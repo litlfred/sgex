@@ -37,11 +37,15 @@ The SMART Guidelines Exchange (SGEX) Workbench is a browser-based, static web ap
 
 ### 2.3 DAK Component Management
 
-**REQ-DAK-001**: The system SHALL display all 8 DAK components on the home page
+**REQ-DAK-001**: The system SHALL display all 8 WHO SMART Guidelines DAK components on the home page
 - Visual dashboard with distinctive cards/tiles for each component
-- WHO SMART Guidelines branding and color codes
+- WHO SMART Guidelines branding and color codes  
 - WHO-provided icons for each component
-- Clear visual distinction between Level 2 and Level 3 content
+- Clear visual distinction between Level 2 (Business Logic & Processes) and Level 3 (Technical Implementation) content
+- The 8 core DAK components are:
+  - **Level 2**: Business Processes, Decision Support Logic, Indicators & Measures, Data Entry Forms
+  - **Level 3**: Terminology, FHIR Profiles, FHIR Extensions, Test Data & Examples
+- Note: Scheduling tables are considered a special case of decision tables within Decision Support Logic
 
 **REQ-DAK-002**: The system SHALL support navigation to component-specific editors
 - Click-through navigation from home page to relevant editors
