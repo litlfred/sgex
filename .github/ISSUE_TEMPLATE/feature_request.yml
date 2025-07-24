@@ -1,101 +1,33 @@
 name: Feature Request
-description: Suggest an idea for the SGEX Workbench
+description: Suggest an idea for this project
 title: "[Feature]: "
-labels: ["enhancement", "triage"]
+labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting a new feature for the SGEX Workbench!
-        
+        Thanks for suggesting a new feature!
+
   - type: textarea
-    id: feature-description
+    id: description
     attributes:
       label: Feature Description
-      description: A clear and concise description of the feature you'd like to see.
-      placeholder: Describe the feature you'd like...
+      description: A clear description of what you want to happen.
     validations:
       required: true
-      
+
   - type: textarea
-    id: problem-statement
+    id: use-case
     attributes:
-      label: Problem Statement
-      description: What problem does this feature solve? What use case does it address?
-      placeholder: This feature would help with...
+      label: Use Case
+      description: Describe the use case and why this feature would be beneficial.
     validations:
       required: true
-      
-  - type: dropdown
-    id: component
-    attributes:
-      label: Component
-      description: Which component of the SGEX Workbench would this feature affect?
-      options:
-        - Authentication
-        - Repository Management  
-        - File Editors (BPMN/DMN/Markdown)
-        - GitHub Integration
-        - UI/Forms (JSON Forms)
-        - Collaboration Tools
-        - Documentation
-        - Deployment
-        - Other
-    validations:
-      required: true
-      
-  - type: textarea
-    id: proposed-solution
-    attributes:
-      label: Proposed Solution
-      description: Describe the solution you'd like to see implemented.
-      placeholder: The feature could work by...
-    validations:
-      required: true
-      
+
   - type: textarea
     id: alternatives
     attributes:
       label: Alternatives Considered
-      description: Describe any alternative solutions or features you've considered.
-      placeholder: Other approaches could include...
-      
-  - type: dropdown
-    id: priority
-    attributes:
-      label: Priority
-      description: How important is this feature to you?
-      options:
-        - Low - Nice to have
-        - Medium - Would be helpful
-        - High - Important for my use case
-        - Critical - Blocking my work
+      description: Any alternative solutions or workarounds you've considered.
     validations:
-      required: true
-      
-  - type: textarea
-    id: who-benefits
-    attributes:
-      label: Who Benefits
-      description: Who would benefit from this feature? (DAK authors, administrators, etc.)
-      placeholder: This would help...
-      
-  - type: checkboxes
-    id: requirements-alignment
-    attributes:
-      label: Requirements Alignment
-      description: Please confirm this feature aligns with WHO SMART Guidelines requirements
-      options:
-        - label: This feature aligns with WHO SMART Guidelines and DAK requirements
-          required: true
-        - label: I have reviewed the existing documentation and requirements
-          required: true
-          
-  - type: checkboxes
-    id: terms
-    attributes:
-      label: Code of Conduct
-      description: By submitting this issue, you agree to follow our Code of Conduct and WHO guidelines.
-      options:
-        - label: I agree to follow this project's Code of Conduct and WHO SMART Guidelines
-          required: true
+      required: false
