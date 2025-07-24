@@ -29,13 +29,23 @@ This document provides an index and summary of all documentation for the SMART G
    - Security and deployment architecture
    - Performance and scalability considerations
 
+4. **[DAK Components](dak-components.md)**
+   - Comprehensive guide to the 8 WHO SMART Guidelines DAK components
+   - Detailed component descriptions and purposes
+   - Level 2 (Business Logic) vs Level 3 (Technical Implementation) organization
+   - Editor capabilities and file type specifications
+
 ## Key Concepts
 
 ### SGEX Workbench
 A browser-based, static web application for collaborative editing of WHO SMART Guidelines Digital Adaptation Kits (DAKs) content stored in GitHub repositories.
 
 ### DAK Components (8 Total)
-The system supports editing of all WHO SMART Guidelines DAK components with visual distinction between Level 2 and Level 3 content.
+The system supports editing of all 8 WHO SMART Guidelines DAK components:
+- **Level 2 (Business Logic & Processes)**: Business Processes, Decision Support Logic, Indicators & Measures, Data Entry Forms  
+- **Level 3 (Technical Implementation)**: Terminology, FHIR Profiles, FHIR Extensions, Test Data & Examples
+- Scheduling tables are considered a special case of decision tables within Decision Support Logic
+- See [DAK Components](dak-components.md) for comprehensive details
 
 ### Technology Stack
 - **Frontend**: React-based Single Page Application
