@@ -24,21 +24,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build React app
+        run: npm run build
+        
       - name: Setup Pages
         uses: actions/configure-pages@v4
         
-      - name: Build site
+      - name: Prepare site
         run: |
           mkdir -p _site
-          cp -r docs/* _site/
-          echo "SGEX Workbench Documentation" > _site/index.html
-          echo "<h1>SGEX Workbench</h1>" >> _site/index.html
-          echo "<p>Documentation site for WHO SMART Guidelines Exchange Workbench</p>" >> _site/index.html
-          echo "<ul>" >> _site/index.html
-          echo "<li><a href='project-plan.html'>Project Plan</a></li>" >> _site/index.html
-          echo "<li><a href='requirements.html'>Requirements</a></li>" >> _site/index.html
-          echo "<li><a href='solution-architecture.html'>Solution Architecture</a></li>" >> _site/index.html
-          echo "</ul>" >> _site/index.html
+          # Copy React build output
+          cp -r build/* _site/
+          # Copy documentation
+          mkdir -p _site/docs
+          cp docs/*.md _site/docs/
+          # Copy root index.html as fallback
+          if [ ! -f _site/index.html ]; then
+            cp index.html _site/
+          fi
           
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
