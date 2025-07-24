@@ -1,0 +1,59 @@
+version: 2
+updates:
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    assignees:
+      - "litlfred"
+    reviewers:
+      - "litlfred"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    
+  # Enable version updates for npm (for future development)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"  
+      time: "09:00"
+    assignees:
+      - "litlfred"
+    reviewers:
+      - "litlfred"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+    # Ignore minor and patch updates for development dependencies
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-patch", "version-update:semver-minor"]
+        dependency-type: "development"
+    # Group updates for better management
+    groups:
+      jsonforms:
+        patterns:
+          - "@jsonforms/*"
+      bpmn:
+        patterns:
+          - "bpmn-*"
+          - "dmn-*"
+      github:
+        patterns:
+          - "@octokit/*"
+          - "octokit"
+      react:
+        patterns:
+          - "react*"
+          - "@types/react*"

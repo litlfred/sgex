@@ -1,0 +1,94 @@
+name: Deploy Documentation to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Create Pages site
+        run: |
+          mkdir -p _site
+          cp README.md _site/index.md
+          cp -r docs _site/
+          
+          # Create a simple HTML index page
+          cat > _site/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>SGEX Workbench Documentation</title>
+              <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 40px; }
+                  .header { border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
+                  .nav { list-style: none; padding: 0; }
+                  .nav li { margin: 10px 0; }
+                  .nav a { text-decoration: none; color: #0066cc; }
+                  .nav a:hover { text-decoration: underline; }
+              </style>
+          </head>
+          <body>
+              <div class="header">
+                  <h1>SGEX Workbench (WHO SMART Guidelines Exchange)</h1>
+                  <p>Documentation for the SMART Guidelines Exchange collaborative editor</p>
+              </div>
+              
+              <h2>Project Documentation</h2>
+              <ul class="nav">
+                  <li><a href="docs/project-plan.html">Project Plan</a></li>
+                  <li><a href="docs/requirements.html">Requirements</a></li>
+                  <li><a href="docs/solution-architecture.html">Solution Architecture</a></li>
+              </ul>
+              
+              <h2>About</h2>
+              <p>The SGEX Workbench is a browser-based, static web application for collaborative editing of WHO SMART Guidelines Digital Adaptation Kits (DAKs) content stored in GitHub repositories.</p>
+              
+              <ul>
+                  <li>All UI schemas are rendered using <a href="https://jsonforms.io/">JSON Forms</a> for standards compliance and accessibility.</li>
+                  <li>All schemas and documentation follow the terminology and branding of <a href="https://www.who.int/teams/digital-health-and-innovation/smart-guidelines">WHO SMART Guidelines</a>.</li>
+              </ul>
+          </body>
+          </html>
+          EOF
+          
+          # Convert markdown files to basic HTML
+          for md in _site/docs/*.md; do
+              if [ -f "$md" ]; then
+                  html="${md%.md}.html"
+                  echo "<!DOCTYPE html><html><head><title>$(basename "$md" .md)</title><style>body{font-family:sans-serif;margin:40px;}</style></head><body><pre>" > "$html"
+                  cat "$md" >> "$html"
+                  echo "</pre></body></html>" >> "$html"
+              fi
+          done
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
