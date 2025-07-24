@@ -1,26 +1,23 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LandingPage from './components/LandingPage';
+import RepositorySelection from './components/RepositorySelection';
+import DAKDashboard from './components/DAKDashboard';
+import ComponentEditor from './components/ComponentEditor';
 import './App.css';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>SGEX Workbench</h1>
-        <p>WHO SMART Guidelines Exchange</p>
-        <p>
-          A browser-based, standards-compliant collaborative editor for WHO SMART Guidelines 
-          Digital Adaptation Kits (DAKs).
-        </p>
-        <div className="App-links">
-          <h2>Documentation</h2>
-          <ul>
-            <li><a href="docs/project-plan.html">Project Plan</a></li>
-            <li><a href="docs/requirements.html">Requirements</a></li>
-            <li><a href="docs/solution-architecture.html">Solution Architecture</a></li>
-          </ul>
-        </div>
-      </header>
-    </div>
+    <Router basename="/sgex">
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/repositories" element={<RepositorySelection />} />
+          <Route path="/dashboard" element={<DAKDashboard />} />
+          <Route path="/editor/:componentId" element={<ComponentEditor />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
