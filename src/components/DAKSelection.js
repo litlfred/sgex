@@ -390,10 +390,22 @@ const DAKSelection = () => {
                     ></div>
                   </div>
                   <div className="progress-info">
-                    <span className="progress-text">
-                      Checking {scanProgress.currentRepo} ({scanProgress.current}/{scanProgress.total})
-                    </span>
-                    <span className="progress-percentage">{scanProgress.progress}%</span>
+                    <div className="current-repo-status">
+                      <span className="status-icon">🔍</span>
+                      <span className="current-repo-name">
+                        {scanProgress.completed ? 'Processed' : 'Checking'}: <strong>{scanProgress.currentRepo}</strong>
+                      </span>
+                    </div>
+                    <div className="progress-stats">
+                      <span className="progress-text">
+                        {scanProgress.current}/{scanProgress.total} repositories
+                      </span>
+                      <span className="progress-percentage">{scanProgress.progress}%</span>
+                    </div>
+                  </div>
+                  <div className="scanning-note">
+                    <span className="note-icon">⚡</span>
+                    <span>Scanning up to 5 repositories concurrently to improve speed</span>
                   </div>
                 </div>
               )}

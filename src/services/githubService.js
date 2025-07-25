@@ -1,4 +1,6 @@
 import { Octokit } from '@octokit/rest';
+import { processConcurrently } from '../utils/concurrency';
+import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
 
 class GitHubService {
   constructor() {
@@ -135,6 +137,12 @@ class GitHubService {
       return false;
     }
 
+    // Check cache first to prevent redundant downloads
+    const cachedResult = repositoryCompatibilityCache.get(owner, repo);
+    if (cachedResult !== null) {
+      return cachedResult;
+    }
+
     try {
       // Try to get sushi-config.yaml from the repository root
       const { data } = await this.octokit.rest.repos.getContent({
@@ -148,15 +156,25 @@ class GitHubService {
         const content = Buffer.from(data.content, 'base64').toString('utf-8');
         
         // Check if the content contains smart.who.int.base in dependencies
-        return content.includes('smart.who.int.base');
+        const isCompatible = content.includes('smart.who.int.base');
+        
+        // Cache the result
+        repositoryCompatibilityCache.set(owner, repo, isCompatible);
+        return isCompatible;
       }
       
+      // Cache negative result
+      repositoryCompatibilityCache.set(owner, repo, false);
       return false;
     } catch (error) {
       // If it's a rate limiting or network error, try to fall back to other indicators
       if (error.status === 403 || error.status === 429 || error.message.includes('rate limit') || error.message.includes('Network')) {
         console.warn(`Rate limit or network error checking ${owner}/${repo}, trying fallback approach:`, error.message);
-        return this.checkSmartGuidelinesFallback(owner, repo);
+        const fallbackResult = await this.checkSmartGuidelinesFallback(owner, repo);
+        
+        // Cache the fallback result
+        repositoryCompatibilityCache.set(owner, repo, fallbackResult);
+        return fallbackResult;
       }
       
       // If it's a 404 (file not found), retry once more in case of temporary issues
@@ -167,7 +185,12 @@ class GitHubService {
       }
       
       // For 404 errors after retries, or other errors, file doesn't exist or can't be accessed
-      return false;
+      // Try fallback before giving up
+      const fallbackResult = await this.checkSmartGuidelinesFallback(owner, repo);
+      
+      // Cache the result (could be true from fallback or false)
+      repositoryCompatibilityCache.set(owner, repo, fallbackResult);
+      return fallbackResult;
     }
   }
 
@@ -180,7 +203,7 @@ class GitHubService {
         repo,
       });
 
-      // Check if repository topics or description contain SMART guidelines indicators
+      // Enhanced smart indicators including patterns for repositories like smart-trust-phw
       const smartIndicators = [
         'smart-guidelines',
         'smart guidelines', // Add space variant
@@ -191,7 +214,13 @@ class GitHubService {
         'dak',
         'fhir-ig',
         'implementation-guide',
-        'implementation guide' // Add space variant
+        'implementation guide', // Add space variant
+        'smart-trust', // For smart-trust-phw specifically
+        'trust-phw', // Another pattern for trust-related SMART repos
+        'phw', // Public Health Web repositories
+        'smart guide', // Another common variant
+        'who guide', // WHO guideline patterns
+        'fhir guide', // FHIR guideline patterns
       ];
 
       const topics = data.topics || [];
@@ -205,7 +234,24 @@ class GitHubService {
         repoName.includes(indicator.replace(/[-\s]/g, ''))
       );
 
-      if (hasSmartIndicators) {
+      // More lenient check for implementation guide patterns
+      const hasIGPatterns = description.includes('implementation guide') ||
+                           description.includes('fhir') ||
+                           description.includes('smart') ||
+                           description.includes('who') ||
+                           description.includes('guideline');
+
+      // Additional check for repositories that contain SMART-related keywords in name
+      const hasSmartInName = repoName.includes('smart') || 
+                            repoName.includes('dak') ||
+                            repoName.includes('guideline') ||
+                            repoName.includes('who') ||
+                            repoName.includes('fhir') ||
+                            (repoName.includes('trust') && repoName.includes('phw'));
+
+      const isCompatible = hasSmartIndicators || hasSmartInName || hasIGPatterns;
+
+      if (isCompatible) {
         console.info(`Repository ${owner}/${repo} has SMART guidelines indicators in topics/description, assuming compatible`);
         return true;
       }
@@ -284,39 +330,58 @@ class GitHubService {
         repositories = data;
       }
 
-      const smartGuidelinesRepos = [];
-      const totalRepos = repositories.length;
-
-      // Check each repository for SMART guidelines compatibility with progress callbacks
-      for (let i = 0; i < repositories.length; i++) {
-        const repo = repositories[i];
-        
-        // Notify progress
+      // Process repositories concurrently with rate limiting
+      const processor = async (repo, index) => {
+        // Notify progress with current repository being checked
         if (onProgress) {
           onProgress({
-            current: i + 1,
-            total: totalRepos,
+            current: index + 1,
+            total: repositories.length,
             currentRepo: repo.name,
-            progress: Math.round(((i + 1) / totalRepos) * 100)
+            progress: Math.round(((index + 1) / repositories.length) * 100)
           });
         }
 
         const isCompatible = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
+        
         if (isCompatible) {
           const smartRepo = {
             ...repo,
             smart_guidelines_compatible: true
           };
-          smartGuidelinesRepos.push(smartRepo);
           
           // Notify that a repository was found
           if (onRepositoryFound) {
             onRepositoryFound(smartRepo);
           }
+          
+          return smartRepo;
         }
-      }
+        
+        return null;
+      };
 
-      return smartGuidelinesRepos;
+      // Use concurrent processing with max 5 parallel requests
+      const results = await processConcurrently(repositories, processor, {
+        concurrency: 5,
+        onProgress: (completed, total, repo, result) => {
+          // Additional progress callback for completed items
+          if (onProgress) {
+            onProgress({
+              current: completed,
+              total: total,
+              currentRepo: repo.name,
+              progress: Math.round((completed / total) * 100),
+              completed: true
+            });
+          }
+        }
+      });
+
+      // Filter out null results and collect smart repositories
+      const validResults = results.filter(result => result !== null && !result.error);
+      
+      return validResults;
     } catch (error) {
       console.error('Failed to fetch SMART guidelines repositories:', error);
       throw error;

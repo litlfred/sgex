@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import DeviceFlowLogin from './DeviceFlowLogin';
@@ -13,47 +13,7 @@ const LandingPage = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Check if user is already authenticated from previous session
-    const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
-    if (token) {
-      const success = githubService.authenticate(token);
-      if (success) {
-        setIsAuthenticated(true);
-        fetchUserData();
-      } else {
-        sessionStorage.removeItem('github_token');
-        localStorage.removeItem('github_token');
-      }
-    }
-  }, []);
-
-  const fetchUserData = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Check token permissions first
-      await githubService.checkTokenPermissions();
-      
-      // Fetch user data using GitHub service
-      const userData = await githubService.getCurrentUser();
-      setUser(userData);
-      
-      // Fetch organizations separately
-      await fetchOrganizations();
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      setError('Failed to fetch user data. Please check your connection and try again.');
-      setIsAuthenticated(false);
-      sessionStorage.removeItem('github_token');
-      localStorage.removeItem('github_token');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchOrganizations = async () => {
+  const fetchOrganizations = useCallback(async () => {
     try {
       // Fetch organizations
       let orgsData = [];
@@ -106,7 +66,47 @@ const LandingPage = () => {
       };
       setOrganizations([whoOrganization]);
     }
-  };
+  }, []);
+
+  const fetchUserData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Check token permissions first
+      await githubService.checkTokenPermissions();
+      
+      // Fetch user data using GitHub service
+      const userData = await githubService.getCurrentUser();
+      setUser(userData);
+      
+      // Fetch organizations separately
+      await fetchOrganizations();
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      setError('Failed to fetch user data. Please check your connection and try again.');
+      setIsAuthenticated(false);
+      sessionStorage.removeItem('github_token');
+      localStorage.removeItem('github_token');
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchOrganizations]);
+
+  useEffect(() => {
+    // Check if user is already authenticated from previous session
+    const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
+    if (token) {
+      const success = githubService.authenticate(token);
+      if (success) {
+        setIsAuthenticated(true);
+        fetchUserData();
+      } else {
+        sessionStorage.removeItem('github_token');
+        localStorage.removeItem('github_token');
+      }
+    }
+  }, [fetchUserData]);
 
   const handleAuthSuccess = (token, octokitInstance) => {
     // Store token in session storage for this session

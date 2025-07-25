@@ -529,7 +529,68 @@
   }
 }
 
-/* Responsive Design */
+/* Enhanced progress display */
+.current-repo-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(0, 120, 212, 0.1);
+  border-radius: 8px;
+  border-left: 4px solid #0078d4;
+}
+
+.status-icon {
+  font-size: 1rem;
+  animation: scanning 2s linear infinite;
+}
+
+@keyframes scanning {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.current-repo-name {
+  color: #0078d4;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.progress-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.scanning-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  color: #28a745;
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+.note-icon {
+  font-size: 1rem;
+}
+
+/* Responsive enhancements for progress display */
+@media (max-width: 768px) {
+  .current-repo-status {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.25rem;
+  }
+  
+  .scanning-note {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
 @media (max-width: 768px) {
   .selection-header {
     padding: 1rem;
