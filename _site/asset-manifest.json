@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/sgex/static/css/main.cba4903b.css",
+    "main.js": "/sgex/static/js/main.78ea579e.js",
+    "static/js/488.3abbf358.chunk.js": "/sgex/static/js/488.3abbf358.chunk.js",
+    "index.html": "/sgex/index.html",
+    "main.cba4903b.css.map": "/sgex/static/css/main.cba4903b.css.map",
+    "main.78ea579e.js.map": "/sgex/static/js/main.78ea579e.js.map",
+    "488.3abbf358.chunk.js.map": "/sgex/static/js/488.3abbf358.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.cba4903b.css",
+    "static/js/main.78ea579e.js"
+  ]
+}
