@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="800" viewBox="0 0 1400 800">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; fill: #333; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 12px; fill: #666; }
+      .lane-title { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; fill: #333; }
+      .task-text { font-family: Arial, sans-serif; font-size: 10px; fill: #333; }
+      .lane { fill: #f8f9fa; stroke: #dee2e6; stroke-width: 2; }
+      .task { fill: #ffffff; stroke: #007bff; stroke-width: 2; rx: 8; }
+      .gateway { fill: #fff3cd; stroke: #856404; stroke-width: 2; }
+      .start-event { fill: #d4edda; stroke: #28a745; stroke-width: 2; }
+      .end-event { fill: #f8d7da; stroke: #dc3545; stroke-width: 2; }
+      .flow { stroke: #6c757d; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .message-flow { stroke: #17a2b8; stroke-width: 2; stroke-dasharray: 5,5; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#6c757d"/>
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="700" y="30" class="title" text-anchor="middle">Manage DAK Workflow - BPMN Diagram</text>
+  <text x="700" y="50" class="subtitle" text-anchor="middle">WHO SMART Guidelines Exchange Workbench</text>
+  
+  <!-- Swimlanes -->
+  <rect x="50" y="80" width="1300" height="120" class="lane"/>
+  <text x="60" y="140" class="lane-title">DAK Author</text>
+  
+  <rect x="50" y="200" width="1300" height="80" class="lane"/>
+  <text x="60" y="240" class="lane-title">SGeX Workbench</text>
+  
+  <rect x="50" y="280" width="1300" height="80" class="lane"/>
+  <text x="60" y="320" class="lane-title">GitHub</text>
+  
+  <rect x="50" y="360" width="1300" height="60" class="lane"/>
+  <text x="60" y="390" class="lane-title">OCL</text>
+  
+  <rect x="50" y="420" width="1300" height="60" class="lane"/>
+  <text x="60" y="450" class="lane-title">PCMT</text>
+  
+  <!-- DAK Author Lane -->
+  <circle cx="150" cy="140" r="15" class="start-event"/>
+  <text x="150" y="145" class="task-text" text-anchor="middle">Start</text>
+  
+  <rect x="200" y="120" width="100" height="40" class="task"/>
+  <text x="250" y="140" class="task-text" text-anchor="middle">Choose DAK</text>
+  <text x="250" y="152" class="task-text" text-anchor="middle">Action</text>
+  
+  <polygon points="350,120 380,140 350,160 320,140" class="gateway"/>
+  <text x="350" y="145" class="task-text" text-anchor="middle">Action?</text>
+  
+  <!-- Edit Path -->
+  <rect x="420" y="100" width="80" height="30" class="task"/>
+  <text x="460" y="118" class="task-text" text-anchor="middle">Select DAK</text>
+  
+  <!-- Fork Path -->
+  <rect x="420" y="135" width="80" height="30" class="task"/>
+  <text x="460" y="153" class="task-text" text-anchor="middle">Select DAK</text>
+  
+  <rect x="520" y="135" width="80" height="30" class="task"/>
+  <text x="560" y="153" class="task-text" text-anchor="middle">Select Org</text>
+  
+  <!-- Create Path -->
+  <rect x="420" y="170" width="80" height="30" class="task"/>
+  <text x="460" y="188" class="task-text" text-anchor="middle">Select Template</text>
+  
+  <rect x="520" y="170" width="80" height="30" class="task"/>
+  <text x="560" y="188" class="task-text" text-anchor="middle">Select Org</text>
+  
+  <rect x="620" y="170" width="80" height="30" class="task"/>
+  <text x="660" y="188" class="task-text" text-anchor="middle">Configure DAK</text>
+  
+  <!-- Convergence -->
+  <polygon points="750,120 780,140 750,160 720,140" class="gateway"/>
+  
+  <rect x="820" y="120" width="100" height="40" class="task"/>
+  <text x="870" y="140" class="task-text" text-anchor="middle">Edit DAK</text>
+  <text x="870" y="152" class="task-text" text-anchor="middle">Component</text>
+  
+  <circle cx="980" cy="140" r="15" class="end-event"/>
+  <text x="980" y="145" class="task-text" text-anchor="middle">End</text>
+  
+  <!-- SGeX Lane -->
+  <rect x="820" y="220" width="100" height="40" class="task"/>
+  <text x="870" y="240" class="task-text" text-anchor="middle">Manage DAK</text>
+  <text x="870" y="252" class="task-text" text-anchor="middle">Editing</text>
+  
+  <!-- GitHub Lane -->
+  <rect x="450" y="300" width="80" height="30" class="task"/>
+  <text x="490" y="318" class="task-text" text-anchor="middle">Query Repos</text>
+  
+  <rect x="550" y="300" width="80" height="30" class="task"/>
+  <text x="590" y="318" class="task-text" text-anchor="middle">Query Orgs</text>
+  
+  <!-- OCL Lane -->
+  <rect x="820" y="375" width="100" height="30" class="task"/>
+  <text x="870" y="393" class="task-text" text-anchor="middle">Provide Terminology</text>
+  
+  <!-- PCMT Lane -->
+  <rect x="820" y="435" width="100" height="30" class="task"/>
+  <text x="870" y="453" class="task-text" text-anchor="middle">Provide Product Data</text>
+  
+  <!-- Sequence Flows -->
+  <line x1="165" y1="140" x2="200" y2="140" class="flow"/>
+  <line x1="300" y1="140" x2="320" y2="140" class="flow"/>
+  
+  <!-- Edit flow -->
+  <line x1="350" y1="130" x2="420" y2="115" class="flow"/>
+  <line x1="500" y1="115" x2="735" y2="135" class="flow"/>
+  
+  <!-- Fork flow -->
+  <line x1="350" y1="140" x2="420" y2="150" class="flow"/>
+  <line x1="500" y1="150" x2="520" y2="150" class="flow"/>
+  <line x1="600" y1="150" x2="735" y2="145" class="flow"/>
+  
+  <!-- Create flow -->
+  <line x1="350" y1="150" x2="420" y2="185" class="flow"/>
+  <line x1="500" y1="185" x2="520" y2="185" class="flow"/>
+  <line x1="600" y1="185" x2="620" y2="185" class="flow"/>
+  <line x1="700" y1="185" x2="750" y2="155" class="flow"/>
+  
+  <!-- Final flow -->
+  <line x1="780" y1="140" x2="820" y2="140" class="flow"/>
+  <line x1="920" y1="140" x2="965" y2="140" class="flow"/>
+  
+  <!-- Message Flows -->
+  <line x1="250" y1="160" x2="870" y2="220" class="message-flow"/>
+  <line x1="460" y1="165" x2="490" y2="300" class="message-flow"/>
+  <line x1="560" y1="165" x2="590" y2="300" class="message-flow"/>
+  <line x1="870" y1="260" x2="870" y2="375" class="message-flow"/>
+  <line x1="870" y1="260" x2="870" y2="435" class="message-flow"/>
+  
+  <!-- Labels -->
+  <text x="385" y="110" class="task-text">Edit</text>
+  <text x="385" y="135" class="task-text">Fork</text>
+  <text x="385" y="200" class="task-text">Create</text>
+  
+</svg>

@@ -47,6 +47,52 @@ const DAKSelection = () => {
     }
   };
 
+  const getMockRepositories = useCallback(() => {
+    const mockRepos = [
+      {
+        id: 1,
+        name: 'maternal-health-dak',
+        full_name: `${profile.login}/maternal-health-dak`,
+        description: 'WHO SMART Guidelines for Maternal Health - Digital Adaptation Kit',
+        html_url: `https://github.com/${profile.login}/maternal-health-dak`,
+        topics: ['who', 'smart-guidelines', 'maternal-health', 'dak'],
+        language: 'FML',
+        stargazers_count: 12,
+        forks_count: 3,
+        updated_at: '2024-01-15T10:30:00Z',
+        smart_guidelines_compatible: true
+      },
+      {
+        id: 2,
+        name: 'immunization-dak',
+        full_name: `${profile.login}/immunization-dak`,
+        description: 'Digital Adaptation Kit for Immunization Guidelines',
+        html_url: `https://github.com/${profile.login}/immunization-dak`,
+        topics: ['who', 'smart-guidelines', 'immunization', 'vaccines'],
+        language: 'FML',
+        stargazers_count: 8,
+        forks_count: 2,
+        updated_at: '2024-01-10T14:20:00Z',
+        smart_guidelines_compatible: true
+      },
+      {
+        id: 3,
+        name: 'anc-dak',
+        full_name: `${profile.login}/anc-dak`,
+        description: 'Antenatal Care Digital Adaptation Kit based on WHO guidelines',
+        html_url: `https://github.com/${profile.login}/anc-dak`,
+        topics: ['who', 'anc', 'antenatal-care', 'smart-guidelines'],
+        language: 'FML',
+        stargazers_count: 15,
+        forks_count: 5,
+        updated_at: '2024-01-12T09:15:00Z',
+        smart_guidelines_compatible: true
+      }
+    ];
+
+    return mockRepos;
+  }, [profile.login]);
+
   const fetchRepositories = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -94,53 +140,7 @@ const DAKSelection = () => {
     } finally {
       setLoading(false);
     }
-  }, [profile, action]);
-
-  const getMockRepositories = () => {
-    const mockRepos = [
-      {
-        id: 1,
-        name: 'maternal-health-dak',
-        full_name: `${profile.login}/maternal-health-dak`,
-        description: 'WHO SMART Guidelines for Maternal Health - Digital Adaptation Kit',
-        html_url: `https://github.com/${profile.login}/maternal-health-dak`,
-        topics: ['who', 'smart-guidelines', 'maternal-health', 'dak'],
-        language: 'FML',
-        stargazers_count: 12,
-        forks_count: 3,
-        updated_at: '2024-01-15T10:30:00Z',
-        smart_guidelines_compatible: true
-      },
-      {
-        id: 2,
-        name: 'immunization-dak',
-        full_name: `${profile.login}/immunization-dak`,
-        description: 'Digital Adaptation Kit for Immunization Guidelines',
-        html_url: `https://github.com/${profile.login}/immunization-dak`,
-        topics: ['who', 'smart-guidelines', 'immunization', 'vaccines'],
-        language: 'FML',
-        stargazers_count: 8,
-        forks_count: 2,
-        updated_at: '2024-01-10T14:20:00Z',
-        smart_guidelines_compatible: true
-      },
-      {
-        id: 3,
-        name: 'anc-dak',
-        full_name: `${profile.login}/anc-dak`,
-        description: 'Antenatal Care Digital Adaptation Kit based on WHO guidelines',
-        html_url: `https://github.com/${profile.login}/anc-dak`,
-        topics: ['who', 'anc', 'antenatal-care', 'smart-guidelines'],
-        language: 'FML',
-        stargazers_count: 15,
-        forks_count: 5,
-        updated_at: '2024-01-12T09:15:00Z',
-        smart_guidelines_compatible: true
-      }
-    ];
-
-    return mockRepos;
-  };
+  }, [profile, action, getMockRepositories]);
 
   useEffect(() => {
     if (!profile || !action) {
