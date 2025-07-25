@@ -13,7 +13,7 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
 
 ### Prerequisites
 
-- **Node.js**: Version 18.x or higher (tested with Node.js 20.x)
+- **Node.js**: Version 16.x or higher (tested with Node.js 18.x and 20.x)
 - **npm**: Version 8.x or higher (comes with Node.js)
 
 ### Installation
@@ -61,6 +61,13 @@ sgex/
 ├── package.json     # Dependencies and scripts
 └── README.md        # This file
 ```
+
+### Available Scripts
+
+- `npm start` - Runs the app in development mode
+- `npm test` - Launches the test runner in interactive watch mode
+- `npm run build` - Builds the app for production
+- `npm run eject` - **Note: This is a one-way operation. Don't do this unless you know what you're doing!**
 
 ### Troubleshooting
 
