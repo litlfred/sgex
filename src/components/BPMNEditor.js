@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 import { Octokit } from '@octokit/rest';
+import ComponentLinkPanel from './ComponentLinkPanel';
+import BPMNOverlayManager from '../services/BPMNOverlayManager';
+import componentLinkService from '../services/ComponentLinkService';
 import './BPMNEditor.css';
 
 const BPMNEditor = () => {
@@ -19,6 +22,11 @@ const BPMNEditor = () => {
   const [error, setError] = useState(null);
   const [commitMessage, setCommitMessage] = useState('');
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  
+  // Component linking state
+  const [selectedElement, setSelectedElement] = useState(null);
+  const [showComponentPanel, setShowComponentPanel] = useState(false);
+  const overlayManagerRef = useRef(null);
 
   // Initialize BPMN modeler
   useEffect(() => {
@@ -32,6 +40,31 @@ const BPMNEditor = () => {
               bindTo: window
             }
           });
+
+          // Initialize overlay manager
+          overlayManagerRef.current = new BPMNOverlayManager(modelerRef.current);
+
+          // Set up event listeners for element selection
+          const eventBus = modelerRef.current.get('eventBus');
+          eventBus.on('element.click', (event) => {
+            const element = event.element;
+            setSelectedElement(element);
+            console.log('Selected element:', element.id, element.type);
+          });
+
+          // Set up event listener for diagram import
+          eventBus.on('import.done', () => {
+            // Refresh overlays after diagram is loaded
+            setTimeout(() => {
+              if (overlayManagerRef.current) {
+                overlayManagerRef.current.refreshAllOverlays((componentInfo) => {
+                  const url = componentLinkService.getComponentEditorUrl(componentInfo, { profile, repository });
+                  alert(`Navigate to ${componentInfo.name} (${componentInfo.type})\nURL: ${url}`);
+                });
+              }
+            }, 100);
+          });
+
           console.log('BPMN modeler initialized successfully');
         } catch (error) {
           console.error('Failed to initialize BPMN modeler:', error);
@@ -57,8 +90,13 @@ const BPMNEditor = () => {
         }
         modelerRef.current = null;
       }
+      
+      if (overlayManagerRef.current) {
+        overlayManagerRef.current.destroy();
+        overlayManagerRef.current = null;
+      }
     };
-  }, [selectedFile]);
+  }, [selectedFile, profile, repository]);
 
   // Load BPMN files from repository
   useEffect(() => {
@@ -314,6 +352,34 @@ const BPMNEditor = () => {
     }
   };
 
+  // Component linking functions
+  const handleLinkAdded = (elementId, componentInfo) => {
+    if (overlayManagerRef.current) {
+      overlayManagerRef.current.addElementOverlay(elementId, handleNavigateToComponent);
+    }
+  };
+
+  const handleLinkRemoved = (elementId) => {
+    if (overlayManagerRef.current) {
+      overlayManagerRef.current.removeElementOverlay(elementId);
+    }
+  };
+
+  const handleNavigateToComponent = (componentInfo) => {
+    const url = componentLinkService.getComponentEditorUrl(componentInfo, { profile, repository });
+    
+    // For now, show an alert with the navigation intent
+    // In a real implementation, this would navigate to the component editor
+    alert(`Navigate to ${componentInfo.name} (${componentInfo.type})\nURL: ${url}`);
+    
+    // TODO: Implement actual navigation
+    // navigate(url, { state: { profile, repository, componentInfo } });
+  };
+
+  const handleToggleComponentPanel = () => {
+    setShowComponentPanel(!showComponentPanel);
+  };
+
   if (!profile || !repository || !component) {
     navigate('/');
     return <div>Redirecting...</div>;
@@ -400,6 +466,14 @@ const BPMNEditor = () => {
                   </div>
                   <div className="toolbar-right">
                     <button 
+                      className={`action-btn ${showComponentPanel ? 'primary' : 'secondary'}`}
+                      onClick={handleToggleComponentPanel}
+                      title="Toggle component links panel"
+                    >
+                      <span>🔗</span>
+                      Components
+                    </button>
+                    <button 
                       className="action-btn primary"
                       onClick={() => setShowSaveDialog(true)}
                       disabled={saving}
@@ -408,7 +482,21 @@ const BPMNEditor = () => {
                     </button>
                   </div>
                 </div>
-                <div className="bpmn-container" ref={containerRef}></div>
+                <div className="editor-workspace">
+                  <div className="bpmn-container" ref={containerRef}></div>
+                  {showComponentPanel && (
+                    <div className="component-panel">
+                      <ComponentLinkPanel
+                        selectedElement={selectedElement}
+                        onLinkAdded={handleLinkAdded}
+                        onLinkRemoved={handleLinkRemoved}
+                        onNavigateToComponent={handleNavigateToComponent}
+                        profile={profile}
+                        repository={repository}
+                      />
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <div className="diagram-placeholder">
