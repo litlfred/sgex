@@ -236,10 +236,23 @@
   cursor: not-allowed;
 }
 
+.editor-workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
 .bpmn-container {
   flex: 1;
   position: relative;
   background: #fafafa;
+}
+
+.component-panel {
+  width: 350px;
+  border-left: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  overflow: hidden;
 }
 
 .diagram-placeholder {
@@ -390,6 +403,13 @@
   .file-browser {
     width: 100%;
     max-height: 200px;
+  }
+  
+  .component-panel {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid #e0e0e0;
+    max-height: 300px;
   }
   
   .editor-header {
