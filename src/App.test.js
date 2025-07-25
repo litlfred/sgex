@@ -21,3 +21,13 @@ test('renders WHO SMART Guidelines Exchange subtitle', () => {
   const subtitleElement = screen.getByText(/WHO SMART Guidelines Exchange/i);
   expect(subtitleElement).toBeInTheDocument();
 });
+
+test('landing page renders without crashing', () => {
+  render(
+    <MemoryRouter>
+      <LandingPage />
+    </MemoryRouter>
+  );
+  // Just check that the landing page renders without crashing
+  expect(document.body).toBeTruthy();
+});
