@@ -8,8 +8,8 @@ test('renders SGEX Workbench heading', () => {
       <LandingPage />
     </MemoryRouter>
   );
-  const linkElement = screen.getByRole('heading', { name: /SGEX Workbench/i, level: 1 });
-  expect(linkElement).toBeInTheDocument();
+  const headingElement = screen.getByRole('heading', { name: /SGEX Workbench/i, level: 1 });
+  expect(headingElement).toBeInTheDocument();
 });
 
 test('renders WHO SMART Guidelines Exchange subtitle', () => {

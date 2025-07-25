@@ -4,11 +4,12 @@ Thank you for your interest in contributing to the WHO SMART Guidelines Exchange
 
 ## Getting Started
 
-1. Fork the repository
-2. Create a feature branch from `main`
-3. Make your changes
-4. Test your changes locally
-5. Submit a pull request
+1. **Set up your development environment** - Follow the [Development Setup](README.md#development-setup) instructions in the README
+2. Fork the repository
+3. Create a feature branch from `main`
+4. Make your changes
+5. Test your changes locally using `npm start` and `npm run build`
+6. Submit a pull request
 
 ## Guidelines
 

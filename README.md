@@ -9,6 +9,74 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
 - All UI schemas are rendered using [JSON Forms](https://jsonforms.io/) for standards compliance and accessibility.
 - All schemas and documentation follow the terminology and branding of [WHO SMART Guidelines](https://www.who.int/teams/digital-health-and-innovation/smart-guidelines).
 
+## Development Setup
+
+### Prerequisites
+
+- **Node.js**: Version 16.x or higher (tested with Node.js 18.x and 20.x)
+- **npm**: Version 8.x or higher (comes with Node.js)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/litlfred/sgex.git
+   cd sgex
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+### Development
+
+1. **Start the development server**
+   ```bash
+   npm start
+   ```
+   The application will be available at `http://localhost:3000/sgex`
+
+2. **Build for production**
+   ```bash
+   npm run build
+   ```
+   The build artifacts will be created in the `build/` directory.
+
+3. **Run tests**
+   ```bash
+   npm test
+   ```
+
+### Project Structure
+
+```
+sgex/
+├── public/          # Static assets
+├── src/             # Source code
+│   ├── components/  # React components
+│   ├── App.js       # Main application component
+│   └── index.js     # Application entry point
+├── docs/            # Project documentation
+├── package.json     # Dependencies and scripts
+└── README.md        # This file
+```
+
+### Available Scripts
+
+- `npm start` - Runs the app in development mode
+- `npm test` - Launches the test runner in interactive watch mode
+- `npm run build` - Builds the app for production
+- `npm run eject` - **Note: This is a one-way operation. Don't do this unless you know what you're doing!**
+
+### Troubleshooting
+
+- **Port 3000 already in use**: The development server will automatically try to use an alternative port (3001, 3002, etc.)
+- **Build issues**: Try deleting `node_modules/` and `package-lock.json`, then run `npm install` again
+- **Memory issues**: If you encounter JavaScript heap out of memory errors, try setting `NODE_OPTIONS=--max-old-space-size=4096` before running build commands
+
+For more information about contributing, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## WHO SMART Guidelines DAK Components
 
 The SGEX Workbench supports editing of the **8 core Digital Adaptation Kit (DAK) components** as defined by the WHO SMART Guidelines framework. These components are organized into two levels:
