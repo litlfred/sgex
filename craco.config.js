@@ -1,3 +1,14 @@
+/**
+ * CRACO configuration for SGEX Workbench
+ * 
+ * This configuration provides compatibility between react-scripts and webpack-dev-server v5.x
+ * 
+ * Key fixes:
+ * 1. Replaces deprecated onBeforeSetupMiddleware/onAfterSetupMiddleware with setupMiddlewares
+ * 2. Handles HTTPS configuration migration from 'https' to 'server' property  
+ * 3. Adds devServer.close() compatibility method for graceful shutdown (fixes TypeError)
+ */
+
 const fs = require('fs');
 const evalSourceMapMiddleware = require('react-dev-utils/evalSourceMapMiddleware');
 const noopServiceWorkerMiddleware = require('react-dev-utils/noopServiceWorkerMiddleware');
