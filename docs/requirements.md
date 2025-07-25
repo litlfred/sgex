@@ -66,7 +66,7 @@ The SMART Guidelines Exchange (SGEX) Workbench is a browser-based, static web ap
 | Generic personas | Actor definitions and role descriptions | FHIR Person/Practitioner profiles |
 | User scenarios | Use case narratives and workflows | FHIR Scenario test bundles |
 | Generic business processes and workflows | BPMN diagrams (.bpmn) | FHIR ActivityDefinition/PlanDefinition |
-| Core data elements | Logical data models | FHIR StructureDefinition profiles |
+| Core data elements | FHIR CodeSystems and Logical Models | FHIR StructureDefinition profiles |
 | Decision-support logic | DMN decision tables | FHIR PlanDefinition with decision logic |
 | Program indicators | Logical indicator models | FHIR Measure resources |
 | Functional and non-functional requirements | Requirements specifications | FHIR ImplementationGuide conformance rules |
@@ -78,6 +78,7 @@ The SMART Guidelines Exchange (SGEX) Workbench is a browser-based, static web ap
 | Terminology | Concept definitions and mappings | FHIR CodeSystem/ValueSet |
 | FHIR Profiles | Data model specifications | FHIR StructureDefinition |
 | FHIR Extensions | Extension specifications | FHIR StructureDefinition (extension) |
+| FHIR Questionnaires | FHIR Questionnaires | FHIR Questionnaires coupled with FHIR Structure Map |
 | Test Data & Examples | Test scenarios and sample data | FHIR Examples/test bundles |
 
 **REQ-DAK-005**: The system SHALL comply with industry standards
