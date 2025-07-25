@@ -116,6 +116,34 @@
   font-size: 1rem;
 }
 
+.documentation-info {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1.5rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.documentation-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.documentation-info .doc-link {
+  color: #0078d4;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.documentation-info .doc-link:hover {
+  color: #106ebe;
+  text-decoration: underline;
+}
+
 .loading {
   text-align: center;
   padding: 3rem;

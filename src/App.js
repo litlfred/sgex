@@ -9,6 +9,7 @@ import RepositorySelection from './components/RepositorySelection';
 import DAKDashboard from './components/DAKDashboard';
 import ComponentEditor from './components/ComponentEditor';
 import BPMNEditor from './components/BPMNEditor';
+import DocumentationViewer from './components/DocumentationViewer';
 import './App.css';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
           <Route path="/dashboard" element={<DAKDashboard />} />
           <Route path="/editor/:componentId" element={<ComponentEditor />} />
           <Route path="/bpmn-editor" element={<BPMNEditor />} />
+          <Route path="/docs/:docId" element={<DocumentationViewer />} />
         </Routes>
       </div>
     </Router>
