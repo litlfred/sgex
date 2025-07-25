@@ -1,5 +1,10 @@
 # SGEX Workbench (WHO SMART Guidelines Exchange)
 
+<div align="center">
+  <img src="public/mascot-full.svg" alt="SGEX Workbench Helper" width="200" height="200">
+  <p><em>Meet your SGEX Workbench Helper - here to guide you through WHO SMART Guidelines DAK editing!</em></p>
+</div>
+
 This repository contains the source code, schemas, and documentation for the SGEX Workbench—a browser-based, standards-compliant collaborative editor for WHO SMART Guidelines Digital Adaptation Kits (DAKs).
 
 ## About

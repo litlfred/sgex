@@ -233,6 +233,17 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - Clear instructions for account creation
 - Smooth transition from GitHub signup to app usage
 
+**REQ-UX-003**: The system SHALL provide a consistent "Get Help" feature
+- SGEX mascot-based help button available throughout the application
+- Context-sensitive help dialogs with step-by-step guidance
+- Interactive slideshow for GitHub Personal Access Token creation
+- Hamburger menu with additional support options:
+  - File Bug Report functionality linking to GitHub issues
+  - DAK Feedback option (when applicable) linking to selected repository issues
+  - Email support option with pre-populated context
+- Help system should overlay current screen without losing user context
+- Mascot should provide helpful hints and guidance in speech bubbles
+
 ### 4.2 Navigation
 
 **REQ-UX-003**: The system SHALL provide intuitive navigation
@@ -240,6 +251,12 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - Consistent navigation patterns
 - Context-sensitive UI elements
 - Breadcrumb navigation
+
+**REQ-UX-004**: The system SHALL provide accessible help and support
+- SGEX Workbench mascot as consistent help interface
+- Context-aware help system with step-by-step guidance
+- Multiple support channels integrated into help interface
+- Visual and textual guidance for complex workflows
 
 ## 5. Integration Requirements
 

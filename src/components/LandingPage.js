@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import HelpButton from './HelpButton';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -118,36 +119,74 @@ const LandingPage = () => {
                   </button>
                 </>
               ) : (
-                <form onSubmit={handleTokenSubmit}>
-                  <p>Enter your GitHub Personal Access Token:</p>
-                  <div className="token-input-group">
-                    <input
-                      type="password"
-                      placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                      value={tokenInput}
-                      onChange={(e) => setTokenInput(e.target.value)}
-                      className="token-input"
-                      disabled={loading}
-                    />
-                    <button 
-                      type="submit" 
-                      className="token-submit-btn"
-                      disabled={loading || !tokenInput.trim()}
-                    >
-                      {loading ? 'Connecting...' : 'Connect'}
-                    </button>
-                  </div>
-                  <p className="token-help">
-                    Create a token at{' '}
-                    <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer">
-                      GitHub Settings
-                    </a>{' '}
-                    with 'repo' and 'read:org' permissions.
-                  </p>
-                </form>
+                <div className="token-section">
+                  <form onSubmit={handleTokenSubmit}>
+                    <div className="token-header">
+                      <p>Enter your GitHub Personal Access Token:</p>
+                      <HelpButton 
+                        helpTopic="github-token"
+                        contextData={{ 
+                          repository: { owner: 'litlfred', name: 'sgex' },
+                          requiredScopes: ['repo', 'read:org']
+                        }}
+                      />
+                    </div>
+                    <div className="token-input-group">
+                      <input
+                        type="password"
+                        placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                        value={tokenInput}
+                        onChange={(e) => setTokenInput(e.target.value)}
+                        className="token-input"
+                        disabled={loading}
+                      />
+                      <button 
+                        type="submit" 
+                        className="token-submit-btn"
+                        disabled={loading || !tokenInput.trim()}
+                      >
+                        {loading ? 'Connecting...' : 'Connect'}
+                      </button>
+                    </div>
+                    <p className="token-help">
+                      Need a token? We can help!{' '}
+                      <a 
+                        href="https://github.com/settings/tokens/new?description=SGEX%20Workbench%20Access&scopes=repo,read:org" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="quick-token-link"
+                      >
+                        Create one with pre-filled settings →
+                      </a>
+                      <br />
+                      Or visit{' '}
+                      <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer">
+                        GitHub Settings
+                      </a>{' '}
+                      and select 'repo' and 'read:org' permissions.
+                    </p>
+                  </form>
+                </div>
               )}
               
-              {error && <div className="error-message">{error}</div>}
+              {error && (
+                <div className="error-message">
+                  {error}
+                  {error.includes('Failed to fetch user data') && (
+                    <div className="error-help">
+                      <HelpButton 
+                        helpTopic="github-token"
+                        contextData={{ 
+                          repository: { owner: 'litlfred', name: 'sgex' },
+                          requiredScopes: ['repo', 'read:org'],
+                          error: error
+                        }}
+                      />
+                      <span>Click the helper for step-by-step guidance</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
