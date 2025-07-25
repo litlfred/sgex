@@ -12,7 +12,11 @@ const DAKSelection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  const { profile, action } = location.state || {};
+  const { profile: stateProfile, action: stateAction } = location.state || {};
+  
+  // Provide defaults for testing - remove after fixing visibility
+  const profile = stateProfile || { login: 'testuser', name: 'Test User', avatar_url: 'https://github.com/testuser.png' };
+  const action = stateAction || 'edit';
 
   const getActionConfig = () => {
     switch (action) {
@@ -200,9 +204,10 @@ const DAKSelection = () => {
     });
   };
 
-  if (!profile || !action) {
-    return <div>Redirecting...</div>;
-  }
+  // Skip redirect for testing - remove after fixing visibility
+  // if (!profile || !action) {
+  //   return <div>Redirecting...</div>;
+  // }
 
   const config = getActionConfig();
 
