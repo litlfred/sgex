@@ -88,9 +88,12 @@
   <!-- GitHub Lane -->
   <rect x="450" y="300" width="80" height="30" class="task"/>
   <text x="490" y="318" class="task-text" text-anchor="middle">Query Repos</text>
-  
+
   <rect x="550" y="300" width="80" height="30" class="task"/>
   <text x="590" y="318" class="task-text" text-anchor="middle">Query Orgs</text>
+
+  <rect x="650" y="300" width="80" height="30" class="task"/>
+  <text x="690" y="318" class="task-text" text-anchor="middle">Save Config</text>
   
   <!-- OCL Lane -->
   <rect x="820" y="375" width="100" height="30" class="task"/>
@@ -124,9 +127,10 @@
   <line x1="920" y1="140" x2="965" y2="140" class="flow"/>
   
   <!-- Message Flows -->
-  <line x1="250" y1="160" x2="870" y2="220" class="message-flow"/>
+  <line x1="870" y1="160" x2="870" y2="220" class="message-flow"/>
   <line x1="460" y1="240" x2="490" y2="300" class="message-flow"/>
   <line x1="560" y1="240" x2="590" y2="300" class="message-flow"/>
+  <line x1="660" y1="200" x2="690" y2="300" class="message-flow"/>
   <line x1="870" y1="260" x2="870" y2="375" class="message-flow"/>
   <line x1="870" y1="260" x2="870" y2="435" class="message-flow"/>
   
