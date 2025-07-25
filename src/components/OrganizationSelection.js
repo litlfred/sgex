@@ -54,11 +54,39 @@ const OrganizationSelection = () => {
         orgsData = getMockOrganizations();
       }
       
+      // Always ensure WHO organization is included
+      const whoOrganization = {
+        id: 'who-organization',
+        login: 'WorldHealthOrganization',
+        display_name: 'World Health Organization',
+        description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+        avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+        html_url: 'https://github.com/WorldHealthOrganization',
+        type: 'Organization',
+        permissions: {
+          can_create_repositories: true,
+          can_create_private_repositories: true
+        },
+        plan: {
+          name: 'Organization',
+          private_repos: 'unlimited'
+        },
+        isWHO: true
+      };
+      
+      // Check if WHO organization is already in the list
+      const hasWHO = orgsData.some(org => org.login === 'WorldHealthOrganization');
+      
+      if (!hasWHO) {
+        // Add WHO organization at the beginning of the list
+        orgsData.unshift(whoOrganization);
+      }
+      
       setOrganizations(orgsData);
     } catch (error) {
       console.error('Error fetching organizations:', error);
       setError('Failed to fetch organizations. Please check your connection and try again.');
-      // Fallback to mock data for demonstration
+      // Fallback to mock data for demonstration (which includes WHO)
       setOrganizations(getMockOrganizations());
     } finally {
       setLoading(false);
@@ -67,6 +95,24 @@ const OrganizationSelection = () => {
 
   const getMockOrganizations = () => {
     return [
+      {
+        id: 'who-organization',
+        login: 'WorldHealthOrganization',
+        display_name: 'World Health Organization',
+        description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+        avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+        html_url: 'https://github.com/WorldHealthOrganization',
+        type: 'Organization',
+        permissions: {
+          can_create_repositories: true,
+          can_create_private_repositories: true
+        },
+        plan: {
+          name: 'Organization',
+          private_repos: 'unlimited'
+        },
+        isWHO: true
+      },
       {
         id: 1,
         login: 'my-health-org',
@@ -272,7 +318,7 @@ const OrganizationSelection = () => {
                   {allOptions.map((org) => (
                     <div 
                       key={`${org.type}-${org.id}`}
-                      className={`org-card ${selectedOrganization?.id === org.id && selectedOrganization?.type === org.type ? 'selected' : ''} ${org.isPersonal ? 'personal' : ''}`}
+                      className={`org-card ${selectedOrganization?.id === org.id && selectedOrganization?.type === org.type ? 'selected' : ''} ${org.isPersonal ? 'personal' : ''} ${org.isWHO ? 'who-org' : ''}`}
                       onClick={() => handleOrganizationSelect(org)}
                     >
                       <div className="org-header-info">
@@ -285,6 +331,7 @@ const OrganizationSelection = () => {
                           <h3>{org.display_name || org.login}</h3>
                           <p className="org-login">@{org.login}</p>
                           {org.isPersonal && <span className="personal-badge">Personal</span>}
+                          {org.isWHO && <span className="who-badge">WHO Official</span>}
                         </div>
                       </div>
                       
