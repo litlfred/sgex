@@ -15,7 +15,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -32,9 +32,11 @@ jobs:
           
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Build React app
         run: npm run build
+        env:
+          CI: false
         
       - name: Setup Pages
         uses: actions/configure-pages@v5
