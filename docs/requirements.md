@@ -4,6 +4,40 @@
 
 The SMART Guidelines Exchange (SGEX) Workbench is a browser-based, static web application designed for collaborative editing of WHO SMART Guidelines Digital Adaptation Kits (DAKs) content stored in GitHub repositories.
 
+## 1.1 System Actors
+
+The SGEX Workbench operates within an ecosystem of actors that collaborate to enable effective DAK management and editing:
+
+**REQ-ACTOR-001**: **DAK Author** - The primary user of the system
+- Definition: L2 or L3 author of a WHO SMART Guidelines Digital Adaptation Kit
+- Role: Creates, edits, forks, and manages DAK content and components
+- Access Level: Authenticated GitHub user with repository permissions
+- Responsibilities: Content creation, component editing, workflow decisions, quality assurance
+
+**REQ-ACTOR-002**: **SGeX Workbench** - The collaborative editing platform  
+- Definition: The SMART Guidelines Exchange web application serving as the primary interface
+- Role: Orchestrates DAK management workflows and provides editing capabilities
+- Implementation: React-based single-page application hosted on GitHub Pages
+- Responsibilities: User interface management, workflow coordination, GitHub API integration
+
+**REQ-ACTOR-003**: **GitHub** - Version control and collaboration platform
+- Definition: Cloud-based Git repository hosting service providing storage and collaboration features
+- Role: Stores DAK repositories, manages permissions, provides versioning and collaboration tools
+- Integration: REST API v3/v4 for repository operations, authentication, and content management
+- Responsibilities: Repository hosting, user authentication, permission management, version control
+
+**REQ-ACTOR-004**: **OCL (Open Concept Lab)** - Terminology management system
+- Definition: Open-source terminology management platform at https://openconceptlab.org/
+- Role: Provides standardized health terminology and concept definitions for DAK components
+- Integration: RESTful API for terminology lookup and validation
+- Responsibilities: Concept definitions, terminology mappings, vocabulary management
+
+**REQ-ACTOR-005**: **PCMT (Product Catalogue Management Tool)** - Product data management
+- Definition: WHO product catalog system at https://productcatalog.io/ and https://worldhealthorganization.github.io/smart-pcmt/
+- Role: Manages product master data for health commodities and medical devices
+- Integration: API endpoints for product data retrieval and validation
+- Responsibilities: Product catalog management, commodity definitions, supply chain data
+
 ## 2. Functional Requirements
 
 ### 2.1 User Authentication and Authorization

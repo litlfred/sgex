@@ -22,6 +22,28 @@ flowchart TD
 - **SGEX Workbench Frontend:** Runs entirely client-side as a Single Page Application (SPA), hosted on GitHub Pages or another CDN
 - **GitHub Cloud:** Provides authentication, authorization, file storage, versioning, branching, and collaboration tools
 
+### 2.2 DAK Management Workflow Architecture
+
+The SGEX Workbench implements a comprehensive "Manage a DAK" workflow as defined in issue #26, involving five key actors:
+
+**Workflow Actors:**
+1. **DAK Author** - L2/L3 author of WHO SMART Guidelines
+2. **SGeX Workbench** - The collaborative editing platform
+3. **GitHub** - Version control and repository management
+4. **OCL (Open Concept Lab)** - Terminology management
+5. **PCMT** - Product catalog management
+
+**Workflow Diagrams:**
+- **BPMN Diagram:** [`docs/workflows/manage-dak-workflow.bpmn`](workflows/manage-dak-workflow.bpmn)
+- **Sequence Diagram:** [`docs/workflows/manage-dak-sequence.puml`](workflows/manage-dak-sequence.puml)
+
+**Workflow Components:**
+- **DAK Action Selection:** Choose between edit, fork, or create DAK
+- **DAK Selection:** Select source DAK repository with SMART Guidelines filtering
+- **Organization Selection:** Choose destination for fork/create operations
+- **DAK Configuration:** Configure new DAK parameters and sushi-config.yaml
+- **Component Editing:** Edit DAK components with specialized editors
+
 ### 2.2 Architecture Principles
 
 1. **Client-Side Only**: No backend server required - all processing happens in the browser
@@ -110,10 +132,16 @@ src/
 ### 3.5 Form Architecture with JSON Forms
 
 **Schema-Driven Approach:**
-- All structured data entry uses JSON Schema definitions
+- All structured data entry uses JSON Schema definitions stored in `src/schemas/`
 - UI Schema controls presentation and validation
 - Custom WHO-branded renderers for specialized controls
 - Consistent validation and error handling
+
+**Workflow Schemas:**
+- [`dak-action-form.json`](../src/schemas/dak-action-form.json) - DAK action selection (edit/fork/create)
+- [`dak-selection-form.json`](../src/schemas/dak-selection-form.json) - Repository selection with SMART Guidelines filtering
+- [`organization-selection-form.json`](../src/schemas/organization-selection-form.json) - GitHub organization selection
+- [`dak-config-form.json`](../src/schemas/dak-config-form.json) - DAK configuration and sushi-config.yaml parameters
 
 **Implementation Pattern:**
 ```javascript

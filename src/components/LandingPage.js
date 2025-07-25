@@ -88,7 +88,7 @@ const LandingPage = () => {
   };
 
   const handleProfileSelect = (profile) => {
-    navigate('/repositories', { state: { profile } });
+    navigate('/dak-action', { state: { profile } });
   };
 
   if (!isAuthenticated) {

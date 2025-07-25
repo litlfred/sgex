@@ -48,6 +48,7 @@
     "webpack-dev-server": "5.2.1"
   },
   "devDependencies": {
-    "@craco/craco": "^7.1.0"
+    "@craco/craco": "^7.1.0",
+    "jsdom": "^26.1.0"
   }
 }
