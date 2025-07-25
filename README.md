@@ -34,11 +34,11 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
    npm install
    ```
 
-3. **Configure GitHub OAuth (for production deployment)**
+3. **Configure GitHub OAuth (Required for authentication)**
    
    To enable GitHub authentication, you need to register an OAuth app:
    
-   a. Go to GitHub Settings > Developer settings > OAuth Apps
+   a. Go to [GitHub Settings > Developer settings > OAuth Apps](https://github.com/settings/applications/new)
    b. Click "New OAuth App" and fill in:
       - **Application name**: "SGEX Workbench"
       - **Homepage URL**: Your deployment URL (e.g., `https://litlfred.github.io/sgex`)
@@ -49,7 +49,7 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
       echo "REACT_APP_GITHUB_CLIENT_ID=your_client_id_here" > .env.local
       ```
    
-   **Note**: For development/testing, the app will work without OAuth configuration, but users won't be able to authenticate with GitHub.
+   **Note**: If you don't configure OAuth, the app will show helpful setup instructions when you try to sign in.
 
 ### Development
 
