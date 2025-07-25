@@ -13,24 +13,20 @@ const OrganizationSelection = () => {
   const [includePersonal, setIncludePersonal] = useState(true);
   
   const { profile, sourceRepository, action } = location.state || {};
-  
-  // Use profile or fallback for testing
-  const currentProfile = profile || { login: 'testuser', name: 'Test User', avatar_url: 'https://github.com/testuser.png' };
 
   const getActionConfig = () => {
-    const currentAction = action || 'fork'; // fallback
-    switch (currentAction) {
+    switch (action) {
       case 'fork':
         return {
           title: 'Select Destination for Fork',
-          description: `Choose where to create a fork of "${sourceRepository?.name || 'test-dak'}".`,
+          description: `Choose where to create a fork of "${sourceRepository?.name}".`,
           buttonText: 'Fork Repository',
           nextRoute: '/dashboard'
         };
       case 'create':
         return {
           title: 'Select Destination for New DAK',
-          description: `Choose where to create your new DAK based on "${sourceRepository?.name || 'test-dak'}".`,
+          description: `Choose where to create your new DAK based on "${sourceRepository?.name}".`,
           buttonText: 'Continue to Configuration',
           nextRoute: '/dak-configuration'
         };
@@ -58,11 +54,39 @@ const OrganizationSelection = () => {
         orgsData = getMockOrganizations();
       }
       
+      // Always ensure WHO organization is included
+      const whoOrganization = {
+        id: 'who-organization',
+        login: 'WorldHealthOrganization',
+        display_name: 'World Health Organization',
+        description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+        avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+        html_url: 'https://github.com/WorldHealthOrganization',
+        type: 'Organization',
+        permissions: {
+          can_create_repositories: true,
+          can_create_private_repositories: true
+        },
+        plan: {
+          name: 'Organization',
+          private_repos: 'unlimited'
+        },
+        isWHO: true
+      };
+      
+      // Check if WHO organization is already in the list
+      const hasWHO = orgsData.some(org => org.login === 'WorldHealthOrganization');
+      
+      if (!hasWHO) {
+        // Add WHO organization at the beginning of the list
+        orgsData.unshift(whoOrganization);
+      }
+      
       setOrganizations(orgsData);
     } catch (error) {
       console.error('Error fetching organizations:', error);
       setError('Failed to fetch organizations. Please check your connection and try again.');
-      // Fallback to mock data for demonstration
+      // Fallback to mock data for demonstration (which includes WHO)
       setOrganizations(getMockOrganizations());
     } finally {
       setLoading(false);
@@ -71,6 +95,24 @@ const OrganizationSelection = () => {
 
   const getMockOrganizations = () => {
     return [
+      {
+        id: 'who-organization',
+        login: 'WorldHealthOrganization',
+        display_name: 'World Health Organization',
+        description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+        avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+        html_url: 'https://github.com/WorldHealthOrganization',
+        type: 'Organization',
+        permissions: {
+          can_create_repositories: true,
+          can_create_private_repositories: true
+        },
+        plan: {
+          name: 'Organization',
+          private_repos: 'unlimited'
+        },
+        isWHO: true
+      },
       {
         id: 1,
         login: 'my-health-org',
@@ -109,12 +151,9 @@ const OrganizationSelection = () => {
   };
 
   useEffect(() => {
-    // Temporarily bypass state check for testing UI
     if (!profile || !sourceRepository || !action) {
-      // Use mock data for testing
-      const mockProfile = { login: 'testuser', name: 'Test User', avatar_url: 'https://github.com/testuser.png' };
-      const mockRepo = { name: 'test-dak', full_name: 'testuser/test-dak' };
-      // Don't navigate away, just use mock data
+      navigate('/');
+      return;
     }
     
     fetchOrganizations();
@@ -169,11 +208,7 @@ const OrganizationSelection = () => {
   };
 
   if (!profile || !sourceRepository || !action) {
-    // Use mock data for testing UI
-    const mockProfile = { login: 'testuser', name: 'Test User', avatar_url: 'https://github.com/testuser.png' };
-    const mockRepo = { name: 'test-dak', full_name: 'testuser/test-dak' };
-    const mockAction = 'fork';
-    // Don't return early, continue with mock data
+    return <div>Redirecting...</div>;
   }
 
   const config = getActionConfig();
@@ -183,9 +218,9 @@ const OrganizationSelection = () => {
   
   if (includePersonal) {
     allOptions.push({
-      ...currentProfile,
+      ...profile,
       type: 'User',
-      display_name: currentProfile.name || currentProfile.login,
+      display_name: profile.name || profile.login,
       description: 'Your personal GitHub account',
       permissions: {
         can_create_repositories: true,
@@ -206,11 +241,11 @@ const OrganizationSelection = () => {
         </div>
         <div className="profile-info">
           <img 
-            src={(currentProfile?.avatar_url) || `https://github.com/${currentProfile?.login || 'testuser'}.png`} 
+            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
             alt="Profile" 
             className="profile-avatar" 
           />
-          <span>{currentProfile?.name || currentProfile?.login || 'Test User'}</span>
+          <span>{profile.name || profile.login}</span>
         </div>
       </div>
 
@@ -220,7 +255,7 @@ const OrganizationSelection = () => {
             Select Profile
           </button>
           <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/dak-action', { state: { profile: currentProfile } })} className="breadcrumb-link">
+          <button onClick={() => navigate('/dak-action', { state: { profile } })} className="breadcrumb-link">
             Choose DAK Action
           </button>
           <span className="breadcrumb-separator">›</span>
@@ -242,15 +277,6 @@ const OrganizationSelection = () => {
                 <div className="repo-badge">
                   <span className="repo-name">{sourceRepository.name}</span>
                   <span className="repo-owner">@{sourceRepository.full_name?.split('/')[0]}</span>
-                </div>
-              </div>
-            )}
-            {!sourceRepository && (
-              <div className="source-repo-info">
-                <span className="repo-label">Source Repository:</span>
-                <div className="repo-badge">
-                  <span className="repo-name">test-dak</span>
-                  <span className="repo-owner">@testuser</span>
                 </div>
               </div>
             )}
@@ -292,7 +318,7 @@ const OrganizationSelection = () => {
                   {allOptions.map((org) => (
                     <div 
                       key={`${org.type}-${org.id}`}
-                      className={`org-card ${selectedOrganization?.id === org.id && selectedOrganization?.type === org.type ? 'selected' : ''} ${org.isPersonal ? 'personal' : ''}`}
+                      className={`org-card ${selectedOrganization?.id === org.id && selectedOrganization?.type === org.type ? 'selected' : ''} ${org.isPersonal ? 'personal' : ''} ${org.isWHO ? 'who-org' : ''}`}
                       onClick={() => handleOrganizationSelect(org)}
                     >
                       <div className="org-header-info">
@@ -305,6 +331,7 @@ const OrganizationSelection = () => {
                           <h3>{org.display_name || org.login}</h3>
                           <p className="org-login">@{org.login}</p>
                           {org.isPersonal && <span className="personal-badge">Personal</span>}
+                          {org.isWHO && <span className="who-badge">WHO Official</span>}
                         </div>
                       </div>
                       
