@@ -246,6 +246,69 @@ class GitHubService {
     }
   }
 
+  // Get repositories with progressive scanning (for real-time updates)
+  async getSmartGuidelinesRepositoriesProgressive(owner, type = 'user', onRepositoryFound = null, onProgress = null) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      let repositories;
+      if (type === 'user') {
+        const { data } = await this.octokit.rest.repos.listForUser({
+          username: owner,
+          sort: 'updated',
+          per_page: 100,
+        });
+        repositories = data;
+      } else {
+        const { data } = await this.octokit.rest.repos.listForOrg({
+          org: owner,
+          sort: 'updated',
+          per_page: 100,
+        });
+        repositories = data;
+      }
+
+      const smartGuidelinesRepos = [];
+      const totalRepos = repositories.length;
+
+      // Check each repository for SMART guidelines compatibility with progress callbacks
+      for (let i = 0; i < repositories.length; i++) {
+        const repo = repositories[i];
+        
+        // Notify progress
+        if (onProgress) {
+          onProgress({
+            current: i + 1,
+            total: totalRepos,
+            currentRepo: repo.name,
+            progress: Math.round(((i + 1) / totalRepos) * 100)
+          });
+        }
+
+        const isCompatible = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
+        if (isCompatible) {
+          const smartRepo = {
+            ...repo,
+            smart_guidelines_compatible: true
+          };
+          smartGuidelinesRepos.push(smartRepo);
+          
+          // Notify that a repository was found
+          if (onRepositoryFound) {
+            onRepositoryFound(smartRepo);
+          }
+        }
+      }
+
+      return smartGuidelinesRepos;
+    } catch (error) {
+      console.error('Failed to fetch SMART guidelines repositories:', error);
+      throw error;
+    }
+  }
+
   // Get a specific repository
   async getRepository(owner, repo) {
     if (!this.isAuth()) {
