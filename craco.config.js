@@ -27,6 +27,13 @@ module.exports = {
     
     // Add the new setupMiddlewares function
     devServerConfig.setupMiddlewares = (middlewares, devServer) => {
+      // Add close method as alias to stop for compatibility with react-scripts
+      if (!devServer.close && devServer.stop) {
+        devServer.close = function() {
+          return devServer.stop();
+        };
+      }
+
       // Before middlewares (replaces onBeforeSetupMiddleware)
       // Keep `evalSourceMapMiddleware`
       // middlewares before `redirectServedPath` otherwise will not have any effect
@@ -51,6 +58,9 @@ module.exports = {
 
       return middlewares;
     };
+
+    // Remove the onListening approach as we're handling it in setupMiddlewares
+    delete devServerConfig.onListening;
 
     return devServerConfig;
   },
