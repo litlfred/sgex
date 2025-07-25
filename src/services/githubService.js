@@ -109,8 +109,43 @@ class GitHubService {
     }
   }
 
-  // Get repositories for a user or organization
+  // Get repositories for a user or organization (now filters by SMART Guidelines compatibility)
   async getRepositories(owner, type = 'user') {
+    // Use the new SMART guidelines filtering method
+    return this.getSmartGuidelinesRepositories(owner, type);
+  }
+
+  // Check if a repository has sushi-config.yaml with smart.who.int.base dependency
+  async checkSmartGuidelinesCompatibility(owner, repo) {
+    if (!this.isAuth()) {
+      return false;
+    }
+
+    try {
+      // Try to get sushi-config.yaml from the repository root
+      const { data } = await this.octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path: 'sushi-config.yaml',
+      });
+
+      if (data.type === 'file' && data.content) {
+        // Decode base64 content
+        const content = Buffer.from(data.content, 'base64').toString('utf-8');
+        
+        // Check if the content contains smart.who.int.base in dependencies
+        return content.includes('smart.who.int.base');
+      }
+      
+      return false;
+    } catch (error) {
+      // File doesn't exist or can't be accessed
+      return false;
+    }
+  }
+
+  // Get repositories that are SMART guidelines compatible
+  async getSmartGuidelinesRepositories(owner, type = 'user') {
     if (!this.isAuth()) {
       throw new Error('Not authenticated with GitHub');
     }
@@ -133,27 +168,21 @@ class GitHubService {
         repositories = data;
       }
 
-      // Filter for repositories that might be DAK-related or have relevant topics
-      return repositories.filter(repo => {
-        const topics = repo.topics || [];
-        const description = (repo.description || '').toLowerCase();
-        const name = repo.name.toLowerCase();
-        
-        // Look for DAK-related keywords
-        const dakKeywords = [
-          'dak', 'smart', 'guidelines', 'who', 'health', 'fhir', 
-          'implementation', 'guide', 'ig', 'clinical', 'maternal',
-          'immunization', 'anc', 'digital', 'adaptation', 'kit'
-        ];
-        
-        return topics.some(topic => 
-          dakKeywords.some(keyword => topic.toLowerCase().includes(keyword))
-        ) || dakKeywords.some(keyword => 
-          description.includes(keyword) || name.includes(keyword)
-        );
-      });
+      // Check each repository for SMART guidelines compatibility
+      const smartGuidelinesRepos = [];
+      for (const repo of repositories) {
+        const isCompatible = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
+        if (isCompatible) {
+          smartGuidelinesRepos.push({
+            ...repo,
+            smart_guidelines_compatible: true
+          });
+        }
+      }
+
+      return smartGuidelinesRepos;
     } catch (error) {
-      console.error('Failed to fetch repositories:', error);
+      console.error('Failed to fetch SMART guidelines repositories:', error);
       throw error;
     }
   }
@@ -173,7 +202,7 @@ class GitHubService {
     } catch (error) {
       console.error('Failed to fetch repository:', error);
       throw error;
-    }
+    }  
   }
 
   // Logout

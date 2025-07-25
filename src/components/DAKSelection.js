@@ -49,7 +49,8 @@ const DAKSelection = () => {
   };
 
   const getMockRepositories = useCallback(() => {
-    const mockRepos = [
+    // Mock repositories - only some have SMART guidelines compatibility
+    const allMockRepos = [
       {
         id: 1,
         name: 'maternal-health-dak',
@@ -88,10 +89,37 @@ const DAKSelection = () => {
         forks_count: 5,
         updated_at: '2024-01-12T09:15:00Z',
         smart_guidelines_compatible: true
+      },
+      {
+        id: 4,
+        name: 'regular-health-app',
+        full_name: `${profile.login}/regular-health-app`,
+        description: 'A regular health application without SMART Guidelines',
+        html_url: `https://github.com/${profile.login}/regular-health-app`,
+        topics: ['health', 'app', 'javascript'],
+        language: 'JavaScript',
+        stargazers_count: 5,
+        forks_count: 1,
+        updated_at: '2024-01-08T16:45:00Z',
+        smart_guidelines_compatible: false // This one doesn't have sushi-config.yaml with smart.who.int.base
+      },
+      {
+        id: 5,
+        name: 'medical-database',
+        full_name: `${profile.login}/medical-database`,
+        description: 'Medical database with FHIR but not SMART Guidelines',
+        html_url: `https://github.com/${profile.login}/medical-database`,
+        topics: ['fhir', 'database', 'medical'],
+        language: 'SQL',
+        stargazers_count: 7,
+        forks_count: 2,
+        updated_at: '2024-01-05T11:20:00Z',
+        smart_guidelines_compatible: false // This one also doesn't have the required sushi-config.yaml
       }
     ];
 
-    return mockRepos;
+    // Filter to only return SMART guidelines compatible repositories
+    return allMockRepos.filter(repo => repo.smart_guidelines_compatible);
   }, [profile.login]);
 
   const fetchRepositories = useCallback(async () => {
