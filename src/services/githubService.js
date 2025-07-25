@@ -5,10 +5,10 @@ class GitHubService {
     this.octokit = null;
     this.isAuthenticated = false;
     this.permissions = null;
-    this.tokenType = null; // 'classic' or 'fine-grained'
+    this.tokenType = null; // 'classic', 'fine-grained', or 'oauth'
   }
 
-  // Initialize with a GitHub token
+  // Initialize with a GitHub token (supports both OAuth and PAT tokens)
   authenticate(token) {
     try {
       this.octokit = new Octokit({
@@ -18,6 +18,20 @@ class GitHubService {
       return true;
     } catch (error) {
       console.error('Failed to authenticate with GitHub:', error);
+      this.isAuthenticated = false;
+      return false;
+    }
+  }
+
+  // Initialize with an existing Octokit instance (for OAuth flow)
+  authenticateWithOctokit(octokitInstance) {
+    try {
+      this.octokit = octokitInstance;
+      this.isAuthenticated = true;
+      this.tokenType = 'oauth';
+      return true;
+    } catch (error) {
+      console.error('Failed to authenticate with Octokit instance:', error);
       this.isAuthenticated = false;
       return false;
     }
@@ -209,7 +223,10 @@ class GitHubService {
   logout() {
     this.octokit = null;
     this.isAuthenticated = false;
+    this.tokenType = null;
+    this.permissions = null;
     localStorage.removeItem('github_token');
+    sessionStorage.removeItem('github_token');
   }
 }
 

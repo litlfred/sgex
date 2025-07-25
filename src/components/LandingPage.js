@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import HelpButton from './HelpButton';
+import DeviceFlowLogin from './DeviceFlowLogin';
+import { DEFAULT_SCOPES } from '../services/../config/oauth';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -10,20 +11,18 @@ const LandingPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [tokenInput, setTokenInput] = useState('');
-  const [showTokenInput, setShowTokenInput] = useState(false);
-  const [permissionMode, setPermissionMode] = useState('read-only'); // 'read-only' or 'edit'
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is already authenticated
-    const token = localStorage.getItem('github_token');
+    // Check if user is already authenticated from previous session
+    const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
     if (token) {
       const success = githubService.authenticate(token);
       if (success) {
         setIsAuthenticated(true);
         fetchUserData();
       } else {
+        sessionStorage.removeItem('github_token');
         localStorage.removeItem('github_token');
       }
     }
@@ -46,35 +45,25 @@ const LandingPage = () => {
       setOrganizations(orgsData);
     } catch (error) {
       console.error('Error fetching user data:', error);
-      setError('Failed to fetch user data. Please check your token and try again.');
+      setError('Failed to fetch user data. Please check your connection and try again.');
       setIsAuthenticated(false);
+      sessionStorage.removeItem('github_token');
       localStorage.removeItem('github_token');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGitHubLogin = () => {
-    setShowTokenInput(true);
-  };
-
-  const handleTokenSubmit = (e) => {
-    e.preventDefault();
-    if (!tokenInput.trim()) {
-      setError('Please enter a valid GitHub token');
-      return;
-    }
-
-    const success = githubService.authenticate(tokenInput.trim());
-    if (success) {
-      localStorage.setItem('github_token', tokenInput.trim());
-      setIsAuthenticated(true);
-      setShowTokenInput(false);
-      setTokenInput('');
-      fetchUserData();
-    } else {
-      setError('Invalid GitHub token. Please check and try again.');
-    }
+  const handleAuthSuccess = (token, octokitInstance) => {
+    // Store token in session storage for this session
+    sessionStorage.setItem('github_token', token);
+    
+    // Use the provided Octokit instance directly
+    githubService.authenticateWithOctokit(octokitInstance);
+    
+    setIsAuthenticated(true);
+    setError(null);
+    fetchUserData();
   };
 
   const handleLogout = () => {
@@ -83,8 +72,6 @@ const LandingPage = () => {
     setUser(null);
     setOrganizations([]);
     setError(null);
-    setShowTokenInput(false);
-    setTokenInput('');
   };
 
   const handleProfileSelect = (profile) => {
@@ -110,131 +97,15 @@ const LandingPage = () => {
             </p>
             
             <div className="auth-section">
-              {!showTokenInput ? (
-                <>
-                  <p>Connect your GitHub account to get started:</p>
-                  <button 
-                    className="github-login-btn"
-                    onClick={handleGitHubLogin}
-                    disabled={loading}
-                  >
-                    <span className="github-icon">⚡</span>
-                    Continue with GitHub
-                  </button>
-                </>
-              ) : (
-                <div className="token-section">
-                  <div className="permission-mode-selector">
-                    <p>Choose your access level:</p>
-                    <div className="permission-options">
-                      <label className={`permission-option ${permissionMode === 'read-only' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="permissionMode"
-                          value="read-only"
-                          checked={permissionMode === 'read-only'}
-                          onChange={(e) => setPermissionMode(e.target.value)}
-                        />
-                        <div>
-                          <strong>Read-Only Access</strong>
-                          <p>Browse and view DAK repositories (Recommended)</p>
-                        </div>
-                      </label>
-                      <label className={`permission-option ${permissionMode === 'edit' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="permissionMode"
-                          value="edit"
-                          checked={permissionMode === 'edit'}
-                          onChange={(e) => setPermissionMode(e.target.value)}
-                        />
-                        <div>
-                          <strong>Edit Access</strong>
-                          <p>Browse, view, and edit DAK repositories</p>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-                  
-                  <form onSubmit={handleTokenSubmit}>
-                    <div className="token-header">
-                      <p>Enter your GitHub Personal Access Token:</p>
-                      <HelpButton 
-                        helpTopic="github-token"
-                        contextData={{ 
-                          repository: { owner: 'litlfred', name: 'sgex' },
-                          requiredScopes: permissionMode === 'read-only' ? ['read:org'] : ['repo', 'read:org'],
-                          permissionMode: permissionMode
-                        }}
-                      />
-                    </div>
-                    <div className="token-input-group">
-                      <input
-                        type="password"
-                        placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                        value={tokenInput}
-                        onChange={(e) => setTokenInput(e.target.value)}
-                        className="token-input"
-                        disabled={loading}
-                      />
-                      <button 
-                        type="submit" 
-                        className="token-submit-btn"
-                        disabled={loading || !tokenInput.trim()}
-                      >
-                        {loading ? 'Connecting...' : 'Connect'}
-                      </button>
-                    </div>
-                    {permissionMode === 'read-only' ? (
-                      <p className="token-help">
-                        <strong>For read-only access:</strong> Create a{' '}
-                        <a 
-                          href="https://github.com/settings/personal-access-tokens/new" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="quick-token-link"
-                        >
-                          fine-grained personal access token →
-                        </a>
-                        <br />
-                        Select this repository (litlfred/sgex) and grant "Contents: Read" and "Metadata: Read" permissions.
-                      </p>
-                    ) : (
-                      <p className="token-help">
-                        <strong>For edit access:</strong> Create a{' '}
-                        <a 
-                          href="https://github.com/settings/personal-access-tokens/new" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="quick-token-link"
-                        >
-                          fine-grained personal access token →
-                        </a>
-                        <br />
-                        Select the repositories you want to edit and grant "Contents: Write", "Metadata: Read", and "Pull requests: Write" permissions.
-                      </p>
-                    )}
-                  </form>
-                </div>
-              )}
+              <p>Connect your GitHub account to get started:</p>
+              <DeviceFlowLogin 
+                onAuthSuccess={handleAuthSuccess}
+                requiredScopes={DEFAULT_SCOPES}
+              />
               
               {error && (
                 <div className="error-message">
                   {error}
-                  {error.includes('Failed to fetch user data') && (
-                    <div className="error-help">
-                      <HelpButton 
-                        helpTopic="github-token"
-                        contextData={{ 
-                          repository: { owner: 'litlfred', name: 'sgex' },
-                          requiredScopes: permissionMode === 'read-only' ? ['read:org'] : ['repo', 'read:org'],
-                          permissionMode: permissionMode,
-                          error: error
-                        }}
-                      />
-                      <span>Click the helper for step-by-step guidance</span>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
