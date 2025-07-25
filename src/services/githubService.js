@@ -116,7 +116,7 @@ class GitHubService {
   }
 
   // Check if a repository has sushi-config.yaml with smart.who.int.base dependency
-  async checkSmartGuidelinesCompatibility(owner, repo) {
+  async checkSmartGuidelinesCompatibility(owner, repo, retryCount = 2) {
     if (!this.isAuth()) {
       return false;
     }
@@ -139,7 +139,64 @@ class GitHubService {
       
       return false;
     } catch (error) {
-      // File doesn't exist or can't be accessed
+      // If it's a rate limiting or network error, try to fall back to other indicators
+      if (error.status === 403 || error.status === 429 || error.message.includes('rate limit') || error.message.includes('Network')) {
+        console.warn(`Rate limit or network error checking ${owner}/${repo}, trying fallback approach:`, error.message);
+        return this.checkSmartGuidelinesFallback(owner, repo);
+      }
+      
+      // If it's a 404 (file not found), retry once more in case of temporary issues
+      if (error.status === 404 && retryCount > 0) {
+        console.warn(`File not found for ${owner}/${repo}, retrying... (${retryCount} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        return this.checkSmartGuidelinesCompatibility(owner, repo, retryCount - 1);
+      }
+      
+      // For 404 errors after retries, or other errors, file doesn't exist or can't be accessed
+      return false;
+    }
+  }
+
+  // Fallback method to check for SMART Guidelines compatibility using other indicators
+  async checkSmartGuidelinesFallback(owner, repo) {
+    try {
+      // Get repository details to check topics and description
+      const { data } = await this.octokit.rest.repos.get({
+        owner,
+        repo,
+      });
+
+      // Check if repository topics or description contain SMART guidelines indicators
+      const smartIndicators = [
+        'smart-guidelines',
+        'who-smart',
+        'smart.who.int',
+        'digital-adaptation-kit',
+        'digital adaptation kit',
+        'dak',
+        'fhir-ig',
+        'implementation-guide'
+      ];
+
+      const topics = data.topics || [];
+      const description = (data.description || '').toLowerCase();
+      const repoName = repo.toLowerCase();
+
+      // Check if any SMART guidelines indicators are present
+      const hasSmartIndicators = smartIndicators.some(indicator => 
+        topics.includes(indicator) || 
+        description.includes(indicator.toLowerCase()) ||
+        repoName.includes(indicator.replace(/[-\s]/g, ''))
+      );
+
+      if (hasSmartIndicators) {
+        console.info(`Repository ${owner}/${repo} has SMART guidelines indicators in topics/description, assuming compatible`);
+        return true;
+      }
+
+      return false;
+    } catch (fallbackError) {
+      console.warn(`Fallback check also failed for ${owner}/${repo}:`, fallbackError.message);
       return false;
     }
   }
