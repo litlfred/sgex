@@ -94,13 +94,25 @@ const DAKDashboard = () => {
 
   const handleComponentClick = (component) => {
     // Navigate to component-specific editor
-    navigate(`/editor/${component.id}`, {
-      state: {
-        profile,
-        repository,
-        component
-      }
-    });
+    if (component.id === 'business-processes') {
+      // Use dedicated BPMN editor for business processes
+      navigate(`/bpmn-editor`, {
+        state: {
+          profile,
+          repository,
+          component
+        }
+      });
+    } else {
+      // Use generic component editor for other components
+      navigate(`/editor/${component.id}`, {
+        state: {
+          profile,
+          repository,
+          component
+        }
+      });
+    }
   };
 
   const handleBackToRepos = () => {
