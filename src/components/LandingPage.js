@@ -94,19 +94,45 @@ const LandingPage = () => {
   }, [fetchOrganizations]);
 
   useEffect(() => {
-    // Check if user is already authenticated from previous session
-    const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
-    if (token) {
-      const success = githubService.authenticate(token);
-      if (success) {
-        setIsAuthenticated(true);
-        fetchUserData();
-      } else {
-        sessionStorage.removeItem('github_token');
-        localStorage.removeItem('github_token');
+    const initializeAuth = async () => {
+      // Check if user is already authenticated from previous session
+      const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
+      if (token) {
+        const success = githubService.authenticate(token);
+        if (success) {
+          setIsAuthenticated(true);
+          // Call fetchUserData directly here
+          setLoading(true);
+          setError(null);
+          
+          try {
+            // Check token permissions first
+            await githubService.checkTokenPermissions();
+            
+            // Fetch user data using GitHub service
+            const userData = await githubService.getCurrentUser();
+            setUser(userData);
+            
+            // Fetch organizations separately
+            await fetchOrganizations();
+          } catch (error) {
+            console.error('Error fetching user data:', error);
+            setError('Failed to fetch user data. Please check your connection and try again.');
+            setIsAuthenticated(false);
+            sessionStorage.removeItem('github_token');
+            localStorage.removeItem('github_token');
+          } finally {
+            setLoading(false);
+          }
+        } else {
+          sessionStorage.removeItem('github_token');
+          localStorage.removeItem('github_token');
+        }
       }
-    }
-  }, [fetchUserData]);
+    };
+
+    initializeAuth();
+  }, [fetchOrganizations]);
 
   const handleAuthSuccess = (token, octokitInstance) => {
     // Store token in session storage for this session
