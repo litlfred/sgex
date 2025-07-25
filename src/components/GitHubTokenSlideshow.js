@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import './GitHubTokenSlideshow.css';
 
-const GitHubTokenSlideshow = () => {
+const GitHubTokenSlideshow = ({ contextData = {} }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  
+  const { permissionMode = 'read-only', upgradeMode = false } = contextData;
 
   const slides = [
     {
@@ -13,14 +15,20 @@ const GitHubTokenSlideshow = () => {
             <img src="/sgex/mascot-full.svg" alt="SGEX Helper" className="slide-mascot" />
             <div className="instruction-bubble">
               <p>Let's create your GitHub Personal Access Token together!</p>
-              <p>First, click the link below to go to GitHub Settings:</p>
+              <p>We'll use fine-grained tokens for better security. Click below to get started:</p>
+              {upgradeMode && (
+                <div className="upgrade-notice">
+                  <strong>🔧 Upgrading to Edit Access</strong>
+                  <p>You're creating a new token with write permissions for repository editing.</p>
+                </div>
+              )}
               <a 
-                href="https://github.com/settings/tokens" 
+                href="https://github.com/settings/personal-access-tokens/new" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="github-link"
               >
-                Go to GitHub Token Settings →
+                Go to Fine-Grained Token Settings →
               </a>
             </div>
           </div>
@@ -30,42 +38,14 @@ const GitHubTokenSlideshow = () => {
                 <div className="browser-dots">
                   <span></span><span></span><span></span>
                 </div>
-                <div className="browser-url">github.com/settings/tokens</div>
+                <div className="browser-url">github.com/settings/personal-access-tokens/new</div>
               </div>
               <div className="browser-content">
-                <h3>Personal access tokens</h3>
-                <p>Generate new tokens to access the GitHub API</p>
-                <button className="fake-button">Generate new token →</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      title: "Step 2: Generate New Token (Classic)",
-      content: (
-        <div className="slide-content">
-          <div className="mascot-instruction">
-            <img src="/sgex/mascot-full.svg" alt="SGEX Helper" className="slide-mascot" />
-            <div className="instruction-bubble">
-              <p>Click on "Generate new token" and select "Generate new token (classic)"</p>
-              <p>This will take you to the token creation form.</p>
-            </div>
-          </div>
-          <div className="screenshot-placeholder">
-            <div className="fake-browser">
-              <div className="browser-bar">
-                <div className="browser-dots">
-                  <span></span><span></span><span></span>
-                </div>
-                <div className="browser-url">github.com/settings/tokens/new</div>
-              </div>
-              <div className="browser-content">
-                <h3>New personal access token (classic)</h3>
-                <div className="form-preview">
-                  <label>Note *</label>
-                  <input type="text" placeholder="What's this token for?" readOnly />
+                <h3>Generate a fine-grained personal access token</h3>
+                <p>Fine-grained tokens provide more secure, repository-specific access</p>
+                <div className="token-form-preview">
+                  <label>Token name</label>
+                  <input type="text" placeholder="Enter a name for your token" readOnly />
                 </div>
               </div>
             </div>
@@ -74,17 +54,17 @@ const GitHubTokenSlideshow = () => {
       )
     },
     {
-      title: "Step 3: Fill in Token Details",
+      title: "Step 2: Configure Token Details",
       content: (
         <div className="slide-content">
           <div className="mascot-instruction">
             <img src="/sgex/mascot-full.svg" alt="SGEX Helper" className="slide-mascot" />
             <div className="instruction-bubble">
-              <p>Fill in these exact details:</p>
+              <p>Fill in these details:</p>
               <ul>
-                <li><strong>Note:</strong> "SGEX Workbench Access"</li>
+                <li><strong>Token name:</strong> "SGEX Workbench Access"</li>
                 <li><strong>Expiration:</strong> Choose your preference</li>
-                <li><strong>Repository:</strong> litlfred/sgex</li>
+                <li><strong>Resource owner:</strong> Your username or organization</li>
               </ul>
             </div>
           </div>
@@ -94,21 +74,71 @@ const GitHubTokenSlideshow = () => {
                 <div className="browser-dots">
                   <span></span><span></span><span></span>
                 </div>
-                <div className="browser-url">github.com/settings/tokens/new</div>
+                <div className="browser-url">github.com/settings/personal-access-tokens/new</div>
               </div>
               <div className="browser-content">
                 <div className="form-preview">
-                  <label>Note *</label>
+                  <label>Token name *</label>
                   <input type="text" value="SGEX Workbench Access" readOnly className="filled" />
                   
                   <label>Expiration *</label>
                   <select className="filled">
-                    <option>30 days</option>
+                    <option>90 days</option>
                   </select>
                   
-                  <label>Selected scopes</label>
-                  <div className="scope-note">
-                    👇 Select the scopes below (Step 4)
+                  <label>Resource owner *</label>
+                  <select className="filled">
+                    <option>Your username</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Step 3: Select Repository Access",
+      content: (
+        <div className="slide-content">
+          <div className="mascot-instruction">
+            <img src="/sgex/mascot-full.svg" alt="SGEX Helper" className="slide-mascot" />
+            <div className="instruction-bubble">
+              <p>Choose repository access:</p>
+              <ul>
+                <li><strong>For read-only:</strong> Select "Selected repositories" and choose specific DAK repos</li>
+                <li><strong>For editing:</strong> Select repositories you want to edit</li>
+              </ul>
+              <p>This is much safer than giving access to all repositories!</p>
+            </div>
+          </div>
+          <div className="screenshot-placeholder">
+            <div className="fake-browser">
+              <div className="browser-bar">
+                <div className="browser-dots">
+                  <span></span><span></span><span></span>
+                </div>
+                <div className="browser-url">github.com/settings/personal-access-tokens/new</div>
+              </div>
+              <div className="browser-content">
+                <div className="repository-access-preview">
+                  <h4>Repository access</h4>
+                  <div className="access-option selected">
+                    <input type="radio" checked readOnly />
+                    <div>
+                      <strong>Selected repositories</strong>
+                      <p>Choose specific repositories (Recommended)</p>
+                    </div>
+                  </div>
+                  <div className="repository-selector">
+                    <div className="repo-item selected">
+                      <input type="checkbox" checked readOnly />
+                      <span>litlfred/sgex</span>
+                    </div>
+                    <div className="repo-item">
+                      <input type="checkbox" readOnly />
+                      <span>your-org/dak-repository</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -118,18 +148,31 @@ const GitHubTokenSlideshow = () => {
       )
     },
     {
-      title: "Step 4: Select Required Permissions",
+      title: "Step 4: Set Repository Permissions",
       content: (
         <div className="slide-content">
           <div className="mascot-instruction">
             <img src="/sgex/mascot-full.svg" alt="SGEX Helper" className="slide-mascot" />
             <div className="instruction-bubble">
-              <p>Select these two permissions:</p>
-              <ul>
-                <li>✅ <strong>repo</strong> - Full control of private repositories</li>
-                <li>✅ <strong>read:org</strong> - Read org and team membership</li>
-              </ul>
-              <p>These permissions allow SGEX to access your repositories and organizations.</p>
+              <p>Select the appropriate permissions:</p>
+              {permissionMode === 'read-only' ? (
+                <ul>
+                  <li><strong>Contents:</strong> Read (to view repository files)</li>
+                  <li><strong>Metadata:</strong> Read (to access repository information)</li>
+                </ul>
+              ) : (
+                <ul>
+                  <li><strong>Contents:</strong> Write (to create and modify files)</li>
+                  <li><strong>Metadata:</strong> Read (to access repository information)</li>
+                  <li><strong>Pull requests:</strong> Write (to create pull requests)</li>
+                </ul>
+              )}
+              <p>
+                {permissionMode === 'read-only' 
+                  ? 'These minimal permissions provide secure read-only access.'
+                  : 'You can always create a new token later with different permissions!'
+                }
+              </p>
             </div>
           </div>
           <div className="screenshot-placeholder">
@@ -138,31 +181,40 @@ const GitHubTokenSlideshow = () => {
                 <div className="browser-dots">
                   <span></span><span></span><span></span>
                 </div>
-                <div className="browser-url">github.com/settings/tokens/new</div>
+                <div className="browser-url">github.com/settings/personal-access-tokens/new</div>
               </div>
               <div className="browser-content">
                 <div className="permissions-preview">
+                  <h4>Repository permissions</h4>
                   <div className="permission-item selected">
                     <input type="checkbox" checked readOnly />
                     <div>
-                      <strong>repo</strong>
-                      <p>Full control of private repositories</p>
-                    </div>
-                  </div>
-                  <div className="permission-item">
-                    <input type="checkbox" readOnly />
-                    <div>
-                      <strong>workflow</strong>
-                      <p>Update GitHub Action workflows</p>
+                      <strong>Contents</strong>
+                      <select>
+                        <option>{permissionMode === 'read-only' ? 'Read' : 'Write'}</option>
+                      </select>
                     </div>
                   </div>
                   <div className="permission-item selected">
                     <input type="checkbox" checked readOnly />
                     <div>
-                      <strong>read:org</strong>
-                      <p>Read org and team membership</p>
+                      <strong>Metadata</strong>
+                      <select>
+                        <option>Read</option>
+                      </select>
                     </div>
                   </div>
+                  {permissionMode !== 'read-only' && (
+                    <div className="permission-item selected">
+                      <input type="checkbox" checked readOnly />
+                      <div>
+                        <strong>Pull requests</strong>
+                        <select>
+                          <option>Write</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -188,18 +240,18 @@ const GitHubTokenSlideshow = () => {
                 <div className="browser-dots">
                   <span></span><span></span><span></span>
                 </div>
-                <div className="browser-url">github.com/settings/tokens</div>
+                <div className="browser-url">github.com/settings/personal-access-tokens</div>
               </div>
               <div className="browser-content">
                 <div className="token-display">
-                  <h4>Personal access tokens</h4>
+                  <h4>Fine-grained personal access tokens</h4>
                   <div className="token-item">
                     <strong>SGEX Workbench Access</strong>
                     <div className="token-value">
-                      <code>ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code>
+                      <code>github_pat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code>
                       <button className="copy-btn">📋 Copy</button>
                     </div>
-                    <small>Created just now • repo, read:org</small>
+                    <small>Created just now • Selected repositories</small>
                   </div>
                 </div>
               </div>
@@ -267,12 +319,12 @@ const GitHubTokenSlideshow = () => {
         <div className="quick-link">
           <strong>Quick Link:</strong>
           <a 
-            href="https://github.com/settings/tokens/new?description=SGEX%20Workbench%20Access&scopes=repo,read:org" 
+            href="https://github.com/settings/personal-access-tokens/new" 
             target="_blank" 
             rel="noopener noreferrer"
             className="quick-create-link"
           >
-            Create Token with Pre-filled Settings →
+            Create Fine-Grained Token →
           </a>
         </div>
       </div>

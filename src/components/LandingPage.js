@@ -12,6 +12,7 @@ const LandingPage = () => {
   const [error, setError] = useState(null);
   const [tokenInput, setTokenInput] = useState('');
   const [showTokenInput, setShowTokenInput] = useState(false);
+  const [permissionMode, setPermissionMode] = useState('read-only'); // 'read-only' or 'edit'
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,6 +34,9 @@ const LandingPage = () => {
     setError(null);
     
     try {
+      // Check token permissions first
+      await githubService.checkTokenPermissions();
+      
       // Fetch user data using GitHub service
       const userData = await githubService.getCurrentUser();
       setUser(userData);
@@ -120,6 +124,38 @@ const LandingPage = () => {
                 </>
               ) : (
                 <div className="token-section">
+                  <div className="permission-mode-selector">
+                    <p>Choose your access level:</p>
+                    <div className="permission-options">
+                      <label className={`permission-option ${permissionMode === 'read-only' ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="permissionMode"
+                          value="read-only"
+                          checked={permissionMode === 'read-only'}
+                          onChange={(e) => setPermissionMode(e.target.value)}
+                        />
+                        <div>
+                          <strong>Read-Only Access</strong>
+                          <p>Browse and view DAK repositories (Recommended)</p>
+                        </div>
+                      </label>
+                      <label className={`permission-option ${permissionMode === 'edit' ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="permissionMode"
+                          value="edit"
+                          checked={permissionMode === 'edit'}
+                          onChange={(e) => setPermissionMode(e.target.value)}
+                        />
+                        <div>
+                          <strong>Edit Access</strong>
+                          <p>Browse, view, and edit DAK repositories</p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                  
                   <form onSubmit={handleTokenSubmit}>
                     <div className="token-header">
                       <p>Enter your GitHub Personal Access Token:</p>
@@ -127,7 +163,8 @@ const LandingPage = () => {
                         helpTopic="github-token"
                         contextData={{ 
                           repository: { owner: 'litlfred', name: 'sgex' },
-                          requiredScopes: ['repo', 'read:org']
+                          requiredScopes: permissionMode === 'read-only' ? ['read:org'] : ['repo', 'read:org'],
+                          permissionMode: permissionMode
                         }}
                       />
                     </div>
@@ -148,23 +185,35 @@ const LandingPage = () => {
                         {loading ? 'Connecting...' : 'Connect'}
                       </button>
                     </div>
-                    <p className="token-help">
-                      Need a token? We can help!{' '}
-                      <a 
-                        href="https://github.com/settings/tokens/new?description=SGEX%20Workbench%20Access&scopes=repo,read:org" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="quick-token-link"
-                      >
-                        Create one with pre-filled settings →
-                      </a>
-                      <br />
-                      Or visit{' '}
-                      <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer">
-                        GitHub Settings
-                      </a>{' '}
-                      and select 'repo' and 'read:org' permissions.
-                    </p>
+                    {permissionMode === 'read-only' ? (
+                      <p className="token-help">
+                        <strong>For read-only access:</strong> Create a{' '}
+                        <a 
+                          href="https://github.com/settings/personal-access-tokens/new" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="quick-token-link"
+                        >
+                          fine-grained personal access token →
+                        </a>
+                        <br />
+                        Select this repository (litlfred/sgex) and grant "Contents: Read" and "Metadata: Read" permissions.
+                      </p>
+                    ) : (
+                      <p className="token-help">
+                        <strong>For edit access:</strong> Create a{' '}
+                        <a 
+                          href="https://github.com/settings/personal-access-tokens/new" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="quick-token-link"
+                        >
+                          fine-grained personal access token →
+                        </a>
+                        <br />
+                        Select the repositories you want to edit and grant "Contents: Write", "Metadata: Read", and "Pull requests: Write" permissions.
+                      </p>
+                    )}
                   </form>
                 </div>
               )}
@@ -178,7 +227,8 @@ const LandingPage = () => {
                         helpTopic="github-token"
                         contextData={{ 
                           repository: { owner: 'litlfred', name: 'sgex' },
-                          requiredScopes: ['repo', 'read:org'],
+                          requiredScopes: permissionMode === 'read-only' ? ['read:org'] : ['repo', 'read:org'],
+                          permissionMode: permissionMode,
                           error: error
                         }}
                       />

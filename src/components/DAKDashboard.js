@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import githubService from '../services/githubService';
+import HelpButton from './HelpButton';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
@@ -7,6 +9,30 @@ const DAKDashboard = () => {
   const navigate = useNavigate();
   
   const { profile, repository } = location.state || {};
+  const [hasWriteAccess, setHasWriteAccess] = useState(false);
+  const [checkingPermissions, setCheckingPermissions] = useState(true);
+  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
+
+  // Check write permissions on mount
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (repository && profile) {
+        try {
+          const writeAccess = await githubService.checkRepositoryWritePermissions(
+            repository.owner?.login || repository.full_name.split('/')[0],
+            repository.name
+          );
+          setHasWriteAccess(writeAccess);
+        } catch (error) {
+          console.warn('Could not check write permissions:', error);
+          setHasWriteAccess(false);
+        }
+      }
+      setCheckingPermissions(false);
+    };
+
+    checkPermissions();
+  }, [repository, profile]);
 
   // Define the 8 DAK components based on WHO SMART Guidelines structure
   const dakComponents = [
@@ -93,6 +119,12 @@ const DAKDashboard = () => {
   ];
 
   const handleComponentClick = (component) => {
+    // Check if user wants to edit and has permissions
+    if (!hasWriteAccess) {
+      setShowPermissionDialog(true);
+      return;
+    }
+
     // Navigate to component-specific editor
     if (component.id === 'business-processes') {
       // Use dedicated BPMN editor for business processes
@@ -140,6 +172,11 @@ const DAKDashboard = () => {
           <div className="context-details">
             <span className="context-repo">{repository.name}</span>
             <span className="context-owner">@{profile.login}</span>
+            {!checkingPermissions && (
+              <span className={`access-level ${hasWriteAccess ? 'write' : 'read'}`}>
+                {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only Access'}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -233,6 +270,67 @@ const DAKDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Permission Upgrade Dialog */}
+      {showPermissionDialog && (
+        <div className="permission-dialog-overlay">
+          <div className="permission-dialog">
+            <div className="dialog-header">
+              <h3>Edit Access Required</h3>
+              <button 
+                className="dialog-close"
+                onClick={() => setShowPermissionDialog(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="dialog-content">
+              <div className="dialog-mascot">
+                <img src="/sgex/mascot-full.svg" alt="SGEX Helper" className="dialog-mascot-img" />
+                <div className="mascot-message">
+                  <p>You need edit permissions to modify DAK components!</p>
+                  <p>Your current token only provides read access to this repository.</p>
+                </div>
+              </div>
+              <div className="permission-options">
+                <div className="option-card">
+                  <h4>🔧 Upgrade Your Token</h4>
+                  <p>Create a new fine-grained token with write permissions for this repository.</p>
+                  <div className="option-buttons">
+                    <a 
+                      href="https://github.com/settings/personal-access-tokens/new"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-primary"
+                    >
+                      Create New Token
+                    </a>
+                    <HelpButton 
+                      helpTopic="github-token"
+                      contextData={{ 
+                        repository: { owner: repository.owner?.login || repository.full_name.split('/')[0], name: repository.name },
+                        requiredScopes: ['Contents: Write', 'Metadata: Read', 'Pull requests: Write'],
+                        permissionMode: 'edit',
+                        upgradeMode: true
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="option-card">
+                  <h4>👁️ Continue in Read-Only Mode</h4>
+                  <p>Browse and view DAK components without editing capabilities.</p>
+                  <button 
+                    className="btn-secondary"
+                    onClick={() => setShowPermissionDialog(false)}
+                  >
+                    Continue Read-Only
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

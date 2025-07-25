@@ -76,8 +76,8 @@ Best regards,
     switch (topic) {
       case 'github-token':
         return {
-          title: 'GitHub Personal Access Token Help',
-          content: <GitHubTokenSlideshow />
+          title: `GitHub Personal Access Token Help${contextData.upgradeMode ? ' - Upgrade to Edit Access' : ''}`,
+          content: <GitHubTokenSlideshow contextData={contextData} />
         };
       default:
         return {
