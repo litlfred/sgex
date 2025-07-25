@@ -195,7 +195,7 @@
 
 .dak-selection .repo-header-info h3 {
   margin: 0 0 0.5rem 0;
-  color: #333;
+  color: #333 !important;
   font-size: 1.2rem;
   font-weight: 600;
 }
@@ -238,6 +238,9 @@
   border: 1px solid #c3e6cb;
 }
 
+
+.repo-description {
+  color: #333 !important;
 .dak-selection .repo-description {
   color: #666;
   line-height: 1.5;
@@ -254,7 +257,7 @@
 
 .dak-selection .topic-tag {
   background: #f8f9fa;
-  color: #495057;
+  color: #333 !important;
   padding: 0.25rem 0.5rem;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -262,7 +265,7 @@
 }
 
 .topic-more {
-  color: #6c757d;
+  color: #333 !important;
   font-size: 0.75rem;
   font-style: italic;
 }
@@ -270,7 +273,7 @@
 .dak-selection .repo-stats {
   display: flex;
   gap: 1rem;
-  color: #666;
+  color: #333 !important;
   font-size: 0.8rem;
   margin-bottom: 1rem;
 }
