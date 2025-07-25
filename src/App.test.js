@@ -2,6 +2,9 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 
+// Mock the GitHub service
+jest.mock('./services/githubService');
+
 test('renders SGEX Workbench heading', () => {
   render(
     <MemoryRouter>

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import githubService from '../services/githubService';
 import './RepositorySelection.css';
 
 const RepositorySelection = () => {
@@ -7,8 +8,25 @@ const RepositorySelection = () => {
   const navigate = useNavigate();
   const [repositories, setRepositories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const profile = location.state?.profile;
+
+  const fetchRepositories = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Use GitHub service to fetch real repositories
+      const repos = await githubService.getRepositories(profile.login, profile.type);
+      setRepositories(repos);
+    } catch (error) {
+      console.error('Error fetching repositories:', error);
+      setError('Failed to fetch repositories. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [profile]);
 
   useEffect(() => {
     if (!profile) {
@@ -16,58 +34,8 @@ const RepositorySelection = () => {
       return;
     }
     
-    const fetchRepositories = async () => {
-      try {
-        // Mock GitHub repositories - replace with actual Octokit implementation
-        const mockRepos = [
-          {
-            id: 1,
-            name: 'smart-guidelines-dak-example',
-            full_name: `${profile.login}/smart-guidelines-dak-example`,
-            description: 'WHO SMART Guidelines Digital Adaptation Kit for Example Disease',
-            private: false,
-            updated_at: '2024-01-15T10:30:00Z',
-            language: 'JavaScript',
-            stargazers_count: 42,
-            forks_count: 8,
-            topics: ['who', 'smart-guidelines', 'dak', 'health']
-          },
-          {
-            id: 2,
-            name: 'dak-maternal-health',
-            full_name: `${profile.login}/dak-maternal-health`,
-            description: 'Digital Adaptation Kit for Maternal Health Guidelines',
-            private: false,
-            updated_at: '2024-01-10T14:20:00Z',
-            language: 'TypeScript',
-            stargazers_count: 28,
-            forks_count: 12,
-            topics: ['who', 'maternal-health', 'dak']
-          },
-          {
-            id: 3,
-            name: 'smart-base-template',
-            full_name: `${profile.login}/smart-base-template`,
-            description: 'Template repository for WHO SMART Guidelines projects',
-            private: false,
-            updated_at: '2024-01-08T09:15:00Z',
-            language: 'HTML',
-            stargazers_count: 156,
-            forks_count: 45,
-            topics: ['template', 'who', 'smart-guidelines']
-          }
-        ];
-        
-        setRepositories(mockRepos);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching repositories:', error);
-        setLoading(false);
-      }
-    };
-
     fetchRepositories();
-  }, [profile, navigate]);
+  }, [profile, navigate, fetchRepositories]);
 
   const handleRepositorySelect = (repo) => {
     navigate('/dashboard', { 
@@ -121,56 +89,66 @@ const RepositorySelection = () => {
               <div className="spinner"></div>
               <p>Loading repositories...</p>
             </div>
+          ) : error ? (
+            <div className="error-state">
+              <h3>Error loading repositories</h3>
+              <p>{error}</p>
+              <button onClick={() => fetchRepositories()} className="retry-btn">
+                Try Again
+              </button>
+            </div>
+          ) : repositories.length === 0 ? (
+            <div className="empty-state">
+              <h3>No DAK repositories found</h3>
+              <p>
+                No repositories found with DAK-related topics or keywords. 
+                Create a new repository or add topics like 'who', 'smart-guidelines', 
+                'dak', or 'health' to existing repositories.
+              </p>
+            </div>
           ) : (
             <div className="repo-grid">
-              {repositories.length === 0 ? (
-                <div className="empty-state">
-                  <h3>No DAK repositories found</h3>
-                  <p>Create a new repository or check your permissions.</p>
-                </div>
-              ) : (
-                repositories.map((repo) => (
-                  <div 
-                    key={repo.id}
-                    className="repo-card"
-                    onClick={() => handleRepositorySelect(repo)}
-                  >
-                    <div className="repo-header-info">
-                      <h3>{repo.name}</h3>
-                      <div className="repo-meta">
-                        {repo.private && <span className="private-badge">Private</span>}
-                        {repo.language && <span className="language-badge">{repo.language}</span>}
-                      </div>
-                    </div>
-                    
-                    <p className="repo-description">{repo.description}</p>
-                    
-                    <div className="repo-topics">
-                      {repo.topics.slice(0, 3).map((topic) => (
-                        <span key={topic} className="topic-tag">{topic}</span>
-                      ))}
-                      {repo.topics.length > 3 && (
-                        <span className="topic-more">+{repo.topics.length - 3} more</span>
-                      )}
-                    </div>
-                    
-                    <div className="repo-stats">
-                      <div className="stat">
-                        <span className="stat-icon">⭐</span>
-                        <span>{repo.stargazers_count}</span>
-                      </div>
-                      <div className="stat">
-                        <span className="stat-icon">🍴</span>
-                        <span>{repo.forks_count}</span>
-                      </div>
-                      <div className="stat">
-                        <span className="stat-icon">📅</span>
-                        <span>Updated {formatDate(repo.updated_at)}</span>
-                      </div>
+              {repositories.map((repo) => (
+                <div 
+                  key={repo.id}
+                  className="repo-card"
+                  onClick={() => handleRepositorySelect(repo)}
+                >
+                  <div className="repo-header-info">
+                    <h3>{repo.name}</h3>
+                    <div className="repo-meta">
+                      {repo.private && <span className="private-badge">Private</span>}
+                      {repo.language && <span className="language-badge">{repo.language}</span>}
                     </div>
                   </div>
-                ))
-              )}
+                  
+                  <p className="repo-description">{repo.description || 'No description available'}</p>
+                  
+                  <div className="repo-topics">
+                    {(repo.topics || []).slice(0, 3).map((topic) => (
+                      <span key={topic} className="topic-tag">{topic}</span>
+                    ))}
+                    {(repo.topics || []).length > 3 && (
+                      <span className="topic-more">+{(repo.topics || []).length - 3} more</span>
+                    )}
+                  </div>
+                  
+                  <div className="repo-stats">
+                    <div className="stat">
+                      <span className="stat-icon">⭐</span>
+                      <span>{repo.stargazers_count || 0}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-icon">🍴</span>
+                      <span>{repo.forks_count || 0}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-icon">📅</span>
+                      <span>Updated {formatDate(repo.updated_at)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
