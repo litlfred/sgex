@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="40" height="40" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="55" fill="#f8f9fa" stroke="#0066cc" stroke-width="2"/>
+  
+  <!-- Head -->
+  <circle cx="60" cy="42" r="15" fill="#fdbcb4"/>
+  
+  <!-- Hair -->
+  <path d="M45 33 C 45 27, 75 27, 75 33 C 75 30, 72 29, 69 30 C 66 27, 54 27, 51 30 C 48 29, 45 30, 45 33" fill="#8b4513"/>
+  
+  <!-- Eyes -->
+  <circle cx="55" cy="39" r="2" fill="#333"/>
+  <circle cx="65" cy="39" r="2" fill="#333"/>
+  <circle cx="55" cy="38.5" r="0.5" fill="#fff"/>
+  <circle cx="65" cy="38.5" r="0.5" fill="#fff"/>
+  
+  <!-- Nose -->
+  <circle cx="60" cy="43" r="0.5" fill="#333"/>
+  
+  <!-- Mouth -->
+  <path d="M 57 47 Q 60 49 63 47" stroke="#333" stroke-width="1" fill="none"/>
+  
+  <!-- Body -->
+  <rect x="49" y="55" width="22" height="27" rx="5" fill="#0066cc"/>
+  
+  <!-- Arms -->
+  <circle cx="45" cy="63" r="5" fill="#fdbcb4"/>
+  <circle cx="75" cy="63" r="5" fill="#fdbcb4"/>
+  <rect x="40" y="59" width="10" height="9" rx="5" fill="#0066cc"/>
+  <rect x="70" y="59" width="10" height="9" rx="5" fill="#0066cc"/>
+  
+  <!-- Question mark bubble -->
+  <g transform="translate(30, 24)">
+    <circle cx="0" cy="0" r="8" fill="#fff" stroke="#0066cc" stroke-width="1.5"/>
+    <text x="0" y="1" text-anchor="middle" font-size="10" font-family="Arial" fill="#0066cc" font-weight="bold">?</text>
+  </g>
+</svg>

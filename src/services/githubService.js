@@ -4,6 +4,8 @@ class GitHubService {
   constructor() {
     this.octokit = null;
     this.isAuthenticated = false;
+    this.permissions = null;
+    this.tokenType = null; // 'classic' or 'fine-grained'
   }
 
   // Initialize with a GitHub token
@@ -17,6 +19,57 @@ class GitHubService {
     } catch (error) {
       console.error('Failed to authenticate with GitHub:', error);
       this.isAuthenticated = false;
+      return false;
+    }
+  }
+
+  // Check token permissions and type
+  async checkTokenPermissions() {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      // Try to get token info to determine type and permissions
+      const response = await this.octokit.request('GET /user');
+      
+      // Check if this is a fine-grained token by trying to access rate limit info
+      try {
+        const rateLimit = await this.octokit.rest.rateLimit.get();
+        // Fine-grained tokens have different rate limit structure
+        this.tokenType = rateLimit.data.resources.core ? 'classic' : 'fine-grained';
+      } catch {
+        this.tokenType = 'unknown';
+      }
+
+      return {
+        type: this.tokenType,
+        user: response.data
+      };
+    } catch (error) {
+      console.error('Failed to check token permissions:', error);
+      throw error;
+    }
+  }
+
+  // Check if we have write permissions for a specific repository
+  async checkRepositoryWritePermissions(owner, repo) {
+    if (!this.isAuth()) {
+      return false;
+    }
+
+    try {
+      // Try to get repository collaborator permissions
+      const { data } = await this.octokit.rest.repos.getCollaboratorPermissionLevel({
+        owner,
+        repo,
+        username: (await this.getCurrentUser()).login
+      });
+      
+      return ['write', 'admin'].includes(data.permission);
+    } catch (error) {
+      // If we can't check permissions, assume we don't have write access
+      console.warn('Could not check repository write permissions:', error);
       return false;
     }
   }

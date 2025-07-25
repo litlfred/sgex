@@ -1,0 +1,232 @@
+.help-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.help-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-width: 800px;
+  max-height: 80vh;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.help-modal-header {
+  background: linear-gradient(135deg, #0066cc, #004499);
+  color: white;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.help-modal-header h2 {
+  margin: 0;
+  font-size: 1.5em;
+  font-weight: 600;
+}
+
+.help-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hamburger-menu-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 20px;
+  transition: background-color 0.2s;
+}
+
+.hamburger-menu-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.hamburger-menu-btn span {
+  display: block;
+  width: 16px;
+  height: 2px;
+  background-color: white;
+  margin: 1px 0;
+  transition: all 0.2s;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.help-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 50px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1001;
+  min-width: 200px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.2s;
+}
+
+.menu-item:hover {
+  background-color: #f5f5f5;
+}
+
+.menu-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.help-modal-content {
+  padding: 0;
+  max-height: calc(80vh - 80px);
+  overflow-y: auto;
+}
+
+.help-content {
+  padding: 30px;
+}
+
+.mascot-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.help-mascot {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+}
+
+.message-bubble {
+  background: #f8f9fa;
+  border: 2px solid #0066cc;
+  border-radius: 20px;
+  padding: 20px;
+  position: relative;
+  flex: 1;
+}
+
+.message-bubble::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 20px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 10px 12px 10px 0;
+  border-color: transparent #0066cc transparent transparent;
+}
+
+.message-bubble::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 22px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px 10px 8px 0;
+  border-color: transparent #f8f9fa transparent transparent;
+}
+
+.message-bubble p {
+  margin: 0 0 12px 0;
+  color: #333;
+  line-height: 1.5;
+}
+
+.message-bubble p:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .help-modal {
+    margin: 10px;
+    max-height: 90vh;
+  }
+  
+  .help-modal-header {
+    padding: 16px;
+  }
+  
+  .help-modal-header h2 {
+    font-size: 1.3em;
+  }
+  
+  .help-content {
+    padding: 20px;
+  }
+  
+  .mascot-message {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .help-mascot {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .message-bubble::before,
+  .message-bubble::after {
+    display: none;
+  }
+}

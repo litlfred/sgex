@@ -183,6 +183,81 @@
 }
 
 /* New authentication styles */
+.token-section {
+  position: relative;
+}
+
+.permission-mode-selector {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.permission-mode-selector p {
+  color: white;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.permission-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.permission-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.permission-option:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.permission-option.selected {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.permission-option input[type="radio"] {
+  margin-top: 0.2rem;
+}
+
+.permission-option div {
+  flex: 1;
+}
+
+.permission-option strong {
+  color: white;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.permission-option p {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.token-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.token-header p {
+  margin: 0;
+  flex: 1;
+}
+
 .token-input-group {
   display: flex;
   gap: 0.5rem;
@@ -244,6 +319,20 @@
   text-decoration: underline;
 }
 
+.quick-token-link {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-decoration: none !important;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.quick-token-link:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: white !important;
+}
+
 .logout-btn {
   padding: 0.5rem 1rem;
   background: rgba(255, 255, 255, 0.2);
@@ -270,6 +359,18 @@
   border-radius: 6px;
   margin-top: 1rem;
   backdrop-filter: blur(10px);
+}
+
+.error-help {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.error-help span {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .loading-section {
