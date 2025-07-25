@@ -44,6 +44,26 @@
   border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
+.header-nav .nav-link,
+.user-info .nav-link {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.header-nav .nav-link:hover,
+.user-info .nav-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
+  text-decoration: none;
+}
+
 .landing-content {
   padding: 3rem 2rem;
   display: flex;
@@ -84,6 +104,33 @@
 .auth-section p {
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
+}
+
+.info-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-section p {
+  margin: 0;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.5;
+}
+
+.doc-link {
+  color: #90caf9;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.doc-link:hover {
+  color: white;
+  text-decoration: underline;
 }
 
 .github-login-btn {

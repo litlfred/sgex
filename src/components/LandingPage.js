@@ -140,6 +140,9 @@ const LandingPage = () => {
             <h1>SGEX Workbench</h1>
             <p className="subtitle">WHO SMART Guidelines Exchange</p>
           </div>
+          <div className="header-nav">
+            <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+          </div>
         </div>
         
         <div className="landing-content">
@@ -163,6 +166,16 @@ const LandingPage = () => {
                 </div>
               )}
             </div>
+            
+            <div className="info-section">
+              <p>
+                Need help getting started? Check out our comprehensive{' '}
+                <a href="/sgex/docs/overview" className="doc-link">
+                  documentation
+                </a>{' '}
+                to learn more about SGEX Workbench and DAK components.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -179,6 +192,7 @@ const LandingPage = () => {
         <div className="user-info">
           <img src={user?.avatar_url} alt="User avatar" className="user-avatar" />
           <span>{user?.name || user?.login}</span>
+          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
           <button onClick={handleLogout} className="logout-btn">Logout</button>
         </div>
       </div>
