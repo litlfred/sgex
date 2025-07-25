@@ -8,6 +8,11 @@ const mockGitHubService = {
     return true;
   }),
   
+  authenticateWithOctokit: jest.fn(() => {
+    mockGitHubService.isAuthenticated = true;
+    return true;
+  }),
+  
   isAuth: jest.fn(() => mockGitHubService.isAuthenticated),
   
   getCurrentUser: jest.fn(() => Promise.resolve({

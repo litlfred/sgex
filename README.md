@@ -34,6 +34,23 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
    npm install
    ```
 
+3. **Configure GitHub OAuth (for production deployment)**
+   
+   To enable GitHub authentication, you need to register an OAuth app:
+   
+   a. Go to GitHub Settings > Developer settings > OAuth Apps
+   b. Click "New OAuth App" and fill in:
+      - **Application name**: "SGEX Workbench"
+      - **Homepage URL**: Your deployment URL (e.g., `https://litlfred.github.io/sgex`)
+      - **Authorization callback URL**: Your deployment URL (required but not used in device flow)
+   c. Copy the Client ID and set it as an environment variable:
+      ```bash
+      # Create .env.local file (for local development)
+      echo "REACT_APP_GITHUB_CLIENT_ID=your_client_id_here" > .env.local
+      ```
+   
+   **Note**: For development/testing, the app will work without OAuth configuration, but users won't be able to authenticate with GitHub.
+
 ### Development
 
 1. **Start the development server**
@@ -52,6 +69,22 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
    ```bash
    npm test
    ```
+
+## Authentication
+
+SGEX Workbench uses **GitHub OAuth Device Flow** for secure authentication. This provides a seamless "Sign in with GitHub" experience without requiring users to manually create personal access tokens.
+
+### How it works:
+1. Users click "Sign in with GitHub" 
+2. A device code is displayed along with a verification URL
+3. Users visit the URL and enter the code to authorize the application
+4. The app automatically receives access and loads the user's repositories
+
+### Required GitHub Permissions:
+- **repo**: Full access to repositories (for editing DAK content)
+- **read:org**: Read access to organizations (for listing organization repositories)
+
+This authentication method is fully compatible with static deployments and requires no backend server.
 
 ### Project Structure
 

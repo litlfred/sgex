@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import GitHubTokenSlideshow from './GitHubTokenSlideshow';
 import './HelpModal.css';
 
 const HelpModal = ({ topic, contextData, onClose }) => {
@@ -75,9 +74,28 @@ Best regards,
   const getHelpContent = () => {
     switch (topic) {
       case 'github-token':
+      case 'oauth-help':
         return {
-          title: `GitHub Personal Access Token Help${contextData.upgradeMode ? ' - Upgrade to Edit Access' : ''}`,
-          content: <GitHubTokenSlideshow contextData={contextData} />
+          title: 'GitHub Authentication Help',
+          content: (
+            <div className="help-content">
+              <div className="mascot-message">
+                <img src="/sgex/mascot-full.svg" alt="SGEX Helper" className="help-mascot" />
+                <div className="message-bubble">
+                  <p>SGEX Workbench now uses GitHub OAuth for secure authentication!</p>
+                  <p><strong>How it works:</strong></p>
+                  <ul>
+                    <li>Click "Sign in with GitHub" to begin</li>
+                    <li>You'll get a code to enter on GitHub's website</li>
+                    <li>Authorize the SGEX Workbench application</li>
+                    <li>You'll be automatically logged in!</li>
+                  </ul>
+                  <p>This is much simpler and more secure than personal access tokens.</p>
+                  <p>If you're having trouble, please use the menu above to get additional support.</p>
+                </div>
+              </div>
+            </div>
+          )
         };
       default:
         return {
