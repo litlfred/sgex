@@ -169,13 +169,15 @@ class GitHubService {
       // Check if repository topics or description contain SMART guidelines indicators
       const smartIndicators = [
         'smart-guidelines',
+        'smart guidelines', // Add space variant
         'who-smart',
         'smart.who.int',
         'digital-adaptation-kit',
         'digital adaptation kit',
         'dak',
         'fhir-ig',
-        'implementation-guide'
+        'implementation-guide',
+        'implementation guide' // Add space variant
       ];
 
       const topics = data.topics || [];
