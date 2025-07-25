@@ -62,9 +62,9 @@ const DAKSelection = () => {
       {
         id: 1,
         name: 'maternal-health-dak',
-        full_name: `${profile.login}/maternal-health-dak`,
+        full_name: `${profile?.login || 'test-user'}/maternal-health-dak`,
         description: 'WHO SMART Guidelines for Maternal Health - Digital Adaptation Kit',
-        html_url: `https://github.com/${profile.login}/maternal-health-dak`,
+        html_url: `https://github.com/${profile?.login || 'test-user'}/maternal-health-dak`,
         topics: ['who', 'smart-guidelines', 'maternal-health', 'dak'],
         language: 'FML',
         stargazers_count: 12,
@@ -75,9 +75,9 @@ const DAKSelection = () => {
       {
         id: 2,
         name: 'immunization-dak',
-        full_name: `${profile.login}/immunization-dak`,
+        full_name: `${profile?.login || 'test-user'}/immunization-dak`,
         description: 'Digital Adaptation Kit for Immunization Guidelines',
-        html_url: `https://github.com/${profile.login}/immunization-dak`,
+        html_url: `https://github.com/${profile?.login || 'test-user'}/immunization-dak`,
         topics: ['who', 'smart-guidelines', 'immunization', 'vaccines'],
         language: 'FML',
         stargazers_count: 8,
@@ -88,9 +88,9 @@ const DAKSelection = () => {
       {
         id: 3,
         name: 'anc-dak',
-        full_name: `${profile.login}/anc-dak`,
+        full_name: `${profile?.login || 'test-user'}/anc-dak`,
         description: 'Antenatal Care Digital Adaptation Kit based on WHO guidelines',
-        html_url: `https://github.com/${profile.login}/anc-dak`,
+        html_url: `https://github.com/${profile?.login || 'test-user'}/anc-dak`,
         topics: ['who', 'anc', 'antenatal-care', 'smart-guidelines'],
         language: 'FML',
         stargazers_count: 15,
@@ -101,9 +101,9 @@ const DAKSelection = () => {
       {
         id: 4,
         name: 'regular-health-app',
-        full_name: `${profile.login}/regular-health-app`,
+        full_name: `${profile?.login || 'test-user'}/regular-health-app`,
         description: 'A regular health application without SMART Guidelines',
-        html_url: `https://github.com/${profile.login}/regular-health-app`,
+        html_url: `https://github.com/${profile?.login || 'test-user'}/regular-health-app`,
         topics: ['health', 'app', 'javascript'],
         language: 'JavaScript',
         stargazers_count: 5,
@@ -114,9 +114,9 @@ const DAKSelection = () => {
       {
         id: 5,
         name: 'medical-database',
-        full_name: `${profile.login}/medical-database`,
+        full_name: `${profile?.login || 'test-user'}/medical-database`,
         description: 'Medical database with FHIR but not SMART Guidelines',
-        html_url: `https://github.com/${profile.login}/medical-database`,
+        html_url: `https://github.com/${profile?.login || 'test-user'}/medical-database`,
         topics: ['fhir', 'database', 'medical'],
         language: 'SQL',
         stargazers_count: 7,
@@ -128,7 +128,7 @@ const DAKSelection = () => {
 
     // Filter to only return SMART guidelines compatible repositories
     return allMockRepos.filter(repo => repo.smart_guidelines_compatible);
-  }, [profile.login]);
+  }, [profile?.login]);
 
   const fetchRepositories = useCallback(async () => {
     setLoading(true);
@@ -189,7 +189,7 @@ const DAKSelection = () => {
     }
     
     fetchRepositories();
-  }, [profile, action, navigate, fetchRepositories]);
+  }, [profile?.login, action, navigate]);
 
   const handleRepositorySelect = (repo) => {
     setSelectedRepository(repo);
