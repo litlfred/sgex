@@ -186,6 +186,36 @@
   letter-spacing: 0.5px;
 }
 
+.profile-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.who-badge {
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.profile-card.who-org {
+  border: 2px solid rgba(0, 120, 212, 0.5);
+  box-shadow: 0 0 20px rgba(0, 120, 212, 0.3);
+}
+
+.profile-card.who-org:hover {
+  border-color: rgba(0, 120, 212, 0.8);
+  box-shadow: 0 8px 25px rgba(0, 120, 212, 0.4);
+}
+
 /* New authentication styles */
 .token-section {
   position: relative;

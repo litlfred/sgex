@@ -40,9 +40,8 @@ const LandingPage = () => {
       const userData = await githubService.getCurrentUser();
       setUser(userData);
       
-      // Fetch organizations
-      const orgsData = await githubService.getUserOrganizations();
-      setOrganizations(orgsData);
+      // Fetch organizations separately
+      await fetchOrganizations();
     } catch (error) {
       console.error('Error fetching user data:', error);
       setError('Failed to fetch user data. Please check your connection and try again.');
@@ -51,6 +50,61 @@ const LandingPage = () => {
       localStorage.removeItem('github_token');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOrganizations = async () => {
+    try {
+      // Fetch organizations
+      let orgsData = [];
+      
+      if (githubService.isAuth()) {
+        orgsData = await githubService.getUserOrganizations();
+      }
+      
+      // Always ensure WHO organization is included
+      const whoOrganization = {
+        id: 'who-organization',
+        login: 'WorldHealthOrganization',
+        name: 'World Health Organization',
+        description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+        avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+        html_url: 'https://github.com/WorldHealthOrganization',
+        type: 'Organization',
+        isWHO: true
+      };
+      
+      // Check if WHO organization is already in the list
+      const hasWHO = orgsData.some(org => org.login === 'WorldHealthOrganization');
+      
+      if (!hasWHO) {
+        // Add WHO organization at the beginning of the list
+        orgsData.unshift(whoOrganization);
+      } else {
+        // Ensure existing WHO organization has the isWHO flag
+        orgsData = orgsData.map(org => 
+          org.login === 'WorldHealthOrganization' 
+            ? { ...org, isWHO: true }
+            : org
+        );
+      }
+      
+      setOrganizations(orgsData);
+    } catch (error) {
+      console.error('Error fetching organizations:', error);
+      
+      // Even if organizations fail, still show WHO organization
+      const whoOrganization = {
+        id: 'who-organization',
+        login: 'WorldHealthOrganization',
+        name: 'World Health Organization',
+        description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+        avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+        html_url: 'https://github.com/WorldHealthOrganization',
+        type: 'Organization',
+        isWHO: true
+      };
+      setOrganizations([whoOrganization]);
     }
   };
 
@@ -158,7 +212,7 @@ const LandingPage = () => {
               {organizations.map((org) => (
                 <div 
                   key={org.login}
-                  className="profile-card"
+                  className={`profile-card ${org.isWHO ? 'who-org' : ''}`}
                   onClick={() => handleProfileSelect({ type: 'org', ...org })}
                 >
                   <img 
@@ -167,7 +221,10 @@ const LandingPage = () => {
                   />
                   <h3>{org.name || org.login}</h3>
                   <p>@{org.login}</p>
-                  <span className="profile-type">Organization</span>
+                  <div className="profile-badges">
+                    <span className="profile-type">Organization</span>
+                    {org.isWHO && <span className="who-badge">WHO Official</span>}
+                  </div>
                 </div>
               ))}
             </div>
