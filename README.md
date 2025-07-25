@@ -9,6 +9,52 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
 - All UI schemas are rendered using [JSON Forms](https://jsonforms.io/) for standards compliance and accessibility.
 - All schemas and documentation follow the terminology and branding of [WHO SMART Guidelines](https://www.who.int/teams/digital-health-and-innovation/smart-guidelines).
 
+## Development Setup
+
+### Prerequisites
+
+- **Node.js** (version 16 or higher recommended)
+- **npm** (comes with Node.js)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/litlfred/sgex.git
+   cd sgex
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+### Development
+
+1. **Start the development server**
+   ```bash
+   npm start
+   ```
+   The application will open in your browser at `http://localhost:3000/sgex`.
+
+2. **Run tests**
+   ```bash
+   npm test
+   ```
+
+3. **Build for production**
+   ```bash
+   npm run build
+   ```
+   This creates a `build` folder with the production-ready application.
+
+### Available Scripts
+
+- `npm start` - Runs the app in development mode
+- `npm test` - Launches the test runner in interactive watch mode
+- `npm run build` - Builds the app for production
+- `npm run eject` - **Note: This is a one-way operation. Don't do this unless you know what you're doing!**
+
 ## WHO SMART Guidelines DAK Components
 
 The SGEX Workbench supports editing of the **8 core Digital Adaptation Kit (DAK) components** as defined by the WHO SMART Guidelines framework. These components are organized into two levels:
