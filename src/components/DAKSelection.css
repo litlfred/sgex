@@ -267,6 +267,12 @@
 }
 
 
+
+.repo-description {
+  color: #333 !important;
+}
+
+
 .dak-selection .repo-description {
   color: #666;
   line-height: 1.5;
