@@ -37,6 +37,8 @@ The SMART Guidelines Exchange (SGEX) Workbench is a browser-based, static web ap
 
 ### 2.3 DAK Component Management
 
+For detailed information about each DAK component, see [DAK Components Documentation](dak-components.md).
+
 **REQ-DAK-001**: The system SHALL display all 8 WHO SMART Guidelines DAK components on the home page
 - Visual dashboard with distinctive cards/tiles for each component
 - WHO SMART Guidelines branding and color codes  
