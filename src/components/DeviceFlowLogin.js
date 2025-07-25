@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import deviceFlowAuthService from "../services/deviceFlowAuthService";
-import { DEFAULT_SCOPES } from "../config/oauth";
+import { DEFAULT_SCOPES, isUsingPlaceholderClientId } from "../config/oauth";
+import OAuthSetupInstructions from "./OAuthSetupInstructions";
 import "./DeviceFlowLogin.css";
 
 const DeviceFlowLogin = ({ onAuthSuccess, requiredScopes = DEFAULT_SCOPES }) => {
@@ -12,6 +13,12 @@ const DeviceFlowLogin = ({ onAuthSuccess, requiredScopes = DEFAULT_SCOPES }) => 
   const [loading, setLoading] = useState(false);
 
   const handleStart = async () => {
+    // Check if we're using the placeholder client ID
+    if (isUsingPlaceholderClientId()) {
+      setError("GitHub OAuth is not configured. Please follow the setup instructions below.");
+      return;
+    }
+
     setLoading(true);
     setStep("requesting");
     setError("");
@@ -75,6 +82,7 @@ const DeviceFlowLogin = ({ onAuthSuccess, requiredScopes = DEFAULT_SCOPES }) => 
             Sign in with GitHub
           </button>
           {error && <div className="error-message">{error}</div>}
+          {(error || isUsingPlaceholderClientId()) && <OAuthSetupInstructions />}
         </div>
       )}
       
