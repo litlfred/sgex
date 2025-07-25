@@ -62,14 +62,15 @@ The SMART Guidelines Exchange (SGEX) Workbench is a browser-based, static web ap
 
 | DAK Component | L2 Representation | L3 Representation |
 |---------------|-------------------|-------------------|
-| Health interventions and recommendations | Clinical guidelines documents | FHIR Clinical Practice Guidelines |
+| Health interventions and recommendations | References to Publications on IRIS at https://iris.who.int/ | FHIR Clinical Practice Guidelines |
 | Generic personas | Actor definitions and role descriptions | FHIR Person/Practitioner profiles |
 | User scenarios | Use case narratives and workflows | FHIR Scenario test bundles |
 | Generic business processes and workflows | BPMN diagrams (.bpmn) | FHIR ActivityDefinition/PlanDefinition |
-| Core data elements | FHIR CodeSystems and Logical Models | FHIR StructureDefinition profiles |
+| Core data elements | Open Concept Lab (OCL) at https://openconceptlab.org/ | FHIR StructureDefinition profiles |
+| Product Master Data | FHIR CodeSystems and Logical Models | Product Catalogue Management Tool (PCMT) at https://worldhealthorganization.github.io/smart-pcmt/ and https://productcatalog.io/ |
 | Decision-support logic | DMN decision tables | FHIR PlanDefinition with decision logic |
 | Program indicators | Logical indicator models | FHIR Measure resources |
-| Functional and non-functional requirements | Requirements specifications | FHIR ImplementationGuide conformance rules |
+| Functional and non-functional requirements | Requirements specifications at https://worldhealthorganization.github.io/smart-base/StructureDefinition-FunctionalRequirement.html and https://worldhealthorganization.github.io/smart-base/StructureDefinition-NonFunctionalRequirement.html | FHIR ImplementationGuide conformance rules |
 
 **REQ-DAK-004**: The system SHALL support additional structured knowledge representations:
 
