@@ -109,8 +109,102 @@ class GitHubService {
     }
   }
 
-  // Get repositories for a user or organization
+  // Get repositories for a user or organization (now filters by SMART Guidelines compatibility)
   async getRepositories(owner, type = 'user') {
+    // Use the new SMART guidelines filtering method
+    return this.getSmartGuidelinesRepositories(owner, type);
+  }
+
+  // Check if a repository has sushi-config.yaml with smart.who.int.base dependency
+  async checkSmartGuidelinesCompatibility(owner, repo, retryCount = 2) {
+    if (!this.isAuth()) {
+      return false;
+    }
+
+    try {
+      // Try to get sushi-config.yaml from the repository root
+      const { data } = await this.octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path: 'sushi-config.yaml',
+      });
+
+      if (data.type === 'file' && data.content) {
+        // Decode base64 content
+        const content = Buffer.from(data.content, 'base64').toString('utf-8');
+        
+        // Check if the content contains smart.who.int.base in dependencies
+        return content.includes('smart.who.int.base');
+      }
+      
+      return false;
+    } catch (error) {
+      // If it's a rate limiting or network error, try to fall back to other indicators
+      if (error.status === 403 || error.status === 429 || error.message.includes('rate limit') || error.message.includes('Network')) {
+        console.warn(`Rate limit or network error checking ${owner}/${repo}, trying fallback approach:`, error.message);
+        return this.checkSmartGuidelinesFallback(owner, repo);
+      }
+      
+      // If it's a 404 (file not found), retry once more in case of temporary issues
+      if (error.status === 404 && retryCount > 0) {
+        console.warn(`File not found for ${owner}/${repo}, retrying... (${retryCount} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        return this.checkSmartGuidelinesCompatibility(owner, repo, retryCount - 1);
+      }
+      
+      // For 404 errors after retries, or other errors, file doesn't exist or can't be accessed
+      return false;
+    }
+  }
+
+  // Fallback method to check for SMART Guidelines compatibility using other indicators
+  async checkSmartGuidelinesFallback(owner, repo) {
+    try {
+      // Get repository details to check topics and description
+      const { data } = await this.octokit.rest.repos.get({
+        owner,
+        repo,
+      });
+
+      // Check if repository topics or description contain SMART guidelines indicators
+      const smartIndicators = [
+        'smart-guidelines',
+        'smart guidelines', // Add space variant
+        'who-smart',
+        'smart.who.int',
+        'digital-adaptation-kit',
+        'digital adaptation kit',
+        'dak',
+        'fhir-ig',
+        'implementation-guide',
+        'implementation guide' // Add space variant
+      ];
+
+      const topics = data.topics || [];
+      const description = (data.description || '').toLowerCase();
+      const repoName = repo.toLowerCase();
+
+      // Check if any SMART guidelines indicators are present
+      const hasSmartIndicators = smartIndicators.some(indicator => 
+        topics.includes(indicator) || 
+        description.includes(indicator.toLowerCase()) ||
+        repoName.includes(indicator.replace(/[-\s]/g, ''))
+      );
+
+      if (hasSmartIndicators) {
+        console.info(`Repository ${owner}/${repo} has SMART guidelines indicators in topics/description, assuming compatible`);
+        return true;
+      }
+
+      return false;
+    } catch (fallbackError) {
+      console.warn(`Fallback check also failed for ${owner}/${repo}:`, fallbackError.message);
+      return false;
+    }
+  }
+
+  // Get repositories that are SMART guidelines compatible
+  async getSmartGuidelinesRepositories(owner, type = 'user') {
     if (!this.isAuth()) {
       throw new Error('Not authenticated with GitHub');
     }
@@ -133,27 +227,84 @@ class GitHubService {
         repositories = data;
       }
 
-      // Filter for repositories that might be DAK-related or have relevant topics
-      return repositories.filter(repo => {
-        const topics = repo.topics || [];
-        const description = (repo.description || '').toLowerCase();
-        const name = repo.name.toLowerCase();
-        
-        // Look for DAK-related keywords
-        const dakKeywords = [
-          'dak', 'smart', 'guidelines', 'who', 'health', 'fhir', 
-          'implementation', 'guide', 'ig', 'clinical', 'maternal',
-          'immunization', 'anc', 'digital', 'adaptation', 'kit'
-        ];
-        
-        return topics.some(topic => 
-          dakKeywords.some(keyword => topic.toLowerCase().includes(keyword))
-        ) || dakKeywords.some(keyword => 
-          description.includes(keyword) || name.includes(keyword)
-        );
-      });
+      // Check each repository for SMART guidelines compatibility
+      const smartGuidelinesRepos = [];
+      for (const repo of repositories) {
+        const isCompatible = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
+        if (isCompatible) {
+          smartGuidelinesRepos.push({
+            ...repo,
+            smart_guidelines_compatible: true
+          });
+        }
+      }
+
+      return smartGuidelinesRepos;
     } catch (error) {
-      console.error('Failed to fetch repositories:', error);
+      console.error('Failed to fetch SMART guidelines repositories:', error);
+      throw error;
+    }
+  }
+
+  // Get repositories with progressive scanning (for real-time updates)
+  async getSmartGuidelinesRepositoriesProgressive(owner, type = 'user', onRepositoryFound = null, onProgress = null) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      let repositories;
+      if (type === 'user') {
+        const { data } = await this.octokit.rest.repos.listForUser({
+          username: owner,
+          sort: 'updated',
+          per_page: 100,
+        });
+        repositories = data;
+      } else {
+        const { data } = await this.octokit.rest.repos.listForOrg({
+          org: owner,
+          sort: 'updated',
+          per_page: 100,
+        });
+        repositories = data;
+      }
+
+      const smartGuidelinesRepos = [];
+      const totalRepos = repositories.length;
+
+      // Check each repository for SMART guidelines compatibility with progress callbacks
+      for (let i = 0; i < repositories.length; i++) {
+        const repo = repositories[i];
+        
+        // Notify progress
+        if (onProgress) {
+          onProgress({
+            current: i + 1,
+            total: totalRepos,
+            currentRepo: repo.name,
+            progress: Math.round(((i + 1) / totalRepos) * 100)
+          });
+        }
+
+        const isCompatible = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
+        if (isCompatible) {
+          const smartRepo = {
+            ...repo,
+            smart_guidelines_compatible: true
+          };
+          smartGuidelinesRepos.push(smartRepo);
+          
+          // Notify that a repository was found
+          if (onRepositoryFound) {
+            onRepositoryFound(smartRepo);
+          }
+        }
+      }
+
+      return smartGuidelinesRepos;
+    } catch (error) {
+      console.error('Failed to fetch SMART guidelines repositories:', error);
       throw error;
     }
   }
@@ -173,7 +324,7 @@ class GitHubService {
     } catch (error) {
       console.error('Failed to fetch repository:', error);
       throw error;
-    }
+    }  
   }
 
   // Logout

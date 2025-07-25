@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import repositoryCacheService from '../services/repositoryCacheService';
 import dakTemplates from '../config/dak-templates.json';
 import './DAKSelection.css';
 
@@ -11,6 +12,9 @@ const DAKSelection = () => {
   const [selectedRepository, setSelectedRepository] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(null);
+  const [usingCachedData, setUsingCachedData] = useState(false);
   
   const { profile, action } = location.state || {};
 
@@ -49,7 +53,8 @@ const DAKSelection = () => {
   };
 
   const getMockRepositories = useCallback(() => {
-    const mockRepos = [
+    // Mock repositories - only some have SMART guidelines compatibility
+    const allMockRepos = [
       {
         id: 1,
         name: 'maternal-health-dak',
@@ -88,15 +93,45 @@ const DAKSelection = () => {
         forks_count: 5,
         updated_at: '2024-01-12T09:15:00Z',
         smart_guidelines_compatible: true
+      },
+      {
+        id: 4,
+        name: 'regular-health-app',
+        full_name: `${profile.login}/regular-health-app`,
+        description: 'A regular health application without SMART Guidelines',
+        html_url: `https://github.com/${profile.login}/regular-health-app`,
+        topics: ['health', 'app', 'javascript'],
+        language: 'JavaScript',
+        stargazers_count: 5,
+        forks_count: 1,
+        updated_at: '2024-01-08T16:45:00Z',
+        smart_guidelines_compatible: false // This one doesn't have sushi-config.yaml with smart.who.int.base
+      },
+      {
+        id: 5,
+        name: 'medical-database',
+        full_name: `${profile.login}/medical-database`,
+        description: 'Medical database with FHIR but not SMART Guidelines',
+        html_url: `https://github.com/${profile.login}/medical-database`,
+        topics: ['fhir', 'database', 'medical'],
+        language: 'SQL',
+        stargazers_count: 7,
+        forks_count: 2,
+        updated_at: '2024-01-05T11:20:00Z',
+        smart_guidelines_compatible: false // This one also doesn't have the required sushi-config.yaml
       }
     ];
 
-    return mockRepos;
+    // Filter to only return SMART guidelines compatible repositories
+    return allMockRepos.filter(repo => repo.smart_guidelines_compatible);
   }, [profile.login]);
 
-  const fetchRepositories = useCallback(async () => {
+  const fetchRepositories = useCallback(async (forceRescan = false) => {
     setLoading(true);
     setError(null);
+    setIsScanning(false);
+    setScanProgress(null);
+    setUsingCachedData(false);
     
     try {
       let repos = [];
@@ -126,12 +161,53 @@ const DAKSelection = () => {
           }
         }));
       } else {
-        // For edit/fork, fetch user repositories with SMART Guidelines filtering
-        if (githubService.isAuth()) {
-          repos = await githubService.getRepositories(profile.login, profile.type === 'org' ? 'org' : 'user');
+        // For edit/fork, try to use cached data first if available and not forcing rescan
+        let cachedData = null;
+        if (!forceRescan && githubService.isAuth()) {
+          cachedData = repositoryCacheService.getCachedRepositories(profile.login, profile.type === 'org' ? 'org' : 'user');
+        }
+
+        if (cachedData && !forceRescan) {
+          // Use cached data
+          console.log('Using cached repository data', repositoryCacheService.getCacheInfo(profile.login, profile.type === 'org' ? 'org' : 'user'));
+          repos = cachedData.repositories;
+          setUsingCachedData(true);
         } else {
-          // Fallback to mock repositories for demonstration
-          repos = getMockRepositories();
+          // Fetch fresh data with progressive scanning
+          if (githubService.isAuth()) {
+            setIsScanning(true);
+            setRepositories([]); // Clear current repositories for progressive updates
+            
+            repos = await githubService.getSmartGuidelinesRepositoriesProgressive(
+              profile.login, 
+              profile.type === 'org' ? 'org' : 'user',
+              // onRepositoryFound callback - add repo to list immediately
+              (foundRepo) => {
+                setRepositories(prevRepos => {
+                  // Avoid duplicates
+                  const exists = prevRepos.some(repo => repo.id === foundRepo.id);
+                  if (!exists) {
+                    return [...prevRepos, foundRepo];
+                  }
+                  return prevRepos;
+                });
+              },
+              // onProgress callback - update progress indicator
+              (progress) => {
+                setScanProgress(progress);
+              }
+            );
+            
+            // Cache the results
+            repositoryCacheService.setCachedRepositories(
+              profile.login, 
+              profile.type === 'org' ? 'org' : 'user', 
+              repos
+            );
+          } else {
+            // Fallback to mock repositories for demonstration
+            repos = getMockRepositories();
+          }
         }
       }
       
@@ -143,6 +219,8 @@ const DAKSelection = () => {
       setRepositories(getMockRepositories());
     } finally {
       setLoading(false);
+      setIsScanning(false);
+      setScanProgress(null);
     }
   }, [profile, action, getMockRepositories]);
 
@@ -186,6 +264,10 @@ const DAKSelection = () => {
         }
       });
     }
+  };
+
+  const handleRescan = () => {
+    fetchRepositories(true); // Force rescan, ignore cache
   };
 
   const handleBack = () => {
@@ -246,12 +328,121 @@ const DAKSelection = () => {
                 <span>You'll create a new repository based on the WHO SMART Guidelines template.</span>
               </div>
             )}
+            {action !== 'create' && githubService.isAuth() && (
+              <div className="cache-controls">
+                {usingCachedData && (
+                  <div className="cache-info">
+                    <span className="cache-icon">💾</span>
+                    <span>Using cached data. </span>
+                    <button 
+                      onClick={handleRescan} 
+                      className="rescan-link"
+                      disabled={isScanning}
+                    >
+                      Rescan for updates
+                    </button>
+                  </div>
+                )}
+                {!usingCachedData && !isScanning && !loading && (
+                  <button 
+                    onClick={handleRescan} 
+                    className="rescan-btn"
+                    disabled={isScanning}
+                  >
+                    🔄 Rescan Repositories
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {loading ? (
             <div className="loading">
               <div className="spinner"></div>
               <p>Loading repositories...</p>
+            </div>
+          ) : isScanning ? (
+            <div className="scanning-status">
+              <div className="scanning-header">
+                <div className="spinner"></div>
+                <h3>Scanning repositories for SMART Guidelines compatibility...</h3>
+              </div>
+              {scanProgress && (
+                <div className="progress-container">
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill" 
+                      style={{ width: `${scanProgress.progress}%` }}
+                    ></div>
+                  </div>
+                  <div className="progress-info">
+                    <span className="progress-text">
+                      Checking {scanProgress.currentRepo} ({scanProgress.current}/{scanProgress.total})
+                    </span>
+                    <span className="progress-percentage">{scanProgress.progress}%</span>
+                  </div>
+                </div>
+              )}
+              <div className="scanning-results">
+                <p>Found repositories will appear below as they are discovered:</p>
+                <div className="repo-grid">
+                  {repositories.map((repo) => (
+                    <div 
+                      key={repo.id}
+                      className={`repo-card ${selectedRepository?.id === repo.id ? 'selected' : ''} scanning-found`}
+                      onClick={() => handleRepositorySelect(repo)}
+                    >
+                      <div className="repo-header-info">
+                        <h3>{repo.name} <span className="new-badge">✨ Found</span></h3>
+                        <div className="repo-meta">
+                          {repo.is_template && (
+                            <span className="template-badge">
+                              {repo.template_config?.name || 'Template'}
+                            </span>
+                          )}
+                          {repo.private && <span className="private-badge">Private</span>}
+                          {repo.language && <span className="language-badge">{repo.language}</span>}
+                          {repo.smart_guidelines_compatible && (
+                            <span className="compatible-badge">SMART Guidelines</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <p className="repo-description">{repo.description || 'No description available'}</p>
+                      
+                      <div className="repo-topics">
+                        {(repo.topics || []).slice(0, 3).map((topic) => (
+                          <span key={topic} className="topic-tag">{topic}</span>
+                        ))}
+                        {(repo.topics || []).length > 3 && (
+                          <span className="topic-more">+{(repo.topics || []).length - 3} more</span>
+                        )}
+                      </div>
+                      
+                      <div className="repo-stats">
+                        <div className="stat">
+                          <span className="stat-icon">⭐</span>
+                          <span>{repo.stargazers_count || 0}</span>
+                        </div>
+                        <div className="stat">
+                          <span className="stat-icon">🍴</span>
+                          <span>{repo.forks_count || 0}</span>
+                        </div>
+                        <div className="stat">
+                          <span className="stat-icon">📅</span>
+                          <span>Updated {formatDate(repo.updated_at)}</span>
+                        </div>
+                      </div>
+
+                      {selectedRepository?.id === repo.id && (
+                        <div className="selection-indicator">
+                          <span>✓ Selected</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           ) : error ? (
             <div className="error-state">

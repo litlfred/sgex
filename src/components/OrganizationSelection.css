@@ -241,6 +241,17 @@
   background: linear-gradient(135deg, rgba(16, 124, 16, 0.05) 0%, rgba(16, 124, 16, 0.02) 100%);
 }
 
+.org-card.who-org {
+  border-color: #0078d4;
+  border-width: 3px;
+}
+
+.org-card.who-org:hover, .org-card.who-org.selected {
+  border-color: #0078d4;
+  background: linear-gradient(135deg, rgba(0, 120, 212, 0.08) 0%, rgba(0, 120, 212, 0.05) 100%);
+  box-shadow: 0 6px 20px rgba(0, 120, 212, 0.2);
+}
+
 .org-header-info {
   display: flex;
   align-items: center;
@@ -270,6 +281,18 @@
 .personal-badge {
   background: #d4edda;
   color: #155724;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-top: 0.25rem;
+  display: inline-block;
+}
+
+.who-badge {
+  background: #0078d4;
+  color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 12px;
   font-size: 0.7rem;
@@ -349,6 +372,10 @@
 
 .org-card.personal .selection-indicator {
   background: #107c10;
+}
+
+.org-card.who-org .selection-indicator {
+  background: #0078d4;
 }
 
 .org-footer {

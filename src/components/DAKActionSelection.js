@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [selectedAction, setSelectedAction] = useState('');
   
   const { profile } = location.state || {};
 
@@ -34,22 +33,17 @@ const DAKActionSelection = () => {
   ];
 
   const handleActionSelect = (actionId) => {
-    setSelectedAction(actionId);
-  };
-
-  const handleContinue = () => {
-    if (!selectedAction) {
-      alert('Please select an action to continue');
-      return;
-    }
-
-    // Navigate to the DAK selection with the chosen action
+    // Navigate directly to the DAK selection with the chosen action
     navigate('/dak-selection', { 
       state: { 
         profile, 
-        action: selectedAction 
+        action: actionId 
       } 
     });
+  };
+
+  const handleHomeNavigation = () => {
+    navigate('/', { state: { profile } });
   };
 
   const handleBackToProfile = () => {
@@ -65,7 +59,7 @@ const DAKActionSelection = () => {
     <div className="dak-action-selection">
       <div className="action-header">
         <div className="who-branding">
-          <h1>SGEX Workbench</h1>
+          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="profile-info">
@@ -100,7 +94,7 @@ const DAKActionSelection = () => {
             {dakActions.map((action) => (
               <div 
                 key={action.id}
-                className={`action-card ${selectedAction === action.id ? 'selected' : ''}`}
+                className={`action-card`}
                 onClick={() => handleActionSelect(action.id)}
                 style={{ '--action-color': action.color }}
               >
@@ -138,24 +132,8 @@ const DAKActionSelection = () => {
                     </div>
                   )}
                 </div>
-
-                {selectedAction === action.id && (
-                  <div className="selection-indicator">
-                    <span>✓ Selected</span>
-                  </div>
-                )}
               </div>
             ))}
-          </div>
-
-          <div className="action-footer">
-            <button 
-              className="continue-btn"
-              onClick={handleContinue}
-              disabled={!selectedAction}
-            >
-              Continue with {selectedAction ? dakActions.find(a => a.id === selectedAction)?.title : 'Selected Action'}
-            </button>
           </div>
         </div>
       </div>

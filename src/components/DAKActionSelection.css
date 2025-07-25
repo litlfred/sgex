@@ -19,6 +19,15 @@
   font-weight: 600;
 }
 
+.who-branding h1.clickable-title {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.who-branding h1.clickable-title:hover {
+  color: #106ebe;
+}
+
 .who-branding .subtitle {
   margin: 0;
   color: #666;
@@ -103,7 +112,6 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 2rem;
-  margin-bottom: 3rem;
 }
 
 .action-card {
@@ -177,46 +185,6 @@
   font-size: 0.8rem;
   color: #666;
   border: 1px solid #e1e5e9;
-}
-
-.selection-indicator {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: var(--action-color);
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.action-footer {
-  text-align: center;
-}
-
-.continue-btn {
-  background: #0078d4;
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 200px;
-}
-
-.continue-btn:hover:not(:disabled) {
-  background: #106ebe;
-  transform: translateY(-1px);
-}
-
-.continue-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-  transform: none;
 }
 
 /* Responsive Design */
