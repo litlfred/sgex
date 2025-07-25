@@ -41,16 +41,56 @@ The SMART Guidelines Exchange (SGEX) Workbench is a browser-based, static web ap
 - Visual dashboard with distinctive cards/tiles for each component
 - WHO SMART Guidelines branding and color codes  
 - WHO-provided icons for each component
-- Clear visual distinction between Level 2 (Business Logic & Processes) and Level 3 (Technical Implementation) content
-- The 8 core DAK components are:
-  - **Level 2**: Business Processes, Decision Support Logic, Indicators & Measures, Data Entry Forms
-  - **Level 3**: Terminology, FHIR Profiles, FHIR Extensions, Test Data & Examples
-- Note: Scheduling tables are considered a special case of decision tables within Decision Support Logic
+- Clear visual distinction between Level 2 (L2) and Level 3 (L3) component representations
+- The 8 core WHO SMART Guidelines DAK components are:
+  1. **Health interventions and recommendations**
+  2. **Generic personas**
+  3. **User scenarios**
+  4. **Generic business processes and workflows**
+  5. **Core data elements**
+  6. **Decision-support logic**
+  7. **Program indicators**
+  8. **Functional and non-functional requirements**
 
-**REQ-DAK-002**: The system SHALL support navigation to component-specific editors
-- Click-through navigation from home page to relevant editors
-- Context-aware navigation based on content type
+**REQ-DAK-002**: The system SHALL distinguish between L2 and L3 component representations
+- **L2 (Level 2)**: Data model agnostic representations that capture business logic and clinical processes independent of specific technical implementations
+- **L3 (Level 3)**: FHIR R4-specific implementations following WHO enterprise architecture specifications at http://smart.who.int/ra
+- Clear visual indicators and separate editing workflows for L2 vs L3 content
+- Traceability links between corresponding L2 and L3 representations
+
+**REQ-DAK-003**: The system SHALL support canonical representations for DAK components according to the following mapping:
+
+| DAK Component | L2 Representation | L3 Representation |
+|---------------|-------------------|-------------------|
+| Health interventions and recommendations | Clinical guidelines documents | FHIR Clinical Practice Guidelines |
+| Generic personas | Actor definitions and role descriptions | FHIR Person/Practitioner profiles |
+| User scenarios | Use case narratives and workflows | FHIR Scenario test bundles |
+| Generic business processes and workflows | BPMN diagrams (.bpmn) | FHIR ActivityDefinition/PlanDefinition |
+| Core data elements | Logical data models | FHIR StructureDefinition profiles |
+| Decision-support logic | DMN decision tables | FHIR PlanDefinition with decision logic |
+| Program indicators | Logical indicator models | FHIR Measure resources |
+| Functional and non-functional requirements | Requirements specifications | FHIR ImplementationGuide conformance rules |
+
+**REQ-DAK-004**: The system SHALL support additional structured knowledge representations:
+
+| Knowledge Type | L2 Representation | L3 Representation |
+|----------------|-------------------|-------------------|
+| Terminology | Concept definitions and mappings | FHIR CodeSystem/ValueSet |
+| FHIR Profiles | Data model specifications | FHIR StructureDefinition |
+| FHIR Extensions | Extension specifications | FHIR StructureDefinition (extension) |
+| Test Data & Examples | Test scenarios and sample data | FHIR Examples/test bundles |
+
+**REQ-DAK-005**: The system SHALL comply with industry standards
+- Business processes SHALL conform to [OMG BPMN 2.0 specification](https://www.omg.org/spec/BPMN/2.0/)
+- Decision support logic SHALL conform to [OMG DMN 1.3 specification](https://www.omg.org/spec/DMN/1.3/)
+- L3 implementations SHALL align with WHO enterprise architecture at http://smart.who.int/ra
+- All FHIR resources SHALL comply with FHIR R4 specification
+
+**REQ-DAK-006**: The system SHALL provide component-specific navigation and editing
+- Click-through navigation from home page to specialized editors for each component type
+- Context-aware editing capabilities based on L2/L3 distinction
 - Breadcrumb navigation for user orientation
+- Component-specific validation and error handling
 
 ### 2.4 File Operations
 
