@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import dakTemplates from '../config/dak-templates.json';
 import './DAKSelection.css';
 
 const DAKSelection = () => {
@@ -101,26 +102,29 @@ const DAKSelection = () => {
       let repos = [];
       
       if (action === 'create') {
-        // For create action, show WHO template repository
-        repos = [{
-          id: -1,
-          name: 'smart-ig-empty',
-          full_name: 'WorldHealthOrganization/smart-ig-empty',
-          description: 'WHO SMART Guidelines empty implementation guide template',
-          html_url: 'https://github.com/WorldHealthOrganization/smart-ig-empty',
-          clone_url: 'https://github.com/WorldHealthOrganization/smart-ig-empty.git',
-          topics: ['who', 'smart-guidelines', 'template', 'fhir'],
+        // For create action, load templates from configuration
+        repos = dakTemplates.dakTemplates.map((template, index) => ({
+          id: -(index + 1),
+          name: template.repo,
+          full_name: `${template.owner}/${template.repo}`,
+          description: template.description,
+          html_url: template.repository,
+          clone_url: `${template.repository}.git`,
+          topics: template.tags.map(tag => tag.toLowerCase().replace(/\s+/g, '-')),
           language: 'FML',
           stargazers_count: 15,
           forks_count: 8,
           updated_at: new Date().toISOString(),
           smart_guidelines_compatible: true,
           is_template: true,
+          template_config: template,
           owner: {
-            login: 'WorldHealthOrganization',
-            avatar_url: 'https://avatars.githubusercontent.com/u/9166906?s=200&v=4'
+            login: template.owner,
+            avatar_url: template.owner === 'WorldHealthOrganization' 
+              ? 'https://avatars.githubusercontent.com/u/9166906?s=200&v=4'
+              : 'https://github.com/favicon.ico'
           }
-        }];
+        }));
       } else {
         // For edit/fork, fetch user repositories with SMART Guidelines filtering
         if (githubService.isAuth()) {
@@ -279,7 +283,11 @@ const DAKSelection = () => {
                     <div className="repo-header-info">
                       <h3>{repo.name}</h3>
                       <div className="repo-meta">
-                        {repo.is_template && <span className="template-badge">Template</span>}
+                        {repo.is_template && (
+                          <span className="template-badge">
+                            {repo.template_config?.name || 'Template'}
+                          </span>
+                        )}
                         {repo.private && <span className="private-badge">Private</span>}
                         {repo.language && <span className="language-badge">{repo.language}</span>}
                         {repo.smart_guidelines_compatible && (

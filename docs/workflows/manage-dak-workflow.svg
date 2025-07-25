@@ -125,8 +125,8 @@
   
   <!-- Message Flows -->
   <line x1="250" y1="160" x2="870" y2="220" class="message-flow"/>
-  <line x1="460" y1="165" x2="490" y2="300" class="message-flow"/>
-  <line x1="560" y1="165" x2="590" y2="300" class="message-flow"/>
+  <line x1="460" y1="240" x2="490" y2="300" class="message-flow"/>
+  <line x1="560" y1="240" x2="590" y2="300" class="message-flow"/>
   <line x1="870" y1="260" x2="870" y2="375" class="message-flow"/>
   <line x1="870" y1="260" x2="870" y2="435" class="message-flow"/>
   
