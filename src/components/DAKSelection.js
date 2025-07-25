@@ -12,7 +12,15 @@ const DAKSelection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  const { profile, action } = location.state || {};
+  // For debugging purposes, create mock data if not available
+  const mockProfile = {
+    login: 'test-user',
+    name: 'Test User',
+    avatar_url: 'https://github.com/test-user.png',
+    type: 'user'
+  };
+  
+  const { profile = mockProfile, action = 'edit' } = location.state || {};
 
   const getActionConfig = () => {
     switch (action) {
