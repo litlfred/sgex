@@ -1,7 +1,7 @@
 # SGEX Workbench (WHO SMART Guidelines Exchange)
 
 <div align="center">
-  <img src="https://github.com/litlfred/sgex/blob/main/public/sgex-mascot.png" alt="SGEX Workbench Helper" width="200" height="200">
+  <img src="public/sgex-mascot.png" alt="SGEX Workbench Helper" width="200" height="200">
   <p><em>Meet your SGEX Workbench Helper - here to guide you through WHO SMART Guidelines DAK editing!</em></p>
 </div>
 
