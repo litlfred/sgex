@@ -224,12 +224,16 @@ const LandingPage = () => {
     navigate('/dak-action', { state: { profile } });
   };
 
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="landing-page">
         <div className="landing-header">
           <div className="who-branding">
-            <h1>SGEX Workbench</h1>
+            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
             <p className="subtitle">WHO SMART Guidelines Exchange</p>
           </div>
           <div className="header-nav">
@@ -277,7 +281,7 @@ const LandingPage = () => {
     <div className="landing-page">
       <div className="landing-header">
         <div className="who-branding">
-          <h1>SGEX Workbench</h1>
+          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="user-info">
