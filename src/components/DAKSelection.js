@@ -264,7 +264,13 @@ const DAKSelection = () => {
             // This preserves any cached repos that were already displayed
             console.log('📊 Starting enhanced scanning display for authenticated user');
             
-            repos = await githubService.getSmartGuidelinesRepositoriesProgressive(
+            // Add timeout wrapper to prevent infinite scanning
+            const SCAN_TIMEOUT = 60000; // 60 seconds timeout
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Scanning timeout - operation took longer than 60 seconds')), SCAN_TIMEOUT);
+            });
+            
+            const scanPromise = githubService.getSmartGuidelinesRepositoriesProgressive(
               profile.login, 
               profile.type === 'org' ? 'org' : 'user',
               // onRepositoryFound callback - add repo to list immediately
@@ -333,6 +339,18 @@ const DAKSelection = () => {
                 }
               }
             );
+            
+            try {
+              // Race between the scanning promise and timeout
+              repos = await Promise.race([scanPromise, timeoutPromise]);
+            } catch (timeoutError) {
+              console.error('⏰ Scanning timed out:', timeoutError.message);
+              // Stop scanning on timeout
+              setIsScanning(false);
+              setScanProgress(null);
+              setCurrentlyScanningRepos(new Set());
+              throw new Error('Repository scanning timed out. Please try again or use cached data if available.');
+            }
             
             // Cache the results for future quick access
             repositoryCacheService.setCachedRepositories(
