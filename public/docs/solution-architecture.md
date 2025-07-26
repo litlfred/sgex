@@ -81,7 +81,7 @@ The SGEX Workbench implements a comprehensive "Manage a DAK" workflow as defined
 
 **GitHub Integration:**
 - [Octokit](https://github.com/octokit/rest.js) - GitHub REST API client
-- GitHub OAuth integration
+- GitHub Personal Access Token authentication
 
 **Development Tools:**
 - TypeScript (recommended) - Type safety
@@ -164,12 +164,12 @@ const DAKComponentForm = ({ schema, uischema, data, onChange }) => (
 
 ### 4.1 Authentication and Authorization
 
-**OAuth Flow:**
+**Personal Access Token Flow:**
 1. User accesses SGEX Workbench
-2. Redirect to GitHub OAuth if not authenticated
-3. GitHub authentication/account creation
-4. Redirect back to original context (repo/artifact specific)
-5. Access token stored securely in browser
+2. If not authenticated, app displays PAT setup instructions
+3. User creates GitHub Personal Access Token with required permissions
+4. User enters PAT into the application
+5. Access token stored securely in browser for future use
 
 **Permission Model:**
 - All permissions managed by GitHub repository settings
@@ -292,12 +292,12 @@ const BPMNEditor = ({ initialXml, onSave }) => {
 
 **Client-Side Security:**
 - No secrets stored in application code
-- OAuth tokens managed securely in browser
+- Personal Access Tokens managed securely in browser
 - HTTPS-only communication
 - CSP headers for XSS protection
 
 **GitHub-Based Security:**
-- Authentication via GitHub OAuth
+- Authentication via GitHub Personal Access Tokens
 - Authorization via GitHub repository permissions
 - Audit trail through GitHub commit history
 
@@ -307,7 +307,7 @@ const BPMNEditor = ({ initialXml, onSave }) => {
 - No user data stored outside GitHub
 - All processing happens client-side
 - No server-side logging or analytics
-- User consent for GitHub OAuth access
+- User consent for GitHub Personal Access Token usage
 
 ## 8. Deployment Architecture
 
