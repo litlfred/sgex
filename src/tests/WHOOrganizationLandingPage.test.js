@@ -18,9 +18,9 @@ jest.mock('../services/githubService', () => ({
   checkTokenPermissions: jest.fn()
 }));
 
-// Mock device flow login component
-jest.mock('../components/DeviceFlowLogin', () => {
-  return function MockDeviceFlowLogin({ onAuthSuccess }) {
+// Mock PAT login component
+jest.mock('../components/PATLogin', () => {
+  return function MockPATLogin({ onAuthSuccess }) {
     return (
       <button 
         onClick={() => onAuthSuccess('mock-token', { mockOctokit: true })}
@@ -78,7 +78,7 @@ describe('WHO Organization in LandingPage', () => {
     // Mock successful authentication flow
     githubService.isAuth.mockReturnValue(true);
     githubService.checkTokenPermissions.mockResolvedValue({
-      type: 'oauth',
+      type: 'pat',
       user: { login: 'testuser' }
     });
     
@@ -138,7 +138,7 @@ describe('WHO Organization in LandingPage', () => {
     // Mock authentication but organizations fetch fails
     githubService.isAuth.mockReturnValue(true);
     githubService.checkTokenPermissions.mockResolvedValue({
-      type: 'oauth',
+      type: 'pat',
       user: { login: 'testuser' }
     });
     
@@ -177,7 +177,7 @@ describe('WHO Organization in LandingPage', () => {
     // Test case where user is actually a member of WHO organization
     githubService.isAuth.mockReturnValue(true);
     githubService.checkTokenPermissions.mockResolvedValue({
-      type: 'oauth',
+      type: 'pat',
       user: { login: 'whouser' }
     });
     
@@ -236,7 +236,7 @@ describe('WHO Organization in LandingPage', () => {
   it('should maintain WHO organization at the top of the list', async () => {
     githubService.isAuth.mockReturnValue(true);
     githubService.checkTokenPermissions.mockResolvedValue({
-      type: 'oauth',
+      type: 'pat',
       user: { login: 'testuser' }
     });
     

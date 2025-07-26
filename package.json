@@ -5,7 +5,6 @@
   "private": true,
   "homepage": "https://litlfred.github.io/sgex",
   "dependencies": {
-    "@octokit/auth-oauth-device": "^8.0.1",
     "@octokit/rest": "^22.0.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^16.3.0",
