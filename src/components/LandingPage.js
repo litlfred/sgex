@@ -148,15 +148,15 @@ const LandingPage = () => {
     }
   }, [fetchOrganizations, fetchDakRepositoryCounts]);
 
+  // Initial authentication check - runs once on mount
   useEffect(() => {
-    const initializeAuth = async () => {
+    const initializeAuth = () => {
       // Check if user is already authenticated from previous session
       const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
       if (token) {
         const success = githubService.authenticate(token);
         if (success) {
           setIsAuthenticated(true);
-          await fetchUserData();
         } else {
           sessionStorage.removeItem('github_token');
           localStorage.removeItem('github_token');
@@ -165,7 +165,14 @@ const LandingPage = () => {
     };
 
     initializeAuth();
-  }, [fetchUserData]);
+  }, []);
+
+  // Fetch user data when authentication state changes
+  useEffect(() => {
+    if (isAuthenticated && !user) {
+      fetchUserData();
+    }
+  }, [isAuthenticated, user, fetchUserData]);
 
   const handleAuthSuccess = (token, octokitInstance) => {
     // Store token in session storage for this session
