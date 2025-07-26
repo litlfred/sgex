@@ -14,54 +14,28 @@ const LandingPage = () => {
   const [countingInProgress, setCountingInProgress] = useState(false);
   const navigate = useNavigate();
 
-  const fetchDakRepositoryCounts = useCallback(async (profiles) => {
-    if (!githubService.isAuth()) return {};
-    
-    setCountingInProgress(true);
-    const counts = {};
+  const fetchUserData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     
     try {
-      // Count DAK repositories for each profile in parallel
-      const countPromises = profiles.map(async (profile) => {
-        try {
-          const repositories = await githubService.getSmartGuidelinesRepositories(
-            profile.login, 
-            profile.type === 'user' ? 'user' : 'org'
-          );
-          return { 
-            key: `${profile.type}-${profile.login}`, 
-            count: repositories.length 
-          };
-        } catch (error) {
-          console.warn(`Failed to count DAK repos for ${profile.login}:`, error);
-          return { 
-            key: `${profile.type}-${profile.login}`, 
-            count: 0 
-          };
-        }
-      });
+      // Check token permissions first
+      await githubService.checkTokenPermissions();
       
-      const results = await Promise.all(countPromises);
-      results.forEach(({ key, count }) => {
-        counts[key] = count;
-      });
+      // Fetch user data using GitHub service
+      const userData = await githubService.getCurrentUser();
+      setUser(userData);
       
-    } catch (error) {
-      console.error('Error fetching DAK repository counts:', error);
-    } finally {
-      setCountingInProgress(false);
-    }
-    
-    return counts;
-  }, []);
-
-  const fetchOrganizations = useCallback(async () => {
-    try {
-      // Fetch organizations
+      // Fetch organizations inline
       let orgsData = [];
       
       if (githubService.isAuth()) {
-        orgsData = await githubService.getUserOrganizations();
+        try {
+          orgsData = await githubService.getUserOrganizations();
+        } catch (error) {
+          console.error('Error fetching organizations:', error);
+          orgsData = [];
+        }
       }
       
       // Always ensure WHO organization is included
@@ -92,40 +66,6 @@ const LandingPage = () => {
       }
       
       setOrganizations(orgsData);
-      return orgsData;
-    } catch (error) {
-      console.error('Error fetching organizations:', error);
-      
-      // Even if organizations fail, still show WHO organization
-      const whoOrganization = {
-        id: 'who-organization',
-        login: 'WorldHealthOrganization',
-        name: 'World Health Organization',
-        description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
-        avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
-        html_url: 'https://github.com/WorldHealthOrganization',
-        type: 'Organization',
-        isWHO: true
-      };
-      setOrganizations([whoOrganization]);
-      return [whoOrganization];
-    }
-  }, []);
-
-  const fetchUserData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Check token permissions first
-      await githubService.checkTokenPermissions();
-      
-      // Fetch user data using GitHub service
-      const userData = await githubService.getCurrentUser();
-      setUser(userData);
-      
-      // Fetch organizations separately
-      const orgsData = await fetchOrganizations();
       
       // Prepare profiles for counting DAK repositories
       const profiles = [
@@ -133,8 +73,47 @@ const LandingPage = () => {
         ...orgsData.map(org => ({ login: org.login, type: 'org' }))
       ];
       
-      // Fetch DAK repository counts
-      const counts = await fetchDakRepositoryCounts(profiles);
+      // Fetch DAK repository counts inline
+      if (!githubService.isAuth()) {
+        setDakCounts({});
+        return;
+      }
+      
+      setCountingInProgress(true);
+      const counts = {};
+      
+      try {
+        // Count DAK repositories for each profile in parallel
+        const countPromises = profiles.map(async (profile) => {
+          try {
+            const repositories = await githubService.getSmartGuidelinesRepositories(
+              profile.login, 
+              profile.type === 'user' ? 'user' : 'org'
+            );
+            return { 
+              key: `${profile.type}-${profile.login}`, 
+              count: repositories.length 
+            };
+          } catch (error) {
+            console.warn(`Failed to count DAK repos for ${profile.login}:`, error);
+            return { 
+              key: `${profile.type}-${profile.login}`, 
+              count: 0 
+            };
+          }
+        });
+        
+        const results = await Promise.all(countPromises);
+        results.forEach(({ key, count }) => {
+          counts[key] = count;
+        });
+        
+      } catch (error) {
+        console.error('Error fetching DAK repository counts:', error);
+      } finally {
+        setCountingInProgress(false);
+      }
+      
       setDakCounts(counts);
       
     } catch (error) {
@@ -146,50 +125,17 @@ const LandingPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [fetchOrganizations, fetchDakRepositoryCounts]);
+  }, []); // Remove dependencies to prevent circular re-renders
 
+  // Initial authentication check - runs once on mount
   useEffect(() => {
-    const initializeAuth = async () => {
+    const initializeAuth = () => {
       // Check if user is already authenticated from previous session
       const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
       if (token) {
         const success = githubService.authenticate(token);
         if (success) {
           setIsAuthenticated(true);
-          // Call fetchUserData directly here
-          setLoading(true);
-          setError(null);
-          
-          try {
-            // Check token permissions first
-            await githubService.checkTokenPermissions();
-            
-            // Fetch user data using GitHub service
-            const userData = await githubService.getCurrentUser();
-            setUser(userData);
-            
-            // Fetch organizations separately
-            const orgsData = await fetchOrganizations();
-            
-            // Prepare profiles for counting DAK repositories
-            const profiles = [
-              { login: userData.login, type: 'user' },
-              ...orgsData.map(org => ({ login: org.login, type: 'org' }))
-            ];
-            
-            // Fetch DAK repository counts
-            const counts = await fetchDakRepositoryCounts(profiles);
-            setDakCounts(counts);
-            
-          } catch (error) {
-            console.error('Error fetching user data:', error);
-            setError('Failed to fetch user data. Please check your connection and try again.');
-            setIsAuthenticated(false);
-            sessionStorage.removeItem('github_token');
-            localStorage.removeItem('github_token');
-          } finally {
-            setLoading(false);
-          }
         } else {
           sessionStorage.removeItem('github_token');
           localStorage.removeItem('github_token');
@@ -198,7 +144,14 @@ const LandingPage = () => {
     };
 
     initializeAuth();
-  }, [fetchOrganizations, fetchDakRepositoryCounts]);
+  }, []);
+
+  // Fetch user data when authentication state changes
+  useEffect(() => {
+    if (isAuthenticated && !user) {
+      fetchUserData();
+    }
+  }, [isAuthenticated, user, fetchUserData]);
 
   const handleAuthSuccess = (token, octokitInstance) => {
     // Store token in session storage for this session
