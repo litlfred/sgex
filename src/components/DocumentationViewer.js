@@ -10,7 +10,10 @@ const docFiles = {
   'requirements': { file: 'requirements.md', title: 'Requirements' },
   'architecture': { file: 'solution-architecture.md', title: 'Solution Architecture' },
   'project-plan': { file: 'project-plan.md', title: 'Project Plan' },
-  'bpmn-integration': { file: 'bpmn-integration.md', title: 'BPMN Integration' }
+  'bpmn-integration': { file: 'bpmn-integration.md', title: 'BPMN Integration' },
+  'qa-testing': { file: 'qa-testing.md', title: 'QA Testing Guide' },
+  'qa-report': { file: 'qa-report.html', title: 'QA Testing Report', isHtml: true },
+  'issues-analysis': { file: 'github-issues-analysis.md', title: 'GitHub Issues Analysis' }
 };
 
 const DocumentationViewer = () => {
@@ -27,6 +30,13 @@ const DocumentationViewer = () => {
 
       try {
         const docInfo = docFiles[docId] || docFiles['overview'];
+
+        // For HTML files, redirect to the HTML file directly
+        if (docInfo.isHtml) {
+          // Redirect to the HTML file
+          window.location.href = `${process.env.PUBLIC_URL}/docs/${docInfo.file}`;
+          return;
+        }
 
         // Fetch the markdown file from the docs folder
         const response = await fetch(`${process.env.PUBLIC_URL}/docs/${docInfo.file}`);
