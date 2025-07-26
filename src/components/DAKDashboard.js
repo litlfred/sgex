@@ -12,6 +12,7 @@ const DAKDashboard = () => {
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('core'); // 'core' or 'additional'
 
   // Check write permissions on mount
   useEffect(() => {
@@ -265,115 +266,139 @@ const DAKDashboard = () => {
             </p>
           </div>
 
-          {/* 8 Core DAK Components Section */}
-          <div className="components-section">
-            <div className="section-header">
-              <h3 className="section-title">8 Core DAK Components</h3>
-              <p className="section-description">
-                Essential components that form the foundation of any WHO SMART Guidelines Digital Adaptation Kit
-              </p>
-            </div>
+          {/* Tab Navigation */}
+          <div className="tab-navigation">
+            <button 
+              className={`tab-button ${activeTab === 'core' ? 'active' : ''}`}
+              onClick={() => setActiveTab('core')}
+            >
+              <span className="tab-icon">⭐</span>
+              <span className="tab-text">8 Core Components</span>
+              <span className="tab-badge core">L2</span>
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'additional' ? 'active' : ''}`}
+              onClick={() => setActiveTab('additional')}
+            >
+              <span className="tab-icon">🔧</span>
+              <span className="tab-text">Additional Representations</span>
+              <span className="tab-badge additional">L3</span>
+            </button>
+          </div>
 
-            <div className="components-legend">
-              <div className="legend-item">
-                <span className="legend-badge l2">L2</span>
-                <span>Data model agnostic representations</span>
+          {/* 8 Core DAK Components Section */}
+          {activeTab === 'core' && (
+            <div className="components-section active">
+              <div className="section-header">
+                <h3 className="section-title">8 Core DAK Components</h3>
+                <p className="section-description">
+                  Essential components that form the foundation of any WHO SMART Guidelines Digital Adaptation Kit
+                </p>
+              </div>
+
+              <div className="components-legend">
+                <div className="legend-item">
+                  <span className="legend-badge l2">L2</span>
+                  <span>Data model agnostic representations</span>
+                </div>
+              </div>
+
+              <div className="components-grid core-components">
+                {coreDAKComponents.map((component) => (
+                  <div 
+                    key={component.id}
+                    className={`component-card ${component.type.toLowerCase()}`}
+                    onClick={() => handleComponentClick(component)}
+                    style={{ '--component-color': component.color }}
+                  >
+                    <div className="component-header">
+                      <div className="component-icon" style={{ color: component.color }}>
+                        {component.icon}
+                      </div>
+                      <div className="component-badge">
+                        <span className={`level-badge ${component.type.toLowerCase()}`}>
+                          {component.type}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="component-content">
+                      <h4>{component.name}</h4>
+                      <p>{component.description}</p>
+                      
+                      <div className="component-meta">
+                        <div className="file-types">
+                          {component.fileTypes.map((type) => (
+                            <span key={type} className="file-type-tag">{type}</span>
+                          ))}
+                        </div>
+                        <div className="file-count">
+                          {component.count} files
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-
-            <div className="components-grid core-components">
-              {coreDAKComponents.map((component) => (
-                <div 
-                  key={component.id}
-                  className={`component-card ${component.type.toLowerCase()}`}
-                  onClick={() => handleComponentClick(component)}
-                  style={{ '--component-color': component.color }}
-                >
-                  <div className="component-header">
-                    <div className="component-icon" style={{ color: component.color }}>
-                      {component.icon}
-                    </div>
-                    <div className="component-badge">
-                      <span className={`level-badge ${component.type.toLowerCase()}`}>
-                        {component.type}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="component-content">
-                    <h4>{component.name}</h4>
-                    <p>{component.description}</p>
-                    
-                    <div className="component-meta">
-                      <div className="file-types">
-                        {component.fileTypes.map((type) => (
-                          <span key={type} className="file-type-tag">{type}</span>
-                        ))}
-                      </div>
-                      <div className="file-count">
-                        {component.count} files
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
 
           {/* Additional Structured Knowledge Representations Section */}
-          <div className="components-section additional-section">
-            <div className="section-header">
-              <h3 className="section-title">Additional Structured Knowledge Representations</h3>
-              <p className="section-description">
-                FHIR R4-specific implementations and technical artifacts that support the core DAK components
-              </p>
-            </div>
+          {activeTab === 'additional' && (
+            <div className="components-section additional-section active">
+              <div className="section-header">
+                <h3 className="section-title">Additional Structured Knowledge Representations</h3>
+                <p className="section-description">
+                  FHIR R4-specific implementations and technical artifacts that support the core DAK components
+                </p>
+              </div>
 
-            <div className="components-legend">
-              <div className="legend-item">
-                <span className="legend-badge l3">L3</span>
-                <span>FHIR R4-specific implementations</span>
+              <div className="components-legend">
+                <div className="legend-item">
+                  <span className="legend-badge l3">L3</span>
+                  <span>FHIR R4-specific implementations</span>
+                </div>
+              </div>
+
+              <div className="components-grid additional-components">
+                {additionalComponents.map((component) => (
+                  <div 
+                    key={component.id}
+                    className={`component-card ${component.type.toLowerCase()}`}
+                    onClick={() => handleComponentClick(component)}
+                    style={{ '--component-color': component.color }}
+                  >
+                    <div className="component-header">
+                      <div className="component-icon" style={{ color: component.color }}>
+                        {component.icon}
+                      </div>
+                      <div className="component-badge">
+                        <span className={`level-badge ${component.type.toLowerCase()}`}>
+                          {component.type}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="component-content">
+                      <h4>{component.name}</h4>
+                      <p>{component.description}</p>
+                      
+                      <div className="component-meta">
+                        <div className="file-types">
+                          {component.fileTypes.map((type) => (
+                            <span key={type} className="file-type-tag">{type}</span>
+                          ))}
+                        </div>
+                        <div className="file-count">
+                          {component.count} files
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-
-            <div className="components-grid additional-components">
-              {additionalComponents.map((component) => (
-                <div 
-                  key={component.id}
-                  className={`component-card ${component.type.toLowerCase()}`}
-                  onClick={() => handleComponentClick(component)}
-                  style={{ '--component-color': component.color }}
-                >
-                  <div className="component-header">
-                    <div className="component-icon" style={{ color: component.color }}>
-                      {component.icon}
-                    </div>
-                    <div className="component-badge">
-                      <span className={`level-badge ${component.type.toLowerCase()}`}>
-                        {component.type}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="component-content">
-                    <h4>{component.name}</h4>
-                    <p>{component.description}</p>
-                    
-                    <div className="component-meta">
-                      <div className="file-types">
-                        {component.fileTypes.map((type) => (
-                          <span key={type} className="file-type-tag">{type}</span>
-                        ))}
-                      </div>
-                      <div className="file-count">
-                        {component.count} files
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
 
           <div className="dashboard-footer">
             <div className="repo-actions">
