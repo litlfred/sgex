@@ -424,6 +424,54 @@
   cursor: not-allowed;
 }
 
+/* Demo controls */
+.demo-controls {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.demo-info {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #856404;
+  font-size: 0.9rem;
+}
+
+.demo-icon {
+  font-size: 1rem;
+}
+
+.demo-scan-btn {
+  background: #ffc107;
+  color: #212529;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+  margin-left: 0.5rem;
+}
+
+.demo-scan-btn:hover:not(:disabled) {
+  background: #e0a800;
+}
+
+.demo-scan-btn:disabled {
+  background: #6c757d;
+  color: white;
+  cursor: not-allowed;
+}
+
 /* Scanning status */
 .scanning-status {
   text-align: center;

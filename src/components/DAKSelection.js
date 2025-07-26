@@ -127,6 +127,61 @@ const DAKSelection = () => {
     return allMockRepos.filter(repo => repo.smart_guidelines_compatible);
   }, [profile.login]);
 
+  const simulateEnhancedScanning = useCallback(async () => {
+    setIsScanning(true);
+    setRepositories([]); // Clear current repositories for progressive updates
+    
+    const mockRepos = getMockRepositories();
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    
+    try {
+      // Simulate concurrent scanning with enhanced display
+      for (let i = 0; i < mockRepos.length; i++) {
+        const repo = mockRepos[i];
+        
+        // Simulate starting to scan this repository
+        setScanProgress({
+          current: i + 1,
+          total: mockRepos.length,
+          currentRepo: repo.name,
+          progress: Math.round(((i + 1) / mockRepos.length) * 100),
+          completed: false,
+          started: true
+        });
+        
+        // Add to currently scanning repos
+        setCurrentlyScanningRepos(prev => new Set([...prev, repo.name]));
+        
+        // Simulate scanning time (1-2 seconds per repository)
+        await delay(1000 + Math.random() * 1000);
+        
+        // Add found repository to results
+        setRepositories(prevRepos => [...prevRepos, repo]);
+        
+        // Simulate completion
+        setScanProgress({
+          current: i + 1,
+          total: mockRepos.length,
+          currentRepo: repo.name,
+          progress: Math.round(((i + 1) / mockRepos.length) * 100),
+          completed: true
+        });
+        
+        // Remove from currently scanning repos
+        setCurrentlyScanningRepos(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(repo.name);
+          return newSet;
+        });
+        
+        // Small delay before next repository
+        await delay(300);
+      }
+    } catch (error) {
+      console.error('Error in simulated scanning:', error);
+    }
+  }, [getMockRepositories]);
+
   const fetchRepositories = useCallback(async (forceRescan = false) => {
     setLoading(true);
     setError(null);
@@ -220,7 +275,8 @@ const DAKSelection = () => {
               repos
             );
           } else {
-            // Fallback to mock repositories for demonstration
+            // Fallback to mock repositories with enhanced scanning demonstration
+            await simulateEnhancedScanning();
             repos = getMockRepositories();
           }
         }
@@ -238,7 +294,7 @@ const DAKSelection = () => {
       setScanProgress(null);
       setCurrentlyScanningRepos(new Set());
     }
-  }, [profile, action, getMockRepositories]);
+  }, [profile, action, getMockRepositories, simulateEnhancedScanning]);
 
   useEffect(() => {
     if (!profile || !action) {
@@ -284,6 +340,11 @@ const DAKSelection = () => {
 
   const handleRescan = () => {
     fetchRepositories(true); // Force rescan, ignore cache
+  };
+
+  const handleDemoScanning = async () => {
+    // Simulate the enhanced scanning display for demonstration purposes
+    await simulateEnhancedScanning();
   };
 
   const handleBack = () => {
@@ -381,6 +442,21 @@ const DAKSelection = () => {
                     🔄 Rescan Repositories
                   </button>
                 )}
+              </div>
+            )}
+            {action !== 'create' && !githubService.isAuth() && !isScanning && !loading && (
+              <div className="demo-controls">
+                <div className="demo-info">
+                  <span className="demo-icon">🎭</span>
+                  <span>Not authenticated. </span>
+                  <button 
+                    onClick={handleDemoScanning} 
+                    className="demo-scan-btn"
+                    disabled={isScanning}
+                  >
+                    ✨ Demo Enhanced Scanning Display
+                  </button>
+                </div>
               </div>
             )}
           </div>
