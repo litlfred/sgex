@@ -152,62 +152,62 @@
 
 /* Position tail based on mascot position */
 .contextual-help-mascot.bottom-right .bubble-tail {
-  bottom: 5px;
+  bottom: -15px;
   right: 25px;
 }
 
 .contextual-help-mascot.bottom-right .bubble-tail::before {
-  bottom: -12px;
+  bottom: -25px;
   right: -5px;
 }
 
 .contextual-help-mascot.bottom-right .bubble-tail::after {
-  bottom: -25px;
+  bottom: -35px;
   right: -8px;
 }
 
 .contextual-help-mascot.bottom-left .bubble-tail {
-  bottom: 5px;
+  bottom: -15px;
   left: 25px;
 }
 
 .contextual-help-mascot.bottom-left .bubble-tail::before {
-  bottom: -12px;
+  bottom: -25px;
   left: -5px;
 }
 
 .contextual-help-mascot.bottom-left .bubble-tail::after {
-  bottom: -25px;
+  bottom: -35px;
   left: -8px;
 }
 
 .contextual-help-mascot.top-right .bubble-tail {
-  top: 5px;
+  top: -15px;
   right: 25px;
 }
 
 .contextual-help-mascot.top-right .bubble-tail::before {
-  top: -12px;
+  top: -25px;
   right: -5px;
 }
 
 .contextual-help-mascot.top-right .bubble-tail::after {
-  top: -25px;
+  top: -35px;
   right: -8px;
 }
 
 .contextual-help-mascot.top-left .bubble-tail {
-  top: 5px;
+  top: -15px;
   left: 25px;
 }
 
 .contextual-help-mascot.top-left .bubble-tail::before {
-  top: -12px;
+  top: -25px;
   left: -5px;
 }
 
 .contextual-help-mascot.top-left .bubble-tail::after {
-  top: -25px;
+  top: -35px;
   left: -8px;
 }
 
