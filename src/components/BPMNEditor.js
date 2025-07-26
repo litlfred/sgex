@@ -12,6 +12,10 @@ const BPMNEditor = () => {
   
   const { profile, repository, component } = location.state || {};
   
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
+
   const [bpmnFiles, setBpmnFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -323,7 +327,7 @@ const BPMNEditor = () => {
     <div className="bpmn-editor">
       <div className="editor-header">
         <div className="who-branding">
-          <h1>SGEX Workbench</h1>
+          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="context-info">

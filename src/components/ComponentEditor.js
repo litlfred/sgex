@@ -8,6 +8,10 @@ const ComponentEditor = () => {
   
   const { profile, repository, component } = location.state || {};
 
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
+
   if (!profile || !repository || !component) {
     navigate('/');
     return <div>Redirecting...</div>;
@@ -17,7 +21,7 @@ const ComponentEditor = () => {
     <div className="component-editor">
       <div className="editor-header">
         <div className="who-branding">
-          <h1>SGEX Workbench</h1>
+          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="context-info">

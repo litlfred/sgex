@@ -151,6 +151,10 @@ const DAKDashboard = () => {
     navigate('/repositories', { state: { profile } });
   };
 
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
+
   if (!profile || !repository) {
     navigate('/');
     return <div>Redirecting...</div>;
@@ -160,7 +164,7 @@ const DAKDashboard = () => {
     <div className="dak-dashboard">
       <div className="dashboard-header">
         <div className="who-branding">
-          <h1>SGEX Workbench</h1>
+          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="context-info">

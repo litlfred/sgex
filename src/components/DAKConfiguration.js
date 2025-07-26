@@ -196,6 +196,10 @@ const DAKConfiguration = () => {
     });
   };
 
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
+
   if (!profile || !templateRepository || !destinationOrganization || action !== 'create') {
     navigate('/');
     return <div>Redirecting...</div>;
@@ -210,7 +214,7 @@ const DAKConfiguration = () => {
     <div className="dak-configuration">
       <div className="config-header">
         <div className="who-branding">
-          <h1>SGEX Workbench</h1>
+          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="profile-info">

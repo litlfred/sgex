@@ -305,6 +305,10 @@ const DAKSelection = () => {
     navigate('/dak-action', { state: { profile: profile } });
   };
 
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -323,7 +327,7 @@ const DAKSelection = () => {
     <div className="dak-selection">
       <div className="selection-header">
         <div className="who-branding">
-          <h1>SGEX Workbench</h1>
+          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="profile-info">
