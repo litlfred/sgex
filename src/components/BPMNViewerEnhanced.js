@@ -127,7 +127,8 @@ const BPMNViewerEnhanced = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const viewerRef = useRef(null);
-  const [containerElement, setContainerElement] = useState(null);
+  const containerRef = useRef(null);
+  const [containerReady, setContainerReady] = useState(false);
   
   const { profile, repository, component, selectedFile } = location.state || {};
   
@@ -140,10 +141,11 @@ const BPMNViewerEnhanced = () => {
   const [selectedElement, setSelectedElement] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
 
-  // Use callback ref to ensure we get notified when element is attached
-  const containerRef = useCallback((element) => {
+  // Container ref callback to notify when element is ready
+  const handleContainerRef = useCallback((element) => {
     console.log('Container ref callback called with element:', !!element);
-    setContainerElement(element);
+    containerRef.current = element;
+    setContainerReady(!!element);
   }, []);
 
   // Check write permissions
@@ -165,10 +167,10 @@ const BPMNViewerEnhanced = () => {
 
   // Initialize BPMN viewer and load content
   useEffect(() => {
-    console.log('useEffect running, containerElement:', !!containerElement, 'selectedFile:', !!selectedFile);
+    console.log('useEffect running, containerReady:', containerReady, 'selectedFile:', !!selectedFile);
     
-    if (!selectedFile || !containerElement) {
-      console.log('Missing selectedFile or containerElement, skipping initialization');
+    if (!selectedFile || !containerReady || !containerRef.current) {
+      console.log('Missing selectedFile or container not ready, skipping initialization');
       return;
     }
 
@@ -189,7 +191,7 @@ const BPMNViewerEnhanced = () => {
 
         console.log('Creating BPMN viewer with container element...');
         viewerRef.current = new BpmnViewer({
-          container: containerElement
+          container: containerRef.current
         });
 
         console.log('BPMN viewer initialized successfully');
@@ -252,7 +254,7 @@ const BPMNViewerEnhanced = () => {
         viewerRef.current = null;
       }
     };
-  }, [selectedFile, containerElement, profile?.token]);
+  }, [selectedFile, containerReady, profile?.token]);  // Depend on containerReady state
 
   // Toolbar actions
   const handleZoomIn = () => {
@@ -459,7 +461,7 @@ const BPMNViewerEnhanced = () => {
 
           <div className="viewer-body">
             <div className="diagram-container">
-              <div className="bpmn-container" ref={containerRef}></div>
+              <div className="bpmn-container" ref={handleContainerRef}></div>
               {loading && (
                 <div className="loading-overlay">
                   <div className="spinner"></div>
