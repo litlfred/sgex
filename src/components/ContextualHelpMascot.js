@@ -9,8 +9,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
 
   // Get help topics for the page
-  const helpTopics = pageId ? helpContentService.getHelpTopicsForPage(pageId) : [];
-  const hasTopics = helpTopics.length > 0 || helpContent;
+  const helpTopics = pageId ? helpContentService.getHelpTopicsForPage(pageId, contextData) : [];
 
   const handleMouseEnter = () => {
     if (!helpSticky) {
@@ -44,10 +43,10 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
     setSelectedHelpTopic(null);
   };
 
-  // Don't render if there are no help topics
-  if (!hasTopics) {
-    return null;
-  }
+  // Always render the mascot now since we have universal topics
+  // if (!hasTopics) {
+  //   return null;
+  // }
 
   return (
     <>
@@ -64,12 +63,10 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
             className="mascot-icon"
           />
           
-          {/* Question mark thought bubble */}
-          {hasTopics && (
-            <div className="question-bubble">
-              ?
-            </div>
-          )}
+          {/* Question mark thought bubble - always show since we always have topics now */}
+          <div className="question-bubble">
+            ?
+          </div>
         </div>
         
         {showHelp && (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './BPMNSource.css';
 
 const BPMNSource = () => {
@@ -336,6 +337,11 @@ const BPMNSource = () => {
           </div>
         </div>
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="bpmn-source"
+        contextData={{ profile, repository, component, selectedFile }}
+      />
     </div>
   );
 };

@@ -1,9 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './HelpModal.css';
 
 const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Set up global reference for inline onclick handlers
+  useEffect(() => {
+    window.helpModalInstance = {
+      openDakIssue: (issueType) => {
+        const repository = contextData.repository || contextData.selectedDak;
+        if (!repository) {
+          console.warn('No DAK repository specified for feedback');
+          return;
+        }
+
+        const baseUrl = `https://github.com/${repository.owner}/${repository.name}/issues/new`;
+        let url = baseUrl;
+
+        switch (issueType) {
+          case 'bug':
+            url += '?template=bug_report.md&labels=bug,dak-issue';
+            break;
+          case 'improvement':
+            url += '?template=feature_request.md&labels=enhancement,dak-improvement';
+            break;
+          case 'content':
+            url += '?labels=content-issue,clinical-content';
+            break;
+          case 'question':
+            url += '?template=question.md&labels=question,dak-question';
+            break;
+          default:
+            url += '?labels=dak-feedback';
+        }
+
+        window.open(url, '_blank');
+      }
+    };
+
+    return () => {
+      // Cleanup
+      delete window.helpModalInstance;
+    };
+  }, [contextData]);
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -94,6 +134,15 @@ Best regards,
     const slides = helpTopic.content;
     const currentSlideData = slides[currentSlide];
 
+    // Handle DAK feedback buttons by replacing onclick handlers
+    let processedContent = currentSlideData.content;
+    if (helpTopic.id === 'provide-dak-feedback') {
+      processedContent = processedContent.replace(
+        /onclick="this\.openDakIssue\('([^']+)'\)"/g,
+        `onclick="window.helpModalInstance?.openDakIssue('$1')"`
+      );
+    }
+
     return (
       <div className="help-slideshow">
         <div className="slideshow-header">
@@ -105,7 +154,7 @@ Best regards,
         
         <div 
           className="slideshow-content"
-          dangerouslySetInnerHTML={{ __html: currentSlideData.content }}
+          dangerouslySetInnerHTML={{ __html: processedContent }}
         />
         
         <div className="slideshow-controls">

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './TestDashboard.css';
 
 const TestDashboard = () => {
@@ -171,6 +172,11 @@ const TestDashboard = () => {
           </div>
         </div>
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="test-dashboard"
+        contextData={{ mockProfile, mockRepository }}
+      />
     </div>
   );
 };

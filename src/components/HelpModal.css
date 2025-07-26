@@ -389,3 +389,45 @@
 .slide-dot.active {
   background: #0066cc;
 }
+
+/* Bug report button styles */
+.bug-report-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.bug-type-btn {
+  background: white;
+  border: 2px solid #0066cc;
+  border-radius: 8px;
+  padding: 16px;
+  color: #0066cc;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bug-type-btn:hover {
+  background: #0066cc;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.bug-type-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .bug-type-btn {
+    padding: 12px;
+    font-size: 13px;
+  }
+}

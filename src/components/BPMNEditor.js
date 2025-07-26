@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 import { Octokit } from '@octokit/rest';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './BPMNEditor.css';
 
 const BPMNEditor = () => {
@@ -462,6 +463,11 @@ const BPMNEditor = () => {
           </div>
         </div>
       )}
+      
+      <ContextualHelpMascot 
+        pageId="bpmn-editor"
+        contextData={{ profile, repository, component, selectedFile }}
+      />
     </div>
   );
 };

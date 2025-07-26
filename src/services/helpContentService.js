@@ -1,6 +1,72 @@
 // Help Content Service - Provides page-specific help topics and content
 class HelpContentService {
   constructor() {
+    // Universal help topics that appear on all pages
+    this.universalTopics = {
+      bugReport: {
+        id: 'report-sgex-bug',
+        title: 'Report a SGeX bug',
+        type: 'slideshow',
+        content: [
+          {
+            title: 'Report a Bug or Issue',
+            content: `
+              <p>Help us improve SGeX by reporting bugs and issues:</p>
+              <h4>What type of issue are you experiencing?</h4>
+              <div class="bug-report-options">
+                <button class="bug-type-btn" onclick="window.open('https://github.com/litlfred/sgex/issues/new?template=bug_report.md&labels=bug', '_blank')">
+                  🐛 Bug Report - Something isn't working correctly
+                </button>
+                <button class="bug-type-btn" onclick="window.open('https://github.com/litlfred/sgex/issues/new?template=feature_request.md&labels=enhancement', '_blank')">
+                  ✨ Feature Request - Suggest a new feature or improvement
+                </button>
+                <button class="bug-type-btn" onclick="window.open('https://github.com/litlfred/sgex/issues/new?template=question.md&labels=question', '_blank')">
+                  ❓ Question - Ask for help or clarification
+                </button>
+                <button class="bug-type-btn" onclick="window.open('https://github.com/litlfred/sgex/issues/new?labels=documentation', '_blank')">
+                  📚 Documentation Issue - Report problems with documentation
+                </button>
+              </div>
+              <div class="help-tip">
+                <strong>💡 Tip:</strong> Please provide as much detail as possible including steps to reproduce, expected behavior, and actual behavior.
+              </div>
+            `
+          }
+        ]
+      },
+      dakFeedback: {
+        id: 'provide-dak-feedback',
+        title: 'Provide DAK Feedback',
+        type: 'slideshow',
+        content: [
+          {
+            title: 'Provide Feedback on this DAK',
+            content: `
+              <p>Share feedback about this Digital Adaptation Kit (DAK):</p>
+              <h4>What type of feedback do you have?</h4>
+              <div class="bug-report-options">
+                <button class="bug-type-btn" onclick="this.openDakIssue('bug')">
+                  🐛 DAK Bug - Issue with this specific DAK content
+                </button>
+                <button class="bug-type-btn" onclick="this.openDakIssue('improvement')">
+                  📈 DAK Improvement - Suggest enhancements to this DAK
+                </button>
+                <button class="bug-type-btn" onclick="this.openDakIssue('content')">
+                  📝 Content Issue - Problems with clinical content or logic
+                </button>
+                <button class="bug-type-btn" onclick="this.openDakIssue('question')">
+                  ❓ DAK Question - Ask about this DAK's implementation
+                </button>
+              </div>
+              <div class="help-tip">
+                <strong>💡 Note:</strong> This will open an issue in the selected DAK repository for targeted feedback.
+              </div>
+            `
+          }
+        ]
+      }
+    };
+
     this.helpTopics = {
       'landing-page-unauthenticated': [
         {
@@ -168,13 +234,125 @@ class HelpContentService {
             }
           ]
         }
+      ],
+      'dak-selection': [
+        {
+          id: 'choosing-dak-repository',
+          title: 'Selecting the Right DAK Repository',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Understanding DAK Repository Types',
+              content: `
+                <p>Choose the right repository based on your workflow:</p>
+                <ul>
+                  <li><strong>Published DAKs:</strong> Official WHO repositories with complete implementations</li>
+                  <li><strong>Community DAKs:</strong> Community-maintained repositories with adaptations</li>
+                  <li><strong>Template DAKs:</strong> Starting templates for creating new DAKs</li>
+                  <li><strong>Private DAKs:</strong> Your private repositories or organization-specific DAKs</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💡 Tip:</strong> Look for the "SMART Guidelines" badge to ensure compatibility.
+                </div>
+              `
+            }
+          ]
+        }
+      ],
+      'organization-selection': [
+        {
+          id: 'selecting-organization',
+          title: 'Choosing an Organization',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Organization vs Personal Account',
+              content: `
+                <p>Decide where to create or fork your DAK:</p>
+                <ul>
+                  <li><strong>Personal Account:</strong> For individual development and experimentation</li>
+                  <li><strong>Organization Account:</strong> For team collaboration and official implementations</li>
+                  <li><strong>WHO Official:</strong> Only for authorized WHO contributors</li>
+                </ul>
+                <div class="help-warning">
+                  <strong>⚠️ Important:</strong> Make sure you have the necessary permissions for the selected organization.
+                </div>
+              `
+            }
+          ]
+        }
+      ],
+      'bpmn-editor': [
+        {
+          id: 'using-bpmn-editor',
+          title: 'Using the BPMN Editor',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'BPMN Business Process Modeling',
+              content: `
+                <p>The BPMN editor helps you create and modify business process workflows:</p>
+                <ul>
+                  <li><strong>Drag and Drop:</strong> Use the palette to add process elements</li>
+                  <li><strong>Connect Elements:</strong> Click and drag to create sequence flows</li>
+                  <li><strong>Properties Panel:</strong> Configure element properties and conditions</li>
+                  <li><strong>Validation:</strong> The editor highlights errors and warnings</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💡 Tip:</strong> BPMN processes define the clinical workflow and decision logic for your DAK.
+                </div>
+              `
+            }
+          ]
+        }
+      ],
+      'component-editor': [
+        {
+          id: 'component-editor-overview',
+          title: 'Understanding the Component Editor',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'DAK Component Types',
+              content: `
+                <p>The component editor provides specialized interfaces for different DAK components:</p>
+                <h4>Business Logic Components</h4>
+                <ul>
+                  <li><strong>Business Processes:</strong> BPMN workflow editor</li>
+                  <li><strong>Decision Logic:</strong> DMN decision table editor</li>
+                  <li><strong>Forms:</strong> Structured questionnaire builder</li>
+                </ul>
+                <h4>Technical Components</h4>
+                <ul>
+                  <li><strong>FHIR Resources:</strong> Profile and extension definitions</li>
+                  <li><strong>Terminology:</strong> Code systems and value sets</li>
+                  <li><strong>Test Data:</strong> Example data and test cases</li>
+                </ul>
+              `
+            }
+          ]
+        }
       ]
     };
   }
 
   // Get help topics for a specific page
-  getHelpTopicsForPage(pageId) {
-    return this.helpTopics[pageId] || [];
+  getHelpTopicsForPage(pageId, contextData = {}) {
+    const pageTopics = this.helpTopics[pageId] || [];
+    const universalTopics = this.getUniversalTopics(contextData);
+    return [...pageTopics, ...universalTopics];
+  }
+
+  // Get universal topics based on context (e.g., if DAK is selected)
+  getUniversalTopics(contextData = {}) {
+    const topics = [this.universalTopics.bugReport];
+    
+    // Add DAK feedback if we have DAK context
+    if (contextData.selectedDak || contextData.repository) {
+      topics.push(this.universalTopics.dakFeedback);
+    }
+    
+    return topics;
   }
 
   // Get a specific help topic by ID
@@ -188,10 +366,9 @@ class HelpContentService {
     return null;
   }
 
-  // Check if a page has help topics
-  hasHelpTopics(pageId) {
-    const topics = this.getHelpTopicsForPage(pageId);
-    return topics && topics.length > 0;
+  // Check if a page has help topics (now always true since we have universal topics)
+  hasHelpTopics(pageId, contextData = {}) {
+    return true; // Always true now due to universal topics
   }
 
   // Add a help topic to a page
@@ -205,6 +382,36 @@ class HelpContentService {
   // Get all available page IDs that have help content
   getAvailablePages() {
     return Object.keys(this.helpTopics);
+  }
+
+  // Helper method to open DAK-specific issues
+  openDakIssue(issueType, dakRepository) {
+    if (!dakRepository) {
+      console.warn('No DAK repository specified for feedback');
+      return;
+    }
+
+    const baseUrl = `https://github.com/${dakRepository.owner}/${dakRepository.name}/issues/new`;
+    let url = baseUrl;
+
+    switch (issueType) {
+      case 'bug':
+        url += '?template=bug_report.md&labels=bug,dak-issue';
+        break;
+      case 'improvement':
+        url += '?template=feature_request.md&labels=enhancement,dak-improvement';
+        break;
+      case 'content':
+        url += '?labels=content-issue,clinical-content';
+        break;
+      case 'question':
+        url += '?template=question.md&labels=question,dak-question';
+        break;
+      default:
+        url += '?labels=dak-feedback';
+    }
+
+    window.open(url, '_blank');
   }
 }
 
