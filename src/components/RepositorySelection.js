@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import repositoryCacheService from '../services/repositoryCacheService';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import './RepositorySelection.css';
 
@@ -13,13 +14,42 @@ const RepositorySelection = () => {
   
   const profile = location.state?.profile;
 
-  const fetchRepositories = useCallback(async () => {
+  const fetchRepositories = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     
     try {
-      // Use GitHub service to fetch real repositories
-      const repos = await githubService.getRepositories(profile.login, profile.type);
+      const profileType = profile.type;
+      
+      // First, check cache unless we're forcing a refresh
+      if (!forceRefresh) {
+        let cachedRepos = null;
+        try {
+          cachedRepos = repositoryCacheService.getCachedRepositories(profile.login, profileType);
+        } catch (cacheError) {
+          console.warn('Error accessing repository cache:', cacheError);
+        }
+        
+        if (cachedRepos) {
+          // Use cached repositories
+          console.log(`Using cached repositories for ${profile.login} (${profileType})`);
+          setRepositories(cachedRepos.repositories);
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // No cached data or forced refresh - fetch from GitHub
+      console.log(`Fetching fresh repositories for ${profile.login} (${profileType})`);
+      const repos = await githubService.getRepositories(profile.login, profileType);
+      
+      // Cache the fetched repositories
+      try {
+        repositoryCacheService.setCachedRepositories(profile.login, profileType, repos);
+      } catch (cacheError) {
+        console.warn('Error caching repositories:', cacheError);
+      }
+      
       setRepositories(repos);
     } catch (error) {
       console.error('Error fetching repositories:', error);
@@ -98,7 +128,7 @@ const RepositorySelection = () => {
             <div className="error-state">
               <h3>Error loading repositories</h3>
               <p>{error}</p>
-              <button onClick={() => fetchRepositories()} className="retry-btn">
+              <button onClick={() => fetchRepositories(true)} className="retry-btn">
                 Try Again
               </button>
             </div>
