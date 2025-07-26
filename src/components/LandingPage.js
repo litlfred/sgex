@@ -10,7 +10,50 @@ const LandingPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [dakCounts, setDakCounts] = useState({});
+  const [countingInProgress, setCountingInProgress] = useState(false);
   const navigate = useNavigate();
+
+  const fetchDakRepositoryCounts = useCallback(async (profiles) => {
+    if (!githubService.isAuth()) return {};
+    
+    setCountingInProgress(true);
+    const counts = {};
+    
+    try {
+      // Count DAK repositories for each profile in parallel
+      const countPromises = profiles.map(async (profile) => {
+        try {
+          const repositories = await githubService.getSmartGuidelinesRepositories(
+            profile.login, 
+            profile.type === 'user' ? 'user' : 'org'
+          );
+          return { 
+            key: `${profile.type}-${profile.login}`, 
+            count: repositories.length 
+          };
+        } catch (error) {
+          console.warn(`Failed to count DAK repos for ${profile.login}:`, error);
+          return { 
+            key: `${profile.type}-${profile.login}`, 
+            count: 0 
+          };
+        }
+      });
+      
+      const results = await Promise.all(countPromises);
+      results.forEach(({ key, count }) => {
+        counts[key] = count;
+      });
+      
+    } catch (error) {
+      console.error('Error fetching DAK repository counts:', error);
+    } finally {
+      setCountingInProgress(false);
+    }
+    
+    return counts;
+  }, []);
 
   const fetchOrganizations = useCallback(async () => {
     try {
@@ -49,6 +92,7 @@ const LandingPage = () => {
       }
       
       setOrganizations(orgsData);
+      return orgsData;
     } catch (error) {
       console.error('Error fetching organizations:', error);
       
@@ -64,6 +108,7 @@ const LandingPage = () => {
         isWHO: true
       };
       setOrganizations([whoOrganization]);
+      return [whoOrganization];
     }
   }, []);
 
@@ -80,7 +125,18 @@ const LandingPage = () => {
       setUser(userData);
       
       // Fetch organizations separately
-      await fetchOrganizations();
+      const orgsData = await fetchOrganizations();
+      
+      // Prepare profiles for counting DAK repositories
+      const profiles = [
+        { login: userData.login, type: 'user' },
+        ...orgsData.map(org => ({ login: org.login, type: 'org' }))
+      ];
+      
+      // Fetch DAK repository counts
+      const counts = await fetchDakRepositoryCounts(profiles);
+      setDakCounts(counts);
+      
     } catch (error) {
       console.error('Error fetching user data:', error);
       setError('Failed to fetch user data. Please check your connection and try again.');
@@ -90,7 +146,7 @@ const LandingPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [fetchOrganizations]);
+  }, [fetchOrganizations, fetchDakRepositoryCounts]);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -113,7 +169,18 @@ const LandingPage = () => {
             setUser(userData);
             
             // Fetch organizations separately
-            await fetchOrganizations();
+            const orgsData = await fetchOrganizations();
+            
+            // Prepare profiles for counting DAK repositories
+            const profiles = [
+              { login: userData.login, type: 'user' },
+              ...orgsData.map(org => ({ login: org.login, type: 'org' }))
+            ];
+            
+            // Fetch DAK repository counts
+            const counts = await fetchDakRepositoryCounts(profiles);
+            setDakCounts(counts);
+            
           } catch (error) {
             console.error('Error fetching user data:', error);
             setError('Failed to fetch user data. Please check your connection and try again.');
@@ -131,7 +198,7 @@ const LandingPage = () => {
     };
 
     initializeAuth();
-  }, [fetchOrganizations]);
+  }, [fetchOrganizations, fetchDakRepositoryCounts]);
 
   const handleAuthSuccess = (token, octokitInstance) => {
     // Store token in session storage for this session
@@ -240,10 +307,22 @@ const LandingPage = () => {
                 className="profile-card"
                 onClick={() => handleProfileSelect({ type: 'user', ...user })}
               >
-                <img src={user?.avatar_url} alt="Personal profile" />
+                <div className="profile-card-header">
+                  <img src={user?.avatar_url} alt="Personal profile" />
+                  {dakCounts[`user-${user?.login}`] > 0 && (
+                    <div className="dak-count-badge">
+                      {dakCounts[`user-${user?.login}`]}
+                    </div>
+                  )}
+                </div>
                 <h3>{user?.name || user?.login}</h3>
                 <p>Personal repositories</p>
-                <span className="profile-type">Personal</span>
+                <div className="profile-badges">
+                  <span className="profile-type">Personal</span>
+                  {countingInProgress && (
+                    <span className="counting-badge">Scanning...</span>
+                  )}
+                </div>
               </div>
               
               {/* Organization Profiles */}
@@ -253,15 +332,25 @@ const LandingPage = () => {
                   className={`profile-card ${org.isWHO ? 'who-org' : ''}`}
                   onClick={() => handleProfileSelect({ type: 'org', ...org })}
                 >
-                  <img 
-                    src={org.avatar_url || `https://github.com/${org.login}.png`} 
-                    alt={`${org.name || org.login} organization`} 
-                  />
+                  <div className="profile-card-header">
+                    <img 
+                      src={org.avatar_url || `https://github.com/${org.login}.png`} 
+                      alt={`${org.name || org.login} organization`} 
+                    />
+                    {dakCounts[`org-${org.login}`] > 0 && (
+                      <div className="dak-count-badge">
+                        {dakCounts[`org-${org.login}`]}
+                      </div>
+                    )}
+                  </div>
                   <h3>{org.name || org.login}</h3>
                   <p>@{org.login}</p>
                   <div className="profile-badges">
                     <span className="profile-type">Organization</span>
                     {org.isWHO && <span className="who-badge">WHO Official</span>}
+                    {countingInProgress && (
+                      <span className="counting-badge">Scanning...</span>
+                    )}
                   </div>
                 </div>
               ))}
