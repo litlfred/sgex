@@ -182,7 +182,7 @@ const DAKSelection = () => {
     }
   }, [getMockRepositories]);
 
-  const fetchRepositories = useCallback(async (forceRescan = false) => {
+  const fetchRepositories = useCallback(async (forceRescan = false, useCachedData = false) => {
     setLoading(true);
     setError(null);
     setIsScanning(false);
@@ -218,19 +218,19 @@ const DAKSelection = () => {
           }
         }));
       } else {
-        // For edit/fork, try to use cached data first if available and not forcing rescan
+        // For edit/fork, show enhanced scanning by default for better user experience
         let cachedData = null;
-        if (!forceRescan && githubService.isAuth()) {
+        if (useCachedData && githubService.isAuth()) {
           cachedData = repositoryCacheService.getCachedRepositories(profile.login, profile.type === 'org' ? 'org' : 'user');
         }
 
-        if (cachedData && !forceRescan) {
-          // Use cached data
+        if (cachedData && useCachedData) {
+          // Use cached data only when explicitly requested
           console.log('Using cached repository data', repositoryCacheService.getCacheInfo(profile.login, profile.type === 'org' ? 'org' : 'user'));
           repos = cachedData.repositories;
           setUsingCachedData(true);
         } else {
-          // Fetch fresh data with progressive scanning
+          // Always show enhanced scanning for authenticated users (fetch fresh data with progressive scanning)
           if (githubService.isAuth()) {
             setIsScanning(true);
             setRepositories([]); // Clear current repositories for progressive updates
@@ -268,7 +268,7 @@ const DAKSelection = () => {
               }
             );
             
-            // Cache the results
+            // Cache the results for future quick access
             repositoryCacheService.setCachedRepositories(
               profile.login, 
               profile.type === 'org' ? 'org' : 'user', 
@@ -354,7 +354,11 @@ const DAKSelection = () => {
   };
 
   const handleRescan = () => {
-    fetchRepositories(true); // Force rescan, ignore cache
+    fetchRepositories(true, false); // Force rescan, don't use cache
+  };
+
+  const handleUseCachedData = () => {
+    fetchRepositories(false, true); // Don't force rescan, use cached data
   };
 
   const handleDemoScanning = async () => {
@@ -435,7 +439,7 @@ const DAKSelection = () => {
             </div>
             {action !== 'create' && githubService.isAuth() && (
               <div className="cache-controls">
-                {usingCachedData && (
+                {usingCachedData ? (
                   <div className="cache-info">
                     <span className="cache-icon">💾</span>
                     <span>Using cached data. </span>
@@ -444,18 +448,32 @@ const DAKSelection = () => {
                       className="rescan-link"
                       disabled={isScanning}
                     >
-                      Rescan for updates
+                      Show Enhanced Scanning
                     </button>
                   </div>
-                )}
-                {!usingCachedData && !isScanning && !loading && (
-                  <button 
-                    onClick={handleRescan} 
-                    className="rescan-btn"
-                    disabled={isScanning}
-                  >
-                    🔄 Rescan Repositories
-                  </button>
+                ) : (
+                  <div className="scan-controls">
+                    {!isScanning && !loading && (
+                      <>
+                        <button 
+                          onClick={handleRescan} 
+                          className="rescan-btn"
+                          disabled={isScanning}
+                        >
+                          🔄 Rescan Repositories
+                        </button>
+                        {repositoryCacheService.getCachedRepositories(profile.login, profile.type === 'org' ? 'org' : 'user') && (
+                          <button 
+                            onClick={handleUseCachedData} 
+                            className="cache-btn"
+                            disabled={isScanning}
+                          >
+                            💾 Use Cached Data
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             )}

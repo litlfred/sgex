@@ -431,6 +431,7 @@
   cursor: pointer;
   font-size: 0.9rem;
   transition: background-color 0.3s ease;
+  margin-right: 0.5rem;
 }
 
 .rescan-btn:hover:not(:disabled) {
@@ -440,6 +441,32 @@
 .rescan-btn:disabled {
   background: #6c757d;
   cursor: not-allowed;
+}
+
+.cache-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
+}
+
+.cache-btn:hover:not(:disabled) {
+  background: #5a6268;
+}
+
+.cache-btn:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+}
+
+.scan-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* Demo controls */
