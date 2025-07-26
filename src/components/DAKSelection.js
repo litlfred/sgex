@@ -14,6 +14,7 @@ const DAKSelection = () => {
   const [error, setError] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(null);
+  const [currentlyScanningRepos, setCurrentlyScanningRepos] = useState(new Set());
   const [usingCachedData, setUsingCachedData] = useState(false);
   
   const { profile, action } = location.state || {};
@@ -131,6 +132,7 @@ const DAKSelection = () => {
     setError(null);
     setIsScanning(false);
     setScanProgress(null);
+    setCurrentlyScanningRepos(new Set());
     setUsingCachedData(false);
     
     try {
@@ -195,6 +197,19 @@ const DAKSelection = () => {
               // onProgress callback - update progress indicator
               (progress) => {
                 setScanProgress(progress);
+                
+                // Track repositories currently being scanned
+                if (progress.started && !progress.completed) {
+                  // Repository is being started
+                  setCurrentlyScanningRepos(prev => new Set([...prev, progress.currentRepo]));
+                } else if (progress.completed) {
+                  // Repository is completed
+                  setCurrentlyScanningRepos(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(progress.currentRepo);
+                    return newSet;
+                  });
+                }
               }
             );
             
@@ -221,6 +236,7 @@ const DAKSelection = () => {
       setLoading(false);
       setIsScanning(false);
       setScanProgress(null);
+      setCurrentlyScanningRepos(new Set());
     }
   }, [profile, action, getMockRepositories]);
 
@@ -249,18 +265,18 @@ const DAKSelection = () => {
       // Go directly to dashboard for editing
       navigate(config.nextRoute, {
         state: {
-          profile,
+          profile: profile,
           repository: selectedRepository,
-          action
+          action: action
         }
       });
     } else {
       // Go to organization selection for fork/create
       navigate(config.nextRoute, {
         state: {
-          profile,
+          profile: profile,
           sourceRepository: selectedRepository,
-          action
+          action: action
         }
       });
     }
@@ -271,7 +287,7 @@ const DAKSelection = () => {
   };
 
   const handleBack = () => {
-    navigate('/dak-action', { state: { profile } });
+    navigate('/dak-action', { state: { profile: profile } });
   };
 
   const formatDate = (dateString) => {
@@ -378,12 +394,34 @@ const DAKSelection = () => {
                     ></div>
                   </div>
                   <div className="progress-info">
+                    {/* Show currently scanning repositories */}
+                    {currentlyScanningRepos.size > 0 && (
+                      <div className="currently-scanning-section">
+                        <div className="scanning-section-title">
+                          <span className="scanning-icon">🔍</span>
+                          <span>Currently Testing:</span>
+                        </div>
+                        <div className="currently-scanning-repos">
+                          {Array.from(currentlyScanningRepos).map((repoName) => (
+                            <div key={repoName} className="scanning-repo-item">
+                              <span className="repo-status-indicator">⚡</span>
+                              <span className="scanning-repo-name">{repoName}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Show most recent progress update */}
                     <div className="current-repo-status">
-                      <span className="status-icon">🔍</span>
+                      <span className="status-icon">
+                        {scanProgress.completed ? '✅' : '🔍'}
+                      </span>
                       <span className="current-repo-name">
-                        {scanProgress.completed ? 'Processed' : 'Checking'}: <strong>{scanProgress.currentRepo}</strong>
+                        {scanProgress.completed ? 'Completed' : 'Testing'}: <strong>{scanProgress.currentRepo}</strong>
                       </span>
                     </div>
+                    
                     <div className="progress-stats">
                       <span className="progress-text">
                         {scanProgress.current}/{scanProgress.total} repositories
