@@ -9,6 +9,9 @@ import RepositorySelection from './components/RepositorySelection';
 import DAKDashboard from './components/DAKDashboard';
 import ComponentEditor from './components/ComponentEditor';
 import BPMNEditor from './components/BPMNEditor';
+import BusinessProcessSelection from './components/BusinessProcessSelection';
+import BPMNViewer from './components/BPMNViewer';
+import BPMNSource from './components/BPMNSource';
 import DocumentationViewer from './components/DocumentationViewer';
 import './App.css';
 
@@ -25,7 +28,10 @@ function App() {
           <Route path="/repositories" element={<RepositorySelection />} />
           <Route path="/dashboard" element={<DAKDashboard />} />
           <Route path="/editor/:componentId" element={<ComponentEditor />} />
+          <Route path="/business-process-selection" element={<BusinessProcessSelection />} />
           <Route path="/bpmn-editor" element={<BPMNEditor />} />
+          <Route path="/bpmn-viewer" element={<BPMNViewer />} />
+          <Route path="/bpmn-source" element={<BPMNSource />} />
           <Route path="/docs/:docId" element={<DocumentationViewer />} />
         </Routes>
       </div>
