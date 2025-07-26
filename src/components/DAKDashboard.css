@@ -313,8 +313,8 @@
 }
 
 .component-card {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 120, 212, 0.1);
+  border: 1px solid rgba(0, 120, 212, 0.2);
   border-radius: 16px;
   padding: 1.5rem;
   cursor: pointer;
@@ -337,10 +337,10 @@
 }
 
 .component-card:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 120, 212, 0.15);
   transform: translateY(-6px);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: rgba(0, 120, 212, 0.4);
 }
 
 .component-card:hover::before {
@@ -429,12 +429,12 @@
 }
 
 .additional-section .component-card {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 120, 212, 0.08);
+  border: 1px solid rgba(0, 120, 212, 0.15);
 }
 
 .additional-section .component-card:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 120, 212, 0.12);
 }
 
 .dashboard-footer {
