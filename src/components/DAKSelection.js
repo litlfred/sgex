@@ -14,12 +14,26 @@ const DAKSelection = () => {
   const [error, setError] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(null);
+  const [currentlyScanningRepos, setCurrentlyScanningRepos] = useState(new Set());
   const [usingCachedData, setUsingCachedData] = useState(false);
   
   const { profile, action } = location.state || {};
+  
+  // Demo mode for testing - remove in production
+  const isDemoMode = !profile && window.location.search.includes('demo=true');
+  const demoProfile = {
+    login: 'testuser',
+    name: 'Test User',
+    avatar_url: 'https://github.com/testuser.png',
+    type: 'user'
+  };
+  const demoAction = 'edit';
+  
+  const effectiveProfile = profile || (isDemoMode ? demoProfile : null);
+  const effectiveAction = action || (isDemoMode ? demoAction : null);
 
   const getActionConfig = () => {
-    switch (action) {
+    switch (effectiveAction) {
       case 'edit':
         return {
           title: 'Select DAK to Edit',
@@ -52,15 +66,61 @@ const DAKSelection = () => {
     }
   };
 
+  const simulateDemoScanning = async () => {
+    setIsScanning(true);
+    setRepositories([]); // Clear current repositories
+    
+    const mockRepos = getMockRepositories();
+    // Simulate progressive scanning with delays
+    for (let i = 0; i < mockRepos.length; i++) {
+      const repo = mockRepos[i];
+      
+      // Simulate starting to scan this repository
+      setScanProgress({
+        current: i + 1,
+        total: mockRepos.length,
+        currentRepo: repo.name,
+        progress: Math.round(((i + 1) / mockRepos.length) * 100),
+        started: true,
+        completed: false
+      });
+      
+      setCurrentlyScanningRepos(prev => new Set([...prev, repo.name]));
+      
+      // Simulate scanning delay
+      await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 2000));
+      
+      // Simulate completion
+      setScanProgress({
+        current: i + 1,
+        total: mockRepos.length,
+        currentRepo: repo.name,
+        progress: Math.round(((i + 1) / mockRepos.length) * 100),
+        completed: true
+      });
+      
+      setCurrentlyScanningRepos(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(repo.name);
+        return newSet;
+      });
+      
+      // Add found repository
+      setRepositories(prevRepos => [...prevRepos, repo]);
+    }
+    
+    return mockRepos;
+  };
+
   const getMockRepositories = useCallback(() => {
     // Mock repositories - only some have SMART guidelines compatibility
     const allMockRepos = [
       {
         id: 1,
         name: 'maternal-health-dak',
-        full_name: `${profile.login}/maternal-health-dak`,
+        full_name: `${effectiveProfile.login}/maternal-health-dak`,
         description: 'WHO SMART Guidelines for Maternal Health - Digital Adaptation Kit',
-        html_url: `https://github.com/${profile.login}/maternal-health-dak`,
+        html_url: `https://github.com/${effectiveProfile.login}/maternal-health-dak`,
         topics: ['who', 'smart-guidelines', 'maternal-health', 'dak'],
         language: 'FML',
         stargazers_count: 12,
@@ -71,9 +131,9 @@ const DAKSelection = () => {
       {
         id: 2,
         name: 'immunization-dak',
-        full_name: `${profile.login}/immunization-dak`,
+        full_name: `${effectiveProfile.login}/immunization-dak`,
         description: 'Digital Adaptation Kit for Immunization Guidelines',
-        html_url: `https://github.com/${profile.login}/immunization-dak`,
+        html_url: `https://github.com/${effectiveProfile.login}/immunization-dak`,
         topics: ['who', 'smart-guidelines', 'immunization', 'vaccines'],
         language: 'FML',
         stargazers_count: 8,
@@ -84,9 +144,9 @@ const DAKSelection = () => {
       {
         id: 3,
         name: 'anc-dak',
-        full_name: `${profile.login}/anc-dak`,
+        full_name: `${effectiveProfile.login}/anc-dak`,
         description: 'Antenatal Care Digital Adaptation Kit based on WHO guidelines',
-        html_url: `https://github.com/${profile.login}/anc-dak`,
+        html_url: `https://github.com/${effectiveProfile.login}/anc-dak`,
         topics: ['who', 'anc', 'antenatal-care', 'smart-guidelines'],
         language: 'FML',
         stargazers_count: 15,
@@ -97,9 +157,9 @@ const DAKSelection = () => {
       {
         id: 4,
         name: 'regular-health-app',
-        full_name: `${profile.login}/regular-health-app`,
+        full_name: `${effectiveProfile.login}/regular-health-app`,
         description: 'A regular health application without SMART Guidelines',
-        html_url: `https://github.com/${profile.login}/regular-health-app`,
+        html_url: `https://github.com/${effectiveProfile.login}/regular-health-app`,
         topics: ['health', 'app', 'javascript'],
         language: 'JavaScript',
         stargazers_count: 5,
@@ -110,9 +170,9 @@ const DAKSelection = () => {
       {
         id: 5,
         name: 'medical-database',
-        full_name: `${profile.login}/medical-database`,
+        full_name: `${effectiveProfile.login}/medical-database`,
         description: 'Medical database with FHIR but not SMART Guidelines',
-        html_url: `https://github.com/${profile.login}/medical-database`,
+        html_url: `https://github.com/${effectiveProfile.login}/medical-database`,
         topics: ['fhir', 'database', 'medical'],
         language: 'SQL',
         stargazers_count: 7,
@@ -124,19 +184,20 @@ const DAKSelection = () => {
 
     // Filter to only return SMART guidelines compatible repositories
     return allMockRepos.filter(repo => repo.smart_guidelines_compatible);
-  }, [profile.login]);
+  }, [effectiveProfile.login]);
 
   const fetchRepositories = useCallback(async (forceRescan = false) => {
     setLoading(true);
     setError(null);
     setIsScanning(false);
     setScanProgress(null);
+    setCurrentlyScanningRepos(new Set());
     setUsingCachedData(false);
     
     try {
       let repos = [];
       
-      if (action === 'create') {
+      if (effectiveAction === 'create') {
         // For create action, load templates from configuration
         repos = dakTemplates.dakTemplates.map((template, index) => ({
           id: -(index + 1),
@@ -164,12 +225,12 @@ const DAKSelection = () => {
         // For edit/fork, try to use cached data first if available and not forcing rescan
         let cachedData = null;
         if (!forceRescan && githubService.isAuth()) {
-          cachedData = repositoryCacheService.getCachedRepositories(profile.login, profile.type === 'org' ? 'org' : 'user');
+          cachedData = repositoryCacheService.getCachedRepositories(effectiveProfile.login, effectiveProfile.type === 'org' ? 'org' : 'user');
         }
 
         if (cachedData && !forceRescan) {
           // Use cached data
-          console.log('Using cached repository data', repositoryCacheService.getCacheInfo(profile.login, profile.type === 'org' ? 'org' : 'user'));
+          console.log('Using cached repository data', repositoryCacheService.getCacheInfo(effectiveProfile.login, effectiveProfile.type === 'org' ? 'org' : 'user'));
           repos = cachedData.repositories;
           setUsingCachedData(true);
         } else {
@@ -179,8 +240,8 @@ const DAKSelection = () => {
             setRepositories([]); // Clear current repositories for progressive updates
             
             repos = await githubService.getSmartGuidelinesRepositoriesProgressive(
-              profile.login, 
-              profile.type === 'org' ? 'org' : 'user',
+              effectiveProfile.login, 
+              effectiveProfile.type === 'org' ? 'org' : 'user',
               // onRepositoryFound callback - add repo to list immediately
               (foundRepo) => {
                 setRepositories(prevRepos => {
@@ -195,18 +256,36 @@ const DAKSelection = () => {
               // onProgress callback - update progress indicator
               (progress) => {
                 setScanProgress(progress);
+                
+                // Track repositories currently being scanned
+                if (progress.started && !progress.completed) {
+                  // Repository is being started
+                  setCurrentlyScanningRepos(prev => new Set([...prev, progress.currentRepo]));
+                } else if (progress.completed) {
+                  // Repository is completed
+                  setCurrentlyScanningRepos(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(progress.currentRepo);
+                    return newSet;
+                  });
+                }
               }
             );
             
             // Cache the results
             repositoryCacheService.setCachedRepositories(
-              profile.login, 
-              profile.type === 'org' ? 'org' : 'user', 
+              effectiveProfile.login, 
+              effectiveProfile.type === 'org' ? 'org' : 'user', 
               repos
             );
           } else {
             // Fallback to mock repositories for demonstration
-            repos = getMockRepositories();
+            if (isDemoMode && forceRescan) {
+              // In demo mode with rescan, simulate progressive scanning
+              repos = await simulateDemoScanning();
+            } else {
+              repos = getMockRepositories();
+            }
           }
         }
       }
@@ -221,17 +300,20 @@ const DAKSelection = () => {
       setLoading(false);
       setIsScanning(false);
       setScanProgress(null);
+      setCurrentlyScanningRepos(new Set());
     }
-  }, [profile, action, getMockRepositories]);
+  }, [effectiveProfile, effectiveAction, getMockRepositories]);
 
   useEffect(() => {
-    if (!profile || !action) {
-      navigate('/');
-      return;
+    if (!effectiveProfile || !effectiveAction) {
+      if (!isDemoMode) {
+        navigate('/');
+        return;
+      }
     }
     
     fetchRepositories();
-  }, [profile, action, navigate, fetchRepositories]);
+  }, [effectiveProfile, effectiveAction, navigate, fetchRepositories, isDemoMode]);
 
   const handleRepositorySelect = (repo) => {
     setSelectedRepository(repo);
@@ -245,22 +327,22 @@ const DAKSelection = () => {
 
     const config = getActionConfig();
     
-    if (action === 'edit') {
+    if (effectiveAction === 'edit') {
       // Go directly to dashboard for editing
       navigate(config.nextRoute, {
         state: {
-          profile,
+          profile: effectiveProfile,
           repository: selectedRepository,
-          action
+          action: effectiveAction
         }
       });
     } else {
       // Go to organization selection for fork/create
       navigate(config.nextRoute, {
         state: {
-          profile,
+          profile: effectiveProfile,
           sourceRepository: selectedRepository,
-          action
+          action: effectiveAction
         }
       });
     }
@@ -271,7 +353,7 @@ const DAKSelection = () => {
   };
 
   const handleBack = () => {
-    navigate('/dak-action', { state: { profile } });
+    navigate('/dak-action', { state: { profile: effectiveProfile } });
   };
 
   const formatDate = (dateString) => {
@@ -282,8 +364,10 @@ const DAKSelection = () => {
     });
   };
 
-  if (!profile || !action) {
-    return <div>Redirecting...</div>;
+  if (!effectiveProfile || !effectiveAction) {
+    if (!isDemoMode) {
+      return <div>Redirecting...</div>;
+    }
   }
 
   const config = getActionConfig();
@@ -297,11 +381,11 @@ const DAKSelection = () => {
         </div>
         <div className="profile-info">
           <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
+            src={effectiveProfile.avatar_url || `https://github.com/${effectiveProfile.login}.png`} 
             alt="Profile" 
             className="profile-avatar" 
           />
-          <span>{profile.name || profile.login}</span>
+          <span>{effectiveProfile.name || effectiveProfile.login}</span>
         </div>
       </div>
 
@@ -322,7 +406,7 @@ const DAKSelection = () => {
           <div className="selection-intro">
             <h2>{config.title}</h2>
             <p>{config.description}</p>
-            {action === 'create' && (
+            {effectiveAction === 'create' && (
               <div className="template-notice">
                 <span className="notice-icon">ℹ️</span>
                 <span>You'll create a new repository based on the WHO SMART Guidelines template.</span>
@@ -342,7 +426,7 @@ const DAKSelection = () => {
               </p>
             </div>
             
-            {action !== 'create' && githubService.isAuth() && (
+            {effectiveAction !== 'create' && (isDemoMode || githubService.isAuth()) && (
               <div className="cache-controls">
                 {usingCachedData && (
                   <div className="cache-info">
@@ -363,7 +447,7 @@ const DAKSelection = () => {
                     className="rescan-btn"
                     disabled={isScanning}
                   >
-                    🔄 Rescan Repositories
+                    🔄 {isDemoMode ? 'Demo: Rescan Repositories' : 'Rescan Repositories'}
                   </button>
                 )}
               </div>
@@ -390,12 +474,34 @@ const DAKSelection = () => {
                     ></div>
                   </div>
                   <div className="progress-info">
+                    {/* Show currently scanning repositories */}
+                    {currentlyScanningRepos.size > 0 && (
+                      <div className="currently-scanning-section">
+                        <div className="scanning-section-title">
+                          <span className="scanning-icon">🔍</span>
+                          <span>Currently Testing:</span>
+                        </div>
+                        <div className="currently-scanning-repos">
+                          {Array.from(currentlyScanningRepos).map((repoName) => (
+                            <div key={repoName} className="scanning-repo-item">
+                              <span className="repo-status-indicator">⚡</span>
+                              <span className="scanning-repo-name">{repoName}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Show most recent progress update */}
                     <div className="current-repo-status">
-                      <span className="status-icon">🔍</span>
+                      <span className="status-icon">
+                        {scanProgress.completed ? '✅' : '🔍'}
+                      </span>
                       <span className="current-repo-name">
-                        {scanProgress.completed ? 'Processed' : 'Checking'}: <strong>{scanProgress.currentRepo}</strong>
+                        {scanProgress.completed ? 'Completed' : 'Testing'}: <strong>{scanProgress.currentRepo}</strong>
                       </span>
                     </div>
+                    
                     <div className="progress-stats">
                       <span className="progress-text">
                         {scanProgress.current}/{scanProgress.total} repositories
@@ -482,7 +588,7 @@ const DAKSelection = () => {
             <div className="empty-state">
               <h3>No repositories found</h3>
               <p>
-                {action === 'create' 
+                {effectiveAction === 'create' 
                   ? 'Unable to load the WHO template repository.'
                   : 'No DAK repositories found with SMART Guidelines compatibility.'
                 }
