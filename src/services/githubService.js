@@ -332,16 +332,6 @@ class GitHubService {
 
       // Process repositories concurrently with rate limiting
       const processor = async (repo, index) => {
-        // Notify progress with current repository being checked
-        if (onProgress) {
-          onProgress({
-            current: index + 1,
-            total: repositories.length,
-            currentRepo: repo.name,
-            progress: Math.round(((index + 1) / repositories.length) * 100)
-          });
-        }
-
         const isCompatible = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
         
         if (isCompatible) {
@@ -365,7 +355,7 @@ class GitHubService {
       const results = await processConcurrently(repositories, processor, {
         concurrency: 5,
         onProgress: (completed, total, repo, result) => {
-          // Additional progress callback for completed items
+          // Progress callback for completed items
           if (onProgress) {
             onProgress({
               current: completed,
@@ -373,6 +363,19 @@ class GitHubService {
               currentRepo: repo.name,
               progress: Math.round((completed / total) * 100),
               completed: true
+            });
+          }
+        },
+        onItemStart: (repo, index) => {
+          // Progress callback for started items
+          if (onProgress) {
+            onProgress({
+              current: index + 1,
+              total: repositories.length,
+              currentRepo: repo.name,
+              progress: Math.round(((index + 1) / repositories.length) * 100),
+              completed: false,
+              started: true
             });
           }
         }

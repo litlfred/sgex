@@ -10,13 +10,15 @@
  * @param {number} options.concurrency - Maximum concurrent operations (default: 5)
  * @param {Function} options.onProgress - Progress callback (current, total, item, result)
  * @param {Function} options.onItemComplete - Callback when item completes (item, result, error)
+ * @param {Function} options.onItemStart - Callback when item starts processing (item, index)
  * @returns {Promise<Array>} Array of results (in original order)
  */
 export async function processConcurrently(items, processor, options = {}) {
   const {
     concurrency = 5,
     onProgress = null,
-    onItemComplete = null
+    onItemComplete = null,
+    onItemStart = null
   } = options;
 
   if (!items || items.length === 0) {
@@ -34,6 +36,11 @@ export async function processConcurrently(items, processor, options = {}) {
   const worker = async () => {
     while (queue.length > 0) {
       const { item, index } = queue.shift();
+      
+      // Notify that processing is starting
+      if (onItemStart) {
+        onItemStart(item, index);
+      }
       
       try {
         const result = await processor(item, index);
