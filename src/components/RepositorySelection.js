@@ -46,6 +46,10 @@ const RepositorySelection = () => {
     });
   };
 
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -62,7 +66,7 @@ const RepositorySelection = () => {
     <div className="repository-selection">
       <div className="repo-header">
         <div className="who-branding">
-          <h1>SGEX Workbench</h1>
+          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="profile-info">

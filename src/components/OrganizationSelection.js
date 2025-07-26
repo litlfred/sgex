@@ -207,6 +207,10 @@ const OrganizationSelection = () => {
     });
   };
 
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
+
   if (!profile || !sourceRepository || !action) {
     return <div>Redirecting...</div>;
   }
@@ -236,7 +240,7 @@ const OrganizationSelection = () => {
     <div className="organization-selection">
       <div className="org-header">
         <div className="who-branding">
-          <h1>SGEX Workbench</h1>
+          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="profile-info">

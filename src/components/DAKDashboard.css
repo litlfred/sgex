@@ -22,6 +22,16 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+.who-branding h1.clickable-title {
+  cursor: pointer;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.who-branding h1.clickable-title:hover {
+  color: #90caf9;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
 .who-branding .subtitle {
   color: rgba(255, 255, 255, 0.95);
   margin: 0.2rem 0 0 0;
