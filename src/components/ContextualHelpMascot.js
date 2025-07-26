@@ -91,7 +91,14 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                         className="help-topic-btn"
                         onClick={() => handleHelpTopicClick(topic)}
                       >
-                        {topic.title}
+                        {topic.badge && (
+                          <img 
+                            src={topic.badge} 
+                            alt="" 
+                            className="help-topic-badge"
+                          />
+                        )}
+                        <span className="help-topic-title">{topic.title}</span>
                       </button>
                     ))}
                   </div>
