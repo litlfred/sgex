@@ -74,7 +74,7 @@ Best regards,
   const getHelpContent = () => {
     switch (topic) {
       case 'github-token':
-      case 'oauth-help':
+      case 'pat-help':
         return {
           title: 'GitHub Authentication Help',
           content: (
@@ -82,15 +82,15 @@ Best regards,
               <div className="mascot-message">
                 <img src="/sgex/mascot-full.svg" alt="SGEX Helper" className="help-mascot" />
                 <div className="message-bubble">
-                  <p>SGEX Workbench now uses GitHub OAuth for secure authentication!</p>
+                  <p>SGEX Workbench uses GitHub Personal Access Tokens for secure authentication!</p>
                   <p><strong>How it works:</strong></p>
                   <ul>
-                    <li>Click "Sign in with GitHub" to begin</li>
-                    <li>You'll get a code to enter on GitHub's website</li>
-                    <li>Authorize the SGEX Workbench application</li>
-                    <li>You'll be automatically logged in!</li>
+                    <li>Create a Personal Access Token in your GitHub settings</li>
+                    <li>Enter the token in the login form</li>
+                    <li>SGEX will securely connect to your GitHub repositories</li>
+                    <li>No backend server required - works entirely in your browser!</li>
                   </ul>
-                  <p>This is much simpler and more secure than personal access tokens.</p>
+                  <p>This approach ensures compliance with our no-backend requirement while keeping your data secure.</p>
                   <p>If you're having trouble, please use the menu above to get additional support.</p>
                 </div>
               </div>

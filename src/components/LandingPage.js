@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import DeviceFlowLogin from './DeviceFlowLogin';
-import { DEFAULT_SCOPES } from '../services/../config/oauth';
+import PATLogin from './PATLogin';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -181,9 +180,8 @@ const LandingPage = () => {
             
             <div className="auth-section">
               <p>Connect your GitHub account to get started:</p>
-              <DeviceFlowLogin 
+              <PATLogin 
                 onAuthSuccess={handleAuthSuccess}
-                requiredScopes={DEFAULT_SCOPES}
               />
               
               {error && (

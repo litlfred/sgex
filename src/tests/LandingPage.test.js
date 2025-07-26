@@ -17,10 +17,10 @@ jest.mock('../services/githubService', () => ({
   }
 }));
 
-// Mock device flow login component
-jest.mock('../components/DeviceFlowLogin', () => {
-  return function MockDeviceFlowLogin() {
-    return <div data-testid="device-flow-login">Mock Device Flow Login</div>;
+// Mock PAT login component
+jest.mock('../components/PATLogin', () => {
+  return function MockPATLogin() {
+    return <div data-testid="pat-login">Mock PAT Login</div>;
   };
 });
 
@@ -34,6 +34,6 @@ describe('LandingPage', () => {
     
     expect(screen.getByText('SGEX Workbench')).toBeInTheDocument();
     expect(screen.getByText('WHO SMART Guidelines Exchange')).toBeInTheDocument();
-    expect(screen.getByTestId('device-flow-login')).toBeInTheDocument();
+    expect(screen.getByTestId('pat-login')).toBeInTheDocument();
   });
 });

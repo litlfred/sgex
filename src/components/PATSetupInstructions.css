@@ -1,0 +1,173 @@
+.pat-setup-instructions {
+  background: #f8f9fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  color: #24292e;
+}
+
+.setup-content h3 {
+  margin: 0 0 1rem 0;
+  color: #0366d6;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.setup-content p {
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+  color: #586069;
+}
+
+.setup-steps {
+  margin: 1.5rem 0;
+}
+
+.step {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.step:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.step h4 {
+  margin: 0 0 0.5rem 0;
+  color: #24292e;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step p {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.step ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.step li {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #586069;
+}
+
+.step li strong {
+  color: #24292e;
+  font-weight: 600;
+}
+
+.warning-note {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #856404;
+}
+
+.benefits-section,
+.security-note {
+  background: white;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.benefits-section h4,
+.security-note h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.benefits-section h4 {
+  color: #28a745;
+}
+
+.security-note h4 {
+  color: #6f42c1;
+}
+
+.benefits-section ul,
+.security-note ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.benefits-section li,
+.security-note li {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #586069;
+}
+
+.help-links {
+  background: #e6f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1.5rem;
+}
+
+.help-links p {
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  color: #0366d6;
+}
+
+.help-links ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.help-links li {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.help-links a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.help-links a:hover {
+  text-decoration: underline;
+}
+
+.setup-content a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.setup-content a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .pat-setup-instructions {
+    padding: 1rem;
+  }
+  
+  .step ul,
+  .benefits-section ul,
+  .security-note ul,
+  .help-links ul {
+    padding-left: 1rem;
+  }
+}
