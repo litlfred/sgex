@@ -7,6 +7,10 @@ const { execSync } = require('child_process');
 /**
  * QA Report Generator for SGEX Workbench
  * Generates a styled HTML QA report that matches the SGEX application design
+ * 
+ * IMPORTANT: This file is generated during CI/CD and should not be committed to the repository.
+ * The generated qa-report.html is excluded in .gitignore and the workflow uses paths-ignore
+ * to prevent infinite loops when the generated files would trigger another workflow run.
  */
 
 const generateQAReport = () => {

@@ -33,9 +33,25 @@ const DocumentationViewer = () => {
 
         // For HTML files, redirect to the HTML file directly
         if (docInfo.isHtml) {
-          // Redirect to the HTML file
-          window.location.href = `${process.env.PUBLIC_URL}/docs/${docInfo.file}`;
-          return;
+          // Check if file exists first
+          try {
+            const checkResponse = await fetch(`${process.env.PUBLIC_URL}/docs/${docInfo.file}`, { method: 'HEAD' });
+            if (checkResponse.ok) {
+              // File exists, redirect to it
+              window.location.href = `${process.env.PUBLIC_URL}/docs/${docInfo.file}`;
+              return;
+            } else {
+              // File doesn't exist, show helpful message
+              setContent(`# ${docInfo.title}\n\nThe QA report is generated during deployment and is available on the live site at: [${docInfo.file}](/docs/${docInfo.file})\n\nIf you're viewing this locally, the report will be available after the next deployment to GitHub Pages.`);
+              setLoading(false);
+              return;
+            }
+          } catch (htmlCheckError) {
+            // If check fails, show helpful message
+            setContent(`# ${docInfo.title}\n\nThe QA report is generated during deployment and is available on the live site.\n\nIf you're viewing this locally, the report will be available after the next deployment to GitHub Pages.`);
+            setLoading(false);
+            return;
+          }
         }
 
         // Fetch the markdown file from the docs folder

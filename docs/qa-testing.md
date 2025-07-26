@@ -1,4 +1,4 @@
-# QA Testing Report
+# QA Testing Documentation
 
 ## Overview
 
@@ -6,9 +6,16 @@ The SGEX Workbench includes a comprehensive Quality Assurance (QA) testing syste
 
 ## Accessing the QA Report
 
-The current QA report is available at: **[QA Testing Report](qa-report.html)**
+The QA report is automatically generated during the CI/CD pipeline and is available on the deployed site at: **[/docs/qa-report.html](/docs/qa-report.html)**
 
-This report is automatically generated as part of our Continuous Integration/Continuous Deployment (CI/CD) pipeline and is updated with every commit to the main branch.
+> **Note**: The QA report is generated dynamically during deployment and is not committed to the repository to prevent infinite loops in the CI/CD pipeline. The report is always available on the live site after successful deployment.
+
+## Report Generation Process
+
+1. **Automated Generation**: The QA report is generated on every push to the main branch or pull request
+2. **CI/CD Integration**: Generated as part of the GitHub Actions workflow (`.github/workflows/pages.yml`)
+3. **Deployment Only**: The report files are created during build time and deployed to GitHub Pages but not committed to the repository
+4. **Path Exclusion**: The workflow uses `paths-ignore` to prevent triggering when generated files would be committed
 
 ## What's Included in the QA Report
 
