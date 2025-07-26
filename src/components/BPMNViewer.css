@@ -75,7 +75,7 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: #0078d4;
+  color: white;
   cursor: pointer;
   text-decoration: underline;
   padding: 0;
@@ -83,7 +83,7 @@
 }
 
 .breadcrumb-link:hover {
-  color: #106ebe;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .breadcrumb-separator {
@@ -152,7 +152,7 @@
 
 .action-btn.primary {
   background: #ffffff;
-  color: #0078d4;
+  color: white;
 }
 
 .action-btn.primary:hover {

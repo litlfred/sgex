@@ -75,7 +75,7 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: #0078d4;
+  color: white;
   cursor: pointer;
   text-decoration: underline;
   padding: 0;
@@ -83,7 +83,7 @@
 }
 
 .breadcrumb-link:hover {
-  color: #106ebe;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .breadcrumb-separator {
@@ -277,7 +277,7 @@
 
 .github-view:hover {
   background: #106ebe;
-  border-color: #106ebe;
+  border-color: rgba(255, 255, 255, 0.8);
   transform: translateY(-1px);
 }
 

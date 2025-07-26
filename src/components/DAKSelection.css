@@ -68,14 +68,14 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: #90caf9;
+  color: white;
   cursor: pointer;
   text-decoration: underline;
   font-size: inherit;
 }
 
 .breadcrumb-link:hover {
-  color: white;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .breadcrumb-separator {
@@ -396,7 +396,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  color: #0078d4;
+  color: white;
   font-size: 0.9rem;
   font-style: italic;
   padding: 1rem;
@@ -564,7 +564,7 @@
 
 .scanning-header h3 {
   margin: 0;
-  color: #0078d4;
+  color: white;
   font-size: 1.5rem;
 }
 
@@ -668,7 +668,7 @@
   gap: 0.5rem;
   margin-bottom: 0.75rem;
   font-weight: 600;
-  color: #0078d4;
+  color: white;
   font-size: 1rem;
 }
 
@@ -701,7 +701,7 @@
 
 .scanning-repo-name {
   font-weight: 600;
-  color: #0078d4;
+  color: white;
   font-size: 0.9rem;
 }
 
@@ -743,7 +743,7 @@
 }
 
 .current-repo-name {
-  color: #0078d4;
+  color: white;
   font-weight: 500;
   font-size: 0.95rem;
 }
