@@ -10,7 +10,6 @@ const RepositorySelection = () => {
   const [repositories, setRepositories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [repositoriesLoaded, setRepositoriesLoaded] = useState(false);
   
   const profile = location.state?.profile;
 
@@ -19,54 +18,45 @@ const RepositorySelection = () => {
     setError(null);
     
     try {
-      // If we already have repositories loaded and this isn't a forced refresh,
-      // don't fetch again
-      if (repositoriesLoaded && !forceRefresh) {
-        setLoading(false);
-        return;
+      const profileType = profile.type;
+      
+      // First, check cache unless we're forcing a refresh
+      if (!forceRefresh) {
+        let cachedRepos = null;
+        try {
+          cachedRepos = repositoryCacheService.getCachedRepositories(profile.login, profileType);
+        } catch (cacheError) {
+          console.warn('Error accessing repository cache:', cacheError);
+        }
+        
+        if (cachedRepos) {
+          // Use cached repositories
+          console.log(`Using cached repositories for ${profile.login} (${profileType})`);
+          setRepositories(cachedRepos.repositories);
+          setLoading(false);
+          return;
+        }
       }
       
-      // Check if we have cached repositories that are still fresh (< 24 hours)
-      let cachedRepos = null;
-      try {
-        cachedRepos = repositoryCacheService.getCachedRepositories(profile.login, profile.type);
-      } catch (cacheError) {
-        console.warn('Error accessing repository cache:', cacheError);
-        // Continue to fetch fresh data if cache fails
-      }
-      
-      if (cachedRepos && !forceRefresh) {
-        // Use cached repositories
-        console.log(`Using cached repositories for ${profile.login} (${profile.type})`);
-        setRepositories(cachedRepos.repositories);
-        setRepositoriesLoaded(true);
-        setLoading(false);
-        return;
-      }
-      
-      // No cached data or stale data or forced refresh - fetch from GitHub
-      console.log(`Fetching fresh repositories for ${profile.login} (${profile.type})`);
-      
-      // Use GitHub service to fetch real repositories
-      const repos = await githubService.getRepositories(profile.login, profile.type);
+      // No cached data or forced refresh - fetch from GitHub
+      console.log(`Fetching fresh repositories for ${profile.login} (${profileType})`);
+      const repos = await githubService.getRepositories(profile.login, profileType);
       
       // Cache the fetched repositories
       try {
-        repositoryCacheService.setCachedRepositories(profile.login, profile.type, repos);
+        repositoryCacheService.setCachedRepositories(profile.login, profileType, repos);
       } catch (cacheError) {
         console.warn('Error caching repositories:', cacheError);
-        // Continue even if caching fails
       }
       
       setRepositories(repos);
-      setRepositoriesLoaded(true);
     } catch (error) {
       console.error('Error fetching repositories:', error);
       setError('Failed to fetch repositories. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
-  }, [profile?.login, profile?.type, repositoriesLoaded]);
+  }, [profile]);
 
   useEffect(() => {
     if (!profile) {
@@ -74,14 +64,8 @@ const RepositorySelection = () => {
       return;
     }
     
-    // Reset loaded state when profile changes
-    setRepositoriesLoaded(false);
-    setRepositories([]);
-    
-    // Fetch repositories (will check cache automatically)
     fetchRepositories();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.login, profile?.type, navigate]);
+  }, [profile, navigate, fetchRepositories]);
 
   const handleRepositorySelect = (repo) => {
     navigate('/dashboard', { 

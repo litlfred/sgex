@@ -74,7 +74,7 @@ const LandingPage = () => {
         ...orgsData.map(org => ({ login: org.login, type: 'org' }))
       ];
       
-      // Fetch DAK repository counts inline - use cache when available
+      // Fetch DAK repository counts using cache when available
       if (!githubService.isAuth()) {
         setDakCounts({});
         return;
@@ -87,40 +87,32 @@ const LandingPage = () => {
         // Count DAK repositories for each profile, using cache when available
         const countPromises = profiles.map(async (profile) => {
           try {
-            // Check if we have cached repositories first
+            const profileType = profile.type === 'user' ? 'user' : 'org';
+            
+            // First, check if we have cached repositories
             let cachedRepos = null;
             try {
-              cachedRepos = repositoryCacheService.getCachedRepositories(
-                profile.login, 
-                profile.type === 'user' ? 'user' : 'org'
-              );
+              cachedRepos = repositoryCacheService.getCachedRepositories(profile.login, profileType);
             } catch (cacheError) {
               console.warn(`Error accessing cache for ${profile.login}:`, cacheError);
             }
             
             if (cachedRepos) {
               // Use cached count - no need to scan
-              console.log(`Using cached DAK count for ${profile.login} (${profile.type}): ${cachedRepos.repositories.length}`);
+              console.log(`Using cached DAK count for ${profile.login} (${profileType}): ${cachedRepos.repositories.length}`);
               return { 
                 key: `${profile.type}-${profile.login}`, 
                 count: cachedRepos.repositories.length 
               };
             }
             
-            // No cached data - fetch fresh repositories
-            console.log(`Fetching fresh DAK repositories for ${profile.login} (${profile.type})`);
-            const repositories = await githubService.getSmartGuidelinesRepositories(
-              profile.login, 
-              profile.type === 'user' ? 'user' : 'org'
-            );
+            // No cached data - fetch fresh repositories and cache them
+            console.log(`Fetching fresh DAK repositories for ${profile.login} (${profileType})`);
+            const repositories = await githubService.getSmartGuidelinesRepositories(profile.login, profileType);
             
             // Cache the results for future use
             try {
-              repositoryCacheService.setCachedRepositories(
-                profile.login,
-                profile.type === 'user' ? 'user' : 'org',
-                repositories
-              );
+              repositoryCacheService.setCachedRepositories(profile.login, profileType, repositories);
             } catch (cacheError) {
               console.warn(`Error caching repositories for ${profile.login}:`, cacheError);
             }
