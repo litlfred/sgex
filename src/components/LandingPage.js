@@ -2,7 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
+import oauthService from '../services/oauthService';
 import PATLogin from './PATLogin';
+import OAuthLogin from './OAuthLogin';
+import OAuthSettings from './OAuthSettings';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import './LandingPage.css';
 
@@ -13,6 +16,9 @@ const LandingPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [dakCounts, setDakCounts] = useState({});
+  const [useOAuth, setUseOAuth] = useState(true);
+  const [showPATLogin, setShowPATLogin] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const navigate = useNavigate();
 
@@ -130,16 +136,30 @@ const LandingPage = () => {
 
   // Initial authentication check - runs once on mount
   useEffect(() => {
-    const initializeAuth = () => {
-      // Check if user is already authenticated from previous session
-      const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
-      if (token) {
-        const success = githubService.authenticate(token);
-        if (success) {
-          setIsAuthenticated(true);
-        } else {
-          sessionStorage.removeItem('github_token');
-          localStorage.removeItem('github_token');
+    const initializeAuth = async () => {
+      // Load OAuth tokens first
+      await oauthService.loadTokensFromStorage();
+      
+      // Check if we have OAuth tokens
+      const hasOAuthAccess = oauthService.hasAccess('READ_ONLY') || oauthService.hasAccess('WRITE_ACCESS');
+      
+      if (hasOAuthAccess) {
+        // Use OAuth mode
+        githubService.enableOAuthMode();
+        setIsAuthenticated(true);
+        setUseOAuth(true);
+      } else {
+        // Check for legacy PAT token
+        const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
+        if (token) {
+          const success = githubService.authenticate(token);
+          if (success) {
+            setIsAuthenticated(true);
+            setUseOAuth(false);
+          } else {
+            sessionStorage.removeItem('github_token');
+            localStorage.removeItem('github_token');
+          }
         }
       }
     };
@@ -162,7 +182,23 @@ const LandingPage = () => {
     githubService.authenticateWithOctokit(octokitInstance);
     
     setIsAuthenticated(true);
+    setUseOAuth(false);
     setError(null);
+    fetchUserData();
+  };
+
+  const handleOAuthSuccess = (tokenInfo, user) => {
+    // OAuth tokens are managed by the OAuth service
+    githubService.enableOAuthMode();
+    
+    setIsAuthenticated(true);
+    setUseOAuth(true);
+    setError(null);
+    
+    if (user) {
+      setUser(user);
+    }
+    
     fetchUserData();
   };
 
@@ -172,6 +208,7 @@ const LandingPage = () => {
     setUser(null);
     setOrganizations([]);
     setError(null);
+    setUseOAuth(true); // Default back to OAuth
   };
 
   const handleProfileSelect = (profile) => {
@@ -223,10 +260,38 @@ const LandingPage = () => {
             </p>
             
             <div className="auth-section">
-              <p>Connect your GitHub account to get started:</p>
-              <PATLogin 
-                onAuthSuccess={handleAuthSuccess}
-              />
+              {showPATLogin ? (
+                <div>
+                  <div className="auth-mode-switcher">
+                    <button 
+                      onClick={() => setShowPATLogin(false)}
+                      className="switch-mode-btn"
+                    >
+                      ← Use OAuth Instead (Recommended)
+                    </button>
+                  </div>
+                  
+                  <p>Connect using a Personal Access Token:</p>
+                  <PATLogin 
+                    onAuthSuccess={handleAuthSuccess}
+                  />
+                </div>
+              ) : (
+                <div>
+                  <div className="auth-mode-switcher">
+                    <button 
+                      onClick={() => setShowPATLogin(true)}
+                      className="switch-mode-btn secondary"
+                    >
+                      Use Personal Access Token Instead
+                    </button>
+                  </div>
+                  
+                  <OAuthLogin 
+                    onAuthSuccess={handleOAuthSuccess}
+                  />
+                </div>
+              )}
               
               {error && (
                 <div className="error-message">
@@ -279,7 +344,23 @@ const LandingPage = () => {
           <img src={user?.avatar_url} alt="User avatar" className="user-avatar" />
           <span>{user?.name || user?.login}</span>
           <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-          <button onClick={handleLogout} className="logout-btn">Logout</button>
+          
+          <div className="user-menu">
+            <button 
+              onClick={() => setShowSettings(true)}
+              className="settings-btn"
+              title="OAuth Settings"
+            >
+              ⚙️ Settings
+            </button>
+            <button onClick={handleLogout} className="logout-btn">Logout</button>
+          </div>
+          
+          {useOAuth && (
+            <div className="auth-mode-indicator">
+              <span className="oauth-badge">🔐 OAuth</span>
+            </div>
+          )}
         </div>
       </div>
       
@@ -352,6 +433,11 @@ const LandingPage = () => {
         pageId="landing-page-authenticated"
         position="bottom-right"
         contextData={{ user, organizations }}
+      />
+      
+      <OAuthSettings 
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
       />
     </div>
   );

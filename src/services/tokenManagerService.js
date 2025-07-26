@@ -316,7 +316,7 @@ class TokenManagerService {
 
   // Get component ID from file path
   getComponentFromFilePath(filePath) {
-    for (const [componentId, component] of Object.entries(DAK_COMPONENTS)) {
+    for (const [componentId] of Object.entries(DAK_COMPONENTS)) {
       if (this.validateComponentFilePath(componentId, filePath)) {
         return componentId;
       }

@@ -2,7 +2,6 @@ import { Octokit } from '@octokit/rest';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
 import oauthService from './oauthService';
-import tokenManagerService from './tokenManagerService';
 
 class GitHubService {
   constructor() {

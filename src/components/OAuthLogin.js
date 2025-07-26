@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import oauthService from '../services/oauthService';
-import tokenManagerService, { ACCESS_LEVELS } from '../services/tokenManagerService';
+import { ACCESS_LEVELS } from '../services/tokenManagerService';
 import './OAuthLogin.css';
 
 const OAuthLogin = ({ onAuthSuccess, requiredAccessLevel = 'READ_ONLY', repoOwner = null, repoName = null }) => {

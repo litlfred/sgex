@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import oauthService from '../services/oauthService';
-import tokenManagerService, { ACCESS_LEVELS } from '../services/tokenManagerService';
+import { ACCESS_LEVELS } from '../services/tokenManagerService';
 import OAuthLogin from './OAuthLogin';
 import './OAuthSettings.css';
 
@@ -55,23 +55,6 @@ const OAuthSettings = ({ isOpen, onClose }) => {
       } finally {
         setLoading(false);
       }
-    }
-  };
-
-  const formatTokenKey = (key) => {
-    const parts = key.split(':');
-    const accessLevel = parts[0];
-    const scope = parts[1];
-    
-    const levelInfo = ACCESS_LEVELS[accessLevel];
-    const levelName = levelInfo ? levelInfo.name : accessLevel;
-    
-    if (scope === 'global') {
-      return `${levelName} (Global)`;
-    } else if (scope.endsWith('/*')) {
-      return `${levelName} (${scope.replace('/*', ' Organization')})`;
-    } else {
-      return `${levelName} (${scope})`;
     }
   };
 
