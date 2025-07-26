@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import repositoryCacheService from '../services/repositoryCacheService';
 import './RepositorySelection.css';
 
 const RepositorySelection = () => {
@@ -17,8 +18,37 @@ const RepositorySelection = () => {
     setError(null);
     
     try {
+      // Check if we have cached repositories that are still fresh (< 24 hours)
+      let cachedRepos = null;
+      try {
+        cachedRepos = repositoryCacheService.getCachedRepositories(profile.login, profile.type);
+      } catch (cacheError) {
+        console.warn('Error accessing repository cache:', cacheError);
+        // Continue to fetch fresh data if cache fails
+      }
+      
+      if (cachedRepos) {
+        // Use cached repositories
+        console.log(`Using cached repositories for ${profile.login} (${profile.type})`);
+        setRepositories(cachedRepos.repositories);
+        setLoading(false);
+        return;
+      }
+      
+      // No cached data or stale data - fetch from GitHub
+      console.log(`Fetching fresh repositories for ${profile.login} (${profile.type})`);
+      
       // Use GitHub service to fetch real repositories
       const repos = await githubService.getRepositories(profile.login, profile.type);
+      
+      // Cache the fetched repositories
+      try {
+        repositoryCacheService.setCachedRepositories(profile.login, profile.type, repos);
+      } catch (cacheError) {
+        console.warn('Error caching repositories:', cacheError);
+        // Continue even if caching fails
+      }
+      
       setRepositories(repos);
     } catch (error) {
       console.error('Error fetching repositories:', error);
