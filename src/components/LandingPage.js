@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import repositoryCacheService from '../services/repositoryCacheService';
 import PATLogin from './PATLogin';
 import './LandingPage.css';
 
@@ -73,7 +74,7 @@ const LandingPage = () => {
         ...orgsData.map(org => ({ login: org.login, type: 'org' }))
       ];
       
-      // Fetch DAK repository counts inline
+      // Fetch DAK repository counts inline - use cache when available
       if (!githubService.isAuth()) {
         setDakCounts({});
         return;
@@ -83,13 +84,47 @@ const LandingPage = () => {
       const counts = {};
       
       try {
-        // Count DAK repositories for each profile in parallel
+        // Count DAK repositories for each profile, using cache when available
         const countPromises = profiles.map(async (profile) => {
           try {
+            // Check if we have cached repositories first
+            let cachedRepos = null;
+            try {
+              cachedRepos = repositoryCacheService.getCachedRepositories(
+                profile.login, 
+                profile.type === 'user' ? 'user' : 'org'
+              );
+            } catch (cacheError) {
+              console.warn(`Error accessing cache for ${profile.login}:`, cacheError);
+            }
+            
+            if (cachedRepos) {
+              // Use cached count - no need to scan
+              console.log(`Using cached DAK count for ${profile.login} (${profile.type}): ${cachedRepos.repositories.length}`);
+              return { 
+                key: `${profile.type}-${profile.login}`, 
+                count: cachedRepos.repositories.length 
+              };
+            }
+            
+            // No cached data - fetch fresh repositories
+            console.log(`Fetching fresh DAK repositories for ${profile.login} (${profile.type})`);
             const repositories = await githubService.getSmartGuidelinesRepositories(
               profile.login, 
               profile.type === 'user' ? 'user' : 'org'
             );
+            
+            // Cache the results for future use
+            try {
+              repositoryCacheService.setCachedRepositories(
+                profile.login,
+                profile.type === 'user' ? 'user' : 'org',
+                repositories
+              );
+            } catch (cacheError) {
+              console.warn(`Error caching repositories for ${profile.login}:`, cacheError);
+            }
+            
             return { 
               key: `${profile.type}-${profile.login}`, 
               count: repositories.length 
