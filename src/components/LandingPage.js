@@ -156,40 +156,7 @@ const LandingPage = () => {
         const success = githubService.authenticate(token);
         if (success) {
           setIsAuthenticated(true);
-          // Call fetchUserData directly here
-          setLoading(true);
-          setError(null);
-          
-          try {
-            // Check token permissions first
-            await githubService.checkTokenPermissions();
-            
-            // Fetch user data using GitHub service
-            const userData = await githubService.getCurrentUser();
-            setUser(userData);
-            
-            // Fetch organizations separately
-            const orgsData = await fetchOrganizations();
-            
-            // Prepare profiles for counting DAK repositories
-            const profiles = [
-              { login: userData.login, type: 'user' },
-              ...orgsData.map(org => ({ login: org.login, type: 'org' }))
-            ];
-            
-            // Fetch DAK repository counts
-            const counts = await fetchDakRepositoryCounts(profiles);
-            setDakCounts(counts);
-            
-          } catch (error) {
-            console.error('Error fetching user data:', error);
-            setError('Failed to fetch user data. Please check your connection and try again.');
-            setIsAuthenticated(false);
-            sessionStorage.removeItem('github_token');
-            localStorage.removeItem('github_token');
-          } finally {
-            setLoading(false);
-          }
+          await fetchUserData();
         } else {
           sessionStorage.removeItem('github_token');
           localStorage.removeItem('github_token');
@@ -198,7 +165,7 @@ const LandingPage = () => {
     };
 
     initializeAuth();
-  }, [fetchOrganizations, fetchDakRepositoryCounts]);
+  }, [fetchUserData]);
 
   const handleAuthSuccess = (token, octokitInstance) => {
     // Store token in session storage for this session
