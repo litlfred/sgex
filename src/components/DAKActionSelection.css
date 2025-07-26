@@ -67,14 +67,14 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: #0078d4;
+  color: white;
   cursor: pointer;
   text-decoration: underline;
   font-size: inherit;
 }
 
 .breadcrumb-link:hover {
-  color: #106ebe;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .breadcrumb-separator {

@@ -17,7 +17,7 @@
 
 .who-branding h1 {
   margin: 0;
-  color: #0078d4;
+  color: white;
   font-size: 1.5rem;
   font-weight: 600;
 }
@@ -58,7 +58,7 @@
 
 .context-repo {
   font-weight: 600;
-  color: #0078d4;
+  color: white;
   font-size: 0.875rem;
 }
 
@@ -85,14 +85,14 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: #0078d4;
+  color: white;
   cursor: pointer;
   text-decoration: underline;
   font-size: inherit;
 }
 
 .breadcrumb-link:hover {
-  color: #106ebe;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .breadcrumb-separator {
@@ -356,7 +356,7 @@
 
 .commit-message-input:focus {
   outline: none;
-  border-color: #0078d4;
+  border-color: white;
   box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
 }
 
