@@ -192,6 +192,7 @@ const DAKSelection = () => {
     
     try {
       let repos = [];
+      let cachedData = null;
       
       if (action === 'create') {
         // For create action, load templates from configuration
@@ -217,23 +218,33 @@ const DAKSelection = () => {
               : 'https://github.com/favicon.ico'
           }
         }));
+        setRepositories(repos);
       } else {
-        // For edit/fork, show enhanced scanning by default for better user experience
-        let cachedData = null;
-        if (useCachedData && githubService.isAuth()) {
-          cachedData = repositoryCacheService.getCachedRepositories(profile.login, profile.type === 'org' ? 'org' : 'user');
+        // For edit/fork actions, implement cache-first approach
+        
+        // Always check cache first unless explicitly forcing a rescan
+        if (githubService.isAuth() && !forceRescan) {
+          try {
+            cachedData = repositoryCacheService.getCachedRepositories(profile.login, profile.type === 'org' ? 'org' : 'user');
+          } catch (cacheError) {
+            console.warn('Error accessing repository cache:', cacheError);
+          }
         }
 
-        if (cachedData && useCachedData) {
-          // Use cached data only when explicitly requested
+        if (cachedData && !forceRescan) {
+          // Use cached data - show immediately
           console.log('Using cached repository data', repositoryCacheService.getCacheInfo(profile.login, profile.type === 'org' ? 'org' : 'user'));
           repos = cachedData.repositories;
           setUsingCachedData(true);
+          setRepositories(repos);
         } else {
-          // Always show enhanced scanning for authenticated users (fetch fresh data with progressive scanning)
+          // No cached data or forcing rescan - initiate progressive scanning
           if (githubService.isAuth()) {
+            console.log(forceRescan ? 'Force rescanning repositories...' : 'No cached data, initiating scan...');
             setIsScanning(true);
-            setRepositories([]); // Clear current repositories for progressive updates
+            
+            // Important: Don't clear existing repositories when scanning
+            // This preserves any cached repos that were already displayed
             
             repos = await githubService.getSmartGuidelinesRepositoriesProgressive(
               profile.login, 
@@ -274,15 +285,17 @@ const DAKSelection = () => {
               profile.type === 'org' ? 'org' : 'user', 
               repos
             );
+            
+            // Update repositories with final results (in case callback missed any)
+            setRepositories(repos);
           } else {
             // Fallback to mock repositories with enhanced scanning demonstration
             await simulateEnhancedScanning();
             repos = getMockRepositories();
+            setRepositories(repos);
           }
         }
       }
-      
-      setRepositories(repos);
     } catch (error) {
       console.error('Error fetching repositories:', error);
       setError('Failed to fetch repositories. Please check your connection and try again.');
@@ -302,7 +315,8 @@ const DAKSelection = () => {
       return;
     }
     
-    fetchRepositories();
+    // Always check cache first on initial load
+    fetchRepositories(false, false); // forceRescan=false, useCachedData=false (but still check cache first)
   }, [profile, action, navigate, fetchRepositories]);
 
   const handleRepositorySelect = (repo) => {
@@ -358,7 +372,7 @@ const DAKSelection = () => {
   };
 
   const handleUseCachedData = () => {
-    fetchRepositories(false, true); // Don't force rescan, use cached data
+    fetchRepositories(false, false); // Don't force rescan, check cache first (this should use cache if available)
   };
 
   const handleDemoScanning = async () => {
@@ -441,7 +455,7 @@ const DAKSelection = () => {
                       className="rescan-link"
                       disabled={isScanning}
                     >
-                      Show Enhanced Scanning
+                      {isScanning ? 'Scanning...' : 'Rescan Repositories'}
                     </button>
                   </div>
                 ) : (
@@ -465,6 +479,12 @@ const DAKSelection = () => {
                           </button>
                         )}
                       </>
+                    )}
+                    {isScanning && (
+                      <div className="scanning-indicator">
+                        <span className="scanning-icon">🔍</span>
+                        <span>Scanning in progress...</span>
+                      </div>
                     )}
                   </div>
                 )}

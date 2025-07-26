@@ -56,6 +56,12 @@ describe('DAKSelection Direct Navigation', () => {
       expect(screen.getByText('Select DAK to Edit')).toBeInTheDocument();
     });
 
+    // Wait for repositories to load - in unauthenticated mode, this will use mock data
+    // The simulateEnhancedScanning takes time to complete
+    await waitFor(() => {
+      return screen.queryByText('maternal-health-dak') !== null;
+    }, { timeout: 10000 });
+
     // Find and click on a repository card
     const repoCard = await waitFor(() => 
       screen.getByText('maternal-health-dak')
@@ -95,6 +101,11 @@ describe('DAKSelection Direct Navigation', () => {
       expect(screen.getByText('Select DAK to Fork')).toBeInTheDocument();
     });
 
+    // Wait for repositories to load - in unauthenticated mode, this will use mock data
+    await waitFor(() => {
+      return screen.queryByText('maternal-health-dak') !== null;
+    }, { timeout: 10000 });
+
     // Find and click on a repository card
     const repoCard = await waitFor(() => 
       screen.getByText('maternal-health-dak')
@@ -130,6 +141,11 @@ describe('DAKSelection Direct Navigation', () => {
       expect(screen.getByText('Select DAK to Edit')).toBeInTheDocument();
     });
 
+    // Wait for repositories to load - in unauthenticated mode, this will use mock data
+    await waitFor(() => {
+      return screen.queryByText('maternal-health-dak') !== null;
+    }, { timeout: 10000 });
+
     // Verify the direct selection note is shown
     expect(screen.getByText('Click on a repository above to start editing its components')).toBeInTheDocument();
     
@@ -154,8 +170,15 @@ describe('DAKSelection Direct Navigation', () => {
       expect(screen.getByText('Select DAK to Fork')).toBeInTheDocument();
     });
 
-    // Verify the continue button IS shown for non-edit actions
-    expect(screen.getByText('Continue to Organization Selection')).toBeInTheDocument();
+    // Wait for repositories to load - in unauthenticated mode, this will use mock data
+    await waitFor(() => {
+      return screen.queryByText('maternal-health-dak') !== null;
+    }, { timeout: 10000 });
+
+    // Verify the continue button IS shown for non-edit actions (once repos are loaded)
+    await waitFor(() => {
+      expect(screen.getByText('Continue to Organization Selection')).toBeInTheDocument();
+    });
     
     // Verify the direct selection note is NOT shown
     expect(screen.queryByText('Click on a repository above to start editing its components')).not.toBeInTheDocument();
