@@ -182,8 +182,20 @@ const DAKSelection = () => {
         // Small delay before next repository
         await delay(300);
       }
+      
+      // After all repositories are scanned, stop the scanning state
+      console.log('🎉 Demo scanning completed, stopping scanning state');
+      setTimeout(() => {
+        setIsScanning(false);
+        setScanProgress(null);
+        setCurrentlyScanningRepos(new Set());
+      }, 500); // Small delay to show completion
     } catch (error) {
       console.error('Error in simulated scanning:', error);
+      // Make sure to stop scanning on error
+      setIsScanning(false);
+      setScanProgress(null);
+      setCurrentlyScanningRepos(new Set());
     }
   }, [getMockRepositories]);
 
@@ -343,8 +355,9 @@ const DAKSelection = () => {
     } finally {
       setLoading(false);
       // Don't automatically stop scanning here for authenticated progressive scans
-      // The scanning state is managed by the progress callbacks
-      if (!githubService.isAuth() || action === 'create') {
+      // or for demo scanning - let them manage their own scanning state
+      if (!githubService.isAuth() && action === 'create') {
+        // Only auto-stop for create action when not authenticated
         setIsScanning(false);
         setScanProgress(null);
         setCurrentlyScanningRepos(new Set());
