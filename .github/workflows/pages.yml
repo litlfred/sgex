@@ -2,14 +2,10 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
     paths-ignore:
       - 'docs/qa-report.html'
       - 'docs/github-issues-analysis.md'
   pull_request:
-    branches:
-      - main
     paths-ignore:
       - 'docs/qa-report.html'
       - 'docs/github-issues-analysis.md'
