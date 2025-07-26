@@ -121,13 +121,13 @@
 }
 
 .action-card {
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(0, 120, 212, 0.2);
   border-radius: 12px;
   padding: 2rem;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 120, 212, 0.1);
   backdrop-filter: blur(10px);
 }
 
