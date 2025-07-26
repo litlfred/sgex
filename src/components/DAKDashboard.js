@@ -435,7 +435,7 @@ const DAKDashboard = () => {
             </div>
             <div className="dialog-content">
               <div className="dialog-mascot">
-                <img src="/sgex/mascot-full.svg" alt="SGEX Helper" className="dialog-mascot-img" />
+                <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="dialog-mascot-img" />
                 <div className="mascot-message">
                   <p>You need edit permissions to modify DAK components!</p>
                   <p>Your current token only provides read access to this repository.</p>
