@@ -10,14 +10,22 @@ const RepositorySelection = () => {
   const [repositories, setRepositories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [repositoriesLoaded, setRepositoriesLoaded] = useState(false);
   
   const profile = location.state?.profile;
 
-  const fetchRepositories = useCallback(async () => {
+  const fetchRepositories = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     
     try {
+      // If we already have repositories loaded and this isn't a forced refresh,
+      // don't fetch again
+      if (repositoriesLoaded && !forceRefresh) {
+        setLoading(false);
+        return;
+      }
+      
       // Check if we have cached repositories that are still fresh (< 24 hours)
       let cachedRepos = null;
       try {
@@ -27,15 +35,16 @@ const RepositorySelection = () => {
         // Continue to fetch fresh data if cache fails
       }
       
-      if (cachedRepos) {
+      if (cachedRepos && !forceRefresh) {
         // Use cached repositories
         console.log(`Using cached repositories for ${profile.login} (${profile.type})`);
         setRepositories(cachedRepos.repositories);
+        setRepositoriesLoaded(true);
         setLoading(false);
         return;
       }
       
-      // No cached data or stale data - fetch from GitHub
+      // No cached data or stale data or forced refresh - fetch from GitHub
       console.log(`Fetching fresh repositories for ${profile.login} (${profile.type})`);
       
       // Use GitHub service to fetch real repositories
@@ -50,13 +59,14 @@ const RepositorySelection = () => {
       }
       
       setRepositories(repos);
+      setRepositoriesLoaded(true);
     } catch (error) {
       console.error('Error fetching repositories:', error);
       setError('Failed to fetch repositories. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
-  }, [profile]);
+  }, [profile?.login, profile?.type, repositoriesLoaded]);
 
   useEffect(() => {
     if (!profile) {
@@ -64,8 +74,14 @@ const RepositorySelection = () => {
       return;
     }
     
+    // Reset loaded state when profile changes
+    setRepositoriesLoaded(false);
+    setRepositories([]);
+    
+    // Fetch repositories (will check cache automatically)
     fetchRepositories();
-  }, [profile, navigate, fetchRepositories]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.login, profile?.type, navigate]);
 
   const handleRepositorySelect = (repo) => {
     navigate('/dashboard', { 
@@ -127,7 +143,7 @@ const RepositorySelection = () => {
             <div className="error-state">
               <h3>Error loading repositories</h3>
               <p>{error}</p>
-              <button onClick={() => fetchRepositories()} className="retry-btn">
+              <button onClick={() => fetchRepositories(true)} className="retry-btn">
                 Try Again
               </button>
             </div>
