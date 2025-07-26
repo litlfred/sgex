@@ -38,7 +38,7 @@ const mockSmartRepos = [
   { name: 'another-smart-repo', smart_guidelines_compatible: true }
 ];
 
-describe('LandingPage DAK Count Features', () => {
+describe('LandingPage without DAK Count Features', () => {
   beforeEach(() => {
     // Mock localStorage and sessionStorage
     Storage.prototype.getItem = jest.fn(() => 'mock-token');
@@ -71,7 +71,6 @@ describe('LandingPage DAK Count Features', () => {
     }, { timeout: 5000 });
 
     // Check if user profile is rendered
-    expect(screen.getByText('Test User')).toBeInTheDocument();
     expect(screen.getByText('Personal repositories')).toBeInTheDocument();
 
     // Check if WHO organization is rendered
@@ -82,13 +81,7 @@ describe('LandingPage DAK Count Features', () => {
     expect(screen.getByText('Test Organization')).toBeInTheDocument();
   });
 
-  test('displays DAK repository count badges when repositories are found', async () => {
-    // Mock different counts for different profiles
-    githubService.getSmartGuidelinesRepositories
-      .mockResolvedValueOnce([mockSmartRepos[0]]) // 1 repo for user
-      .mockResolvedValueOnce(mockSmartRepos) // 2 repos for WHO
-      .mockResolvedValueOnce([]); // 0 repos for test org
-
+  test('does not display DAK repository count badges (no automatic scanning)', async () => {
     render(
       <BrowserRouter>
         <LandingPage />
@@ -100,20 +93,15 @@ describe('LandingPage DAK Count Features', () => {
       expect(screen.getByText('Select Profile or Organization')).toBeInTheDocument();
     }, { timeout: 5000 });
 
-    // Wait for DAK counting to complete
-    await waitFor(() => {
-      // Check if DAK count badges are displayed
-      const badges = screen.getAllByText('1');
-      expect(badges.length).toBeGreaterThan(0);
-    }, { timeout: 10000 });
+    // Verify that DAK count badges are NOT displayed (since we removed automatic scanning)
+    expect(screen.queryByText('1')).not.toBeInTheDocument();
+    expect(screen.queryByText('2')).not.toBeInTheDocument();
+    
+    // Verify that getSmartGuidelinesRepositories is NOT called automatically
+    expect(githubService.getSmartGuidelinesRepositories).not.toHaveBeenCalled();
   });
 
-  test('shows scanning indicator while counting DAK repositories', async () => {
-    // Mock a delayed response to test the scanning indicator
-    githubService.getSmartGuidelinesRepositories.mockImplementation(() => 
-      new Promise(resolve => setTimeout(() => resolve(mockSmartRepos), 1000))
-    );
-
+  test('does not show scanning indicator (no automatic scanning)', async () => {
     render(
       <BrowserRouter>
         <LandingPage />
@@ -125,15 +113,12 @@ describe('LandingPage DAK Count Features', () => {
       expect(screen.getByText('Select Profile or Organization')).toBeInTheDocument();
     }, { timeout: 5000 });
 
-    // Check if scanning indicators are shown
-    await waitFor(() => {
-      const scanningElements = screen.getAllByText('Scanning...');
-      expect(scanningElements.length).toBeGreaterThan(0);
-    }, { timeout: 2000 });
+    // Check that scanning indicators are NOT shown (since we removed automatic scanning)
+    expect(screen.queryByText('Scanning...')).not.toBeInTheDocument();
   });
 
-  test('handles DAK repository counting errors gracefully', async () => {
-    // Mock error in repository fetching
+  test('renders without DAK repository scanning errors', async () => {
+    // Mock error in repository fetching (but this should not be called)
     githubService.getSmartGuidelinesRepositories.mockRejectedValue(new Error('API Error'));
 
     render(
@@ -147,9 +132,12 @@ describe('LandingPage DAK Count Features', () => {
       expect(screen.getByText('Select Profile or Organization')).toBeInTheDocument();
     }, { timeout: 5000 });
 
-    // The component should still render without crashing
-    expect(screen.getByText('Test User')).toBeInTheDocument();
+    // The component should still render without issues (and no scanning should occur)
+    expect(screen.getByText('Personal repositories')).toBeInTheDocument();
     expect(screen.getByText('World Health Organization')).toBeInTheDocument();
+    
+    // Verify that getSmartGuidelinesRepositories is NOT called
+    expect(githubService.getSmartGuidelinesRepositories).not.toHaveBeenCalled();
   });
 
   test('displays proper avatar images for organizations', async () => {
