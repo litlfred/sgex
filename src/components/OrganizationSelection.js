@@ -51,35 +51,53 @@ const OrganizationSelection = () => {
         orgsData = await githubService.getUserOrganizations();
       } else {
         // Fallback to mock organizations for demonstration
-        orgsData = getMockOrganizations();
+        orgsData = await getMockOrganizations();
       }
       
-      // Always ensure WHO organization is included
-      const whoOrganization = {
-        id: 'who-organization',
-        login: 'WorldHealthOrganization',
-        display_name: 'World Health Organization',
-        description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
-        avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
-        html_url: 'https://github.com/WorldHealthOrganization',
-        type: 'Organization',
-        permissions: {
-          can_create_repositories: true,
-          can_create_private_repositories: true
-        },
-        plan: {
-          name: 'Organization',
-          private_repos: 'unlimited'
-        },
-        isWHO: true
-      };
-      
-      // Check if WHO organization is already in the list
-      const hasWHO = orgsData.some(org => org.login === 'WorldHealthOrganization');
-      
-      if (!hasWHO) {
-        // Add WHO organization at the beginning of the list
-        orgsData.unshift(whoOrganization);
+      // Always ensure WHO organization is included with fresh data
+      try {
+        const whoOrganization = await githubService.getWHOOrganization();
+        
+        // Check if WHO organization is already in the list
+        const whoIndex = orgsData.findIndex(org => org.login === 'WorldHealthOrganization');
+        
+        if (whoIndex >= 0) {
+          // Replace existing WHO org with fresh data
+          orgsData[whoIndex] = { ...orgsData[whoIndex], ...whoOrganization };
+        } else {
+          // Add WHO organization at the beginning of the list
+          orgsData.unshift(whoOrganization);
+        }
+      } catch (whoError) {
+        console.warn('Could not fetch WHO organization data, using fallback:', whoError);
+        
+        // Fallback to hardcoded WHO organization
+        const whoOrganization = {
+          id: 'who-organization',
+          login: 'WorldHealthOrganization',
+          display_name: 'World Health Organization',
+          description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+          avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+          html_url: 'https://github.com/WorldHealthOrganization',
+          type: 'Organization',
+          permissions: {
+            can_create_repositories: true,
+            can_create_private_repositories: true
+          },
+          plan: {
+            name: 'Organization',
+            private_repos: 'unlimited'
+          },
+          isWHO: true
+        };
+        
+        // Check if WHO organization is already in the list
+        const hasWHO = orgsData.some(org => org.login === 'WorldHealthOrganization');
+        
+        if (!hasWHO) {
+          // Add WHO organization at the beginning of the list
+          orgsData.unshift(whoOrganization);
+        }
       }
       
       setOrganizations(orgsData);
@@ -87,67 +105,135 @@ const OrganizationSelection = () => {
       console.error('Error fetching organizations:', error);
       setError('Failed to fetch organizations. Please check your connection and try again.');
       // Fallback to mock data for demonstration (which includes WHO)
-      setOrganizations(getMockOrganizations());
+      try {
+        const mockOrgs = await getMockOrganizations();
+        setOrganizations(mockOrgs);
+      } catch (mockError) {
+        // Ultimate fallback with hardcoded data
+        setOrganizations([{
+          id: 'who-organization',
+          login: 'WorldHealthOrganization',
+          display_name: 'World Health Organization',
+          description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+          avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+          html_url: 'https://github.com/WorldHealthOrganization',
+          type: 'Organization',
+          permissions: {
+            can_create_repositories: true,
+            can_create_private_repositories: true
+          },
+          plan: {
+            name: 'Organization',
+            private_repos: 'unlimited'
+          },
+          isWHO: true
+        }]);
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const getMockOrganizations = () => {
-    return [
-      {
-        id: 'who-organization',
-        login: 'WorldHealthOrganization',
-        display_name: 'World Health Organization',
-        description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
-        avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
-        html_url: 'https://github.com/WorldHealthOrganization',
-        type: 'Organization',
-        permissions: {
-          can_create_repositories: true,
-          can_create_private_repositories: true
+  const getMockOrganizations = async () => {
+    try {
+      // Try to get fresh WHO data even in mock mode
+      const whoOrganization = await githubService.getWHOOrganization();
+      
+      return [
+        whoOrganization,
+        {
+          id: 1,
+          login: 'my-health-org',
+          display_name: 'My Health Organization',
+          description: 'Healthcare technology organization focused on digital health solutions',
+          avatar_url: 'https://avatars.githubusercontent.com/u/1?s=200&v=4',
+          html_url: 'https://github.com/my-health-org',
+          type: 'Organization',
+          permissions: {
+            can_create_repositories: true,
+            can_create_private_repositories: true
+          },
+          plan: {
+            name: 'Team',
+            private_repos: 10
+          }
         },
-        plan: {
-          name: 'Organization',
-          private_repos: 'unlimited'
-        },
-        isWHO: true
-      },
-      {
-        id: 1,
-        login: 'my-health-org',
-        display_name: 'My Health Organization',
-        description: 'Healthcare technology organization focused on digital health solutions',
-        avatar_url: 'https://avatars.githubusercontent.com/u/1?s=200&v=4',
-        html_url: 'https://github.com/my-health-org',
-        type: 'Organization',
-        permissions: {
-          can_create_repositories: true,
-          can_create_private_repositories: true
-        },
-        plan: {
-          name: 'Team',
-          private_repos: 10
+        {
+          id: 2,
+          login: 'global-health-initiative',
+          display_name: 'Global Health Initiative',
+          description: 'International organization working on global health standards',
+          avatar_url: 'https://avatars.githubusercontent.com/u/2?s=200&v=4',
+          html_url: 'https://github.com/global-health-initiative',
+          type: 'Organization',
+          permissions: {
+            can_create_repositories: true,
+            can_create_private_repositories: false
+          },
+          plan: {
+            name: 'Free',
+            private_repos: 0
+          }
         }
-      },
-      {
-        id: 2,
-        login: 'global-health-initiative',
-        display_name: 'Global Health Initiative',
-        description: 'International organization working on global health standards',
-        avatar_url: 'https://avatars.githubusercontent.com/u/2?s=200&v=4',
-        html_url: 'https://github.com/global-health-initiative',
-        type: 'Organization',
-        permissions: {
-          can_create_repositories: true,
-          can_create_private_repositories: false
+      ];
+    } catch (error) {
+      console.warn('Could not fetch WHO data for mock organizations, using fallback:', error);
+      // Return original hardcoded mock data
+      return [
+        {
+          id: 'who-organization',
+          login: 'WorldHealthOrganization',
+          display_name: 'World Health Organization',
+          description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+          avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+          html_url: 'https://github.com/WorldHealthOrganization',
+          type: 'Organization',
+          permissions: {
+            can_create_repositories: true,
+            can_create_private_repositories: true
+          },
+          plan: {
+            name: 'Organization',
+            private_repos: 'unlimited'
+          },
+          isWHO: true
         },
-        plan: {
-          name: 'Free',
-          private_repos: 0
+        {
+          id: 1,
+          login: 'my-health-org',
+          display_name: 'My Health Organization',
+          description: 'Healthcare technology organization focused on digital health solutions',
+          avatar_url: 'https://avatars.githubusercontent.com/u/1?s=200&v=4',
+          html_url: 'https://github.com/my-health-org',
+          type: 'Organization',
+          permissions: {
+            can_create_repositories: true,
+            can_create_private_repositories: true
+          },
+          plan: {
+            name: 'Team',
+            private_repos: 10
+          }
+        },
+        {
+          id: 2,
+          login: 'global-health-initiative',
+          display_name: 'Global Health Initiative',
+          description: 'International organization working on global health standards',
+          avatar_url: 'https://avatars.githubusercontent.com/u/2?s=200&v=4',
+          html_url: 'https://github.com/global-health-initiative',
+          type: 'Organization',
+          permissions: {
+            can_create_repositories: true,
+            can_create_private_repositories: false
+          },
+          plan: {
+            name: 'Free',
+            private_repos: 0
+          }
         }
-      }
-    ];
+      ];
+    }
   };
 
   useEffect(() => {
