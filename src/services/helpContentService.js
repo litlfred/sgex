@@ -6,6 +6,7 @@ class HelpContentService {
       bugReport: {
         id: 'report-sgex-bug',
         title: 'Report a SGeX bug',
+        badge: '/sgex/cat-paw-bug-icon.svg',
         type: 'slideshow',
         content: [
           {
@@ -72,6 +73,7 @@ class HelpContentService {
         {
           id: 'github-pat-setup',
           title: 'How to Create a GitHub Personal Access Token',
+          badge: '/sgex/cat-paw-lock-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -337,6 +339,7 @@ class HelpContentService {
         {
           id: 'pat-authentication-help',
           title: 'Using Personal Access Tokens',
+          badge: '/sgex/cat-paw-lock-icon.svg',
           type: 'slideshow',
           content: [
             {
@@ -361,6 +364,7 @@ class HelpContentService {
         {
           id: 'detailed-pat-setup',
           title: 'Detailed PAT Setup Guide',
+          badge: '/sgex/cat-paw-lock-icon.svg',
           type: 'slideshow',
           content: [
             {
