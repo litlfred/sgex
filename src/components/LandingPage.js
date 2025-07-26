@@ -39,30 +39,48 @@ const LandingPage = () => {
       }
       
       // Always ensure WHO organization is included
-      const whoOrganization = {
-        id: 'who-organization',
-        login: 'WorldHealthOrganization',
-        name: 'World Health Organization',
-        description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
-        avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
-        html_url: 'https://github.com/WorldHealthOrganization',
-        type: 'Organization',
-        isWHO: true
-      };
-      
-      // Check if WHO organization is already in the list
-      const hasWHO = orgsData.some(org => org.login === 'WorldHealthOrganization');
-      
-      if (!hasWHO) {
-        // Add WHO organization at the beginning of the list
-        orgsData.unshift(whoOrganization);
-      } else {
-        // Ensure existing WHO organization has the isWHO flag
-        orgsData = orgsData.map(org => 
-          org.login === 'WorldHealthOrganization' 
-            ? { ...org, isWHO: true }
-            : org
-        );
+      try {
+        const whoOrganization = await githubService.getWHOOrganization();
+        
+        // Check if WHO organization is already in the list
+        const whoIndex = orgsData.findIndex(org => org.login === 'WorldHealthOrganization');
+        
+        if (whoIndex >= 0) {
+          // Replace existing WHO org with fresh data and ensure isWHO flag
+          orgsData[whoIndex] = { ...orgsData[whoIndex], ...whoOrganization, isWHO: true };
+        } else {
+          // Add WHO organization at the beginning of the list
+          orgsData.unshift(whoOrganization);
+        }
+      } catch (whoError) {
+        console.warn('Could not fetch WHO organization data, using fallback:', whoError);
+        
+        // Fallback to hardcoded WHO organization
+        const whoOrganization = {
+          id: 'who-organization',
+          login: 'WorldHealthOrganization',
+          name: 'World Health Organization',
+          description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+          avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+          html_url: 'https://github.com/WorldHealthOrganization',
+          type: 'Organization',
+          isWHO: true
+        };
+        
+        // Check if WHO organization is already in the list
+        const hasWHO = orgsData.some(org => org.login === 'WorldHealthOrganization');
+        
+        if (!hasWHO) {
+          // Add WHO organization at the beginning of the list
+          orgsData.unshift(whoOrganization);
+        } else {
+          // Ensure existing WHO organization has the isWHO flag
+          orgsData = orgsData.map(org => 
+            org.login === 'WorldHealthOrganization' 
+              ? { ...org, isWHO: true }
+              : org
+          );
+        }
       }
       
       setOrganizations(orgsData);
