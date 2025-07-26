@@ -202,6 +202,10 @@ const LandingPage = () => {
             </div>
           </div>
         </div>
+        
+        <div className="landing-mascot">
+          <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="landing-mascot-img" />
+        </div>
       </div>
     );
   }
@@ -268,6 +272,10 @@ const LandingPage = () => {
             </div>
           </div>
         )}
+      </div>
+      
+      <div className="landing-mascot">
+        <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="landing-mascot-img" />
       </div>
     </div>
   );

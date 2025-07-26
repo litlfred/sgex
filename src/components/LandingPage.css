@@ -497,4 +497,30 @@
   .profile-selection h2 {
     font-size: 1.8rem;
   }
+  
+  .landing-mascot {
+    display: none; /* Hide mascot on mobile for better space usage */
+  }
+}
+
+/* Landing page mascot */
+.landing-mascot {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+  pointer-events: none; /* Allow clicks to pass through */
+}
+
+.landing-mascot-img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.landing-mascot:hover .landing-mascot-img {
+  opacity: 1;
 }
