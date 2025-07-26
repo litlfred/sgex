@@ -34,22 +34,11 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
    npm install
    ```
 
-3. **Configure GitHub OAuth (Required for authentication)**
+3. **Authentication Setup**
    
-   To enable GitHub authentication, you need to register an OAuth app:
+   SGEX Workbench uses GitHub Personal Access Tokens (PATs) for authentication. No additional setup is required - the application will guide you through creating a PAT when you first sign in.
    
-   a. Go to [GitHub Settings > Developer settings > OAuth Apps](https://github.com/settings/applications/new)
-   b. Click "New OAuth App" and fill in:
-      - **Application name**: "SGEX Workbench"
-      - **Homepage URL**: Your deployment URL (e.g., `https://litlfred.github.io/sgex`)
-      - **Authorization callback URL**: Your deployment URL (required but not used in device flow)
-   c. Copy the Client ID and set it as an environment variable:
-      ```bash
-      # Create .env.local file (for local development)
-      echo "REACT_APP_GITHUB_CLIENT_ID=your_client_id_here" > .env.local
-      ```
-   
-   **Note**: If you don't configure OAuth, the app will show helpful setup instructions when you try to sign in.
+   **Note**: The app will show helpful step-by-step instructions for creating a Personal Access Token when you try to sign in.
 
 ### Development
 
@@ -72,17 +61,23 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
 
 ## Authentication
 
-SGEX Workbench uses **GitHub OAuth Device Flow** for secure authentication. This provides a seamless "Sign in with GitHub" experience without requiring users to manually create personal access tokens.
+SGEX Workbench uses **GitHub Personal Access Tokens (PATs)** for secure authentication. This provides a secure authentication method without requiring any backend server setup.
 
 ### How it works:
-1. Users click "Sign in with GitHub" 
-2. A device code is displayed along with a verification URL
-3. Users visit the URL and enter the code to authorize the application
-4. The app automatically receives access and loads the user's repositories
+1. Users click "Sign in with Personal Access Token"
+2. The app displays step-by-step instructions for creating a GitHub Personal Access Token
+3. Users create their PAT with the required permissions and paste it into the app
+4. The app stores the token securely in the browser and loads the user's repositories
 
 ### Required GitHub Permissions:
-- **repo**: Full access to repositories (for editing DAK content)
-- **read:org**: Read access to organizations (for listing organization repositories)
+For **fine-grained tokens**:
+- **Contents**: Read and Write (for editing DAK content)
+- **Metadata**: Read (for repository information)
+- **Pull requests**: Read and Write (for creating pull requests)
+
+For **classic tokens**:
+- **repo**: Full control of private repositories (for editing DAK content)
+- **read:org**: Read org and team membership (for listing organization repositories)
 
 This authentication method is fully compatible with static deployments and requires no backend server.
 

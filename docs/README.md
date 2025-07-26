@@ -51,7 +51,7 @@ The system supports editing of all 8 WHO SMART Guidelines DAK components:
 - **Frontend**: React-based Single Page Application
 - **Forms**: JSON Forms for schema-driven UI
 - **Editors**: bpmn-js (BPMN), dmn-js (DMN), Monaco Editor (XML)
-- **Integration**: GitHub OAuth + REST API via Octokit
+- **Integration**: GitHub Personal Access Tokens + REST API via Octokit
 - **Deployment**: GitHub Pages
 
 ### WHO Compliance
@@ -65,7 +65,7 @@ All UI components, terminology, and branding follow WHO SMART Guidelines specifi
 - GitHub handles storage and collaboration
 
 ### GitHub-Centric
-- OAuth authentication
+- Personal Access Token authentication
 - Repository-based permissions
 - Native GitHub collaboration tools integration
 
@@ -90,7 +90,7 @@ All UI components, terminology, and branding follow WHO SMART Guidelines specifi
 ## Key Features
 
 ### Authentication & Access
-- GitHub OAuth integration
+- GitHub Personal Access Token integration
 - Repository permission inheritance
 - Post-authentication redirect to intended view
 
@@ -117,7 +117,7 @@ All UI components, terminology, and branding follow WHO SMART Guidelines specifi
 
 - Client-side only architecture
 - No secrets in codebase
-- GitHub OAuth for authentication
+- GitHub Personal Access Tokens for authentication
 - Repository permissions for authorization
 - HTTPS-only communication
 

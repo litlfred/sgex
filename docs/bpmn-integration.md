@@ -11,7 +11,7 @@ This document describes the requirements and implementation for BPMN (Business P
 - **REQ-BPMN-001**: User must have selected a SMART Guidelines GitHub repository
   - Repository must contain `input/business-processes/` directory
   - User must have appropriate GitHub repository permissions
-  - User authentication via GitHub OAuth must be completed
+  - User authentication via GitHub Personal Access Token must be completed
 
 ### BPMN File Management
 
@@ -156,7 +156,7 @@ BPMN diagrams in SMART Guidelines typically represent:
 
 ### Authentication
 
-- All GitHub operations require valid OAuth token
+- All GitHub operations require valid Personal Access Token
 - Repository permissions enforced by GitHub
 - No local storage of sensitive credentials
 

@@ -71,7 +71,7 @@ The SMART Guidelines Exchange (SGEX) Workbench is a browser-based, standards-com
 ### Technical Risks
 - **GitHub API Limitations**: Mitigation through proper API usage patterns and error handling
 - **Browser Compatibility**: Mitigation through modern browser standards and progressive enhancement
-- **Security Concerns**: Mitigation through OAuth-based authentication and client-side only architecture
+- **Security Concerns**: Mitigation through Personal Access Token-based authentication and client-side only architecture
 
 ### Project Risks
 - **Requirement Changes**: Mitigation through iterative documentation updates
