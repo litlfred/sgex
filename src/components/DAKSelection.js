@@ -240,11 +240,12 @@ const DAKSelection = () => {
         } else {
           // No cached data or forcing rescan - initiate progressive scanning
           if (githubService.isAuth()) {
-            console.log(forceRescan ? 'Force rescanning repositories...' : 'No cached data, initiating scan...');
+            console.log(forceRescan ? '🔄 Force rescanning repositories...' : '🔍 No cached data, initiating scan...');
             setIsScanning(true);
             
             // Important: Don't clear existing repositories when scanning
             // This preserves any cached repos that were already displayed
+            console.log('📊 Starting enhanced scanning display for authenticated user');
             
             repos = await githubService.getSmartGuidelinesRepositoriesProgressive(
               profile.login, 
@@ -260,21 +261,39 @@ const DAKSelection = () => {
                   return prevRepos;
                 });
               },
-              // onProgress callback - update progress indicator
+              // onProgress callback - update progress indicator with enhanced display
               (progress) => {
+                console.log('📊 Real scanning progress:', progress);
                 setScanProgress(progress);
                 
-                // Track repositories currently being scanned
+                // Track repositories currently being scanned with enhanced display timing
                 if (progress.started && !progress.completed) {
-                  // Repository is being started
+                  // Repository is being started - add to currently scanning set
+                  console.log('🔍 Started scanning:', progress.currentRepo);
                   setCurrentlyScanningRepos(prev => new Set([...prev, progress.currentRepo]));
-                } else if (progress.completed) {
-                  // Repository is completed
-                  setCurrentlyScanningRepos(prev => {
-                    const newSet = new Set(prev);
-                    newSet.delete(progress.currentRepo);
-                    return newSet;
+                  
+                  // Ensure the scanning state is properly set
+                  setScanProgress({
+                    ...progress,
+                    started: true,
+                    completed: false
                   });
+                } else if (progress.completed) {
+                  // Repository is completed - show completion state
+                  console.log('✅ Completed scanning:', progress.currentRepo);
+                  setScanProgress({
+                    ...progress,
+                    completed: true
+                  });
+                  
+                  // Remove from currently scanning set after a brief moment
+                  setTimeout(() => {
+                    setCurrentlyScanningRepos(prev => {
+                      const newSet = new Set(prev);
+                      newSet.delete(progress.currentRepo);
+                      return newSet;
+                    });
+                  }, 200);
                 }
               }
             );

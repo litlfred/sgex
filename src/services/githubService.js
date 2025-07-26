@@ -330,8 +330,11 @@ class GitHubService {
         repositories = data;
       }
 
-      // Process repositories concurrently with rate limiting
+      // Process repositories concurrently with rate limiting and enhanced display
       const processor = async (repo, index) => {
+        // Add a small delay to make scanning progress visible (similar to demo mode)
+        await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+        
         const isCompatible = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
         
         if (isCompatible) {
