@@ -14,16 +14,16 @@ class HelpContentService {
               <p>Help us improve SGeX by reporting bugs and issues:</p>
               <h4>What type of issue are you experiencing?</h4>
               <div class="bug-report-options">
-                <button class="bug-type-btn" onclick="window.open('https://github.com/litlfred/sgex/issues/new?template=bug_report.md&labels=bug', '_blank')">
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('bug')">
                   🐛 Bug Report - Something isn't working correctly
                 </button>
-                <button class="bug-type-btn" onclick="window.open('https://github.com/litlfred/sgex/issues/new?template=feature_request.md&labels=enhancement', '_blank')">
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('feature')">
                   ✨ Feature Request - Suggest a new feature or improvement
                 </button>
-                <button class="bug-type-btn" onclick="window.open('https://github.com/litlfred/sgex/issues/new?template=question.md&labels=question', '_blank')">
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('question')">
                   ❓ Question - Ask for help or clarification
                 </button>
-                <button class="bug-type-btn" onclick="window.open('https://github.com/litlfred/sgex/issues/new?labels=documentation', '_blank')">
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('documentation')">
                   📚 Documentation Issue - Report problems with documentation
                 </button>
               </div>
@@ -45,16 +45,16 @@ class HelpContentService {
               <p>Share feedback about this Digital Adaptation Kit (DAK):</p>
               <h4>What type of feedback do you have?</h4>
               <div class="bug-report-options">
-                <button class="bug-type-btn" onclick="this.openDakIssue('bug')">
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('content')">
+                  📝 Report DAK Content Error - Problems with clinical content or logic
+                </button>
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('bug')">
                   🐛 DAK Bug - Issue with this specific DAK content
                 </button>
-                <button class="bug-type-btn" onclick="this.openDakIssue('improvement')">
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('improvement')">
                   📈 DAK Improvement - Suggest enhancements to this DAK
                 </button>
-                <button class="bug-type-btn" onclick="this.openDakIssue('content')">
-                  📝 Content Issue - Problems with clinical content or logic
-                </button>
-                <button class="bug-type-btn" onclick="this.openDakIssue('question')">
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('question')">
                   ❓ DAK Question - Ask about this DAK's implementation
                 </button>
               </div>

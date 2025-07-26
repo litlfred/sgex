@@ -1,0 +1,67 @@
+name: DAK Content Error
+description: Report problems with clinical content, logic, or accuracy in this Digital Adaptation Kit (DAK)
+title: "[DAK Content Error]: "
+labels: ["content-issue", "clinical-content"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a content error in this Digital Adaptation Kit (DAK)!
+        Clinical accuracy is critical for implementation.
+
+  - type: textarea
+    id: content-error
+    attributes:
+      label: Content Error Description
+      description: What clinical content or logic appears to be incorrect?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: error-type
+    attributes:
+      label: Type of Content Error
+      description: What type of content error is this?
+      options:
+        - Clinical Logic Error
+        - Incorrect Medical Information
+        - Missing Clinical Guidance
+        - Terminology/Coding Error
+        - Decision Tree/Algorithm Error
+        - Form Design Issue
+        - Indicator/Measure Calculation Error
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: clinical-context
+    attributes:
+      label: Clinical Context
+      description: In what clinical scenario or workflow does this error occur?
+    validations:
+      required: true
+
+  - type: textarea
+    id: correct-approach
+    attributes:
+      label: Expected Clinical Approach
+      description: What should the correct clinical guidance or logic be?
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Supporting Evidence
+      description: Any clinical guidelines, research, or other evidence supporting the correction?
+    validations:
+      required: false
+
+  - type: textarea
+    id: patient-safety
+    attributes:
+      label: Patient Safety Impact
+      description: Could this error impact patient safety or clinical outcomes?
+    validations:
+      required: false

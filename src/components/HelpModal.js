@@ -7,7 +7,54 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
 
   // Set up global reference for inline onclick handlers
   useEffect(() => {
+    const createContextualUrl = (baseUrl, params) => {
+      const urlParams = new URLSearchParams(params);
+      
+      // Add contextual information
+      if (contextData.pageId) {
+        urlParams.set('sgex_page', contextData.pageId);
+      }
+      
+      const currentUrl = window.location.href;
+      urlParams.set('sgex_current_url', currentUrl);
+      
+      if (contextData.selectedDak?.name) {
+        urlParams.set('sgex_selected_dak', contextData.selectedDak.name);
+      }
+      
+      return `${baseUrl}?${urlParams.toString()}`;
+    };
+
     window.helpModalInstance = {
+      openSgexIssue: (issueType) => {
+        const baseUrl = `https://github.com/litlfred/sgex/issues/new`;
+        let params = {};
+
+        switch (issueType) {
+          case 'bug':
+            params.template = 'bug_report.yml';
+            params.labels = 'bug';
+            break;
+          case 'feature':
+            params.template = 'feature_request.yml';
+            params.labels = 'enhancement';
+            break;
+          case 'question':
+            params.template = 'question.yml';
+            params.labels = 'question';
+            break;
+          case 'documentation':
+            params.template = 'documentation.yml';
+            params.labels = 'documentation';
+            break;
+          default:
+            params.labels = 'needs-triage';
+        }
+
+        const url = createContextualUrl(baseUrl, params);
+        window.open(url, '_blank');
+      },
+
       openDakIssue: (issueType) => {
         const repository = contextData.repository || contextData.selectedDak;
         if (!repository) {
@@ -16,25 +63,35 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
         }
 
         const baseUrl = `https://github.com/${repository.owner}/${repository.name}/issues/new`;
-        let url = baseUrl;
+        let params = {};
 
         switch (issueType) {
           case 'bug':
-            url += '?template=bug_report.md&labels=bug,dak-issue';
+            params.template = 'dak_bug_report.yml';
+            params.labels = 'bug,dak-issue';
             break;
           case 'improvement':
-            url += '?template=feature_request.md&labels=enhancement,dak-improvement';
+            params.template = 'dak_feature_request.yml';
+            params.labels = 'enhancement,dak-improvement';
             break;
           case 'content':
-            url += '?labels=content-issue,clinical-content';
+            params.template = 'dak_content_error.yml';
+            params.labels = 'content-issue,clinical-content';
             break;
           case 'question':
-            url += '?template=question.md&labels=question,dak-question';
+            params.template = 'dak_question.yml';
+            params.labels = 'question,dak-question';
             break;
           default:
-            url += '?labels=dak-feedback';
+            params.labels = 'dak-feedback';
         }
 
+        // Add DAK-specific context
+        if (repository.name) {
+          params.sgex_dak_repository = `${repository.owner}/${repository.name}`;
+        }
+
+        const url = createContextualUrl(baseUrl, params);
         window.open(url, '_blank');
       }
     };
@@ -56,41 +113,33 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   };
 
   const handleBugReport = () => {
-    const topicTitle = helpTopic?.title || topic;
-    const issueUrl = 'https://github.com/litlfred/sgex/issues/new';
-    const title = encodeURIComponent(`Bug Report: ${topicTitle}`);
-    const body = encodeURIComponent(`
-**Issue Description:**
-Please describe the issue you encountered.
-
-**Context:**
-- Help Topic: ${topicTitle}
-- Page: ${window.location.pathname}
-- Context Data: ${JSON.stringify(contextData, null, 2)}
-
-**Steps to Reproduce:**
-1. 
-2. 
-3. 
-
-**Expected Behavior:**
-What did you expect to happen?
-
-**Actual Behavior:**
-What actually happened?
-
-**Additional Information:**
-Any other relevant information or screenshots.
-    `.trim());
-    
-    window.open(`${issueUrl}?title=${title}&body=${body}`, '_blank');
+    // Use the new SGEX issue reporting system
+    if (window.helpModalInstance?.openSgexIssue) {
+      window.helpModalInstance.openSgexIssue('bug');
+    } else {
+      // Fallback to direct URL
+      const params = new URLSearchParams({
+        template: 'bug_report.yml',
+        labels: 'bug',
+        sgex_page: contextData.pageId || 'unknown',
+        sgex_current_url: window.location.href
+      });
+      
+      if (contextData.selectedDak?.name) {
+        params.set('sgex_selected_dak', contextData.selectedDak.name);
+      }
+      
+      const url = `https://github.com/litlfred/sgex/issues/new?${params.toString()}`;
+      window.open(url, '_blank');
+    }
   };
 
   const handleDAKFeedback = () => {
     if (contextData.repository) {
-      const { owner, name } = contextData.repository;
-      const issueUrl = `https://github.com/${owner}/${name}/issues`;
-      window.open(issueUrl, '_blank');
+      // Default to opening content error as the primary DAK feedback type
+      if (window.helpModalInstance?.openDakIssue) {
+        window.helpModalInstance.openDakIssue('content');
+      }
     }
   };
 
