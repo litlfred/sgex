@@ -54,6 +54,10 @@ const DAKSelection = () => {
   };
 
   const getMockRepositories = useCallback(() => {
+    if (!profile || !profile.login) {
+      return [];
+    }
+    
     // Mock repositories - only some have SMART guidelines compatibility
     const allMockRepos = [
       {
@@ -125,7 +129,7 @@ const DAKSelection = () => {
 
     // Filter to only return SMART guidelines compatible repositories
     return allMockRepos.filter(repo => repo.smart_guidelines_compatible);
-  }, [profile.login]);
+  }, [profile?.login]);
 
   const simulateEnhancedScanning = useCallback(async () => {
     setIsScanning(true);
@@ -383,7 +387,7 @@ const DAKSelection = () => {
   };
 
   if (!profile || !action) {
-    return <div>Redirecting...</div>;
+    return <div className="dak-selection"><div style={{color: 'white', textAlign: 'center', padding: '2rem'}}>Redirecting...</div></div>;
   }
 
   const config = getActionConfig();
