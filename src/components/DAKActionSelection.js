@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
@@ -138,6 +139,12 @@ const DAKActionSelection = () => {
           </div>
         </div>
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="dak-action-selection"
+        position="bottom-right"
+        contextData={{ profile }}
+      />
     </div>
   );
 };

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import './HelpModal.css';
 
-const HelpModal = ({ topic, contextData, onClose }) => {
+const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   const [showMenu, setShowMenu] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -15,14 +16,15 @@ const HelpModal = ({ topic, contextData, onClose }) => {
   };
 
   const handleBugReport = () => {
+    const topicTitle = helpTopic?.title || topic;
     const issueUrl = 'https://github.com/litlfred/sgex/issues/new';
-    const title = encodeURIComponent(`Bug Report: ${topic}`);
+    const title = encodeURIComponent(`Bug Report: ${topicTitle}`);
     const body = encodeURIComponent(`
 **Issue Description:**
 Please describe the issue you encountered.
 
 **Context:**
-- Help Topic: ${topic}
+- Help Topic: ${topicTitle}
 - Page: ${window.location.pathname}
 - Context Data: ${JSON.stringify(contextData, null, 2)}
 
@@ -53,13 +55,14 @@ Any other relevant information or screenshots.
   };
 
   const handleEmailSupport = () => {
-    const subject = encodeURIComponent(`SGEX Workbench Support: ${topic}`);
+    const topicTitle = helpTopic?.title || topic;
+    const subject = encodeURIComponent(`SGEX Workbench Support: ${topicTitle}`);
     const body = encodeURIComponent(`
 Hello SMART Guidelines Team,
 
 I need assistance with the SGEX Workbench.
 
-Topic: ${topic}
+Topic: ${topicTitle}
 Page: ${window.location.pathname}
 
 Please describe your question or issue:
@@ -71,7 +74,91 @@ Best regards,
     window.open(`mailto:smart@who.int?subject=${subject}&body=${body}`);
   };
 
+  const handlePrevSlide = () => {
+    if (currentSlide > 0) {
+      setCurrentSlide(currentSlide - 1);
+    }
+  };
+
+  const handleNextSlide = () => {
+    if (helpTopic?.content && currentSlide < helpTopic.content.length - 1) {
+      setCurrentSlide(currentSlide + 1);
+    }
+  };
+
+  const renderSlideshow = () => {
+    if (!helpTopic?.content || helpTopic.type !== 'slideshow') {
+      return null;
+    }
+
+    const slides = helpTopic.content;
+    const currentSlideData = slides[currentSlide];
+
+    return (
+      <div className="help-slideshow">
+        <div className="slideshow-header">
+          <h3>{currentSlideData.title}</h3>
+          <div className="slide-counter">
+            {currentSlide + 1} of {slides.length}
+          </div>
+        </div>
+        
+        <div 
+          className="slideshow-content"
+          dangerouslySetInnerHTML={{ __html: currentSlideData.content }}
+        />
+        
+        <div className="slideshow-controls">
+          <button 
+            onClick={handlePrevSlide}
+            disabled={currentSlide === 0}
+            className="slide-nav-btn"
+          >
+            ← Previous
+          </button>
+          
+          <div className="slide-dots">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                className={`slide-dot ${index === currentSlide ? 'active' : ''}`}
+                onClick={() => setCurrentSlide(index)}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+          
+          <button 
+            onClick={handleNextSlide}
+            disabled={currentSlide === slides.length - 1}
+            className="slide-nav-btn"
+          >
+            Next →
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const getHelpContent = () => {
+    // If we have a specific help topic, use it
+    if (helpTopic) {
+      return {
+        title: helpTopic.title,
+        content: helpTopic.type === 'slideshow' ? renderSlideshow() : (
+          <div className="help-content">
+            <div className="mascot-message">
+              <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="help-mascot" />
+              <div className="message-bubble">
+                <div dangerouslySetInnerHTML={{ __html: helpTopic.content }} />
+              </div>
+            </div>
+          </div>
+        )
+      };
+    }
+
+    // Legacy support for old topic strings
     switch (topic) {
       case 'github-token':
       case 'pat-help':

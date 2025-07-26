@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import PATLogin from './PATLogin';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -259,9 +260,10 @@ const LandingPage = () => {
           </div>
         </div>
         
-        <div className="landing-mascot">
-          <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="landing-mascot-img" />
-        </div>
+        <ContextualHelpMascot 
+          pageId="landing-page-unauthenticated"
+          position="bottom-right"
+        />
       </div>
     );
   }
@@ -352,9 +354,11 @@ const LandingPage = () => {
         )}
       </div>
       
-      <div className="landing-mascot">
-        <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="landing-mascot-img" />
-      </div>
+      <ContextualHelpMascot 
+        pageId="landing-page-authenticated"
+        position="bottom-right"
+        contextData={{ user, organizations }}
+      />
     </div>
   );
 };
