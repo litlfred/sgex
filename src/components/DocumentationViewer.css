@@ -21,6 +21,16 @@
   font-weight: 600;
 }
 
+.who-branding h1.clickable-title {
+  cursor: pointer;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.who-branding h1.clickable-title:hover {
+  color: #0078d4;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .who-branding .subtitle {
   color: #666;
   font-size: 0.9rem;

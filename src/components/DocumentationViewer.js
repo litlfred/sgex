@@ -51,6 +51,10 @@ const DocumentationViewer = () => {
     navigate(-1);
   };
 
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
+
   const renderMarkdown = (markdown) => {
     // Simple markdown to HTML conversion for basic formatting
     return markdown
@@ -75,7 +79,7 @@ const DocumentationViewer = () => {
       <div className="documentation-viewer">
         <div className="doc-header">
           <div className="who-branding">
-            <h1>SGEX Workbench</h1>
+            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
             <p className="subtitle">WHO SMART Guidelines Exchange</p>
           </div>
           <button onClick={handleBack} className="back-btn">
@@ -97,7 +101,7 @@ const DocumentationViewer = () => {
       <div className="documentation-viewer">
         <div className="doc-header">
           <div className="who-branding">
-            <h1>SGEX Workbench</h1>
+            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
             <p className="subtitle">WHO SMART Guidelines Exchange</p>
           </div>
           <button onClick={handleBack} className="back-btn">
@@ -121,7 +125,7 @@ const DocumentationViewer = () => {
     <div className="documentation-viewer">
       <div className="doc-header">
         <div className="who-branding">
-          <h1>SGEX Workbench</h1>
+          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="doc-nav">
