@@ -1,6 +1,6 @@
 .component-editor {
   min-height: 100vh;
-  background: rgb(4, 11, 118);
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -9,7 +9,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgb(4, 11, 118);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 }
