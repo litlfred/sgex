@@ -8,6 +8,16 @@ const GITHUB_SCOPES = {
   WRITE_ACCESS: ['read:user', 'public_repo', 'repo'] // Full repo access including private repos
 };
 
+// OAuth endpoints - use proxy for development to avoid CORS issues
+const OAUTH_ENDPOINTS = {
+  DEVICE_CODE: process.env.NODE_ENV === 'development' 
+    ? '/api/github/oauth/device/code' 
+    : 'https://github.com/login/device/code',
+  ACCESS_TOKEN: process.env.NODE_ENV === 'development' 
+    ? '/api/github/oauth/access_token' 
+    : 'https://github.com/login/oauth/access_token'
+};
+
 class OAuthService {
   constructor() {
     this.tokens = new Map(); // Store multiple tokens keyed by repo/component
@@ -107,7 +117,7 @@ class OAuthService {
       const scopeString = scopes.join(' ');
 
       // Initialize device flow
-      const response = await fetch('https://github.com/login/device/code', {
+      const response = await fetch(OAUTH_ENDPOINTS.DEVICE_CODE, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
@@ -147,7 +157,7 @@ class OAuthService {
     return new Promise((resolve, reject) => {
       const poll = async () => {
         try {
-          const response = await fetch('https://github.com/login/oauth/access_token', {
+          const response = await fetch(OAUTH_ENDPOINTS.ACCESS_TOKEN, {
             method: 'POST',
             headers: {
               'Accept': 'application/json',

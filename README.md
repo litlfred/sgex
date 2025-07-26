@@ -36,9 +36,17 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
 
 3. **Authentication Setup**
    
-   SGEX Workbench uses GitHub Personal Access Tokens (PATs) for authentication. No additional setup is required - the application will guide you through creating a PAT when you first sign in.
+   SGEX Workbench supports both OAuth (recommended) and Personal Access Token (PAT) authentication:
    
-   **Note**: The app will show helpful step-by-step instructions for creating a Personal Access Token when you try to sign in.
+   **OAuth Authentication (Recommended)**
+   - Modern, secure authentication using GitHub Apps
+   - No manual token creation required
+   - Granular permissions with automatic scope management
+   - See [OAuth Development Setup](docs/development-oauth-setup.md) for detailed configuration
+   
+   **Personal Access Token (Legacy)**
+   - The application will guide you through creating a PAT when you first sign in
+   - Helpful step-by-step instructions provided in the app
 
 ### Development
 
