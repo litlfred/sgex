@@ -166,11 +166,22 @@ const BPMNViewerEnhanced = () => {
       return;
     }
 
+    let retryCount = 0;
+    const maxRetries = 50; // Prevent infinite retries
+
     const initializeViewer = async () => {
       // Check if container is ready
-      if (!containerRef.current) {
-        console.log('Container not ready, retrying in 100ms');
+      if (!containerRef.current && retryCount < maxRetries) {
+        console.log(`Container not ready, retrying in 100ms (attempt ${retryCount + 1}/${maxRetries})`);
+        retryCount++;
         setTimeout(initializeViewer, 100);
+        return;
+      }
+
+      if (!containerRef.current) {
+        console.error('Container never became ready after maximum retries');
+        setError('Failed to initialize diagram container');
+        setLoading(false);
         return;
       }
 
@@ -241,10 +252,13 @@ const BPMNViewerEnhanced = () => {
       }
     };
 
-    // Start the initialization process
-    initializeViewer();
+    // Use a different approach - wait for the next render cycle
+    const timer = setTimeout(() => {
+      initializeViewer();
+    }, 0);
     
     return () => {
+      clearTimeout(timer);
       if (viewerRef.current) {
         try {
           viewerRef.current.destroy();
