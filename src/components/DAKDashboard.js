@@ -119,32 +119,32 @@ const DAKDashboard = () => {
   ];
 
   const handleComponentClick = (component) => {
-    // Check if user wants to edit and has permissions
+    // For business processes, navigate to selection page without permission check
+    if (component.id === 'business-processes') {
+      navigate('/business-process-selection', {
+        state: {
+          profile,
+          repository,
+          component
+        }
+      });
+      return;
+    }
+
+    // For other components, check permissions before proceeding
     if (!hasWriteAccess) {
       setShowPermissionDialog(true);
       return;
     }
 
-    // Navigate to component-specific editor
-    if (component.id === 'business-processes') {
-      // Use dedicated BPMN editor for business processes
-      navigate(`/bpmn-editor`, {
-        state: {
-          profile,
-          repository,
-          component
-        }
-      });
-    } else {
-      // Use generic component editor for other components
-      navigate(`/editor/${component.id}`, {
-        state: {
-          profile,
-          repository,
-          component
-        }
-      });
-    }
+    // Navigate to generic component editor for other components
+    navigate(`/editor/${component.id}`, {
+      state: {
+        profile,
+        repository,
+        component
+      }
+    });
   };
 
   const handleBackToRepos = () => {
