@@ -143,6 +143,18 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - Breadcrumb navigation for user orientation
 - Component-specific validation and error handling
 
+**REQ-DAK-007**: The system SHALL support enhanced business process selection navigation
+- Business process navigation SHALL NOT require permission validation at initial click
+- Permission checks SHALL occur only when attempting to edit or create BPMN diagrams
+- The system SHALL provide a dedicated business process selection interface showing:
+  - List of all BPMN files in `input/business-processes/` directory
+  - File metadata (name, path, size) for each BPMN diagram
+  - Three action modes per file: View (read-only), Edit (permission-required), Source (XML viewing)
+- Read-only BPMN viewing SHALL use `bpmn-js/NavigatedViewer` without editing capabilities
+- Source viewing SHALL display formatted XML with copy, download, and GitHub integration features
+- All business process screens SHALL maintain consistent breadcrumb navigation
+- Permission notices SHALL be clearly displayed for users without write access
+
 ### 2.4 File Operations
 
 **REQ-FILE-001**: The system SHALL provide file browser functionality
