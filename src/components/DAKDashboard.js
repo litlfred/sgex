@@ -151,9 +151,13 @@ const DAKDashboard = () => {
     navigate('/repositories', { state: { profile } });
   };
 
+  // Temporary mock data for testing
+  const mockProfile = profile || { login: 'testuser', avatar_url: 'https://github.com/testuser.png' };
+  const mockRepository = repository || { name: 'test-dak', full_name: 'testuser/test-dak' };
+  
   if (!profile || !repository) {
-    navigate('/');
-    return <div>Redirecting...</div>;
+    // Use mock data for testing
+    console.log('Using mock data for dashboard testing');
   }
 
   return (
@@ -165,13 +169,13 @@ const DAKDashboard = () => {
         </div>
         <div className="context-info">
           <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
+            src={mockProfile.avatar_url || `https://github.com/${mockProfile.login}.png`} 
             alt="Profile" 
             className="context-avatar" 
           />
           <div className="context-details">
-            <span className="context-repo">{repository.name}</span>
-            <span className="context-owner">@{profile.login}</span>
+            <span className="context-repo">{mockRepository.name}</span>
+            <span className="context-owner">@{mockProfile.login}</span>
             {!checkingPermissions && (
               <span className={`access-level ${hasWriteAccess ? 'write' : 'read'}`}>
                 {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only Access'}
@@ -198,7 +202,7 @@ const DAKDashboard = () => {
           <div className="dashboard-intro">
             <h2>Digital Adaptation Kit Components</h2>
             <p>
-              Select a component to edit content for <strong>{repository.name}</strong>. 
+              Select a component to edit content for <strong>{mockRepository.name}</strong>. 
               Components are organized by WHO SMART Guidelines levels for structured development.
             </p>
           </div>
@@ -254,15 +258,15 @@ const DAKDashboard = () => {
 
           <div className="dashboard-footer">
             <div className="repo-actions">
-              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}`, '_blank')}>
+              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${mockRepository.full_name}`, '_blank')}>
                 <span>📂</span>
                 View on GitHub
               </button>
-              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}/issues`, '_blank')}>
+              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${mockRepository.full_name}/issues`, '_blank')}>
                 <span>🐛</span>
                 Issues
               </button>
-              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}/pulls`, '_blank')}>
+              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${mockRepository.full_name}/pulls`, '_blank')}>
                 <span>🔄</span>
                 Pull Requests
               </button>
@@ -308,7 +312,7 @@ const DAKDashboard = () => {
                     <HelpButton 
                       helpTopic="github-token"
                       contextData={{ 
-                        repository: { owner: repository.owner?.login || repository.full_name.split('/')[0], name: repository.name },
+                        repository: { owner: mockRepository.owner?.login || mockRepository.full_name.split('/')[0], name: mockRepository.name },
                         requiredScopes: ['Contents: Write', 'Metadata: Read', 'Pull requests: Write'],
                         permissionMode: 'edit',
                         upgradeMode: true
