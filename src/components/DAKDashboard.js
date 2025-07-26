@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import HelpButton from './HelpButton';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
@@ -479,6 +480,31 @@ const DAKDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Contextual Help Mascot */}
+      <ContextualHelpMascot 
+        helpContent={
+          <div>
+            <h4>DAK Component Dashboard</h4>
+            <p>Welcome to the Digital Adaptation Kit (DAK) component selection dashboard!</p>
+            <div className="tip">
+              <strong>Getting Started:</strong>
+              <ul>
+                <li>Use the tabs above to switch between <strong>8 Core Components</strong> (L2 - Data model agnostic) and <strong>Additional Representations</strong> (L3 - FHIR R4-specific)</li>
+                <li>Click on any component card to start editing its content</li>
+                <li>Each component shows the number of files and supported formats</li>
+              </ul>
+            </div>
+            <p><strong>Need Help?</strong> This page organizes WHO SMART Guidelines components according to the official framework. The core components represent essential building blocks, while additional representations provide technical implementations.</p>
+            {!hasWriteAccess && (
+              <div className="tip">
+                <strong>Read-Only Access:</strong> You currently have read-only access. To edit components, you'll need write permissions to this repository.
+              </div>
+            )}
+          </div>
+        }
+        position="bottom-right"
+      />
     </div>
   );
 };

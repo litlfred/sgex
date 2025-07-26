@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="40" height="40" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background circle -->
-  <circle cx="60" cy="60" r="55" fill="#f8f9fa" stroke="#0066cc" stroke-width="2"/>
   
   <!-- Head -->
   <circle cx="60" cy="42" r="15" fill="#fdbcb4"/>

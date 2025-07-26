@@ -1,0 +1,236 @@
+/* Fixed Contextual Help Mascot */
+.contextual-help-mascot {
+  position: fixed;
+  z-index: 1000;
+  
+  /* Default position: bottom-right */
+  bottom: 30px;
+  right: 30px;
+}
+
+.contextual-help-mascot.bottom-left {
+  bottom: 30px;
+  left: 30px;
+}
+
+.contextual-help-mascot.top-right {
+  top: 100px;
+  right: 30px;
+}
+
+.contextual-help-mascot.top-left {
+  top: 100px;
+  left: 30px;
+}
+
+/* Mascot Container */
+.mascot-container {
+  cursor: pointer;
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border: 2px solid #0066cc;
+}
+
+.mascot-container:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 102, 204, 0.3);
+}
+
+.mascot-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+}
+
+/* Help Thought Bubble */
+.help-thought-bubble {
+  position: absolute;
+  background: #ffffff;
+  border: 2px solid #0066cc;
+  border-radius: 20px;
+  padding: 20px;
+  min-width: 280px;
+  max-width: 350px;
+  box-shadow: 0 8px 32px rgba(0, 102, 204, 0.15);
+  animation: bubbleAppear 0.3s ease-out;
+  z-index: 1001;
+}
+
+/* Position the bubble relative to mascot position */
+.contextual-help-mascot.bottom-right .help-thought-bubble {
+  bottom: 80px;
+  right: 0;
+}
+
+.contextual-help-mascot.bottom-left .help-thought-bubble {
+  bottom: 80px;
+  left: 0;
+}
+
+.contextual-help-mascot.top-right .help-thought-bubble {
+  top: 80px;
+  right: 0;
+}
+
+.contextual-help-mascot.top-left .help-thought-bubble {
+  top: 80px;
+  left: 0;
+}
+
+/* Bubble Tail (pointing to mascot) */
+.bubble-tail {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border: 2px solid #0066cc;
+  transform: rotate(45deg);
+}
+
+/* Position tail based on mascot position */
+.contextual-help-mascot.bottom-right .bubble-tail {
+  bottom: -12px;
+  right: 20px;
+  border-top: none;
+  border-left: none;
+}
+
+.contextual-help-mascot.bottom-left .bubble-tail {
+  bottom: -12px;
+  left: 20px;
+  border-top: none;
+  border-left: none;
+}
+
+.contextual-help-mascot.top-right .bubble-tail {
+  top: -12px;
+  right: 20px;
+  border-bottom: none;
+  border-right: none;
+}
+
+.contextual-help-mascot.top-left .bubble-tail {
+  top: -12px;
+  left: 20px;
+  border-bottom: none;
+  border-right: none;
+}
+
+/* Bubble Content */
+.bubble-content {
+  position: relative;
+}
+
+.close-bubble-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.close-bubble-btn:hover {
+  background: #004a99;
+}
+
+.help-text {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+}
+
+.help-text h4 {
+  margin: 0 0 12px 0;
+  color: #0066cc;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.help-text p {
+  margin: 8px 0;
+}
+
+.help-text ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.help-text li {
+  margin: 4px 0;
+}
+
+.help-text .tip {
+  background: #e3f2fd;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 4px solid #0066cc;
+  margin: 12px 0;
+}
+
+.help-text .tip strong {
+  color: #0066cc;
+}
+
+/* Animation */
+@keyframes bubbleAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .contextual-help-mascot {
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  .contextual-help-mascot.bottom-left {
+    bottom: 20px;
+    left: 20px;
+  }
+  
+  .help-thought-bubble {
+    min-width: 260px;
+    max-width: calc(100vw - 40px);
+    padding: 16px;
+  }
+  
+  .help-text {
+    font-size: 13px;
+  }
+}
+
+/* Ensure mascot appears above other fixed elements */
+.contextual-help-mascot {
+  z-index: 1000;
+}
+
+.help-thought-bubble {
+  z-index: 1001;
+}
