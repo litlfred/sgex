@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './RepositorySelection.css';
 
 const RepositorySelection = () => {
@@ -187,6 +188,11 @@ const RepositorySelection = () => {
           )}
         </div>
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="repository-selection"
+        contextData={{ profile }}
+      />
     </div>
   );
 };

@@ -125,6 +125,68 @@ class GitHubService {
     }
   }
 
+  // Get specific organization data (public data, no auth required)
+  async getOrganization(orgLogin) {
+    try {
+      // Create a temporary Octokit instance for public API calls if we don't have one
+      const octokit = this.octokit || new Octokit();
+      
+      const { data } = await octokit.rest.orgs.get({
+        org: orgLogin
+      });
+      return data;
+    } catch (error) {
+      console.error(`Failed to fetch organization ${orgLogin}:`, error);
+      throw error;
+    }
+  }
+
+  // Get WHO organization data with fresh avatar
+  async getWHOOrganization() {
+    try {
+      const whoData = await this.getOrganization('WorldHealthOrganization');
+      return {
+        id: whoData.id,
+        login: whoData.login,
+        display_name: whoData.name || 'World Health Organization',
+        description: whoData.description || 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+        avatar_url: whoData.avatar_url,
+        html_url: whoData.html_url,
+        type: 'Organization',
+        permissions: {
+          can_create_repositories: true,
+          can_create_private_repositories: true
+        },
+        plan: {
+          name: 'Organization',
+          private_repos: 'unlimited'
+        },
+        isWHO: true
+      };
+    } catch (error) {
+      console.warn('Could not fetch WHO organization data from API, using fallback:', error);
+      // Return hardcoded fallback data
+      return {
+        id: 'who-organization',
+        login: 'WorldHealthOrganization',
+        display_name: 'World Health Organization',
+        description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+        avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+        html_url: 'https://github.com/WorldHealthOrganization',
+        type: 'Organization',
+        permissions: {
+          can_create_repositories: true,
+          can_create_private_repositories: true
+        },
+        plan: {
+          name: 'Organization',
+          private_repos: 'unlimited'
+        },
+        isWHO: true
+      };
+    }
+  }
+
   // Get repositories for a user or organization (now filters by SMART Guidelines compatibility)
   async getRepositories(owner, type = 'user') {
     // Use the new SMART guidelines filtering method

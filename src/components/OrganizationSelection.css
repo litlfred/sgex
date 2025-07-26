@@ -4,7 +4,7 @@
 }
 
 .org-header {
-  background: rgba(0, 32, 92, 0);
+  background: rgb(4, 11, 118);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   padding: 1rem 2rem;
@@ -15,7 +15,7 @@
 
 .who-branding h1 {
   margin: 0;
-  color: #0078d4;
+  color: white;
   font-size: 1.8rem;
   font-weight: 600;
 }
@@ -65,14 +65,14 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: #0078d4;
+  color: white;
   cursor: pointer;
   text-decoration: underline;
   font-size: inherit;
 }
 
 .breadcrumb-link:hover {
-  color: #106ebe;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .breadcrumb-separator {
@@ -167,7 +167,7 @@
 .checkbox-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: #0078d4;
+  accent-color: white;
 }
 
 .loading {
@@ -232,13 +232,13 @@
 }
 
 .org-card:hover {
-  border-color: #0078d4;
+  border-color: white;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   transform: translateY(-2px);
 }
 
 .org-card.selected {
-  border-color: #0078d4;
+  border-color: white;
   background: linear-gradient(135deg, rgba(0, 120, 212, 0.05) 0%, rgba(0, 120, 212, 0.02) 100%);
   box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
@@ -253,12 +253,12 @@
 }
 
 .org-card.who-org {
-  border-color: #0078d4;
+  border-color: white;
   border-width: 3px;
 }
 
 .org-card.who-org:hover, .org-card.who-org.selected {
-  border-color: #0078d4;
+  border-color: white;
   background: linear-gradient(135deg, rgba(0, 120, 212, 0.08) 0%, rgba(0, 120, 212, 0.05) 100%);
   box-shadow: 0 6px 20px rgba(0, 120, 212, 0.2);
 }

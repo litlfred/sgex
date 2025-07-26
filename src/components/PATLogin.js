@@ -1,12 +1,10 @@
 import React, { useState } from "react";
-import PATSetupInstructions from "./PATSetupInstructions";
 import "./PATLogin.css";
 
 const PATLogin = ({ onAuthSuccess }) => {
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -87,18 +85,6 @@ const PATLogin = ({ onAuthSuccess }) => {
         </form>
         
         {error && <div className="error-message">{error}</div>}
-        
-        <div className="help-section">
-          <button 
-            type="button"
-            className="help-toggle-btn"
-            onClick={() => setShowInstructions(!showInstructions)}
-          >
-            {showInstructions ? '🔼' : '🔽'} How to create a Personal Access Token
-          </button>
-          
-          {showInstructions && <PATSetupInstructions />}
-        </div>
       </div>
     </div>
   );

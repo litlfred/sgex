@@ -1,0 +1,59 @@
+name: DAK Feature Request
+description: Suggest an enhancement or improvement to this Digital Adaptation Kit (DAK)
+title: "[DAK Enhancement]: "
+labels: ["enhancement", "dak-improvement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement to this Digital Adaptation Kit (DAK)!
+
+  - type: textarea
+    id: improvement-description
+    attributes:
+      label: Improvement Description
+      description: What enhancement would you like to see in this DAK?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: dak-component
+    attributes:
+      label: DAK Component
+      description: Which DAK component would this enhancement affect?
+      options:
+        - Business Processes (BPMN)
+        - Decision Support Logic (DMN)
+        - Indicators & Measures
+        - Data Entry Forms
+        - Terminology (Code Systems/Value Sets)
+        - FHIR Profiles
+        - FHIR Extensions
+        - Test Data & Examples
+        - General / Multiple Components
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: What clinical or implementation use case would this enhancement support?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: How do you envision this enhancement being implemented?
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Approaches
+      description: Are there other ways this need could be addressed?
+    validations:
+      required: false

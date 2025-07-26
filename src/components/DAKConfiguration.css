@@ -4,7 +4,7 @@
 }
 
 .config-header {
-  background: rgba(0, 32, 92, 0);
+  background: rgb(4, 11, 118);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   padding: 1rem 2rem;
@@ -15,7 +15,7 @@
 
 .who-branding h1 {
   margin: 0;
-  color: #0078d4;
+  color: white;
   font-size: 1.8rem;
   font-weight: 600;
 }
@@ -65,14 +65,14 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: #0078d4;
+  color: white;
   cursor: pointer;
   text-decoration: underline;
   font-size: inherit;
 }
 
 .breadcrumb-link:hover {
-  color: #106ebe;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .breadcrumb-separator {
@@ -187,7 +187,7 @@
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #0078d4;
+  border-color: white;
 }
 
 .form-group input.error,
@@ -220,7 +220,7 @@
 .checkbox-label input[type="checkbox"] {
   width: auto;
   margin: 0;
-  accent-color: #0078d4;
+  accent-color: white;
 }
 
 .topics-container {
@@ -288,7 +288,7 @@
 .topic-suggestion:hover {
   background: #0078d4;
   color: white;
-  border-color: #0078d4;
+  border-color: white;
 }
 
 .config-footer {

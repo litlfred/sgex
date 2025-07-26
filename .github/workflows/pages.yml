@@ -2,11 +2,13 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    paths-ignore:
+      - 'docs/qa-report.html'
+      - 'docs/github-issues-analysis.md'
   pull_request:
-    branches:
-      - main
+    paths-ignore:
+      - 'docs/qa-report.html'
+      - 'docs/github-issues-analysis.md'
 
 permissions:
   contents: read
@@ -37,6 +39,12 @@ jobs:
         run: npm run build
         env:
           CI: false
+
+      - name: Generate QA Report
+        run: node scripts/generate-qa-report.js
+
+      - name: Generate Issues Analysis
+        run: node scripts/analyze-github-issues.js
         
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -49,6 +57,10 @@ jobs:
           # Copy documentation
           mkdir -p _site/docs
           cp docs/*.md _site/docs/
+          # Copy QA report
+          if [ -f docs/qa-report.html ]; then
+            cp docs/qa-report.html _site/docs/
+          fi
           # Copy root index.html as fallback
           if [ ! -f _site/index.html ]; then
             cp index.html _site/

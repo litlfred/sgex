@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './DocumentationViewer.css';
 
 // Map of available documentation files
@@ -9,7 +10,10 @@ const docFiles = {
   'requirements': { file: 'requirements.md', title: 'Requirements' },
   'architecture': { file: 'solution-architecture.md', title: 'Solution Architecture' },
   'project-plan': { file: 'project-plan.md', title: 'Project Plan' },
-  'bpmn-integration': { file: 'bpmn-integration.md', title: 'BPMN Integration' }
+  'bpmn-integration': { file: 'bpmn-integration.md', title: 'BPMN Integration' },
+  'qa-testing': { file: 'qa-testing.md', title: 'QA Testing Guide' },
+  'qa-report': { file: 'qa-report.html', title: 'QA Testing Report', isHtml: true },
+  'issues-analysis': { file: 'github-issues-analysis.md', title: 'GitHub Issues Analysis' }
 };
 
 const DocumentationViewer = () => {
@@ -26,6 +30,29 @@ const DocumentationViewer = () => {
 
       try {
         const docInfo = docFiles[docId] || docFiles['overview'];
+
+        // For HTML files, redirect to the HTML file directly
+        if (docInfo.isHtml) {
+          // Check if file exists first
+          try {
+            const checkResponse = await fetch(`${process.env.PUBLIC_URL}/docs/${docInfo.file}`, { method: 'HEAD' });
+            if (checkResponse.ok) {
+              // File exists, redirect to it
+              window.location.href = `${process.env.PUBLIC_URL}/docs/${docInfo.file}`;
+              return;
+            } else {
+              // File doesn't exist, show helpful message
+              setContent(`# ${docInfo.title}\n\nThe QA report is generated during deployment and is available on the live site at: [${docInfo.file}](/docs/${docInfo.file})\n\nIf you're viewing this locally, the report will be available after the next deployment to GitHub Pages.`);
+              setLoading(false);
+              return;
+            }
+          } catch (htmlCheckError) {
+            // If check fails, show helpful message
+            setContent(`# ${docInfo.title}\n\nThe QA report is generated during deployment and is available on the live site.\n\nIf you're viewing this locally, the report will be available after the next deployment to GitHub Pages.`);
+            setLoading(false);
+            return;
+          }
+        }
 
         // Fetch the markdown file from the docs folder
         const response = await fetch(`${process.env.PUBLIC_URL}/docs/${docInfo.file}`);
@@ -196,6 +223,12 @@ const DocumentationViewer = () => {
           />
         </div>
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="documentation-viewer"
+        position="bottom-right"
+        contextData={{ docId, docFiles }}
+      />
     </div>
   );
 };

@@ -4,7 +4,7 @@
 }
 
 .action-header {
-  background: rgba(0, 32, 92, 0);
+  background: rgb(4, 11, 118);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   padding: 1rem 2rem;
@@ -32,7 +32,7 @@
 
 .who-branding .subtitle {
   margin: 0;
-  color: rgba(255, 255, 255, 0.95);
+  color: white;
   font-size: 0.9rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
@@ -67,14 +67,14 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: #0078d4;
+  color: white;
   cursor: pointer;
   text-decoration: underline;
   font-size: inherit;
 }
 
 .breadcrumb-link:hover {
-  color: #106ebe;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .breadcrumb-separator {

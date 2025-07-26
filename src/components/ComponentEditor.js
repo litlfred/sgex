@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './ComponentEditor.css';
 
 const ComponentEditor = () => {
@@ -95,6 +96,11 @@ const ComponentEditor = () => {
           </div>
         </div>
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="component-editor"
+        contextData={{ profile, repository, component }}
+      />
     </div>
   );
 };

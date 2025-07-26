@@ -34,6 +34,40 @@ const mockGitHubService = {
     { login: 'test-org', name: 'Test Organization' }
   ])),
   
+  getOrganization: jest.fn((orgLogin) => {
+    if (orgLogin === 'WorldHealthOrganization') {
+      return Promise.resolve({
+        id: 12261302,
+        login: 'WorldHealthOrganization',
+        name: 'World Health Organization',
+        description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+        avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+        html_url: 'https://github.com/WorldHealthOrganization',
+        type: 'Organization'
+      });
+    }
+    return Promise.reject(new Error('Organization not found'));
+  }),
+  
+  getWHOOrganization: jest.fn(() => Promise.resolve({
+    id: 12261302,
+    login: 'WorldHealthOrganization',
+    display_name: 'World Health Organization',
+    description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+    avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+    html_url: 'https://github.com/WorldHealthOrganization',
+    type: 'Organization',
+    permissions: {
+      can_create_repositories: true,
+      can_create_private_repositories: true
+    },
+    plan: {
+      name: 'Organization',
+      private_repos: 'unlimited'
+    },
+    isWHO: true
+  })),
+  
   getRepositories: jest.fn(() => Promise.resolve([
     {
       id: 1,

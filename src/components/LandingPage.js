@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import PATLogin from './PATLogin';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -12,8 +13,35 @@ const LandingPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [dakCounts, setDakCounts] = useState({});
-  const [countingInProgress, setCountingInProgress] = useState(false);
+
   const navigate = useNavigate();
+
+  // Load cached DAK counts without initiating any scanning
+  const loadCachedDakCounts = useCallback((userData, orgsData) => {
+    if (!githubService.isAuth()) {
+      return;
+    }
+
+    const counts = {};
+    
+    // Check cache for user's personal repositories
+    if (userData) {
+      const userCache = repositoryCacheService.getCachedRepositories(userData.login, 'user');
+      if (userCache && userCache.repositories) {
+        counts[`user-${userData.login}`] = userCache.repositories.length;
+      }
+    }
+    
+    // Check cache for organization repositories
+    orgsData.forEach(org => {
+      const orgCache = repositoryCacheService.getCachedRepositories(org.login, 'org');
+      if (orgCache && orgCache.repositories) {
+        counts[`org-${org.login}`] = orgCache.repositories.length;
+      }
+    });
+    
+    setDakCounts(counts);
+  }, []);
 
   const fetchUserData = useCallback(async () => {
     setLoading(true);
@@ -40,108 +68,54 @@ const LandingPage = () => {
       }
       
       // Always ensure WHO organization is included
-      const whoOrganization = {
-        id: 'who-organization',
-        login: 'WorldHealthOrganization',
-        name: 'World Health Organization',
-        description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
-        avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
-        html_url: 'https://github.com/WorldHealthOrganization',
-        type: 'Organization',
-        isWHO: true
-      };
-      
-      // Check if WHO organization is already in the list
-      const hasWHO = orgsData.some(org => org.login === 'WorldHealthOrganization');
-      
-      if (!hasWHO) {
-        // Add WHO organization at the beginning of the list
-        orgsData.unshift(whoOrganization);
-      } else {
-        // Ensure existing WHO organization has the isWHO flag
-        orgsData = orgsData.map(org => 
-          org.login === 'WorldHealthOrganization' 
-            ? { ...org, isWHO: true }
-            : org
-        );
+      try {
+        const whoOrganization = await githubService.getWHOOrganization();
+        
+        // Check if WHO organization is already in the list
+        const whoIndex = orgsData.findIndex(org => org.login === 'WorldHealthOrganization');
+        
+        if (whoIndex >= 0) {
+          // Replace existing WHO org with fresh data and ensure isWHO flag
+          orgsData[whoIndex] = { ...orgsData[whoIndex], ...whoOrganization, isWHO: true };
+        } else {
+          // Add WHO organization at the beginning of the list
+          orgsData.unshift(whoOrganization);
+        }
+      } catch (whoError) {
+        console.warn('Could not fetch WHO organization data, using fallback:', whoError);
+        
+        // Fallback to hardcoded WHO organization
+        const whoOrganization = {
+          id: 'who-organization',
+          login: 'WorldHealthOrganization',
+          name: 'World Health Organization',
+          description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+          avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+          html_url: 'https://github.com/WorldHealthOrganization',
+          type: 'Organization',
+          isWHO: true
+        };
+        
+        // Check if WHO organization is already in the list
+        const hasWHO = orgsData.some(org => org.login === 'WorldHealthOrganization');
+        
+        if (!hasWHO) {
+          // Add WHO organization at the beginning of the list
+          orgsData.unshift(whoOrganization);
+        } else {
+          // Ensure existing WHO organization has the isWHO flag
+          orgsData = orgsData.map(org => 
+            org.login === 'WorldHealthOrganization' 
+              ? { ...org, isWHO: true }
+              : org
+          );
+        }
       }
       
       setOrganizations(orgsData);
       
-      // Prepare profiles for counting DAK repositories
-      const profiles = [
-        { login: userData.login, type: 'user' },
-        ...orgsData.map(org => ({ login: org.login, type: 'org' }))
-      ];
-      
-      // Fetch DAK repository counts using cache when available
-      if (!githubService.isAuth()) {
-        setDakCounts({});
-        return;
-      }
-      
-      setCountingInProgress(true);
-      const counts = {};
-      
-      try {
-        // Count DAK repositories for each profile, using cache when available
-        const countPromises = profiles.map(async (profile) => {
-          try {
-            const profileType = profile.type === 'user' ? 'user' : 'org';
-            
-            // First, check if we have cached repositories
-            let cachedRepos = null;
-            try {
-              cachedRepos = repositoryCacheService.getCachedRepositories(profile.login, profileType);
-            } catch (cacheError) {
-              console.warn(`Error accessing cache for ${profile.login}:`, cacheError);
-            }
-            
-            if (cachedRepos) {
-              // Use cached count - no need to scan
-              console.log(`Using cached DAK count for ${profile.login} (${profileType}): ${cachedRepos.repositories.length}`);
-              return { 
-                key: `${profile.type}-${profile.login}`, 
-                count: cachedRepos.repositories.length 
-              };
-            }
-            
-            // No cached data - fetch fresh repositories and cache them
-            console.log(`Fetching fresh DAK repositories for ${profile.login} (${profileType})`);
-            const repositories = await githubService.getSmartGuidelinesRepositories(profile.login, profileType);
-            
-            // Cache the results for future use
-            try {
-              repositoryCacheService.setCachedRepositories(profile.login, profileType, repositories);
-            } catch (cacheError) {
-              console.warn(`Error caching repositories for ${profile.login}:`, cacheError);
-            }
-            
-            return { 
-              key: `${profile.type}-${profile.login}`, 
-              count: repositories.length 
-            };
-          } catch (error) {
-            console.warn(`Failed to count DAK repos for ${profile.login}:`, error);
-            return { 
-              key: `${profile.type}-${profile.login}`, 
-              count: 0 
-            };
-          }
-        });
-        
-        const results = await Promise.all(countPromises);
-        results.forEach(({ key, count }) => {
-          counts[key] = count;
-        });
-        
-      } catch (error) {
-        console.error('Error fetching DAK repository counts:', error);
-      } finally {
-        setCountingInProgress(false);
-      }
-      
-      setDakCounts(counts);
+      // Load cached DAK counts (if available)
+      loadCachedDakCounts(userData, orgsData);
       
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -152,7 +126,7 @@ const LandingPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []); // Remove dependencies to prevent circular re-renders
+  }, [loadCachedDakCounts]); // Remove dependencies to prevent circular re-renders
 
   // Initial authentication check - runs once on mount
   useEffect(() => {
@@ -286,9 +260,10 @@ const LandingPage = () => {
           </div>
         </div>
         
-        <div className="landing-mascot">
-          <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="landing-mascot-img" />
-        </div>
+        <ContextualHelpMascot 
+          pageId="landing-page-unauthenticated"
+          position="bottom-right"
+        />
       </div>
     );
   }
@@ -339,9 +314,6 @@ const LandingPage = () => {
                 <p>Personal repositories</p>
                 <div className="profile-badges">
                   <span className="profile-type">Personal</span>
-                  {countingInProgress && (
-                    <span className="counting-badge">Scanning...</span>
-                  )}
                 </div>
               </div>
               
@@ -368,9 +340,6 @@ const LandingPage = () => {
                   <div className="profile-badges">
                     <span className="profile-type">Organization</span>
                     {org.isWHO && <span className="who-badge">WHO Official</span>}
-                    {countingInProgress && (
-                      <span className="counting-badge">Scanning...</span>
-                    )}
                   </div>
                 </div>
               ))}
@@ -379,9 +348,11 @@ const LandingPage = () => {
         )}
       </div>
       
-      <div className="landing-mascot">
-        <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="landing-mascot-img" />
-      </div>
+      <ContextualHelpMascot 
+        pageId="landing-page-authenticated"
+        position="bottom-right"
+        contextData={{ user, organizations }}
+      />
     </div>
   );
 };

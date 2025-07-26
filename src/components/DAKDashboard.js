@@ -488,27 +488,9 @@ const DAKDashboard = () => {
 
       {/* Contextual Help Mascot */}
       <ContextualHelpMascot 
-        helpContent={
-          <div>
-            <h4>DAK Component Dashboard</h4>
-            <p>Welcome to the Digital Adaptation Kit (DAK) component selection dashboard!</p>
-            <div className="tip">
-              <strong>Getting Started:</strong>
-              <ul>
-                <li>Use the tabs above to switch between <strong>8 Core Components</strong> (L2 - Data model agnostic) and <strong>Additional Representations</strong> (L3 - FHIR R4-specific)</li>
-                <li>Click on any component card to start editing its content</li>
-                <li>Each component shows the number of files and supported formats</li>
-              </ul>
-            </div>
-            <p><strong>Need Help?</strong> This page organizes WHO SMART Guidelines components according to the official framework. The core components represent essential building blocks, while additional representations provide technical implementations.</p>
-            {!hasWriteAccess && (
-              <div className="tip">
-                <strong>Read-Only Access:</strong> You currently have read-only access. To edit components, you'll need write permissions to this repository.
-              </div>
-            )}
-          </div>
-        }
+        pageId="dak-dashboard"
         position="bottom-right"
+        contextData={{ profile, repository, hasWriteAccess }}
       />
     </div>
   );
