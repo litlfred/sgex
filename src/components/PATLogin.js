@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ContextualHelpMascot from './ContextualHelpMascot';
 import "./PATLogin.css";
 
 const PATLogin = ({ onAuthSuccess }) => {
@@ -86,6 +87,11 @@ const PATLogin = ({ onAuthSuccess }) => {
         
         {error && <div className="error-message">{error}</div>}
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="pat-login"
+        position="bottom-right"
+      />
     </div>
   );
 };

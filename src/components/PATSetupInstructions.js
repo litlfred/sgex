@@ -1,4 +1,5 @@
 import React from 'react';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './PATSetupInstructions.css';
 
 const PATSetupInstructions = () => {
@@ -82,6 +83,11 @@ const PATSetupInstructions = () => {
           </ul>
         </div>
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="pat-setup-instructions"
+        position="bottom-right"
+      />
     </div>
   );
 };

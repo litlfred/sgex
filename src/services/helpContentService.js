@@ -332,6 +332,88 @@ class HelpContentService {
             }
           ]
         }
+      ],
+      'pat-login': [
+        {
+          id: 'pat-authentication-help',
+          title: 'Using Personal Access Tokens',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Why Personal Access Tokens?',
+              content: `
+                <p>SGEX uses GitHub Personal Access Tokens (PATs) for secure authentication:</p>
+                <ul>
+                  <li><strong>No Backend Required:</strong> Works entirely in your browser</li>
+                  <li><strong>Fine-grained Control:</strong> Choose which repositories to access</li>
+                  <li><strong>Enhanced Security:</strong> Can be easily rotated and revoked</li>
+                  <li><strong>Privacy Focused:</strong> Your token never leaves your browser</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🔒 Security:</strong> SGEX stores your token locally and never transmits it to any server.
+                </div>
+              `
+            }
+          ]
+        }
+      ],
+      'pat-setup-instructions': [
+        {
+          id: 'detailed-pat-setup',
+          title: 'Detailed PAT Setup Guide',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Token Type Comparison',
+              content: `
+                <p>GitHub offers two types of Personal Access Tokens:</p>
+                <h4>Fine-grained Tokens (Recommended)</h4>
+                <ul>
+                  <li>Repository-specific access control</li>
+                  <li>Better security with minimal permissions</li>
+                  <li>More granular permission settings</li>
+                  <li>Shorter default expiration times</li>
+                </ul>
+                <h4>Classic Tokens</h4>
+                <ul>
+                  <li>Broader scope-based permissions</li>
+                  <li>Simpler permission model</li>
+                  <li>Longer expiration options</li>
+                  <li>Works with all GitHub integrations</li>
+                </ul>
+              `
+            }
+          ]
+        }
+      ],
+      'dak-configuration': [
+        {
+          id: 'dak-configuration-guide',
+          title: 'Configuring Your DAK',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Understanding DAK Configuration',
+              content: `
+                <p>When creating a new DAK, you need to configure both repository and FHIR settings:</p>
+                <h4>Repository Configuration</h4>
+                <ul>
+                  <li><strong>Repository Name:</strong> GitHub repository identifier (lowercase with hyphens)</li>
+                  <li><strong>Description:</strong> Brief description of your DAK's purpose</li>
+                  <li><strong>Topics:</strong> Tags that help others discover your DAK</li>
+                  <li><strong>Visibility:</strong> Public repositories are discoverable by the community</li>
+                </ul>
+                <h4>FHIR Implementation Guide Settings</h4>
+                <ul>
+                  <li><strong>IG ID:</strong> Unique identifier for your Implementation Guide</li>
+                  <li><strong>Name:</strong> Technical name used in code generation</li>
+                  <li><strong>Title:</strong> Human-readable title for documentation</li>
+                  <li><strong>Publisher:</strong> Organization responsible for the DAK</li>
+                </ul>
+              `
+            }
+          ]
+        }
       ]
     };
   }

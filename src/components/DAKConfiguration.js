@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './DAKConfiguration.css';
 
 const DAKConfiguration = () => {
@@ -470,6 +471,18 @@ const DAKConfiguration = () => {
           </div>
         </div>
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="dak-configuration"
+        position="bottom-right"
+        contextData={{ 
+          repository: templateRepository,
+          selectedDak: templateRepository,
+          profile,
+          destinationOrganization,
+          action
+        }}
+      />
     </div>
   );
 };
