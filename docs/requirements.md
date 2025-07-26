@@ -70,6 +70,18 @@ The SGEX Workbench operates within an ecosystem of actors that collaborate to en
 - Repository selection interface
 - Navigate to repository-specific home page
 
+**REQ-REPO-003**: The system SHALL display official logos and avatars for organizations
+- Organizations (e.g., WHO) SHALL display their official logo/avatar retrieved from GitHub
+- Avatars SHALL be properly sized and positioned within profile cards
+- Profile cards SHALL maintain visual consistency across different organization types
+
+**REQ-REPO-004**: The system SHALL provide DAK repository count indicators
+- Users and organizations with scanned DAK repositories SHALL display a notification badge
+- The badge SHALL show the number of found DAK repositories in the upper right corner of the avatar
+- The badge SHALL be visually distinctive with appropriate color coding and animation
+- The badge SHALL only appear when DAK repositories are found (count > 0)
+- During repository scanning, a "Scanning..." indicator SHALL be displayed
+
 ### 2.3 DAK Component Management
 
 For detailed information about each DAK component, see [DAK Components Documentation](dak-components.md).

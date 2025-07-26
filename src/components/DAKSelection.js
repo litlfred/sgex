@@ -307,6 +307,21 @@ const DAKSelection = () => {
 
   const handleRepositorySelect = (repo) => {
     setSelectedRepository(repo);
+    
+    // For 'edit' action, automatically navigate after selection
+    if (action === 'edit') {
+      // Add a small delay for visual feedback before navigation
+      setTimeout(() => {
+        const config = getActionConfig();
+        navigate(config.nextRoute, {
+          state: {
+            profile,
+            repository: repo,
+            action
+          }
+        });
+      }, 300); // 300ms delay for visual feedback
+    }
   };
 
   const handleContinue = () => {
@@ -662,13 +677,21 @@ const DAKSelection = () => {
               </div>
 
               <div className="selection-footer">
-                <button 
-                  className="continue-btn"
-                  onClick={handleContinue}
-                  disabled={!selectedRepository}
-                >
-                  {config.buttonText}
-                </button>
+                {action !== 'edit' && (
+                  <button 
+                    className="continue-btn"
+                    onClick={handleContinue}
+                    disabled={!selectedRepository}
+                  >
+                    {config.buttonText}
+                  </button>
+                )}
+                {action === 'edit' && (
+                  <div className="direct-selection-note">
+                    <span className="note-icon">💡</span>
+                    <span>Click on a repository above to start editing its components</span>
+                  </div>
+                )}
               </div>
             </>
           )}

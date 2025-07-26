@@ -42,10 +42,11 @@ The SGEX Workbench operates within an ecosystem of actors that collaborate to en
 
 ### 2.1 User Authentication and Authorization
 
-**REQ-AUTH-001**: The system SHALL use GitHub OAuth for user authentication
-- Users must authenticate using their GitHub credentials
+**REQ-AUTH-001**: The system SHALL use GitHub Personal Access Tokens (PATs) for user authentication
+- Users must authenticate using their GitHub Personal Access Tokens
 - No separate user management system is required
 - Authentication state must persist across browser sessions
+- Supports both classic and fine-grained Personal Access Tokens
 
 **REQ-AUTH-002**: The system SHALL redirect users to their intended destination after authentication
 - Post-authentication redirect to original app view
@@ -231,12 +232,12 @@ For detailed information about each DAK component, see [DAK Components Documenta
 **REQ-SEC-001**: The system SHALL run entirely client-side
 - No backend server required
 - No secrets stored in codebase
-- All authentication via GitHub OAuth
+- All authentication via GitHub Personal Access Tokens
 
 **REQ-SEC-002**: The system SHALL enforce security through GitHub
 - Repository permissions enforced by GitHub
 - No custom security implementation
-- OAuth token management
+- Personal Access Token management
 
 ### 3.5 Compatibility
 
@@ -340,7 +341,7 @@ For detailed information about each DAK component, see [DAK Components Documenta
 
 ## 8. Dependencies
 
-- GitHub OAuth service availability
+- GitHub Personal Access Token service availability
 - GitHub REST API stability
 - Third-party library maintenance (bpmn-js, dmn-js, JSON Forms)
 - WHO SMART Guidelines branding materials availability
