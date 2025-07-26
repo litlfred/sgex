@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import patManagementService from '../services/patManagementService';
 import PATSetupInstructions from './PATSetupInstructions';
+import PATHelpSlideshow from './PATHelpSlideshow';
 import './PATManagementModal.css';
 
-const PATManagementModal = ({ onClose }) => {
+const PATManagementModal = ({ onClose, repository = null, requiredAccess = 'read' }) => {
   const [pats, setPATs] = useState([]);
   const [newToken, setNewToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showInstructions, setShowInstructions] = useState(false);
+  const [showSlideshow, setShowSlideshow] = useState(false);
   const [activeTab, setActiveTab] = useState('manage'); // 'manage' or 'add'
 
   useEffect(() => {
@@ -254,12 +256,23 @@ const PATManagementModal = ({ onClose }) => {
                   >
                     {showInstructions ? 'Hide Instructions' : 'Show Instructions'}
                   </button>
+
+                  <button 
+                    type="button"
+                    className="help-btn"
+                    onClick={() => setShowSlideshow(true)}
+                  >
+                    🎓 Step-by-Step Guide
+                  </button>
                 </div>
               </form>
 
               {showInstructions && (
                 <div className="instructions-section">
-                  <PATSetupInstructions />
+                  <PATSetupInstructions 
+                    repository={repository}
+                    requiredAccess={requiredAccess}
+                  />
                 </div>
               )}
             </div>
@@ -278,6 +291,14 @@ const PATManagementModal = ({ onClose }) => {
           </div>
         </div>
       </div>
+
+      {showSlideshow && (
+        <PATHelpSlideshow
+          repository={repository}
+          requiredAccess={requiredAccess}
+          onClose={() => setShowSlideshow(false)}
+        />
+      )}
     </div>
   );
 };

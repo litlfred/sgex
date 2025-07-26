@@ -323,6 +323,22 @@
   background: #f6f8fa;
 }
 
+.help-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.help-btn:hover {
+  background: #218838;
+}
+
 .instructions-section {
   margin-top: 24px;
   padding-top: 24px;
