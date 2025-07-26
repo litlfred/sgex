@@ -3,9 +3,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import LandingPage from '../components/LandingPage';
 import githubService from '../services/githubService';
+import repositoryCacheService from '../services/repositoryCacheService';
 
 // Mock the GitHub service
 jest.mock('../services/githubService');
+// Mock the repository cache service
+jest.mock('../services/repositoryCacheService');
 
 const mockUser = {
   login: 'testuser',
@@ -52,10 +55,68 @@ describe('LandingPage without DAK Count Features', () => {
     githubService.getCurrentUser.mockResolvedValue(mockUser);
     githubService.getUserOrganizations.mockResolvedValue(mockOrganizations.slice(1)); // Exclude WHO as it's added automatically
     githubService.getSmartGuidelinesRepositories.mockResolvedValue(mockSmartRepos);
+
+    // Mock repository cache service to return null by default (no cached data)
+    repositoryCacheService.getCachedRepositories.mockReturnValue(null);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  test('displays cached DAK count badges when cache is available', async () => {
+    // Mock cached data for user and organizations
+    repositoryCacheService.getCachedRepositories.mockImplementation((login, type) => {
+      if (login === 'testuser' && type === 'user') {
+        return {
+          repositories: mockSmartRepos.slice(0, 1), // 1 repo
+          timestamp: Date.now(),
+          owner: 'testuser',
+          type: 'user'
+        };
+      }
+      if (login === 'WorldHealthOrganization' && type === 'org') {
+        return {
+          repositories: mockSmartRepos, // 2 repos
+          timestamp: Date.now(),
+          owner: 'WorldHealthOrganization',
+          type: 'org'
+        };
+      }
+      if (login === 'testorg' && type === 'org') {
+        return {
+          repositories: mockSmartRepos.slice(0, 1), // 1 repo
+          timestamp: Date.now(),
+          owner: 'testorg',
+          type: 'org'
+        };
+      }
+      return null;
+    });
+
+    render(
+      <BrowserRouter>
+        <LandingPage />
+      </BrowserRouter>
+    );
+
+    // Wait for authentication and data loading
+    await waitFor(() => {
+      expect(screen.getByText('Select Profile or Organization')).toBeInTheDocument();
+    }, { timeout: 5000 });
+
+    // Check that DAK count badges are displayed based on cached data
+    const ones = screen.getAllByText('1'); // Personal profile and testorg both have 1 repo
+    expect(ones).toHaveLength(2);
+    expect(screen.getByText('2')).toBeInTheDocument(); // WHO org has 2 repos
+    
+    // Verify that no scanning was initiated
+    expect(githubService.getSmartGuidelinesRepositories).not.toHaveBeenCalled();
+    
+    // Verify that cache was checked for each profile
+    expect(repositoryCacheService.getCachedRepositories).toHaveBeenCalledWith('testuser', 'user');
+    expect(repositoryCacheService.getCachedRepositories).toHaveBeenCalledWith('WorldHealthOrganization', 'org');
+    expect(repositoryCacheService.getCachedRepositories).toHaveBeenCalledWith('testorg', 'org');
   });
 
   test('renders authenticated landing page with DAK count badges', async () => {

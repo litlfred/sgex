@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import repositoryCacheService from '../services/repositoryCacheService';
 import PATLogin from './PATLogin';
 import './LandingPage.css';
 
@@ -10,8 +11,36 @@ const LandingPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [dakCounts, setDakCounts] = useState({});
 
   const navigate = useNavigate();
+
+  // Load cached DAK counts without initiating any scanning
+  const loadCachedDakCounts = useCallback((userData, orgsData) => {
+    if (!githubService.isAuth()) {
+      return;
+    }
+
+    const counts = {};
+    
+    // Check cache for user's personal repositories
+    if (userData) {
+      const userCache = repositoryCacheService.getCachedRepositories(userData.login, 'user');
+      if (userCache && userCache.repositories) {
+        counts[`user-${userData.login}`] = userCache.repositories.length;
+      }
+    }
+    
+    // Check cache for organization repositories
+    orgsData.forEach(org => {
+      const orgCache = repositoryCacheService.getCachedRepositories(org.login, 'org');
+      if (orgCache && orgCache.repositories) {
+        counts[`org-${org.login}`] = orgCache.repositories.length;
+      }
+    });
+    
+    setDakCounts(counts);
+  }, []);
 
   const fetchUserData = useCallback(async () => {
     setLoading(true);
@@ -66,6 +95,9 @@ const LandingPage = () => {
       
       setOrganizations(orgsData);
       
+      // Load cached DAK counts (if available)
+      loadCachedDakCounts(userData, orgsData);
+      
     } catch (error) {
       console.error('Error fetching user data:', error);
       setError('Failed to fetch user data. Please check your connection and try again.');
@@ -75,7 +107,7 @@ const LandingPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []); // Remove dependencies to prevent circular re-renders
+  }, [loadCachedDakCounts]); // Remove dependencies to prevent circular re-renders
 
   // Initial authentication check - runs once on mount
   useEffect(() => {
@@ -252,6 +284,11 @@ const LandingPage = () => {
               >
                 <div className="profile-card-header">
                   <img src={user?.avatar_url} alt="Personal profile" />
+                  {dakCounts[`user-${user?.login}`] > 0 && (
+                    <div className="dak-count-badge">
+                      {dakCounts[`user-${user?.login}`]}
+                    </div>
+                  )}
                 </div>
                 <h3>{user?.name || user?.login}</h3>
                 <p>Personal repositories</p>
@@ -272,6 +309,11 @@ const LandingPage = () => {
                       src={org.avatar_url || `https://github.com/${org.login}.png`} 
                       alt={`${org.name || org.login} organization`} 
                     />
+                    {dakCounts[`org-${org.login}`] > 0 && (
+                      <div className="dak-count-badge">
+                        {dakCounts[`org-${org.login}`]}
+                      </div>
+                    )}
                   </div>
                   <h3>{org.name || org.login}</h3>
                   <p>@{org.login}</p>
