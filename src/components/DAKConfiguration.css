@@ -1,6 +1,6 @@
 .dak-configuration {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: rgb(4, 11, 118);
 }
 
 .config-header {

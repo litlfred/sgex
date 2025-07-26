@@ -1,6 +1,6 @@
 .dak-action-selection {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: rgb(4, 11, 118);
 }
 
 .action-header {
@@ -32,7 +32,7 @@
 
 .who-branding .subtitle {
   margin: 0;
-  color: rgba(255, 255, 255, 0.95);
+  color: white;
   font-size: 0.9rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
