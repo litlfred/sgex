@@ -1,6 +1,8 @@
 import { Octokit } from '@octokit/rest';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
+import oauthService from './oauthService';
+import tokenManagerService from './tokenManagerService';
 
 class GitHubService {
   constructor() {
@@ -8,6 +10,7 @@ class GitHubService {
     this.isAuthenticated = false;
     this.permissions = null;
     this.tokenType = null; // 'classic', 'fine-grained', or 'oauth'
+    this.useOAuth = true; // Default to OAuth mode
   }
 
   // Initialize with a GitHub token (supports both OAuth and PAT tokens)
@@ -17,6 +20,7 @@ class GitHubService {
         auth: token,
       });
       this.isAuthenticated = true;
+      this.useOAuth = false; // Using PAT mode
       return true;
     } catch (error) {
       console.error('Failed to authenticate with GitHub:', error);
@@ -31,11 +35,39 @@ class GitHubService {
       this.octokit = octokitInstance;
       this.isAuthenticated = true;
       this.tokenType = 'oauth';
+      this.useOAuth = false; // Using legacy mode with specific instance
       return true;
     } catch (error) {
       console.error('Failed to authenticate with Octokit instance:', error);
       this.isAuthenticated = false;
       return false;
+    }
+  }
+
+  // Initialize OAuth mode
+  enableOAuthMode() {
+    this.useOAuth = true;
+    this.isAuthenticated = true; // OAuth service handles authentication
+    this.tokenType = 'oauth';
+    this.octokit = null; // Will be created per-request
+    return true;
+  }
+
+  // Get appropriate Octokit instance for repository operations
+  getOctokitForRepo(repoOwner, repoName, operation = 'read') {
+    if (this.useOAuth) {
+      // Use OAuth service to get appropriate token
+      return oauthService.createOctokit(
+        operation === 'write' ? 'WRITE_ACCESS' : 'READ_ONLY',
+        repoOwner,
+        repoName
+      );
+    } else if (this.octokit) {
+      // Use existing authenticated instance
+      return this.octokit;
+    } else {
+      // Return unauthenticated instance for public access
+      return new Octokit();
     }
   }
 
@@ -92,11 +124,19 @@ class GitHubService {
 
   // Check if authenticated
   isAuth() {
+    if (this.useOAuth) {
+      // In OAuth mode, check if we have any tokens
+      return oauthService.hasAccess('READ_ONLY') || oauthService.hasAccess('WRITE_ACCESS');
+    }
     return this.isAuthenticated && this.octokit !== null;
   }
 
   // Get current user data
   async getCurrentUser() {
+    if (this.useOAuth) {
+      return oauthService.getCurrentUser();
+    }
+
     if (!this.isAuth()) {
       throw new Error('Not authenticated with GitHub');
     }
@@ -112,6 +152,13 @@ class GitHubService {
 
   // Get user's organizations
   async getUserOrganizations() {
+    if (this.useOAuth) {
+      // Use best available token for organizations
+      const octokit = oauthService.createOctokit('READ_ONLY');
+      const { data } = await octokit.rest.orgs.listForAuthenticatedUser();
+      return data;
+    }
+
     if (!this.isAuth()) {
       throw new Error('Not authenticated with GitHub');
     }
@@ -195,10 +242,6 @@ class GitHubService {
 
   // Check if a repository has sushi-config.yaml with smart.who.int.base dependency
   async checkSmartGuidelinesCompatibility(owner, repo, retryCount = 2) {
-    if (!this.isAuth()) {
-      return false;
-    }
-
     // Check cache first to prevent redundant downloads
     const cachedResult = repositoryCompatibilityCache.get(owner, repo);
     if (cachedResult !== null) {
@@ -206,8 +249,11 @@ class GitHubService {
     }
 
     try {
+      // Get appropriate Octokit instance for this repo
+      const octokit = this.getOctokitForRepo(owner, repo, 'read');
+      
       // Try to get sushi-config.yaml from the repository root
-      const { data } = await this.octokit.rest.repos.getContent({
+      const { data } = await octokit.rest.repos.getContent({
         owner,
         repo,
         path: 'sushi-config.yaml',
@@ -260,7 +306,8 @@ class GitHubService {
   async checkSmartGuidelinesFallback(owner, repo) {
     try {
       // Get repository details to check topics and description
-      const { data } = await this.octokit.rest.repos.get({
+      const octokit = this.getOctokitForRepo(owner, repo, 'read');
+      const { data } = await octokit.rest.repos.get({
         owner,
         repo,
       });
@@ -327,21 +374,19 @@ class GitHubService {
 
   // Get repositories that are SMART guidelines compatible
   async getSmartGuidelinesRepositories(owner, type = 'user') {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
       let repositories;
+      const octokit = this.getOctokitForRepo(owner, null, 'read');
+      
       if (type === 'user') {
-        const { data } = await this.octokit.rest.repos.listForUser({
+        const { data } = await octokit.rest.repos.listForUser({
           username: owner,
           sort: 'updated',
           per_page: 100,
         });
         repositories = data;
       } else {
-        const { data } = await this.octokit.rest.repos.listForOrg({
+        const { data } = await octokit.rest.repos.listForOrg({
           org: owner,
           sort: 'updated',
           per_page: 100,
@@ -370,21 +415,19 @@ class GitHubService {
 
   // Get repositories with progressive scanning (for real-time updates)
   async getSmartGuidelinesRepositoriesProgressive(owner, type = 'user', onRepositoryFound = null, onProgress = null) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
       let repositories;
+      const octokit = this.getOctokitForRepo(owner, null, 'read');
+      
       if (type === 'user') {
-        const { data } = await this.octokit.rest.repos.listForUser({
+        const { data } = await octokit.rest.repos.listForUser({
           username: owner,
           sort: 'updated',
           per_page: 100,
         });
         repositories = data;
       } else {
-        const { data } = await this.octokit.rest.repos.listForOrg({
+        const { data } = await octokit.rest.repos.listForOrg({
           org: owner,
           sort: 'updated',
           per_page: 100,
@@ -455,12 +498,9 @@ class GitHubService {
 
   // Get a specific repository
   async getRepository(owner, repo) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
-      const { data } = await this.octokit.rest.repos.get({
+      const octokit = this.getOctokitForRepo(owner, repo, 'read');
+      const { data } = await octokit.rest.repos.get({
         owner,
         repo,
       });
@@ -477,6 +517,14 @@ class GitHubService {
     this.isAuthenticated = false;
     this.tokenType = null;
     this.permissions = null;
+    this.useOAuth = true; // Reset to OAuth mode
+    
+    // Clear OAuth tokens
+    if (oauthService) {
+      oauthService.clearAllTokens();
+    }
+    
+    // Clear legacy storage
     localStorage.removeItem('github_token');
     sessionStorage.removeItem('github_token');
   }

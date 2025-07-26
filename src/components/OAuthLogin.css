@@ -1,0 +1,456 @@
+.oauth-login {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.oauth-login-section {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.oauth-intro {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.oauth-intro h3 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.oauth-intro p {
+  color: #666;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Access Level Options */
+.access-level-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.access-level-card {
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  background: #fafafa;
+}
+
+.access-level-card:hover {
+  border-color: #007bff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.access-level-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.access-level-icon {
+  font-size: 1.5rem;
+}
+
+.access-level-header h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.access-level-description {
+  color: #666;
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+}
+
+.capabilities-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem 0;
+}
+
+.capabilities-list li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.capabilities-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #28a745;
+  font-weight: bold;
+}
+
+.auth-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.auth-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.auth-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.auth-btn.read-only {
+  background-color: #17a2b8;
+}
+
+.auth-btn.write-access {
+  background-color: #28a745;
+}
+
+/* OAuth Flow Active State */
+.oauth-flow-active {
+  text-align: center;
+}
+
+.oauth-flow-header {
+  margin-bottom: 2rem;
+}
+
+.oauth-flow-header h3 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.oauth-flow-header p {
+  color: #666;
+  margin: 0;
+}
+
+.oauth-flow-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.oauth-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  text-align: left;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+}
+
+.oauth-step.completed {
+  border-color: #28a745;
+  background: #d4edda;
+}
+
+.step-number {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: #007bff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-content h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.step-help {
+  margin: 0.5rem 0 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.github-auth-btn {
+  padding: 0.75rem 1.5rem;
+  background: #24292e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.github-auth-btn:hover {
+  background: #1a1e22;
+}
+
+.github-auth-btn.primary {
+  background: #007bff;
+}
+
+.github-auth-btn.primary:hover {
+  background: #0056b3;
+}
+
+.verification-code {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.verification-code .code {
+  font-family: 'Courier New', monospace;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #007bff;
+  background: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  letter-spacing: 0.1em;
+}
+
+.copy-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.copy-btn:hover {
+  background: #5a6268;
+}
+
+.waiting-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.oauth-flow-actions {
+  margin-bottom: 1.5rem;
+}
+
+.cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background: #5a6268;
+}
+
+.oauth-flow-info {
+  background: #e7f3ff;
+  border: 1px solid #b3d7ff;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.access-level-info {
+  margin: 0;
+  color: #004085;
+  font-size: 0.9rem;
+}
+
+/* Help Section */
+.oauth-help-section {
+  border-top: 1px solid #dee2e6;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.help-toggle-btn {
+  background: #f8f9fa;
+  color: #007bff;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.help-toggle-btn:hover {
+  background: #e9ecef;
+  border-color: #007bff;
+}
+
+.oauth-help-content {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.oauth-help-content h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.help-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.help-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.help-item strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #333;
+}
+
+.help-item p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.oauth-steps-help {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.oauth-steps-help h5 {
+  margin: 0 0 0.75rem 0;
+  color: #333;
+}
+
+.oauth-steps-help ol {
+  margin: 0;
+  color: #555;
+}
+
+.oauth-steps-help li {
+  margin-bottom: 0.25rem;
+}
+
+/* Error Message */
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.error-icon {
+  font-size: 1.1rem;
+}
+
+/* Spinner */
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner.small {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-width: 1.5px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .oauth-login {
+    padding: 1rem;
+  }
+  
+  .oauth-login-section {
+    padding: 1.5rem;
+  }
+  
+  .access-level-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .oauth-flow-steps {
+    gap: 1rem;
+  }
+  
+  .oauth-step {
+    padding: 0.75rem;
+  }
+  
+  .help-grid {
+    grid-template-columns: 1fr;
+  }
+}
