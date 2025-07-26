@@ -302,6 +302,7 @@ const DAKSelection = () => {
             className="profile-avatar" 
           />
           <span>{profile.name || profile.login}</span>
+          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
 
@@ -328,19 +329,6 @@ const DAKSelection = () => {
                 <span>You'll create a new repository based on the WHO SMART Guidelines template.</span>
               </div>
             )}
-            
-            <div className="documentation-info">
-              <p>
-                Learn more about{' '}
-                <a href="/sgex/docs/dak-components" className="doc-link" target="_blank" rel="noopener noreferrer">
-                  DAK Components
-                </a>{' '}
-                and{' '}
-                <a href="/sgex/docs/overview" className="doc-link" target="_blank" rel="noopener noreferrer">
-                  SGEX Documentation
-                </a>
-              </p>
-            </div>
             
             {action !== 'create' && githubService.isAuth() && (
               <div className="cache-controls">
