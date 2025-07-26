@@ -130,7 +130,7 @@ const DAKSelection = () => {
 
     // Filter to only return SMART guidelines compatible repositories
     return allMockRepos.filter(repo => repo.smart_guidelines_compatible);
-  }, [profile?.login]);
+  }, [profile]);
 
   const simulateEnhancedScanning = useCallback(async () => {
     setIsScanning(true);
