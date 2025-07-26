@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './BPMNViewer.css';
 
 const BPMNViewerComponent = () => {
@@ -304,6 +305,11 @@ const BPMNViewerComponent = () => {
           </div>
         </div>
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="bpmn-viewer"
+        contextData={{ profile, repository, selectedFile }}
+      />
     </div>
   );
 };

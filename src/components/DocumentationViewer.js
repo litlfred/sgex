@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './DocumentationViewer.css';
 
 // Map of available documentation files
@@ -196,6 +197,12 @@ const DocumentationViewer = () => {
           />
         </div>
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="documentation-viewer"
+        position="bottom-right"
+        contextData={{ docId, docFiles }}
+      />
     </div>
   );
 };

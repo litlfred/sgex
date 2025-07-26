@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Octokit } from '@octokit/rest';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './BusinessProcessSelection.css';
 
 const BusinessProcessSelection = () => {
@@ -273,6 +274,11 @@ const BusinessProcessSelection = () => {
           )}
         </div>
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="business-process-selection"
+        contextData={{ profile, repository, component }}
+      />
     </div>
   );
 };

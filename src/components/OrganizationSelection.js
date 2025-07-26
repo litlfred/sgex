@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './OrganizationSelection.css';
 
 const OrganizationSelection = () => {
@@ -475,6 +476,11 @@ const OrganizationSelection = () => {
           </div>
         </div>
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="organization-selection"
+        contextData={{ profile, sourceRepository, action, selectedOrganization }}
+      />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import dakTemplates from '../config/dak-templates.json';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './DAKSelection.css';
 
 const DAKSelection = () => {
@@ -712,6 +713,11 @@ const DAKSelection = () => {
           )}
         </div>
       </div>
+      
+      <ContextualHelpMascot 
+        pageId="dak-selection"
+        contextData={{ profile, selectedRepository, action }}
+      />
     </div>
   );
 };
