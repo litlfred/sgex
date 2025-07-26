@@ -1,30 +1,32 @@
 .documentation-viewer {
   min-height: 100vh;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
 .doc-header {
-  background: white;
-  border-bottom: 1px solid #e9ecef;
+  background: rgba(0, 32, 92, 0);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .who-branding h1 {
-  color: #005eb8;
+  color: white;
   font-size: 1.5rem;
   margin: 0;
   font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .who-branding .subtitle {
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.9rem;
   margin: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .doc-nav {
@@ -35,26 +37,34 @@
 
 .doc-selector {
   padding: 0.5rem 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 4px;
-  background: white;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
   font-size: 0.9rem;
-  color: #333;
+  color: white;
+}
+
+.doc-selector option {
+  background: #0078d4;
+  color: white;
 }
 
 .back-btn {
-  background: #005eb8;
+  background: rgba(255, 255, 255, 0.2);
   color: white;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
 }
 
 .back-btn:hover {
-  background: #004494;
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .doc-content {
@@ -64,8 +74,9 @@
 
 .doc-sidebar {
   width: 250px;
-  background: white;
-  border-right: 1px solid #e9ecef;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
   padding: 2rem 0;
   position: sticky;
   top: 0;
@@ -74,11 +85,12 @@
 }
 
 .doc-sidebar h3 {
-  color: #333;
+  color: white;
   font-size: 1.1rem;
   margin: 0 0 1rem 0;
   padding: 0 1.5rem;
   font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .doc-menu {
@@ -92,21 +104,21 @@
   padding: 0.75rem 1.5rem;
   text-align: left;
   cursor: pointer;
-  color: #666;
+  color: rgba(255, 255, 255, 0.8);
   font-size: 0.9rem;
   transition: all 0.2s;
   border-left: 3px solid transparent;
 }
 
 .doc-menu-item:hover {
-  background: #f8f9fa;
-  color: #333;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 .doc-menu-item.active {
-  background: #e3f2fd;
-  color: #005eb8;
-  border-left-color: #005eb8;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-left-color: rgba(255, 255, 255, 0.8);
   font-weight: 500;
 }
 
@@ -117,45 +129,49 @@
 }
 
 .doc-article {
-  background: white;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 2rem;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   max-width: 800px;
   line-height: 1.6;
 }
 
 .doc-article h1 {
-  color: #005eb8;
+  color: white;
   font-size: 2rem;
   margin-bottom: 1rem;
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
   padding-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .doc-article h2 {
-  color: #333;
+  color: white;
   font-size: 1.5rem;
   margin-top: 2rem;
   margin-bottom: 1rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .doc-article h3 {
-  color: #333;
+  color: white;
   font-size: 1.2rem;
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .doc-article h4 {
-  color: #555;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 1rem;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
 }
 
 .doc-article p {
-  color: #333;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 1rem;
 }
 
@@ -165,33 +181,35 @@
 }
 
 .doc-article li {
-  color: #333;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 0.25rem;
 }
 
 .doc-article code {
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.2);
   padding: 0.125rem 0.25rem;
   border-radius: 3px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.9em;
-  color: #e83e8c;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .doc-article pre {
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.1);
   padding: 1rem;
   border-radius: 4px;
   overflow-x: auto;
   margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .doc-article a {
-  color: #005eb8;
+  color: #90caf9;
   text-decoration: none;
 }
 
 .doc-article a:hover {
+  color: white;
   text-decoration: underline;
 }
 
@@ -210,13 +228,14 @@
   justify-content: center;
   min-height: 300px;
   text-align: center;
+  color: white;
 }
 
 .spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #005eb8;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -228,18 +247,21 @@
 }
 
 .retry-btn {
-  background: #005eb8;
+  background: rgba(255, 255, 255, 0.2);
   color: white;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
   margin-top: 1rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
 }
 
 .retry-btn:hover {
-  background: #004494;
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* Responsive design */

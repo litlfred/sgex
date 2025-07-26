@@ -1,12 +1,13 @@
 .dak-selection {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
 }
 
 .selection-header {
-  background: white;
+  background: rgba(0, 32, 92, 0);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   padding: 1rem 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -14,21 +15,24 @@
 
 .who-branding h1 {
   margin: 0;
-  color: #0078d4;
+  color: white;
   font-size: 1.8rem;
   font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .who-branding .subtitle {
   margin: 0;
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.9rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .profile-info {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: white;
 }
 
 .profile-avatar {
@@ -54,30 +58,31 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: #0078d4;
+  color: #90caf9;
   cursor: pointer;
   text-decoration: underline;
   font-size: inherit;
 }
 
 .breadcrumb-link:hover {
-  color: #106ebe;
+  color: white;
 }
 
 .breadcrumb-separator {
-  color: #666;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .breadcrumb-current {
-  color: #333;
+  color: white;
   font-weight: 500;
 }
 
 .selection-main {
-  background: white;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   padding: 2rem;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .selection-intro {
@@ -86,13 +91,14 @@
 }
 
 .selection-intro h2 {
-  color: #333;
+  color: white;
   font-size: 2rem;
   margin-bottom: 1rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .selection-intro p {
-  color: #666;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 1.1rem;
   max-width: 600px;
   margin: 0 auto 1rem;
@@ -130,30 +136,31 @@
 .documentation-info p {
   margin: 0;
   font-size: 0.9rem;
-  color: #666;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .documentation-info .doc-link {
-  color: #0078d4;
+  color: #90caf9;
   text-decoration: none;
   font-weight: 500;
 }
 
 .documentation-info .doc-link:hover {
-  color: #106ebe;
+  color: white;
   text-decoration: underline;
 }
 
 .loading {
   text-align: center;
   padding: 3rem;
+  color: white;
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #0078d4;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
@@ -167,25 +174,30 @@
 .error-state, .empty-state {
   text-align: center;
   padding: 3rem;
+  color: white;
 }
 
 .error-state h3, .empty-state h3 {
-  color: #333;
+  color: white;
   margin-bottom: 1rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .retry-btn {
-  background: #0078d4;
+  background: rgba(255, 255, 255, 0.2);
   color: white;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   padding: 0.75rem 1.5rem;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
 }
 
 .retry-btn:hover {
-  background: #106ebe;
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .repo-grid {
@@ -196,25 +208,27 @@
 }
 
 .dak-selection .repo-card {
-  border: 2px solid #e1e5e9;
+  border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   padding: 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  background: white;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
 }
 
 .dak-selection .repo-card:hover {
-  border-color: #0078d4;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .dak-selection .repo-card.selected {
-  border-color: #0078d4;
-  background: linear-gradient(135deg, rgba(0, 120, 212, 0.05) 0%, rgba(0, 120, 212, 0.02) 100%);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
 
 .repo-header-info {
@@ -223,9 +237,10 @@
 
 .dak-selection .repo-header-info h3 {
   margin: 0 0 0.5rem 0;
-  color: #333 !important;
+  color: white !important;
   font-size: 1.2rem;
   font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .repo-meta {
@@ -269,12 +284,11 @@
 
 
 .repo-description {
-  color: #333 !important;
+  color: white !important;
 }
 
-
 .dak-selection .repo-description {
-  color: #666;
+  color: rgba(255, 255, 255, 0.9);
   line-height: 1.5;
   margin-bottom: 1rem;
   min-height: 3rem;
@@ -288,16 +302,16 @@
 }
 
 .dak-selection .topic-tag {
-  background: #f8f9fa;
-  color: #333 !important;
+  background: rgba(255, 255, 255, 0.2);
+  color: white !important;
   padding: 0.25rem 0.5rem;
   border-radius: 12px;
   font-size: 0.75rem;
-  border: 1px solid #e9ecef;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .topic-more {
-  color: #333 !important;
+  color: rgba(255, 255, 255, 0.8) !important;
   font-size: 0.75rem;
   font-style: italic;
 }
@@ -305,7 +319,7 @@
 .dak-selection .repo-stats {
   display: flex;
   gap: 1rem;
-  color: #333 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
   font-size: 0.8rem;
   margin-bottom: 1rem;
 }
@@ -324,12 +338,14 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: #0078d4;
+  background: rgba(255, 255, 255, 0.3);
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 500;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .selection-footer {
@@ -337,9 +353,9 @@
 }
 
 .continue-btn {
-  background: #0078d4;
+  background: rgba(255, 255, 255, 0.2);
   color: white;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   padding: 1rem 2rem;
   border-radius: 6px;
   font-size: 1rem;
@@ -347,15 +363,19 @@
   cursor: pointer;
   transition: all 0.3s ease;
   min-width: 250px;
+  backdrop-filter: blur(10px);
 }
 
 .continue-btn:hover:not(:disabled) {
-  background: #106ebe;
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
   transform: translateY(-1px);
 }
 
 .continue-btn:disabled {
-  background: #ccc;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
   cursor: not-allowed;
   transform: none;
 }
