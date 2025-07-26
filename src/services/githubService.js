@@ -1,6 +1,7 @@
 import { Octokit } from '@octokit/rest';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
+import patManagementService from './patManagementService';
 
 class GitHubService {
   constructor() {
@@ -8,16 +9,15 @@ class GitHubService {
     this.isAuthenticated = false;
     this.permissions = null;
     this.tokenType = null; // 'classic', 'fine-grained', or 'oauth'
+    this.currentPAT = null; // Current PAT being used
   }
 
   // Initialize with a GitHub token (supports both OAuth and PAT tokens)
   authenticate(token) {
     try {
-      this.octokit = new Octokit({
-        auth: token,
-      });
-      this.isAuthenticated = true;
-      return true;
+      // Add token to PAT management service
+      patManagementService.initialize();
+      return patManagementService.addPAT(token);
     } catch (error) {
       console.error('Failed to authenticate with GitHub:', error);
       this.isAuthenticated = false;
@@ -25,12 +25,17 @@ class GitHubService {
     }
   }
 
-  // Initialize with an existing Octokit instance (for OAuth flow)
+  // Initialize with an existing Octokit instance (for OAuth flow) 
   authenticateWithOctokit(octokitInstance) {
     try {
       this.octokit = octokitInstance;
       this.isAuthenticated = true;
       this.tokenType = 'oauth';
+      this.currentPAT = {
+        id: 'oauth',
+        octokit: octokitInstance,
+        permissions: { level: 'oauth' }
+      };
       return true;
     } catch (error) {
       console.error('Failed to authenticate with Octokit instance:', error);
@@ -39,8 +44,45 @@ class GitHubService {
     }
   }
 
+  // Get appropriate Octokit instance for repository operations
+  async getOctokitForRepository(owner, repo, operation = 'read') {
+    patManagementService.initialize();
+    
+    // Try to get the best PAT for this repository
+    const pat = await patManagementService.getBestPATForRepository(owner, repo, operation);
+    
+    if (pat) {
+      this.currentPAT = pat;
+      this.octokit = pat.octokit;
+      this.isAuthenticated = pat.id !== 'unauthenticated';
+      return pat.octokit;
+    }
+    
+    // Fallback to unauthenticated access
+    this.octokit = patManagementService.getUnauthenticatedOctokit();
+    this.isAuthenticated = false;
+    this.currentPAT = null;
+    return this.octokit;
+  }
+
   // Check token permissions and type
   async checkTokenPermissions() {
+    patManagementService.initialize();
+    
+    // If we have PATs, get permissions from PAT service
+    const pats = patManagementService.getAllPATs();
+    if (pats.length > 0) {
+      // Use the first PAT for permission checking
+      const pat = pats[0];
+      this.permissions = pat.permissions;
+      this.tokenType = pat.permissions.type;
+      return {
+        type: this.tokenType,
+        user: pat.user
+      };
+    }
+    
+    // Fallback to legacy method for OAuth tokens
     if (!this.isAuth()) {
       throw new Error('Not authenticated with GitHub');
     }
@@ -70,33 +112,41 @@ class GitHubService {
 
   // Check if we have write permissions for a specific repository
   async checkRepositoryWritePermissions(owner, repo) {
-    if (!this.isAuth()) {
-      return false;
-    }
-
-    try {
-      // Try to get repository collaborator permissions
-      const { data } = await this.octokit.rest.repos.getCollaboratorPermissionLevel({
-        owner,
-        repo,
-        username: (await this.getCurrentUser()).login
-      });
-      
-      return ['write', 'admin'].includes(data.permission);
-    } catch (error) {
-      // If we can't check permissions, assume we don't have write access
-      console.warn('Could not check repository write permissions:', error);
-      return false;
-    }
+    patManagementService.initialize();
+    return await patManagementService.hasWriteAccess(owner, repo);
   }
 
   // Check if authenticated
   isAuth() {
+    patManagementService.initialize();
+    
+    // Check if we have any PATs or OAuth token
+    const pats = patManagementService.getAllPATs();
+    if (pats.length > 0) {
+      return true;
+    }
+    
+    // Fallback to legacy authentication check
     return this.isAuthenticated && this.octokit !== null;
+  }
+
+  // Get security level
+  getSecurityLevel() {
+    patManagementService.initialize();
+    return patManagementService.getSecurityLevel();
   }
 
   // Get current user data
   async getCurrentUser() {
+    patManagementService.initialize();
+    
+    // Try to get user from PAT management service first
+    const pats = patManagementService.getAllPATs();
+    if (pats.length > 0) {
+      return pats[0].user; // Return user from first PAT
+    }
+    
+    // Fallback to direct API call for OAuth tokens
     if (!this.isAuth()) {
       throw new Error('Not authenticated with GitHub');
     }
@@ -473,10 +523,17 @@ class GitHubService {
 
   // Logout
   logout() {
+    // Clear PAT management service
+    patManagementService.clearAll();
+    
+    // Clear legacy state
     this.octokit = null;
     this.isAuthenticated = false;
     this.tokenType = null;
     this.permissions = null;
+    this.currentPAT = null;
+    
+    // Clear legacy storage
     localStorage.removeItem('github_token');
     sessionStorage.removeItem('github_token');
   }

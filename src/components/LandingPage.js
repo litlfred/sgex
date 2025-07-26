@@ -4,6 +4,7 @@ import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import PATLogin from './PATLogin';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import SettingsMenu from './SettingsMenu';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -276,10 +277,8 @@ const LandingPage = () => {
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="user-info">
-          <img src={user?.avatar_url} alt="User avatar" className="user-avatar" />
-          <span>{user?.name || user?.login}</span>
+          <SettingsMenu user={user} onLogout={handleLogout} />
           <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-          <button onClick={handleLogout} className="logout-btn">Logout</button>
         </div>
       </div>
       

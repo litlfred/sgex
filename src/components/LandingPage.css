@@ -47,13 +47,6 @@
   font-weight: 500;
 }
 
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
 .header-nav .nav-link,
 .user-info .nav-link {
   color: rgba(255, 255, 255, 0.9);
@@ -523,24 +516,6 @@
 .quick-token-link:hover {
   background: rgba(255, 255, 255, 0.3);
   color: white !important;
-}
-
-.logout-btn {
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-}
-
-.logout-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .error-message {
