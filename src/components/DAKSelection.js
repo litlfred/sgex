@@ -299,6 +299,17 @@ const DAKSelection = () => {
                       return newSet;
                     });
                   }, 200);
+                  
+                  // Check if this is the last repository being scanned
+                  if (progress.current === progress.total) {
+                    // All repositories have been scanned, stop the scanning state
+                    console.log('🎉 All repositories scanned, stopping scanning state');
+                    setTimeout(() => {
+                      setIsScanning(false);
+                      setScanProgress(null);
+                      setCurrentlyScanningRepos(new Set());
+                    }, 500); // Small delay to show completion
+                  }
                 }
               }
             );
@@ -325,11 +336,19 @@ const DAKSelection = () => {
       setError('Failed to fetch repositories. Please check your connection and try again.');
       // Fallback to mock data for demonstration
       setRepositories(getMockRepositories());
-    } finally {
-      setLoading(false);
+      // Make sure to stop scanning on error
       setIsScanning(false);
       setScanProgress(null);
       setCurrentlyScanningRepos(new Set());
+    } finally {
+      setLoading(false);
+      // Don't automatically stop scanning here for authenticated progressive scans
+      // The scanning state is managed by the progress callbacks
+      if (!githubService.isAuth() || action === 'create') {
+        setIsScanning(false);
+        setScanProgress(null);
+        setCurrentlyScanningRepos(new Set());
+      }
     }
   }, [profile, action, getMockRepositories, simulateEnhancedScanning]);
 
