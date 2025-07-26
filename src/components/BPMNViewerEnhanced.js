@@ -1,27 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import './BPMNViewerEnhanced.css';
 
-const BPMNViewerEnhanced = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const viewerRef = useRef(null);
-  const containerRef = useRef(null);
-  
-  const { profile, repository, component, selectedFile } = location.state || {};
-  
-  console.log('BPMNViewerEnhanced - location.state:', location.state);
-  console.log('BPMNViewerEnhanced - selectedFile:', selectedFile);
-  
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [hasWriteAccess, setHasWriteAccess] = useState(false);
-  const [selectedElement, setSelectedElement] = useState(null);
-  const [zoomLevel, setZoomLevel] = useState(1);
-
-  // Sample BPMN content for demo purposes
-  const sampleBpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
+// Sample BPMN content for demo purposes - moved outside component to avoid re-renders
+const sampleBpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
@@ -30,7 +13,7 @@ const BPMNViewerEnhanced = () => {
                  targetNamespace="http://bpmn.io/schema/bpmn" 
                  exporter="SGEX Workbench" 
                  exporterVersion="1.0.0">
-  <bpmn:process id="Process_${selectedFile?.name?.replace('.bpmn', '') || 'Sample'}" isExecutable="true">
+  <bpmn:process id="Process_Sample" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1" name="Process Start">
       <bpmn:outgoing>Flow_1</bpmn:outgoing>
     </bpmn:startEvent>
@@ -68,7 +51,7 @@ const BPMNViewerEnhanced = () => {
     <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_3" targetRef="EndEvent_2" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_${selectedFile?.name?.replace('.bpmn', '') || 'Sample'}">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_Sample">
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="179" y="99" width="36" height="36" />
         <bpmndi:BPMNLabel>
@@ -140,6 +123,29 @@ const BPMNViewerEnhanced = () => {
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
 
+const BPMNViewerEnhanced = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const viewerRef = useRef(null);
+  const [containerElement, setContainerElement] = useState(null);
+  
+  const { profile, repository, component, selectedFile } = location.state || {};
+  
+  console.log('BPMNViewerEnhanced - location.state:', location.state);
+  console.log('BPMNViewerEnhanced - selectedFile:', selectedFile);
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [hasWriteAccess, setHasWriteAccess] = useState(false);
+  const [selectedElement, setSelectedElement] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
+
+  // Use callback ref to ensure we get notified when element is attached
+  const containerRef = useCallback((element) => {
+    console.log('Container ref callback called with element:', !!element);
+    setContainerElement(element);
+  }, []);
+
   // Check write permissions
   useEffect(() => {
     const checkPermissions = async () => {
@@ -159,52 +165,37 @@ const BPMNViewerEnhanced = () => {
 
   // Initialize BPMN viewer and load content
   useEffect(() => {
-    console.log('useEffect running, containerRef.current:', !!containerRef.current, 'selectedFile:', !!selectedFile);
+    console.log('useEffect running, containerElement:', !!containerElement, 'selectedFile:', !!selectedFile);
     
-    if (!selectedFile) {
-      console.log('Missing selectedFile, skipping initialization');
+    if (!selectedFile || !containerElement) {
+      console.log('Missing selectedFile or containerElement, skipping initialization');
       return;
     }
 
-    let retryCount = 0;
-    const maxRetries = 50; // Prevent infinite retries
-
     const initializeViewer = async () => {
-      // Check if container is ready
-      if (!containerRef.current && retryCount < maxRetries) {
-        console.log(`Container not ready, retrying in 100ms (attempt ${retryCount + 1}/${maxRetries})`);
-        retryCount++;
-        setTimeout(initializeViewer, 100);
-        return;
-      }
-
-      if (!containerRef.current) {
-        console.error('Container never became ready after maximum retries');
-        setError('Failed to initialize diagram container');
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
         setError(null);
 
+        // Clean up any existing viewer
         if (viewerRef.current) {
-          viewerRef.current.destroy();
+          try {
+            viewerRef.current.destroy();
+          } catch (cleanupError) {
+            console.warn('Error destroying existing viewer:', cleanupError);
+          }
+          viewerRef.current = null;
         }
 
-        console.log('Creating BPMN viewer...');
+        console.log('Creating BPMN viewer with container element...');
         viewerRef.current = new BpmnViewer({
-          container: containerRef.current,
-          keyboard: {
-            bindTo: window
-          }
+          container: containerElement
         });
 
         console.log('BPMN viewer initialized successfully');
 
-        // Load BPMN content directly here
-        let bpmnXml = null;
+        // Load BPMN content
+        let bpmnXml = sampleBpmnXml;
         
         // Try to load actual BPMN content from GitHub if available
         if (profile?.token && selectedFile.download_url) {
@@ -217,11 +208,7 @@ const BPMNViewerEnhanced = () => {
           } catch (fetchError) {
             console.warn('Could not fetch BPMN content from GitHub:', fetchError);
           }
-        }
-
-        // Use sample content if we couldn't load from GitHub
-        if (!bpmnXml) {
-          bpmnXml = sampleBpmnXml;
+        } else {
           console.log('Using sample BPMN content');
         }
 
@@ -252,13 +239,10 @@ const BPMNViewerEnhanced = () => {
       }
     };
 
-    // Use a different approach - wait for the next render cycle
-    const timer = setTimeout(() => {
-      initializeViewer();
-    }, 0);
+    // Initialize immediately since we know the container is ready
+    initializeViewer();
     
     return () => {
-      clearTimeout(timer);
       if (viewerRef.current) {
         try {
           viewerRef.current.destroy();
@@ -268,7 +252,7 @@ const BPMNViewerEnhanced = () => {
         viewerRef.current = null;
       }
     };
-  }, [selectedFile, profile?.token, sampleBpmnXml]);
+  }, [selectedFile, containerElement, profile?.token]);
 
   // Toolbar actions
   const handleZoomIn = () => {
@@ -340,6 +324,17 @@ const BPMNViewerEnhanced = () => {
         mode: 'edit'
       }
     });
+  };
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setSelectedElement(null);
+    
+    // Force a re-render by creating a small delay - the useEffect will trigger again
+    setTimeout(() => {
+      setLoading(true);
+    }, 50);
   };
 
   const handleBackToSelection = () => {
@@ -464,23 +459,23 @@ const BPMNViewerEnhanced = () => {
 
           <div className="viewer-body">
             <div className="diagram-container">
-              {loading ? (
+              <div className="bpmn-container" ref={containerRef}></div>
+              {loading && (
                 <div className="loading-overlay">
                   <div className="spinner"></div>
                   <p>Loading BPMN diagram...</p>
                 </div>
-              ) : error ? (
+              )}
+              {error && (
                 <div className="error-overlay">
                   <p>❌ {error}</p>
                   <button 
                     className="action-btn secondary"
-                    onClick={() => window.location.reload()}
+                    onClick={handleRetry}
                   >
                     Retry
                   </button>
                 </div>
-              ) : (
-                <div className="bpmn-container" ref={containerRef}></div>
               )}
             </div>
 
