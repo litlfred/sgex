@@ -360,6 +360,24 @@
   transform: none;
 }
 
+.direct-selection-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #0078d4;
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 1rem;
+  background: rgba(0, 120, 212, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 120, 212, 0.2);
+}
+
+.direct-selection-note .note-icon {
+  font-size: 1rem;
+}
+
 /* Cache controls */
 .cache-controls {
   margin-top: 1rem;
