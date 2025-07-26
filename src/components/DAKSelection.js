@@ -127,7 +127,62 @@ const DAKSelection = () => {
     return allMockRepos.filter(repo => repo.smart_guidelines_compatible);
   }, [profile.login]);
 
-  const fetchRepositories = useCallback(async (forceRescan = false) => {
+  const simulateEnhancedScanning = useCallback(async () => {
+    setIsScanning(true);
+    setRepositories([]); // Clear current repositories for progressive updates
+    
+    const mockRepos = getMockRepositories();
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    
+    try {
+      // Simulate concurrent scanning with enhanced display
+      for (let i = 0; i < mockRepos.length; i++) {
+        const repo = mockRepos[i];
+        
+        // Simulate starting to scan this repository
+        setScanProgress({
+          current: i + 1,
+          total: mockRepos.length,
+          currentRepo: repo.name,
+          progress: Math.round(((i + 1) / mockRepos.length) * 100),
+          completed: false,
+          started: true
+        });
+        
+        // Add to currently scanning repos
+        setCurrentlyScanningRepos(prev => new Set([...prev, repo.name]));
+        
+        // Simulate scanning time (1-2 seconds per repository)
+        await delay(1000 + Math.random() * 1000);
+        
+        // Add found repository to results
+        setRepositories(prevRepos => [...prevRepos, repo]);
+        
+        // Simulate completion
+        setScanProgress({
+          current: i + 1,
+          total: mockRepos.length,
+          currentRepo: repo.name,
+          progress: Math.round(((i + 1) / mockRepos.length) * 100),
+          completed: true
+        });
+        
+        // Remove from currently scanning repos
+        setCurrentlyScanningRepos(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(repo.name);
+          return newSet;
+        });
+        
+        // Small delay before next repository
+        await delay(300);
+      }
+    } catch (error) {
+      console.error('Error in simulated scanning:', error);
+    }
+  }, [getMockRepositories]);
+
+  const fetchRepositories = useCallback(async (forceRescan = false, useCachedData = false) => {
     setLoading(true);
     setError(null);
     setIsScanning(false);
@@ -163,19 +218,19 @@ const DAKSelection = () => {
           }
         }));
       } else {
-        // For edit/fork, try to use cached data first if available and not forcing rescan
+        // For edit/fork, show enhanced scanning by default for better user experience
         let cachedData = null;
-        if (!forceRescan && githubService.isAuth()) {
+        if (useCachedData && githubService.isAuth()) {
           cachedData = repositoryCacheService.getCachedRepositories(profile.login, profile.type === 'org' ? 'org' : 'user');
         }
 
-        if (cachedData && !forceRescan) {
-          // Use cached data
+        if (cachedData && useCachedData) {
+          // Use cached data only when explicitly requested
           console.log('Using cached repository data', repositoryCacheService.getCacheInfo(profile.login, profile.type === 'org' ? 'org' : 'user'));
           repos = cachedData.repositories;
           setUsingCachedData(true);
         } else {
-          // Fetch fresh data with progressive scanning
+          // Always show enhanced scanning for authenticated users (fetch fresh data with progressive scanning)
           if (githubService.isAuth()) {
             setIsScanning(true);
             setRepositories([]); // Clear current repositories for progressive updates
@@ -213,14 +268,15 @@ const DAKSelection = () => {
               }
             );
             
-            // Cache the results
+            // Cache the results for future quick access
             repositoryCacheService.setCachedRepositories(
               profile.login, 
               profile.type === 'org' ? 'org' : 'user', 
               repos
             );
           } else {
-            // Fallback to mock repositories for demonstration
+            // Fallback to mock repositories with enhanced scanning demonstration
+            await simulateEnhancedScanning();
             repos = getMockRepositories();
           }
         }
@@ -238,7 +294,7 @@ const DAKSelection = () => {
       setScanProgress(null);
       setCurrentlyScanningRepos(new Set());
     }
-  }, [profile, action, getMockRepositories]);
+  }, [profile, action, getMockRepositories, simulateEnhancedScanning]);
 
   useEffect(() => {
     if (!profile || !action) {
@@ -298,7 +354,16 @@ const DAKSelection = () => {
   };
 
   const handleRescan = () => {
-    fetchRepositories(true); // Force rescan, ignore cache
+    fetchRepositories(true, false); // Force rescan, don't use cache
+  };
+
+  const handleUseCachedData = () => {
+    fetchRepositories(false, true); // Don't force rescan, use cached data
+  };
+
+  const handleDemoScanning = async () => {
+    // Simulate the enhanced scanning display for demonstration purposes
+    await simulateEnhancedScanning();
   };
 
   const handleBack = () => {
@@ -367,7 +432,7 @@ const DAKSelection = () => {
             
             {action !== 'create' && githubService.isAuth() && (
               <div className="cache-controls">
-                {usingCachedData && (
+                {usingCachedData ? (
                   <div className="cache-info">
                     <span className="cache-icon">💾</span>
                     <span>Using cached data. </span>
@@ -376,19 +441,48 @@ const DAKSelection = () => {
                       className="rescan-link"
                       disabled={isScanning}
                     >
-                      Rescan for updates
+                      Show Enhanced Scanning
                     </button>
                   </div>
+                ) : (
+                  <div className="scan-controls">
+                    {!isScanning && !loading && (
+                      <>
+                        <button 
+                          onClick={handleRescan} 
+                          className="rescan-btn"
+                          disabled={isScanning}
+                        >
+                          🔄 Rescan Repositories
+                        </button>
+                        {repositoryCacheService.getCachedRepositories(profile.login, profile.type === 'org' ? 'org' : 'user') && (
+                          <button 
+                            onClick={handleUseCachedData} 
+                            className="cache-btn"
+                            disabled={isScanning}
+                          >
+                            💾 Use Cached Data
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 )}
-                {!usingCachedData && !isScanning && !loading && (
+              </div>
+            )}
+            {action !== 'create' && !githubService.isAuth() && !isScanning && !loading && (
+              <div className="demo-controls">
+                <div className="demo-info">
+                  <span className="demo-icon">🎭</span>
+                  <span>Not authenticated. </span>
                   <button 
-                    onClick={handleRescan} 
-                    className="rescan-btn"
+                    onClick={handleDemoScanning} 
+                    className="demo-scan-btn"
                     disabled={isScanning}
                   >
-                    🔄 Rescan Repositories
+                    ✨ Demo Enhanced Scanning Display
                   </button>
-                )}
+                </div>
               </div>
             )}
           </div>
