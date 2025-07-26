@@ -294,7 +294,13 @@ For detailed information about each DAK component, see [DAK Components Documenta
 
 **REQ-UX-003**: The system SHALL provide a consistent "Get Help" feature
 - SGEX mascot-based help button available throughout the application
-- Context-sensitive help dialogs with step-by-step guidance
+- **Fixed positioning**: Mascot appears as a fixed UI element in the bottom-right corner of each page
+- **Transparent background**: Mascot images have transparent backgrounds for seamless integration
+- **Interactive help behavior**:
+  - **Hover interaction**: When user hovers over the mascot, a contextual help dialog appears as a thought bubble
+  - **Click interaction**: When user clicks the mascot, the help dialog becomes sticky and remains visible until manually closed
+  - **Thought bubble design**: Help content appears in a speech bubble pointing to the mascot
+- Context-sensitive help dialogs with step-by-step guidance tailored to the current page
 - Interactive slideshow for GitHub Personal Access Token creation
 - Hamburger menu with additional support options:
   - File Bug Report functionality linking to GitHub issues

@@ -154,7 +154,7 @@
   display: flex;
   justify-content: center;
   gap: 2rem;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 .legend-item {
@@ -174,21 +174,142 @@
   letter-spacing: 0.5px;
 }
 
-.legend-badge.level-2 {
+.legend-badge.level-2,
+.legend-badge.l2 {
   background: linear-gradient(135deg, #0078d4, #005a9e);
   color: white;
 }
 
-.legend-badge.level-3 {
+.legend-badge.level-3,
+.legend-badge.l3 {
   background: linear-gradient(135deg, #881798, #6b1785);
   color: white;
+}
+
+/* Tab Navigation Styles */
+.tab-navigation {
+  display: flex;
+  justify-content: center;
+  margin: 2rem auto 3rem auto;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0.5rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 600px;
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  padding: 1rem 1.5rem;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  font-weight: 500;
+  position: relative;
+}
+
+.tab-button:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-button.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.tab-icon {
+  font-size: 1.2rem;
+}
+
+.tab-text {
+  flex: 1;
+  text-align: center;
+}
+
+.tab-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tab-badge.core {
+  background: rgba(0, 120, 212, 0.8);
+  color: white;
+}
+
+.tab-badge.additional {
+  background: rgba(136, 23, 152, 0.8);
+  color: white;
+}
+
+/* Section Styles */
+.components-section {
+  margin-bottom: 4rem;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.4s ease;
+}
+
+.components-section.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.components-section.additional-section {
+  border-top: none;
+  padding-top: 0;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  color: white;
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+
+.section-description {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.6;
 }
 
 .components-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
+}
+
+.components-grid.core-components {
+  /* Slightly larger cards for core components */
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+}
+
+.components-grid.additional-components {
+  /* Slightly smaller cards for additional components */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.2rem;
 }
 
 .component-card {
@@ -251,17 +372,20 @@
   letter-spacing: 0.5px;
 }
 
-.level-badge.level-2 {
+.level-badge.level-2,
+.level-badge.l2 {
   background: rgba(0, 120, 212, 0.8);
   color: white;
 }
 
-.level-badge.level-3 {
+.level-badge.level-3,
+.level-badge.l3 {
   background: rgba(136, 23, 152, 0.8);
   color: white;
 }
 
-.component-content h3 {
+.component-content h3,
+.component-content h4 {
   color: white;
   font-size: 1.4rem;
   font-weight: 600;
@@ -304,8 +428,17 @@
   font-weight: 500;
 }
 
+.additional-section .component-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.additional-section .component-card:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .dashboard-footer {
-  margin-top: 4rem;
+  margin-top: 3rem;
   padding-top: 2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -389,6 +522,22 @@
   .breadcrumb {
     justify-content: center;
     flex-wrap: wrap;
+  }
+
+  /* Tab Navigation Mobile */
+  .tab-navigation {
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: none;
+  }
+
+  .tab-button {
+    flex: none;
+    padding: 0.8rem 1rem;
+  }
+
+  .tab-text {
+    font-size: 0.9rem;
   }
 }
 
