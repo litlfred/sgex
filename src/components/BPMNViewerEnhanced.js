@@ -145,7 +145,34 @@ const BPMNViewerEnhanced = () => {
   const handleContainerRef = useCallback((element) => {
     console.log('Container ref callback called with element:', !!element);
     containerRef.current = element;
-    setContainerReady(!!element);
+    
+    if (element) {
+      // Use requestAnimationFrame to ensure element is properly attached to DOM
+      requestAnimationFrame(() => {
+        if (element.parentNode && element.offsetWidth > 0 && element.offsetHeight > 0) {
+          console.log('Container is ready with dimensions:', {
+            width: element.offsetWidth,
+            height: element.offsetHeight,
+            attached: !!element.parentNode
+          });
+          setContainerReady(true);
+        } else {
+          console.warn('Container element not properly ready yet, retrying...');
+          // Retry after a short delay
+          setTimeout(() => {
+            if (element.parentNode && element.offsetWidth > 0 && element.offsetHeight > 0) {
+              console.log('Container ready after retry');
+              setContainerReady(true);
+            } else {
+              console.error('Container still not ready after retry');
+              setContainerReady(false);
+            }
+          }, 100);
+        }
+      });
+    } else {
+      setContainerReady(false);
+    }
   }, []);
 
   // Check write permissions
@@ -189,7 +216,29 @@ const BPMNViewerEnhanced = () => {
           viewerRef.current = null;
         }
 
-        console.log('Creating BPMN viewer with container element...');
+        // Ensure container is properly ready with multiple validation checks
+        if (!containerRef.current) {
+          throw new Error('Container element is null');
+        }
+
+        if (!containerRef.current.parentNode) {
+          throw new Error('Container element is not attached to DOM');
+        }
+
+        if (containerRef.current.offsetWidth === 0 || containerRef.current.offsetHeight === 0) {
+          throw new Error('Container element has no dimensions');
+        }
+
+        console.log('Creating BPMN viewer with container element...', {
+          element: containerRef.current,
+          width: containerRef.current.offsetWidth,
+          height: containerRef.current.offsetHeight,
+          parentNode: !!containerRef.current.parentNode
+        });
+
+        // Add a small delay to ensure DOM is fully ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         viewerRef.current = new BpmnViewer({
           container: containerRef.current
         });
@@ -236,7 +285,22 @@ const BPMNViewerEnhanced = () => {
         setLoading(false);
       } catch (error) {
         console.error('Failed to initialize BPMN viewer:', error);
-        setError('Failed to initialize BPMN viewer: ' + error.message);
+        
+        // Provide more specific error messages
+        let errorMessage = 'Failed to initialize diagram container';
+        if (error.message.includes('Container element is null')) {
+          errorMessage = 'Container element not found. Please try refreshing the page.';
+        } else if (error.message.includes('not attached to DOM')) {
+          errorMessage = 'Container element not properly attached. Please try again.';
+        } else if (error.message.includes('no dimensions')) {
+          errorMessage = 'Container element has no size. Please check CSS styling.';
+        } else if (error.message.includes('importXML')) {
+          errorMessage = 'Failed to load BPMN diagram: ' + error.message;
+        } else {
+          errorMessage = 'Failed to initialize BPMN viewer: ' + error.message;
+        }
+        
+        setError(errorMessage);
         setLoading(false);
       }
     };
@@ -333,10 +397,16 @@ const BPMNViewerEnhanced = () => {
     setLoading(true);
     setSelectedElement(null);
     
-    // Force a re-render by creating a small delay - the useEffect will trigger again
-    setTimeout(() => {
-      setLoading(true);
-    }, 50);
+    // Reset container state to force re-initialization
+    setContainerReady(false);
+    
+    // Force a re-evaluation of container readiness
+    if (containerRef.current) {
+      // Trigger the container ref callback again
+      setTimeout(() => {
+        handleContainerRef(containerRef.current);
+      }, 50);
+    }
   };
 
   const handleBackToSelection = () => {

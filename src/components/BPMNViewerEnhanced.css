@@ -234,7 +234,9 @@
 .bpmn-container {
   width: 100%;
   height: 600px;
+  min-height: 600px;
   background: #ffffff;
+  position: relative;
 }
 
 .loading-overlay,
