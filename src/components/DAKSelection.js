@@ -322,6 +322,14 @@ const DAKSelection = () => {
                       setCurrentlyScanningRepos(new Set());
                     }, 500); // Small delay to show completion
                   }
+                } else if (progress.total === 0 && progress.completed) {
+                  // Special case: no repositories to scan
+                  console.log('🎉 No repositories to scan, stopping scanning state');
+                  setTimeout(() => {
+                    setIsScanning(false);
+                    setScanProgress(null);
+                    setCurrentlyScanningRepos(new Set());
+                  }, 500);
                 }
               }
             );
