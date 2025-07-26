@@ -53,7 +53,34 @@ const DocumentationViewer = () => {
 
   const renderMarkdown = (markdown) => {
     // Simple markdown to HTML conversion for basic formatting
-    return markdown
+    let html = markdown;
+
+    // Process tables first (before paragraph processing)
+    html = html.replace(/(\|[^\n]+\|\n\|[-\s|:]+\|\n(?:\|[^\n]+\|\n?)*)/gm, (match) => {
+      const lines = match.trim().split('\n');
+      const headers = lines[0].split('|').slice(1, -1).map(h => h.trim());
+      const rows = lines.slice(2).map(row => row.split('|').slice(1, -1).map(cell => cell.trim()));
+      
+      let tableHtml = '<table class="doc-table">\n<thead>\n<tr>\n';
+      headers.forEach(header => {
+        tableHtml += `<th>${header}</th>\n`;
+      });
+      tableHtml += '</tr>\n</thead>\n<tbody>\n';
+      
+      rows.forEach(row => {
+        tableHtml += '<tr>\n';
+        row.forEach(cell => {
+          tableHtml += `<td>${cell}</td>\n`;
+        });
+        tableHtml += '</tr>\n';
+      });
+      
+      tableHtml += '</tbody>\n</table>\n';
+      return tableHtml;
+    });
+
+    // Apply other markdown formatting
+    return html
       .replace(/^# (.*$)/gim, '<h1>$1</h1>')
       .replace(/^## (.*$)/gim, '<h2>$1</h2>')
       .replace(/^### (.*$)/gim, '<h3>$1</h3>')
