@@ -10,7 +10,7 @@ import DAKDashboard from './components/DAKDashboard';
 import ComponentEditor from './components/ComponentEditor';
 import BPMNEditor from './components/BPMNEditor';
 import BusinessProcessSelection from './components/BusinessProcessSelection';
-import BPMNViewer from './components/BPMNViewer';
+import BPMNViewer from './components/BPMNViewerEnhanced';
 import BPMNSource from './components/BPMNSource';
 import DocumentationViewer from './components/DocumentationViewer';
 import TestDashboard from './components/TestDashboard';
