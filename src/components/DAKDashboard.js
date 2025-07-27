@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import branchContextService from '../services/branchContextService';
+import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import './DAKDashboard.css';
@@ -14,6 +16,17 @@ const DAKDashboard = () => {
   const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); // 'core' or 'additional'
+  const [selectedBranch, setSelectedBranch] = useState(null);
+
+  // Initialize selected branch from session context
+  useEffect(() => {
+    if (repository) {
+      const storedBranch = branchContextService.getSelectedBranch(repository);
+      if (storedBranch) {
+        setSelectedBranch(storedBranch);
+      }
+    }
+  }, [repository]);
 
   // Check write permissions on mount
   useEffect(() => {
@@ -182,6 +195,12 @@ const DAKDashboard = () => {
     }
   ];
 
+  // Handle branch selection change
+  const handleBranchChange = (branch) => {
+    setSelectedBranch(branch);
+    branchContextService.setSelectedBranch(repository, branch);
+  };
+
   const handleComponentClick = (component) => {
     // For business processes, navigate to selection page without permission check
     if (component.id === 'business-processes') {
@@ -189,7 +208,8 @@ const DAKDashboard = () => {
         state: {
           profile,
           repository,
-          component
+          component,
+          selectedBranch
         }
       });
       return;
@@ -206,7 +226,8 @@ const DAKDashboard = () => {
       state: {
         profile,
         repository,
-        component
+        component,
+        selectedBranch
       }
     });
   };
@@ -227,25 +248,47 @@ const DAKDashboard = () => {
   return (
     <div className="dak-dashboard">
       <div className="dashboard-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repository.name}</span>
-            <span className="context-owner">@{profile.login}</span>
+        <div className="header-left">
+          <div className="who-branding">
+            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
+            <p className="subtitle">WHO SMART Guidelines Exchange</p>
+          </div>
+          <div className="repo-status">
+            <div className="repo-info">
+              <a 
+                href={`https://github.com/${repository.full_name}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="context-repo-link"
+                title="View repository on GitHub"
+              >
+                <span className="repo-icon">📁</span>
+                <span className="context-repo">{repository.name}</span>
+                <span className="external-link">↗</span>
+              </a>
+            </div>
+            <div className="branch-info">
+              <BranchSelector
+                repository={repository}
+                selectedBranch={selectedBranch}
+                onBranchChange={handleBranchChange}
+                className="header-branch-selector"
+              />
+            </div>
             {!checkingPermissions && (
               <span className={`access-level ${hasWriteAccess ? 'write' : 'read'}`}>
                 {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only Access'}
               </span>
             )}
           </div>
+        </div>
+        <div className="header-right">
+          <img 
+            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
+            alt="Profile" 
+            className="context-avatar" 
+          />
+          <span className="context-owner">@{profile.login}</span>
           <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
@@ -267,7 +310,10 @@ const DAKDashboard = () => {
           <div className="dashboard-intro">
             <h2>Digital Adaptation Kit Components</h2>
             <p>
-              Select a component to edit content for <strong>{repository.name}</strong>. 
+              Select a component to edit content for <strong>{repository.name}</strong>
+              {selectedBranch && (
+                <span> on branch <code className="branch-display">{selectedBranch}</code></span>
+              )}. 
               Components are organized according to the WHO SMART Guidelines framework.
             </p>
           </div>
