@@ -228,24 +228,42 @@ const PagesManager = () => {
             break;
           }
           
-          // Parse page entries - looking for lines with markdown file references
-          if (trimmedLine.includes('.md')) {
-            const match = trimmedLine.match(/([^:]+):\s*(.+\.md)/);
-            if (match) {
-              const [, title, filename] = match;
-              pages.push({
-                title: title.trim(),
-                filename: filename.trim(),
-                path: `input/pagecontent/${filename.trim()}`,
-                level: Math.floor((lineIndent - currentIndent) / 2)
-              });
+          // Look for markdown file entries (e.g., "index.md:")
+          if (trimmedLine.endsWith('.md:')) {
+            const filename = trimmedLine.replace(':', '').trim();
+            let title = filename; // Default title to filename if no title found
+            
+            // Look ahead for the title on the next line(s)
+            for (let j = i + 1; j < lines.length; j++) {
+              const nextLine = lines[j];
+              const nextTrimmed = nextLine.trim();
+              const nextIndent = nextLine.length - nextLine.trimStart().length;
+              
+              // If we've moved to same or lesser indent, stop looking for title
+              if (nextTrimmed && nextIndent <= lineIndent) {
+                break;
+              }
+              
+              // Look for title line
+              if (nextTrimmed.startsWith('title:')) {
+                title = nextTrimmed.replace('title:', '').trim();
+                break;
+              }
             }
-          } else if (trimmedLine.includes(':') && !trimmedLine.includes('.md')) {
-            // This might be a section header
-            const title = trimmedLine.replace(':', '').trim();
-            if (title) {
+            
+            pages.push({
+              title,
+              filename,
+              path: `input/pagecontent/${filename}`,
+              level: Math.floor((lineIndent - currentIndent) / 2)
+            });
+          }
+          // Handle nested sections (lines that end with : but aren't .md files)
+          else if (trimmedLine.endsWith(':') && !trimmedLine.includes('.md')) {
+            const sectionName = trimmedLine.replace(':', '').trim();
+            if (sectionName) {
               pages.push({
-                title,
+                title: sectionName,
                 isSection: true,
                 level: Math.floor((lineIndent - currentIndent) / 2)
               });
