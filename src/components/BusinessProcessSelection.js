@@ -38,7 +38,7 @@ const BusinessProcessSelection = () => {
   // Load BPMN files from repository
   useEffect(() => {
     const loadBpmnFiles = async () => {
-      if (!profile || !repository) {
+      if (!repository) {
         navigate('/');
         return;
       }
@@ -47,39 +47,30 @@ const BusinessProcessSelection = () => {
         setLoading(true);
         setError(null);
 
-        // Only show real BPMN files if we have authentication and a repository
-        if (profile.token && githubService.isAuth()) {
-          try {
-            const owner = repository.owner?.login || repository.full_name.split('/')[0];
-            const repoName = repository.name;
-            const ref = selectedBranch || 'main';
+        const owner = repository.owner?.login || repository.full_name.split('/')[0];
+        const repoName = repository.name;
+        const ref = selectedBranch || 'main';
 
-            console.log(`Fetching BPMN files from ${owner}/${repoName} (branch: ${ref})`);
-            
-            const bpmnFiles = await githubService.getBpmnFiles(owner, repoName, ref);
-            
-            console.log(`Found ${bpmnFiles.length} BPMN files:`, bpmnFiles.map(f => f.path));
-            
-            setBpmnFiles(bpmnFiles);
-            setLoading(false);
-            return;
-          } catch (apiError) {
-            console.error('Failed to fetch BPMN files from repository:', apiError);
-            setError(`Failed to load BPMN files from repository: ${apiError.message}`);
-            setBpmnFiles([]); // Show empty state instead of demo data
-            setLoading(false);
-            return;
-          }
-        }
-
-        // If no authentication or no repository, show empty state
-        console.warn('Not authenticated or no repository selected');
-        setError('Authentication required to load BPMN files from repository');
-        setBpmnFiles([]);
+        console.log(`Fetching BPMN files from ${owner}/${repoName} (branch: ${ref})`);
+        
+        const bpmnFiles = await githubService.getBpmnFiles(owner, repoName, ref);
+        
+        console.log(`Found ${bpmnFiles.length} BPMN files:`, bpmnFiles.map(f => f.path));
+        
+        setBpmnFiles(bpmnFiles);
         setLoading(false);
-      } catch (err) {
-        console.error('Error loading BPMN files:', err);
-        setError('Failed to load BPMN files from repository');
+      } catch (apiError) {
+        console.error('Failed to fetch BPMN files from repository:', apiError);
+        
+        // Check if this is an authentication error for a private repository
+        if (apiError.status === 401 || apiError.status === 403) {
+          setError('Authentication required to access this repository. Please ensure you have a valid GitHub token with appropriate permissions.');
+        } else if (apiError.status === 404) {
+          setError('Repository or branch not found. Please check the repository name and branch.');
+        } else {
+          setError(`Failed to load BPMN files from repository: ${apiError.message}`);
+        }
+        
         setBpmnFiles([]);
         setLoading(false);
       }
@@ -132,7 +123,7 @@ const BusinessProcessSelection = () => {
     });
   };
 
-  if (!profile || !repository) {
+  if (!repository) {
     navigate('/');
     return <div>Redirecting...</div>;
   }

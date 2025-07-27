@@ -281,8 +281,6 @@ describe('GitHubService', () => {
 
   describe('getBpmnFiles', () => {
     it('should fetch BPMN files from both business-processes and business-process directories', async () => {
-      githubService.authenticate('fake-token');
-
       // Mock responses for different directory paths
       const mockBpmnFile1 = {
         name: 'workflow1.bpmn',
@@ -312,9 +310,28 @@ describe('GitHubService', () => {
       expect(mockOctokit.rest.repos.getContent).toHaveBeenCalledTimes(2);
     });
 
-    it('should return empty array when directories do not exist', async () => {
-      githubService.authenticate('fake-token');
+    it('should work without authentication for public repositories', async () => {
+      // Don't authenticate githubService - it should still work for public repos
+      
+      const mockBpmnFile = {
+        name: 'public-workflow.bpmn',
+        path: 'input/business-processes/public-workflow.bpmn',
+        type: 'file',
+        sha: 'public123',
+        size: 1024
+      };
 
+      mockOctokit.rest.repos.getContent
+        .mockResolvedValueOnce({ data: [mockBpmnFile] })
+        .mockRejectedValueOnce({ status: 404 }); // second directory doesn't exist
+
+      const result = await githubService.getBpmnFiles('test-owner', 'public-repo', 'main');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('public-workflow.bpmn');
+    });
+
+    it('should return empty array when directories do not exist', async () => {
       // Mock 404 responses for both directory paths
       const notFoundError = new Error('Not Found');
       notFoundError.status = 404;
@@ -326,8 +343,6 @@ describe('GitHubService', () => {
     });
 
     it('should handle recursive directory structure', async () => {
-      githubService.authenticate('fake-token');
-
       const mockDirectory = {
         name: 'subdir',
         path: 'input/business-processes/subdir',
@@ -353,17 +368,11 @@ describe('GitHubService', () => {
       expect(result[0].name).toBe('nested.bpmn');
       expect(result[0].path).toBe('input/business-processes/subdir/nested.bpmn');
     });
-
-    it('should throw error when not authenticated', async () => {
-      await expect(githubService.getBpmnFiles('test-owner', 'test-repo'))
-        .rejects.toThrow('Not authenticated with GitHub');
-    });
   });
 
   describe('getBpmnFilesRecursive', () => {
     beforeEach(() => {
       jest.clearAllMocks();
-      githubService.authenticate('fake-token');
     });
 
     it('should recursively fetch BPMN files from directories', async () => {
@@ -397,6 +406,24 @@ describe('GitHubService', () => {
       expect(result).toHaveLength(2);
       expect(result[0].name).toBe('file1.bpmn');
       expect(result[1].name).toBe('file2.bpmn');
+    });
+
+    it('should work without authentication for public repositories', async () => {
+      // Don't authenticate githubService
+      const mockFiles = [
+        {
+          name: 'public.bpmn',
+          path: 'input/business-processes/public.bpmn',
+          type: 'file'
+        }
+      ];
+
+      mockOctokit.rest.repos.getContent.mockResolvedValueOnce({ data: mockFiles });
+
+      const result = await githubService.getBpmnFilesRecursive('test-owner', 'public-repo', 'input/business-processes');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('public.bpmn');
     });
 
     it('should return empty array when directory does not exist', async () => {

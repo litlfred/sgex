@@ -751,12 +751,11 @@ class GitHubService {
 
   // Recursively fetch BPMN files from a directory and its subdirectories
   async getBpmnFilesRecursive(owner, repo, path, ref = 'main', allFiles = []) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
-      const { data } = await this.octokit.rest.repos.getContent({
+      // Use authenticated octokit if available, otherwise create a public instance
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.getContent({
         owner,
         repo,
         path,
@@ -793,10 +792,6 @@ class GitHubService {
 
   // Get all BPMN files from a repository's business process directories
   async getBpmnFiles(owner, repo, ref = 'main') {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     const allBpmnFiles = [];
     
     // Try both possible directory names: 'input/business-processes' and 'input/business-process'
