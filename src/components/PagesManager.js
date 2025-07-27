@@ -17,11 +17,44 @@ const PagesManager = () => {
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [checkingPermissions, setCheckingPermissions] = useState(true);
+  const [initializingAuth, setInitializingAuth] = useState(true);
+
+  // Initialize authentication if needed
+  useEffect(() => {
+    const initializeAuthentication = async () => {
+      // Check if GitHub service is already authenticated
+      if (githubService.isAuth()) {
+        setInitializingAuth(false);
+        return;
+      }
+
+      // Try to restore authentication from stored token
+      const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
+      if (token) {
+        console.log('Restoring GitHub authentication from stored token');
+        const success = githubService.authenticate(token);
+        if (success) {
+          console.log('GitHub authentication restored successfully');
+        } else {
+          console.warn('Failed to restore GitHub authentication');
+          // Clean up invalid tokens
+          sessionStorage.removeItem('github_token');
+          localStorage.removeItem('github_token');
+        }
+      } else {
+        console.warn('No stored GitHub token found');
+      }
+
+      setInitializingAuth(false);
+    };
+
+    initializeAuthentication();
+  }, []);
 
   // Check write permissions
   useEffect(() => {
     const checkPermissions = async () => {
-      if (repository && profile) {
+      if (repository && profile && !initializingAuth) {
         try {
           const writeAccess = await githubService.checkRepositoryWritePermissions(
             repository.owner?.login || repository.full_name.split('/')[0],
@@ -36,14 +69,28 @@ const PagesManager = () => {
       setCheckingPermissions(false);
     };
 
-    checkPermissions();
-  }, [repository, profile]);
+    if (!initializingAuth) {
+      checkPermissions();
+    }
+  }, [repository, profile, initializingAuth]);
 
   // Load pages from sushi-config.yaml
   useEffect(() => {
     const loadPages = async () => {
       if (!profile || !repository) {
         navigate('/');
+        return;
+      }
+
+      // Wait for authentication to be initialized
+      if (initializingAuth) {
+        return;
+      }
+
+      // Check if we have authentication after initialization
+      if (!githubService.isAuth()) {
+        setError('GitHub authentication not available. Please return to the home page and sign in again.');
+        setLoading(false);
         return;
       }
 
@@ -65,7 +112,7 @@ const PagesManager = () => {
           console.log('GitHub auth status:', githubService.isAuth());
           console.log('GitHub octokit:', !!githubService.octokit);
 
-          // Check if GitHub service is ready
+          // Double-check authentication status
           if (!githubService.isAuth() || !githubService.octokit) {
             if (retries < maxRetries - 1) {
               console.log('GitHub service not ready, waiting...');
@@ -73,7 +120,7 @@ const PagesManager = () => {
               retries++;
               continue;
             } else {
-              throw new Error('GitHub service not authenticated after retries');
+              throw new Error('GitHub service not authenticated. Please return to the home page and sign in again.');
             }
           }
 
@@ -111,7 +158,7 @@ const PagesManager = () => {
     };
 
     loadPages();
-  }, [profile, repository, selectedBranch, navigate]);
+  }, [profile, repository, selectedBranch, navigate, initializingAuth]);
 
   const fetchSushiConfig = async (owner, repo, branch) => {
     try {
@@ -399,10 +446,10 @@ const PagesManager = () => {
             </p>
           </div>
 
-          {loading && (
+          {(loading || initializingAuth) && (
             <div className="loading-state">
               <div className="loading-spinner"></div>
-              <p>Loading pages from sushi-config.yaml...</p>
+              <p>{initializingAuth ? 'Initializing GitHub authentication...' : 'Loading pages from sushi-config.yaml...'}</p>
             </div>
           )}
 
@@ -425,7 +472,7 @@ const PagesManager = () => {
             </div>
           )}
 
-          {!loading && !error && pages.length === 0 && (
+          {!loading && !initializingAuth && !error && pages.length === 0 && (
             <div className="empty-state">
               <div className="empty-icon">📄</div>
               <h3>No pages found</h3>
@@ -443,7 +490,7 @@ const PagesManager = () => {
             </div>
           )}
 
-          {!loading && !error && pages.length > 0 && (
+          {!loading && !initializingAuth && !error && pages.length > 0 && (
             <div className="pages-list">
               <div className="pages-header-info">
                 <div className="pages-count">
