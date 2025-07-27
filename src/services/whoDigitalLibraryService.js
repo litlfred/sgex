@@ -74,14 +74,8 @@ class WHODigitalLibraryService {
         }
       }
       
-      // Check if this is a 403 access denied error
-      if (error.message.includes('HTTP 403')) {
-        // For development mode, we can suggest using mock data
-        if (this.isDevelopment) {
-          console.warn('WHO API returned 403 - using mock search results for development');
-          return this.getMockSearchResults(query, page, size);
-        }
-      }
+      // For 403 errors, provide clear guidance but don't automatically fall back to mock data
+      // The proxy should handle CORS, so 403 is a legitimate API response
       
       throw new Error(`Failed to search WHO digital library: ${error.message}`);
     }
@@ -318,11 +312,10 @@ class WHODigitalLibraryService {
     } catch (error) {
       console.error('Error fetching featured items:', error);
       
-      // Return sample/mock data when API is not accessible
+      // Return sample/mock data only for actual network/CORS errors, not for legitimate API responses
       if (error.message.includes('CORS policy') || 
-          error.message.includes('HTTP 403') || 
           error.message.includes('Failed to fetch')) {
-        console.warn('Using mock featured items due to API access issues');
+        console.warn('Using mock featured items due to network/CORS issues');
         return this.getMockFeaturedItems();
       }
       
