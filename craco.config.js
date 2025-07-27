@@ -36,6 +36,10 @@ module.exports = {
       };
     }
     
+    // Disable static file serving to avoid conflicts with React Router
+    // This prevents the serve-static middleware from being added
+    devServerConfig.static = false;
+    
     // Add the new setupMiddlewares function
     devServerConfig.setupMiddlewares = (middlewares, devServer) => {
       // Add close method as alias to stop for compatibility with react-scripts
@@ -63,10 +67,6 @@ module.exports = {
       // it used the same host and port.
       // https://github.com/facebook/create-react-app/issues/2272#issuecomment-302832432
       devServer.app.use(noopServiceWorkerMiddleware(paths.publicUrlOrPath));
-
-      // Redirect to `PUBLIC_URL` or `homepage` from `package.json` if url not match
-      // Apply this AFTER service worker middleware to avoid conflicts with static files
-      devServer.app.use(redirectServedPath(paths.publicUrlOrPath));
 
       return middlewares;
     };
