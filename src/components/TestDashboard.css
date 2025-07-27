@@ -124,7 +124,7 @@
 }
 
 .component-card {
-  background: #ffffff;
+  background: #0078d4;
   border: 2px solid #e1e5e9;
   border-radius: 12px;
   padding: 1.5rem;
@@ -198,7 +198,7 @@
 
 .component-content p {
   margin: 0 0 1rem 0;
-  color: #666;
+  color: #8f9deb;
   font-size: 0.9rem;
   line-height: 1.4;
 }
