@@ -67,6 +67,11 @@ const WHODigitalLibrary = ({ onReferencesChange }) => {
       setTotalPages(results.totalPages);
       setTotalResults(results.totalElements);
       setCurrentPage(page);
+      
+      // Check if this is demonstration data
+      if (results.isDemo) {
+        setError('WHO_API_DEMO'); // Special error code for demo mode
+      }
     } catch (error) {
       setError(error.message);
       setSearchResults([]);
@@ -300,7 +305,7 @@ const WHODigitalLibrary = ({ onReferencesChange }) => {
           </div>
         </form>
 
-        {error && (
+        {error && error !== 'WHO_API_DEMO' && (
           <div className="error-message">
             <strong>Search Error:</strong> {error}
             {(error.includes('CORS policy') || error.includes('restart the development server')) && (
@@ -340,6 +345,41 @@ const WHODigitalLibrary = ({ onReferencesChange }) => {
                 <p>Please wait a few minutes before searching again. You can browse featured items below in the meantime.</p>
               </div>
             )}
+          </div>
+        )}
+
+        {error === 'WHO_API_DEMO' && (
+          <div className="demo-notice">
+            <div className="demo-notice-header">
+              <span className="demo-icon">🔧</span>
+              <strong>Demonstration Mode</strong>
+            </div>
+            <p>
+              The WHO Digital Library API is currently not accessible for direct integration. 
+              The results below are demonstration data showing how the feature would work.
+            </p>
+            <p>
+              <strong>To search real WHO publications:</strong> Visit{' '}
+              <a 
+                href="https://iris.who.int" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="external-link"
+              >
+                iris.who.int
+              </a>{' '}
+              directly.
+            </p>
+            <div className="demo-notice-actions">
+              <a 
+                href="https://iris.who.int/help" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="help-link"
+              >
+                📖 WHO IRIS Help & Documentation
+              </a>
+            </div>
           </div>
         )}
       </div>
