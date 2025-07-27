@@ -250,41 +250,6 @@
   line-height: 1.6;
 }
 
-.components-legend {
-  display: flex;
-  justify-content: center;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.95rem;
-}
-
-.legend-badge {
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.legend-badge.level-2,
-.legend-badge.l2 {
-  background: linear-gradient(135deg, #0078d4, #005a9e);
-  color: white;
-}
-
-.legend-badge.level-3,
-.legend-badge.l3 {
-  background: linear-gradient(135deg, #881798, #6b1785);
-  color: white;
-}
 
 /* Tab Navigation Styles */
 .tab-navigation {
@@ -337,24 +302,7 @@
   text-align: center;
 }
 
-.tab-badge {
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
 
-.tab-badge.core {
-  background: rgba(0, 120, 212, 0.8);
-  color: white;
-}
-
-.tab-badge.additional {
-  background: rgba(136, 23, 152, 0.8);
-  color: white;
-}
 
 /* Section Styles */
 .components-section {
@@ -459,30 +407,7 @@
   line-height: 1;
 }
 
-.component-badge {
-  flex-shrink: 0;
-}
 
-.level-badge {
-  padding: 0.3rem 0.7rem;
-  border-radius: 16px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.level-badge.level-2,
-.level-badge.l2 {
-  background: rgba(0, 120, 212, 0.8);
-  color: white;
-}
-
-.level-badge.level-3,
-.level-badge.l3 {
-  background: rgba(136, 23, 152, 0.8);
-  color: white;
-}
 
 .component-content h3,
 .component-content h4 {

@@ -569,7 +569,6 @@ const DAKDashboard = () => {
             >
               <span className="tab-icon">⭐</span>
               <span className="tab-text">8 Core Components</span>
-              <span className="tab-badge core">L2</span>
             </button>
             <button 
               className={`tab-button ${activeTab === 'additional' ? 'active' : ''}`}
@@ -577,7 +576,6 @@ const DAKDashboard = () => {
             >
               <span className="tab-icon">🔧</span>
               <span className="tab-text">Additional Representations</span>
-              <span className="tab-badge additional">L3</span>
             </button>
             <button 
               className={`tab-button ${activeTab === 'workflows' ? 'active' : ''}`}
@@ -599,13 +597,6 @@ const DAKDashboard = () => {
                 </p>
               </div>
 
-              <div className="components-legend">
-                <div className="legend-item">
-                  <span className="legend-badge l2">L2</span>
-                  <span>Data model agnostic representations</span>
-                </div>
-              </div>
-
               <div className="components-grid core-components">
                 {coreDAKComponents.map((component) => (
                   <div 
@@ -617,11 +608,6 @@ const DAKDashboard = () => {
                     <div className="component-header">
                       <div className="component-icon" style={{ color: component.color }}>
                         {component.icon}
-                      </div>
-                      <div className="component-badge">
-                        <span className={`level-badge ${component.type.toLowerCase()}`}>
-                          {component.type}
-                        </span>
                       </div>
                     </div>
                     
@@ -656,13 +642,6 @@ const DAKDashboard = () => {
                 </p>
               </div>
 
-              <div className="components-legend">
-                <div className="legend-item">
-                  <span className="legend-badge l3">L3</span>
-                  <span>FHIR R4-specific implementations</span>
-                </div>
-              </div>
-
               <div className="components-grid additional-components">
                 {additionalComponents.map((component) => (
                   <div 
@@ -674,11 +653,6 @@ const DAKDashboard = () => {
                     <div className="component-header">
                       <div className="component-icon" style={{ color: component.color }}>
                         {component.icon}
-                      </div>
-                      <div className="component-badge">
-                        <span className={`level-badge ${component.type.toLowerCase()}`}>
-                          {component.type}
-                        </span>
                       </div>
                     </div>
                     
