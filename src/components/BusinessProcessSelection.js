@@ -8,7 +8,7 @@ const BusinessProcessSelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const { profile, repository, component } = location.state || {};
+  const { profile, repository, component, selectedBranch } = location.state || {};
   
   const [bpmnFiles, setBpmnFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +54,8 @@ const BusinessProcessSelection = () => {
             const { data } = await octokit.rest.repos.getContent({
               owner: repository.owner?.login || repository.full_name.split('/')[0],
               repo: repository.name,
-              path: 'input/business-processes'
+              path: 'input/business-processes',
+              ref: selectedBranch || 'main' // Use selected branch or default to main
             });
 
             // Filter for .bpmn files
@@ -109,7 +110,7 @@ const BusinessProcessSelection = () => {
     };
 
     loadBpmnFiles();
-  }, [profile, repository, navigate]);
+  }, [profile, repository, navigate, selectedBranch]); // Add selectedBranch to dependencies
 
   const handleEdit = (file) => {
     if (!hasWriteAccess) {
@@ -124,6 +125,7 @@ const BusinessProcessSelection = () => {
         repository,
         component,
         selectedFile: file,
+        selectedBranch,
         mode: 'edit'
       }
     });
@@ -136,6 +138,7 @@ const BusinessProcessSelection = () => {
         repository,
         component,
         selectedFile: file,
+        selectedBranch,
         mode: 'view'
       }
     });
@@ -147,7 +150,8 @@ const BusinessProcessSelection = () => {
         profile,
         repository,
         component,
-        selectedFile: file
+        selectedFile: file,
+        selectedBranch
       }
     });
   };

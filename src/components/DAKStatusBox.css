@@ -1,0 +1,450 @@
+.dak-status-box {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  margin: 1.5rem 0;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.dak-status-box:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.status-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.status-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+}
+
+.status-icon {
+  font-size: 1.5rem;
+}
+
+.status-title h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.branch-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.branch-indicator code {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.8rem;
+  color: #e3f2fd;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.expand-icon {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  transition: transform 0.3s ease;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.status-content {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 2rem;
+  justify-content: center;
+}
+
+.loading-spinner {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #ff6b6b;
+  padding: 1rem;
+  background: rgba(255, 107, 107, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.error-icon {
+  font-size: 1.2rem;
+}
+
+.status-section {
+  margin-bottom: 2rem;
+}
+
+.status-section:last-child {
+  margin-bottom: 0;
+}
+
+.status-section h4 {
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-section h5 {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin: 0 0 0.75rem 0;
+}
+
+/* Quick Links Section */
+.quick-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.quick-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.quick-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  transform: translateY(-2px);
+}
+
+.link-icon {
+  font-size: 1rem;
+}
+
+.external-indicator {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  margin-left: auto;
+}
+
+/* Workflows Section */
+.workflows-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.available-workflows {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.workflow-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.workflow-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.workflow-item:last-child {
+  border-bottom: none;
+}
+
+.workflow-name {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+}
+
+.workflow-trigger-btn {
+  background: rgba(76, 175, 80, 0.8);
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.workflow-trigger-btn:hover:not(:disabled) {
+  background: rgba(76, 175, 80, 1);
+  transform: translateY(-1px);
+}
+
+.workflow-trigger-btn:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+}
+
+.recent-runs {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.workflow-runs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.workflow-run {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.run-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.run-status {
+  font-size: 1rem;
+}
+
+.run-name {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.run-date {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  margin-left: auto;
+}
+
+.run-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.rerun-btn,
+.view-run-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  padding: 0.4rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  min-width: 28px;
+  height: 28px;
+}
+
+.rerun-btn:hover,
+.view-run-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Releases Section */
+.releases-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.release-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.release-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.release-name {
+  color: white;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.release-date {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+}
+
+.prerelease-badge {
+  background: rgba(255, 193, 7, 0.8);
+  color: #212529;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.release-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.release-link,
+.download-link {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.release-link:hover,
+.download-link:hover {
+  background: rgba(255, 255, 255, 0.3);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.no-data {
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dak-status-box {
+    margin: 1rem 0;
+  }
+
+  .status-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .status-content {
+    padding: 1rem;
+  }
+
+  .status-title {
+    gap: 0.5rem;
+  }
+
+  .status-title h3 {
+    font-size: 1.1rem;
+  }
+
+  .quick-links {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .workflows-section {
+    gap: 1rem;
+  }
+
+  .workflow-item,
+  .release-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .run-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .run-date {
+    margin-left: 0;
+  }
+
+  .release-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}

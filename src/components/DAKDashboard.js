@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
+import branchContextService from '../services/branchContextService';
+import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import DAKStatusBox from './DAKStatusBox';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, repo, branch } = useParams();
   
-  const { profile, repository } = location.state || {};
+  // Try to get data from location.state first, then from URL params
+  const [profile, setProfile] = useState(location.state?.profile || null);
+  const [repository, setRepository] = useState(location.state?.repository || null);
+  const [loading, setLoading] = useState(!profile || !repository);
+  const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
@@ -17,6 +25,116 @@ const DAKDashboard = () => {
   const [workflows, setWorkflows] = useState([]);
   const [workflowsLoading, setWorkflowsLoading] = useState(false);
   const [workflowsError, setWorkflowsError] = useState(null);
+  const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
+
+  // Fetch data from URL parameters if not available in location.state
+  useEffect(() => {
+    const fetchDataFromUrlParams = async () => {
+      if ((!profile || !repository) && user && repo) {
+        try {
+          setLoading(true);
+          setError(null);
+
+          // Check if githubService is authenticated (allow demo mode to proceed without auth)
+          if (!githubService.isAuth()) {
+            // In demo mode, create mock data instead of requiring authentication
+            if (window.location.pathname.includes('/dashboard/')) {
+              const demoProfile = {
+                login: user,
+                name: user.charAt(0).toUpperCase() + user.slice(1),
+                avatar_url: `https://github.com/${user}.png`,
+                type: 'User',
+                isDemo: true
+              };
+
+              const demoRepository = {
+                name: repo,
+                full_name: `${user}/${repo}`,
+                owner: { login: user },
+                default_branch: branch || 'main',
+                html_url: `https://github.com/${user}/${repo}`,
+                isDemo: true
+              };
+
+              setProfile(demoProfile);
+              setRepository(demoRepository);
+              setSelectedBranch(branch || 'main');
+              setLoading(false);
+              return;
+            } else {
+              setError('GitHub authentication required. Please authenticate first.');
+              setLoading(false);
+              return;
+            }
+          }
+
+          // Fetch user profile
+          let userProfile = null;
+          try {
+            const userResponse = await githubService.getUser(user);
+            userProfile = userResponse;
+          } catch (err) {
+            console.error('Error fetching user:', err);
+            setError(`User '${user}' not found or not accessible.`);
+            setLoading(false);
+            return;
+          }
+
+          // Fetch repository
+          let repoData = null;
+          try {
+            const repoResponse = await githubService.getRepository(user, repo);
+            repoData = repoResponse;
+          } catch (err) {
+            console.error('Error fetching repository:', err);
+            setError(`Repository '${user}/${repo}' not found or not accessible.`);
+            setLoading(false);
+            return;
+          }
+
+          // Validate branch if specified
+          if (branch) {
+            try {
+              await githubService.getBranch(user, repo, branch);
+              setSelectedBranch(branch);
+            } catch (err) {
+              console.warn(`Branch '${branch}' not found, falling back to default branch`);
+              setSelectedBranch(repoData.default_branch);
+            }
+          } else {
+            setSelectedBranch(repoData.default_branch);
+          }
+
+          setProfile(userProfile);
+          setRepository(repoData);
+          setLoading(false);
+        } catch (err) {
+          console.error('Error fetching data from URL params:', err);
+          setError('Failed to load dashboard data. Please check the URL or try again.');
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    fetchDataFromUrlParams();
+  }, [user, repo, branch, profile, repository]);
+
+  // Initialize selected branch from session context
+  useEffect(() => {
+    if (repository) {
+      const storedBranch = branchContextService.getSelectedBranch(repository);
+      if (storedBranch) {
+        setSelectedBranch(storedBranch);
+      } else if (profile && profile.login === 'demo-user') {
+        // For demo mode, set a default branch
+        const defaultBranch = repository.default_branch || 'main';
+        setSelectedBranch(defaultBranch);
+        branchContextService.setSelectedBranch(repository, defaultBranch);
+      }
+    }
+  }, [repository, profile]);
 
   // Check write permissions on mount
   useEffect(() => {
@@ -211,6 +329,12 @@ const DAKDashboard = () => {
     }
   ];
 
+  // Handle branch selection change
+  const handleBranchChange = (branch) => {
+    setSelectedBranch(branch);
+    branchContextService.setSelectedBranch(repository, branch);
+  };
+
   const handleComponentClick = (component) => {
     // For business processes, navigate to selection page without permission check
     if (component.id === 'business-processes') {
@@ -218,7 +342,21 @@ const DAKDashboard = () => {
         state: {
           profile,
           repository,
-          component
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
+    // For health-interventions (WHO Digital Library), allow access in read-only mode
+    if (component.id === 'health-interventions') {
+      navigate(`/editor/${component.id}`, {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
         }
       });
       return;
@@ -235,7 +373,8 @@ const DAKDashboard = () => {
       state: {
         profile,
         repository,
-        component
+        component,
+        selectedBranch
       }
     });
   };
@@ -248,6 +387,36 @@ const DAKDashboard = () => {
     navigate('/');
   };
 
+  if (loading) {
+    return (
+      <div className="dak-dashboard loading-state">
+        <div className="loading-content">
+          <h2>Loading Dashboard...</h2>
+          <p>Fetching repository and user data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dak-dashboard error-state">
+        <div className="error-content">
+          <h2>Error Loading Dashboard</h2>
+          <p>{error}</p>
+          <div className="error-actions">
+            <button onClick={() => navigate('/')} className="action-btn primary">
+              Return to Home
+            </button>
+            <button onClick={() => window.location.reload()} className="action-btn secondary">
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!profile || !repository) {
     navigate('/');
     return <div>Redirecting...</div>;
@@ -256,25 +425,47 @@ const DAKDashboard = () => {
   return (
     <div className="dak-dashboard">
       <div className="dashboard-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repository.name}</span>
-            <span className="context-owner">@{profile.login}</span>
+        <div className="header-left">
+          <div className="who-branding">
+            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
+            <p className="subtitle">WHO SMART Guidelines Exchange</p>
+          </div>
+          <div className="repo-status">
+            <div className="repo-info">
+              <a 
+                href={`https://github.com/${repository.full_name}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="context-repo-link"
+                title="View repository on GitHub"
+              >
+                <span className="repo-icon">📁</span>
+                <span className="context-repo">{repository.name}</span>
+                <span className="external-link">↗</span>
+              </a>
+            </div>
+            <div className="branch-info">
+              <BranchSelector
+                repository={repository}
+                selectedBranch={selectedBranch}
+                onBranchChange={handleBranchChange}
+                className="header-branch-selector"
+              />
+            </div>
             {!checkingPermissions && (
               <span className={`access-level ${hasWriteAccess ? 'write' : 'read'}`}>
                 {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only Access'}
               </span>
             )}
           </div>
+        </div>
+        <div className="header-right">
+          <img 
+            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
+            alt="Profile" 
+            className="context-avatar" 
+          />
+          <span className="context-owner">@{profile.login}</span>
           <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
@@ -296,10 +487,23 @@ const DAKDashboard = () => {
           <div className="dashboard-intro">
             <h2>Digital Adaptation Kit Components</h2>
             <p>
-              Select a component to edit content for <strong>{repository.name}</strong>. 
+              Select a component to edit content for <strong>{repository.name}</strong>
+              {selectedBranch && (
+                <span> on branch <code className="branch-display">{selectedBranch}</code></span>
+              )}. 
               Components are organized according to the WHO SMART Guidelines framework.
             </p>
           </div>
+
+          {/* DAK Status Box - only show when repository and branch are selected */}
+          {repository && selectedBranch && (
+            <DAKStatusBox 
+              repository={repository}
+              selectedBranch={selectedBranch}
+              hasWriteAccess={hasWriteAccess}
+              profile={profile}
+            />
+          )}
 
           {/* Tab Navigation */}
           <div className="tab-navigation">

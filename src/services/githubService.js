@@ -141,6 +141,22 @@ class GitHubService {
     }
   }
 
+  // Get specific user data (public data, no auth required)
+  async getUser(username) {
+    try {
+      // Create a temporary Octokit instance for public API calls if we don't have one
+      const octokit = this.octokit || new Octokit();
+      
+      const { data } = await octokit.rest.users.getByUsername({
+        username
+      });
+      return data;
+    } catch (error) {
+      console.error(`Failed to fetch user ${username}:`, error);
+      throw error;
+    }
+  }
+
   // Get WHO organization data with fresh avatar
   async getWHOOrganization() {
     try {
@@ -214,8 +230,8 @@ class GitHubService {
       });
 
       if (data.type === 'file' && data.content) {
-        // Decode base64 content
-        const content = Buffer.from(data.content, 'base64').toString('utf-8');
+        // Decode base64 content (browser-compatible)
+        const content = decodeURIComponent(escape(atob(data.content)));
         
         // Check if the content contains smart.who.int.base in dependencies
         const isCompatible = content.includes('smart.who.int.base');
@@ -229,101 +245,26 @@ class GitHubService {
       repositoryCompatibilityCache.set(owner, repo, false);
       return false;
     } catch (error) {
-      // If it's a rate limiting or network error, try to fall back to other indicators
-      if (error.status === 403 || error.status === 429 || error.message.includes('rate limit') || error.message.includes('Network')) {
-        console.warn(`Rate limit or network error checking ${owner}/${repo}, trying fallback approach:`, error.message);
-        const fallbackResult = await this.checkSmartGuidelinesFallback(owner, repo);
-        
-        // Cache the fallback result
-        repositoryCompatibilityCache.set(owner, repo, fallbackResult);
-        return fallbackResult;
-      }
-      
       // If it's a 404 (file not found), retry once more in case of temporary issues
       if (error.status === 404 && retryCount > 0) {
         console.warn(`File not found for ${owner}/${repo}, retrying... (${retryCount} attempts left)`);
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        // Use shorter delay in test environment
+        const delay = process.env.NODE_ENV === 'test' ? 10 : 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
         return this.checkSmartGuidelinesCompatibility(owner, repo, retryCount - 1);
       }
       
-      // For 404 errors after retries, or other errors, file doesn't exist or can't be accessed
-      // Try fallback before giving up
-      const fallbackResult = await this.checkSmartGuidelinesFallback(owner, repo);
+      // For any error (including rate limiting, network errors, or file not found after retries),
+      // strictly return false - no fallback logic
+      console.warn(`Failed to check ${owner}/${repo} for sushi-config.yaml with smart.who.int.base dependency:`, error.message);
       
-      // Cache the result (could be true from fallback or false)
-      repositoryCompatibilityCache.set(owner, repo, fallbackResult);
-      return fallbackResult;
-    }
-  }
-
-  // Fallback method to check for SMART Guidelines compatibility using other indicators
-  async checkSmartGuidelinesFallback(owner, repo) {
-    try {
-      // Get repository details to check topics and description
-      const { data } = await this.octokit.rest.repos.get({
-        owner,
-        repo,
-      });
-
-      // Enhanced smart indicators including patterns for repositories like smart-trust-phw
-      const smartIndicators = [
-        'smart-guidelines',
-        'smart guidelines', // Add space variant
-        'who-smart',
-        'smart.who.int',
-        'digital-adaptation-kit',
-        'digital adaptation kit',
-        'dak',
-        'fhir-ig',
-        'implementation-guide',
-        'implementation guide', // Add space variant
-        'smart-trust', // For smart-trust-phw specifically
-        'trust-phw', // Another pattern for trust-related SMART repos
-        'phw', // Public Health Web repositories
-        'smart guide', // Another common variant
-        'who guide', // WHO guideline patterns
-        'fhir guide', // FHIR guideline patterns
-      ];
-
-      const topics = data.topics || [];
-      const description = (data.description || '').toLowerCase();
-      const repoName = repo.toLowerCase();
-
-      // Check if any SMART guidelines indicators are present
-      const hasSmartIndicators = smartIndicators.some(indicator => 
-        topics.includes(indicator) || 
-        description.includes(indicator.toLowerCase()) ||
-        repoName.includes(indicator.replace(/[-\s]/g, ''))
-      );
-
-      // More lenient check for implementation guide patterns
-      const hasIGPatterns = description.includes('implementation guide') ||
-                           description.includes('fhir') ||
-                           description.includes('smart') ||
-                           description.includes('who') ||
-                           description.includes('guideline');
-
-      // Additional check for repositories that contain SMART-related keywords in name
-      const hasSmartInName = repoName.includes('smart') || 
-                            repoName.includes('dak') ||
-                            repoName.includes('guideline') ||
-                            repoName.includes('who') ||
-                            repoName.includes('fhir') ||
-                            (repoName.includes('trust') && repoName.includes('phw'));
-
-      const isCompatible = hasSmartIndicators || hasSmartInName || hasIGPatterns;
-
-      if (isCompatible) {
-        console.info(`Repository ${owner}/${repo} has SMART guidelines indicators in topics/description, assuming compatible`);
-        return true;
-      }
-
-      return false;
-    } catch (fallbackError) {
-      console.warn(`Fallback check also failed for ${owner}/${repo}:`, fallbackError.message);
+      // Cache negative result
+      repositoryCompatibilityCache.set(owner, repo, false);
       return false;
     }
   }
+
+
 
   // Get repositories that are SMART guidelines compatible
   async getSmartGuidelinesRepositories(owner, type = 'user') {
@@ -332,21 +273,34 @@ class GitHubService {
     }
 
     try {
-      let repositories;
-      if (type === 'user') {
-        const { data } = await this.octokit.rest.repos.listForUser({
-          username: owner,
-          sort: 'updated',
-          per_page: 100,
-        });
-        repositories = data;
-      } else {
-        const { data } = await this.octokit.rest.repos.listForOrg({
-          org: owner,
-          sort: 'updated',
-          per_page: 100,
-        });
-        repositories = data;
+      let repositories = [];
+      let page = 1;
+      let hasMorePages = true;
+
+      // Fetch all repositories using pagination
+      while (hasMorePages) {
+        let response;
+        if (type === 'user') {
+          response = await this.octokit.rest.repos.listForUser({
+            username: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        } else {
+          response = await this.octokit.rest.repos.listForOrg({
+            org: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        }
+
+        repositories = repositories.concat(response.data);
+        
+        // Check if there are more pages
+        hasMorePages = response.data.length === 100;
+        page++;
       }
 
       // Check each repository for SMART guidelines compatibility
@@ -375,21 +329,50 @@ class GitHubService {
     }
 
     try {
-      let repositories;
-      if (type === 'user') {
-        const { data } = await this.octokit.rest.repos.listForUser({
-          username: owner,
-          sort: 'updated',
-          per_page: 100,
-        });
-        repositories = data;
-      } else {
-        const { data } = await this.octokit.rest.repos.listForOrg({
-          org: owner,
-          sort: 'updated',
-          per_page: 100,
-        });
-        repositories = data;
+      let repositories = [];
+      let page = 1;
+      let hasMorePages = true;
+
+      // Fetch all repositories using pagination
+      while (hasMorePages) {
+        let response;
+        if (type === 'user') {
+          response = await this.octokit.rest.repos.listForUser({
+            username: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        } else {
+          response = await this.octokit.rest.repos.listForOrg({
+            org: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        }
+
+        repositories = repositories.concat(response.data);
+        
+        // Check if there are more pages
+        hasMorePages = response.data.length === 100;
+        page++;
+      }
+
+      // Handle case where user has no repositories
+      if (repositories.length === 0) {
+        console.log('📊 No repositories found for user, completing scan immediately');
+        // Call progress callback to indicate completion
+        if (onProgress) {
+          onProgress({
+            current: 0,
+            total: 0,
+            currentRepo: 'none',
+            progress: 100,
+            completed: true
+          });
+        }
+        return [];
       }
 
       // Process repositories concurrently with rate limiting and enhanced display
@@ -474,7 +457,76 @@ class GitHubService {
     }  
   }
 
-  // Get GitHub workflows from .github/workflows directory
+  // Get repository branches
+  async getBranches(owner, repo) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.listBranches({
+        owner,
+        repo,
+        per_page: 100
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch branches:', error);
+      throw error;
+    }
+  }
+
+  // Create a new branch
+  async createBranch(owner, repo, branchName, fromBranch = 'main') {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      // First get the SHA of the source branch
+      const { data: refData } = await this.octokit.rest.git.getRef({
+        owner,
+        repo,
+        ref: `heads/${fromBranch}`
+      });
+
+      // Create the new branch
+      const { data } = await this.octokit.rest.git.createRef({
+        owner,
+        repo,
+        ref: `refs/heads/${branchName}`,
+        sha: refData.object.sha
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Failed to create branch:', error);
+      throw error;
+    }
+  }
+
+  // Get a specific branch
+  async getBranch(owner, repo, branch) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.getBranch({
+        owner,
+        repo,
+        branch
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch branch:', error);
+      throw error;
+    }
+  }
+
+  // GitHub Actions API methods
+  
+  // Get workflows for a repository (detailed version with file parsing)
   async getWorkflows(owner, repo) {
     if (!this.isAuth()) {
       throw new Error('Not authenticated with GitHub');
@@ -562,6 +614,161 @@ class GitHubService {
     }
   }
 
+  // Get workflow runs for a repository
+  async getWorkflowRuns(owner, repo, options = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const params = {
+        owner,
+        repo,
+        per_page: options.per_page || 10,
+        page: options.page || 1
+      };
+
+      if (options.branch) {
+        params.branch = options.branch;
+      }
+
+      if (options.workflow_id) {
+        params.workflow_id = options.workflow_id;
+      }
+
+      const { data } = await this.octokit.rest.actions.listWorkflowRunsForRepo(params);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch workflow runs:', error);
+      throw error;
+    }
+  }
+
+  // Get workflow runs for a specific workflow
+  async getWorkflowRunsForWorkflow(owner, repo, workflow_id, options = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const params = {
+        owner,
+        repo,
+        workflow_id,
+        per_page: options.per_page || 10,
+        page: options.page || 1
+      };
+
+      if (options.branch) {
+        params.branch = options.branch;
+      }
+
+      const { data } = await this.octokit.rest.actions.listWorkflowRuns(params);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch workflow runs for workflow:', error);
+      throw error;
+    }
+  }
+
+  // Trigger a workflow run
+  async triggerWorkflow(owner, repo, workflow_id, ref = 'main', inputs = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.actions.createWorkflowDispatch({
+        owner,
+        repo,
+        workflow_id,
+        ref,
+        inputs
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to trigger workflow:', error);
+      throw error;
+    }
+  }
+
+  // Re-run a workflow
+  async rerunWorkflow(owner, repo, run_id) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.actions.reRunWorkflow({
+        owner,
+        repo,
+        run_id
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to re-run workflow:', error);
+      throw error;
+    }
+  }
+
+  // Get workflow run logs
+  async getWorkflowRunLogs(owner, repo, run_id) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.actions.downloadWorkflowRunLogs({
+        owner,
+        repo,
+        run_id
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to get workflow run logs:', error);
+      throw error;
+    }
+  }
+
+  // Releases API methods
+
+  // Get releases for a repository
+  async getReleases(owner, repo, options = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.listReleases({
+        owner,
+        repo,
+        per_page: options.per_page || 10,
+        page: options.page || 1
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch releases:', error);
+      throw error;
+    }
+  }
+
+  // Get latest release
+  async getLatestRelease(owner, repo) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.getLatestRelease({
+        owner,
+        repo
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch latest release:', error);
+      throw error;
+    }
+  }
   // Logout
   logout() {
     this.octokit = null;
@@ -570,6 +777,15 @@ class GitHubService {
     this.permissions = null;
     localStorage.removeItem('github_token');
     sessionStorage.removeItem('github_token');
+    
+    // Clear branch context on logout
+    try {
+      const { default: branchContextService } = require('../services/branchContextService');
+      branchContextService.clearAllBranchContext();
+    } catch (error) {
+      // Service might not be available during testing
+      sessionStorage.removeItem('sgex_branch_context');
+    }
   }
 }
 

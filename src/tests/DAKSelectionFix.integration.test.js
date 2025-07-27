@@ -54,7 +54,7 @@ describe('DAK Selection Fix Integration', () => {
         name: 'regular-repo',
         owner: { login: 'litlfred' },
         full_name: 'litlfred/regular-repo',
-        description: 'A regular repository without SMART guidelines'
+        description: 'A regular repository for JavaScript development',
       }
     ];
 
@@ -80,7 +80,7 @@ describe('DAK Selection Fix Integration', () => {
       .mockResolvedValueOnce({
         data: {
           name: 'regular-repo',
-          description: 'A regular repository without SMART guidelines',
+          description: 'A regular repository for JavaScript development',
           topics: ['javascript', 'node']
         }
       });
@@ -89,10 +89,14 @@ describe('DAK Selection Fix Integration', () => {
     const result = await githubService.getSmartGuidelinesRepositories('litlfred', 'user');
 
     // Verify that smart-trust-phw is included even though sushi-config.yaml check failed
-    expect(result).toHaveLength(2); // Both repos get the fallback check
+    expect(result).toHaveLength(1); // Only the DAK repo should be included now
     const smartTrustRepo = result.find(r => r.name === 'smart-trust-phw');
     expect(smartTrustRepo).toBeDefined();
     expect(smartTrustRepo.smart_guidelines_compatible).toBe(true);
+    
+    // Verify that regular-repo is NOT included due to strict filtering
+    const regularRepo = result.find(r => r.name === 'regular-repo');
+    expect(regularRepo).toBeUndefined();
     
     // Verify that the fallback method was called
     expect(mockOctokit.rest.repos.get).toHaveBeenCalledWith({

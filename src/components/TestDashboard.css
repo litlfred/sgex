@@ -90,7 +90,7 @@
 }
 
 .dashboard-main {
-  background: #ffffff;
+  background: rgba(255, 107, 107, 0.1);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -124,7 +124,7 @@
 }
 
 .component-card {
-  background: #ffffff;
+  background: #0078d4;
   border: 2px solid #e1e5e9;
   border-radius: 12px;
   padding: 1.5rem;
@@ -198,7 +198,7 @@
 
 .component-content p {
   margin: 0 0 1rem 0;
-  color: #666;
+  color: #8f9deb;
   font-size: 0.9rem;
   line-height: 1.4;
 }
