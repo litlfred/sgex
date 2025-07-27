@@ -93,4 +93,21 @@ describe('Invalid DAK URL Redirection', () => {
 
     expect(screen.getByText(warningMessage)).toBeInTheDocument();
   });
+
+  test('warning message for repository with misleading smart keyword', () => {
+    const warningMessage = "Could not access the requested DAK. Repository 'litlfred/smart-trust-gdhcnv' not found or not accessible.";
+    
+    render(
+      <MemoryRouter 
+        initialEntries={[{ 
+          pathname: '/', 
+          state: { warningMessage } 
+        }]}
+      >
+        <LandingPage />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText(warningMessage)).toBeInTheDocument();
+  });
 });

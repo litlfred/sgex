@@ -39,17 +39,41 @@ const DAKDashboard = () => {
               // List of known demo repositories that should work
               const validDemoRepos = [
                 'sgex-demo',
-                'smart-guidelines-demo',
+                'smart-guidelines-demo', 
                 'who-smart-guidelines',
+                'smart-anc-toolkit',
+                'smart-immunizations-demo',
+                'smart-hiv-demo',
                 'dak-example',
-                'implementation-guide-example'
+                'implementation-guide-example',
+                'smart-guidelines',
+                'smart-anc',
+                'smart-tb',
+                'smart-hiv',
+                'smart-immunizations'
               ];
               
-              // If it's not a known valid demo repo, redirect with warning
-              if (!validDemoRepos.some(validRepo => repo.toLowerCase().includes(validRepo.toLowerCase())) && 
-                  !repo.toLowerCase().includes('smart') && 
-                  !repo.toLowerCase().includes('dak') &&
-                  !repo.toLowerCase().includes('guideline')) {
+              // More restrictive validation: repository must be in the known valid list
+              // OR follow specific naming patterns for DAK repositories
+              const isValidDemoRepo = validDemoRepos.some(validRepo => 
+                repo.toLowerCase() === validRepo.toLowerCase() || 
+                repo.toLowerCase().includes(validRepo.toLowerCase())
+              );
+              
+              const isValidDAKPattern = (
+                // WHO official repositories
+                (user.toLowerCase() === 'worldhealthorganization' || user.toLowerCase() === 'who') ||
+                // Repositories that follow the exact DAK naming pattern
+                (repo.toLowerCase().includes('smart-') && repo.toLowerCase().includes('-demo')) ||
+                (repo.toLowerCase().includes('smart-') && repo.toLowerCase().includes('-toolkit')) ||
+                (repo.toLowerCase().includes('dak-') && repo.toLowerCase().includes('demo')) ||
+                // Known demo users with valid patterns
+                (user.toLowerCase() === 'litlfred' && validDemoRepos.some(validRepo => 
+                  repo.toLowerCase().includes(validRepo.toLowerCase())
+                ))
+              );
+              
+              if (!isValidDemoRepo && !isValidDAKPattern) {
                 navigate('/', { 
                   state: { 
                     warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
