@@ -11,6 +11,7 @@
     "@testing-library/user-event": "^14.6.1",
     "bpmn-js": "^18.6.2",
     "bpmn-moddle": "^9.0.2",
+    "http-proxy-middleware": "^3.0.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^6.30.1",
