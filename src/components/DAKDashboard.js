@@ -144,6 +144,16 @@ const DAKDashboard = () => {
   // Additional Structured Knowledge Representations
   const additionalComponents = [
     {
+      id: 'pages',
+      name: 'Pages',
+      description: 'Published page content and documentation defined in sushi-config.yaml',
+      icon: '📄',
+      type: 'Content',
+      color: '#8b5cf6',
+      fileTypes: ['Markdown', 'HTML'],
+      count: 0
+    },
+    {
       id: 'terminology',
       name: 'Terminology',
       description: 'Code systems, value sets, and concept maps',
@@ -205,6 +215,19 @@ const DAKDashboard = () => {
     // For business processes, navigate to selection page without permission check
     if (component.id === 'business-processes') {
       navigate('/business-process-selection', {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
+    // For pages, navigate to pages manager (read-only access allowed)
+    if (component.id === 'pages') {
+      navigate('/pages', {
         state: {
           profile,
           repository,
