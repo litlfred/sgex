@@ -22,7 +22,10 @@ const DAKDashboard = () => {
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('core'); // 'core' or 'additional'
+  const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'workflows'
+  const [workflows, setWorkflows] = useState([]);
+  const [workflowsLoading, setWorkflowsLoading] = useState(false);
+  const [workflowsError, setWorkflowsError] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
 
   // Fetch data from URL parameters if not available in location.state
@@ -186,6 +189,32 @@ const DAKDashboard = () => {
 
     checkPermissions();
   }, [repository, profile]);
+
+  // Fetch GitHub workflows when workflows tab is active
+  useEffect(() => {
+    const fetchWorkflows = async () => {
+      if (activeTab !== 'workflows' || !repository || !profile) {
+        return;
+      }
+
+      setWorkflowsLoading(true);
+      setWorkflowsError(null);
+
+      try {
+        const owner = repository.owner?.login || repository.full_name.split('/')[0];
+        const workflows = await githubService.getWorkflows(owner, repository.name);
+        setWorkflows(workflows);
+      } catch (error) {
+        console.error('Error fetching workflows:', error);
+        setWorkflowsError('Failed to load GitHub workflows');
+        setWorkflows([]);
+      } finally {
+        setWorkflowsLoading(false);
+      }
+    };
+
+    fetchWorkflows();
+  }, [activeTab, repository, profile]);
 
   // Define the 8 core DAK components based on WHO SMART Guidelines documentation
   const coreDAKComponents = [
@@ -550,6 +579,14 @@ const DAKDashboard = () => {
               <span className="tab-text">Additional Representations</span>
               <span className="tab-badge additional">L3</span>
             </button>
+            <button 
+              className={`tab-button ${activeTab === 'workflows' ? 'active' : ''}`}
+              onClick={() => setActiveTab('workflows')}
+            >
+              <span className="tab-icon">⚡</span>
+              <span className="tab-text">GitHub Workflows</span>
+              <span className="tab-badge workflows">CI/CD</span>
+            </button>
           </div>
 
           {/* 8 Core DAK Components Section */}
@@ -666,7 +703,138 @@ const DAKDashboard = () => {
             </div>
           )}
 
+          {/* GitHub Workflows Section */}
+          {activeTab === 'workflows' && (
+            <div className="components-section workflows-section active">
+              <div className="section-header">
+                <h3 className="section-title">GitHub Actions Workflows</h3>
+                <p className="section-description">
+                  Continuous Integration and Deployment workflows defined in .github/workflows
+                </p>
+              </div>
 
+              {workflowsLoading ? (
+                <div className="workflows-loading">
+                  <div className="spinner"></div>
+                  <p>Loading GitHub workflows...</p>
+                </div>
+              ) : workflowsError ? (
+                <div className="workflows-error">
+                  <p>❌ {workflowsError}</p>
+                  <button 
+                    className="action-btn secondary"
+                    onClick={() => setActiveTab('workflows')}
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : workflows.length === 0 ? (
+                <div className="workflows-empty">
+                  <div className="empty-state-icon">⚡</div>
+                  <h4>No GitHub workflows found</h4>
+                  <p>No workflow files found in .github/workflows directory.</p>
+                  <p>
+                    <a 
+                      href={`https://github.com/${repository.full_name}/new/main?filename=.github/workflows/`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="action-btn primary"
+                    >
+                      Create First Workflow
+                    </a>
+                  </p>
+                </div>
+              ) : (
+                <div className="workflows-grid">
+                  {workflows.map((workflow) => (
+                    <div key={workflow.filename} className="workflow-card">
+                      <div className="workflow-header">
+                        <div className="workflow-icon">⚡</div>
+                        <div className="workflow-info">
+                          <h4>{workflow.name}</h4>
+                          <span className="workflow-filename">{workflow.filename}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="workflow-content">
+                        <div className="workflow-triggers">
+                          <label>Triggers:</label>
+                          <div className="trigger-tags">
+                            {workflow.triggers.map((trigger) => (
+                              <span key={trigger} className={`trigger-tag trigger-${trigger}`}>
+                                {trigger === 'push' ? '📤 Push' :
+                                 trigger === 'pull_request' ? '🔄 PR' :
+                                 trigger === 'schedule' ? '⏰ Schedule' :
+                                 trigger === 'manual' ? '🎯 Manual' :
+                                 `🔧 ${trigger}`}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="workflow-meta">
+                          <div className="meta-item">
+                            <span className="meta-label">Size:</span>
+                            <span className="meta-value">{(workflow.size / 1024).toFixed(1)} KB</span>
+                          </div>
+                          <div className="meta-item">
+                            <span className="meta-label">Path:</span>
+                            <span className="meta-value">{workflow.path}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="workflow-actions">
+                        <a 
+                          href={workflow.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="action-btn secondary small"
+                        >
+                          👁️ View
+                        </a>
+                        {hasWriteAccess && (
+                          <a 
+                            href={workflow.url.replace('/blob/', '/edit/')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="action-btn primary small"
+                          >
+                            ✏️ Edit
+                          </a>
+                        )}
+                        <a 
+                          href={`https://github.com/${repository.full_name}/actions`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="action-btn secondary small"
+                        >
+                          📊 Runs
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="dashboard-footer">
+            <div className="repo-actions">
+              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}`, '_blank')}>
+                <span>📂</span>
+                View on GitHub
+              </button>
+              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}/issues`, '_blank')}>
+                <span>🐛</span>
+                Issues
+              </button>
+              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}/pulls`, '_blank')}>
+                <span>🔄</span>
+                Pull Requests
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

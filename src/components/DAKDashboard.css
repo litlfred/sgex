@@ -838,6 +838,178 @@
 .component-card:nth-child(7) { animation-delay: 0.7s; }
 .component-card:nth-child(8) { animation-delay: 0.8s; }
 
+/* GitHub Workflows Section */
+.workflows-section {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.workflows-loading, .workflows-error, .workflows-empty {
+  text-align: center;
+  padding: 3rem;
+  color: white;
+}
+
+.workflows-loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+.workflows-error h4, .workflows-empty h4 {
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.workflows-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+  padding: 0;
+}
+
+.workflow-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  animation: slideInUp 0.6s ease-out;
+}
+
+.workflow-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+.workflow-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.workflow-icon {
+  font-size: 2rem;
+  color: #0078d4;
+}
+
+.workflow-info h4 {
+  margin: 0;
+  color: #24292e;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.workflow-filename {
+  color: #586069;
+  font-size: 0.9rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.workflow-content {
+  margin-bottom: 1.5rem;
+}
+
+.workflow-triggers {
+  margin-bottom: 1rem;
+}
+
+.workflow-triggers label {
+  display: block;
+  color: #24292e;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.trigger-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.trigger-tag {
+  padding: 0.3rem 0.6rem;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
+}
+
+.trigger-tag.trigger-push {
+  background: #28a745;
+}
+
+.trigger-tag.trigger-pull_request {
+  background: #0366d6;
+}
+
+.trigger-tag.trigger-schedule {
+  background: #6f42c1;
+}
+
+.trigger-tag.trigger-manual {
+  background: #f66a0a;
+}
+
+.trigger-tag:not([class*="trigger-"]) {
+  background: #6a737d;
+}
+
+.workflow-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.meta-label {
+  color: #586069;
+  font-weight: 500;
+  font-size: 0.85rem;
+  min-width: 60px;
+}
+
+.meta-value {
+  color: #24292e;
+  font-size: 0.85rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  word-break: break-all;
+}
+
+.workflow-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.action-btn.small {
+  padding: 0.5rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+/* Tab badge styles for workflows */
+.tab-badge.workflows {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #1a1a1a;
+}
+
 /* Loading and Error States */
 .loading-state,
 .error-state {
