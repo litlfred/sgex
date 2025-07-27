@@ -17,6 +17,19 @@ const BusinessProcessSelection = () => {
     loading: dakLoading, 
     error: dakError 
   } = useDAKUrlParams();
+
+  // Debug logging for repository data flow
+  console.log('🚀 BusinessProcessSelection: Hook data received:', {
+    hasProfile: !!profile,
+    hasRepository: !!repository,
+    profileLogin: profile?.login,
+    repositoryName: repository?.name,
+    repositoryFullName: repository?.full_name,
+    repositoryOwner: repository?.owner?.login,
+    selectedBranch,
+    dakLoading,
+    dakError
+  });
   
   // Get component from location.state if available (when navigating from dashboard)
   const { component } = location.state || {};
@@ -59,25 +72,36 @@ const BusinessProcessSelection = () => {
         setError(null);
 
         // Debug logging to understand repository data flow
-        console.log('BusinessProcessSelection - Repository object received:', {
+        console.log('📂 BusinessProcessSelection - Repository object analysis:', {
           name: repository.name,
           full_name: repository.full_name,
           owner: repository.owner,
+          ownerLogin: repository.owner?.login,
           isDemo: repository.isDemo,
-          html_url: repository.html_url
+          html_url: repository.html_url,
+          default_branch: repository.default_branch
         });
-        console.log('BusinessProcessSelection - Profile object received:', {
+        console.log('👤 BusinessProcessSelection - Profile object analysis:', {
           login: profile?.login,
           name: profile?.name,
-          isDemo: profile?.isDemo
+          isDemo: profile?.isDemo,
+          type: profile?.type
         });
 
         const owner = repository.owner?.login || repository.full_name.split('/')[0];
         const repoName = repository.name;
         const ref = selectedBranch || 'main';
 
-        console.log(`BusinessProcessSelection: Fetching BPMN files from ${owner}/${repoName} (branch: ${ref})`);
-        console.log('BusinessProcessSelection: Owner derived from:', repository.owner?.login ? 'repository.owner.login' : 'repository.full_name.split()');
+        console.log(`📋 BusinessProcessSelection: Derived repository info:`, {
+          original_owner_login: repository.owner?.login,
+          original_full_name: repository.full_name,
+          derived_owner: owner,
+          derived_repoName: repoName,
+          selected_ref: ref,
+          derivation_method: repository.owner?.login ? 'owner.login' : 'full_name.split'
+        });
+
+        console.log(`🔍 BusinessProcessSelection: About to fetch BPMN files from ${owner}/${repoName} (branch: ${ref})`);
         console.log('BusinessProcessSelection: Final repository access details:', {
           derivedOwner: owner,
           repositoryName: repoName,
