@@ -7,7 +7,11 @@ import './PATManagementModal.css';
 const PATManagementModal = ({ onClose, repository = null, requiredAccess = 'read' }) => {
   const [pats, setPATs] = useState([]);
   const [newToken, setNewToken] = useState('');
+  const [newUsername, setNewUsername] = useState('');
   const [loading, setLoading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [tokenAnalysis, setTokenAnalysis] = useState(null);
+  const [showPermissions, setShowPermissions] = useState(false);
   const [error, setError] = useState('');
   const [showInstructions, setShowInstructions] = useState(false);
   const [showSlideshow, setShowSlideshow] = useState(false);
@@ -28,6 +32,27 @@ const PATManagementModal = ({ onClose, repository = null, requiredAccess = 'read
     }
   };
 
+  const analyzeNewToken = async (tokenValue) => {
+    if (!tokenValue.trim()) return;
+    
+    setAnalyzing(true);
+    setError("");
+    
+    try {
+      const analysis = await patManagementService.analyzeToken(tokenValue);
+      setTokenAnalysis(analysis);
+      setNewUsername(analysis.tokenName);
+      setShowPermissions(true);
+    } catch (err) {
+      console.error('Token analysis failed:', err);
+      setError(err.message || "Failed to analyze token");
+      setTokenAnalysis(null);
+      setShowPermissions(false);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const handleAddPAT = async (e) => {
     e.preventDefault();
     
@@ -42,6 +67,9 @@ const PATManagementModal = ({ onClose, repository = null, requiredAccess = 'read
     try {
       await patManagementService.addPAT(newToken.trim(), null, false);
       setNewToken('');
+      setNewUsername('');
+      setTokenAnalysis(null);
+      setShowPermissions(false);
       loadPATs();
       setActiveTab('manage');
       // Show success message briefly
@@ -52,6 +80,51 @@ const PATManagementModal = ({ onClose, repository = null, requiredAccess = 'read
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleNewTokenChange = (e) => {
+    const tokenValue = e.target.value;
+    setNewToken(tokenValue);
+    if (error) setError('');
+    
+    // Reset analysis state when token changes
+    if (tokenValue !== newToken) {
+      setTokenAnalysis(null);
+      setShowPermissions(false);
+      setNewUsername('');
+    }
+    
+    // Analyze token after a short delay (debounced)
+    clearTimeout(window.newTokenAnalysisTimeout);
+    if (tokenValue.trim().length > 10) { // Only analyze if token looks valid
+      window.newTokenAnalysisTimeout = setTimeout(() => {
+        analyzeNewToken(tokenValue);
+      }, 1000);
+    }
+  };
+
+  const getPermissionDescription = (permissions) => {
+    if (!permissions) return ["❓ Unable to determine permissions"];
+    
+    const descriptions = [];
+    
+    if (permissions.level === 'write') {
+      descriptions.push("✅ Full repository access (read and write)");
+    } else if (permissions.level === 'read-only') {
+      descriptions.push("👁️ Read-only repository access");
+    } else if (permissions.level === 'fine-grained') {
+      descriptions.push("🔧 Fine-grained permissions (repository-specific)");
+    }
+    
+    if (permissions.scopes && permissions.scopes.length > 0) {
+      descriptions.push(`📋 Scopes: ${permissions.scopes.join(', ')}`);
+    }
+    
+    if (permissions.type) {
+      descriptions.push(`🏷️ Token type: ${permissions.type === 'classic' ? 'Classic' : 'Fine-grained'}`);
+    }
+    
+    return descriptions;
   };
 
   const handleRemovePAT = (patId) => {
@@ -217,21 +290,65 @@ const PATManagementModal = ({ onClose, repository = null, requiredAccess = 'read
 
               <form onSubmit={handleAddPAT} className="add-token-form">
                 <div className="form-group">
+                  <label htmlFor="new-username">Username:</label>
+                  <input
+                    id="new-username"
+                    type="text"
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    placeholder="Will be filled automatically from token"
+                    className="username-input"
+                    disabled={analyzing || loading}
+                    autoComplete="username"
+                  />
+                </div>
+                
+                <div className="form-group">
                   <label htmlFor="new-token">GitHub Personal Access Token:</label>
                   <input
                     id="new-token"
                     type="password"
                     value={newToken}
-                    onChange={(e) => {
-                      setNewToken(e.target.value);
-                      if (error) setError('');
-                    }}
+                    onChange={handleNewTokenChange}
                     placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
                     className={`token-input ${error ? 'error' : ''}`}
                     disabled={loading}
-                    autoComplete="off"
+                    autoComplete="current-password"
                   />
+                  {analyzing && (
+                    <div className="analyzing-indicator">
+                      <span className="spinner small"></span>
+                      Analyzing token...
+                    </div>
+                  )}
                 </div>
+
+                {showPermissions && tokenAnalysis && (
+                  <div className="permissions-display">
+                    <h4>🔐 Token Permissions Preview</h4>
+                    <div className="user-info">
+                      <img 
+                        src={tokenAnalysis.user.avatar_url} 
+                        alt={tokenAnalysis.user.login}
+                        className="token-user-avatar"
+                      />
+                      <div>
+                        <div className="token-user-name">
+                          {tokenAnalysis.user.name || tokenAnalysis.user.login}
+                        </div>
+                        <div className="token-username">@{tokenAnalysis.user.login}</div>
+                      </div>
+                    </div>
+                    <div className="permissions-list">
+                      <p><strong>By adding this token, you will grant SGEX Workbench:</strong></p>
+                      <ul>
+                        {getPermissionDescription(tokenAnalysis.permissions).map((desc, index) => (
+                          <li key={index}>{desc}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
 
                 <div className="form-actions">
                   <button 

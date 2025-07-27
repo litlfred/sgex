@@ -65,7 +65,8 @@ class PATManagementService {
       const octokit = new Octokit({ auth: token.trim() });
       
       // Test token and get user info
-      const { data: user } = await octokit.rest.users.getAuthenticated();
+      const userResponse = await octokit.rest.users.getAuthenticated();
+      const user = userResponse?.data || userResponse; // Handle both mocked and real responses
       
       // Check token permissions
       const permissions = await this.analyzeTokenPermissions(octokit);
@@ -221,6 +222,36 @@ class PATManagementService {
   }
 
   /**
+   * Analyze a token before adding it to the service
+   * @param {string} token - The GitHub PAT to analyze
+   * @returns {Promise<Object>} Token analysis including user info and permissions
+   */
+  async analyzeToken(token) {
+    if (!token || typeof token !== 'string') {
+      throw new Error('Invalid token provided');
+    }
+
+    try {
+      // Create temporary Octokit instance
+      const octokit = new Octokit({ auth: token.trim() });
+      
+      // Get user info and permissions
+      const userResponse = await octokit.rest.users.getAuthenticated();
+      const user = userResponse?.data || userResponse; // Handle both mocked and real responses
+      const permissions = await this.analyzeTokenPermissions(octokit);
+      
+      return {
+        user,
+        permissions,
+        tokenName: user.name || user.login // Use full name or fallback to username
+      };
+    } catch (error) {
+      console.error('Failed to analyze token:', error);
+      throw new Error(`Failed to analyze token: ${error.message}`);
+    }
+  }
+
+  /**
    * Analyze token permissions
    * @param {Octokit} octokit - Octokit instance with the token
    * @returns {Promise<Object>} Permission analysis
@@ -228,11 +259,13 @@ class PATManagementService {
   async analyzeTokenPermissions(octokit) {
     try {
       // Try to determine token type and permissions
-      const { headers } = await octokit.request('GET /user');
+      const userRequest = await octokit.request('GET /user');
+      const headers = userRequest?.headers || {};
       
       // Check rate limit to understand token type
-      const rateLimit = await octokit.rest.rateLimit.get();
-      const isClassicToken = rateLimit.data.resources && rateLimit.data.resources.core;
+      const rateLimitResponse = await octokit.rest.rateLimit.get();
+      const rateLimit = rateLimitResponse?.data || rateLimitResponse;
+      const isClassicToken = rateLimit?.resources && rateLimit.resources.core;
       
       // For classic tokens, check scopes in headers
       let scopes = [];
@@ -255,7 +288,7 @@ class PATManagementService {
         type: isClassicToken ? 'classic' : 'fine-grained',
         level,
         scopes,
-        rateLimit: rateLimit.data
+        rateLimit
       };
     } catch (error) {
       console.error('Failed to analyze token permissions:', error);

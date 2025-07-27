@@ -164,3 +164,99 @@
     font-size: 16px; /* Prevents zoom on iOS */
   }
 }
+
+/* New styles for username and permissions display */
+.username-input {
+  padding: 0.75rem;
+  border: 2px solid #e1e4e8;
+  border-radius: 6px;
+  font-size: 1rem;
+  background-color: #f6f8fa;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.username-input:focus {
+  outline: none;
+  border-color: #0366d6;
+  box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+  background-color: white;
+}
+
+.username-input:disabled {
+  background-color: #f1f3f4;
+  color: #6a737d;
+  cursor: not-allowed;
+}
+
+.analyzing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6a737d;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.permissions-display {
+  background: #f8f9fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+}
+
+.permissions-display h4 {
+  margin: 0 0 0.75rem 0;
+  color: #24292e;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.token-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e1e4e8;
+}
+
+.token-user-name {
+  font-weight: 600;
+  color: #24292e;
+  font-size: 0.95rem;
+}
+
+.token-username {
+  color: #6a737d;
+  font-size: 0.85rem;
+}
+
+.permissions-list {
+  color: #24292e;
+}
+
+.permissions-list p {
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.permissions-list ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.permissions-list li {
+  margin-bottom: 0.25rem;
+  color: #586069;
+}
