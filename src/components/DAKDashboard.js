@@ -641,25 +641,6 @@ const DAKDashboard = () => {
               </div>
             </div>
           )}
-
-
-
-          <div className="dashboard-footer">
-            <div className="repo-actions">
-              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}`, '_blank')}>
-                <span>📂</span>
-                View on GitHub
-              </button>
-              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}/issues`, '_blank')}>
-                <span>🐛</span>
-                Issues
-              </button>
-              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}/pulls`, '_blank')}>
-                <span>🔄</span>
-                Pull Requests
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 
