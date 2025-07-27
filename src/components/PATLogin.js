@@ -32,8 +32,14 @@ const PATLogin = ({ onAuthSuccess }) => {
     try {
       // Test the token by creating an Octokit instance and making a test request
       const { Octokit } = await import('@octokit/rest');
-      const octokit = new Octokit({ auth: token.trim() });
-      componentLogger.debug('Octokit instance created for PAT validation');
+      const octokit = new Octokit({ 
+        auth: token.trim(),
+        request: {
+          timeout: 30000, // 30-second timeout
+          retries: 1 // Single retry on failure
+        }
+      });
+      componentLogger.debug('Octokit instance created for PAT validation with timeout configuration');
       
       // Test the token by fetching user info
       componentLogger.apiCall('GET', '/user', null);
@@ -62,6 +68,10 @@ const PATLogin = ({ onAuthSuccess }) => {
         setError("Invalid Personal Access Token. Please check your token and try again.");
       } else if (err.status === 403) {
         setError("Token doesn't have sufficient permissions. Please ensure your token has 'repo' and 'read:org' scopes.");
+      } else if (err.name === 'RequestError' && err.message.includes('timeout')) {
+        setError("Authentication request timed out. Please check your internet connection and try again.");
+      } else if (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED') {
+        setError("Network connection failed. Please check your internet connection and try again.");
       } else {
         setError("Authentication failed. Please check your connection and try again.");
       }

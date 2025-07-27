@@ -21,6 +21,10 @@ class GitHubService {
     try {
       this.octokit = new Octokit({
         auth: token,
+        request: {
+          timeout: 30000, // 30-second timeout for all requests
+          retries: 1 // Single retry on failure
+        }
       });
       this.isAuthenticated = true;
       
@@ -43,6 +47,12 @@ class GitHubService {
     this.logger.auth('Starting OAuth authentication with Octokit instance');
     
     try {
+      // Ensure the Octokit instance has proper timeout configuration
+      if (octokitInstance.request && !octokitInstance.request.endpoint.DEFAULTS.timeout) {
+        octokitInstance.request.endpoint.DEFAULTS.timeout = 30000;
+        octokitInstance.request.endpoint.DEFAULTS.retries = 1;
+      }
+      
       this.octokit = octokitInstance;
       this.isAuthenticated = true;
       this.tokenType = 'oauth';
@@ -196,7 +206,12 @@ class GitHubService {
   async getOrganization(orgLogin) {
     try {
       // Create a temporary Octokit instance for public API calls if we don't have one
-      const octokit = this.octokit || new Octokit();
+      const octokit = this.octokit || new Octokit({
+        request: {
+          timeout: 30000, // 30-second timeout
+          retries: 1 // Single retry on failure
+        }
+      });
       
       const { data } = await octokit.rest.orgs.get({
         org: orgLogin
@@ -212,7 +227,12 @@ class GitHubService {
   async getUser(username) {
     try {
       // Create a temporary Octokit instance for public API calls if we don't have one
-      const octokit = this.octokit || new Octokit();
+      const octokit = this.octokit || new Octokit({
+        request: {
+          timeout: 30000, // 30-second timeout
+          retries: 1 // Single retry on failure
+        }
+      });
       
       const { data } = await octokit.rest.users.getByUsername({
         username
