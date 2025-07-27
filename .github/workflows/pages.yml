@@ -4,10 +4,12 @@ on:
   push:
     paths-ignore:
       - 'docs/qa-report.html'
+      - 'public/docs/qa-report.html'
       - 'docs/github-issues-analysis.md'
   pull_request:
     paths-ignore:
       - 'docs/qa-report.html'
+      - 'public/docs/qa-report.html'
       - 'docs/github-issues-analysis.md'
 
 permissions:
