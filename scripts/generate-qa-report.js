@@ -67,17 +67,26 @@ const generateQAReport = () => {
   // Generate HTML report
   const htmlReport = generateHTMLReport(testResults, coverageData);
 
-  // Ensure docs directory exists
+  // Ensure both docs and public/docs directories exist
   const docsDir = path.join(process.cwd(), 'docs');
+  const publicDocsDir = path.join(process.cwd(), 'public', 'docs');
+  
   if (!fs.existsSync(docsDir)) {
     fs.mkdirSync(docsDir, { recursive: true });
   }
+  if (!fs.existsSync(publicDocsDir)) {
+    fs.mkdirSync(publicDocsDir, { recursive: true });
+  }
 
-  // Write the report
+  // Write the report to both locations for compatibility
   const reportPath = path.join(docsDir, 'qa-report.html');
+  const publicReportPath = path.join(publicDocsDir, 'qa-report.html');
+  
   fs.writeFileSync(reportPath, htmlReport);
+  fs.writeFileSync(publicReportPath, htmlReport);
 
   console.log(`✅ QA Report generated successfully: ${reportPath}`);
+  console.log(`✅ QA Report also available for development server: ${publicReportPath}`);
   return reportPath;
 };
 
