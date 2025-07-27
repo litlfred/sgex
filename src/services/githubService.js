@@ -920,19 +920,25 @@ class GitHubService {
     const timeoutMs = 15000; // 15 second timeout
     
     try {
-      console.log(`githubService.getFileContent: Starting request for ${owner}/${repo}/${path} (ref: ${ref})`);
-      console.log('githubService.getFileContent: Authentication status:', this.isAuth());
+      console.log(`🚀 githubService.getFileContent: Starting request for ${owner}/${repo}/${path} (ref: ${ref})`);
+      console.log('🔐 githubService.getFileContent: Authentication status:', this.isAuth());
+      console.log('📋 githubService.getFileContent: Request parameters:', { owner, repo, path, ref });
       
       // Use authenticated octokit if available, otherwise create a public instance for public repos
       const octokit = this.isAuth() ? this.octokit : new Octokit();
-      console.log('githubService.getFileContent: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
+      console.log('🔧 githubService.getFileContent: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
       
       // Create a promise that rejects after timeout
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error(`Request timeout after ${timeoutMs}ms`)), timeoutMs);
+        console.log(`⏰ githubService.getFileContent: Setting up ${timeoutMs}ms timeout`);
+        setTimeout(() => {
+          console.error(`⏰ githubService.getFileContent: Request timed out after ${timeoutMs}ms`);
+          reject(new Error(`Request timeout after ${timeoutMs}ms`));
+        }, timeoutMs);
       });
       
       // Race the GitHub API call against the timeout
+      console.log('🌐 githubService.getFileContent: Creating GitHub API promise...');
       const apiPromise = octokit.rest.repos.getContent({
         owner,
         repo,
@@ -940,41 +946,68 @@ class GitHubService {
         ref
       });
       
-      console.log('githubService.getFileContent: API request initiated, waiting for response...');
+      console.log('📡 githubService.getFileContent: API request initiated, waiting for response...');
+      const startTime = Date.now();
+      
       const { data } = await Promise.race([apiPromise, timeoutPromise]);
-      console.log('githubService.getFileContent: API response received, data type:', data.type);
+      const responseTime = Date.now() - startTime;
+      
+      console.log(`✅ githubService.getFileContent: API response received in ${responseTime}ms`);
+      console.log('📂 githubService.getFileContent: Response data type:', data.type);
+      console.log('📊 githubService.getFileContent: Response details:', {
+        type: data.type,
+        name: data.name,
+        size: data.size,
+        encoding: data.encoding,
+        hasContent: !!data.content
+      });
 
       // Handle file content
       if (data.type === 'file' && data.content) {
         // Decode base64 content
-        console.log('githubService.getFileContent: Decoding base64 content...');
+        console.log('🔧 githubService.getFileContent: Decoding base64 content...');
+        console.log('📊 githubService.getFileContent: Base64 content length:', data.content.length);
+        
         const content = Buffer.from(data.content, 'base64').toString('utf-8');
-        console.log(`githubService.getFileContent: Successfully fetched and decoded file content, length: ${content.length} characters`);
+        console.log(`✅ githubService.getFileContent: Successfully fetched and decoded file content`);
+        console.log('📏 githubService.getFileContent: Final content length:', content.length, 'characters');
+        console.log('👀 githubService.getFileContent: Content preview (first 200 chars):', content.substring(0, 200));
+        
         return content;
       } else {
-        console.error('githubService.getFileContent: Invalid response - not a file or no content');
-        console.error('githubService.getFileContent: Response data:', data);
+        console.error('❌ githubService.getFileContent: Invalid response - not a file or no content');
+        console.error('🔍 githubService.getFileContent: Full response data:', JSON.stringify(data, null, 2));
         throw new Error('File not found or is not a file');
       }
     } catch (error) {
-      console.error(`githubService.getFileContent: Failed to fetch file content from ${owner}/${repo}/${path}:`, error);
-      console.error('githubService.getFileContent: Error type:', typeof error);
-      console.error('githubService.getFileContent: Error status:', error.status);
-      console.error('githubService.getFileContent: Error message:', error.message);
+      console.error(`💥 githubService.getFileContent: Failed to fetch file content from ${owner}/${repo}/${path}:`, error);
+      console.error('🔍 githubService.getFileContent: Error analysis:', {
+        type: typeof error,
+        status: error.status,
+        message: error.message,
+        name: error.name,
+        stack: error.stack?.substring(0, 500) + '...'
+      });
       
       // Provide more specific error messages
       if (error.message.includes('timeout')) {
+        console.error('⏰ githubService.getFileContent: Timeout error detected');
         throw new Error(`GitHub API request timed out after ${timeoutMs / 1000} seconds. Please try again.`);
       } else if (error.status === 403) {
+        console.error('🔒 githubService.getFileContent: 403 Forbidden error detected');
         throw new Error('Access denied. This repository may be private or you may have hit rate limits.');
       } else if (error.status === 404) {
+        console.error('🔍 githubService.getFileContent: 404 Not Found error detected');
         throw new Error('File not found in the repository.');
       } else if (error.message.includes('rate limit')) {
+        console.error('🚦 githubService.getFileContent: Rate limit error detected');
         throw new Error('GitHub API rate limit exceeded. Please try again later.');
       } else if (error.message.includes('Network Error') || error.message.includes('Failed to fetch')) {
+        console.error('🌐 githubService.getFileContent: Network error detected');
         throw new Error('Network error occurred. Please check your internet connection and try again.');
       }
       
+      console.error('❓ githubService.getFileContent: Unknown error type, re-throwing original error');
       throw error;
     }
   }
