@@ -35,7 +35,7 @@ const WHODigitalLibrary = ({ onReferencesChange }) => {
         console.error('Error loading saved references:', error);
       }
     }
-  }, [onReferencesChange]);
+  }, []); // Remove onReferencesChange from dependency array to prevent infinite loop
 
   // Save references to localStorage whenever they change
   useEffect(() => {
@@ -241,6 +241,17 @@ const WHODigitalLibrary = ({ onReferencesChange }) => {
           <p className="library-description">
             Search and select references from the WHO Institutional Repository for Health Information (IRIS)
           </p>
+          <div className="library-help">
+            <a 
+              href="https://iris.who.int/help" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="help-link"
+              title="Get help with WHO Digital Library search"
+            >
+              📖 Search Help & Documentation
+            </a>
+          </div>
         </div>
         <div className="library-stats">
           <div className="stat">
@@ -296,6 +307,22 @@ const WHODigitalLibrary = ({ onReferencesChange }) => {
         {error && (
           <div className="error-message">
             <strong>Search Error:</strong> {error}
+            {error.includes('CORS policy') && (
+              <div className="error-help">
+                <p><strong>Note:</strong> This error occurs in development mode due to browser security restrictions.</p>
+                <p>
+                  For help with WHO Digital Library search, visit: {' '}
+                  <a 
+                    href="https://iris.who.int/help" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="help-link"
+                  >
+                    iris.who.int/help
+                  </a>
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

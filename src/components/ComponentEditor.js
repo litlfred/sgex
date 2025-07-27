@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import WHODigitalLibrary from './WHODigitalLibrary';
@@ -11,9 +11,9 @@ const ComponentEditor = () => {
   
   const { profile, repository, component } = location.state || {};
 
-  const handleReferencesChange = (references) => {
+  const handleReferencesChange = useCallback((references) => {
     setSelectedReferences(references);
-  };
+  }, []);
 
   const handleHomeNavigation = () => {
     navigate('/');

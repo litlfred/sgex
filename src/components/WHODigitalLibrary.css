@@ -22,9 +22,25 @@
 }
 
 .library-description {
-  margin: 0;
+  margin: 0 0 8px 0;
   font-size: 14px;
   opacity: 0.9;
+}
+
+.library-help {
+  margin-top: 8px;
+}
+
+.library-help .help-link {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.2s;
+}
+
+.library-help .help-link:hover {
+  color: white;
+  text-decoration: underline;
 }
 
 .library-stats {
@@ -137,6 +153,28 @@
   border: 1px solid #ffccc7;
   border-radius: 6px;
   color: #a8071a;
+}
+
+.error-help {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ffccc7;
+}
+
+.error-help p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #8b4513;
+}
+
+.error-help .help-link {
+  color: #0078d4;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.error-help .help-link:hover {
+  text-decoration: underline;
 }
 
 .library-content {

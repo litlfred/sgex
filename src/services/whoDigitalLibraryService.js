@@ -48,6 +48,12 @@ class WHODigitalLibraryService {
       return this.processSearchResults(data);
     } catch (error) {
       console.error('Error searching WHO digital library:', error);
+      
+      // Check if this is a CORS-related error
+      if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+        throw new Error('Unable to access WHO Digital Library directly from browser due to CORS policy. This is a known limitation when running in development mode. In production, this would typically be handled by a server-side proxy.');
+      }
+      
       throw new Error(`Failed to search WHO digital library: ${error.message}`);
     }
   }
@@ -272,8 +278,45 @@ class WHODigitalLibraryService {
       return results.items;
     } catch (error) {
       console.error('Error fetching featured items:', error);
+      
+      // Return sample/mock data when CORS prevents access
+      if (error.message.includes('CORS policy')) {
+        return this.getMockFeaturedItems();
+      }
+      
       return [];
     }
+  }
+
+  /**
+   * Get mock featured items as fallback when API is not accessible
+   * @returns {Array} Array of mock items with proper structure
+   */
+  getMockFeaturedItems() {
+    return [
+      {
+        id: 'mock-1',
+        title: 'WHO Digital Library Search Help',
+        creator: 'World Health Organization',
+        dateIssued: '2024',
+        type: 'Documentation',
+        abstract: 'This is a demonstration of the WHO Digital Library integration. In production, this would show real publications from iris.who.int.',
+        subject: ['Digital Library', 'IRIS', 'WHO Publications'],
+        url: 'https://iris.who.int/help',
+        rawMetadata: {}
+      },
+      {
+        id: 'mock-2', 
+        title: 'How to Search WHO IRIS',
+        creator: 'World Health Organization',
+        dateIssued: '2024',
+        type: 'Help Documentation',
+        abstract: 'Learn how to effectively search the WHO Institutional Repository for Health Information (IRIS) for publications and resources.',
+        subject: ['Search', 'IRIS', 'Help'],
+        url: 'https://iris.who.int/help',
+        rawMetadata: {}
+      }
+    ];
   }
 
   /**
