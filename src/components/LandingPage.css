@@ -238,10 +238,80 @@
 }
 
 .info-section p {
-  margin: 0;
+  margin: 0 0 1rem 0;
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.9);
   line-height: 1.5;
+}
+
+.info-section p:last-child {
+  margin-bottom: 0;
+}
+
+/* Advanced Options */
+.advanced-options {
+  margin-top: 1.5rem;
+}
+
+.advanced-details {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.advanced-details summary {
+  padding: 1rem;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.advanced-details summary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.advanced-details[open] summary {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.advanced-content {
+  padding: 1rem;
+}
+
+.advanced-content p {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.pat-fallback-btn {
+  background: #666;
+  color: white;
+  border: 1px solid #777;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0.5rem 0;
+}
+
+.pat-fallback-btn:hover {
+  background: #555;
+  border-color: #666;
+}
+
+.advanced-content .note {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
 }
 
 .doc-link {

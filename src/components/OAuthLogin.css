@@ -24,8 +24,53 @@
 
 .oauth-intro p {
   color: #666;
-  margin: 0;
+  margin: 0 0 1rem 0;
   line-height: 1.6;
+}
+
+/* GitHub App Notice */
+.github-app-notice {
+  background: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.notice-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.notice-icon {
+  font-size: 1.1rem;
+}
+
+.github-app-notice p {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.setup-guide-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1976d2;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.setup-guide-link:hover {
+  background-color: rgba(25, 118, 210, 0.1);
+  text-decoration: none;
 }
 
 /* Access Level Options */

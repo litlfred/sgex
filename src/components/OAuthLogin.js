@@ -208,6 +208,24 @@ const OAuthLogin = ({ onAuthSuccess, requiredAccessLevel = 'READ_ONLY', repoOwne
             Choose your access level to start working with DAK repositories. 
             You can always upgrade your permissions later.
           </p>
+          
+          <div className="github-app-notice">
+            <div className="notice-header">
+              <span className="notice-icon">ℹ️</span>
+              <strong>GitHub App Required</strong>
+            </div>
+            <p>
+              This deployment uses GitHub App OAuth for secure authentication. 
+              If you're the administrator, ensure a GitHub App is configured with your Client ID.
+            </p>
+            <a 
+              href="/sgex/docs/github-app-setup.md" 
+              target="_blank" 
+              className="setup-guide-link"
+            >
+              📋 GitHub App Setup Guide
+            </a>
+          </div>
         </div>
 
         <div className="access-level-options">
