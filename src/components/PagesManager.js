@@ -4,6 +4,8 @@ import githubService from '../services/githubService';
 import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import PageViewModal from './PageViewModal';
+import PageEditModal from './PageEditModal';
 import './PagesManager.css';
 
 const PagesManager = () => {
@@ -18,6 +20,8 @@ const PagesManager = () => {
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [initializingAuth, setInitializingAuth] = useState(true);
+  const [viewModalPage, setViewModalPage] = useState(null);
+  const [editModalPage, setEditModalPage] = useState(null);
 
   // Initialize authentication if needed
   useEffect(() => {
@@ -321,44 +325,45 @@ const PagesManager = () => {
   };
 
   const handleViewPage = (page) => {
-    if (page.exists && page.content) {
-      // Decode and display the markdown content
-      const markdownContent = atob(page.content.content);
-      
-      // For now, just open in a new window with raw markdown
-      // In a full implementation, this would render the markdown
-      const newWindow = window.open('', '_blank');
-      newWindow.document.write(`
-        <html>
-          <head>
-            <title>${page.title}</title>
-            <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 40px; line-height: 1.6; }
-              pre { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; }
-              code { background: #f6f8fa; padding: 2px 4px; border-radius: 3px; }
-            </style>
-          </head>
-          <body>
-            <h1>${page.title}</h1>
-            <pre>${markdownContent}</pre>
-          </body>
-        </html>
-      `);
-      newWindow.document.close();
-    }
+    setViewModalPage(page);
   };
 
   const handleEditPage = (page) => {
+    setEditModalPage(page);
+  };
+
+  const handleSavePage = async (page, content) => {
     if (!hasWriteAccess) {
-      alert('You need write access to edit pages. Please upgrade your GitHub token permissions.');
-      return;
+      throw new Error('You need write access to save changes. Please upgrade your GitHub token permissions.');
     }
-    
-    // For now, just link to GitHub's edit interface
+
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const branch = selectedBranch || 'main';
-    const editUrl = `https://github.com/${owner}/${repository.name}/edit/${branch}/${page.path}`;
-    window.open(editUrl, '_blank');
+    
+    // Encode content to base64
+    const encodedContent = btoa(content);
+    
+    // Get current file SHA for update
+    const currentSha = page.content?.sha;
+    
+    await githubService.octokit.rest.repos.createOrUpdateFileContents({
+      owner,
+      repo: repository.name,
+      path: page.path,
+      message: `Update ${page.filename} via SGEX Workbench`,
+      content: encodedContent,
+      branch,
+      sha: currentSha
+    });
+
+    // Refresh pages after save
+    const owner2 = repository.owner?.login || repository.full_name.split('/')[0];
+    const sushiConfigContent = await fetchSushiConfig(owner2, repository.name, branch);
+    if (sushiConfigContent) {
+      const parsedPages = parsePagesFromSushiConfig(sushiConfigContent);
+      const pagesWithStatus = await checkPagesExistence(owner2, repository.name, branch, parsedPages);
+      setPages(pagesWithStatus);
+    }
   };
 
   const handleHomeNavigation = () => {
@@ -569,8 +574,7 @@ const PagesManager = () => {
                           <button
                             onClick={() => handleEditPage(page)}
                             className="btn-action edit"
-                            title={hasWriteAccess ? "Edit page on GitHub" : "Edit access required"}
-                            disabled={!hasWriteAccess}
+                            title="Edit page with WYSIWYG editor"
                           >
                             ✏️ Edit
                           </button>
@@ -600,6 +604,23 @@ const PagesManager = () => {
         position="bottom-right"
         contextData={{ repository, hasWriteAccess, pages }}
       />
+
+      {/* View Modal */}
+      {viewModalPage && (
+        <PageViewModal
+          page={viewModalPage}
+          onClose={() => setViewModalPage(null)}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {editModalPage && (
+        <PageEditModal
+          page={editModalPage}
+          onClose={() => setEditModalPage(null)}
+          onSave={handleSavePage}
+        />
+      )}
     </div>
   );
 };
