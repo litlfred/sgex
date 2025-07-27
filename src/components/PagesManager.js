@@ -55,10 +55,14 @@ const PagesManager = () => {
         const repo = repository.name;
         const branch = selectedBranch || 'main';
 
+        console.log(`Loading pages for ${owner}/${repo} on branch: ${branch}`);
+        console.log('selectedBranch:', selectedBranch);
+        console.log('GitHub auth status:', githubService.isAuth());
+
         // Fetch sushi-config.yaml
         const sushiConfigContent = await fetchSushiConfig(owner, repo, branch);
         if (!sushiConfigContent) {
-          throw new Error('sushi-config.yaml not found in repository');
+          throw new Error(`sushi-config.yaml not found in repository on branch "${branch}"`);
         }
         
         // Parse pages from sushi-config.yaml
@@ -86,6 +90,8 @@ const PagesManager = () => {
         throw new Error('GitHub service not authenticated');
       }
 
+      console.log(`Fetching sushi-config.yaml from ${owner}/${repo} on branch ${branch}`);
+      
       const { data } = await githubService.octokit.rest.repos.getContent({
         owner,
         repo,
@@ -94,12 +100,27 @@ const PagesManager = () => {
       });
 
       if (data.type === 'file' && data.content) {
+        console.log('Successfully fetched sushi-config.yaml');
         return Buffer.from(data.content, 'base64').toString('utf-8');
       }
+      
+      console.log('sushi-config.yaml found but no content or not a file');
       return null;
     } catch (error) {
       console.error('Failed to fetch sushi-config.yaml:', error);
-      return null;
+      
+      // Provide more specific error messages
+      if (error.status === 404) {
+        throw new Error(`sushi-config.yaml not found in repository on branch "${branch}"`);
+      } else if (error.status === 403) {
+        throw new Error('Access denied - insufficient permissions to read repository contents');
+      } else if (error.status === 401) {
+        throw new Error('Authentication failed - please check your GitHub token');
+      } else if (!githubService.isAuth()) {
+        throw new Error('GitHub service not authenticated');
+      } else {
+        throw new Error(`Failed to fetch sushi-config.yaml: ${error.message}`);
+      }
     }
   };
 
@@ -364,9 +385,10 @@ const PagesManager = () => {
                 <div className="error-suggestions">
                   <p>Make sure:</p>
                   <ul>
-                    <li>The repository contains a <code>sushi-config.yaml</code> file</li>
+                    <li>The repository contains a <code>sushi-config.yaml</code> file{selectedBranch && ` on branch "${selectedBranch}"`}</li>
                     <li>The sushi-config.yaml file has a <code>pages:</code> section</li>
                     <li>You have access to view the repository contents</li>
+                    {selectedBranch && selectedBranch !== 'main' && <li>The branch "{selectedBranch}" exists and is accessible</li>}
                   </ul>
                 </div>
               </div>
