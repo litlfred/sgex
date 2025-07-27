@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import stagingGroundService from '../services/stagingGroundService';
+import dakComplianceService from '../services/dakComplianceService';
+import SaveDialog from './SaveDialog';
 import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import './DAKDashboard.css';
@@ -14,6 +17,12 @@ const DAKDashboard = () => {
   const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); // 'core' or 'additional'
+  
+  // Staging ground state
+  const [stagingGround, setStagingGround] = useState(null);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [validation, setValidation] = useState(null);
+  const [selectedBranch] = useState('main'); // Currently fixed to main branch
 
   // Check write permissions on mount
   useEffect(() => {
@@ -35,6 +44,53 @@ const DAKDashboard = () => {
 
     checkPermissions();
   }, [repository, profile]);
+
+  // Initialize staging ground when repository changes
+  useEffect(() => {
+    if (repository) {
+      stagingGroundService.initialize(repository, selectedBranch);
+      
+      // Listen for staging ground changes
+      const unsubscribe = stagingGroundService.addListener((updatedStagingGround) => {
+        setStagingGround(updatedStagingGround);
+      });
+
+      // Initial load
+      setStagingGround(stagingGroundService.getStagingGround());
+
+      return unsubscribe;
+    }
+  }, [repository, selectedBranch]);
+
+  // Validate staging ground when it changes
+  useEffect(() => {
+    if (stagingGround && stagingGround.files.length > 0) {
+      dakComplianceService.validateFiles(stagingGround.files)
+        .then(setValidation)
+        .catch(error => {
+          console.warn('Validation failed:', error);
+          setValidation(null);
+        });
+    } else {
+      setValidation(null);
+    }
+  }, [stagingGround]);
+
+  // Handle save dialog
+  const handleOpenSaveDialog = () => {
+    if (stagingGround && stagingGround.files.length > 0) {
+      setShowSaveDialog(true);
+    }
+  };
+
+  const handleSaveSuccess = (result) => {
+    setShowSaveDialog(false);
+    // Clear staging ground after successful save
+    stagingGroundService.clearChanges();
+    
+    // Show success message
+    alert(`Changes saved successfully! Commit: ${result.sha.substring(0, 7)}`);
+  };
 
   // Define the 8 core DAK components based on WHO SMART Guidelines documentation
   const coreDAKComponents = [
@@ -262,6 +318,51 @@ const DAKDashboard = () => {
           <span className="breadcrumb-separator">›</span>
           <span className="breadcrumb-current">DAK Components</span>
         </div>
+
+        {/* Staging Ground Status */}
+        {stagingGround && stagingGround.files.length > 0 && (
+          <div className="staging-ground-status">
+            <div className="staging-info">
+              <span className="staging-icon">📝</span>
+              <span className="staging-text">
+                {stagingGround.files.length} file{stagingGround.files.length !== 1 ? 's' : ''} staged for commit
+              </span>
+              {validation && (
+                <div className="validation-summary">
+                  {validation.summary.filesWithErrors > 0 && (
+                    <span className="validation-badge error">
+                      🔴 {validation.summary.filesWithErrors} errors
+                    </span>
+                  )}
+                  {validation.summary.filesWithWarnings > 0 && (
+                    <span className="validation-badge warning">
+                      🟡 {validation.summary.filesWithWarnings} warnings
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="staging-actions">
+              <button 
+                className="staging-btn save"
+                onClick={handleOpenSaveDialog}
+                disabled={!hasWriteAccess}
+              >
+                💾 Save Changes
+              </button>
+              <button 
+                className="staging-btn clear"
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to clear all staged changes?')) {
+                    stagingGroundService.clearChanges();
+                  }
+                }}
+              >
+                🗑️ Clear
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="dashboard-main">
           <div className="dashboard-intro">
@@ -491,6 +592,18 @@ const DAKDashboard = () => {
         pageId="dak-dashboard"
         position="bottom-right"
         contextData={{ profile, repository, hasWriteAccess }}
+      />
+
+      {/* Save Dialog */}
+      <SaveDialog
+        isOpen={showSaveDialog}
+        onClose={() => setShowSaveDialog(false)}
+        stagingGround={stagingGround}
+        validation={validation}
+        repository={repository}
+        selectedBranch={selectedBranch}
+        hasWriteAccess={hasWriteAccess}
+        onSaveSuccess={handleSaveSuccess}
       />
     </div>
   );

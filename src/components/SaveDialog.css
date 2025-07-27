@@ -1,0 +1,592 @@
+/* Save Dialog Styles */
+.save-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.save-dialog {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.4em;
+  font-weight: 600;
+}
+
+.dialog-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.dialog-close:hover {
+  background: #e9ecef;
+  color: #333;
+}
+
+.dialog-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dialog-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Files Summary */
+.save-summary {
+  margin-bottom: 24px;
+}
+
+.save-summary h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.files-list {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.file-item:last-child {
+  border-bottom: none;
+}
+
+.file-icon {
+  font-size: 14px;
+}
+
+.file-path {
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #333;
+}
+
+.file-size {
+  font-size: 12px;
+  color: #666;
+  background: #e9ecef;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.no-files {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+.no-files-icon {
+  font-size: 18px;
+}
+
+/* PAT Status Section */
+.pat-status-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+}
+
+.pat-status-section h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.pat-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.pat-status.write-access {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+.pat-status.no-write-access {
+  background: #fff3cd;
+  color: #856404;
+  border-left: 4px solid #ffc107;
+}
+
+.status-icon {
+  font-size: 16px;
+}
+
+.status-text {
+  font-weight: 500;
+}
+
+.pat-info {
+  font-size: 12px;
+  color: #666;
+}
+
+.pat-warning {
+  margin-top: 12px;
+  padding: 8px;
+  background: #f8d7da;
+  color: #721c24;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* Validation Section */
+.validation-section {
+  margin-bottom: 24px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.validation-summary {
+  background: #f8f9fa;
+  padding: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.validation-summary:hover {
+  background: #f1f3f4;
+}
+
+.validation-summary.has-issues {
+  border-left: 4px solid #dc3545;
+}
+
+.validation-summary.clean {
+  border-left: 4px solid #28a745;
+}
+
+.validation-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.validation-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.validation-badges {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+.validation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.validation-badge.error {
+  background: #dc3545;
+}
+
+.validation-badge.warning {
+  background: #ffc107;
+  color: #212529;
+}
+
+.validation-badge.info {
+  background: #17a2b8;
+}
+
+.validation-badge.success {
+  background: #28a745;
+}
+
+.expand-icon {
+  font-size: 12px;
+  color: #666;
+  transition: transform 0.2s ease;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+/* Validation Details */
+.validation-details {
+  border-top: 1px solid #e9ecef;
+  background: white;
+}
+
+.file-validation {
+  padding: 16px;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.file-validation:last-child {
+  border-bottom: none;
+}
+
+.file-validation h5 {
+  margin: 0 0 12px 0;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #495057;
+  font-weight: 600;
+}
+
+.validation-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.validation-issue {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  background: #f8f9fa;
+}
+
+.validation-issue.error {
+  background: #f8d7da;
+  border-left: 3px solid #dc3545;
+}
+
+.validation-issue.warning {
+  background: #fff3cd;
+  border-left: 3px solid #ffc107;
+}
+
+.validation-issue.info {
+  background: #d1ecf1;
+  border-left: 3px solid #17a2b8;
+}
+
+.issue-icon {
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.issue-content {
+  flex: 1;
+}
+
+.issue-message {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.issue-suggestion {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Override Section */
+.override-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+}
+
+.override-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #333;
+}
+
+.override-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.checkmark {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffc107;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.override-checkbox input[type="checkbox"]:checked + .checkmark {
+  background: #ffc107;
+}
+
+.override-checkbox input[type="checkbox"]:checked + .checkmark::after {
+  content: '✓';
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.override-warning {
+  margin: 8px 0 0 24px;
+  font-size: 12px;
+  color: #856404;
+  font-style: italic;
+}
+
+/* Commit Message Section */
+.commit-message-section {
+  margin-bottom: 24px;
+}
+
+.commit-message-section label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.commit-message-section h4 {
+  margin: 0;
+  color: #333;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.commit-message-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s ease;
+}
+
+.commit-message-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.commit-message-input:disabled {
+  background: #f8f9fa;
+  color: #6c757d;
+}
+
+.commit-tips {
+  margin-top: 8px;
+}
+
+.commit-tips p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+/* Error Section */
+.error-section {
+  margin-bottom: 24px;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  color: #721c24;
+  font-size: 14px;
+}
+
+.error-icon {
+  font-size: 16px;
+}
+
+/* Repository Info */
+.repo-info {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 13px;
+}
+
+.info-value {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #333;
+}
+
+.info-value.write {
+  color: #28a745;
+}
+
+.info-value.read {
+  color: #ffc107;
+}
+
+/* Dialog Actions */
+.dialog-actions {
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.action-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-btn.primary {
+  background: #007bff;
+  color: white;
+}
+
+.action-btn.primary:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.action-btn.secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.action-btn.secondary:hover:not(:disabled) {
+  background: #545b62;
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.saving-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .save-dialog {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .dialog-content {
+    padding: 16px;
+  }
+  
+  .dialog-actions {
+    padding: 16px;
+    flex-direction: column;
+  }
+  
+  .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
