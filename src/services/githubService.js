@@ -490,12 +490,11 @@ class GitHubService {
 
   // Get a specific repository
   async getRepository(owner, repo) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
-      const { data } = await this.octokit.rest.repos.get({
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.get({
         owner,
         repo,
       });
@@ -508,12 +507,11 @@ class GitHubService {
 
   // Get repository branches
   async getBranches(owner, repo) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
-      const { data } = await this.octokit.rest.repos.listBranches({
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.listBranches({
         owner,
         repo,
         per_page: 100
@@ -556,12 +554,11 @@ class GitHubService {
 
   // Get a specific branch
   async getBranch(owner, repo, branch) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
-      const { data } = await this.octokit.rest.repos.getBranch({
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.getBranch({
         owner,
         repo,
         branch
