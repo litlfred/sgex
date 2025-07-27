@@ -141,6 +141,22 @@ class GitHubService {
     }
   }
 
+  // Get specific user data (public data, no auth required)
+  async getUser(username) {
+    try {
+      // Create a temporary Octokit instance for public API calls if we don't have one
+      const octokit = this.octokit || new Octokit();
+      
+      const { data } = await octokit.rest.users.getByUsername({
+        username
+      });
+      return data;
+    } catch (error) {
+      console.error(`Failed to fetch user ${username}:`, error);
+      throw error;
+    }
+  }
+
   // Get WHO organization data with fresh avatar
   async getWHOOrganization() {
     try {
