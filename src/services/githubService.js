@@ -257,6 +257,7 @@ class GitHubService {
   }
 
   // Fallback method to check for SMART Guidelines compatibility using other indicators
+  // NOTE: This fallback should be very restrictive to avoid false positives
   async checkSmartGuidelinesFallback(owner, repo) {
     try {
       // Get repository details to check topics and description
@@ -265,56 +266,41 @@ class GitHubService {
         repo,
       });
 
-      // Enhanced smart indicators including patterns for repositories like smart-trust-phw
-      const smartIndicators = [
-        'smart-guidelines',
-        'smart guidelines', // Add space variant
-        'who-smart',
-        'smart.who.int',
-        'digital-adaptation-kit',
-        'digital adaptation kit',
-        'dak',
-        'fhir-ig',
-        'implementation-guide',
-        'implementation guide', // Add space variant
-        'smart-trust', // For smart-trust-phw specifically
-        'trust-phw', // Another pattern for trust-related SMART repos
-        'phw', // Public Health Web repositories
-        'smart guide', // Another common variant
-        'who guide', // WHO guideline patterns
-        'fhir guide', // FHIR guideline patterns
+      // Only use very specific and reliable indicators for DAK repositories
+      // Based on issue #125, we should be very strict about what constitutes a DAK repository
+      const strictSmartIndicators = [
+        'smart-guidelines',      // Official WHO SMART Guidelines term
+        'smart guidelines',      // Space variant of above
+        'smart.who.int',         // Official domain reference
+        'digital-adaptation-kit', // Official DAK term
+        'digital adaptation kit', // Space variant of above
+        'smart-trust-phw',       // Specific known pattern for trust PHW repos
       ];
 
       const topics = data.topics || [];
       const description = (data.description || '').toLowerCase();
       const repoName = repo.toLowerCase();
 
-      // Check if any SMART guidelines indicators are present
-      const hasSmartIndicators = smartIndicators.some(indicator => 
+      // Only check for very specific indicators that strongly suggest this is a DAK repository
+      const hasStrictSmartIndicators = strictSmartIndicators.some(indicator => 
         topics.includes(indicator) || 
         description.includes(indicator.toLowerCase()) ||
-        repoName.includes(indicator.replace(/[-\s]/g, ''))
+        repoName.includes(indicator.replace(/[-\s.]/g, ''))
       );
 
-      // More lenient check for implementation guide patterns
-      const hasIGPatterns = description.includes('implementation guide') ||
-                           description.includes('fhir') ||
-                           description.includes('smart') ||
-                           description.includes('who') ||
-                           description.includes('guideline');
+      // Special case for repositories that are known to be legitimate DAK repositories
+      // but may not have the sushi-config.yaml accessible due to temporary issues
+      const isKnownDAKRepo = (
+        // WHO organization repositories with 'smart' in name are likely legitimate
+        (owner.toLowerCase() === 'worldhealthorganization' && repoName.includes('smart')) ||
+        // Repositories with very specific DAK naming patterns
+        (repoName.includes('smartimmunizations') || repoName.includes('smarttrust'))
+      );
 
-      // Additional check for repositories that contain SMART-related keywords in name
-      const hasSmartInName = repoName.includes('smart') || 
-                            repoName.includes('dak') ||
-                            repoName.includes('guideline') ||
-                            repoName.includes('who') ||
-                            repoName.includes('fhir') ||
-                            (repoName.includes('trust') && repoName.includes('phw'));
-
-      const isCompatible = hasSmartIndicators || hasSmartInName || hasIGPatterns;
+      const isCompatible = hasStrictSmartIndicators || isKnownDAKRepo;
 
       if (isCompatible) {
-        console.info(`Repository ${owner}/${repo} has SMART guidelines indicators in topics/description, assuming compatible`);
+        console.info(`Repository ${owner}/${repo} has strict SMART guidelines indicators, assuming compatible`);
         return true;
       }
 
