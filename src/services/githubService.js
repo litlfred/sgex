@@ -557,6 +557,182 @@ class GitHubService {
     }
   }
 
+  // GitHub Actions API methods
+  
+  // Get workflows for a repository
+  async getWorkflows(owner, repo) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.actions.listRepoWorkflows({
+        owner,
+        repo
+      });
+      return data.workflows;
+    } catch (error) {
+      console.error('Failed to fetch workflows:', error);
+      throw error;
+    }
+  }
+
+  // Get workflow runs for a repository
+  async getWorkflowRuns(owner, repo, options = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const params = {
+        owner,
+        repo,
+        per_page: options.per_page || 10,
+        page: options.page || 1
+      };
+
+      if (options.branch) {
+        params.branch = options.branch;
+      }
+
+      if (options.workflow_id) {
+        params.workflow_id = options.workflow_id;
+      }
+
+      const { data } = await this.octokit.rest.actions.listWorkflowRunsForRepo(params);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch workflow runs:', error);
+      throw error;
+    }
+  }
+
+  // Get workflow runs for a specific workflow
+  async getWorkflowRunsForWorkflow(owner, repo, workflow_id, options = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const params = {
+        owner,
+        repo,
+        workflow_id,
+        per_page: options.per_page || 10,
+        page: options.page || 1
+      };
+
+      if (options.branch) {
+        params.branch = options.branch;
+      }
+
+      const { data } = await this.octokit.rest.actions.listWorkflowRuns(params);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch workflow runs for workflow:', error);
+      throw error;
+    }
+  }
+
+  // Trigger a workflow run
+  async triggerWorkflow(owner, repo, workflow_id, ref = 'main', inputs = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.actions.createWorkflowDispatch({
+        owner,
+        repo,
+        workflow_id,
+        ref,
+        inputs
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to trigger workflow:', error);
+      throw error;
+    }
+  }
+
+  // Re-run a workflow
+  async rerunWorkflow(owner, repo, run_id) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.actions.reRunWorkflow({
+        owner,
+        repo,
+        run_id
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to re-run workflow:', error);
+      throw error;
+    }
+  }
+
+  // Get workflow run logs
+  async getWorkflowRunLogs(owner, repo, run_id) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.actions.downloadWorkflowRunLogs({
+        owner,
+        repo,
+        run_id
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to get workflow run logs:', error);
+      throw error;
+    }
+  }
+
+  // Releases API methods
+
+  // Get releases for a repository
+  async getReleases(owner, repo, options = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.listReleases({
+        owner,
+        repo,
+        per_page: options.per_page || 10,
+        page: options.page || 1
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch releases:', error);
+      throw error;
+    }
+  }
+
+  // Get latest release
+  async getLatestRelease(owner, repo) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.getLatestRelease({
+        owner,
+        repo
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch latest release:', error);
+      throw error;
+    }
+  }
+
   // Logout
   logout() {
     this.octokit = null;

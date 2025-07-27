@@ -5,6 +5,7 @@ import branchContextService from '../services/branchContextService';
 import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import DAKStatusBox from './DAKStatusBox';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
@@ -24,9 +25,14 @@ const DAKDashboard = () => {
       const storedBranch = branchContextService.getSelectedBranch(repository);
       if (storedBranch) {
         setSelectedBranch(storedBranch);
+      } else if (profile && profile.login === 'demo-user') {
+        // For demo mode, set a default branch
+        const defaultBranch = repository.default_branch || 'main';
+        setSelectedBranch(defaultBranch);
+        branchContextService.setSelectedBranch(repository, defaultBranch);
       }
     }
-  }, [repository]);
+  }, [repository, profile]);
 
   // Check write permissions on mount
   useEffect(() => {
@@ -317,6 +323,16 @@ const DAKDashboard = () => {
               Components are organized according to the WHO SMART Guidelines framework.
             </p>
           </div>
+
+          {/* DAK Status Box - only show when repository and branch are selected */}
+          {repository && selectedBranch && (
+            <DAKStatusBox 
+              repository={repository}
+              selectedBranch={selectedBranch}
+              hasWriteAccess={hasWriteAccess}
+              profile={profile}
+            />
+          )}
 
           {/* Tab Navigation */}
           <div className="tab-navigation">
