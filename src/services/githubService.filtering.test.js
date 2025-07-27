@@ -153,14 +153,14 @@ describe('GitHubService Repository Filtering', () => {
       expect(result).toHaveLength(0);
     });
 
-    it('should exclude repositories that trigger fallback logic with SMART-like keywords', async () => {
-      // This reproduces the actual issue - repositories like dhis-web-script-library
-      // that don't have sushi-config.yaml but have keywords that trigger the fallback
+    it('should exclude repositories that cannot access sushi-config.yaml due to rate limiting', async () => {
+      // This tests that repositories without accessible sushi-config.yaml are excluded,
+      // even if they have DAK-like names or descriptions
       
       // Mock authentication
       githubService.authenticate('fake-token');
 
-      // Mock repository similar to dhis-web-script-library but with keywords that WILL trigger fallback
+      // Mock repository similar to dhis-web-script-library but with keywords that WOULD trigger fallback
       const mockRepos = [
         {
           id: 1,
@@ -176,41 +176,28 @@ describe('GitHubService Repository Filtering', () => {
         data: mockRepos
       });
 
-      // Mock rate limiting error to trigger fallback
+      // Mock rate limiting error - should now result in exclusion
       mockOctokit.rest.repos.getContent.mockRejectedValue({ 
         status: 429, 
         message: 'rate limit exceeded' 
       });
 
-      // Mock fallback repo.get call - this should return data that triggers the hasIGPatterns check
-      mockOctokit.rest.repos.get.mockResolvedValue({
-        data: {
-          name: 'dhis-web-script-library',
-          description: 'DHIS2 web scripts library with WHO integration', // Contains 'who' which triggers hasIGPatterns
-          topics: ['dhis2', 'web'] // No SMART topics
-        }
-      });
-
       const result = await githubService.getSmartGuidelinesRepositories('litlfred', 'user');
 
-      // The current implementation incorrectly includes this due to fallback logic
-      // After the fix, this should be empty
-      console.log('Result with rate limiting and WHO in description:', result);
-      
-      // THIS SHOULD FAIL with current implementation - the repo gets included due to 'who' in description
+      // With strict filtering, this should be empty since sushi-config.yaml is not accessible
       expect(result).toHaveLength(0);
     });
 
-    it('should include repositories with smart- prefix in fallback', async () => {
+    it('should exclude repositories with smart- prefix that lack sushi-config.yaml with smart.who.int.base', async () => {
       jest.setTimeout(10000); // Increase timeout for this test
       
-      // This tests that legitimate DAK repositories like smart-ra are included
-      // even when sushi-config.yaml is not accessible
+      // This tests that repositories with smart- prefix are excluded if they don't have
+      // the required sushi-config.yaml with smart.who.int.base dependency
       
       // Mock authentication
       githubService.authenticate('fake-token');
 
-      // Mock repositories with smart- prefix that should be included
+      // Mock repositories with smart- prefix that should now be excluded without proper dependency
       const mockRepos = [
         {
           id: 1,
@@ -228,14 +215,14 @@ describe('GitHubService Repository Filtering', () => {
         },
         {
           id: 3,
-          name: 'smart-x', // Should be included (smart- prefix)
+          name: 'smart-x', // Should be excluded (no proper dependency)
           owner: { login: 'testuser' },
           full_name: 'testuser/smart-x',
           description: 'Some smart guideline'
         },
         {
           id: 4,
-          name: 'smart', // Should NOT be included (too short, no dash)
+          name: 'smart', // Should be excluded (no sushi-config.yaml)
           owner: { login: 'testuser' },
           full_name: 'testuser/smart',
           description: 'Just smart'
@@ -246,35 +233,60 @@ describe('GitHubService Repository Filtering', () => {
         data: mockRepos
       });
 
-      // Mock sushi-config.yaml not found for all repositories (trigger fallback)
+      // Mock sushi-config.yaml not found for all repositories
       mockOctokit.rest.repos.getContent.mockRejectedValue({ 
         status: 404, 
         message: 'Not Found' 
       });
 
-      // Mock fallback repo.get calls with a flexible implementation
-      mockOctokit.rest.repos.get.mockImplementation(async (params) => {
-        const repo = mockRepos.find(r => r.name === params.repo);
-        if (repo) {
-          return {
-            data: {
-              name: repo.name,
-              description: repo.description,
-              topics: []
-            }
-          };
-        }
-        throw new Error('Repository not found');
-      });
-
       const result = await githubService.getSmartGuidelinesRepositories('litlfred', 'user');
 
-      // Should include repositories with smart- prefix but exclude 'smart' without dash
-      expect(result).toHaveLength(3);
-      expect(result.find(repo => repo.name === 'smart-ra')).toBeDefined();
-      expect(result.find(repo => repo.name === 'smart-trust-phw')).toBeDefined();
-      expect(result.find(repo => repo.name === 'smart-x')).toBeDefined();
-      expect(result.find(repo => repo.name === 'smart')).toBeUndefined();
+      // With strict filtering, all should be excluded since none have accessible sushi-config.yaml
+      expect(result).toHaveLength(0);
+    });
+
+    it('should include repositories that have sushi-config.yaml with smart.who.int.base even with generic names', async () => {
+      // This tests that the strict filtering correctly includes repositories with the proper dependency
+      
+      // Mock authentication
+      githubService.authenticate('fake-token');
+
+      // Mock repository with generic name but proper dependency
+      const mockRepos = [
+        {
+          id: 1,
+          name: 'my-project',
+          owner: { login: 'testuser' },
+          full_name: 'testuser/my-project',
+          description: 'A generic project'
+        }
+      ];
+
+      mockOctokit.rest.repos.listForUser.mockResolvedValue({
+        data: mockRepos
+      });
+
+      // Mock sushi-config.yaml WITH smart.who.int.base dependency
+      mockOctokit.rest.repos.getContent.mockResolvedValue({
+        data: {
+          type: 'file',
+          content: Buffer.from(`name: my-project
+dependencies:
+  smart.who.int.base:
+    id: sb
+    version: 0.1.0
+  other.dependency:
+    id: other
+    version: 1.0.0`).toString('base64')
+        }
+      });
+
+      const result = await githubService.getSmartGuidelinesRepositories('testuser', 'user');
+
+      // Should include the repository since it has the required dependency
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('my-project');
+      expect(result[0].smart_guidelines_compatible).toBe(true);
     });
   });
 });

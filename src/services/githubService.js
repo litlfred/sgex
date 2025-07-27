@@ -229,16 +229,6 @@ class GitHubService {
       repositoryCompatibilityCache.set(owner, repo, false);
       return false;
     } catch (error) {
-      // If it's a rate limiting or network error, try to fall back to other indicators
-      if (error.status === 403 || error.status === 429 || error.message.includes('rate limit') || error.message.includes('Network')) {
-        console.warn(`Rate limit or network error checking ${owner}/${repo}, trying fallback approach:`, error.message);
-        const fallbackResult = await this.checkSmartGuidelinesFallback(owner, repo);
-        
-        // Cache the fallback result
-        repositoryCompatibilityCache.set(owner, repo, fallbackResult);
-        return fallbackResult;
-      }
-      
       // If it's a 404 (file not found), retry once more in case of temporary issues
       if (error.status === 404 && retryCount > 0) {
         console.warn(`File not found for ${owner}/${repo}, retrying... (${retryCount} attempts left)`);
@@ -248,73 +238,17 @@ class GitHubService {
         return this.checkSmartGuidelinesCompatibility(owner, repo, retryCount - 1);
       }
       
-      // For 404 errors after retries, or other errors, file doesn't exist or can't be accessed
-      // Try fallback before giving up
-      const fallbackResult = await this.checkSmartGuidelinesFallback(owner, repo);
+      // For any error (including rate limiting, network errors, or file not found after retries),
+      // strictly return false - no fallback logic
+      console.warn(`Failed to check ${owner}/${repo} for sushi-config.yaml with smart.who.int.base dependency:`, error.message);
       
-      // Cache the result (could be true from fallback or false)
-      repositoryCompatibilityCache.set(owner, repo, fallbackResult);
-      return fallbackResult;
-    }
-  }
-
-  // Fallback method to check for SMART Guidelines compatibility using other indicators
-  // NOTE: This fallback should be restrictive to avoid false positives but inclusive enough for legitimate DAK repos
-  async checkSmartGuidelinesFallback(owner, repo) {
-    try {
-      // Get repository details to check topics and description
-      const { data } = await this.octokit.rest.repos.get({
-        owner,
-        repo,
-      });
-
-      // Specific indicators that strongly suggest this is a DAK repository
-      const strictSmartIndicators = [
-        'smart-guidelines',      // Official WHO SMART Guidelines term
-        'smart guidelines',      // Space variant of above
-        'smart.who.int',         // Official domain reference
-        'digital-adaptation-kit', // Official DAK term
-        'digital adaptation kit', // Space variant of above
-        'smart-trust-phw',       // Specific known pattern for trust PHW repos
-      ];
-
-      const topics = data.topics || [];
-      const description = (data.description || '').toLowerCase();
-      const repoName = repo.toLowerCase();
-
-      // Check for very specific indicators that strongly suggest this is a DAK repository
-      const hasStrictSmartIndicators = strictSmartIndicators.some(indicator => 
-        topics.includes(indicator) || 
-        description.includes(indicator.toLowerCase()) ||
-        repoName.includes(indicator.replace(/[-\s.]/g, ''))
-      );
-
-      // Check for repository names that start with "smart-" which are very likely DAK repositories
-      // This catches repositories like "smart-ra", "smart-trust-phw", etc.
-      const hasSmartPrefix = repoName.startsWith('smart-') && repoName.length > 6; // "smart-" + at least 1 char
-
-      // Special case for repositories that are known to be legitimate DAK repositories
-      // but may not have the sushi-config.yaml accessible due to temporary issues
-      const isKnownDAKRepo = (
-        // WHO organization repositories with 'smart' in name are likely legitimate
-        (owner.toLowerCase() === 'worldhealthorganization' && repoName.includes('smart')) ||
-        // Repositories with very specific DAK naming patterns
-        (repoName.includes('smartimmunizations') || repoName.includes('smarttrust'))
-      );
-
-      const isCompatible = hasStrictSmartIndicators || hasSmartPrefix || isKnownDAKRepo;
-
-      if (isCompatible) {
-        console.info(`Repository ${owner}/${repo} has SMART guidelines indicators, assuming compatible`);
-        return true;
-      }
-
-      return false;
-    } catch (fallbackError) {
-      console.warn(`Fallback check also failed for ${owner}/${repo}:`, fallbackError.message);
+      // Cache negative result
+      repositoryCompatibilityCache.set(owner, repo, false);
       return false;
     }
   }
+
+
 
   // Get repositories that are SMART guidelines compatible
   async getSmartGuidelinesRepositories(owner, type = 'user') {
