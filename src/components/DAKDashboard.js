@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import branchContextService from '../services/branchContextService';
 import BranchSelector from './BranchSelector';
@@ -10,13 +10,86 @@ import './DAKDashboard.css';
 const DAKDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, repo, branch } = useParams();
   
-  const { profile, repository } = location.state || {};
+  // Try to get data from location.state first, then from URL params
+  const [profile, setProfile] = useState(location.state?.profile || null);
+  const [repository, setRepository] = useState(location.state?.repository || null);
+  const [loading, setLoading] = useState(!profile || !repository);
+  const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); // 'core' or 'additional'
-  const [selectedBranch, setSelectedBranch] = useState(null);
+  const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
+
+  // Fetch data from URL parameters if not available in location.state
+  useEffect(() => {
+    const fetchDataFromUrlParams = async () => {
+      if ((!profile || !repository) && user && repo) {
+        try {
+          setLoading(true);
+          setError(null);
+
+          // Check if githubService is authenticated
+          if (!githubService.isAuth()) {
+            setError('GitHub authentication required. Please authenticate first.');
+            setLoading(false);
+            return;
+          }
+
+          // Fetch user profile
+          let userProfile = null;
+          try {
+            const userResponse = await githubService.getUser(user);
+            userProfile = userResponse;
+          } catch (err) {
+            console.error('Error fetching user:', err);
+            setError(`User '${user}' not found or not accessible.`);
+            setLoading(false);
+            return;
+          }
+
+          // Fetch repository
+          let repoData = null;
+          try {
+            const repoResponse = await githubService.getRepository(user, repo);
+            repoData = repoResponse;
+          } catch (err) {
+            console.error('Error fetching repository:', err);
+            setError(`Repository '${user}/${repo}' not found or not accessible.`);
+            setLoading(false);
+            return;
+          }
+
+          // Validate branch if specified
+          if (branch) {
+            try {
+              await githubService.getBranch(user, repo, branch);
+              setSelectedBranch(branch);
+            } catch (err) {
+              console.warn(`Branch '${branch}' not found, falling back to default branch`);
+              setSelectedBranch(repoData.default_branch);
+            }
+          } else {
+            setSelectedBranch(repoData.default_branch);
+          }
+
+          setProfile(userProfile);
+          setRepository(repoData);
+          setLoading(false);
+        } catch (err) {
+          console.error('Error fetching data from URL params:', err);
+          setError('Failed to load dashboard data. Please check the URL or try again.');
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    fetchDataFromUrlParams();
+  }, [user, repo, branch, profile, repository]);
 
   // Initialize selected branch from session context
   useEffect(() => {
@@ -239,6 +312,36 @@ const DAKDashboard = () => {
   const handleHomeNavigation = () => {
     navigate('/');
   };
+
+  if (loading) {
+    return (
+      <div className="dak-dashboard loading-state">
+        <div className="loading-content">
+          <h2>Loading Dashboard...</h2>
+          <p>Fetching repository and user data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dak-dashboard error-state">
+        <div className="error-content">
+          <h2>Error Loading Dashboard</h2>
+          <p>{error}</p>
+          <div className="error-actions">
+            <button onClick={() => navigate('/')} className="action-btn primary">
+              Return to Home
+            </button>
+            <button onClick={() => window.location.reload()} className="action-btn secondary">
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!profile || !repository) {
     navigate('/');
