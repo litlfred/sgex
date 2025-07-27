@@ -3,6 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 import { Octokit } from '@octokit/rest';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import customPaletteModule from './bpmn/customPaletteProvider';
+import customPropertiesProviderModule from './bpmn/customPropertiesProvider';
+import validationRendererModule from './bpmn/validationRenderer';
 import './BPMNEditor.css';
 
 const BPMNEditor = () => {
@@ -35,7 +38,12 @@ const BPMNEditor = () => {
             container: containerRef.current,
             keyboard: {
               bindTo: window
-            }
+            },
+            additionalModules: [
+              customPaletteModule,
+              customPropertiesProviderModule,
+              validationRendererModule
+            ]
           });
           console.log('BPMN modeler initialized successfully');
         } catch (error) {
@@ -154,7 +162,12 @@ const BPMNEditor = () => {
               container: containerRef.current,
               keyboard: {
                 bindTo: window
-              }
+              },
+              additionalModules: [
+                customPaletteModule,
+                customPropertiesProviderModule,
+                validationRendererModule
+              ]
             });
             console.log('BPMN modeler initialized for file loading');
           }
