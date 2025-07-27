@@ -1,22 +1,122 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import branchContextService from '../services/branchContextService';
 import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import DAKStatusBox from './DAKStatusBox';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, repo, branch } = useParams();
   
-  const { profile, repository } = location.state || {};
+  // Try to get data from location.state first, then from URL params
+  const [profile, setProfile] = useState(location.state?.profile || null);
+  const [repository, setRepository] = useState(location.state?.repository || null);
+  const [loading, setLoading] = useState(!profile || !repository);
+  const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); // 'core' or 'additional'
-  const [selectedBranch, setSelectedBranch] = useState(null);
+  const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
+
+  // Fetch data from URL parameters if not available in location.state
+  useEffect(() => {
+    const fetchDataFromUrlParams = async () => {
+      if ((!profile || !repository) && user && repo) {
+        try {
+          setLoading(true);
+          setError(null);
+
+          // Check if githubService is authenticated (allow demo mode to proceed without auth)
+          if (!githubService.isAuth()) {
+            // In demo mode, create mock data instead of requiring authentication
+            if (window.location.pathname.includes('/dashboard/')) {
+              const demoProfile = {
+                login: user,
+                name: user.charAt(0).toUpperCase() + user.slice(1),
+                avatar_url: `https://github.com/${user}.png`,
+                type: 'User',
+                isDemo: true
+              };
+
+              const demoRepository = {
+                name: repo,
+                full_name: `${user}/${repo}`,
+                owner: { login: user },
+                default_branch: branch || 'main',
+                html_url: `https://github.com/${user}/${repo}`,
+                isDemo: true
+              };
+
+              setProfile(demoProfile);
+              setRepository(demoRepository);
+              setSelectedBranch(branch || 'main');
+              setLoading(false);
+              return;
+            } else {
+              setError('GitHub authentication required. Please authenticate first.');
+              setLoading(false);
+              return;
+            }
+          }
+
+          // Fetch user profile
+          let userProfile = null;
+          try {
+            const userResponse = await githubService.getUser(user);
+            userProfile = userResponse;
+          } catch (err) {
+            console.error('Error fetching user:', err);
+            setError(`User '${user}' not found or not accessible.`);
+            setLoading(false);
+            return;
+          }
+
+          // Fetch repository
+          let repoData = null;
+          try {
+            const repoResponse = await githubService.getRepository(user, repo);
+            repoData = repoResponse;
+          } catch (err) {
+            console.error('Error fetching repository:', err);
+            setError(`Repository '${user}/${repo}' not found or not accessible.`);
+            setLoading(false);
+            return;
+          }
+
+          // Validate branch if specified
+          if (branch) {
+            try {
+              await githubService.getBranch(user, repo, branch);
+              setSelectedBranch(branch);
+            } catch (err) {
+              console.warn(`Branch '${branch}' not found, falling back to default branch`);
+              setSelectedBranch(repoData.default_branch);
+            }
+          } else {
+            setSelectedBranch(repoData.default_branch);
+          }
+
+          setProfile(userProfile);
+          setRepository(repoData);
+          setLoading(false);
+        } catch (err) {
+          console.error('Error fetching data from URL params:', err);
+          setError('Failed to load dashboard data. Please check the URL or try again.');
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    fetchDataFromUrlParams();
+  }, [user, repo, branch, profile, repository]);
 
   // Initialize selected branch from session context
   useEffect(() => {
@@ -24,9 +124,14 @@ const DAKDashboard = () => {
       const storedBranch = branchContextService.getSelectedBranch(repository);
       if (storedBranch) {
         setSelectedBranch(storedBranch);
+      } else if (profile && profile.login === 'demo-user') {
+        // For demo mode, set a default branch
+        const defaultBranch = repository.default_branch || 'main';
+        setSelectedBranch(defaultBranch);
+        branchContextService.setSelectedBranch(repository, defaultBranch);
       }
     }
-  }, [repository]);
+  }, [repository, profile]);
 
   // Check write permissions on mount
   useEffect(() => {
@@ -238,6 +343,19 @@ const DAKDashboard = () => {
       return;
     }
 
+    // For health-interventions (WHO Digital Library), allow access in read-only mode
+    if (component.id === 'health-interventions') {
+      navigate(`/editor/${component.id}`, {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
     // For other components, check permissions before proceeding
     if (!hasWriteAccess) {
       setShowPermissionDialog(true);
@@ -262,6 +380,36 @@ const DAKDashboard = () => {
   const handleHomeNavigation = () => {
     navigate('/');
   };
+
+  if (loading) {
+    return (
+      <div className="dak-dashboard loading-state">
+        <div className="loading-content">
+          <h2>Loading Dashboard...</h2>
+          <p>Fetching repository and user data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dak-dashboard error-state">
+        <div className="error-content">
+          <h2>Error Loading Dashboard</h2>
+          <p>{error}</p>
+          <div className="error-actions">
+            <button onClick={() => navigate('/')} className="action-btn primary">
+              Return to Home
+            </button>
+            <button onClick={() => window.location.reload()} className="action-btn secondary">
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!profile || !repository) {
     navigate('/');
@@ -340,6 +488,16 @@ const DAKDashboard = () => {
               Components are organized according to the WHO SMART Guidelines framework.
             </p>
           </div>
+
+          {/* DAK Status Box - only show when repository and branch are selected */}
+          {repository && selectedBranch && (
+            <DAKStatusBox 
+              repository={repository}
+              selectedBranch={selectedBranch}
+              hasWriteAccess={hasWriteAccess}
+              profile={profile}
+            />
+          )}
 
           {/* Tab Navigation */}
           <div className="tab-navigation">
@@ -475,22 +633,7 @@ const DAKDashboard = () => {
             </div>
           )}
 
-          <div className="dashboard-footer">
-            <div className="repo-actions">
-              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}`, '_blank')}>
-                <span>📂</span>
-                View on GitHub
-              </button>
-              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}/issues`, '_blank')}>
-                <span>🐛</span>
-                Issues
-              </button>
-              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}/pulls`, '_blank')}>
-                <span>🔄</span>
-                Pull Requests
-              </button>
-            </div>
-          </div>
+
         </div>
       </div>
 
