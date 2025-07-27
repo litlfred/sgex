@@ -307,9 +307,11 @@ const WHODigitalLibrary = ({ onReferencesChange }) => {
         {error && (
           <div className="error-message">
             <strong>Search Error:</strong> {error}
-            {error.includes('CORS policy') && (
+            {(error.includes('CORS policy') || error.includes('restart the development server')) && (
               <div className="error-help">
-                <p><strong>Note:</strong> This error occurs in development mode due to browser security restrictions.</p>
+                <p><strong>Development Mode:</strong> {error.includes('restart') ? 
+                  'The WHO Digital Library proxy is now configured. Please restart your development server (npm start) to enable API access.' : 
+                  'This error occurs in development mode due to browser security restrictions.'}</p>
                 <p>
                   For help with WHO Digital Library search, visit: {' '}
                   <a 

@@ -7,9 +7,12 @@
 
 class WHODigitalLibraryService {
   constructor() {
-    this.baseUrl = 'https://iris.who.int';
+    // Use proxy in development, direct API in production
+    this.isDevelopment = process.env.NODE_ENV === 'development';
+    this.baseUrl = this.isDevelopment ? '/api/who' : 'https://iris.who.int';
     this.restApi = `${this.baseUrl}/rest`;
     this.searchEndpoint = `${this.restApi}/discover/search/objects`;
+    this.originalBaseUrl = 'https://iris.who.int'; // For constructing public URLs
   }
 
   /**
@@ -51,7 +54,11 @@ class WHODigitalLibraryService {
       
       // Check if this is a CORS-related error
       if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
-        throw new Error('Unable to access WHO Digital Library directly from browser due to CORS policy. This is a known limitation when running in development mode. In production, this would typically be handled by a server-side proxy.');
+        if (this.isDevelopment) {
+          throw new Error('Unable to connect to WHO Digital Library. Please restart the development server to enable the API proxy. If the problem persists, the WHO IRIS service may be temporarily unavailable.');
+        } else {
+          throw new Error('Unable to access WHO Digital Library. This may be due to network restrictions or the service being temporarily unavailable.');
+        }
       }
       
       throw new Error(`Failed to search WHO digital library: ${error.message}`);
@@ -215,7 +222,8 @@ class WHODigitalLibraryService {
    */
   constructItemUrl(handle) {
     if (!handle) return null;
-    return `${this.baseUrl}/handle/${handle}`;
+    // Always use the original WHO URL for public links, not the proxy
+    return `${this.originalBaseUrl}/handle/${handle}`;
   }
 
   /**
