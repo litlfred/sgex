@@ -106,9 +106,44 @@
   font-weight: 500;
 }
 
+.component-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.intro-content {
+  flex: 1;
+}
+
+.intro-content h2 {
+  font-size: 2rem;
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+}
+
+.intro-content p {
+  font-size: 1rem;
+  line-height: 1.6;
+  opacity: 0.9;
+  margin-bottom: 1.5rem;
+}
+
+.component-intro .component-icon {
+  font-size: 3rem;
+  margin: 0;
+  min-width: 60px;
+}
+
 .editor-main {
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: none; /* Allow full width for digital library */
 }
 
 .editor-placeholder {
