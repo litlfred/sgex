@@ -4,7 +4,25 @@
 
 The SMART Guidelines Exchange (SGEX) Workbench is a browser-based, static web application designed for collaborative editing of WHO SMART Guidelines Digital Adaptation Kits (DAKs) content stored in GitHub repositories.
 
-## 1.1 System Actors
+### 1.1 Definition of a WHO SMART Guidelines Digital Adaptation Kit
+
+A **GitHub Repository which is a WHO SMART Guidelines Digital Adaptation Kit** is defined as one that:
+
+1. **Has a `sushi-config.yaml` file in the root of the repository**
+2. **If found, it should parse the YAML and look for the key 'dependencies' which is a list and which should have a key 'smart.who.int.base'**
+
+This definition ensures that only repositories that are genuinely WHO SMART Guidelines Digital Adaptation Kits are recognized and processed by the SGEX Workbench, providing a clear and technical validation mechanism.
+
+**Example**: A valid DAK repository should have a `sushi-config.yaml` file with content similar to:
+```yaml
+dependencies:
+  smart.who.int.base: current
+  # ... other dependencies
+```
+
+For reference, see the WHO DAK repository example at: https://github.com/WorldHealthOrganization/smart-immunizations/blob/main/sushi-config.yaml
+
+## 1.2 System Actors
 
 The SGEX Workbench operates within an ecosystem of actors that collaborate to enable effective DAK management and editing:
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
+import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
 import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
@@ -34,46 +35,11 @@ const DAKDashboard = () => {
 
           // Check if githubService is authenticated (allow demo mode to proceed without auth)
           if (!githubService.isAuth()) {
-            // In demo mode, create mock data instead of requiring authentication
+            // In demo mode, use the DAK validation service for demo repositories
             if (window.location.pathname.includes('/dashboard/')) {
-              // List of known demo repositories that should work
-              const validDemoRepos = [
-                'sgex-demo',
-                'smart-guidelines-demo', 
-                'who-smart-guidelines',
-                'smart-anc-toolkit',
-                'smart-immunizations-demo',
-                'smart-hiv-demo',
-                'dak-example',
-                'implementation-guide-example',
-                'smart-guidelines',
-                'smart-anc',
-                'smart-tb',
-                'smart-hiv',
-                'smart-immunizations'
-              ];
+              const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
               
-              // More restrictive validation: repository must be in the known valid list
-              // OR follow specific naming patterns for DAK repositories
-              const isValidDemoRepo = validDemoRepos.some(validRepo => 
-                repo.toLowerCase() === validRepo.toLowerCase() || 
-                repo.toLowerCase().includes(validRepo.toLowerCase())
-              );
-              
-              const isValidDAKPattern = (
-                // WHO official repositories
-                (user.toLowerCase() === 'worldhealthorganization' || user.toLowerCase() === 'who') ||
-                // Repositories that follow the exact DAK naming pattern
-                (repo.toLowerCase().includes('smart-') && repo.toLowerCase().includes('-demo')) ||
-                (repo.toLowerCase().includes('smart-') && repo.toLowerCase().includes('-toolkit')) ||
-                (repo.toLowerCase().includes('dak-') && repo.toLowerCase().includes('demo')) ||
-                // Known demo users with valid patterns
-                (user.toLowerCase() === 'litlfred' && validDemoRepos.some(validRepo => 
-                  repo.toLowerCase().includes(validRepo.toLowerCase())
-                ))
-              );
-              
-              if (!isValidDemoRepo && !isValidDAKPattern) {
+              if (!isValidDAK) {
                 navigate('/', { 
                   state: { 
                     warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
@@ -135,6 +101,19 @@ const DAKDashboard = () => {
           } catch (err) {
             console.error('Error fetching repository:', err);
             // Redirect to landing page with warning message
+            navigate('/', { 
+              state: { 
+                warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
+              } 
+            });
+            return;
+          }
+
+          // Validate that this is actually a DAK repository
+          const isValidDAK = await dakValidationService.validateDAKRepository(user, repo, branch || repoData.default_branch);
+          
+          if (!isValidDAK) {
+            console.log(`Repository ${user}/${repo} is not a valid DAK repository`);
             navigate('/', { 
               state: { 
                 warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
