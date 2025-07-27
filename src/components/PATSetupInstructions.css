@@ -158,6 +158,61 @@
   text-decoration: underline;
 }
 
+/* Repository-specific guidance styles */
+.repository-specific {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.repository-specific h4 {
+  margin: 0 0 0.75rem 0;
+  color: #856404;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.repo-info {
+  background: white;
+  border: 1px solid #e1e4e8;
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.85rem;
+}
+
+.org-note {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #6a737d;
+  font-style: italic;
+}
+
+.org-warning {
+  background: #fff5b4;
+  border: 1px solid #f0c674;
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  font-size: 0.85rem;
+  color: #6c4a00;
+}
+
+.repository-specific ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.repository-specific li {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #856404;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .pat-setup-instructions {
@@ -169,5 +224,14 @@
   .security-note ul,
   .help-links ul {
     padding-left: 1rem;
+  }
+  
+  .repository-specific {
+    padding: 0.75rem;
+  }
+  
+  .repo-info {
+    padding: 0.5rem;
+    font-size: 0.8rem;
   }
 }

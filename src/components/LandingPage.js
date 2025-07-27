@@ -4,6 +4,7 @@ import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import PATLogin from './PATLogin';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import SettingsMenu from './SettingsMenu';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -13,6 +14,7 @@ const LandingPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [dakCounts, setDakCounts] = useState({});
+  const [securityLevel, setSecurityLevel] = useState('unauthenticated');
 
   const navigate = useNavigate();
 
@@ -117,6 +119,9 @@ const LandingPage = () => {
       // Load cached DAK counts (if available)
       loadCachedDakCounts(userData, orgsData);
       
+      // Update security level
+      setSecurityLevel(githubService.getSecurityLevel());
+      
     } catch (error) {
       console.error('Error fetching user data:', error);
       setError('Failed to fetch user data. Please check your connection and try again.');
@@ -164,6 +169,7 @@ const LandingPage = () => {
     setIsAuthenticated(true);
     setError(null);
     fetchUserData();
+    setSecurityLevel(githubService.getSecurityLevel());
   };
 
   const handleLogout = () => {
@@ -246,6 +252,12 @@ const LandingPage = () => {
               <p className="demo-note">
                 Demo mode showcases the enhanced DAK scanning display with mock data.
               </p>
+              <div className="security-level-indicator demo">
+                <span className="security-badge unauthenticated">🔓 Unauthenticated Access</span>
+                <p className="security-description">
+                  Limited to public repository browsing and demo features
+                </p>
+              </div>
             </div>
             
             <div className="info-section">
@@ -276,10 +288,8 @@ const LandingPage = () => {
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="user-info">
-          <img src={user?.avatar_url} alt="User avatar" className="user-avatar" />
-          <span>{user?.name || user?.login}</span>
+          <SettingsMenu user={user} onLogout={handleLogout} />
           <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-          <button onClick={handleLogout} className="logout-btn">Logout</button>
         </div>
       </div>
       
@@ -295,6 +305,19 @@ const LandingPage = () => {
             <p>Choose the GitHub profile or organization containing your DAK repositories:</p>
             
             {error && <div className="error-message">{error}</div>}
+            
+            <div className="security-level-indicator authenticated">
+              <span className={`security-badge ${securityLevel}`}>
+                {securityLevel === 'write' && '🔐 Write Access'}
+                {securityLevel === 'read-only' && '🔍 Read-Only Access'}
+                {securityLevel === 'unauthenticated' && '🔓 Unauthenticated'}
+              </span>
+              <p className="security-description">
+                {securityLevel === 'write' && 'You can edit and create pull requests in repositories'}
+                {securityLevel === 'read-only' && 'You can view and analyze repository contents'}
+                {securityLevel === 'unauthenticated' && 'Limited to public repository browsing'}
+              </p>
+            </div>
             
             <div className="profile-grid">
               {/* Personal Profile */}
