@@ -256,7 +256,6 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
     
     return {
       ciBuild: `${baseUrl}/branches/${branch}`,
-      qaReport: `${baseUrl}/branches/${branch}/qa.html`,
       qcReport: `${baseUrl}/branches/${branch}/artifacts.html`,
       artifacts: `${baseUrl}/branches/${branch}/artifacts.html`
     };
@@ -308,13 +307,13 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
                     <span className="external-indicator">↗</span>
                   </a>
                   <a 
-                    href={quickLinks.qaReport} 
+                    href={`https://github.com/${owner}/${repoName}/issues`}
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="quick-link"
                   >
-                    <span className="link-icon">📋</span>
-                    QA Report
+                    <span className="link-icon">🐛</span>
+                    Issues
                     <span className="external-indicator">↗</span>
                   </a>
                   <a 
