@@ -31,11 +31,37 @@ const DAKDashboard = () => {
           setLoading(true);
           setError(null);
 
-          // Check if githubService is authenticated
+          // Check if githubService is authenticated (allow demo mode to proceed without auth)
           if (!githubService.isAuth()) {
-            setError('GitHub authentication required. Please authenticate first.');
-            setLoading(false);
-            return;
+            // In demo mode, create mock data instead of requiring authentication
+            if (window.location.pathname.includes('/dashboard/')) {
+              const demoProfile = {
+                login: user,
+                name: user.charAt(0).toUpperCase() + user.slice(1),
+                avatar_url: `https://github.com/${user}.png`,
+                type: 'User',
+                isDemo: true
+              };
+
+              const demoRepository = {
+                name: repo,
+                full_name: `${user}/${repo}`,
+                owner: { login: user },
+                default_branch: branch || 'main',
+                html_url: `https://github.com/${user}/${repo}`,
+                isDemo: true
+              };
+
+              setProfile(demoProfile);
+              setRepository(demoRepository);
+              setSelectedBranch(branch || 'main');
+              setLoading(false);
+              return;
+            } else {
+              setError('GitHub authentication required. Please authenticate first.');
+              setLoading(false);
+              return;
+            }
           }
 
           // Fetch user profile
