@@ -185,8 +185,20 @@ const DAKSelection = () => {
         // Small delay before next repository
         await delay(300);
       }
+      
+      // After all repositories are scanned, stop the scanning state
+      console.log('🎉 Demo scanning completed, stopping scanning state');
+      setTimeout(() => {
+        setIsScanning(false);
+        setScanProgress(null);
+        setCurrentlyScanningRepos(new Set());
+      }, 500); // Small delay to show completion
     } catch (error) {
       console.error('Error in simulated scanning:', error);
+      // Make sure to stop scanning on error
+      setIsScanning(false);
+      setScanProgress(null);
+      setCurrentlyScanningRepos(new Set());
     }
   }, [getMockRepositories]);
 
@@ -254,12 +266,19 @@ const DAKSelection = () => {
           if (githubService.isAuth()) {
             console.log(forceRescan ? '🔄 Force rescanning repositories...' : '🔍 No cached data, initiating scan...');
             setIsScanning(true);
+            setLoading(false); // Stop loading state to show scanning progress
             
             // Important: Don't clear existing repositories when scanning
             // This preserves any cached repos that were already displayed
             console.log('📊 Starting enhanced scanning display for authenticated user');
             
-            repos = await githubService.getSmartGuidelinesRepositoriesProgressive(
+            // Add timeout wrapper to prevent infinite scanning
+            const SCAN_TIMEOUT = 60000; // 60 seconds timeout
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Scanning timeout - operation took longer than 60 seconds')), SCAN_TIMEOUT);
+            });
+            
+            const scanPromise = githubService.getSmartGuidelinesRepositoriesProgressive(
               profile.login, 
               profile.type === 'org' ? 'org' : 'user',
               // onRepositoryFound callback - add repo to list immediately in alphabetical order
@@ -308,9 +327,40 @@ const DAKSelection = () => {
                       return newSet;
                     });
                   }, 200);
+                  
+                  // Check if this is the last repository being scanned
+                  if (progress.current === progress.total) {
+                    // All repositories have been scanned, stop the scanning state
+                    console.log('🎉 All repositories scanned, stopping scanning state');
+                    setTimeout(() => {
+                      setIsScanning(false);
+                      setScanProgress(null);
+                      setCurrentlyScanningRepos(new Set());
+                    }, 500); // Small delay to show completion
+                  }
+                } else if (progress.total === 0 && progress.completed) {
+                  // Special case: no repositories to scan
+                  console.log('🎉 No repositories to scan, stopping scanning state');
+                  setTimeout(() => {
+                    setIsScanning(false);
+                    setScanProgress(null);
+                    setCurrentlyScanningRepos(new Set());
+                  }, 500);
                 }
               }
             );
+            
+            try {
+              // Race between the scanning promise and timeout
+              repos = await Promise.race([scanPromise, timeoutPromise]);
+            } catch (timeoutError) {
+              console.error('⏰ Scanning timed out:', timeoutError.message);
+              // Stop scanning on timeout
+              setIsScanning(false);
+              setScanProgress(null);
+              setCurrentlyScanningRepos(new Set());
+              throw new Error('Repository scanning timed out. Please try again or use cached data if available.');
+            }
             
             // Cache the results for future quick access
             repositoryCacheService.setCachedRepositories(
@@ -340,11 +390,20 @@ const DAKSelection = () => {
       const mockRepos = getMockRepositories();
       mockRepos.sort((a, b) => a.name.localeCompare(b.name));
       setRepositories(mockRepos);
-    } finally {
-      setLoading(false);
+      // Make sure to stop scanning on error
       setIsScanning(false);
       setScanProgress(null);
       setCurrentlyScanningRepos(new Set());
+    } finally {
+      setLoading(false);
+      // Don't automatically stop scanning here for authenticated progressive scans
+      // or for demo scanning - let them manage their own scanning state
+      if (!githubService.isAuth() && action === 'create') {
+        // Only auto-stop for create action when not authenticated
+        setIsScanning(false);
+        setScanProgress(null);
+        setCurrentlyScanningRepos(new Set());
+      }
     }
   }, [profile, action, getMockRepositories, simulateEnhancedScanning]);
 
@@ -518,12 +577,6 @@ const DAKSelection = () => {
                           </button>
                         )}
                       </>
-                    )}
-                    {isScanning && (
-                      <div className="scanning-indicator">
-                        <span className="scanning-icon">🔍</span>
-                        <span>Scanning in progress...</span>
-                      </div>
                     )}
                   </div>
                 )}

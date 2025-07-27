@@ -28,6 +28,8 @@ function App() {
           <Route path="/dak-configuration" element={<DAKConfiguration />} />
           <Route path="/repositories" element={<RepositorySelection />} />
           <Route path="/dashboard" element={<DAKDashboard />} />
+          <Route path="/dashboard/:user/:repo" element={<DAKDashboard />} />
+          <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />
           <Route path="/test-dashboard" element={<TestDashboard />} />
           <Route path="/editor/:componentId" element={<ComponentEditor />} />
           <Route path="/business-process-selection" element={<BusinessProcessSelection />} />
