@@ -16,12 +16,7 @@ const WHODigitalLibrary = ({ onReferencesChange }) => {
   const [featuredItems, setFeaturedItems] = useState([]);
   const searchInputRef = useRef(null);
 
-  // Load featured items on component mount
-  useEffect(() => {
-    loadFeaturedItems();
-  }, []);
-
-  // Load saved references from localStorage on mount
+  // Load featured items on component mount and load references from localStorage
   useEffect(() => {
     const savedReferences = localStorage.getItem('whoDigitalLibraryReferences');
     if (savedReferences) {
@@ -35,7 +30,8 @@ const WHODigitalLibrary = ({ onReferencesChange }) => {
         console.error('Error loading saved references:', error);
       }
     }
-  }, []); // Remove onReferencesChange from dependency array to prevent infinite loop
+    loadFeaturedItems();
+  }, [onReferencesChange]);
 
   // Save references to localStorage whenever they change
   useEffect(() => {
@@ -323,6 +319,25 @@ const WHODigitalLibrary = ({ onReferencesChange }) => {
                     iris.who.int/help
                   </a>
                 </p>
+              </div>
+            )}
+            {error.includes('HTTP 403') && (
+              <div className="error-help">
+                <p><strong>API Access Issue:</strong> The WHO Digital Library is currently restricting access to its search API.</p>
+                <p><strong>Possible solutions:</strong></p>
+                <ul>
+                  <li>Wait a few minutes and try again (may be temporary rate limiting)</li>
+                  <li>Try a different, more specific search term</li>
+                  <li>Browse the WHO Digital Library directly: <a href="https://iris.who.int" target="_blank" rel="noopener noreferrer">iris.who.int</a></li>
+                  <li>For API access guidelines, visit: <a href="https://iris.who.int/help" target="_blank" rel="noopener noreferrer">iris.who.int/help</a></li>
+                </ul>
+                <p><em>Note: This integration provides direct access to WHO's public API. Access policies and availability are controlled by WHO.</em></p>
+              </div>
+            )}
+            {(error.includes('HTTP 429') || error.includes('rate limit')) && (
+              <div className="error-help">
+                <p><strong>Rate Limit:</strong> Too many requests have been made to the WHO Digital Library API.</p>
+                <p>Please wait a few minutes before searching again. You can browse featured items below in the meantime.</p>
               </div>
             )}
           </div>

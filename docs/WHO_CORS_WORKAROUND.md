@@ -46,10 +46,32 @@ We've implemented a development proxy that automatically forwards WHO Digital Li
 
 If WHO Digital Library searches still fail after implementing this workaround:
 
+### Common Error Types
+
+1. **HTTP 403 (Access Denied)**
+   - **Cause**: WHO's API is restricting access due to rate limiting, API policies, or access controls
+   - **Solution**: Wait a few minutes and try again with different search terms
+   - **Fallback**: Mock data is automatically provided in development mode
+
+2. **HTTP 429 (Rate Limited)**
+   - **Cause**: Too many requests made to the WHO API in a short time
+   - **Solution**: Wait before making additional requests
+
+3. **CORS Errors**
+   - **Cause**: Browser blocking cross-origin requests in development
+   - **Solution**: Restart the development server to activate the proxy
+
+4. **Network Connectivity Issues**
+   - **Cause**: Unable to reach iris.who.int
+   - **Solution**: Check internet connection and network restrictions
+
+### Debugging Steps
+
 1. **Restart the development server** - The proxy configuration requires a server restart
 2. **Check the console** - Look for proxy debug messages starting with `[WHO Proxy]`
 3. **Verify the proxy file** - Ensure `src/setupProxy.js` exists and is configured correctly
 4. **Check network connectivity** - The proxy still requires access to iris.who.int
+5. **Review API status** - Check if iris.who.int is accessible and operational
 
 ## Alternative Solutions
 

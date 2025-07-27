@@ -39,12 +39,25 @@ class WHODigitalLibraryService {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'User-Agent': 'SGEX-Workbench/1.0 (WHO Digital Library Integration)',
+          'Cache-Control': 'no-cache'
         }
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Handle specific HTTP status codes
+        if (response.status === 403) {
+          throw new Error(`Access denied (HTTP 403): The WHO Digital Library API is currently restricting access. This may be due to rate limiting, API access policies, or temporary restrictions. Please try again later or contact WHO for API access guidelines.`);
+        } else if (response.status === 429) {
+          throw new Error(`Rate limit exceeded (HTTP 429): Too many requests to the WHO Digital Library API. Please wait a moment before searching again.`);
+        } else if (response.status === 500) {
+          throw new Error(`Server error (HTTP 500): The WHO Digital Library API is experiencing technical difficulties. Please try again later.`);
+        } else if (response.status === 404) {
+          throw new Error(`Service not found (HTTP 404): The WHO Digital Library API endpoint may have changed. Please check for updates.`);
+        } else {
+          throw new Error(`HTTP error! status: ${response.status} - Unable to access WHO Digital Library API`);
+        }
       }
 
       const data = await response.json();
@@ -58,6 +71,15 @@ class WHODigitalLibraryService {
           throw new Error('Unable to connect to WHO Digital Library. Please restart the development server to enable the API proxy. If the problem persists, the WHO IRIS service may be temporarily unavailable.');
         } else {
           throw new Error('Unable to access WHO Digital Library. This may be due to network restrictions or the service being temporarily unavailable.');
+        }
+      }
+      
+      // Check if this is a 403 access denied error
+      if (error.message.includes('HTTP 403')) {
+        // For development mode, we can suggest using mock data
+        if (this.isDevelopment) {
+          console.warn('WHO API returned 403 - using mock search results for development');
+          return this.getMockSearchResults(query, page, size);
         }
       }
       
@@ -77,12 +99,21 @@ class WHODigitalLibraryService {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'User-Agent': 'SGEX-Workbench/1.0 (WHO Digital Library Integration)',
+          'Cache-Control': 'no-cache'
         }
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Handle specific HTTP status codes  
+        if (response.status === 403) {
+          throw new Error(`Access denied (HTTP 403): Unable to fetch item metadata due to API access restrictions.`);
+        } else if (response.status === 404) {
+          throw new Error(`Item not found (HTTP 404): The requested item may have been removed or the identifier is invalid.`);
+        } else {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
       }
 
       const data = await response.json();
@@ -287,8 +318,11 @@ class WHODigitalLibraryService {
     } catch (error) {
       console.error('Error fetching featured items:', error);
       
-      // Return sample/mock data when CORS prevents access
-      if (error.message.includes('CORS policy')) {
+      // Return sample/mock data when API is not accessible
+      if (error.message.includes('CORS policy') || 
+          error.message.includes('HTTP 403') || 
+          error.message.includes('Failed to fetch')) {
+        console.warn('Using mock featured items due to API access issues');
         return this.getMockFeaturedItems();
       }
       
@@ -325,6 +359,48 @@ class WHODigitalLibraryService {
         rawMetadata: {}
       }
     ];
+  }
+
+  /**
+   * Get mock search results as fallback when API returns 403 or other errors
+   * @param {string} query - Search query
+   * @param {number} page - Page number  
+   * @param {number} size - Page size
+   * @returns {Object} Mock search results structure
+   */
+  getMockSearchResults(query, page = 0, size = 10) {
+    const mockItems = [
+      {
+        id: 'mock-search-1',
+        title: `Mock Result: WHO Guidelines on ${query}`,
+        creator: 'World Health Organization',
+        dateIssued: '2023',
+        type: 'Guidelines',
+        abstract: `This is a mock search result for "${query}". The WHO Digital Library API is currently not accessible, but this demonstrates the expected result structure.`,
+        subject: [query, 'WHO Guidelines', 'Health Policy'],
+        url: 'https://iris.who.int/help',
+        rawMetadata: {}
+      },
+      {
+        id: 'mock-search-2',
+        title: `Mock Result: ${query.toUpperCase()} Prevention and Control`,
+        creator: 'World Health Organization', 
+        dateIssued: '2023',
+        type: 'Technical Report',
+        abstract: `Mock technical report related to ${query}. This result is displayed because the WHO IRIS API is currently not accessible.`,
+        subject: [query, 'Prevention', 'Public Health'],
+        url: 'https://iris.who.int/help',
+        rawMetadata: {}
+      }
+    ];
+
+    return {
+      items: mockItems.slice(page * size, (page + 1) * size),
+      totalElements: mockItems.length,
+      totalPages: Math.ceil(mockItems.length / size),
+      currentPage: page,
+      size: size
+    };
   }
 
   /**
