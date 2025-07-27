@@ -47,6 +47,9 @@ const PagesManager = () => {
         return;
       }
 
+      // Add a small delay to ensure GitHub service is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       try {
         setLoading(true);
         setError(null);
@@ -58,6 +61,7 @@ const PagesManager = () => {
         console.log(`Loading pages for ${owner}/${repo} on branch: ${branch}`);
         console.log('selectedBranch:', selectedBranch);
         console.log('GitHub auth status:', githubService.isAuth());
+        console.log('GitHub octokit:', !!githubService.octokit);
 
         // Fetch sushi-config.yaml
         const sushiConfigContent = await fetchSushiConfig(owner, repo, branch);
