@@ -129,17 +129,52 @@ const LandingPage = () => {
   // Initial authentication check - runs once on mount
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log('🚀 SGEX Workbench starting up...');
+      console.log('Initializing OAuth authentication system...');
+      
       // Load OAuth tokens from storage
       await oauthService.loadTokensFromStorage();
+      
+      // Validate OAuth configuration
+      const configValidation = oauthService.validateConfiguration();
+      console.log('OAuth configuration validation:', configValidation);
+      
+      if (!configValidation.valid) {
+        console.warn('⚠️ OAuth configuration issues detected:', configValidation.issues);
+        configValidation.issues.forEach(issue => {
+          console.warn(`   - ${issue.type}: ${issue.message} (${issue.solution})`);
+        });
+      } else {
+        console.log('✅ OAuth configuration appears valid');
+        
+        // Test connection to GitHub OAuth endpoints
+        try {
+          const connectionTest = await oauthService.testConnection();
+          console.log('GitHub OAuth connectivity test:', connectionTest);
+          
+          if (!connectionTest.reachable) {
+            console.error('❌ Cannot reach GitHub OAuth endpoints:', connectionTest.error);
+          } else {
+            console.log('✅ GitHub OAuth endpoints are reachable');
+          }
+        } catch (testError) {
+          console.warn('⚠️ Could not test GitHub OAuth connectivity:', testError.message);
+        }
+      }
       
       // Check if we have OAuth tokens
       const hasOAuthAccess = oauthService.hasAccess('READ_ONLY') || oauthService.hasAccess('WRITE_ACCESS');
       
       if (hasOAuthAccess) {
+        console.log('✅ Valid OAuth tokens found, enabling OAuth mode');
         // Enable OAuth mode
         githubService.enableOAuthMode();
         setIsAuthenticated(true);
+      } else {
+        console.log('ℹ️ No valid OAuth tokens found, user needs to authenticate');
       }
+      
+      console.log('🎯 SGEX Workbench initialization complete');
     };
 
     initializeAuth();
@@ -224,6 +259,59 @@ const LandingPage = () => {
             </p>
             
             <div className="auth-section">
+              <div className="startup-status">
+                <h3>🔧 System Configuration Status</h3>
+                <div className="status-checks">
+                  <div className="status-item">
+                    <span className="status-icon">
+                      {process.env.REACT_APP_GITHUB_CLIENT_ID && 
+                       process.env.REACT_APP_GITHUB_CLIENT_ID !== 'sgex-workbench-dev' ? '✅' : '❌'}
+                    </span>
+                    <div className="status-content">
+                      <strong>GitHub App Client ID</strong>
+                      <div className="status-detail">
+                        {process.env.REACT_APP_GITHUB_CLIENT_ID && 
+                         process.env.REACT_APP_GITHUB_CLIENT_ID !== 'sgex-workbench-dev' 
+                          ? 'Configured and ready' 
+                          : 'Not configured - OAuth authentication unavailable'}
+                      </div>
+                      {(!process.env.REACT_APP_GITHUB_CLIENT_ID || 
+                        process.env.REACT_APP_GITHUB_CLIENT_ID === 'sgex-workbench-dev') && (
+                        <div className="status-help">
+                          Create .env.local file with REACT_APP_GITHUB_CLIENT_ID=Iv1.your-client-id
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="status-item">
+                    <span className="status-icon">
+                      {process.env.NODE_ENV === 'development' ? '🔧' : '🚀'}
+                    </span>
+                    <div className="status-content">
+                      <strong>Environment</strong>
+                      <div className="status-detail">
+                        Running in {process.env.NODE_ENV || 'production'} mode
+                        {process.env.NODE_ENV === 'development' && ' with CORS proxy enabled'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="status-item">
+                    <span className="status-icon">ℹ️</span>
+                    <div className="status-content">
+                      <strong>Next Steps</strong>
+                      <div className="status-detail">
+                        {process.env.REACT_APP_GITHUB_CLIENT_ID && 
+                         process.env.REACT_APP_GITHUB_CLIENT_ID !== 'sgex-workbench-dev' 
+                          ? 'Ready to authenticate with GitHub OAuth' 
+                          : 'Configure GitHub App Client ID to enable OAuth authentication'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
               <OAuthLogin 
                 onAuthSuccess={handleOAuthSuccess}
               />

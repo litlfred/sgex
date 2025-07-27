@@ -110,21 +110,100 @@ class OAuthService {
     });
   }
 
-  // Start GitHub OAuth device flow
+  // Enhanced configuration validation
+  validateConfiguration() {
+    const issues = [];
+    
+    // Check Client ID
+    if (!GITHUB_CLIENT_ID || GITHUB_CLIENT_ID === 'sgex-workbench-dev') {
+      issues.push({
+        type: 'missing_client_id',
+        message: 'GitHub App Client ID not configured',
+        solution: 'Set REACT_APP_GITHUB_CLIENT_ID in .env.local'
+      });
+    } else if (!GITHUB_CLIENT_ID.startsWith('Iv1.') && !GITHUB_CLIENT_ID.startsWith('Iv23.')) {
+      issues.push({
+        type: 'invalid_client_id_format',
+        message: 'Client ID format appears invalid',
+        solution: 'GitHub App Client IDs should start with "Iv1." or "Iv23."'
+      });
+    }
+
+    // Check environment
+    if (process.env.NODE_ENV === 'development') {
+      console.log('OAuth Configuration Status:', {
+        clientId: GITHUB_CLIENT_ID.substring(0, 10) + '...',
+        environment: 'development',
+        corsProxy: 'enabled',
+        issues: issues.length > 0 ? issues : 'none'
+      });
+    }
+
+    return {
+      valid: issues.length === 0,
+      issues
+    };
+  }
+
+  // Test connection to GitHub OAuth endpoints
+  async testConnection() {
+    try {
+      console.log('Testing GitHub OAuth endpoint connectivity...');
+      
+      // Test with a minimal request that should fail gracefully
+      const response = await fetch(OAUTH_ENDPOINTS.DEVICE_CODE, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: 'test-connection',
+          scope: 'read:user',
+        }),
+      });
+
+      console.log('GitHub OAuth endpoint test result:', {
+        status: response.status,
+        statusText: response.statusText,
+        reachable: true
+      });
+
+      return {
+        reachable: true,
+        status: response.status,
+        message: response.status === 422 ? 'GitHub OAuth endpoints reachable' : 'Unexpected response'
+      };
+    } catch (error) {
+      console.error('GitHub OAuth endpoint test failed:', error);
+      return {
+        reachable: false,
+        error: error.message,
+        message: 'Cannot reach GitHub OAuth endpoints'
+      };
+    }
+  }
   async startDeviceFlow(accessLevel = 'READ_ONLY', repoOwner = null, repoName = null) {
     try {
-      // Check if client ID is configured
-      if (!GITHUB_CLIENT_ID || GITHUB_CLIENT_ID === 'sgex-workbench-dev') {
-        throw new Error('GitHub App Client ID not configured. Please set REACT_APP_GITHUB_CLIENT_ID in your .env.local file.');
+      console.log('Starting OAuth device flow...');
+      
+      // Enhanced configuration validation
+      const configValidation = this.validateConfiguration();
+      if (!configValidation.valid) {
+        const issue = configValidation.issues[0];
+        throw new Error(`${issue.message}. ${issue.solution}`);
       }
 
       const scopes = GITHUB_SCOPES[accessLevel] || GITHUB_SCOPES.READ_ONLY;
       const scopeString = scopes.join(' ');
 
-      console.log('Starting OAuth device flow with:', {
-        client_id: GITHUB_CLIENT_ID,
+      console.log('OAuth device flow configuration:', {
+        client_id: GITHUB_CLIENT_ID.substring(0, 10) + '...',
         scope: scopeString,
-        endpoint: OAUTH_ENDPOINTS.DEVICE_CODE
+        endpoint: OAUTH_ENDPOINTS.DEVICE_CODE,
+        accessLevel,
+        repoOwner,
+        repoName
       });
 
       // Initialize device flow
@@ -140,6 +219,12 @@ class OAuthService {
         }),
       });
 
+      console.log('GitHub OAuth response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('OAuth device flow error response:', {
@@ -152,12 +237,24 @@ class OAuthService {
         
         if (response.status === 422) {
           errorMessage = 'GitHub App configuration error. Please verify your GitHub App is properly configured with Device Flow enabled.';
+        } else if (response.status === 403) {
+          errorMessage = 'GitHub App access denied. Device Flow may not be enabled for this GitHub App.';
+        } else if (response.status === 404) {
+          errorMessage = 'GitHub App not found. Please verify your Client ID is correct.';
+        } else if (response.status >= 500) {
+          errorMessage = 'GitHub OAuth service temporarily unavailable. Please try again later.';
         }
         
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      
+      console.log('OAuth device flow started successfully:', {
+        user_code: data.user_code,
+        expires_in: data.expires_in,
+        interval: data.interval
+      });
       
       return {
         device_code: data.device_code,

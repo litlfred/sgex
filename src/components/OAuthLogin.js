@@ -3,28 +3,86 @@ import oauthService from '../services/oauthService';
 import { ACCESS_LEVELS } from '../services/tokenManagerService';
 import './OAuthLogin.css';
 
-// Development configuration display component
-const DevConfigDisplay = () => {
-  if (process.env.NODE_ENV !== 'development') return null;
-  
+// Configuration status display component
+const ConfigurationStatus = () => {
   const clientId = process.env.REACT_APP_GITHUB_CLIENT_ID || 'sgex-workbench-dev';
   const isConfigured = clientId && clientId !== 'sgex-workbench-dev';
+  const hasCorrectFormat = clientId && (clientId.startsWith('Iv1.') || clientId.startsWith('Iv23.'));
   
+  // Always show configuration status for transparency
   return (
-    <div style={{ 
-      background: isConfigured ? '#d4edda' : '#f8d7da', 
-      border: isConfigured ? '1px solid #c3e6cb' : '1px solid #f5c6cb',
-      color: isConfigured ? '#155724' : '#721c24',
-      padding: '8px 12px', 
-      borderRadius: '4px', 
-      fontSize: '12px', 
-      marginBottom: '16px',
-      fontFamily: 'monospace'
-    }}>
-      <strong>Dev Config:</strong> REACT_APP_GITHUB_CLIENT_ID = {clientId}
+    <div className="configuration-status">
+      <div className="config-header">
+        <h4>🔧 GitHub App Configuration Status</h4>
+      </div>
+      
+      <div className="config-checks">
+        <div className={`config-check ${isConfigured ? 'success' : 'error'}`}>
+          <span className="check-icon">{isConfigured ? '✅' : '❌'}</span>
+          <div className="check-content">
+            <strong>Client ID Configuration</strong>
+            <div className="check-details">
+              {isConfigured ? (
+                <>
+                  <div>✓ REACT_APP_GITHUB_CLIENT_ID is set</div>
+                  <div className="config-value">Current: {clientId.substring(0, 10)}...</div>
+                </>
+              ) : (
+                <>
+                  <div>✗ REACT_APP_GITHUB_CLIENT_ID not configured</div>
+                  <div className="config-value">Current: {clientId}</div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className={`config-check ${hasCorrectFormat ? 'success' : isConfigured ? 'warning' : 'error'}`}>
+          <span className="check-icon">{hasCorrectFormat ? '✅' : isConfigured ? '⚠️' : '❌'}</span>
+          <div className="check-content">
+            <strong>Client ID Format</strong>
+            <div className="check-details">
+              {hasCorrectFormat ? (
+                <div>✓ Valid GitHub App Client ID format</div>
+              ) : isConfigured ? (
+                <div>⚠️ Client ID format may be invalid (should start with 'Iv1.' or 'Iv23.')</div>
+              ) : (
+                <div>✗ Using default fallback ID</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="config-check info">
+          <span className="check-icon">ℹ️</span>
+          <div className="check-content">
+            <strong>Setup Requirements</strong>
+            <div className="check-details">
+              <div>• GitHub App must be created with Device Flow enabled</div>
+              <div>• OAuth callback URL configured (not required for Device Flow)</div>
+              <div>• Appropriate permissions granted (read:user, public_repo, repo)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {!isConfigured && (
-        <div style={{ marginTop: '4px' }}>
-          ⚠️ Create .env.local file with your GitHub App Client ID
+        <div className="config-actions">
+          <div className="config-step">
+            <strong>Quick Setup:</strong>
+            <ol>
+              <li>Create <code>.env.local</code> file in project root</li>
+              <li>Add: <code>REACT_APP_GITHUB_CLIENT_ID=Iv1.your-client-id</code></li>
+              <li>Restart development server: <code>npm start</code></li>
+            </ol>
+          </div>
+        </div>
+      )}
+
+      {process.env.NODE_ENV === 'development' && (
+        <div className="dev-info">
+          <strong>Development Mode:</strong> 
+          <span className="dev-value">CORS proxy enabled for localhost testing</span>
         </div>
       )}
     </div>
@@ -112,17 +170,53 @@ const OAuthLogin = ({ onAuthSuccess, requiredAccessLevel = 'READ_ONLY', repoOwne
     } catch (err) {
       console.error('Failed to start OAuth flow:', err);
       
-      // Check for specific configuration issues
+      // Enhanced error handling with specific troubleshooting
+      let errorMessage = '';
+      let troubleshooting = [];
+      
       if (err.message.includes('GitHub App Client ID not configured')) {
-        setError('⚠️ GitHub App Client ID not configured. Please create a .env.local file with REACT_APP_GITHUB_CLIENT_ID set to your GitHub App\'s client ID.');
+        errorMessage = '🔧 GitHub App Client ID not configured';
+        troubleshooting = [
+          'Create a .env.local file in your project root',
+          'Add: REACT_APP_GITHUB_CLIENT_ID=Iv1.your-client-id-here',
+          'Get your Client ID from https://github.com/settings/apps',
+          'Restart the development server: npm start'
+        ];
       } else if (err.message.includes('GitHub App configuration error') || err.message.includes('422')) {
-        setError('⚠️ GitHub App configuration error. Please verify your GitHub App is properly configured with Device Flow enabled.');
+        errorMessage = '⚙️ GitHub App configuration error';
+        troubleshooting = [
+          'Verify your GitHub App exists at https://github.com/settings/apps',
+          'Ensure Device Flow is enabled in your GitHub App settings',
+          'Check that your Client ID is correct and starts with "Iv1." or "Iv23."',
+          'Verify the GitHub App has the required permissions (read:user, public_repo, repo)'
+        ];
       } else if (err.message.includes('403') || err.message.includes('Device flow initiation failed')) {
-        setError('⚠️ GitHub App not configured. Please contact your administrator to set up the GitHub App for OAuth authentication.');
+        errorMessage = '🚫 GitHub App access denied';
+        troubleshooting = [
+          'Your GitHub App may not have Device Flow enabled',
+          'The Client ID may belong to a different type of GitHub App',
+          'Check your GitHub App permissions at https://github.com/settings/apps',
+          'Ensure the GitHub App is not suspended or restricted'
+        ];
+      } else if (err.message.includes('Failed to fetch') || err.message.includes('network')) {
+        errorMessage = '🌐 Network connectivity issue';
+        troubleshooting = [
+          'Check your internet connection',
+          'Verify GitHub is accessible: https://github.com',
+          'If using a proxy or VPN, try disabling it temporarily',
+          'Check browser console for additional network errors'
+        ];
       } else {
-        setError('⚠️ Failed to start authorization. Please check your connection and try again.');
+        errorMessage = '⚠️ Authentication initialization failed';
+        troubleshooting = [
+          'Check browser console for detailed error information',
+          'Verify your GitHub App configuration',
+          'Try refreshing the page and attempting again',
+          'Contact administrator if the issue persists'
+        ];
       }
       
+      setError({ message: errorMessage, troubleshooting });
       setIsAuthenticating(false);
     }
   };
@@ -248,24 +342,34 @@ const OAuthLogin = ({ onAuthSuccess, requiredAccessLevel = 'READ_ONLY', repoOwne
             You can always upgrade your permissions later.
           </p>
           
-          <DevConfigDisplay />
+          <ConfigurationStatus />
           
-          <div className="github-app-notice">
-            <div className="notice-header">
-              <span className="notice-icon">⚙️</span>
-              <strong>GitHub App Setup Required</strong>
-            </div>
-            <p>
-              This application uses GitHub App OAuth for secure authentication. 
-              A GitHub App must be configured by an administrator before OAuth will work.
-            </p>
-            <div className="notice-actions">
+          <div className="setup-resources">
+            <h4>📚 Setup Resources</h4>
+            <div className="resource-links">
               <a 
                 href="/sgex/docs/github-app-setup.md" 
                 target="_blank" 
-                className="setup-guide-link"
+                rel="noreferrer"
+                className="resource-link primary"
               >
                 📋 GitHub App Setup Guide
+              </a>
+              <a 
+                href="/sgex/docs/development-oauth-setup.md"
+                target="_blank"
+                rel="noreferrer"
+                className="resource-link"
+              >
+                🔧 Development Setup
+              </a>
+              <a 
+                href="https://github.com/settings/apps"
+                target="_blank"
+                rel="noreferrer"
+                className="resource-link"
+              >
+                ⚙️ GitHub Apps Settings
               </a>
             </div>
           </div>
@@ -313,16 +417,40 @@ const OAuthLogin = ({ onAuthSuccess, requiredAccessLevel = 'READ_ONLY', repoOwne
         </div>
 
         {error && (
-          <div className="error-message">
-            <span className="error-icon">⚠️</span>
-            <div className="error-content">
-              <div className="error-text">{error}</div>
-              {error.includes('GitHub App not configured') && (
-                <div className="error-help">
-                  <p>Contact your administrator to set up the GitHub App for OAuth authentication.</p>
-                  <p>Once configured, refresh this page and try again.</p>
-                </div>
-              )}
+          <div className="error-message enhanced">
+            <div className="error-header">
+              <span className="error-icon">🚨</span>
+              <div className="error-title">
+                {typeof error === 'string' ? error : error.message}
+              </div>
+            </div>
+            
+            {typeof error === 'object' && error.troubleshooting && (
+              <div className="error-troubleshooting">
+                <h5>🔍 Troubleshooting Steps:</h5>
+                <ol>
+                  {error.troubleshooting.map((step, index) => (
+                    <li key={index}>{step}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
+
+            <div className="error-actions">
+              <button 
+                onClick={() => setError('')}
+                className="dismiss-error-btn"
+              >
+                Dismiss
+              </button>
+              <a 
+                href="/sgex/docs/oauth-guide.md#troubleshooting"
+                target="_blank"
+                rel="noreferrer"
+                className="troubleshooting-guide-link"
+              >
+                📖 Full Troubleshooting Guide
+              </a>
             </div>
           </div>
         )}
