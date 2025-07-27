@@ -200,5 +200,81 @@ describe('GitHubService Repository Filtering', () => {
       // THIS SHOULD FAIL with current implementation - the repo gets included due to 'who' in description
       expect(result).toHaveLength(0);
     });
+
+    it('should include repositories with smart- prefix in fallback', async () => {
+      jest.setTimeout(10000); // Increase timeout for this test
+      
+      // This tests that legitimate DAK repositories like smart-ra are included
+      // even when sushi-config.yaml is not accessible
+      
+      // Mock authentication
+      githubService.authenticate('fake-token');
+
+      // Mock repositories with smart- prefix that should be included
+      const mockRepos = [
+        {
+          id: 1,
+          name: 'smart-ra',
+          owner: { login: 'litlfred' },
+          full_name: 'litlfred/smart-ra',
+          description: 'SMART Risk Assessment guidelines'
+        },
+        {
+          id: 2,
+          name: 'smart-trust-phw',
+          owner: { login: 'litlfred' },
+          full_name: 'litlfred/smart-trust-phw',
+          description: 'SMART Trust PHW guidelines'
+        },
+        {
+          id: 3,
+          name: 'smart-x', // Should be included (smart- prefix)
+          owner: { login: 'testuser' },
+          full_name: 'testuser/smart-x',
+          description: 'Some smart guideline'
+        },
+        {
+          id: 4,
+          name: 'smart', // Should NOT be included (too short, no dash)
+          owner: { login: 'testuser' },
+          full_name: 'testuser/smart',
+          description: 'Just smart'
+        }
+      ];
+
+      mockOctokit.rest.repos.listForUser.mockResolvedValue({
+        data: mockRepos
+      });
+
+      // Mock sushi-config.yaml not found for all repositories (trigger fallback)
+      mockOctokit.rest.repos.getContent.mockRejectedValue({ 
+        status: 404, 
+        message: 'Not Found' 
+      });
+
+      // Mock fallback repo.get calls with a flexible implementation
+      mockOctokit.rest.repos.get.mockImplementation(async (params) => {
+        const repo = mockRepos.find(r => r.name === params.repo);
+        if (repo) {
+          return {
+            data: {
+              name: repo.name,
+              description: repo.description,
+              topics: []
+            }
+          };
+        }
+        throw new Error('Repository not found');
+      });
+
+      const result = await githubService.getSmartGuidelinesRepositories('litlfred', 'user');
+
+      // Should include repositories with smart- prefix but exclude 'smart' without dash
+      expect(result).toHaveLength(3);
+      expect(result.find(repo => repo.name === 'smart-ra')).toBeDefined();
+      expect(result.find(repo => repo.name === 'smart-trust-phw')).toBeDefined();
+      expect(result.find(repo => repo.name === 'smart-x')).toBeDefined();
+      expect(result.find(repo => repo.name === 'smart')).toBeUndefined();
+    });
   });
 });

@@ -242,7 +242,9 @@ class GitHubService {
       // If it's a 404 (file not found), retry once more in case of temporary issues
       if (error.status === 404 && retryCount > 0) {
         console.warn(`File not found for ${owner}/${repo}, retrying... (${retryCount} attempts left)`);
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        // Use shorter delay in test environment
+        const delay = process.env.NODE_ENV === 'test' ? 10 : 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
         return this.checkSmartGuidelinesCompatibility(owner, repo, retryCount - 1);
       }
       
@@ -257,7 +259,7 @@ class GitHubService {
   }
 
   // Fallback method to check for SMART Guidelines compatibility using other indicators
-  // NOTE: This fallback should be very restrictive to avoid false positives
+  // NOTE: This fallback should be restrictive to avoid false positives but inclusive enough for legitimate DAK repos
   async checkSmartGuidelinesFallback(owner, repo) {
     try {
       // Get repository details to check topics and description
@@ -266,8 +268,7 @@ class GitHubService {
         repo,
       });
 
-      // Only use very specific and reliable indicators for DAK repositories
-      // Based on issue #125, we should be very strict about what constitutes a DAK repository
+      // Specific indicators that strongly suggest this is a DAK repository
       const strictSmartIndicators = [
         'smart-guidelines',      // Official WHO SMART Guidelines term
         'smart guidelines',      // Space variant of above
@@ -281,12 +282,16 @@ class GitHubService {
       const description = (data.description || '').toLowerCase();
       const repoName = repo.toLowerCase();
 
-      // Only check for very specific indicators that strongly suggest this is a DAK repository
+      // Check for very specific indicators that strongly suggest this is a DAK repository
       const hasStrictSmartIndicators = strictSmartIndicators.some(indicator => 
         topics.includes(indicator) || 
         description.includes(indicator.toLowerCase()) ||
         repoName.includes(indicator.replace(/[-\s.]/g, ''))
       );
+
+      // Check for repository names that start with "smart-" which are very likely DAK repositories
+      // This catches repositories like "smart-ra", "smart-trust-phw", etc.
+      const hasSmartPrefix = repoName.startsWith('smart-') && repoName.length > 6; // "smart-" + at least 1 char
 
       // Special case for repositories that are known to be legitimate DAK repositories
       // but may not have the sushi-config.yaml accessible due to temporary issues
@@ -297,10 +302,10 @@ class GitHubService {
         (repoName.includes('smartimmunizations') || repoName.includes('smarttrust'))
       );
 
-      const isCompatible = hasStrictSmartIndicators || isKnownDAKRepo;
+      const isCompatible = hasStrictSmartIndicators || hasSmartPrefix || isKnownDAKRepo;
 
       if (isCompatible) {
-        console.info(`Repository ${owner}/${repo} has strict SMART guidelines indicators, assuming compatible`);
+        console.info(`Repository ${owner}/${repo} has SMART guidelines indicators, assuming compatible`);
         return true;
       }
 
