@@ -769,6 +769,86 @@ class GitHubService {
       throw error;
     }
   }
+
+  // Create a commit with multiple files
+  async createCommit(owner, repo, branch, message, files) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      // Get the latest commit SHA
+      const { data: refData } = await this.octokit.rest.git.getRef({
+        owner,
+        repo,
+        ref: `heads/${branch}`
+      });
+      const latestCommitSha = refData.object.sha;
+
+      // Get the tree SHA from the latest commit
+      const { data: commitData } = await this.octokit.rest.git.getCommit({
+        owner,
+        repo,
+        commit_sha: latestCommitSha
+      });
+      const baseTreeSha = commitData.tree.sha;
+
+      // Create blobs for all files
+      const blobs = await Promise.all(
+        files.map(async (file) => {
+          const { data: blobData } = await this.octokit.rest.git.createBlob({
+            owner,
+            repo,
+            content: file.content,
+            encoding: 'utf-8'
+          });
+          return {
+            path: file.path,
+            mode: '100644',
+            type: 'blob',
+            sha: blobData.sha
+          };
+        })
+      );
+
+      // Create a new tree with the blobs
+      const { data: treeData } = await this.octokit.rest.git.createTree({
+        owner,
+        repo,
+        base_tree: baseTreeSha,
+        tree: blobs
+      });
+
+      // Create the commit
+      const { data: newCommitData } = await this.octokit.rest.git.createCommit({
+        owner,
+        repo,
+        message,
+        tree: treeData.sha,
+        parents: [latestCommitSha]
+      });
+
+      // Update the branch reference
+      await this.octokit.rest.git.updateRef({
+        owner,
+        repo,
+        ref: `heads/${branch}`,
+        sha: newCommitData.sha
+      });
+
+      return {
+        sha: newCommitData.sha,
+        html_url: `https://github.com/${owner}/${repo}/commit/${newCommitData.sha}`,
+        message: newCommitData.message,
+        author: newCommitData.author,
+        committer: newCommitData.committer
+      };
+    } catch (error) {
+      console.error('Failed to create commit:', error);
+      throw error;
+    }
+  }
+
   // Logout
   logout() {
     this.octokit = null;
