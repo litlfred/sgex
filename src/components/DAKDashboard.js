@@ -5,6 +5,7 @@ import branchContextService from '../services/branchContextService';
 import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import DAKStatusBox from './DAKStatusBox';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
@@ -24,9 +25,14 @@ const DAKDashboard = () => {
       const storedBranch = branchContextService.getSelectedBranch(repository);
       if (storedBranch) {
         setSelectedBranch(storedBranch);
+      } else if (profile && profile.login === 'demo-user') {
+        // For demo mode, set a default branch
+        const defaultBranch = repository.default_branch || 'main';
+        setSelectedBranch(defaultBranch);
+        branchContextService.setSelectedBranch(repository, defaultBranch);
       }
     }
-  }, [repository]);
+  }, [repository, profile]);
 
   // Check write permissions on mount
   useEffect(() => {
@@ -318,6 +324,16 @@ const DAKDashboard = () => {
             </p>
           </div>
 
+          {/* DAK Status Box - only show when repository and branch are selected */}
+          {repository && selectedBranch && (
+            <DAKStatusBox 
+              repository={repository}
+              selectedBranch={selectedBranch}
+              hasWriteAccess={hasWriteAccess}
+              profile={profile}
+            />
+          )}
+
           {/* Tab Navigation */}
           <div className="tab-navigation">
             <button 
@@ -452,22 +468,7 @@ const DAKDashboard = () => {
             </div>
           )}
 
-          <div className="dashboard-footer">
-            <div className="repo-actions">
-              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}`, '_blank')}>
-                <span>📂</span>
-                View on GitHub
-              </button>
-              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}/issues`, '_blank')}>
-                <span>🐛</span>
-                Issues
-              </button>
-              <button className="action-btn secondary" onClick={() => window.open(`https://github.com/${repository.full_name}/pulls`, '_blank')}>
-                <span>🔄</span>
-                Pull Requests
-              </button>
-            </div>
-          </div>
+
         </div>
       </div>
 
