@@ -248,17 +248,12 @@ const DAKDashboard = () => {
   return (
     <div className="dak-dashboard">
       <div className="dashboard-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
+        <div className="header-left">
+          <div className="who-branding">
+            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
+            <p className="subtitle">WHO SMART Guidelines Exchange</p>
+          </div>
+          <div className="repo-status">
             <div className="repo-info">
               <a 
                 href={`https://github.com/${repository.full_name}`}
@@ -271,7 +266,6 @@ const DAKDashboard = () => {
                 <span className="context-repo">{repository.name}</span>
                 <span className="external-link">↗</span>
               </a>
-              <span className="context-owner">@{profile.login}</span>
             </div>
             <div className="branch-info">
               <BranchSelector
@@ -287,6 +281,14 @@ const DAKDashboard = () => {
               </span>
             )}
           </div>
+        </div>
+        <div className="header-right">
+          <img 
+            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
+            alt="Profile" 
+            className="context-avatar" 
+          />
+          <span className="context-owner">@{profile.login}</span>
           <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
