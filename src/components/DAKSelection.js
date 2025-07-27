@@ -563,12 +563,6 @@ const DAKSelection = () => {
                         )}
                       </>
                     )}
-                    {isScanning && (
-                      <div className="scanning-indicator">
-                        <span className="scanning-icon">🔍</span>
-                        <span>Scanning in progress...</span>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
