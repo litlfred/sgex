@@ -215,4 +215,74 @@ describe('GitHubService', () => {
       expect(mockOctokit.rest.repos.getContent).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe('pagination support', () => {
+    it('should fetch all repositories across multiple pages', async () => {
+      githubService.authenticate('fake-token');
+
+      // Mock first page (100 repos)
+      const firstPageRepos = Array(100).fill(0).map((_, i) => ({
+        name: `repo${i}`,
+        owner: { login: 'testuser' },
+        full_name: `testuser/repo${i}`
+      }));
+
+      // Mock second page (50 repos)
+      const secondPageRepos = Array(50).fill(0).map((_, i) => ({
+        name: `repo${i + 100}`,
+        owner: { login: 'testuser' },
+        full_name: `testuser/repo${i + 100}`
+      }));
+
+      mockOctokit.rest.repos.listForUser
+        .mockResolvedValueOnce({ data: firstPageRepos })
+        .mockResolvedValueOnce({ data: secondPageRepos });
+
+      // Mock sushi-config.yaml checks to return false for all repos
+      mockOctokit.rest.repos.getContent.mockRejectedValue(new Error('Not Found'));
+
+      const result = await githubService.getSmartGuidelinesRepositories('testuser', 'user');
+
+      // Should have made 2 API calls for pagination
+      expect(mockOctokit.rest.repos.listForUser).toHaveBeenCalledTimes(2);
+      
+      // First call should be for page 1
+      expect(mockOctokit.rest.repos.listForUser).toHaveBeenNthCalledWith(1, {
+        username: 'testuser',
+        sort: 'updated',
+        per_page: 100,
+        page: 1
+      });
+
+      // Second call should be for page 2
+      expect(mockOctokit.rest.repos.listForUser).toHaveBeenNthCalledWith(2, {
+        username: 'testuser',
+        sort: 'updated',
+        per_page: 100,
+        page: 2
+      });
+
+      // Should have checked all 150 repositories
+      expect(mockOctokit.rest.repos.getContent).toHaveBeenCalledTimes(150);
+    });
+
+    it('should stop pagination when page returns less than 100 results', async () => {
+      githubService.authenticate('fake-token');
+
+      // Mock single page with 50 repos (less than 100)
+      const repos = Array(50).fill(0).map((_, i) => ({
+        name: `repo${i}`,
+        owner: { login: 'testuser' },
+        full_name: `testuser/repo${i}`
+      }));
+
+      mockOctokit.rest.repos.listForUser.mockResolvedValueOnce({ data: repos });
+      mockOctokit.rest.repos.getContent.mockRejectedValue(new Error('Not Found'));
+
+      await githubService.getSmartGuidelinesRepositories('testuser', 'user');
+
+      // Should have made only 1 API call since first page had < 100 results
+      expect(mockOctokit.rest.repos.listForUser).toHaveBeenCalledTimes(1);
+    });
+  });
 });

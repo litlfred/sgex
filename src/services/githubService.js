@@ -257,21 +257,34 @@ class GitHubService {
     }
 
     try {
-      let repositories;
-      if (type === 'user') {
-        const { data } = await this.octokit.rest.repos.listForUser({
-          username: owner,
-          sort: 'updated',
-          per_page: 100,
-        });
-        repositories = data;
-      } else {
-        const { data } = await this.octokit.rest.repos.listForOrg({
-          org: owner,
-          sort: 'updated',
-          per_page: 100,
-        });
-        repositories = data;
+      let repositories = [];
+      let page = 1;
+      let hasMorePages = true;
+
+      // Fetch all repositories using pagination
+      while (hasMorePages) {
+        let response;
+        if (type === 'user') {
+          response = await this.octokit.rest.repos.listForUser({
+            username: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        } else {
+          response = await this.octokit.rest.repos.listForOrg({
+            org: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        }
+
+        repositories = repositories.concat(response.data);
+        
+        // Check if there are more pages
+        hasMorePages = response.data.length === 100;
+        page++;
       }
 
       // Check each repository for SMART guidelines compatibility
@@ -300,21 +313,34 @@ class GitHubService {
     }
 
     try {
-      let repositories;
-      if (type === 'user') {
-        const { data } = await this.octokit.rest.repos.listForUser({
-          username: owner,
-          sort: 'updated',
-          per_page: 100,
-        });
-        repositories = data;
-      } else {
-        const { data } = await this.octokit.rest.repos.listForOrg({
-          org: owner,
-          sort: 'updated',
-          per_page: 100,
-        });
-        repositories = data;
+      let repositories = [];
+      let page = 1;
+      let hasMorePages = true;
+
+      // Fetch all repositories using pagination
+      while (hasMorePages) {
+        let response;
+        if (type === 'user') {
+          response = await this.octokit.rest.repos.listForUser({
+            username: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        } else {
+          response = await this.octokit.rest.repos.listForOrg({
+            org: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        }
+
+        repositories = repositories.concat(response.data);
+        
+        // Check if there are more pages
+        hasMorePages = response.data.length === 100;
+        page++;
       }
 
       // Process repositories concurrently with rate limiting and enhanced display
