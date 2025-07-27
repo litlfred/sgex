@@ -90,7 +90,7 @@
 }
 
 .dashboard-main {
-  background: #ffffff;
+  background: rgba(255, 107, 107, 0.1);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   overflow: hidden;
