@@ -82,6 +82,12 @@
   min-height: calc(100vh - 120px);
 }
 
+.content-container {
+  width: 100%;
+  max-width: 800px;
+  position: relative;
+}
+
 .welcome-section {
   text-align: center;
   max-width: 600px;
@@ -641,8 +647,12 @@
   background: #fff3cd;
   border: 1px solid #ffeaa7;
   border-radius: 8px;
-  margin: 1rem 0;
+  margin: 0 0 2.5rem 0;
   animation: slideInFromTop 0.3s ease-out;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 10;
+  transform: translateY(-8px);
 }
 
 .warning-content {
