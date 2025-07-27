@@ -267,7 +267,7 @@ const LandingPage = () => {
                       onClick={() => setShowPATLogin(false)}
                       className="switch-mode-btn"
                     >
-                      ← Use GitHub App OAuth (Recommended)
+                      ← Try GitHub App OAuth Again
                     </button>
                   </div>
                   
@@ -280,6 +280,7 @@ const LandingPage = () => {
                 <div>
                   <OAuthLogin 
                     onAuthSuccess={handleOAuthSuccess}
+                    onOAuthFailure={() => setShowPATLogin(true)}
                   />
                 </div>
               )}
@@ -312,27 +313,6 @@ const LandingPage = () => {
                 </a>{' '}
                 to learn more about SGEX Workbench and DAK components.
               </p>
-              
-              <div className="advanced-options">
-                <details className="advanced-details">
-                  <summary>Advanced Options</summary>
-                  <div className="advanced-content">
-                    <p>Having trouble with GitHub App OAuth? You can use a Personal Access Token instead:</p>
-                    <button 
-                      onClick={() => setShowPATLogin(true)}
-                      className="pat-fallback-btn"
-                    >
-                      🔑 Use Personal Access Token
-                    </button>
-                    <p className="note">
-                      <small>
-                        <strong>Note:</strong> OAuth is recommended for better security and user experience. 
-                        Only use PAT if OAuth is not available in your deployment.
-                      </small>
-                    </p>
-                  </div>
-                </details>
-              </div>
             </div>
           </div>
         </div>

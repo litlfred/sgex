@@ -73,6 +73,37 @@
   text-decoration: none;
 }
 
+.notice-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.notice-separator {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.pat-quick-access-btn {
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pat-quick-access-btn:hover {
+  background: #1565c0;
+}
+
 /* Access Level Options */
 .access-level-options {
   display: grid;
@@ -443,8 +474,46 @@
   padding: 1rem;
   margin: 1rem 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
+}
+
+.error-content {
+  flex: 1;
+}
+
+.error-text {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.error-help {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f5c6cb;
+}
+
+.error-help p {
+  margin: 0.5rem 0;
+  color: #721c24;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.fallback-btn {
+  background: #721c24;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background-color 0.2s ease;
+}
+
+.fallback-btn:hover {
+  background: #5a1419;
 }
 
 .error-icon {

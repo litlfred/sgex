@@ -3,7 +3,7 @@ import oauthService from '../services/oauthService';
 import { ACCESS_LEVELS } from '../services/tokenManagerService';
 import './OAuthLogin.css';
 
-const OAuthLogin = ({ onAuthSuccess, requiredAccessLevel = 'READ_ONLY', repoOwner = null, repoName = null }) => {
+const OAuthLogin = ({ onAuthSuccess, onOAuthFailure, requiredAccessLevel = 'READ_ONLY', repoOwner = null, repoName = null }) => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authFlow, setAuthFlow] = useState(null);
   const [error, setError] = useState('');
@@ -83,7 +83,21 @@ const OAuthLogin = ({ onAuthSuccess, requiredAccessLevel = 'READ_ONLY', repoOwne
       setAuthFlow(flowData);
     } catch (err) {
       console.error('Failed to start OAuth flow:', err);
-      setError('Failed to start authorization. Please check your connection and try again.');
+      
+      // Check if it's a GitHub App configuration issue
+      if (err.message.includes('403') || err.message.includes('Device flow initiation failed')) {
+        setError('GitHub App not configured. The OAuth feature requires a GitHub App to be set up by an administrator.');
+        
+        // Automatically redirect to PAT login after a delay if callback is provided
+        if (onOAuthFailure) {
+          setTimeout(() => {
+            onOAuthFailure();
+          }, 3000);
+        }
+      } else {
+        setError('Failed to start authorization. Please check your connection and try again.');
+      }
+      
       setIsAuthenticating(false);
     }
   };
@@ -211,20 +225,33 @@ const OAuthLogin = ({ onAuthSuccess, requiredAccessLevel = 'READ_ONLY', repoOwne
           
           <div className="github-app-notice">
             <div className="notice-header">
-              <span className="notice-icon">ℹ️</span>
-              <strong>GitHub App Required</strong>
+              <span className="notice-icon">⚙️</span>
+              <strong>Administrator Setup Required</strong>
             </div>
             <p>
               This deployment uses GitHub App OAuth for secure authentication. 
-              If you're the administrator, ensure a GitHub App is configured with your Client ID.
+              A GitHub App must be configured by an administrator before OAuth will work.
             </p>
-            <a 
-              href="/sgex/docs/github-app-setup.md" 
-              target="_blank" 
-              className="setup-guide-link"
-            >
-              📋 GitHub App Setup Guide
-            </a>
+            <div className="notice-actions">
+              <a 
+                href="/sgex/docs/github-app-setup.md" 
+                target="_blank" 
+                className="setup-guide-link"
+              >
+                📋 GitHub App Setup Guide
+              </a>
+              {onOAuthFailure && (
+                <>
+                  <span className="notice-separator">or</span>
+                  <button 
+                    onClick={onOAuthFailure}
+                    className="pat-quick-access-btn"
+                  >
+                    🔑 Use Personal Access Token Instead
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -272,7 +299,21 @@ const OAuthLogin = ({ onAuthSuccess, requiredAccessLevel = 'READ_ONLY', repoOwne
         {error && (
           <div className="error-message">
             <span className="error-icon">⚠️</span>
-            {error}
+            <div className="error-content">
+              <div className="error-text">{error}</div>
+              {error.includes('GitHub App not configured') && onOAuthFailure && (
+                <div className="error-help">
+                  <p>Don't worry! You can still use SGEX Workbench with a Personal Access Token while the administrator sets up the GitHub App.</p>
+                  <p><strong>Redirecting to PAT login in a few seconds...</strong></p>
+                  <button 
+                    onClick={onOAuthFailure}
+                    className="fallback-btn"
+                  >
+                    🔑 Switch to Personal Access Token Now
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
