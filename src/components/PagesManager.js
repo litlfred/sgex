@@ -47,40 +47,66 @@ const PagesManager = () => {
         return;
       }
 
-      // Add a small delay to ensure GitHub service is ready
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Retry logic for GitHub service authentication
+      let retries = 0;
+      const maxRetries = 3;
+      
+      while (retries < maxRetries) {
+        try {
+          setLoading(true);
+          setError(null);
 
-      try {
-        setLoading(true);
-        setError(null);
+          const owner = repository.owner?.login || repository.full_name.split('/')[0];
+          const repo = repository.name;
+          const branch = selectedBranch || 'main';
 
-        const owner = repository.owner?.login || repository.full_name.split('/')[0];
-        const repo = repository.name;
-        const branch = selectedBranch || 'main';
+          console.log(`Loading pages for ${owner}/${repo} on branch: ${branch} (attempt ${retries + 1})`);
+          console.log('selectedBranch:', selectedBranch);
+          console.log('GitHub auth status:', githubService.isAuth());
+          console.log('GitHub octokit:', !!githubService.octokit);
 
-        console.log(`Loading pages for ${owner}/${repo} on branch: ${branch}`);
-        console.log('selectedBranch:', selectedBranch);
-        console.log('GitHub auth status:', githubService.isAuth());
-        console.log('GitHub octokit:', !!githubService.octokit);
+          // Check if GitHub service is ready
+          if (!githubService.isAuth() || !githubService.octokit) {
+            if (retries < maxRetries - 1) {
+              console.log('GitHub service not ready, waiting...');
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              retries++;
+              continue;
+            } else {
+              throw new Error('GitHub service not authenticated after retries');
+            }
+          }
 
-        // Fetch sushi-config.yaml
-        const sushiConfigContent = await fetchSushiConfig(owner, repo, branch);
-        if (!sushiConfigContent) {
-          throw new Error(`sushi-config.yaml not found in repository on branch "${branch}"`);
+          // Fetch sushi-config.yaml
+          const sushiConfigContent = await fetchSushiConfig(owner, repo, branch);
+          if (!sushiConfigContent) {
+            throw new Error(`sushi-config.yaml not found in repository on branch "${branch}"`);
+          }
+        
+          // Parse pages from sushi-config.yaml
+          const parsedPages = parsePagesFromSushiConfig(sushiConfigContent);
+          
+          // Check if page files exist and get their status
+          const pagesWithStatus = await checkPagesExistence(owner, repo, branch, parsedPages);
+          
+          setPages(pagesWithStatus);
+          break; // Success, exit retry loop
+          
+        } catch (error) {
+          console.error('Failed to load pages:', error);
+          
+          if (retries < maxRetries - 1) {
+            retries++;
+            await new Promise(resolve => setTimeout(resolve, 500));
+            continue;
+          }
+          
+          // Final error after all retries
+          setError(error.message);
+        } finally {
+          setLoading(false);
         }
-        
-        // Parse pages from sushi-config.yaml
-        const parsedPages = parsePagesFromSushiConfig(sushiConfigContent);
-        
-        // Check if page files exist and get their status
-        const pagesWithStatus = await checkPagesExistence(owner, repo, branch, parsedPages);
-        
-        setPages(pagesWithStatus);
-      } catch (error) {
-        console.error('Failed to load pages:', error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
+        break;
       }
     };
 
