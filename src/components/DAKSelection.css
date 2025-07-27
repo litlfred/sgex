@@ -676,6 +676,41 @@
   background: linear-gradient(135deg, rgba(0, 120, 212, 0.1) 0%, rgba(0, 120, 212, 0.05) 100%);
 }
 
+/* Unified scanning status styles */
+.unified-scanning-status {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.scanning-header-unified {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.currently-testing-unified {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.75rem;
+  background: rgba(0, 120, 212, 0.1);
+  border-radius: 8px;
+  border-left: 4px solid #0078d4;
+}
+
+.currently-testing-unified .scanning-icon {
+  font-size: 1.2rem;
+  animation: scanning 2s linear infinite;
+}
+
+.currently-testing-unified > span:nth-child(2) {
+  color: white;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
 .scanning-section-title {
   display: flex;
   align-items: center;
@@ -710,7 +745,7 @@
 
 .repo-status-indicator {
   font-size: 0.9rem;
-  animation: flash 1.5s ease-in-out infinite;
+  /* Animation removed per user feedback - no rotation for status icons */
 }
 
 .scanning-repo-name {
@@ -748,7 +783,7 @@
 
 .status-icon {
   font-size: 1rem;
-  animation: scanning 2s linear infinite;
+  /* Animation removed per user feedback - no rotation for status icons */
 }
 
 @keyframes scanning {
@@ -765,7 +800,24 @@
 .progress-stats {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(40, 167, 69, 0.1);
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+}
+
+.progress-stats .progress-text {
+  color: white;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.progress-stats .progress-percentage {
+  font-weight: 600;
+  color: #28a745;
+  font-size: 1.1rem;
 }
 
 .scanning-note {

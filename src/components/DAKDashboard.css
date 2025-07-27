@@ -85,6 +85,9 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  background-color: #548ad1;
+  padding: 0.5rem;
+  border-radius: 6px;
 }
 
 .nav-link {
@@ -138,6 +141,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  background-color: #548ad1;
+  padding: 0.5rem;
+  border-radius: 6px;
 }
 
 .header-branch-selector {
@@ -186,7 +192,7 @@
 
 .context-owner {
   font-size: 0.8rem;
-  opacity: 0.8;
+  color: white;
 }
 
 .dashboard-content {
@@ -204,7 +210,7 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.9);
+  color: #041c4d;
   cursor: pointer;
   text-decoration: underline;
   font-size: 1rem;
@@ -212,7 +218,8 @@
 }
 
 .breadcrumb-link:hover {
-  color: white;
+  color: #041c4d;
+  text-decoration: underline;
 }
 
 .breadcrumb-separator {
@@ -221,7 +228,7 @@
 }
 
 .breadcrumb-current {
-  color: white;
+  color: #041c4d;
   font-weight: 500;
 }
 
@@ -245,46 +252,11 @@
 .dashboard-intro p {
   font-size: 1.1rem;
   opacity: 0.9;
-  max-width: 600px;
+  width: 100%;
   margin: 0 auto;
   line-height: 1.6;
 }
 
-.components-legend {
-  display: flex;
-  justify-content: center;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.95rem;
-}
-
-.legend-badge {
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.legend-badge.level-2,
-.legend-badge.l2 {
-  background: linear-gradient(135deg, #0078d4, #005a9e);
-  color: white;
-}
-
-.legend-badge.level-3,
-.legend-badge.l3 {
-  background: linear-gradient(135deg, #881798, #6b1785);
-  color: white;
-}
 
 /* Tab Navigation Styles */
 .tab-navigation {
@@ -337,24 +309,7 @@
   text-align: center;
 }
 
-.tab-badge {
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
 
-.tab-badge.core {
-  background: rgba(0, 120, 212, 0.8);
-  color: white;
-}
-
-.tab-badge.additional {
-  background: rgba(136, 23, 152, 0.8);
-  color: white;
-}
 
 /* Section Styles */
 .components-section {
@@ -459,30 +414,7 @@
   line-height: 1;
 }
 
-.component-badge {
-  flex-shrink: 0;
-}
 
-.level-badge {
-  padding: 0.3rem 0.7rem;
-  border-radius: 16px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.level-badge.level-2,
-.level-badge.l2 {
-  background: rgba(0, 120, 212, 0.8);
-  color: white;
-}
-
-.level-badge.level-3,
-.level-badge.l3 {
-  background: rgba(136, 23, 152, 0.8);
-  color: white;
-}
 
 .component-content h3,
 .component-content h4 {
@@ -837,6 +769,178 @@
 .component-card:nth-child(6) { animation-delay: 0.6s; }
 .component-card:nth-child(7) { animation-delay: 0.7s; }
 .component-card:nth-child(8) { animation-delay: 0.8s; }
+
+/* GitHub Workflows Section */
+.workflows-section {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.workflows-loading, .workflows-error, .workflows-empty {
+  text-align: center;
+  padding: 3rem;
+  color: white;
+}
+
+.workflows-loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+.workflows-error h4, .workflows-empty h4 {
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.workflows-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+  padding: 0;
+}
+
+.workflow-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  animation: slideInUp 0.6s ease-out;
+}
+
+.workflow-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+.workflow-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.workflow-icon {
+  font-size: 2rem;
+  color: #0078d4;
+}
+
+.workflow-info h4 {
+  margin: 0;
+  color: #24292e;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.workflow-filename {
+  color: #586069;
+  font-size: 0.9rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.workflow-content {
+  margin-bottom: 1.5rem;
+}
+
+.workflow-triggers {
+  margin-bottom: 1rem;
+}
+
+.workflow-triggers label {
+  display: block;
+  color: #24292e;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.trigger-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.trigger-tag {
+  padding: 0.3rem 0.6rem;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
+}
+
+.trigger-tag.trigger-push {
+  background: #28a745;
+}
+
+.trigger-tag.trigger-pull_request {
+  background: #0366d6;
+}
+
+.trigger-tag.trigger-schedule {
+  background: #6f42c1;
+}
+
+.trigger-tag.trigger-manual {
+  background: #f66a0a;
+}
+
+.trigger-tag:not([class*="trigger-"]) {
+  background: #6a737d;
+}
+
+.workflow-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.meta-label {
+  color: #586069;
+  font-weight: 500;
+  font-size: 0.85rem;
+  min-width: 60px;
+}
+
+.meta-value {
+  color: #24292e;
+  font-size: 0.85rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  word-break: break-all;
+}
+
+.workflow-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.action-btn.small {
+  padding: 0.5rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+/* Tab badge styles for workflows */
+.tab-badge.workflows {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #1a1a1a;
+}
 
 /* Loading and Error States */
 .loading-state,

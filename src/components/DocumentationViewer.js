@@ -11,8 +11,7 @@ const docFiles = {
   'architecture': { file: 'solution-architecture.md', title: 'Solution Architecture' },
   'project-plan': { file: 'project-plan.md', title: 'Project Plan' },
   'bpmn-integration': { file: 'bpmn-integration.md', title: 'BPMN Integration' },
-  'qa-testing': { file: 'qa-testing.md', title: 'QA Testing Guide' },
-  'qa-report': { file: 'qa-report.html', title: 'QA Testing Report', isHtml: true },
+  'qa-report': { file: 'qa-report.html', title: 'QA Report', isHtml: true },
   'issues-analysis': { file: 'github-issues-analysis.md', title: 'GitHub Issues Analysis' }
 };
 
@@ -31,14 +30,17 @@ const DocumentationViewer = () => {
       try {
         const docInfo = docFiles[docId] || docFiles['overview'];
 
-        // For HTML files, redirect to the HTML file directly
+        // For HTML files, open in a new tab to avoid navigation conflicts
         if (docInfo.isHtml) {
           // Check if file exists first
           try {
             const checkResponse = await fetch(`${process.env.PUBLIC_URL}/docs/${docInfo.file}`, { method: 'HEAD' });
             if (checkResponse.ok) {
-              // File exists, redirect to it
-              window.location.href = `${process.env.PUBLIC_URL}/docs/${docInfo.file}`;
+              // File exists, open in new tab to avoid server conflicts
+              window.open(`${process.env.PUBLIC_URL}/docs/${docInfo.file}`, '_blank');
+              // Show message in current tab
+              setContent(`# ${docInfo.title}\n\nThe QA report has been opened in a new tab.\n\nIf it didn't open automatically, you can access it here: [${docInfo.file}](${process.env.PUBLIC_URL}/docs/${docInfo.file})`);
+              setLoading(false);
               return;
             } else {
               // File doesn't exist, show helpful message

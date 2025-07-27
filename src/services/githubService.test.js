@@ -26,8 +26,14 @@ describe('GitHubService', () => {
     
     Octokit.mockImplementation(() => mockOctokit);
     
-    // Reset service state
+    // Reset service state and clear cache
     githubService.logout();
+    
+    // Clear the repository compatibility cache
+    const repositoryCompatibilityCache = require('../utils/repositoryCompatibilityCache');
+    if (repositoryCompatibilityCache.default && repositoryCompatibilityCache.default.clear) {
+      repositoryCompatibilityCache.default.clear();
+    }
   });
 
   afterEach(() => {
@@ -82,7 +88,7 @@ describe('GitHubService', () => {
       expect(result[0].smart_guidelines_compatible).toBe(true);
     });
 
-    it('should handle errors gracefully when checking sushi-config.yaml', async () => {
+    it('should handle errors gracefully when checking sushi-config.yaml (strict mode)', async () => {
       // Mock authentication
       githubService.authenticate('fake-token');
 
@@ -102,27 +108,16 @@ describe('GitHubService', () => {
         data: mockRepos
       });
 
-      // Mock network error when checking sushi-config.yaml, but success for fallback
+      // Mock network error when checking sushi-config.yaml
       mockOctokit.rest.repos.getContent.mockRejectedValue({ 
         status: 429, 
         message: 'rate limit exceeded' 
       });
-      
-      // Mock fallback repository details call
-      mockOctokit.rest.repos.get.mockResolvedValue({
-        data: {
-          name: 'smart-trust-phw',
-          description: 'A SMART guidelines repository',
-          topics: ['smart-guidelines', 'who', 'dak']
-        }
-      });
 
       const result = await githubService.getSmartGuidelinesRepositories('litlfred', 'user');
 
-      // Should now return the repository using fallback indicators
-      expect(result).toHaveLength(1);
-      expect(result[0].name).toBe('smart-trust-phw');
-      expect(result[0].smart_guidelines_compatible).toBe(true);
+      // With strict filtering, should return no repositories when sushi-config.yaml is not accessible
+      expect(result).toHaveLength(0);
     });
   });
 
@@ -183,7 +178,7 @@ describe('GitHubService', () => {
       expect(result).toBe(false);
     });
 
-    it('should use fallback method when rate limited', async () => {
+    it('should return false when rate limited (no fallback)', async () => {
       githubService.authenticate('fake-token');
 
       // Mock rate limit error
@@ -192,18 +187,10 @@ describe('GitHubService', () => {
         message: 'rate limit exceeded' 
       });
 
-      // Mock successful fallback
-      mockOctokit.rest.repos.get.mockResolvedValue({
-        data: {
-          name: 'smart-trust-phw',
-          description: 'A SMART guidelines repository',
-          topics: ['smart-guidelines', 'dak']
-        }
-      });
+      const result = await githubService.checkSmartGuidelinesCompatibility('litlfred', 'rate-limited-repo');
 
-      const result = await githubService.checkSmartGuidelinesCompatibility('litlfred', 'smart-trust-phw');
-
-      expect(result).toBe(true);
+      // With strict filtering, rate limiting should result in false
+      expect(result).toBe(false);
     });
 
     it('should retry on 404 errors', async () => {
@@ -229,53 +216,73 @@ describe('GitHubService', () => {
     });
   });
 
-  describe('checkSmartGuidelinesFallback', () => {
-    it('should return true for repository with SMART guidelines topics', async () => {
+  describe('pagination support', () => {
+    it('should fetch all repositories across multiple pages', async () => {
       githubService.authenticate('fake-token');
 
-      mockOctokit.rest.repos.get.mockResolvedValue({
-        data: {
-          name: 'test-repo',
-          description: 'A test repository',
-          topics: ['smart-guidelines', 'fhir', 'who']
-        }
+      // Mock first page (100 repos)
+      const firstPageRepos = Array(100).fill(0).map((_, i) => ({
+        name: `repo${i}`,
+        owner: { login: 'testuser' },
+        full_name: `testuser/repo${i}`
+      }));
+
+      // Mock second page (50 repos)
+      const secondPageRepos = Array(50).fill(0).map((_, i) => ({
+        name: `repo${i + 100}`,
+        owner: { login: 'testuser' },
+        full_name: `testuser/repo${i + 100}`
+      }));
+
+      mockOctokit.rest.repos.listForUser
+        .mockResolvedValueOnce({ data: firstPageRepos })
+        .mockResolvedValueOnce({ data: secondPageRepos });
+
+      // Mock sushi-config.yaml checks to return false for all repos
+      mockOctokit.rest.repos.getContent.mockRejectedValue(new Error('Not Found'));
+
+      const result = await githubService.getSmartGuidelinesRepositories('testuser', 'user');
+
+      // Should have made 2 API calls for pagination
+      expect(mockOctokit.rest.repos.listForUser).toHaveBeenCalledTimes(2);
+      
+      // First call should be for page 1
+      expect(mockOctokit.rest.repos.listForUser).toHaveBeenNthCalledWith(1, {
+        username: 'testuser',
+        sort: 'updated',
+        per_page: 100,
+        page: 1
       });
 
-      const result = await githubService.checkSmartGuidelinesFallback('litlfred', 'test-repo');
+      // Second call should be for page 2
+      expect(mockOctokit.rest.repos.listForUser).toHaveBeenNthCalledWith(2, {
+        username: 'testuser',
+        sort: 'updated',
+        per_page: 100,
+        page: 2
+      });
 
-      expect(result).toBe(true);
+      // Should have checked all 150 repositories
+      expect(mockOctokit.rest.repos.getContent).toHaveBeenCalledTimes(150);
     });
 
-    it('should return true for repository with SMART guidelines in description', async () => {
+    it('should stop pagination when page returns less than 100 results', async () => {
       githubService.authenticate('fake-token');
 
-      mockOctokit.rest.repos.get.mockResolvedValue({
-        data: {
-          name: 'test-repo',
-          description: 'This is a digital adaptation kit for WHO SMART guidelines',
-          topics: []
-        }
-      });
+      // Mock single page with 50 repos (less than 100)
+      const repos = Array(50).fill(0).map((_, i) => ({
+        name: `repo${i}`,
+        owner: { login: 'testuser' },
+        full_name: `testuser/repo${i}`
+      }));
 
-      const result = await githubService.checkSmartGuidelinesFallback('litlfred', 'test-repo');
+      mockOctokit.rest.repos.listForUser.mockResolvedValueOnce({ data: repos });
+      mockOctokit.rest.repos.getContent.mockRejectedValue(new Error('Not Found'));
 
-      expect(result).toBe(true);
-    });
+      await githubService.getSmartGuidelinesRepositories('testuser', 'user');
 
-    it('should return false for repository without SMART guidelines indicators', async () => {
-      githubService.authenticate('fake-token');
-
-      mockOctokit.rest.repos.get.mockResolvedValue({
-        data: {
-          name: 'regular-repo',
-          description: 'Just a regular repository',
-          topics: ['javascript', 'node']
-        }
-      });
-
-      const result = await githubService.checkSmartGuidelinesFallback('litlfred', 'regular-repo');
-
-      expect(result).toBe(false);
+      // Should have made only 1 API call since first page had < 100 results
+      expect(mockOctokit.rest.repos.listForUser).toHaveBeenCalledTimes(1);
     });
   });
 

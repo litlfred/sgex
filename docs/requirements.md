@@ -4,7 +4,25 @@
 
 The SMART Guidelines Exchange (SGEX) Workbench is a browser-based, static web application designed for collaborative editing of WHO SMART Guidelines Digital Adaptation Kits (DAKs) content stored in GitHub repositories.
 
-## 1.1 System Actors
+### 1.1 Definition of a WHO SMART Guidelines Digital Adaptation Kit
+
+A **GitHub Repository which is a WHO SMART Guidelines Digital Adaptation Kit** is defined as one that:
+
+1. **Has a `sushi-config.yaml` file in the root of the repository**
+2. **If found, it should parse the YAML and look for the key 'dependencies' which is a list and which should have a key 'smart.who.int.base'**
+
+This definition ensures that only repositories that are genuinely WHO SMART Guidelines Digital Adaptation Kits are recognized and processed by the SGEX Workbench, providing a clear and technical validation mechanism.
+
+**Example**: A valid DAK repository should have a `sushi-config.yaml` file with content similar to:
+```yaml
+dependencies:
+  smart.who.int.base: current
+  # ... other dependencies
+```
+
+For reference, see the WHO DAK repository example at: https://github.com/WorldHealthOrganization/smart-immunizations/blob/main/sushi-config.yaml
+
+## 1.2 System Actors
 
 The SGEX Workbench operates within an ecosystem of actors that collaborate to enable effective DAK management and editing:
 
@@ -381,6 +399,111 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - GitHub REST API stability
 - Third-party library maintenance (bpmn-js, dmn-js, JSON Forms)
 - WHO SMART Guidelines branding materials availability
+
+## 9. Staging Ground for DAK Changes
+
+### 9.1 Overview
+
+**REQ-STAGING-001**: The system SHALL provide a "Staging Ground" for managing local DAK changes before committing to GitHub
+- The staging ground serves as a temporary workspace for DAK authors to make and validate changes
+- All changes must pass compliance validation before being committed to the repository
+- Local changes are stored in browser localStorage with timestamp and rollback capabilities
+- Staging ground integrates with all DAK component editing tools
+
+### 9.2 Data Structure
+
+**REQ-STAGING-002**: The system SHALL maintain a structured data dictionary for staging ground with the following properties:
+- **message**: A commit message provided by the DAK Author when saving changes
+- **files**: Array of file objects containing:
+  - **path**: Relative path of the file within the repository
+  - **content**: Full file content (editing tools provide complete files, not diffs)
+  - **metadata**: Additional metadata necessary for commit operations
+  - **timestamp**: When the file was last modified in staging
+- **timestamp**: Overall timestamp when the staging ground was last updated
+- **branch**: Target branch for the changes
+
+**REQ-STAGING-003**: The system SHALL support multiple timestamped saves in local storage
+- Each save operation creates a separate entry with timestamp
+- DAK authors can roll back to earlier saved versions
+- Local storage manages versioning and cleanup of old saves
+
+### 9.3 Compliance Validation
+
+**REQ-STAGING-004**: The system SHALL provide comprehensive compliance validation with three severity levels:
+- **Error**: Compliance failures that block commit/save operations
+- **Warning**: Issues that should be addressed but don't prevent saving
+- **Info**: Informational messages about best practices or suggestions
+
+**REQ-STAGING-005**: The system SHALL support validation execution in multiple environments:
+- **Client-side in React**: Real-time validation in SGeX Workbench interface
+- **Command-line**: For users working with git checkout and command-line tools
+- **IDE integration**: For users editing in their preferred development environment
+
+**REQ-STAGING-006**: The system SHALL block save operations when error-level validation failures exist
+- Save button remains disabled until errors are resolved
+- Optional override mechanism (disabled by default) allows saving despite errors
+- Clear error messages guide users toward resolution
+
+### 9.4 User Interface
+
+**REQ-STAGING-007**: The system SHALL display staging ground status in the DAK Dashboard through a collapsible interface:
+- **Title bar** (always visible) showing:
+  - Status indicator badge with number of files changed
+  - Horizontal stoplight validation indicator with severity badges:
+    - Red: Number of error-level compliance test failures
+    - Amber/Orange: Number of warning-level compliance test failures  
+    - Green: Number of info-level compliance test results
+  - Colors light up only when no failures exist for that severity level
+- **Expanded content** (initially collapsed) showing:
+  - Detailed list of changed files
+  - Validation results with specific messages
+  - Save button and commit message interface
+
+**REQ-STAGING-008**: The system SHALL provide a save dialog interface:
+- Commit message input field (required)
+- Validation status display with expansion for details
+- Option to override error-level validations (disabled by default)
+- Clear error handling with user-friendly resolution guidance
+
+### 9.5 Integration Interfaces
+
+**REQ-STAGING-009**: The system SHALL provide standardized interfaces for DAK component editing tools:
+- **File contribution interface**: Allows editing tools to add/update files in staging ground
+- **Status query interface**: Tools can check current staging ground state
+- **Validation trigger interface**: Tools can request validation of their contributions
+
+**REQ-STAGING-010**: The system SHALL support integration with existing DAK editing workflows:
+- BPMN editor integration for business process files
+- DMN editor integration for decision support logic
+- Form-based editors for structured DAK components
+- File browser integration for direct file modifications
+
+### 9.6 Persistence and Versioning
+
+**REQ-STAGING-011**: The system SHALL implement robust local storage management:
+- Browser localStorage for client-side persistence
+- Automatic cleanup of old saves (configurable retention period)
+- Conflict detection when multiple browser tabs modify the same DAK
+- Export/import functionality for staging ground state
+
+**REQ-STAGING-012**: The system SHALL support rollback to previous saves:
+- List of available save points with timestamps
+- Preview capability showing changes between saves
+- One-click rollback to any previous save state
+- Confirmation dialogs to prevent accidental data loss
+
+### 9.7 GitHub Integration
+
+**REQ-STAGING-013**: The system SHALL seamlessly integrate staging ground with GitHub operations:
+- Staging ground changes translate directly to GitHub commit operations
+- Branch selection and creation through staging ground interface
+- Pull request creation workflow incorporating staged changes
+- Conflict resolution when remote changes affect staged files
+
+**REQ-STAGING-014**: The system SHALL maintain consistency between staging ground and repository state:
+- Detection of conflicts with remote changes
+- Merge capabilities for non-conflicting changes
+- Clear indicators when staging ground is out of sync with selected branch
 
 ---
 

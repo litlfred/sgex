@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
+import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
 import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
@@ -32,62 +33,92 @@ const DAKDashboard = () => {
           setLoading(true);
           setError(null);
 
-          // For URL-based access, always try to fetch the actual repository data first
-          // This ensures that URLs like /dashboard/WorldHealthOrganization/repo work
-          // regardless of current authentication state
-          
-          // Fetch user profile from URL parameter
+          // Check if githubService is authenticated (allow demo mode to proceed without auth)
+          if (!githubService.isAuth()) {
+            // In demo mode, use the DAK validation service for demo repositories
+            if (window.location.pathname.includes('/dashboard/')) {
+              const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
+              
+              if (!isValidDAK) {
+                navigate('/', { 
+                  state: { 
+                    warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
+                  } 
+                });
+                return;
+              }
+
+              const demoProfile = {
+                login: user,
+                name: user.charAt(0).toUpperCase() + user.slice(1),
+                avatar_url: `https://github.com/${user}.png`,
+                type: 'User',
+                isDemo: true
+              };
+
+              const demoRepository = {
+                name: repo,
+                full_name: `${user}/${repo}`,
+                owner: { login: user },
+                default_branch: branch || 'main',
+                html_url: `https://github.com/${user}/${repo}`,
+                isDemo: true
+              };
+
+              setProfile(demoProfile);
+              setRepository(demoRepository);
+              setSelectedBranch(branch || 'main');
+              setLoading(false);
+              return;
+            } else {
+              setError('GitHub authentication required. Please authenticate first.');
+              setLoading(false);
+              return;
+            }
+          }
+
+          // Fetch user profile
           let userProfile = null;
           try {
             const userResponse = await githubService.getUser(user);
             userProfile = userResponse;
           } catch (err) {
-            console.error('Error fetching user from URL:', err);
-            // If we can't fetch the user, fall back to demo mode
-            console.log('Falling back to demo mode for user:', user);
-            
-            const demoProfile = {
-              login: user,
-              name: user.charAt(0).toUpperCase() + user.slice(1),
-              avatar_url: `https://github.com/${user}.png`,
-              type: 'User',
-              isDemo: true
-            };
-
-            const demoRepository = {
-              name: repo,
-              full_name: `${user}/${repo}`,
-              owner: { login: user },
-              default_branch: branch || 'main',
-              html_url: `https://github.com/${user}/${repo}`,
-              isDemo: true
-            };
-
-            setProfile(demoProfile);
-            setRepository(demoRepository);
-            setSelectedBranch(branch || 'main');
-            
-            console.log('DAKDashboard - Demo mode repository created (after user fetch failed):', {
-              name: demoRepository.name,
-              full_name: demoRepository.full_name,
-              owner: demoRepository.owner,
-              isDemo: demoRepository.isDemo,
-              html_url: demoRepository.html_url
+            console.error('Error fetching user:', err);
+            // Redirect to landing page with warning message
+            navigate('/', { 
+              state: { 
+                warningMessage: `Could not access the requested DAK. User '${user}' not found or not accessible.` 
+              } 
             });
-            
-            setLoading(false);
             return;
           }
 
-          // Fetch repository data from URL parameter
+          // Fetch repository
           let repoData = null;
           try {
             const repoResponse = await githubService.getRepository(user, repo);
             repoData = repoResponse;
           } catch (err) {
-            console.error('Error fetching repository from URL:', err);
-            setError(`Repository '${user}/${repo}' not found or not accessible.`);
-            setLoading(false);
+            console.error('Error fetching repository:', err);
+            // Redirect to landing page with warning message
+            navigate('/', { 
+              state: { 
+                warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
+              } 
+            });
+            return;
+          }
+
+          // Validate that this is actually a DAK repository
+          const isValidDAK = await dakValidationService.validateDAKRepository(user, repo, branch || repoData.default_branch);
+          
+          if (!isValidDAK) {
+            console.log(`Repository ${user}/${repo} is not a valid DAK repository`);
+            navigate('/', { 
+              state: { 
+                warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
+              } 
+            });
             return;
           }
 
@@ -106,20 +137,6 @@ const DAKDashboard = () => {
 
           setProfile(userProfile);
           setRepository(repoData);
-          
-          console.log('DAKDashboard - Authenticated mode repository set:', {
-            name: repoData.name,
-            full_name: repoData.full_name,
-            owner: repoData.owner,
-            isDemo: repoData.isDemo,
-            html_url: repoData.html_url
-          });
-          console.log('DAKDashboard - Authenticated mode profile set:', {
-            login: userProfile.login,
-            name: userProfile.name,
-            isDemo: userProfile.isDemo
-          });
-          
           setLoading(false);
         } catch (err) {
           console.error('Error fetching data from URL params:', err);
@@ -132,7 +149,7 @@ const DAKDashboard = () => {
     };
 
     fetchDataFromUrlParams();
-  }, [user, repo, branch, profile, repository]);
+  }, [user, repo, branch, profile, repository, navigate]);
 
   // Initialize selected branch from session context
   useEffect(() => {
@@ -169,6 +186,8 @@ const DAKDashboard = () => {
 
     checkPermissions();
   }, [repository, profile]);
+
+
 
   // Define the 8 core DAK components based on WHO SMART Guidelines documentation
   const coreDAKComponents = [
@@ -265,6 +284,16 @@ const DAKDashboard = () => {
   // Additional Structured Knowledge Representations
   const additionalComponents = [
     {
+      id: 'pages',
+      name: 'Pages',
+      description: 'Published page content and documentation defined in sushi-config.yaml',
+      icon: '📄',
+      type: 'Content',
+      color: '#8b5cf6',
+      fileTypes: ['Markdown', 'HTML'],
+      count: 0
+    },
+    {
       id: 'terminology',
       name: 'Terminology',
       description: 'Code systems, value sets, and concept maps',
@@ -325,22 +354,39 @@ const DAKDashboard = () => {
   const handleComponentClick = (component) => {
     // For business processes, navigate to selection page without permission check
     if (component.id === 'business-processes') {
-      console.log('DAKDashboard - Navigating to business-process-selection with data:', {
-        repository: {
-          name: repository.name,
-          full_name: repository.full_name,
-          owner: repository.owner,
-          isDemo: repository.isDemo
-        },
-        profile: {
-          login: profile.login,
-          name: profile.name,
-          isDemo: profile.isDemo
-        },
-        selectedBranch
-      });
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/business-process-selection/${owner}/${repoName}/${selectedBranch}`
+        : `/business-process-selection/${owner}/${repoName}`;
       
-      navigate('/business-process-selection', {
+      navigate(path, {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
+    // For pages, navigate to pages manager (read-only access allowed)
+    if (component.id === 'pages') {
+      navigate('/pages', {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
+    // For health-interventions (WHO Digital Library), allow access in read-only mode
+    if (component.id === 'health-interventions') {
+      navigate(`/editor/${component.id}`, {
         state: {
           profile,
           repository,
@@ -502,15 +548,13 @@ const DAKDashboard = () => {
             >
               <span className="tab-icon">⭐</span>
               <span className="tab-text">8 Core Components</span>
-              <span className="tab-badge core">L2</span>
             </button>
             <button 
               className={`tab-button ${activeTab === 'additional' ? 'active' : ''}`}
               onClick={() => setActiveTab('additional')}
             >
               <span className="tab-icon">🔧</span>
-              <span className="tab-text">Additional Representations</span>
-              <span className="tab-badge additional">L3</span>
+              <span className="tab-text">Additional Components</span>
             </button>
           </div>
 
@@ -522,13 +566,6 @@ const DAKDashboard = () => {
                 <p className="section-description">
                   Essential components that form the foundation of any WHO SMART Guidelines Digital Adaptation Kit
                 </p>
-              </div>
-
-              <div className="components-legend">
-                <div className="legend-item">
-                  <span className="legend-badge l2">L2</span>
-                  <span>Data model agnostic representations</span>
-                </div>
               </div>
 
               <div className="components-grid core-components">
@@ -543,11 +580,6 @@ const DAKDashboard = () => {
                       <div className="component-icon" style={{ color: component.color }}>
                         {component.icon}
                       </div>
-                      <div className="component-badge">
-                        <span className={`level-badge ${component.type.toLowerCase()}`}>
-                          {component.type}
-                        </span>
-                      </div>
                     </div>
                     
                     <div className="component-content">
@@ -571,21 +603,14 @@ const DAKDashboard = () => {
             </div>
           )}
 
-          {/* Additional Structured Knowledge Representations Section */}
+          {/* Additional Components Section */}
           {activeTab === 'additional' && (
             <div className="components-section additional-section active">
               <div className="section-header">
-                <h3 className="section-title">Additional Structured Knowledge Representations</h3>
+                <h3 className="section-title">Additional Components</h3>
                 <p className="section-description">
                   FHIR R4-specific implementations and technical artifacts that support the core DAK components
                 </p>
-              </div>
-
-              <div className="components-legend">
-                <div className="legend-item">
-                  <span className="legend-badge l3">L3</span>
-                  <span>FHIR R4-specific implementations</span>
-                </div>
               </div>
 
               <div className="components-grid additional-components">
@@ -600,11 +625,6 @@ const DAKDashboard = () => {
                       <div className="component-icon" style={{ color: component.color }}>
                         {component.icon}
                       </div>
-                      <div className="component-badge">
-                        <span className={`level-badge ${component.type.toLowerCase()}`}>
-                          {component.type}
-                        </span>
-                      </div>
                     </div>
                     
                     <div className="component-content">
@@ -627,8 +647,6 @@ const DAKDashboard = () => {
               </div>
             </div>
           )}
-
-
         </div>
       </div>
 

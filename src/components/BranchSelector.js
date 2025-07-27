@@ -15,10 +15,56 @@ const BranchSelector = ({
   const [newBranchName, setNewBranchName] = useState('');
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState(null);
+  const [initializingAuth, setInitializingAuth] = useState(true);
+
+  // Initialize authentication if needed
+  useEffect(() => {
+    const initializeAuthentication = async () => {
+      // Check if GitHub service is already authenticated
+      if (githubService.isAuth()) {
+        setInitializingAuth(false);
+        return;
+      }
+
+      // Try to restore authentication from stored token
+      const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
+      if (token) {
+        console.log('BranchSelector: Restoring GitHub authentication from stored token');
+        const success = githubService.authenticate(token);
+        if (success) {
+          console.log('BranchSelector: GitHub authentication restored successfully');
+        } else {
+          console.warn('BranchSelector: Failed to restore GitHub authentication');
+          // Clean up invalid tokens
+          sessionStorage.removeItem('github_token');
+          localStorage.removeItem('github_token');
+        }
+      } else {
+        console.warn('BranchSelector: No stored GitHub token found');
+      }
+
+      setInitializingAuth(false);
+    };
+
+    initializeAuthentication();
+  }, []);
 
   useEffect(() => {
     const fetchBranches = async () => {
       if (!repository) return;
+
+      // Wait for authentication to be initialized
+      if (initializingAuth) {
+        return;
+      }
+
+      // Check if we have authentication after initialization
+      if (!githubService.isAuth()) {
+        console.warn('BranchSelector: GitHub authentication not available');
+        setError('GitHub authentication required');
+        setLoading(false);
+        return;
+      }
 
       try {
         setLoading(true);
@@ -46,8 +92,10 @@ const BranchSelector = ({
       }
     };
 
-    fetchBranches();
-  }, [repository, selectedBranch, onBranchChange]);
+    if (!initializingAuth) {
+      fetchBranches();
+    }
+  }, [repository, selectedBranch, onBranchChange, initializingAuth]);
 
   const handleBranchSelect = (branchName) => {
     if (onBranchChange) {

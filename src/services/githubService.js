@@ -1,6 +1,7 @@
 import { Octokit } from '@octokit/rest';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
+import logger from '../utils/logger';
 
 class GitHubService {
   constructor() {
@@ -8,17 +9,29 @@ class GitHubService {
     this.isAuthenticated = false;
     this.permissions = null;
     this.tokenType = null; // 'classic', 'fine-grained', or 'oauth'
+    this.logger = logger.getLogger('GitHubService');
+    this.logger.debug('GitHubService instance created');
   }
 
   // Initialize with a GitHub token (supports both OAuth and PAT tokens)
   authenticate(token) {
+    const startTime = Date.now();
+    this.logger.auth('Starting authentication', { tokenProvided: !!token, tokenLength: token ? token.length : 0 });
+    
     try {
       this.octokit = new Octokit({
         auth: token,
       });
       this.isAuthenticated = true;
+      
+      const duration = Date.now() - startTime;
+      this.logger.auth('Authentication successful', { duration });
+      this.logger.performance('GitHub authentication', duration);
+      
       return true;
     } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.auth('Authentication failed', { error: error.message, duration });
       console.error('Failed to authenticate with GitHub:', error);
       this.isAuthenticated = false;
       return false;
@@ -27,12 +40,17 @@ class GitHubService {
 
   // Initialize with an existing Octokit instance (for OAuth flow)
   authenticateWithOctokit(octokitInstance) {
+    this.logger.auth('Starting OAuth authentication with Octokit instance');
+    
     try {
       this.octokit = octokitInstance;
       this.isAuthenticated = true;
       this.tokenType = 'oauth';
+      
+      this.logger.auth('OAuth authentication successful', { tokenType: this.tokenType });
       return true;
     } catch (error) {
+      this.logger.auth('OAuth authentication failed', { error: error.message });
       console.error('Failed to authenticate with Octokit instance:', error);
       this.isAuthenticated = false;
       return false;
@@ -42,27 +60,50 @@ class GitHubService {
   // Check token permissions and type
   async checkTokenPermissions() {
     if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
+      const error = new Error('Not authenticated with GitHub');
+      this.logger.error('Token permission check failed - not authenticated');
+      throw error;
     }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', '/user', null);
 
     try {
       // Try to get token info to determine type and permissions
       const response = await this.octokit.request('GET /user');
+      this.logger.apiResponse('GET', '/user', response.status, Date.now() - startTime);
       
       // Check if this is a fine-grained token by trying to access rate limit info
       try {
+        const rateLimitStart = Date.now();
+        this.logger.apiCall('GET', '/rate_limit', null);
         const rateLimit = await this.octokit.rest.rateLimit.get();
+        this.logger.apiResponse('GET', '/rate_limit', rateLimit.status, Date.now() - rateLimitStart);
+        
         // Fine-grained tokens have different rate limit structure
         this.tokenType = rateLimit.data.resources.core ? 'classic' : 'fine-grained';
-      } catch {
+        this.logger.debug('Token type determined', { tokenType: this.tokenType, hasCore: !!rateLimit.data.resources.core });
+      } catch (rateLimitError) {
         this.tokenType = 'unknown';
+        this.logger.warn('Could not determine token type from rate limit', { error: rateLimitError.message });
       }
 
-      return {
+      const permissions = {
         type: this.tokenType,
         user: response.data
       };
+      
+      this.permissions = permissions;
+      this.logger.debug('Token permissions checked successfully', { 
+        tokenType: this.tokenType, 
+        username: response.data.login 
+      });
+      
+      return permissions;
     } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.apiError('GET', '/user', error);
+      this.logger.performance('Token permission check (failed)', duration);
       console.error('Failed to check token permissions:', error);
       throw error;
     }
@@ -71,21 +112,47 @@ class GitHubService {
   // Check if we have write permissions for a specific repository
   async checkRepositoryWritePermissions(owner, repo) {
     if (!this.isAuth()) {
+      this.logger.warn('Cannot check repository write permissions - not authenticated', { owner, repo });
       return false;
     }
 
+    const startTime = Date.now();
+    this.logger.debug('Checking write permissions for repository', { owner, repo });
+
     try {
+      // Get current user first
+      const currentUser = await this.getCurrentUser();
+      const username = currentUser.login;
+      
+      this.logger.apiCall('GET', `/repos/${owner}/${repo}/collaborators/${username}/permission`, null);
+      
       // Try to get repository collaborator permissions
       const { data } = await this.octokit.rest.repos.getCollaboratorPermissionLevel({
         owner,
         repo,
-        username: (await this.getCurrentUser()).login
+        username
       });
       
-      return ['write', 'admin'].includes(data.permission);
+      const duration = Date.now() - startTime;
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/collaborators/${username}/permission`, 200, duration);
+      
+      const hasWriteAccess = ['write', 'admin'].includes(data.permission);
+      this.logger.debug('Repository write permissions checked', { 
+        owner, 
+        repo, 
+        permission: data.permission, 
+        hasWriteAccess 
+      });
+      
+      return hasWriteAccess;
     } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.apiError('GET', `/repos/${owner}/${repo}/collaborators/*/permission`, error);
+      this.logger.performance('Repository write permission check (failed)', duration);
+      
       // If we can't check permissions, assume we don't have write access
       console.warn('Could not check repository write permissions:', error);
+      this.logger.warn('Assuming no write access due to permission check failure', { owner, repo, error: error.message });
       return false;
     }
   }
@@ -230,8 +297,8 @@ class GitHubService {
       });
 
       if (data.type === 'file' && data.content) {
-        // Decode base64 content
-        const content = Buffer.from(data.content, 'base64').toString('utf-8');
+        // Decode base64 content (browser-compatible)
+        const content = decodeURIComponent(escape(atob(data.content)));
         
         // Check if the content contains smart.who.int.base in dependencies
         const isCompatible = content.includes('smart.who.int.base');
@@ -245,101 +312,26 @@ class GitHubService {
       repositoryCompatibilityCache.set(owner, repo, false);
       return false;
     } catch (error) {
-      // If it's a rate limiting or network error, try to fall back to other indicators
-      if (error.status === 403 || error.status === 429 || error.message.includes('rate limit') || error.message.includes('Network')) {
-        console.warn(`Rate limit or network error checking ${owner}/${repo}, trying fallback approach:`, error.message);
-        const fallbackResult = await this.checkSmartGuidelinesFallback(owner, repo);
-        
-        // Cache the fallback result
-        repositoryCompatibilityCache.set(owner, repo, fallbackResult);
-        return fallbackResult;
-      }
-      
       // If it's a 404 (file not found), retry once more in case of temporary issues
       if (error.status === 404 && retryCount > 0) {
         console.warn(`File not found for ${owner}/${repo}, retrying... (${retryCount} attempts left)`);
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        // Use shorter delay in test environment
+        const delay = process.env.NODE_ENV === 'test' ? 10 : 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
         return this.checkSmartGuidelinesCompatibility(owner, repo, retryCount - 1);
       }
       
-      // For 404 errors after retries, or other errors, file doesn't exist or can't be accessed
-      // Try fallback before giving up
-      const fallbackResult = await this.checkSmartGuidelinesFallback(owner, repo);
+      // For any error (including rate limiting, network errors, or file not found after retries),
+      // strictly return false - no fallback logic
+      console.warn(`Failed to check ${owner}/${repo} for sushi-config.yaml with smart.who.int.base dependency:`, error.message);
       
-      // Cache the result (could be true from fallback or false)
-      repositoryCompatibilityCache.set(owner, repo, fallbackResult);
-      return fallbackResult;
-    }
-  }
-
-  // Fallback method to check for SMART Guidelines compatibility using other indicators
-  async checkSmartGuidelinesFallback(owner, repo) {
-    try {
-      // Get repository details to check topics and description
-      const { data } = await this.octokit.rest.repos.get({
-        owner,
-        repo,
-      });
-
-      // Enhanced smart indicators including patterns for repositories like smart-trust-phw
-      const smartIndicators = [
-        'smart-guidelines',
-        'smart guidelines', // Add space variant
-        'who-smart',
-        'smart.who.int',
-        'digital-adaptation-kit',
-        'digital adaptation kit',
-        'dak',
-        'fhir-ig',
-        'implementation-guide',
-        'implementation guide', // Add space variant
-        'smart-trust', // For smart-trust-phw specifically
-        'trust-phw', // Another pattern for trust-related SMART repos
-        'phw', // Public Health Web repositories
-        'smart guide', // Another common variant
-        'who guide', // WHO guideline patterns
-        'fhir guide', // FHIR guideline patterns
-      ];
-
-      const topics = data.topics || [];
-      const description = (data.description || '').toLowerCase();
-      const repoName = repo.toLowerCase();
-
-      // Check if any SMART guidelines indicators are present
-      const hasSmartIndicators = smartIndicators.some(indicator => 
-        topics.includes(indicator) || 
-        description.includes(indicator.toLowerCase()) ||
-        repoName.includes(indicator.replace(/[-\s]/g, ''))
-      );
-
-      // More lenient check for implementation guide patterns
-      const hasIGPatterns = description.includes('implementation guide') ||
-                           description.includes('fhir') ||
-                           description.includes('smart') ||
-                           description.includes('who') ||
-                           description.includes('guideline');
-
-      // Additional check for repositories that contain SMART-related keywords in name
-      const hasSmartInName = repoName.includes('smart') || 
-                            repoName.includes('dak') ||
-                            repoName.includes('guideline') ||
-                            repoName.includes('who') ||
-                            repoName.includes('fhir') ||
-                            (repoName.includes('trust') && repoName.includes('phw'));
-
-      const isCompatible = hasSmartIndicators || hasSmartInName || hasIGPatterns;
-
-      if (isCompatible) {
-        console.info(`Repository ${owner}/${repo} has SMART guidelines indicators in topics/description, assuming compatible`);
-        return true;
-      }
-
-      return false;
-    } catch (fallbackError) {
-      console.warn(`Fallback check also failed for ${owner}/${repo}:`, fallbackError.message);
+      // Cache negative result
+      repositoryCompatibilityCache.set(owner, repo, false);
       return false;
     }
   }
+
+
 
   // Get repositories that are SMART guidelines compatible
   async getSmartGuidelinesRepositories(owner, type = 'user') {
@@ -348,21 +340,34 @@ class GitHubService {
     }
 
     try {
-      let repositories;
-      if (type === 'user') {
-        const { data } = await this.octokit.rest.repos.listForUser({
-          username: owner,
-          sort: 'updated',
-          per_page: 100,
-        });
-        repositories = data;
-      } else {
-        const { data } = await this.octokit.rest.repos.listForOrg({
-          org: owner,
-          sort: 'updated',
-          per_page: 100,
-        });
-        repositories = data;
+      let repositories = [];
+      let page = 1;
+      let hasMorePages = true;
+
+      // Fetch all repositories using pagination
+      while (hasMorePages) {
+        let response;
+        if (type === 'user') {
+          response = await this.octokit.rest.repos.listForUser({
+            username: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        } else {
+          response = await this.octokit.rest.repos.listForOrg({
+            org: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        }
+
+        repositories = repositories.concat(response.data);
+        
+        // Check if there are more pages
+        hasMorePages = response.data.length === 100;
+        page++;
       }
 
       // Check each repository for SMART guidelines compatibility
@@ -391,21 +396,34 @@ class GitHubService {
     }
 
     try {
-      let repositories;
-      if (type === 'user') {
-        const { data } = await this.octokit.rest.repos.listForUser({
-          username: owner,
-          sort: 'updated',
-          per_page: 100,
-        });
-        repositories = data;
-      } else {
-        const { data } = await this.octokit.rest.repos.listForOrg({
-          org: owner,
-          sort: 'updated',
-          per_page: 100,
-        });
-        repositories = data;
+      let repositories = [];
+      let page = 1;
+      let hasMorePages = true;
+
+      // Fetch all repositories using pagination
+      while (hasMorePages) {
+        let response;
+        if (type === 'user') {
+          response = await this.octokit.rest.repos.listForUser({
+            username: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        } else {
+          response = await this.octokit.rest.repos.listForOrg({
+            org: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        }
+
+        repositories = repositories.concat(response.data);
+        
+        // Check if there are more pages
+        hasMorePages = response.data.length === 100;
+        page++;
       }
 
       // Handle case where user has no repositories
@@ -572,19 +590,89 @@ class GitHubService {
 
   // GitHub Actions API methods
   
-  // Get workflows for a repository
+  // Get workflows for a repository (detailed version with file parsing)
   async getWorkflows(owner, repo) {
     if (!this.isAuth()) {
       throw new Error('Not authenticated with GitHub');
     }
 
     try {
-      const { data } = await this.octokit.rest.actions.listRepoWorkflows({
+      // First, try to get the .github/workflows directory
+      const { data } = await this.octokit.rest.repos.getContent({
         owner,
-        repo
+        repo,
+        path: '.github/workflows'
       });
-      return data.workflows;
+
+      // Filter for YAML/YML files
+      const workflowFiles = Array.isArray(data) 
+        ? data.filter(file => file.name.endsWith('.yml') || file.name.endsWith('.yaml'))
+        : [];
+
+      // Fetch workflow details for each file
+      const workflows = await Promise.all(
+        workflowFiles.map(async (file) => {
+          try {
+            // Get file content to parse workflow name
+            const contentResponse = await this.octokit.rest.repos.getContent({
+              owner,
+              repo,
+              path: file.path
+            });
+
+            const content = Buffer.from(contentResponse.data.content, 'base64').toString('utf-8');
+            
+            // Parse workflow name from YAML (simple regex approach)
+            const nameMatch = content.match(/^name:\s*(.+)$/m);
+            const workflowName = nameMatch ? nameMatch[1].replace(/['"]/g, '') : file.name.replace(/\.(yml|yaml)$/, '');
+
+            // Parse triggers
+            const onMatch = content.match(/^on:\s*$/m);
+            let triggers = [];
+            if (onMatch) {
+              const pushMatch = content.match(/^\s*push:/m);
+              const prMatch = content.match(/^\s*pull_request:/m);
+              const scheduleMatch = content.match(/^\s*schedule:/m);
+              const workflowDispatchMatch = content.match(/^\s*workflow_dispatch:/m);
+              
+              if (pushMatch) triggers.push('push');
+              if (prMatch) triggers.push('pull_request');
+              if (scheduleMatch) triggers.push('schedule');
+              if (workflowDispatchMatch) triggers.push('manual');
+            }
+
+            return {
+              name: workflowName,
+              filename: file.name,
+              path: file.path,
+              size: file.size,
+              sha: file.sha,
+              url: file.html_url,
+              triggers: triggers.length > 0 ? triggers : ['push'], // default to push if we can't parse
+              lastModified: contentResponse.data.last_modified || 'Unknown'
+            };
+          } catch (error) {
+            console.warn(`Failed to fetch workflow details for ${file.name}:`, error);
+            return {
+              name: file.name.replace(/\.(yml|yaml)$/, ''),
+              filename: file.name,
+              path: file.path,
+              size: file.size,
+              sha: file.sha,
+              url: file.html_url,
+              triggers: ['unknown'],
+              lastModified: 'Unknown'
+            };
+          }
+        })
+      );
+
+      return workflows;
     } catch (error) {
+      if (error.status === 404) {
+        // No .github/workflows directory exists
+        return [];
+      }
       console.error('Failed to fetch workflows:', error);
       throw error;
     }
@@ -865,6 +953,85 @@ class GitHubService {
         throw new Error('Network error occurred. Please check your internet connection and try again.');
       }
       
+      throw error;
+    }
+  }
+
+  // Create a commit with multiple files
+  async createCommit(owner, repo, branch, message, files) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      // Get the latest commit SHA
+      const { data: refData } = await this.octokit.rest.git.getRef({
+        owner,
+        repo,
+        ref: `heads/${branch}`
+      });
+      const latestCommitSha = refData.object.sha;
+
+      // Get the tree SHA from the latest commit
+      const { data: commitData } = await this.octokit.rest.git.getCommit({
+        owner,
+        repo,
+        commit_sha: latestCommitSha
+      });
+      const baseTreeSha = commitData.tree.sha;
+
+      // Create blobs for all files
+      const blobs = await Promise.all(
+        files.map(async (file) => {
+          const { data: blobData } = await this.octokit.rest.git.createBlob({
+            owner,
+            repo,
+            content: file.content,
+            encoding: 'utf-8'
+          });
+          return {
+            path: file.path,
+            mode: '100644',
+            type: 'blob',
+            sha: blobData.sha
+          };
+        })
+      );
+
+      // Create a new tree with the blobs
+      const { data: treeData } = await this.octokit.rest.git.createTree({
+        owner,
+        repo,
+        base_tree: baseTreeSha,
+        tree: blobs
+      });
+
+      // Create the commit
+      const { data: newCommitData } = await this.octokit.rest.git.createCommit({
+        owner,
+        repo,
+        message,
+        tree: treeData.sha,
+        parents: [latestCommitSha]
+      });
+
+      // Update the branch reference
+      await this.octokit.rest.git.updateRef({
+        owner,
+        repo,
+        ref: `heads/${branch}`,
+        sha: newCommitData.sha
+      });
+
+      return {
+        sha: newCommitData.sha,
+        html_url: `https://github.com/${owner}/${repo}/commit/${newCommitData.sha}`,
+        message: newCommitData.message,
+        author: newCommitData.author,
+        committer: newCommitData.committer
+      };
+    } catch (error) {
+      console.error('Failed to create commit:', error);
       throw error;
     }
   }

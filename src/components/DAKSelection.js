@@ -20,6 +20,22 @@ const DAKSelection = () => {
   
   const { profile, action } = location.state || {};
 
+  // Helper function to extract user and repo from repository object
+  const getRepositoryPath = (repository) => {
+    if (!repository) return null;
+    
+    // Get user from owner.login or fallback to parsing full_name
+    const user = repository.owner?.login || repository.full_name?.split('/')[0];
+    const repo = repository.name;
+    
+    if (!user || !repo) {
+      console.error('Unable to extract user/repo from repository object:', repository);
+      return null;
+    }
+    
+    return { user, repo };
+  };
+
   const getActionConfig = () => {
     switch (action) {
       case 'edit':
@@ -27,7 +43,7 @@ const DAKSelection = () => {
           title: 'Select DAK to Edit',
           description: 'Choose an existing DAK repository that you have permission to modify.',
           buttonText: 'Continue to Edit Components',
-          nextRoute: '/dashboard'
+          nextRoute: '/dashboard'  // This will be constructed dynamically with user/repo
         };
       case 'fork':
         return {
@@ -49,7 +65,7 @@ const DAKSelection = () => {
           title: 'Select DAK Repository',
           description: 'Choose a DAK repository to work with.',
           buttonText: 'Continue',
-          nextRoute: '/dashboard'
+          nextRoute: '/dashboard'  // This will be constructed dynamically with user/repo
         };
     }
   };
@@ -160,8 +176,11 @@ const DAKSelection = () => {
         // Simulate scanning time (1-2 seconds per repository)
         await delay(1000 + Math.random() * 1000);
         
-        // Add found repository to results
-        setRepositories(prevRepos => [...prevRepos, repo]);
+        // Add found repository to results in alphabetical order
+        setRepositories(prevRepos => {
+          const newRepos = [...prevRepos, repo];
+          return newRepos.sort((a, b) => a.name.localeCompare(b.name));
+        });
         
         // Simulate completion
         setScanProgress({
@@ -235,6 +254,8 @@ const DAKSelection = () => {
               : 'https://github.com/favicon.ico'
           }
         }));
+        // Sort templates alphabetically by name
+        repos.sort((a, b) => a.name.localeCompare(b.name));
         setRepositories(repos);
       } else {
         // For edit/fork actions, implement cache-first approach
@@ -253,6 +274,8 @@ const DAKSelection = () => {
           console.log('Using cached repository data', repositoryCacheService.getCacheInfo(profile.login, profile.type === 'org' ? 'org' : 'user'));
           repos = cachedData.repositories;
           setUsingCachedData(true);
+          // Sort cached repositories alphabetically
+          repos.sort((a, b) => a.name.localeCompare(b.name));
           setRepositories(repos);
         } else {
           // No cached data or forcing rescan - initiate progressive scanning
@@ -274,13 +297,15 @@ const DAKSelection = () => {
             const scanPromise = githubService.getSmartGuidelinesRepositoriesProgressive(
               profile.login, 
               profile.type === 'org' ? 'org' : 'user',
-              // onRepositoryFound callback - add repo to list immediately
+              // onRepositoryFound callback - add repo to list immediately in alphabetical order
               (foundRepo) => {
                 setRepositories(prevRepos => {
                   // Avoid duplicates
                   const exists = prevRepos.some(repo => repo.id === foundRepo.id);
                   if (!exists) {
-                    return [...prevRepos, foundRepo];
+                    // Add the new repository and sort alphabetically by name
+                    const newRepos = [...prevRepos, foundRepo];
+                    return newRepos.sort((a, b) => a.name.localeCompare(b.name));
                   }
                   return prevRepos;
                 });
@@ -361,11 +386,15 @@ const DAKSelection = () => {
             );
             
             // Update repositories with final results (in case callback missed any)
-            setRepositories(repos);
+            // Sort alphabetically to ensure consistent ordering
+            const sortedRepos = repos.sort((a, b) => a.name.localeCompare(b.name));
+            setRepositories(sortedRepos);
           } else {
             // Fallback to mock repositories with enhanced scanning demonstration
             await simulateEnhancedScanning();
             repos = getMockRepositories();
+            // Sort mock repositories alphabetically
+            repos.sort((a, b) => a.name.localeCompare(b.name));
             setRepositories(repos);
           }
         }
@@ -374,7 +403,9 @@ const DAKSelection = () => {
       console.error('Error fetching repositories:', error);
       setError('Failed to fetch repositories. Please check your connection and try again.');
       // Fallback to mock data for demonstration
-      setRepositories(getMockRepositories());
+      const mockRepos = getMockRepositories();
+      mockRepos.sort((a, b) => a.name.localeCompare(b.name));
+      setRepositories(mockRepos);
       // Make sure to stop scanning on error
       setIsScanning(false);
       setScanProgress(null);
@@ -409,14 +440,27 @@ const DAKSelection = () => {
     if (action === 'edit') {
       // Add a small delay for visual feedback before navigation
       setTimeout(() => {
-        const config = getActionConfig();
-        navigate(config.nextRoute, {
-          state: {
-            profile,
-            repository: repo,
-            action
-          }
-        });
+        const repoPath = getRepositoryPath(repo);
+        if (repoPath) {
+          const dashboardUrl = `/dashboard/${repoPath.user}/${repoPath.repo}`;
+          navigate(dashboardUrl, {
+            state: {
+              profile,
+              repository: repo,
+              action
+            }
+          });
+        } else {
+          // Fallback to original behavior if unable to extract path
+          const config = getActionConfig();
+          navigate(config.nextRoute, {
+            state: {
+              profile,
+              repository: repo,
+              action
+            }
+          });
+        }
       }, 300); // 300ms delay for visual feedback
     }
   };
@@ -430,14 +474,27 @@ const DAKSelection = () => {
     const config = getActionConfig();
     
     if (action === 'edit') {
-      // Go directly to dashboard for editing
-      navigate(config.nextRoute, {
-        state: {
-          profile: profile,
-          repository: selectedRepository,
-          action: action
-        }
-      });
+      // Go directly to dashboard for editing with user/repo parameters
+      const repoPath = getRepositoryPath(selectedRepository);
+      if (repoPath) {
+        const dashboardUrl = `/dashboard/${repoPath.user}/${repoPath.repo}`;
+        navigate(dashboardUrl, {
+          state: {
+            profile: profile,
+            repository: selectedRepository,
+            action: action
+          }
+        });
+      } else {
+        // Fallback to original behavior if unable to extract path
+        navigate(config.nextRoute, {
+          state: {
+            profile: profile,
+            repository: selectedRepository,
+            action: action
+          }
+        });
+      }
     } else {
       // Go to organization selection for fork/create
       navigate(config.nextRoute, {
@@ -604,39 +661,30 @@ const DAKSelection = () => {
                     ></div>
                   </div>
                   <div className="progress-info">
-                    {/* Show currently scanning repositories */}
-                    {currentlyScanningRepos.size > 0 && (
-                      <div className="currently-scanning-section">
-                        <div className="scanning-section-title">
-                          <span className="scanning-icon">🔍</span>
-                          <span>Currently Testing:</span>
+                    {/* Unified scanning status showing percentage and currently testing repos */}
+                    <div className="unified-scanning-status">
+                      <div className="scanning-header-unified">
+                        <div className="progress-stats">
+                          <span className="progress-text">
+                            {scanProgress.current}/{scanProgress.total} repositories
+                          </span>
+                          <span className="progress-percentage">{scanProgress.progress}%</span>
                         </div>
-                        <div className="currently-scanning-repos">
-                          {Array.from(currentlyScanningRepos).map((repoName) => (
-                            <div key={repoName} className="scanning-repo-item">
-                              <span className="repo-status-indicator">⚡</span>
-                              <span className="scanning-repo-name">{repoName}</span>
+                        {currentlyScanningRepos.size > 0 && (
+                          <div className="currently-testing-unified">
+                            <span className="scanning-icon">🔍</span>
+                            <span>Currently Testing:</span>
+                            <div className="currently-scanning-repos">
+                              {Array.from(currentlyScanningRepos).map((repoName) => (
+                                <div key={repoName} className="scanning-repo-item">
+                                  <span className="repo-status-indicator">⚡</span>
+                                  <span className="scanning-repo-name">{repoName}</span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    
-                    {/* Show most recent progress update */}
-                    <div className="current-repo-status">
-                      <span className="status-icon">
-                        {scanProgress.completed ? '✅' : '🔍'}
-                      </span>
-                      <span className="current-repo-name">
-                        {scanProgress.completed ? 'Completed' : 'Testing'}: <strong>{scanProgress.currentRepo}</strong>
-                      </span>
-                    </div>
-                    
-                    <div className="progress-stats">
-                      <span className="progress-text">
-                        {scanProgress.current}/{scanProgress.total} repositories
-                      </span>
-                      <span className="progress-percentage">{scanProgress.progress}%</span>
                     </div>
                   </div>
                   <div className="scanning-note">
