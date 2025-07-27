@@ -15,9 +15,24 @@ import BPMNSource from './components/BPMNSource';
 import DocumentationViewer from './components/DocumentationViewer';
 import TestDashboard from './components/TestDashboard';
 import PagesManager from './components/PagesManager';
+import logger from './utils/logger';
 import './App.css';
 
 function App() {
+  const appLogger = logger.getLogger('App');
+  
+  React.useEffect(() => {
+    appLogger.componentMount();
+    appLogger.info('SGEX Workbench application started', { 
+      environment: process.env.NODE_ENV,
+      basename: '/sgex'
+    });
+    
+    return () => {
+      appLogger.componentUnmount();
+    };
+  }, [appLogger]);
+
   return (
     <Router basename="/sgex">
       <div className="App">

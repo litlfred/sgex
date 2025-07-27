@@ -1,6 +1,7 @@
 import { Octokit } from '@octokit/rest';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
+import logger from '../utils/logger';
 
 class GitHubService {
   constructor() {
@@ -8,17 +9,29 @@ class GitHubService {
     this.isAuthenticated = false;
     this.permissions = null;
     this.tokenType = null; // 'classic', 'fine-grained', or 'oauth'
+    this.logger = logger.getLogger('GitHubService');
+    this.logger.debug('GitHubService instance created');
   }
 
   // Initialize with a GitHub token (supports both OAuth and PAT tokens)
   authenticate(token) {
+    const startTime = Date.now();
+    this.logger.auth('Starting authentication', { tokenProvided: !!token, tokenLength: token ? token.length : 0 });
+    
     try {
       this.octokit = new Octokit({
         auth: token,
       });
       this.isAuthenticated = true;
+      
+      const duration = Date.now() - startTime;
+      this.logger.auth('Authentication successful', { duration });
+      this.logger.performance('GitHub authentication', duration);
+      
       return true;
     } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.auth('Authentication failed', { error: error.message, duration });
       console.error('Failed to authenticate with GitHub:', error);
       this.isAuthenticated = false;
       return false;
@@ -27,12 +40,17 @@ class GitHubService {
 
   // Initialize with an existing Octokit instance (for OAuth flow)
   authenticateWithOctokit(octokitInstance) {
+    this.logger.auth('Starting OAuth authentication with Octokit instance');
+    
     try {
       this.octokit = octokitInstance;
       this.isAuthenticated = true;
       this.tokenType = 'oauth';
+      
+      this.logger.auth('OAuth authentication successful', { tokenType: this.tokenType });
       return true;
     } catch (error) {
+      this.logger.auth('OAuth authentication failed', { error: error.message });
       console.error('Failed to authenticate with Octokit instance:', error);
       this.isAuthenticated = false;
       return false;
@@ -42,27 +60,50 @@ class GitHubService {
   // Check token permissions and type
   async checkTokenPermissions() {
     if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
+      const error = new Error('Not authenticated with GitHub');
+      this.logger.error('Token permission check failed - not authenticated');
+      throw error;
     }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', '/user', null);
 
     try {
       // Try to get token info to determine type and permissions
       const response = await this.octokit.request('GET /user');
+      this.logger.apiResponse('GET', '/user', response.status, Date.now() - startTime);
       
       // Check if this is a fine-grained token by trying to access rate limit info
       try {
+        const rateLimitStart = Date.now();
+        this.logger.apiCall('GET', '/rate_limit', null);
         const rateLimit = await this.octokit.rest.rateLimit.get();
+        this.logger.apiResponse('GET', '/rate_limit', rateLimit.status, Date.now() - rateLimitStart);
+        
         // Fine-grained tokens have different rate limit structure
         this.tokenType = rateLimit.data.resources.core ? 'classic' : 'fine-grained';
-      } catch {
+        this.logger.debug('Token type determined', { tokenType: this.tokenType, hasCore: !!rateLimit.data.resources.core });
+      } catch (rateLimitError) {
         this.tokenType = 'unknown';
+        this.logger.warn('Could not determine token type from rate limit', { error: rateLimitError.message });
       }
 
-      return {
+      const permissions = {
         type: this.tokenType,
         user: response.data
       };
+      
+      this.permissions = permissions;
+      this.logger.debug('Token permissions checked successfully', { 
+        tokenType: this.tokenType, 
+        username: response.data.login 
+      });
+      
+      return permissions;
     } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.apiError('GET', '/user', error);
+      this.logger.performance('Token permission check (failed)', duration);
       console.error('Failed to check token permissions:', error);
       throw error;
     }
@@ -71,21 +112,47 @@ class GitHubService {
   // Check if we have write permissions for a specific repository
   async checkRepositoryWritePermissions(owner, repo) {
     if (!this.isAuth()) {
+      this.logger.warn('Cannot check repository write permissions - not authenticated', { owner, repo });
       return false;
     }
 
+    const startTime = Date.now();
+    this.logger.debug('Checking write permissions for repository', { owner, repo });
+
     try {
+      // Get current user first
+      const currentUser = await this.getCurrentUser();
+      const username = currentUser.login;
+      
+      this.logger.apiCall('GET', `/repos/${owner}/${repo}/collaborators/${username}/permission`, null);
+      
       // Try to get repository collaborator permissions
       const { data } = await this.octokit.rest.repos.getCollaboratorPermissionLevel({
         owner,
         repo,
-        username: (await this.getCurrentUser()).login
+        username
       });
       
-      return ['write', 'admin'].includes(data.permission);
+      const duration = Date.now() - startTime;
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/collaborators/${username}/permission`, 200, duration);
+      
+      const hasWriteAccess = ['write', 'admin'].includes(data.permission);
+      this.logger.debug('Repository write permissions checked', { 
+        owner, 
+        repo, 
+        permission: data.permission, 
+        hasWriteAccess 
+      });
+      
+      return hasWriteAccess;
     } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.apiError('GET', `/repos/${owner}/${repo}/collaborators/*/permission`, error);
+      this.logger.performance('Repository write permission check (failed)', duration);
+      
       // If we can't check permissions, assume we don't have write access
       console.warn('Could not check repository write permissions:', error);
+      this.logger.warn('Assuming no write access due to permission check failure', { owner, repo, error: error.message });
       return false;
     }
   }
