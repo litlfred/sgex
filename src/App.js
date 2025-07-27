@@ -14,6 +14,7 @@ import BPMNViewer from './components/BPMNViewerEnhanced';
 import BPMNSource from './components/BPMNSource';
 import DocumentationViewer from './components/DocumentationViewer';
 import TestDashboard from './components/TestDashboard';
+import PagesManager from './components/PagesManager';
 import './App.css';
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
           <Route path="/bpmn-viewer" element={<BPMNViewer />} />
           <Route path="/bpmn-source" element={<BPMNSource />} />
           <Route path="/docs/:docId" element={<DocumentationViewer />} />
+          <Route path="/pages" element={<PagesManager />} />
         </Routes>
       </div>
     </Router>
