@@ -259,6 +259,7 @@ const DAKSelection = () => {
           if (githubService.isAuth()) {
             console.log(forceRescan ? '🔄 Force rescanning repositories...' : '🔍 No cached data, initiating scan...');
             setIsScanning(true);
+            setLoading(false); // Stop loading state to show scanning progress
             
             // Important: Don't clear existing repositories when scanning
             // This preserves any cached repos that were already displayed
