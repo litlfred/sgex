@@ -267,7 +267,7 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
     <div className="dak-status-box">
       <div className="status-header" onClick={handleToggle}>
         <div className="status-title">
-          <span className="status-icon">📊</span>
+          <span className="status-icon">📈</span>
           <h3>DAK Status & Actions</h3>
           <span className="branch-indicator">
             {branch && <code>{branch}</code>}
