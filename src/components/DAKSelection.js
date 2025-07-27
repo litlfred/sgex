@@ -20,6 +20,22 @@ const DAKSelection = () => {
   
   const { profile, action } = location.state || {};
 
+  // Helper function to extract user and repo from repository object
+  const getRepositoryPath = (repository) => {
+    if (!repository) return null;
+    
+    // Get user from owner.login or fallback to parsing full_name
+    const user = repository.owner?.login || repository.full_name?.split('/')[0];
+    const repo = repository.name;
+    
+    if (!user || !repo) {
+      console.error('Unable to extract user/repo from repository object:', repository);
+      return null;
+    }
+    
+    return { user, repo };
+  };
+
   const getActionConfig = () => {
     switch (action) {
       case 'edit':
@@ -27,7 +43,7 @@ const DAKSelection = () => {
           title: 'Select DAK to Edit',
           description: 'Choose an existing DAK repository that you have permission to modify.',
           buttonText: 'Continue to Edit Components',
-          nextRoute: '/dashboard'
+          nextRoute: '/dashboard'  // This will be constructed dynamically with user/repo
         };
       case 'fork':
         return {
@@ -49,7 +65,7 @@ const DAKSelection = () => {
           title: 'Select DAK Repository',
           description: 'Choose a DAK repository to work with.',
           buttonText: 'Continue',
-          nextRoute: '/dashboard'
+          nextRoute: '/dashboard'  // This will be constructed dynamically with user/repo
         };
     }
   };
@@ -409,14 +425,27 @@ const DAKSelection = () => {
     if (action === 'edit') {
       // Add a small delay for visual feedback before navigation
       setTimeout(() => {
-        const config = getActionConfig();
-        navigate(config.nextRoute, {
-          state: {
-            profile,
-            repository: repo,
-            action
-          }
-        });
+        const repoPath = getRepositoryPath(repo);
+        if (repoPath) {
+          const dashboardUrl = `/dashboard/${repoPath.user}/${repoPath.repo}`;
+          navigate(dashboardUrl, {
+            state: {
+              profile,
+              repository: repo,
+              action
+            }
+          });
+        } else {
+          // Fallback to original behavior if unable to extract path
+          const config = getActionConfig();
+          navigate(config.nextRoute, {
+            state: {
+              profile,
+              repository: repo,
+              action
+            }
+          });
+        }
       }, 300); // 300ms delay for visual feedback
     }
   };
@@ -430,14 +459,27 @@ const DAKSelection = () => {
     const config = getActionConfig();
     
     if (action === 'edit') {
-      // Go directly to dashboard for editing
-      navigate(config.nextRoute, {
-        state: {
-          profile: profile,
-          repository: selectedRepository,
-          action: action
-        }
-      });
+      // Go directly to dashboard for editing with user/repo parameters
+      const repoPath = getRepositoryPath(selectedRepository);
+      if (repoPath) {
+        const dashboardUrl = `/dashboard/${repoPath.user}/${repoPath.repo}`;
+        navigate(dashboardUrl, {
+          state: {
+            profile: profile,
+            repository: selectedRepository,
+            action: action
+          }
+        });
+      } else {
+        // Fallback to original behavior if unable to extract path
+        navigate(config.nextRoute, {
+          state: {
+            profile: profile,
+            repository: selectedRepository,
+            action: action
+          }
+        });
+      }
     } else {
       // Go to organization selection for fork/create
       navigate(config.nextRoute, {
