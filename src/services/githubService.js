@@ -474,6 +474,73 @@ class GitHubService {
     }  
   }
 
+  // Get repository branches
+  async getBranches(owner, repo) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.listBranches({
+        owner,
+        repo,
+        per_page: 100
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch branches:', error);
+      throw error;
+    }
+  }
+
+  // Create a new branch
+  async createBranch(owner, repo, branchName, fromBranch = 'main') {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      // First get the SHA of the source branch
+      const { data: refData } = await this.octokit.rest.git.getRef({
+        owner,
+        repo,
+        ref: `heads/${fromBranch}`
+      });
+
+      // Create the new branch
+      const { data } = await this.octokit.rest.git.createRef({
+        owner,
+        repo,
+        ref: `refs/heads/${branchName}`,
+        sha: refData.object.sha
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Failed to create branch:', error);
+      throw error;
+    }
+  }
+
+  // Get a specific branch
+  async getBranch(owner, repo, branch) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.getBranch({
+        owner,
+        repo,
+        branch
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch branch:', error);
+      throw error;
+    }
+  }
+
   // Logout
   logout() {
     this.octokit = null;
@@ -482,6 +549,15 @@ class GitHubService {
     this.permissions = null;
     localStorage.removeItem('github_token');
     sessionStorage.removeItem('github_token');
+    
+    // Clear branch context on logout
+    try {
+      const { default: branchContextService } = require('../services/branchContextService');
+      branchContextService.clearAllBranchContext();
+    } catch (error) {
+      // Service might not be available during testing
+      sessionStorage.removeItem('sgex_branch_context');
+    }
   }
 }
 
