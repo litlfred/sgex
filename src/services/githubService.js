@@ -392,6 +392,22 @@ class GitHubService {
         repositories = data;
       }
 
+      // Handle case where user has no repositories
+      if (repositories.length === 0) {
+        console.log('📊 No repositories found for user, completing scan immediately');
+        // Call progress callback to indicate completion
+        if (onProgress) {
+          onProgress({
+            current: 0,
+            total: 0,
+            currentRepo: 'none',
+            progress: 100,
+            completed: true
+          });
+        }
+        return [];
+      }
+
       // Process repositories concurrently with rate limiting and enhanced display
       const processor = async (repo, index) => {
         // Add a small delay to make scanning progress visible (similar to demo mode)
