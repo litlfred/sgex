@@ -526,17 +526,29 @@ class GitHubService {
   // Get repository branches
   async getBranches(owner, repo) {
     try {
+      console.log(`githubService.getBranches: Fetching branches for ${owner}/${repo}`);
+      console.log('githubService.getBranches: Authentication status:', this.isAuth());
+      
       // Use authenticated octokit if available, otherwise create a public instance for public repos
       const octokit = this.isAuth() ? this.octokit : new Octokit();
+      console.log('githubService.getBranches: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
       
       const { data } = await octokit.rest.repos.listBranches({
         owner,
         repo,
         per_page: 100
       });
+      
+      console.log(`githubService.getBranches: Successfully fetched ${data.length} branches`);
       return data;
     } catch (error) {
-      console.error('Failed to fetch branches:', error);
+      console.error('githubService.getBranches: Failed to fetch branches:', error);
+      console.error('githubService.getBranches: Error details:', {
+        status: error.status,
+        message: error.message,
+        owner,
+        repo
+      });
       throw error;
     }
   }
@@ -908,10 +920,12 @@ class GitHubService {
     const timeoutMs = 15000; // 15 second timeout
     
     try {
-      console.log(`Getting file content: ${owner}/${repo}/${path} (ref: ${ref})`);
+      console.log(`githubService.getFileContent: Starting request for ${owner}/${repo}/${path} (ref: ${ref})`);
+      console.log('githubService.getFileContent: Authentication status:', this.isAuth());
       
       // Use authenticated octokit if available, otherwise create a public instance for public repos
       const octokit = this.isAuth() ? this.octokit : new Octokit();
+      console.log('githubService.getFileContent: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
       
       // Create a promise that rejects after timeout
       const timeoutPromise = new Promise((_, reject) => {
@@ -926,19 +940,27 @@ class GitHubService {
         ref
       });
       
+      console.log('githubService.getFileContent: API request initiated, waiting for response...');
       const { data } = await Promise.race([apiPromise, timeoutPromise]);
+      console.log('githubService.getFileContent: API response received, data type:', data.type);
 
       // Handle file content
       if (data.type === 'file' && data.content) {
         // Decode base64 content
+        console.log('githubService.getFileContent: Decoding base64 content...');
         const content = Buffer.from(data.content, 'base64').toString('utf-8');
-        console.log(`Successfully fetched file content, length: ${content.length} characters`);
+        console.log(`githubService.getFileContent: Successfully fetched and decoded file content, length: ${content.length} characters`);
         return content;
       } else {
+        console.error('githubService.getFileContent: Invalid response - not a file or no content');
+        console.error('githubService.getFileContent: Response data:', data);
         throw new Error('File not found or is not a file');
       }
     } catch (error) {
-      console.error(`Failed to fetch file content from ${owner}/${repo}/${path}:`, error);
+      console.error(`githubService.getFileContent: Failed to fetch file content from ${owner}/${repo}/${path}:`, error);
+      console.error('githubService.getFileContent: Error type:', typeof error);
+      console.error('githubService.getFileContent: Error status:', error.status);
+      console.error('githubService.getFileContent: Error message:', error.message);
       
       // Provide more specific error messages
       if (error.message.includes('timeout')) {

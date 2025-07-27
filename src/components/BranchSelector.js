@@ -58,13 +58,14 @@ const BranchSelector = ({
         return;
       }
 
-      // Check if we have authentication after initialization
-      if (!githubService.isAuth()) {
-        console.warn('BranchSelector: GitHub authentication not available');
-        setError('GitHub authentication required');
-        setLoading(false);
-        return;
-      }
+      // Note: For public repositories, authentication is not required
+      // The githubService.getBranches method will work without authentication for public repos
+      console.log('BranchSelector: Fetching branches for repository:', {
+        name: repository.name,
+        full_name: repository.full_name,
+        owner: repository.owner,
+        isAuthenticated: githubService.isAuth()
+      });
 
       try {
         setLoading(true);

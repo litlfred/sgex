@@ -25,6 +25,16 @@ const useDAKUrlParams = () => {
   useEffect(() => {
     const fetchDataFromUrlParams = async () => {
       if ((!profile || !repository) && user && repo) {
+        console.log('useDAKUrlParams: Fetching data from URL parameters:', {
+          user, 
+          repo, 
+          branch,
+          hasProfile: !!profile,
+          hasRepository: !!repository,
+          hasLocationState: !!location.state,
+          isAuthenticated: githubService.isAuth()
+        });
+        
         try {
           setLoading(true);
           setError(null);
@@ -85,10 +95,17 @@ const useDAKUrlParams = () => {
           // Fetch repository
           let repoData = null;
           try {
+            console.log(`useDAKUrlParams: Fetching repository data for ${user}/${repo}`);
             const repoResponse = await githubService.getRepository(user, repo);
             repoData = repoResponse;
+            console.log('useDAKUrlParams: Repository data fetched successfully:', {
+              name: repoData.name,
+              full_name: repoData.full_name,
+              owner: repoData.owner,
+              default_branch: repoData.default_branch
+            });
           } catch (err) {
-            console.error('Error fetching repository:', err);
+            console.error('useDAKUrlParams: Error fetching repository:', err);
             navigate('/', { 
               state: { 
                 warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
@@ -122,6 +139,21 @@ const useDAKUrlParams = () => {
           } else {
             setSelectedBranch(repoData.default_branch);
           }
+
+          console.log('useDAKUrlParams: Setting final state:', {
+            profile: {
+              login: userProfile.login,
+              name: userProfile.name,
+              type: userProfile.type
+            },
+            repository: {
+              name: repoData.name,
+              full_name: repoData.full_name,
+              owner: repoData.owner,
+              default_branch: repoData.default_branch
+            },
+            selectedBranch: branch || repoData.default_branch
+          });
 
           setProfile(userProfile);
           setRepository(repoData);

@@ -76,8 +76,19 @@ const BusinessProcessSelection = () => {
         const repoName = repository.name;
         const ref = selectedBranch || 'main';
 
-        console.log(`Fetching BPMN files from ${owner}/${repoName} (branch: ${ref})`);
-        console.log('Derived owner from:', repository.owner?.login ? 'repository.owner.login' : 'repository.full_name.split()');
+        console.log(`BusinessProcessSelection: Fetching BPMN files from ${owner}/${repoName} (branch: ${ref})`);
+        console.log('BusinessProcessSelection: Owner derived from:', repository.owner?.login ? 'repository.owner.login' : 'repository.full_name.split()');
+        console.log('BusinessProcessSelection: Final repository access details:', {
+          derivedOwner: owner,
+          repositoryName: repoName,
+          ref: ref,
+          fullRepositoryData: {
+            name: repository.name,
+            full_name: repository.full_name,
+            owner: repository.owner,
+            default_branch: repository.default_branch
+          }
+        });
         
         const bpmnFiles = await githubService.getBpmnFiles(owner, repoName, ref);
         

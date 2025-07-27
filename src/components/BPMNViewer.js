@@ -63,12 +63,13 @@ const BPMNViewerComponent = () => {
       const repoName = repository.name;
       const ref = selectedBranch || 'main';
 
-      console.log('BPMNViewer - Loading content with:', {
+      console.log('BPMNViewer - Loading content with detailed analysis:', {
         repository: {
           name: repository.name,
           full_name: repository.full_name,
           owner: repository.owner,
-          isDemo: repository.isDemo
+          isDemo: repository.isDemo,
+          default_branch: repository.default_branch
         },
         selectedFile: {
           name: selectedFile.name,
@@ -76,11 +77,13 @@ const BPMNViewerComponent = () => {
           size: selectedFile.size
         },
         derivedOwner: owner,
-        ref
+        repoName: repoName,
+        ref: ref,
+        githubServiceAuthenticated: githubService.isAuth()
       });
 
-      console.log(`Loading BPMN content from ${owner}/${repoName}:${selectedFile.path} (ref: ${ref})`);
-      console.log('Selected file object:', selectedFile);
+      console.log(`BPMNViewer: Loading BPMN content from ${owner}/${repoName}:${selectedFile.path} (ref: ${ref})`);
+      console.log('BPMNViewer: Selected file object:', selectedFile);
       
       // Add a timeout for the entire loading process
       const loadingTimeout = setTimeout(() => {
@@ -90,47 +93,71 @@ const BPMNViewerComponent = () => {
       
       try {
         // Use githubService to fetch file content (works for both public and private repos)
+        console.log(`BPMNViewer: Calling githubService.getFileContent with params:`, {
+          owner,
+          repoName,
+          path: selectedFile.path,
+          ref
+        });
+        
         const bpmnXml = await githubService.getFileContent(owner, repoName, selectedFile.path, ref);
         
-        console.log('Successfully loaded BPMN content from repository, length:', bpmnXml.length);
-        console.log('BPMN content preview:', bpmnXml.substring(0, 200));
+        console.log('BPMNViewer: Successfully loaded BPMN content from repository');
+        console.log('BPMNViewer: Content length:', bpmnXml.length);
+        console.log('BPMNViewer: Content preview (first 200 chars):', bpmnXml.substring(0, 200));
+        console.log('BPMNViewer: Content type check - contains bpmn:definitions:', bpmnXml.includes('bpmn:definitions'));
+        console.log('BPMNViewer: Content type check - contains <definitions:', bpmnXml.includes('<definitions'));
 
         // Validate that we got valid BPMN XML content
         if (!bpmnXml || !bpmnXml.trim()) {
+          console.error('BPMNViewer: Empty or invalid BPMN file content received');
           throw new Error('Empty or invalid BPMN file content');
         }
         
         if (!bpmnXml.includes('bpmn:definitions') && !bpmnXml.includes('<definitions')) {
+          console.error('BPMNViewer: File does not contain valid BPMN XML content');
+          console.error('BPMNViewer: Content preview for debugging:', bpmnXml.substring(0, 500));
           throw new Error('File does not appear to contain valid BPMN XML content');
         }
 
         // Load the BPMN diagram
-        console.log('Attempting to import XML into BPMN viewer...');
+        console.log('BPMNViewer: Attempting to import XML into BPMN viewer...');
         await viewerRef.current.importXML(bpmnXml);
-        console.log('Successfully imported BPMN XML into viewer');
+        console.log('BPMNViewer: Successfully imported BPMN XML into viewer');
         
         // Center the diagram in the viewer
         try {
           const canvas = viewerRef.current.get('canvas');
           canvas.zoom('fit-viewport');
-          console.log('Centered BPMN diagram in viewport');
+          console.log('BPMNViewer: Centered BPMN diagram in viewport');
         } catch (centerError) {
-          console.warn('Could not center diagram:', centerError);
+          console.warn('BPMNViewer: Could not center diagram:', centerError);
           // This is not a critical error, continue
         }
         
         clearTimeout(loadingTimeout);
+        console.log('BPMNViewer: BPMN loading completed successfully');
         setLoading(false);
       } catch (contentError) {
         clearTimeout(loadingTimeout);
+        console.error('BPMNViewer: Error during file content processing:', contentError);
         throw contentError;
       }
     } catch (err) {
-      console.error('Error loading BPMN file:', err);
-      console.error('Error details:', {
+      console.error('BPMNViewer: Error loading BPMN file:', err);
+      console.error('BPMNViewer: Error details:', {
         message: err.message,
         status: err.status,
-        stack: err.stack
+        stack: err.stack,
+        repository: {
+          owner: owner,
+          name: repoName,
+          ref: ref
+        },
+        file: {
+          name: selectedFile.name,
+          path: selectedFile.path
+        }
       });
       
       // Provide specific error messages based on the error type
