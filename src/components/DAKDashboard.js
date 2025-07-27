@@ -226,7 +226,7 @@ const DAKDashboard = () => {
       id: 'program-indicators',
       name: 'Program Indicators',
       description: 'Performance indicators and measurement definitions for monitoring and evaluation',
-      icon: '📊',
+      icon: '📈',
       type: 'L2',
       color: '#498205',
       fileTypes: ['Measure', 'Logic'],

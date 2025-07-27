@@ -55,7 +55,7 @@ const TestDashboard = () => {
       id: 'indicators',
       name: 'Indicators & Measures',
       description: 'Performance indicators and measurement definitions',
-      icon: '📊',
+      icon: '📈',
       type: 'Level 2',
       color: '#881798',
       fileTypes: ['JSON', 'XML'],
