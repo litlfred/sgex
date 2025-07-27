@@ -54,21 +54,21 @@ A GitHub repository is considered a WHO SMART Guidelines DAK if it:
 
 ### The 8 Core DAK Components
 
-DAK components are organized into two implementation levels:
-- **L2 (Level 2)**: Data model agnostic business logic representations
-- **L3 (Level 3)**: FHIR R4-specific technical implementations
-
-#### Level 2 (Business Logic & Processes)
+#### 
 1. **Business Processes** - BPMN workflows and business process definitions
 2. **Decision Support Logic** - DMN decision tables and clinical decision support 
 3. **Indicators & Measures** - Performance indicators and measurement definitions
 4. **Data Entry Forms** - Structured data collection forms and questionnaires
-
-#### Level 3 (Technical Implementation)
 5. **Terminology** - Code systems, value sets, and concept maps
 6. **FHIR Profiles** - FHIR resource profiles and structure definitions
 7. **FHIR Extensions** - Custom FHIR extensions and data elements
 8. **Test Data & Examples** - Sample data and test cases for validation
+
+
+DAK components have two implementation levels:
+- **L2 (Level 2)**: Data model agnostic business logic representations
+- **L3 (Level 3)**: FHIR R4-specific technical implementations
+
 
 ### Component Representations
 
