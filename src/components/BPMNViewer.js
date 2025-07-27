@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
+import githubService from '../services/githubService';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import './BPMNViewer.css';
 
@@ -10,7 +11,7 @@ const BPMNViewerComponent = () => {
   const viewerRef = useRef(null);
   const containerRef = useRef(null);
   
-  const { profile, repository, component, selectedFile } = location.state || {};
+  const { profile, repository, component, selectedFile, selectedBranch } = location.state || {};
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,7 +37,7 @@ const BPMNViewerComponent = () => {
 
   // Load BPMN file content
   const loadBpmnContent = useCallback(async () => {
-    if (!viewerRef.current || !selectedFile) {
+    if (!viewerRef.current || !selectedFile || !repository) {
       return;
     }
 
@@ -44,71 +45,37 @@ const BPMNViewerComponent = () => {
       setLoading(true);
       setError(null);
 
-      // Load actual BPMN content from GitHub if available
-      let bpmnXml = null;
-      if (profile.token && selectedFile.download_url) {
-        try {
-          const response = await fetch(selectedFile.download_url);
-          if (response.ok) {
-            bpmnXml = await response.text();
-            console.log('Loaded BPMN content from GitHub');
-          }
-        } catch (fetchError) {
-          console.warn('Could not fetch BPMN content from GitHub:', fetchError);
-        }
-      }
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const ref = selectedBranch || 'main';
 
-      // Use mock content if we couldn't load from GitHub
-      if (!bpmnXml) {
-        bpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="17.11.1">
-  <bpmn:process id="Process_${selectedFile.name.replace('.bpmn', '')}" isExecutable="true">
-    <bpmn:startEvent id="StartEvent_1">
-      <bpmn:outgoing>Flow_1</bpmn:outgoing>
-    </bpmn:startEvent>
-    <bpmn:task id="Task_1" name="${selectedFile.name.replace('.bpmn', '').replace('-', ' ').toUpperCase()}">
-      <bpmn:incoming>Flow_1</bpmn:incoming>
-      <bpmn:outgoing>Flow_2</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:endEvent id="EndEvent_1">
-      <bpmn:incoming>Flow_2</bpmn:incoming>
-    </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="EndEvent_1" />
-  </bpmn:process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_${selectedFile.name.replace('.bpmn', '')}">
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
-        <dc:Bounds x="179" y="99" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1" bpmnElement="Task_1">
-        <dc:Bounds x="270" y="77" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1" bpmnElement="EndEvent_1">
-        <dc:Bounds x="432" y="99" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
-        <di:waypoint x="215" y="117" />
-        <di:waypoint x="270" y="117" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
-        <di:waypoint x="370" y="117" />
-        <di:waypoint x="432" y="117" />
-      </bpmndi:BPMNEdge>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
-</bpmn:definitions>`;
-      }
+      console.log(`Loading BPMN content from ${owner}/${repoName}:${selectedFile.path} (ref: ${ref})`);
+      
+      // Use githubService to fetch file content (works for both public and private repos)
+      const bpmnXml = await githubService.getFileContent(owner, repoName, selectedFile.path, ref);
+      
+      console.log('Successfully loaded BPMN content from repository');
 
       // Load the BPMN diagram
       await viewerRef.current.importXML(bpmnXml);
       setLoading(false);
     } catch (err) {
       console.error('Error loading BPMN file:', err);
-      setError('Failed to load BPMN diagram');
+      
+      // Provide specific error messages based on the error type
+      if (err.status === 404) {
+        setError('BPMN file not found in the repository. The file may have been moved or deleted.');
+      } else if (err.status === 403) {
+        setError('Access denied. This repository may be private and require authentication.');
+      } else if (err.message.includes('rate limit')) {
+        setError('GitHub API rate limit exceeded. Please try again later or authenticate for higher limits.');
+      } else {
+        setError(`Failed to load BPMN diagram: ${err.message}`);
+      }
+      
       setLoading(false);
     }
-  }, [selectedFile, profile.token]);
+  }, [selectedFile, repository, selectedBranch]);
 
   // Initialize BPMN viewer
   useEffect(() => {
@@ -161,6 +128,7 @@ const BPMNViewerComponent = () => {
         repository,
         component,
         selectedFile,
+        selectedBranch,
         mode: 'edit'
       }
     });
@@ -171,7 +139,8 @@ const BPMNViewerComponent = () => {
       state: {
         profile,
         repository,
-        component
+        component,
+        selectedBranch
       }
     });
   };

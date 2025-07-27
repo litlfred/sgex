@@ -818,6 +818,32 @@ class GitHubService {
     return uniqueFiles;
   }
 
+  // Get file content from GitHub repository
+  async getFileContent(owner, repo, path, ref = 'main') {
+    try {
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref
+      });
+
+      // Handle file content
+      if (data.type === 'file' && data.content) {
+        // Decode base64 content
+        return Buffer.from(data.content, 'base64').toString('utf-8');
+      } else {
+        throw new Error('File not found or is not a file');
+      }
+    } catch (error) {
+      console.error(`Failed to fetch file content from ${owner}/${repo}/${path}:`, error);
+      throw error;
+    }
+  }
+
   // Logout
   logout() {
     this.octokit = null;
