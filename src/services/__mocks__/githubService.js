@@ -117,6 +117,34 @@ const mockGitHubService = {
   
   checkSmartGuidelinesCompatibility: jest.fn(() => Promise.resolve(true)),
   
+  getBpmnFiles: jest.fn((owner, repo, ref = 'main') => {
+    // Mock BPMN files that would be found in a real repository
+    if (owner === 'WorldHealthOrganization' && repo === 'smart-dak-tb') {
+      return Promise.resolve([
+        {
+          name: 'treatment-decision.bpmn',
+          path: 'input/business-processes/treatment-decision.bpmn',
+          sha: 'abc123',
+          size: 4096,
+          download_url: `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/input/business-processes/treatment-decision.bpmn`,
+          html_url: `https://github.com/${owner}/${repo}/blob/${ref}/input/business-processes/treatment-decision.bpmn`
+        },
+        {
+          name: 'patient-screening.bpmn',
+          path: 'input/business-processes/screening/patient-screening.bpmn',
+          sha: 'def456',
+          size: 3072,
+          download_url: `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/input/business-processes/screening/patient-screening.bpmn`,
+          html_url: `https://github.com/${owner}/${repo}/blob/${ref}/input/business-processes/screening/patient-screening.bpmn`
+        }
+      ]);
+    }
+    // Return empty array for repositories without BPMN files
+    return Promise.resolve([]);
+  }),
+  
+  getBpmnFilesRecursive: jest.fn(() => Promise.resolve([])),
+  
   logout: jest.fn(() => {
     mockGitHubService.isAuthenticated = false;
   })

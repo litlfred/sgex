@@ -749,6 +749,80 @@ class GitHubService {
     }
   }
 
+  // Recursively fetch BPMN files from a directory and its subdirectories
+  async getBpmnFilesRecursive(owner, repo, path, ref = 'main', allFiles = []) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref
+      });
+
+      // Handle single file response
+      if (!Array.isArray(data)) {
+        if (data.name.endsWith('.bpmn')) {
+          allFiles.push(data);
+        }
+        return allFiles;
+      }
+
+      // Handle directory response
+      for (const item of data) {
+        if (item.type === 'file' && item.name.endsWith('.bpmn')) {
+          allFiles.push(item);
+        } else if (item.type === 'dir') {
+          // Recursively search subdirectories
+          await this.getBpmnFilesRecursive(owner, repo, item.path, ref, allFiles);
+        }
+      }
+
+      return allFiles;
+    } catch (error) {
+      // If directory doesn't exist, return empty array (not an error)
+      if (error.status === 404) {
+        return allFiles;
+      }
+      throw error;
+    }
+  }
+
+  // Get all BPMN files from a repository's business process directories
+  async getBpmnFiles(owner, repo, ref = 'main') {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const allBpmnFiles = [];
+    
+    // Try both possible directory names: 'input/business-processes' and 'input/business-process'
+    const possiblePaths = [
+      'input/business-processes',
+      'input/business-process'
+    ];
+
+    for (const path of possiblePaths) {
+      try {
+        const files = await this.getBpmnFilesRecursive(owner, repo, path, ref);
+        allBpmnFiles.push(...files);
+      } catch (error) {
+        console.warn(`Could not fetch BPMN files from ${path}:`, error.message);
+        // Continue trying other paths
+      }
+    }
+
+    // Remove duplicates based on path (in case both directories exist and have overlapping files)
+    const uniqueFiles = allBpmnFiles.filter((file, index, self) => 
+      index === self.findIndex(f => f.path === file.path)
+    );
+
+    return uniqueFiles;
+  }
+
   // Logout
   logout() {
     this.octokit = null;

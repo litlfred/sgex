@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Octokit } from '@octokit/rest';
+import githubService from '../services/githubService';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import './BusinessProcessSelection.css';
 
@@ -47,70 +47,46 @@ const BusinessProcessSelection = () => {
         setLoading(true);
         setError(null);
 
-        // Use GitHub API if profile has token
-        if (profile.token) {
+        // Only show real BPMN files if we have authentication and a repository
+        if (profile.token && githubService.isAuth()) {
           try {
-            const octokit = new Octokit({ auth: profile.token });
-            const { data } = await octokit.rest.repos.getContent({
-              owner: repository.owner?.login || repository.full_name.split('/')[0],
-              repo: repository.name,
-              path: 'input/business-processes',
-              ref: selectedBranch || 'main' // Use selected branch or default to main
-            });
+            const owner = repository.owner?.login || repository.full_name.split('/')[0];
+            const repoName = repository.name;
+            const ref = selectedBranch || 'main';
 
-            // Filter for .bpmn files
-            const bpmnFiles = Array.isArray(data) 
-              ? data.filter(file => file.name.endsWith('.bpmn'))
-              : data.name.endsWith('.bpmn') ? [data] : [];
-
+            console.log(`Fetching BPMN files from ${owner}/${repoName} (branch: ${ref})`);
+            
+            const bpmnFiles = await githubService.getBpmnFiles(owner, repoName, ref);
+            
+            console.log(`Found ${bpmnFiles.length} BPMN files:`, bpmnFiles.map(f => f.path));
+            
             setBpmnFiles(bpmnFiles);
             setLoading(false);
             return;
           } catch (apiError) {
-            console.warn('GitHub API error, falling back to mock data:', apiError);
-            // Fall through to mock data
+            console.error('Failed to fetch BPMN files from repository:', apiError);
+            setError(`Failed to load BPMN files from repository: ${apiError.message}`);
+            setBpmnFiles([]); // Show empty state instead of demo data
+            setLoading(false);
+            return;
           }
         }
 
-        // Mock BPMN files for demonstration
-        const mockFiles = [
-          {
-            name: 'patient-registration.bpmn',
-            path: 'input/business-processes/patient-registration.bpmn',
-            sha: 'abc123',
-            size: 2048,
-            download_url: 'https://raw.githubusercontent.com/example/repo/main/input/business-processes/patient-registration.bpmn',
-            html_url: 'https://github.com/example/repo/blob/main/input/business-processes/patient-registration.bpmn'
-          },
-          {
-            name: 'vaccination-workflow.bpmn',
-            path: 'input/business-processes/vaccination-workflow.bpmn',
-            sha: 'def456',
-            size: 3072,
-            download_url: 'https://raw.githubusercontent.com/example/repo/main/input/business-processes/vaccination-workflow.bpmn',
-            html_url: 'https://github.com/example/repo/blob/main/input/business-processes/vaccination-workflow.bpmn'
-          },
-          {
-            name: 'appointment-scheduling.bpmn',
-            path: 'input/business-processes/appointment-scheduling.bpmn',
-            sha: 'ghi789',
-            size: 1536,
-            download_url: 'https://raw.githubusercontent.com/example/repo/main/input/business-processes/appointment-scheduling.bpmn',
-            html_url: 'https://github.com/example/repo/blob/main/input/business-processes/appointment-scheduling.bpmn'
-          }
-        ];
-
-        setBpmnFiles(mockFiles);
+        // If no authentication or no repository, show empty state
+        console.warn('Not authenticated or no repository selected');
+        setError('Authentication required to load BPMN files from repository');
+        setBpmnFiles([]);
         setLoading(false);
       } catch (err) {
         console.error('Error loading BPMN files:', err);
         setError('Failed to load BPMN files from repository');
+        setBpmnFiles([]);
         setLoading(false);
       }
     };
 
     loadBpmnFiles();
-  }, [profile, repository, navigate, selectedBranch]); // Add selectedBranch to dependencies
+  }, [profile, repository, navigate, selectedBranch]);
 
   const handleEdit = (file) => {
     if (!hasWriteAccess) {
@@ -208,7 +184,7 @@ const BusinessProcessSelection = () => {
             <h2>Business Process Files</h2>
             <p>
               Select a BPMN business process file to view, edit, or examine the source code.
-              Files are located in the <code>input/business-processes/</code> directory.
+              Files are loaded from <code>input/business-processes/</code> or <code>input/business-process/</code> directories and subdirectories.
             </p>
           </div>
 
@@ -225,7 +201,7 @@ const BusinessProcessSelection = () => {
             <div className="empty-state">
               <div className="empty-icon">📋</div>
               <h3>No BPMN Files Found</h3>
-              <p>No .bpmn files were found in the input/business-processes/ directory.</p>
+              <p>No .bpmn files were found in the input/business-processes/ or input/business-process/ directories.</p>
             </div>
           ) : (
             <div className="files-grid">
