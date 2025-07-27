@@ -47,6 +47,46 @@
   font-weight: 500;
 }
 
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.settings-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+}
+
+.settings-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.auth-mode-indicator {
+  display: flex;
+  align-items: center;
+  margin-left: 0.5rem;
+}
+
+.oauth-badge {
+  background: #28a745;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .user-avatar {
   width: 32px;
   height: 32px;
@@ -111,6 +151,40 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.auth-mode-switcher {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.switch-mode-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+}
+
+.switch-mode-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.switch-mode-btn.secondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+}
+
+.switch-mode-btn.secondary:hover {
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
 .auth-section p {
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
@@ -164,10 +238,80 @@
 }
 
 .info-section p {
-  margin: 0;
+  margin: 0 0 1rem 0;
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.9);
   line-height: 1.5;
+}
+
+.info-section p:last-child {
+  margin-bottom: 0;
+}
+
+/* Advanced Options */
+.advanced-options {
+  margin-top: 1.5rem;
+}
+
+.advanced-details {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.advanced-details summary {
+  padding: 1rem;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.advanced-details summary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.advanced-details[open] summary {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.advanced-content {
+  padding: 1rem;
+}
+
+.advanced-content p {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.pat-fallback-btn {
+  background: #666;
+  color: white;
+  border: 1px solid #777;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0.5rem 0;
+}
+
+.pat-fallback-btn:hover {
+  background: #555;
+  border-color: #666;
+}
+
+.advanced-content .note {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
 }
 
 .doc-link {
