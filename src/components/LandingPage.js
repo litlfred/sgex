@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import PATLogin from './PATLogin';
@@ -13,8 +13,10 @@ const LandingPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [dakCounts, setDakCounts] = useState({});
+  const [warningMessage, setWarningMessage] = useState(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Load cached DAK counts without initiating any scanning
   const loadCachedDakCounts = useCallback((userData, orgsData) => {
@@ -147,6 +149,15 @@ const LandingPage = () => {
     initializeAuth();
   }, []);
 
+  // Handle warning message from navigation state
+  useEffect(() => {
+    if (location.state?.warningMessage) {
+      setWarningMessage(location.state.warningMessage);
+      // Clear the warning message from navigation state to prevent it from persisting
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
+
   // Fetch user data when authentication state changes
   useEffect(() => {
     if (isAuthenticated && !user) {
@@ -201,6 +212,10 @@ const LandingPage = () => {
     navigate('/');
   };
 
+  const handleDismissWarning = () => {
+    setWarningMessage(null);
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="landing-page">
@@ -215,6 +230,21 @@ const LandingPage = () => {
         </div>
         
         <div className="landing-content">
+          {warningMessage && (
+            <div className="warning-message">
+              <div className="warning-content">
+                <span className="warning-icon">⚠️</span>
+                <span className="warning-text">{warningMessage}</span>
+                <button 
+                  className="warning-dismiss" 
+                  onClick={handleDismissWarning}
+                  aria-label="Dismiss warning"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
           <div className="welcome-section">
             <h2>Welcome to SGEX Workbench</h2>
             <p>
@@ -284,6 +314,21 @@ const LandingPage = () => {
       </div>
       
       <div className="landing-content">
+        {warningMessage && (
+          <div className="warning-message">
+            <div className="warning-content">
+              <span className="warning-icon">⚠️</span>
+              <span className="warning-text">{warningMessage}</span>
+              <button 
+                className="warning-dismiss" 
+                onClick={handleDismissWarning}
+                aria-label="Dismiss warning"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
         {loading ? (
           <div className="loading-section">
             <div className="spinner"></div>

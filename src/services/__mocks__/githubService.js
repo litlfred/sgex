@@ -117,6 +117,46 @@ const mockGitHubService = {
   
   checkSmartGuidelinesCompatibility: jest.fn(() => Promise.resolve(true)),
   
+  getUser: jest.fn((username) => {
+    if (username === 'test-user') {
+      return Promise.resolve({
+        login: 'test-user',
+        name: 'Test User',
+        avatar_url: 'https://github.com/test-user.png',
+        type: 'User'
+      });
+    }
+    return Promise.reject(new Error('User not found'));
+  }),
+
+  getRepository: jest.fn((owner, repo) => {
+    if (owner === 'test-user' && repo === 'smart-test-repo') {
+      return Promise.resolve({
+        id: 1,
+        name: 'smart-test-repo',
+        full_name: 'test-user/smart-test-repo',
+        description: 'Test SMART guidelines repository',
+        private: false,
+        default_branch: 'main',
+        owner: { login: 'test-user' },
+        html_url: 'https://github.com/test-user/smart-test-repo'
+      });
+    }
+    return Promise.reject(new Error('Repository not found'));
+  }),
+
+  getBranch: jest.fn((owner, repo, branch) => {
+    if (owner === 'test-user' && repo === 'smart-test-repo' && branch === 'main') {
+      return Promise.resolve({
+        name: 'main',
+        commit: { sha: 'abc123' }
+      });
+    }
+    return Promise.reject(new Error('Branch not found'));
+  }),
+
+  checkRepositoryWritePermissions: jest.fn(() => Promise.resolve(false)),
+  
   logout: jest.fn(() => {
     mockGitHubService.isAuthenticated = false;
   })

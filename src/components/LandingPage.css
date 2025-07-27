@@ -635,3 +635,63 @@
 .landing-mascot:hover .landing-mascot-img {
   opacity: 1;
 }
+
+/* Warning message styles */
+.warning-message {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  margin: 1rem 0;
+  animation: slideInFromTop 0.3s ease-out;
+}
+
+.warning-content {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  gap: 0.75rem;
+}
+
+.warning-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.warning-text {
+  color: #856404;
+  font-weight: 500;
+  flex: 1;
+  line-height: 1.4;
+}
+
+.warning-dismiss {
+  background: none;
+  border: none;
+  color: #856404;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.warning-dismiss:hover {
+  background-color: rgba(133, 100, 4, 0.1);
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

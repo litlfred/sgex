@@ -36,6 +36,28 @@ const DAKDashboard = () => {
           if (!githubService.isAuth()) {
             // In demo mode, create mock data instead of requiring authentication
             if (window.location.pathname.includes('/dashboard/')) {
+              // List of known demo repositories that should work
+              const validDemoRepos = [
+                'sgex-demo',
+                'smart-guidelines-demo',
+                'who-smart-guidelines',
+                'dak-example',
+                'implementation-guide-example'
+              ];
+              
+              // If it's not a known valid demo repo, redirect with warning
+              if (!validDemoRepos.some(validRepo => repo.toLowerCase().includes(validRepo.toLowerCase())) && 
+                  !repo.toLowerCase().includes('smart') && 
+                  !repo.toLowerCase().includes('dak') &&
+                  !repo.toLowerCase().includes('guideline')) {
+                navigate('/', { 
+                  state: { 
+                    warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
+                  } 
+                });
+                return;
+              }
+
               const demoProfile = {
                 login: user,
                 name: user.charAt(0).toUpperCase() + user.slice(1),
@@ -72,8 +94,12 @@ const DAKDashboard = () => {
             userProfile = userResponse;
           } catch (err) {
             console.error('Error fetching user:', err);
-            setError(`User '${user}' not found or not accessible.`);
-            setLoading(false);
+            // Redirect to landing page with warning message
+            navigate('/', { 
+              state: { 
+                warningMessage: `Could not access the requested DAK. User '${user}' not found or not accessible.` 
+              } 
+            });
             return;
           }
 
@@ -84,8 +110,12 @@ const DAKDashboard = () => {
             repoData = repoResponse;
           } catch (err) {
             console.error('Error fetching repository:', err);
-            setError(`Repository '${user}/${repo}' not found or not accessible.`);
-            setLoading(false);
+            // Redirect to landing page with warning message
+            navigate('/', { 
+              state: { 
+                warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
+              } 
+            });
             return;
           }
 
@@ -116,7 +146,7 @@ const DAKDashboard = () => {
     };
 
     fetchDataFromUrlParams();
-  }, [user, repo, branch, profile, repository]);
+  }, [user, repo, branch, profile, repository, navigate]);
 
   // Initialize selected branch from session context
   useEffect(() => {
