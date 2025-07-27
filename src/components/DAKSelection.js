@@ -160,8 +160,11 @@ const DAKSelection = () => {
         // Simulate scanning time (1-2 seconds per repository)
         await delay(1000 + Math.random() * 1000);
         
-        // Add found repository to results
-        setRepositories(prevRepos => [...prevRepos, repo]);
+        // Add found repository to results in alphabetical order
+        setRepositories(prevRepos => {
+          const newRepos = [...prevRepos, repo];
+          return newRepos.sort((a, b) => a.name.localeCompare(b.name));
+        });
         
         // Simulate completion
         setScanProgress({
@@ -223,6 +226,8 @@ const DAKSelection = () => {
               : 'https://github.com/favicon.ico'
           }
         }));
+        // Sort templates alphabetically by name
+        repos.sort((a, b) => a.name.localeCompare(b.name));
         setRepositories(repos);
       } else {
         // For edit/fork actions, implement cache-first approach
@@ -241,6 +246,8 @@ const DAKSelection = () => {
           console.log('Using cached repository data', repositoryCacheService.getCacheInfo(profile.login, profile.type === 'org' ? 'org' : 'user'));
           repos = cachedData.repositories;
           setUsingCachedData(true);
+          // Sort cached repositories alphabetically
+          repos.sort((a, b) => a.name.localeCompare(b.name));
           setRepositories(repos);
         } else {
           // No cached data or forcing rescan - initiate progressive scanning
@@ -255,13 +262,15 @@ const DAKSelection = () => {
             repos = await githubService.getSmartGuidelinesRepositoriesProgressive(
               profile.login, 
               profile.type === 'org' ? 'org' : 'user',
-              // onRepositoryFound callback - add repo to list immediately
+              // onRepositoryFound callback - add repo to list immediately in alphabetical order
               (foundRepo) => {
                 setRepositories(prevRepos => {
                   // Avoid duplicates
                   const exists = prevRepos.some(repo => repo.id === foundRepo.id);
                   if (!exists) {
-                    return [...prevRepos, foundRepo];
+                    // Add the new repository and sort alphabetically by name
+                    const newRepos = [...prevRepos, foundRepo];
+                    return newRepos.sort((a, b) => a.name.localeCompare(b.name));
                   }
                   return prevRepos;
                 });
@@ -311,11 +320,15 @@ const DAKSelection = () => {
             );
             
             // Update repositories with final results (in case callback missed any)
-            setRepositories(repos);
+            // Sort alphabetically to ensure consistent ordering
+            const sortedRepos = repos.sort((a, b) => a.name.localeCompare(b.name));
+            setRepositories(sortedRepos);
           } else {
             // Fallback to mock repositories with enhanced scanning demonstration
             await simulateEnhancedScanning();
             repos = getMockRepositories();
+            // Sort mock repositories alphabetically
+            repos.sort((a, b) => a.name.localeCompare(b.name));
             setRepositories(repos);
           }
         }
@@ -324,7 +337,9 @@ const DAKSelection = () => {
       console.error('Error fetching repositories:', error);
       setError('Failed to fetch repositories. Please check your connection and try again.');
       // Fallback to mock data for demonstration
-      setRepositories(getMockRepositories());
+      const mockRepos = getMockRepositories();
+      mockRepos.sort((a, b) => a.name.localeCompare(b.name));
+      setRepositories(mockRepos);
     } finally {
       setLoading(false);
       setIsScanning(false);
