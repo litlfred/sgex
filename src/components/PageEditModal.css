@@ -311,3 +311,33 @@
     padding: 1rem 1.5rem;
   }
 }
+
+/* MD Editor Container */
+.md-editor-container {
+  flex: 1;
+  padding: 1rem;
+  min-height: 0;
+}
+
+.md-editor-container .w-md-editor {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+}
+
+.md-editor-container .w-md-editor-text-toolbar {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.5rem;
+}
+
+.md-editor-container .w-md-editor-text {
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.md-editor-container .w-md-editor-preview {
+  background: white;
+  padding: 1rem;
+}
