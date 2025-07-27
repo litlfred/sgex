@@ -320,6 +320,19 @@ const DAKDashboard = () => {
       return;
     }
 
+    // For health-interventions (WHO Digital Library), allow access in read-only mode
+    if (component.id === 'health-interventions') {
+      navigate(`/editor/${component.id}`, {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
     // For other components, check permissions before proceeding
     if (!hasWriteAccess) {
       setShowPermissionDialog(true);
