@@ -63,6 +63,22 @@ const BPMNViewerComponent = () => {
       const repoName = repository.name;
       const ref = selectedBranch || 'main';
 
+      console.log('BPMNViewer - Loading content with:', {
+        repository: {
+          name: repository.name,
+          full_name: repository.full_name,
+          owner: repository.owner,
+          isDemo: repository.isDemo
+        },
+        selectedFile: {
+          name: selectedFile.name,
+          path: selectedFile.path,
+          size: selectedFile.size
+        },
+        derivedOwner: owner,
+        ref
+      });
+
       console.log(`Loading BPMN content from ${owner}/${repoName}:${selectedFile.path} (ref: ${ref})`);
       console.log('Selected file object:', selectedFile);
       

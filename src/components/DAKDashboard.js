@@ -32,58 +32,60 @@ const DAKDashboard = () => {
           setLoading(true);
           setError(null);
 
-          // Check if githubService is authenticated (allow demo mode to proceed without auth)
-          if (!githubService.isAuth()) {
-            // In demo mode, create mock data instead of requiring authentication
-            if (window.location.pathname.includes('/dashboard/')) {
-              const demoProfile = {
-                login: user,
-                name: user.charAt(0).toUpperCase() + user.slice(1),
-                avatar_url: `https://github.com/${user}.png`,
-                type: 'User',
-                isDemo: true
-              };
-
-              const demoRepository = {
-                name: repo,
-                full_name: `${user}/${repo}`,
-                owner: { login: user },
-                default_branch: branch || 'main',
-                html_url: `https://github.com/${user}/${repo}`,
-                isDemo: true
-              };
-
-              setProfile(demoProfile);
-              setRepository(demoRepository);
-              setSelectedBranch(branch || 'main');
-              setLoading(false);
-              return;
-            } else {
-              setError('GitHub authentication required. Please authenticate first.');
-              setLoading(false);
-              return;
-            }
-          }
-
-          // Fetch user profile
+          // For URL-based access, always try to fetch the actual repository data first
+          // This ensures that URLs like /dashboard/WorldHealthOrganization/repo work
+          // regardless of current authentication state
+          
+          // Fetch user profile from URL parameter
           let userProfile = null;
           try {
             const userResponse = await githubService.getUser(user);
             userProfile = userResponse;
           } catch (err) {
-            console.error('Error fetching user:', err);
-            setError(`User '${user}' not found or not accessible.`);
+            console.error('Error fetching user from URL:', err);
+            // If we can't fetch the user, fall back to demo mode
+            console.log('Falling back to demo mode for user:', user);
+            
+            const demoProfile = {
+              login: user,
+              name: user.charAt(0).toUpperCase() + user.slice(1),
+              avatar_url: `https://github.com/${user}.png`,
+              type: 'User',
+              isDemo: true
+            };
+
+            const demoRepository = {
+              name: repo,
+              full_name: `${user}/${repo}`,
+              owner: { login: user },
+              default_branch: branch || 'main',
+              html_url: `https://github.com/${user}/${repo}`,
+              isDemo: true
+            };
+
+            setProfile(demoProfile);
+            setRepository(demoRepository);
+            setSelectedBranch(branch || 'main');
+            
+            console.log('DAKDashboard - Demo mode repository created (after user fetch failed):', {
+              name: demoRepository.name,
+              full_name: demoRepository.full_name,
+              owner: demoRepository.owner,
+              isDemo: demoRepository.isDemo,
+              html_url: demoRepository.html_url
+            });
+            
             setLoading(false);
             return;
           }
 
-          // Fetch repository
+          // Fetch repository data from URL parameter
           let repoData = null;
           try {
             const repoResponse = await githubService.getRepository(user, repo);
             repoData = repoResponse;
           } catch (err) {
-            console.error('Error fetching repository:', err);
+            console.error('Error fetching repository from URL:', err);
             setError(`Repository '${user}/${repo}' not found or not accessible.`);
             setLoading(false);
             return;
@@ -104,6 +106,20 @@ const DAKDashboard = () => {
 
           setProfile(userProfile);
           setRepository(repoData);
+          
+          console.log('DAKDashboard - Authenticated mode repository set:', {
+            name: repoData.name,
+            full_name: repoData.full_name,
+            owner: repoData.owner,
+            isDemo: repoData.isDemo,
+            html_url: repoData.html_url
+          });
+          console.log('DAKDashboard - Authenticated mode profile set:', {
+            login: userProfile.login,
+            name: userProfile.name,
+            isDemo: userProfile.isDemo
+          });
+          
           setLoading(false);
         } catch (err) {
           console.error('Error fetching data from URL params:', err);
@@ -309,6 +325,21 @@ const DAKDashboard = () => {
   const handleComponentClick = (component) => {
     // For business processes, navigate to selection page without permission check
     if (component.id === 'business-processes') {
+      console.log('DAKDashboard - Navigating to business-process-selection with data:', {
+        repository: {
+          name: repository.name,
+          full_name: repository.full_name,
+          owner: repository.owner,
+          isDemo: repository.isDemo
+        },
+        profile: {
+          login: profile.login,
+          name: profile.name,
+          isDemo: profile.isDemo
+        },
+        selectedBranch
+      });
+      
       navigate('/business-process-selection', {
         state: {
           profile,

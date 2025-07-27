@@ -47,11 +47,26 @@ const BusinessProcessSelection = () => {
         setLoading(true);
         setError(null);
 
+        // Debug logging to understand repository data flow
+        console.log('BusinessProcessSelection - Repository object received:', {
+          name: repository.name,
+          full_name: repository.full_name,
+          owner: repository.owner,
+          isDemo: repository.isDemo,
+          html_url: repository.html_url
+        });
+        console.log('BusinessProcessSelection - Profile object received:', {
+          login: profile?.login,
+          name: profile?.name,
+          isDemo: profile?.isDemo
+        });
+
         const owner = repository.owner?.login || repository.full_name.split('/')[0];
         const repoName = repository.name;
         const ref = selectedBranch || 'main';
 
         console.log(`Fetching BPMN files from ${owner}/${repoName} (branch: ${ref})`);
+        console.log('Derived owner from:', repository.owner?.login ? 'repository.owner.login' : 'repository.full_name.split()');
         
         const bpmnFiles = await githubService.getBpmnFiles(owner, repoName, ref);
         
