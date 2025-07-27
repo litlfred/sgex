@@ -415,6 +415,113 @@ class PATManagementService {
   }
 
   /**
+   * Find the best PAT for a specific repository
+   * @param {string} owner - Repository owner
+   * @param {string} repo - Repository name
+   * @returns {Promise<Object|null>} Best PAT for the repository or null
+   */
+  async findBestPATForRepository(owner, repo) {
+    this.initialize();
+    
+    let bestPAT = null;
+    let bestScore = 0; // Higher score = better PAT
+    
+    for (const [tokenId, patData] of this.pats) {
+      try {
+        // Check if this PAT has access to the repository
+        const hasAccess = await this.checkPATRepositoryAccess(tokenId, owner, repo);
+        
+        if (hasAccess) {
+          let score = 1; // Base score for having access
+          
+          // Prefer PATs with write access
+          if (patData.permissions.repoWrite) {
+            score += 10;
+          }
+          
+          // Prefer fine-grained tokens over classic tokens
+          if (patData.tokenType === 'fine-grained') {
+            score += 5;
+          }
+          
+          // Prefer tokens with more recent activity
+          if (patData.lastUsed) {
+            const daysSinceLastUse = (Date.now() - patData.lastUsed) / (1000 * 60 * 60 * 24);
+            score += Math.max(0, 10 - daysSinceLastUse); // Bonus for recent use
+          }
+          
+          if (score > bestScore) {
+            bestScore = score;
+            bestPAT = {
+              tokenId,
+              username: patData.username,
+              permissions: patData.permissions,
+              tokenType: patData.tokenType,
+              hasWriteAccess: patData.permissions.repoWrite
+            };
+          }
+        }
+      } catch (error) {
+        console.warn(`Error checking PAT ${tokenId} for ${owner}/${repo}:`, error);
+      }
+    }
+    
+    return bestPAT;
+  }
+
+  /**
+   * Check if a specific PAT has access to a repository
+   * @param {string} tokenId - PAT token ID
+   * @param {string} owner - Repository owner
+   * @param {string} repo - Repository name
+   * @returns {Promise<boolean>} Whether the PAT has access
+   */
+  async checkPATRepositoryAccess(tokenId, owner, repo) {
+    const patData = this.pats.get(tokenId);
+    if (!patData) return false;
+    
+    try {
+      // Try to get repository information
+      await patData.octokit.rest.repos.get({
+        owner,
+        repo
+      });
+      return true;
+    } catch (error) {
+      if (error.status === 404 || error.status === 403) {
+        return false; // No access or repository doesn't exist
+      }
+      throw error; // Re-throw other errors
+    }
+  }
+
+  /**
+   * Check if we have write access to a specific repository using any available PAT
+   * @param {string} owner - Repository owner
+   * @param {string} repo - Repository name
+   * @returns {Promise<boolean>} Whether we have write access
+   */
+  async checkRepositoryWriteAccess(owner, repo) {
+    const bestPAT = await this.findBestPATForRepository(owner, repo);
+    return bestPAT ? bestPAT.hasWriteAccess : false;
+  }
+
+  /**
+   * Get the Octokit instance for the best PAT for a repository
+   * @param {string} owner - Repository owner
+   * @param {string} repo - Repository name
+   * @returns {Promise<Octokit|null>} Octokit instance or null if no suitable PAT
+   */
+  async getOctokitForRepository(owner, repo) {
+    const bestPAT = await this.findBestPATForRepository(owner, repo);
+    if (bestPAT) {
+      const patData = this.pats.get(bestPAT.tokenId);
+      return patData ? patData.octokit : null;
+    }
+    return null;
+  }
+
+  /**
    * Clear all PATs and storage
    */
   clearAll() {
