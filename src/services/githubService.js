@@ -214,8 +214,8 @@ class GitHubService {
       });
 
       if (data.type === 'file' && data.content) {
-        // Decode base64 content
-        const content = Buffer.from(data.content, 'base64').toString('utf-8');
+        // Decode base64 content (browser-compatible)
+        const content = decodeURIComponent(escape(atob(data.content)));
         
         // Check if the content contains smart.who.int.base in dependencies
         const isCompatible = content.includes('smart.who.int.base');
