@@ -710,7 +710,7 @@
 
 .repo-status-indicator {
   font-size: 0.9rem;
-  animation: flash 1.5s ease-in-out infinite;
+  /* Animation removed per user feedback - no rotation for status icons */
 }
 
 .scanning-repo-name {
@@ -748,7 +748,7 @@
 
 .status-icon {
   font-size: 1rem;
-  animation: scanning 2s linear infinite;
+  /* Animation removed per user feedback - no rotation for status icons */
 }
 
 @keyframes scanning {

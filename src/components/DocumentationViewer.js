@@ -11,8 +11,7 @@ const docFiles = {
   'architecture': { file: 'solution-architecture.md', title: 'Solution Architecture' },
   'project-plan': { file: 'project-plan.md', title: 'Project Plan' },
   'bpmn-integration': { file: 'bpmn-integration.md', title: 'BPMN Integration' },
-  'qa-testing': { file: 'qa-testing.md', title: 'QA Testing Guide' },
-  'qa-report': { file: 'qa-report.html', title: 'QA Testing Report', isHtml: true },
+  'qa-report': { file: 'qa-report.html', title: 'QA Report', isHtml: true },
   'issues-analysis': { file: 'github-issues-analysis.md', title: 'GitHub Issues Analysis' }
 };
 
