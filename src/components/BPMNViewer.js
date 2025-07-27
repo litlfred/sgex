@@ -55,14 +55,15 @@ const BPMNViewerComponent = () => {
       return;
     }
 
+    // Declare variables outside try block so they're accessible in catch block
+    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+    const repoName = repository.name;
+    const ref = selectedBranch || 'main';
+
     try {
       console.log('📡 BPMNViewer: Setting loading state to true');
       setLoading(true);
       setError(null);
-
-      const owner = repository.owner?.login || repository.full_name.split('/')[0];
-      const repoName = repository.name;
-      const ref = selectedBranch || 'main';
 
       console.log('🔍 BPMNViewer: Repository and file analysis:', {
         repository: {
