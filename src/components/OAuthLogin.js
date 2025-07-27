@@ -3,6 +3,34 @@ import oauthService from '../services/oauthService';
 import { ACCESS_LEVELS } from '../services/tokenManagerService';
 import './OAuthLogin.css';
 
+// Development configuration display component
+const DevConfigDisplay = () => {
+  if (process.env.NODE_ENV !== 'development') return null;
+  
+  const clientId = process.env.REACT_APP_GITHUB_CLIENT_ID || 'sgex-workbench-dev';
+  const isConfigured = clientId && clientId !== 'sgex-workbench-dev';
+  
+  return (
+    <div style={{ 
+      background: isConfigured ? '#d4edda' : '#f8d7da', 
+      border: isConfigured ? '1px solid #c3e6cb' : '1px solid #f5c6cb',
+      color: isConfigured ? '#155724' : '#721c24',
+      padding: '8px 12px', 
+      borderRadius: '4px', 
+      fontSize: '12px', 
+      marginBottom: '16px',
+      fontFamily: 'monospace'
+    }}>
+      <strong>Dev Config:</strong> REACT_APP_GITHUB_CLIENT_ID = {clientId}
+      {!isConfigured && (
+        <div style={{ marginTop: '4px' }}>
+          ⚠️ Create .env.local file with your GitHub App Client ID
+        </div>
+      )}
+    </div>
+  );
+};
+
 const OAuthLogin = ({ onAuthSuccess, requiredAccessLevel = 'READ_ONLY', repoOwner = null, repoName = null }) => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authFlow, setAuthFlow] = useState(null);
@@ -84,11 +112,15 @@ const OAuthLogin = ({ onAuthSuccess, requiredAccessLevel = 'READ_ONLY', repoOwne
     } catch (err) {
       console.error('Failed to start OAuth flow:', err);
       
-      // Check if it's a GitHub App configuration issue
-      if (err.message.includes('403') || err.message.includes('Device flow initiation failed')) {
-        setError('GitHub App not configured. Please contact your administrator to set up the GitHub App for OAuth authentication.');
+      // Check for specific configuration issues
+      if (err.message.includes('GitHub App Client ID not configured')) {
+        setError('⚠️ GitHub App Client ID not configured. Please create a .env.local file with REACT_APP_GITHUB_CLIENT_ID set to your GitHub App\'s client ID.');
+      } else if (err.message.includes('GitHub App configuration error') || err.message.includes('422')) {
+        setError('⚠️ GitHub App configuration error. Please verify your GitHub App is properly configured with Device Flow enabled.');
+      } else if (err.message.includes('403') || err.message.includes('Device flow initiation failed')) {
+        setError('⚠️ GitHub App not configured. Please contact your administrator to set up the GitHub App for OAuth authentication.');
       } else {
-        setError('Failed to start authorization. Please check your connection and try again.');
+        setError('⚠️ Failed to start authorization. Please check your connection and try again.');
       }
       
       setIsAuthenticating(false);
@@ -215,6 +247,8 @@ const OAuthLogin = ({ onAuthSuccess, requiredAccessLevel = 'READ_ONLY', repoOwne
             Choose your access level to start working with DAK repositories. 
             You can always upgrade your permissions later.
           </p>
+          
+          <DevConfigDisplay />
           
           <div className="github-app-notice">
             <div className="notice-header">

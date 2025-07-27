@@ -31,15 +31,35 @@ The development server will:
 
 For OAuth to work, you need a GitHub App configured with:
 
-1. **Client ID**: Set via `REACT_APP_GITHUB_CLIENT_ID` environment variable
-   - For development, defaults to `'sgex-workbench-dev'`
-   - For production, should be set to your actual GitHub App client ID
+1. **Client ID**: **REQUIRED** - Set via `REACT_APP_GITHUB_CLIENT_ID` environment variable
+   - Create a `.env.local` file with your GitHub App's client ID
+   - Without this, OAuth will fail with a configuration error
 
 2. **Device Flow Enabled**: Your GitHub App must have Device Flow enabled in its settings
 
 3. **OAuth Scopes**: The app requests these scopes based on access level:
    - **Read Access**: `read:user`, `public_repo`
    - **Write Access**: `read:user`, `public_repo`, `repo`
+
+### Setting Up Client ID
+
+**Step 1**: Create a `.env.local` file in your project root:
+
+```bash
+# Required: Your GitHub App's client ID
+REACT_APP_GITHUB_CLIENT_ID=Iv1.your-actual-client-id-here
+```
+
+**Step 2**: Get your Client ID from your GitHub App:
+1. Go to https://github.com/settings/apps
+2. Select your GitHub App
+3. Copy the "Client ID" value
+4. Paste it into your `.env.local` file
+
+**Step 3**: Restart your development server:
+```bash
+npm start
+```
 
 ### Testing OAuth Flow Locally
 
@@ -50,12 +70,14 @@ For OAuth to work, you need a GitHub App configured with:
 
 ### Environment Variables
 
-Create a `.env.local` file for local development:
+**Required**: Create a `.env.local` file for local development:
 
 ```bash
-# Optional: Override default client ID
-REACT_APP_GITHUB_CLIENT_ID=your-github-app-client-id
+# Required: Your GitHub App's Client ID
+REACT_APP_GITHUB_CLIENT_ID=Iv1.your-actual-client-id-here
 ```
+
+**Important**: Without setting `REACT_APP_GITHUB_CLIENT_ID`, OAuth authentication will fail. The application will show a clear error message if this is not configured.
 
 ### Troubleshooting
 
@@ -65,9 +87,10 @@ REACT_APP_GITHUB_CLIENT_ID=your-github-app-client-id
 3. Check that `http-proxy-middleware` is installed
 
 **OAuth Failures**: If OAuth requests fail:
-1. Check your GitHub App configuration
-2. Verify the client ID is correct
-3. Ensure Device Flow is enabled in your GitHub App settings
+1. **Missing Client ID**: Create `.env.local` with `REACT_APP_GITHUB_CLIENT_ID=your-client-id`
+2. Check your GitHub App configuration
+3. Verify the client ID is correct (should start with 'Iv1.')
+4. Ensure Device Flow is enabled in your GitHub App settings
 
 **Proxy Not Working**: If the proxy isn't loading:
 1. Verify `src/setupProxy.js` exports a function

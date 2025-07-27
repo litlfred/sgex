@@ -113,8 +113,19 @@ class OAuthService {
   // Start GitHub OAuth device flow
   async startDeviceFlow(accessLevel = 'READ_ONLY', repoOwner = null, repoName = null) {
     try {
+      // Check if client ID is configured
+      if (!GITHUB_CLIENT_ID || GITHUB_CLIENT_ID === 'sgex-workbench-dev') {
+        throw new Error('GitHub App Client ID not configured. Please set REACT_APP_GITHUB_CLIENT_ID in your .env.local file.');
+      }
+
       const scopes = GITHUB_SCOPES[accessLevel] || GITHUB_SCOPES.READ_ONLY;
       const scopeString = scopes.join(' ');
+
+      console.log('Starting OAuth device flow with:', {
+        client_id: GITHUB_CLIENT_ID,
+        scope: scopeString,
+        endpoint: OAUTH_ENDPOINTS.DEVICE_CODE
+      });
 
       // Initialize device flow
       const response = await fetch(OAUTH_ENDPOINTS.DEVICE_CODE, {
@@ -130,7 +141,20 @@ class OAuthService {
       });
 
       if (!response.ok) {
-        throw new Error(`Device flow initiation failed: ${response.status}`);
+        const errorText = await response.text();
+        console.error('OAuth device flow error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        
+        let errorMessage = `Device flow initiation failed: ${response.status}`;
+        
+        if (response.status === 422) {
+          errorMessage = 'GitHub App configuration error. Please verify your GitHub App is properly configured with Device Flow enabled.';
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
