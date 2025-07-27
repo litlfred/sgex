@@ -252,6 +252,82 @@
   background: #fafafa;
 }
 
+.editor-main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.properties-panel {
+  width: 300px;
+  background: white;
+  border-left: 1px solid #e0e0e0;
+  overflow-y: auto;
+  min-width: 250px;
+}
+
+/* BPMN Properties Panel Styles */
+.properties-panel .bio-properties-panel-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.properties-panel .bio-properties-panel-entry {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.properties-panel .bio-properties-panel-entry label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  color: #333;
+}
+
+.properties-panel .bio-properties-panel-entry input,
+.properties-panel .bio-properties-panel-entry textarea,
+.properties-panel .bio-properties-panel-entry select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-family: inherit;
+}
+
+.properties-panel .bio-properties-panel-entry input:focus,
+.properties-panel .bio-properties-panel-entry textarea:focus,
+.properties-panel .bio-properties-panel-entry select:focus {
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+.properties-panel .bio-properties-panel-entry.error input,
+.properties-panel .bio-properties-panel-entry.error textarea {
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.2);
+}
+
+.properties-panel .bio-properties-panel-entry .error-message {
+  color: #d32f2f;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.properties-panel .bio-properties-panel-group-header {
+  background: #f8f9fa;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #e0e0e0;
+  color: #333;
+}
+
 .diagram-placeholder {
   flex: 1;
   display: flex;
