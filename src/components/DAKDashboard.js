@@ -381,7 +381,13 @@ const DAKDashboard = () => {
   const handleComponentClick = (component) => {
     // For business processes, navigate to selection page without permission check
     if (component.id === 'business-processes') {
-      navigate('/business-process-selection', {
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/business-process-selection/${owner}/${repoName}/${selectedBranch}`
+        : `/business-process-selection/${owner}/${repoName}`;
+      
+      navigate(path, {
         state: {
           profile,
           repository,
