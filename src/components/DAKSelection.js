@@ -661,39 +661,30 @@ const DAKSelection = () => {
                     ></div>
                   </div>
                   <div className="progress-info">
-                    {/* Show currently scanning repositories */}
-                    {currentlyScanningRepos.size > 0 && (
-                      <div className="currently-scanning-section">
-                        <div className="scanning-section-title">
-                          <span className="scanning-icon">🔍</span>
-                          <span>Currently Testing:</span>
+                    {/* Unified scanning status showing percentage and currently testing repos */}
+                    <div className="unified-scanning-status">
+                      <div className="scanning-header-unified">
+                        <div className="progress-stats">
+                          <span className="progress-text">
+                            {scanProgress.current}/{scanProgress.total} repositories
+                          </span>
+                          <span className="progress-percentage">{scanProgress.progress}%</span>
                         </div>
-                        <div className="currently-scanning-repos">
-                          {Array.from(currentlyScanningRepos).map((repoName) => (
-                            <div key={repoName} className="scanning-repo-item">
-                              <span className="repo-status-indicator">⚡</span>
-                              <span className="scanning-repo-name">{repoName}</span>
+                        {currentlyScanningRepos.size > 0 && (
+                          <div className="currently-testing-unified">
+                            <span className="scanning-icon">🔍</span>
+                            <span>Currently Testing:</span>
+                            <div className="currently-scanning-repos">
+                              {Array.from(currentlyScanningRepos).map((repoName) => (
+                                <div key={repoName} className="scanning-repo-item">
+                                  <span className="repo-status-indicator">⚡</span>
+                                  <span className="scanning-repo-name">{repoName}</span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    
-                    {/* Show most recent progress update */}
-                    <div className="current-repo-status">
-                      <span className="status-icon">
-                        {scanProgress.completed ? '✅' : '🔍'}
-                      </span>
-                      <span className="current-repo-name">
-                        {scanProgress.completed ? 'Completed' : 'Testing'}: <strong>{scanProgress.currentRepo}</strong>
-                      </span>
-                    </div>
-                    
-                    <div className="progress-stats">
-                      <span className="progress-text">
-                        {scanProgress.current}/{scanProgress.total} repositories
-                      </span>
-                      <span className="progress-percentage">{scanProgress.progress}%</span>
                     </div>
                   </div>
                   <div className="scanning-note">
