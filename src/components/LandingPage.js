@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import oauthService from '../services/oauthService';
-import PATLogin from './PATLogin';
 import OAuthLogin from './OAuthLogin';
 import OAuthSettings from './OAuthSettings';
 import ContextualHelpMascot from './ContextualHelpMascot';
@@ -16,8 +15,6 @@ const LandingPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [dakCounts, setDakCounts] = useState({});
-  const [useOAuth, setUseOAuth] = useState(true);
-  const [showPATLogin, setShowPATLogin] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
   const navigate = useNavigate();
@@ -54,19 +51,16 @@ const LandingPage = () => {
     setError(null);
     
     try {
-      // Check token permissions first
-      await githubService.checkTokenPermissions();
-      
-      // Fetch user data using GitHub service
-      const userData = await githubService.getCurrentUser();
+      // Fetch user data using OAuth service
+      const userData = await oauthService.getCurrentUser();
       setUser(userData);
       
-      // Fetch organizations inline
+      // Fetch organizations using OAuth service
       let orgsData = [];
       
-      if (githubService.isAuth()) {
+      if (oauthService.hasAccess('READ_ONLY')) {
         try {
-          orgsData = await githubService.getUserOrganizations();
+          orgsData = await oauthService.getUserOrganizations();
         } catch (error) {
           console.error('Error fetching organizations:', error);
           orgsData = [];
@@ -75,7 +69,7 @@ const LandingPage = () => {
       
       // Always ensure WHO organization is included
       try {
-        const whoOrganization = await githubService.getWHOOrganization();
+        const whoOrganization = await oauthService.getWHOOrganization();
         
         // Check if WHO organization is already in the list
         const whoIndex = orgsData.findIndex(org => org.login === 'WorldHealthOrganization');
@@ -127,40 +121,24 @@ const LandingPage = () => {
       console.error('Error fetching user data:', error);
       setError('Failed to fetch user data. Please check your connection and try again.');
       setIsAuthenticated(false);
-      sessionStorage.removeItem('github_token');
-      localStorage.removeItem('github_token');
     } finally {
       setLoading(false);
     }
-  }, [loadCachedDakCounts]); // Remove dependencies to prevent circular re-renders
+  }, [loadCachedDakCounts]);
 
   // Initial authentication check - runs once on mount
   useEffect(() => {
     const initializeAuth = async () => {
-      // Load OAuth tokens first
+      // Load OAuth tokens from storage
       await oauthService.loadTokensFromStorage();
       
       // Check if we have OAuth tokens
       const hasOAuthAccess = oauthService.hasAccess('READ_ONLY') || oauthService.hasAccess('WRITE_ACCESS');
       
       if (hasOAuthAccess) {
-        // Use OAuth mode
+        // Enable OAuth mode
         githubService.enableOAuthMode();
         setIsAuthenticated(true);
-        setUseOAuth(true);
-      } else {
-        // Check for legacy PAT token
-        const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
-        if (token) {
-          const success = githubService.authenticate(token);
-          if (success) {
-            setIsAuthenticated(true);
-            setUseOAuth(false);
-          } else {
-            sessionStorage.removeItem('github_token');
-            localStorage.removeItem('github_token');
-          }
-        }
       }
     };
 
@@ -174,25 +152,11 @@ const LandingPage = () => {
     }
   }, [isAuthenticated, user, fetchUserData]);
 
-  const handleAuthSuccess = (token, octokitInstance) => {
-    // Store token in session storage for this session
-    sessionStorage.setItem('github_token', token);
-    
-    // Use the provided Octokit instance directly
-    githubService.authenticateWithOctokit(octokitInstance);
-    
-    setIsAuthenticated(true);
-    setUseOAuth(false);
-    setError(null);
-    fetchUserData();
-  };
-
   const handleOAuthSuccess = (tokenInfo, user) => {
     // OAuth tokens are managed by the OAuth service
     githubService.enableOAuthMode();
     
     setIsAuthenticated(true);
-    setUseOAuth(true);
     setError(null);
     
     if (user) {
@@ -203,12 +167,12 @@ const LandingPage = () => {
   };
 
   const handleLogout = () => {
+    oauthService.clearAllTokens();
     githubService.logout();
     setIsAuthenticated(false);
     setUser(null);
     setOrganizations([]);
     setError(null);
-    setUseOAuth(true); // Default back to OAuth
   };
 
   const handleProfileSelect = (profile) => {
@@ -260,30 +224,9 @@ const LandingPage = () => {
             </p>
             
             <div className="auth-section">
-              {showPATLogin ? (
-                <div>
-                  <div className="auth-mode-switcher">
-                    <button 
-                      onClick={() => setShowPATLogin(false)}
-                      className="switch-mode-btn"
-                    >
-                      ← Try GitHub App OAuth Again
-                    </button>
-                  </div>
-                  
-                  <p>Connect using a Personal Access Token:</p>
-                  <PATLogin 
-                    onAuthSuccess={handleAuthSuccess}
-                  />
-                </div>
-              ) : (
-                <div>
-                  <OAuthLogin 
-                    onAuthSuccess={handleOAuthSuccess}
-                    onOAuthFailure={() => setShowPATLogin(true)}
-                  />
-                </div>
-              )}
+              <OAuthLogin 
+                onAuthSuccess={handleOAuthSuccess}
+              />
               
               {error && (
                 <div className="error-message">
@@ -348,11 +291,9 @@ const LandingPage = () => {
             <button onClick={handleLogout} className="logout-btn">Logout</button>
           </div>
           
-          {useOAuth && (
-            <div className="auth-mode-indicator">
-              <span className="oauth-badge">🔐 OAuth</span>
-            </div>
-          )}
+          <div className="auth-mode-indicator">
+            <span className="oauth-badge">🔐 OAuth</span>
+          </div>
         </div>
       </div>
       

@@ -70,67 +70,67 @@ class HelpContentService {
     this.helpTopics = {
       'landing-page-unauthenticated': [
         {
-          id: 'github-pat-setup',
-          title: 'How to Create a GitHub Personal Access Token',
+          id: 'github-oauth-setup',
+          title: 'How to Set Up GitHub App OAuth Authentication',
           type: 'slideshow',
           content: [
             {
-              title: 'Step 1: Go to GitHub Settings',
+              title: 'GitHub App OAuth Authentication',
               content: `
-                <p>Navigate to your GitHub account settings:</p>
-                <ol>
-                  <li>Click your profile picture in the top right</li>
-                  <li>Select "Settings" from the dropdown</li>
-                  <li>Go to "Developer settings" → "Personal access tokens"</li>
-                  <li>Choose "Fine-grained tokens" (recommended) or "Tokens (classic)"</li>
-                </ol>
+                <p>SGEX Workbench uses GitHub App OAuth for secure, granular access to your repositories:</p>
+                <div class="oauth-benefits">
+                  <h4>🔐 Enhanced Security Benefits:</h4>
+                  <ul>
+                    <li><strong>No Token Management:</strong> You never handle sensitive tokens directly</li>
+                    <li><strong>Granular Permissions:</strong> Grant only specific access needed per repository</li>
+                    <li><strong>Easy Revocation:</strong> Manage all permissions through GitHub's OAuth settings</li>
+                    <li><strong>Audit Trail:</strong> GitHub tracks which app accesses what resources</li>
+                  </ul>
+                </div>
                 <div class="help-tip">
-                  <strong>💡 Tip:</strong> Fine-grained tokens provide better security with repository-specific access.
+                  <strong>💡 Setup Required:</strong> Your administrator needs to configure a GitHub App before OAuth will work.
                 </div>
               `
             },
             {
-              title: 'Step 2: Generate New Token',
+              title: 'Administrator Setup Required',
               content: `
-                <p>Create your new token:</p>
+                <p>Before you can use OAuth authentication, an administrator must set up a GitHub App:</p>
                 <ol>
-                  <li>Click "Generate new token"</li>
-                  <li>Give it a descriptive name like "SGEX Workbench"</li>
-                  <li>Set expiration (90 days recommended)</li>
-                  <li>Select repository access (specific repos or all)</li>
+                  <li>Create a GitHub App with Device Flow enabled</li>
+                  <li>Configure the app with appropriate permissions</li>
+                  <li>Set the <code>REACT_APP_GITHUB_CLIENT_ID</code> environment variable</li>
+                  <li>Deploy the updated configuration</li>
                 </ol>
-                <div class="help-warning">
-                  <strong>⚠️ Important:</strong> You'll only see the token once, so copy it immediately!
+                <div class="setup-links">
+                  <a href="/sgex/docs/github-app-setup.md" target="_blank" class="help-link">
+                    📋 Complete GitHub App Setup Guide
+                  </a>
+                </div>
+                <div class="help-tip">
+                  <strong>🔧 For Administrators:</strong> Follow the setup guide to enable OAuth for your users.
                 </div>
               `
             },
             {
-              title: 'Step 3: Set Required Permissions',
+              title: 'Using OAuth Authentication',
               content: `
-                <p>For <strong>fine-grained tokens</strong>, enable:</p>
-                <ul>
-                  <li><strong>Contents:</strong> Read and Write</li>
-                  <li><strong>Metadata:</strong> Read</li>
-                  <li><strong>Pull requests:</strong> Read and Write</li>
-                </ul>
-                <p>For <strong>classic tokens</strong>, select:</p>
-                <ul>
-                  <li><strong>repo</strong> - Full control of private repositories</li>
-                  <li><strong>read:org</strong> - Read org and team membership</li>
-                </ul>
-              `
-            },
-            {
-              title: 'Step 4: Use Your Token',
-              content: `
-                <p>Now you can authenticate with SGEX:</p>
+                <p>Once OAuth is set up, authentication is simple and secure:</p>
                 <ol>
-                  <li>Copy your newly generated token</li>
-                  <li>Paste it into the login form</li>
-                  <li>Click "Sign in with Personal Access Token"</li>
+                  <li><strong>Choose Access Level:</strong> Select Read or Write access based on your needs</li>
+                  <li><strong>Authorize on GitHub:</strong> Complete the authorization using the device code</li>
+                  <li><strong>Start Working:</strong> Access your DAK repositories with appropriate permissions</li>
                 </ol>
+                <div class="access-levels">
+                  <div class="access-level">
+                    <strong>👁️ Read Access:</strong> View repositories, components, and user information
+                  </div>
+                  <div class="access-level">
+                    <strong>✏️ Write Access:</strong> Edit components, create pull requests, and manage content
+                  </div>
+                </div>
                 <div class="help-tip">
-                  <strong>🔒 Security:</strong> Your token is stored securely in your browser and never shared with servers.
+                  <strong>🔄 Flexible:</strong> You can upgrade your permissions anytime without re-authenticating.
                 </div>
               `
             }

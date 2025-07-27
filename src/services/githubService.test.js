@@ -36,8 +36,8 @@ describe('GitHubService', () => {
 
   describe('getSmartGuidelinesRepositories', () => {
     it('should return repositories with SMART guidelines compatibility', async () => {
-      // Mock authentication
-      githubService.authenticate('fake-token');
+      // Mock OAuth authentication
+      githubService.enableOAuthMode();
 
       // Mock repository list
       const mockRepos = [
@@ -84,7 +84,7 @@ describe('GitHubService', () => {
 
     it('should handle errors gracefully when checking sushi-config.yaml', async () => {
       // Mock authentication
-      githubService.authenticate('fake-token');
+      githubService.enableOAuthMode();
 
       // Mock repository list
       const mockRepos = [
@@ -128,7 +128,7 @@ describe('GitHubService', () => {
 
   describe('checkSmartGuidelinesCompatibility', () => {
     it('should return true for repo with smart.who.int.base dependency', async () => {
-      githubService.authenticate('fake-token');
+      githubService.enableOAuthMode();
 
       mockOctokit.rest.repos.getContent.mockResolvedValue({
         data: {
@@ -146,7 +146,7 @@ describe('GitHubService', () => {
     });
 
     it('should return false for repo without smart.who.int.base dependency', async () => {
-      githubService.authenticate('fake-token');
+      githubService.enableOAuthMode();
 
       mockOctokit.rest.repos.getContent.mockResolvedValue({
         data: {
@@ -164,7 +164,7 @@ describe('GitHubService', () => {
     });
 
     it('should return false when sushi-config.yaml does not exist', async () => {
-      githubService.authenticate('fake-token');
+      githubService.enableOAuthMode();
 
       mockOctokit.rest.repos.getContent.mockRejectedValue(new Error('Not Found'));
 
@@ -174,7 +174,7 @@ describe('GitHubService', () => {
     });
 
     it('should return false when there is a network error', async () => {
-      githubService.authenticate('fake-token');
+      githubService.enableOAuthMode();
 
       mockOctokit.rest.repos.getContent.mockRejectedValue(new Error('Network timeout'));
 
@@ -184,7 +184,7 @@ describe('GitHubService', () => {
     });
 
     it('should use fallback method when rate limited', async () => {
-      githubService.authenticate('fake-token');
+      githubService.enableOAuthMode();
 
       // Mock rate limit error
       mockOctokit.rest.repos.getContent.mockRejectedValue({ 
@@ -207,7 +207,7 @@ describe('GitHubService', () => {
     });
 
     it('should retry on 404 errors', async () => {
-      githubService.authenticate('fake-token');
+      githubService.enableOAuthMode();
 
       // Mock 404 error first, then success
       mockOctokit.rest.repos.getContent
@@ -231,7 +231,7 @@ describe('GitHubService', () => {
 
   describe('checkSmartGuidelinesFallback', () => {
     it('should return true for repository with SMART guidelines topics', async () => {
-      githubService.authenticate('fake-token');
+      githubService.enableOAuthMode();
 
       mockOctokit.rest.repos.get.mockResolvedValue({
         data: {
@@ -247,7 +247,7 @@ describe('GitHubService', () => {
     });
 
     it('should return true for repository with SMART guidelines in description', async () => {
-      githubService.authenticate('fake-token');
+      githubService.enableOAuthMode();
 
       mockOctokit.rest.repos.get.mockResolvedValue({
         data: {
@@ -263,7 +263,7 @@ describe('GitHubService', () => {
     });
 
     it('should return false for repository without SMART guidelines indicators', async () => {
-      githubService.authenticate('fake-token');
+      githubService.enableOAuthMode();
 
       mockOctokit.rest.repos.get.mockResolvedValue({
         data: {

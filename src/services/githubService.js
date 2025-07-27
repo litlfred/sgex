@@ -5,177 +5,51 @@ import oauthService from './oauthService';
 
 class GitHubService {
   constructor() {
-    this.octokit = null;
     this.isAuthenticated = false;
-    this.permissions = null;
-    this.tokenType = null; // 'classic', 'fine-grained', or 'oauth'
-    this.useOAuth = true; // Default to OAuth mode
-  }
-
-  // Initialize with a GitHub token (supports both OAuth and PAT tokens)
-  authenticate(token) {
-    try {
-      this.octokit = new Octokit({
-        auth: token,
-      });
-      this.isAuthenticated = true;
-      this.useOAuth = false; // Using PAT mode
-      return true;
-    } catch (error) {
-      console.error('Failed to authenticate with GitHub:', error);
-      this.isAuthenticated = false;
-      return false;
-    }
-  }
-
-  // Initialize with an existing Octokit instance (for OAuth flow)
-  authenticateWithOctokit(octokitInstance) {
-    try {
-      this.octokit = octokitInstance;
-      this.isAuthenticated = true;
-      this.tokenType = 'oauth';
-      this.useOAuth = false; // Using legacy mode with specific instance
-      return true;
-    } catch (error) {
-      console.error('Failed to authenticate with Octokit instance:', error);
-      this.isAuthenticated = false;
-      return false;
-    }
-  }
-
-  // Initialize OAuth mode
-  enableOAuthMode() {
-    this.useOAuth = true;
-    this.isAuthenticated = true; // OAuth service handles authentication
     this.tokenType = 'oauth';
-    this.octokit = null; // Will be created per-request
+  }
+
+  // Initialize OAuth mode - this is now the only authentication method
+  enableOAuthMode() {
+    this.isAuthenticated = true;
+    this.tokenType = 'oauth';
     return true;
   }
 
   // Get appropriate Octokit instance for repository operations
   getOctokitForRepo(repoOwner, repoName, operation = 'read') {
-    if (this.useOAuth) {
-      // Use OAuth service to get appropriate token
-      return oauthService.createOctokit(
-        operation === 'write' ? 'WRITE_ACCESS' : 'READ_ONLY',
-        repoOwner,
-        repoName
-      );
-    } else if (this.octokit) {
-      // Use existing authenticated instance
-      return this.octokit;
-    } else {
-      // Return unauthenticated instance for public access
-      return new Octokit();
-    }
-  }
-
-  // Check token permissions and type
-  async checkTokenPermissions() {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
-    try {
-      // Try to get token info to determine type and permissions
-      const response = await this.octokit.request('GET /user');
-      
-      // Check if this is a fine-grained token by trying to access rate limit info
-      try {
-        const rateLimit = await this.octokit.rest.rateLimit.get();
-        // Fine-grained tokens have different rate limit structure
-        this.tokenType = rateLimit.data.resources.core ? 'classic' : 'fine-grained';
-      } catch {
-        this.tokenType = 'unknown';
-      }
-
-      return {
-        type: this.tokenType,
-        user: response.data
-      };
-    } catch (error) {
-      console.error('Failed to check token permissions:', error);
-      throw error;
-    }
-  }
-
-  // Check if we have write permissions for a specific repository
-  async checkRepositoryWritePermissions(owner, repo) {
-    if (!this.isAuth()) {
-      return false;
-    }
-
-    try {
-      // Try to get repository collaborator permissions
-      const { data } = await this.octokit.rest.repos.getCollaboratorPermissionLevel({
-        owner,
-        repo,
-        username: (await this.getCurrentUser()).login
-      });
-      
-      return ['write', 'admin'].includes(data.permission);
-    } catch (error) {
-      // If we can't check permissions, assume we don't have write access
-      console.warn('Could not check repository write permissions:', error);
-      return false;
-    }
+    // Always use OAuth service to get appropriate token
+    return oauthService.createOctokit(
+      operation === 'write' ? 'WRITE_ACCESS' : 'READ_ONLY',
+      repoOwner,
+      repoName
+    );
   }
 
   // Check if authenticated
   isAuth() {
-    if (this.useOAuth) {
-      // In OAuth mode, check if we have any tokens
-      return oauthService.hasAccess('READ_ONLY') || oauthService.hasAccess('WRITE_ACCESS');
-    }
-    return this.isAuthenticated && this.octokit !== null;
+    // In OAuth mode, check if we have any tokens
+    return oauthService.hasAccess('READ_ONLY') || oauthService.hasAccess('WRITE_ACCESS');
   }
 
   // Get current user data
   async getCurrentUser() {
-    if (this.useOAuth) {
-      return oauthService.getCurrentUser();
-    }
-
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
-    try {
-      const { data } = await this.octokit.rest.users.getAuthenticated();
-      return data;
-    } catch (error) {
-      console.error('Failed to fetch user data:', error);
-      throw error;
-    }
+    return oauthService.getCurrentUser();
   }
 
   // Get user's organizations
   async getUserOrganizations() {
-    if (this.useOAuth) {
-      // Use best available token for organizations
-      const octokit = oauthService.createOctokit('READ_ONLY');
-      const { data } = await octokit.rest.orgs.listForAuthenticatedUser();
-      return data;
-    }
-
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
-    try {
-      const { data } = await this.octokit.rest.orgs.listForAuthenticatedUser();
-      return data;
-    } catch (error) {
-      console.error('Failed to fetch organizations:', error);
-      throw error;
-    }
+    // Use best available token for organizations
+    const octokit = oauthService.createOctokit('READ_ONLY');
+    const { data } = await octokit.rest.orgs.listForAuthenticatedUser();
+    return data;
   }
 
   // Get specific organization data (public data, no auth required)
   async getOrganization(orgLogin) {
     try {
-      // Create a temporary Octokit instance for public API calls if we don't have one
-      const octokit = this.octokit || new Octokit();
+      // Create a public Octokit instance for public API calls
+      const octokit = new Octokit();
       
       const { data } = await octokit.rest.orgs.get({
         org: orgLogin
@@ -512,20 +386,8 @@ class GitHubService {
 
   // Logout
   logout() {
-    this.octokit = null;
     this.isAuthenticated = false;
-    this.tokenType = null;
-    this.permissions = null;
-    this.useOAuth = true; // Reset to OAuth mode
-    
-    // Clear OAuth tokens
-    if (oauthService) {
-      oauthService.clearAllTokens();
-    }
-    
-    // Clear legacy storage
-    localStorage.removeItem('github_token');
-    sessionStorage.removeItem('github_token');
+    this.tokenType = 'oauth';
   }
 }
 

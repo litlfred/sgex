@@ -8,14 +8,10 @@ const GITHUB_SCOPES = {
   WRITE_ACCESS: ['read:user', 'public_repo', 'repo'] // Full repo access including private repos
 };
 
-// OAuth endpoints - use proxy for development to avoid CORS issues
+// OAuth endpoints - direct GitHub endpoints (no proxy needed for OAuth Device Flow)
 const OAUTH_ENDPOINTS = {
-  DEVICE_CODE: process.env.NODE_ENV === 'development' 
-    ? '/api/github/oauth/device/code' 
-    : 'https://github.com/login/device/code',
-  ACCESS_TOKEN: process.env.NODE_ENV === 'development' 
-    ? '/api/github/oauth/access_token' 
-    : 'https://github.com/login/oauth/access_token'
+  DEVICE_CODE: 'https://github.com/login/device/code',
+  ACCESS_TOKEN: 'https://github.com/login/oauth/access_token'
 };
 
 class OAuthService {

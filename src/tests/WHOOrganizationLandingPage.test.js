@@ -6,27 +6,37 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import LandingPage from '../components/LandingPage';
 import githubService from '../services/githubService';
+import oauthService from '../services/oauthService';
 
 // Mock the GitHub service
 jest.mock('../services/githubService', () => ({
-  authenticate: jest.fn(),
-  authenticateWithOctokit: jest.fn(),
+  enableOAuthMode: jest.fn(),
   isAuth: jest.fn(),
   getCurrentUser: jest.fn(),
   getUserOrganizations: jest.fn(),
   logout: jest.fn(),
-  checkTokenPermissions: jest.fn()
+  getWHOOrganization: jest.fn()
 }));
 
-// Mock PAT login component
-jest.mock('../components/PATLogin', () => {
-  return function MockPATLogin({ onAuthSuccess }) {
+// Mock the OAuth service
+jest.mock('../services/oauthService', () => ({
+  loadTokensFromStorage: jest.fn(),
+  hasAccess: jest.fn(),
+  getCurrentUser: jest.fn(),
+  getUserOrganizations: jest.fn(),
+  getWHOOrganization: jest.fn(),
+  clearAllTokens: jest.fn()
+}));
+
+// Mock OAuth login component
+jest.mock('../components/OAuthLogin', () => {
+  return function MockOAuthLogin({ onAuthSuccess }) {
     return (
       <button 
-        onClick={() => onAuthSuccess('mock-token', { mockOctokit: true })}
-        data-testid="mock-signin-button"
+        onClick={() => onAuthSuccess({ accessToken: 'mock-token' }, { login: 'testuser', name: 'Test User' })}
+        data-testid="mock-oauth-signin-button"
       >
-        Mock Sign In
+        Mock OAuth Sign In
       </button>
     );
   };
@@ -69,18 +79,18 @@ describe('WHO Organization in LandingPage', () => {
     mockLocalStorage.clear();
     
     // Reset GitHub service mocks
-    githubService.authenticate.mockReturnValue(false);
-    githubService.authenticateWithOctokit.mockReturnValue(true);
+    githubService.enableOAuthMode.mockReturnValue(true);
     githubService.isAuth.mockReturnValue(false);
+    
+    // Reset OAuth service mocks
+    oauthService.loadTokensFromStorage.mockResolvedValue();
+    oauthService.hasAccess.mockReturnValue(false);
   });
 
   it('should show WHO organization in profile selection after authentication', async () => {
-    // Mock successful authentication flow
+    // Mock successful OAuth authentication flow
+    oauthService.hasAccess.mockReturnValue(true);
     githubService.isAuth.mockReturnValue(true);
-    githubService.checkTokenPermissions.mockResolvedValue({
-      type: 'pat',
-      user: { login: 'testuser' }
-    });
     
     const mockUser = {
       login: 'testuser',
@@ -98,8 +108,16 @@ describe('WHO Organization in LandingPage', () => {
       }
     ];
     
-    githubService.getCurrentUser.mockResolvedValue(mockUser);
-    githubService.getUserOrganizations.mockResolvedValue(mockOrganizations);
+    oauthService.getCurrentUser.mockResolvedValue(mockUser);
+    oauthService.getUserOrganizations.mockResolvedValue(mockOrganizations);
+    oauthService.getWHOOrganization.mockResolvedValue({
+      id: 'who-organization',
+      login: 'WorldHealthOrganization',
+      name: 'World Health Organization',
+      avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+      type: 'Organization',
+      isWHO: true
+    });
 
     const { container } = render(
       <MemoryRouter>

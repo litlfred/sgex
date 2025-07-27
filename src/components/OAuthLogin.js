@@ -3,7 +3,7 @@ import oauthService from '../services/oauthService';
 import { ACCESS_LEVELS } from '../services/tokenManagerService';
 import './OAuthLogin.css';
 
-const OAuthLogin = ({ onAuthSuccess, onOAuthFailure, requiredAccessLevel = 'READ_ONLY', repoOwner = null, repoName = null }) => {
+const OAuthLogin = ({ onAuthSuccess, requiredAccessLevel = 'READ_ONLY', repoOwner = null, repoName = null }) => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authFlow, setAuthFlow] = useState(null);
   const [error, setError] = useState('');
@@ -86,14 +86,7 @@ const OAuthLogin = ({ onAuthSuccess, onOAuthFailure, requiredAccessLevel = 'READ
       
       // Check if it's a GitHub App configuration issue
       if (err.message.includes('403') || err.message.includes('Device flow initiation failed')) {
-        setError('GitHub App not configured. The OAuth feature requires a GitHub App to be set up by an administrator.');
-        
-        // Automatically redirect to PAT login after a delay if callback is provided
-        if (onOAuthFailure) {
-          setTimeout(() => {
-            onOAuthFailure();
-          }, 3000);
-        }
+        setError('GitHub App not configured. Please contact your administrator to set up the GitHub App for OAuth authentication.');
       } else {
         setError('Failed to start authorization. Please check your connection and try again.');
       }
@@ -226,10 +219,10 @@ const OAuthLogin = ({ onAuthSuccess, onOAuthFailure, requiredAccessLevel = 'READ
           <div className="github-app-notice">
             <div className="notice-header">
               <span className="notice-icon">⚙️</span>
-              <strong>Administrator Setup Required</strong>
+              <strong>GitHub App Setup Required</strong>
             </div>
             <p>
-              This deployment uses GitHub App OAuth for secure authentication. 
+              This application uses GitHub App OAuth for secure authentication. 
               A GitHub App must be configured by an administrator before OAuth will work.
             </p>
             <div className="notice-actions">
@@ -240,17 +233,6 @@ const OAuthLogin = ({ onAuthSuccess, onOAuthFailure, requiredAccessLevel = 'READ
               >
                 📋 GitHub App Setup Guide
               </a>
-              {onOAuthFailure && (
-                <>
-                  <span className="notice-separator">or</span>
-                  <button 
-                    onClick={onOAuthFailure}
-                    className="pat-quick-access-btn"
-                  >
-                    🔑 Use Personal Access Token Instead
-                  </button>
-                </>
-              )}
             </div>
           </div>
         </div>
@@ -301,16 +283,10 @@ const OAuthLogin = ({ onAuthSuccess, onOAuthFailure, requiredAccessLevel = 'READ
             <span className="error-icon">⚠️</span>
             <div className="error-content">
               <div className="error-text">{error}</div>
-              {error.includes('GitHub App not configured') && onOAuthFailure && (
+              {error.includes('GitHub App not configured') && (
                 <div className="error-help">
-                  <p>Don't worry! You can still use SGEX Workbench with a Personal Access Token while the administrator sets up the GitHub App.</p>
-                  <p><strong>Redirecting to PAT login in a few seconds...</strong></p>
-                  <button 
-                    onClick={onOAuthFailure}
-                    className="fallback-btn"
-                  >
-                    🔑 Switch to Personal Access Token Now
-                  </button>
+                  <p>Contact your administrator to set up the GitHub App for OAuth authentication.</p>
+                  <p>Once configured, refresh this page and try again.</p>
                 </div>
               )}
             </div>
