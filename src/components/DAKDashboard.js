@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
+import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
 import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
@@ -34,8 +35,19 @@ const DAKDashboard = () => {
 
           // Check if githubService is authenticated (allow demo mode to proceed without auth)
           if (!githubService.isAuth()) {
-            // In demo mode, create mock data instead of requiring authentication
+            // In demo mode, use the DAK validation service for demo repositories
             if (window.location.pathname.includes('/dashboard/')) {
+              const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
+              
+              if (!isValidDAK) {
+                navigate('/', { 
+                  state: { 
+                    warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
+                  } 
+                });
+                return;
+              }
+
               const demoProfile = {
                 login: user,
                 name: user.charAt(0).toUpperCase() + user.slice(1),
@@ -72,8 +84,12 @@ const DAKDashboard = () => {
             userProfile = userResponse;
           } catch (err) {
             console.error('Error fetching user:', err);
-            setError(`User '${user}' not found or not accessible.`);
-            setLoading(false);
+            // Redirect to landing page with warning message
+            navigate('/', { 
+              state: { 
+                warningMessage: `Could not access the requested DAK. User '${user}' not found or not accessible.` 
+              } 
+            });
             return;
           }
 
@@ -84,8 +100,25 @@ const DAKDashboard = () => {
             repoData = repoResponse;
           } catch (err) {
             console.error('Error fetching repository:', err);
-            setError(`Repository '${user}/${repo}' not found or not accessible.`);
-            setLoading(false);
+            // Redirect to landing page with warning message
+            navigate('/', { 
+              state: { 
+                warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
+              } 
+            });
+            return;
+          }
+
+          // Validate that this is actually a DAK repository
+          const isValidDAK = await dakValidationService.validateDAKRepository(user, repo, branch || repoData.default_branch);
+          
+          if (!isValidDAK) {
+            console.log(`Repository ${user}/${repo} is not a valid DAK repository`);
+            navigate('/', { 
+              state: { 
+                warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
+              } 
+            });
             return;
           }
 
@@ -116,7 +149,7 @@ const DAKDashboard = () => {
     };
 
     fetchDataFromUrlParams();
-  }, [user, repo, branch, profile, repository]);
+  }, [user, repo, branch, profile, repository, navigate]);
 
   // Initialize selected branch from session context
   useEffect(() => {
