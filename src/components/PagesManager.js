@@ -178,7 +178,7 @@ const PagesManager = () => {
 
       if (data.type === 'file' && data.content) {
         console.log('Successfully fetched sushi-config.yaml');
-        return Buffer.from(data.content, 'base64').toString('utf-8');
+        return atob(data.content);
       }
       
       console.log('sushi-config.yaml found but no content or not a file');
@@ -305,7 +305,7 @@ const PagesManager = () => {
   const handleViewPage = (page) => {
     if (page.exists && page.content) {
       // Decode and display the markdown content
-      const markdownContent = Buffer.from(page.content.content, 'base64').toString('utf-8');
+      const markdownContent = atob(page.content.content);
       
       // For now, just open in a new window with raw markdown
       // In a full implementation, this would render the markdown
