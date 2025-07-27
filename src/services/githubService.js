@@ -818,28 +818,56 @@ class GitHubService {
     return uniqueFiles;
   }
 
-  // Get file content from GitHub repository
+  // Get file content from GitHub repository with timeout handling
   async getFileContent(owner, repo, path, ref = 'main') {
+    const timeoutMs = 15000; // 15 second timeout
+    
     try {
+      console.log(`Getting file content: ${owner}/${repo}/${path} (ref: ${ref})`);
+      
       // Use authenticated octokit if available, otherwise create a public instance for public repos
       const octokit = this.isAuth() ? this.octokit : new Octokit();
       
-      const { data } = await octokit.rest.repos.getContent({
+      // Create a promise that rejects after timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`Request timeout after ${timeoutMs}ms`)), timeoutMs);
+      });
+      
+      // Race the GitHub API call against the timeout
+      const apiPromise = octokit.rest.repos.getContent({
         owner,
         repo,
         path,
         ref
       });
+      
+      const { data } = await Promise.race([apiPromise, timeoutPromise]);
 
       // Handle file content
       if (data.type === 'file' && data.content) {
         // Decode base64 content
-        return Buffer.from(data.content, 'base64').toString('utf-8');
+        const content = Buffer.from(data.content, 'base64').toString('utf-8');
+        console.log(`Successfully fetched file content, length: ${content.length} characters`);
+        return content;
       } else {
         throw new Error('File not found or is not a file');
       }
     } catch (error) {
       console.error(`Failed to fetch file content from ${owner}/${repo}/${path}:`, error);
+      
+      // Provide more specific error messages
+      if (error.message.includes('timeout')) {
+        throw new Error(`GitHub API request timed out after ${timeoutMs / 1000} seconds. Please try again.`);
+      } else if (error.status === 403) {
+        throw new Error('Access denied. This repository may be private or you may have hit rate limits.');
+      } else if (error.status === 404) {
+        throw new Error('File not found in the repository.');
+      } else if (error.message.includes('rate limit')) {
+        throw new Error('GitHub API rate limit exceeded. Please try again later.');
+      } else if (error.message.includes('Network Error') || error.message.includes('Failed to fetch')) {
+        throw new Error('Network error occurred. Please check your internet connection and try again.');
+      }
+      
       throw error;
     }
   }
