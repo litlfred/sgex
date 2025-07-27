@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Octokit } from '@octokit/rest';
+import useDAKUrlParams from '../hooks/useDAKUrlParams';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import './BusinessProcessSelection.css';
 
@@ -8,7 +9,17 @@ const BusinessProcessSelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const { profile, repository, component, selectedBranch } = location.state || {};
+  // Use the DAK URL params hook to get profile, repository, and branch
+  const { 
+    profile, 
+    repository, 
+    selectedBranch, 
+    loading: dakLoading, 
+    error: dakError 
+  } = useDAKUrlParams();
+  
+  // Get component from location.state if available (when navigating from dashboard)
+  const { component } = location.state || {};
   
   const [bpmnFiles, setBpmnFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -156,6 +167,36 @@ const BusinessProcessSelection = () => {
     });
   };
 
+  if (dakLoading) {
+    return (
+      <div className="business-process-selection loading-state">
+        <div className="loading-content">
+          <h2>Loading DAK Data...</h2>
+          <p>Fetching repository and user data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (dakError) {
+    return (
+      <div className="business-process-selection error-state">
+        <div className="error-content">
+          <h2>Error Loading DAK Data</h2>
+          <p>{dakError}</p>
+          <div className="error-actions">
+            <button onClick={() => navigate('/')} className="action-btn primary">
+              Return to Home
+            </button>
+            <button onClick={() => window.location.reload()} className="action-btn secondary">
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!profile || !repository) {
     navigate('/');
     return <div>Redirecting...</div>;
@@ -196,7 +237,12 @@ const BusinessProcessSelection = () => {
             Select Repository
           </button>
           <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/dashboard', { state: { profile, repository } })} className="breadcrumb-link">
+          <button 
+            onClick={() => navigate(`/dashboard/${repository.owner?.login || repository.full_name.split('/')[0]}/${repository.name}${selectedBranch ? `/${selectedBranch}` : ''}`, { 
+              state: { profile, repository, selectedBranch } 
+            })} 
+            className="breadcrumb-link"
+          >
             DAK Components
           </button>
           <span className="breadcrumb-separator">›</span>

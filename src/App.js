@@ -34,6 +34,8 @@ function App() {
           <Route path="/test-dashboard" element={<TestDashboard />} />
           <Route path="/editor/:componentId" element={<ComponentEditor />} />
           <Route path="/business-process-selection" element={<BusinessProcessSelection />} />
+          <Route path="/business-process-selection/:user/:repo" element={<BusinessProcessSelection />} />
+          <Route path="/business-process-selection/:user/:repo/:branch" element={<BusinessProcessSelection />} />
           <Route path="/bpmn-editor" element={<BPMNEditor />} />
           <Route path="/bpmn-viewer" element={<BPMNViewer />} />
           <Route path="/bpmn-source" element={<BPMNSource />} />
