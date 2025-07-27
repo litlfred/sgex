@@ -10,6 +10,8 @@
  */
 
 const fs = require('fs');
+const path = require('path');
+const express = require('express');
 const evalSourceMapMiddleware = require('react-dev-utils/evalSourceMapMiddleware');
 const noopServiceWorkerMiddleware = require('react-dev-utils/noopServiceWorkerMiddleware');
 const redirectServedPath = require('react-dev-utils/redirectServedPathMiddleware');
@@ -62,6 +64,15 @@ module.exports = {
         // This registers user provided middleware for proxy reasons
         require(paths.proxySetup)(devServer.app);
       }
+
+      // Add middleware to serve QA report HTML files directly before React Router
+      devServer.app.use('/sgex/docs', express.static(path.join(__dirname, 'public/docs'), {
+        setHeaders: (res, path) => {
+          if (path.endsWith('.html')) {
+            res.setHeader('Content-Type', 'text/html');
+          }
+        }
+      }));
 
       // After middlewares (replaces onAfterSetupMiddleware)
       // This service worker file is effectively a 'no-op' that will reset any
