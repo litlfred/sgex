@@ -85,6 +85,9 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  background-color: #548ad1;
+  padding: 0.5rem;
+  border-radius: 6px;
 }
 
 .nav-link {
@@ -138,6 +141,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  background-color: #548ad1;
+  padding: 0.5rem;
+  border-radius: 6px;
 }
 
 .header-branch-selector {
@@ -186,7 +192,7 @@
 
 .context-owner {
   font-size: 0.8rem;
-  opacity: 0.8;
+  color: white;
 }
 
 .dashboard-content {
@@ -204,7 +210,7 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.9);
+  color: #041c4d;
   cursor: pointer;
   text-decoration: underline;
   font-size: 1rem;
@@ -212,7 +218,8 @@
 }
 
 .breadcrumb-link:hover {
-  color: white;
+  color: #041c4d;
+  text-decoration: underline;
 }
 
 .breadcrumb-separator {
@@ -221,7 +228,7 @@
 }
 
 .breadcrumb-current {
-  color: white;
+  color: #041c4d;
   font-weight: 500;
 }
 
@@ -245,7 +252,7 @@
 .dashboard-intro p {
   font-size: 1.1rem;
   opacity: 0.9;
-  max-width: 600px;
+  width: 100%;
   margin: 0 auto;
   line-height: 1.6;
 }
