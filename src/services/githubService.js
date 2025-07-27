@@ -242,7 +242,9 @@ class GitHubService {
       // If it's a 404 (file not found), retry once more in case of temporary issues
       if (error.status === 404 && retryCount > 0) {
         console.warn(`File not found for ${owner}/${repo}, retrying... (${retryCount} attempts left)`);
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        // Use shorter delay in test environment
+        const delay = process.env.NODE_ENV === 'test' ? 10 : 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
         return this.checkSmartGuidelinesCompatibility(owner, repo, retryCount - 1);
       }
       
@@ -257,6 +259,7 @@ class GitHubService {
   }
 
   // Fallback method to check for SMART Guidelines compatibility using other indicators
+  // NOTE: This fallback should be restrictive to avoid false positives but inclusive enough for legitimate DAK repos
   async checkSmartGuidelinesFallback(owner, repo) {
     try {
       // Get repository details to check topics and description
@@ -265,56 +268,44 @@ class GitHubService {
         repo,
       });
 
-      // Enhanced smart indicators including patterns for repositories like smart-trust-phw
-      const smartIndicators = [
-        'smart-guidelines',
-        'smart guidelines', // Add space variant
-        'who-smart',
-        'smart.who.int',
-        'digital-adaptation-kit',
-        'digital adaptation kit',
-        'dak',
-        'fhir-ig',
-        'implementation-guide',
-        'implementation guide', // Add space variant
-        'smart-trust', // For smart-trust-phw specifically
-        'trust-phw', // Another pattern for trust-related SMART repos
-        'phw', // Public Health Web repositories
-        'smart guide', // Another common variant
-        'who guide', // WHO guideline patterns
-        'fhir guide', // FHIR guideline patterns
+      // Specific indicators that strongly suggest this is a DAK repository
+      const strictSmartIndicators = [
+        'smart-guidelines',      // Official WHO SMART Guidelines term
+        'smart guidelines',      // Space variant of above
+        'smart.who.int',         // Official domain reference
+        'digital-adaptation-kit', // Official DAK term
+        'digital adaptation kit', // Space variant of above
+        'smart-trust-phw',       // Specific known pattern for trust PHW repos
       ];
 
       const topics = data.topics || [];
       const description = (data.description || '').toLowerCase();
       const repoName = repo.toLowerCase();
 
-      // Check if any SMART guidelines indicators are present
-      const hasSmartIndicators = smartIndicators.some(indicator => 
+      // Check for very specific indicators that strongly suggest this is a DAK repository
+      const hasStrictSmartIndicators = strictSmartIndicators.some(indicator => 
         topics.includes(indicator) || 
         description.includes(indicator.toLowerCase()) ||
-        repoName.includes(indicator.replace(/[-\s]/g, ''))
+        repoName.includes(indicator.replace(/[-\s.]/g, ''))
       );
 
-      // More lenient check for implementation guide patterns
-      const hasIGPatterns = description.includes('implementation guide') ||
-                           description.includes('fhir') ||
-                           description.includes('smart') ||
-                           description.includes('who') ||
-                           description.includes('guideline');
+      // Check for repository names that start with "smart-" which are very likely DAK repositories
+      // This catches repositories like "smart-ra", "smart-trust-phw", etc.
+      const hasSmartPrefix = repoName.startsWith('smart-') && repoName.length > 6; // "smart-" + at least 1 char
 
-      // Additional check for repositories that contain SMART-related keywords in name
-      const hasSmartInName = repoName.includes('smart') || 
-                            repoName.includes('dak') ||
-                            repoName.includes('guideline') ||
-                            repoName.includes('who') ||
-                            repoName.includes('fhir') ||
-                            (repoName.includes('trust') && repoName.includes('phw'));
+      // Special case for repositories that are known to be legitimate DAK repositories
+      // but may not have the sushi-config.yaml accessible due to temporary issues
+      const isKnownDAKRepo = (
+        // WHO organization repositories with 'smart' in name are likely legitimate
+        (owner.toLowerCase() === 'worldhealthorganization' && repoName.includes('smart')) ||
+        // Repositories with very specific DAK naming patterns
+        (repoName.includes('smartimmunizations') || repoName.includes('smarttrust'))
+      );
 
-      const isCompatible = hasSmartIndicators || hasSmartInName || hasIGPatterns;
+      const isCompatible = hasStrictSmartIndicators || hasSmartPrefix || isKnownDAKRepo;
 
       if (isCompatible) {
-        console.info(`Repository ${owner}/${repo} has SMART guidelines indicators in topics/description, assuming compatible`);
+        console.info(`Repository ${owner}/${repo} has SMART guidelines indicators, assuming compatible`);
         return true;
       }
 
