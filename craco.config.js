@@ -36,9 +36,12 @@ module.exports = {
       };
     }
     
-    // Disable static file serving to avoid conflicts with React Router
-    // This prevents the serve-static middleware from being added
-    devServerConfig.static = false;
+    // Configure static file serving to avoid conflicts with React Router
+    // Keep static serving enabled but prevent redirects that cause middleware conflicts
+    if (devServerConfig.static && typeof devServerConfig.static === 'object') {
+      // Disable the redirect option that causes middleware conflicts
+      devServerConfig.static.serveIndex = false;
+    }
     
     // Add the new setupMiddlewares function
     devServerConfig.setupMiddlewares = (middlewares, devServer) => {
@@ -67,6 +70,9 @@ module.exports = {
       // it used the same host and port.
       // https://github.com/facebook/create-react-app/issues/2272#issuecomment-302832432
       devServer.app.use(noopServiceWorkerMiddleware(paths.publicUrlOrPath));
+
+      // Redirect to `PUBLIC_URL` or `homepage` from `package.json` if url not match
+      devServer.app.use(redirectServedPath(paths.publicUrlOrPath));
 
       return middlewares;
     };
