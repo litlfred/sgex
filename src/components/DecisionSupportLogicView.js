@@ -23,6 +23,7 @@ const DecisionSupportLogicView = () => {
   const [sortField, setSortField] = useState('Code');
   const [sortDirection, setSortDirection] = useState('asc');
   const [selectedDialog, setSelectedDialog] = useState(null);
+  const [activeSection, setActiveSection] = useState('variables'); // 'variables' or 'tables'
 
   // Initialize repository data if not available
   useEffect(() => {
@@ -187,58 +188,175 @@ const DecisionSupportLogicView = () => {
   }, [repository, selectedBranch]);
 
   const parseFSHCodeSystem = (fshContent) => {
-    // Basic FSH parser for DAK code system
+    // Enhanced FSH parser for DAK code system
     const lines = fshContent.split('\n');
     const concepts = [];
     let currentConcept = null;
+    let multiLineState = null; // Track what multi-line content we're parsing
+    let multiLineContent = [];
     
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
       const trimmedLine = line.trim();
       
       // Check if this is a top-level concept (starts with * # and is not indented)
       const isTopLevel = line.startsWith('* #') && !line.startsWith('  ');
       
       if (isTopLevel) {
-        // New concept - extract code and display
-        let conceptLine = trimmedLine.substring(1).trim(); // Remove initial '*'
-        conceptLine = conceptLine.substring(1); // Remove '#' prefix
+        // Finish any ongoing multi-line content
+        if (multiLineState && currentConcept) {
+          if (multiLineState === 'definition') {
+            currentConcept.Definition = multiLineContent.join('\n').trim();
+          } else if (multiLineState === 'cql') {
+            currentConcept.CQL = multiLineContent.join('\n').trim();
+          }
+          multiLineState = null;
+          multiLineContent = [];
+        }
         
-        const parts = conceptLine.split(/\s+/);
-        if (parts.length >= 2) {
+        // New concept - extract code and display from quoted strings
+        let conceptLine = trimmedLine.substring(2).trim(); // Remove '* #'
+        
+        // Match quoted strings: "code" "display"
+        // Handle escaped quotes properly
+        const quoteMatches = [];
+        let inQuote = false;
+        let current = '';
+        let i = 0;
+        
+        while (i < conceptLine.length) {
+          const char = conceptLine[i];
+          
+          if (char === '"' && (i === 0 || conceptLine[i-1] !== '\\')) {
+            if (inQuote) {
+              // End of quote
+              quoteMatches.push(current);
+              current = '';
+              inQuote = false;
+            } else {
+              // Start of quote
+              inQuote = true;
+            }
+          } else if (inQuote) {
+            if (char === '\\' && i + 1 < conceptLine.length && conceptLine[i + 1] === '"') {
+              // Escaped quote
+              current += '"';
+              i++; // Skip the next character
+            } else {
+              current += char;
+            }
+          }
+          i++;
+        }
+        
+        if (quoteMatches.length >= 2) {
+          const code = quoteMatches[0];
+          const display = quoteMatches[1];
+          
           currentConcept = {
-            Code: parts[0],
-            Display: parts.slice(1).join(' ').replace(/"/g, ''),
+            Code: code,
+            Display: display,
             Definition: '',
-            table: '',
-            tab: '',
+            Tables: '',
+            Tabs: '',
             CQL: ''
           };
           concepts.push(currentConcept);
         }
-      } else if (currentConcept && trimmedLine.includes('definition')) {
-        // Extract definition
-        const match = trimmedLine.match(/definition\s*=\s*"([^"]*)"/);
-        if (match) {
-          currentConcept.Definition = match[1];
+      } else if (currentConcept) {
+        // Handle definition start
+        if (trimmedLine.startsWith('* ^definition = """')) {
+          multiLineState = 'definition';
+          multiLineContent = [];
+          // Get content after the opening """
+          const afterOpening = trimmedLine.substring('* ^definition = """'.length);
+          if (afterOpening && afterOpening !== '"""') {
+            multiLineContent.push(afterOpening);
+          }
         }
-      } else if (currentConcept && trimmedLine.includes('#table')) {
-        // Extract table property
-        const match = trimmedLine.match(/#table\s*=\s*"([^"]*)"/);
-        if (match) {
-          currentConcept.table = match[1];
+        // Handle definition end
+        else if (multiLineState === 'definition' && trimmedLine.endsWith('"""')) {
+          const beforeClosing = trimmedLine.substring(0, trimmedLine.length - 3);
+          if (beforeClosing) {
+            multiLineContent.push(beforeClosing);
+          }
+          currentConcept.Definition = multiLineContent.join('\n').trim();
+          multiLineState = null;
+          multiLineContent = [];
         }
-      } else if (currentConcept && trimmedLine.includes('#tab')) {
-        // Extract tab property
-        const match = trimmedLine.match(/#tab\s*=\s*"([^"]*)"/);
-        if (match) {
-          currentConcept.tab = match[1];
+        // Handle definition continuation
+        else if (multiLineState === 'definition') {
+          multiLineContent.push(trimmedLine);
         }
-      } else if (currentConcept && trimmedLine.includes('#CQL')) {
-        // Extract CQL property (may span multiple lines)
-        const match = trimmedLine.match(/#CQL\s*=\s*"([^"]*)"/);
-        if (match) {
-          currentConcept.CQL = match[1].replace(/\\n/g, '\n');
+        // Handle CQL designation start
+        else if (trimmedLine.startsWith('* ^designation[+].value = """')) {
+          multiLineState = 'cql';
+          multiLineContent = [];
+          // Get content after the opening """
+          const afterOpening = trimmedLine.substring('* ^designation[+].value = """'.length);
+          if (afterOpening && afterOpening !== '"""') {
+            multiLineContent.push(afterOpening);
+          }
         }
+        // Handle CQL designation end
+        else if (multiLineState === 'cql' && trimmedLine.endsWith('"""')) {
+          const beforeClosing = trimmedLine.substring(0, trimmedLine.length - 3);
+          if (beforeClosing) {
+            multiLineContent.push(beforeClosing);
+          }
+          currentConcept.CQL = multiLineContent.join('\n').trim();
+          multiLineState = null;
+          multiLineContent = [];
+        }
+        // Handle CQL continuation
+        else if (multiLineState === 'cql') {
+          multiLineContent.push(line); // Keep original indentation for CQL
+        }
+        // Handle table property
+        else if (trimmedLine.includes('* ^property[+].code = #"table"')) {
+          // Look for the next line with valueString
+          for (let j = i + 1; j < lines.length; j++) {
+            const nextLine = lines[j].trim();
+            if (nextLine.startsWith('* ^property[=].valueString = ')) {
+              const match = nextLine.match(/valueString = "([^"]*)"/);
+              if (match) {
+                currentConcept.Tables = match[1];
+                break;
+              }
+            }
+            // Stop looking if we hit another property or concept
+            if (nextLine.startsWith('* ^property[+]') || nextLine.startsWith('* #')) {
+              break;
+            }
+          }
+        }
+        // Handle tab property
+        else if (trimmedLine.includes('* ^property[+].code = #"tab"')) {
+          // Look for the next line with valueString
+          for (let j = i + 1; j < lines.length; j++) {
+            const nextLine = lines[j].trim();
+            if (nextLine.startsWith('* ^property[=].valueString = ')) {
+              const match = nextLine.match(/valueString = "([^"]*)"/);
+              if (match) {
+                currentConcept.Tabs = match[1];
+                break;
+              }
+            }
+            // Stop looking if we hit another property or concept
+            if (nextLine.startsWith('* ^property[+]') || nextLine.startsWith('* #')) {
+              break;
+            }
+          }
+        }
+      }
+    }
+    
+    // Handle any remaining multi-line content at end of file
+    if (multiLineState && currentConcept) {
+      if (multiLineState === 'definition') {
+        currentConcept.Definition = multiLineContent.join('\n').trim();
+      } else if (multiLineState === 'cql') {
+        currentConcept.CQL = multiLineContent.join('\n').trim();
       }
     }
     
@@ -458,149 +576,175 @@ const DecisionSupportLogicView = () => {
             </p>
           </div>
 
-          {/* Variables Section */}
-          <div className="section variables-section">
-            <div className="section-header">
-              <h3>📊 Variables</h3>
-              <p>Decision variables and their CQL implementations from the DAK code system</p>
-            </div>
-
-            <div className="variables-controls">
-              <div className="search-box">
-                <input
-                  type="text"
-                  placeholder="Search variables..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="search-input"
-                />
-                <span className="search-icon">🔍</span>
-              </div>
-              <div className="results-count">
-                {filteredVariables.length} variable{filteredVariables.length !== 1 ? 's' : ''} found
-              </div>
-            </div>
-
-            <div className="variables-table-container">
-              <table className="variables-table">
-                <thead>
-                  <tr>
-                    <th onClick={() => handleSort('Code')} className="sortable">
-                      Code {sortField === 'Code' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-                    </th>
-                    <th onClick={() => handleSort('Display')} className="sortable">
-                      Display {sortField === 'Display' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-                    </th>
-                    <th onClick={() => handleSort('Definition')} className="sortable">
-                      Definition {sortField === 'Definition' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-                    </th>
-                    <th onClick={() => handleSort('table')} className="sortable">
-                      Table {sortField === 'table' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-                    </th>
-                    <th onClick={() => handleSort('tab')} className="sortable">
-                      Tab {sortField === 'tab' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-                    </th>
-                    <th>CQL</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredVariables.map((variable, index) => (
-                    <tr key={index}>
-                      <td><code className="variable-code">{variable.Code}</code></td>
-                      <td><strong>{variable.Display}</strong></td>
-                      <td>{variable.Definition}</td>
-                      <td><span className="table-tag">{variable.table}</span></td>
-                      <td><span className="tab-tag">{variable.tab}</span></td>
-                      <td>
-                        {variable.CQL && (
-                          <pre className="cql-code"><code>{variable.CQL}</code></pre>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              
-              {filteredVariables.length === 0 && !searchTerm && (
-                <div className="no-results">
-                  <p>No variables found. The DAK code system may not be available at input/fsh/codesystems/DAK.fsh</p>
-                </div>
-              )}
-              
-              {filteredVariables.length === 0 && searchTerm && (
-                <div className="no-results">
-                  <p>No variables match your search criteria.</p>
-                  <button 
-                    onClick={() => setSearchTerm('')}
-                    className="clear-search-btn"
-                  >
-                    Clear Search
-                  </button>
-                </div>
-              )}
-            </div>
+          {/* Section Toggle Tabs */}
+          <div className="section-tabs">
+            <button 
+              className={`tab-button ${activeSection === 'variables' ? 'active' : ''}`}
+              onClick={() => setActiveSection('variables')}
+            >
+              <span className="tab-icon">📊</span>
+              <span className="tab-text">Variables</span>
+            </button>
+            <button 
+              className={`tab-button ${activeSection === 'tables' ? 'active' : ''}`}
+              onClick={() => setActiveSection('tables')}
+            >
+              <span className="tab-icon">📋</span>
+              <span className="tab-text">Decision Tables</span>
+            </button>
           </div>
+
+          {/* Variables Section */}
+          {activeSection === 'variables' && (
+            <div className="components-section variables-section active">
+              <div className="section-header">
+                <h3 className="section-title">📊 Variables</h3>
+                <p className="section-description">
+                  Decision variables and their CQL implementations from the DAK code system
+                </p>
+              </div>
+
+              <div className="variables-controls">
+                <div className="search-box">
+                  <input
+                    type="text"
+                    placeholder="Search variables..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="search-input"
+                  />
+                  <span className="search-icon">🔍</span>
+                </div>
+                <div className="results-count">
+                  {filteredVariables.length} variable{filteredVariables.length !== 1 ? 's' : ''} found
+                </div>
+              </div>
+
+              <div className="variables-table-container">
+                <table className="variables-table">
+                  <thead>
+                    <tr>
+                      <th onClick={() => handleSort('Code')} className="sortable">
+                        Code {sortField === 'Code' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
+                      </th>
+                      <th onClick={() => handleSort('Display')} className="sortable">
+                        Display {sortField === 'Display' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
+                      </th>
+                      <th onClick={() => handleSort('Definition')} className="sortable">
+                        Definition {sortField === 'Definition' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
+                      </th>
+                      <th onClick={() => handleSort('Tables')} className="sortable">
+                        Table {sortField === 'Tables' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
+                      </th>
+                      <th onClick={() => handleSort('Tabs')} className="sortable">
+                        Tab {sortField === 'Tabs' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
+                      </th>
+                      <th>CQL</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredVariables.map((variable, index) => (
+                      <tr key={index}>
+                        <td><code className="variable-code">{variable.Code}</code></td>
+                        <td><strong>{variable.Display}</strong></td>
+                        <td>{variable.Definition}</td>
+                        <td><span className="table-tag">{variable.Tables}</span></td>
+                        <td><span className="tab-tag">{variable.Tabs}</span></td>
+                        <td>
+                          {variable.CQL && (
+                            <pre className="cql-code"><code>{variable.CQL}</code></pre>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                
+                {filteredVariables.length === 0 && !searchTerm && (
+                  <div className="no-results">
+                    <p>No variables found. The DAK code system may not be available at input/fsh/codesystems/DAK.fsh</p>
+                  </div>
+                )}
+                
+                {filteredVariables.length === 0 && searchTerm && (
+                  <div className="no-results">
+                    <p>No variables match your search criteria.</p>
+                    <button 
+                      onClick={() => setSearchTerm('')}
+                      className="clear-search-btn"
+                    >
+                      Clear Search
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Decision Tables Section */}
-          <div className="section decision-tables-section">
-            <div className="section-header">
-              <h3>📋 Decision Tables</h3>
-              <p>DMN decision tables that implement clinical decision logic</p>
-            </div>
+          {activeSection === 'tables' && (
+            <div className="components-section decision-tables-section active">
+              <div className="section-header">
+                <h3 className="section-title">📋 Decision Tables</h3>
+                <p className="section-description">
+                  DMN decision tables that implement clinical decision logic
+                </p>
+              </div>
 
-            <div className="decision-tables-grid">
-              {decisionTables.map((table, index) => (
-                <div key={index} className="decision-table-card">
-                  <div className="table-header">
-                    <h4>{table.basename}</h4>
-                    <div className="table-meta">
-                      <span className="file-size">{Math.round(table.size / 1024)}KB</span>
-                      <span className="file-type">DMN</span>
+              <div className="decision-tables-grid">
+                {decisionTables.map((table, index) => (
+                  <div key={index} className="decision-table-card">
+                    <div className="table-header">
+                      <h4>{table.basename}</h4>
+                      <div className="table-meta">
+                        <span className="file-size">{Math.round(table.size / 1024)}KB</span>
+                        <span className="file-type">DMN</span>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="table-actions">
-                    <button
-                      onClick={() => openSourceDialog(table)}
-                      className="action-btn secondary"
-                      title="View DMN source"
-                    >
-                      📄 View Source
-                    </button>
                     
-                    <a
-                      href={table.githubUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="action-btn secondary"
-                      title="View on GitHub"
-                    >
-                      🔗 GitHub
-                    </a>
-                    
-                    {table.htmlFile && (
+                    <div className="table-actions">
+                      <button
+                        onClick={() => openSourceDialog(table)}
+                        className="action-btn secondary"
+                        title="View DMN source"
+                      >
+                        📄 View Source
+                      </button>
+                      
                       <a
-                        href={`https://github.com/${repository.owner?.login || repository.full_name.split('/')[0]}/${repository.name}/blob/${selectedBranch}/${table.htmlFile}`}
+                        href={table.githubUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="action-btn primary"
-                        title="View HTML rendering"
+                        className="action-btn secondary"
+                        title="View on GitHub"
                       >
-                        🌐 View HTML
+                        🔗 GitHub
                       </a>
-                    )}
+                      
+                      {table.htmlFile && (
+                        <a
+                          href={`https://github.com/${repository.owner?.login || repository.full_name.split('/')[0]}/${repository.name}/blob/${selectedBranch}/${table.htmlFile}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="action-btn primary"
+                          title="View HTML rendering"
+                        >
+                          🌐 View HTML
+                        </a>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-            
-            {decisionTables.length === 0 && (
-              <div className="no-tables">
-                <p>No decision tables found in the input/decision-logic directory.</p>
-                <p>Decision tables should be stored as .dmn files in the repository's input/decision-logic/ directory.</p>
+                ))}
               </div>
-            )}
-          </div>
+              
+              {decisionTables.length === 0 && (
+                <div className="no-tables">
+                  <p>No decision tables found in the input/decision-logic directory.</p>
+                  <p>Decision tables should be stored as .dmn files in the repository's input/decision-logic/ directory.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
