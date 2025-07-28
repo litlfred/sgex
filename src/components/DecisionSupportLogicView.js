@@ -157,10 +157,10 @@ const DecisionSupportLogicView = () => {
               await githubService.getFileContent(
                 owner,
                 repoName,
-                `input/pagecontent/${fileBasename}.html`,
+                `input/pagecontent/${fileBasename}.xml`,
                 selectedBranch
               );
-              htmlFile = `input/pagecontent/${fileBasename}.html`;
+              htmlFile = `input/pagecontent/${fileBasename}.xml`;
             } catch {
               // HTML file doesn't exist, which is fine
             }
