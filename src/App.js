@@ -13,6 +13,7 @@ import BusinessProcessSelection from './components/BusinessProcessSelection';
 import BPMNViewer from './components/BPMNViewerEnhanced';
 import BPMNSource from './components/BPMNSource';
 import DocumentationViewer from './components/DocumentationViewer';
+import DecisionSupportLogicView from './components/DecisionSupportLogicView';
 import TestDashboard from './components/TestDashboard';
 import PagesManager from './components/PagesManager';
 import logger from './utils/logger';
@@ -54,6 +55,9 @@ function App() {
           <Route path="/bpmn-editor" element={<BPMNEditor />} />
           <Route path="/bpmn-viewer" element={<BPMNViewer />} />
           <Route path="/bpmn-source" element={<BPMNSource />} />
+          <Route path="/decision-support-logic" element={<DecisionSupportLogicView />} />
+          <Route path="/decision-support-logic/:user/:repo" element={<DecisionSupportLogicView />} />
+          <Route path="/decision-support-logic/:user/:repo/:branch" element={<DecisionSupportLogicView />} />
           <Route path="/docs/:docId" element={<DocumentationViewer />} />
           <Route path="/pages" element={<PagesManager />} />
         </Routes>

@@ -352,6 +352,25 @@ const DAKDashboard = () => {
   };
 
   const handleComponentClick = (component) => {
+    // For decision-support, always navigate to view page (no permission check needed)
+    if (component.id === 'decision-support') {
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/decision-support-logic/${owner}/${repoName}/${selectedBranch}`
+        : `/decision-support-logic/${owner}/${repoName}`;
+      
+      navigate(path, {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
     // For business processes, navigate to selection page without permission check
     if (component.id === 'business-processes') {
       const owner = repository.owner?.login || repository.full_name.split('/')[0];

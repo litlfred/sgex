@@ -916,6 +916,55 @@ class GitHubService {
     }
   }
 
+  // Get file content
+  async getFileContent(owner, repo, path, ref = 'main') {
+    try {
+      // Create temporary Octokit instance for unauthenticated access if needed
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref
+      });
+
+      if (data.type === 'file' && data.content) {
+        // Decode base64 content
+        return decodeURIComponent(escape(atob(data.content)));
+      } else {
+        throw new Error('Not a file or no content available');
+      }
+    } catch (error) {
+      console.error(`Failed to get file content for ${path}:`, error);
+      throw error;
+    }
+  }
+
+  // Get directory contents
+  async getDirectoryContents(owner, repo, path = '', ref = 'main') {
+    try {
+      // Create temporary Octokit instance for unauthenticated access if needed
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref
+      });
+
+      if (Array.isArray(data)) {
+        return data;
+      } else {
+        throw new Error('Not a directory');
+      }
+    } catch (error) {
+      console.error(`Failed to get directory contents for ${path}:`, error);
+      throw error;
+    }
+  }
+
   // Logout
   logout() {
     this.octokit = null;
