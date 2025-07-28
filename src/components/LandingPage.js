@@ -186,7 +186,7 @@ const LandingPage = () => {
   };
 
   const handleProfileSelect = (profile) => {
-    navigate('/dak-action', { state: { profile } });
+    navigate(`/dak-action/${profile.login}`, { state: { profile } });
   };
 
   const handleDemoMode = () => {

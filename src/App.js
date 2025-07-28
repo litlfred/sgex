@@ -40,6 +40,7 @@ function App() {
       <div className="App">
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/dak-action/:user" element={<DAKActionSelection />} />
           <Route path="/dak-action" element={<DAKActionSelection />} />
           <Route path="/dak-selection/:user" element={<DAKSelection />} />
           <Route path="/dak-selection" element={<DAKSelection />} />

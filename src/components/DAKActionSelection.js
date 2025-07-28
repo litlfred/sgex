@@ -1,13 +1,44 @@
-import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user: userParam } = useParams();
   
   const { profile } = location.state || {};
+
+  // Validate user parameter and profile consistency
+  useEffect(() => {
+    // If no user parameter in URL and no profile in state, redirect to landing
+    if (!userParam && !profile) {
+      navigate('/');
+      return;
+    }
+    
+    // If user parameter exists but no profile - redirect to landing
+    if (userParam && !profile) {
+      navigate('/');
+      return;
+    }
+    
+    // If user parameter exists and profile exists but they don't match - redirect to landing
+    if (userParam && profile && profile.login !== userParam) {
+      navigate('/');
+      return;
+    }
+    
+    // If profile exists but no user parameter, redirect to include user in URL
+    if (profile && !userParam) {
+      navigate(`/dak-action/${profile.login}`, { 
+        state: { profile },
+        replace: true 
+      });
+      return;
+    }
+  }, [userParam, profile, navigate]);
 
   const dakActions = [
     {
@@ -52,7 +83,6 @@ const DAKActionSelection = () => {
   };
 
   if (!profile) {
-    navigate('/');
     return <div>Redirecting...</div>;
   }
 
