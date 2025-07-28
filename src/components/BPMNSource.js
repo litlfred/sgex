@@ -10,6 +10,22 @@ const BPMNSource = () => {
   
   const { profile, repository, component, selectedFile, selectedBranch } = location.state || {};
   
+  // Debug logging for component initialization
+  console.log('🚀 BPMNSource component initialized with state:', {
+    hasProfile: !!profile,
+    hasRepository: !!repository,
+    hasComponent: !!component,
+    hasSelectedFile: !!selectedFile,
+    selectedBranch,
+    profileLogin: profile?.login,
+    repositoryName: repository?.name,
+    repositoryFullName: repository?.full_name,
+    repositoryOwner: repository?.owner?.login,
+    selectedFileName: selectedFile?.name,
+    selectedFilePath: selectedFile?.path,
+    locationStateKeys: location.state ? Object.keys(location.state) : 'no location.state'
+  });
+  
   const [bpmnXml, setBpmnXml] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -120,17 +136,59 @@ const BPMNSource = () => {
   const getGitHubUrl = () => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const branch = selectedBranch || 'main';
+    
+    // Debug logging to help troubleshoot the issue
+    console.log('🔗 BPMNSource.getGitHubUrl() - Debug info:', {
+      selectedBranch,
+      fallbackBranch: 'main',
+      finalBranch: branch,
+      repository: {
+        name: repository.name,
+        full_name: repository.full_name,
+        owner: repository.owner
+      },
+      selectedFile: {
+        name: selectedFile.name,
+        path: selectedFile.path
+      }
+    });
+    
     // Only encode the branch if it contains special characters, leave the file path as-is
     const encodedBranch = encodeURIComponent(branch);
-    return `https://github.com/${owner}/${repository.name}/blob/${encodedBranch}/${selectedFile.path}`;
+    const url = `https://github.com/${owner}/${repository.name}/blob/${encodedBranch}/${selectedFile.path}`;
+    
+    console.log('🌐 Final GitHub URL generated:', url);
+    
+    return url;
   };
 
   const getGitHubEditUrl = () => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const branch = selectedBranch || 'main';
+    
+    // Debug logging to help troubleshoot the issue
+    console.log('✏️ BPMNSource.getGitHubEditUrl() - Debug info:', {
+      selectedBranch,
+      fallbackBranch: 'main',
+      finalBranch: branch,
+      repository: {
+        name: repository.name,
+        full_name: repository.full_name,
+        owner: repository.owner
+      },
+      selectedFile: {
+        name: selectedFile.name,
+        path: selectedFile.path
+      }
+    });
+    
     // Only encode the branch if it contains special characters, leave the file path as-is
     const encodedBranch = encodeURIComponent(branch);
-    return `https://github.com/${owner}/${repository.name}/edit/${encodedBranch}/${selectedFile.path}`;
+    const url = `https://github.com/${owner}/${repository.name}/edit/${encodedBranch}/${selectedFile.path}`;
+    
+    console.log('🌐 Final GitHub edit URL generated:', url);
+    
+    return url;
   };
 
   if (!profile || !repository || !selectedFile) {
