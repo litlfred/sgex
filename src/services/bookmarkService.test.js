@@ -167,7 +167,78 @@ describe('BookmarkService', () => {
     expect(bookmarkService.getBookmarks()).toHaveLength(0);
   });
 
-  test('should handle localStorage errors gracefully', () => {
+  test('should create bookmark from framework context', () => {
+    const mockFrameworkContext = {
+      type: 'dak',
+      pageName: 'dashboard',
+      profile: { login: 'testuser', avatar_url: 'https://example.com/avatar.jpg' },
+      repository: { name: 'testrepo', full_name: 'testuser/testrepo' },
+      branch: 'main',
+      location: { pathname: '/dashboard/testuser/testrepo/main', search: '' }
+    };
+
+    const bookmark = bookmarkService.createBookmarkFromFramework(mockFrameworkContext);
+    
+    expect(bookmark.title).toBe('DAK: testuser/testrepo');
+    expect(bookmark.pageType).toBe('Dashboard');
+    expect(bookmark.url).toBe('/dashboard/testuser/testrepo/main');
+    expect(bookmark.data.profile.login).toBe('testuser');
+    expect(bookmark.data.repository.name).toBe('testrepo');
+    expect(bookmark.data.branch).toBe('main');
+    expect(bookmark.data.type).toBe('dak');
+    expect(bookmark.data.pageName).toBe('dashboard');
+  });
+
+  test('should create bookmark from framework context with non-main branch', () => {
+    const mockFrameworkContext = {
+      type: 'dak',
+      pageName: 'core-data-dictionary-viewer',
+      profile: { login: 'testuser', avatar_url: 'https://example.com/avatar.jpg' },
+      repository: { name: 'testrepo', full_name: 'testuser/testrepo' },
+      branch: 'feature-branch',
+      location: { pathname: '/core-data-dictionary-viewer/testuser/testrepo/feature-branch', search: '' }
+    };
+
+    const bookmark = bookmarkService.createBookmarkFromFramework(mockFrameworkContext);
+    
+    expect(bookmark.title).toBe('DAK: testuser/testrepo/feature-branch');
+    expect(bookmark.pageType).toBe('Core Data Dictionary');
+    expect(bookmark.url).toBe('/core-data-dictionary-viewer/testuser/testrepo/feature-branch');
+  });
+
+  test('should create bookmark for asset page from framework context', () => {
+    const mockFrameworkContext = {
+      type: 'asset',
+      pageName: 'bpmn-editor',
+      profile: { login: 'testuser', avatar_url: 'https://example.com/avatar.jpg' },
+      repository: { name: 'testrepo', full_name: 'testuser/testrepo' },
+      branch: 'main',
+      location: { pathname: '/bpmn-editor/testuser/testrepo/main/workflow.bpmn', search: '' }
+    };
+
+    const bookmark = bookmarkService.createBookmarkFromFramework(mockFrameworkContext);
+    
+    expect(bookmark.title).toBe('workflow.bpmn in DAK: testuser/testrepo');
+    expect(bookmark.pageType).toBe('BPMN Editor');
+    expect(bookmark.url).toBe('/bpmn-editor/testuser/testrepo/main/workflow.bpmn');
+  });
+
+  test('should create bookmark for top-level page from framework context', () => {
+    const mockFrameworkContext = {
+      type: 'top-level',
+      pageName: 'documentation',
+      profile: null,
+      repository: null,
+      branch: null,
+      location: { pathname: '/docs/overview', search: '' }
+    };
+
+    const bookmark = bookmarkService.createBookmarkFromFramework(mockFrameworkContext);
+    
+    expect(bookmark.title).toBe('Documentation - overview');
+    expect(bookmark.pageType).toBe('Documentation');
+    expect(bookmark.url).toBe('/docs/overview');
+  });
     // Mock localStorage to throw error
     localStorageMock.getItem.mockImplementation(() => {
       throw new Error('localStorage error');

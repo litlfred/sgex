@@ -90,7 +90,118 @@ class BookmarkService {
   }
 
   /**
-   * Generate a bookmark object for the current page
+   * Generate a bookmark object from the page framework context
+   * @param {Object} frameworkContext - Framework context from usePage hook
+   * @returns {Object} Bookmark object
+   */
+  createBookmarkFromFramework(frameworkContext) {
+    const { type, pageName, profile, repository, branch, location } = frameworkContext;
+    const { pathname, search } = location;
+    
+    // Use framework context to generate title and page type
+    let title = 'SGEX Page';
+    let pageType = 'Other';
+    
+    // Map framework page types to bookmark page types
+    if (type === 'dak' || type === 'asset') {
+      // For DAK and Asset pages, determine specific page type from pageName
+      switch (pageName) {
+        case 'dashboard':
+          pageType = 'Dashboard';
+          break;
+        case 'core-data-dictionary-viewer':
+          pageType = 'Core Data Dictionary';
+          break;
+        case 'business-process-selection':
+          pageType = 'Business Process Selection';
+          break;
+        case 'decision-support-logic':
+          pageType = 'Decision Support Logic';
+          break;
+        case 'component-editor':
+        case 'editor':
+          pageType = 'Component Editor';
+          break;
+        case 'bpmn-editor':
+          pageType = 'BPMN Editor';
+          break;
+        case 'bpmn-viewer':
+          pageType = 'BPMN Viewer';
+          break;
+        case 'pages':
+          pageType = 'Pages Manager';
+          break;
+        default:
+          pageType = 'DAK Component';
+      }
+      
+      // Generate title based on repository and branch
+      if (repository && profile) {
+        const fullName = repository.full_name || `${profile.login}/${repository.name}`;
+        
+        if (type === 'asset') {
+          // For asset pages, try to extract asset name from pathname
+          const pathParts = pathname.split('/').filter(Boolean);
+          const assetName = pathParts[pathParts.length - 1] || 'Asset';
+          
+          if (branch && branch !== 'main') {
+            title = `${assetName} in DAK: ${fullName}/${branch}`;
+          } else {
+            title = `${assetName} in DAK: ${fullName}`;
+          }
+        } else {
+          // For DAK pages
+          if (branch && branch !== 'main') {
+            title = `DAK: ${fullName}/${branch}`;
+          } else {
+            title = `DAK: ${fullName}`;
+          }
+        }
+      }
+    } else if (type === 'user') {
+      pageType = 'User Profile';
+      if (profile) {
+        title = `User: ${profile.login}`;
+      }
+    } else if (type === 'top-level') {
+      switch (pageName) {
+        case 'documentation':
+          pageType = 'Documentation';
+          const docId = pathname.split('/docs/')[1] || 'Overview';
+          title = `Documentation - ${docId}`;
+          break;
+        case 'landing':
+          pageType = 'Landing Page';
+          title = 'SGEX Workbench';
+          break;
+        default:
+          pageType = 'Other';
+          title = `SGEX - ${pageName}`;
+      }
+    }
+
+    return {
+      title,
+      pageType,
+      url: pathname + (search || ''),
+      data: {
+        profile: profile ? { login: profile.login, avatar_url: profile.avatar_url } : null,
+        repository: repository ? { 
+          name: repository.name, 
+          full_name: repository.full_name || `${profile?.login}/${repository.name}` 
+        } : null,
+        selectedBranch: branch,
+        user: profile?.login,
+        repo: repository?.name,
+        branch: branch,
+        type: type,
+        pageName: pageName
+      }
+    };
+  }
+
+  /**
+   * Generate a bookmark object for the current page (legacy method)
    * @param {Object} params - Page parameters
    * @returns {Object} Bookmark object
    */
