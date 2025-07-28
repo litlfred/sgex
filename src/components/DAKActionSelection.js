@@ -114,7 +114,7 @@ const DAKActionSelection = () => {
           <span className="breadcrumb-current">Choose DAK Action</span>
         </div>
 
-        <div className="action-selection">
+        <div className="action-main">
           <div className="action-intro">
             <h2>Manage a DAK</h2>
             <p>

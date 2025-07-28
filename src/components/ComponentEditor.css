@@ -154,7 +154,12 @@ body.theme-light .component-editor {
   min-width: 60px;
 }
 
-.editor-main {
+.component-editor .editor-main {
+  background: var(--who-card-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--who-border-color);
+  border-radius: 8px;
+  padding: 2rem;
   max-width: none; /* Allow full width for digital library */
 }
 

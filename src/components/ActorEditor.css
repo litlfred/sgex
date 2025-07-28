@@ -323,10 +323,11 @@ body.theme-light .actor-editor {
 
 .main-editor {
   flex: 1;
-  background: white;
+  background: var(--who-card-bg);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  border: 1px solid var(--who-border-color);
 }
 
 .main-editor.with-sidebar {

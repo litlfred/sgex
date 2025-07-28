@@ -102,6 +102,14 @@ body.theme-light .repository-selection {
   font-weight: 500;
 }
 
+.repository-selection .repo-main {
+  background: var(--who-card-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--who-border-color);
+  border-radius: 8px;
+  padding: 2rem;
+}
+
 .repo-selection {
   max-width: 1200px;
   margin: 0 auto;
