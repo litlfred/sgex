@@ -15,6 +15,12 @@ jest.mock('../services/branchContextService', () => ({
   setSelectedBranch: jest.fn()
 }));
 
+jest.mock('../services/stagingGroundService', () => ({
+  initialize: jest.fn(),
+  getStagingGround: jest.fn().mockReturnValue({ files: [], message: '', timestamp: Date.now() }),
+  addListener: jest.fn().mockReturnValue(() => {})
+}));
+
 // Mock child components
 jest.mock('../components/BranchSelector', () => {
   return function MockBranchSelector() {
@@ -31,6 +37,24 @@ jest.mock('../components/HelpButton', () => {
 jest.mock('../components/ContextualHelpMascot', () => {
   return function MockContextualHelpMascot() {
     return <div data-testid="help-mascot">Help Mascot</div>;
+  };
+});
+
+jest.mock('../components/PageEditModal', () => {
+  return function MockPageEditModal() {
+    return <div data-testid="page-edit-modal">Page Edit Modal</div>;
+  };
+});
+
+jest.mock('../components/PageViewModal', () => {
+  return function MockPageViewModal() {
+    return <div data-testid="page-view-modal">Page View Modal</div>;
+  };
+});
+
+jest.mock('../components/DAKStatusBox', () => {
+  return function MockDAKStatusBox() {
+    return <div data-testid="dak-status-box">DAK Status Box</div>;
   };
 });
 

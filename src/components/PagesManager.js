@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import stagingGroundService from '../services/stagingGroundService';
 import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import PageViewModal from './PageViewModal';
 import PageEditModal from './PageEditModal';
+import DAKStatusBox from './DAKStatusBox';
 import './PagesManager.css';
 
 const PagesManager = () => {
@@ -77,6 +79,13 @@ const PagesManager = () => {
       checkPermissions();
     }
   }, [repository, profile, initializingAuth]);
+
+  // Initialize staging ground service
+  useEffect(() => {
+    if (repository && selectedBranch && !initializingAuth) {
+      stagingGroundService.initialize(repository, selectedBranch);
+    }
+  }, [repository, selectedBranch, initializingAuth]);
 
   // Load pages from sushi-config.yaml
   useEffect(() => {
@@ -332,37 +341,49 @@ const PagesManager = () => {
     setEditModalPage(page);
   };
 
-  const handleSavePage = async (page, content) => {
-    if (!hasWriteAccess) {
+  const handleSavePage = async (page, content, action = 'staged') => {
+    // For staging ground integration, we don't need write access check here
+    // as the content is being staged, not directly committed
+    if (action === 'staged') {
+      // Content has been successfully staged, no further action needed
+      console.log(`Page ${page.filename} has been staged for commit`);
+      return;
+    }
+    
+    // Legacy direct save functionality (if needed for backward compatibility)
+    if (action === 'direct' && !hasWriteAccess) {
       throw new Error('You need write access to save changes. Please upgrade your GitHub token permissions.');
     }
 
-    const owner = repository.owner?.login || repository.full_name.split('/')[0];
-    const branch = selectedBranch || 'main';
-    
-    // Encode content to base64
-    const encodedContent = btoa(content);
-    
-    // Get current file SHA for update
-    const currentSha = page.content?.sha;
-    
-    await githubService.octokit.rest.repos.createOrUpdateFileContents({
-      owner,
-      repo: repository.name,
-      path: page.path,
-      message: `Update ${page.filename} via SGEX Workbench`,
-      content: encodedContent,
-      branch,
-      sha: currentSha
-    });
+    // This direct save path should not be used anymore with staging ground integration
+    if (action === 'direct') {
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const branch = selectedBranch || 'main';
+      
+      // Encode content to base64
+      const encodedContent = btoa(content);
+      
+      // Get current file SHA for update
+      const currentSha = page.content?.sha;
+      
+      await githubService.octokit.rest.repos.createOrUpdateFileContents({
+        owner,
+        repo: repository.name,
+        path: page.path,
+        message: `Update ${page.filename} via SGEX Workbench`,
+        content: encodedContent,
+        branch,
+        sha: currentSha
+      });
 
-    // Refresh pages after save
-    const owner2 = repository.owner?.login || repository.full_name.split('/')[0];
-    const sushiConfigContent = await fetchSushiConfig(owner2, repository.name, branch);
-    if (sushiConfigContent) {
-      const parsedPages = parsePagesFromSushiConfig(sushiConfigContent);
-      const pagesWithStatus = await checkPagesExistence(owner2, repository.name, branch, parsedPages);
-      setPages(pagesWithStatus);
+      // Refresh pages after save
+      const owner2 = repository.owner?.login || repository.full_name.split('/')[0];
+      const sushiConfigContent = await fetchSushiConfig(owner2, repository.name, branch);
+      if (sushiConfigContent) {
+        const parsedPages = parsePagesFromSushiConfig(sushiConfigContent);
+        const pagesWithStatus = await checkPagesExistence(owner2, repository.name, branch, parsedPages);
+        setPages(pagesWithStatus);
+      }
     }
   };
 
@@ -453,6 +474,14 @@ const PagesManager = () => {
           <span className="breadcrumb-separator">›</span>
           <span className="breadcrumb-current">Pages</span>
         </div>
+
+        {/* Staging Ground Status */}
+        <DAKStatusBox
+          repository={repository}
+          selectedBranch={selectedBranch}
+          hasWriteAccess={hasWriteAccess}
+          profile={profile}
+        />
 
         <div className="pages-main">
           <div className="pages-intro">
