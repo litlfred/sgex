@@ -8,6 +8,7 @@ import DAKConfiguration from './components/DAKConfiguration';
 import RepositorySelection from './components/RepositorySelection';
 import DAKDashboard from './components/DAKDashboard';
 import ComponentEditor from './components/ComponentEditor';
+import CoreDataDictionaryViewer from './components/CoreDataDictionaryViewer';
 import ActorEditor from './components/ActorEditor';
 import BPMNEditor from './components/BPMNEditor';
 import BusinessProcessSelection from './components/BusinessProcessSelection';
@@ -48,6 +49,9 @@ function App() {
           <Route path="/dashboard/:user/:repo" element={<DAKDashboard />} />
           <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />
           <Route path="/test-dashboard" element={<TestDashboard />} />
+          <Route path="/core-data-dictionary-viewer" element={<CoreDataDictionaryViewer />} />
+          <Route path="/core-data-dictionary-viewer/:user/:repo" element={<CoreDataDictionaryViewer />} />
+          <Route path="/core-data-dictionary-viewer/:user/:repo/:branch" element={<CoreDataDictionaryViewer />} />
           <Route path="/editor/:componentId" element={<ComponentEditor />} />
           <Route path="/actor-editor" element={<ActorEditor />} />
           <Route path="/business-process-selection" element={<BusinessProcessSelection />} />
