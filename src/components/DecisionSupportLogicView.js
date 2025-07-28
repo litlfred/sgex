@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
+import '@uiw/react-md-editor/markdown-editor.css';
+import '@uiw/react-markdown-preview/markdown.css';
+import MDEditor from '@uiw/react-md-editor';
 import './DecisionSupportLogicView.css';
 
 const DecisionSupportLogicView = () => {
@@ -23,6 +26,7 @@ const DecisionSupportLogicView = () => {
   const [sortField, setSortField] = useState('Code');
   const [sortDirection, setSortDirection] = useState('asc');
   const [selectedDialog, setSelectedDialog] = useState(null);
+  const [cqlModal, setCqlModal] = useState(null);
   const [activeSection, setActiveSection] = useState('variables'); // 'variables' or 'tables'
 
   // Initialize repository data if not available
@@ -435,6 +439,15 @@ const DecisionSupportLogicView = () => {
     }
   };
 
+  const openCqlModal = (variable) => {
+    setCqlModal({
+      title: `CQL for ${variable.Code}`,
+      code: variable.Code,
+      display: variable.Display,
+      cql: variable.CQL
+    });
+  };
+
   const openSourceDialog = async (table) => {
     try {
       const content = await fetch(table.downloadUrl).then(res => res.text());
@@ -624,22 +637,22 @@ const DecisionSupportLogicView = () => {
                 <table className="variables-table">
                   <thead>
                     <tr>
-                      <th onClick={() => handleSort('Code')} className="sortable">
+                      <th onClick={() => handleSort('Code')} className="sortable code-column">
                         Code {sortField === 'Code' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                       </th>
-                      <th onClick={() => handleSort('Display')} className="sortable">
+                      <th onClick={() => handleSort('Display')} className="sortable display-column">
                         Display {sortField === 'Display' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                       </th>
-                      <th onClick={() => handleSort('Definition')} className="sortable">
+                      <th onClick={() => handleSort('Definition')} className="sortable definition-column">
                         Definition {sortField === 'Definition' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                       </th>
-                      <th onClick={() => handleSort('Tables')} className="sortable">
+                      <th className="cql-column">CQL</th>
+                      <th onClick={() => handleSort('Tables')} className="sortable table-column">
                         Table {sortField === 'Tables' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                       </th>
-                      <th onClick={() => handleSort('Tabs')} className="sortable">
+                      <th onClick={() => handleSort('Tabs')} className="sortable tab-column">
                         Tab {sortField === 'Tabs' && <span className="sort-indicator">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                       </th>
-                      <th>CQL</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -647,14 +660,27 @@ const DecisionSupportLogicView = () => {
                       <tr key={index}>
                         <td><code className="variable-code">{variable.Code}</code></td>
                         <td><strong>{variable.Display}</strong></td>
-                        <td>{variable.Definition}</td>
-                        <td><span className="table-tag">{variable.Tables}</span></td>
-                        <td><span className="tab-tag">{variable.Tabs}</span></td>
                         <td>
-                          {variable.CQL && (
-                            <pre className="cql-code"><code>{variable.CQL}</code></pre>
+                          {variable.Definition && (
+                            <div className="definition-content">
+                              <MDEditor.Markdown source={variable.Definition} />
+                            </div>
                           )}
                         </td>
+                        <td>
+                          {variable.CQL && (
+                            <button 
+                              className="cql-card"
+                              onClick={() => openCqlModal(variable)}
+                              title="Click to view full CQL code"
+                            >
+                              <span className="cql-icon">📜</span>
+                              <span className="cql-preview">View CQL</span>
+                            </button>
+                          )}
+                        </td>
+                        <td><span className="table-tag">{variable.Tables}</span></td>
+                        <td><span className="tab-tag">{variable.Tabs}</span></td>
                       </tr>
                     ))}
                   </tbody>
@@ -777,6 +803,50 @@ const DecisionSupportLogicView = () => {
               </button>
               <button
                 onClick={() => setSelectedDialog(null)}
+                className="action-btn primary"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CQL Modal */}
+      {cqlModal && (
+        <div className="dialog-overlay" onClick={() => setCqlModal(null)}>
+          <div className="dialog-content cql-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="dialog-header">
+              <div className="cql-modal-title">
+                <h3>📜 CQL Code</h3>
+                <div className="cql-modal-subtitle">
+                  <code className="modal-variable-code">{cqlModal.code}</code>
+                  <span className="modal-variable-display">{cqlModal.display}</span>
+                </div>
+              </div>
+              <button 
+                className="dialog-close"
+                onClick={() => setCqlModal(null)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="dialog-body">
+              <pre className="cql-source-content">
+                <code>{cqlModal.cql}</code>
+              </pre>
+            </div>
+            <div className="dialog-actions">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(cqlModal.cql);
+                }}
+                className="action-btn secondary"
+              >
+                📋 Copy CQL
+              </button>
+              <button
+                onClick={() => setCqlModal(null)}
                 className="action-btn primary"
               >
                 Close
