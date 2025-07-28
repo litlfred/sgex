@@ -1091,6 +1091,151 @@ class GitHubService {
     }
   }
 
+  // Get recent commits for a repository branch
+  async getRecentCommits(owner, repo, branch = 'main', per_page = 5) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/commits`, { sha: branch, per_page });
+
+    try {
+      const response = await this.octokit.rest.repos.listCommits({
+        owner,
+        repo,
+        sha: branch,
+        per_page
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/commits`, response.status, Date.now() - startTime);
+      
+      return response.data.map(commit => ({
+        sha: commit.sha,
+        message: commit.commit.message,
+        author: {
+          name: commit.commit.author.name,
+          email: commit.commit.author.email,
+          date: commit.commit.author.date
+        },
+        committer: {
+          name: commit.commit.committer.name,
+          email: commit.commit.committer.email,
+          date: commit.commit.committer.date
+        },
+        html_url: commit.html_url,
+        stats: commit.stats
+      }));
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/commits`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch recent commits:', error);
+      throw error;
+    }
+  }
+
+  // Get open pull requests count
+  async getOpenPullRequestsCount(owner, repo) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls`, { state: 'open', per_page: 1 });
+
+    try {
+      const response = await this.octokit.rest.pulls.list({
+        owner,
+        repo,
+        state: 'open',
+        per_page: 1
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, response.status, Date.now() - startTime);
+      
+      // GitHub includes the total count in the response headers
+      const linkHeader = response.headers.link;
+      if (linkHeader && linkHeader.includes('rel="last"')) {
+        const lastPageMatch = linkHeader.match(/page=(\d+)>; rel="last"/);
+        if (lastPageMatch) {
+          return parseInt(lastPageMatch[1], 10);
+        }
+      }
+      
+      // Fallback: use the length of returned items (may not be accurate for large counts)
+      return response.data.length;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch pull requests count:', error);
+      throw error;
+    }
+  }
+
+  // Get open issues count
+  async getOpenIssuesCount(owner, repo) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues`, { state: 'open', per_page: 1 });
+
+    try {
+      const response = await this.octokit.rest.issues.listForRepo({
+        owner,
+        repo,
+        state: 'open',
+        per_page: 1
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues`, response.status, Date.now() - startTime);
+      
+      // GitHub includes the total count in the response headers
+      const linkHeader = response.headers.link;
+      if (linkHeader && linkHeader.includes('rel="last"')) {
+        const lastPageMatch = linkHeader.match(/page=(\d+)>; rel="last"/);
+        if (lastPageMatch) {
+          return parseInt(lastPageMatch[1], 10);
+        }
+      }
+      
+      // Fallback: use the length of returned items (may not be accurate for large counts)
+      return response.data.length;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch issues count:', error);
+      throw error;
+    }
+  }
+
+  // Get repository statistics (combined method for efficiency)
+  async getRepositoryStats(owner, repo, branch = 'main') {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const [recentCommits, openPRsCount, openIssuesCount] = await Promise.allSettled([
+        this.getRecentCommits(owner, repo, branch, 1),
+        this.getOpenPullRequestsCount(owner, repo),
+        this.getOpenIssuesCount(owner, repo)
+      ]);
+
+      return {
+        recentCommits: recentCommits.status === 'fulfilled' ? recentCommits.value : [],
+        openPullRequestsCount: openPRsCount.status === 'fulfilled' ? openPRsCount.value : 0,
+        openIssuesCount: openIssuesCount.status === 'fulfilled' ? openIssuesCount.value : 0,
+        errors: {
+          recentCommits: recentCommits.status === 'rejected' ? recentCommits.reason : null,
+          openPullRequestsCount: openPRsCount.status === 'rejected' ? openPRsCount.reason : null,
+          openIssuesCount: openIssuesCount.status === 'rejected' ? openIssuesCount.reason : null
+        }
+      };
+    } catch (error) {
+      console.error('Failed to fetch repository stats:', error);
+      throw error;
+    }
+  }
+
   // Get directory contents
   async getDirectoryContents(owner, repo, path, branch = null) {
     if (!this.isAuth()) {
