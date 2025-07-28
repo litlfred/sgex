@@ -24,6 +24,7 @@ const DAKDashboard = () => {
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); // 'core' or 'additional'
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
+  const [issueCounts, setIssueCounts] = useState({});
 
   // Fetch data from URL parameters if not available in location.state
   useEffect(() => {
@@ -166,6 +167,45 @@ const DAKDashboard = () => {
     }
   }, [repository, profile]);
 
+  // Load issue counts for repository
+  const loadIssueCounts = async () => {
+    if (!repository) return;
+    
+    try {
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      
+      // Get all issues (includes pull requests in GitHub API)
+      const issues = await githubService.getIssues(owner, repoName, {
+        state: 'all',
+        per_page: 100
+      });
+      
+      // Filter out pull requests to get actual issues
+      const actualIssues = issues.filter(issue => !issue.pull_request);
+      
+      // Count issues by state
+      const openIssues = actualIssues.filter(issue => issue.state === 'open').length;
+      const closedIssues = actualIssues.filter(issue => issue.state === 'closed').length;
+      
+      setIssueCounts({
+        total: actualIssues.length,
+        open: openIssues,
+        closed: closedIssues
+      });
+    } catch (err) {
+      console.warn('Could not load issue counts:', err);
+      setIssueCounts({ total: 0, open: 0, closed: 0 });
+    }
+  };
+
+  // Load issue counts when repository changes
+  useEffect(() => {
+    if (repository && !loading) {
+      loadIssueCounts();
+    }
+  }, [repository, loading]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Check write permissions on mount
   useEffect(() => {
     const checkPermissions = async () => {
@@ -243,7 +283,7 @@ const DAKDashboard = () => {
       type: 'L2',
       color: '#ff8c00',
       fileTypes: ['OCL', 'Concept'],
-      count: 89,
+      count: issueCounts.total || 89,
       editor: 'Data element editor with OCL integration'
     },
     {

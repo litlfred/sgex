@@ -965,6 +965,69 @@ class GitHubService {
     }
   }
 
+  // Get commits for a repository
+  async getCommits(owner, repo, options = {}) {
+    try {
+      // Create temporary Octokit instance for unauthenticated access if needed
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const params = {
+        owner,
+        repo,
+        per_page: options.per_page || 10,
+        page: options.page || 1
+      };
+
+      if (options.sha) {
+        params.sha = options.sha;
+      }
+
+      if (options.since) {
+        params.since = options.since;
+      }
+
+      if (options.until) {
+        params.until = options.until;
+      }
+
+      const { data } = await octokit.rest.repos.listCommits(params);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch commits:', error);
+      throw error;
+    }
+  }
+
+  // Get issues for a repository
+  async getIssues(owner, repo, options = {}) {
+    try {
+      // Create temporary Octokit instance for unauthenticated access if needed
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const params = {
+        owner,
+        repo,
+        state: options.state || 'all',
+        per_page: options.per_page || 30,
+        page: options.page || 1
+      };
+
+      if (options.labels) {
+        params.labels = options.labels;
+      }
+
+      if (options.milestone) {
+        params.milestone = options.milestone;
+      }
+
+      const { data } = await octokit.rest.issues.listForRepo(params);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch issues:', error);
+      throw error;
+    }
+  }
+
   // Logout
   logout() {
     this.octokit = null;
