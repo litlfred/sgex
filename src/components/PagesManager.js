@@ -8,6 +8,7 @@ import ContextualHelpMascot from './ContextualHelpMascot';
 import PageViewModal from './PageViewModal';
 import PageEditModal from './PageEditModal';
 import DAKStatusBox from './DAKStatusBox';
+import UserDropdown from './UserDropdown';
 import './PagesManager.css';
 
 const PagesManager = () => {
@@ -445,12 +446,7 @@ const PagesManager = () => {
           </div>
         </div>
         <div className="header-right">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <span className="context-owner">@{profile.login}</span>
+          <UserDropdown profile={profile} />
           <HelpButton 
             helpTopic="pages-manager"
             contextData={{ repository, hasWriteAccess }}

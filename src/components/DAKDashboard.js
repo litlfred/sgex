@@ -8,6 +8,7 @@ import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
+import UserDropdown from './UserDropdown';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
@@ -623,13 +624,7 @@ const DAKDashboard = () => {
           </div>
         </div>
         <div className="header-right">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <span className="context-owner">@{profile.login}</span>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+          <UserDropdown profile={profile} />
         </div>
       </div>
 

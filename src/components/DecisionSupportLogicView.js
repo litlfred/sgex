@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import MDEditor from '@uiw/react-md-editor';
+import UserDropdown from './UserDropdown';
 import './DecisionSupportLogicView.css';
 
 const DecisionSupportLogicView = () => {
@@ -611,17 +612,7 @@ define "Contraindication Present":
           </div>
         </div>
         <div className="header-right">
-          {profile && (
-            <>
-              <img 
-                src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-                alt="Profile" 
-                className="context-avatar" 
-              />
-              <span className="context-owner">@{profile.login}</span>
-            </>
-          )}
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+          {profile && <UserDropdown profile={profile} />}
         </div>
       </div>
 
