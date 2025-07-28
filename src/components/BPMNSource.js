@@ -10,6 +10,21 @@ const BPMNSource = () => {
   
   const { profile, repository, component, selectedFile, selectedBranch } = location.state || {};
   
+  // Debug logging to understand what data is being passed
+  console.log('🚀 BPMNSource: Component initialized with state:', {
+    hasProfile: !!profile,
+    hasRepository: !!repository,
+    hasSelectedFile: !!selectedFile,
+    selectedBranch,
+    profileLogin: profile?.login,
+    repositoryName: repository?.name,
+    repositoryFullName: repository?.full_name,
+    repositoryOwner: repository?.owner?.login,
+    selectedFileName: selectedFile?.name,
+    selectedFilePath: selectedFile?.path,
+    locationState: location.state
+  });
+  
   const [bpmnXml, setBpmnXml] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -120,13 +135,35 @@ const BPMNSource = () => {
   const getGitHubUrl = () => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const branch = selectedBranch || 'main';
-    return `https://github.com/${owner}/${repository.name}/blob/${branch}/${selectedFile.path}`;
+    const url = `https://github.com/${owner}/${repository.name}/blob/${branch}/${selectedFile.path}`;
+    
+    console.log('🔗 BPMNSource getGitHubUrl:', {
+      selectedBranch,
+      branch,
+      owner,
+      repositoryName: repository.name,
+      filePath: selectedFile.path,
+      finalUrl: url
+    });
+    
+    return url;
   };
 
   const getGitHubEditUrl = () => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const branch = selectedBranch || 'main';
-    return `https://github.com/${owner}/${repository.name}/edit/${branch}/${selectedFile.path}`;
+    const url = `https://github.com/${owner}/${repository.name}/edit/${branch}/${selectedFile.path}`;
+    
+    console.log('✏️ BPMNSource getGitHubEditUrl:', {
+      selectedBranch,
+      branch,
+      owner,
+      repositoryName: repository.name,
+      filePath: selectedFile.path,
+      finalUrl: url
+    });
+    
+    return url;
   };
 
   if (!profile || !repository || !selectedFile) {
