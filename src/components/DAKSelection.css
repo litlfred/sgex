@@ -566,6 +566,10 @@
 .scanning-status {
   text-align: center;
   padding: 2rem;
+  /* Fix height changes by setting minimum height and structure */
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
 }
 
 .scanning-header {
@@ -585,6 +589,11 @@
 .progress-container {
   max-width: 600px;
   margin: 0 auto 2rem;
+  /* Reserve consistent space for progress section */
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .progress-bar {
@@ -618,6 +627,10 @@
 
 .scanning-results {
   text-align: left;
+  /* Limit height and add scrolling to prevent dialog resizing */
+  flex: 1;
+  overflow-y: auto;
+  max-height: 400px;
 }
 
 .scanning-results > p {
@@ -698,6 +711,8 @@
   background: rgba(0, 120, 212, 0.1);
   border-radius: 8px;
   border-left: 4px solid #0078d4;
+  /* Reserve space even when empty to prevent height changes */
+  min-height: 80px;
 }
 
 .currently-testing-unified .scanning-icon {
