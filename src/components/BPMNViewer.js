@@ -202,7 +202,7 @@ const BPMNViewerComponent = () => {
     }
   }, [selectedFile, repository, selectedBranch]);
 
-  // Initialize BPMN viewer
+  // Initialize BPMN viewer with improved container readiness check
   useEffect(() => {
     const initializeViewer = () => {
       console.log('🛠️ BPMNViewer: initializeViewer called with:', {
@@ -255,15 +255,25 @@ const BPMNViewerComponent = () => {
       }
     };
 
+    const waitForContainer = (attempt = 0) => {
+      const maxAttempts = 50; // Try for up to 5 seconds (50 * 100ms)
+      
+      if (containerRef.current) {
+        console.log(`✅ BPMNViewer: Container found on attempt ${attempt + 1}`);
+        initializeViewer();
+      } else if (attempt < maxAttempts) {
+        console.log(`⏳ BPMNViewer: Container not ready, attempt ${attempt + 1}/${maxAttempts}, retrying in 100ms...`);
+        setTimeout(() => waitForContainer(attempt + 1), 100);
+      } else {
+        console.error('❌ BPMNViewer: Container never became available after maximum attempts');
+        setError('Failed to initialize BPMN viewer: container not available');
+        setLoading(false);
+      }
+    };
+
     if (selectedFile) {
-      console.log('⏰ BPMNViewer: Setting up viewer initialization timer for selectedFile:', selectedFile.name);
-      console.log('⏰ BPMNViewer: Will wait 100ms before initializing viewer...');
-      // Wait for container to be ready
-      const timer = setTimeout(initializeViewer, 100);
-      return () => {
-        console.log('🧹 BPMNViewer: Clearing initialization timer');
-        clearTimeout(timer);
-      };
+      console.log('⏰ BPMNViewer: Starting container readiness check for selectedFile:', selectedFile.name);
+      waitForContainer();
     } else {
       console.log('❌ BPMNViewer: No selectedFile, skipping viewer initialization');
     }
