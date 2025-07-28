@@ -8,6 +8,7 @@ import DAKConfiguration from './components/DAKConfiguration';
 import RepositorySelection from './components/RepositorySelection';
 import DAKDashboard from './components/DAKDashboard';
 import ComponentEditor from './components/ComponentEditor';
+import ActorEditor from './components/ActorEditor';
 import BPMNEditor from './components/BPMNEditor';
 import BusinessProcessSelection from './components/BusinessProcessSelection';
 import BPMNViewer from './components/BPMNViewerEnhanced';
@@ -48,6 +49,7 @@ function App() {
           <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />
           <Route path="/test-dashboard" element={<TestDashboard />} />
           <Route path="/editor/:componentId" element={<ComponentEditor />} />
+          <Route path="/actor-editor" element={<ActorEditor />} />
           <Route path="/business-process-selection" element={<BusinessProcessSelection />} />
           <Route path="/business-process-selection/:user/:repo" element={<BusinessProcessSelection />} />
           <Route path="/business-process-selection/:user/:repo/:branch" element={<BusinessProcessSelection />} />

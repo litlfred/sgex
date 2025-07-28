@@ -398,6 +398,19 @@ const DAKDashboard = () => {
       return;
     }
 
+    // For generic-personas, navigate to actor editor
+    if (component.id === 'generic-personas') {
+      navigate('/actor-editor', {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
     // For other components, check permissions before proceeding
     if (!hasWriteAccess) {
       setShowPermissionDialog(true);
