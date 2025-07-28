@@ -24,17 +24,50 @@ const useDAKUrlParams = () => {
   // Fetch data from URL parameters if not available in location.state
   useEffect(() => {
     const fetchDataFromUrlParams = async () => {
+      console.log('🔍 useDAKUrlParams: Starting data fetch analysis:', {
+        urlParams: { user, repo, branch },
+        currentState: {
+          hasProfile: !!profile,
+          hasRepository: !!repository,
+          profileLogin: profile?.login,
+          repositoryFullName: repository?.full_name,
+          repositoryOwner: repository?.owner?.login
+        },
+        hasLocationState: !!location.state,
+        locationStateSummary: location.state ? {
+          hasProfile: !!location.state.profile,
+          hasRepository: !!location.state.repository,
+          profileLogin: location.state.profile?.login,
+          repositoryFullName: location.state.repository?.full_name,
+          repositoryOwner: location.state.repository?.owner?.login
+        } : null,
+        isAuthenticated: githubService.isAuth(),
+        needsFetch: (!profile || !repository) && user && repo
+      });
+
       if ((!profile || !repository) && user && repo) {
+        console.log('useDAKUrlParams: Fetching data from URL parameters:', {
+          user, 
+          repo, 
+          branch,
+          hasProfile: !!profile,
+          hasRepository: !!repository,
+          hasLocationState: !!location.state,
+          isAuthenticated: githubService.isAuth()
+        });
+        
         try {
           setLoading(true);
           setError(null);
 
           // Check if githubService is authenticated (allow demo mode to proceed without auth)
           if (!githubService.isAuth()) {
+            console.log('🚫 useDAKUrlParams: Not authenticated, entering demo mode');
             // In demo mode, use the DAK validation service for demo repositories
             const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
             
             if (!isValidDAK) {
+              console.log('❌ useDAKUrlParams: Demo DAK validation failed, redirecting home');
               navigate('/', { 
                 state: { 
                   warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
@@ -43,6 +76,7 @@ const useDAKUrlParams = () => {
               return;
             }
 
+            console.log('✅ useDAKUrlParams: Demo DAK validation passed, creating demo data');
             const demoProfile = {
               login: user,
               name: user.charAt(0).toUpperCase() + user.slice(1),
@@ -60,6 +94,12 @@ const useDAKUrlParams = () => {
               isDemo: true
             };
 
+            console.log('📋 useDAKUrlParams: Setting demo state:', {
+              profile: demoProfile,
+              repository: demoRepository,
+              selectedBranch: branch || 'main'
+            });
+
             setProfile(demoProfile);
             setRepository(demoRepository);
             setSelectedBranch(branch || 'main');
@@ -67,13 +107,21 @@ const useDAKUrlParams = () => {
             return;
           }
 
+          console.log('🔐 useDAKUrlParams: Authenticated, fetching real repository data');
+
           // Fetch user profile
           let userProfile = null;
           try {
+            console.log(`🔍 useDAKUrlParams: Fetching user profile for: ${user}`);
             const userResponse = await githubService.getUser(user);
             userProfile = userResponse;
+            console.log('✅ useDAKUrlParams: User profile fetched:', {
+              login: userProfile.login,
+              name: userProfile.name,
+              type: userProfile.type
+            });
           } catch (err) {
-            console.error('Error fetching user:', err);
+            console.error('❌ useDAKUrlParams: Error fetching user:', err);
             navigate('/', { 
               state: { 
                 warningMessage: `Could not access the requested DAK. User '${user}' not found or not accessible.` 
@@ -85,10 +133,17 @@ const useDAKUrlParams = () => {
           // Fetch repository
           let repoData = null;
           try {
+            console.log(`useDAKUrlParams: Fetching repository data for ${user}/${repo}`);
             const repoResponse = await githubService.getRepository(user, repo);
             repoData = repoResponse;
+            console.log('useDAKUrlParams: Repository data fetched successfully:', {
+              name: repoData.name,
+              full_name: repoData.full_name,
+              owner: repoData.owner,
+              default_branch: repoData.default_branch
+            });
           } catch (err) {
-            console.error('Error fetching repository:', err);
+            console.error('useDAKUrlParams: Error fetching repository:', err);
             navigate('/', { 
               state: { 
                 warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
@@ -123,6 +178,21 @@ const useDAKUrlParams = () => {
             setSelectedBranch(repoData.default_branch);
           }
 
+          console.log('useDAKUrlParams: Setting final state:', {
+            profile: {
+              login: userProfile.login,
+              name: userProfile.name,
+              type: userProfile.type
+            },
+            repository: {
+              name: repoData.name,
+              full_name: repoData.full_name,
+              owner: repoData.owner,
+              default_branch: repoData.default_branch
+            },
+            selectedBranch: branch || repoData.default_branch
+          });
+
           setProfile(userProfile);
           setRepository(repoData);
           setLoading(false);
@@ -132,6 +202,13 @@ const useDAKUrlParams = () => {
           setLoading(false);
         }
       } else {
+        console.log('📋 useDAKUrlParams: Not fetching from URL params, using existing state:', {
+          hasProfile: !!profile,
+          hasRepository: !!repository,
+          hasUserParam: !!user,
+          hasRepoParam: !!repo,
+          reason: !profile || !repository ? 'missing URL params' : 'state already populated'
+        });
         setLoading(false);
       }
     };

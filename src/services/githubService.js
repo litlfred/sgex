@@ -508,12 +508,11 @@ class GitHubService {
 
   // Get a specific repository
   async getRepository(owner, repo) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
-      const { data } = await this.octokit.rest.repos.get({
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.get({
         owner,
         repo,
       });
@@ -526,19 +525,30 @@ class GitHubService {
 
   // Get repository branches
   async getBranches(owner, repo) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
-      const { data } = await this.octokit.rest.repos.listBranches({
+      console.log(`githubService.getBranches: Fetching branches for ${owner}/${repo}`);
+      console.log('githubService.getBranches: Authentication status:', this.isAuth());
+      
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      console.log('githubService.getBranches: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
+      
+      const { data } = await octokit.rest.repos.listBranches({
         owner,
         repo,
         per_page: 100
       });
+      
+      console.log(`githubService.getBranches: Successfully fetched ${data.length} branches`);
       return data;
     } catch (error) {
-      console.error('Failed to fetch branches:', error);
+      console.error('githubService.getBranches: Failed to fetch branches:', error);
+      console.error('githubService.getBranches: Error details:', {
+        status: error.status,
+        message: error.message,
+        owner,
+        repo
+      });
       throw error;
     }
   }
@@ -574,12 +584,11 @@ class GitHubService {
 
   // Get a specific branch
   async getBranch(owner, repo, branch) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
-      const { data } = await this.octokit.rest.repos.getBranch({
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.getBranch({
         owner,
         repo,
         branch
@@ -833,6 +842,172 @@ class GitHubService {
       return data;
     } catch (error) {
       console.error('Failed to fetch latest release:', error);
+      throw error;
+    }
+  }
+
+  // Recursively fetch BPMN files from a directory and its subdirectories
+  async getBpmnFilesRecursive(owner, repo, path, ref = 'main', allFiles = []) {
+    try {
+      // Use authenticated octokit if available, otherwise create a public instance
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref
+      });
+
+      // Handle single file response
+      if (!Array.isArray(data)) {
+        if (data.name.endsWith('.bpmn')) {
+          allFiles.push(data);
+        }
+        return allFiles;
+      }
+
+      // Handle directory response
+      for (const item of data) {
+        if (item.type === 'file' && item.name.endsWith('.bpmn')) {
+          allFiles.push(item);
+        } else if (item.type === 'dir') {
+          // Recursively search subdirectories
+          await this.getBpmnFilesRecursive(owner, repo, item.path, ref, allFiles);
+        }
+      }
+
+      return allFiles;
+    } catch (error) {
+      // If directory doesn't exist, return empty array (not an error)
+      if (error.status === 404) {
+        return allFiles;
+      }
+      throw error;
+    }
+  }
+
+  // Get all BPMN files from a repository's business process directories
+  async getBpmnFiles(owner, repo, ref = 'main') {
+    const allBpmnFiles = [];
+    
+    // Try both possible directory names: 'input/business-processes' and 'input/business-process'
+    const possiblePaths = [
+      'input/business-processes',
+      'input/business-process'
+    ];
+
+    for (const path of possiblePaths) {
+      try {
+        const files = await this.getBpmnFilesRecursive(owner, repo, path, ref);
+        allBpmnFiles.push(...files);
+      } catch (error) {
+        console.warn(`Could not fetch BPMN files from ${path}:`, error.message);
+        // Continue trying other paths
+      }
+    }
+
+    // Remove duplicates based on path (in case both directories exist and have overlapping files)
+    const uniqueFiles = allBpmnFiles.filter((file, index, self) => 
+      index === self.findIndex(f => f.path === file.path)
+    );
+
+    return uniqueFiles;
+  }
+
+  // Get file content from GitHub repository with timeout handling
+  async getFileContent(owner, repo, path, ref = 'main') {
+    const timeoutMs = 15000; // 15 second timeout
+    
+    try {
+      console.log(`🚀 githubService.getFileContent: Starting request for ${owner}/${repo}/${path} (ref: ${ref})`);
+      console.log('🔐 githubService.getFileContent: Authentication status:', this.isAuth());
+      console.log('📋 githubService.getFileContent: Request parameters:', { owner, repo, path, ref });
+      
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      console.log('🔧 githubService.getFileContent: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
+      
+      // Create a promise that rejects after timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        console.log(`⏰ githubService.getFileContent: Setting up ${timeoutMs}ms timeout`);
+        setTimeout(() => {
+          console.error(`⏰ githubService.getFileContent: Request timed out after ${timeoutMs}ms`);
+          reject(new Error(`Request timeout after ${timeoutMs}ms`));
+        }, timeoutMs);
+      });
+      
+      // Race the GitHub API call against the timeout
+      console.log('🌐 githubService.getFileContent: Creating GitHub API promise...');
+      const apiPromise = octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref
+      });
+      
+      console.log('📡 githubService.getFileContent: API request initiated, waiting for response...');
+      const startTime = Date.now();
+      
+      const { data } = await Promise.race([apiPromise, timeoutPromise]);
+      const responseTime = Date.now() - startTime;
+      
+      console.log(`✅ githubService.getFileContent: API response received in ${responseTime}ms`);
+      console.log('📂 githubService.getFileContent: Response data type:', data.type);
+      console.log('📊 githubService.getFileContent: Response details:', {
+        type: data.type,
+        name: data.name,
+        size: data.size,
+        encoding: data.encoding,
+        hasContent: !!data.content
+      });
+
+      // Handle file content
+      if (data.type === 'file' && data.content) {
+        // Decode base64 content
+        console.log('🔧 githubService.getFileContent: Decoding base64 content...');
+        console.log('📊 githubService.getFileContent: Base64 content length:', data.content.length);
+        
+        const content = Buffer.from(data.content, 'base64').toString('utf-8');
+        console.log(`✅ githubService.getFileContent: Successfully fetched and decoded file content`);
+        console.log('📏 githubService.getFileContent: Final content length:', content.length, 'characters');
+        console.log('👀 githubService.getFileContent: Content preview (first 200 chars):', content.substring(0, 200));
+        
+        return content;
+      } else {
+        console.error('❌ githubService.getFileContent: Invalid response - not a file or no content');
+        console.error('🔍 githubService.getFileContent: Full response data:', JSON.stringify(data, null, 2));
+        throw new Error('File not found or is not a file');
+      }
+    } catch (error) {
+      console.error(`💥 githubService.getFileContent: Failed to fetch file content from ${owner}/${repo}/${path}:`, error);
+      console.error('🔍 githubService.getFileContent: Error analysis:', {
+        type: typeof error,
+        status: error.status,
+        message: error.message,
+        name: error.name,
+        stack: error.stack?.substring(0, 500) + '...'
+      });
+      
+      // Provide more specific error messages
+      if (error.message.includes('timeout')) {
+        console.error('⏰ githubService.getFileContent: Timeout error detected');
+        throw new Error(`GitHub API request timed out after ${timeoutMs / 1000} seconds. Please try again.`);
+      } else if (error.status === 403) {
+        console.error('🔒 githubService.getFileContent: 403 Forbidden error detected');
+        throw new Error('Access denied. This repository may be private or you may have hit rate limits.');
+      } else if (error.status === 404) {
+        console.error('🔍 githubService.getFileContent: 404 Not Found error detected');
+        throw new Error('File not found in the repository.');
+      } else if (error.message.includes('rate limit')) {
+        console.error('🚦 githubService.getFileContent: Rate limit error detected');
+        throw new Error('GitHub API rate limit exceeded. Please try again later.');
+      } else if (error.message.includes('Network Error') || error.message.includes('Failed to fetch')) {
+        console.error('🌐 githubService.getFileContent: Network error detected');
+        throw new Error('Network error occurred. Please check your internet connection and try again.');
+      }
+      
+      console.error('❓ githubService.getFileContent: Unknown error type, re-throwing original error');
       throw error;
     }
   }

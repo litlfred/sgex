@@ -117,6 +117,54 @@ const mockGitHubService = {
   
   checkSmartGuidelinesCompatibility: jest.fn(() => Promise.resolve(true)),
   
+  getBpmnFiles: jest.fn((owner, repo, ref = 'main') => {
+    // Mock BPMN files that would be found in a real repository
+    if (owner === 'WorldHealthOrganization' && repo === 'smart-dak-tb') {
+      return Promise.resolve([
+        {
+          name: 'treatment-decision.bpmn',
+          path: 'input/business-processes/treatment-decision.bpmn',
+          sha: 'abc123',
+          size: 4096,
+          download_url: `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/input/business-processes/treatment-decision.bpmn`,
+          html_url: `https://github.com/${owner}/${repo}/blob/${ref}/input/business-processes/treatment-decision.bpmn`
+        },
+        {
+          name: 'patient-screening.bpmn',
+          path: 'input/business-processes/screening/patient-screening.bpmn',
+          sha: 'def456',
+          size: 3072,
+          download_url: `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/input/business-processes/screening/patient-screening.bpmn`,
+          html_url: `https://github.com/${owner}/${repo}/blob/${ref}/input/business-processes/screening/patient-screening.bpmn`
+        }
+      ]);
+    }
+    // Return empty array for repositories without BPMN files
+    return Promise.resolve([]);
+  }),
+  
+  getBpmnFilesRecursive: jest.fn(() => Promise.resolve([])),
+
+  getFileContent: jest.fn((owner, repo, path, ref = 'main') => {
+    // Mock BPMN file content
+    if (path.endsWith('.bpmn')) {
+      return Promise.resolve(`<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1"/>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="79" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>`);
+    }
+    return Promise.reject(new Error('File not found'));
+  }),
+
   getUser: jest.fn((username) => {
     if (username === 'test-user') {
       return Promise.resolve({
@@ -141,6 +189,16 @@ const mockGitHubService = {
         owner: { login: 'test-user' },
         html_url: 'https://github.com/test-user/smart-test-repo'
       });
+    }
+    return Promise.reject(new Error('Repository not found'));
+  }),
+
+  getBranches: jest.fn((owner, repo) => {
+    if (owner === 'test-user' && repo === 'smart-test-repo') {
+      return Promise.resolve([
+        { name: 'main', commit: { sha: 'abc123' } },
+        { name: 'develop', commit: { sha: 'def456' } }
+      ]);
     }
     return Promise.reject(new Error('Repository not found'));
   }),

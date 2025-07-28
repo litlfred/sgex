@@ -12,7 +12,7 @@ import CoreDataDictionaryViewer from './components/CoreDataDictionaryViewer';
 import ActorEditor from './components/ActorEditor';
 import BPMNEditor from './components/BPMNEditor';
 import BusinessProcessSelection from './components/BusinessProcessSelection';
-import BPMNViewer from './components/BPMNViewerEnhanced';
+import BPMNViewer from './components/BPMNViewer';
 import BPMNSource from './components/BPMNSource';
 import DocumentationViewer from './components/DocumentationViewer';
 import TestDashboard from './components/TestDashboard';
