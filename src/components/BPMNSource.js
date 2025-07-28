@@ -10,6 +10,9 @@ const BPMNSource = () => {
   
   const { profile, repository, component, selectedFile, selectedBranch } = location.state || {};
   
+  // Essential debug logging for troubleshooting branch URL issue
+  console.log('BPMNSource: Received selectedBranch =', selectedBranch);
+  
   const [bpmnXml, setBpmnXml] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -119,12 +122,29 @@ const BPMNSource = () => {
 
   const getGitHubUrl = () => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
-    return `https://github.com/${owner}/${repository.name}/blob/main/${selectedFile.path}`;
+    const branch = selectedBranch || 'main';
+    
+    // Essential debug logging
+    console.log('BPMNSource GitHub URL: using branch =', branch);
+    
+    // Only encode the branch if it contains special characters, leave the file path as-is
+    const encodedBranch = encodeURIComponent(branch);
+    const url = `https://github.com/${owner}/${repository.name}/blob/${encodedBranch}/${selectedFile.path}`;
+    
+    console.log('BPMNSource GitHub URL generated:', url);
+    
+    return url;
   };
 
   const getGitHubEditUrl = () => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
-    return `https://github.com/${owner}/${repository.name}/edit/main/${selectedFile.path}`;
+    const branch = selectedBranch || 'main';
+    
+    // Only encode the branch if it contains special characters, leave the file path as-is
+    const encodedBranch = encodeURIComponent(branch);
+    const url = `https://github.com/${owner}/${repository.name}/edit/${encodedBranch}/${selectedFile.path}`;
+    
+    return url;
   };
 
   if (!profile || !repository || !selectedFile) {
