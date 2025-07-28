@@ -49,6 +49,8 @@ function App() {
           <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />
           <Route path="/test-dashboard" element={<TestDashboard />} />
           <Route path="/core-data-dictionary-viewer" element={<CoreDataDictionaryViewer />} />
+          <Route path="/core-data-dictionary-viewer/:user/:repo" element={<CoreDataDictionaryViewer />} />
+          <Route path="/core-data-dictionary-viewer/:user/:repo/:branch" element={<CoreDataDictionaryViewer />} />
           <Route path="/editor/:componentId" element={<ComponentEditor />} />
           <Route path="/business-process-selection" element={<BusinessProcessSelection />} />
           <Route path="/business-process-selection/:user/:repo" element={<BusinessProcessSelection />} />

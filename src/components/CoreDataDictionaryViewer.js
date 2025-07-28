@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import './CoreDataDictionaryViewer.css';
@@ -7,7 +7,13 @@ import './CoreDataDictionaryViewer.css';
 const CoreDataDictionaryViewer = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const params = useParams();
+  
+  // Get data from URL params or location state (for backward compatibility)
   const { profile, repository, component, selectedBranch } = location.state || {};
+  const user = params.user;
+  const repo = params.repo;
+  const branch = params.branch;
   
   const [fshFiles, setFshFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,14 +25,14 @@ const CoreDataDictionaryViewer = () => {
   const [hasGhPages, setHasGhPages] = useState(false);
 
   // Generate base URL for IG Publisher artifacts
-  const getBaseUrl = (branch) => {
-    const owner = repository.owner?.login || repository.full_name.split('/')[0];
-    const repoName = repository.name;
+  const getBaseUrl = (branchName) => {
+    const owner = user || repository?.owner?.login || repository?.full_name.split('/')[0];
+    const repoName = repo || repository?.name;
     
-    if (branch === repository.default_branch || branch === 'main') {
+    if (branchName === (repository?.default_branch || 'main')) {
       return `https://${owner}.github.io/${repoName}`;
     } else {
-      return `https://${owner}.github.io/${repoName}/branches/${branch}`;
+      return `https://${owner}.github.io/${repoName}/branches/${branchName}`;
     }
   };
 
@@ -35,19 +41,34 @@ const CoreDataDictionaryViewer = () => {
   };
 
   const handleBackToDashboard = () => {
-    navigate('/dashboard', { 
-      state: { 
-        profile, 
-        repository, 
-        selectedBranch 
-      } 
-    });
+    if (user && repo) {
+      // Use URL parameters for navigation
+      const dashboardPath = branch ? 
+        `/dashboard/${user}/${repo}/${branch}` : 
+        `/dashboard/${user}/${repo}`;
+      navigate(dashboardPath);
+    } else {
+      // Fallback to state-based navigation
+      navigate('/dashboard', { 
+        state: { 
+          profile, 
+          repository, 
+          selectedBranch 
+        } 
+      });
+    }
   };
 
   // Fetch FSH files from input/fsh directory
   useEffect(() => {
     const fetchFshFiles = async () => {
-      if (!repository || !selectedBranch) {
+      // Support both URL params and state-based data
+      const currentRepository = repository;
+      const currentBranch = branch || selectedBranch;
+      const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
+      const currentRepo = repo || repository?.name;
+      
+      if ((!currentRepository && (!currentUser || !currentRepo)) || !currentBranch) {
         setLoading(false);
         return;
       }
@@ -56,16 +77,13 @@ const CoreDataDictionaryViewer = () => {
         setLoading(true);
         setError(null);
 
-        const owner = repository.owner?.login || repository.full_name.split('/')[0];
-        const repoName = repository.name;
-
         // Try to fetch the input/fsh directory
         try {
           const fshDirContents = await githubService.getDirectoryContents(
-            owner, 
-            repoName, 
+            currentUser, 
+            currentRepo, 
             'input/fsh', 
-            selectedBranch
+            currentBranch
           );
 
           // Filter for .fsh files
@@ -89,7 +107,7 @@ const CoreDataDictionaryViewer = () => {
         }
 
         // Fetch branches to check for gh-pages
-        const allBranches = await githubService.getBranches(owner, repoName);
+        const allBranches = await githubService.getBranches(currentUser, currentRepo);
         const branchNames = allBranches.map(b => b.name);
         setBranches(branchNames.filter(name => name !== 'gh-pages'));
         setHasGhPages(branchNames.includes('gh-pages'));
@@ -103,7 +121,7 @@ const CoreDataDictionaryViewer = () => {
     };
 
     fetchFshFiles();
-  }, [repository, selectedBranch]);
+  }, [repository, selectedBranch, user, repo, branch]);
 
   // Fetch file content for modal display
   const handleViewSource = async (file) => {
@@ -112,14 +130,15 @@ const CoreDataDictionaryViewer = () => {
       setFileContent('Loading...');
       setShowModal(true);
 
-      const owner = repository.owner?.login || repository.full_name.split('/')[0];
-      const repoName = repository.name;
+      const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
+      const currentRepo = repo || repository?.name;
+      const currentBranch = branch || selectedBranch;
       
       const content = await githubService.getFileContent(
-        owner,
-        repoName,
+        currentUser,
+        currentRepo,
         file.path,
-        selectedBranch
+        currentBranch
       );
 
       setFileContent(content);
@@ -135,7 +154,7 @@ const CoreDataDictionaryViewer = () => {
     setFileContent('');
   };
 
-  if (!profile || !repository || !component) {
+  if ((!profile || !repository || !component) && !user && !repo) {
     navigate('/');
     return <div>Redirecting...</div>;
   }
@@ -160,12 +179,12 @@ const CoreDataDictionaryViewer = () => {
         </div>
         <div className="context-info">
           <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
+            src={profile?.avatar_url || `https://github.com/${user || profile?.login}.png`} 
             alt="Profile" 
             className="context-avatar" 
           />
           <div className="context-details">
-            <span className="context-repo">{repository.name}</span>
+            <span className="context-repo">{repo || repository?.name}</span>
             <span className="context-component">Core Data Dictionary</span>
           </div>
         </div>
@@ -190,8 +209,8 @@ const CoreDataDictionaryViewer = () => {
 
         <div className="viewer-main">
           <div className="component-intro">
-            <div className="component-icon" style={{ color: component.color }}>
-              {component.icon}
+            <div className="component-icon" style={{ color: component?.color || '#0078d4' }}>
+              {component?.icon || '📊'}
             </div>
             <div className="intro-content">
               <h2>Core Data Dictionary Viewer</h2>
@@ -199,9 +218,9 @@ const CoreDataDictionaryViewer = () => {
                 View canonical representations of Component 2 Core Data Dictionary including FHIR CodeSystems, 
                 ValueSets, and ConceptMaps stored in FSH format.
               </p>
-              {selectedBranch && (
+              {(branch || selectedBranch) && (
                 <div className="branch-info">
-                  <strong>Branch:</strong> <code>{selectedBranch}</code>
+                  <strong>Branch:</strong> <code>{branch || selectedBranch}</code>
                 </div>
               )}
             </div>
@@ -262,12 +281,12 @@ const CoreDataDictionaryViewer = () => {
               <h3>Publications</h3>
               <p>Published FHIR Implementation Guide artifacts generated by the IG Publisher</p>
               
-              {branches.map((branch) => (
-                <div key={branch} className="branch-publication">
-                  <h4>Branch: <code>{branch}</code></h4>
+              {branches.map((branchName) => (
+                <div key={branchName} className="branch-publication">
+                  <h4>Branch: <code>{branchName}</code></h4>
                   <div className="artifact-links">
                     <a 
-                      href={`${getBaseUrl(branch)}/artifacts.html#terminology-code-systems`}
+                      href={`${getBaseUrl(branchName)}/artifacts.html#terminology-code-systems`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="artifact-link"
@@ -275,7 +294,7 @@ const CoreDataDictionaryViewer = () => {
                       Code Systems ↗
                     </a>
                     <a 
-                      href={`${getBaseUrl(branch)}/artifacts.html#terminology-value-sets`}
+                      href={`${getBaseUrl(branchName)}/artifacts.html#terminology-value-sets`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="artifact-link"
@@ -283,7 +302,7 @@ const CoreDataDictionaryViewer = () => {
                       Value Sets ↗
                     </a>
                     <a 
-                      href={`${getBaseUrl(branch)}/artifacts.html#structures-logical-models`}
+                      href={`${getBaseUrl(branchName)}/artifacts.html#structures-logical-models`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="artifact-link"
@@ -291,7 +310,7 @@ const CoreDataDictionaryViewer = () => {
                       Logical Models ↗
                     </a>
                     <a 
-                      href={`${getBaseUrl(branch)}/artifacts.html#terminology-concept-maps`}
+                      href={`${getBaseUrl(branchName)}/artifacts.html#terminology-concept-maps`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="artifact-link"
@@ -308,14 +327,6 @@ const CoreDataDictionaryViewer = () => {
               <div className="no-gh-pages-message">
                 <p>📋 No published artifacts available</p>
                 <p>This repository does not have a <code>gh-pages</code> branch for publishing FHIR Implementation Guide artifacts.</p>
-                <a 
-                  href="https://smart.who.int/ig-starter-kit/v1.0.0/ig_setup.html#ghpages-build"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="get-help-link"
-                >
-                  Get Help Setting Up GitHub Pages
-                </a>
               </div>
             </div>
           )}
@@ -329,7 +340,7 @@ const CoreDataDictionaryViewer = () => {
               {hasGhPages ? (
                 <div className="dictionary-links">
                   <a 
-                    href={`${getBaseUrl(selectedBranch)}/CodeSystem-DAK.html`}
+                    href={`${getBaseUrl(branch || selectedBranch)}/CodeSystem-DAK.html`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="dictionary-link primary"
