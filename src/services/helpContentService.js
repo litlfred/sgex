@@ -429,12 +429,14 @@ class HelpContentService {
             {
               title: 'What is the Core Data Dictionary?',
               content: `
-                <p>The Core Data Dictionary (Component 2) contains the canonical data definitions for your Digital Adaptation Kit:</p>
+                <p>The Core Data Dictionary (Component 2) contains the data elements required throughout the different points of the workflow. These data elements are mapped to the International Classification of Diseases version 11 (ICD-11) codes and other established concept mapping standards to ensure the data dictionary is compatible with other digital systems.</p>
+                <h4>Purpose: System Design and Interoperability</h4>
+                <p>To know which data elements need to be logged and how they map to other standard terminologies (e.g. ICD, Systematized Nomenclature of Medicine [SNOMED]) for interoperability with other standards-based systems.</p>
                 <h4>FHIR FSH Source Files</h4>
                 <ul>
                   <li><strong>CodeSystems:</strong> Define custom codes and concepts used in your DAK</li>
                   <li><strong>ValueSets:</strong> Specify allowed values for clinical data elements</li>
-                  <li><strong>ConceptMaps:</strong> Map between different terminology systems</li>
+                  <li><strong>ConceptMaps:</strong> Map between different terminology systems including ICD-11 and SNOMED</li>
                   <li><strong>Logical Models:</strong> Define data structures for clinical workflows</li>
                 </ul>
                 <div class="help-tip">

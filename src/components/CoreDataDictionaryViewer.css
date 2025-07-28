@@ -166,6 +166,46 @@
   font-family: 'Consolas', 'Monaco', monospace;
 }
 
+.documentation-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.documentation-link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: #0078d4;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.documentation-link:hover {
+  background: #106ebe;
+  color: white;
+}
+
+.two-column-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.left-column {
+  grid-column: 1;
+}
+
+.right-column {
+  grid-column: 2;
+}
+
 .section {
   background: white;
   border-radius: 12px;
@@ -563,6 +603,11 @@
   .component-intro {
     flex-direction: column;
     text-align: center;
+  }
+
+  .two-column-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .fsh-files-grid {
