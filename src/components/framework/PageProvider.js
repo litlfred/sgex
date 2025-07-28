@@ -127,8 +127,8 @@ export const PageProvider = ({ children, pageName }) => {
 
           selectedBranch = selectedBranch || repository?.default_branch || 'main';
 
-          // For asset pages, validate the asset exists (if authenticated)
-          if (pageState.type === PAGE_TYPES.ASSET && asset && githubService.isAuth()) {
+          // For asset pages, validate the asset exists (when authenticated or public repo)
+          if (pageState.type === PAGE_TYPES.ASSET && asset) {
             try {
               await githubService.getFileContent(user, repo, asset, selectedBranch);
             } catch (err) {

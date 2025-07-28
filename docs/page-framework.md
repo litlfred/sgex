@@ -218,7 +218,7 @@ The framework automatically validates URL patterns:
 - **User validation**: Checks if GitHub user/org exists
 - **Repository validation**: Validates repository access and DAK compatibility  
 - **Branch validation**: Ensures branch exists in repository
-- **Asset validation**: Confirms asset file exists (when authenticated)
+- **Asset validation**: Confirms asset file exists (when authenticated or public repo)
 
 Invalid URLs automatically redirect to the landing page with appropriate error messages.
 
