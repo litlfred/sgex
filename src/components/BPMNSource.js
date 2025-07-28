@@ -119,12 +119,14 @@ const BPMNSource = () => {
 
   const getGitHubUrl = () => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
-    return `https://github.com/${owner}/${repository.name}/blob/main/${selectedFile.path}`;
+    const branch = selectedBranch || 'main';
+    return `https://github.com/${owner}/${repository.name}/blob/${branch}/${selectedFile.path}`;
   };
 
   const getGitHubEditUrl = () => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
-    return `https://github.com/${owner}/${repository.name}/edit/main/${selectedFile.path}`;
+    const branch = selectedBranch || 'main';
+    return `https://github.com/${owner}/${repository.name}/edit/${branch}/${selectedFile.path}`;
   };
 
   if (!profile || !repository || !selectedFile) {
