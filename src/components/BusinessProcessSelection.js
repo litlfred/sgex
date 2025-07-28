@@ -184,6 +184,25 @@ const BusinessProcessSelection = () => {
     });
   };
 
+  const handleCreateNew = () => {
+    if (!hasWriteAccess) {
+      // Show permission help message
+      alert('You need write permissions to create new BPMN files. Please check your GitHub token permissions.');
+      return;
+    }
+
+    navigate('/bpmn-editor', {
+      state: {
+        profile,
+        repository,
+        component,
+        selectedFile: null, // No file selected - creating new
+        selectedBranch,
+        mode: 'create'
+      }
+    });
+  };
+
   if (dakLoading) {
     return (
       <div className="business-process-selection loading-state">
@@ -274,6 +293,23 @@ const BusinessProcessSelection = () => {
               Select a BPMN business process file to view, edit, or examine the source code.
               Files are loaded from <code>input/business-processes/</code> or <code>input/business-process/</code> directories and subdirectories.
             </p>
+            
+            {/* Create New Workflow Button - Always visible */}
+            <div className="create-new-section">
+              <button 
+                className={`action-btn create-new-btn ${!hasWriteAccess ? 'disabled' : ''}`}
+                onClick={handleCreateNew}
+                title={hasWriteAccess ? "Create a new BPMN workflow from scratch" : "Write access required to create new files"}
+                disabled={!hasWriteAccess}
+              >
+                ✨ Create New Workflow
+              </button>
+              {!hasWriteAccess && (
+                <p className="permission-notice-inline">
+                  🔒 Write permissions required to create new workflows
+                </p>
+              )}
+            </div>
           </div>
 
           {loading ? (
@@ -290,6 +326,23 @@ const BusinessProcessSelection = () => {
               <div className="empty-icon">📋</div>
               <h3>No BPMN Files Found</h3>
               <p>No .bpmn files were found in the input/business-processes/ or input/business-process/ directories.</p>
+              
+              {hasWriteAccess ? (
+                <div className="empty-state-actions">
+                  <p>Get started by creating your first business process workflow:</p>
+                  <button 
+                    className="action-btn create-new-btn primary"
+                    onClick={handleCreateNew}
+                    title="Create a new BPMN workflow from scratch"
+                  >
+                    ✨ Create New Workflow
+                  </button>
+                </div>
+              ) : (
+                <div className="empty-state-notice">
+                  <p>🔒 Write permissions are required to create new workflows.</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="files-grid">

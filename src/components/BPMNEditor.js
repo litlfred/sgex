@@ -11,25 +11,27 @@ const BPMNEditor = () => {
   const modelerRef = useRef(null);
   const containerRef = useRef(null);
   
-  const { profile, repository, component } = location.state || {};
+  const { profile, repository, component, selectedFile: passedFile, mode } = location.state || {};
   
   const handleHomeNavigation = () => {
     navigate('/');
   };
 
   const [bpmnFiles, setBpmnFiles] = useState([]);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(mode === 'create' ? null : passedFile);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [commitMessage, setCommitMessage] = useState('');
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [newFileName, setNewFileName] = useState('');
+  const [isCreateMode, setIsCreateMode] = useState(mode === 'create');
 
   // Initialize BPMN modeler
   useEffect(() => {
-    // Initialize modeler when container is available and file is selected
+    // Initialize modeler when container is available
     const initializeModeler = () => {
-      if (containerRef.current && !modelerRef.current && selectedFile) {
+      if (containerRef.current && !modelerRef.current) {
         try {
           modelerRef.current = new BpmnModeler({
             container: containerRef.current,
@@ -38,22 +40,23 @@ const BPMNEditor = () => {
             }
           });
           console.log('BPMN modeler initialized successfully');
+          
+          // If in create mode, load a blank diagram immediately
+          if (isCreateMode) {
+            loadBlankDiagram();
+          }
         } catch (error) {
           console.error('Failed to initialize BPMN modeler:', error);
         }
       }
     };
 
-    // Try to initialize immediately if we have a selected file
-    if (selectedFile) {
-      initializeModeler();
-      
-      // If container is not ready, wait a bit and try again
-      const timer = setTimeout(initializeModeler, 100);
-      return () => clearTimeout(timer);
-    }
+    // Initialize immediately if container is ready, or wait a bit
+    initializeModeler();
+    const timer = setTimeout(initializeModeler, 100);
 
     return () => {
+      clearTimeout(timer);
       if (modelerRef.current) {
         try {
           modelerRef.current.destroy();
@@ -63,13 +66,19 @@ const BPMNEditor = () => {
         modelerRef.current = null;
       }
     };
-  }, [selectedFile]);
+  }, [isCreateMode]); // Add isCreateMode as dependency
 
-  // Load BPMN files from repository
+  // Load BPMN files from repository (skip in create mode)
   useEffect(() => {
     const loadBpmnFiles = async () => {
       if (!profile || !repository) {
         navigate('/');
+        return;
+      }
+
+      // Skip loading files in create mode
+      if (isCreateMode) {
+        setLoading(false);
         return;
       }
 
@@ -136,7 +145,72 @@ const BPMNEditor = () => {
     };
 
     loadBpmnFiles();
-  }, [profile, repository, navigate]);
+  }, [profile, repository, navigate, isCreateMode]);
+
+  // Load blank BPMN diagram for create mode
+  const loadBlankDiagram = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Create a minimal blank BPMN diagram
+      const blankBpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="SGEX Workbench" exporterVersion="1.0.0">
+  <bpmn:process id="Process_NewWorkflow" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Activity_1" name="New Task">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="EndEvent_1">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Activity_1" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Activity_1" targetRef="EndEvent_1" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_NewWorkflow">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1_di" bpmnElement="Activity_1">
+        <dc:Bounds x="270" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="432" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="270" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="370" y="117" />
+        <di:waypoint x="432" y="117" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>`;
+
+      // Wait for the modeler to be ready
+      if (!modelerRef.current) {
+        console.error('BPMN modeler not available for blank diagram');
+        setError('BPMN editor not ready. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Load the blank BPMN diagram
+      await modelerRef.current.importXML(blankBpmnXml);
+      console.log('Blank BPMN diagram loaded successfully');
+      setLoading(false);
+    } catch (err) {
+      console.error('Error loading blank BPMN diagram:', err);
+      setError('Failed to create new BPMN diagram');
+      setLoading(false);
+    }
+  };
 
   // Load selected BPMN file content
   const loadBpmnFile = async (file) => {
@@ -247,6 +321,12 @@ const BPMNEditor = () => {
       return;
     }
 
+    // For create mode, also validate filename
+    if (isCreateMode && !newFileName.trim()) {
+      alert('Please enter a filename for the new workflow');
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);
@@ -259,38 +339,68 @@ const BPMNEditor = () => {
         try {
           const octokit = new Octokit({ auth: profile.token });
           
-          // Get current file to get SHA for update
-          let currentSha = selectedFile.sha;
-          try {
-            const { data: currentFile } = await octokit.rest.repos.getContent({
-              owner: repository.owner?.login || repository.full_name.split('/')[0],
-              repo: repository.name,
-              path: selectedFile.path
-            });
-            currentSha = currentFile.sha;
-          } catch (getError) {
-            console.warn('Could not get current file SHA, using provided SHA:', getError);
+          let filePath, currentSha;
+          
+          if (isCreateMode) {
+            // Create new file path
+            const fileName = newFileName.endsWith('.bpmn') ? newFileName : `${newFileName}.bpmn`;
+            filePath = `input/business-processes/${fileName}`;
+            currentSha = null; // No SHA for new files
+          } else {
+            // Update existing file
+            filePath = selectedFile.path;
+            currentSha = selectedFile.sha;
+            
+            // Try to get current SHA for updates
+            try {
+              const { data: currentFile } = await octokit.rest.repos.getContent({
+                owner: repository.owner?.login || repository.full_name.split('/')[0],
+                repo: repository.name,
+                path: selectedFile.path
+              });
+              currentSha = currentFile.sha;
+            } catch (getError) {
+              console.warn('Could not get current file SHA, using provided SHA:', getError);
+            }
           }
 
-          // Commit the updated BPMN file
-          await octokit.rest.repos.createOrUpdateFileContents({
+          // Create or update the BPMN file
+          const requestBody = {
             owner: repository.owner?.login || repository.full_name.split('/')[0],
             repo: repository.name,
-            path: selectedFile.path,
+            path: filePath,
             message: commitMessage,
             content: btoa(xml), // Base64 encode the XML content
-            sha: currentSha,
             committer: {
               name: profile.name || profile.login,
               email: profile.email || `${profile.login}@users.noreply.github.com`
             }
-          });
+          };
 
-          console.log('BPMN file committed to GitHub successfully');
+          // Only include SHA for existing files
+          if (currentSha) {
+            requestBody.sha = currentSha;
+          }
+
+          await octokit.rest.repos.createOrUpdateFileContents(requestBody);
+
+          console.log(`BPMN file ${isCreateMode ? 'created' : 'updated'} to GitHub successfully`);
           setSaving(false);
           setShowSaveDialog(false);
           setCommitMessage('');
-          alert('BPMN diagram saved to GitHub successfully!');
+          
+          if (isCreateMode) {
+            setNewFileName('');
+            // Switch to edit mode after creating
+            setIsCreateMode(false);
+            setSelectedFile({
+              name: newFileName.endsWith('.bpmn') ? newFileName : `${newFileName}.bpmn`,
+              path: filePath,
+              sha: null // Will be updated on next load
+            });
+          }
+          
+          alert(`BPMN diagram ${isCreateMode ? 'created' : 'saved'} to GitHub successfully!`);
           return;
         } catch (apiError) {
           console.error('GitHub API error:', apiError);
@@ -301,7 +411,7 @@ const BPMNEditor = () => {
       }
 
       // Fallback: simulate save for demo purposes
-      console.log('BPMN saved with message:', commitMessage);
+      console.log(`BPMN ${isCreateMode ? 'created' : 'saved'} with message:`, commitMessage);
       console.log('BPMN XML:', xml);
 
       // Simulate save success
@@ -309,7 +419,10 @@ const BPMNEditor = () => {
         setSaving(false);
         setShowSaveDialog(false);
         setCommitMessage('');
-        alert('BPMN diagram saved successfully!');
+        if (isCreateMode) {
+          setNewFileName('');
+        }
+        alert(`BPMN diagram ${isCreateMode ? 'created' : 'saved'} successfully!`);
       }, 1000);
 
     } catch (err) {
@@ -359,50 +472,56 @@ const BPMNEditor = () => {
             DAK Components
           </button>
           <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Business Processes</span>
+          <span className="breadcrumb-current">
+            {isCreateMode ? 'Create New Workflow' : 'Business Processes'}
+          </span>
         </div>
 
         <div className="bpmn-workspace">
-          <div className="file-browser">
-            <div className="file-browser-header">
-              <h3>BPMN Files</h3>
-              <span className="file-path">input/business-processes/</span>
-            </div>
-            
-            {loading && !selectedFile ? (
-              <div className="loading">
-                <div className="spinner"></div>
-                <p>Loading BPMN files...</p>
+          {!isCreateMode && (
+            <div className="file-browser">
+              <div className="file-browser-header">
+                <h3>BPMN Files</h3>
+                <span className="file-path">input/business-processes/</span>
               </div>
-            ) : error ? (
-              <div className="error">
-                <p>❌ {error}</p>
-              </div>
-            ) : (
-              <div className="file-list">
-                {bpmnFiles.map((file) => (
-                  <div 
-                    key={file.sha}
-                    className={`file-item ${selectedFile?.sha === file.sha ? 'selected' : ''}`}
-                    onClick={() => loadBpmnFile(file)}
-                  >
-                    <div className="file-icon">📋</div>
-                    <div className="file-details">
-                      <div className="file-name">{file.name}</div>
-                      <div className="file-size">{(file.size / 1024).toFixed(1)} KB</div>
+              
+              {loading && !selectedFile ? (
+                <div className="loading">
+                  <div className="spinner"></div>
+                  <p>Loading BPMN files...</p>
+                </div>
+              ) : error ? (
+                <div className="error">
+                  <p>❌ {error}</p>
+                </div>
+              ) : (
+                <div className="file-list">
+                  {bpmnFiles.map((file) => (
+                    <div 
+                      key={file.sha}
+                      className={`file-item ${selectedFile?.sha === file.sha ? 'selected' : ''}`}
+                      onClick={() => loadBpmnFile(file)}
+                    >
+                      <div className="file-icon">📋</div>
+                      <div className="file-details">
+                        <div className="file-name">{file.name}</div>
+                        <div className="file-size">{(file.size / 1024).toFixed(1)} KB</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
-          <div className="diagram-editor">
-            {selectedFile ? (
+          <div className={`diagram-editor ${isCreateMode ? 'full-width' : ''}`}>
+            {isCreateMode || selectedFile ? (
               <>
                 <div className="editor-toolbar">
                   <div className="toolbar-left">
-                    <h4>{selectedFile.name}</h4>
+                    <h4>
+                      {isCreateMode ? 'New Workflow' : selectedFile.name}
+                    </h4>
                   </div>
                   <div className="toolbar-right">
                     <button 
@@ -410,7 +529,7 @@ const BPMNEditor = () => {
                       onClick={() => setShowSaveDialog(true)}
                       disabled={saving}
                     >
-                      {saving ? 'Saving...' : 'Save'}
+                      {saving ? 'Saving...' : (isCreateMode ? 'Create' : 'Save')}
                     </button>
                   </div>
                 </div>
@@ -433,21 +552,46 @@ const BPMNEditor = () => {
       {showSaveDialog && (
         <div className="modal-overlay">
           <div className="save-dialog">
-            <h3>Save BPMN Diagram</h3>
-            <p>Describe the changes you made to this business process:</p>
-            <textarea
-              value={commitMessage}
-              onChange={(e) => setCommitMessage(e.target.value)}
-              placeholder="Enter commit message..."
-              rows={4}
-              className="commit-message-input"
-            />
+            <h3>{isCreateMode ? 'Create New BPMN Workflow' : 'Save BPMN Diagram'}</h3>
+            
+            {isCreateMode && (
+              <div className="form-group">
+                <label htmlFor="fileName">Workflow Name:</label>
+                <input
+                  id="fileName"
+                  type="text"
+                  value={newFileName}
+                  onChange={(e) => setNewFileName(e.target.value)}
+                  placeholder="Enter workflow name (e.g., patient-registration)"
+                  className="filename-input"
+                />
+                <small>The .bpmn extension will be added automatically</small>
+              </div>
+            )}
+            
+            <div className="form-group">
+              <label htmlFor="commitMessage">
+                {isCreateMode ? 'Creation description:' : 'Describe the changes you made to this business process:'}
+              </label>
+              <textarea
+                id="commitMessage"
+                value={commitMessage}
+                onChange={(e) => setCommitMessage(e.target.value)}
+                placeholder={isCreateMode ? 'Describe the new workflow...' : 'Enter commit message...'}
+                rows={4}
+                className="commit-message-input"
+              />
+            </div>
+            
             <div className="dialog-actions">
               <button 
                 className="action-btn secondary"
                 onClick={() => {
                   setShowSaveDialog(false);
                   setCommitMessage('');
+                  if (isCreateMode) {
+                    setNewFileName('');
+                  }
                 }}
                 disabled={saving}
               >
@@ -456,9 +600,9 @@ const BPMNEditor = () => {
               <button 
                 className="action-btn primary"
                 onClick={saveBpmnDiagram}
-                disabled={saving || !commitMessage.trim()}
+                disabled={saving || !commitMessage.trim() || (isCreateMode && !newFileName.trim())}
               >
-                {saving ? 'Saving...' : 'Save Changes'}
+                {saving ? 'Saving...' : (isCreateMode ? 'Create Workflow' : 'Save Changes')}
               </button>
             </div>
           </div>
