@@ -35,8 +35,8 @@
 }
 
 .publication-card {
-  background: white;
-  border: 1px solid #e1e5e9;
+  background: #0078d4;
+  border: 1px solid #005a9e;
   border-radius: 8px;
   padding: 20px;
   transition: all 0.2s ease;
@@ -44,13 +44,14 @@
 }
 
 .publication-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.1);
-  border-color: #0078d4;
+  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+  border-color: #ffffff;
+  background: #106ebe;
 }
 
 .publication-card.main-branch {
   border-left: 4px solid #107c10;
-  background: linear-gradient(135deg, #f8fff8 0%, #ffffff 100%);
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
 }
 
 .publication-header {
@@ -73,7 +74,7 @@
 .branch-name {
   font-weight: 600;
   font-size: 16px;
-  color: #323130;
+  color: #ffffff;
 }
 
 .main-badge {
@@ -138,20 +139,20 @@
 
 .publication-url label {
   font-size: 12px;
-  color: #605e5c;
+  color: #ffffff;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .publication-link {
-  color: #0078d4;
+  color: #003d71;
   text-decoration: none;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 14px;
   padding: 8px 12px;
-  background: #f3f9ff;
-  border: 1px solid #c7e0f4;
+  background: #ffffff;
+  border: 1px solid #e1e5e9;
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -161,8 +162,8 @@
 }
 
 .publication-link:hover {
-  background: #deecf9;
-  border-color: #0078d4;
+  background: #f3f2f1;
+  border-color: #323130;
 }
 
 .external-link {
@@ -196,14 +197,15 @@
 }
 
 .restart-workflow-btn {
-  background: #0078d4;
-  color: white;
-  border: 1px solid #0078d4;
+  background: #ffffff;
+  color: #0078d4;
+  border: 1px solid #ffffff;
 }
 
 .restart-workflow-btn:hover:not(:disabled) {
-  background: #106ebe;
-  border-color: #106ebe;
+  background: #f3f2f1;
+  border-color: #f3f2f1;
+  color: #005a9e;
 }
 
 .restart-workflow-btn:disabled {
@@ -215,15 +217,15 @@
 }
 
 .view-source-btn {
-  background: #f3f2f1;
-  color: #323130;
-  border: 1px solid #d2d0ce;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .view-source-btn:hover {
-  background: #edebe9;
-  border-color: #c8c6c4;
-  color: #201f1e;
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
 }
 
 .no-branches {
