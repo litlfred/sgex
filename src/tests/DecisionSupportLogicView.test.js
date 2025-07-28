@@ -66,9 +66,9 @@ Description: "Variables and logic for DAK decision tables"
       {
         name: 'test-decision.dmn',
         type: 'file',
-        path: 'input/decision-logic/test-decision.dmn',
-        download_url: 'https://raw.githubusercontent.com/testuser/test-dak/main/input/decision-logic/test-decision.dmn',
-        html_url: 'https://github.com/testuser/test-dak/blob/main/input/decision-logic/test-decision.dmn',
+        path: 'input/dmn/test-decision.dmn',
+        download_url: 'https://raw.githubusercontent.com/testuser/test-dak/main/input/dmn/test-decision.dmn',
+        html_url: 'https://github.com/testuser/test-dak/blob/main/input/dmn/test-decision.dmn',
         size: 2048
       }
     ]);
@@ -264,7 +264,7 @@ Description: "Variables and logic for DAK decision tables"
     }, { timeout: 5000 });
 
     // Should show no tables message
-    expect(screen.getByText('No decision tables found in the input/decision-logic directory.')).toBeInTheDocument();
+    expect(screen.getByText('No decision tables found in the input/dmn directory.')).toBeInTheDocument();
   });
 
   it('displays results count correctly', async () => {
