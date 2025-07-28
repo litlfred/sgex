@@ -426,9 +426,18 @@ const BPMNViewerComponent = () => {
                   </button>
                 </div>
               </div>
-            ) : (
-              <div className="bpmn-container" ref={containerRef}></div>
-            )}
+            ) : null}
+            
+            {/* Always render the BPMN container so the ref can be set */}
+            <div 
+              className="bpmn-container" 
+              ref={containerRef}
+              style={{ 
+                display: loading || error ? 'none' : 'block',
+                width: '100%',
+                height: '100%'
+              }}
+            ></div>
           </div>
 
           <div className="diagram-info">
