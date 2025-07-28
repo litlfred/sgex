@@ -57,7 +57,7 @@ describe('DAKSelection URL Rewriting', () => {
 
   test('navigates to parameterized dashboard URL when repository is selected for edit action', async () => {
     const initialEntries = [{
-      pathname: '/dak-selection',
+      pathname: '/dak-selection/testuser',
       state: {
         profile: mockProfile,
         action: 'edit'

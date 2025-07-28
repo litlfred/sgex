@@ -186,7 +186,7 @@ const LandingPage = () => {
   };
 
   const handleProfileSelect = (profile) => {
-    navigate('/dak-action', { state: { profile } });
+    navigate(`/dak-action/${profile.login}`, { state: { profile } });
   };
 
   const handleDemoMode = () => {
@@ -200,7 +200,7 @@ const LandingPage = () => {
     };
     
     // Navigate directly to DAK selection with edit action to show enhanced scanning
-    navigate('/dak-selection', {
+    navigate(`/dak-selection/${demoProfile.login}`, {
       state: {
         profile: demoProfile,
         action: 'edit'

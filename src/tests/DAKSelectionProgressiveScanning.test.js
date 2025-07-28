@@ -88,7 +88,7 @@ describe('DAKSelection Progressive Scanning', () => {
 
     await act(async () => {
       render(
-        <MemoryRouter initialEntries={[{ pathname: '/dak-selection', state: mockLocationState }]}>
+        <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: mockLocationState }]}>
           <DAKSelection />
         </MemoryRouter>
       );
@@ -123,7 +123,7 @@ describe('DAKSelection Progressive Scanning', () => {
 
     await act(async () => {
       render(
-        <MemoryRouter initialEntries={[{ pathname: '/dak-selection', state: mockLocationState }]}>
+        <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: mockLocationState }]}>
           <DAKSelection />
         </MemoryRouter>
       );

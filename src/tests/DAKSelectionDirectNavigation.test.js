@@ -46,7 +46,7 @@ describe('DAKSelection Direct Navigation', () => {
     };
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/dak-selection', state: mockLocationState }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: mockLocationState }]}>
         <DAKSelection />
       </MemoryRouter>
     );
@@ -91,7 +91,7 @@ describe('DAKSelection Direct Navigation', () => {
     };
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/dak-selection', state: mockLocationState }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: mockLocationState }]}>
         <DAKSelection />
       </MemoryRouter>
     );
@@ -131,7 +131,7 @@ describe('DAKSelection Direct Navigation', () => {
     };
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/dak-selection', state: mockLocationState }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: mockLocationState }]}>
         <DAKSelection />
       </MemoryRouter>
     );
@@ -160,7 +160,7 @@ describe('DAKSelection Direct Navigation', () => {
     };
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/dak-selection', state: mockLocationState }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: mockLocationState }]}>
         <DAKSelection />
       </MemoryRouter>
     );
