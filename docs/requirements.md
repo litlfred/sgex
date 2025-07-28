@@ -179,7 +179,31 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - All business process screens SHALL maintain consistent breadcrumb navigation
 - Permission notices SHALL be clearly displayed for users without write access
 
-### 2.4 File Operations
+### 2.4 URL Patterns and Routing
+
+**REQ-URL-001**: The system SHALL use consistent URL patterns for DAK component pages
+- DAK component pages SHALL follow the pattern: `/{component}/{user}/{repo}` or `/{component}/{user}/{repo}/{branch}`
+- Core Data Dictionary viewer SHALL use: `/core-data-dictionary-viewer/{user}/{repo}/{branch}`
+- Business process selection SHALL use: `/business-process-selection/{user}/{repo}/{branch}`
+- Dashboard SHALL use: `/dashboard/{user}/{repo}/{branch}`
+- URL parameters SHALL take precedence over location state for navigation context
+- Components SHALL support both URL-based and state-based navigation for backward compatibility
+
+**REQ-URL-002**: The system SHALL maintain URL parameter consistency
+- `{user}`: GitHub username or organization name (owner of the repository)
+- `{repo}`: Repository name
+- `{branch}`: Git branch name (optional, defaults to repository default branch)
+- URL patterns SHALL be used for shareable links and direct navigation
+- Navigation between DAK components SHALL preserve URL parameter context
+
+**REQ-URL-003**: The system SHALL support GitHub Pages URL generation
+- Branch-based URL generation for FHIR IG Publisher artifacts:
+  - Main branch: `https://{user}.github.io/{repo}/`
+  - Other branches: `https://{user}.github.io/{repo}/branches/{branch}`
+- Artifact links for Code Systems, Value Sets, Logical Models, and Concept Maps
+- Standard Dictionaries section with Core Data Dictionary CodeSystem link
+
+### 2.5 File Operations
 
 **REQ-FILE-001**: The system SHALL provide file browser functionality
 - Navigate file structure within repositories
@@ -217,17 +241,18 @@ For detailed information about each DAK component, see [DAK Components Documenta
 
 **REQ-EDIT-005**: The system SHALL provide Core Data Dictionary viewing capabilities
 - Dedicated viewer for Component 2 Core Data Dictionary (DAK Component: Core Data Elements)
+- Accessible from both "Core Data Elements" (8 Core Components) and "Terminology" (Additional Components)
+- URL pattern following REQ-URL-001: `/core-data-dictionary-viewer/{user}/{repo}/{branch}`
+- Context preservation through URL parameters with fallback to location state
 - FHIR FSH file detection and display from `input/fsh/` directory
 - Source code modal viewer with syntax highlighting for FSH files
 - Direct GitHub source code links for each FSH file
 - Publications section with automated gh-pages branch detection
-- Branch-based URL generation for FHIR IG Publisher artifacts:
-  - Main branch: `https://{user}.github.io/{repo}/`
-  - Other branches: `https://{user}.github.io/{repo}/branches/{branch}`
+- Branch-based URL generation for FHIR IG Publisher artifacts (per REQ-URL-003)
 - Artifact links for Code Systems, Value Sets, Logical Models, and Concept Maps
 - Standard Dictionaries section with Core Data Dictionary CodeSystem link
-- Help integration with "Get Help" links when gh-pages branch is not available
-- Contextual help mascot with notification badge for repositories without gh-pages
+- Help integration with contextual help topics and notification badges for repositories without gh-pages
+- Consistent blue background styling matching DAK Dashboard component pages
 
 ### 2.6 Form-Based Data Entry
 
