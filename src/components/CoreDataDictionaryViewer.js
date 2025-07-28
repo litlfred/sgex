@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import UserDropdown from './UserDropdown';
 import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {
@@ -284,11 +285,9 @@ const CoreDataDictionaryViewer = () => {
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="context-info">
-          <img 
-            src={profile?.avatar_url || `https://github.com/${user || profile?.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
+          {(profile || user) && (
+            <UserDropdown profile={profile || { login: user, avatar_url: `https://github.com/${user}.png` }} />
+          )}
           <div className="context-details">
             <span className="context-repo">{repo || repository?.name}</span>
             <span className="context-component">Core Data Dictionary</span>

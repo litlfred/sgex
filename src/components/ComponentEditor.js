@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import WHODigitalLibrary from './WHODigitalLibrary';
+import UserDropdown from './UserDropdown';
 import './ComponentEditor.css';
 
 const ComponentEditor = () => {
@@ -34,11 +35,7 @@ const ComponentEditor = () => {
             <p className="subtitle">WHO SMART Guidelines Exchange</p>
           </div>
           <div className="context-info">
-            <img 
-              src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-              alt="Profile" 
-              className="context-avatar" 
-            />
+            <UserDropdown profile={profile} />
             <div className="context-details">
               <span className="context-repo">{repository.name}</span>
               <span className="context-component">{component.name}</span>
@@ -117,11 +114,7 @@ const ComponentEditor = () => {
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="context-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
+          <UserDropdown profile={profile} />
           <div className="context-details">
             <span className="context-repo">{repository.name}</span>
             <span className="context-component">{component.name}</span>

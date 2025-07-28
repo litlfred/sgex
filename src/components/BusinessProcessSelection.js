@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import useDAKUrlParams from '../hooks/useDAKUrlParams';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import UserDropdown from './UserDropdown';
 import './BusinessProcessSelection.css';
 
 const BusinessProcessSelection = () => {
@@ -227,11 +228,7 @@ const BusinessProcessSelection = () => {
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="context-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
+          {profile && <UserDropdown profile={profile} />}
           <div className="context-details">
             <span className="context-repo">{repository.name}</span>
             <span className="context-component">Business Processes</span>
