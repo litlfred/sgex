@@ -7,6 +7,7 @@ import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import DAKStatusBox from './DAKStatusBox';
+import Publications from './Publications';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
@@ -22,7 +23,7 @@ const DAKDashboard = () => {
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('core'); // 'core' or 'additional'
+  const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
 
@@ -456,6 +457,61 @@ const DAKDashboard = () => {
       return;
     }
 
+    // For core-data-elements (Component 2 Core Data Dictionary), navigate to viewer
+    if (component.id === 'core-data-elements') {
+      const owner = user || repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repo || repository.name;
+      const branchName = selectedBranch;
+      
+      const viewerPath = branchName ? 
+        `/core-data-dictionary-viewer/${owner}/${repoName}/${branchName}` :
+        `/core-data-dictionary-viewer/${owner}/${repoName}`;
+        
+      navigate(viewerPath, {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
+    // For terminology (also Component 2 Core Data Dictionary from Additional Components), navigate to viewer
+    if (component.id === 'terminology') {
+      const owner = user || repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repo || repository.name;
+      const branchName = selectedBranch;
+      
+      const viewerPath = branchName ? 
+        `/core-data-dictionary-viewer/${owner}/${repoName}/${branchName}` :
+        `/core-data-dictionary-viewer/${owner}/${repoName}`;
+        
+      navigate(viewerPath, {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
+    // For generic-personas, navigate to actor editor
+    if (component.id === 'generic-personas') {
+      navigate('/actor-editor', {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
     // For other components, check permissions before proceeding
     if (!hasWriteAccess) {
       setShowPermissionDialog(true);
@@ -615,6 +671,13 @@ const DAKDashboard = () => {
               <span className="tab-icon">🔧</span>
               <span className="tab-text">Additional Components</span>
             </button>
+            <button
+              className={`tab-button ${activeTab === 'publications' ? 'active' : ''}`}
+              onClick={() => setActiveTab('publications')}
+            >
+              <span className="tab-icon">📚</span>
+              <span className="tab-text">Publications</span>
+            </button>
           </div>
 
           {/* 8 Core DAK Components Section */}
@@ -704,6 +767,18 @@ const DAKDashboard = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Publications Section */}
+          {activeTab === 'publications' && (
+            <div className="components-section publications-section active">
+              <Publications
+                profile={profile}
+                repository={repository}
+                selectedBranch={selectedBranch}
+                hasWriteAccess={hasWriteAccess}
+              />
             </div>
           )}
         </div>

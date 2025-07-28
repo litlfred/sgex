@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import MDEditor from '@uiw/react-md-editor';
+import stagingGroundService from '../services/stagingGroundService';
 import './PageEditModal.css';
 
 const PageEditModal = ({ page, onClose, onSave }) => {
@@ -17,11 +18,30 @@ const PageEditModal = ({ page, onClose, onSave }) => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onSave(page, content);
-      onClose();
+      // Save content to staging ground instead of directly to GitHub
+      const success = stagingGroundService.updateFile(
+        page.path,
+        content,
+        {
+          title: page.title,
+          filename: page.filename,
+          tool: 'PageEditor',
+          contentType: 'markdown'
+        }
+      );
+      
+      if (success) {
+        // Notify parent that changes were staged successfully
+        if (onSave) {
+          await onSave(page, content, 'staged');
+        }
+        onClose();
+      } else {
+        throw new Error('Failed to save to staging ground');
+      }
     } catch (error) {
       console.error('Failed to save page:', error);
-      alert('Failed to save page. Please try again.');
+      alert('Failed to save page to staging ground. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -45,7 +65,7 @@ const PageEditModal = ({ page, onClose, onSave }) => {
               onClick={handleSave}
               disabled={isSaving}
             >
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? 'Staging...' : 'Stage Changes'}
             </button>
           </div>
         </div>

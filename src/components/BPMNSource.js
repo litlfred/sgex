@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import githubService from '../services/githubService';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import './BPMNSource.css';
 
@@ -7,7 +8,7 @@ const BPMNSource = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const { profile, repository, component, selectedFile } = location.state || {};
+  const { profile, repository, component, selectedFile, selectedBranch } = location.state || {};
   
   const [bpmnXml, setBpmnXml] = useState('');
   const [loading, setLoading] = useState(true);
@@ -35,7 +36,7 @@ const BPMNSource = () => {
   // Load BPMN XML source
   useEffect(() => {
     const loadBpmnSource = async () => {
-      if (!selectedFile) {
+      if (!selectedFile || !repository) {
         return;
       }
 
@@ -43,101 +44,39 @@ const BPMNSource = () => {
         setLoading(true);
         setError(null);
 
-        // Load actual BPMN content from GitHub if available
-        let xmlContent = null;
-        if (profile.token && selectedFile.download_url) {
-          try {
-            const response = await fetch(selectedFile.download_url);
-            if (response.ok) {
-              xmlContent = await response.text();
-              console.log('Loaded BPMN source from GitHub');
-            }
-          } catch (fetchError) {
-            console.warn('Could not fetch BPMN source from GitHub:', fetchError);
-          }
-        }
+        const owner = repository.owner?.login || repository.full_name.split('/')[0];
+        const repoName = repository.name;
+        const ref = selectedBranch || 'main';
 
-        // Use mock content if we couldn't load from GitHub
-        if (!xmlContent) {
-          xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
-                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
-                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
-                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
-                  id="Definitions_1" 
-                  targetNamespace="http://bpmn.io/schema/bpmn" 
-                  exporter="bpmn-js (https://demo.bpmn.io)" 
-                  exporterVersion="17.11.1">
-  
-  <bpmn:process id="Process_${selectedFile.name.replace('.bpmn', '')}" isExecutable="true">
-    <bpmn:documentation>
-      Business Process: ${selectedFile.name.replace('.bpmn', '').replace('-', ' ').toUpperCase()}
-      
-      This is a sample BPMN process diagram demonstrating the WHO SMART Guidelines
-      business process modeling approach for digital adaptation kits (DAKs).
-    </bpmn:documentation>
-    
-    <bpmn:startEvent id="StartEvent_1" name="Process Start">
-      <bpmn:documentation>Initial event that triggers the business process.</bpmn:documentation>
-      <bpmn:outgoing>Flow_1</bpmn:outgoing>
-    </bpmn:startEvent>
-    
-    <bpmn:task id="Task_1" name="${selectedFile.name.replace('.bpmn', '').replace('-', ' ').toUpperCase()}">
-      <bpmn:documentation>Main processing task for this business workflow.</bpmn:documentation>
-      <bpmn:incoming>Flow_1</bpmn:incoming>
-      <bpmn:outgoing>Flow_2</bpmn:outgoing>
-    </bpmn:task>
-    
-    <bpmn:endEvent id="EndEvent_1" name="Process Complete">
-      <bpmn:documentation>Final event indicating successful completion of the process.</bpmn:documentation>
-      <bpmn:incoming>Flow_2</bpmn:incoming>
-    </bpmn:endEvent>
-    
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="EndEvent_1" />
-  </bpmn:process>
-  
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_${selectedFile.name.replace('.bpmn', '')}">
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
-        <dc:Bounds x="179" y="99" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="162" y="142" width="70" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1" bpmnElement="Task_1">
-        <dc:Bounds x="270" y="77" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1" bpmnElement="EndEvent_1">
-        <dc:Bounds x="432" y="99" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="405" y="142" width="90" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
-        <di:waypoint x="215" y="117" />
-        <di:waypoint x="270" y="117" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
-        <di:waypoint x="370" y="117" />
-        <di:waypoint x="432" y="117" />
-      </bpmndi:BPMNEdge>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
-</bpmn:definitions>`;
-        }
+        console.log(`Loading BPMN source from ${owner}/${repoName}:${selectedFile.path} (ref: ${ref})`);
+        
+        // Use githubService to fetch file content (works for both public and private repos)
+        const xmlContent = await githubService.getFileContent(owner, repoName, selectedFile.path, ref);
+        
+        console.log('Successfully loaded BPMN source from repository');
 
         setBpmnXml(xmlContent);
         setLoading(false);
       } catch (err) {
         console.error('Error loading BPMN source:', err);
-        setError('Failed to load BPMN source code');
+        
+        // Provide specific error messages based on the error type
+        if (err.status === 404) {
+          setError('BPMN file not found in the repository. The file may have been moved or deleted.');
+        } else if (err.status === 403) {
+          setError('Access denied. This repository may be private and require authentication.');
+        } else if (err.message.includes('rate limit')) {
+          setError('GitHub API rate limit exceeded. Please try again later or authenticate for higher limits.');
+        } else {
+          setError(`Failed to load BPMN source: ${err.message}`);
+        }
+        
         setLoading(false);
       }
     };
 
     loadBpmnSource();
-  }, [selectedFile, profile]);
+  }, [selectedFile, repository, selectedBranch]);
 
   const handleCopyToClipboard = async () => {
     try {
@@ -172,7 +111,8 @@ const BPMNSource = () => {
       state: {
         profile,
         repository,
-        component
+        component,
+        selectedBranch
       }
     });
   };
@@ -209,6 +149,7 @@ const BPMNSource = () => {
             <span className="context-repo">{repository.name}</span>
             <span className="context-component">BPMN Source Code</span>
           </div>
+          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
 

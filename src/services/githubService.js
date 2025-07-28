@@ -508,12 +508,11 @@ class GitHubService {
 
   // Get a specific repository
   async getRepository(owner, repo) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
-      const { data } = await this.octokit.rest.repos.get({
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.get({
         owner,
         repo,
       });
@@ -526,19 +525,30 @@ class GitHubService {
 
   // Get repository branches
   async getBranches(owner, repo) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
-      const { data } = await this.octokit.rest.repos.listBranches({
+      console.log(`githubService.getBranches: Fetching branches for ${owner}/${repo}`);
+      console.log('githubService.getBranches: Authentication status:', this.isAuth());
+      
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      console.log('githubService.getBranches: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
+      
+      const { data } = await octokit.rest.repos.listBranches({
         owner,
         repo,
         per_page: 100
       });
+      
+      console.log(`githubService.getBranches: Successfully fetched ${data.length} branches`);
       return data;
     } catch (error) {
-      console.error('Failed to fetch branches:', error);
+      console.error('githubService.getBranches: Failed to fetch branches:', error);
+      console.error('githubService.getBranches: Error details:', {
+        status: error.status,
+        message: error.message,
+        owner,
+        repo
+      });
       throw error;
     }
   }
@@ -574,12 +584,11 @@ class GitHubService {
 
   // Get a specific branch
   async getBranch(owner, repo, branch) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
-      const { data } = await this.octokit.rest.repos.getBranch({
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.getBranch({
         owner,
         repo,
         branch
@@ -837,6 +846,172 @@ class GitHubService {
     }
   }
 
+  // Recursively fetch BPMN files from a directory and its subdirectories
+  async getBpmnFilesRecursive(owner, repo, path, ref = 'main', allFiles = []) {
+    try {
+      // Use authenticated octokit if available, otherwise create a public instance
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref
+      });
+
+      // Handle single file response
+      if (!Array.isArray(data)) {
+        if (data.name.endsWith('.bpmn')) {
+          allFiles.push(data);
+        }
+        return allFiles;
+      }
+
+      // Handle directory response
+      for (const item of data) {
+        if (item.type === 'file' && item.name.endsWith('.bpmn')) {
+          allFiles.push(item);
+        } else if (item.type === 'dir') {
+          // Recursively search subdirectories
+          await this.getBpmnFilesRecursive(owner, repo, item.path, ref, allFiles);
+        }
+      }
+
+      return allFiles;
+    } catch (error) {
+      // If directory doesn't exist, return empty array (not an error)
+      if (error.status === 404) {
+        return allFiles;
+      }
+      throw error;
+    }
+  }
+
+  // Get all BPMN files from a repository's business process directories
+  async getBpmnFiles(owner, repo, ref = 'main') {
+    const allBpmnFiles = [];
+    
+    // Try both possible directory names: 'input/business-processes' and 'input/business-process'
+    const possiblePaths = [
+      'input/business-processes',
+      'input/business-process'
+    ];
+
+    for (const path of possiblePaths) {
+      try {
+        const files = await this.getBpmnFilesRecursive(owner, repo, path, ref);
+        allBpmnFiles.push(...files);
+      } catch (error) {
+        console.warn(`Could not fetch BPMN files from ${path}:`, error.message);
+        // Continue trying other paths
+      }
+    }
+
+    // Remove duplicates based on path (in case both directories exist and have overlapping files)
+    const uniqueFiles = allBpmnFiles.filter((file, index, self) => 
+      index === self.findIndex(f => f.path === file.path)
+    );
+
+    return uniqueFiles;
+  }
+
+  // Get file content from GitHub repository with timeout handling
+  async getFileContent(owner, repo, path, ref = 'main') {
+    const timeoutMs = 15000; // 15 second timeout
+    
+    try {
+      console.log(`🚀 githubService.getFileContent: Starting request for ${owner}/${repo}/${path} (ref: ${ref})`);
+      console.log('🔐 githubService.getFileContent: Authentication status:', this.isAuth());
+      console.log('📋 githubService.getFileContent: Request parameters:', { owner, repo, path, ref });
+      
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      console.log('🔧 githubService.getFileContent: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
+      
+      // Create a promise that rejects after timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        console.log(`⏰ githubService.getFileContent: Setting up ${timeoutMs}ms timeout`);
+        setTimeout(() => {
+          console.error(`⏰ githubService.getFileContent: Request timed out after ${timeoutMs}ms`);
+          reject(new Error(`Request timeout after ${timeoutMs}ms`));
+        }, timeoutMs);
+      });
+      
+      // Race the GitHub API call against the timeout
+      console.log('🌐 githubService.getFileContent: Creating GitHub API promise...');
+      const apiPromise = octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref
+      });
+      
+      console.log('📡 githubService.getFileContent: API request initiated, waiting for response...');
+      const startTime = Date.now();
+      
+      const { data } = await Promise.race([apiPromise, timeoutPromise]);
+      const responseTime = Date.now() - startTime;
+      
+      console.log(`✅ githubService.getFileContent: API response received in ${responseTime}ms`);
+      console.log('📂 githubService.getFileContent: Response data type:', data.type);
+      console.log('📊 githubService.getFileContent: Response details:', {
+        type: data.type,
+        name: data.name,
+        size: data.size,
+        encoding: data.encoding,
+        hasContent: !!data.content
+      });
+
+      // Handle file content
+      if (data.type === 'file' && data.content) {
+        // Decode base64 content
+        console.log('🔧 githubService.getFileContent: Decoding base64 content...');
+        console.log('📊 githubService.getFileContent: Base64 content length:', data.content.length);
+        
+        const content = Buffer.from(data.content, 'base64').toString('utf-8');
+        console.log(`✅ githubService.getFileContent: Successfully fetched and decoded file content`);
+        console.log('📏 githubService.getFileContent: Final content length:', content.length, 'characters');
+        console.log('👀 githubService.getFileContent: Content preview (first 200 chars):', content.substring(0, 200));
+        
+        return content;
+      } else {
+        console.error('❌ githubService.getFileContent: Invalid response - not a file or no content');
+        console.error('🔍 githubService.getFileContent: Full response data:', JSON.stringify(data, null, 2));
+        throw new Error('File not found or is not a file');
+      }
+    } catch (error) {
+      console.error(`💥 githubService.getFileContent: Failed to fetch file content from ${owner}/${repo}/${path}:`, error);
+      console.error('🔍 githubService.getFileContent: Error analysis:', {
+        type: typeof error,
+        status: error.status,
+        message: error.message,
+        name: error.name,
+        stack: error.stack?.substring(0, 500) + '...'
+      });
+      
+      // Provide more specific error messages
+      if (error.message.includes('timeout')) {
+        console.error('⏰ githubService.getFileContent: Timeout error detected');
+        throw new Error(`GitHub API request timed out after ${timeoutMs / 1000} seconds. Please try again.`);
+      } else if (error.status === 403) {
+        console.error('🔒 githubService.getFileContent: 403 Forbidden error detected');
+        throw new Error('Access denied. This repository may be private or you may have hit rate limits.');
+      } else if (error.status === 404) {
+        console.error('🔍 githubService.getFileContent: 404 Not Found error detected');
+        throw new Error('File not found in the repository.');
+      } else if (error.message.includes('rate limit')) {
+        console.error('🚦 githubService.getFileContent: Rate limit error detected');
+        throw new Error('GitHub API rate limit exceeded. Please try again later.');
+      } else if (error.message.includes('Network Error') || error.message.includes('Failed to fetch')) {
+        console.error('🌐 githubService.getFileContent: Network error detected');
+        throw new Error('Network error occurred. Please check your internet connection and try again.');
+      }
+      
+      console.error('❓ githubService.getFileContent: Unknown error type, re-throwing original error');
+      throw error;
+    }
+  }
+
   // Create a commit with multiple files
   async createCommit(owner, repo, branch, message, files) {
     if (!this.isAuth()) {
@@ -916,7 +1091,7 @@ class GitHubService {
     }
   }
 
-  // Get file content
+  // Get file content (supports both authenticated and unauthenticated access)
   async getFileContent(owner, repo, path, ref = 'main') {
     try {
       // Create temporary Octokit instance for unauthenticated access if needed
@@ -941,7 +1116,152 @@ class GitHubService {
     }
   }
 
-  // Get directory contents
+  // Get recent commits for a repository branch
+  async getRecentCommits(owner, repo, branch = 'main', per_page = 5) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/commits`, { sha: branch, per_page });
+
+    try {
+      const response = await this.octokit.rest.repos.listCommits({
+        owner,
+        repo,
+        sha: branch,
+        per_page
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/commits`, response.status, Date.now() - startTime);
+      
+      return response.data.map(commit => ({
+        sha: commit.sha,
+        message: commit.commit.message,
+        author: {
+          name: commit.commit.author.name,
+          email: commit.commit.author.email,
+          date: commit.commit.author.date
+        },
+        committer: {
+          name: commit.commit.committer.name,
+          email: commit.commit.committer.email,
+          date: commit.commit.committer.date
+        },
+        html_url: commit.html_url,
+        stats: commit.stats
+      }));
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/commits`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch recent commits:', error);
+      throw error;
+    }
+  }
+
+  // Get open pull requests count
+  async getOpenPullRequestsCount(owner, repo) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls`, { state: 'open', per_page: 1 });
+
+    try {
+      const response = await this.octokit.rest.pulls.list({
+        owner,
+        repo,
+        state: 'open',
+        per_page: 1
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, response.status, Date.now() - startTime);
+      
+      // GitHub includes the total count in the response headers
+      const linkHeader = response.headers.link;
+      if (linkHeader && linkHeader.includes('rel="last"')) {
+        const lastPageMatch = linkHeader.match(/page=(\d+)>; rel="last"/);
+        if (lastPageMatch) {
+          return parseInt(lastPageMatch[1], 10);
+        }
+      }
+      
+      // Fallback: use the length of returned items (may not be accurate for large counts)
+      return response.data.length;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch pull requests count:', error);
+      throw error;
+    }
+  }
+
+  // Get open issues count
+  async getOpenIssuesCount(owner, repo) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues`, { state: 'open', per_page: 1 });
+
+    try {
+      const response = await this.octokit.rest.issues.listForRepo({
+        owner,
+        repo,
+        state: 'open',
+        per_page: 1
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues`, response.status, Date.now() - startTime);
+      
+      // GitHub includes the total count in the response headers
+      const linkHeader = response.headers.link;
+      if (linkHeader && linkHeader.includes('rel="last"')) {
+        const lastPageMatch = linkHeader.match(/page=(\d+)>; rel="last"/);
+        if (lastPageMatch) {
+          return parseInt(lastPageMatch[1], 10);
+        }
+      }
+      
+      // Fallback: use the length of returned items (may not be accurate for large counts)
+      return response.data.length;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch issues count:', error);
+      throw error;
+    }
+  }
+
+  // Get repository statistics (combined method for efficiency)
+  async getRepositoryStats(owner, repo, branch = 'main') {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const [recentCommits, openPRsCount, openIssuesCount] = await Promise.allSettled([
+        this.getRecentCommits(owner, repo, branch, 1),
+        this.getOpenPullRequestsCount(owner, repo),
+        this.getOpenIssuesCount(owner, repo)
+      ]);
+
+      return {
+        recentCommits: recentCommits.status === 'fulfilled' ? recentCommits.value : [],
+        openPullRequestsCount: openPRsCount.status === 'fulfilled' ? openPRsCount.value : 0,
+        openIssuesCount: openIssuesCount.status === 'fulfilled' ? openIssuesCount.value : 0,
+        errors: {
+          recentCommits: recentCommits.status === 'rejected' ? recentCommits.reason : null,
+          openPullRequestsCount: openPRsCount.status === 'rejected' ? openPRsCount.reason : null,
+          openIssuesCount: openIssuesCount.status === 'rejected' ? openIssuesCount.reason : null
+        }
+      };
+    } catch (error) {
+      console.error('Failed to fetch repository stats:', error);
+      throw error;
+    }
+  }
+
+  // Get directory contents (supports both authenticated and unauthenticated access)
   async getDirectoryContents(owner, repo, path = '', ref = 'main') {
     try {
       // Create temporary Octokit instance for unauthenticated access if needed
@@ -965,7 +1285,7 @@ class GitHubService {
     }
   }
 
-  // Get commits for a repository
+  // Get commits for a repository (supports unauthenticated access)
   async getCommits(owner, repo, options = {}) {
     try {
       // Create temporary Octokit instance for unauthenticated access if needed
@@ -998,7 +1318,7 @@ class GitHubService {
     }
   }
 
-  // Get issues for a repository
+  // Get issues for a repository (supports unauthenticated access)
   async getIssues(owner, repo, options = {}) {
     try {
       // Create temporary Octokit instance for unauthenticated access if needed

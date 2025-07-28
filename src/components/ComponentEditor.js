@@ -43,6 +43,7 @@ const ComponentEditor = () => {
               <span className="context-repo">{repository.name}</span>
               <span className="context-component">{component.name}</span>
             </div>
+            <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
           </div>
         </div>
 
@@ -125,6 +126,7 @@ const ComponentEditor = () => {
             <span className="context-repo">{repository.name}</span>
             <span className="context-component">{component.name}</span>
           </div>
+          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
 

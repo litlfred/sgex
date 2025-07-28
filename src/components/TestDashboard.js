@@ -23,52 +23,52 @@ const TestDashboard = () => {
 
   const mockComponent = {
     id: 'business-processes',
-    name: 'Business Processes',
-    description: 'BPMN workflows and business process definitions',
+    name: 'Generic Business Processes and Workflows',
+    description: 'BPMN workflows and business process definitions that model clinical workflows and care pathways',
     icon: '🔄',
     type: 'Level 2',
-    color: '#0078d4'
+    color: '#d13438'
   };
 
   const dakComponents = [
     {
       id: 'business-processes',
-      name: 'Business Processes',
-      description: 'BPMN workflows and business process definitions',
+      name: 'Generic Business Processes and Workflows',
+      description: 'BPMN workflows and business process definitions that model clinical workflows and care pathways',
       icon: '🔄',
       type: 'Level 2',
-      color: '#0078d4',
+      color: '#d13438',
       fileTypes: ['BPMN', 'XML'],
       count: 12
     },
     {
       id: 'decision-support',
-      name: 'Decision Support Logic',
-      description: 'DMN decision tables and clinical decision support',
+      name: 'Decision-Support Logic',
+      description: 'DMN decision tables and clinical decision support rules that encode clinical logic',
       icon: '🎯',
       type: 'Level 2',
-      color: '#107c10',
+      color: '#00bcf2',
       fileTypes: ['DMN', 'XML'],
       count: 8
     },
     {
       id: 'indicators',
-      name: 'Indicators & Measures',
-      description: 'Performance indicators and measurement definitions',
+      name: 'Program Indicators',
+      description: 'Performance indicators and measurement definitions for monitoring and evaluation',
       icon: '📊',
       type: 'Level 2',
-      color: '#881798',
-      fileTypes: ['JSON', 'XML'],
+      color: '#498205',
+      fileTypes: ['Measure', 'Logic'],
       count: 15
     },
     {
       id: 'forms',
-      name: 'Data Entry Forms',
-      description: 'Structured data collection forms and questionnaires',
+      name: 'FHIR Questionnaires',
+      description: 'Structured forms and questionnaires for data collection',
       icon: '📋',
-      type: 'Level 2',
-      color: '#d13438',
-      fileTypes: ['JSON', 'XML'],
+      type: 'Level 3',
+      color: '#881798',
+      fileTypes: ['Questionnaire', 'StructureMap'],
       count: 24
     }
   ];
@@ -110,6 +110,7 @@ const TestDashboard = () => {
               👁️ Read-Only Access (Test Mode)
             </span>
           </div>
+          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
 
@@ -123,7 +124,7 @@ const TestDashboard = () => {
             <h2>Digital Adaptation Kit Components</h2>
             <p>
               Select a component to test the new business process navigation. 
-              <strong>Click "Business Processes" to test the new selection flow!</strong>
+              <strong>Click "Generic Business Processes and Workflows" to test the new selection flow!</strong>
             </p>
           </div>
 

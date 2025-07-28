@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import stagingGroundService from '../services/stagingGroundService';
 import dakComplianceService from '../services/dakComplianceService';
+import githubService from '../services/githubService';
 import SaveDialog from './SaveDialog';
 import CommitsSlider from './CommitsSlider';
 import GitHubActionsIntegration from './GitHubActionsIntegration';
@@ -13,10 +14,44 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [repositoryStats, setRepositoryStats] = useState({
+    recentCommits: [],
+    openPullRequestsCount: 0,
+    openIssuesCount: 0,
+    statsLoading: false,
+    statsError: null
+  });
 
   const owner = repository.owner?.login || repository.full_name.split('/')[0];
   const repoName = repository.name;
   const branch = selectedBranch || repository.default_branch || 'main';
+
+  // Load repository statistics
+  const loadRepositoryStats = useCallback(async () => {
+    if (!githubService.isAuth()) {
+      return;
+    }
+
+    setRepositoryStats(prev => ({ ...prev, statsLoading: true, statsError: null }));
+
+    try {
+      const stats = await githubService.getRepositoryStats(owner, repoName, branch);
+      setRepositoryStats({
+        recentCommits: stats.recentCommits,
+        openPullRequestsCount: stats.openPullRequestsCount,
+        openIssuesCount: stats.openIssuesCount,
+        statsLoading: false,
+        statsError: null
+      });
+    } catch (err) {
+      console.error('Error loading repository stats:', err);
+      setRepositoryStats(prev => ({
+        ...prev,
+        statsLoading: false,
+        statsError: 'Failed to load repository statistics'
+      }));
+    }
+  }, [owner, repoName, branch]);
 
   // Load staging ground data
   const loadStagingGroundData = useCallback(async () => {
@@ -43,6 +78,7 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
     if (repository && selectedBranch) {
       stagingGroundService.initialize(repository, selectedBranch);
       loadStagingGroundData();
+      loadRepositoryStats();
 
       // Subscribe to staging ground changes
       const unsubscribe = stagingGroundService.addListener((updatedStagingGround) => {
@@ -52,7 +88,7 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
 
       return unsubscribe;
     }
-  }, [repository, selectedBranch, loadStagingGroundData]);
+  }, [repository, selectedBranch, loadStagingGroundData, loadRepositoryStats]);
 
   // Validate staging ground
   const validateStagingGround = async (stagingGroundData) => {
@@ -98,6 +134,13 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
     }
   };
 
+  // Handle removing individual file
+  const handleRemoveFile = (filePath) => {
+    if (window.confirm(`Are you sure you want to remove "${filePath}" from staging? This cannot be undone.`)) {
+      stagingGroundService.removeFile(filePath);
+    }
+  };
+
   // Get validation summary for display
   const getValidationSummary = () => {
     if (!validation) {
@@ -115,6 +158,28 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
       size: new Blob([file.content]).size,
       lastModified: file.timestamp
     }));
+  };
+
+  // Format the last commit for display
+  const formatLastCommit = () => {
+    if (!repositoryStats.recentCommits || repositoryStats.recentCommits.length === 0) {
+      return null;
+    }
+    
+    const lastCommit = repositoryStats.recentCommits[0];
+    const commitDate = new Date(lastCommit.author.date);
+    const shortSha = lastCommit.sha.substring(0, 7);
+    const shortMessage = lastCommit.message.split('\n')[0].substring(0, 60);
+    const displayMessage = lastCommit.message.split('\n')[0].length > 60 ? shortMessage + '...' : shortMessage;
+    
+    return {
+      sha: shortSha,
+      message: displayMessage,
+      author: lastCommit.author.name,
+      date: commitDate.toLocaleDateString(),
+      time: commitDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      url: lastCommit.html_url
+    };
   };
 
   const validationSummary = getValidationSummary();
@@ -212,6 +277,16 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
                           <span className="file-time">
                             {new Date(file.lastModified).toLocaleTimeString()}
                           </span>
+                          <button
+                            className="remove-file-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveFile(file.path);
+                            }}
+                            title={`Remove ${file.path} from staging`}
+                          >
+                            🗑️
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -300,16 +375,44 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
               <div className="status-section">
                 <h4>⚡ Quick Actions</h4>
                 <div className="quick-actions">
-                  <a 
-                    href={`https://github.com/${owner}/${repoName}/commits/${branch}`}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="quick-link"
-                  >
-                    <span className="link-icon">📈</span>
-                    Recent Commits
-                    <span className="external-indicator">↗</span>
-                  </a>
+                  <div className="quick-action-group">
+                    <a 
+                      href={`https://github.com/${owner}/${repoName}/commits/${branch}`}
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="quick-link"
+                    >
+                      <span className="link-icon">📈</span>
+                      Recent Commits
+                      <span className="external-indicator">↗</span>
+                    </a>
+                    {/* Last commit display */}
+                    {(() => {
+                      const lastCommit = formatLastCommit();
+                      return lastCommit ? (
+                        <div className="last-commit">
+                          <a 
+                            href={lastCommit.url}
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="commit-link"
+                          >
+                            <span className="commit-sha">{lastCommit.sha}</span>
+                            <span className="commit-message">{lastCommit.message}</span>
+                            <span className="commit-meta">
+                              by {lastCommit.author} on {lastCommit.date} at {lastCommit.time}
+                            </span>
+                          </a>
+                        </div>
+                      ) : repositoryStats.statsLoading ? (
+                        <div className="last-commit loading">
+                          <span className="loading-spinner">⏳</span>
+                          Loading recent commits...
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                  
                   <a 
                     href={`https://github.com/${owner}/${repoName}/pulls`}
                     target="_blank" 
@@ -318,8 +421,30 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
                   >
                     <span className="link-icon">🔄</span>
                     Pull Requests
+                    {repositoryStats.openPullRequestsCount > 0 && !repositoryStats.statsLoading && (
+                      <span className="notification-badge pr-badge">
+                        {repositoryStats.openPullRequestsCount}
+                      </span>
+                    )}
                     <span className="external-indicator">↗</span>
                   </a>
+                  
+                  <a 
+                    href={`https://github.com/${owner}/${repoName}/issues`}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="quick-link"
+                  >
+                    <span className="link-icon">🐛</span>
+                    Issues
+                    {repositoryStats.openIssuesCount > 0 && !repositoryStats.statsLoading && (
+                      <span className="notification-badge issue-badge">
+                        {repositoryStats.openIssuesCount}
+                      </span>
+                    )}
+                    <span className="external-indicator">↗</span>
+                  </a>
+                  
                   <a 
                     href={`https://github.com/${owner}/${repoName}/actions`}
                     target="_blank" 
@@ -331,6 +456,13 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
                     <span className="external-indicator">↗</span>
                   </a>
                 </div>
+                
+                {repositoryStats.statsError && (
+                  <div className="stats-error">
+                    <span className="error-icon">⚠️</span>
+                    {repositoryStats.statsError}
+                  </div>
+                )}
               </div>
             </>
           )}

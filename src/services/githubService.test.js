@@ -285,4 +285,162 @@ describe('GitHubService', () => {
       expect(mockOctokit.rest.repos.listForUser).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('getBpmnFiles', () => {
+    it('should fetch BPMN files from both business-processes and business-process directories', async () => {
+      // Mock responses for different directory paths
+      const mockBpmnFile1 = {
+        name: 'workflow1.bpmn',
+        path: 'input/business-processes/workflow1.bpmn',
+        type: 'file',
+        sha: 'abc123',
+        size: 1024
+      };
+
+      const mockBpmnFile2 = {
+        name: 'workflow2.bpmn',
+        path: 'input/business-process/workflow2.bpmn',
+        type: 'file',
+        sha: 'def456',
+        size: 2048
+      };
+
+      mockOctokit.rest.repos.getContent
+        .mockResolvedValueOnce({ data: [mockBpmnFile1] }) // input/business-processes
+        .mockResolvedValueOnce({ data: [mockBpmnFile2] }); // input/business-process
+
+      const result = await githubService.getBpmnFiles('test-owner', 'test-repo', 'main');
+
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe('workflow1.bpmn');
+      expect(result[1].name).toBe('workflow2.bpmn');
+      expect(mockOctokit.rest.repos.getContent).toHaveBeenCalledTimes(2);
+    });
+
+    it('should work without authentication for public repositories', async () => {
+      // Don't authenticate githubService - it should still work for public repos
+      
+      const mockBpmnFile = {
+        name: 'public-workflow.bpmn',
+        path: 'input/business-processes/public-workflow.bpmn',
+        type: 'file',
+        sha: 'public123',
+        size: 1024
+      };
+
+      mockOctokit.rest.repos.getContent
+        .mockResolvedValueOnce({ data: [mockBpmnFile] })
+        .mockRejectedValueOnce({ status: 404 }); // second directory doesn't exist
+
+      const result = await githubService.getBpmnFiles('test-owner', 'public-repo', 'main');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('public-workflow.bpmn');
+    });
+
+    it('should return empty array when directories do not exist', async () => {
+      // Mock 404 responses for both directory paths
+      const notFoundError = new Error('Not Found');
+      notFoundError.status = 404;
+      mockOctokit.rest.repos.getContent.mockRejectedValue(notFoundError);
+
+      const result = await githubService.getBpmnFiles('test-owner', 'test-repo', 'main');
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should handle recursive directory structure', async () => {
+      const mockDirectory = {
+        name: 'subdir',
+        path: 'input/business-processes/subdir',
+        type: 'dir'
+      };
+
+      const mockBpmnFile = {
+        name: 'nested.bpmn',
+        path: 'input/business-processes/subdir/nested.bpmn',
+        type: 'file',
+        sha: 'xyz789',
+        size: 1536
+      };
+
+      mockOctokit.rest.repos.getContent
+        .mockResolvedValueOnce({ data: [mockDirectory] }) // First call returns directory
+        .mockResolvedValueOnce({ data: [mockBpmnFile] }) // Second call returns files in subdirectory
+        .mockRejectedValueOnce({ status: 404 }); // input/business-process doesn't exist
+
+      const result = await githubService.getBpmnFiles('test-owner', 'test-repo', 'main');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('nested.bpmn');
+      expect(result[0].path).toBe('input/business-processes/subdir/nested.bpmn');
+    });
+  });
+
+  describe('getBpmnFilesRecursive', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should recursively fetch BPMN files from directories', async () => {
+      const mockFiles = [
+        {
+          name: 'file1.bpmn',
+          path: 'input/business-processes/file1.bpmn',
+          type: 'file'
+        },
+        {
+          name: 'subdir',
+          path: 'input/business-processes/subdir',
+          type: 'dir'
+        }
+      ];
+
+      const mockSubdirFiles = [
+        {
+          name: 'file2.bpmn',
+          path: 'input/business-processes/subdir/file2.bpmn',
+          type: 'file'
+        }
+      ];
+
+      mockOctokit.rest.repos.getContent
+        .mockResolvedValueOnce({ data: mockFiles })
+        .mockResolvedValueOnce({ data: mockSubdirFiles });
+
+      const result = await githubService.getBpmnFilesRecursive('test-owner', 'test-repo', 'input/business-processes');
+
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe('file1.bpmn');
+      expect(result[1].name).toBe('file2.bpmn');
+    });
+
+    it('should work without authentication for public repositories', async () => {
+      // Don't authenticate githubService
+      const mockFiles = [
+        {
+          name: 'public.bpmn',
+          path: 'input/business-processes/public.bpmn',
+          type: 'file'
+        }
+      ];
+
+      mockOctokit.rest.repos.getContent.mockResolvedValueOnce({ data: mockFiles });
+
+      const result = await githubService.getBpmnFilesRecursive('test-owner', 'public-repo', 'input/business-processes');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('public.bpmn');
+    });
+
+    it('should return empty array when directory does not exist', async () => {
+      const notFoundError = new Error('Not Found');
+      notFoundError.status = 404;
+      mockOctokit.rest.repos.getContent.mockRejectedValue(notFoundError);
+
+      const result = await githubService.getBpmnFilesRecursive('test-owner', 'test-repo', 'nonexistent/path');
+
+      expect(result).toHaveLength(0);
+    });
+  });
 });
