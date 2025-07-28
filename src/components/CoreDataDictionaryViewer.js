@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import ContextualHelpMascot from './ContextualHelpMascot';
@@ -23,9 +23,14 @@ const CoreDataDictionaryViewer = () => {
   const [showModal, setShowModal] = useState(false);
   const [branches, setBranches] = useState([]);
   const [hasGhPages, setHasGhPages] = useState(false);
+  const [dakFshFile, setDakFshFile] = useState(null);
+  const [dakConcepts, setDakConcepts] = useState([]);
+  const [dakTableSearch, setDakTableSearch] = useState('');
+  const [hasPublishedDak, setHasPublishedDak] = useState(false);
+  const [checkingPublishedDak, setCheckingPublishedDak] = useState(false);
 
   // Generate base URL for IG Publisher artifacts
-  const getBaseUrl = (branchName) => {
+  const getBaseUrl = useCallback((branchName) => {
     const owner = user || repository?.owner?.login || repository?.full_name.split('/')[0];
     const repoName = repo || repository?.name;
     
@@ -34,7 +39,32 @@ const CoreDataDictionaryViewer = () => {
     } else {
       return `https://${owner}.github.io/${repoName}/branches/${branchName}`;
     }
-  };
+  }, [user, repository, repo]);
+
+  // Parse DAK.fsh file to extract concepts
+  const parseDakFshConcepts = useCallback((content) => {
+    const concepts = [];
+    
+    // Split by lines and find concept definitions
+    const lines = content.split('\n');
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Look for concept definitions: * #code "display" "definition"
+      const conceptMatch = line.match(/^\*\s*#([^\s"]+)\s*"([^"]+)"\s*"([^"]+)"/);
+      if (conceptMatch) {
+        const [, code, display, definition] = conceptMatch;
+        concepts.push({
+          code: code.trim(),
+          display: display.trim(),
+          definition: definition.trim()
+        });
+      }
+    }
+    
+    return concepts;
+  }, []);
 
   const handleHomeNavigation = () => {
     navigate('/');
@@ -73,6 +103,23 @@ const CoreDataDictionaryViewer = () => {
         return;
       }
 
+      // Check if published DAK CodeSystem exists
+      const checkPublishedDakExists = async (baseUrl) => {
+        try {
+          setCheckingPublishedDak(true);
+          const dakUrl = `${baseUrl}/CodeSystem-DAK.html`;
+          
+          // Use fetch to check if the URL exists (HEAD request would be better but may have CORS issues)
+          const response = await fetch(dakUrl, { method: 'HEAD' });
+          return response.ok;
+        } catch (error) {
+          console.warn('Error checking published DAK:', error);
+          return false;
+        } finally {
+          setCheckingPublishedDak(false);
+        }
+      };
+
       try {
         setLoading(true);
         setError(null);
@@ -106,11 +153,70 @@ const CoreDataDictionaryViewer = () => {
           }
         }
 
+        // Try to fetch the DAK.fsh file specifically from input/fsh/codesystems/
+        try {
+          const dakFile = await githubService.getDirectoryContents(
+            currentUser,
+            currentRepo,
+            'input/fsh/codesystems',
+            currentBranch
+          );
+          
+          // Look for DAK.fsh file
+          const dakFsh = dakFile.find(file => file.name === 'DAK.fsh' && file.type === 'file');
+          if (dakFsh) {
+            setDakFshFile({
+              name: dakFsh.name,
+              path: dakFsh.path,
+              download_url: dakFsh.download_url,
+              html_url: dakFsh.html_url
+            });
+
+            // Fetch and parse DAK.fsh content for table display
+            try {
+              const dakContent = await githubService.getFileContent(
+                currentUser,
+                currentRepo,
+                dakFsh.path,
+                currentBranch
+              );
+              const concepts = parseDakFshConcepts(dakContent);
+              setDakConcepts(concepts);
+            } catch (contentErr) {
+              console.warn('Could not parse DAK.fsh content:', contentErr);
+              setDakConcepts([]);
+            }
+          } else {
+            setDakFshFile(null);
+            setDakConcepts([]);
+          }
+        } catch (err) {
+          if (err.status === 404) {
+            // input/fsh/codesystems directory doesn't exist or no DAK.fsh
+            setDakFshFile(null);
+            setDakConcepts([]);
+          } else {
+            console.warn('Error fetching DAK.fsh:', err);
+            setDakFshFile(null);
+            setDakConcepts([]);
+          }
+        }
+
         // Fetch branches to check for gh-pages
         const allBranches = await githubService.getBranches(currentUser, currentRepo);
         const branchNames = allBranches.map(b => b.name);
         setBranches(branchNames.filter(name => name !== 'gh-pages'));
-        setHasGhPages(branchNames.includes('gh-pages'));
+        const hasGhPagesVar = branchNames.includes('gh-pages');
+        setHasGhPages(hasGhPagesVar);
+
+        // Check if published DAK exists if we have gh-pages
+        if (hasGhPagesVar) {
+          const baseUrl = getBaseUrl(currentBranch);
+          const dakExists = await checkPublishedDakExists(baseUrl);
+          setHasPublishedDak(dakExists);
+        } else {
+          setHasPublishedDak(false);
+        }
 
       } catch (err) {
         console.error('Error fetching FSH files:', err);
@@ -121,7 +227,7 @@ const CoreDataDictionaryViewer = () => {
     };
 
     fetchFshFiles();
-  }, [repository, selectedBranch, user, repo, branch]);
+  }, [repository, selectedBranch, user, repo, branch, getBaseUrl, parseDakFshConcepts]);
 
   // Fetch file content for modal display
   const handleViewSource = async (file) => {
@@ -255,16 +361,57 @@ const CoreDataDictionaryViewer = () => {
               
               <div className="subsection">
                 <h4>Code Systems</h4>
+                
+                {/* DAK Source File Links */}
+                {dakFshFile && (
+                  <div className="dak-source-section">
+                    <h5>DAK Source File (FSH)</h5>
+                    <div className="dak-source-links">
+                      <button 
+                        className="action-btn primary"
+                        onClick={() => handleViewSource(dakFshFile)}
+                        title="View DAK.fsh source code with syntax highlighting"
+                      >
+                        📄 View Source
+                      </button>
+                      <a 
+                        href={dakFshFile.html_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="action-btn secondary"
+                        title="View DAK.fsh source on GitHub"
+                      >
+                        🔗 GitHub Source ↗
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Published DAK CodeSystem */}
                 {hasGhPages ? (
-                  <div className="dictionary-links">
-                    <a 
-                      href={`${getBaseUrl(branch || selectedBranch)}/CodeSystem-DAK.html`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="dictionary-link primary"
-                    >
-                      Core Data Dictionary (DAK) ↗
-                    </a>
+                  <div className="dak-published-section">
+                    <h5>Published CodeSystem</h5>
+                    {checkingPublishedDak ? (
+                      <p className="checking-published">Checking published version...</p>
+                    ) : hasPublishedDak ? (
+                      <div className="dictionary-links">
+                        <a 
+                          href={`${getBaseUrl(branch || selectedBranch)}/CodeSystem-DAK.html`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="dictionary-link primary"
+                        >
+                          📊 View Published Core Data Dictionary (DAK) ↗
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="unpublished-dak">
+                        <span className="disabled-link">Core Data Dictionary (DAK)</span>
+                        <p className="unpublished-note">
+                          ⚠️ The published version is not yet available. The CodeSystem-DAK.html file has not been published to GitHub Pages.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="no-publication-note">
@@ -272,6 +419,50 @@ const CoreDataDictionaryViewer = () => {
                   </p>
                 )}
               </div>
+
+              {/* DAK Concepts Table */}
+              {dakConcepts.length > 0 && (
+                <div className="subsection">
+                  <h4>DAK Concepts ({dakConcepts.length} total)</h4>
+                  <div className="dak-table-controls">
+                    <input
+                      type="text"
+                      placeholder="Search concepts..."
+                      value={dakTableSearch}
+                      onChange={(e) => setDakTableSearch(e.target.value)}
+                      className="search-input"
+                    />
+                  </div>
+                  <div className="dak-concepts-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Code</th>
+                          <th>Display</th>
+                          <th>Definition</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dakConcepts
+                          .filter(concept => 
+                            !dakTableSearch || 
+                            concept.code.toLowerCase().includes(dakTableSearch.toLowerCase()) ||
+                            concept.display.toLowerCase().includes(dakTableSearch.toLowerCase()) ||
+                            concept.definition.toLowerCase().includes(dakTableSearch.toLowerCase())
+                          )
+                          .map((concept, index) => (
+                            <tr key={index}>
+                              <td className="concept-code">{concept.code}</td>
+                              <td className="concept-display">{concept.display}</td>
+                              <td className="concept-definition">{concept.definition}</td>
+                            </tr>
+                          ))
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
 
               <div className="subsection">
                 <h4>Value Sets</h4>

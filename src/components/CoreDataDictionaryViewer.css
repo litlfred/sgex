@@ -464,6 +464,134 @@
   font-size: 0.9rem;
 }
 
+/* DAK Source File Styles */
+.dak-source-section,
+.dak-published-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #0078d4;
+}
+
+.dak-source-section h5,
+.dak-published-section h5 {
+  color: #2c3e50;
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.dak-source-links {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.checking-published {
+  color: #6c757d;
+  font-style: italic;
+  margin: 0;
+}
+
+.unpublished-dak {
+  padding: 0.75rem;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+}
+
+.disabled-link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: #e9ecef;
+  color: #6c757d;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: line-through;
+}
+
+.unpublished-note {
+  margin: 0.5rem 0 0 0;
+  color: #856404;
+  font-size: 0.9rem;
+}
+
+/* DAK Concepts Table Styles */
+.dak-table-controls {
+  margin-bottom: 1rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
+}
+
+.dak-concepts-table {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.dak-concepts-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.dak-concepts-table th {
+  background: #0078d4;
+  color: white;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.dak-concepts-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: top;
+}
+
+.dak-concepts-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.concept-code {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-weight: 600;
+  color: #2c3e50;
+  min-width: 120px;
+}
+
+.concept-display {
+  font-weight: 500;
+  color: #2c3e50;
+  min-width: 200px;
+}
+
+.concept-definition {
+  color: #6c757d;
+  line-height: 1.4;
+}
+
 /* Modal Styles */
 .modal-overlay {
   position: fixed;
