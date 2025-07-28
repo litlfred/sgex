@@ -204,6 +204,14 @@ const BPMNViewerComponent = () => {
 
   // Initialize BPMN viewer with improved container readiness check
   useEffect(() => {
+    const cleanupContainer = () => {
+      if (containerRef.current) {
+        // Clear any existing BPMN.js content from the container
+        containerRef.current.innerHTML = '';
+        console.log('🧹 BPMNViewer: Container cleaned up');
+      }
+    };
+
     const initializeViewer = () => {
       console.log('🛠️ BPMNViewer: initializeViewer called with:', {
         hasContainer: !!containerRef.current,
@@ -215,12 +223,16 @@ const BPMNViewerComponent = () => {
 
       if (containerRef.current && !viewerRef.current && selectedFile) {
         try {
+          // Clean the container before creating a new viewer
+          cleanupContainer();
+          
           console.log('🔧 BPMNViewer: Creating new BPMN viewer...');
           console.log('🔧 BPMNViewer: Container element details:', {
             tagName: containerRef.current.tagName,
             className: containerRef.current.className,
             clientWidth: containerRef.current.clientWidth,
-            clientHeight: containerRef.current.clientHeight
+            clientHeight: containerRef.current.clientHeight,
+            innerHTML: containerRef.current.innerHTML.length
           });
           
           viewerRef.current = new BpmnViewer({
@@ -238,10 +250,39 @@ const BPMNViewerComponent = () => {
           console.error('🔍 BPMNViewer: Initialization error details:', {
             message: error.message,
             stack: error.stack,
-            containerExists: !!containerRef.current
+            containerExists: !!containerRef.current,
+            containerContent: containerRef.current ? containerRef.current.innerHTML : 'N/A'
           });
-          setError('Failed to initialize BPMN viewer');
-          setLoading(false);
+          
+          // If it's an "element already exists" error, try to clean up and retry once
+          if (error.message.includes('already exists')) {
+            console.log('🔄 BPMNViewer: Detected "element already exists" error, attempting cleanup and retry...');
+            cleanupContainer();
+            
+            // Wait a bit and try again
+            setTimeout(() => {
+              if (containerRef.current && !viewerRef.current) {
+                try {
+                  console.log('🔄 BPMNViewer: Retrying viewer creation after cleanup...');
+                  viewerRef.current = new BpmnViewer({
+                    container: containerRef.current,
+                    keyboard: {
+                      bindTo: window
+                    }
+                  });
+                  console.log('✅ BPMNViewer: BPMN viewer initialized successfully on retry');
+                  loadBpmnContent();
+                } catch (retryError) {
+                  console.error('❌ BPMNViewer: Failed to initialize BPMN viewer on retry:', retryError);
+                  setError(`Failed to initialize BPMN viewer: ${retryError.message}`);
+                  setLoading(false);
+                }
+              }
+            }, 100);
+          } else {
+            setError(`Failed to initialize BPMN viewer: ${error.message}`);
+            setLoading(false);
+          }
         }
       } else {
         console.log('⚠️ BPMNViewer: Skipping viewer initialization:', {
@@ -289,6 +330,8 @@ const BPMNViewerComponent = () => {
         }
         viewerRef.current = null;
       }
+      // Also clean up the container on unmount
+      cleanupContainer();
     };
   }, [selectedFile, loadBpmnContent]);
 
