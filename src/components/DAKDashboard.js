@@ -350,6 +350,19 @@ const DAKDashboard = () => {
   const handleBranchChange = (branch) => {
     setSelectedBranch(branch);
     branchContextService.setSelectedBranch(repository, branch);
+    
+    // Update the URL to include the branch parameter
+    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+    const repoName = repository.name;
+    const newPath = `/dashboard/${owner}/${repoName}/${branch}`;
+    
+    navigate(newPath, {
+      state: {
+        profile,
+        repository,
+        selectedBranch: branch
+      }
+    });
   };
 
   const handleComponentClick = (component) => {
