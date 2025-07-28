@@ -701,20 +701,26 @@ const DAKSelection = () => {
                           </span>
                           <span className="progress-percentage">{scanProgress.progress}%</span>
                         </div>
-                        {currentlyScanningRepos.size > 0 && (
-                          <div className="currently-testing-unified">
-                            <span className="scanning-icon">🔍</span>
-                            <span>Currently Testing:</span>
-                            <div className="currently-scanning-repos">
-                              {Array.from(currentlyScanningRepos).map((repoName) => (
+                        {/* Always show Currently Testing section to maintain consistent height */}
+                        <div className="currently-testing-unified">
+                          <span className="scanning-icon">🔍</span>
+                          <span>Currently Testing:</span>
+                          <div className="currently-scanning-repos">
+                            {currentlyScanningRepos.size > 0 ? (
+                              Array.from(currentlyScanningRepos).map((repoName) => (
                                 <div key={repoName} className="scanning-repo-item">
                                   <span className="repo-status-indicator">⚡</span>
                                   <span className="scanning-repo-name">{repoName}</span>
                                 </div>
-                              ))}
-                            </div>
+                              ))
+                            ) : (
+                              <div className="scanning-repo-item">
+                                <span className="repo-status-indicator">⏳</span>
+                                <span className="scanning-repo-name">Preparing scan...</span>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
                   </div>
