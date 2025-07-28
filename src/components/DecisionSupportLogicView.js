@@ -133,12 +133,12 @@ const DecisionSupportLogicView = () => {
         const owner = repository.owner?.login || repository.full_name.split('/')[0];
         const repoName = repository.name;
         
-        // Try to get decision-logic directory contents
+        // Try to get dmn directory contents
         try {
           const contents = await githubService.getDirectoryContents(
             owner,
             repoName,
-            'input/decision-logic',
+            'input/dmn',
             selectedBranch
           );
           
@@ -179,7 +179,7 @@ const DecisionSupportLogicView = () => {
           
           setDecisionTables(tables);
         } catch (error) {
-          console.warn('Decision-logic directory not found or empty');
+          console.warn('DMN directory not found or empty');
           setDecisionTables([]);
         }
       } catch (err) {
@@ -824,8 +824,8 @@ define "Contraindication Present":
               
               {decisionTables.length === 0 && (
                 <div className="no-tables">
-                  <p>No decision tables found in the input/decision-logic directory.</p>
-                  <p>Decision tables should be stored as .dmn files in the repository's input/decision-logic/ directory.</p>
+                  <p>No decision tables found in the input/dmn directory.</p>
+                  <p>Decision tables should be stored as .dmn files in the repository's input/dmn/ directory.</p>
                 </div>
               )}
             </div>
