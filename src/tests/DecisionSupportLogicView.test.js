@@ -40,7 +40,7 @@ describe('DecisionSupportLogicView', () => {
     
     // Mock successful responses
     githubService.getFileContent.mockImplementation((owner, repo, path) => {
-      if (path === 'input/fsh/codesystems/DAK.DT.fsh') {
+      if (path === 'input/fsh/codesystems/DAK.fsh') {
         return Promise.resolve(`
 CodeSystem: DAK_DT
 Title: "Decision Table"

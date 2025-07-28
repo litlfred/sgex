@@ -32,26 +32,27 @@ const DecisionSupportLogicView = () => {
           setLoading(true);
           setError(null);
 
-          // Create demo profile if not authenticated
-          const demoProfile = {
+          // Create profile for public repository access (not demo mode)
+          // This allows access to real repositories without authentication
+          const publicProfile = {
             login: user,
             name: user.charAt(0).toUpperCase() + user.slice(1),
             avatar_url: `https://github.com/${user}.png`,
             type: 'User',
-            isDemo: true
+            isDemo: false  // This is public access to a real repository
           };
 
-          const demoRepository = {
+          const publicRepository = {
             name: repo,
             full_name: `${user}/${repo}`,
             owner: { login: user },
             default_branch: branch || 'main',
             html_url: `https://github.com/${user}/${repo}`,
-            isDemo: true
+            isDemo: false  // This is a real repository
           };
 
-          setProfile(demoProfile);
-          setRepository(demoRepository);
+          setProfile(publicProfile);
+          setRepository(publicRepository);
           setSelectedBranch(branch || 'main');
         } catch (err) {
           console.error('Error initializing data:', err);
@@ -88,7 +89,7 @@ const DecisionSupportLogicView = () => {
 
     const loadDAKDTCodeSystem = async () => {
       try {
-        // Try to load DAK.DT code system from input/fsh/codesystems/DAK.DT.fsh
+        // Try to load DAK code system from input/fsh/codesystems/DAK.fsh
         const owner = repository.owner?.login || repository.full_name.split('/')[0];
         const repoName = repository.name;
         
@@ -96,7 +97,7 @@ const DecisionSupportLogicView = () => {
           const fshContent = await githubService.getFileContent(
             owner, 
             repoName, 
-            'input/fsh/codesystems/DAK.DT.fsh', 
+            'input/fsh/codesystems/DAK.fsh', 
             selectedBranch
           );
           
@@ -105,11 +106,17 @@ const DecisionSupportLogicView = () => {
           setDakDTCodeSystem(codeSystemData);
           setFilteredVariables(codeSystemData.concepts || []);
         } catch (error) {
-          console.warn('DAK.DT.fsh not found, using fallback data');
-          // Fallback data if file doesn't exist
-          const fallbackData = createFallbackDAKDT();
-          setDakDTCodeSystem(fallbackData);
-          setFilteredVariables(fallbackData.concepts || []);
+          console.warn('DAK.fsh not found, repository may not have DAK code system');
+          // Only use fallback data in test environment, not for real repositories
+          if (process.env.NODE_ENV === 'test') {
+            const fallbackData = createFallbackDAKDT();
+            setDakDTCodeSystem(fallbackData);
+            setFilteredVariables(fallbackData.concepts || []);
+          } else {
+            // For real repositories, show empty state if no DAK code system found
+            setDakDTCodeSystem({ id: 'DAK.DT', name: 'Decision Table', concepts: [] });
+            setFilteredVariables([]);
+          }
         }
       } catch (err) {
         console.error('Error loading DAK.DT code system:', err);
@@ -180,7 +187,7 @@ const DecisionSupportLogicView = () => {
   }, [repository, selectedBranch]);
 
   const parseFSHCodeSystem = (fshContent) => {
-    // Basic FSH parser for DAK.DT code system
+    // Basic FSH parser for DAK code system
     const lines = fshContent.split('\n');
     const concepts = [];
     let currentConcept = null;
@@ -188,10 +195,15 @@ const DecisionSupportLogicView = () => {
     for (const line of lines) {
       const trimmedLine = line.trim();
       
-      // Look for concept definitions
-      if (trimmedLine.startsWith('*')) {
-        // New concept
-        const parts = trimmedLine.substring(1).trim().split(/\s+/);
+      // Check if this is a top-level concept (starts with * # and is not indented)
+      const isTopLevel = line.startsWith('* #') && !line.startsWith('  ');
+      
+      if (isTopLevel) {
+        // New concept - extract code and display
+        let conceptLine = trimmedLine.substring(1).trim(); // Remove initial '*'
+        conceptLine = conceptLine.substring(1); // Remove '#' prefix
+        
+        const parts = conceptLine.split(/\s+/);
         if (parts.length >= 2) {
           currentConcept = {
             Code: parts[0],
@@ -450,7 +462,7 @@ const DecisionSupportLogicView = () => {
           <div className="section variables-section">
             <div className="section-header">
               <h3>📊 Variables</h3>
-              <p>Decision variables and their CQL implementations from the DAK.DT code system</p>
+              <p>Decision variables and their CQL implementations from the DAK code system</p>
             </div>
 
             <div className="variables-controls">
@@ -509,17 +521,21 @@ const DecisionSupportLogicView = () => {
                 </tbody>
               </table>
               
-              {filteredVariables.length === 0 && (
+              {filteredVariables.length === 0 && !searchTerm && (
+                <div className="no-results">
+                  <p>No variables found. The DAK code system may not be available at input/fsh/codesystems/DAK.fsh</p>
+                </div>
+              )}
+              
+              {filteredVariables.length === 0 && searchTerm && (
                 <div className="no-results">
                   <p>No variables match your search criteria.</p>
-                  {searchTerm && (
-                    <button 
-                      onClick={() => setSearchTerm('')}
-                      className="clear-search-btn"
-                    >
-                      Clear Search
-                    </button>
-                  )}
+                  <button 
+                    onClick={() => setSearchTerm('')}
+                    className="clear-search-btn"
+                  >
+                    Clear Search
+                  </button>
                 </div>
               )}
             </div>
