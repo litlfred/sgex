@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import bookmarkService from '../services/bookmarkService';
+import cacheManagementService from '../services/cacheManagementService';
 import './UserDropdown.css';
 
 const UserDropdown = ({ profile }) => {
@@ -75,22 +76,28 @@ const UserDropdown = ({ profile }) => {
     navigate(bookmark.url, { state: bookmark.data });
   };
 
+  const handleClearCache = () => {
+    setIsOpen(false);
+    const success = cacheManagementService.clearAllCache();
+    
+    if (success) {
+      // Show success message and redirect to home
+      navigate('/', { 
+        state: { 
+          successMessage: '🚽 Cache cleared successfully! All local data has been flushed.' 
+        } 
+      });
+    } else {
+      // Show error message
+      alert('⚠️ There was an error clearing the cache. Please try again or refresh the page.');
+    }
+  };
+
   const formatDate = (timestamp) => {
     return new Date(timestamp).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric'
     });
-  };
-
-  const groupBookmarksByPageType = (bookmarks) => {
-    return bookmarks.reduce((groups, bookmark) => {
-      const pageType = bookmark.pageType || 'Other';
-      if (!groups[pageType]) {
-        groups[pageType] = [];
-      }
-      groups[pageType].push(bookmark);
-      return groups;
-    }, {});
   };
 
   return (
@@ -133,40 +140,33 @@ const UserDropdown = ({ profile }) => {
             </button>
           </div>
 
-          {/* Bookmarks list organized by page type */}
+          {/* Bookmarks list */}
           {bookmarks.length > 0 && (
             <>
               <div className="dropdown-divider"></div>
               <div className="dropdown-section">
                 <div className="dropdown-section-title">Bookmarks</div>
                 <div className="bookmarks-list">
-                  {Object.entries(groupBookmarksByPageType(bookmarks))
-                    .sort(([a], [b]) => a.localeCompare(b)) // Sort page types alphabetically
-                    .map(([pageType, pageBookmarks]) => (
-                      <div key={pageType} className="bookmark-page-group">
-                        <div className="bookmark-page-type">{pageType}</div>
-                        {pageBookmarks.map((bookmark) => (
-                          <div key={bookmark.id} className="bookmark-item">
-                            <button 
-                              className="bookmark-link"
-                              onClick={() => navigateToBookmark(bookmark)}
-                              title={bookmark.title}
-                            >
-                              <span className="bookmark-title">{bookmark.title}</span>
-                              <span className="bookmark-date">{formatDate(bookmark.timestamp)}</span>
-                            </button>
-                            <button 
-                              className="bookmark-remove"
-                              onClick={() => removeBookmark(bookmark.id)}
-                              title="Remove bookmark"
-                              aria-label="Remove bookmark"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
+                  {bookmarks.map((bookmark) => (
+                    <div key={bookmark.id} className="bookmark-item">
+                      <button 
+                        className="bookmark-link"
+                        onClick={() => navigateToBookmark(bookmark)}
+                        title={bookmark.title}
+                      >
+                        <span className="bookmark-title">{bookmark.title}</span>
+                        <span className="bookmark-date">{formatDate(bookmark.timestamp)}</span>
+                      </button>
+                      <button 
+                        className="bookmark-remove"
+                        onClick={() => removeBookmark(bookmark.id)}
+                        title="Remove bookmark"
+                        aria-label="Remove bookmark"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             </>
@@ -175,6 +175,12 @@ const UserDropdown = ({ profile }) => {
           {/* Documentation link */}
           <div className="dropdown-divider"></div>
           <div className="dropdown-section">
+            <button 
+              className="dropdown-link clear-cache-btn"
+              onClick={handleClearCache}
+            >
+              🚽 Clear Cache
+            </button>
             <a 
               href="/sgex/docs/overview" 
               className="dropdown-link"

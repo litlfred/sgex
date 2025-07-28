@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import ContextualHelpMascot from './ContextualHelpMascot';
-
+import UserDropdown from './UserDropdown';
 import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {

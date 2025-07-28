@@ -1,38 +1,28 @@
 import bookmarkService from '../services/bookmarkService';
 
 // Mock localStorage
-let store = {};
-
-const localStorageMock = {
-  getItem: jest.fn((key) => {
-    const value = store[key] || null;
-    return value;
-  }),
-  setItem: jest.fn((key, value) => {
-    store[key] = value.toString();
-  }),
-  removeItem: jest.fn((key) => {
-    delete store[key];
-  }),
-  clear: jest.fn(() => {
-    Object.keys(store).forEach(key => delete store[key]);
-  })
-};
-
-// Set up the global localStorage mock
-Object.defineProperty(global, 'localStorage', {
-  value: localStorageMock,
-  writable: true
-});
+const localStorageMock = (() => {
+  let store = {};
+  return {
+    getItem: jest.fn((key) => store[key] || null),
+    setItem: jest.fn((key, value) => {
+      store[key] = value.toString();
+    }),
+    removeItem: jest.fn((key) => {
+      delete store[key];
+    }),
+    clear: jest.fn(() => {
+      store = {};
+    })
+  };
+})();
 
 Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-  writable: true
+  value: localStorageMock
 });
 
 describe('BookmarkService', () => {
   beforeEach(() => {
-    // Reset localStorage store by recreating it
     localStorageMock.clear();
     localStorageMock.getItem.mockClear();
     localStorageMock.setItem.mockClear();
@@ -47,7 +37,6 @@ describe('BookmarkService', () => {
   test('should add a bookmark', () => {
     const bookmark = {
       title: 'Test Page',
-      pageType: 'Dashboard',
       url: '/dashboard/user/repo',
       data: { user: 'testuser', repo: 'testrepo' }
     };
@@ -58,7 +47,6 @@ describe('BookmarkService', () => {
     const bookmarks = bookmarkService.getBookmarks();
     expect(bookmarks).toHaveLength(1);
     expect(bookmarks[0].title).toBe('Test Page');
-    expect(bookmarks[0].pageType).toBe('Dashboard');
     expect(bookmarks[0].url).toBe('/dashboard/user/repo');
     expect(bookmarks[0].id).toBeDefined();
     expect(bookmarks[0].timestamp).toBeDefined();
@@ -67,14 +55,12 @@ describe('BookmarkService', () => {
   test('should update existing bookmark with same URL', () => {
     const bookmark1 = {
       title: 'Test Page',
-      pageType: 'Dashboard',
       url: '/dashboard/user/repo',
       data: { user: 'testuser' }
     };
 
     const bookmark2 = {
       title: 'Updated Test Page',
-      pageType: 'Dashboard',
       url: '/dashboard/user/repo',
       data: { user: 'testuser', repo: 'testrepo' }
     };
@@ -85,14 +71,12 @@ describe('BookmarkService', () => {
     const bookmarks = bookmarkService.getBookmarks();
     expect(bookmarks).toHaveLength(1);
     expect(bookmarks[0].title).toBe('Updated Test Page');
-    expect(bookmarks[0].pageType).toBe('Dashboard');
     expect(bookmarks[0].data.repo).toBe('testrepo');
   });
 
   test('should remove a bookmark', () => {
     const bookmark = {
       title: 'Test Page',
-      pageType: 'Dashboard',
       url: '/dashboard/user/repo'
     };
 
@@ -110,7 +94,6 @@ describe('BookmarkService', () => {
   test('should check if URL is bookmarked', () => {
     const bookmark = {
       title: 'Test Page',
-      pageType: 'Dashboard',
       url: '/dashboard/user/repo'
     };
 
@@ -134,8 +117,7 @@ describe('BookmarkService', () => {
 
     const bookmark = bookmarkService.createBookmark({ location: mockLocation });
     
-    expect(bookmark.title).toBe('DAK: user/testrepo');
-    expect(bookmark.pageType).toBe('Dashboard');
+    expect(bookmark.title).toBe('Dashboard - user/testrepo');
     expect(bookmark.url).toBe('/dashboard/user/repo?branch=main');
     expect(bookmark.data.profile.login).toBe('testuser');
     expect(bookmark.data.repository.name).toBe('testrepo');
@@ -147,7 +129,6 @@ describe('BookmarkService', () => {
     for (let i = 0; i < 25; i++) {
       bookmarkService.addBookmark({
         title: `Test Page ${i}`,
-        pageType: 'Other',
         url: `/page${i}`
       });
     }
@@ -159,7 +140,7 @@ describe('BookmarkService', () => {
   });
 
   test('should clear all bookmarks', () => {
-    bookmarkService.addBookmark({ title: 'Test Page', pageType: 'Other', url: '/test' });
+    bookmarkService.addBookmark({ title: 'Test Page', url: '/test' });
     expect(bookmarkService.getBookmarks()).toHaveLength(1);
 
     const result = bookmarkService.clearAllBookmarks();
@@ -167,78 +148,7 @@ describe('BookmarkService', () => {
     expect(bookmarkService.getBookmarks()).toHaveLength(0);
   });
 
-  test('should create bookmark from framework context', () => {
-    const mockFrameworkContext = {
-      type: 'dak',
-      pageName: 'dashboard',
-      profile: { login: 'testuser', avatar_url: 'https://example.com/avatar.jpg' },
-      repository: { name: 'testrepo', full_name: 'testuser/testrepo' },
-      branch: 'main',
-      location: { pathname: '/dashboard/testuser/testrepo/main', search: '' }
-    };
-
-    const bookmark = bookmarkService.createBookmarkFromFramework(mockFrameworkContext);
-    
-    expect(bookmark.title).toBe('DAK: testuser/testrepo');
-    expect(bookmark.pageType).toBe('Dashboard');
-    expect(bookmark.url).toBe('/dashboard/testuser/testrepo/main');
-    expect(bookmark.data.profile.login).toBe('testuser');
-    expect(bookmark.data.repository.name).toBe('testrepo');
-    expect(bookmark.data.branch).toBe('main');
-    expect(bookmark.data.type).toBe('dak');
-    expect(bookmark.data.pageName).toBe('dashboard');
-  });
-
-  test('should create bookmark from framework context with non-main branch', () => {
-    const mockFrameworkContext = {
-      type: 'dak',
-      pageName: 'core-data-dictionary-viewer',
-      profile: { login: 'testuser', avatar_url: 'https://example.com/avatar.jpg' },
-      repository: { name: 'testrepo', full_name: 'testuser/testrepo' },
-      branch: 'feature-branch',
-      location: { pathname: '/core-data-dictionary-viewer/testuser/testrepo/feature-branch', search: '' }
-    };
-
-    const bookmark = bookmarkService.createBookmarkFromFramework(mockFrameworkContext);
-    
-    expect(bookmark.title).toBe('DAK: testuser/testrepo/feature-branch');
-    expect(bookmark.pageType).toBe('Core Data Dictionary');
-    expect(bookmark.url).toBe('/core-data-dictionary-viewer/testuser/testrepo/feature-branch');
-  });
-
-  test('should create bookmark for asset page from framework context', () => {
-    const mockFrameworkContext = {
-      type: 'asset',
-      pageName: 'bpmn-editor',
-      profile: { login: 'testuser', avatar_url: 'https://example.com/avatar.jpg' },
-      repository: { name: 'testrepo', full_name: 'testuser/testrepo' },
-      branch: 'main',
-      location: { pathname: '/bpmn-editor/testuser/testrepo/main/workflow.bpmn', search: '' }
-    };
-
-    const bookmark = bookmarkService.createBookmarkFromFramework(mockFrameworkContext);
-    
-    expect(bookmark.title).toBe('workflow.bpmn in DAK: testuser/testrepo');
-    expect(bookmark.pageType).toBe('BPMN Editor');
-    expect(bookmark.url).toBe('/bpmn-editor/testuser/testrepo/main/workflow.bpmn');
-  });
-
-  test('should create bookmark for top-level page from framework context', () => {
-    const mockFrameworkContext = {
-      type: 'top-level',
-      pageName: 'documentation',
-      profile: null,
-      repository: null,
-      branch: null,
-      location: { pathname: '/docs/overview', search: '' }
-    };
-
-    const bookmark = bookmarkService.createBookmarkFromFramework(mockFrameworkContext);
-    
-    expect(bookmark.title).toBe('Documentation - overview');
-    expect(bookmark.pageType).toBe('Documentation');
-    expect(bookmark.url).toBe('/docs/overview');
-  });
+  test('should handle localStorage errors gracefully', () => {
     // Mock localStorage to throw error
     localStorageMock.getItem.mockImplementation(() => {
       throw new Error('localStorage error');

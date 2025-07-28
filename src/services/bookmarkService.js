@@ -22,7 +22,7 @@ class BookmarkService {
 
   /**
    * Save a new bookmark
-   * @param {Object} bookmark - Bookmark object with title, url, pageType, and optional data
+   * @param {Object} bookmark - Bookmark object with title, url, and optional data
    * @returns {boolean} Success status
    */
   addBookmark(bookmark) {
@@ -35,10 +35,9 @@ class BookmarkService {
       const newBookmark = {
         id: bookmark.id || Date.now().toString(),
         title: bookmark.title,
-        pageType: bookmark.pageType || 'Other',
         url: bookmark.url,
         timestamp: new Date().toISOString(),
-        data: bookmark.data || {} // Store additional data separately
+        ...bookmark.data // Additional data like user, repo, branch
       };
 
       if (existingIndex >= 0) {
@@ -90,118 +89,7 @@ class BookmarkService {
   }
 
   /**
-   * Generate a bookmark object from the page framework context
-   * @param {Object} frameworkContext - Framework context from usePage hook
-   * @returns {Object} Bookmark object
-   */
-  createBookmarkFromFramework(frameworkContext) {
-    const { type, pageName, profile, repository, branch, location } = frameworkContext;
-    const { pathname, search } = location;
-    
-    // Use framework context to generate title and page type
-    let title = 'SGEX Page';
-    let pageType = 'Other';
-    
-    // Map framework page types to bookmark page types
-    if (type === 'dak' || type === 'asset') {
-      // For DAK and Asset pages, determine specific page type from pageName
-      switch (pageName) {
-        case 'dashboard':
-          pageType = 'Dashboard';
-          break;
-        case 'core-data-dictionary-viewer':
-          pageType = 'Core Data Dictionary';
-          break;
-        case 'business-process-selection':
-          pageType = 'Business Process Selection';
-          break;
-        case 'decision-support-logic':
-          pageType = 'Decision Support Logic';
-          break;
-        case 'component-editor':
-        case 'editor':
-          pageType = 'Component Editor';
-          break;
-        case 'bpmn-editor':
-          pageType = 'BPMN Editor';
-          break;
-        case 'bpmn-viewer':
-          pageType = 'BPMN Viewer';
-          break;
-        case 'pages':
-          pageType = 'Pages Manager';
-          break;
-        default:
-          pageType = 'DAK Component';
-      }
-      
-      // Generate title based on repository and branch
-      if (repository && profile) {
-        const fullName = repository.full_name || `${profile.login}/${repository.name}`;
-        
-        if (type === 'asset') {
-          // For asset pages, try to extract asset name from pathname
-          const pathParts = pathname.split('/').filter(Boolean);
-          const assetName = pathParts[pathParts.length - 1] || 'Asset';
-          
-          if (branch && branch !== 'main') {
-            title = `${assetName} in DAK: ${fullName}/${branch}`;
-          } else {
-            title = `${assetName} in DAK: ${fullName}`;
-          }
-        } else {
-          // For DAK pages
-          if (branch && branch !== 'main') {
-            title = `DAK: ${fullName}/${branch}`;
-          } else {
-            title = `DAK: ${fullName}`;
-          }
-        }
-      }
-    } else if (type === 'user') {
-      pageType = 'User Profile';
-      if (profile) {
-        title = `User: ${profile.login}`;
-      }
-    } else if (type === 'top-level') {
-      switch (pageName) {
-        case 'documentation':
-          pageType = 'Documentation';
-          const docId = pathname.split('/docs/')[1] || 'Overview';
-          title = `Documentation - ${docId}`;
-          break;
-        case 'landing':
-          pageType = 'Landing Page';
-          title = 'SGEX Workbench';
-          break;
-        default:
-          pageType = 'Other';
-          title = `SGEX - ${pageName}`;
-      }
-    }
-
-    return {
-      title,
-      pageType,
-      url: pathname + (search || ''),
-      data: {
-        profile: profile ? { login: profile.login, avatar_url: profile.avatar_url } : null,
-        repository: repository ? { 
-          name: repository.name, 
-          full_name: repository.full_name || `${profile?.login}/${repository.name}` 
-        } : null,
-        selectedBranch: branch,
-        user: profile?.login,
-        repo: repository?.name,
-        branch: branch,
-        type: type,
-        pageName: pageName
-      }
-    };
-  }
-
-  /**
-   * Generate a bookmark object for the current page (legacy method)
+   * Generate a bookmark object for the current page
    * @param {Object} params - Page parameters
    * @returns {Object} Bookmark object
    */
@@ -209,140 +97,45 @@ class BookmarkService {
     const { pathname, search, state } = params.location || {};
     const { profile, repository, selectedBranch } = state || {};
     
-    // Extract user/repo info from URL params if not in state
-    const urlParts = pathname.split('/').filter(Boolean);
-    let user, repo, branch;
-    
-    // Try to extract from URL patterns like /dashboard/user/repo/branch
-    if (urlParts.length >= 3 && ['dashboard', 'core-data-dictionary-viewer', 'business-process-selection', 'decision-support-logic'].includes(urlParts[0])) {
-      user = urlParts[1];
-      repo = urlParts[2];
-      branch = urlParts[3];
-    }
-    
-    // Use state data if available, otherwise fall back to URL params
-    const contextUser = repository?.owner?.login || repository?.full_name?.split('/')[0] || user;
-    const contextRepo = repository?.name || repo;
-    const contextBranch = selectedBranch || branch || 'main';
-    const fullName = repository?.full_name || (contextUser && contextRepo ? `${contextUser}/${contextRepo}` : null);
-    
-    // Generate title and page type based on current route and context
+    // Generate title based on current route and context
     let title = 'SGEX Page';
-    let pageType = 'Other';
     
     if (pathname) {
       if (pathname.includes('/dashboard')) {
-        pageType = 'Dashboard';
-        if (fullName) {
-          if (contextBranch && contextBranch !== 'main') {
-            title = `DAK: ${fullName}/${contextBranch}`;
-          } else {
-            title = `DAK: ${fullName}`;
-          }
-        } else {
-          title = 'DAK Dashboard';
-        }
+        title = repository ? `Dashboard - ${repository.full_name}` : 'DAK Dashboard';
       } else if (pathname.includes('/core-data-dictionary-viewer')) {
-        pageType = 'Core Data Dictionary';
-        if (fullName) {
-          if (contextBranch && contextBranch !== 'main') {
-            title = `DAK: ${fullName}/${contextBranch}`;
-          } else {
-            title = `DAK: ${fullName}`;
-          }
-        } else {
-          title = 'Core Data Dictionary';
-        }
+        title = repository ? `Data Dictionary - ${repository.full_name}` : 'Core Data Dictionary';
       } else if (pathname.includes('/business-process-selection')) {
-        pageType = 'Business Process Selection';
-        if (fullName) {
-          if (contextBranch && contextBranch !== 'main') {
-            title = `DAK: ${fullName}/${contextBranch}`;
-          } else {
-            title = `DAK: ${fullName}`;
-          }
-        } else {
-          title = 'Business Process Selection';
-        }
+        title = repository ? `Business Processes - ${repository.full_name}` : 'Business Process Selection';
       } else if (pathname.includes('/decision-support-logic')) {
-        pageType = 'Decision Support Logic';
-        if (fullName) {
-          if (contextBranch && contextBranch !== 'main') {
-            title = `DAK: ${fullName}/${contextBranch}`;
-          } else {
-            title = `DAK: ${fullName}`;
-          }
-        } else {
-          title = 'Decision Support Logic';
-        }
-      } else if (pathname.includes('/editor/')) {
-        pageType = 'Component Editor';
-        const componentId = pathname.split('/editor/')[1];
-        if (fullName && componentId) {
-          if (contextBranch && contextBranch !== 'main') {
-            title = `${componentId} in DAK: ${fullName}/${contextBranch}`;
-          } else {
-            title = `${componentId} in DAK: ${fullName}`;
-          }
-        } else {
-          title = `Editor - ${componentId || 'component'}`;
-        }
-      } else if (pathname.includes('/bpmn-editor')) {
-        pageType = 'BPMN Editor';
-        // Try to extract BPMN file name from search params or other context
-        const searchParams = new URLSearchParams(search || '');
-        const bpmnFile = searchParams.get('file') || searchParams.get('asset') || 'BPMN Diagram';
-        if (fullName) {
-          if (contextBranch && contextBranch !== 'main') {
-            title = `${bpmnFile} in DAK: ${fullName}/${contextBranch}`;
-          } else {
-            title = `${bpmnFile} in DAK: ${fullName}`;
-          }
-        } else {
-          title = 'BPMN Editor';
-        }
-      } else if (pathname.includes('/bpmn-viewer')) {
-        pageType = 'BPMN Viewer';
-        const searchParams = new URLSearchParams(search || '');
-        const bpmnFile = searchParams.get('file') || searchParams.get('asset') || 'BPMN Diagram';
-        if (fullName) {
-          if (contextBranch && contextBranch !== 'main') {
-            title = `${bpmnFile} in DAK: ${fullName}/${contextBranch}`;
-          } else {
-            title = `${bpmnFile} in DAK: ${fullName}`;
-          }
-        } else {
-          title = 'BPMN Viewer';
-        }
+        title = repository ? `Decision Logic - ${repository.full_name}` : 'Decision Support Logic';
       } else if (pathname.includes('/docs/')) {
-        pageType = 'Documentation';
         const docId = pathname.split('/docs/')[1];
         title = `Documentation - ${docId}`;
+      } else if (pathname.includes('/editor/')) {
+        const componentId = pathname.split('/editor/')[1];
+        title = `Editor - ${componentId}`;
+      } else if (pathname.includes('/bpmn-editor')) {
+        title = 'BPMN Editor';
+      } else if (pathname.includes('/bpmn-viewer')) {
+        title = 'BPMN Viewer';
       } else if (pathname.includes('/pages')) {
-        pageType = 'Pages Manager';
-        if (fullName) {
-          if (contextBranch && contextBranch !== 'main') {
-            title = `DAK: ${fullName}/${contextBranch}`;
-          } else {
-            title = `DAK: ${fullName}`;
-          }
-        } else {
-          title = 'Pages Manager';
-        }
+        title = 'Pages Manager';
       }
+    }
+
+    // Add branch info if available
+    if (selectedBranch && selectedBranch !== 'main') {
+      title += ` (${selectedBranch})`;
     }
 
     return {
       title,
-      pageType,
       url: pathname + (search || ''),
       data: {
         profile: profile ? { login: profile.login, avatar_url: profile.avatar_url } : null,
         repository: repository ? { name: repository.name, full_name: repository.full_name } : null,
-        selectedBranch: contextBranch,
-        user: contextUser,
-        repo: contextRepo,
-        branch: contextBranch
+        selectedBranch
       }
     };
   }

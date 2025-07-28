@@ -8,7 +8,7 @@ import ContextualHelpMascot from './ContextualHelpMascot';
 import PageViewModal from './PageViewModal';
 import PageEditModal from './PageEditModal';
 import DAKStatusBox from './DAKStatusBox';
-
+import UserDropdown from './UserDropdown';
 import './PagesManager.css';
 
 const PagesManager = () => {

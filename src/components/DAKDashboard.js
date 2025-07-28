@@ -9,6 +9,7 @@ import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
+import UserDropdown from './UserDropdown';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKDashboard.css';
 
@@ -28,8 +29,6 @@ const DAKDashboard = () => {
   const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showClearCacheConfirm, setShowClearCacheConfirm] = useState(false);
 
   // Fetch data from URL parameters if not available in location.state
   useEffect(() => {
@@ -231,20 +230,6 @@ const DAKDashboard = () => {
 
     checkPermissions();
   }, [repository, profile]);
-
-  // Close user menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (showUserMenu && !event.target.closest('.user-menu-container')) {
-        setShowUserMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showUserMenu]);
 
 
 
@@ -521,36 +506,6 @@ const DAKDashboard = () => {
     navigate('/');
   };
 
-  const handleUserMenuToggle = () => {
-    setShowUserMenu(!showUserMenu);
-  };
-
-  const handleClearCacheClick = () => {
-    setShowUserMenu(false);
-    setShowClearCacheConfirm(true);
-  };
-
-  const handleClearCacheConfirm = () => {
-    const success = cacheManagementService.clearAllCache();
-    setShowClearCacheConfirm(false);
-    
-    if (success) {
-      // Show success message and redirect to home
-      navigate('/', { 
-        state: { 
-          successMessage: '🚽 Cache cleared successfully! All local data has been flushed.' 
-        } 
-      });
-    } else {
-      // Show error message
-      alert('⚠️ There was an error clearing the cache. Please try again or refresh the page.');
-    }
-  };
-
-  const handleClearCacheCancel = () => {
-    setShowClearCacheConfirm(false);
-  };
-
   if (loading) {
     return (
       <div className="dak-dashboard loading-state">
@@ -624,26 +579,7 @@ const DAKDashboard = () => {
           </div>
         </div>
         <div className="header-right">
-          <div className="user-menu-container">
-            <div className="user-info" onClick={handleUserMenuToggle}>
-              <img 
-                src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-                alt="Profile" 
-                className="context-avatar" 
-              />
-              <span className="context-owner">@{profile.login}</span>
-              <span className="menu-arrow">▼</span>
-            </div>
-            
-            {showUserMenu && (
-              <div className="user-dropdown-menu">
-                <div className="dropdown-item" onClick={handleClearCacheClick}>
-                  <span className="dropdown-icon">🚽</span>
-                  <span className="dropdown-text">Clear Cache</span>
-                </div>
-              </div>
-            )}
-          </div>
+          <UserDropdown profile={profile} />
           <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
@@ -867,53 +803,6 @@ const DAKDashboard = () => {
                     Continue Read-Only
                   </button>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Clear Cache Confirmation Dialog */}
-      {showClearCacheConfirm && (
-        <div className="clear-cache-dialog-overlay">
-          <div className="clear-cache-dialog">
-            <div className="dialog-header">
-              <h3>🚽 Clear Cache</h3>
-              <button 
-                className="dialog-close"
-                onClick={handleClearCacheCancel}
-              >
-                ×
-              </button>
-            </div>
-            <div className="dialog-content">
-              <div className="dialog-mascot">
-                <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="dialog-mascot-img" />
-                <div className="mascot-message">
-                  <p><strong>⚠️ Warning: You may lose unsaved progress!</strong></p>
-                  <p>This will clear all cached data including:</p>
-                  <ul>
-                    <li>Repository lists and metadata</li>
-                    <li>Branch selections and context</li>
-                    <li>Unsaved changes in staging area</li>
-                    <li>Other local application data</li>
-                  </ul>
-                  <p><strong>Any work not committed to GitHub will be lost permanently.</strong></p>
-                </div>
-              </div>
-              <div className="dialog-actions">
-                <button 
-                  className="btn-danger"
-                  onClick={handleClearCacheConfirm}
-                >
-                  🚽 Yes, Clear Cache
-                </button>
-                <button 
-                  className="btn-secondary"
-                  onClick={handleClearCacheCancel}
-                >
-                  Cancel
-                </button>
               </div>
             </div>
           </div>
