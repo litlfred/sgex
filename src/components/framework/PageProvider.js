@@ -33,7 +33,7 @@ export const usePage = () => {
  * Determine page type from URL parameters
  */
 const determinePageType = (params) => {
-  const { user, repo, branch, asset } = params;
+  const { user, repo, asset } = params;
   
   if (asset) return PAGE_TYPES.ASSET;
   if (user && repo) return PAGE_TYPES.DAK;
@@ -63,7 +63,7 @@ export const PageProvider = ({ children, pageName }) => {
   });
 
   // Extract URL parameters
-  const { user, repo, branch, asset } = params;
+  const { user, repo, asset } = params;
 
   // Load data based on page type
   useEffect(() => {
@@ -74,7 +74,7 @@ export const PageProvider = ({ children, pageName }) => {
         // Use location state if available, otherwise fetch from URL params
         let profile = location.state?.profile;
         let repository = location.state?.repository;
-        let selectedBranch = location.state?.selectedBranch || branch;
+        let selectedBranch = location.state?.selectedBranch || params.branch;
 
         // For DAK and Asset pages, validate and fetch data
         if (pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
@@ -181,7 +181,7 @@ export const PageProvider = ({ children, pageName }) => {
     if ((pageState.type !== PAGE_TYPES.TOP_LEVEL && user) || pageState.type === PAGE_TYPES.TOP_LEVEL) {
       loadPageData();
     }
-  }, [user, repo, branch, asset, pageState.type, location.state]);
+  }, [user, repo, params.branch, asset, pageState.type, location.state]);
 
   const value = {
     ...pageState,

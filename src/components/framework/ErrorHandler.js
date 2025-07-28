@@ -7,7 +7,15 @@ import './ErrorHandler.css';
  * Error handler component with automatic bug reporting functionality
  */
 const ErrorHandler = ({ error, onRetry }) => {
-  const { pageName, location } = usePage();
+  // Try to get page context, but provide defaults if not available
+  let pageName = 'unknown';
+  try {
+    const pageContext = usePage();
+    pageName = pageContext.pageName;
+  } catch (e) {
+    // usePage hook not available, use default
+    console.warn('ErrorHandler used outside of PageProvider context');
+  }
   const [bugReportSent, setBugReportSent] = useState(false);
   const [userExplanation, setUserExplanation] = useState('');
 

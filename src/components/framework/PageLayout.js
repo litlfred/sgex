@@ -1,4 +1,4 @@
-import React, { useErrorBoundary } from 'react';
+import React from 'react';
 import { PageProvider, usePage } from './PageProvider';
 import PageHeader from './PageHeader';
 import ErrorHandler from './ErrorHandler';
