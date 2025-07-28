@@ -4,6 +4,7 @@ import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import PATLogin from './PATLogin';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import { handleNavigationClick } from '../utils/navigationUtils';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -185,11 +186,12 @@ const LandingPage = () => {
     setError(null);
   };
 
-  const handleProfileSelect = (profile) => {
-    navigate(`/dak-action/${profile.login}`, { state: { profile } });
+  const handleProfileSelect = (event, profile) => {
+    const navigationState = { profile };
+    handleNavigationClick(event, `/dak-action/${profile.login}`, navigate, navigationState);
   };
 
-  const handleDemoMode = () => {
+  const handleDemoMode = (event) => {
     // Create a mock profile for demonstration purposes
     const demoProfile = {
       login: 'demo-user',
@@ -200,12 +202,12 @@ const LandingPage = () => {
     };
     
     // Navigate directly to DAK selection with edit action to show enhanced scanning
-    navigate(`/dak-selection/${demoProfile.login}`, {
-      state: {
-        profile: demoProfile,
-        action: 'edit'
-      }
-    });
+    const navigationState = {
+      profile: demoProfile,
+      action: 'edit'
+    };
+    
+    handleNavigationClick(event, `/dak-selection/${demoProfile.login}`, navigate, navigationState);
   };
 
   const handleHomeNavigation = () => {
@@ -345,7 +347,7 @@ const LandingPage = () => {
               {/* Personal Profile */}
               <div 
                 className="profile-card"
-                onClick={() => handleProfileSelect({ type: 'user', ...user })}
+                onClick={(event) => handleProfileSelect(event, { type: 'user', ...user })}
               >
                 <div className="profile-card-header">
                   <img src={user?.avatar_url} alt="Personal profile" />
@@ -367,7 +369,7 @@ const LandingPage = () => {
                 <div 
                   key={org.login}
                   className={`profile-card ${org.isWHO ? 'who-org' : ''}`}
-                  onClick={() => handleProfileSelect({ type: 'org', ...org })}
+                  onClick={(event) => handleProfileSelect(event, { type: 'org', ...org })}
                 >
                   <div className="profile-card-header">
                     <img 
