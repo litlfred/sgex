@@ -7,6 +7,7 @@ import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import DAKStatusBox from './DAKStatusBox';
+import Publications from './Publications';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
@@ -22,7 +23,7 @@ const DAKDashboard = () => {
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('core'); // 'core' or 'additional'
+  const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
 
   // Fetch data from URL parameters if not available in location.state
@@ -556,6 +557,13 @@ const DAKDashboard = () => {
               <span className="tab-icon">🔧</span>
               <span className="tab-text">Additional Components</span>
             </button>
+            <button 
+              className={`tab-button ${activeTab === 'publications' ? 'active' : ''}`}
+              onClick={() => setActiveTab('publications')}
+            >
+              <span className="tab-icon">📚</span>
+              <span className="tab-text">Publications</span>
+            </button>
           </div>
 
           {/* 8 Core DAK Components Section */}
@@ -645,6 +653,18 @@ const DAKDashboard = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Publications Section */}
+          {activeTab === 'publications' && (
+            <div className="components-section publications-section active">
+              <Publications 
+                profile={profile}
+                repository={repository}
+                selectedBranch={selectedBranch}
+                hasWriteAccess={hasWriteAccess}
+              />
             </div>
           )}
         </div>
