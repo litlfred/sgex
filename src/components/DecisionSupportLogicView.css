@@ -794,6 +794,71 @@
   color: #495057;
 }
 
+/* HTML Content Styles */
+.decision-support-view .html-content {
+  padding: 2rem;
+  background: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow: auto;
+  max-height: 60vh;
+  color: #212529;
+}
+
+.decision-support-view .html-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  border: 1px solid #e9ecef;
+}
+
+.decision-support-view .html-content th,
+.decision-support-view .html-content td {
+  border: 1px solid #e9ecef;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.decision-support-view .html-content th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+}
+
+.decision-support-view .html-content tr:nth-child(even) {
+  background: #f8f9fa;
+}
+
+.decision-support-view .html-content h1,
+.decision-support-view .html-content h2,
+.decision-support-view .html-content h3,
+.decision-support-view .html-content h4,
+.decision-support-view .html-content h5,
+.decision-support-view .html-content h6 {
+  color: #212529;
+  margin: 1rem 0 0.5rem 0;
+}
+
+.decision-support-view .html-content p {
+  margin: 0.5rem 0;
+}
+
+.decision-support-view .html-content ul,
+.decision-support-view .html-content ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.decision-support-view .html-content code {
+  background: #f8f9fa;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.125rem;
+  font-size: 0.85em;
+  border: 1px solid #e9ecef;
+  color: #e83e8c;
+}
+
 .decision-support-view .dialog-actions {
   padding: 1rem 2rem 1.5rem 2rem;
   border-top: 1px solid #e9ecef;

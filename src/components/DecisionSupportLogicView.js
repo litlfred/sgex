@@ -567,18 +567,53 @@ define "Contraindication Present":
 
   const openSourceDialog = async (table) => {
     try {
-      const content = await fetch(table.downloadUrl).then(res => res.text());
+      let content = '';
+      let contentType = 'xml'; // Default to XML/DMN
+      let title = table.basename;
+
+      // First try to load HTML file if it exists
+      if (table.htmlFile) {
+        try {
+          const owner = repository.owner?.login || repository.full_name.split('/')[0];
+          const repoName = repository.name;
+          const htmlContent = await githubService.getFileContent(
+            owner,
+            repoName,
+            table.htmlFile,
+            selectedBranch
+          );
+          content = htmlContent;
+          contentType = 'html';
+          title = `${table.basename} (HTML)`;
+        } catch (htmlError) {
+          console.warn('HTML file not accessible, falling back to DMN source:', htmlError);
+          // Fall back to DMN source
+          content = await fetch(table.downloadUrl).then(res => res.text());
+          contentType = 'xml';
+          title = `${table.basename} (DMN)`;
+        }
+      } else {
+        // No HTML file available, load DMN source
+        content = await fetch(table.downloadUrl).then(res => res.text());
+        contentType = 'xml';
+        title = `${table.basename} (DMN)`;
+      }
+
       setSelectedDialog({
-        title: `${table.name} Source`,
+        title: title,
         content: content,
-        type: 'dmn'
+        type: contentType,
+        githubUrl: table.githubUrl,
+        tableName: table.basename
       });
     } catch (err) {
-      console.error('Error loading DMN source:', err);
+      console.error('Error loading decision table content:', err);
       setSelectedDialog({
         title: 'Error',
-        content: 'Failed to load DMN source content.',
-        type: 'error'
+        content: 'Failed to load decision table content.',
+        type: 'error',
+        githubUrl: table.githubUrl,
+        tableName: table.basename
       });
     }
   };
@@ -951,9 +986,16 @@ define "Contraindication Present":
               </button>
             </div>
             <div className="dialog-body">
-              <pre className="source-content">
-                <code>{selectedDialog.content}</code>
-              </pre>
+              {selectedDialog.type === 'html' ? (
+                <div 
+                  className="html-content"
+                  dangerouslySetInnerHTML={{ __html: selectedDialog.content }}
+                />
+              ) : (
+                <pre className="source-content">
+                  <code>{selectedDialog.content}</code>
+                </pre>
+              )}
             </div>
             <div className="dialog-actions">
               <button
@@ -964,6 +1006,16 @@ define "Contraindication Present":
               >
                 📋 Copy
               </button>
+              {selectedDialog.githubUrl && (
+                <a
+                  href={selectedDialog.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-btn secondary"
+                >
+                  🔗 GitHub
+                </a>
+              )}
               <button
                 onClick={() => setSelectedDialog(null)}
                 className="action-btn primary"
