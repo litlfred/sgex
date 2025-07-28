@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import githubService from '../services/githubService';
 import dakComplianceService from '../services/dakComplianceService';
+import stagingGroundService from '../services/stagingGroundService';
 import './SaveDialog.css';
 
 const SaveDialog = ({ 
@@ -115,6 +116,13 @@ const SaveDialog = ({
     }
   };
 
+  // Handle removing individual file
+  const handleRemoveFile = (filePath) => {
+    if (window.confirm(`Are you sure you want to remove "${filePath}" from staging? This cannot be undone.`)) {
+      stagingGroundService.removeFile(filePath);
+    }
+  };
+
   return (
     <div className="save-dialog-overlay">
       <div className="save-dialog">
@@ -141,6 +149,17 @@ const SaveDialog = ({
                   <span className="file-size">
                     {(new Blob([file.content]).size / 1024).toFixed(1)} KB
                   </span>
+                  <button
+                    className="remove-file-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveFile(file.path);
+                    }}
+                    title={`Remove ${file.path} from staging`}
+                    disabled={isSaving}
+                  >
+                    🗑️
+                  </button>
                 </div>
               ))}
             </div>

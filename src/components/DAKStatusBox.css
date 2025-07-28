@@ -258,6 +258,27 @@
   font-style: italic;
 }
 
+.remove-file-btn {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #dc3545;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.remove-file-btn:hover {
+  background: #f8d7da;
+  opacity: 1;
+}
+
+.remove-file-btn:active {
+  transform: scale(0.95);
+}
+
 .file-actions {
   padding: 12px 16px;
   background: #f1f3f4;
