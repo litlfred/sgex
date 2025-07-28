@@ -35,6 +35,13 @@ This document provides an index and summary of all documentation for the SMART G
    - Level 2 (Business Logic) vs Level 3 (Technical Implementation) organization
    - Editor capabilities and file type specifications
 
+5. **[Page Framework](page-framework.md)**
+   - Consistent page functionality framework for all pages
+   - URL patterns and page types (Top-Level, User, DAK, Asset)
+   - Header components and navigation patterns
+   - Error handling and automatic bug reporting
+   - Developer requirements and implementation examples
+
 ## Key Concepts
 
 ### SGEX Workbench
