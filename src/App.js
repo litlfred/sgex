@@ -16,6 +16,7 @@ import BPMNViewer from './components/BPMNViewer';
 import BPMNSource from './components/BPMNSource';
 import BPMNViewerTestComponent from './components/BPMNViewerTestComponent';
 import DocumentationViewer from './components/DocumentationViewer';
+import DecisionSupportLogicView from './components/DecisionSupportLogicView';
 import TestDashboard from './components/TestDashboard';
 import PagesManager from './components/PagesManager';
 import NotFound from './components/NotFound';
@@ -63,6 +64,9 @@ function App() {
           <Route path="/bpmn-viewer" element={<BPMNViewer />} />
           <Route path="/test-bpmn-viewer" element={<BPMNViewerTestComponent />} />
           <Route path="/bpmn-source" element={<BPMNSource />} />
+          <Route path="/decision-support-logic" element={<DecisionSupportLogicView />} />
+          <Route path="/decision-support-logic/:user/:repo" element={<DecisionSupportLogicView />} />
+          <Route path="/decision-support-logic/:user/:repo/:branch" element={<DecisionSupportLogicView />} />
           <Route path="/docs/:docId" element={<DocumentationViewer />} />
           <Route path="/pages" element={<PagesManager />} />
           <Route path="*" element={<NotFound />} />

@@ -1,0 +1,241 @@
+.commits-slider-container {
+  margin: 1rem 0;
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.slider-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.slider-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.slider-control {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.slider-control:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #ccc;
+  color: #333;
+}
+
+.slider-control:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.commits-slider {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 0.5rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
+}
+
+.commits-slider::-webkit-scrollbar {
+  height: 6px;
+}
+
+.commits-slider::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.commits-slider::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.commits-slider::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+.commit-card {
+  flex: 0 0 280px;
+  background: white;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.commit-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.commit-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.commit-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #f0f0f0;
+}
+
+.commit-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.commit-author {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.commit-date {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 2px;
+}
+
+.commit-message {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: #333;
+  margin-bottom: 0.75rem;
+  min-height: 2.8rem; /* Ensure consistent height */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.commit-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.commit-sha {
+  font-size: 0.75rem;
+}
+
+.commit-sha code {
+  background: #f6f8fa;
+  color: #0366d6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.commit-link {
+  color: #666;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.commit-link:hover {
+  color: #0366d6;
+}
+
+.load-more-container {
+  flex: 0 0 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.load-more-btn {
+  padding: 0.75rem 1rem;
+  background: #f6f8fa;
+  border: 1px solid #d1d5da;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #333;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.load-more-btn:hover:not(:disabled) {
+  background: #e1e4e8;
+  border-color: #c6cbd1;
+}
+
+.load-more-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.commits-loading {
+  flex: 0 0 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.commits-slider-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #d73a49;
+  font-size: 0.875rem;
+  padding: 0.75rem;
+  background: #ffeaea;
+  border: 1px solid #f0b3b3;
+  border-radius: 6px;
+}
+
+.loading-spinner {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .commit-card {
+    flex: 0 0 240px;
+  }
+  
+  .slider-controls {
+    display: none; /* Hide controls on mobile, rely on touch scrolling */
+  }
+}

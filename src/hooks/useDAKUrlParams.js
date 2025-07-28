@@ -214,7 +214,7 @@ const useDAKUrlParams = () => {
     };
 
     fetchDataFromUrlParams();
-  }, [user, repo, branch, profile, repository, navigate]);
+  }, [user, repo, branch, profile, repository, navigate, location.state]);
 
   return {
     profile,

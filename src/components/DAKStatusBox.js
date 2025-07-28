@@ -3,6 +3,8 @@ import stagingGroundService from '../services/stagingGroundService';
 import dakComplianceService from '../services/dakComplianceService';
 import githubService from '../services/githubService';
 import SaveDialog from './SaveDialog';
+import CommitsSlider from './CommitsSlider';
+import GitHubActionsIntegration from './GitHubActionsIntegration';
 import './DAKStatusBox.css';
 
 const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) => {
@@ -351,6 +353,23 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
                   </div>
                 </div>
               )}
+
+              {/* Commits Section */}
+              <div className="status-section">
+                <CommitsSlider 
+                  repository={repository}
+                  selectedBranch={selectedBranch}
+                />
+              </div>
+
+              {/* GitHub Actions Integration */}
+              <div className="status-section">
+                <GitHubActionsIntegration
+                  repository={repository}
+                  selectedBranch={selectedBranch}
+                  hasWriteAccess={hasWriteAccess}
+                />
+              </div>
 
               {/* Quick Actions */}
               <div className="status-section">

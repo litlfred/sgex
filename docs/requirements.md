@@ -179,6 +179,20 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - All business process screens SHALL maintain consistent breadcrumb navigation
 - Permission notices SHALL be clearly displayed for users without write access
 
+**REQ-DAK-008**: The system SHALL provide public Decision Support Logic viewing capabilities
+- Decision Support Logic component card SHALL always display a 'View' link accessible to all users (authenticated or not)
+- The system SHALL provide a dedicated Decision Support Logic view page with two main sections:
+  1. **Variables Section**: Dynamic display of DAK.DT code system content as a sortable, searchable table
+  2. **Decision Tables Section**: List of DMN files from `input/decision-logic/` directory with comprehensive linking
+- Variables table SHALL include columns: Code, Display, Definition, Table, Tab, and CQL (rendered as formatted code blocks)
+- Decision tables SHALL provide three types of links per file:
+  - **DMN Source**: Pop-up dialog displaying raw DMN content with copy functionality
+  - **GitHub Source**: Direct link to the file on GitHub repository
+  - **HTML Rendering**: Link to corresponding HTML file in `input/pagecontent/` (when available)
+- All DMN and HTML renderings SHALL use styling from WHO DMN stylesheet (https://github.com/WorldHealthOrganization/smart-base/blob/main/input/scripts/includes/dmn.css)
+- All Decision Support Logic features SHALL be accessible without authentication
+- Navigation SHALL support direct URL access with repository parameters: `/decision-support-logic/:user/:repo/:branch`
+
 ### 2.4 URL Patterns and Routing
 
 **REQ-URL-001**: The system SHALL use consistent URL patterns for DAK component pages

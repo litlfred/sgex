@@ -1236,58 +1236,89 @@ class GitHubService {
     }
   }
 
-  // Get directory contents
-  async getDirectoryContents(owner, repo, path, branch = null) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
+  // Get directory contents (supports both authenticated and unauthenticated access)
+  async getDirectoryContents(owner, repo, path = '', ref = 'main') {
     try {
-      const params = {
+      // Create temporary Octokit instance for unauthenticated access if needed
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const { data } = await octokit.rest.repos.getContent({
         owner,
         repo,
-        path
-      };
-      
-      if (branch) {
-        params.ref = branch;
-      }
+        path,
+        ref
+      });
 
-      const { data } = await this.octokit.rest.repos.getContent(params);
-      return Array.isArray(data) ? data : [data];
+      if (Array.isArray(data)) {
+        return data;
+      } else {
+        throw new Error('Not a directory');
+      }
     } catch (error) {
-      console.error(`Failed to fetch directory contents for ${path}:`, error);
+      console.error(`Failed to get directory contents for ${path}:`, error);
       throw error;
     }
   }
 
-  // Get file content
-  async getFileContent(owner, repo, path, branch = null) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
+  // Get commits for a repository (supports unauthenticated access)
+  async getCommits(owner, repo, options = {}) {
     try {
+      // Create temporary Octokit instance for unauthenticated access if needed
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
       const params = {
         owner,
         repo,
-        path
+        per_page: options.per_page || 10,
+        page: options.page || 1
       };
-      
-      if (branch) {
-        params.ref = branch;
+
+      if (options.sha) {
+        params.sha = options.sha;
       }
 
-      const { data } = await this.octokit.rest.repos.getContent(params);
-      
-      if (data.type === 'file' && data.content) {
-        // Decode base64 content (browser-compatible)
-        return decodeURIComponent(escape(atob(data.content)));
-      } else {
-        throw new Error('File not found or is not a file');
+      if (options.since) {
+        params.since = options.since;
       }
+
+      if (options.until) {
+        params.until = options.until;
+      }
+
+      const { data } = await octokit.rest.repos.listCommits(params);
+      return data;
     } catch (error) {
-      console.error(`Failed to fetch file content for ${path}:`, error);
+      console.error('Failed to fetch commits:', error);
+      throw error;
+    }
+  }
+
+  // Get issues for a repository (supports unauthenticated access)
+  async getIssues(owner, repo, options = {}) {
+    try {
+      // Create temporary Octokit instance for unauthenticated access if needed
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const params = {
+        owner,
+        repo,
+        state: options.state || 'all',
+        per_page: options.per_page || 30,
+        page: options.page || 1
+      };
+
+      if (options.labels) {
+        params.labels = options.labels;
+      }
+
+      if (options.milestone) {
+        params.milestone = options.milestone;
+      }
+
+      const { data } = await octokit.rest.issues.listForRepo(params);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch issues:', error);
       throw error;
     }
   }
