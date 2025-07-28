@@ -16,11 +16,50 @@ const BPMNViewerComponent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Initialize authentication - runs once on mount
+  useEffect(() => {
+    const initializeAuth = () => {
+      console.log('🔐 BPMNViewer: Initializing authentication...');
+      
+      // Check if already authenticated
+      if (githubService.isAuth()) {
+        console.log('✅ BPMNViewer: Already authenticated');
+        setIsAuthenticated(true);
+        return;
+      }
+      
+      // Try to restore authentication from stored token
+      const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
+      if (token) {
+        console.log('🔑 BPMNViewer: Found stored token, attempting authentication...');
+        const success = githubService.authenticate(token);
+        if (success) {
+          console.log('✅ BPMNViewer: Authentication successful');
+          setIsAuthenticated(true);
+        } else {
+          console.error('❌ BPMNViewer: Failed to authenticate with stored token');
+          // Clean up invalid tokens
+          sessionStorage.removeItem('github_token');
+          localStorage.removeItem('github_token');
+          setError('Authentication failed. Please log in again.');
+          setLoading(false);
+        }
+      } else {
+        console.warn('⚠️ BPMNViewer: No authentication token found');
+        setError('Not authenticated with GitHub. Please log in to view BPMN diagrams.');
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, []);
 
   // Check write permissions
   useEffect(() => {
     const checkPermissions = async () => {
-      if (repository && profile) {
+      if (repository && profile && isAuthenticated) {
         try {
           // Simple permission check - in real app, this would use githubService
           const writeAccess = profile.token && repository.permissions?.push;
@@ -33,7 +72,7 @@ const BPMNViewerComponent = () => {
     };
 
     checkPermissions();
-  }, [repository, profile]);
+  }, [repository, profile, isAuthenticated]);
 
   // Load BPMN file content
   const loadBpmnContent = useCallback(async () => {
@@ -174,6 +213,23 @@ const BPMNViewerComponent = () => {
       } else if (err.status === 404) {
         console.error('🔍 BPMNViewer: 404 error detected - file not found');
         setError('BPMN file not found in the repository. The file may have been moved or deleted.');
+      } else if (err.message.includes('Not authenticated') || err.status === 401) {
+        console.error('🔒 BPMNViewer: Authentication error detected');
+        setError('Not authenticated with GitHub. Please log in to view BPMN diagrams.');
+        // Try to re-authenticate
+        const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
+        if (token) {
+          console.log('🔄 BPMNViewer: Attempting to re-authenticate...');
+          const success = githubService.authenticate(token);
+          if (success) {
+            setError('Authentication restored. Please retry loading the diagram.');
+          } else {
+            // Clean up invalid tokens
+            sessionStorage.removeItem('github_token');
+            localStorage.removeItem('github_token');
+            setError('Authentication failed. Please log in again.');
+          }
+        }
       } else if (err.status === 403) {
         console.error('🔒 BPMNViewer: 403 error detected - access denied');
         setError('Access denied. This repository may be private and require authentication.');
@@ -204,14 +260,6 @@ const BPMNViewerComponent = () => {
 
   // Initialize BPMN viewer with improved container readiness check
   useEffect(() => {
-    const cleanupContainer = () => {
-      if (containerRef.current) {
-        // Clear any existing BPMN.js content from the container
-        containerRef.current.innerHTML = '';
-        console.log('🧹 BPMNViewer: Container cleaned up');
-      }
-    };
-
     const initializeViewer = () => {
       console.log('🛠️ BPMNViewer: initializeViewer called with:', {
         hasContainer: !!containerRef.current,
@@ -221,18 +269,14 @@ const BPMNViewerComponent = () => {
         viewerRefCurrent: viewerRef.current
       });
 
-      if (containerRef.current && !viewerRef.current && selectedFile) {
+      if (containerRef.current && !viewerRef.current && selectedFile && isAuthenticated) {
         try {
-          // Clean the container before creating a new viewer
-          cleanupContainer();
-          
           console.log('🔧 BPMNViewer: Creating new BPMN viewer...');
           console.log('🔧 BPMNViewer: Container element details:', {
             tagName: containerRef.current.tagName,
             className: containerRef.current.className,
             clientWidth: containerRef.current.clientWidth,
-            clientHeight: containerRef.current.clientHeight,
-            innerHTML: containerRef.current.innerHTML.length
+            clientHeight: containerRef.current.clientHeight
           });
           
           viewerRef.current = new BpmnViewer({
@@ -250,39 +294,10 @@ const BPMNViewerComponent = () => {
           console.error('🔍 BPMNViewer: Initialization error details:', {
             message: error.message,
             stack: error.stack,
-            containerExists: !!containerRef.current,
-            containerContent: containerRef.current ? containerRef.current.innerHTML : 'N/A'
+            containerExists: !!containerRef.current
           });
-          
-          // If it's an "element already exists" error, try to clean up and retry once
-          if (error.message.includes('already exists')) {
-            console.log('🔄 BPMNViewer: Detected "element already exists" error, attempting cleanup and retry...');
-            cleanupContainer();
-            
-            // Wait a bit and try again
-            setTimeout(() => {
-              if (containerRef.current && !viewerRef.current) {
-                try {
-                  console.log('🔄 BPMNViewer: Retrying viewer creation after cleanup...');
-                  viewerRef.current = new BpmnViewer({
-                    container: containerRef.current,
-                    keyboard: {
-                      bindTo: window
-                    }
-                  });
-                  console.log('✅ BPMNViewer: BPMN viewer initialized successfully on retry');
-                  loadBpmnContent();
-                } catch (retryError) {
-                  console.error('❌ BPMNViewer: Failed to initialize BPMN viewer on retry:', retryError);
-                  setError(`Failed to initialize BPMN viewer: ${retryError.message}`);
-                  setLoading(false);
-                }
-              }
-            }, 100);
-          } else {
-            setError(`Failed to initialize BPMN viewer: ${error.message}`);
-            setLoading(false);
-          }
+          setError('Failed to initialize BPMN viewer');
+          setLoading(false);
         }
       } else {
         console.log('⚠️ BPMNViewer: Skipping viewer initialization:', {
@@ -312,7 +327,7 @@ const BPMNViewerComponent = () => {
       }
     };
 
-    if (selectedFile) {
+    if (selectedFile && isAuthenticated) {
       console.log('⏰ BPMNViewer: Starting container readiness check for selectedFile:', selectedFile.name);
       waitForContainer();
     } else {
@@ -330,10 +345,8 @@ const BPMNViewerComponent = () => {
         }
         viewerRef.current = null;
       }
-      // Also clean up the container on unmount
-      cleanupContainer();
     };
-  }, [selectedFile, loadBpmnContent]);
+  }, [selectedFile, loadBpmnContent, isAuthenticated]);
 
   const handleEditMode = () => {
     if (!hasWriteAccess) {
@@ -455,10 +468,41 @@ const BPMNViewerComponent = () => {
                 <div className="error-actions">
                   <button 
                     className="action-btn secondary"
-                    onClick={() => loadBpmnContent()}
+                    onClick={() => {
+                      setError(null);
+                      setLoading(true);
+                      
+                      // Check authentication before retrying
+                      if (!githubService.isAuth()) {
+                        const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
+                        if (token) {
+                          const success = githubService.authenticate(token);
+                          if (success) {
+                            setIsAuthenticated(true);
+                            loadBpmnContent();
+                          } else {
+                            setError('Authentication failed. Please log in again.');
+                            setLoading(false);
+                          }
+                        } else {
+                          setError('No authentication token found. Please log in again.');
+                          setLoading(false);
+                        }
+                      } else {
+                        loadBpmnContent();
+                      }
+                    }}
                   >
                     🔄 Retry
                   </button>
+                  {error && error.includes('Not authenticated') && (
+                    <button 
+                      className="action-btn primary"
+                      onClick={() => navigate('/')}
+                    >
+                      🔐 Log In
+                    </button>
+                  )}
                   <button 
                     className="action-btn secondary"
                     onClick={() => navigate('/business-process-selection', {
