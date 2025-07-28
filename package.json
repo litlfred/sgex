@@ -34,8 +34,11 @@
   },
   "jest": {
     "transformIgnorePatterns": [
-      "node_modules/(?!(@octokit|universal-user-agent|before-after-hook|@babel|babel-runtime|@ungap|jsdom)/)"
-    ]
+      "node_modules/(?!(@octokit|universal-user-agent|before-after-hook|@babel|babel-runtime|@ungap|jsdom|@uiw)/)"
+    ],
+    "moduleNameMapper": {
+      "\\.(css|less|scss|sass)$": "identity-obj-proxy"
+    }
   },
   "browserslist": {
     "production": [
@@ -57,6 +60,7 @@
   "devDependencies": {
     "@craco/craco": "^7.1.0",
     "http-proxy-middleware": "^3.0.5",
+    "identity-obj-proxy": "^3.0.0",
     "jsdom": "^26.1.0"
   }
 }

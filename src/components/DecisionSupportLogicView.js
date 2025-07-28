@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
-import '@uiw/react-md-editor/markdown-editor.css';
-import '@uiw/react-markdown-preview/markdown.css';
 import MDEditor from '@uiw/react-md-editor';
 import './DecisionSupportLogicView.css';
 
@@ -112,8 +110,8 @@ const DecisionSupportLogicView = () => {
           setFilteredVariables(codeSystemData.concepts || []);
         } catch (error) {
           console.warn('DAK.fsh not found, repository may not have DAK code system');
-          // Only use fallback data in test environment, not for real repositories
-          if (process.env.NODE_ENV === 'test') {
+          // Use fallback data in test environment or for demo repositories
+          if (process.env.NODE_ENV === 'test' || (profile && profile.isDemo)) {
             const fallbackData = createFallbackDAKDT();
             setDakDTCodeSystem(fallbackData);
             setFilteredVariables(fallbackData.concepts || []);
@@ -378,28 +376,86 @@ const DecisionSupportLogicView = () => {
       name: 'Decision Table',
       concepts: [
         {
-          Code: 'VAR001',
-          Display: 'Patient Age',
-          Definition: 'The age of the patient in years',
-          table: 'Demographics',
-          tab: 'Basic Info',
-          CQL: `define "Patient Age":\n  AgeInYears()\n\ndefine "Age Range":\n  case\n    when "Patient Age" < 18 then 'Pediatric'\n    when "Patient Age" >= 65 then 'Geriatric'\n    else 'Adult'\n  end`
+          Code: 'Patient_Age_Years',
+          Display: 'Patient Age in Years',
+          Definition: `The age of the patient in **years** at the time of encounter.
+
+**Referenced in the following locations:**
+* Decision Tables: IMMZ.DT.Eligibility.Age
+* Tabs: Demographics, Clinical Assessment
+
+This variable is *critical* for determining vaccine eligibility based on age requirements.`,
+          Tables: 'IMMZ.DT.Eligibility.Age',
+          Tabs: 'Demographics',
+          CQL: `//Found in input/cql/IMMZCommonElements.cql
+
+define "Patient Age in Years":
+  AgeInYears()
+
+define "Age Range Category":
+  case
+    when "Patient Age in Years" < 18 then 'Pediatric'
+    when "Patient Age in Years" >= 65 then 'Geriatric'
+    else 'Adult'
+  end`
         },
         {
-          Code: 'VAR002',
-          Display: 'BMI Category',
-          Definition: 'Body Mass Index categorization',
-          table: 'Clinical Measurements',
-          tab: 'Vitals',
-          CQL: `define "BMI":\n  [Observation: "Body mass index"] BMIObservation\n    where BMIObservation.status = 'final'\n    return BMIObservation.value as Quantity\n\ndefine "BMI Category":\n  case\n    when "BMI" < 18.5 then 'Underweight'\n    when "BMI" < 25 then 'Normal'\n    when "BMI" < 30 then 'Overweight'\n    else 'Obese'\n  end`
+          Code: 'Vaccination_History_Complete',
+          Display: 'Vaccination History Complete',
+          Definition: `Boolean indicator of whether the patient has a **complete vaccination history** recorded in the system.
+
+**Calculation logic:**
+1. Count total required vaccines for patient's age group
+2. Count completed vaccinations in patient record
+3. Return \`true\` if counts match, \`false\` otherwise
+
+Used for determining if additional vaccines are needed.`,
+          Tables: 'IMMZ.DT.Screening.History',
+          Tabs: 'Vaccination Status',
+          CQL: `//Found in input/cql/IMMZVaccinationElements.cql
+
+define "Required Vaccines for Age":
+  [ValueSet: "Required Immunizations"] V
+    where V applies to "Patient Age in Years"
+
+define "Completed Vaccinations":
+  [Immunization] I
+    where I.status = 'completed'
+      and I.vaccineCode in "Required Vaccines for Age"
+
+define "Vaccination History Complete":
+  Count("Completed Vaccinations") >= Count("Required Vaccines for Age")`
         },
         {
-          Code: 'VAR003',
-          Display: 'Vaccination Status',
-          Definition: 'Current vaccination status for immunization recommendations',
-          table: 'Immunizations',
-          tab: 'Status',
-          CQL: `define "Completed Vaccinations":\n  [Immunization] I\n    where I.status = 'completed'\n      and I.vaccineCode in "Required Vaccines"\n\ndefine "Vaccination Complete":\n  Count("Completed Vaccinations") >= 3`
+          Code: 'Contraindication_Present',
+          Display: 'Contraindication Present',
+          Definition: `Indicates presence of any **medical contraindications** that would prevent vaccine administration.
+
+**Contraindication types checked:**
+- Severe allergic reactions
+- Immunocompromising conditions  
+- Active severe illness
+- Previous adverse reactions
+
+Returns \`true\` if any contraindication exists, \`false\` if safe to vaccinate.`,
+          Tables: 'IMMZ.DT.Safety.Check',
+          Tabs: 'Safety Assessment',
+          CQL: `//Found in input/cql/IMMZSafetyElements.cql
+
+define "Severe Allergic Reactions":
+  [Condition] C
+    where C.code in "Severe Allergy Codes"
+      and C.clinicalStatus = 'active'
+
+define "Immunocompromising Conditions":
+  [Condition] C
+    where C.code in "Immunodeficiency Codes"
+      and C.clinicalStatus = 'active'
+
+define "Contraindication Present":
+  exists("Severe Allergic Reactions")
+    or exists("Immunocompromising Conditions")
+    or exists("Active Severe Illness")`
         }
       ]
     };
