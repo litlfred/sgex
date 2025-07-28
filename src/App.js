@@ -16,6 +16,7 @@ import BPMNSource from './components/BPMNSource';
 import DocumentationViewer from './components/DocumentationViewer';
 import TestDashboard from './components/TestDashboard';
 import PagesManager from './components/PagesManager';
+import NotFound from './components/NotFound';
 import logger from './utils/logger';
 import './App.css';
 
@@ -58,6 +59,7 @@ function App() {
           <Route path="/bpmn-source" element={<BPMNSource />} />
           <Route path="/docs/:docId" element={<DocumentationViewer />} />
           <Route path="/pages" element={<PagesManager />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </Router>
