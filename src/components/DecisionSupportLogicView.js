@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import MDEditor from '@uiw/react-md-editor';
@@ -28,45 +28,47 @@ const DecisionSupportLogicView = () => {
   const [activeSection, setActiveSection] = useState('variables'); // 'variables' or 'tables'
 
   // Initialize repository data if not available
-  useEffect(() => {
-    const initializeData = async () => {
-      if ((!profile || !repository) && user && repo) {
-        try {
-          setLoading(true);
-          setError(null);
+  const initializeData = useCallback(async () => {
+    // Only initialize if we have URL params but missing data
+    if (!profile && !repository && user && repo) {
+      try {
+        setLoading(true);
+        setError(null);
 
-          // Create profile for public repository access (not demo mode)
-          // This allows access to real repositories without authentication
-          const publicProfile = {
-            login: user,
-            name: user.charAt(0).toUpperCase() + user.slice(1),
-            avatar_url: `https://github.com/${user}.png`,
-            type: 'User',
-            isDemo: false  // This is public access to a real repository
-          };
+        // Create profile for public repository access (not demo mode)
+        // This allows access to real repositories without authentication
+        const publicProfile = {
+          login: user,
+          name: user.charAt(0).toUpperCase() + user.slice(1),
+          avatar_url: `https://github.com/${user}.png`,
+          type: 'User',
+          isDemo: false  // This is public access to a real repository
+        };
 
-          const publicRepository = {
-            name: repo,
-            full_name: `${user}/${repo}`,
-            owner: { login: user },
-            default_branch: branch || 'main',
-            html_url: `https://github.com/${user}/${repo}`,
-            isDemo: false  // This is a real repository
-          };
+        const publicRepository = {
+          name: repo,
+          full_name: `${user}/${repo}`,
+          owner: { login: user },
+          default_branch: branch || 'main',
+          html_url: `https://github.com/${user}/${repo}`,
+          isDemo: false  // This is a real repository
+        };
 
-          setProfile(publicProfile);
-          setRepository(publicRepository);
-          setSelectedBranch(branch || 'main');
-        } catch (err) {
-          console.error('Error initializing data:', err);
-          setError('Failed to load data. Please check the URL or try again.');
-        }
+        setProfile(publicProfile);
+        setRepository(publicRepository);
+        setSelectedBranch(branch || 'main');
+      } catch (err) {
+        console.error('Error initializing data:', err);
+        setError('Failed to load data. Please check the URL or try again.');
       }
-      setLoading(false);
-    };
-
-    initializeData();
+    }
+    setLoading(false);
   }, [user, repo, branch, profile, repository]);
+
+  useEffect(() => {
+    initializeData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initializeData]);
 
   // Load DAK decision support data
   useEffect(() => {
@@ -187,7 +189,8 @@ const DecisionSupportLogicView = () => {
     };
 
     loadDecisionSupportData();
-  }, [repository, selectedBranch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps  
+  }, [repository, selectedBranch, profile?.isDemo]); // Include profile.isDemo for fallback logic
 
   const parseFSHCodeSystem = (fshContent) => {
     // Enhanced FSH parser for DAK code system

@@ -1091,31 +1091,6 @@ class GitHubService {
     }
   }
 
-  // Get file content (supports both authenticated and unauthenticated access)
-  async getFileContent(owner, repo, path, ref = 'main') {
-    try {
-      // Create temporary Octokit instance for unauthenticated access if needed
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
-      
-      const { data } = await octokit.rest.repos.getContent({
-        owner,
-        repo,
-        path,
-        ref
-      });
-
-      if (data.type === 'file' && data.content) {
-        // Decode base64 content
-        return decodeURIComponent(escape(atob(data.content)));
-      } else {
-        throw new Error('Not a file or no content available');
-      }
-    } catch (error) {
-      console.error(`Failed to get file content for ${path}:`, error);
-      throw error;
-    }
-  }
-
   // Get recent commits for a repository branch
   async getRecentCommits(owner, repo, branch = 'main', per_page = 5) {
     if (!this.isAuth()) {
