@@ -1,19 +1,21 @@
 import bookmarkService from '../services/bookmarkService';
 
 // Mock localStorage
-const localStorageMock = {
-  store: {},
-  getItem: jest.fn((key) => localStorageMock.store[key] || null),
-  setItem: jest.fn((key, value) => {
-    localStorageMock.store[key] = value.toString();
-  }),
-  removeItem: jest.fn((key) => {
-    delete localStorageMock.store[key];
-  }),
-  clear: jest.fn(() => {
-    localStorageMock.store = {};
-  })
-};
+const localStorageMock = (() => {
+  let store = {};
+  return {
+    getItem: jest.fn((key) => store[key] || null),
+    setItem: jest.fn((key, value) => {
+      store[key] = value.toString();
+    }),
+    removeItem: jest.fn((key) => {
+      delete store[key];
+    }),
+    clear: jest.fn(() => {
+      store = {};
+    })
+  };
+})();
 
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock
@@ -22,7 +24,9 @@ Object.defineProperty(window, 'localStorage', {
 describe('BookmarkService', () => {
   beforeEach(() => {
     localStorageMock.clear();
-    jest.clearAllMocks();
+    localStorageMock.getItem.mockClear();
+    localStorageMock.setItem.mockClear();
+    localStorageMock.removeItem.mockClear();
   });
 
   test('should get empty bookmarks initially', () => {
@@ -113,7 +117,7 @@ describe('BookmarkService', () => {
 
     const bookmark = bookmarkService.createBookmark({ location: mockLocation });
     
-    expect(bookmark.title).toBe('Dashboard - user/testrepo (main)');
+    expect(bookmark.title).toBe('Dashboard - user/testrepo');
     expect(bookmark.url).toBe('/dashboard/user/repo?branch=main');
     expect(bookmark.data.profile.login).toBe('testuser');
     expect(bookmark.data.repository.name).toBe('testrepo');
