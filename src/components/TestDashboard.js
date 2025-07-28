@@ -110,6 +110,7 @@ const TestDashboard = () => {
               👁️ Read-Only Access (Test Mode)
             </span>
           </div>
+          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
 
