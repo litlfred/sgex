@@ -96,6 +96,13 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
     }
   };
 
+  // Handle removing individual file
+  const handleRemoveFile = (filePath) => {
+    if (window.confirm(`Are you sure you want to remove "${filePath}" from staging? This cannot be undone.`)) {
+      stagingGroundService.removeFile(filePath);
+    }
+  };
+
   // Get validation summary for display
   const getValidationSummary = () => {
     if (!validation) {
@@ -210,6 +217,16 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
                           <span className="file-time">
                             {new Date(file.lastModified).toLocaleTimeString()}
                           </span>
+                          <button
+                            className="remove-file-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveFile(file.path);
+                            }}
+                            title={`Remove ${file.path} from staging`}
+                          >
+                            🗑️
+                          </button>
                         </div>
                       </div>
                     ))}
