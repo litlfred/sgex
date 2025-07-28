@@ -1,5 +1,6 @@
 # SGEX Workbench (WHO SMART Guidelines Exchange)
 
+
 <div align="center">
   <img src="public/sgex-mascot.png" alt="SGEX Workbench Helper" width="200" height="200">
   <p><em>Meet your SGEX Workbench Helper - here to guide you through WHO SMART Guidelines DAK editing!</em></p>
@@ -58,6 +59,17 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
    ```bash
    npm test
    ```
+### Docker
+
+1. **Build the docker image**
+```bash
+docker build -t sgex .
+```
+
+2. **Start the docker image**
+```bash
+docker run --rm -p 3000:3000 sgex
+```
 
 ## Authentication
 
