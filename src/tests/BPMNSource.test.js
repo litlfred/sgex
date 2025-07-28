@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import BPMNSource from '../components/BPMNSource';
 import githubService from '../services/githubService';
@@ -146,6 +146,54 @@ describe('BPMNSource GitHub URL Generation', () => {
     expect(viewOnGitHubLink).toHaveAttribute(
       'href',
       'https://github.com/WorldHealthOrganization/smart-immunizations/blob/feature-branch/input/business-processes/IMMZ.D.Administer%20Vaccine.bpmn'
+    );
+  });
+
+  test('handles branches with special characters by URL encoding them', async () => {
+    const locationState = {
+      profile: {
+        login: 'testuser',
+        avatar_url: 'https://github.com/testuser.png',
+        name: 'Test User',
+        token: 'mock-token' // Add token to simulate authentication
+      },
+      repository: {
+        name: 'smart-immunizations',
+        full_name: 'WorldHealthOrganization/smart-immunizations',
+        owner: { login: 'WorldHealthOrganization' },
+        permissions: { push: true } // Add write permissions
+      },
+      selectedFile: {
+        name: 'IMMZ.D.Administer Vaccine.bpmn',
+        path: 'input/business-processes/IMMZ.D.Administer%20Vaccine.bpmn',
+        size: 5120
+      },
+      selectedBranch: 'feature/new-dak-component'
+    };
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/bpmn-source', state: locationState }]}>
+        <BPMNSource />
+      </MemoryRouter>
+    );
+
+    // Wait for component to load
+    await waitFor(() => {
+      expect(screen.getByText('IMMZ.D.Administer Vaccine.bpmn')).toBeInTheDocument();
+    });
+
+    // Find the "View on GitHub" link and check it uses URL-encoded branch name
+    const viewOnGitHubLink = screen.getByText('👁️ View on GitHub').closest('a');
+    expect(viewOnGitHubLink).toHaveAttribute(
+      'href',
+      'https://github.com/WorldHealthOrganization/smart-immunizations/blob/feature%2Fnew-dak-component/input/business-processes/IMMZ.D.Administer%20Vaccine.bpmn'
+    );
+
+    // Find the "Edit on GitHub" link and check it also uses URL-encoded branch name
+    const editOnGitHubLink = screen.getByText('✏️ Edit on GitHub').closest('a');
+    expect(editOnGitHubLink).toHaveAttribute(
+      'href',
+      'https://github.com/WorldHealthOrganization/smart-immunizations/edit/feature%2Fnew-dak-component/input/business-processes/IMMZ.D.Administer%20Vaccine.bpmn'
     );
   });
 });
