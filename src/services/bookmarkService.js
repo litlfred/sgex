@@ -22,7 +22,7 @@ class BookmarkService {
 
   /**
    * Save a new bookmark
-   * @param {Object} bookmark - Bookmark object with title, url, and optional data
+   * @param {Object} bookmark - Bookmark object with title, url, pageType, and optional data
    * @returns {boolean} Success status
    */
   addBookmark(bookmark) {
@@ -35,9 +35,10 @@ class BookmarkService {
       const newBookmark = {
         id: bookmark.id || Date.now().toString(),
         title: bookmark.title,
+        pageType: bookmark.pageType || 'Other',
         url: bookmark.url,
         timestamp: new Date().toISOString(),
-        ...bookmark.data // Additional data like user, repo, branch
+        data: bookmark.data || {} // Store additional data separately
       };
 
       if (existingIndex >= 0) {
@@ -97,45 +98,140 @@ class BookmarkService {
     const { pathname, search, state } = params.location || {};
     const { profile, repository, selectedBranch } = state || {};
     
-    // Generate title based on current route and context
+    // Extract user/repo info from URL params if not in state
+    const urlParts = pathname.split('/').filter(Boolean);
+    let user, repo, branch;
+    
+    // Try to extract from URL patterns like /dashboard/user/repo/branch
+    if (urlParts.length >= 3 && ['dashboard', 'core-data-dictionary-viewer', 'business-process-selection', 'decision-support-logic'].includes(urlParts[0])) {
+      user = urlParts[1];
+      repo = urlParts[2];
+      branch = urlParts[3];
+    }
+    
+    // Use state data if available, otherwise fall back to URL params
+    const contextUser = repository?.owner?.login || repository?.full_name?.split('/')[0] || user;
+    const contextRepo = repository?.name || repo;
+    const contextBranch = selectedBranch || branch || 'main';
+    const fullName = repository?.full_name || (contextUser && contextRepo ? `${contextUser}/${contextRepo}` : null);
+    
+    // Generate title and page type based on current route and context
     let title = 'SGEX Page';
+    let pageType = 'Other';
     
     if (pathname) {
       if (pathname.includes('/dashboard')) {
-        title = repository ? `Dashboard - ${repository.full_name}` : 'DAK Dashboard';
+        pageType = 'Dashboard';
+        if (fullName) {
+          if (contextBranch && contextBranch !== 'main') {
+            title = `DAK: ${fullName}/${contextBranch}`;
+          } else {
+            title = `DAK: ${fullName}`;
+          }
+        } else {
+          title = 'DAK Dashboard';
+        }
       } else if (pathname.includes('/core-data-dictionary-viewer')) {
-        title = repository ? `Data Dictionary - ${repository.full_name}` : 'Core Data Dictionary';
+        pageType = 'Core Data Dictionary';
+        if (fullName) {
+          if (contextBranch && contextBranch !== 'main') {
+            title = `DAK: ${fullName}/${contextBranch}`;
+          } else {
+            title = `DAK: ${fullName}`;
+          }
+        } else {
+          title = 'Core Data Dictionary';
+        }
       } else if (pathname.includes('/business-process-selection')) {
-        title = repository ? `Business Processes - ${repository.full_name}` : 'Business Process Selection';
+        pageType = 'Business Process Selection';
+        if (fullName) {
+          if (contextBranch && contextBranch !== 'main') {
+            title = `DAK: ${fullName}/${contextBranch}`;
+          } else {
+            title = `DAK: ${fullName}`;
+          }
+        } else {
+          title = 'Business Process Selection';
+        }
       } else if (pathname.includes('/decision-support-logic')) {
-        title = repository ? `Decision Logic - ${repository.full_name}` : 'Decision Support Logic';
+        pageType = 'Decision Support Logic';
+        if (fullName) {
+          if (contextBranch && contextBranch !== 'main') {
+            title = `DAK: ${fullName}/${contextBranch}`;
+          } else {
+            title = `DAK: ${fullName}`;
+          }
+        } else {
+          title = 'Decision Support Logic';
+        }
+      } else if (pathname.includes('/editor/')) {
+        pageType = 'Component Editor';
+        const componentId = pathname.split('/editor/')[1];
+        if (fullName && componentId) {
+          if (contextBranch && contextBranch !== 'main') {
+            title = `${componentId} in DAK: ${fullName}/${contextBranch}`;
+          } else {
+            title = `${componentId} in DAK: ${fullName}`;
+          }
+        } else {
+          title = `Editor - ${componentId || 'component'}`;
+        }
+      } else if (pathname.includes('/bpmn-editor')) {
+        pageType = 'BPMN Editor';
+        // Try to extract BPMN file name from search params or other context
+        const searchParams = new URLSearchParams(search || '');
+        const bpmnFile = searchParams.get('file') || searchParams.get('asset') || 'BPMN Diagram';
+        if (fullName) {
+          if (contextBranch && contextBranch !== 'main') {
+            title = `${bpmnFile} in DAK: ${fullName}/${contextBranch}`;
+          } else {
+            title = `${bpmnFile} in DAK: ${fullName}`;
+          }
+        } else {
+          title = 'BPMN Editor';
+        }
+      } else if (pathname.includes('/bpmn-viewer')) {
+        pageType = 'BPMN Viewer';
+        const searchParams = new URLSearchParams(search || '');
+        const bpmnFile = searchParams.get('file') || searchParams.get('asset') || 'BPMN Diagram';
+        if (fullName) {
+          if (contextBranch && contextBranch !== 'main') {
+            title = `${bpmnFile} in DAK: ${fullName}/${contextBranch}`;
+          } else {
+            title = `${bpmnFile} in DAK: ${fullName}`;
+          }
+        } else {
+          title = 'BPMN Viewer';
+        }
       } else if (pathname.includes('/docs/')) {
+        pageType = 'Documentation';
         const docId = pathname.split('/docs/')[1];
         title = `Documentation - ${docId}`;
-      } else if (pathname.includes('/editor/')) {
-        const componentId = pathname.split('/editor/')[1];
-        title = `Editor - ${componentId}`;
-      } else if (pathname.includes('/bpmn-editor')) {
-        title = 'BPMN Editor';
-      } else if (pathname.includes('/bpmn-viewer')) {
-        title = 'BPMN Viewer';
       } else if (pathname.includes('/pages')) {
-        title = 'Pages Manager';
+        pageType = 'Pages Manager';
+        if (fullName) {
+          if (contextBranch && contextBranch !== 'main') {
+            title = `DAK: ${fullName}/${contextBranch}`;
+          } else {
+            title = `DAK: ${fullName}`;
+          }
+        } else {
+          title = 'Pages Manager';
+        }
       }
-    }
-
-    // Add branch info if available
-    if (selectedBranch && selectedBranch !== 'main') {
-      title += ` (${selectedBranch})`;
     }
 
     return {
       title,
+      pageType,
       url: pathname + (search || ''),
       data: {
         profile: profile ? { login: profile.login, avatar_url: profile.avatar_url } : null,
         repository: repository ? { name: repository.name, full_name: repository.full_name } : null,
-        selectedBranch
+        selectedBranch: contextBranch,
+        user: contextUser,
+        repo: contextRepo,
+        branch: contextBranch
       }
     };
   }

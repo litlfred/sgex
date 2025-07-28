@@ -82,6 +82,17 @@ const UserDropdown = ({ profile }) => {
     });
   };
 
+  const groupBookmarksByPageType = (bookmarks) => {
+    return bookmarks.reduce((groups, bookmark) => {
+      const pageType = bookmark.pageType || 'Other';
+      if (!groups[pageType]) {
+        groups[pageType] = [];
+      }
+      groups[pageType].push(bookmark);
+      return groups;
+    }, {});
+  };
+
   return (
     <div className="user-dropdown" ref={dropdownRef}>
       <button 
@@ -122,33 +133,40 @@ const UserDropdown = ({ profile }) => {
             </button>
           </div>
 
-          {/* Bookmarks list */}
+          {/* Bookmarks list organized by page type */}
           {bookmarks.length > 0 && (
             <>
               <div className="dropdown-divider"></div>
               <div className="dropdown-section">
                 <div className="dropdown-section-title">Bookmarks</div>
                 <div className="bookmarks-list">
-                  {bookmarks.map((bookmark) => (
-                    <div key={bookmark.id} className="bookmark-item">
-                      <button 
-                        className="bookmark-link"
-                        onClick={() => navigateToBookmark(bookmark)}
-                        title={bookmark.title}
-                      >
-                        <span className="bookmark-title">{bookmark.title}</span>
-                        <span className="bookmark-date">{formatDate(bookmark.timestamp)}</span>
-                      </button>
-                      <button 
-                        className="bookmark-remove"
-                        onClick={() => removeBookmark(bookmark.id)}
-                        title="Remove bookmark"
-                        aria-label="Remove bookmark"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+                  {Object.entries(groupBookmarksByPageType(bookmarks))
+                    .sort(([a], [b]) => a.localeCompare(b)) // Sort page types alphabetically
+                    .map(([pageType, pageBookmarks]) => (
+                      <div key={pageType} className="bookmark-page-group">
+                        <div className="bookmark-page-type">{pageType}</div>
+                        {pageBookmarks.map((bookmark) => (
+                          <div key={bookmark.id} className="bookmark-item">
+                            <button 
+                              className="bookmark-link"
+                              onClick={() => navigateToBookmark(bookmark)}
+                              title={bookmark.title}
+                            >
+                              <span className="bookmark-title">{bookmark.title}</span>
+                              <span className="bookmark-date">{formatDate(bookmark.timestamp)}</span>
+                            </button>
+                            <button 
+                              className="bookmark-remove"
+                              onClick={() => removeBookmark(bookmark.id)}
+                              title="Remove bookmark"
+                              aria-label="Remove bookmark"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
                 </div>
               </div>
             </>

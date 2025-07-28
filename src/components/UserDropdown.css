@@ -148,11 +148,29 @@
   overflow-y: auto;
 }
 
+.bookmark-page-group {
+  margin-bottom: 0.75rem;
+}
+
+.bookmark-page-group:last-child {
+  margin-bottom: 0;
+}
+
+.bookmark-page-type {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0078d4;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #e1e5e9;
+}
+
 .bookmark-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.25rem;
+  margin-left: 0.5rem; /* Indent bookmark items under page type */
 }
 
 .bookmark-item:last-child {

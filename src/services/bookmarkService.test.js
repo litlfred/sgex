@@ -1,28 +1,38 @@
 import bookmarkService from '../services/bookmarkService';
 
 // Mock localStorage
-const localStorageMock = (() => {
-  let store = {};
-  return {
-    getItem: jest.fn((key) => store[key] || null),
-    setItem: jest.fn((key, value) => {
-      store[key] = value.toString();
-    }),
-    removeItem: jest.fn((key) => {
-      delete store[key];
-    }),
-    clear: jest.fn(() => {
-      store = {};
-    })
-  };
-})();
+let store = {};
+
+const localStorageMock = {
+  getItem: jest.fn((key) => {
+    const value = store[key] || null;
+    return value;
+  }),
+  setItem: jest.fn((key, value) => {
+    store[key] = value.toString();
+  }),
+  removeItem: jest.fn((key) => {
+    delete store[key];
+  }),
+  clear: jest.fn(() => {
+    Object.keys(store).forEach(key => delete store[key]);
+  })
+};
+
+// Set up the global localStorage mock
+Object.defineProperty(global, 'localStorage', {
+  value: localStorageMock,
+  writable: true
+});
 
 Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
+  value: localStorageMock,
+  writable: true
 });
 
 describe('BookmarkService', () => {
   beforeEach(() => {
+    // Reset localStorage store by recreating it
     localStorageMock.clear();
     localStorageMock.getItem.mockClear();
     localStorageMock.setItem.mockClear();
@@ -37,6 +47,7 @@ describe('BookmarkService', () => {
   test('should add a bookmark', () => {
     const bookmark = {
       title: 'Test Page',
+      pageType: 'Dashboard',
       url: '/dashboard/user/repo',
       data: { user: 'testuser', repo: 'testrepo' }
     };
@@ -47,6 +58,7 @@ describe('BookmarkService', () => {
     const bookmarks = bookmarkService.getBookmarks();
     expect(bookmarks).toHaveLength(1);
     expect(bookmarks[0].title).toBe('Test Page');
+    expect(bookmarks[0].pageType).toBe('Dashboard');
     expect(bookmarks[0].url).toBe('/dashboard/user/repo');
     expect(bookmarks[0].id).toBeDefined();
     expect(bookmarks[0].timestamp).toBeDefined();
@@ -55,12 +67,14 @@ describe('BookmarkService', () => {
   test('should update existing bookmark with same URL', () => {
     const bookmark1 = {
       title: 'Test Page',
+      pageType: 'Dashboard',
       url: '/dashboard/user/repo',
       data: { user: 'testuser' }
     };
 
     const bookmark2 = {
       title: 'Updated Test Page',
+      pageType: 'Dashboard',
       url: '/dashboard/user/repo',
       data: { user: 'testuser', repo: 'testrepo' }
     };
@@ -71,12 +85,14 @@ describe('BookmarkService', () => {
     const bookmarks = bookmarkService.getBookmarks();
     expect(bookmarks).toHaveLength(1);
     expect(bookmarks[0].title).toBe('Updated Test Page');
+    expect(bookmarks[0].pageType).toBe('Dashboard');
     expect(bookmarks[0].data.repo).toBe('testrepo');
   });
 
   test('should remove a bookmark', () => {
     const bookmark = {
       title: 'Test Page',
+      pageType: 'Dashboard',
       url: '/dashboard/user/repo'
     };
 
@@ -94,6 +110,7 @@ describe('BookmarkService', () => {
   test('should check if URL is bookmarked', () => {
     const bookmark = {
       title: 'Test Page',
+      pageType: 'Dashboard',
       url: '/dashboard/user/repo'
     };
 
@@ -117,7 +134,8 @@ describe('BookmarkService', () => {
 
     const bookmark = bookmarkService.createBookmark({ location: mockLocation });
     
-    expect(bookmark.title).toBe('Dashboard - user/testrepo');
+    expect(bookmark.title).toBe('DAK: user/testrepo');
+    expect(bookmark.pageType).toBe('Dashboard');
     expect(bookmark.url).toBe('/dashboard/user/repo?branch=main');
     expect(bookmark.data.profile.login).toBe('testuser');
     expect(bookmark.data.repository.name).toBe('testrepo');
@@ -129,6 +147,7 @@ describe('BookmarkService', () => {
     for (let i = 0; i < 25; i++) {
       bookmarkService.addBookmark({
         title: `Test Page ${i}`,
+        pageType: 'Other',
         url: `/page${i}`
       });
     }
@@ -140,7 +159,7 @@ describe('BookmarkService', () => {
   });
 
   test('should clear all bookmarks', () => {
-    bookmarkService.addBookmark({ title: 'Test Page', url: '/test' });
+    bookmarkService.addBookmark({ title: 'Test Page', pageType: 'Other', url: '/test' });
     expect(bookmarkService.getBookmarks()).toHaveLength(1);
 
     const result = bookmarkService.clearAllBookmarks();
