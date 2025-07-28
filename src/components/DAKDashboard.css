@@ -981,3 +981,223 @@
   justify-content: center;
   flex-wrap: wrap;
 }
+
+/* User Menu Styles */
+.user-menu-container {
+  position: relative;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.user-info:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.context-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.context-owner {
+  font-weight: 500;
+  color: white;
+}
+
+.menu-arrow {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  transition: transform 0.2s ease;
+}
+
+.user-info:hover .menu-arrow {
+  transform: translateY(1px);
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  z-index: 1000;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 0.5rem;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  color: #24292e;
+}
+
+.dropdown-item:hover {
+  background-color: #f6f8fa;
+}
+
+.dropdown-item:first-child {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.dropdown-item:last-child {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.dropdown-icon {
+  font-size: 1.1rem;
+}
+
+.dropdown-text {
+  font-weight: 500;
+}
+
+/* Clear Cache Dialog Styles */
+.clear-cache-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+}
+
+.clear-cache-dialog {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.clear-cache-dialog .dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 1.5rem 0 1.5rem;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.clear-cache-dialog .dialog-header h3 {
+  margin: 0;
+  color: #24292e;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.clear-cache-dialog .dialog-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #586069;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.clear-cache-dialog .dialog-close:hover {
+  background-color: #f6f8fa;
+}
+
+.clear-cache-dialog .dialog-content {
+  padding: 1.5rem;
+}
+
+.clear-cache-dialog .dialog-mascot {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.clear-cache-dialog .dialog-mascot-img {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.clear-cache-dialog .mascot-message {
+  flex: 1;
+}
+
+.clear-cache-dialog .mascot-message p {
+  margin: 0 0 0.75rem 0;
+  color: #24292e;
+  line-height: 1.5;
+}
+
+.clear-cache-dialog .mascot-message ul {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+  color: #586069;
+}
+
+.clear-cache-dialog .mascot-message li {
+  margin-bottom: 0.25rem;
+}
+
+.clear-cache-dialog .dialog-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.clear-cache-dialog .btn-danger {
+  background: #d73a49;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.clear-cache-dialog .btn-danger:hover {
+  background: #cb2431;
+}
+
+.clear-cache-dialog .btn-secondary {
+  background: #f6f8fa;
+  color: #24292e;
+  border: 1px solid #d1d5da;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.clear-cache-dialog .btn-secondary:hover {
+  background: #e1e4e8;
+}

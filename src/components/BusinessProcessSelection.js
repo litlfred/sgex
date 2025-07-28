@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import useDAKUrlParams from '../hooks/useDAKUrlParams';
 import ContextualHelpMascot from './ContextualHelpMascot';
-import UserDropdown from './UserDropdown';
+import { handleNavigationClick } from '../utils/navigationUtils';
 import './BusinessProcessSelection.css';
 
 const BusinessProcessSelection = () => {
@@ -141,48 +141,48 @@ const BusinessProcessSelection = () => {
     loadBpmnFiles();
   }, [profile, repository, navigate, selectedBranch]);
 
-  const handleEdit = (file) => {
+  const handleEdit = (event, file) => {
     if (!hasWriteAccess) {
       // Show permission help message
       alert('You need write permissions to edit BPMN files. Please check your GitHub token permissions.');
       return;
     }
 
-    navigate('/bpmn-editor', {
-      state: {
-        profile,
-        repository,
-        component,
-        selectedFile: file,
-        selectedBranch,
-        mode: 'edit'
-      }
-    });
+    const navigationState = {
+      profile,
+      repository,
+      component,
+      selectedFile: file,
+      selectedBranch,
+      mode: 'edit'
+    };
+    
+    handleNavigationClick(event, '/bpmn-editor', navigate, navigationState);
   };
 
-  const handleView = (file) => {
-    navigate('/bpmn-viewer', {
-      state: {
-        profile,
-        repository,
-        component,
-        selectedFile: file,
-        selectedBranch,
-        mode: 'view'
-      }
-    });
+  const handleView = (event, file) => {
+    const navigationState = {
+      profile,
+      repository,
+      component,
+      selectedFile: file,
+      selectedBranch,
+      mode: 'view'
+    };
+    
+    handleNavigationClick(event, '/bpmn-viewer', navigate, navigationState);
   };
 
-  const handleViewSource = (file) => {
-    navigate('/bpmn-source', {
-      state: {
-        profile,
-        repository,
-        component,
-        selectedFile: file,
-        selectedBranch
-      }
-    });
+  const handleViewSource = (event, file) => {
+    const navigationState = {
+      profile,
+      repository,
+      component,
+      selectedFile: file,
+      selectedBranch
+    };
+    
+    handleNavigationClick(event, '/bpmn-source', navigate, navigationState);
   };
 
   if (dakLoading) {
@@ -228,7 +228,6 @@ const BusinessProcessSelection = () => {
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="context-info">
-          {profile && <UserDropdown profile={profile} />}
           <div className="context-details">
             <span className="context-repo">{repository.name}</span>
             <span className="context-component">Business Processes</span>
@@ -304,7 +303,7 @@ const BusinessProcessSelection = () => {
                   <div className="file-actions">
                     <button 
                       className="action-btn view-btn"
-                      onClick={() => handleView(file)}
+                      onClick={(event) => handleView(event, file)}
                       title="View BPMN diagram (read-only)"
                     >
                       👁️ View
@@ -312,7 +311,7 @@ const BusinessProcessSelection = () => {
 
                     <button 
                       className={`action-btn edit-btn ${!hasWriteAccess ? 'disabled' : ''}`}
-                      onClick={() => handleEdit(file)}
+                      onClick={(event) => handleEdit(event, file)}
                       title={hasWriteAccess ? "Edit BPMN diagram" : "Edit access required"}
                       disabled={!hasWriteAccess}
                     >
@@ -321,7 +320,7 @@ const BusinessProcessSelection = () => {
 
                     <button 
                       className="action-btn source-btn"
-                      onClick={() => handleViewSource(file)}
+                      onClick={(event) => handleViewSource(event, file)}
                       title="View XML source code"
                     >
                       📄 Source

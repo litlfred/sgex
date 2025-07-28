@@ -20,6 +20,9 @@ import DecisionSupportLogicView from './components/DecisionSupportLogicView';
 import TestDashboard from './components/TestDashboard';
 import PagesManager from './components/PagesManager';
 import NotFound from './components/NotFound';
+import LandingPageWithFramework from './components/LandingPageWithFramework';
+import DAKDashboardWithFramework from './components/DAKDashboardWithFramework';
+import TestDocumentationPage from './components/TestDocumentationPage';
 import logger from './utils/logger';
 import './App.css';
 
@@ -71,6 +74,13 @@ function App() {
           <Route path="/decision-support-logic/:user/:repo/:branch" element={<DecisionSupportLogicView />} />
           <Route path="/docs/:docId" element={<DocumentationViewer />} />
           <Route path="/pages" element={<PagesManager />} />
+          
+          {/* Framework test routes */}
+          <Route path="/test-framework" element={<LandingPageWithFramework />} />
+          <Route path="/test-framework-dashboard/:user/:repo" element={<DAKDashboardWithFramework />} />
+          <Route path="/test-framework-dashboard/:user/:repo/:branch" element={<DAKDashboardWithFramework />} />
+          <Route path="/test-documentation" element={<TestDocumentationPage />} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

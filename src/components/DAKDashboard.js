@@ -3,12 +3,13 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
+import cacheManagementService from '../services/cacheManagementService';
 import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
-import UserDropdown from './UserDropdown';
+import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
@@ -27,6 +28,8 @@ const DAKDashboard = () => {
   const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showClearCacheConfirm, setShowClearCacheConfirm] = useState(false);
 
   // Fetch data from URL parameters if not available in location.state
   useEffect(() => {
@@ -229,6 +232,20 @@ const DAKDashboard = () => {
     checkPermissions();
   }, [repository, profile]);
 
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserMenu && !event.target.closest('.user-menu-container')) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
+
 
 
   // Define the 8 core DAK components based on WHO SMART Guidelines documentation
@@ -406,7 +423,14 @@ const DAKDashboard = () => {
     });
   };
 
-  const handleComponentClick = (component) => {
+  const handleComponentClick = (event, component) => {
+    const navigationState = {
+      profile,
+      repository,
+      component,
+      selectedBranch
+    };
+    
     // For decision-support, always navigate to view page (no permission check needed)
     if (component.id === 'decision-support') {
       const owner = repository.owner?.login || repository.full_name.split('/')[0];
@@ -415,14 +439,7 @@ const DAKDashboard = () => {
         ? `/decision-support-logic/${owner}/${repoName}/${selectedBranch}`
         : `/decision-support-logic/${owner}/${repoName}`;
       
-      navigate(path, {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
@@ -434,40 +451,19 @@ const DAKDashboard = () => {
         ? `/business-process-selection/${owner}/${repoName}/${selectedBranch}`
         : `/business-process-selection/${owner}/${repoName}`;
       
-      navigate(path, {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
     // For pages, navigate to pages manager (read-only access allowed)
     if (component.id === 'pages') {
-      navigate('/pages', {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, '/pages', navigate, navigationState);
       return;
     }
 
     // For health-interventions (WHO Digital Library), allow access in read-only mode
     if (component.id === 'health-interventions') {
-      navigate(`/editor/${component.id}`, {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
       return;
     }
 
@@ -481,14 +477,7 @@ const DAKDashboard = () => {
         `/core-data-dictionary-viewer/${owner}/${repoName}/${branchName}` :
         `/core-data-dictionary-viewer/${owner}/${repoName}`;
         
-      navigate(viewerPath, {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, viewerPath, navigate, navigationState);
       return;
     }
 
@@ -502,45 +491,26 @@ const DAKDashboard = () => {
         `/core-data-dictionary-viewer/${owner}/${repoName}/${branchName}` :
         `/core-data-dictionary-viewer/${owner}/${repoName}`;
         
-      navigate(viewerPath, {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, viewerPath, navigate, navigationState);
       return;
     }
 
     // For generic-personas, navigate to actor editor
     if (component.id === 'generic-personas') {
-      navigate('/actor-editor', {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, '/actor-editor', navigate, navigationState);
       return;
     }
 
     // For other components, check permissions before proceeding
     if (!hasWriteAccess) {
+      // If command-click, still show permission dialog instead of opening new tab
+      // since the user needs to authenticate first
       setShowPermissionDialog(true);
       return;
     }
 
     // Navigate to generic component editor for other components
-    navigate(`/editor/${component.id}`, {
-      state: {
-        profile,
-        repository,
-        component,
-        selectedBranch
-      }
-    });
+    handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
   };
 
   const handleBackToRepos = () => {
@@ -549,6 +519,36 @@ const DAKDashboard = () => {
 
   const handleHomeNavigation = () => {
     navigate('/');
+  };
+
+  const handleUserMenuToggle = () => {
+    setShowUserMenu(!showUserMenu);
+  };
+
+  const handleClearCacheClick = () => {
+    setShowUserMenu(false);
+    setShowClearCacheConfirm(true);
+  };
+
+  const handleClearCacheConfirm = () => {
+    const success = cacheManagementService.clearAllCache();
+    setShowClearCacheConfirm(false);
+    
+    if (success) {
+      // Show success message and redirect to home
+      navigate('/', { 
+        state: { 
+          successMessage: '🚽 Cache cleared successfully! All local data has been flushed.' 
+        } 
+      });
+    } else {
+      // Show error message
+      alert('⚠️ There was an error clearing the cache. Please try again or refresh the page.');
+    }
+  };
+
+  const handleClearCacheCancel = () => {
+    setShowClearCacheConfirm(false);
   };
 
   if (loading) {
@@ -624,7 +624,27 @@ const DAKDashboard = () => {
           </div>
         </div>
         <div className="header-right">
-          <UserDropdown profile={profile} />
+          <div className="user-menu-container">
+            <div className="user-info" onClick={handleUserMenuToggle}>
+              <img 
+                src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
+                alt="Profile" 
+                className="context-avatar" 
+              />
+              <span className="context-owner">@{profile.login}</span>
+              <span className="menu-arrow">▼</span>
+            </div>
+            
+            {showUserMenu && (
+              <div className="user-dropdown-menu">
+                <div className="dropdown-item" onClick={handleClearCacheClick}>
+                  <span className="dropdown-icon">🚽</span>
+                  <span className="dropdown-text">Clear Cache</span>
+                </div>
+              </div>
+            )}
+          </div>
+          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
 
@@ -703,7 +723,7 @@ const DAKDashboard = () => {
                   <div 
                     key={component.id}
                     className={`component-card ${component.type.toLowerCase()}`}
-                    onClick={() => handleComponentClick(component)}
+                    onClick={(event) => handleComponentClick(event, component)}
                     style={{ '--component-color': component.color }}
                   >
                     <div className="component-header">
@@ -748,7 +768,7 @@ const DAKDashboard = () => {
                   <div 
                     key={component.id}
                     className={`component-card ${component.type.toLowerCase()}`}
-                    onClick={() => handleComponentClick(component)}
+                    onClick={(event) => handleComponentClick(event, component)}
                     style={{ '--component-color': component.color }}
                   >
                     <div className="component-header">
@@ -847,6 +867,53 @@ const DAKDashboard = () => {
                     Continue Read-Only
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear Cache Confirmation Dialog */}
+      {showClearCacheConfirm && (
+        <div className="clear-cache-dialog-overlay">
+          <div className="clear-cache-dialog">
+            <div className="dialog-header">
+              <h3>🚽 Clear Cache</h3>
+              <button 
+                className="dialog-close"
+                onClick={handleClearCacheCancel}
+              >
+                ×
+              </button>
+            </div>
+            <div className="dialog-content">
+              <div className="dialog-mascot">
+                <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="dialog-mascot-img" />
+                <div className="mascot-message">
+                  <p><strong>⚠️ Warning: You may lose unsaved progress!</strong></p>
+                  <p>This will clear all cached data including:</p>
+                  <ul>
+                    <li>Repository lists and metadata</li>
+                    <li>Branch selections and context</li>
+                    <li>Unsaved changes in staging area</li>
+                    <li>Other local application data</li>
+                  </ul>
+                  <p><strong>Any work not committed to GitHub will be lost permanently.</strong></p>
+                </div>
+              </div>
+              <div className="dialog-actions">
+                <button 
+                  className="btn-danger"
+                  onClick={handleClearCacheConfirm}
+                >
+                  🚽 Yes, Clear Cache
+                </button>
+                <button 
+                  className="btn-secondary"
+                  onClick={handleClearCacheCancel}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
