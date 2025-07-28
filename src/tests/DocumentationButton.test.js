@@ -7,6 +7,7 @@ import DAKActionSelection from '../components/DAKActionSelection';
 import OrganizationSelection from '../components/OrganizationSelection';
 import DAKDashboard from '../components/DAKDashboard';
 import BPMNViewerEnhanced from '../components/BPMNViewerEnhanced';
+import BusinessProcessSelection from '../components/BusinessProcessSelection';
 
 // Mock the GitHub service to avoid authentication issues in tests
 jest.mock('../services/githubService', () => ({
@@ -178,6 +179,36 @@ describe('Documentation Button Consistency', () => {
         } 
       }]}>
         <BPMNViewerEnhanced />
+      </MemoryRouter>
+    );
+    
+    const docButton = screen.getByText('📖 Documentation');
+    expect(docButton).toBeInTheDocument();
+    expect(docButton.closest('a')).toHaveAttribute('href', '/sgex/docs/overview');
+  });
+
+  test('BusinessProcessSelection has documentation button', () => {
+    const mockProfile = {
+      login: 'testuser',
+      name: 'Test User',
+      avatar_url: 'https://github.com/testuser.png'
+    };
+    const mockRepository = {
+      name: 'test-repo',
+      full_name: 'testuser/test-repo',
+      owner: { login: 'testuser' }
+    };
+
+    render(
+      <MemoryRouter initialEntries={[{ 
+        pathname: '/business-process-selection', 
+        state: { 
+          profile: mockProfile, 
+          repository: mockRepository,
+          selectedBranch: 'main'
+        } 
+      }]}>
+        <BusinessProcessSelection />
       </MemoryRouter>
     );
     
