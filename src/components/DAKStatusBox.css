@@ -151,6 +151,7 @@
 /* Status Content */
 .status-content {
   padding: 20px;
+  background: dodgerblue;
 }
 
 .loading-indicator {
@@ -204,7 +205,7 @@
 
 /* Changed Files */
 .changed-files {
-  background: #e3f2fd;
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid #bbdefb;
   border-radius: 6px;
   overflow: hidden;
@@ -280,7 +281,7 @@
 
 /* Validation Results */
 .validation-summary-detailed {
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid #e9ecef;
   border-radius: 6px;
   padding: 16px;
