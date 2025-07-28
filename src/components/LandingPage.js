@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import PATLogin from './PATLogin';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './LandingPage.css';
 
@@ -178,14 +178,6 @@ const LandingPage = () => {
     fetchUserData();
   };
 
-  const handleLogout = () => {
-    githubService.logout();
-    setIsAuthenticated(false);
-    setUser(null);
-    setOrganizations([]);
-    setError(null);
-  };
-
   const handleProfileSelect = (event, profile) => {
     const navigationState = { profile };
     handleNavigationClick(event, `/dak-action/${profile.login}`, navigate, navigationState);
@@ -210,27 +202,13 @@ const LandingPage = () => {
     handleNavigationClick(event, `/dak-selection/${demoProfile.login}`, navigate, navigationState);
   };
 
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
   const handleDismissWarning = () => {
     setWarningMessage(null);
   };
 
   if (!isAuthenticated) {
     return (
-      <div className="landing-page">
-        <div className="landing-header">
-          <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
-          </div>
-          <div className="header-nav">
-            <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-          </div>
-        </div>
-        
+      <PageLayout pageName="landing-unauthenticated">
         <div className="landing-content">
           {warningMessage && (
             <div className="warning-message">
@@ -291,30 +269,12 @@ const LandingPage = () => {
             </div>
           </div>
         </div>
-        
-        <ContextualHelpMascot 
-          pageId="landing-page-unauthenticated"
-          position="bottom-right"
-        />
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="landing-page">
-      <div className="landing-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="user-info">
-          <img src={user?.avatar_url} alt="User avatar" className="user-avatar" />
-          <span>{user?.name || user?.login}</span>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-          <button onClick={handleLogout} className="logout-btn">Logout</button>
-        </div>
-      </div>
-      
+    <PageLayout pageName="landing-authenticated">
       <div className="landing-content">
         {warningMessage && (
           <div className="warning-message">
@@ -394,13 +354,7 @@ const LandingPage = () => {
           </div>
         )}
       </div>
-      
-      <ContextualHelpMascot 
-        pageId="landing-page-authenticated"
-        position="bottom-right"
-        contextData={{ user, organizations }}
-      />
-    </div>
+    </PageLayout>
   );
 };
 
