@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
@@ -64,14 +65,14 @@ const DAKActionSelection = () => {
     }
   ];
 
-  const handleActionSelect = (actionId) => {
+  const handleActionSelect = (event, actionId) => {
     // Navigate directly to the DAK selection with the chosen action and user parameter
-    navigate(`/dak-selection/${profile.login}`, { 
-      state: { 
-        profile, 
-        action: actionId 
-      } 
-    });
+    const navigationState = { 
+      profile, 
+      action: actionId 
+    };
+    
+    handleNavigationClick(event, `/dak-selection/${profile.login}`, navigate, navigationState);
   };
 
   const handleHomeNavigation = () => {
@@ -127,7 +128,7 @@ const DAKActionSelection = () => {
               <div 
                 key={action.id}
                 className={`action-card`}
-                onClick={() => handleActionSelect(action.id)}
+                onClick={(event) => handleActionSelect(event, action.id)}
                 style={{ '--action-color': action.color }}
               >
                 <div className="action-header-content">

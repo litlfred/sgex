@@ -8,6 +8,7 @@ import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
+import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
@@ -405,7 +406,14 @@ const DAKDashboard = () => {
     });
   };
 
-  const handleComponentClick = (component) => {
+  const handleComponentClick = (event, component) => {
+    const navigationState = {
+      profile,
+      repository,
+      component,
+      selectedBranch
+    };
+    
     // For decision-support, always navigate to view page (no permission check needed)
     if (component.id === 'decision-support') {
       const owner = repository.owner?.login || repository.full_name.split('/')[0];
@@ -414,14 +422,7 @@ const DAKDashboard = () => {
         ? `/decision-support-logic/${owner}/${repoName}/${selectedBranch}`
         : `/decision-support-logic/${owner}/${repoName}`;
       
-      navigate(path, {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
@@ -433,40 +434,19 @@ const DAKDashboard = () => {
         ? `/business-process-selection/${owner}/${repoName}/${selectedBranch}`
         : `/business-process-selection/${owner}/${repoName}`;
       
-      navigate(path, {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
     // For pages, navigate to pages manager (read-only access allowed)
     if (component.id === 'pages') {
-      navigate('/pages', {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, '/pages', navigate, navigationState);
       return;
     }
 
     // For health-interventions (WHO Digital Library), allow access in read-only mode
     if (component.id === 'health-interventions') {
-      navigate(`/editor/${component.id}`, {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
       return;
     }
 
@@ -480,14 +460,7 @@ const DAKDashboard = () => {
         `/core-data-dictionary-viewer/${owner}/${repoName}/${branchName}` :
         `/core-data-dictionary-viewer/${owner}/${repoName}`;
         
-      navigate(viewerPath, {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, viewerPath, navigate, navigationState);
       return;
     }
 
@@ -501,45 +474,26 @@ const DAKDashboard = () => {
         `/core-data-dictionary-viewer/${owner}/${repoName}/${branchName}` :
         `/core-data-dictionary-viewer/${owner}/${repoName}`;
         
-      navigate(viewerPath, {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, viewerPath, navigate, navigationState);
       return;
     }
 
     // For generic-personas, navigate to actor editor
     if (component.id === 'generic-personas') {
-      navigate('/actor-editor', {
-        state: {
-          profile,
-          repository,
-          component,
-          selectedBranch
-        }
-      });
+      handleNavigationClick(event, '/actor-editor', navigate, navigationState);
       return;
     }
 
     // For other components, check permissions before proceeding
     if (!hasWriteAccess) {
+      // If command-click, still show permission dialog instead of opening new tab
+      // since the user needs to authenticate first
       setShowPermissionDialog(true);
       return;
     }
 
     // Navigate to generic component editor for other components
-    navigate(`/editor/${component.id}`, {
-      state: {
-        profile,
-        repository,
-        component,
-        selectedBranch
-      }
-    });
+    handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
   };
 
   const handleBackToRepos = () => {
@@ -708,7 +662,7 @@ const DAKDashboard = () => {
                   <div 
                     key={component.id}
                     className={`component-card ${component.type.toLowerCase()}`}
-                    onClick={() => handleComponentClick(component)}
+                    onClick={(event) => handleComponentClick(event, component)}
                     style={{ '--component-color': component.color }}
                   >
                     <div className="component-header">
@@ -753,7 +707,7 @@ const DAKDashboard = () => {
                   <div 
                     key={component.id}
                     className={`component-card ${component.type.toLowerCase()}`}
-                    onClick={() => handleComponentClick(component)}
+                    onClick={(event) => handleComponentClick(event, component)}
                     style={{ '--component-color': component.color }}
                   >
                     <div className="component-header">
