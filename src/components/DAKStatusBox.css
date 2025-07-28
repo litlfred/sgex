@@ -367,8 +367,14 @@
 /* Quick Actions */
 .quick-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 12px;
+}
+
+.quick-action-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .quick-link {
@@ -383,6 +389,7 @@
   color: #333;
   font-size: 13px;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .quick-link:hover {
@@ -398,6 +405,101 @@
 .external-indicator {
   font-size: 10px;
   color: #666;
+  margin-left: auto;
+}
+
+/* Notification Badges */
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: 20px;
+  background: #dc3545;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 16px;
+  text-align: center;
+  line-height: 1.2;
+  border: 2px solid white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.notification-badge.pr-badge {
+  background: #0366d6;
+}
+
+.notification-badge.issue-badge {
+  background: #28a745;
+}
+
+/* Last Commit Display */
+.last-commit {
+  margin-left: 20px;
+  padding: 8px 12px;
+  background: #f1f3f4;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.last-commit.loading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-style: italic;
+}
+
+.commit-link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #333;
+  text-decoration: none;
+}
+
+.commit-link:hover {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.commit-sha {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: #0366d6;
+  font-size: 11px;
+}
+
+.commit-message {
+  font-weight: 500;
+  color: #333;
+  line-height: 1.3;
+}
+
+.commit-meta {
+  color: #666;
+  font-size: 10px;
+  font-style: italic;
+}
+
+/* Stats Error */
+.stats-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  color: #856404;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.stats-error .error-icon {
+  font-size: 14px;
 }
 
 /* Action Buttons */
@@ -467,10 +569,25 @@
   }
   
   .quick-actions {
-    flex-direction: column;
+    gap: 8px;
   }
   
   .quick-link {
-    justify-content: center;
+    justify-content: flex-start;
+  }
+  
+  .last-commit {
+    margin-left: 12px;
+    padding: 6px 8px;
+  }
+  
+  .commit-message {
+    font-size: 11px;
+  }
+  
+  .notification-badge {
+    right: 16px;
+    font-size: 9px;
+    padding: 1px 4px;
   }
 }
