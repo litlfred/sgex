@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import WHODigitalLibrary from './WHODigitalLibrary';
 import './ComponentEditor.css';
@@ -7,9 +7,20 @@ import './ComponentEditor.css';
 const ComponentEditor = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const params = useParams();
   const [selectedReferences, setSelectedReferences] = useState([]);
   
   const { profile, repository, component } = location.state || {};
+
+  // Determine component from route or state
+  let currentComponent = component;
+  
+  // Handle direct access to editor-health-interventions route
+  if (location.pathname === '/sgex/editor-health-interventions' && !component) {
+    currentComponent = { id: 'health-interventions', name: 'Health Interventions' };
+  } else if (params.componentId && !component) {
+    currentComponent = { id: params.componentId, name: params.componentId };
+  }
 
   const handleReferencesChange = useCallback((references) => {
     setSelectedReferences(references);
@@ -19,13 +30,56 @@ const ComponentEditor = () => {
     navigate('/');
   };
 
-  if (!profile || !repository || !component) {
-    navigate('/');
-    return <div>Redirecting...</div>;
+  // For health-interventions, we can work without full context for now
+  if (!profile || !repository) {
+    if (currentComponent?.id === 'health-interventions') {
+      // Allow access to health-interventions editor without full context
+      // Use placeholder data for now
+      const placeholderProfile = { login: 'demo-user', avatar_url: '/sgex/sgex-mascot.png', name: 'Demo User' };
+      const placeholderRepo = { name: 'demo-repository' };
+      
+      return (
+        <div className="component-editor">
+          <div className="editor-header">
+            <div className="who-branding">
+              <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
+              <p className="subtitle">WHO SMART Guidelines Exchange</p>
+            </div>
+            <div className="context-info">
+              <img 
+                src={placeholderProfile.avatar_url} 
+                alt="Profile" 
+                className="context-avatar" 
+              />
+              <div className="context-details">
+                <span className="context-repo">{placeholderRepo.name}</span>
+                <span className="context-component">{currentComponent.name}</span>
+              </div>
+              <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+            </div>
+          </div>
+
+          <div className="editor-content">
+            <WHODigitalLibrary 
+              onReferencesChange={handleReferencesChange}
+              selectedReferences={selectedReferences}
+            />
+          </div>
+          
+          <ContextualHelpMascot 
+            pageId="component-editor"
+            contextData={{ component: currentComponent }}
+          />
+        </div>
+      );
+    } else {
+      navigate('/');
+      return <div>Redirecting...</div>;
+    }
   }
 
   // Render WHO Digital Library for health-interventions component
-  if (component.id === 'health-interventions') {
+  if (currentComponent?.id === 'health-interventions') {
     return (
       <div className="component-editor">
         <div className="editor-header">
@@ -41,7 +95,7 @@ const ComponentEditor = () => {
             />
             <div className="context-details">
               <span className="context-repo">{repository.name}</span>
-              <span className="context-component">{component.name}</span>
+              <span className="context-component">{currentComponent.name}</span>
             </div>
             <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
           </div>
@@ -61,16 +115,16 @@ const ComponentEditor = () => {
               DAK Components
             </button>
             <span className="breadcrumb-separator">›</span>
-            <span className="breadcrumb-current">{component.name}</span>
+            <span className="breadcrumb-current">{currentComponent.name}</span>
           </div>
 
           <div className="editor-main">
             <div className="component-intro">
-              <div className="component-icon" style={{ color: component.color }}>
-                {component.icon}
+              <div className="component-icon" style={{ color: currentComponent.color }}>
+                {currentComponent.icon}
               </div>
               <div className="intro-content">
-                <h2>{component.name}</h2>
+                <h2>{currentComponent.name}</h2>
                 <p>
                   Manage clinical guidelines and health intervention specifications by searching and selecting 
                   publications from digital libraries. References are stored using Dublin Core metadata standards.
@@ -101,7 +155,7 @@ const ComponentEditor = () => {
           contextData={{ 
             profile, 
             repository, 
-            component,
+            component: currentComponent,
             selectedReferencesCount: selectedReferences.length 
           }}
         />
@@ -124,7 +178,7 @@ const ComponentEditor = () => {
           />
           <div className="context-details">
             <span className="context-repo">{repository.name}</span>
-            <span className="context-component">{component.name}</span>
+            <span className="context-component">{currentComponent.name}</span>
           </div>
           <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
@@ -144,27 +198,27 @@ const ComponentEditor = () => {
             DAK Components
           </button>
           <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">{component.name}</span>
+          <span className="breadcrumb-current">{currentComponent.name}</span>
         </div>
 
         <div className="editor-main">
           <div className="editor-placeholder">
-            <div className="component-icon" style={{ color: component.color }}>
-              {component.icon}
+            <div className="component-icon" style={{ color: currentComponent.color }}>
+              {currentComponent.icon}
             </div>
-            <h2>{component.name} Editor</h2>
+            <h2>{currentComponent.name} Editor</h2>
             <p>
-              This is where the {component.name.toLowerCase()} editor will be implemented. 
-              The editor will support {component.fileTypes.join(', ')} files and provide 
-              specialized tools for {component.description.toLowerCase()}.
+              This is where the {currentComponent.name?.toLowerCase()} editor will be implemented. 
+              The editor will support {currentComponent.fileTypes?.join(', ') || 'various'} files and provide 
+              specialized tools for {currentComponent.description?.toLowerCase() || 'component editing'}.
             </p>
             
             <div className="component-info">
               <div className="info-item">
-                <strong>Component Type:</strong> {component.type}
+                <strong>Component Type:</strong> {currentComponent.type || 'Editor'}
               </div>
               <div className="info-item">
-                <strong>File Types:</strong> {component.fileTypes.join(', ')}
+                <strong>File Types:</strong> {currentComponent.fileTypes?.join(', ') || 'Various formats'}
               </div>
               <div className="info-item">
                 <strong>Repository:</strong> {repository.name}
@@ -191,7 +245,7 @@ const ComponentEditor = () => {
       
       <ContextualHelpMascot 
         pageId="component-editor"
-        contextData={{ profile, repository, component }}
+        contextData={{ profile, repository, component: currentComponent }}
       />
     </div>
   );

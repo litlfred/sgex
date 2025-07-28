@@ -1,12 +1,25 @@
 .dak-selection {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: var(--who-primary-bg);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--who-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode gradient overlay */
+body.theme-dark .dak-selection {
+  background: linear-gradient(135deg, var(--who-navy) 0%, var(--who-secondary-bg) 100%);
+}
+
+/* Light mode gradient overlay */
+body.theme-light .dak-selection {
+  background: linear-gradient(135deg, var(--who-light-blue) 0%, var(--who-light-blue-light) 100%);
 }
 
 .selection-header {
-  background: rgb(4, 11, 118);
+  background: var(--who-secondary-bg);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid var(--who-border-color);
   padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
@@ -15,7 +28,7 @@
 
 .who-branding h1 {
   margin: 0;
-  color: white;
+  color: var(--who-text-primary);
   font-size: 1.8rem;
   font-weight: 600;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -27,13 +40,13 @@
 }
 
 .who-branding h1.clickable-title:hover {
-  color: #005a9e;
+  color: var(--who-blue-light);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .who-branding .subtitle {
   margin: 0;
-  color: white;
+  color: var(--who-text-secondary);
   font-size: 0.9rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
@@ -42,7 +55,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: white;
+  color: var(--who-text-primary);
 }
 
 .profile-avatar {
@@ -68,29 +81,29 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: white;
+  color: var(--who-text-primary);
   cursor: pointer;
   text-decoration: underline;
   font-size: inherit;
 }
 
 .breadcrumb-link:hover {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--who-blue);
 }
 
 .breadcrumb-separator {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--who-text-muted);
 }
 
 .breadcrumb-current {
-  color: white;
+  color: var(--who-text-primary);
   font-weight: 500;
 }
 
 .dak-selection .selection-main {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--who-card-bg);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--who-border-color);
   border-radius: 8px;
   padding: 2rem;
 }
@@ -101,14 +114,14 @@
 }
 
 .selection-intro h2 {
-  color: white;
+  color: var(--who-text-primary);
   font-size: 2rem;
   margin-bottom: 1rem;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .selection-intro p {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--who-text-secondary);
   font-size: 1.1rem;
   max-width: 600px;
   margin: 0 auto 1rem;
@@ -116,14 +129,14 @@
 }
 
 .template-notice {
-  background: rgba(0, 120, 212, 0.1);
-  border: 1px solid rgba(0, 120, 212, 0.3);
+  background: var(--who-selected-bg);
+  border: 1px solid var(--who-blue);
   border-radius: 6px;
   padding: 1rem;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: white;
+  color: var(--who-text-primary);
   font-size: 0.9rem;
   margin-top: 1rem;
   backdrop-filter: blur(10px);
