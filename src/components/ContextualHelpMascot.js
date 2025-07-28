@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 import helpContentService from '../services/helpContentService';
 import HelpModal from './HelpModal';
 import './ContextualHelpMascot.css';
@@ -7,6 +8,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [showHelp, setShowHelp] = useState(false);
   const [helpSticky, setHelpSticky] = useState(false);
   const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
+  const { isDarkMode, toggleTheme } = useTheme();
 
   // Get help topics for the page
   const helpTopics = pageId ? helpContentService.getHelpTopicsForPage(pageId, contextData) : [];
@@ -51,6 +53,18 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   return (
     <>
       <div className={`contextual-help-mascot ${position}`}>
+        {/* Theme toggle button positioned under mascot */}
+        <div className="theme-toggle-container">
+          <button 
+            className={`theme-toggle-btn ${isDarkMode ? 'dark' : 'light'}`}
+            onClick={toggleTheme}
+            aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+            title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+          >
+            {isDarkMode ? '🌞' : '🌙'}
+          </button>
+        </div>
+        
         <div 
           className="mascot-container"
           onMouseEnter={handleMouseEnter}

@@ -2,7 +2,8 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
+  background-color: var(--who-primary-bg, #ffffff);
+  color: var(--who-text-primary, #333333);
 }
 
 .page-main {
@@ -25,8 +26,8 @@
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #0066cc;
+  border: 4px solid var(--who-border-color, #f3f3f3);
+  border-top: 4px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -37,7 +38,7 @@
 }
 
 .page-loading p {
-  color: #6c757d;
+  color: var(--who-text-secondary, #6c757d);
   font-size: 1.1rem;
   margin: 0;
 }
@@ -60,23 +61,6 @@
 @media (prefers-reduced-motion: reduce) {
   .loading-spinner {
     animation: none;
-    border: 4px solid #0066cc;
-  }
-}
-
-/* Dark mode support (if needed in future) */
-@media (prefers-color-scheme: dark) {
-  .page-layout {
-    background-color: #1a1a1a;
-    color: #ffffff;
-  }
-  
-  .page-loading p {
-    color: #cccccc;
-  }
-  
-  .loading-spinner {
-    border-color: #333333;
-    border-top-color: #0099ff;
+    border: 4px solid var(--who-blue, #006cbe);
   }
 }

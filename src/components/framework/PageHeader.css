@@ -3,8 +3,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 1rem;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
+  background-color: var(--who-secondary-bg, #c0dcf2);
+  border-bottom: 1px solid var(--who-border-color, #dee2e6);
   min-height: 60px;
 }
 
@@ -31,14 +31,14 @@
 .sgex-logo h1 {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #0066cc;
+  color: var(--who-blue, #006cbe);
   margin: 0;
   line-height: 1.2;
 }
 
 .sgex-logo .subtitle {
   font-size: 0.8rem;
-  color: #666;
+  color: var(--who-text-secondary, #666);
   margin: 0;
   line-height: 1;
 }
@@ -48,12 +48,12 @@
   display: flex;
   align-items: center;
   font-size: 0.9rem;
-  color: #666;
+  color: var(--who-text-secondary, #666);
 }
 
 .context-separator {
   margin: 0 0.5rem;
-  color: #999;
+  color: var(--who-text-muted, #999);
 }
 
 .context-user,
@@ -69,8 +69,8 @@
 
 .context-user:hover,
 .context-repo:hover {
-  background-color: #e9ecef; 
-  color: #0066cc;
+  background-color: var(--who-hover-bg, #e9ecef); 
+  color: var(--who-blue, #006cbe);
 }
 
 .context-avatar {
@@ -81,7 +81,7 @@
 
 .context-branch {
   font-family: monospace;
-  background-color: #e9ecef;
+  background-color: var(--who-hover-bg, #e9ecef);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   font-size: 0.8rem;
@@ -93,9 +93,9 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.4rem 0.8rem;
-  border: 1px solid #dee2e6;
-  background-color: white;
-  color: #495057;
+  border: 1px solid var(--who-border-color, #dee2e6);
+  background-color: var(--who-card-bg, white);
+  color: var(--who-text-secondary, #495057);
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
@@ -104,12 +104,12 @@
 }
 
 .header-btn:hover {
-  background-color: #e9ecef;
-  border-color: #adb5bd;
+  background-color: var(--who-hover-bg, #e9ecef);
+  border-color: var(--who-border-color, #adb5bd);
 }
 
 .documentation-btn {
-  color: #0066cc;
+  color: var(--who-blue, #006cbe);
 }
 
 .github-repo-btn .github-icon {
@@ -144,7 +144,7 @@
 }
 
 .user-info:hover {
-  background-color: #e9ecef;
+  background-color: var(--who-hover-bg, #e9ecef);
 }
 
 .user-avatar {
@@ -155,7 +155,7 @@
 
 .user-name {
   font-size: 0.9rem;
-  color: #495057;
+  color: var(--who-text-secondary, #495057);
   max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -166,8 +166,8 @@
   position: absolute;
   top: 100%;
   right: 0;
-  background-color: white;
-  border: 1px solid #dee2e6;
+  background-color: var(--who-card-bg, white);
+  border: 1px solid var(--who-border-color, #dee2e6);
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   min-width: 160px;
@@ -195,12 +195,12 @@
   text-align: left;
   cursor: pointer;
   font-size: 0.9rem;
-  color: #495057;
+  color: var(--who-text-secondary, #495057);
   transition: background-color 0.2s;
 }
 
 .dropdown-item:hover {
-  background-color: #f8f9fa;
+  background-color: var(--who-hover-bg, #f8f9fa);
 }
 
 .dropdown-item .github-icon {
@@ -220,7 +220,7 @@
 /* Login button */
 .login-btn {
   padding: 0.4rem 1rem;
-  background-color: #0066cc;
+  background-color: var(--who-blue, #006cbe);
   color: white;
   border: none;
   border-radius: 4px;
@@ -230,7 +230,7 @@
 }
 
 .login-btn:hover {
-  background-color: #0052a3;
+  background-color: var(--who-blue-dark, #004a99);
 }
 
 /* RTL language support */
