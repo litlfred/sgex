@@ -536,6 +536,48 @@
   display: inline-block;
 }
 
+.decision-support-view .table-tag.clickable {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.decision-support-view .table-tag.clickable:hover {
+  background: #0056b3;
+}
+
+.decision-support-view .table-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.decision-support-view .table-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.decision-support-view .dmn-icon {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.decision-support-view .github-link {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 0.8rem;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.decision-support-view .github-link:hover {
+  opacity: 1;
+}
+
 .decision-support-view .tab-tag {
   background: #28a745;
 }
