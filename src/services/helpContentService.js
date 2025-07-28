@@ -418,6 +418,186 @@ class HelpContentService {
             }
           ]
         }
+      ],
+      'core-data-dictionary-viewer': [
+        {
+          id: 'core-data-dictionary-help',
+          title: 'Understanding Core Data Dictionary',
+          badge: '/sgex/cat-paw-info-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'What is the Core Data Dictionary?',
+              content: `
+                <p>The Core Data Dictionary (Component 2) contains the data elements required throughout the different points of the workflow. These data elements are mapped to the International Classification of Diseases version 11 (ICD-11) codes and other established concept mapping standards to ensure the data dictionary is compatible with other digital systems.</p>
+                <h4>Purpose: System Design and Interoperability</h4>
+                <p>To know which data elements need to be logged and how they map to other standard terminologies (e.g. ICD, Systematized Nomenclature of Medicine [SNOMED]) for interoperability with other standards-based systems.</p>
+                <h4>FHIR FSH Source Files</h4>
+                <ul>
+                  <li><strong>CodeSystems:</strong> Define custom codes and concepts used in your DAK</li>
+                  <li><strong>ValueSets:</strong> Specify allowed values for clinical data elements</li>
+                  <li><strong>ConceptMaps:</strong> Map between different terminology systems including ICD-11 and SNOMED</li>
+                  <li><strong>Logical Models:</strong> Define data structures for clinical workflows</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💡 Location:</strong> FSH files are stored in the <code>input/fsh/</code> directory of your repository.
+                </div>
+              `
+            },
+            {
+              title: 'GitHub Pages Integration',
+              content: `
+                <p>When GitHub Pages is configured, your FSH files are automatically compiled into HTML documentation:</p>
+                <h4>Published Artifacts</h4>
+                <ul>
+                  <li><strong>Code Systems:</strong> Browse and search your custom terminologies</li>
+                  <li><strong>Value Sets:</strong> View allowed values with descriptions</li>
+                  <li><strong>Logical Models:</strong> Interactive data structure documentation</li>
+                  <li><strong>Concept Maps:</strong> Visual mapping between terminologies</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>⚡ URL Pattern:</strong> Main branch publishes to <code>user.github.io/repo</code>, feature branches to <code>user.github.io/repo/branches/branch-name</code>
+                </div>
+              `
+            }
+          ]
+        },
+        {
+          id: 'github-pages-setup',
+          title: 'Setting Up GitHub Pages',
+          badge: '/sgex/cat-paw-settings-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Enable GitHub Pages for Your DAK',
+              content: `
+                <p>Follow these steps to enable automatic publishing of your Implementation Guide:</p>
+                <h4>Step 1: Repository Settings</h4>
+                <ol>
+                  <li>Go to your repository on GitHub</li>
+                  <li>Click on the <strong>Settings</strong> tab</li>
+                  <li>Scroll down to <strong>Pages</strong> in the left sidebar</li>
+                  <li>Under <strong>Source</strong>, select <strong>GitHub Actions</strong></li>
+                </ol>
+                <div class="help-tip">
+                  <strong>📋 Note:</strong> Your repository must contain a valid FHIR Implementation Guide structure with <code>sushi-config.yaml</code>
+                </div>
+              `
+            },
+            {
+              title: 'Configure IG Publisher Workflow',
+              content: `
+                <p>Set up the automated publishing workflow:</p>
+                <h4>Step 2: GitHub Actions</h4>
+                <ol>
+                  <li>Create <code>.github/workflows/</code> directory in your repository</li>
+                  <li>Add an IG Publisher workflow file (e.g., <code>publish.yml</code>)</li>
+                  <li>Configure the workflow to run on push to main branch</li>
+                  <li>Include steps to build and deploy the Implementation Guide</li>
+                </ol>
+                <h4>Step 3: Verify Publishing</h4>
+                <ul>
+                  <li>Check the <strong>Actions</strong> tab for workflow status</li>
+                  <li>Once successful, visit your GitHub Pages URL</li>
+                  <li>Verify that artifacts are accessible from the Core Data Dictionary viewer</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🔗 Reference:</strong> See the <a href="https://smart.who.int/ig-starter-kit/v1.0.0/ig_setup.html#ghpages-build" target="_blank">WHO IG Starter Kit</a> for detailed setup instructions.
+                </div>
+              `
+            }
+          ]
+        }
+      ],
+      'business-process-selection': [
+        {
+          id: 'business-process-help',
+          title: 'Understanding Business Processes',
+          badge: '/sgex/cat-paw-workflow-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'What are Business Processes?',
+              content: `
+                <p>Business Processes (Component 5) define the clinical workflows and care processes in your DAK:</p>
+                <h4>BPMN 2.0 Diagrams</h4>
+                <ul>
+                  <li><strong>Clinical Workflows:</strong> Step-by-step patient care processes</li>
+                  <li><strong>Decision Points:</strong> Where clinical decisions are made</li>
+                  <li><strong>Task Assignments:</strong> Who performs each step in the workflow</li>
+                  <li><strong>Data Flows:</strong> How information moves through the process</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💡 Standard:</strong> Uses BPMN 2.0 (Business Process Model and Notation) for workflow modeling
+                </div>
+              `
+            },
+            {
+              title: 'Working with BPMN Files',
+              content: `
+                <p>Business process diagrams are stored as BPMN XML files in your repository:</p>
+                <h4>File Management</h4>
+                <ul>
+                  <li><strong>Location:</strong> Typically stored in <code>input/models/</code> or <code>input/bpmn/</code></li>
+                  <li><strong>Format:</strong> BPMN 2.0 XML standard format</li>
+                  <li><strong>Editing:</strong> Use the built-in BPMN editor or external tools</li>
+                  <li><strong>Validation:</strong> Automatic validation against BPMN 2.0 schema</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🔧 Tools:</strong> SGeX includes an integrated BPMN editor for creating and modifying workflow diagrams
+                </div>
+              `
+            }
+          ]
+        }
+      ],
+      'pages-manager': [
+        {
+          id: 'page-content-help',
+          title: 'Managing Page Content',
+          badge: '/sgex/cat-paw-document-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'What is Page Content?',
+              content: `
+                <p>Page Content represents the narrative documentation and educational materials in your DAK:</p>
+                <h4>Content Types</h4>
+                <ul>
+                  <li><strong>Clinical Guidelines:</strong> Evidence-based care recommendations</li>
+                  <li><strong>User Guides:</strong> Instructions for healthcare workers</li>
+                  <li><strong>Training Materials:</strong> Educational content and scenarios</li>
+                  <li><strong>Reference Documentation:</strong> Technical specifications and background</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💡 Format:</strong> Content is typically authored in Markdown format for easy editing and version control
+                </div>
+              `
+            },
+            {
+              title: 'Content Organization',
+              content: `
+                <p>Page content is organized to support different user needs and workflows:</p>
+                <h4>Structure</h4>
+                <ul>
+                  <li><strong>Pages Directory:</strong> Main content files organized by topic</li>
+                  <li><strong>Assets:</strong> Images, diagrams, and multimedia content</li>
+                  <li><strong>Templates:</strong> Reusable content patterns and layouts</li>
+                  <li><strong>Navigation:</strong> Menus and linking between related content</li>
+                </ul>
+                <h4>Publishing</h4>
+                <ul>
+                  <li><strong>GitHub Pages:</strong> Automatic publishing of content as web pages</li>
+                  <li><strong>FHIR IG:</strong> Integration with Implementation Guide publishing</li>
+                  <li><strong>Version Control:</strong> Track changes and collaborate on content</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>📝 Best Practice:</strong> Use clear headings, bullet points, and visual elements to make content accessible to healthcare workers
+                </div>
+              `
+            }
+          ]
+        }
       ]
     };
   }

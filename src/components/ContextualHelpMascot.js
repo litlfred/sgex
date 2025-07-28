@@ -3,7 +3,7 @@ import helpContentService from '../services/helpContentService';
 import HelpModal from './HelpModal';
 import './ContextualHelpMascot.css';
 
-const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', contextData = {} }) => {
+const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', contextData = {}, notificationBadge = false }) => {
   const [showHelp, setShowHelp] = useState(false);
   const [helpSticky, setHelpSticky] = useState(false);
   const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
@@ -63,10 +63,19 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
             className="mascot-icon"
           />
           
+          {/* Notification badge for important help messages */}
+          {notificationBadge && (
+            <div className="notification-badge">
+              !
+            </div>
+          )}
+          
           {/* Question mark thought bubble - always show since we always have topics now */}
-          <div className="question-bubble">
-            ?
-          </div>
+          {!notificationBadge && (
+            <div className="question-bubble">
+              ?
+            </div>
+          )}
         </div>
         
         {showHelp && (

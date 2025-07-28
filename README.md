@@ -112,19 +112,22 @@ For more information about contributing, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## WHO SMART Guidelines DAK Components
 
-The SGEX Workbench supports editing of the **8 core Digital Adaptation Kit (DAK) components** as defined by the WHO SMART Guidelines framework. These components are organized into two levels:
+The SGEX Workbench supports editing of the **8 core Digital Adaptation Kit (DAK) components** as defined by the WHO SMART Guidelines framework. These components are organized according to the official DAK authoring sequence:
 
-### Level 2: Business Logic & Processes
-1. **Business Processes** - BPMN workflows and business process definitions
-2. **Decision Support Logic** - DMN decision tables and clinical decision support 
-3. **Indicators & Measures** - Performance indicators and measurement definitions
-4. **Data Entry Forms** - Structured data collection forms and questionnaires
+### The 8 Core DAK Components
+1. **Health Interventions and Recommendations** - Clinical guidelines and health intervention specifications
+2. **Generic Personas** - Standardized user roles and actor definitions  
+3. **User Scenarios** - Narrative descriptions of user interactions with the system
+4. **Generic Business Processes and Workflows** - BPMN workflows and business process definitions
+5. **Core Data Elements** - Essential data structures and terminology for clinical data
+6. **Decision-Support Logic** - DMN decision tables and clinical decision support
+7. **Program Indicators** - Performance indicators and measurement definitions
+8. **Functional and Non-Functional Requirements** - System requirements and specifications
 
-### Level 3: Technical Implementation  
-5. **Terminology** - Code systems, value sets, and concept maps
-6. **FHIR Profiles** - FHIR resource profiles and structure definitions
-7. **FHIR Extensions** - Custom FHIR extensions and data elements
-8. **Test Data & Examples** - Sample data and test cases for validation
+### Additional Components
+The SGEX Workbench also supports additional structured knowledge representations including Terminology, FHIR Profiles, FHIR Extensions, FHIR Questionnaires, and Test Data & Examples.
+
+For detailed information about each component, see the [DAK Components Documentation](docs/dak-components.md).
 
 *Note: Scheduling tables are considered a special case of decision tables and are included within the Decision Support Logic component.*
 

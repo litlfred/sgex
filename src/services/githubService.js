@@ -1061,6 +1061,62 @@ class GitHubService {
     }
   }
 
+  // Get directory contents
+  async getDirectoryContents(owner, repo, path, branch = null) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const params = {
+        owner,
+        repo,
+        path
+      };
+      
+      if (branch) {
+        params.ref = branch;
+      }
+
+      const { data } = await this.octokit.rest.repos.getContent(params);
+      return Array.isArray(data) ? data : [data];
+    } catch (error) {
+      console.error(`Failed to fetch directory contents for ${path}:`, error);
+      throw error;
+    }
+  }
+
+  // Get file content
+  async getFileContent(owner, repo, path, branch = null) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const params = {
+        owner,
+        repo,
+        path
+      };
+      
+      if (branch) {
+        params.ref = branch;
+      }
+
+      const { data } = await this.octokit.rest.repos.getContent(params);
+      
+      if (data.type === 'file' && data.content) {
+        // Decode base64 content (browser-compatible)
+        return decodeURIComponent(escape(atob(data.content)));
+      } else {
+        throw new Error('File not found or is not a file');
+      }
+    } catch (error) {
+      console.error(`Failed to fetch file content for ${path}:`, error);
+      throw error;
+    }
+  }
+
   // Logout
   logout() {
     this.octokit = null;

@@ -146,6 +146,33 @@ npm run build       # Production build
 - **JSON Forms**: Schema-driven form rendering
 - **WHO Enterprise Architecture**: http://smart.who.int/ra
 
+### URL Patterns and Routing
+DAK component pages MUST follow consistent URL patterns for navigation and context preservation:
+
+#### Standard URL Pattern
+```
+/{component}/{user}/{repo}/{branch?}
+```
+
+**Examples:**
+- `/core-data-dictionary-viewer/litlfred/anc-dak/main`
+- `/business-process-selection/who/immunization-dak/feature-branch`
+- `/dashboard/demo-user/maternal-health-dak`
+
+#### Implementation Guidelines:
+- **URL Parameters**: Use `useParams()` to extract `user`, `repo`, and `branch` from URL
+- **State Fallback**: Support `location.state` for backward compatibility
+- **Navigation**: Always preserve URL context when navigating between components
+- **GitHub Pages**: Generate artifact URLs using pattern `https://{user}.github.io/{repo}/branches/{branch}`
+
+#### Required Route Patterns:
+```javascript
+// Add these route patterns to App.js for new DAK components:
+<Route path="/{component}" element={<Component />} />
+<Route path="/{component}/:user/:repo" element={<Component />} />
+<Route path="/{component}/:user/:repo/:branch" element={<Component />} />
+```
+
 ### Code Quality
 - **ESLint**: Code style and error checking
 - **Jest + React Testing Library**: Component and service testing
@@ -215,6 +242,34 @@ npm test -- --coverage     # Generate coverage report
 - Follow WHO branding guidelines for visual elements
 - Implement proper loading states and error boundaries
 - Maintain accessibility standards
+
+#### DAK Component Page Standards:
+- **Styling**: Use blue gradient background matching DAK Dashboard (`background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%)`)
+- **Header**: Use `rgb(4, 11, 118)` header background with white text and proper WHO branding
+- **URL Pattern**: Follow standard `/{component}/{user}/{repo}/{branch?}` routing
+- **Help Topics**: Add contextual help topics to `helpContentService.js` for the page ID
+- **Navigation**: Support both URL parameters and location state for context
+- **Notification Badge**: Use `notificationBadge` prop on ContextualHelpMascot for important alerts
+
+#### Help Topic Structure:
+```javascript
+// Add to helpContentService.js helpTopics object:
+'{page-id}': [
+  {
+    id: '{topic-id}',
+    title: 'Topic Title',
+    badge: '/sgex/cat-paw-icon.svg',
+    type: 'slideshow',
+    content: [
+      {
+        title: 'Step Title',
+        content: `<p>HTML content with help information</p>`
+      }
+      // Additional slides...
+    ]
+  }
+]
+```
 
 ### DAK Repository Operations
 - Validate DAK compatibility using sushi-config.yaml detection

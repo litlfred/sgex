@@ -8,6 +8,8 @@ import DAKConfiguration from './components/DAKConfiguration';
 import RepositorySelection from './components/RepositorySelection';
 import DAKDashboard from './components/DAKDashboard';
 import ComponentEditor from './components/ComponentEditor';
+import CoreDataDictionaryViewer from './components/CoreDataDictionaryViewer';
+import ActorEditor from './components/ActorEditor';
 import BPMNEditor from './components/BPMNEditor';
 import BusinessProcessSelection from './components/BusinessProcessSelection';
 import BPMNViewer from './components/BPMNViewerEnhanced';
@@ -15,6 +17,7 @@ import BPMNSource from './components/BPMNSource';
 import DocumentationViewer from './components/DocumentationViewer';
 import TestDashboard from './components/TestDashboard';
 import PagesManager from './components/PagesManager';
+import NotFound from './components/NotFound';
 import logger from './utils/logger';
 import './App.css';
 
@@ -47,7 +50,11 @@ function App() {
           <Route path="/dashboard/:user/:repo" element={<DAKDashboard />} />
           <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />
           <Route path="/test-dashboard" element={<TestDashboard />} />
+          <Route path="/core-data-dictionary-viewer" element={<CoreDataDictionaryViewer />} />
+          <Route path="/core-data-dictionary-viewer/:user/:repo" element={<CoreDataDictionaryViewer />} />
+          <Route path="/core-data-dictionary-viewer/:user/:repo/:branch" element={<CoreDataDictionaryViewer />} />
           <Route path="/editor/:componentId" element={<ComponentEditor />} />
+          <Route path="/actor-editor" element={<ActorEditor />} />
           <Route path="/business-process-selection" element={<BusinessProcessSelection />} />
           <Route path="/business-process-selection/:user/:repo" element={<BusinessProcessSelection />} />
           <Route path="/business-process-selection/:user/:repo/:branch" element={<BusinessProcessSelection />} />
@@ -56,6 +63,7 @@ function App() {
           <Route path="/bpmn-source" element={<BPMNSource />} />
           <Route path="/docs/:docId" element={<DocumentationViewer />} />
           <Route path="/pages" element={<PagesManager />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </Router>

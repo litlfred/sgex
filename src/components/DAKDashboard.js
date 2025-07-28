@@ -398,6 +398,61 @@ const DAKDashboard = () => {
       return;
     }
 
+    // For core-data-elements (Component 2 Core Data Dictionary), navigate to viewer
+    if (component.id === 'core-data-elements') {
+      const owner = user || repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repo || repository.name;
+      const branchName = selectedBranch;
+      
+      const viewerPath = branchName ? 
+        `/core-data-dictionary-viewer/${owner}/${repoName}/${branchName}` :
+        `/core-data-dictionary-viewer/${owner}/${repoName}`;
+        
+      navigate(viewerPath, {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
+    // For terminology (also Component 2 Core Data Dictionary from Additional Components), navigate to viewer
+    if (component.id === 'terminology') {
+      const owner = user || repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repo || repository.name;
+      const branchName = selectedBranch;
+      
+      const viewerPath = branchName ? 
+        `/core-data-dictionary-viewer/${owner}/${repoName}/${branchName}` :
+        `/core-data-dictionary-viewer/${owner}/${repoName}`;
+        
+      navigate(viewerPath, {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
+    // For generic-personas, navigate to actor editor
+    if (component.id === 'generic-personas') {
+      navigate('/actor-editor', {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
     // For other components, check permissions before proceeding
     if (!hasWriteAccess) {
       setShowPermissionDialog(true);
@@ -557,7 +612,7 @@ const DAKDashboard = () => {
               <span className="tab-icon">🔧</span>
               <span className="tab-text">Additional Components</span>
             </button>
-            <button 
+            <button
               className={`tab-button ${activeTab === 'publications' ? 'active' : ''}`}
               onClick={() => setActiveTab('publications')}
             >
@@ -659,7 +714,7 @@ const DAKDashboard = () => {
           {/* Publications Section */}
           {activeTab === 'publications' && (
             <div className="components-section publications-section active">
-              <Publications 
+              <Publications
                 profile={profile}
                 repository={repository}
                 selectedBranch={selectedBranch}
