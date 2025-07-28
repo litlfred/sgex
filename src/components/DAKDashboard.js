@@ -397,6 +397,19 @@ const DAKDashboard = () => {
       return;
     }
 
+    // For core-data-elements (Component 2 Core Data Dictionary), navigate to viewer
+    if (component.id === 'core-data-elements') {
+      navigate('/core-data-dictionary-viewer', {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
     // For other components, check permissions before proceeding
     if (!hasWriteAccess) {
       setShowPermissionDialog(true);
