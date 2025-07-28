@@ -410,6 +410,19 @@ const DAKDashboard = () => {
       return;
     }
 
+    // For terminology (also Component 2 Core Data Dictionary from Additional Components), navigate to viewer
+    if (component.id === 'terminology') {
+      navigate('/core-data-dictionary-viewer', {
+        state: {
+          profile,
+          repository,
+          component,
+          selectedBranch
+        }
+      });
+      return;
+    }
+
     // For other components, check permissions before proceeding
     if (!hasWriteAccess) {
       setShowPermissionDialog(true);

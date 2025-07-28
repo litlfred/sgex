@@ -215,6 +215,20 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - Syntax highlighting and validation
 - Support for complex XML structures
 
+**REQ-EDIT-005**: The system SHALL provide Core Data Dictionary viewing capabilities
+- Dedicated viewer for Component 2 Core Data Dictionary (DAK Component: Core Data Elements)
+- FHIR FSH file detection and display from `input/fsh/` directory
+- Source code modal viewer with syntax highlighting for FSH files
+- Direct GitHub source code links for each FSH file
+- Publications section with automated gh-pages branch detection
+- Branch-based URL generation for FHIR IG Publisher artifacts:
+  - Main branch: `https://{user}.github.io/{repo}/`
+  - Other branches: `https://{user}.github.io/{repo}/branches/{branch}`
+- Artifact links for Code Systems, Value Sets, Logical Models, and Concept Maps
+- Standard Dictionaries section with Core Data Dictionary CodeSystem link
+- Help integration with "Get Help" links when gh-pages branch is not available
+- Contextual help mascot with notification badge for repositories without gh-pages
+
 ### 2.6 Form-Based Data Entry
 
 **REQ-FORM-001**: The system SHALL use JSON Forms for all structured data entry
@@ -369,6 +383,28 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - dmn-js for DMN editing
 - Monaco Editor for code editing
 - Octokit for GitHub API access
+
+### 5.3 FHIR IG Publisher and GitHub Workflows
+
+**REQ-INT-004**: The system SHALL support FHIR Implementation Guide Publisher integration
+- DAK repositories use the FHIR IG Publisher to generate published artifacts from FSH source files
+- Each branch (except gh-pages) triggers the IG Publisher on every commit via GitHub Actions
+- Published content is deployed to the gh-pages branch for web access
+- The Core Data Dictionary viewer integrates with this publishing workflow to provide artifact links
+
+**REQ-INT-005**: The system SHALL understand branch-to-publication relationships
+- **Main branch publication**: Content accessible at `https://{user}.github.io/{repo}/`
+- **Feature branch publication**: Content accessible at `https://{user}.github.io/{repo}/branches/{branch}`
+- **Source files**: FHIR FSH files stored in `input/fsh/` directory
+- **Published artifacts**: Generated HTML documentation and FHIR resources
+- **Artifact categories**: Code Systems, Value Sets, Logical Models, Concept Maps available at standardized paths
+
+**REQ-INT-006**: The system SHALL provide GitHub Pages setup guidance
+- Detect repositories without gh-pages branch configuration
+- Provide contextual help links to WHO IG Starter Kit documentation
+- Reference setup instructions at https://smart.who.int/ig-starter-kit/v1.0.0/ig_setup.html#ghpages-build
+- Display notification badges in help system for repositories requiring setup
+- Guide users through common setup and troubleshooting scenarios
 
 ## 6. Constraints
 
