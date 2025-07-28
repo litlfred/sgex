@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import dakTemplates from '../config/dak-templates.json';
@@ -9,6 +9,7 @@ import './DAKSelection.css';
 const DAKSelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user: userParam } = useParams();
   const [repositories, setRepositories] = useState([]);
   const [selectedRepository, setSelectedRepository] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,6 +20,36 @@ const DAKSelection = () => {
   const [usingCachedData, setUsingCachedData] = useState(false);
   
   const { profile, action } = location.state || {};
+
+  // Validate user parameter and profile consistency
+  useEffect(() => {
+    // If no user parameter in URL and no profile in state, redirect to landing
+    if (!userParam && !profile) {
+      navigate('/');
+      return;
+    }
+    
+    // If user parameter exists but no profile - redirect to landing
+    if (userParam && !profile) {
+      navigate('/');
+      return;
+    }
+    
+    // If user parameter exists and profile exists but they don't match - redirect to landing
+    if (userParam && profile && profile.login !== userParam) {
+      navigate('/');
+      return;
+    }
+    
+    // If profile exists but no user parameter, redirect to include user in URL
+    if (profile && !userParam) {
+      navigate(`/dak-selection/${profile.login}`, { 
+        state: { profile, action },
+        replace: true 
+      });
+      return;
+    }
+  }, [userParam, profile, action, navigate]);
 
   // Helper function to extract user and repo from repository object
   const getRepositoryPath = (repository) => {
@@ -424,14 +455,14 @@ const DAKSelection = () => {
   }, [profile, action, getMockRepositories, simulateEnhancedScanning]);
 
   useEffect(() => {
-    if (!profile || !action) {
-      navigate('/');
+    // Only proceed if we have valid profile, action and userParam consistency
+    if (!profile || !action || !userParam || profile.login !== userParam) {
       return;
     }
     
     // Always check cache first on initial load
     fetchRepositories(false, false); // forceRescan=false, useCachedData=false (but still check cache first)
-  }, [profile, action, navigate, fetchRepositories]);
+  }, [profile, action, userParam, fetchRepositories]);
 
   const handleRepositorySelect = (repo) => {
     setSelectedRepository(repo);
@@ -536,7 +567,7 @@ const DAKSelection = () => {
     });
   };
 
-  if (!profile || !action) {
+  if (!profile || !action || !userParam || profile.login !== userParam) {
     return <div className="dak-selection"><div style={{color: 'white', textAlign: 'center', padding: '2rem'}}>Redirecting...</div></div>;
   }
 

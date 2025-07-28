@@ -56,7 +56,7 @@ describe('Documentation Button Consistency', () => {
     };
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/dak-selection', state: { profile: mockProfile, action: 'edit' } }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: { profile: mockProfile, action: 'edit' } }]}>
         <DAKSelection />
       </MemoryRouter>
     );
@@ -74,7 +74,7 @@ describe('Documentation Button Consistency', () => {
     };
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/dak-selection', state: { profile: mockProfile, action: 'edit' } }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: { profile: mockProfile, action: 'edit' } }]}>
         <DAKSelection />
       </MemoryRouter>
     );

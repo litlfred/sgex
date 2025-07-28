@@ -200,7 +200,7 @@ const LandingPage = () => {
     };
     
     // Navigate directly to DAK selection with edit action to show enhanced scanning
-    navigate('/dak-selection', {
+    navigate(`/dak-selection/${demoProfile.login}`, {
       state: {
         profile: demoProfile,
         action: 'edit'

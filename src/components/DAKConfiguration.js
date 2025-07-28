@@ -238,7 +238,7 @@ const DAKConfiguration = () => {
             Choose DAK Action
           </button>
           <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/dak-selection', { state: { profile, action } })} className="breadcrumb-link">
+          <button onClick={() => navigate(`/dak-selection/${profile.login}`, { state: { profile, action } })} className="breadcrumb-link">
             Select DAK
           </button>
           <span className="breadcrumb-separator">›</span>

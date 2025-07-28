@@ -289,7 +289,7 @@ const OrganizationSelection = () => {
   };
 
   const handleBack = () => {
-    navigate('/dak-selection', { 
+    navigate(`/dak-selection/${profile.login}`, { 
       state: { profile, action } 
     });
   };

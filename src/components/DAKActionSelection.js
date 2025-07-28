@@ -34,8 +34,8 @@ const DAKActionSelection = () => {
   ];
 
   const handleActionSelect = (actionId) => {
-    // Navigate directly to the DAK selection with the chosen action
-    navigate('/dak-selection', { 
+    // Navigate directly to the DAK selection with the chosen action and user parameter
+    navigate(`/dak-selection/${profile.login}`, { 
       state: { 
         profile, 
         action: actionId 
