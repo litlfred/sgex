@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import './RepositorySelection.css';
 
 const RepositorySelection = () => {
@@ -77,10 +77,6 @@ const RepositorySelection = () => {
     });
   };
 
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -90,22 +86,15 @@ const RepositorySelection = () => {
   };
 
   if (!profile) {
-    return <div>Redirecting...</div>;
+    return (
+      <PageLayout pageName="repository-selection">
+        <div>Redirecting...</div>
+      </PageLayout>
+    );
   }
 
   return (
-    <div className="repository-selection">
-      <div className="repo-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="profile-info">
-          <img src={profile.avatar_url || `https://github.com/${profile.login}.png`} alt="Profile" className="profile-avatar" />
-          <span>{profile.name || profile.login}</span>
-        </div>
-      </div>
-
+    <PageLayout pageName="repository-selection">
       <div className="repo-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
@@ -188,12 +177,7 @@ const RepositorySelection = () => {
           )}
         </div>
       </div>
-      
-      <ContextualHelpMascot 
-        pageId="repository-selection"
-        contextData={{ profile }}
-      />
-    </div>
+    </PageLayout>
   );
 };
 
