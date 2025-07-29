@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { PageLayout } from './framework';
 import githubService from '../services/githubService';
-import ContextualHelpMascot from './ContextualHelpMascot';
 import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {
@@ -277,26 +277,9 @@ const CoreDataDictionaryViewer = () => {
   }
 
   return (
-    <div className="core-data-dictionary-viewer">
-      <div className="viewer-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile?.avatar_url || `https://github.com/${user || profile?.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repo || repository?.name}</span>
-            <span className="context-component">Core Data Dictionary</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="viewer-content">
+    <PageLayout pageName="core-data-dictionary-viewer">
+      <div className="core-data-dictionary-viewer">
+        <div className="viewer-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
@@ -605,19 +588,8 @@ const CoreDataDictionaryViewer = () => {
         </div>
       )}
 
-      <ContextualHelpMascot 
-        pageId="core-data-dictionary-viewer"
-        contextData={{ 
-          profile, 
-          repository, 
-          component,
-          selectedBranch,
-          hasGhPages,
-          fshFilesCount: fshFiles.length
-        }}
-        notificationBadge={!hasGhPages}
-      />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 
