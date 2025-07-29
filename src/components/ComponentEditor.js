@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import WHODigitalLibrary from './WHODigitalLibrary';
 import './ComponentEditor.css';
 
@@ -39,38 +39,16 @@ const ComponentEditor = () => {
       const placeholderRepo = { name: 'demo-repository' };
       
       return (
-        <div className="component-editor">
-          <div className="editor-header">
-            <div className="who-branding">
-              <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-              <p className="subtitle">WHO SMART Guidelines Exchange</p>
-            </div>
-            <div className="context-info">
-              <img 
-                src={placeholderProfile.avatar_url} 
-                alt="Profile" 
-                className="context-avatar" 
+        <PageLayout pageName="component-editor">
+          <div className="component-editor">
+            <div className="editor-content">
+              <WHODigitalLibrary 
+                onReferencesChange={handleReferencesChange}
+                selectedReferences={selectedReferences}
               />
-              <div className="context-details">
-                <span className="context-repo">{placeholderRepo.name}</span>
-                <span className="context-component">{currentComponent.name}</span>
-              </div>
-              <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
             </div>
           </div>
-
-          <div className="editor-content">
-            <WHODigitalLibrary 
-              onReferencesChange={handleReferencesChange}
-              selectedReferences={selectedReferences}
-            />
-          </div>
-          
-          <ContextualHelpMascot 
-            pageId="component-editor"
-            contextData={{ component: currentComponent }}
-          />
-        </div>
+        </PageLayout>
       );
     } else {
       navigate('/');
@@ -81,27 +59,9 @@ const ComponentEditor = () => {
   // Render WHO Digital Library for health-interventions component
   if (currentComponent?.id === 'health-interventions') {
     return (
-      <div className="component-editor">
-        <div className="editor-header">
-          <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
-          </div>
-          <div className="context-info">
-            <img 
-              src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-              alt="Profile" 
-              className="context-avatar" 
-            />
-            <div className="context-details">
-              <span className="context-repo">{repository.name}</span>
-              <span className="context-component">{currentComponent.name}</span>
-            </div>
-            <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-          </div>
-        </div>
-
-        <div className="editor-content">
+      <PageLayout pageName="component-editor">
+        <div className="component-editor">
+          <div className="editor-content">
           <div className="breadcrumb">
             <button onClick={() => navigate('/')} className="breadcrumb-link">
               Select Profile
@@ -149,42 +109,14 @@ const ComponentEditor = () => {
             <WHODigitalLibrary onReferencesChange={handleReferencesChange} />
           </div>
         </div>
-        
-        <ContextualHelpMascot 
-          pageId="health-interventions-editor"
-          contextData={{ 
-            profile, 
-            repository, 
-            component: currentComponent,
-            selectedReferencesCount: selectedReferences.length 
-          }}
-        />
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="component-editor">
-      <div className="editor-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repository.name}</span>
-            <span className="context-component">{currentComponent.name}</span>
-          </div>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-        </div>
-      </div>
-
-      <div className="editor-content">
+    <PageLayout pageName="component-editor">
+      <div className="component-editor">
+        <div className="editor-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
@@ -242,12 +174,7 @@ const ComponentEditor = () => {
           </div>
         </div>
       </div>
-      
-      <ContextualHelpMascot 
-        pageId="component-editor"
-        contextData={{ profile, repository, component: currentComponent }}
-      />
-    </div>
+    </PageLayout>
   );
 };
 
