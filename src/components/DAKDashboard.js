@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
@@ -9,10 +10,12 @@ import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
+import LanguageSelector from './LanguageSelector';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, repo, branch } = useParams();
@@ -77,7 +80,7 @@ const DAKDashboard = () => {
               setLoading(false);
               return;
             } else {
-              setError('GitHub authentication required. Please authenticate first.');
+              setError(t('errors.github_auth_required'));
               setLoading(false);
               return;
             }
@@ -93,7 +96,7 @@ const DAKDashboard = () => {
             // Redirect to landing page with warning message
             navigate('/', { 
               state: { 
-                warningMessage: `Could not access the requested DAK. User '${user}' not found or not accessible.` 
+                warningMessage: t('errors.user_not_found', { user }) 
               } 
             });
             return;
@@ -155,7 +158,7 @@ const DAKDashboard = () => {
     };
 
     fetchDataFromUrlParams();
-  }, [user, repo, branch, profile, repository, navigate]);
+  }, [user, repo, branch, profile, repository, navigate, t]);
 
   // Initialize selected branch from session context
   useEffect(() => {
@@ -588,11 +591,12 @@ const DAKDashboard = () => {
 
   return (
     <div className="dak-dashboard">
+      <LanguageSelector position="top-right" showLabel={false} />
       <div className="dashboard-header">
         <div className="header-left">
           <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
+            <h1 onClick={handleHomeNavigation} className="clickable-title">{t('app.title')}</h1>
+            <p className="subtitle">{t('app.subtitle')}</p>
           </div>
           <div className="repo-status">
             <div className="repo-info">

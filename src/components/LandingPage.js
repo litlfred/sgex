@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import PATLogin from './PATLogin';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import LanguageSelector from './LanguageSelector';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './LandingPage.css';
 
 const LandingPage = () => {
+  const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const [organizations, setOrganizations] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -122,14 +125,14 @@ const LandingPage = () => {
       
     } catch (error) {
       console.error('Error fetching user data:', error);
-      setError('Failed to fetch user data. Please check your connection and try again.');
+      setError(t('errors.failed_fetch_user'));
       setIsAuthenticated(false);
       sessionStorage.removeItem('github_token');
       localStorage.removeItem('github_token');
     } finally {
       setLoading(false);
     }
-  }, [loadCachedDakCounts]); // Remove dependencies to prevent circular re-renders
+  }, [loadCachedDakCounts, t]); // Remove dependencies to prevent circular re-renders
 
   // Initial authentication check - runs once on mount
   useEffect(() => {
@@ -221,13 +224,14 @@ const LandingPage = () => {
   if (!isAuthenticated) {
     return (
       <div className="landing-page">
+        <LanguageSelector position="top-right" showLabel={false} />
         <div className="landing-header">
           <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
+            <h1 onClick={handleHomeNavigation} className="clickable-title">{t('app.title')}</h1>
+            <p className="subtitle">{t('app.subtitle')}</p>
           </div>
           <div className="header-nav">
-            <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+            <a href="/sgex/docs/overview" className="nav-link">{t('navigation.documentation')}</a>
           </div>
         </div>
         
@@ -240,7 +244,7 @@ const LandingPage = () => {
                 <button 
                   className="warning-dismiss" 
                   onClick={handleDismissWarning}
-                  aria-label="Dismiss warning"
+                  aria-label={t('common.dismiss')}
                 >
                   ×
                 </button>
@@ -248,14 +252,13 @@ const LandingPage = () => {
             </div>
           )}
           <div className="welcome-section">
-            <h2>Welcome to SGEX Workbench</h2>
+            <h2>{t('landing.welcome')}</h2>
             <p>
-              A browser-based, standards-compliant collaborative editor for 
-              WHO SMART Guidelines Digital Adaptation Kits (DAKs).
+              {t('landing.description')}
             </p>
             
             <div className="auth-section">
-              <p>Connect your GitHub account to get started:</p>
+              <p>{t('landing.connect_github')}</p>
               <PATLogin 
                 onAuthSuccess={handleAuthSuccess}
               />
@@ -268,25 +271,24 @@ const LandingPage = () => {
             </div>
             
             <div className="demo-section">
-              <p>Want to try without authentication?</p>
+              <p>{t('landing.try_demo')}</p>
               <button 
                 onClick={handleDemoMode}
                 className="demo-mode-btn"
               >
-                🎭 Try Demo Mode
+                {t('landing.demo_mode')}
               </button>
               <p className="demo-note">
-                Demo mode showcases the enhanced DAK scanning display with mock data.
+                {t('landing.demo_note')}
               </p>
             </div>
             
             <div className="info-section">
               <p>
-                Need help getting started? Check out our comprehensive{' '}
+                {t('landing.need_help')}{' '}
                 <a href="/sgex/docs/overview" className="doc-link">
-                  documentation
-                </a>{' '}
-                to learn more about SGEX Workbench and DAK components.
+                  {t('landing.documentation_link')}</a>{' '}
+                {t('landing.learn_more')}
               </p>
             </div>
           </div>
@@ -302,16 +304,17 @@ const LandingPage = () => {
 
   return (
     <div className="landing-page">
+      <LanguageSelector position="top-right" showLabel={false} />
       <div className="landing-header">
         <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
+          <h1 onClick={handleHomeNavigation} className="clickable-title">{t('app.title')}</h1>
+          <p className="subtitle">{t('app.subtitle')}</p>
         </div>
         <div className="user-info">
           <img src={user?.avatar_url} alt="User avatar" className="user-avatar" />
           <span>{user?.name || user?.login}</span>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-          <button onClick={handleLogout} className="logout-btn">Logout</button>
+          <a href="/sgex/docs/overview" className="nav-link">{t('navigation.documentation')}</a>
+          <button onClick={handleLogout} className="logout-btn">{t('navigation.logout')}</button>
         </div>
       </div>
       
@@ -324,7 +327,7 @@ const LandingPage = () => {
               <button 
                 className="warning-dismiss" 
                 onClick={handleDismissWarning}
-                aria-label="Dismiss warning"
+                aria-label={t('common.dismiss')}
               >
                 ×
               </button>
@@ -334,12 +337,12 @@ const LandingPage = () => {
         {loading ? (
           <div className="loading-section">
             <div className="spinner"></div>
-            <p>Loading profile data...</p>
+            <p>{t('landing.loading_profile')}</p>
           </div>
         ) : (
           <div className="profile-selection">
-            <h2>Select Profile or Organization</h2>
-            <p>Choose the GitHub profile or organization containing your DAK repositories:</p>
+            <h2>{t('landing.profile_selection')}</h2>
+            <p>{t('landing.choose_profile')}</p>
             
             {error && <div className="error-message">{error}</div>}
             
