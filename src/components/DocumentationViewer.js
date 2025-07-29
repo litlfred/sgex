@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import './DocumentationViewer.css';
 
 // Map of available documentation files
@@ -76,14 +76,6 @@ const DocumentationViewer = () => {
     loadDocumentation();
   }, [docId]);
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
   const renderMarkdown = (markdown) => {
     // Simple markdown to HTML conversion for basic formatting
     let html = markdown;
@@ -132,75 +124,41 @@ const DocumentationViewer = () => {
 
   if (loading) {
     return (
-      <div className="documentation-viewer">
-        <div className="doc-header">
-          <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
-          </div>
-          <button onClick={handleBack} className="back-btn">
-            ← Back
-          </button>
-        </div>
-        <div className="doc-content">
-          <div className="loading">
-            <div className="spinner"></div>
-            <p>Loading documentation...</p>
+      <PageLayout pageName="documentation-viewer">
+        <div className="documentation-viewer">
+          <div className="doc-content">
+            <div className="loading">
+              <div className="spinner"></div>
+              <p>Loading documentation...</p>
+            </div>
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="documentation-viewer">
-        <div className="doc-header">
-          <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
-          </div>
-          <button onClick={handleBack} className="back-btn">
-            ← Back
-          </button>
-        </div>
-        <div className="doc-content">
-          <div className="error-state">
-            <h2>Error</h2>
-            <p>{error}</p>
-            <button onClick={() => window.location.reload()} className="retry-btn">
-              Try Again
-            </button>
+      <PageLayout pageName="documentation-viewer">
+        <div className="documentation-viewer">
+          <div className="doc-content">
+            <div className="error-state">
+              <h2>Error</h2>
+              <p>{error}</p>
+              <button onClick={() => window.location.reload()} className="retry-btn">
+                Try Again
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="documentation-viewer">
-      <div className="doc-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="doc-nav">
-          <select 
-            value={docId} 
-            onChange={(e) => navigate(`/docs/${e.target.value}`)}
-            className="doc-selector"
-          >
-            {Object.entries(docFiles).map(([key, doc]) => (
-              <option key={key} value={key}>{doc.title}</option>
-            ))}
-          </select>
-          <button onClick={handleBack} className="back-btn">
-            ← Back
-          </button>
-        </div>
-      </div>
-
-      <div className="doc-content">
+    <PageLayout pageName="documentation-viewer">
+      <div className="documentation-viewer">
+        <div className="doc-content">
         <div className="doc-sidebar">
           <h3>Documentation</h3>
           <nav className="doc-menu">
@@ -226,12 +184,8 @@ const DocumentationViewer = () => {
         </div>
       </div>
       
-      <ContextualHelpMascot 
-        pageId="documentation-viewer"
-        position="bottom-right"
-        contextData={{ docId, docFiles }}
-      />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 
