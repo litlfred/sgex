@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { PageLayout, useDAKParams } from './framework';
 import githubService from '../services/githubService';
 import MDEditor from '@uiw/react-md-editor';
 import './DecisionSupportLogicView.css';
@@ -9,10 +10,14 @@ const DecisionSupportLogicView = () => {
   const navigate = useNavigate();
   const { user, repo, branch } = useParams();
   
-  // State from location or URL params
-  const [profile, setProfile] = useState(location.state?.profile || null);
-  const [repository, setRepository] = useState(location.state?.repository || null);
-  const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
+  // Use framework DAK parameters when available
+  const frameworkParams = useDAKParams() || {};
+  const { profile: frameworkProfile, repository: frameworkRepository, branch: frameworkBranch } = frameworkParams;
+  
+  // State from location, URL params, or framework
+  const [profile, setProfile] = useState(frameworkProfile || location.state?.profile || null);
+  const [repository, setRepository] = useState(frameworkRepository || location.state?.repository || null);
+  const [selectedBranch, setSelectedBranch] = useState(frameworkBranch || location.state?.selectedBranch || branch || null);
   
   // Component state
   const [loading, setLoading] = useState(true);
@@ -69,6 +74,19 @@ const DecisionSupportLogicView = () => {
     initializeData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initializeData]);
+
+  // Sync with framework parameters when they change
+  useEffect(() => {
+    if (frameworkProfile && frameworkProfile !== profile) {
+      setProfile(frameworkProfile);
+    }
+    if (frameworkRepository && frameworkRepository !== repository) {
+      setRepository(frameworkRepository);
+    }
+    if (frameworkBranch && frameworkBranch !== selectedBranch) {
+      setSelectedBranch(frameworkBranch);
+    }
+  }, [frameworkProfile, frameworkRepository, frameworkBranch, profile, repository, selectedBranch]);
 
   // Load DAK decision support data
   useEffect(() => {
@@ -657,83 +675,38 @@ define "Contraindication Present":
     }
   };
 
-  if (loading) {
-    return (
-      <div className="decision-support-view loading-state">
-        <div className="loading-content">
-          <h2>Loading Decision Support Logic...</h2>
-          <p>Fetching variables and decision tables...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="decision-support-view error-state">
-        <div className="error-content">
-          <h2>Error Loading Decision Support Logic</h2>
-          <p>{error}</p>
-          <div className="error-actions">
-            <button onClick={() => navigate('/')} className="action-btn primary">
-              Return to Home
-            </button>
-            <button onClick={() => window.location.reload()} className="action-btn secondary">
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="decision-support-view">
-      <div className="view-header">
-        <div className="header-left">
-          <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
+    <PageLayout pageName="decision-support-logic">
+      <div className="decision-support-view">
+        {loading && (
+          <div className="loading-state">
+            <div className="loading-content">
+              <h2>Loading Decision Support Logic...</h2>
+              <p>Fetching variables and decision tables...</p>
+            </div>
           </div>
-          <div className="repo-context">
-            {repository && (
-              <div className="repo-info">
-                <a 
-                  href={`https://github.com/${repository.full_name}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="context-repo-link"
-                  title="View repository on GitHub"
-                >
-                  <span className="repo-icon">📁</span>
-                  <span className="context-repo">{repository.name}</span>
-                  <span className="external-link">↗</span>
-                </a>
-                {selectedBranch && (
-                  <span className="branch-info">
-                    <code className="branch-display">{selectedBranch}</code>
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="header-right">
-          {profile && (
-            <>
-              <img 
-                src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-                alt="Profile" 
-                className="context-avatar" 
-              />
-              <span className="context-owner">@{profile.login}</span>
-            </>
-          )}
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-        </div>
-      </div>
+        )}
 
-      <div className="view-content">
+        {error && (
+          <div className="error-state">
+            <div className="error-content">
+              <h2>Error Loading Decision Support Logic</h2>
+              <p>{error}</p>
+              <div className="error-actions">
+                <button onClick={() => navigate('/')} className="action-btn primary">
+                  Return to Home
+                </button>
+                <button onClick={() => window.location.reload()} className="action-btn secondary">
+                  Retry
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
+            <div className="view-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
@@ -971,9 +944,11 @@ define "Contraindication Present":
           )}
         </div>
       </div>
+        </>
+        )}
 
-      {/* Source Dialog */}
-      {selectedDialog && (
+        {/* Source Dialog */}
+        {selectedDialog && (
         <div className="dialog-overlay" onClick={() => setSelectedDialog(null)}>
           <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
             <div className="dialog-header">
@@ -1070,7 +1045,7 @@ define "Contraindication Present":
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 };
 
