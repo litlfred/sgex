@@ -8,6 +8,20 @@
 
 This repository contains the source code, schemas, and documentation for the SGEX Workbench—a browser-based, standards-compliant collaborative editor for WHO SMART Guidelines Digital Adaptation Kits (DAKs).
 
+## Overview
+
+The SGEX Workbench provides an intuitive interface for collaborative editing of WHO SMART Guidelines Digital Adaptation Kits (DAKs). Here's what you can expect:
+
+### Repository Selection
+Browse and select from available DAK repositories with enhanced scanning display showing repository details, tags, and metadata.
+
+![Repository Selection](https://github.com/user-attachments/assets/1c606285-519f-4985-91a1-52739069ae39)
+
+### DAK Component Management
+Access and edit the 8 core DAK components organized according to the WHO SMART Guidelines framework, including Health Interventions, Generic Personas, User Scenarios, Business Processes, Core Data Elements, Decision-Support Logic, Program Indicators, and Requirements.
+
+![DAK Components](https://github.com/user-attachments/assets/2b3c8e7d-cdd2-4a61-a482-a2c1bc6cb0cb)
+
 ## About
 
 The SGEX Workbench is a browser-based, static web application for collaborative editing of WHO SMART Guidelines Digital Adaptation Kits (DAKs) content stored in GitHub repositories.
