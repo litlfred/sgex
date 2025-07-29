@@ -5,7 +5,6 @@ import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import PATLogin from './PATLogin';
 import ContextualHelpMascot from './ContextualHelpMascot';
-import LanguageSelector from './LanguageSelector';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './LandingPage.css';
 
@@ -224,7 +223,6 @@ const LandingPage = () => {
   if (!isAuthenticated) {
     return (
       <div className="landing-page">
-        <LanguageSelector position="top-right" showLabel={false} />
         <div className="landing-header">
           <div className="who-branding">
             <h1 onClick={handleHomeNavigation} className="clickable-title">{t('app.title')}</h1>
@@ -304,7 +302,6 @@ const LandingPage = () => {
 
   return (
     <div className="landing-page">
-      <LanguageSelector position="top-right" showLabel={false} />
       <div className="landing-header">
         <div className="who-branding">
           <h1 onClick={handleHomeNavigation} className="clickable-title">{t('app.title')}</h1>

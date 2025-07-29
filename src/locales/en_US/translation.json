@@ -67,5 +67,8 @@
     "english": "English (US)",
     "french": "Français",
     "spanish": "Español"
+  },
+  "help": {
+    "getHelp": "Get Help"
   }
 }

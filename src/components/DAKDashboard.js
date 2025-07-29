@@ -10,7 +10,6 @@ import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
-import LanguageSelector from './LanguageSelector';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKDashboard.css';
 
@@ -591,7 +590,6 @@ const DAKDashboard = () => {
 
   return (
     <div className="dak-dashboard">
-      <LanguageSelector position="top-right" showLabel={false} />
       <div className="dashboard-header">
         <div className="header-left">
           <div className="who-branding">
