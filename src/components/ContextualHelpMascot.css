@@ -201,7 +201,7 @@
 
 /* Position the bubble relative to mascot position */
 .contextual-help-mascot.bottom-right .help-thought-bubble {
-  bottom: 60px;
+  bottom: 140px;
   right: 0;
 }
 
@@ -223,10 +223,10 @@
 /* Bubble Tail (thought dots pointing to mascot) */
 .bubble-tail {
   position: absolute;
-  width: 12px;
-  height: 12px;
-  background: var(--who-card-bg, #ffffff);
-  border: 4px solid var(--who-blue, #006cbe);
+  width: 23px;
+  height: 23px;
+  background: #ffffff;
+  border: 3px solid #0066cc;
   border-radius: 50%;
   z-index: 1002;
 }
@@ -234,10 +234,10 @@
 .bubble-tail::before {
   content: '';
   position: absolute;
-  width: 8px;
-  height: 8px;
-  background: var(--who-card-bg, #ffffff);
-  border: 4px solid var(--who-blue, #006cbe);
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border: 4px solid #0066cc;
   border-radius: 50%;
   z-index: 1003;
 }
@@ -245,28 +245,28 @@
 .bubble-tail::after {
   content: '';
   position: absolute;
-  width: 5px;
-  height: 5px;
-  background: var(--who-card-bg, #ffffff);
-  border: 4px solid var(--who-blue, #006cbe);
+  width: 15px;
+  height: 15px;
+  background: #ffffff;
+  border: 4px solid #0066cc;
   border-radius: 50%;
   z-index: 1004;
 }
 
 /* Position tail based on mascot position */
 .contextual-help-mascot.bottom-right .bubble-tail {
-  bottom: 50px;
-  right: 25px;
+  bottom: -14px;
+  right: -4px;
 }
 
 .contextual-help-mascot.bottom-right .bubble-tail::before {
-  bottom: 55px;
-  right: -5px;
+  bottom: -64px;
+  right: -15px;
 }
 
 .contextual-help-mascot.bottom-right .bubble-tail::after {
-  bottom: 58px;
-  right: -8px;
+  bottom: -28px;
+  right: -1px;
 }
 
 .contextual-help-mascot.bottom-left .bubble-tail {
