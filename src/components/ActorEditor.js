@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import actorDefinitionService from '../services/actorDefinitionService';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import './ActorEditor.css';
 
 const ActorEditor = () => {
@@ -236,10 +236,6 @@ const ActorEditor = () => {
   };
 
   // Navigation handlers
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
   const handleBackToDashboard = () => {
     navigate('/dashboard', {
       state: {
@@ -267,27 +263,9 @@ const ActorEditor = () => {
   }
 
   return (
-    <div className="actor-editor">
-      <div className="editor-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repository.name}</span>
-            <span className="context-component">Actor Definitions Editor</span>
-            {selectedBranch && <span className="context-branch">{selectedBranch}</span>}
-          </div>
-        </div>
-      </div>
-
-      <div className="editor-content">
+    <PageLayout pageName="actor-editor">
+      <div className="actor-editor">
+        <div className="editor-content">
         <div className="breadcrumb">
           <span onClick={handleBackToDashboard} className="breadcrumb-link">Dashboard</span>
           <span className="breadcrumb-separator">→</span>
@@ -508,11 +486,8 @@ const ActorEditor = () => {
         </div>
       )}
 
-      <ContextualHelpMascot 
-        context="actor-editor"
-        helpText="Use this editor to create and modify actor definitions based on the FHIR Persona logical model. Define healthcare actors like clinicians, patients, and administrators with their roles, qualifications, and access requirements."
-      />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 
