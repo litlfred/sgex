@@ -26,18 +26,10 @@ const ComponentEditor = () => {
     setSelectedReferences(references);
   }, []);
 
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
   // For health-interventions, we can work without full context for now
   if (!profile || !repository) {
     if (currentComponent?.id === 'health-interventions') {
       // Allow access to health-interventions editor without full context
-      // Use placeholder data for now
-      const placeholderProfile = { login: 'demo-user', avatar_url: '/sgex/sgex-mascot.png', name: 'Demo User' };
-      const placeholderRepo = { name: 'demo-repository' };
-      
       return (
         <PageLayout pageName="component-editor">
           <div className="component-editor">
@@ -108,6 +100,7 @@ const ComponentEditor = () => {
 
             <WHODigitalLibrary onReferencesChange={handleReferencesChange} />
           </div>
+          </div>
         </div>
       </PageLayout>
     );
@@ -117,7 +110,7 @@ const ComponentEditor = () => {
     <PageLayout pageName="component-editor">
       <div className="component-editor">
         <div className="editor-content">
-        <div className="breadcrumb">
+          <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
           </button>
@@ -172,6 +165,7 @@ const ComponentEditor = () => {
               </button>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </PageLayout>

@@ -181,7 +181,7 @@ const DocumentationViewer = () => {
     <PageLayout pageName="documentation-viewer">
       <div className="documentation-viewer">
         <div className="doc-content">
-        <div className="doc-sidebar">
+          <div className="doc-sidebar">
           <h3>Documentation</h3>
           <nav className="doc-menu">
             {Object.entries(docFiles).map(([key, doc]) => (
@@ -203,6 +203,7 @@ const DocumentationViewer = () => {
               __html: renderMarkdown(content)
             }}
           />
+        </div>
         </div>
       </div>
     </PageLayout>
