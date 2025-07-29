@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PageLayout } from './framework';
 
 const BPMNViewerTestComponent = () => {
   const navigate = useNavigate();
@@ -34,10 +35,12 @@ const BPMNViewerTestComponent = () => {
   }, [navigate]);
 
   return (
-    <div>
-      <h2>Navigating to BPMN Viewer...</h2>
-      <p>This will test the container initialization fix.</p>
-    </div>
+    <PageLayout pageName="bpmn-viewer-test">
+      <div>
+        <h2>Navigating to BPMN Viewer...</h2>
+        <p>This will test the container initialization fix.</p>
+      </div>
+    </PageLayout>
   );
 };
 

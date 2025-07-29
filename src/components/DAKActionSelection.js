@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKActionSelection.css';
 
@@ -75,36 +75,20 @@ const DAKActionSelection = () => {
     handleNavigationClick(event, `/dak-selection/${profile.login}`, navigate, navigationState);
   };
 
-  const handleHomeNavigation = () => {
-    navigate('/', { state: { profile } });
-  };
-
   const handleBackToProfile = () => {
     navigate('/', { state: { profile } });
   };
 
   if (!profile) {
-    return <div>Redirecting...</div>;
+    return (
+      <PageLayout pageName="dak-action-selection">
+        <div>Redirecting...</div>
+      </PageLayout>
+    );
   }
 
   return (
-    <div className="dak-action-selection">
-      <div className="action-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="profile-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="profile-avatar" 
-          />
-          <span>{profile.name || profile.login}</span>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-        </div>
-      </div>
-
+    <PageLayout pageName="dak-action-selection">
       <div className="action-content">
         <div className="breadcrumb">
           <button onClick={handleBackToProfile} className="breadcrumb-link">
@@ -170,13 +154,7 @@ const DAKActionSelection = () => {
           </div>
         </div>
       </div>
-      
-      <ContextualHelpMascot 
-        pageId="dak-action-selection"
-        position="bottom-right"
-        contextData={{ profile }}
-      />
-    </div>
+    </PageLayout>
   );
 };
 

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { PageLayout } from './framework';
 import githubService from '../services/githubService';
 
 const NotFound = () => {
@@ -22,9 +23,15 @@ const NotFound = () => {
     });
   }, [navigate, location.pathname]);
 
-  // This component doesn't render anything visible
-  // as it immediately redirects to the landing page
-  return null;
+  // Show temporary message while redirecting
+  return (
+    <PageLayout pageName="not-found">
+      <div className="not-found-page">
+        <h1>Page Not Found</h1>
+        <p>Redirecting to home page...</p>
+      </div>
+    </PageLayout>
+  );
 };
 
 export default NotFound;

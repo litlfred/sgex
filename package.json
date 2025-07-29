@@ -24,7 +24,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "serve": "npm run build && cd build && python3 -m http.server 3000"
+    "serve": "npm run build && cd build && python3 -m http.server 3000",
+    "check-framework-compliance": "node scripts/check-framework-compliance.js"
   },
   "eslintConfig": {
     "extends": [

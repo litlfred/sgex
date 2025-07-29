@@ -1,0 +1,124 @@
+name: Page Framework Compliance Check
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/components/**/*.js'
+      - 'src/components/**/*.jsx'
+      - 'src/App.js'
+      - 'scripts/check-framework-compliance.js'
+
+jobs:
+  framework-compliance:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run Framework Compliance Check
+      run: npm run check-framework-compliance
+
+    - name: Comment PR with compliance results
+      if: always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          
+          try {
+            // Run compliance check and capture output
+            const output = execSync('npm run check-framework-compliance', { 
+              encoding: 'utf8',
+              cwd: process.cwd()
+            });
+            
+            // Create comment body
+            const commentBody = `## 🔍 Page Framework Compliance Check Results
+            
+            ${output}
+            
+            ---
+            
+            ### Next Steps
+            ${output.includes('NON-COMPLIANT') ? 
+              '❌ **Action Required**: Fix non-compliant pages before merging.' :
+              output.includes('PARTIAL') ?
+                '⚠️ **Recommended**: Consider addressing partial compliance issues.' :
+                '✅ **All Good**: All pages are framework compliant!'
+            }
+            
+            For migration guidance, see [Page Framework Documentation](../docs/page-framework.md).
+            `;
+            
+            // Find existing compliance comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const existingComment = comments.find(comment => 
+              comment.body.includes('Page Framework Compliance Check Results')
+            );
+            
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: commentBody
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }
+            
+          } catch (error) {
+            console.error('Error running compliance check:', error);
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## ❌ Page Framework Compliance Check Failed
+              
+              The compliance check encountered an error:
+              \`\`\`
+              ${error.message}
+              \`\`\`
+              
+              Please check the action logs for more details.`
+            });
+            
+            process.exit(1);
+          }
+
+    - name: Fail on non-compliance
+      run: |
+        # Re-run compliance check to get exit code
+        npm run check-framework-compliance
+        exit_code=$?
+        
+        if [ $exit_code -ne 0 ]; then
+          echo "❌ Framework compliance check failed. Please fix non-compliant pages."
+          exit 1
+        else
+          echo "✅ Framework compliance check passed."
+        fi

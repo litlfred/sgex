@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import './OrganizationSelection.css';
 
 const OrganizationSelection = () => {
@@ -294,12 +294,12 @@ const OrganizationSelection = () => {
     });
   };
 
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
   if (!profile || !sourceRepository || !action) {
-    return <div>Redirecting...</div>;
+    return (
+      <PageLayout pageName="organization-selection">
+        <div>Redirecting...</div>
+      </PageLayout>
+    );
   }
 
   const config = getActionConfig();
@@ -324,23 +324,7 @@ const OrganizationSelection = () => {
   allOptions.push(...organizations);
 
   return (
-    <div className="organization-selection">
-      <div className="org-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="profile-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="profile-avatar" 
-          />
-          <span>{profile.name || profile.login}</span>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-        </div>
-      </div>
-
+    <PageLayout pageName="organization-selection">
       <div className="org-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
@@ -476,12 +460,7 @@ const OrganizationSelection = () => {
           </div>
         </div>
       </div>
-      
-      <ContextualHelpMascot 
-        pageId="organization-selection"
-        contextData={{ profile, sourceRepository, action, selectedOrganization }}
-      />
-    </div>
+    </PageLayout>
   );
 };
 
