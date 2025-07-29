@@ -388,13 +388,21 @@ For detailed information about each DAK component, see [DAK Components Documenta
 
 ### 4.2 Navigation
 
-**REQ-UX-003**: The system SHALL provide intuitive navigation
+**REQ-UX-005**: The system SHALL provide intuitive navigation
 - Clear visual hierarchy
 - Consistent navigation patterns
 - Context-sensitive UI elements
 - Breadcrumb navigation
 
-**REQ-UX-004**: The system SHALL provide accessible help and support
+**REQ-UX-006**: The system SHALL provide branch selector functionality on DAK and Asset pages
+- **DAK pages** (URL pattern: `/sgex/{page_name}/{user}/{repo}[/{branch}]`) MUST include a branch selector in the header
+- **Asset pages** (URL pattern: `/sgex/{page_name}/{user}/{repo}/{branch}/{asset}`) MUST include a branch selector in the header
+- Branch selector SHALL allow users to switch between available repository branches
+- Branch selector SHALL update the current page URL when a new branch is selected
+- Branch selector SHALL display the currently selected branch prominently
+- Branch selector SHALL be consistent across all DAK and Asset pages
+
+**REQ-UX-007**: The system SHALL provide accessible help and support
 - SGEX Workbench mascot as consistent help interface
 - Context-aware help system with step-by-step guidance
 - Multiple support channels integrated into help interface

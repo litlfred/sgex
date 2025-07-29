@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { PageLayout } from './framework';
 import githubService from '../services/githubService';
 import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
@@ -553,31 +554,35 @@ const DAKDashboard = () => {
 
   if (loading) {
     return (
-      <div className="dak-dashboard loading-state">
-        <div className="loading-content">
-          <h2>Loading Dashboard...</h2>
-          <p>Fetching repository and user data...</p>
+      <PageLayout pageName="dak-dashboard">
+        <div className="dak-dashboard loading-state">
+          <div className="loading-content">
+            <h2>Loading Dashboard...</h2>
+            <p>Fetching repository and user data...</p>
+          </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="dak-dashboard error-state">
-        <div className="error-content">
-          <h2>Error Loading Dashboard</h2>
-          <p>{error}</p>
-          <div className="error-actions">
-            <button onClick={() => navigate('/')} className="action-btn primary">
-              Return to Home
-            </button>
-            <button onClick={() => window.location.reload()} className="action-btn secondary">
-              Retry
-            </button>
+      <PageLayout pageName="dak-dashboard">
+        <div className="dak-dashboard error-state">
+          <div className="error-content">
+            <h2>Error Loading Dashboard</h2>
+            <p>{error}</p>
+            <div className="error-actions">
+              <button onClick={() => navigate('/')} className="action-btn primary">
+                Return to Home
+              </button>
+              <button onClick={() => window.location.reload()} className="action-btn secondary">
+                Retry
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
@@ -587,7 +592,8 @@ const DAKDashboard = () => {
   }
 
   return (
-    <div className="dak-dashboard">
+    <PageLayout pageName="dak-dashboard">
+      <div className="dak-dashboard">
       <div className="dashboard-header">
         <div className="header-left">
           <div className="who-branding">
@@ -926,7 +932,8 @@ const DAKDashboard = () => {
         position="bottom-right"
         contextData={{ profile, repository, hasWriteAccess }}
       />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 
