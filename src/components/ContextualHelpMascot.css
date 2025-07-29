@@ -2,6 +2,10 @@
 .contextual-help-mascot {
   position: fixed;
   z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   
   /* Default position: bottom-right */
   bottom: 30px;
@@ -23,6 +27,72 @@
   left: 30px;
 }
 
+/* Theme Toggle Container */
+.theme-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+/* Theme Toggle Button (Light Switch) */
+.theme-toggle-btn {
+  background: var(--who-card-bg, #ffffff);
+  border: 2px solid var(--who-blue, #006cbe);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 108, 190, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 108, 190, 0.3);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle-btn.light {
+  background: var(--who-light-blue-light, #e0ebf7);
+  color: var(--who-blue, #006cbe);
+}
+
+.theme-toggle-btn.dark {
+  background: var(--who-navy, #040B76);
+  color: var(--who-light-blue, #c0dcf2);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+/* Add glow effect for theme toggle */
+.theme-toggle-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: var(--who-blue, #006cbe);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+  opacity: 0.2;
+  z-index: -1;
+}
+
+.theme-toggle-btn:hover::before {
+  width: 100%;
+  height: 100%;
+}
+
 /* Mascot Container */
 .mascot-container {
   cursor: pointer;
@@ -30,13 +100,13 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.2);
+  background: var(--who-card-bg, #ffffff);
+  box-shadow: 0 4px 12px rgba(0, 108, 190, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  border: 2px solid #0066cc;
+  border: 2px solid var(--who-blue, #006cbe);
 }
 
 .mascot-container:hover {
@@ -55,9 +125,9 @@
   position: absolute;
   top: -8px;
   right: -8px;
-  background: white;
-  color: #0066cc;
-  border: 2px solid #0066cc;
+  background: var(--who-card-bg, #ffffff);
+  color: var(--who-blue, #006cbe);
+  border: 2px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   width: 24px;
   height: 24px;
@@ -67,7 +137,7 @@
   font-size: 14px;
   font-weight: bold;
   animation: pulse 2s infinite;
-  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 108, 190, 0.3);
 }
 
 @keyframes pulse {
@@ -118,13 +188,13 @@
 /* Help Thought Bubble */
 .help-thought-bubble {
   position: absolute;
-  background: #ffffff;
-  border: 4px solid #0066cc;
+  background: var(--who-card-bg, #ffffff);
+  border: 4px solid var(--who-blue, #006cbe);
   border-radius: 20px;
   padding: 20px;
   min-width: 280px;
   max-width: 350px;
-  box-shadow: 0 8px 32px rgba(0, 102, 204, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 108, 190, 0.15);
   animation: bubbleAppear 0.3s ease-out;
   z-index: 1001;
 }
@@ -155,8 +225,8 @@
   position: absolute;
   width: 12px;
   height: 12px;
-  background: #ffffff;
-  border: 4px solid #0066cc;
+  background: var(--who-card-bg, #ffffff);
+  border: 4px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   z-index: 1002;
 }
@@ -166,8 +236,8 @@
   position: absolute;
   width: 8px;
   height: 8px;
-  background: #ffffff;
-  border: 4px solid #0066cc;
+  background: var(--who-card-bg, #ffffff);
+  border: 4px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   z-index: 1003;
 }
@@ -177,8 +247,8 @@
   position: absolute;
   width: 5px;
   height: 5px;
-  background: #ffffff;
-  border: 4px solid #0066cc;
+  background: var(--who-card-bg, #ffffff);
+  border: 4px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   z-index: 1004;
 }
@@ -253,8 +323,8 @@
   position: absolute;
   top: -10px;
   right: -10px;
-  background: #0066cc;
-  color: white;
+  background: var(--who-blue, #006cbe);
+  color: var(--who-card-bg, #ffffff);
   border: none;
   border-radius: 50%;
   width: 24px;
@@ -269,19 +339,19 @@
 }
 
 .close-bubble-btn:hover {
-  background: #004a99;
+  background: var(--who-blue-dark, #004a99);
 }
 
 .help-text {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 14px;
   line-height: 1.5;
-  color: #333;
+  color: var(--who-text-primary, #333);
 }
 
 .help-text h4 {
   margin: 0 0 12px 0;
-  color: #0066cc;
+  color: var(--who-blue, #006cbe);
   font-size: 16px;
   font-weight: 600;
 }
@@ -300,15 +370,15 @@
 }
 
 .help-text .tip {
-  background: #e3f2fd;
+  background: var(--who-selected-bg, rgba(0, 108, 190, 0.1));
   padding: 12px;
   border-radius: 8px;
-  border-left: 4px solid #0066cc;
+  border-left: 4px solid var(--who-blue, #006cbe);
   margin: 12px 0;
 }
 
 .help-text .tip strong {
-  color: #0066cc;
+  color: var(--who-blue, #006cbe);
 }
 
 /* Help topics list */
@@ -318,7 +388,7 @@
 
 .help-topics-list h4 {
   margin: 0 0 12px 0;
-  color: #0066cc;
+  color: var(--who-blue, #006cbe);
   font-size: 16px;
   font-weight: 600;
 }
@@ -328,8 +398,8 @@
   align-items: center;
   gap: 12px;
   width: 100%;
-  background: #f8f9fa;
-  border: 1px solid #e0e0e0;
+  background: var(--who-hover-bg, #f8f9fa);
+  border: 1px solid var(--who-border-color, #e0e0e0);
   border-radius: 6px;
   padding: 12px 16px;
   margin: 8px 0;
@@ -337,7 +407,7 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--who-text-primary, #333);
   transition: all 0.2s ease;
 }
 
@@ -352,16 +422,16 @@
 }
 
 .help-topic-btn:hover {
-  background: #e3f2fd;
-  border-color: #0066cc;
-  color: #0066cc;
+  background: var(--who-selected-bg, rgba(0, 108, 190, 0.1));
+  border-color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #006cbe);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 108, 190, 0.1);
 }
 
 .help-topic-btn:active {
   transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(0, 102, 204, 0.1);
+  box-shadow: 0 1px 4px rgba(0, 108, 190, 0.1);
 }
 
 /* Animation */

@@ -1,28 +1,40 @@
 .business-process-selection {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--who-primary-bg);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--who-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode gradient overlay */
+body.theme-dark .business-process-selection {
+  background: linear-gradient(135deg, var(--who-navy) 0%, var(--who-secondary-bg) 100%);
+}
+
+/* Light mode gradient overlay */
+body.theme-light .business-process-selection {
+  background: linear-gradient(135deg, var(--who-light-blue) 0%, var(--who-light-blue-light) 100%);
 }
 
 .selection-header {
-  background: rgb(4 ,11 ,118);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: var(--who-secondary-bg);
+  box-shadow: 0 2px 10px rgba(0, 108, 190, 0.1);
   padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 3px solid #0078d4;
+  border-bottom: 3px solid var(--who-blue);
 }
 
 .who-branding h1 {
-  color: white;
+  color: var(--who-text-primary);
   margin: 0;
   font-size: 1.8rem;
   font-weight: 600;
 }
 
 .who-branding .subtitle {
-  color: #666;
+  color: var(--who-text-muted);
   margin: 0;
   font-size: 0.9rem;
 }
@@ -37,7 +49,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 2px solid #0078d4;
+  border: 2px solid var(--who-blue);
 }
 
 .context-details {
@@ -48,12 +60,12 @@
 
 .context-repo {
   font-weight: 600;
-  color: #333;
+  color: var(--who-text-primary);
 }
 
 .context-component {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--who-text-secondary);
 }
 
 .access-level {
@@ -90,7 +102,7 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: white;
+  color: var(--who-text-primary);
   cursor: pointer;
   text-decoration: underline;
   padding: 0;
@@ -98,31 +110,32 @@
 }
 
 .breadcrumb-link:hover {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--who-blue);
 }
 
 .breadcrumb-separator {
-  color: #666;
+  color: var(--who-text-muted);
   margin: 0 0.2rem;
 }
 
 .breadcrumb-current {
-  color: #333;
+  color: var(--who-text-primary);
   font-weight: 500;
 }
 
 .selection-main {
-  background: #ffffff;
+  background: var(--who-card-bg);
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 108, 190, 0.1);
   overflow: hidden;
+  border: 1px solid var(--who-border-color);
 }
 
 .selection-intro {
   padding: 2rem;
-  border-bottom: 1px solid #e1e5e9;
-  background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
-  color: white;
+  border-bottom: 1px solid var(--who-border-color);
+  background: linear-gradient(135deg, var(--who-blue) 0%, var(--who-blue-dark) 100%);
+  color: var(--who-text-primary);
 }
 
 .selection-intro h2 {
@@ -151,14 +164,14 @@
   align-items: center;
   justify-content: center;
   padding: 4rem 2rem;
-  color: #666;
+  color: var(--who-text-secondary);
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #e1e5e9;
-  border-top: 4px solid #0078d4;
+  border: 4px solid var(--who-border-color);
+  border-top: 4px solid var(--who-blue);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -181,7 +194,7 @@
   align-items: center;
   justify-content: center;
   padding: 4rem 2rem;
-  color: #666;
+  color: var(--who-text-secondary);
 }
 
 .empty-icon {
@@ -192,7 +205,7 @@
 
 .empty-state h3 {
   margin: 0 0 0.5rem 0;
-  color: #333;
+  color: var(--who-text-primary);
 }
 
 .empty-state p {
@@ -208,8 +221,8 @@
 }
 
 .file-card {
-  background: #ffffff;
-  border: 1px solid #e1e5e9;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 8px;
   padding: 1.5rem;
   transition: all 0.3s ease;
@@ -219,8 +232,8 @@
 
 .file-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  border-color: white;
+  box-shadow: 0 8px 25px rgba(0, 108, 190, 0.15);
+  border-color: var(--who-blue);
 }
 
 .file-header {
@@ -232,7 +245,7 @@
 
 .file-icon {
   font-size: 2rem;
-  color: white;
+  color: var(--who-blue);
   flex-shrink: 0;
 }
 

@@ -104,19 +104,20 @@ const RepositorySelection = () => {
           <span className="breadcrumb-current">Select Repository</span>
         </div>
 
-        <div className="repo-selection">
-          <h2>Select DAK Repository</h2>
-          <p>Choose a repository containing WHO SMART Guidelines Digital Adaptation Kit content:</p>
+        <div className="repo-main">
+          <div className="repo-selection">
+            <h2>Select DAK Repository</h2>
+            <p>Choose a repository containing WHO SMART Guidelines Digital Adaptation Kit content:</p>
 
-          {loading ? (
-            <div className="loading">
-              <div className="spinner"></div>
-              <p>Loading repositories...</p>
-            </div>
-          ) : error ? (
-            <div className="error-state">
-              <h3>Error loading repositories</h3>
-              <p>{error}</p>
+            {loading ? (
+              <div className="loading">
+                <div className="spinner"></div>
+                <p>Loading repositories...</p>
+              </div>
+            ) : error ? (
+              <div className="error-state">
+                <h3>Error loading repositories</h3>
+                <p>{error}</p>
               <button onClick={() => fetchRepositories(true)} className="retry-btn">
                 Try Again
               </button>
@@ -175,6 +176,7 @@ const RepositorySelection = () => {
               ))}
             </div>
           )}
+          </div>
         </div>
       </div>
     </PageLayout>

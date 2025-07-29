@@ -1,7 +1,19 @@
 .repository-selection {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: var(--who-primary-bg);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--who-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode gradient overlay */
+body.theme-dark .repository-selection {
+  background: linear-gradient(135deg, var(--who-navy) 0%, var(--who-secondary-bg) 100%);
+}
+
+/* Light mode gradient overlay */
+body.theme-light .repository-selection {
+  background: linear-gradient(135deg, var(--who-light-blue) 0%, var(--who-light-blue-light) 100%);
 }
 
 .repo-header {
@@ -9,13 +21,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background: rgb(4, 11, 118);
+  background: var(--who-secondary-bg);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid var(--who-border-color);
 }
 
 .who-branding h1 {
-  color: white;
+  color: var(--who-text-primary);
   font-size: 2rem;
   margin: 0;
   font-weight: 700;
@@ -28,12 +40,12 @@
 }
 
 .who-branding h1.clickable-title:hover {
-  color: #90caf9;
+  color: var(--who-blue-light);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .who-branding .subtitle {
-  color: white;
+  color: var(--who-text-secondary);
   margin: 0.2rem 0 0 0;
   font-size: 0.9rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -43,7 +55,7 @@
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  color: white;
+  color: var(--who-text-primary);
   font-weight: 500;
 }
 
@@ -51,7 +63,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid var(--who-border-color);
 }
 
 .repo-content {
@@ -63,13 +75,13 @@
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 2rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--who-text-secondary);
 }
 
 .breadcrumb-link {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--who-text-primary);
   cursor: pointer;
   text-decoration: underline;
   font-size: 1rem;
@@ -77,24 +89,32 @@
 }
 
 .breadcrumb-link:hover {
-  color: white;
+  color: var(--who-blue);
 }
 
 .breadcrumb-separator {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--who-text-muted);
   font-size: 1.2rem;
 }
 
 .breadcrumb-current {
-  color: white;
+  color: var(--who-text-primary);
   font-weight: 500;
+}
+
+.repository-selection .repo-main {
+  background: var(--who-card-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--who-border-color);
+  border-radius: 8px;
+  padding: 2rem;
 }
 
 .repo-selection {
   max-width: 1200px;
   margin: 0 auto;
   text-align: center;
-  color: white;
+  color: var(--who-text-primary);
 }
 
 .repo-selection h2 {
@@ -115,14 +135,14 @@
   align-items: center;
   gap: 1rem;
   padding: 4rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--who-text-secondary);
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top: 3px solid white;
+  border: 3px solid var(--who-border-color);
+  border-top: 3px solid var(--who-blue);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -140,8 +160,8 @@
 }
 
 .repo-card {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 12px;
   padding: 1.5rem;
   cursor: pointer;
@@ -151,10 +171,10 @@
 }
 
 .repo-card:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--who-hover-bg);
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 25px rgba(0, 108, 190, 0.2);
+  border-color: var(--who-blue);
 }
 
 .repo-header-info {
@@ -165,7 +185,7 @@
 }
 
 .repo-card h3 {
-  color: white;
+  color: var(--who-text-primary);
   margin: 0;
   font-size: 1.3rem;
   font-weight: 600;
@@ -189,8 +209,8 @@
 }
 
 .language-badge {
-  background: rgba(108, 117, 125, 0.8);
-  color: white;
+  background: var(--who-selected-bg);
+  color: var(--who-text-primary);
   padding: 0.2rem 0.6rem;
   border-radius: 12px;
   font-size: 0.7rem;
@@ -198,7 +218,7 @@
 }
 
 .repo-description {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--who-text-secondary);
   margin: 0 0 1rem 0;
   font-size: 0.95rem;
   line-height: 1.4;
@@ -212,8 +232,8 @@
 }
 
 .topic-tag {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: var(--who-selected-bg);
+  color: var(--who-blue);
   padding: 0.3rem 0.6rem;
   border-radius: 16px;
   font-size: 0.75rem;
@@ -221,7 +241,7 @@
 }
 
 .topic-more {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--who-text-muted);
   font-size: 0.75rem;
   font-style: italic;
 }
@@ -230,7 +250,7 @@
   display: flex;
   gap: 1rem;
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--who-text-secondary);
 }
 
 .stat {
@@ -244,17 +264,17 @@
 }
 
 .empty-state {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 12px;
   padding: 3rem;
   text-align: center;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--who-text-secondary);
   backdrop-filter: blur(10px);
 }
 
 .empty-state h3 {
-  color: white;
+  color: var(--who-text-primary);
   margin-bottom: 1rem;
   font-size: 1.5rem;
   font-weight: 400;
@@ -267,12 +287,12 @@
 
 /* Error state styles */
 .error-state {
-  background: rgba(255, 107, 107, 0.1);
+  background: var(--who-card-bg);
   border: 1px solid rgba(255, 107, 107, 0.3);
   border-radius: 12px;
   padding: 3rem;
   text-align: center;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--who-text-primary);
   backdrop-filter: blur(10px);
 }
 
@@ -286,13 +306,13 @@
 .error-state p {
   font-size: 1rem;
   margin: 0 0 1.5rem 0;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--who-text-secondary);
 }
 
 .retry-btn {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--who-hover-bg);
+  color: var(--who-text-primary);
+  border: 1px solid var(--who-border-color);
   padding: 0.8rem 1.5rem;
   border-radius: 6px;
   cursor: pointer;
@@ -302,8 +322,8 @@
 }
 
 .retry-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: var(--who-selected-bg);
+  border-color: var(--who-blue);
 }
 
 /* Responsive Design */

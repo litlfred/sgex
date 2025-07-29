@@ -1,7 +1,19 @@
 .component-editor {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: var(--who-primary-bg);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--who-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode gradient overlay */
+body.theme-dark .component-editor {
+  background: linear-gradient(135deg, var(--who-navy) 0%, var(--who-secondary-bg) 100%);
+}
+
+/* Light mode gradient overlay */
+body.theme-light .component-editor {
+  background: linear-gradient(135deg, var(--who-light-blue) 0%, var(--who-light-blue-light) 100%);
 }
 
 .editor-header {
@@ -9,13 +21,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background: rgb(4, 11, 118);
+  background: var(--who-secondary-bg);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid var(--who-border-color);
 }
 
 .who-branding h1 {
-  color: white;
+  color: var(--who-text-primary);
   font-size: 2rem;
   margin: 0;
   font-weight: 700;
@@ -28,12 +40,12 @@
 }
 
 .who-branding h1.clickable-title:hover {
-  color: #90caf9;
+  color: var(--who-blue-light);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .who-branding .subtitle {
-  color: white;
+  color: var(--who-text-secondary);
   margin: 0.2rem 0 0 0;
   font-size: 0.9rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -43,7 +55,7 @@
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  color: white;
+  color: var(--who-text-primary);
 }
 
 .context-avatar {
@@ -142,7 +154,12 @@
   min-width: 60px;
 }
 
-.editor-main {
+.component-editor .editor-main {
+  background: var(--who-card-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--who-border-color);
+  border-radius: 8px;
+  padding: 2rem;
   max-width: none; /* Allow full width for digital library */
 }
 

@@ -1,8 +1,20 @@
 /* Actor Editor Styles */
 .actor-editor {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: var(--who-primary-bg);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--who-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode gradient overlay */
+body.theme-dark .actor-editor {
+  background: linear-gradient(135deg, var(--who-navy) 0%, var(--who-secondary-bg) 100%);
+}
+
+/* Light mode gradient overlay */
+body.theme-light .actor-editor {
+  background: linear-gradient(135deg, var(--who-light-blue) 0%, var(--who-light-blue-light) 100%);
 }
 
 .actor-editor.loading-state {
@@ -14,15 +26,16 @@
 .loading-content {
   text-align: center;
   padding: 2rem;
-  background: white;
+  background: var(--who-card-bg);
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 108, 190, 0.1);
+  border: 1px solid var(--who-border-color);
 }
 
 .editor-header {
-  background: white;
+  background: var(--who-card-bg);
   padding: 1rem 2rem;
-  border-bottom: 1px solid #e1e5e9;
+  border-bottom: 1px solid var(--who-border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -32,7 +45,7 @@
 }
 
 .who-branding h1 {
-  color: #0078d4;
+  color: var(--who-blue);
   margin: 0;
   font-size: 1.8rem;
   cursor: pointer;
@@ -43,7 +56,7 @@
 }
 
 .who-branding .subtitle {
-  color: #666;
+  color: var(--who-text-muted);
   margin: 0;
   font-size: 0.9rem;
 }
@@ -310,10 +323,11 @@
 
 .main-editor {
   flex: 1;
-  background: white;
+  background: var(--who-card-bg);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  border: 1px solid var(--who-border-color);
 }
 
 .main-editor.with-sidebar {
