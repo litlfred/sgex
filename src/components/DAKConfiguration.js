@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import './DAKConfiguration.css';
 
 const DAKConfiguration = () => {
@@ -197,10 +197,6 @@ const DAKConfiguration = () => {
     });
   };
 
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
   if (!profile || !templateRepository || !destinationOrganization || action !== 'create') {
     navigate('/');
     return <div>Redirecting...</div>;
@@ -212,22 +208,7 @@ const DAKConfiguration = () => {
   ];
 
   return (
-    <div className="dak-configuration">
-      <div className="config-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="profile-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="profile-avatar" 
-          />
-          <span>{profile.name || profile.login}</span>
-        </div>
-      </div>
-
+    <PageLayout pageName="dak-configuration">
       <div className="config-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
@@ -471,19 +452,7 @@ const DAKConfiguration = () => {
           </div>
         </div>
       </div>
-      
-      <ContextualHelpMascot 
-        pageId="dak-configuration"
-        position="bottom-right"
-        contextData={{ 
-          repository: templateRepository,
-          selectedDak: templateRepository,
-          profile,
-          destinationOrganization,
-          action
-        }}
-      />
-    </div>
+    </PageLayout>
   );
 };
 
