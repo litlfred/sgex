@@ -70,5 +70,40 @@
   },
   "help": {
     "getHelp": "Get Help"
+  },
+  "notFound": {
+    "authenticatedMessage": "The page \"{{path}}\" could not be found. You've been redirected to the home page.",
+    "unauthenticatedMessage": "The page \"{{path}}\" could not be found. Please sign in or try the demo mode to get started."
+  },
+  "patLogin": {
+    "tokenLabel": "GitHub Personal Access Token",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
+    "signInButton": "Sign in with Personal Access Token",
+    "authenticating": "Authenticating...",
+    "errors": {
+      "noToken": "Please enter a GitHub Personal Access Token",
+      "invalidToken": "Invalid Personal Access Token. Please check your token and try again.",
+      "insufficientPermissions": "Token doesn't have sufficient permissions. Please ensure your token has 'repo' and 'read:org' scopes.",
+      "authFailed": "Authentication failed. Please check your connection and try again."
+    }
+  },
+  "branchSelector": {
+    "loading": "Loading branches...",
+    "createButton": "Create new branch",
+    "errors": {
+      "failedToLoad": "Failed to load branches",
+      "nameRequired": "Branch name is required",
+      "invalidName": "Branch name can only contain letters, numbers, periods, hyphens, and underscores",
+      "nameExists": "A branch with this name already exists",
+      "createFailed": "Failed to create branch. Please check your permissions."
+    },
+    "modal": {
+      "title": "Create New Branch",
+      "nameLabel": "Branch Name",
+      "namePlaceholder": "feature/new-dak-component",
+      "createFrom": "Create from",
+      "creating": "Creating...",
+      "createButton": "Create Branch"
+    }
   }
 }

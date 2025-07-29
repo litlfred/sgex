@@ -70,5 +70,40 @@
   },
   "help": {
     "getHelp": "Obtener Ayuda"
+  },
+  "notFound": {
+    "authenticatedMessage": "La página \"{{path}}\" no se pudo encontrar. Has sido redirigido a la página principal.",
+    "unauthenticatedMessage": "La página \"{{path}}\" no se pudo encontrar. Por favor inicia sesión o prueba el modo demo para comenzar."
+  },
+  "patLogin": {
+    "tokenLabel": "Token de Acceso Personal de GitHub",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
+    "signInButton": "Iniciar sesión con Token de Acceso Personal",
+    "authenticating": "Autenticando...",
+    "errors": {
+      "noToken": "Por favor ingresa un Token de Acceso Personal de GitHub",
+      "invalidToken": "Token de Acceso Personal inválido. Por favor verifica tu token e inténtalo de nuevo.",
+      "insufficientPermissions": "El token no tiene permisos suficientes. Asegúrate de que tu token tenga los alcances 'repo' y 'read:org'.",
+      "authFailed": "Falló la autenticación. Por favor verifica tu conexión e inténtalo de nuevo."
+    }
+  },
+  "branchSelector": {
+    "loading": "Cargando ramas...",
+    "createButton": "Crear nueva rama",
+    "errors": {
+      "failedToLoad": "Error al cargar las ramas",
+      "nameRequired": "El nombre de la rama es requerido",
+      "invalidName": "El nombre de la rama solo puede contener letras, números, puntos, guiones y guiones bajos",
+      "nameExists": "Ya existe una rama con este nombre",
+      "createFailed": "Error al crear la rama. Por favor verifica tus permisos."
+    },
+    "modal": {
+      "title": "Crear Nueva Rama",
+      "nameLabel": "Nombre de la Rama",
+      "namePlaceholder": "feature/nuevo-componente-dak",
+      "createFrom": "Crear desde",
+      "creating": "Creando...",
+      "createButton": "Crear Rama"
+    }
   }
 }

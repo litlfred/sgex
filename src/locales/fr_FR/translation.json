@@ -70,5 +70,40 @@
   },
   "help": {
     "getHelp": "Obtenir de l'aide"
+  },
+  "notFound": {
+    "authenticatedMessage": "La page \"{{path}}\" est introuvable. Vous avez été redirigé vers la page d'accueil.",
+    "unauthenticatedMessage": "La page \"{{path}}\" est introuvable. Veuillez vous connecter ou essayer le mode démo pour commencer."
+  },
+  "patLogin": {
+    "tokenLabel": "Jeton d'Accès Personnel GitHub",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
+    "signInButton": "Se connecter avec le Jeton d'Accès Personnel",
+    "authenticating": "Authentification...",
+    "errors": {
+      "noToken": "Veuillez saisir un Jeton d'Accès Personnel GitHub",
+      "invalidToken": "Jeton d'Accès Personnel invalide. Veuillez vérifier votre jeton et réessayer.",
+      "insufficientPermissions": "Le jeton n'a pas les permissions suffisantes. Assurez-vous que votre jeton a les portées 'repo' et 'read:org'.",
+      "authFailed": "Échec de l'authentification. Veuillez vérifier votre connexion et réessayer."
+    }
+  },
+  "branchSelector": {
+    "loading": "Chargement des branches...",
+    "createButton": "Créer une nouvelle branche",
+    "errors": {
+      "failedToLoad": "Échec du chargement des branches",
+      "nameRequired": "Le nom de la branche est requis",
+      "invalidName": "Le nom de la branche ne peut contenir que des lettres, chiffres, points, tirets et tirets bas",
+      "nameExists": "Une branche avec ce nom existe déjà",
+      "createFailed": "Échec de la création de la branche. Veuillez vérifier vos permissions."
+    },
+    "modal": {
+      "title": "Créer une Nouvelle Branche",
+      "nameLabel": "Nom de la Branche",
+      "namePlaceholder": "feature/nouveau-composant-dak",
+      "createFrom": "Créer depuis",
+      "creating": "Création...",
+      "createButton": "Créer la Branche"
+    }
   }
 }

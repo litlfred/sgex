@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import logger from "../utils/logger";
 import "./PATLogin.css";
 
 const PATLogin = ({ onAuthSuccess }) => {
+  const { t } = useTranslation();
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,7 +20,7 @@ const PATLogin = ({ onAuthSuccess }) => {
     componentLogger.userAction('PAT login attempt', { tokenProvided: !!token.trim() });
     
     if (!token.trim()) {
-      const errorMsg = "Please enter a GitHub Personal Access Token";
+      const errorMsg = t('patLogin.errors.noToken');
       setError(errorMsg);
       componentLogger.warn('PAT login failed - no token provided');
       return;
@@ -59,11 +61,11 @@ const PATLogin = ({ onAuthSuccess }) => {
       console.error('PAT authentication failed:', err);
       
       if (err.status === 401) {
-        setError("Invalid Personal Access Token. Please check your token and try again.");
+        setError(t('patLogin.errors.invalidToken'));
       } else if (err.status === 403) {
-        setError("Token doesn't have sufficient permissions. Please ensure your token has 'repo' and 'read:org' scopes.");
+        setError(t('patLogin.errors.insufficientPermissions'));
       } else {
-        setError("Authentication failed. Please check your connection and try again.");
+        setError(t('patLogin.errors.authFailed'));
       }
     } finally {
       setLoading(false);
@@ -80,13 +82,13 @@ const PATLogin = ({ onAuthSuccess }) => {
       <div className="pat-login-section">
         <form onSubmit={handleSubmit} className="pat-form">
           <div className="form-group">
-            <label htmlFor="pat-token">GitHub Personal Access Token:</label>
+            <label htmlFor="pat-token">{t('patLogin.tokenLabel')}:</label>
             <input
               id="pat-token"
               type="password"
               value={token}
               onChange={handleTokenChange}
-              placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+              placeholder={t('patLogin.tokenPlaceholder')}
               className={`token-input ${error ? 'error' : ''}`}
               disabled={loading}
               autoComplete="off"
@@ -101,12 +103,12 @@ const PATLogin = ({ onAuthSuccess }) => {
             {loading ? (
               <>
                 <span className="spinner small"></span>
-                Authenticating...
+                {t('patLogin.authenticating')}
               </>
             ) : (
               <>
                 <span className="github-icon">🔑</span>
-                Sign in with Personal Access Token
+                {t('patLogin.signInButton')}
               </>
             )}
           </button>
