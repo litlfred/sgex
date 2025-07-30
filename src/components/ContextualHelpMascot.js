@@ -1,23 +1,12 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import helpContentService from '../services/helpContentService';
 import HelpModal from './HelpModal';
 import './ContextualHelpMascot.css';
 
 const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', contextData = {}, notificationBadge = false }) => {
-  const { t, i18n } = useTranslation();
   const [showHelp, setShowHelp] = useState(false);
   const [helpSticky, setHelpSticky] = useState(false);
   const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
-  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
-
-  const languages = [
-    { code: 'en-US', name: t('language.english'), flag: '🇺🇸' },
-    { code: 'fr-FR', name: t('language.french'), flag: '🇫🇷' },
-    { code: 'es-ES', name: t('language.spanish'), flag: '🇪🇸' }
-  ];
-
-  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
 
   // Get help topics for the page
   const helpTopics = pageId ? helpContentService.getHelpTopicsForPage(pageId, contextData) : [];
@@ -48,16 +37,6 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
     setSelectedHelpTopic(topic);
     setShowHelp(false);
     setHelpSticky(false);
-  };
-
-  const handleLanguageChange = (languageCode) => {
-    i18n.changeLanguage(languageCode);
-    setShowLanguageSelector(false);
-  };
-
-  const toggleLanguageSelector = (e) => {
-    e.stopPropagation();
-    setShowLanguageSelector(!showLanguageSelector);
   };
 
   const handleCloseModal = () => {
@@ -106,7 +85,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                 <button 
                   className="close-bubble-btn"
                   onClick={handleCloseHelp}
-                  aria-label={t('buttons.close')}
+                  aria-label="Close help"
                 >
                   ×
                 </button>
@@ -114,7 +93,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
               <div className="help-text">
                 {helpTopics.length > 0 ? (
                   <div className="help-topics-list">
-                    <h4>{t('help.getHelp')}</h4>
+                    <h4>Get Help</h4>
                     {helpTopics.map((topic) => (
                       <button
                         key={topic.id}
@@ -131,39 +110,6 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                         <span className="help-topic-title">{topic.title}</span>
                       </button>
                     ))}
-                    
-                    {/* Language selector as horizontal menu */}
-                    <div className="language-section">
-                      <button
-                        className="help-topic-btn language-toggle-btn"
-                        onClick={toggleLanguageSelector}
-                        aria-expanded={showLanguageSelector}
-                      >
-                        <span className="language-flag">{currentLanguage.flag}</span>
-                        <span className="help-topic-title">{t('language.selector')}</span>
-                        <span className={`language-arrow ${showLanguageSelector ? 'open' : ''}`}>▼</span>
-                      </button>
-                      
-                      {showLanguageSelector && (
-                        <div className="language-slideout">
-                          {languages.map((language) => (
-                            <button
-                              key={language.code}
-                              className={`language-option ${
-                                language.code === i18n.language ? 'active' : ''
-                              }`}
-                              onClick={() => handleLanguageChange(language.code)}
-                            >
-                              <span className="language-flag">{language.flag}</span>
-                              <span className="language-name">{language.name}</span>
-                              {language.code === i18n.language && (
-                                <span className="language-check">✓</span>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
                   </div>
                 ) : (
                   helpContent
@@ -172,14 +118,6 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
             </div>
             <div className="bubble-tail"></div>
           </div>
-        )}
-        
-        {/* Click outside to close language selector */}
-        {showLanguageSelector && (
-          <div 
-            className="language-overlay" 
-            onClick={() => setShowLanguageSelector(false)}
-          />
         )}
       </div>
       

@@ -80,21 +80,18 @@ The framework supports four types of pages with specific URL patterns:
 
 ### Basic Usage
 
-Wrap your page component with `PageLayout` and **always use internationalization**:
+Wrap your page component with `PageLayout`:
 
 ```jsx
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { PageLayout } from '../components/framework';
 
 const MyPage = () => {
-  const { t } = useTranslation();
-  
   return (
     <PageLayout pageName="my-page">
       <div>
-        <h1>{t('myPage.title')}</h1>
-        <p>{t('myPage.description')}</p>
+        <h1>My Page Content</h1>
+        <p>This page uses the framework!</p>
       </div>
     </PageLayout>
   );
@@ -103,33 +100,15 @@ const MyPage = () => {
 export default MyPage;
 ```
 
-### Internationalization Requirements
-
-**ALL pages MUST implement internationalization support**. This is mandatory for:
-- Accessibility and inclusivity
-- WHO global reach requirements  
-- Compliance with international standards
-
-**Required steps for every page:**
-
-1. **Import useTranslation hook**: `import { useTranslation } from 'react-i18next';`
-2. **Initialize translation**: `const { t } = useTranslation();`
-3. **Use translation keys**: Replace all user-visible text with `t('key')`
-4. **Add translation entries**: Update `/locales/[lang]/translation.json` files
-5. **Test language switching**: Verify all text changes when switching languages
-
 ### Accessing Page Context
 
-Use the page hooks to access URL parameters and context, **with full internationalization**:
+Use the page hooks to access URL parameters and context:
 
 ```jsx
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { PageLayout, usePageParams, useDAKParams } from '../components/framework';
 
 const DAKComponentPage = () => {
-  const { t } = useTranslation();
-  
   // For any page type
   const { type, navigate } = usePageParams();
   
@@ -143,11 +122,11 @@ const DAKComponentPage = () => {
   return (
     <PageLayout pageName="dak-component">
       <div>
-        <h1>{t('dakComponent.title', { repository: repository?.name })}</h1>
-        <p>{t('dakComponent.user')}: {profile?.login}</p>
-        <p>{t('dakComponent.branch')}: {branch}</p>
+        <h1>DAK Component for {repository?.name}</h1>
+        <p>User: {profile?.login}</p>
+        <p>Branch: {branch}</p>
         <button onClick={() => handleBranchChange('develop')}>
-          {t('dakComponent.switchToDevelop')}
+          Switch to develop
         </button>
       </div>
     </PageLayout>
@@ -324,45 +303,15 @@ When creating new pages, developers **MUST**:
 
 1. **Use PageLayout**: All pages must be wrapped with `PageLayout`
 2. **Specify pageName**: Provide a unique page name for help and analytics
-3. **Implement internationalization**: Use `useTranslation` hook and `t()` function for all user-visible text
-4. **Add translation entries**: Update all language files in `/locales/[lang]/translation.json`
-5. **Follow URL patterns**: Use the established URL patterns for consistency
-6. **Handle errors gracefully**: Let the framework handle errors, don't suppress them
-7. **Test all page types**: Ensure pages work in authenticated and demo modes
-8. **Test language switching**: Verify all content translates correctly in all supported languages
-
-### Translation Key Naming Convention
-
-Use hierarchical keys that reflect the page structure:
-
-```javascript
-// For MyPage component
-{
-  "myPage": {
-    "title": "My Page Title",
-    "subtitle": "Page subtitle",
-    "actions": {
-      "save": "Save",
-      "cancel": "Cancel",
-      "delete": "Delete"
-    },
-    "messages": {
-      "success": "Operation completed successfully",
-      "error": "An error occurred"
-    }
-  }
-}
-```
+3. **Follow URL patterns**: Use the established URL patterns for consistency
+4. **Handle errors gracefully**: Let the framework handle errors, don't suppress them
+5. **Test all page types**: Ensure pages work in authenticated and demo modes
 
 ### Code Review Checklist
 
 - [ ] Page wrapped with `PageLayout`
 - [ ] Appropriate page type and URL pattern used
 - [ ] Page name specified for help integration
-- [ ] **Internationalization implemented with `useTranslation` hook**
-- [ ] **All user-visible text uses `t()` function**
-- [ ] **Translation entries added to all language files**
-- [ ] **Language switching tested and working**
 - [ ] Error handling follows framework patterns
 - [ ] Header components display correctly
 - [ ] Help mascot is present and functional
@@ -371,32 +320,13 @@ Use hierarchical keys that reflect the page structure:
 
 ## Migration Guide
 
-To migrate existing pages to the framework with internationalization:
+To migrate existing pages to the framework:
 
 1. **Import framework components**: Add `import { PageLayout, usePageParams } from './framework';`
-2. **Import translation hook**: Add `import { useTranslation } from 'react-i18next';`
-3. **Initialize translation**: Add `const { t } = useTranslation();` at component start
-4. **Wrap with PageLayout**: Replace existing layout with `<PageLayout pageName="...">`
-5. **Replace all text with translations**: Convert `"Text"` to `{t('key')}`
-6. **Add translation entries**: Update `/locales/en-US/translation.json`, `/locales/fr-FR/translation.json`, and `/locales/es-ES/translation.json`
-7. **Remove custom headers**: Let the framework handle header rendering
-8. **Update parameter access**: Use framework hooks instead of direct `useParams()`
-9. **Remove error handling**: Let the framework handle errors automatically
-10. **Test thoroughly**: Verify all functionality works with the framework and all languages
+2. **Wrap with PageLayout**: Replace existing layout with `<PageLayout pageName="...">`
+3. **Remove custom headers**: Let the framework handle header rendering
+4. **Update parameter access**: Use framework hooks instead of direct `useParams()`
+5. **Remove error handling**: Let the framework handle errors automatically
+6. **Test thoroughly**: Verify all functionality works with the framework
 
-### Translation File Management
-
-Use the translation management script to maintain translations:
-
-```bash
-# Validate all translations are complete
-node scripts/manage-translations.js validate
-
-# Generate statistics
-node scripts/manage-translations.js stats
-
-# Convert JSON to .po files for translation platforms
-node scripts/manage-translations.js json-to-po-all
-```
-
-The framework is designed to minimize changes to existing page logic while providing consistent behavior and full internationalization support across the application.
+The framework is designed to minimize changes to existing page logic while providing consistent behavior across the application.
