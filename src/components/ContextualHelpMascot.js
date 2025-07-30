@@ -8,6 +8,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [showHelp, setShowHelp] = useState(false);
   const [helpSticky, setHelpSticky] = useState(false);
   const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
+  const [isFadingOut, setIsFadingOut] = useState(false);
   const { isDarkMode, toggleTheme } = useTheme();
 
   // Get help topics for the page
@@ -31,8 +32,13 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   };
 
   const handleCloseHelp = () => {
-    setShowHelp(false);
-    setHelpSticky(false);
+    setIsFadingOut(true);
+    // After fade animation completes, hide the bubble
+    setTimeout(() => {
+      setShowHelp(false);
+      setHelpSticky(false);
+      setIsFadingOut(false);
+    }, 690); // 0.69 seconds
   };
 
   const handleHelpTopicClick = (topic) => {
@@ -93,7 +99,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
         </div>
         
         {showHelp && (
-          <div className="help-thought-bubble">
+          <div className={`help-thought-bubble ${isFadingOut ? 'fading-out' : ''}`}>
             <div className="bubble-content">
               {helpSticky && (
                 <button 

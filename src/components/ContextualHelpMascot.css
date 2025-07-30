@@ -97,8 +97,8 @@
 .mascot-container {
   cursor: pointer;
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 95px;
+  height: 95px;
   border-radius: 50%;
   background: var(--who-card-bg, #ffffff);
   box-shadow: 0 4px 12px rgba(0, 108, 190, 0.2);
@@ -115,8 +115,8 @@
 }
 
 .mascot-icon {
-  width: 50px;
-  height: 50px;
+  width: 85px;
+  height: 85px;
   border-radius: 50%;
 }
 
@@ -137,7 +137,7 @@
   font-size: 14px;
   font-weight: bold;
   animation: pulse 2s infinite;
-  box-shadow: 0 2px 8px rgba(0, 108, 190, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 108, 190, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.8);
 }
 
 @keyframes pulse {
@@ -194,9 +194,14 @@
   padding: 20px;
   min-width: 280px;
   max-width: 350px;
-  box-shadow: 0 8px 32px rgba(0, 108, 190, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 108, 190, 0.15), 0 0 0 3px rgba(255, 255, 255, 0.8);
   animation: bubbleAppear 0.3s ease-out;
   z-index: 1001;
+}
+
+/* Fade out animation for thought bubble */
+.help-thought-bubble.fading-out {
+  animation: bubbleFadeOut 0.69s ease-out forwards;
 }
 
 /* Position the bubble relative to mascot position */
@@ -228,6 +233,7 @@
   background: #ffffff;
   border: 3px solid #0066cc;
   border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
   z-index: 1002;
 }
 
@@ -239,6 +245,7 @@
   background: #ffffff;
   border: 4px solid #0066cc;
   border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
   z-index: 1003;
 }
 
@@ -250,6 +257,7 @@
   background: #ffffff;
   border: 4px solid #0066cc;
   border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
   z-index: 1004;
 }
 
@@ -443,6 +451,17 @@
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes bubbleFadeOut {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9) translateY(5px);
   }
 }
 
