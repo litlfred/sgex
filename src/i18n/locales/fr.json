@@ -77,6 +77,11 @@
     "saveChanges": "Sauvegarder les Modifications",
     "discardChanges": "Ignorer les Modifications"
   },
+  "demo": {
+    "title": "Voulez-vous essayer sans authentification ?",
+    "tryDemoMode": "🎭 Essayer le Mode Démo",
+    "description": "Le mode démo présente l'affichage amélioré de scan DAK avec des données fictives."
+  },
   "help": {
     "title": "Aide et Documentation",
     "contextualHelp": "Aide Contextuelle",

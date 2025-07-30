@@ -77,6 +77,11 @@
     "saveChanges": "Guardar Cambios",
     "discardChanges": "Descartar Cambios"
   },
+  "demo": {
+    "title": "¿Quiere probar sin autenticación?",
+    "tryDemoMode": "🎭 Probar Modo Demo",
+    "description": "El modo demo muestra la pantalla mejorada de escaneo DAK con datos ficticios."
+  },
   "help": {
     "title": "Ayuda y Documentación",
     "contextualHelp": "Ayuda Contextual",

@@ -6,7 +6,7 @@ import LanguageSelector from './LanguageSelector';
 import './ContextualHelpMascot.css';
 
 const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', contextData = {}, notificationBadge = false }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showHelp, setShowHelp] = useState(false);
   const [helpSticky, setHelpSticky] = useState(false);
   const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
@@ -30,6 +30,14 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
     document.body.className = isDarkMode ? 'theme-dark' : 'theme-light';
     localStorage.setItem('sgex-theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
+
+  // Update document direction for RTL languages
+  useEffect(() => {
+    const currentLang = i18n.language || 'en';
+    const isRTL = ['ar', 'he', 'fa'].includes(currentLang);
+    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+    document.documentElement.lang = currentLang;
+  }, [i18n.language]);
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);

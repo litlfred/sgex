@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
@@ -13,6 +14,7 @@ import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, repo, branch } = useParams();
@@ -77,7 +79,7 @@ const DAKDashboard = () => {
               setLoading(false);
               return;
             } else {
-              setError('GitHub authentication required. Please authenticate first.');
+              setError(t('auth.authRequired'));
               setLoading(false);
               return;
             }
@@ -155,7 +157,7 @@ const DAKDashboard = () => {
     };
 
     fetchDataFromUrlParams();
-  }, [user, repo, branch, profile, repository, navigate]);
+  }, [user, repo, branch, profile, repository, navigate, t]);
 
   // Initialize selected branch from session context
   useEffect(() => {
@@ -583,14 +585,14 @@ const DAKDashboard = () => {
     return (
       <div className="dak-dashboard error-state">
         <div className="error-content">
-          <h2>Error Loading Dashboard</h2>
+          <h2>{t('dashboard.errorLoading')}</h2>
           <p>{error}</p>
           <div className="error-actions">
             <button onClick={() => navigate('/')} className="action-btn primary">
-              Return to Home
+              {t('navigation.home')}
             </button>
             <button onClick={() => window.location.reload()} className="action-btn secondary">
-              Retry
+              {t('common.retry')}
             </button>
           </div>
         </div>
@@ -680,7 +682,7 @@ const DAKDashboard = () => {
 
         <div className="dashboard-main">
           <div className="dashboard-intro">
-            <h2>Digital Adaptation Kit Components</h2>
+            <h2>{t('dak.components')}</h2>
             <p>
               Select a component to edit content for <strong>{repository.name}</strong>
               {selectedBranch && (
@@ -729,7 +731,7 @@ const DAKDashboard = () => {
           {activeTab === 'core' && (
             <div className="components-section active">
               <div className="section-header">
-                <h3 className="section-title">9 Core DAK Components</h3>
+                <h3 className="section-title">{t('dak.components')}</h3>
                 <p className="section-description">
                   Essential components that form the foundation of any WHO SMART Guidelines Digital Adaptation Kit
                 </p>

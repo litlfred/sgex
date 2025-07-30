@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import logger from "../utils/logger";
 import "./PATLogin.css";
 
 const PATLogin = ({ onAuthSuccess }) => {
+  const { t } = useTranslation();
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -80,7 +82,7 @@ const PATLogin = ({ onAuthSuccess }) => {
       <div className="pat-login-section">
         <form onSubmit={handleSubmit} className="pat-form">
           <div className="form-group">
-            <label htmlFor="pat-token">GitHub Personal Access Token:</label>
+            <label htmlFor="pat-token">{t('auth.setupToken')}:</label>
             <input
               id="pat-token"
               type="password"
@@ -101,12 +103,12 @@ const PATLogin = ({ onAuthSuccess }) => {
             {loading ? (
               <>
                 <span className="spinner small"></span>
-                Authenticating...
+                {t('common.loading')}...
               </>
             ) : (
               <>
                 <span className="github-icon">🔑</span>
-                Sign in with Personal Access Token
+                {t('auth.signInWithPAT')}
               </>
             )}
           </button>
