@@ -651,116 +651,94 @@ const DAKSelectionContent = () => {
               <p>Loading repositories...</p>
             </div>
           ) : isScanning ? (
-            <div className="scanning-status">
-              <div className="scanning-header">
-                <div className="spinner"></div>
-                <h3>Scanning repositories for SMART Guidelines compatibility...</h3>
-              </div>
-              {scanProgress && (
-                <div className="progress-container">
-                  <div className="progress-bar">
-                    <div 
-                      className="progress-fill" 
-                      style={{ width: `${scanProgress.progress}%` }}
-                    ></div>
+            <div className="condensed-scanning-layout">
+              <div className="scanning-section">
+                <div className="scanning-header-condensed">
+                  <div className="spinner"></div>
+                  <h4>Scanning repositories...</h4>
+                </div>
+                {scanProgress && (
+                  <div className="progress-container-condensed">
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill" 
+                        style={{ width: `${scanProgress.progress}%` }}
+                      ></div>
+                    </div>
+                    <div className="progress-stats-condensed">
+                      <span className="progress-text">
+                        {scanProgress.current}/{scanProgress.total} repositories
+                      </span>
+                      <span className="progress-percentage">{scanProgress.progress}%</span>
+                    </div>
+                    <div className="currently-testing-condensed">
+                      <span className="scanning-icon">🔍</span>
+                      <span>Testing:</span>
+                      <div className="currently-scanning-repos-condensed">
+                        {currentlyScanningRepos.size > 0 ? (
+                          Array.from(currentlyScanningRepos).map((repoName) => (
+                            <div key={repoName} className="scanning-repo-item-condensed">
+                              <span className="repo-status-indicator">⚡</span>
+                              <span className="scanning-repo-name">{repoName}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="scanning-repo-item-condensed">
+                            <span className="repo-status-indicator">⏳</span>
+                            <span className="scanning-repo-name">Preparing...</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="progress-info">
-                    {/* Unified scanning status showing percentage and currently testing repos */}
-                    <div className="unified-scanning-status">
-                      <div className="scanning-header-unified">
-                        <div className="progress-stats">
-                          <span className="progress-text">
-                            {scanProgress.current}/{scanProgress.total} repositories
-                          </span>
-                          <span className="progress-percentage">{scanProgress.progress}%</span>
-                        </div>
-                        {/* Always show Currently Testing section to maintain consistent height */}
-                        <div className="currently-testing-unified">
-                          <span className="scanning-icon">🔍</span>
-                          <span>Currently Testing:</span>
-                          <div className="currently-scanning-repos">
-                            {currentlyScanningRepos.size > 0 ? (
-                              Array.from(currentlyScanningRepos).map((repoName) => (
-                                <div key={repoName} className="scanning-repo-item">
-                                  <span className="repo-status-indicator">⚡</span>
-                                  <span className="scanning-repo-name">{repoName}</span>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="scanning-repo-item">
-                                <span className="repo-status-indicator">⏳</span>
-                                <span className="scanning-repo-name">Preparing scan...</span>
-                              </div>
+                )}
+              </div>
+              <div className="repository-section">
+                <h4>Found Repositories</h4>
+                <div className="repo-grid-condensed">
+                  {repositories.length === 0 ? (
+                    <div className="no-repos-yet">
+                      <span className="search-icon">🔍</span>
+                      <p>Repositories will appear here as they are discovered...</p>
+                    </div>
+                  ) : (
+                    repositories.map((repo) => (
+                      <div 
+                        key={repo.id}
+                        className={`repo-card-condensed ${selectedRepository?.id === repo.id ? 'selected' : ''} scanning-found`}
+                        onClick={() => handleRepositorySelect(repo)}
+                      >
+                        <div className="repo-header-info-condensed">
+                          <h5>{repo.name} <span className="new-badge">✨</span></h5>
+                          <div className="repo-meta-condensed">
+                            {repo.language && <span className="language-badge-small">{repo.language}</span>}
+                            {repo.smart_guidelines_compatible && (
+                              <span className="compatible-badge-small">SMART</span>
                             )}
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="scanning-note">
-                    <span className="note-icon">⚡</span>
-                    <span>Scanning up to 5 repositories concurrently to improve speed</span>
-                  </div>
-                </div>
-              )}
-              <div className="scanning-results">
-                <p>Found repositories will appear below as they are discovered:</p>
-                <div className="repo-grid">
-                  {repositories.map((repo) => (
-                    <div 
-                      key={repo.id}
-                      className={`repo-card ${selectedRepository?.id === repo.id ? 'selected' : ''} scanning-found`}
-                      onClick={() => handleRepositorySelect(repo)}
-                    >
-                      <div className="repo-header-info">
-                        <h3>{repo.name} <span className="new-badge">✨ Found</span></h3>
-                        <div className="repo-meta">
-                          {repo.is_template && (
-                            <span className="template-badge">
-                              {repo.template_config?.name || 'Template'}
-                            </span>
-                          )}
-                          {repo.private && <span className="private-badge">Private</span>}
-                          {repo.language && <span className="language-badge">{repo.language}</span>}
-                          {repo.smart_guidelines_compatible && (
-                            <span className="compatible-badge">SMART Guidelines</span>
-                          )}
+                        
+                        <p className="repo-description-condensed">{repo.description || 'No description available'}</p>
+                        
+                        <div className="repo-stats-condensed">
+                          <div className="stat">
+                            <span className="stat-icon">⭐</span>
+                            <span>{repo.stargazers_count || 0}</span>
+                          </div>
+                          <div className="stat">
+                            <span className="stat-icon">🍴</span>
+                            <span>{repo.forks_count || 0}</span>
+                          </div>
                         </div>
-                      </div>
-                      
-                      <p className="repo-description">{repo.description || 'No description available'}</p>
-                      
-                      <div className="repo-topics">
-                        {(repo.topics || []).slice(0, 3).map((topic) => (
-                          <span key={topic} className="topic-tag">{topic}</span>
-                        ))}
-                        {(repo.topics || []).length > 3 && (
-                          <span className="topic-more">+{(repo.topics || []).length - 3} more</span>
+
+                        {selectedRepository?.id === repo.id && (
+                          <div className="selection-indicator-condensed">
+                            <span>✓</span>
+                          </div>
                         )}
                       </div>
-                      
-                      <div className="repo-stats">
-                        <div className="stat">
-                          <span className="stat-icon">⭐</span>
-                          <span>{repo.stargazers_count || 0}</span>
-                        </div>
-                        <div className="stat">
-                          <span className="stat-icon">🍴</span>
-                          <span>{repo.forks_count || 0}</span>
-                        </div>
-                        <div className="stat">
-                          <span className="stat-icon">📅</span>
-                          <span>Updated {formatDate(repo.updated_at)}</span>
-                        </div>
-                      </div>
-
-                      {selectedRepository?.id === repo.id && (
-                        <div className="selection-indicator">
-                          <span>✓ Selected</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>
