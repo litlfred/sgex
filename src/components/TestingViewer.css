@@ -1,0 +1,267 @@
+.testing-viewer {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.testing-header {
+  margin-bottom: 30px;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: #0078d4;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.back-button:hover {
+  text-decoration: underline;
+}
+
+.testing-header h1 {
+  margin: 0 0 10px 0;
+  color: #323130;
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.testing-description {
+  color: #605e5c;
+  font-size: 16px;
+  margin: 0;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #605e5c;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f2f1;
+  border-top: 4px solid #0078d4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container {
+  padding: 40px 20px;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background-color: #fdf2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 16px;
+}
+
+.error-icon {
+  font-size: 20px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #605e5c;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  margin: 0 0 10px 0;
+  color: #323130;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.feature-files-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.feature-file-card {
+  background: white;
+  border: 1px solid #e1dfdd;
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.feature-file-card:hover {
+  border-color: #0078d4;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.file-icon {
+  font-size: 32px;
+  margin-bottom: 15px;
+}
+
+.file-info {
+  margin-bottom: 20px;
+}
+
+.file-name {
+  margin: 0 0 8px 0;
+  color: #323130;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.file-path {
+  margin: 0;
+  color: #605e5c;
+  font-size: 14px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.file-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: #0078d4;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #106ebe;
+}
+
+.btn-secondary {
+  background-color: #f3f2f1;
+  color: #323130;
+  border: 1px solid #d2d0ce;
+}
+
+.btn-secondary:hover {
+  background-color: #edebe9;
+}
+
+/* Modal Styles */
+.testing-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.testing-modal {
+  background: white;
+  border-radius: 8px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.testing-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e1dfdd;
+}
+
+.testing-modal-header h3 {
+  margin: 0;
+  color: #323130;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.testing-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #605e5c;
+  padding: 4px;
+  line-height: 1;
+}
+
+.testing-modal-close:hover {
+  color: #323130;
+}
+
+.testing-modal-content {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+}
+
+.feature-content {
+  background-color: #f8f8f8;
+  border: 1px solid #e1dfdd;
+  border-radius: 4px;
+  padding: 16px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  min-height: 400px;
+}
+
+.testing-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #e1dfdd;
+}

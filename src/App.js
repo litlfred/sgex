@@ -19,6 +19,7 @@ import BPMNViewerTestComponent from './components/BPMNViewerTestComponent';
 import DocumentationViewer from './components/DocumentationViewer';
 import DecisionSupportLogicView from './components/DecisionSupportLogicView';
 import TestDashboard from './components/TestDashboard';
+import TestingViewer from './components/TestingViewer';
 import PagesManager from './components/PagesManager';
 import NotFound from './components/NotFound';
 import LandingPageWithFramework from './components/LandingPageWithFramework';
@@ -59,6 +60,7 @@ function App() {
             <Route path="/dashboard/:user/:repo" element={<DAKDashboard />} />
             <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />
             <Route path="/test-dashboard" element={<TestDashboard />} />
+            <Route path="/testing-viewer" element={<TestingViewer />} />
             <Route path="/core-data-dictionary-viewer" element={<CoreDataDictionaryViewer />} />
             <Route path="/core-data-dictionary-viewer/:user/:repo" element={<CoreDataDictionaryViewer />} />
             <Route path="/core-data-dictionary-viewer/:user/:repo/:branch" element={<CoreDataDictionaryViewer />} />
