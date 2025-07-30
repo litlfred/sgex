@@ -28,7 +28,7 @@ const LanguageSelector = ({ className = '' }) => {
         aria-label={t('language.select')}
         title={t('language.select')}
       >
-        <span className="language-flag">{currentLanguage.flag}</span>
+        <span className="language-icon">🐾🎧</span>
         <span className="language-name">{currentLanguage.name}</span>
         <span className={`dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
       </button>

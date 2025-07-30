@@ -154,6 +154,73 @@ body.theme-dark .language-option:not(:last-child) {
   margin-right: auto;
 }
 
+/* Help menu divider */
+.help-menu-divider {
+  height: 1px;
+  background: var(--who-border-color, #e0e0e0);
+  margin: 16px 0;
+  opacity: 0.6;
+}
+
+body.theme-dark .help-menu-divider {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Language selector in help menu */
+.help-menu-language-selector {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.help-menu-language-selector .language-toggle {
+  width: 100%;
+  background: var(--who-hover-bg, #f8f9fa);
+  border: 1px solid var(--who-border-color, #e0e0e0);
+  border-radius: 6px;
+  padding: 12px 16px;
+  min-width: unset;
+  font-size: 14px;
+  justify-content: flex-start;
+}
+
+.help-menu-language-selector .language-toggle:hover {
+  background: var(--who-selected-bg, rgba(0, 108, 190, 0.1));
+  border-color: var(--who-blue, #006cbe);
+}
+
+body.theme-dark .help-menu-language-selector .language-toggle {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+body.theme-dark .help-menu-language-selector .language-toggle:hover {
+  background: rgba(0, 108, 190, 0.2);
+  border-color: #006cbe;
+}
+
+.help-menu-language-selector .language-dropdown {
+  position: relative;
+  margin-top: 8px;
+  box-shadow: none;
+  border: 1px solid var(--who-border-color, #e0e0e0);
+}
+
+body.theme-dark .help-menu-language-selector .language-dropdown {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+
+/* Language icon styling */
+.language-icon {
+  font-size: 16px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
   .language-toggle {
