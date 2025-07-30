@@ -1,0 +1,404 @@
+/* Staging Ground Section Styles */
+.staging-ground-section {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(0, 108, 190, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.staging-ground-section .section-header {
+  margin-bottom: 1.5rem;
+}
+
+.staging-ground-section .section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #24292e;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+}
+
+.staging-ground-section .section-icon {
+  font-size: 1.5rem;
+}
+
+.staging-ground-section .files-badge {
+  background: #0078d4;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.staging-ground-section .section-description {
+  color: #6a737d;
+  font-size: 1rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Staging Content */
+.staging-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Status Bar */
+.staging-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e1e4e8;
+}
+
+.status-indicators {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.validation-stoplight {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.stoplight-indicator {
+  position: relative;
+  font-size: 1.2rem;
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+}
+
+.stoplight-indicator.lit {
+  opacity: 1;
+}
+
+.indicator-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #d73a49;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.save-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.save-btn:hover:not(.disabled) {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.save-btn.disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Files Section */
+.staging-files-section {
+  background: white;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.staging-files-section h4 {
+  color: #24292e;
+  font-size: 1.1rem;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.changed-files {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e1e4e8;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.file-icon {
+  font-size: 1rem;
+}
+
+.file-path {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  color: #24292e;
+  word-break: break-all;
+}
+
+.file-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #6a737d;
+}
+
+.file-size,
+.file-time {
+  white-space: nowrap;
+}
+
+.remove-file-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.remove-file-btn:hover {
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.file-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn.secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.action-btn.secondary:hover {
+  background: #545b62;
+}
+
+.action-btn.small {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.no-changes {
+  text-align: center;
+  padding: 2rem;
+  color: #6a737d;
+}
+
+.no-changes p {
+  margin: 0 0 0.5rem 0;
+}
+
+.help-text {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Commit Message Section */
+.commit-message-section {
+  background: white;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.commit-message-section h4 {
+  color: #24292e;
+  font-size: 1.1rem;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.commit-preview {
+  background: #f8f9fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.commit-preview p {
+  margin: 0;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  color: #24292e;
+  white-space: pre-wrap;
+}
+
+/* Loading and Error States */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  color: #6a737d;
+}
+
+.loading-spinner {
+  font-size: 1.2rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  color: #721c24;
+}
+
+.error-icon {
+  font-size: 1.2rem;
+}
+
+/* Dark mode support */
+body.theme-dark .staging-ground-section {
+  background: rgba(26, 35, 128, 0.95);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .staging-ground-section .section-title {
+  color: #ffffff;
+}
+
+body.theme-dark .staging-ground-section .section-description {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+body.theme-dark .staging-status-bar {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .staging-files-section,
+body.theme-dark .commit-message-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .staging-files-section h4,
+body.theme-dark .commit-message-section h4 {
+  color: #ffffff;
+}
+
+body.theme-dark .file-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .file-path {
+  color: #ffffff;
+}
+
+body.theme-dark .file-meta {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+body.theme-dark .commit-preview {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .commit-preview p {
+  color: #ffffff;
+}
+
+body.theme-dark .no-changes {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .staging-ground-section {
+    padding: 1rem;
+  }
+  
+  .staging-status-bar {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .status-indicators {
+    justify-content: center;
+  }
+  
+  .file-item {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+  
+  .file-meta {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .staging-ground-section .section-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}

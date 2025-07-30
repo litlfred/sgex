@@ -369,8 +369,10 @@ body.theme-light .dak-dashboard {
 }
 
 .components-grid.core-components {
-  /* Slightly larger cards for core components */
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  /* 3x3 grid for 9 core components */
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 1200px;
+  margin: 0 auto 2rem auto;
 }
 
 .components-grid.additional-components {
@@ -524,6 +526,13 @@ body.theme-light .dak-dashboard {
   font-size: 1rem;
 }
 
+/* Tablet responsive design */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .components-grid.core-components {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .dashboard-header {
@@ -570,6 +579,12 @@ body.theme-light .dak-dashboard {
   
   .components-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Override 3x3 grid on mobile for core components */
+  .components-grid.core-components {
+    grid-template-columns: 1fr;
+    max-width: none;
   }
   
   .repo-actions {
