@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePage, PAGE_TYPES } from './PageProvider';
 import BranchSelector from '../BranchSelector';
 import githubService from '../../services/githubService';
@@ -22,6 +22,18 @@ const PageHeader = () => {
 
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showBookmarkDropdown, setShowBookmarkDropdown] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Fetch current user if authenticated but no profile from page context
+  useEffect(() => {
+    if (isAuthenticated && !profile) {
+      githubService.getCurrentUser()
+        .then(user => setCurrentUser(user))
+        .catch(error => console.debug('Could not fetch current user:', error));
+    } else {
+      setCurrentUser(null);
+    }
+  }, [isAuthenticated, profile]);
 
   const handleLogout = () => {
     githubService.logout();
@@ -43,18 +55,16 @@ const PageHeader = () => {
   };
 
   const handleGitHubUser = () => {
-    if (profile?.html_url) {
-      window.open(profile.html_url, '_blank');
-    } else if (profile?.login) {
-      window.open(`https://github.com/${profile.login}`, '_blank');
+    if (displayProfile?.html_url) {
+      window.open(displayProfile.html_url, '_blank');
+    } else if (displayProfile?.login) {
+      window.open(`https://github.com/${displayProfile.login}`, '_blank');
     }
   };
 
   const handleBookmarkCurrentPage = () => {
-    if (!profile) return;
-    
     const context = {
-      user: profile?.login,
+      user: displayProfile?.login,
       repository,
       branch,
       asset
@@ -90,6 +100,9 @@ const PageHeader = () => {
   const shouldShowBranchSelector = type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET;
   const currentBookmark = getCurrentPageBookmark();
   const bookmarksGrouped = getBookmarksGrouped();
+  
+  // Use profile from page context if available, otherwise use currentUser
+  const displayProfile = profile || currentUser;
 
   return (
     <header className="page-header">
@@ -168,11 +181,11 @@ const PageHeader = () => {
         )}
         
         {/* User info and controls */}
-        {(isAuthenticated || profile?.isDemo) && profile ? (
+        {(isAuthenticated || profile?.isDemo) && displayProfile ? (
           <div className="user-controls">
             <div className="user-info" onClick={() => setShowUserDropdown(!showUserDropdown)}>
-              <img src={profile.avatar_url} alt="User avatar" className="user-avatar" />
-              <span className="user-name">{profile.name || profile.login}</span>
+              <img src={displayProfile.avatar_url} alt="User avatar" className="user-avatar" />
+              <span className="user-name">{displayProfile.name || displayProfile.login}</span>
               <span className="dropdown-arrow">▼</span>
             </div>
             {showUserDropdown && (
