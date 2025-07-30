@@ -431,3 +431,37 @@
     font-size: 13px;
   }
 }
+
+/* Fallback help section styles */
+.help-fallback {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 20px 0;
+  font-size: 14px;
+}
+
+.help-fallback strong {
+  color: #495057;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.help-fallback ol {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+}
+
+.help-fallback li {
+  margin: 4px 0;
+}
+
+.help-fallback a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.help-fallback a:hover {
+  text-decoration: underline;
+}
