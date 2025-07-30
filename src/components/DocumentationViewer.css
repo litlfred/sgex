@@ -1,0 +1,26 @@
+/* Documentation Viewer styles */
+.documentation-viewer {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.documentation-content {
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.documentation-content h1,
+.documentation-content h2,
+.documentation-content h3 {
+  color: #333;
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
+.documentation-content pre {
+  background-color: #f6f8fa;
+  padding: 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+}

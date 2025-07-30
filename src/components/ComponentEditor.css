@@ -1,0 +1,30 @@
+/* Component Editor styles */
+.component-editor {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.component-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group label {
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}

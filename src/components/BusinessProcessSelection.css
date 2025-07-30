@@ -1,0 +1,21 @@
+/* Business Process Selection styles */
+.business-process-selection {
+  padding: 20px;
+}
+
+.process-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.process-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+}
+
+.process-item:hover {
+  background-color: #f5f5f5;
+}

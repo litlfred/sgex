@@ -1,0 +1,16 @@
+{
+  "templates": [
+    {
+      "id": "basic-dak",
+      "name": "Basic DAK Template",
+      "description": "A basic Digital Adaptation Kit template",
+      "version": "1.0.0"
+    },
+    {
+      "id": "who-smart-guidelines",
+      "name": "WHO SMART Guidelines Template",
+      "description": "Template for WHO SMART Guidelines DAKs",
+      "version": "1.0.0"
+    }
+  ]
+}

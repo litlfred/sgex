@@ -1,0 +1,12 @@
+/* BPMN Viewer styles */
+.bpmn-viewer {
+  width: 100%;
+  height: 500px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+}
+
+.bpmn-viewer-controls {
+  padding: 8px;
+  background-color: #f8f9fa;
+}
