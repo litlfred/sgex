@@ -1,4 +1,4 @@
-/* Page Context Styling - positioned above breadcrumbs */
+/* Page Context Styling - unified avatar + user/repo + breadcrumbs component */
 .page-context-container {
   background: var(--who-primary-bg, #ffffff);
   border-bottom: 1px solid var(--who-border-color, #dee2e6);
@@ -12,7 +12,7 @@
   max-width: 100%;
 }
 
-/* Avatar positioned to the left */
+/* Avatar positioned to the far left as a block */
 .page-context-avatar {
   width: 40px;
   height: 40px;
@@ -21,15 +21,16 @@
   border: 2px solid var(--who-border-color, #dee2e6);
 }
 
-/* Context information container */
+/* Context information container - two rows to the right of avatar */
 .page-context-info {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
   min-width: 0; /* Allow text to truncate */
+  flex: 1;
 }
 
-/* Individual rows for profile/repo and branch */
+/* Individual rows for user/repo and breadcrumbs */
 .page-context-row {
   display: flex;
   align-items: center;
@@ -38,16 +39,21 @@
   line-height: 1.4;
 }
 
-/* Profile and repository styling - WHO blue and bold */
-.page-context-profile,
-.page-context-repo {
+/* First row: User/repo/branch styling - WHO blue and bold */
+.page-context-user-repo {
   font-weight: bold;
   color: var(--who-blue, #006cbe);
+}
+
+.page-context-profile,
+.page-context-repo {
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   transition: all 0.2s ease;
   text-decoration: none;
+  font-weight: bold;
+  color: var(--who-blue, #006cbe);
 }
 
 .page-context-profile:hover,
@@ -76,6 +82,65 @@
   font-size: 0.9rem;
 }
 
+/* Second row: Breadcrumbs styling */
+.page-context-breadcrumbs {
+  padding: 0;
+  margin: 0;
+}
+
+.breadcrumb-list {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.breadcrumb-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--who-blue, #006cbe);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.breadcrumb-link:hover,
+.breadcrumb-link:focus {
+  background-color: var(--who-blue-light, #e3f2fd);
+  color: var(--who-blue-dark, #004a99);
+  text-decoration: underline;
+  outline: 2px solid var(--who-blue, #006cbe);
+  outline-offset: 2px;
+}
+
+.breadcrumb-separator {
+  color: var(--who-blue, #006cbe);
+  font-weight: bold;
+  font-size: 1.1rem;
+  user-select: none;
+}
+
+.breadcrumb-current {
+  font-weight: bold;
+  color: var(--who-blue-dark, #004a99);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background-color: var(--who-blue-light, #f0f8ff);
+}
+
 /* Dark theme support */
 body.theme-dark .page-context-container {
   background: var(--who-dark-bg, #1a1a1a);
@@ -88,12 +153,16 @@ body.theme-dark .page-context-avatar {
 
 body.theme-dark .page-context-profile,
 body.theme-dark .page-context-repo,
-body.theme-dark .page-context-separator {
+body.theme-dark .page-context-separator,
+body.theme-dark .breadcrumb-link,
+body.theme-dark .breadcrumb-separator {
   color: #4dabf7;
 }
 
 body.theme-dark .page-context-profile:hover,
-body.theme-dark .page-context-repo:hover {
+body.theme-dark .page-context-repo:hover,
+body.theme-dark .breadcrumb-link:hover,
+body.theme-dark .breadcrumb-link:focus {
   background-color: rgba(77, 171, 247, 0.2);
   color: #74c0fc;
 }
@@ -101,6 +170,11 @@ body.theme-dark .page-context-repo:hover {
 body.theme-dark .page-context-branch {
   background-color: rgba(255, 255, 255, 0.1);
   color: #4dabf7;
+}
+
+body.theme-dark .breadcrumb-current {
+  background-color: rgba(77, 171, 247, 0.2);
+  color: #74c0fc;
 }
 
 /* Responsive design */
@@ -124,8 +198,13 @@ body.theme-dark .page-context-branch {
   }
   
   .page-context-profile,
-  .page-context-repo {
+  .page-context-repo,
+  .breadcrumb-link {
     padding: 0.2rem 0.4rem;
+  }
+  
+  .breadcrumb-list {
+    gap: 0.25rem;
   }
 }
 
@@ -147,13 +226,20 @@ body.theme-dark .page-context-branch {
   .page-context-row {
     flex-wrap: wrap;
   }
+  
+  .breadcrumb-list {
+    flex-wrap: wrap;
+  }
 }
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .page-context-profile,
   .page-context-repo,
-  .page-context-separator {
+  .page-context-separator,
+  .breadcrumb-link,
+  .breadcrumb-separator,
+  .breadcrumb-current {
     font-weight: 700;
   }
   
@@ -165,7 +251,8 @@ body.theme-dark .page-context-branch {
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .page-context-profile,
-  .page-context-repo {
+  .page-context-repo,
+  .breadcrumb-link {
     transition: none;
   }
 }
