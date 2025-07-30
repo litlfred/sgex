@@ -80,8 +80,18 @@ const DecisionTableEditor = () => {
       const repoName = repository.name;
       const filePath = `input/dmn/${tableId}.dmn`;
 
+      console.log('🎯 DecisionTableEditor: Loading table data with parameters:', {
+        owner,
+        repoName,
+        branch: selectedBranch,
+        tableId,
+        filePath,
+        isNewTable: tableId === 'new'
+      });
+
       // Check if this is a new table
       if (tableId === 'new') {
+        console.log('📝 DecisionTableEditor: Creating new table');
         // Initialize with empty table structure
         const newTable = {
           id: generateTableId(),
@@ -123,6 +133,7 @@ const DecisionTableEditor = () => {
       }
 
       // Load existing DMN file
+      console.log(`📁 DecisionTableEditor: Loading existing DMN file from ${filePath}`);
       const dmnContent = await githubService.getFileContent(
         owner,
         repoName,
@@ -130,14 +141,47 @@ const DecisionTableEditor = () => {
         selectedBranch
       );
 
+      console.log('✅ DecisionTableEditor: Successfully loaded DMN content, parsing...');
       // Parse DMN XML to extract table data
       const parsedData = parseDMNContent(dmnContent);
+      console.log('✅ DecisionTableEditor: Successfully parsed DMN data:', {
+        id: parsedData.id,
+        name: parsedData.name,
+        inputCount: parsedData.inputs.length,
+        outputCount: parsedData.outputs.length,
+        ruleCount: parsedData.rules.length
+      });
+      
       setTableData(parsedData);
       setOriginalTableData(JSON.parse(JSON.stringify(parsedData)));
 
     } catch (err) {
-      console.error('Error loading table data:', err);
-      setError('Failed to load decision table. The file may not exist or may be inaccessible.');
+      console.error('❌ DecisionTableEditor: Error loading table data:', err);
+      console.error('🔍 DecisionTableEditor: Error details:', {
+        message: err.message,
+        status: err.status,
+        type: typeof err,
+        stack: err.stack?.substring(0, 500)
+      });
+      
+      // Provide more specific error messages based on the error type
+      let errorMessage = 'Failed to load decision table.';
+      
+      if (err.message.includes('File not found')) {
+        errorMessage = `Decision table file "${tableId}.dmn" not found in the repository. The file may have been moved, deleted, or the table ID in the URL is incorrect.`;
+      } else if (err.message.includes('Access denied') || err.message.includes('403')) {
+        errorMessage = 'Access denied. This repository may be private or you may not have permission to access it.';
+      } else if (err.message.includes('timeout')) {
+        errorMessage = 'Request timed out while loading the decision table. Please check your internet connection and try again.';
+      } else if (err.message.includes('rate limit')) {
+        errorMessage = 'GitHub API rate limit exceeded. Please wait a moment and try again.';
+      } else if (err.message.includes('Failed to parse DMN file')) {
+        errorMessage = `The DMN file "${tableId}.dmn" exists but contains invalid XML format. ${err.message}`;
+      } else {
+        errorMessage = `Failed to load decision table: ${err.message}`;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -527,6 +571,40 @@ const DecisionTableEditor = () => {
         <div className="error-content">
           <h2>Error Loading Decision Table Editor</h2>
           <p>{error}</p>
+          
+          {/* Show debugging information in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="debug-info">
+              <h4>Debug Information:</h4>
+              <pre>
+                {JSON.stringify({
+                  user,
+                  repo,
+                  branch,
+                  tableId,
+                  hasProfile: !!profile,
+                  hasRepository: !!repository,
+                  selectedBranch,
+                  repositoryDetails: repository ? {
+                    name: repository.name,
+                    full_name: repository.full_name,
+                    owner: repository.owner?.login
+                  } : null
+                }, null, 2)}
+              </pre>
+            </div>
+          )}
+          
+          <div className="error-suggestions">
+            <h4>Troubleshooting:</h4>
+            <ul>
+              <li>If you're trying to edit an existing table, verify that the table ID in the URL is correct</li>
+              <li>Check that the repository has the <code>input/dmn/</code> directory structure</li>
+              <li>Make sure the repository is public or you have access to it</li>
+              <li>Try creating a new table instead by clicking "New Table" from the Decision Support Logic view</li>
+            </ul>
+          </div>
+          
           <div className="error-actions">
             <button onClick={handleBackToDecisionSupport} className="action-btn primary">
               Back to Decision Support
@@ -534,6 +612,20 @@ const DecisionTableEditor = () => {
             <button onClick={() => window.location.reload()} className="action-btn secondary">
               Retry
             </button>
+            {repository && (
+              <button 
+                onClick={() => {
+                  const owner = repository.owner?.login || repository.full_name.split('/')[0];
+                  const repoName = repository.name;
+                  navigate(`/decision-table-editor/${owner}/${repoName}/${selectedBranch}/new`, {
+                    state: { profile, repository, selectedBranch }
+                  });
+                }}
+                className="action-btn secondary"
+              >
+                Create New Table
+              </button>
+            )}
           </div>
         </div>
       </div>

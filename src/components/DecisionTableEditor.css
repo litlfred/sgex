@@ -451,11 +451,68 @@
   color: #212529;
 }
 
+.decision-table-editor .debug-info {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.decision-table-editor .debug-info h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.decision-table-editor .debug-info pre {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #495057;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.decision-table-editor .error-suggestions {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 0.375rem;
+}
+
+.decision-table-editor .error-suggestions h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: #856404;
+}
+
+.decision-table-editor .error-suggestions ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #856404;
+}
+
+.decision-table-editor .error-suggestions li {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.decision-table-editor .error-suggestions code {
+  background: rgba(0,0,0,0.1);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 0.875em;
+}
+
 .decision-table-editor .error-actions {
   margin-top: 2rem;
   display: flex;
   justify-content: center;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 /* Responsive Design */
