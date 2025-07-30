@@ -65,10 +65,7 @@ const ComponentEditor = () => {
             />
           </div>
           
-          <ContextualHelpMascot 
-            pageId="component-editor"
-            contextData={{ component: currentComponent }}
-          />
+          <ContextualHelpMascot />
         </div>
       );
     } else {
@@ -148,15 +145,7 @@ const ComponentEditor = () => {
           </div>
         </div>
         
-        <ContextualHelpMascot 
-          pageId="health-interventions-editor"
-          contextData={{ 
-            profile, 
-            repository, 
-            component: currentComponent,
-            selectedReferencesCount: selectedReferences.length 
-          }}
-        />
+        <ContextualHelpMascot />
       </div>
     );
   }
@@ -240,10 +229,7 @@ const ComponentEditor = () => {
         </div>
       </div>
       
-      <ContextualHelpMascot 
-        pageId="component-editor"
-        contextData={{ profile, repository, component: currentComponent }}
-      />
+      <ContextualHelpMascot />
     </div>
   );
 };

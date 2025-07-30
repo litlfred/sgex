@@ -195,7 +195,7 @@
   min-width: 280px;
   max-width: 350px;
   box-shadow: 0 8px 32px rgba(0, 108, 190, 0.15), 0 0 0 3px rgba(255, 255, 255, 0.8);
-  animation: bubbleAppear 0.3s ease-out;
+  animation: bubbleAppear 0.15s ease-out;
   z-index: 1001;
 }
 
@@ -206,7 +206,7 @@
 
 /* Position the bubble relative to mascot position */
 .contextual-help-mascot.bottom-right .help-thought-bubble {
-  bottom: 140px;
+  bottom: 180px;
   right: 0;
 }
 
@@ -263,12 +263,12 @@
 
 /* Position tail based on mascot position */
 .contextual-help-mascot.bottom-right .bubble-tail {
-  bottom: -14px;
+  bottom: -28px;
   right: -4px;
 }
 
 .contextual-help-mascot.bottom-right .bubble-tail::before {
-  bottom: -64px;
+  bottom: -55px;
   right: -15px;
 }
 

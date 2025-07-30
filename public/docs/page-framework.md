@@ -306,6 +306,17 @@ When creating new pages, developers **MUST**:
 3. **Follow URL patterns**: Use the established URL patterns for consistency
 4. **Handle errors gracefully**: Let the framework handle errors, don't suppress them
 5. **Test all page types**: Ensure pages work in authenticated and demo modes
+6. **Ensure Help Mascot Presence**: The PageLayout framework automatically provides the contextual help mascot with "Report a bug" functionality on ALL pages
+
+### Help System Requirements
+
+**MANDATORY**: Every page in the SGEX Workbench **MUST** have:
+- ✅ **Get Help mascot** visible in bottom-right corner (provided automatically by PageLayout)
+- ✅ **"Report a SGeX bug" functionality** accessible through the help mascot menu
+- ✅ **Universal help topics** including bug reporting, available on all pages
+- ✅ **Contextual help content** specific to the page when available
+
+The PageLayout framework ensures compliance with these requirements automatically. Pages that do not use PageLayout will be non-compliant and may be flagged during code review.
 
 ### Code Review Checklist
 
@@ -314,7 +325,7 @@ When creating new pages, developers **MUST**:
 - [ ] Page name specified for help integration
 - [ ] Error handling follows framework patterns
 - [ ] Header components display correctly
-- [ ] Help mascot is present and functional
+- [ ] **Help mascot is present and functional with bug report access**
 - [ ] Works in both authenticated and demo modes
 - [ ] Responsive design maintained
 
