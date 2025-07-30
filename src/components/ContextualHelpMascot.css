@@ -1,0 +1,498 @@
+/* Fixed Contextual Help Mascot */
+.contextual-help-mascot {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  
+  /* Default position: bottom-right */
+  bottom: 30px;
+  right: 30px;
+}
+
+.contextual-help-mascot.bottom-left {
+  bottom: 30px;
+  left: 30px;
+}
+
+.contextual-help-mascot.top-right {
+  top: 100px;
+  right: 30px;
+}
+
+.contextual-help-mascot.top-left {
+  top: 100px;
+  left: 30px;
+}
+
+/* Theme Toggle Container */
+.theme-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+/* Theme Toggle Button (Light Switch) */
+.theme-toggle-btn {
+  background: var(--who-card-bg, #ffffff);
+  border: 2px solid var(--who-blue, #006cbe);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 108, 190, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 108, 190, 0.3);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle-btn.light {
+  background: var(--who-light-blue-light, #e0ebf7);
+  color: var(--who-blue, #006cbe);
+}
+
+.theme-toggle-btn.dark {
+  background: var(--who-navy, #040B76);
+  color: var(--who-light-blue, #c0dcf2);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+/* Add glow effect for theme toggle */
+.theme-toggle-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: var(--who-blue, #006cbe);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+  opacity: 0.2;
+  z-index: -1;
+}
+
+.theme-toggle-btn:hover::before {
+  width: 100%;
+  height: 100%;
+}
+
+/* Mascot Container */
+.mascot-container {
+  cursor: pointer;
+  position: relative;
+  width: 95px;
+  height: 95px;
+  border-radius: 50%;
+  background: var(--who-card-bg, #ffffff);
+  box-shadow: 0 4px 12px rgba(0, 108, 190, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border: 2px solid var(--who-blue, #006cbe);
+}
+
+.mascot-container:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 102, 204, 0.3);
+}
+
+.mascot-icon {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+}
+
+/* Question mark thought bubble */
+.question-bubble {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--who-card-bg, #ffffff);
+  color: var(--who-blue, #006cbe);
+  border: 2px solid var(--who-blue, #006cbe);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  animation: pulse 2s infinite;
+  box-shadow: 0 2px 8px rgba(0, 108, 190, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Notification Badge */
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #dc3545;
+  color: white;
+  border: 2px solid white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  animation: gentle-shake 2s ease-in-out infinite;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+  z-index: 1001;
+}
+
+@keyframes gentle-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-1px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(1px);
+  }
+}
+
+/* Help Thought Bubble */
+.help-thought-bubble {
+  position: absolute;
+  background: var(--who-card-bg, #ffffff);
+  border: 4px solid var(--who-blue, #006cbe);
+  border-radius: 20px;
+  padding: 20px;
+  min-width: 280px;
+  max-width: 350px;
+  box-shadow: 0 8px 32px rgba(0, 108, 190, 0.15), 0 0 0 3px rgba(255, 255, 255, 0.8);
+  animation: bubbleAppear 0.3s ease-out;
+  z-index: 1001;
+}
+
+/* Fade out animation for thought bubble */
+.help-thought-bubble.fading-out {
+  animation: bubbleFadeOut 0.69s ease-out forwards;
+}
+
+/* Position the bubble relative to mascot position */
+.contextual-help-mascot.bottom-right .help-thought-bubble {
+  bottom: 140px;
+  right: 0;
+}
+
+.contextual-help-mascot.bottom-left .help-thought-bubble {
+  bottom: 60px;
+  left: 0;
+}
+
+.contextual-help-mascot.top-right .help-thought-bubble {
+  top: 60px;
+  right: 0;
+}
+
+.contextual-help-mascot.top-left .help-thought-bubble {
+  top: 60px;
+  left: 0;
+}
+
+/* Bubble Tail (thought dots pointing to mascot) */
+.bubble-tail {
+  position: absolute;
+  width: 23px;
+  height: 23px;
+  background: var(--who-card-bg, #ffffff);
+  border: 3px solid var(--who-blue, #006cbe);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+  z-index: 1002;
+}
+
+.bubble-tail::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: var(--who-card-bg, #ffffff);
+  border: 4px solid var(--who-blue, #006cbe);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+  z-index: 1003;
+}
+
+.bubble-tail::after {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  background: var(--who-card-bg, #ffffff);
+  border: 4px solid var(--who-blue, #006cbe);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
+  z-index: 1004;
+}
+
+/* Position tail based on mascot position */
+.contextual-help-mascot.bottom-right .bubble-tail {
+  bottom: -14px;
+  right: -4px;
+}
+
+.contextual-help-mascot.bottom-right .bubble-tail::before {
+  bottom: -64px;
+  right: -15px;
+}
+
+.contextual-help-mascot.bottom-right .bubble-tail::after {
+  bottom: -28px;
+  right: -1px;
+}
+
+.contextual-help-mascot.bottom-left .bubble-tail {
+  bottom: 50px;
+  left: 25px;
+}
+
+.contextual-help-mascot.bottom-left .bubble-tail::before {
+  bottom: 55px;
+  left: -5px;
+}
+
+.contextual-help-mascot.bottom-left .bubble-tail::after {
+  bottom: 58px;
+  left: -8px;
+}
+
+.contextual-help-mascot.top-right .bubble-tail {
+  top: 50px;
+  right: 25px;
+}
+
+.contextual-help-mascot.top-right .bubble-tail::before {
+  top: 55px;
+  right: -5px;
+}
+
+.contextual-help-mascot.top-right .bubble-tail::after {
+  top: 58px;
+  right: -8px;
+}
+
+.contextual-help-mascot.top-left .bubble-tail {
+  top: 50px;
+  left: 25px;
+}
+
+.contextual-help-mascot.top-left .bubble-tail::before {
+  top: 55px;
+  left: -5px;
+}
+
+.contextual-help-mascot.top-left .bubble-tail::after {
+  top: 58px;
+  left: -8px;
+}
+
+/* Bubble Content */
+.bubble-content {
+  position: relative;
+}
+
+.close-bubble-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: var(--who-blue, #006cbe);
+  color: var(--who-card-bg, #ffffff);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.close-bubble-btn:hover {
+  background: var(--who-blue-dark, #004a99);
+}
+
+.help-text {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--who-text-primary, #333);
+}
+
+.help-text h4 {
+  margin: 0 0 12px 0;
+  color: var(--who-blue, #006cbe);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.help-text p {
+  margin: 8px 0;
+}
+
+.help-text ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.help-text li {
+  margin: 4px 0;
+}
+
+.help-text .tip {
+  background: var(--who-selected-bg, rgba(0, 108, 190, 0.1));
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 4px solid var(--who-blue, #006cbe);
+  margin: 12px 0;
+}
+
+.help-text .tip strong {
+  color: var(--who-blue, #006cbe);
+}
+
+/* Help topics list */
+.help-topics-list {
+  width: 100%;
+}
+
+.help-topics-list h4 {
+  margin: 0 0 12px 0;
+  color: var(--who-blue, #006cbe);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.help-topic-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  background: var(--who-hover-bg, #f8f9fa);
+  border: 1px solid var(--who-border-color, #e0e0e0);
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin: 8px 0;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--who-text-primary, #333);
+  transition: all 0.2s ease;
+}
+
+.help-topic-badge {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.help-topic-title {
+  flex: 1;
+}
+
+.help-topic-btn:hover {
+  background: var(--who-selected-bg, rgba(0, 108, 190, 0.1));
+  border-color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #006cbe);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 108, 190, 0.1);
+}
+
+.help-topic-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 108, 190, 0.1);
+}
+
+/* Animation */
+@keyframes bubbleAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes bubbleFadeOut {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9) translateY(5px);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .contextual-help-mascot {
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  .contextual-help-mascot.bottom-left {
+    bottom: 20px;
+    left: 20px;
+  }
+  
+  .help-thought-bubble {
+    min-width: 260px;
+    max-width: calc(100vw - 40px);
+    padding: 16px;
+  }
+  
+  .help-text {
+    font-size: 13px;
+  }
+}
+
+/* Ensure mascot appears above other fixed elements */
+.contextual-help-mascot {
+  z-index: 1000;
+}
+
+.help-thought-bubble {
+  z-index: 1001;
+}
