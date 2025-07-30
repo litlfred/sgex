@@ -1,0 +1,109 @@
+{
+  "app": {
+    "title": "SGEX Workbench",
+    "subtitle": "OMS Intercambio de Directrices SMART",
+    "description": "Un editor colaborativo basado en navegador que cumple con estándares para los kits de adaptación digital de las directrices SMART de la OMS (DAK)."
+  },
+  "navigation": {
+    "documentation": "📖 Documentación",
+    "logout": "Cerrar Sesión",
+    "dashboard": "Panel de Control",
+    "home": "Inicio"
+  },
+  "landing": {
+    "welcome": "Bienvenido a SGEX Workbench",
+    "description": "Un editor colaborativo basado en navegador que cumple con estándares para los kits de adaptación digital de las directrices SMART de la OMS (DAK).",
+    "connect_github": "Conecta tu cuenta de GitHub para comenzar:",
+    "try_demo": "¿Quieres probar sin autenticación?",
+    "demo_mode": "🎭 Probar Modo Demo",
+    "demo_note": "El modo demo muestra la visualización mejorada de escaneo DAK con datos ficticios.",
+    "need_help": "¿Necesitas ayuda para comenzar? Consulta nuestra",
+    "documentation_link": "documentación",
+    "learn_more": "completa para aprender más sobre SGEX Workbench y los componentes DAK.",
+    "profile_selection": "Seleccionar Perfil u Organización",
+    "choose_profile": "Elige el perfil de GitHub o la organización que contenga tus repositorios DAK:",
+    "loading_profile": "Cargando datos del perfil...",
+    "personal_repositories": "Repositorios Personales",
+    "organization_repositories": "Repositorios de Organización"
+  },
+  "dashboard": {
+    "title": "Panel DAK",
+    "loading": "Cargando...",
+    "select_branch": "Seleccionar Rama",
+    "core_components": "Componentes Principales",
+    "additional_components": "Componentes Adicionales",
+    "publications": "Publicaciones",
+    "clear_cache": "Limpiar Caché",
+    "user_menu": "Menú de Usuario"
+  },
+  "errors": {
+    "failed_fetch_user": "Error al obtener datos del usuario. Por favor verifica tu conexión e inténtalo de nuevo.",
+    "github_auth_required": "Se requiere autenticación de GitHub. Por favor autentícate primero.",
+    "user_not_found": "No se pudo acceder al DAK solicitado. Usuario '{{user}}' no encontrado o no accesible.",
+    "repo_not_found": "No se pudo acceder al DAK solicitado. Repositorio '{{user}}/{{repo}}' no encontrado o no accesible.",
+    "generic_error": "Ocurrió un error. Por favor inténtalo de nuevo."
+  },
+  "buttons": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "confirm": "Confirmar",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "refresh": "Refrescar"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "warning": "Advertencia",
+    "success": "Éxito",
+    "info": "Información",
+    "dismiss": "Descartar"
+  },
+  "language": {
+    "selector": "Idioma",
+    "english": "English (US)",
+    "french": "Français",
+    "spanish": "Español"
+  },
+  "help": {
+    "getHelp": "Obtener Ayuda"
+  },
+  "notFound": {
+    "authenticatedMessage": "La página \"{{path}}\" no se pudo encontrar. Has sido redirigido a la página principal.",
+    "unauthenticatedMessage": "La página \"{{path}}\" no se pudo encontrar. Por favor inicia sesión o prueba el modo demo para comenzar."
+  },
+  "patLogin": {
+    "tokenLabel": "Token de Acceso Personal de GitHub",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
+    "signInButton": "Iniciar sesión con Token de Acceso Personal",
+    "authenticating": "Autenticando...",
+    "errors": {
+      "noToken": "Por favor ingresa un Token de Acceso Personal de GitHub",
+      "invalidToken": "Token de Acceso Personal inválido. Por favor verifica tu token e inténtalo de nuevo.",
+      "insufficientPermissions": "El token no tiene permisos suficientes. Asegúrate de que tu token tenga los alcances 'repo' y 'read:org'.",
+      "authFailed": "Falló la autenticación. Por favor verifica tu conexión e inténtalo de nuevo."
+    }
+  },
+  "branchSelector": {
+    "loading": "Cargando ramas...",
+    "createButton": "Crear nueva rama",
+    "errors": {
+      "failedToLoad": "Error al cargar las ramas",
+      "nameRequired": "El nombre de la rama es requerido",
+      "invalidName": "El nombre de la rama solo puede contener letras, números, puntos, guiones y guiones bajos",
+      "nameExists": "Ya existe una rama con este nombre",
+      "createFailed": "Error al crear la rama. Por favor verifica tus permisos."
+    },
+    "modal": {
+      "title": "Crear Nueva Rama",
+      "nameLabel": "Nombre de la Rama",
+      "namePlaceholder": "feature/nuevo-componente-dak",
+      "createFrom": "Crear desde",
+      "creating": "Creando...",
+      "createButton": "Crear Rama"
+    }
+  }
+}

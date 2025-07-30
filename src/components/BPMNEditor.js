@@ -341,7 +341,6 @@ const BPMNEditor = () => {
             <span className="context-repo">{repository.name}</span>
             <span className="context-component">Business Processes</span>
           </div>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
 

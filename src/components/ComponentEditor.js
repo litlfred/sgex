@@ -55,7 +55,6 @@ const ComponentEditor = () => {
                 <span className="context-repo">{placeholderRepo.name}</span>
                 <span className="context-component">{currentComponent.name}</span>
               </div>
-              <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
             </div>
           </div>
 
@@ -66,10 +65,7 @@ const ComponentEditor = () => {
             />
           </div>
           
-          <ContextualHelpMascot 
-            pageId="component-editor"
-            contextData={{ component: currentComponent }}
-          />
+          <ContextualHelpMascot />
         </div>
       );
     } else {
@@ -97,7 +93,6 @@ const ComponentEditor = () => {
               <span className="context-repo">{repository.name}</span>
               <span className="context-component">{currentComponent.name}</span>
             </div>
-            <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
           </div>
         </div>
 
@@ -150,15 +145,7 @@ const ComponentEditor = () => {
           </div>
         </div>
         
-        <ContextualHelpMascot 
-          pageId="health-interventions-editor"
-          contextData={{ 
-            profile, 
-            repository, 
-            component: currentComponent,
-            selectedReferencesCount: selectedReferences.length 
-          }}
-        />
+        <ContextualHelpMascot />
       </div>
     );
   }
@@ -180,7 +167,6 @@ const ComponentEditor = () => {
             <span className="context-repo">{repository.name}</span>
             <span className="context-component">{currentComponent.name}</span>
           </div>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
 
@@ -243,10 +229,7 @@ const ComponentEditor = () => {
         </div>
       </div>
       
-      <ContextualHelpMascot 
-        pageId="component-editor"
-        contextData={{ profile, repository, component: currentComponent }}
-      />
+      <ContextualHelpMascot />
     </div>
   );
 };

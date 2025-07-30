@@ -1,0 +1,109 @@
+{
+  "app": {
+    "title": "SGEX Workbench",
+    "subtitle": "WHO SMART Guidelines Exchange",
+    "description": "A browser-based, standards-compliant collaborative editor for WHO SMART Guidelines Digital Adaptation Kits (DAKs)."
+  },
+  "navigation": {
+    "documentation": "📖 Documentation",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "home": "Home"
+  },
+  "landing": {
+    "welcome": "Welcome to SGEX Workbench",
+    "description": "A browser-based, standards-compliant collaborative editor for WHO SMART Guidelines Digital Adaptation Kits (DAKs).",
+    "connect_github": "Connect your GitHub account to get started:",
+    "try_demo": "Want to try without authentication?",
+    "demo_mode": "🎭 Try Demo Mode",
+    "demo_note": "Demo mode showcases the enhanced DAK scanning display with mock data.",
+    "need_help": "Need help getting started? Check out our comprehensive",
+    "documentation_link": "documentation",
+    "learn_more": "to learn more about SGEX Workbench and DAK components.",
+    "profile_selection": "Select Profile or Organization",
+    "choose_profile": "Choose the GitHub profile or organization containing your DAK repositories:",
+    "loading_profile": "Loading profile data...",
+    "personal_repositories": "Personal Repositories",
+    "organization_repositories": "Organization Repositories"
+  },
+  "dashboard": {
+    "title": "DAK Dashboard",
+    "loading": "Loading...",
+    "select_branch": "Select Branch",
+    "core_components": "Core Components",
+    "additional_components": "Additional Components",
+    "publications": "Publications",
+    "clear_cache": "Clear Cache",
+    "user_menu": "User Menu"
+  },
+  "errors": {
+    "failed_fetch_user": "Failed to fetch user data. Please check your connection and try again.",
+    "github_auth_required": "GitHub authentication required. Please authenticate first.",
+    "user_not_found": "Could not access the requested DAK. User '{{user}}' not found or not accessible.",
+    "repo_not_found": "Could not access the requested DAK. Repository '{{user}}/{{repo}}' not found or not accessible.",
+    "generic_error": "An error occurred. Please try again."
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "refresh": "Refresh"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "warning": "Warning",
+    "success": "Success",
+    "info": "Information",
+    "dismiss": "Dismiss"
+  },
+  "language": {
+    "selector": "Language",
+    "english": "English (US)",
+    "french": "Français",
+    "spanish": "Español"
+  },
+  "help": {
+    "getHelp": "Get Help"
+  },
+  "notFound": {
+    "authenticatedMessage": "The page \"{{path}}\" could not be found. You've been redirected to the home page.",
+    "unauthenticatedMessage": "The page \"{{path}}\" could not be found. Please sign in or try the demo mode to get started."
+  },
+  "patLogin": {
+    "tokenLabel": "GitHub Personal Access Token",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
+    "signInButton": "Sign in with Personal Access Token",
+    "authenticating": "Authenticating...",
+    "errors": {
+      "noToken": "Please enter a GitHub Personal Access Token",
+      "invalidToken": "Invalid Personal Access Token. Please check your token and try again.",
+      "insufficientPermissions": "Token doesn't have sufficient permissions. Please ensure your token has 'repo' and 'read:org' scopes.",
+      "authFailed": "Authentication failed. Please check your connection and try again."
+    }
+  },
+  "branchSelector": {
+    "loading": "Loading branches...",
+    "createButton": "Create new branch",
+    "errors": {
+      "failedToLoad": "Failed to load branches",
+      "nameRequired": "Branch name is required",
+      "invalidName": "Branch name can only contain letters, numbers, periods, hyphens, and underscores",
+      "nameExists": "A branch with this name already exists",
+      "createFailed": "Failed to create branch. Please check your permissions."
+    },
+    "modal": {
+      "title": "Create New Branch",
+      "nameLabel": "Branch Name",
+      "namePlaceholder": "feature/new-dak-component",
+      "createFrom": "Create from",
+      "creating": "Creating...",
+      "createButton": "Create Branch"
+    }
+  }
+}
