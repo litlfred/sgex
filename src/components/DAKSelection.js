@@ -580,22 +580,6 @@ const DAKSelectionContent = () => {
 
   return (
     <div className="dak-selection">
-      <div className="selection-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="profile-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="profile-avatar" 
-          />
-          <span>{profile.name || profile.login}</span>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-        </div>
-      </div>
-
       <div className="selection-content">
         <div className="selection-main">
           <div className="selection-intro">

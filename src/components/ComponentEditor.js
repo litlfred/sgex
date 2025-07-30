@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PageLayout, usePageParams } from './framework';
-import ContextualHelpMascot from './ContextualHelpMascot';
 import WHODigitalLibrary from './WHODigitalLibrary';
 import './ComponentEditor.css';
 
@@ -43,42 +42,14 @@ const ComponentEditorContent = () => {
   if (!profile || !repository) {
     if (currentComponent?.id === 'health-interventions') {
       // Allow access to health-interventions editor without full context
-      // Use placeholder data for now
-      const placeholderProfile = { login: 'demo-user', avatar_url: '/sgex/sgex-mascot.png', name: 'Demo User' };
-      const placeholderRepo = { name: 'demo-repository' };
-      
       return (
         <div className="component-editor">
-          <div className="editor-header">
-            <div className="who-branding">
-              <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-              <p className="subtitle">WHO SMART Guidelines Exchange</p>
-            </div>
-            <div className="context-info">
-              <img 
-                src={placeholderProfile.avatar_url} 
-                alt="Profile" 
-                className="context-avatar" 
-              />
-              <div className="context-details">
-                <span className="context-repo">{placeholderRepo.name}</span>
-                <span className="context-component">{currentComponent.name}</span>
-              </div>
-              <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-            </div>
-          </div>
-
           <div className="editor-content">
             <WHODigitalLibrary 
               onReferencesChange={handleReferencesChange}
               selectedReferences={selectedReferences}
             />
           </div>
-          
-          <ContextualHelpMascot 
-            pageId="component-editor"
-            contextData={{ component: currentComponent }}
-          />
         </div>
       );
     } else {
@@ -91,27 +62,7 @@ const ComponentEditorContent = () => {
   if (currentComponent?.id === 'health-interventions') {
     return (
       <div className="component-editor">
-        <div className="editor-header">
-          <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
-          </div>
-          <div className="context-info">
-            <img 
-              src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-              alt="Profile" 
-              className="context-avatar" 
-            />
-            <div className="context-details">
-              <span className="context-repo">{repository.name}</span>
-              <span className="context-component">{currentComponent.name}</span>
-            </div>
-            <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-          </div>
-        </div>
-
         <div className="editor-content">
-
           <div className="editor-main">
             <div className="component-intro">
               <div className="component-icon" style={{ color: currentComponent.color }}>
@@ -143,16 +94,6 @@ const ComponentEditorContent = () => {
             <WHODigitalLibrary onReferencesChange={handleReferencesChange} />
           </div>
         </div>
-        
-        <ContextualHelpMascot 
-          pageId="health-interventions-editor"
-          contextData={{ 
-            profile, 
-            repository, 
-            component: currentComponent,
-            selectedReferencesCount: selectedReferences.length 
-          }}
-        />
       </div>
     );
   }

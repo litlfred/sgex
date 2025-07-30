@@ -286,41 +286,7 @@ const CoreDataDictionaryViewerContent = () => {
 
   return (
       <div className="core-data-dictionary-viewer">
-      <div className="viewer-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile?.avatar_url || `https://github.com/${user || profile?.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repo || repository?.name}</span>
-            <span className="context-component">Core Data Dictionary</span>
-          </div>
-        </div>
-      </div>
-
       <div className="viewer-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
-            Select Repository
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBackToDashboard} className="breadcrumb-link">
-            DAK Components
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Core Data Dictionary</span>
-        </div>
-
         <div className="viewer-main">
           <div className="component-intro">
             <div className="component-icon" style={{ color: component?.color || '#0078d4' }}>
