@@ -6,9 +6,9 @@ import branchContextService from '../services/branchContextService';
 import cacheManagementService from '../services/cacheManagementService';
 import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
-import ContextualHelpMascot from './ContextualHelpMascot';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
+import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKDashboard.css';
 
@@ -28,8 +28,6 @@ const DAKDashboard = () => {
   const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showClearCacheConfirm, setShowClearCacheConfirm] = useState(false);
 
   // Fetch data from URL parameters if not available in location.state
   useEffect(() => {
@@ -534,19 +532,6 @@ const DAKDashboard = () => {
     navigate('/repositories', { state: { profile } });
   };
 
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
-  const handleUserMenuToggle = () => {
-    setShowUserMenu(!showUserMenu);
-  };
-
-  const handleClearCacheClick = () => {
-    setShowUserMenu(false);
-    setShowClearCacheConfirm(true);
-  };
-
   const handleClearCacheConfirm = () => {
     const success = cacheManagementService.clearAllCache();
     setShowClearCacheConfirm(false);
@@ -562,10 +547,6 @@ const DAKDashboard = () => {
       // Show error message
       alert('⚠️ There was an error clearing the cache. Please try again or refresh the page.');
     }
-  };
-
-  const handleClearCacheCancel = () => {
-    setShowClearCacheConfirm(false);
   };
 
   if (loading) {
@@ -604,67 +585,8 @@ const DAKDashboard = () => {
   }
 
   return (
-    <div className="dak-dashboard">
-      <div className="dashboard-header">
-        <div className="header-left">
-          <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
-          </div>
-          <div className="repo-status">
-            <div className="repo-info">
-              <a 
-                href={`https://github.com/${repository.full_name}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="context-repo-link"
-                title="View repository on GitHub"
-              >
-                <span className="repo-icon">📁</span>
-                <span className="context-repo">{repository.name}</span>
-                <span className="external-link">↗</span>
-              </a>
-            </div>
-            <div className="branch-info">
-              <BranchSelector
-                repository={repository}
-                selectedBranch={selectedBranch}
-                onBranchChange={handleBranchChange}
-                className="header-branch-selector"
-              />
-            </div>
-            {!checkingPermissions && (
-              <span className={`access-level ${hasWriteAccess ? 'write' : 'read'}`}>
-                {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only Access'}
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="header-right">
-          <div className="user-menu-container">
-            <div className="user-info" onClick={handleUserMenuToggle}>
-              <img 
-                src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-                alt="Profile" 
-                className="context-avatar" 
-              />
-              <span className="context-owner">@{profile.login}</span>
-              <span className="menu-arrow">▼</span>
-            </div>
-            
-            {showUserMenu && (
-              <div className="user-dropdown-menu">
-                <div className="dropdown-item" onClick={handleClearCacheClick}>
-                  <span className="dropdown-icon">🚽</span>
-                  <span className="dropdown-text">Clear Cache</span>
-                </div>
-              </div>
-            )}
-          </div>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-        </div>
-      </div>
-
+    <PageLayout pageName="dak-dashboard">
+      <div className="dak-dashboard">
       <div className="dashboard-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
@@ -889,61 +811,8 @@ const DAKDashboard = () => {
           </div>
         </div>
       )}
-
-      {/* Clear Cache Confirmation Dialog */}
-      {showClearCacheConfirm && (
-        <div className="clear-cache-dialog-overlay">
-          <div className="clear-cache-dialog">
-            <div className="dialog-header">
-              <h3>🚽 Clear Cache</h3>
-              <button 
-                className="dialog-close"
-                onClick={handleClearCacheCancel}
-              >
-                ×
-              </button>
-            </div>
-            <div className="dialog-content">
-              <div className="dialog-mascot">
-                <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="dialog-mascot-img" />
-                <div className="mascot-message">
-                  <p><strong>⚠️ Warning: You may lose unsaved progress!</strong></p>
-                  <p>This will clear all cached data including:</p>
-                  <ul>
-                    <li>Repository lists and metadata</li>
-                    <li>Branch selections and context</li>
-                    <li>Unsaved changes in staging area</li>
-                    <li>Other local application data</li>
-                  </ul>
-                  <p><strong>Any work not committed to GitHub will be lost permanently.</strong></p>
-                </div>
-              </div>
-              <div className="dialog-actions">
-                <button 
-                  className="btn-danger"
-                  onClick={handleClearCacheConfirm}
-                >
-                  🚽 Yes, Clear Cache
-                </button>
-                <button 
-                  className="btn-secondary"
-                  onClick={handleClearCacheCancel}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Contextual Help Mascot */}
-      <ContextualHelpMascot 
-        pageId="dak-dashboard"
-        position="bottom-right"
-        contextData={{ profile, repository, hasWriteAccess }}
-      />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 

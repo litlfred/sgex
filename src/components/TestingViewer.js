@@ -145,7 +145,7 @@ const TestingViewer = () => {
   };
 
   return (
-    <PageLayout>
+    <PageLayout pageName="testing-viewer">
       <div className="testing-viewer">
         <div className="testing-header">
           <button onClick={handleBack} className="back-button">
