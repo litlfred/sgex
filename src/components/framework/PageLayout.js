@@ -94,8 +94,8 @@ const PageLayoutInner = ({
   return (
     <div className="page-layout">
       {showHeader && <PageHeader />}
+      {showBreadcrumbs && <PageBreadcrumbs customBreadcrumbs={customBreadcrumbs} />}
       <main className="page-main">
-        {showBreadcrumbs && <PageBreadcrumbs customBreadcrumbs={customBreadcrumbs} />}
         {children}
         {showMascot && (
           <ContextualHelpMascot 

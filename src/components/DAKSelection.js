@@ -551,10 +551,6 @@ const DAKSelection = () => {
     await simulateEnhancedScanning();
   };
 
-  const handleBack = () => {
-    navigate('/dak-action', { state: { profile: profile } });
-  };
-
   const handleHomeNavigation = () => {
     navigate('/');
   };
@@ -592,18 +588,6 @@ const DAKSelection = () => {
       </div>
 
       <div className="selection-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBack} className="breadcrumb-link">
-            Choose DAK Action
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Select DAK</span>
-        </div>
-
         <div className="selection-main">
           <div className="selection-intro">
             <h2>{config.title}</h2>

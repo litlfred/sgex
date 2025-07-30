@@ -1,7 +1,8 @@
 /* Unified Page Breadcrumbs Styling */
 .page-breadcrumbs {
-  margin-bottom: 1.5rem;
-  padding: 0;
+  margin: 0;
+  padding: 0.75rem 0;
+  background: var(--who-primary-bg, #ffffff);
 }
 
 .breadcrumb-list {
@@ -60,25 +61,28 @@
   padding: 0.25rem 0;
 }
 
-/* Dark theme support */
-[data-theme="dark"] .breadcrumb-link {
-  color: var(--who-blue-light, #4dabf7);
+/* Dark theme support - using body class instead of data-theme attribute */
+body.theme-dark .breadcrumb-link {
+  color: #4dabf7;
+  font-weight: 500;
 }
 
-[data-theme="dark"] .breadcrumb-link:hover {
-  color: var(--who-blue, #339af0);
+body.theme-dark .breadcrumb-link:hover {
+  color: #74c0fc;
 }
 
-[data-theme="dark"] .breadcrumb-link:focus {
-  outline-color: var(--who-blue-light, #4dabf7);
+body.theme-dark .breadcrumb-link:focus {
+  outline-color: #4dabf7;
 }
 
-[data-theme="dark"] .breadcrumb-separator {
-  color: var(--who-text-muted-dark, #adb5bd);
+body.theme-dark .breadcrumb-separator {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
 }
 
-[data-theme="dark"] .breadcrumb-current {
-  color: var(--who-text-primary-dark, #f8f9fa);
+body.theme-dark .breadcrumb-current {
+  color: #ffffff;
+  font-weight: 600;
 }
 
 /* RTL language support */
