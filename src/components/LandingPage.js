@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 // import { useNavigate } from 'react-router-dom'; // TODO: Use for navigation
-// import githubService from '../services/githubService'; // TODO: Use for real PR data
+import githubService from '../services/githubService';
 import BranchSelector from './BranchSelector';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import './LandingPage.css';
@@ -31,60 +31,23 @@ const LandingPage = () => {
   const loadPullRequests = useCallback(async () => {
     setLoadingPRs(true);
     try {
-      // For now, we'll simulate the PR data since we need to add the method to githubService
-      // This will be enhanced with actual GitHub API calls
-      const mockPRs = [
-        { 
-          id: 1, 
-          title: 'Add new BPMN editor features', 
-          number: 123, 
-          branch: 'feature/bpmn-enhancements',
-          head: { ref: 'feature/bpmn-enhancements' }
-        },
-        { 
-          id: 2, 
-          title: 'Fix decision table validation', 
-          number: 124, 
-          branch: 'bugfix/decision-table-validation',
-          head: { ref: 'bugfix/decision-table-validation' }
-        },
-        { 
-          id: 3, 
-          title: 'Improve landing page design', 
-          number: 125, 
-          branch: 'feature/landing-page-improvements',
-          head: { ref: 'feature/landing-page-improvements' }
-        },
-        { 
-          id: 4, 
-          title: 'Add internationalization support', 
-          number: 126, 
-          branch: 'feature/i18n-support',
-          head: { ref: 'feature/i18n-support' }
-        },
-        { 
-          id: 5, 
-          title: 'Update documentation', 
-          number: 127, 
-          branch: 'docs/update-readme',
-          head: { ref: 'docs/update-readme' }
-        }
-      ];
+      // Use real GitHub API to fetch pull requests
+      const result = await githubService.getPullRequests('litlfred', 'sgex', {
+        state: 'open',
+        per_page: 5,
+        page: prPage,
+        search: prSearchTerm,
+        sort: 'updated',
+        direction: 'desc'
+      });
       
-      // Filter by search term if provided
-      const filteredPRs = prSearchTerm 
-        ? mockPRs.filter(pr => pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()))
-        : mockPRs;
-      
-      // Paginate (5 per page)
-      const itemsPerPage = 5;
-      const startIndex = (prPage - 1) * itemsPerPage;
-      const paginatedPRs = filteredPRs.slice(startIndex, startIndex + itemsPerPage);
-      
-      setPullRequests(paginatedPRs);
-      setShowMorePRs(filteredPRs.length > prPage * itemsPerPage);
+      setPullRequests(result.data);
+      setShowMorePRs(result.hasMore);
     } catch (error) {
       console.error('Failed to load pull requests:', error);
+      // Fallback to empty array
+      setPullRequests([]);
+      setShowMorePRs(false);
     } finally {
       setLoadingPRs(false);
     }

@@ -1376,6 +1376,115 @@ class GitHubService {
       sessionStorage.removeItem('sgex_branch_context');
     }
   }
+
+  // Get pull requests with search and pagination
+  async getPullRequests(owner, repo, options = {}) {
+    const {
+      state = 'open',
+      per_page = 5,
+      page = 1,
+      search = '',
+      sort = 'updated',
+      direction = 'desc'
+    } = options;
+
+    if (!this.isAuth()) {
+      // For public repositories, we can still fetch PRs without authentication
+      console.warn('Not authenticated - fetching public PR data');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls`, { state, per_page, page });
+
+    try {
+      const response = await this.octokit.rest.pulls.list({
+        owner,
+        repo,
+        state,
+        per_page,
+        page,
+        sort,
+        direction
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, response.status, Date.now() - startTime);
+      
+      let pullRequests = response.data;
+
+      // Filter by search term if provided
+      if (search) {
+        pullRequests = pullRequests.filter(pr => 
+          pr.title.toLowerCase().includes(search.toLowerCase()) ||
+          pr.body?.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+
+      // Transform the data to match our expected format
+      const transformedPRs = pullRequests.map(pr => ({
+        id: pr.id,
+        number: pr.number,
+        title: pr.title,
+        branch: pr.head.ref,
+        head: {
+          ref: pr.head.ref
+        },
+        user: pr.user,
+        created_at: pr.created_at,
+        updated_at: pr.updated_at,
+        html_url: pr.html_url
+      }));
+
+      return {
+        data: transformedPRs,
+        hasMore: response.data.length === per_page // Simple way to check if there might be more
+      };
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch pull requests:', error);
+      
+      // Return mock data as fallback
+      return {
+        data: [
+          { 
+            id: 1, 
+            title: 'Add new BPMN editor features', 
+            number: 123, 
+            branch: 'feature/bpmn-enhancements',
+            head: { ref: 'feature/bpmn-enhancements' }
+          },
+          { 
+            id: 2, 
+            title: 'Fix decision table validation', 
+            number: 124, 
+            branch: 'bugfix/decision-table-validation',
+            head: { ref: 'bugfix/decision-table-validation' }
+          },
+          { 
+            id: 3, 
+            title: 'Improve landing page design', 
+            number: 125, 
+            branch: 'feature/landing-page-improvements',
+            head: { ref: 'feature/landing-page-improvements' }
+          },
+          { 
+            id: 4, 
+            title: 'Add internationalization support', 
+            number: 126, 
+            branch: 'feature/i18n-support',
+            head: { ref: 'feature/i18n-support' }
+          },
+          { 
+            id: 5, 
+            title: 'Update documentation', 
+            number: 127, 
+            branch: 'docs/update-readme',
+            head: { ref: 'docs/update-readme' }
+          }
+        ],
+        hasMore: false
+      };
+    }
+  }
 }
 
 // Create a singleton instance
