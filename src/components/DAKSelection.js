@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import dakTemplates from '../config/dak-templates.json';
-import { PageLayout, usePageParams } from './framework';
+import { PageLayout } from './framework';
 import './DAKSelection.css';
 
 const DAKSelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { params } = usePageParams();
-  const userParam = params?.user;
+  
+  // Extract userParam from URL directly using useParams
+  const urlParams = useParams();
+  const userParam = urlParams?.user;
+  
   const [repositories, setRepositories] = useState([]);
   const [selectedRepository, setSelectedRepository] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -296,6 +299,10 @@ const DAKSelection = () => {
         if (githubService.isAuth() && !forceRescan) {
           try {
             cachedData = repositoryCacheService.getCachedRepositories(profile.login, profile.type === 'org' ? 'org' : 'user');
+            if (cachedData) {
+              const cacheInfo = repositoryCacheService.getCacheInfo(profile.login, profile.type === 'org' ? 'org' : 'user');
+              console.log('📋 Cache check result:', cacheInfo);
+            }
           } catch (cacheError) {
             console.warn('Error accessing repository cache:', cacheError);
           }
@@ -303,13 +310,13 @@ const DAKSelection = () => {
 
         if (cachedData && !forceRescan) {
           // Use cached data - show immediately
-          console.log('Using cached repository data', repositoryCacheService.getCacheInfo(profile.login, profile.type === 'org' ? 'org' : 'user'));
+          console.log('✅ Using cached repository data', repositoryCacheService.getCacheInfo(profile.login, profile.type === 'org' ? 'org' : 'user'));
           repos = cachedData.repositories;
           setUsingCachedData(true);
           // Sort cached repositories alphabetically
           repos.sort((a, b) => a.name.localeCompare(b.name));
           setRepositories(repos);
-        } else {
+        } else if (forceRescan || (!cachedData && githubService.isAuth())) {
           // No cached data or forcing rescan - initiate progressive scanning
           if (githubService.isAuth()) {
             console.log(forceRescan ? '🔄 Force rescanning repositories...' : '🔍 No cached data, initiating scan...');
@@ -461,9 +468,16 @@ const DAKSelection = () => {
       return;
     }
     
-    // Always check cache first on initial load
-    fetchRepositories(false, false); // forceRescan=false, useCachedData=false (but still check cache first)
-  }, [profile, action, userParam, fetchRepositories]);
+    // Check if we should skip fetching (to prevent over-scanning)
+    // Only fetch if we don't have repositories or if it's a forced rescan
+    if (repositories.length === 0) {
+      console.log('📋 Initial repository fetch for DAK selection');
+      fetchRepositories(false, false); // forceRescan=false, useCachedData=false (but still check cache first)  
+    } else {
+      console.log('📋 Skipping repository fetch - already have repositories:', repositories.length);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, action, userParam]); // Intentionally exclude fetchRepositories and repositories.length to prevent loops
 
   const handleRepositorySelect = (repo) => {
     setSelectedRepository(repo);

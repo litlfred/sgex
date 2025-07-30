@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePage, PAGE_TYPES } from './PageProvider';
 import BranchSelector from '../BranchSelector';
 import githubService from '../../services/githubService';
@@ -17,6 +17,35 @@ const PageHeader = () => {
     isAuthenticated,
     navigate 
   } = usePage();
+
+  const [currentUser, setCurrentUser] = useState(null);
+  const [fetchingUser, setFetchingUser] = useState(false);
+
+  // Fetch current user info when authenticated but no profile is available
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      if (isAuthenticated && !profile && !currentUser && !fetchingUser) {
+        setFetchingUser(true);
+        try {
+          const userData = await githubService.getCurrentUser();
+          setCurrentUser(userData);
+        } catch (error) {
+          console.error('Failed to fetch current user for header:', error);
+        } finally {
+          setFetchingUser(false);
+        }
+      }
+    };
+
+    fetchCurrentUser();
+  }, [isAuthenticated, profile, currentUser, fetchingUser]);
+
+  // Clear current user when logging out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setCurrentUser(null);
+    }
+  }, [isAuthenticated]);
 
   const handleLogout = () => {
     githubService.logout();
@@ -38,10 +67,11 @@ const PageHeader = () => {
   };
 
   const handleGitHubUser = () => {
-    if (profile?.html_url) {
-      window.open(profile.html_url, '_blank');
-    } else if (profile?.login) {
-      window.open(`https://github.com/${profile.login}`, '_blank');
+    const userProfile = profile || currentUser;
+    if (userProfile?.html_url) {
+      window.open(userProfile.html_url, '_blank');
+    } else if (userProfile?.login) {
+      window.open(`https://github.com/${userProfile.login}`, '_blank');
     }
   };
 
@@ -126,23 +156,27 @@ const PageHeader = () => {
         )}
         
         {/* User info and controls */}
-        {isAuthenticated && profile ? (
+        {(isAuthenticated && (profile || currentUser)) || (profile?.isDemo) ? (
           <div className="user-controls">
             <div className="user-info">
-              <img src={profile.avatar_url} alt="User avatar" className="user-avatar" />
-              <span className="user-name">{profile.name || profile.login}</span>
+              <img src={(profile || currentUser)?.avatar_url} alt="User avatar" className="user-avatar" />
+              <span className="user-name">{(profile || currentUser)?.name || (profile || currentUser)?.login}</span>
             </div>
-            <div className="user-dropdown">
-              <button className="dropdown-item" onClick={handleGitHubUser}>
-                <svg className="github-icon" viewBox="0 0 16 16" width="16" height="16">
-                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-                </svg>
-                GitHub Profile
-              </button>
-              <button className="dropdown-item logout-btn" onClick={handleLogout}>
-                Logout
-              </button>
-            </div>
+            {(isAuthenticated || profile?.isDemo) && (
+              <div className="user-dropdown">
+                <button className="dropdown-item" onClick={handleGitHubUser}>
+                  <svg className="github-icon" viewBox="0 0 16 16" width="16" height="16">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                  </svg>
+                  GitHub Profile
+                </button>
+                {isAuthenticated && (
+                  <button className="dropdown-item logout-btn" onClick={handleLogout}>
+                    Logout
+                  </button>  
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <button className="login-btn" onClick={handleHomeNavigation}>

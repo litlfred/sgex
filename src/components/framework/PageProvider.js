@@ -62,6 +62,28 @@ export const PageProvider = ({ children, pageName }) => {
     isAuthenticated: githubService.isAuth()
   });
 
+  // Add effect to monitor authentication state changes
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      const currentAuthStatus = githubService.isAuth();
+      setPageState(prev => {
+        if (prev.isAuthenticated !== currentAuthStatus) {
+          console.log('Authentication state changed:', prev.isAuthenticated, '->', currentAuthStatus);
+          return { ...prev, isAuthenticated: currentAuthStatus };
+        }
+        return prev;
+      });
+    };
+
+    // Check immediately
+    checkAuthStatus();
+
+    // Set up interval to check auth status periodically
+    const authCheckInterval = setInterval(checkAuthStatus, 1000);
+
+    return () => clearInterval(authCheckInterval);
+  }, []);
+
   // Extract URL parameters
   const { user, repo, asset } = params;
 
