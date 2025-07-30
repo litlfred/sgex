@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import dakTemplates from '../config/dak-templates.json';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import './DAKSelection.css';
 
 const DAKSelection = () => {
@@ -574,22 +574,23 @@ const DAKSelection = () => {
   const config = getActionConfig();
 
   return (
-    <div className="dak-selection">
-      <div className="selection-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
+    <PageLayout pageName="dak-selection">
+      <div className="dak-selection">
+        <div className="selection-header">
+          <div className="who-branding">
+            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
+            <p className="subtitle">WHO SMART Guidelines Exchange</p>
+          </div>
+          <div className="profile-info">
+            <img 
+              src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
+              alt="Profile" 
+              className="profile-avatar" 
+            />
+            <span>{profile.name || profile.login}</span>
+            <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+          </div>
         </div>
-        <div className="profile-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="profile-avatar" 
-          />
-          <span>{profile.name || profile.login}</span>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-        </div>
-      </div>
 
       <div className="selection-content">
         <div className="breadcrumb">
@@ -890,12 +891,8 @@ const DAKSelection = () => {
           )}
         </div>
       </div>
-      
-      <ContextualHelpMascot 
-        pageId="dak-selection"
-        contextData={{ profile, selectedRepository, action }}
-      />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 
