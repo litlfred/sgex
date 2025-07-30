@@ -26,6 +26,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch full history for gh-pages branch
+
+      - name: Configure git user
+        shell: bash
+        run: |
+          # Configure git user early to avoid "empty ident name" errors
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
         
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -266,10 +273,6 @@ jobs:
           repo_root="$(pwd)"
           
           echo "Staging changes for commit"
-          
-          # Configure git
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           
           # Add all changes
           git add -A
