@@ -51,7 +51,7 @@ const PageHeader = () => {
   };
 
   const handleBookmarkCurrentPage = () => {
-    if (!isAuthenticated) return;
+    if (!profile) return;
     
     const context = {
       user: profile?.login,
@@ -168,7 +168,7 @@ const PageHeader = () => {
         )}
         
         {/* User info and controls */}
-        {isAuthenticated && profile ? (
+        {(isAuthenticated || profile?.isDemo) && profile ? (
           <div className="user-controls">
             <div className="user-info" onClick={() => setShowUserDropdown(!showUserDropdown)}>
               <img src={profile.avatar_url} alt="User avatar" className="user-avatar" />
