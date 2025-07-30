@@ -7,7 +7,6 @@ import DAKSelection from './components/DAKSelection';
 import OrganizationSelection from './components/OrganizationSelection';
 import DAKConfiguration from './components/DAKConfiguration';
 import RepositorySelection from './components/RepositorySelection';
-import DAKDashboard from './components/DAKDashboard';
 import ComponentEditor from './components/ComponentEditor';
 import CoreDataDictionaryViewer from './components/CoreDataDictionaryViewer';
 import ActorEditor from './components/ActorEditor';
@@ -55,9 +54,9 @@ function App() {
             <Route path="/organization-selection" element={<OrganizationSelection />} />
             <Route path="/dak-configuration" element={<DAKConfiguration />} />
             <Route path="/repositories" element={<RepositorySelection />} />
-            <Route path="/dashboard" element={<DAKDashboard />} />
-            <Route path="/dashboard/:user/:repo" element={<DAKDashboard />} />
-            <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />
+            <Route path="/dashboard" element={<DAKDashboardWithFramework />} />
+            <Route path="/dashboard/:user/:repo" element={<DAKDashboardWithFramework />} />
+            <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboardWithFramework />} />
             <Route path="/test-dashboard" element={<TestDashboard />} />
             <Route path="/testing-viewer" element={<TestingViewer />} />
             <Route path="/testing-viewer/:user/:repo" element={<TestingViewer />} />
