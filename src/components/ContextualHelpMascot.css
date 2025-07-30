@@ -404,12 +404,12 @@
 .help-topic-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
   background: var(--who-hover-bg, #f8f9fa);
   border: 1px solid var(--who-border-color, #e0e0e0);
   border-radius: 6px;
-  padding: 12px 16px;
+  padding: 16px 20px;
   margin: 8px 0;
   text-align: left;
   cursor: pointer;
@@ -420,8 +420,8 @@
 }
 
 .help-topic-badge {
-  width: 20px;
-  height: 20px;
+  width: 60px;
+  height: 60px;
   flex-shrink: 0;
 }
 

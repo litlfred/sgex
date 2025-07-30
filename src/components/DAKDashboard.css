@@ -97,7 +97,8 @@ body.theme-light .dak-dashboard {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background-color: #548ad1;
+  background: var(--who-blue, #006cbe);
+  border: 1px solid var(--who-blue-light, #338dd6);
   padding: 0.5rem;
   border-radius: 6px;
 }
@@ -1005,19 +1006,23 @@ body.theme-light .dak-dashboard {
   gap: 0.5rem;
   cursor: pointer;
   padding: 0.5rem;
-  border-radius: 8px;
-  transition: background-color 0.2s ease;
+  border-radius: 6px;
+  background: var(--who-blue, #006cbe);
+  border: 1px solid var(--who-blue-light, #338dd6);
+  transition: all 0.2s ease;
+  color: white;
 }
 
 .user-info:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background: var(--who-blue-light, #338dd6);
+  border-color: var(--who-blue-light, #338dd6);
 }
 
 .context-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid white;
 }
 
 .context-owner {

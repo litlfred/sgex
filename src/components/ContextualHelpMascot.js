@@ -42,6 +42,15 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   };
 
   const handleHelpTopicClick = (topic) => {
+    // Handle link-type topics by navigating directly
+    if (topic.type === 'link') {
+      window.open(topic.url, '_blank');
+      setShowHelp(false);
+      setHelpSticky(false);
+      return;
+    }
+    
+    // Handle other types with the modal
     setSelectedHelpTopic(topic);
     setShowHelp(false);
     setHelpSticky(false);
