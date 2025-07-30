@@ -1,0 +1,144 @@
+{
+  "app": {
+    "title": "SGEX Workbench",
+    "subtitle": "WHO SMART Guidelines Exchange",
+    "description": "Collaborative editor for WHO SMART Guidelines Digital Adaptation Kits (DAKs)"
+  },
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "repositories": "Repositories",
+    "documentation": "Documentation",
+    "help": "Help"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signInWithPAT": "Sign in with Personal Access Token",
+    "authRequired": "GitHub authentication required. Please authenticate first.",
+    "setupToken": "Set up your GitHub Personal Access Token"
+  },
+  "landing": {
+    "welcome": "Welcome to SGEX Workbench",
+    "subtitle": "WHO SMART Guidelines Exchange collaborative editor",
+    "getStarted": "Get Started",
+    "browseDAKs": "Browse DAKs",
+    "learnMore": "Learn More",
+    "selectAction": "What would you like to do?",
+    "createNew": "Create New DAK",
+    "editExisting": "Edit Existing DAK",
+    "explorePublic": "Explore Public DAKs"
+  },
+  "dak": {
+    "title": "Digital Adaptation Kit",
+    "components": "DAK Components",
+    "status": "Status",
+    "lastModified": "Last Modified",
+    "branch": "Branch",
+    "repository": "Repository",
+    "healthInterventions": "Health Interventions and Recommendations",
+    "genericPersonas": "Generic Personas",
+    "userScenarios": "User Scenarios",
+    "businessProcesses": "Generic Business Processes and Workflows",
+    "coreDataElements": "Core Data Elements",
+    "decisionSupportLogic": "Decision-Support Logic",
+    "programIndicators": "Program Indicators",
+    "requirements": "Functional and Non-Functional Requirements"
+  },
+  "repository": {
+    "select": "Select Repository",
+    "search": "Search repositories...",
+    "noResults": "No repositories found",
+    "loading": "Loading repositories...",
+    "error": "Error loading repositories",
+    "public": "Public",
+    "private": "Private",
+    "fork": "Fork",
+    "stars": "Stars",
+    "language": "Language"
+  },
+  "organization": {
+    "select": "Select Organization",
+    "personal": "Personal Repositories",
+    "organizations": "Organizations"
+  },
+  "branch": {
+    "select": "Select Branch",
+    "current": "Current Branch",
+    "switchTo": "Switch to {{branch}}",
+    "createNew": "Create New Branch"
+  },
+  "editor": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "preview": "Preview",
+    "unsavedChanges": "You have unsaved changes",
+    "saveChanges": "Save Changes",
+    "discardChanges": "Discard Changes"
+  },
+  "demo": {
+    "title": "Want to try without authentication?",
+    "tryDemoMode": "🎭 Try Demo Mode",
+    "description": "Demo mode showcases the enhanced DAK scanning display with mock data."
+  },
+  "help": {
+    "title": "Help & Documentation",
+    "contextualHelp": "Contextual Help",
+    "documentation": "Documentation",
+    "support": "Support",
+    "feedback": "Feedback",
+    "close": "Close"
+  },
+  "theme": {
+    "toggle": "Toggle Theme",
+    "dark": "Dark Mode",
+    "light": "Light Mode"
+  },
+  "language": {
+    "select": "Select Language",
+    "english": "English",
+    "french": "Français",
+    "spanish": "Español",
+    "arabic": "العربية",
+    "chinese": "中文",
+    "russian": "Русский",
+    "search": "Search languages...",
+    "addLanguage": "Add Language"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Information",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "yes": "Yes",
+    "no": "No",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close"
+  },
+  "errors": {
+    "generic": "An error occurred. Please try again.",
+    "network": "Network error. Please check your connection.",
+    "unauthorized": "You are not authorized to perform this action.",
+    "notFound": "The requested resource was not found.",
+    "validation": "Please check your input and try again."
+  },
+  "dashboard": {
+    "title": "DAK Dashboard",
+    "overview": "Overview",
+    "components": "Components",
+    "status": "Status",
+    "activity": "Recent Activity",
+    "errorLoading": "Error Loading Dashboard"
+  }
+}

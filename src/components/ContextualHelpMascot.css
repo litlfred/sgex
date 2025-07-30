@@ -27,11 +27,13 @@
   left: 30px;
 }
 
-/* Theme Toggle Container */
+/* Theme Controls Container */
 .theme-toggle-container {
   display: flex;
-  justify-content: center;
-  margin-bottom: 5px;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 /* Theme Toggle Button (Light Switch) */
@@ -360,7 +362,7 @@ body.theme-dark .bubble-tail::after {
   top: -10px;
   right: -10px;
   background: var(--who-blue, #006cbe);
-  color: var(--who-card-bg, #ffffff);
+  color: #ffffff;
   border: none;
   border-radius: 50%;
   width: 24px;

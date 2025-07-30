@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import './i18n'; // Initialize i18n
 import LandingPage from './components/LandingPage';
 import DAKActionSelection from './components/DAKActionSelection';
 import DAKSelection from './components/DAKSelection';
