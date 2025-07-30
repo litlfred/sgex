@@ -30,8 +30,8 @@ const BPMNViewerTestComponent = () => {
       component: 'business-processes'
     };
 
-    // Navigate to BPMN viewer with test data
-    navigate('/bpmn-viewer', { state: testData });
+    // Navigate to BPMN viewer with test data using contextualized route
+    navigate('/bpmn-viewer/WorldHealthOrganization/smart-immunizations/main', { state: testData });
   }, [navigate]);
 
   return (

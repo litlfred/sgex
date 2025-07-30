@@ -560,14 +560,6 @@ const DAKSelectionContent = () => {
     await simulateEnhancedScanning();
   };
 
-  const handleBack = () => {
-    navigate('/dak-action', { state: { profile: profile } });
-  };
-
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -584,35 +576,7 @@ const DAKSelectionContent = () => {
 
   return (
     <div className="dak-selection">
-      <div className="selection-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="profile-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="profile-avatar" 
-          />
-          <span>{profile.name || profile.login}</span>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-        </div>
-      </div>
-
       <div className="selection-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBack} className="breadcrumb-link">
-            Choose DAK Action
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Select DAK</span>
-        </div>
-
         <div className="selection-main">
           <div className="selection-intro">
             <h2>{config.title}</h2>

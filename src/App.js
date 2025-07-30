@@ -61,19 +61,29 @@ function App() {
             <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />
             <Route path="/test-dashboard" element={<TestDashboard />} />
             <Route path="/testing-viewer" element={<TestingViewer />} />
+            <Route path="/testing-viewer/:user/:repo" element={<TestingViewer />} />
+            <Route path="/testing-viewer/:user/:repo/:branch" element={<TestingViewer />} />
             <Route path="/core-data-dictionary-viewer" element={<CoreDataDictionaryViewer />} />
             <Route path="/core-data-dictionary-viewer/:user/:repo" element={<CoreDataDictionaryViewer />} />
             <Route path="/core-data-dictionary-viewer/:user/:repo/:branch" element={<CoreDataDictionaryViewer />} />
             <Route path="/editor/:componentId" element={<ComponentEditor />} />
             <Route path="/editor-health-interventions" element={<ComponentEditor />} />
             <Route path="/actor-editor" element={<ActorEditor />} />
+            <Route path="/actor-editor/:user/:repo" element={<ActorEditor />} />
+            <Route path="/actor-editor/:user/:repo/:branch" element={<ActorEditor />} />
             <Route path="/business-process-selection" element={<BusinessProcessSelection />} />
             <Route path="/business-process-selection/:user/:repo" element={<BusinessProcessSelection />} />
             <Route path="/business-process-selection/:user/:repo/:branch" element={<BusinessProcessSelection />} />
             <Route path="/bpmn-editor" element={<BPMNEditor />} />
+            <Route path="/bpmn-editor/:user/:repo" element={<BPMNEditor />} />
+            <Route path="/bpmn-editor/:user/:repo/:branch" element={<BPMNEditor />} />
             <Route path="/bpmn-viewer" element={<BPMNViewer />} />
+            <Route path="/bpmn-viewer/:user/:repo" element={<BPMNViewer />} />
+            <Route path="/bpmn-viewer/:user/:repo/:branch" element={<BPMNViewer />} />
             <Route path="/test-bpmn-viewer" element={<BPMNViewerTestComponent />} />
             <Route path="/bpmn-source" element={<BPMNSource />} />
+            <Route path="/bpmn-source/:user/:repo" element={<BPMNSource />} />
+            <Route path="/bpmn-source/:user/:repo/:branch" element={<BPMNSource />} />
             <Route path="/decision-support-logic" element={<DecisionSupportLogicView />} />
             <Route path="/decision-support-logic/:user/:repo" element={<DecisionSupportLogicView />} />
             <Route path="/decision-support-logic/:user/:repo/:branch" element={<DecisionSupportLogicView />} />

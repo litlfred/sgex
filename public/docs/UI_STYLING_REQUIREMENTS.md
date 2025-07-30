@@ -29,8 +29,56 @@ border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 }
 ```
 
+## Breadcrumb Standards
+
+All pages **MUST** use the consistent breadcrumb system provided by the page framework:
+
+### Required Breadcrumb Implementation
+- **Use PageLayout Framework**: All pages must wrap content with `<PageLayout pageName="...">`
+- **Automatic Breadcrumbs**: Framework automatically generates contextual breadcrumbs based on page type
+- **Consistent Styling**: All breadcrumbs use standardized WHO design system colors and typography
+- **Accessibility**: Built-in ARIA labels and semantic navigation structure
+
+### Breadcrumb Styling Standards
+```css
+.page-breadcrumbs {
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.breadcrumb-link {
+  color: var(--who-blue, #006cbe);
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.breadcrumb-separator {
+  color: var(--who-text-muted, #6c757d);
+  margin: 0 0.5rem;
+}
+
+.breadcrumb-current {
+  color: var(--who-text-primary, #333);
+  font-weight: 500;
+}
+```
+
+### Custom Breadcrumbs (When Needed)
+For special cases, custom breadcrumbs can be provided:
+```jsx
+<PageLayout 
+  pageName="special-page"
+  customBreadcrumbs={[
+    { label: 'Home', path: '/' },
+    { label: 'Special Section', path: '/special' },
+    { label: 'Current Page' } // Current page has no path
+  ]}
+>
+```
+
 ## Pages Following Standard (✅ Compliant)
 
+### Background Styling Compliance
 - **LandingPage** (`LandingPage.css`)
 - **DAKDashboard** (`DAKDashboard.css`)
 - **DAKSelection** (`DAKSelection.css`)
@@ -42,7 +90,32 @@ border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 - **BPMNSource** (`BPMNSource.css`) - ✅ Fixed in PR #XX
 - **TestDashboard** (`TestDashboard.css`) - ✅ Fixed in PR #XX
 
+### Breadcrumb Compliance
+- **ActorEditor** - ✅ Uses framework breadcrumbs (Fixed in PR #308)
+- **ComponentEditor** - ✅ Uses framework breadcrumbs (Fixed in PR #308)
+- **DecisionSupportLogicView** - ✅ Uses framework breadcrumbs (Fixed in PR #308)
+- **DAKDashboard** - ✅ Uses framework breadcrumbs (Fixed in PR #308)
+- **PagesManager** - ✅ Uses framework breadcrumbs (Fixed in PR #308)
+- **BPMNViewer** - ✅ Uses framework breadcrumbs (Fixed in PR #308)
+- **BPMNEditor** - ✅ Uses framework breadcrumbs (Fixed in PR #308)
+
+## Components Requiring Migration
+
+### Not Using PageLayout Framework
+These components need to be migrated to use the page framework for consistent breadcrumbs:
+- **CoreDataDictionaryViewer** - ❌ Uses custom header and breadcrumbs
+- **DAKSelection** - ❌ Uses custom header and breadcrumbs
+- **BPMNViewerEnhanced** - ❌ Uses custom header and breadcrumbs (if applicable)
+
 ## Exceptions (Allowed Different Backgrounds)
+
+### Modal Dialogs and Overlays
+Modal dialogs and popup overlays are **allowed** to have white or alternative backgrounds as they overlay the main page:
+
+- **HelpModal** (`HelpModal.css`) - White background appropriate for modal content
+- **ContextualHelpMascot** (`ContextualHelpMascot.css`) - White background for help tooltips
+- **PATLogin** (`PATLogin.css`) - May contain white input forms within the blue gradient page
+- **PATSetupInstructions** (`PATSetupInstructions.css`) - May contain white content areas
 
 ### Modal Dialogs and Overlays
 Modal dialogs and popup overlays are **allowed** to have white or alternative backgrounds as they overlay the main page:

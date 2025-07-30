@@ -37,6 +37,7 @@ body.theme-dark {
   --who-text-muted: rgba(255, 255, 255, 0.6);
   --who-border-color: rgba(255, 255, 255, 0.2);
   --who-hover-bg: rgba(255, 255, 255, 0.1);
+  --who-bg-light: rgba(255, 255, 255, 0.05);
   --who-selected-bg: rgba(0, 108, 190, 0.3);
 }
 

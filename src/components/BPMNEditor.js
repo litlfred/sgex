@@ -350,22 +350,6 @@ const BPMNEditor = () => {
     >
       <div className="bpmn-editor">
         <div className="editor-content">
-          <div className="breadcrumb">
-            <button onClick={() => navigate('/')} className="breadcrumb-link">
-              Select Profile
-            </button>
-            <span className="breadcrumb-separator">›</span>
-            <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
-              Select Repository
-            </button>
-            <span className="breadcrumb-separator">›</span>
-            <button onClick={() => navigate('/dashboard', { state: { profile, repository } })} className="breadcrumb-link">
-              DAK Components
-            </button>
-            <span className="breadcrumb-separator">›</span>
-            <span className="breadcrumb-current">Business Processes</span>
-          </div>
-
           <div className="bpmn-workspace">
             <div className="file-browser">
               <div className="file-browser-header">

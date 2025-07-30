@@ -103,21 +103,6 @@ const ComponentEditor = () => {
         </div>
 
         <div className="editor-content">
-          <div className="breadcrumb">
-            <button onClick={() => navigate('/')} className="breadcrumb-link">
-              Select Profile
-            </button>
-            <span className="breadcrumb-separator">›</span>
-            <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
-              Select Repository
-            </button>
-            <span className="breadcrumb-separator">›</span>
-            <button onClick={() => navigate('/dashboard', { state: { profile, repository } })} className="breadcrumb-link">
-              DAK Components
-            </button>
-            <span className="breadcrumb-separator">›</span>
-            <span className="breadcrumb-current">{currentComponent.name}</span>
-          </div>
 
           <div className="editor-main">
             <div className="component-intro">
@@ -168,21 +153,6 @@ const ComponentEditor = () => {
     <PageLayout pageName="component-editor">
       <div className="component-editor">
       <div className="editor-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
-            Select Repository
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/dashboard', { state: { profile, repository } })} className="breadcrumb-link">
-            DAK Components
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">{currentComponent.name}</span>
-        </div>
 
         <div className="editor-main">
           <div className="editor-placeholder">

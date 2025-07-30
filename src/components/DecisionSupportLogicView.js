@@ -635,25 +635,7 @@ define "Contraindication Present":
     });
   };
 
-  const handleBackToDashboard = () => {
-    if (repository && profile) {
-      const owner = repository.owner?.login || repository.full_name.split('/')[0];
-      const repoName = repository.name;
-      const path = selectedBranch 
-        ? `/dashboard/${owner}/${repoName}/${selectedBranch}`
-        : `/dashboard/${owner}/${repoName}`;
-      
-      navigate(path, {
-        state: {
-          profile,
-          repository,
-          selectedBranch
-        }
-      });
-    } else {
-      navigate('/');
-    }
-  };
+
 
   if (loading) {
     return (
@@ -689,17 +671,6 @@ define "Contraindication Present":
     <PageLayout pageName="decision-support-logic">
       <div className="decision-support-view">
       <div className="view-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBackToDashboard} className="breadcrumb-link">
-            DAK Components
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Decision Support Logic</span>
-        </div>
 
         <div className="view-main">
           <div className="view-intro">
