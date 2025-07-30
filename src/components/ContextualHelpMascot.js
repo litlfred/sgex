@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useTheme } from '../contexts/ThemeContext';
+import React, { useState, useEffect } from 'react';
 import helpContentService from '../services/helpContentService';
 import HelpModal from './HelpModal';
 import './ContextualHelpMascot.css';
@@ -8,7 +7,30 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [showHelp, setShowHelp] = useState(false);
   const [helpSticky, setHelpSticky] = useState(false);
   const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
-  const { isDarkMode, toggleTheme } = useTheme();
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  // Load theme preference from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('sgex-theme');
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark');
+    } else {
+      // Check if user explicitly prefers light mode
+      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+      // Default to dark mode unless user explicitly prefers light
+      setIsDarkMode(!prefersLight);
+    }
+  }, []);
+
+  // Update body class when theme changes
+  useEffect(() => {
+    document.body.className = isDarkMode ? 'theme-dark' : 'theme-light';
+    localStorage.setItem('sgex-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
 
   // Get help topics for the page
   const helpTopics = pageId ? helpContentService.getHelpTopicsForPage(pageId, contextData) : [];
