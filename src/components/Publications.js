@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import githubService from '../services/githubService';
+import StagingGround from './StagingGround';
 import './Publications.css';
 
 const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) => {
@@ -208,6 +209,14 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
 
   return (
     <div className="publications-section">
+      {/* Staging Ground Section */}
+      <StagingGround
+        repository={repository}
+        selectedBranch={selectedBranch}
+        hasWriteAccess={hasWriteAccess}
+        profile={profile}
+      />
+      
       <div className="section-header">
         <h3 className="section-title">Published DAK Content</h3>
         <p className="section-description">
