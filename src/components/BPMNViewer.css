@@ -1,3 +1,13 @@
+/* Override PageLayout padding for fullwidth BPMN viewer */
+.page-main:has(.bpmn-viewer) {
+  padding: 0 !important;
+}
+
+/* Fallback for browsers that don't support :has() */
+.page-layout .page-main .bpmn-viewer {
+  margin: -1rem;
+}
+
 .bpmn-viewer {
   min-height: 100vh;
   background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
@@ -59,9 +69,10 @@
 }
 
 .viewer-content {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 0;
+  max-width: none;
+  margin: 0;
+  width: 100%;
 }
 
 .breadcrumb {

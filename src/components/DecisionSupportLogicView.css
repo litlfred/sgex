@@ -1,4 +1,14 @@
 /* Decision Support Logic View Styles */
+/* Override PageLayout padding for fullwidth DMN viewer */
+.page-main:has(.decision-support-view) {
+  padding: 0 !important;
+}
+
+/* Fallback for browsers that don't support :has() */
+.page-layout .page-main .decision-support-view {
+  margin: -1rem;
+}
+
 .decision-support-view {
   min-height: 100vh;
   background: #f8f9fa;
@@ -94,9 +104,10 @@
 }
 
 .decision-support-view .view-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
 }
 
 /* Section Toggle Tabs */
