@@ -225,8 +225,8 @@
   position: absolute;
   width: 23px;
   height: 23px;
-  background: #ffffff;
-  border: 3px solid #0066cc;
+  background: var(--who-card-bg, #ffffff);
+  border: 3px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   z-index: 1002;
 }
@@ -236,8 +236,8 @@
   position: absolute;
   width: 20px;
   height: 20px;
-  background: #ffffff;
-  border: 4px solid #0066cc;
+  background: var(--who-card-bg, #ffffff);
+  border: 4px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   z-index: 1003;
 }
@@ -247,8 +247,8 @@
   position: absolute;
   width: 15px;
   height: 15px;
-  background: #ffffff;
-  border: 4px solid #0066cc;
+  background: var(--who-card-bg, #ffffff);
+  border: 4px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   z-index: 1004;
 }
