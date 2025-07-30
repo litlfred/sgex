@@ -50,6 +50,7 @@ export const ThemeProvider = ({ children }) => {
       root.style.setProperty('--who-primary-bg', WHO_COLORS.navy);
       root.style.setProperty('--who-secondary-bg', WHO_COLORS.navyLight);
       root.style.setProperty('--who-card-bg', 'rgba(255, 255, 255, 0.1)');
+      root.style.setProperty('--who-thought-bubble-bg', WHO_COLORS.navyLight);
       root.style.setProperty('--who-text-primary', '#ffffff');
       root.style.setProperty('--who-text-secondary', 'rgba(255, 255, 255, 0.8)');
       root.style.setProperty('--who-text-muted', 'rgba(255, 255, 255, 0.6)');
@@ -61,6 +62,7 @@ export const ThemeProvider = ({ children }) => {
       root.style.setProperty('--who-primary-bg', '#ffffff');
       root.style.setProperty('--who-secondary-bg', WHO_COLORS.lightBlue);
       root.style.setProperty('--who-card-bg', '#ffffff');
+      root.style.setProperty('--who-thought-bubble-bg', '#ffffff');
       root.style.setProperty('--who-text-primary', '#333333');
       root.style.setProperty('--who-text-secondary', '#666666');
       root.style.setProperty('--who-text-muted', '#999999');

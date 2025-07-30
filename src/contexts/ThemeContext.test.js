@@ -129,3 +129,40 @@ test('defaults to dark mode when no saved theme and system prefers dark', () => 
 
   expect(getByTestId('theme-mode')).toHaveTextContent('dark');
 });
+
+test('sets thought bubble background CSS variable correctly for dark mode', () => {
+  // Mock no saved theme (defaults to dark)
+  localStorageMock.getItem.mockReturnValue(null);
+  
+  window.matchMedia = jest.fn().mockImplementation((query) => {
+    if (query === '(prefers-color-scheme: light)') {
+      return createMatchMediaMock(false);
+    }
+    return createMatchMediaMock(false);
+  });
+
+  render(
+    <ThemeProvider>
+      <TestComponent />
+    </ThemeProvider>
+  );
+
+  // Check that the CSS variable is set to solid color (not transparent)
+  const thoughtBubbleBg = document.documentElement.style.getPropertyValue('--who-thought-bubble-bg');
+  expect(thoughtBubbleBg).toBe('#1a2380'); // WHO Navy Light - solid color
+});
+
+test('sets thought bubble background CSS variable correctly for light mode', () => {
+  // Mock saved light theme
+  localStorageMock.getItem.mockReturnValue('light');
+
+  render(
+    <ThemeProvider>
+      <TestComponent />
+    </ThemeProvider>
+  );
+
+  // Check that the CSS variable is set to solid white
+  const thoughtBubbleBg = document.documentElement.style.getPropertyValue('--who-thought-bubble-bg');
+  expect(thoughtBubbleBg).toBe('#ffffff'); // White - solid color
+});
