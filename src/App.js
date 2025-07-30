@@ -24,6 +24,7 @@ import NotFound from './components/NotFound';
 import LandingPageWithFramework from './components/LandingPageWithFramework';
 import DAKDashboardWithFramework from './components/DAKDashboardWithFramework';
 import TestDocumentationPage from './components/TestDocumentationPage';
+import AssetEditorTest from './components/AssetEditorTest';
 import logger from './utils/logger';
 import './App.css';
 
@@ -93,6 +94,7 @@ function App() {
             <Route path="/test-framework-dashboard/:user/:repo" element={<DAKDashboardWithFramework />} />
             <Route path="/test-framework-dashboard/:user/:repo/:branch" element={<DAKDashboardWithFramework />} />
             <Route path="/test-documentation" element={<TestDocumentationPage />} />
+            <Route path="/test-asset-editor" element={<AssetEditorTest />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

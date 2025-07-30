@@ -268,6 +268,20 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - Help integration with contextual help topics and notification badges for repositories without gh-pages
 - Consistent blue background styling matching DAK Dashboard component pages
 
+**REQ-EDIT-006**: The system SHALL provide enhanced asset editor framework
+- All asset editors (BPMN, DMN, CQL, Feature Files, etc.) SHALL use the common page framework
+- Asset editors SHALL provide consistent save functionality with two independent save operations:
+  - "Save Local": Saves content to browser localStorage
+  - "Save to GitHub": Commits content to GitHub repository
+- Independent button states: Local and GitHub save buttons SHALL maintain separate disabled/loading states
+- Save confirmation: Local save SHALL provide success confirmation and then disable until content changes
+- GitHub commit workflow: GitHub save SHALL prompt for commit message, allow cancellation, show progress, and disable upon success
+- Error handling: Both save operations SHALL display clear error messages with dismissal capability
+- Demo mode support: Asset editors SHALL function in demo mode with local save only
+- Authentication integration: GitHub save functionality SHALL only be available to authenticated users
+- Content change detection: Asset editors SHALL accurately track and display unsaved changes
+- Asset editors SHALL support loading and discarding local versions of files
+
 ### 2.6 Form-Based Data Entry
 
 **REQ-FORM-001**: The system SHALL use JSON Forms for all structured data entry
