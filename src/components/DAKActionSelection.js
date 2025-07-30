@@ -1,13 +1,22 @@
 import React, { useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { PageLayout } from './framework';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { PageLayout, usePageParams } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
+  return (
+    <PageLayout pageName="dak-action-selection">
+      <DAKActionSelectionContent />
+    </PageLayout>
+  );
+};
+
+const DAKActionSelectionContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user: userParam } = useParams();
+  const { params } = usePageParams();
+  const userParam = params?.user;
   
   const { profile } = location.state || {};
 
@@ -80,81 +89,75 @@ const DAKActionSelection = () => {
   };
 
   if (!profile) {
-    return (
-      <PageLayout pageName="dak-action-selection">
-        <div>Redirecting...</div>
-      </PageLayout>
-    );
+    return <div>Redirecting...</div>;
   }
 
   return (
-    <PageLayout pageName="dak-action-selection">
-      <div className="action-content">
-        <div className="breadcrumb">
-          <button onClick={handleBackToProfile} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Choose DAK Action</span>
+    <div className="action-content">
+      <div className="breadcrumb">
+        <button onClick={handleBackToProfile} className="breadcrumb-link">
+          Select Profile
+        </button>
+        <span className="breadcrumb-separator">›</span>
+        <span className="breadcrumb-current">Choose DAK Action</span>
+      </div>
+
+      <div className="action-main">
+        <div className="action-intro">
+          <h2>Manage a DAK</h2>
+          <p>
+            Choose how you would like to work with a WHO SMART Guidelines Digital Adaptation Kit (DAK). 
+            Each option provides different workflows for DAK management and editing.
+          </p>
         </div>
 
-        <div className="action-main">
-          <div className="action-intro">
-            <h2>Manage a DAK</h2>
-            <p>
-              Choose how you would like to work with a WHO SMART Guidelines Digital Adaptation Kit (DAK). 
-              Each option provides different workflows for DAK management and editing.
-            </p>
-          </div>
-
-          <div className="actions-grid">
-            {dakActions.map((action) => (
-              <div 
-                key={action.id}
-                className={`action-card`}
-                onClick={(event) => handleActionSelect(event, action.id)}
-                style={{ '--action-color': action.color }}
-              >
-                <div className="action-header-content">
-                  <div className="action-icon" style={{ color: action.color }}>
-                    {action.icon}
-                  </div>
-                  <h3>{action.title}</h3>
+        <div className="actions-grid">
+          {dakActions.map((action) => (
+            <div 
+              key={action.id}
+              className={`action-card`}
+              onClick={(event) => handleActionSelect(event, action.id)}
+              style={{ '--action-color': action.color }}
+            >
+              <div className="action-header-content">
+                <div className="action-icon" style={{ color: action.color }}>
+                  {action.icon}
                 </div>
-                
-                <div className="action-description">
-                  <p>{action.description}</p>
-                </div>
-
-                <div className="action-workflow">
-                  {action.id === 'edit' && (
-                    <div className="workflow-steps">
-                      <span className="step">1. Select DAK</span>
-                      <span className="step">2. Edit Components</span>
-                    </div>
-                  )}
-                  {action.id === 'fork' && (
-                    <div className="workflow-steps">
-                      <span className="step">1. Select Source DAK</span>
-                      <span className="step">2. Select Destination</span>
-                      <span className="step">3. Edit Components</span>
-                    </div>
-                  )}
-                  {action.id === 'create' && (
-                    <div className="workflow-steps">
-                      <span className="step">1. Select Template</span>
-                      <span className="step">2. Select Destination</span>
-                      <span className="step">3. Configure DAK</span>
-                      <span className="step">4. Edit Components</span>
-                    </div>
-                  )}
-                </div>
+                <h3>{action.title}</h3>
               </div>
-            ))}
-          </div>
+              
+              <div className="action-description">
+                <p>{action.description}</p>
+              </div>
+
+              <div className="action-workflow">
+                {action.id === 'edit' && (
+                  <div className="workflow-steps">
+                    <span className="step">1. Select DAK</span>
+                    <span className="step">2. Edit Components</span>
+                  </div>
+                )}
+                {action.id === 'fork' && (
+                  <div className="workflow-steps">
+                    <span className="step">1. Select Source DAK</span>
+                    <span className="step">2. Select Destination</span>
+                    <span className="step">3. Edit Components</span>
+                  </div>
+                )}
+                {action.id === 'create' && (
+                  <div className="workflow-steps">
+                    <span className="step">1. Select Template</span>
+                    <span className="step">2. Select Destination</span>
+                    <span className="step">3. Configure DAK</span>
+                    <span className="step">4. Edit Components</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-    </PageLayout>
+    </div>
   );
 };
 

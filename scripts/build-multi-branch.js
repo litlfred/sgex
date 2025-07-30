@@ -34,19 +34,16 @@ function createRootLandingPageApp() {
   const tempAppContent = `
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { ThemeProvider } from './contexts/ThemeContext';
 import BranchListing from './components/BranchListing';
 import './App.css';
 
 function App() {
   return (
-    <ThemeProvider>
-      <Router>
-        <div className="App">
-          <BranchListing />
-        </div>
-      </Router>
-    </ThemeProvider>
+    <Router>
+      <div className="App">
+        <BranchListing />
+      </div>
+    </Router>
   );
 }
 

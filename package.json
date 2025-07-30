@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "SGEX Workbench - WHO SMART Guidelines Exchange collaborative editor",
   "private": true,
-  "homepage": "https://litlfred.github.io/sgex",
+  "homepage": "/",
   "dependencies": {
     "@octokit/rest": "^22.0.0",
     "@testing-library/jest-dom": "^6.6.4",
