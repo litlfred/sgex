@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { PageLayout } from './framework';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { PageLayout, usePageParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import WHODigitalLibrary from './WHODigitalLibrary';
 import './ComponentEditor.css';
@@ -8,7 +8,7 @@ import './ComponentEditor.css';
 const ComponentEditor = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const params = useParams();
+  const { params } = usePageParams();
   const [selectedReferences, setSelectedReferences] = useState([]);
   
   const { profile, repository, component } = location.state || {};
