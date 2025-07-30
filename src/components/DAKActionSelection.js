@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { PageLayout, usePageParams } from './framework';
+import { PageLayout, useUserParams } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
   return (
-    <PageLayout pageName="dak-action-selection" showHeader={false}>
+    <PageLayout pageName="dak-action" showHeader={false}>
       <DAKActionSelectionContent />
     </PageLayout>
   );
@@ -15,40 +15,28 @@ const DAKActionSelection = () => {
 const DAKActionSelectionContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { params } = usePageParams();
-  const userParam = params?.user;
+  const { user, profile } = useUserParams();
   
-  const { profile } = location.state || {};
+  // If using location state profile, use that; otherwise use framework profile
+  const effectiveProfile = location.state?.profile || profile;
 
   // Validate user parameter and profile consistency
   useEffect(() => {
-    // If no user parameter in URL and no profile in state, redirect to landing
-    if (!userParam && !profile) {
-      navigate('/');
-      return;
-    }
-    
-    // If user parameter exists but no profile - redirect to landing
-    if (userParam && !profile) {
-      navigate('/');
-      return;
-    }
-    
     // If user parameter exists and profile exists but they don't match - redirect to landing
-    if (userParam && profile && profile.login !== userParam) {
+    if (user && effectiveProfile && effectiveProfile.login !== user) {
       navigate('/');
       return;
     }
     
     // If profile exists but no user parameter, redirect to include user in URL
-    if (profile && !userParam) {
-      navigate(`/dak-action/${profile.login}`, { 
-        state: { profile },
+    if (effectiveProfile && !user) {
+      navigate(`/dak-action/${effectiveProfile.login}`, { 
+        state: { profile: effectiveProfile },
         replace: true 
       });
       return;
     }
-  }, [userParam, profile, navigate]);
+  }, [user, effectiveProfile, navigate]);
 
   const dakActions = [
     {
@@ -77,31 +65,19 @@ const DAKActionSelectionContent = () => {
   const handleActionSelect = (event, actionId) => {
     // Navigate directly to the DAK selection with the chosen action and user parameter
     const navigationState = { 
-      profile, 
+      profile: effectiveProfile, 
       action: actionId 
     };
     
-    handleNavigationClick(event, `/dak-selection/${profile.login}`, navigate, navigationState);
+    handleNavigationClick(event, `/dak-selection/${effectiveProfile.login}`, navigate, navigationState);
   };
 
-  const handleBackToProfile = () => {
-    navigate('/', { state: { profile } });
-  };
-
-  if (!profile) {
-    return <div>Redirecting...</div>;
+  if (!effectiveProfile) {
+    return <div>Loading...</div>;
   }
 
   return (
     <div className="action-content">
-      <div className="breadcrumb">
-        <button onClick={handleBackToProfile} className="breadcrumb-link">
-          Select Profile
-        </button>
-        <span className="breadcrumb-separator">›</span>
-        <span className="breadcrumb-current">Choose DAK Action</span>
-      </div>
-
       <div className="action-main">
         <div className="action-intro">
           <h2>Manage a DAK</h2>

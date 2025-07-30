@@ -56,12 +56,17 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
   });
 
   // Add user context for user/DAK/asset pages
-  if ((type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile) {
+  // For dak-action pages, don't show "Select Repository" since no repo has been chosen yet
+  console.log('PageBreadcrumbs debug:', { type, pageName, profile: !!profile });
+  if ((type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile && pageName !== 'dak-action') {
+    console.log('Adding Select Repository breadcrumb for', pageName);
     breadcrumbs.push({
       label: 'Select Repository',
       path: `/sgex/repositories/${profile.login}`,
       onClick: () => navigate(`/sgex/repositories/${profile.login}`)
     });
+  } else if (pageName === 'dak-action') {
+    console.log('Skipping Select Repository breadcrumb for dak-action page');
   }
 
   // Add DAK context for DAK/asset pages
