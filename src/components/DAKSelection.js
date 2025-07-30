@@ -8,7 +8,7 @@ import './DAKSelection.css';
 
 const DAKSelection = () => {
   return (
-    <PageLayout pageName="dak-selection" showHeader={false}>
+    <PageLayout pageName="dak-selection" showHeader={true}>
       <DAKSelectionContent />
     </PageLayout>
   );
