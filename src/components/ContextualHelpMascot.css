@@ -256,6 +256,7 @@ body.theme-dark .help-thought-bubble {
 /* Dark mode bubble tail */
 body.theme-dark .bubble-tail {
   background: #1a2380; /* WHO Navy Light - solid color for readability */
+  box-shadow: 0 0 0 2px rgba(26, 35, 128, 0.8); /* Use dark theme color instead of white */
 }
 
 .bubble-tail::before {
@@ -273,6 +274,7 @@ body.theme-dark .bubble-tail {
 /* Dark mode bubble tail before pseudo-element */
 body.theme-dark .bubble-tail::before {
   background: #1a2380; /* WHO Navy Light - solid color for readability */
+  box-shadow: 0 0 0 2px rgba(26, 35, 128, 0.8); /* Use dark theme color instead of white */
 }
 
 .bubble-tail::after {
@@ -290,6 +292,7 @@ body.theme-dark .bubble-tail::before {
 /* Dark mode bubble tail after pseudo-element */
 body.theme-dark .bubble-tail::after {
   background: #1a2380; /* WHO Navy Light - solid color for readability */
+  box-shadow: 0 0 0 1px rgba(26, 35, 128, 0.8); /* Use dark theme color instead of white */
 }
 
 /* Position tail based on mascot position */
