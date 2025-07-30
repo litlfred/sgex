@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import BookmarksSection from './BookmarksSection';
+import BookmarkButton from './BookmarkButton';
 import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {
@@ -292,6 +294,7 @@ const CoreDataDictionaryViewer = () => {
           <div className="context-details">
             <span className="context-repo">{repo || repository?.name}</span>
             <span className="context-component">Core Data Dictionary</span>
+            <BookmarkButton repository={repository || { name: repo, full_name: `${user}/${repo}`, owner: { login: user } }} />
           </div>
         </div>
       </div>
@@ -331,6 +334,9 @@ const CoreDataDictionaryViewer = () => {
               )}
             </div>
           </div>
+
+          {/* Bookmarks Section */}
+          <BookmarksSection profile={profile || { login: user, avatar_url: `https://github.com/${user}.png` }} />
 
           {error && (
             <div className="error-message">

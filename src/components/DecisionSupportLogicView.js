@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import MDEditor from '@uiw/react-md-editor';
+import BookmarksSection from './BookmarksSection';
+import BookmarkButton from './BookmarkButton';
 import './DecisionSupportLogicView.css';
 
 const DecisionSupportLogicView = () => {
@@ -709,6 +711,7 @@ define "Contraindication Present":
                   <span className="context-repo">{repository.name}</span>
                   <span className="external-link">↗</span>
                 </a>
+                <BookmarkButton repository={repository} />
                 {selectedBranch && (
                   <span className="branch-info">
                     <code className="branch-display">{selectedBranch}</code>
@@ -755,6 +758,9 @@ define "Contraindication Present":
               All content is publicly accessible and designed for transparency in digital health implementation.
             </p>
           </div>
+
+          {/* Bookmarks Section */}
+          <BookmarksSection profile={profile} />
 
           {/* Section Toggle Tabs */}
           <div className="section-tabs">

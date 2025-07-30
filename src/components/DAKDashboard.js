@@ -9,6 +9,8 @@ import HelpButton from './HelpButton';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
+import BookmarksSection from './BookmarksSection';
+import BookmarkButton from './BookmarkButton';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKDashboard.css';
 
@@ -624,6 +626,7 @@ const DAKDashboard = () => {
                 <span className="context-repo">{repository.name}</span>
                 <span className="external-link">↗</span>
               </a>
+              <BookmarkButton repository={repository} />
             </div>
             <div className="branch-info">
               <BranchSelector
@@ -699,6 +702,9 @@ const DAKDashboard = () => {
               profile={profile}
             />
           )}
+
+          {/* Bookmarks Section */}
+          <BookmarksSection profile={profile} />
 
           {/* Tab Navigation */}
           <div className="tab-navigation">

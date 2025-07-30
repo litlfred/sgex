@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import useDAKUrlParams from '../hooks/useDAKUrlParams';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import BookmarksSection from './BookmarksSection';
+import BookmarkButton from './BookmarkButton';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './BusinessProcessSelection.css';
 
@@ -241,6 +243,7 @@ const BusinessProcessSelection = () => {
                 {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only Access'}
               </span>
             )}
+            <BookmarkButton repository={repository} />
           </div>
           <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
@@ -276,6 +279,9 @@ const BusinessProcessSelection = () => {
               Files are loaded from <code>input/business-processes/</code> or <code>input/business-process/</code> directories and subdirectories.
             </p>
           </div>
+
+          {/* Bookmarks Section */}
+          <BookmarksSection profile={profile} />
 
           {loading ? (
             <div className="loading">
