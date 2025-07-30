@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 import { Octokit } from '@octokit/rest';
-import { PageLayout } from './framework';
+import { AssetEditorLayout } from './framework';
 import './BPMNEditor.css';
 
 const BPMNEditor = () => {
@@ -16,10 +16,9 @@ const BPMNEditor = () => {
   const [bpmnFiles, setBpmnFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [commitMessage, setCommitMessage] = useState('');
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [currentXmlContent, setCurrentXmlContent] = useState('');
+  const [originalXmlContent, setOriginalXmlContent] = useState('');
 
   // Initialize BPMN modeler
   useEffect(() => {
@@ -134,6 +133,92 @@ const BPMNEditor = () => {
     loadBpmnFiles();
   }, [profile, repository, navigate]);
 
+  // Track BPMN content changes
+  useEffect(() => {
+    if (modelerRef.current) {
+      const handleChanged = () => {
+        // Update current content when diagram changes
+        modelerRef.current.saveXML({ format: true })
+          .then(({ xml }) => {
+            setCurrentXmlContent(xml);
+          })
+          .catch(error => {
+            console.error('Error getting XML content:', error);
+          });
+      };
+
+      modelerRef.current.on('commandStack.changed', handleChanged);
+      
+      return () => {
+        if (modelerRef.current) {
+          modelerRef.current.off('commandStack.changed', handleChanged);
+        }
+      };
+    }
+  }, [selectedFile]);
+
+  // Handle save completion
+  const handleSave = async (content, saveType) => {
+    console.log(`BPMN diagram saved to ${saveType}`);
+    if (saveType === 'github') {
+      // After GitHub save, update the original content
+      setOriginalXmlContent(content);
+    }
+  };
+
+  // Custom save to GitHub function that exports XML and uses GitHub API
+  const customSaveToGitHub = async (commitMessage) => {
+    if (!commitMessage.trim() || !selectedFile || !modelerRef.current) {
+      return false;
+    }
+
+    try {
+      // Export BPMN XML
+      const { xml } = await modelerRef.current.saveXML({ format: true });
+
+      // Use GitHub API if profile has token
+      if (profile.token && repository) {
+        const octokit = new Octokit({ auth: profile.token });
+        
+        // Get current file to get SHA for update
+        let currentSha = selectedFile.sha;
+        try {
+          const { data: currentFile } = await octokit.rest.repos.getContent({
+            owner: repository.owner?.login || repository.full_name.split('/')[0],
+            repo: repository.name,
+            path: selectedFile.path
+          });
+          currentSha = currentFile.sha;
+        } catch (getError) {
+          console.warn('Could not get current file SHA, using provided SHA:', getError);
+        }
+
+        // Commit the updated BPMN file
+        await octokit.rest.repos.createOrUpdateFileContents({
+          owner: repository.owner?.login || repository.full_name.split('/')[0],
+          repo: repository.name,
+          path: selectedFile.path,
+          message: commitMessage,
+          content: btoa(xml), // Base64 encode the XML content
+          sha: currentSha,
+          committer: {
+            name: profile.name || profile.login,
+            email: profile.email || `${profile.login}@users.noreply.github.com`
+          }
+        });
+
+        console.log('BPMN file committed to GitHub successfully');
+        return true;
+      }
+
+      // Fallback: return false for demo mode
+      return false;
+    } catch (error) {
+      console.error('Error saving BPMN to GitHub:', error);
+      throw error;
+    }
+  };
+
   // Load selected BPMN file content
   const loadBpmnFile = async (file) => {
     try {
@@ -221,6 +306,11 @@ const BPMNEditor = () => {
 
           // Load the BPMN diagram
           await modelerRef.current.importXML(bpmnXml);
+          
+          // Set the content states
+          setOriginalXmlContent(bpmnXml);
+          setCurrentXmlContent(bpmnXml);
+          
           setLoading(false);
         } catch (err) {
           console.error('Error loading BPMN file:', err);
@@ -236,214 +326,105 @@ const BPMNEditor = () => {
     }
   };
 
-  // Save BPMN diagram
-  const saveBpmnDiagram = async () => {
-    if (!commitMessage.trim()) {
-      alert('Please enter a commit message');
-      return;
-    }
-
-    try {
-      setSaving(true);
-      setError(null);
-
-      // Export BPMN XML
-      const { xml } = await modelerRef.current.saveXML({ format: true });
-
-      // Use GitHub API if profile has token
-      if (profile.token && repository) {
-        try {
-          const octokit = new Octokit({ auth: profile.token });
-          
-          // Get current file to get SHA for update
-          let currentSha = selectedFile.sha;
-          try {
-            const { data: currentFile } = await octokit.rest.repos.getContent({
-              owner: repository.owner?.login || repository.full_name.split('/')[0],
-              repo: repository.name,
-              path: selectedFile.path
-            });
-            currentSha = currentFile.sha;
-          } catch (getError) {
-            console.warn('Could not get current file SHA, using provided SHA:', getError);
-          }
-
-          // Commit the updated BPMN file
-          await octokit.rest.repos.createOrUpdateFileContents({
-            owner: repository.owner?.login || repository.full_name.split('/')[0],
-            repo: repository.name,
-            path: selectedFile.path,
-            message: commitMessage,
-            content: btoa(xml), // Base64 encode the XML content
-            sha: currentSha,
-            committer: {
-              name: profile.name || profile.login,
-              email: profile.email || `${profile.login}@users.noreply.github.com`
-            }
-          });
-
-          console.log('BPMN file committed to GitHub successfully');
-          setSaving(false);
-          setShowSaveDialog(false);
-          setCommitMessage('');
-          alert('BPMN diagram saved to GitHub successfully!');
-          return;
-        } catch (apiError) {
-          console.error('GitHub API error:', apiError);
-          setError('Failed to save to GitHub: ' + apiError.message);
-          setSaving(false);
-          return;
-        }
-      }
-
-      // Fallback: simulate save for demo purposes
-      console.log('BPMN saved with message:', commitMessage);
-      console.log('BPMN XML:', xml);
-
-      // Simulate save success
-      setTimeout(() => {
-        setSaving(false);
-        setShowSaveDialog(false);
-        setCommitMessage('');
-        alert('BPMN diagram saved successfully!');
-      }, 1000);
-
-    } catch (err) {
-      console.error('Error saving BPMN file:', err);
-      setError('Failed to save BPMN diagram');
-      setSaving(false);
-    }
-  };
-
   if (!profile || !repository || !component) {
     navigate('/');
     return <div>Redirecting...</div>;
   }
 
-  return (
-    <PageLayout pageName="bpmn-editor">
-      <div className="bpmn-editor">
-      <div className="editor-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
-            Select Repository
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/dashboard', { state: { profile, repository } })} className="breadcrumb-link">
-            DAK Components
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Business Processes</span>
-        </div>
+  // Check if there are changes in the BPMN diagram
+  const hasChanges = currentXmlContent !== originalXmlContent;
 
-        <div className="bpmn-workspace">
-          <div className="file-browser">
-            <div className="file-browser-header">
-              <h3>BPMN Files</h3>
-              <span className="file-path">input/business-processes/</span>
+  return (
+    <AssetEditorLayout
+      pageName="bpmn-editor"
+      file={selectedFile}
+      repository={repository}
+      branch="main" // You might want to get this from props or state
+      content={currentXmlContent}
+      originalContent={originalXmlContent}
+      hasChanges={hasChanges}
+      onSave={handleSave}
+      saveButtonsPosition="top"
+      // Custom save function for GitHub to handle BPMN XML export
+      customSaveToGitHub={customSaveToGitHub}
+    >
+      <div className="bpmn-editor">
+        <div className="editor-content">
+          <div className="breadcrumb">
+            <button onClick={() => navigate('/')} className="breadcrumb-link">
+              Select Profile
+            </button>
+            <span className="breadcrumb-separator">›</span>
+            <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
+              Select Repository
+            </button>
+            <span className="breadcrumb-separator">›</span>
+            <button onClick={() => navigate('/dashboard', { state: { profile, repository } })} className="breadcrumb-link">
+              DAK Components
+            </button>
+            <span className="breadcrumb-separator">›</span>
+            <span className="breadcrumb-current">Business Processes</span>
+          </div>
+
+          <div className="bpmn-workspace">
+            <div className="file-browser">
+              <div className="file-browser-header">
+                <h3>BPMN Files</h3>
+                <span className="file-path">input/business-processes/</span>
+              </div>
+              
+              {loading && !selectedFile ? (
+                <div className="loading">
+                  <div className="spinner"></div>
+                  <p>Loading BPMN files...</p>
+                </div>
+              ) : error ? (
+                <div className="error">
+                  <p>❌ {error}</p>
+                </div>
+              ) : (
+                <div className="file-list">
+                  {bpmnFiles.map((file) => (
+                    <div 
+                      key={file.sha}
+                      className={`file-item ${selectedFile?.sha === file.sha ? 'selected' : ''}`}
+                      onClick={() => loadBpmnFile(file)}
+                    >
+                      <div className="file-icon">📋</div>
+                      <div className="file-details">
+                        <div className="file-name">{file.name}</div>
+                        <div className="file-size">{(file.size / 1024).toFixed(1)} KB</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            
-            {loading && !selectedFile ? (
-              <div className="loading">
-                <div className="spinner"></div>
-                <p>Loading BPMN files...</p>
-              </div>
-            ) : error ? (
-              <div className="error">
-                <p>❌ {error}</p>
-              </div>
-            ) : (
-              <div className="file-list">
-                {bpmnFiles.map((file) => (
-                  <div 
-                    key={file.sha}
-                    className={`file-item ${selectedFile?.sha === file.sha ? 'selected' : ''}`}
-                    onClick={() => loadBpmnFile(file)}
-                  >
-                    <div className="file-icon">📋</div>
-                    <div className="file-details">
-                      <div className="file-name">{file.name}</div>
-                      <div className="file-size">{(file.size / 1024).toFixed(1)} KB</div>
+
+            <div className="diagram-editor">
+              {selectedFile ? (
+                <>
+                  <div className="editor-toolbar">
+                    <div className="toolbar-left">
+                      <h4>{selectedFile.name}</h4>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="diagram-editor">
-            {selectedFile ? (
-              <>
-                <div className="editor-toolbar">
-                  <div className="toolbar-left">
-                    <h4>{selectedFile.name}</h4>
-                  </div>
-                  <div className="toolbar-right">
-                    <button 
-                      className="action-btn primary"
-                      onClick={() => setShowSaveDialog(true)}
-                      disabled={saving}
-                    >
-                      {saving ? 'Saving...' : 'Save'}
-                    </button>
+                  <div className="bpmn-container" ref={containerRef}></div>
+                </>
+              ) : (
+                <div className="diagram-placeholder">
+                  <div className="placeholder-content">
+                    <div className="placeholder-icon">🔄</div>
+                    <h3>Select a BPMN File</h3>
+                    <p>Choose a .bpmn file from the list to start editing business processes.</p>
                   </div>
                 </div>
-                <div className="bpmn-container" ref={containerRef}></div>
-              </>
-            ) : (
-              <div className="diagram-placeholder">
-                <div className="placeholder-content">
-                  <div className="placeholder-icon">🔄</div>
-                  <h3>Select a BPMN File</h3>
-                  <p>Choose a .bpmn file from the list to start editing business processes.</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Save Dialog */}
-      {showSaveDialog && (
-        <div className="modal-overlay">
-          <div className="save-dialog">
-            <h3>Save BPMN Diagram</h3>
-            <p>Describe the changes you made to this business process:</p>
-            <textarea
-              value={commitMessage}
-              onChange={(e) => setCommitMessage(e.target.value)}
-              placeholder="Enter commit message..."
-              rows={4}
-              className="commit-message-input"
-            />
-            <div className="dialog-actions">
-              <button 
-                className="action-btn secondary"
-                onClick={() => {
-                  setShowSaveDialog(false);
-                  setCommitMessage('');
-                }}
-                disabled={saving}
-              >
-                Cancel
-              </button>
-              <button 
-                className="action-btn primary"
-                onClick={saveBpmnDiagram}
-                disabled={saving || !commitMessage.trim()}
-              >
-                {saving ? 'Saving...' : 'Save Changes'}
-              </button>
+              )}
             </div>
           </div>
         </div>
-      )}
       </div>
-    </PageLayout>
+    </AssetEditorLayout>
   );
 };
 

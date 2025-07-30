@@ -25,6 +25,8 @@ const AssetEditorLayout = ({
   // Save callbacks
   onSave,
   onContentChange,
+  // Custom save functions (for special cases like BPMN that need XML export)
+  customSaveToGitHub,
   // UI customization
   showSaveButtons = true,
   saveButtonsPosition = 'top', // 'top', 'bottom', 'both'
@@ -102,6 +104,26 @@ const AssetEditorLayout = ({
       setSaveError(null);
       setGithubSaveSuccess(false);
 
+      // Use custom save function if provided (for special cases like BPMN)
+      if (customSaveToGitHub) {
+        const success = await customSaveToGitHub(message.trim());
+        if (success) {
+          setGithubSaveSuccess(true);
+          setShowCommitDialog(false);
+          setCommitMessage('');
+          onSave && onSave(content, 'github');
+          
+          // Auto-hide success message after 3 seconds
+          setTimeout(() => {
+            setGithubSaveSuccess(false);
+          }, 3000);
+        } else {
+          throw new Error('Custom save function failed');
+        }
+        return;
+      }
+
+      // Default GitHub save logic
       let owner, repoName;
       if (repository?.owner?.login) {
         owner = repository.owner.login;
@@ -117,7 +139,7 @@ const AssetEditorLayout = ({
         repoName,
         file.path,
         content,
-        message,
+        message.trim(),
         branch || repository?.default_branch || 'main'
       );
 
@@ -137,7 +159,7 @@ const AssetEditorLayout = ({
     } finally {
       setIsSavingGitHub(false);
     }
-  }, [file, content, repository, branch, onSave]);
+  }, [file, content, repository, branch, onSave, customSaveToGitHub]);
 
   // Handle commit dialog cancel
   const handleCancelCommit = useCallback(() => {
