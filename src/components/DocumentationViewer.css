@@ -108,6 +108,21 @@
   flex-direction: column;
 }
 
+.doc-category {
+  margin-bottom: 0.5rem;
+}
+
+.doc-category-header {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 0.25rem;
+}
+
 .doc-menu-item {
   background: none;
   border: none;
@@ -118,6 +133,11 @@
   font-size: 0.9rem;
   transition: all 0.2s;
   border-left: 3px solid transparent;
+}
+
+.doc-menu-item-nested {
+  padding-left: 2rem;
+  font-size: 0.85rem;
 }
 
 .doc-menu-item:hover {
