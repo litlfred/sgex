@@ -1,13 +1,13 @@
 /* Page Context Styling - unified avatar + user/repo + breadcrumbs component */
 .page-context-container {
-  background: var(--who-primary-bg, #ffffff);
+  background: var(--who-card-bg);
   border-bottom: 1px solid var(--who-border-color, #dee2e6);
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
 }
 
 .page-context-content {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.75rem;
   max-width: 100%;
 }
@@ -19,13 +19,14 @@
   border-radius: 50%;
   flex-shrink: 0;
   border: 2px solid var(--who-border-color, #dee2e6);
+  background: var(--who-card-bg);
 }
 
 /* Context information container - two rows to the right of avatar */
 .page-context-info {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
   min-width: 0; /* Allow text to truncate */
   flex: 1;
 }
@@ -102,6 +103,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin: 0;
+  padding: 0;
 }
 
 .breadcrumb-link {
@@ -134,11 +137,10 @@
 }
 
 .breadcrumb-current {
-  font-weight: bold;
-  color: var(--who-blue-dark, #004a99);
+  font-weight: normal;
+  color: var(--who-blue, #006cbe);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  background-color: var(--who-blue-light, #f0f8ff);
 }
 
 /* Dark theme support */
@@ -173,8 +175,7 @@ body.theme-dark .page-context-branch {
 }
 
 body.theme-dark .breadcrumb-current {
-  background-color: rgba(77, 171, 247, 0.2);
-  color: #74c0fc;
+  color: #4dabf7;
 }
 
 /* Responsive design */
