@@ -28,14 +28,19 @@ const BranchListing = () => {
         // Filter out gh-pages branch and format data
         const filteredBranches = branchData
           .filter(branch => branch.name !== 'gh-pages')
-          .map(branch => ({
-            name: branch.name,
-            commit: branch.commit,
-            url: `./sgex/${branch.name}/index.html`,
-            lastModified: branch.commit.commit?.committer?.date 
-              ? new Date(branch.commit.commit.committer.date).toLocaleDateString()
-              : 'Unknown'
-          }));
+          .map(branch => {
+            // Convert branch name to safe directory name (replace slashes with dashes)
+            const safeName = branch.name.replace(/\//g, '-');
+            return {
+              name: branch.name,
+              safeName: safeName,
+              commit: branch.commit,
+              url: `./sgex/${safeName}/index.html`,
+              lastModified: branch.commit.commit?.committer?.date 
+                ? new Date(branch.commit.commit.committer.date).toLocaleDateString()
+                : 'Unknown'
+            };
+          });
         
         setBranches(filteredBranches);
       } catch (err) {

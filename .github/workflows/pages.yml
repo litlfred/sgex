@@ -64,44 +64,62 @@ jobs:
             exit 1
           fi
           
+          # Replace slashes with dashes for safe directory names
+          safe_branch_name=$(echo "$branch" | tr '/' '-')
+          echo "Safe branch name: $safe_branch_name"
+          
           # Ensure we're in the repository root
           repo_root="$(pwd)"
           echo "Repository root: $repo_root"
           
-          # Calculate target directory path
-          target_dir="$repo_root/$branch"
-          resolved_target="$(readlink -f "$target_dir")"
+          # Calculate target directory path using safe name
+          target_dir="$repo_root/$safe_branch_name"
           
           echo "Target directory: $target_dir"
-          echo "Resolved target: $resolved_target"
           
           # Critical safety validation
-          if [[ "$resolved_target" != "$repo_root"* ]]; then
+          if [[ "$target_dir" != "$repo_root"* ]]; then
             echo "ERROR: Target directory is outside repository root"
             echo "Repository root: $repo_root"
-            echo "Resolved target: $resolved_target"
+            echo "Target directory: $target_dir"
             exit 1
           fi
           
-          if [[ ${#resolved_target} -le ${#repo_root} ]]; then
+          if [[ ${#target_dir} -le ${#repo_root} ]]; then
             echo "ERROR: Target directory path is not longer than repository root"
             echo "Repository root length: ${#repo_root}"
-            echo "Target directory length: ${#resolved_target}"
+            echo "Target directory length: ${#target_dir}"
             exit 1
           fi
           
           # Additional safety: ensure target is exactly one level deeper
-          expected_path="$repo_root/$branch"
-          if [[ "$resolved_target" != "$expected_path" ]]; then
+          expected_path="$repo_root/$safe_branch_name"
+          if [[ "$target_dir" != "$expected_path" ]]; then
             echo "ERROR: Target directory does not match expected path"
             echo "Expected: $expected_path"
-            echo "Resolved: $resolved_target"
+            echo "Target: $target_dir"
+            exit 1
+          fi
+          
+          # Create directory if it doesn't exist to test with readlink
+          if [[ ! -d "$target_dir" ]]; then
+            mkdir -p "$target_dir"
+          fi
+          
+          resolved_target="$(readlink -f "$target_dir")"
+          
+          # Final readlink validation
+          if [[ "$resolved_target" != "$repo_root"* ]] || [[ ${#resolved_target} -le ${#repo_root} ]]; then
+            echo "ERROR: Readlink validation failed"
+            echo "Repository root: $repo_root"
+            echo "Resolved target: $resolved_target"
             exit 1
           fi
           
           echo "✅ Branch directory validation passed"
           echo "branch_dir=$resolved_target" >> "$GITHUB_OUTPUT"
           echo "branch_name=$branch" >> "$GITHUB_OUTPUT"
+          echo "safe_branch_name=$safe_branch_name" >> "$GITHUB_OUTPUT"
 
       - name: Checkout gh-pages branch
         shell: bash
@@ -226,9 +244,9 @@ jobs:
             mkdir -p sgex
           fi
           
-          # Copy current branch to /sgex/branch-name/
-          branch_name="${{ steps.validate_branch.outputs.branch_name }}"
-          sgex_branch_dir="sgex/$branch_name"
+          # Copy current branch to /sgex/safe-branch-name/
+          safe_branch_name="${{ steps.validate_branch.outputs.safe_branch_name }}"
+          sgex_branch_dir="sgex/$safe_branch_name"
           mkdir -p "$sgex_branch_dir"
           
           # Switch back to get the branch build
@@ -277,9 +295,10 @@ jobs:
       - name: Output deployment info
         shell: bash
         run: |
-          branch_name="${{ steps.validate_branch.outputs.branch_name }}"
+          safe_branch_name="${{ steps.validate_branch.outputs.safe_branch_name }}"
           echo "🎉 Deployment Summary:"
-          echo "- Branch: $branch_name"
-          echo "- Branch Preview: https://litlfred.github.io/sgex/sgex/$branch_name/"
+          echo "- Branch: ${{ steps.validate_branch.outputs.branch_name }}"
+          echo "- Safe Branch Name: $safe_branch_name"
+          echo "- Branch Preview: https://litlfred.github.io/sgex/sgex/$safe_branch_name/"
           echo "- Landing Page: https://litlfred.github.io/sgex/"
           echo "- Commit: ${{ github.sha }}"

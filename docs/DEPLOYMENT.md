@@ -19,7 +19,7 @@ https://litlfred.github.io/sgex/
 │   ├── main/
 │   │   └── index.html           # Main branch preview
 │   ├── feature-x/
-│   │   └── index.html           # Feature branch preview
+│   │   └── index.html           # Feature branch preview (if branch is "feature/x", becomes "feature-x")
 │   └── develop/
 │       └── index.html           # Develop branch preview
 └── [other GitHub Pages files]
@@ -30,7 +30,8 @@ https://litlfred.github.io/sgex/
 ### 1. Branch-Specific Builds
 When code is pushed to any branch (except `gh-pages`):
 - React app is built with `/sgex/` basename for branch preview
-- Deployed to `gh-pages/sgex/branch-name/`
+- Branch names with slashes are converted to safe directory names (e.g., `feature/test` → `feature-test`)
+- Deployed to `gh-pages/sgex/safe-branch-name/`
 - Previous deployment for that branch is safely cleaned up
 
 ### 2. Root Landing Page
@@ -81,6 +82,7 @@ The `BranchListing` component:
 ## Security Considerations
 
 - All directory operations validated with `readlink -f`
+- Branch names with slashes converted to safe directory names (replace `/` with `-`)
 - Branch names sanitized for safe filesystem operations
 - No operations performed on repository root
 - Git-managed cleanup prevents accidental deletions
