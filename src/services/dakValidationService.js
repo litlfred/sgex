@@ -90,7 +90,7 @@ class DAKValidationService {
           
           if (data.type === 'file' && data.content) {
             // Decode base64 content
-            const content = Buffer.from(data.content, 'base64').toString('utf-8');
+            const content = atob(data.content);
             console.log(`Found sushi-config.yaml in ${owner}/${repo} on branch ${branchName}`);
             return content;
           }
