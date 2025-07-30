@@ -17,20 +17,21 @@ const FeatureFileEditor = ({
 }) => {
   const [content, setContent] = useState(initialContent);
   const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingLocal, setIsSavingLocal] = useState(false);
+  const [isSavingGitHub, setIsSavingGitHub] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
-  const [saveMode, setSaveMode] = useState('github'); // 'github' or 'local'
   const [savedLocally, setSavedLocally] = useState(false);
+  const [canSaveToGitHub, setCanSaveToGitHub] = useState(false);
 
   useEffect(() => {
     setContent(initialContent);
     setHasChanges(false);
     setSavedLocally(false);
     
-    // Determine save mode based on authentication and demo status
+    // Determine if user can save to GitHub (authenticated and not in demo mode)
     const canSaveToGitHub = githubService.isAuth() && !isDemo;
-    setSaveMode(canSaveToGitHub ? 'github' : 'local');
+    setCanSaveToGitHub(canSaveToGitHub);
     
     // Check if there's a local version of this file
     if (file && file.path) {
@@ -47,69 +48,84 @@ const FeatureFileEditor = ({
     setHasChanges(newContent !== initialContent);
   };
 
-  const handleSave = async () => {
+  const handleSaveLocal = async () => {
     if (!hasChanges) return;
 
     try {
-      setIsSaving(true);
+      setIsSavingLocal(true);
       setSaveError(null);
 
-      if (saveMode === 'github') {
-        // Save to GitHub (existing functionality)
-        let owner, repoName;
-        if (repository.owner?.login) {
-          owner = repository.owner.login;
-          repoName = repository.name;
-        } else if (repository.full_name) {
-          [owner, repoName] = repository.full_name.split('/');
-        }
+      // Save to local storage
+      const metadata = {
+        repository: repository.full_name || `${repository.owner?.login}/${repository.name}`,
+        branch: selectedBranch || repository.default_branch || 'main',
+        fileName: file.name
+      };
 
-        await githubService.updateFile(
-          owner,
-          repoName,
-          file.path,
-          content,
-          `Update ${file.name}`,
-          selectedBranch || repository.default_branch || 'main'
-        );
-
-        setHasChanges(false);
+      const saved = localStorageService.saveLocal(file.path, content, metadata);
+      
+      if (saved) {
+        setSavedLocally(true);
         onSave && onSave(content);
         
-        // Show success message briefly
+        // Only close editing if not saving to GitHub and no other saves in progress
         setTimeout(() => {
-          setIsEditing(false);
-        }, 1000);
-
-      } else {
-        // Save to local storage
-        const metadata = {
-          repository: repository.full_name || `${repository.owner?.login}/${repository.name}`,
-          branch: selectedBranch || repository.default_branch || 'main',
-          fileName: file.name
-        };
-
-        const saved = localStorageService.saveLocal(file.path, content, metadata);
-        
-        if (saved) {
-          setHasChanges(false);
-          setSavedLocally(true);
-          onSave && onSave(content);
-          
-          // Show success message briefly
-          setTimeout(() => {
+          if (!isSavingGitHub && !canSaveToGitHub) {
             setIsEditing(false);
-          }, 1000);
-        } else {
-          throw new Error('Failed to save to local storage');
-        }
+          }
+        }, 1000);
+      } else {
+        throw new Error('Failed to save to local storage');
       }
 
     } catch (error) {
-      console.error('Error saving file:', error);
-      setSaveError(`Failed to save file: ${error.message}`);
+      console.error('Error saving file locally:', error);
+      setSaveError(`Failed to save locally: ${error.message}`);
     } finally {
-      setIsSaving(false);
+      setIsSavingLocal(false);
+    }
+  };
+
+  const handleSaveGitHub = async () => {
+    if (!hasChanges || !canSaveToGitHub) return;
+
+    try {
+      setIsSavingGitHub(true);
+      setSaveError(null);
+
+      // Save to GitHub
+      let owner, repoName;
+      if (repository.owner?.login) {
+        owner = repository.owner.login;
+        repoName = repository.name;
+      } else if (repository.full_name) {
+        [owner, repoName] = repository.full_name.split('/');
+      }
+
+      await githubService.updateFile(
+        owner,
+        repoName,
+        file.path,
+        content,
+        `Update ${file.name}`,
+        selectedBranch || repository.default_branch || 'main'
+      );
+
+      setHasChanges(false);
+      onSave && onSave(content);
+      
+      // Show success message briefly and close editor
+      setTimeout(() => {
+        if (!isSavingLocal) {
+          setIsEditing(false);
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error('Error saving file to GitHub:', error);
+      setSaveError(`Failed to save to GitHub: ${error.message}`);
+    } finally {
+      setIsSavingGitHub(false);
     }
   };
 
@@ -184,9 +200,9 @@ const FeatureFileEditor = ({
                   className="btn btn-primary"
                   onClick={() => setIsEditing(true)}
                 >
-                  Edit {saveMode === 'local' ? '(Local)' : ''}
+                  Edit
                 </button>
-                {savedLocally && saveMode === 'local' && (
+                {savedLocally && (
                   <button 
                     className="btn btn-info"
                     onClick={handleLoadLocal}
@@ -206,19 +222,28 @@ const FeatureFileEditor = ({
               <>
                 <button 
                   className="btn btn-success"
-                  onClick={handleSave}
-                  disabled={!hasChanges || isSaving}
+                  onClick={handleSaveLocal}
+                  disabled={!hasChanges || isSavingLocal}
                 >
-                  {isSaving ? 'Saving...' : `Save ${saveMode === 'local' ? 'Locally' : 'to GitHub'}`}
+                  {isSavingLocal ? 'Saving...' : 'Save Local'}
                 </button>
+                {canSaveToGitHub && (
+                  <button 
+                    className="btn btn-success"
+                    onClick={handleSaveGitHub}
+                    disabled={!hasChanges || isSavingGitHub}
+                  >
+                    {isSavingGitHub ? 'Saving...' : 'Save to GitHub'}
+                  </button>
+                )}
                 <button 
                   className="btn btn-secondary"
                   onClick={handleCancel}
-                  disabled={isSaving}
+                  disabled={isSavingLocal || isSavingGitHub}
                 >
                   Cancel
                 </button>
-                {saveMode === 'local' && localStorageService.hasLocalChanges() && (
+                {localStorageService.hasLocalChanges() && (
                   <button 
                     className="btn btn-info"
                     onClick={handleExportLocal}
@@ -284,7 +309,7 @@ const FeatureFileEditor = ({
           </div>
         )}
 
-        {saveMode === 'local' && !isDemo && (
+        {!canSaveToGitHub && !isDemo && (
           <div className="local-storage-notice">
             <span className="info-icon">💾</span>
             Local Mode: Changes will be saved to your browser's local storage. 
@@ -310,7 +335,7 @@ const FeatureFileEditor = ({
         {isDemo && (
           <div className="demo-notice">
             <span className="info-icon">🧪</span>
-            Demo Mode: Changes are saved locally for demonstration. In a real repository with write permissions, changes would be saved to GitHub.
+            Demo Mode: Changes are saved locally for demonstration. Use "Save Local" to save changes to your browser's storage.
           </div>
         )}
 
@@ -319,7 +344,8 @@ const FeatureFileEditor = ({
             <span>Gherkin Feature File</span>
             {hasChanges && <span className="changes-indicator">• Unsaved changes</span>}
             {savedLocally && <span className="local-indicator">• Local version available</span>}
-            {saveMode === 'local' && <span className="save-mode-indicator">• Local storage mode</span>}
+            {canSaveToGitHub && <span className="github-indicator">• GitHub access available</span>}
+            {!canSaveToGitHub && !isDemo && <span className="save-mode-indicator">• Local storage only</span>}
           </div>
           <div className="editor-links">
             <a 
