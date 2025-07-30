@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from './contexts/ThemeContext';
 import LandingPage from './components/LandingPage';
 import DAKActionSelection from './components/DAKActionSelection';
 import DAKSelection from './components/DAKSelection';
@@ -43,9 +42,8 @@ function App() {
   }, [appLogger]);
 
   return (
-    <ThemeProvider>
-      <Router basename="/sgex">
-        <div className="App">
+    <Router basename="/sgex">
+      <div className="App">
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/dak-action/:user" element={<DAKActionSelection />} />
@@ -88,7 +86,6 @@ function App() {
           </Routes>
         </div>
       </Router>
-    </ThemeProvider>
   );
 }
 
