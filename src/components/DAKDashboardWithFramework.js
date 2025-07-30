@@ -200,12 +200,14 @@ const DAKDashboardContent = () => {
           )}
         </div>
 
-        <DAKStatusBox 
-          repository={repository}
-          profile={profile}
-          selectedBranch={branch}
-          issueCounts={issueCounts}
-        />
+        {repository && (
+          <DAKStatusBox 
+            repository={repository}
+            profile={profile}
+            selectedBranch={branch}
+            issueCounts={issueCounts}
+          />
+        )}
 
         <div className="dashboard-tabs">
           <button 
