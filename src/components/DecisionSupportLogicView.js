@@ -908,10 +908,27 @@ define "Contraindication Present":
           {activeSection === 'tables' && (
             <div className="components-section decision-tables-section active">
               <div className="section-header">
-                <h3 className="section-title">📋 Decision Tables</h3>
-                <p className="section-description">
-                  DMN decision tables that implement clinical decision logic
-                </p>
+                <div className="section-header-content">
+                  <div>
+                    <h3 className="section-title">📋 Decision Tables</h3>
+                    <p className="section-description">
+                      DMN decision tables that implement clinical decision logic
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+                      const repoName = repository.name;
+                      navigate(`/decision-table-editor/${owner}/${repoName}/${selectedBranch}/new`, {
+                        state: { profile, repository, selectedBranch }
+                      });
+                    }}
+                    className="action-btn primary"
+                    title="Create new decision table"
+                  >
+                    ➕ New Table
+                  </button>
+                </div>
               </div>
 
               <div className="decision-tables-grid">
@@ -926,6 +943,21 @@ define "Contraindication Present":
                     </div>
                     
                     <div className="table-actions">
+                      <button
+                        onClick={() => {
+                          const owner = repository.owner?.login || repository.full_name.split('/')[0];
+                          const repoName = repository.name;
+                          const tableId = table.basename;
+                          navigate(`/decision-table-editor/${owner}/${repoName}/${selectedBranch}/${tableId}`, {
+                            state: { profile, repository, selectedBranch }
+                          });
+                        }}
+                        className="action-btn primary"
+                        title="Edit decision table"
+                      >
+                        ✏️ Edit
+                      </button>
+                      
                       <button
                         onClick={() => openSourceDialog(table)}
                         className="action-btn secondary"
@@ -949,7 +981,7 @@ define "Contraindication Present":
                           href={`https://github.com/${repository.owner?.login || repository.full_name.split('/')[0]}/${repository.name}/blob/${selectedBranch}/${table.htmlFile}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="action-btn primary"
+                          className="action-btn secondary"
                           title="View HTML rendering"
                         >
                           🌐 View HTML
