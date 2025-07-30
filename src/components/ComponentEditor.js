@@ -235,5 +235,3 @@ const ComponentEditor = () => {
 };
 
 export default ComponentEditor;
-
-export default ComponentEditor;
