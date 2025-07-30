@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {
@@ -267,17 +267,20 @@ const CoreDataDictionaryViewer = () => {
 
   if (loading) {
     return (
-      <div className="core-data-dictionary-viewer loading-state">
-        <div className="loading-content">
-          <h2>Loading Core Data Dictionary...</h2>
-          <p>Fetching FHIR FSH files and repository data...</p>
+      <PageLayout pageName="core-data-dictionary-viewer">
+        <div className="core-data-dictionary-viewer loading-state">
+          <div className="loading-content">
+            <h2>Loading Core Data Dictionary...</h2>
+            <p>Fetching FHIR FSH files and repository data...</p>
+          </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="core-data-dictionary-viewer">
+    <PageLayout pageName="core-data-dictionary-viewer">
+      <div className="core-data-dictionary-viewer">
       <div className="viewer-header">
         <div className="who-branding">
           <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
@@ -604,20 +607,8 @@ const CoreDataDictionaryViewer = () => {
           </div>
         </div>
       )}
-
-      <ContextualHelpMascot 
-        pageId="core-data-dictionary-viewer"
-        contextData={{ 
-          profile, 
-          repository, 
-          component,
-          selectedBranch,
-          hasGhPages,
-          fshFilesCount: fshFiles.length
-        }}
-        notificationBadge={!hasGhPages}
-      />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 
