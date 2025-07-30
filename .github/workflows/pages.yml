@@ -234,16 +234,26 @@ jobs:
             done
           fi
           
+          # Save the build directory before clearing root
+          echo "Backing up build directory..."
+          mkdir -p /tmp/build-backup
+          cp -a build/. /tmp/build-backup/
+          
           # Clear root (except .git)
           find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name '.github' -exec rm -rf {} +
           
-          # Copy root landing page
-          cp -a build/. .
+          # Copy root landing page from backup
+          cp -a /tmp/build-backup/. .
           
           # Restore branch directories
           if [[ -d /tmp/branch-backup ]]; then
             cp -r /tmp/branch-backup/* .
             rm -rf /tmp/branch-backup
+          fi
+          
+          # Clean up build backup
+          if [[ -d /tmp/build-backup ]]; then
+            rm -rf /tmp/build-backup
           fi
           
           # Ensure main application is accessible at /sgex/main/
