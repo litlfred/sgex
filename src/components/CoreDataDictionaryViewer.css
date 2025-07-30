@@ -125,7 +125,7 @@
 }
 
 .component-intro {
-  background: white;
+  background: var(--who-card-bg);
   padding: 2rem;
   border-radius: 12px;
   margin-bottom: 2rem;
@@ -141,13 +141,13 @@
 }
 
 .intro-content h2 {
-  color: #2c3e50;
+  color: var(--who-text-primary);
   margin: 0 0 1rem 0;
   font-size: 1.8rem;
 }
 
 .intro-content p {
-  color: #6c757d;
+  color: var(--who-text-secondary);
   line-height: 1.6;
   margin-bottom: 1rem;
 }

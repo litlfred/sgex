@@ -99,6 +99,16 @@
 .dashboard-intro {
   padding: 2rem;
   border-bottom: 1px solid #e1e5e9;
+  color: var(--who-text-primary);
+}
+
+/* Light mode dashboard intro background */
+body.theme-light .dashboard-intro {
+  background: linear-gradient(135deg, var(--who-light-blue) 0%, var(--who-light-blue-light) 100%);
+}
+
+/* Dark mode dashboard intro background */
+body.theme-dark .dashboard-intro {
   background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
   color: white;
 }

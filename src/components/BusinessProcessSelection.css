@@ -134,8 +134,17 @@ body.theme-light .business-process-selection {
 .selection-intro {
   padding: 2rem;
   border-bottom: 1px solid var(--who-border-color);
-  background: linear-gradient(135deg, var(--who-blue) 0%, var(--who-blue-dark) 100%);
   color: var(--who-text-primary);
+}
+
+/* Light mode intro background */
+body.theme-light .selection-intro {
+  background: linear-gradient(135deg, var(--who-light-blue) 0%, var(--who-light-blue-light) 100%);
+}
+
+/* Dark mode intro background */
+body.theme-dark .selection-intro {
+  background: linear-gradient(135deg, var(--who-blue) 0%, var(--who-blue-dark) 100%);
 }
 
 .selection-intro h2 {

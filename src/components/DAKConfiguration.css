@@ -97,13 +97,13 @@
 }
 
 .config-intro h2 {
-  color: #333;
+  color: var(--who-text-primary);
   font-size: 2rem;
   margin-bottom: 1rem;
 }
 
 .config-intro p {
-  color: #666;
+  color: var(--who-text-secondary);
   font-size: 1.1rem;
   max-width: 600px;
   margin: 0 auto 2rem;
