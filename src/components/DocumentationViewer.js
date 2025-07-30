@@ -11,8 +11,14 @@ const docFiles = {
   'architecture': { file: 'solution-architecture.md', title: 'Solution Architecture' },
   'project-plan': { file: 'project-plan.md', title: 'Project Plan' },
   'bpmn-integration': { file: 'bpmn-integration.md', title: 'BPMN Integration' },
-  'qa-report': { file: 'qa-report.html', title: 'QA Report', isHtml: true },
-  'issues-analysis': { file: 'github-issues-analysis.md', title: 'GitHub Issues Analysis' }
+  'page-framework': { file: 'page-framework.md', title: 'Page Framework' },
+  'framework-developer-guide': { file: 'framework-developer-guide.md', title: 'Framework Developer Guide' },
+  'page-inventory': { file: 'page-inventory.md', title: 'Page Inventory' },
+  'qa-testing': { file: 'qa-testing.md', title: 'QA Testing' },
+  'ui-styling-requirements': { file: 'UI_STYLING_REQUIREMENTS.md', title: 'UI Styling Requirements' },
+  'who-cors-workaround': { file: 'WHO_CORS_WORKAROUND.md', title: 'WHO CORS Workaround' },
+  'workflows-overview': { file: 'workflows/README.md', title: 'Workflows Overview' },
+  'qa-report': { file: 'qa-report.html', title: 'QA Report', isHtml: true }
 };
 
 const DocumentationViewer = () => {
