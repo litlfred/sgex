@@ -1,0 +1,259 @@
+/* Page Context Styling - unified avatar + user/repo + breadcrumbs component */
+.page-context-container {
+  background: var(--who-card-bg);
+  border-bottom: 1px solid var(--who-border-color, #dee2e6);
+  padding: 0.5rem 1rem;
+}
+
+.page-context-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 100%;
+}
+
+/* Avatar positioned to the far left as a block */
+.page-context-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid var(--who-border-color, #dee2e6);
+  background: var(--who-card-bg);
+}
+
+/* Context information container - two rows to the right of avatar */
+.page-context-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0; /* Allow text to truncate */
+  flex: 1;
+}
+
+/* Individual rows for user/repo and breadcrumbs */
+.page-context-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+/* First row: User/repo/branch styling - WHO blue and bold */
+.page-context-user-repo {
+  font-weight: bold;
+  color: var(--who-blue, #006cbe);
+}
+
+.page-context-profile,
+.page-context-repo {
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  font-weight: bold;
+  color: var(--who-blue, #006cbe);
+}
+
+.page-context-profile:hover,
+.page-context-repo:hover {
+  background-color: var(--who-blue-light, #e3f2fd);
+  color: var(--who-blue-dark, #004a99);
+  text-decoration: underline;
+}
+
+/* Separating slashes - WHO blue color */
+.page-context-separator {
+  color: var(--who-blue, #006cbe);
+  font-weight: bold;
+  font-size: 1.1rem;
+  user-select: none;
+}
+
+/* Branch styling */
+.page-context-branch {
+  font-family: monospace;
+  font-weight: bold;
+  color: var(--who-blue, #006cbe);
+  background-color: var(--who-hover-bg, #e9ecef);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Second row: Breadcrumbs styling */
+.page-context-breadcrumbs {
+  padding: 0;
+  margin: 0;
+}
+
+.breadcrumb-list {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.breadcrumb-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--who-blue, #006cbe);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.breadcrumb-link:hover,
+.breadcrumb-link:focus {
+  background-color: var(--who-blue-light, #e3f2fd);
+  color: var(--who-blue-dark, #004a99);
+  text-decoration: underline;
+  outline: 2px solid var(--who-blue, #006cbe);
+  outline-offset: 2px;
+}
+
+.breadcrumb-separator {
+  color: var(--who-blue, #006cbe);
+  font-weight: bold;
+  font-size: 1.1rem;
+  user-select: none;
+}
+
+.breadcrumb-current {
+  font-weight: normal;
+  color: var(--who-blue, #006cbe);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* Dark theme support */
+body.theme-dark .page-context-container {
+  background: var(--who-dark-bg, #1a1a1a);
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .page-context-avatar {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.theme-dark .page-context-profile,
+body.theme-dark .page-context-repo,
+body.theme-dark .page-context-separator,
+body.theme-dark .breadcrumb-link,
+body.theme-dark .breadcrumb-separator {
+  color: #4dabf7;
+}
+
+body.theme-dark .page-context-profile:hover,
+body.theme-dark .page-context-repo:hover,
+body.theme-dark .breadcrumb-link:hover,
+body.theme-dark .breadcrumb-link:focus {
+  background-color: rgba(77, 171, 247, 0.2);
+  color: #74c0fc;
+}
+
+body.theme-dark .page-context-branch {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #4dabf7;
+}
+
+body.theme-dark .breadcrumb-current {
+  color: #4dabf7;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .page-context-container {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .page-context-content {
+    gap: 0.5rem;
+  }
+  
+  .page-context-avatar {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .page-context-row {
+    font-size: 0.9rem;
+    gap: 0.25rem;
+  }
+  
+  .page-context-profile,
+  .page-context-repo,
+  .breadcrumb-link {
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .breadcrumb-list {
+    gap: 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-context-container {
+    padding: 0.5rem;
+  }
+  
+  .page-context-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .page-context-info {
+    width: 100%;
+  }
+  
+  .page-context-row {
+    flex-wrap: wrap;
+  }
+  
+  .breadcrumb-list {
+    flex-wrap: wrap;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .page-context-profile,
+  .page-context-repo,
+  .page-context-separator,
+  .breadcrumb-link,
+  .breadcrumb-separator,
+  .breadcrumb-current {
+    font-weight: 700;
+  }
+  
+  .page-context-avatar {
+    border-width: 3px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .page-context-profile,
+  .page-context-repo,
+  .breadcrumb-link {
+    transition: none;
+  }
+}

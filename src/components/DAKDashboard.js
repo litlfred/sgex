@@ -12,6 +12,14 @@ import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
+  return (
+    <PageLayout pageName="dak-dashboard">
+      <DAKDashboardContent />
+    </PageLayout>
+  );
+};
+
+const DAKDashboardContent = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -560,8 +568,7 @@ const DAKDashboard = () => {
   }
 
   return (
-    <PageLayout pageName="dak-dashboard">
-      <div className="dak-dashboard">
+    <div className="dak-dashboard">
       <div className="dashboard-content">
 
         <div className="dashboard-main">
@@ -775,8 +782,7 @@ const DAKDashboard = () => {
           </div>
         </div>
       )}
-      </div>
-    </PageLayout>
+    </div>
   );
 };
 
