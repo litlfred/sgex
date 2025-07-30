@@ -12,6 +12,14 @@ import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
+  return (
+    <PageLayout pageName="dak-dashboard">
+      <DAKDashboardContent />
+    </PageLayout>
+  );
+};
+
+const DAKDashboardContent = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -550,16 +558,15 @@ const DAKDashboard = () => {
   }
 
   return (
-    <PageLayout pageName="dak-dashboard">
-      <div className="dak-dashboard">
-      <div className="dashboard-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBackToRepos} className="breadcrumb-link">
-            Select Repository
+    <div className="dak-dashboard">
+    <div className="dashboard-content">
+      <div className="breadcrumb">
+        <button onClick={() => navigate('/')} className="breadcrumb-link">
+          Select Profile
+        </button>
+        <span className="breadcrumb-separator">›</span>
+        <button onClick={handleBackToRepos} className="breadcrumb-link">
+          Select Repository
           </button>
           <span className="breadcrumb-separator">›</span>
           <span className="breadcrumb-current">DAK Components</span>
@@ -776,8 +783,7 @@ const DAKDashboard = () => {
           </div>
         </div>
       )}
-      </div>
-    </PageLayout>
+    </div>
   );
 };
 
