@@ -39,6 +39,16 @@
   text-align: left;
 }
 
+.language-english-name {
+  color: var(--who-text-secondary, #666666);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+body.theme-dark .language-english-name {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .dropdown-arrow {
   font-size: 12px;
   transition: transform 0.2s ease;
