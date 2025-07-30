@@ -1,6 +1,6 @@
 <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
   <!-- Cat paw -->
-  <g fill="#8B4513" stroke="#654321" stroke-width="0.5">
+  <g fill="#006cbe" stroke="#004a99" stroke-width="0.5">
     <!-- Main paw pad -->
     <ellipse cx="10" cy="14" rx="4" ry="2.5" />
     

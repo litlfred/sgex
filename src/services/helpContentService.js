@@ -65,6 +65,24 @@ class HelpContentService {
             `
           }
         ]
+      },
+      documentation: {
+        id: 'sgex-documentation',
+        title: 'Documentation',
+        badge: '/sgex/cat-paw-book-icon.svg',
+        type: 'link',
+        url: '/sgex/docs/overview',
+        content: [
+          {
+            title: 'SGEX Workbench Documentation',
+            content: `
+              <p>Access comprehensive documentation and help resources:</p>
+              <div class="help-tip">
+                <strong>📚 Documentation includes:</strong> Getting started guides, component reference, workflow tutorials, and technical specifications.
+              </div>
+            `
+          }
+        ]
       }
     };
 
@@ -686,7 +704,10 @@ class HelpContentService {
 
   // Get universal topics based on context (e.g., if DAK is selected)
   getUniversalTopics(contextData = {}) {
-    const topics = [this.universalTopics.bugReport];
+    const topics = [
+      this.universalTopics.bugReport,
+      this.universalTopics.documentation
+    ];
     
     // Add DAK feedback if we have DAK context
     if (contextData.selectedDak || contextData.repository) {

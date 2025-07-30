@@ -587,7 +587,6 @@ const DAKSelection = () => {
             className="profile-avatar" 
           />
           <span>{profile.name || profile.login}</span>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
 

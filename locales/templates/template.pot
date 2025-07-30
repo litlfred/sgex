@@ -1,0 +1,229 @@
+# SGEX Workbench Translations
+# Copyright (C) 2024 WHO
+# This file is distributed under the same license as the SGEX package.
+# FIRST AUTHOR <email@address>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: SGEX Workbench 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-01 00:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en-US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: Application title
+msgid "app.title"
+msgstr "SGEX Workbench"
+
+#: Application subtitle
+msgid "app.subtitle"
+msgstr "WHO SMART Guidelines Exchange"
+
+#: Application description
+msgid "app.description"
+msgstr "A browser-based, standards-compliant collaborative editor for WHO SMART Guidelines Digital Adaptation Kits (DAKs)."
+
+#: Documentation link in navigation
+msgid "navigation.documentation"
+msgstr "📖 Documentation"
+
+#: Logout button text
+msgid "navigation.logout"
+msgstr "Logout"
+
+#: Dashboard link in navigation
+msgid "navigation.dashboard"
+msgstr "Dashboard"
+
+#: Home link in navigation
+msgid "navigation.home"
+msgstr "Home"
+
+#: Landing page welcome heading
+msgid "landing.welcome"
+msgstr "Welcome to SGEX Workbench"
+
+#: Landing page description
+msgid "landing.description"
+msgstr "A browser-based, standards-compliant collaborative editor for WHO SMART Guidelines Digital Adaptation Kits (DAKs)."
+
+#: GitHub connection prompt
+msgid "landing.connect_github"
+msgstr "Connect your GitHub account to get started:"
+
+#: Demo mode prompt
+msgid "landing.try_demo"
+msgstr "Want to try without authentication?"
+
+#: Demo mode button text
+msgid "landing.demo_mode"
+msgstr "🎭 Try Demo Mode"
+
+#: Demo mode description
+msgid "landing.demo_note"
+msgstr "Demo mode showcases the enhanced DAK scanning display with mock data."
+
+#: Help text beginning
+msgid "landing.need_help"
+msgstr "Need help getting started? Check out our comprehensive"
+
+#: Documentation link text
+msgid "landing.documentation_link"
+msgstr "documentation"
+
+#: Help text continuation
+msgid "landing.learn_more"
+msgstr "to learn more about SGEX Workbench and DAK components."
+
+#: Profile selection heading
+msgid "landing.profile_selection"
+msgstr "Select Profile or Organization"
+
+#: Profile selection description
+msgid "landing.choose_profile"
+msgstr "Choose the GitHub profile or organization containing your DAK repositories:"
+
+#: Loading profile data message
+msgid "landing.loading_profile"
+msgstr "Loading profile data..."
+
+#: Personal repositories section
+msgid "landing.personal_repositories"
+msgstr "Personal Repositories"
+
+#: Organization repositories section
+msgid "landing.organization_repositories"
+msgstr "Organization Repositories"
+
+#: Dashboard title
+msgid "dashboard.title"
+msgstr "DAK Dashboard"
+
+#: Loading message
+msgid "dashboard.loading"
+msgstr "Loading..."
+
+#: Branch selection prompt
+msgid "dashboard.select_branch"
+msgstr "Select Branch"
+
+#: Core components section
+msgid "dashboard.core_components"
+msgstr "Core Components"
+
+#: Additional components section
+msgid "dashboard.additional_components"
+msgstr "Additional Components"
+
+#: Publications section
+msgid "dashboard.publications"
+msgstr "Publications"
+
+#: Clear cache button
+msgid "dashboard.clear_cache"
+msgstr "Clear Cache"
+
+#: User menu button
+msgid "dashboard.user_menu"
+msgstr "User Menu"
+
+#: Failed to fetch user data error
+msgid "errors.failed_fetch_user"
+msgstr "Failed to fetch user data. Please check your connection and try again."
+
+#: GitHub authentication required error
+msgid "errors.github_auth_required"
+msgstr "GitHub authentication required. Please authenticate first."
+
+#: User not found error (with interpolation)
+msgid "errors.user_not_found"
+msgstr "Could not access the requested DAK. User '{{user}}' not found or not accessible."
+
+#: Repository not found error (with interpolation)
+msgid "errors.repo_not_found"
+msgstr "Could not access the requested DAK. Repository '{{user}}/{{repo}}' not found or not accessible."
+
+#: Generic error message
+msgid "errors.generic_error"
+msgstr "An error occurred. Please try again."
+
+#: Save button
+msgid "buttons.save"
+msgstr "Save"
+
+#: Cancel button
+msgid "buttons.cancel"
+msgstr "Cancel"
+
+#: Edit button
+msgid "buttons.edit"
+msgstr "Edit"
+
+#: Delete button
+msgid "buttons.delete"
+msgstr "Delete"
+
+#: Confirm button
+msgid "buttons.confirm"
+msgstr "Confirm"
+
+#: Close button
+msgid "buttons.close"
+msgstr "Close"
+
+#: Back button
+msgid "buttons.back"
+msgstr "Back"
+
+#: Next button
+msgid "buttons.next"
+msgstr "Next"
+
+#: Refresh button
+msgid "buttons.refresh"
+msgstr "Refresh"
+
+#: Loading indicator
+msgid "common.loading"
+msgstr "Loading..."
+
+#: Error indicator
+msgid "common.error"
+msgstr "Error"
+
+#: Warning indicator
+msgid "common.warning"
+msgstr "Warning"
+
+#: Success indicator
+msgid "common.success"
+msgstr "Success"
+
+#: Information indicator
+msgid "common.info"
+msgstr "Information"
+
+#: Dismiss action
+msgid "common.dismiss"
+msgstr "Dismiss"
+
+#: Language selector label
+msgid "language.selector"
+msgstr "Language"
+
+#: English language option
+msgid "language.english"
+msgstr "English (US)"
+
+#: French language option
+msgid "language.french"
+msgstr "Français"
+
+#: Spanish language option
+msgid "language.spanish"
+msgstr "Español"

@@ -1,0 +1,176 @@
+# SGEX Workbench Translations - English (US)
+# Copyright (C) 2024 WHO
+# This file is distributed under the same license as the SGEX package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: SGEX Workbench 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-29T00:15:53.875Z\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en-US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "app.title"
+msgstr "SGEX Workbench"
+
+msgid "app.subtitle"
+msgstr "WHO SMART Guidelines Exchange"
+
+msgid "app.description"
+msgstr "A browser-based, standards-compliant collaborative editor for WHO SMART Guidelines Digital Adaptation Kits (DAKs)."
+
+msgid "navigation.documentation"
+msgstr "📖 Documentation"
+
+msgid "navigation.logout"
+msgstr "Logout"
+
+msgid "navigation.dashboard"
+msgstr "Dashboard"
+
+msgid "navigation.home"
+msgstr "Home"
+
+msgid "landing.welcome"
+msgstr "Welcome to SGEX Workbench"
+
+msgid "landing.description"
+msgstr "A browser-based, standards-compliant collaborative editor for WHO SMART Guidelines Digital Adaptation Kits (DAKs)."
+
+msgid "landing.connect_github"
+msgstr "Connect your GitHub account to get started:"
+
+msgid "landing.try_demo"
+msgstr "Want to try without authentication?"
+
+msgid "landing.demo_mode"
+msgstr "🎭 Try Demo Mode"
+
+msgid "landing.demo_note"
+msgstr "Demo mode showcases the enhanced DAK scanning display with mock data."
+
+msgid "landing.need_help"
+msgstr "Need help getting started? Check out our comprehensive"
+
+msgid "landing.documentation_link"
+msgstr "documentation"
+
+msgid "landing.learn_more"
+msgstr "to learn more about SGEX Workbench and DAK components."
+
+msgid "landing.profile_selection"
+msgstr "Select Profile or Organization"
+
+msgid "landing.choose_profile"
+msgstr "Choose the GitHub profile or organization containing your DAK repositories:"
+
+msgid "landing.loading_profile"
+msgstr "Loading profile data..."
+
+msgid "landing.personal_repositories"
+msgstr "Personal Repositories"
+
+msgid "landing.organization_repositories"
+msgstr "Organization Repositories"
+
+msgid "dashboard.title"
+msgstr "DAK Dashboard"
+
+msgid "dashboard.loading"
+msgstr "Loading..."
+
+msgid "dashboard.select_branch"
+msgstr "Select Branch"
+
+msgid "dashboard.core_components"
+msgstr "Core Components"
+
+msgid "dashboard.additional_components"
+msgstr "Additional Components"
+
+msgid "dashboard.publications"
+msgstr "Publications"
+
+msgid "dashboard.clear_cache"
+msgstr "Clear Cache"
+
+msgid "dashboard.user_menu"
+msgstr "User Menu"
+
+msgid "errors.failed_fetch_user"
+msgstr "Failed to fetch user data. Please check your connection and try again."
+
+msgid "errors.github_auth_required"
+msgstr "GitHub authentication required. Please authenticate first."
+
+msgid "errors.user_not_found"
+msgstr "Could not access the requested DAK. User '{{user}}' not found or not accessible."
+
+msgid "errors.repo_not_found"
+msgstr "Could not access the requested DAK. Repository '{{user}}/{{repo}}' not found or not accessible."
+
+msgid "errors.generic_error"
+msgstr "An error occurred. Please try again."
+
+msgid "buttons.save"
+msgstr "Save"
+
+msgid "buttons.cancel"
+msgstr "Cancel"
+
+msgid "buttons.edit"
+msgstr "Edit"
+
+msgid "buttons.delete"
+msgstr "Delete"
+
+msgid "buttons.confirm"
+msgstr "Confirm"
+
+msgid "buttons.close"
+msgstr "Close"
+
+msgid "buttons.back"
+msgstr "Back"
+
+msgid "buttons.next"
+msgstr "Next"
+
+msgid "buttons.refresh"
+msgstr "Refresh"
+
+msgid "common.loading"
+msgstr "Loading..."
+
+msgid "common.error"
+msgstr "Error"
+
+msgid "common.warning"
+msgstr "Warning"
+
+msgid "common.success"
+msgstr "Success"
+
+msgid "common.info"
+msgstr "Information"
+
+msgid "common.dismiss"
+msgstr "Dismiss"
+
+msgid "language.selector"
+msgstr "Language"
+
+msgid "language.english"
+msgstr "English (US)"
+
+msgid "language.french"
+msgstr "Français"
+
+msgid "language.spanish"
+msgstr "Español"
+
