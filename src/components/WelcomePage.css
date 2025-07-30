@@ -88,7 +88,7 @@ body.theme-light .welcome-page-content {
 .action-card {
   background: var(--who-card-bg);
   border: 1px solid var(--who-border-color);
-  border-radius: 16px;
+  border-radius: 24px;
   padding: 2.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -125,12 +125,12 @@ body.theme-light .welcome-page-content {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 80px;
+  height: 120px;
 }
 
 .card-icon img {
-  max-width: 80px;
-  max-height: 80px;
+  max-width: 120px;
+  height: 120px;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
@@ -138,13 +138,6 @@ body.theme-light .welcome-page-content {
 .card-icon .icon-symbol {
   font-size: 3rem;
   display: block;
-}
-
-.action-card h3 {
-  font-size: 1.5rem;
-  margin: 0 0 1rem 0;
-  font-weight: 600;
-  color: var(--who-text-primary);
 }
 
 .action-card p {
@@ -172,7 +165,7 @@ body.theme-light .welcome-page-content {
 .demo-card {
   background: var(--who-selected-bg);
   border: 1px solid var(--who-blue);
-  border-radius: 12px;
+  border-radius: 20px;
   padding: 2rem;
   text-align: center;
   backdrop-filter: blur(10px);
@@ -214,7 +207,7 @@ body.theme-light .welcome-page-content {
 .auth-section {
   background: var(--who-card-bg);
   border: 1px solid var(--who-border-color);
-  border-radius: 16px;
+  border-radius: 24px;
   padding: 3rem;
   margin: 4rem auto 0;
   max-width: 600px;

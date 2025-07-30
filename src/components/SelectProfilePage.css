@@ -49,7 +49,7 @@ body.theme-light .select-profile-content {
 .profile-card {
   background: var(--who-card-bg);
   border: 1px solid var(--who-border-color);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 2rem;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -168,48 +168,6 @@ body.theme-light .select-profile-content {
 .profile-card.who-org:hover {
   border-color: rgba(0, 120, 212, 0.8);
   box-shadow: 0 8px 25px rgba(0, 120, 212, 0.4);
-}
-
-.demo-section {
-  margin-top: 3rem;
-  padding: 1.5rem;
-  background: var(--who-selected-bg);
-  border-radius: 8px;
-  border: 1px solid var(--who-blue);
-  text-align: center;
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.demo-section p {
-  margin: 0.5rem 0;
-  color: var(--who-text-primary);
-}
-
-.demo-mode-btn {
-  background: var(--who-blue);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin: 1rem 0;
-}
-
-.demo-mode-btn:hover {
-  background: var(--who-blue-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 108, 190, 0.3);
-}
-
-.demo-note {
-  font-size: 0.9rem;
-  color: var(--who-text-muted);
-  font-style: italic;
 }
 
 .error-message {

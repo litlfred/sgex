@@ -55,6 +55,11 @@
   background: var(--who-secondary-bg);
 }
 
+/* Dark mode specific background for modal header */
+body.theme-dark .collaboration-modal .modal-header {
+  background: var(--who-navy) !important;
+}
+
 .modal-header h2 {
   margin: 0;
   font-size: 1.8rem;

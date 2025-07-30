@@ -177,25 +177,6 @@ const SelectProfilePage = () => {
     handleNavigationClick(event, `/sgex/dak-action/${profile.login}`, navigate, navigationState);
   };
 
-  const handleDemoMode = (event) => {
-    // Create a mock profile for demonstration purposes
-    const demoProfile = {
-      login: 'demo-user',
-      name: 'Demo User',
-      avatar_url: 'https://github.com/github.png',
-      type: 'User',
-      isDemo: true
-    };
-    
-    // Navigate directly to DAK selection with edit action to show enhanced scanning
-    const navigationState = {
-      profile: demoProfile,
-      action: 'edit'
-    };
-    
-    handleNavigationClick(event, `/sgex/dak-selection/${demoProfile.login}`, navigate, navigationState);
-  };
-
   const handleDismissWarning = () => {
     setWarningMessage(null);
   };
@@ -284,19 +265,6 @@ const SelectProfilePage = () => {
                   </div>
                 </div>
               ))}
-            </div>
-
-            <div className="demo-section">
-              <p>Want to try without authentication?</p>
-              <button 
-                onClick={handleDemoMode}
-                className="demo-mode-btn"
-              >
-                🎭 Try Demo Mode
-              </button>
-              <p className="demo-note">
-                Demo mode showcases the enhanced DAK scanning display with mock data.
-              </p>
             </div>
           </div>
         )}

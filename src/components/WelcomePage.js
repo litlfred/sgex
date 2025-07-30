@@ -138,7 +138,6 @@ const WelcomePage = () => {
                 <div className="card-icon">
                   <img src="/collaboration.png" alt="Collaboration" />
                 </div>
-                <h3>Collaboration</h3>
                 <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
               </div>
 
@@ -148,7 +147,6 @@ const WelcomePage = () => {
                   <div className="card-icon">
                     <span className="icon-symbol">🔑</span>
                   </div>
-                  <h3>Sign In</h3>
                   <p>Sign in with your GitHub Personal Access Token to start editing DAKs.</p>
                 </div>
               ) : (
@@ -156,7 +154,6 @@ const WelcomePage = () => {
                   <div className="card-icon">
                     <img src="/authoring.png" alt="Authoring" />
                   </div>
-                  <h3>Start Authoring</h3>
                   <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
                 </div>
               )}
