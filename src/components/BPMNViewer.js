@@ -373,25 +373,6 @@ const BPMNViewerComponent = () => {
     <PageLayout pageName="bpmn-viewer">
       <div className="bpmn-viewer">
       <div className="viewer-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
-            Select Repository
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/dashboard', { state: { profile, repository } })} className="breadcrumb-link">
-            DAK Components
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBackToSelection} className="breadcrumb-link">
-            Business Processes
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">{selectedFile.name}</span>
-        </div>
 
         <div className="viewer-main">
           <div className="viewer-toolbar">

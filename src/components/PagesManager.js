@@ -383,15 +383,7 @@ const PagesManager = () => {
     }
   };
 
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
 
-  const handleBackToDashboard = () => {
-    navigate('/dashboard', { 
-      state: { profile, repository }
-    });
-  };
 
   // Redirect if missing required context - use useEffect to avoid render issues
   useEffect(() => {
@@ -417,21 +409,6 @@ const PagesManager = () => {
     <PageLayout pageName="pages-manager">
       <div className="pages-manager">
         <div className="pages-content">
-        <div className="breadcrumb">
-          <button onClick={handleHomeNavigation} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
-            Select Repository
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBackToDashboard} className="breadcrumb-link">
-            DAK Components
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Pages</span>
-        </div>
 
         {/* Staging Ground Status */}
         <DAKStatusBox

@@ -6,11 +6,22 @@
   color: var(--who-text-primary, #333333);
 }
 
+/* Breadcrumb positioning outside main content */
+.page-layout > .page-breadcrumbs {
+  padding: 0 1rem;
+  margin: 0;
+  z-index: 10;
+  position: relative;
+  background: var(--who-primary-bg, #ffffff);
+  border-bottom: 1px solid var(--who-border-color, #e1e4e8);
+}
+
 .page-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   position: relative;
+  padding: 1rem;
 }
 
 /* Loading state */
