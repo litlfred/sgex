@@ -1170,6 +1170,125 @@ class GitHubService {
     }
   }
 
+  // Get pull requests with pagination and search support
+  async getPullRequests(owner, repo, options = {}) {
+    // Support unauthenticated access for public repositories
+    const octokit = this.isAuth() ? this.octokit : new Octokit();
+    
+    const {
+      state = 'all',  // 'open', 'closed', 'all'
+      per_page = 5,
+      page = 1,
+      sort = 'updated',  // 'created', 'updated', 'popularity'
+      direction = 'desc',
+      search = null
+    } = options;
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls`, { state, per_page, page, sort, direction });
+
+    try {
+      let response;
+      
+      if (search) {
+        // Use search API for filtering by title
+        const searchQuery = `repo:${owner}/${repo} is:pr ${search} in:title`;
+        response = await octokit.rest.search.issuesAndPullRequests({
+          q: searchQuery,
+          sort,
+          order: direction, 
+          per_page,
+          page
+        });
+        
+        // Transform search results to match pulls.list format
+        const pullRequests = response.data.items.map(item => ({
+          id: item.id,
+          number: item.number,
+          title: item.title,
+          state: item.state,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          closed_at: item.closed_at,
+          merged_at: item.pull_request?.merged_at || null,
+          user: item.user,
+          head: {
+            ref: item.pull_request?.head?.ref || 'unknown',
+            sha: item.pull_request?.head?.sha || 'unknown'
+          },
+          base: {
+            ref: item.pull_request?.base?.ref || 'main'
+          },
+          html_url: item.html_url,
+          mergeable: item.pull_request?.mergeable || null,
+          draft: item.draft || false
+        }));
+        
+        response.data = pullRequests;
+      } else {
+        // Use regular pulls API
+        response = await octokit.rest.pulls.list({
+          owner,
+          repo,
+          state,
+          per_page,
+          page,
+          sort,
+          direction
+        });
+      }
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, response.status, Date.now() - startTime);
+      
+      return {
+        data: response.data,
+        pagination: {
+          page,
+          per_page,
+          total: search ? response.data.total_count : null,
+          hasMore: response.data.length === per_page
+        }
+      };
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch pull requests:', error);
+      throw error;
+    }
+  }
+
+  // Get recently deployed/merged pull requests (for deployment landing page)
+  async getRecentlyDeployedPRs(owner, repo, limit = 5) {
+    try {
+      const response = await this.getPullRequests(owner, repo, {
+        state: 'closed',
+        per_page: limit * 2, // Get extra to filter for merged ones
+        sort: 'updated',
+        direction: 'desc'
+      });
+
+      // Filter for merged PRs (deployed ones)
+      const mergedPRs = response.data
+        .filter(pr => pr.merged_at) // Only merged PRs
+        .slice(0, limit); // Take the requested limit
+
+      return mergedPRs.map(pr => ({
+        id: pr.id,
+        number: pr.number,
+        title: pr.title,
+        merged_at: pr.merged_at,
+        head_branch: pr.head.ref,
+        head_sha: pr.head.sha,
+        user: pr.user,
+        html_url: pr.html_url,
+        // Generate branch URL for this deployment
+        branch_url: `./sgex/${pr.head.ref.replace(/\//g, '-')}/index.html`
+      }));
+    } catch (error) {
+      console.error('Failed to fetch recently deployed PRs:', error);
+      throw error;
+    }
+  }
+
   // Get open issues count
   async getOpenIssuesCount(owner, repo) {
     if (!this.isAuth()) {

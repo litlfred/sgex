@@ -598,6 +598,81 @@ class HelpContentService {
             }
           ]
         }
+      ],
+      'branch-listing': [
+        {
+          id: 'how-to-contribute',
+          title: 'How to contribute',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Welcome to SGEX',
+              content: `
+                <div class="contribute-intro">
+                  <p><strong>SGEX is an experimental collaborative project</strong> in the development of a workbench of tools for creating high-fidelity SMART Guidelines Digital Adaptation Kits (DAKs).</p>
+                  <div class="mascot-display">
+                    <img src="./sgex-mascot.png" alt="SGEX Helper" style="width: 120px; height: 120px; border-radius: 50%; margin: 1rem auto; display: block;" />
+                    <p><em>Your SGEX helper is here to guide you!</em></p>
+                  </div>
+                </div>
+              `
+            },
+            {
+              title: 'Report Issues & Request Features',
+              content: `
+                <div class="contribute-step">
+                  <div class="mascot-action">
+                    <img src="./sgex-mascot.png" alt="SGEX Helper investigating" style="width: 80px; height: 80px; border-radius: 50%; float: right; margin-left: 1rem;" />
+                    <p>Using a <strong>bug report</strong>, you can make a feature request or report issues. Our helper mascot will investigate closely!</p>
+                  </div>
+                  <button class="bug-type-btn" onclick="window.open('https://github.com/litlfred/sgex/issues/new', '_blank')">
+                    🐛 Report Bug or Request Feature
+                  </button>
+                </div>
+              `
+            },
+            {
+              title: 'Collaborative Development',
+              content: `
+                <div class="contribute-step">
+                  <p>Once assigned to a <strong>coding agent</strong>, collaborative discussions by the community evolve the workbench in real time.</p>
+                  <div class="collaboration-visual">
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin: 1rem 0;">
+                      <img src="./sgex-mascot.png" alt="Community member 1" style="width: 60px; height: 60px; border-radius: 50%;" />
+                      <img src="./sgex-mascot.png" alt="Community member 2" style="width: 60px; height: 60px; border-radius: 50%;" />
+                      <img src="./sgex-mascot.png" alt="Community member 3" style="width: 60px; height: 60px; border-radius: 50%;" />
+                    </div>
+                    <p style="text-align: center;"><em>Community collaboration through shared vision</em></p>
+                  </div>
+                </div>
+              `
+            },
+            {
+              title: 'Our Mission',
+              content: `
+                <div class="contribute-mission">
+                  <p><strong>Goal:</strong> Make it easier and faster to develop high fidelity SMART Guidelines Digital Adaptation Kits (DAKs).</p>
+                  <ul>
+                    <li>🏥 <strong>Healthcare Focus:</strong> Built specifically for WHO SMART Guidelines</li>
+                    <li>🤝 <strong>Collaborative:</strong> Community-driven development and testing</li>
+                    <li>⚡ <strong>Efficient:</strong> Streamlined workflows for DAK creation</li>
+                    <li>🌍 <strong>Global Impact:</strong> Supporting digital health transformation</li>
+                  </ul>
+                  <div class="help-tip">
+                    <strong>🚀 Ready to contribute?</strong> Start by exploring existing DAKs or reporting issues you encounter!
+                  </div>
+                </div>
+              `
+            }
+          ]
+        },
+        {
+          id: 'documentation-guide',
+          title: 'Documentation',
+          type: 'link',
+          url: './sgex/main/docs/',
+          content: 'Access comprehensive project documentation including requirements, architecture, and DAK component guides.'
+        }
       ]
     };
   }

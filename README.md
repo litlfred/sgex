@@ -1,5 +1,19 @@
 # SGEX Workbench (WHO SMART Guidelines Exchange)
 
+## Mission Statement
+
+SGEX is an experimental collaborative project developing a workbench of tools to make it easier and faster to develop high-fidelity SMART Guidelines Digital Adaptation Kits (DAKs). Through community-driven development, bug reports become feature requests, coding agents facilitate collaborative discussions, and the workbench evolves in real time to support global digital health transformation.
+
+### How to Contribute
+
+SGEX thrives on community collaboration:
+- **🐛 Report Issues:** Use bug reports to request features or report problems
+- **🤝 Join Discussions:** Participate in collaborative community discussions  
+- **🚀 Test & Feedback:** Help test new features and provide feedback
+- **📝 Documentation:** Contribute to documentation and guides
+
+Ready to contribute? Start by [reporting an issue](https://github.com/litlfred/sgex/issues/new) or exploring the [documentation](public/docs/).
+
 
 <div align="center">
   <img src="public/sgex-mascot.png" alt="SGEX Workbench Helper" width="200" height="200">

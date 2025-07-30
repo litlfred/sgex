@@ -1,5 +1,5 @@
 .branch-listing {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
 }
@@ -7,19 +7,70 @@
 .branch-listing-header {
   text-align: center;
   margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header-icon {
+  margin-bottom: 1rem;
+}
+
+.mascot-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .branch-listing-header h1 {
-  font-size: 2.5rem;
+  font-size: 3rem;
   color: #2c3e50;
-  margin-bottom: 0.5rem;
+  margin: 0.5rem 0;
+  font-weight: 700;
 }
 
 .branch-listing-header .subtitle {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   color: #666;
   margin: 0;
+  font-style: italic;
 }
+
+/* Tab Navigation */
+.selector-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+  border-bottom: 2px solid #e1e5e9;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #6a737d;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  border-radius: 8px 8px 0 0;
+}
+
+.tab-button:hover {
+  color: #0366d6;
+  background: #f6f8fa;
+}
+
+.tab-button.active {
+  color: #0366d6;
+  border-bottom-color: #0366d6;
+  background: #f6f8fa;
+}
+
+/* Branch Cards */
 
 .branch-cards {
   display: grid;
@@ -137,6 +188,24 @@
   padding: 2rem;
   border-top: 1px solid #e1e5e9;
   color: #6a737d;
+  position: relative;
+}
+
+.footer-links {
+  position: absolute;
+  left: 2rem;
+  top: 2rem;
+}
+
+.source-link {
+  color: #0366d6;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.source-link:hover {
+  text-decoration: underline;
 }
 
 .branch-listing-footer p {
@@ -153,22 +222,174 @@
   text-decoration: underline;
 }
 
+/* PR Section */
+.pr-section {
+  margin-bottom: 3rem;
+}
+
+.pr-search {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.pr-search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.pr-search-input:focus {
+  outline: none;
+  border-color: #0366d6;
+  box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+}
+
+.pr-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.pr-card {
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  padding: 1.5rem;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.pr-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-color: #28a745;
+}
+
+.pr-card-header {
+  margin-bottom: 1rem;
+}
+
+.pr-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.3rem;
+  line-height: 1.4;
+}
+
+.pr-title a {
+  color: #0366d6;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.pr-title a:hover {
+  text-decoration: underline;
+}
+
+.pr-user {
+  background: #f1f3f4;
+  color: #586069;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.pr-card-body {
+  margin-bottom: 1rem;
+}
+
+.pr-date, .pr-branch {
+  color: #586069;
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}
+
+.pr-branch code {
+  background: #f6f8fa;
+  color: #0366d6;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.85rem;
+}
+
+.pr-preview-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #28a745;
+  color: white;
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  margin-top: 1rem;
+}
+
+.pr-preview-link:hover {
+  background: #218838;
+  text-decoration: none;
+  color: white;
+}
+
+.pr-load-more {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.load-more-btn {
+  background: #f6f8fa;
+  color: #0366d6;
+  border: 2px solid #e1e5e9;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.load-more-btn:hover {
+  background: #0366d6;
+  color: white;
+  border-color: #0366d6;
+}
+
+.no-prs {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  color: #6a737d;
+}
+
+.no-prs p {
+  margin: 0.5rem 0;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .branch-listing {
     padding: 1rem;
   }
   
-  .branch-cards {
+  .branch-cards, .pr-cards {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
   
   .branch-listing-header h1 {
-    font-size: 2rem;
+    font-size: 2.5rem;
   }
   
-  .branch-card {
+  .branch-card, .pr-card {
     padding: 1rem;
   }
   
@@ -176,5 +397,33 @@
     flex-direction: column;
     gap: 0.5rem;
     align-items: flex-start;
+  }
+  
+  .selector-tabs {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .tab-button {
+    border-radius: 0;
+    border-bottom: 1px solid #e1e5e9;
+  }
+  
+  .footer-links {
+    position: static;
+    margin-bottom: 1rem;
+  }
+
+  .mascot-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .branch-listing-header h1 {
+    font-size: 2rem;
+  }
+
+  .branch-listing-header .subtitle {
+    font-size: 1.1rem;
   }
 }
