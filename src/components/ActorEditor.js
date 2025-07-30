@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import actorDefinitionService from '../services/actorDefinitionService';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import './ActorEditor.css';
 
 const ActorEditor = () => {
@@ -236,10 +236,6 @@ const ActorEditor = () => {
   };
 
   // Navigation handlers
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
   const handleBackToDashboard = () => {
     navigate('/dashboard', {
       state: {
@@ -250,44 +246,43 @@ const ActorEditor = () => {
     });
   };
 
+  // Redirect if missing required context - use useEffect to avoid render issues
+  useEffect(() => {
+    if (!profile || !repository) {
+      navigate('/');
+    }
+  }, [profile, repository, navigate]);
+
   if (!profile || !repository) {
-    navigate('/');
-    return <div>Redirecting...</div>;
+    return (
+      <PageLayout pageName="actor-editor">
+        <div className="actor-editor">
+          <div className="redirecting-state">
+            <h2>Redirecting...</h2>
+            <p>Missing required context. Redirecting to home page...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
   }
 
   if (loading) {
     return (
-      <div className="actor-editor loading-state">
-        <div className="loading-content">
-          <h2>Loading Actor Editor...</h2>
-          <p>Initializing editor and loading data...</p>
+      <PageLayout pageName="actor-editor">
+        <div className="actor-editor loading-state">
+          <div className="loading-content">
+            <h2>Loading Actor Editor...</h2>
+            <p>Initializing editor and loading data...</p>
+          </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="actor-editor">
-      <div className="editor-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repository.name}</span>
-            <span className="context-component">Actor Definitions Editor</span>
-            {selectedBranch && <span className="context-branch">{selectedBranch}</span>}
-          </div>
-        </div>
-      </div>
-
-      <div className="editor-content">
+    <PageLayout pageName="actor-editor">
+      <div className="actor-editor">
+        <div className="editor-content">
         <div className="breadcrumb">
           <span onClick={handleBackToDashboard} className="breadcrumb-link">Dashboard</span>
           <span className="breadcrumb-separator">→</span>
@@ -508,11 +503,8 @@ const ActorEditor = () => {
         </div>
       )}
 
-      <ContextualHelpMascot 
-        context="actor-editor"
-        helpText="Use this editor to create and modify actor definitions based on the FHIR Persona logical model. Define healthcare actors like clinicians, patients, and administrators with their roles, qualifications, and access requirements."
-      />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 

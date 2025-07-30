@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import './BPMNSource.css';
 
 const BPMNSource = () => {
@@ -147,33 +147,30 @@ const BPMNSource = () => {
     return url;
   };
 
+  // Redirect if missing required context - use useEffect to avoid render issues
+  useEffect(() => {
+    if (!profile || !repository || !selectedFile) {
+      navigate('/');
+    }
+  }, [profile, repository, selectedFile, navigate]);
+
   if (!profile || !repository || !selectedFile) {
-    navigate('/');
-    return <div>Redirecting...</div>;
+    return (
+      <PageLayout pageName="bpmn-source">
+        <div className="bpmn-source">
+          <div className="redirecting-state">
+            <h2>Redirecting...</h2>
+            <p>Missing required context. Redirecting to home page...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
   }
 
   return (
-    <div className="bpmn-source">
-      <div className="source-header">
-        <div className="who-branding">
-          <h1>SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repository.name}</span>
-            <span className="context-component">BPMN Source Code</span>
-          </div>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-        </div>
-      </div>
-
-      <div className="source-content">
+    <PageLayout pageName="bpmn-source">
+      <div className="bpmn-source">
+        <div className="source-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
@@ -299,11 +296,8 @@ const BPMNSource = () => {
         </div>
       </div>
       
-      <ContextualHelpMascot 
-        pageId="bpmn-source"
-        contextData={{ profile, repository, component, selectedFile }}
-      />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 
