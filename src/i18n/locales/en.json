@@ -100,7 +100,11 @@
     "english": "English",
     "french": "Français",
     "spanish": "Español",
-    "arabic": "العربية"
+    "arabic": "العربية",
+    "chinese": "中文",
+    "russian": "Русский",
+    "search": "Search languages...",
+    "addLanguage": "Add Language"
   },
   "common": {
     "loading": "Loading...",
