@@ -632,7 +632,7 @@ class GitHubService {
               path: file.path
             });
 
-            const content = Buffer.from(contentResponse.data.content, 'base64').toString('utf-8');
+            const content = decodeURIComponent(escape(atob(contentResponse.data.content)));
             
             // Parse workflow name from YAML (simple regex approach)
             const nameMatch = content.match(/^name:\s*(.+)$/m);
@@ -968,7 +968,7 @@ class GitHubService {
         console.log('🔧 githubService.getFileContent: Decoding base64 content...');
         console.log('📊 githubService.getFileContent: Base64 content length:', data.content.length);
         
-        const content = Buffer.from(data.content, 'base64').toString('utf-8');
+        const content = decodeURIComponent(escape(atob(data.content)));
         console.log(`✅ githubService.getFileContent: Successfully fetched and decoded file content`);
         console.log('📏 githubService.getFileContent: Final content length:', content.length, 'characters');
         console.log('👀 githubService.getFileContent: Content preview (first 200 chars):', content.substring(0, 200));
@@ -1087,6 +1087,41 @@ class GitHubService {
       };
     } catch (error) {
       console.error('Failed to create commit:', error);
+      throw error;
+    }
+  }
+
+  // Update a single file in the repository
+  async updateFile(owner, repo, path, content, message, branch = 'main', operation = 'update') {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      // Use the createCommit method with a single file
+      const files = [{
+        path: path,
+        content: content
+      }];
+
+      const result = await this.createCommit(owner, repo, branch, message, files);
+      
+      return {
+        sha: result.sha,
+        commit: {
+          sha: result.sha,
+          html_url: result.html_url,
+          message: result.message,
+          author: result.author,
+          committer: result.committer
+        },
+        content: {
+          path: path,
+          sha: result.sha // This will be the tree SHA, not file SHA, but sufficient for our needs
+        }
+      };
+    } catch (error) {
+      console.error('Failed to update file:', error);
       throw error;
     }
   }
