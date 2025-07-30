@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { PageLayout } from './framework';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { PageLayout, usePageParams } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user: userParam } = useParams();
+  const { params } = usePageParams();
+  const userParam = params?.user;
   
   const { profile } = location.state || {};
 

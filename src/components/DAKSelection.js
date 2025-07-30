@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import dakTemplates from '../config/dak-templates.json';
-import { PageLayout } from './framework';
+import { PageLayout, usePageParams } from './framework';
 import './DAKSelection.css';
 
 const DAKSelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user: userParam } = useParams();
+  const { params } = usePageParams();
+  const userParam = params?.user;
   const [repositories, setRepositories] = useState([]);
   const [selectedRepository, setSelectedRepository] = useState(null);
   const [loading, setLoading] = useState(true);

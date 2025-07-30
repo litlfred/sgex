@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import { PageLayout } from './framework';
+import { PageLayout, usePageParams } from './framework';
 import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const params = useParams();
+  const { params } = usePageParams();
   
   // Get data from URL params or location state (for backward compatibility)
   const { profile, repository, component, selectedBranch } = location.state || {};
-  const user = params.user;
-  const repo = params.repo;
-  const branch = params.branch;
+  const user = params?.user;
+  const repo = params?.repo;
+  const branch = params?.branch;
   
   const [fshFiles, setFshFiles] = useState([]);
   const [loading, setLoading] = useState(true);
