@@ -1,0 +1,73 @@
+/* Global styles for SGEX Workbench */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Theme Variables */
+:root {
+  /* WHO Brand Colors */
+  --who-blue: #006cbe;
+  --who-blue-light: #338dd6;
+  --who-blue-dark: #004d85;
+  --who-navy: #1a2332;
+  --who-light-blue: #e3f2fd;
+  
+  /* Theme Colors - Light Mode */
+  --who-primary-bg: #ffffff;
+  --who-secondary-bg: rgba(255, 255, 255, 0.9);
+  --who-card-bg: rgba(255, 255, 255, 0.8);
+  --who-hover-bg: rgba(0, 108, 190, 0.1);
+  --who-selected-bg: rgba(0, 108, 190, 0.15);
+  --who-border-color: rgba(0, 0, 0, 0.1);
+  --who-text-primary: #1a2332;
+  --who-text-secondary: #666666;
+  --who-text-muted: #999999;
+}
+
+/* Theme Colors - Dark Mode */
+body.theme-dark {
+  --who-primary-bg: #1a2332;
+  --who-secondary-bg: rgba(26, 35, 50, 0.9);
+  --who-card-bg: rgba(255, 255, 255, 0.1);
+  --who-hover-bg: rgba(51, 141, 214, 0.2);
+  --who-selected-bg: rgba(51, 141, 214, 0.3);
+  --who-border-color: rgba(255, 255, 255, 0.2);
+  --who-text-primary: #ffffff;
+  --who-text-secondary: #cccccc;
+  --who-text-muted: #999999;
+  
+  background-color: var(--who-primary-bg);
+  color: var(--who-text-primary);
+}
+
+/* Light Mode */
+body.theme-light {
+  --who-primary-bg: #ffffff;
+  --who-secondary-bg: rgba(255, 255, 255, 0.9);
+  --who-card-bg: rgba(255, 255, 255, 0.8);
+  --who-hover-bg: rgba(0, 108, 190, 0.1);
+  --who-selected-bg: rgba(0, 108, 190, 0.15);
+  --who-border-color: rgba(0, 0, 0, 0.1);
+  --who-text-primary: #1a2332;
+  --who-text-secondary: #666666;
+  --who-text-muted: #999999;
+  
+  background-color: var(--who-primary-bg);
+  color: var(--who-text-primary);
+}

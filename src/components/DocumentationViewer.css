@@ -1,0 +1,6 @@
+/* DocumentationViewer component styles */
+.documentation-viewer {
+  padding: 2rem;
+  background: var(--who-primary-bg);
+  color: var(--who-text-primary);
+}

@@ -1,0 +1,6 @@
+/* BPMNViewerEnhanced component styles */
+.bpmn-viewer-enhanced {
+  padding: 2rem;
+  background: var(--who-primary-bg);
+  color: var(--who-text-primary);
+}

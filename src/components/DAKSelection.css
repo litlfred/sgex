@@ -1,0 +1,7 @@
+/* DAKSelection component styles */
+.dak-selection {
+  padding: 2rem;
+  background: var(--who-primary-bg);
+  color: var(--who-text-primary);
+  min-height: 100vh;
+}

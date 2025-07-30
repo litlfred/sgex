@@ -1,0 +1,13 @@
+/* PageHeader component styles */
+.page-header {
+  background: var(--who-secondary-bg);
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--who-border-color);
+}
+
+.page-header h1 {
+  margin: 0;
+  color: var(--who-text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+}

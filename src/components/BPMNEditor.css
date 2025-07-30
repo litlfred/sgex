@@ -1,0 +1,6 @@
+/* BPMNEditor component styles */
+.bpmn-editor {
+  padding: 2rem;
+  background: var(--who-primary-bg);
+  color: var(--who-text-primary);
+}

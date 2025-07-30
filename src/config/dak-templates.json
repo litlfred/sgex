@@ -1,0 +1,10 @@
+{
+  "templates": [
+    {
+      "id": "basic-dak",
+      "name": "Basic DAK Template",
+      "description": "A basic Digital Adaptation Kit template",
+      "repository": "litlfred/basic-dak-template"
+    }
+  ]
+}

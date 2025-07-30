@@ -1,0 +1,6 @@
+/* BusinessProcessSelection component styles */
+.business-process-selection {
+  padding: 2rem;
+  background: var(--who-primary-bg);
+  color: var(--who-text-primary);
+}

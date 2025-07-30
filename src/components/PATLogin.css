@@ -1,0 +1,6 @@
+/* PATLogin component styles */
+.pat-login {
+  padding: 2rem;
+  background: var(--who-primary-bg);
+  color: var(--who-text-primary);
+}
