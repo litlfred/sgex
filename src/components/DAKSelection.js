@@ -27,6 +27,7 @@ const DAKSelectionContent = () => {
   const [scanProgress, setScanProgress] = useState(null);
   const [currentlyScanningRepos, setCurrentlyScanningRepos] = useState(new Set());
   const [usingCachedData, setUsingCachedData] = useState(false);
+  const [hasCompletedScanning, setHasCompletedScanning] = useState(false);
   
   const { profile, action } = location.state || {};
 
@@ -248,6 +249,7 @@ const DAKSelectionContent = () => {
         setIsScanning(false);
         setScanProgress(null);
         setCurrentlyScanningRepos(new Set());
+        setHasCompletedScanning(true); // Mark that scanning has been completed
       }, 500); // Small delay to show completion
     } catch (error) {
       console.error('Error in simulated scanning:', error);
@@ -265,6 +267,11 @@ const DAKSelectionContent = () => {
     setScanProgress(null);
     setCurrentlyScanningRepos(new Set());
     setUsingCachedData(false);
+    
+    // Reset the scanning completion flag when starting a new fetch
+    if (forceRescan) {
+      setHasCompletedScanning(false);
+    }
     
     try {
       let repos = [];
@@ -392,6 +399,7 @@ const DAKSelectionContent = () => {
                       setIsScanning(false);
                       setScanProgress(null);
                       setCurrentlyScanningRepos(new Set());
+                      setHasCompletedScanning(true); // Mark that scanning has been completed
                     }, 500); // Small delay to show completion
                   }
                 } else if (progress.total === 0 && progress.completed) {
@@ -401,6 +409,7 @@ const DAKSelectionContent = () => {
                     setIsScanning(false);
                     setScanProgress(null);
                     setCurrentlyScanningRepos(new Set());
+                    setHasCompletedScanning(true); // Mark that scanning has been completed
                   }, 500);
                 }
               }
@@ -415,6 +424,7 @@ const DAKSelectionContent = () => {
               setIsScanning(false);
               setScanProgress(null);
               setCurrentlyScanningRepos(new Set());
+              setHasCompletedScanning(true); // Mark that scanning has been completed even on timeout
               throw new Error('Repository scanning timed out. Please try again or use cached data if available.');
             }
             
@@ -450,6 +460,7 @@ const DAKSelectionContent = () => {
       setIsScanning(false);
       setScanProgress(null);
       setCurrentlyScanningRepos(new Set());
+      setHasCompletedScanning(true); // Mark that scanning has been completed even on error
     } finally {
       setLoading(false);
       // Don't automatically stop scanning here for authenticated progressive scans
@@ -459,6 +470,7 @@ const DAKSelectionContent = () => {
         setIsScanning(false);
         setScanProgress(null);
         setCurrentlyScanningRepos(new Set());
+        setHasCompletedScanning(true); // Mark that scanning has been completed
       }
     }
   }, [profile, action, getMockRepositories, simulateEnhancedScanning]);
@@ -762,63 +774,106 @@ const DAKSelectionContent = () => {
             </div>
           ) : (
             <>
-              <div className="repo-grid">
-                {repositories.map((repo) => (
-                  <div 
-                    key={repo.id}
-                    className={`repo-card ${selectedRepository?.id === repo.id ? 'selected' : ''}`}
-                    onClick={() => handleRepositorySelect(repo)}
-                  >
-                    <div className="repo-header-info">
-                      <h3>{repo.name}</h3>
-                      <div className="repo-meta">
-                        {repo.is_template && (
-                          <span className="template-badge">
-                            {repo.template_config?.name || 'Template'}
-                          </span>
-                        )}
-                        {repo.private && <span className="private-badge">Private</span>}
-                        {repo.language && <span className="language-badge">{repo.language}</span>}
-                        {repo.smart_guidelines_compatible && (
-                          <span className="compatible-badge">SMART Guidelines</span>
-                        )}
+              {hasCompletedScanning ? (
+                /* Use condensed format after scanning has been completed */
+                <div className="repo-grid-condensed">
+                  {repositories.map((repo) => (
+                    <div 
+                      key={repo.id}
+                      className={`repo-card-condensed ${selectedRepository?.id === repo.id ? 'selected' : ''}`}
+                      onClick={() => handleRepositorySelect(repo)}
+                    >
+                      <div className="repo-header-info-condensed">
+                        <h5>{repo.name}</h5>
+                        <div className="repo-meta-condensed">
+                          {repo.language && <span className="language-badge-small">{repo.language}</span>}
+                          {repo.smart_guidelines_compatible && (
+                            <span className="compatible-badge-small">SMART</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    
-                    <p className="repo-description">{repo.description || 'No description available'}</p>
-                    
-                    <div className="repo-topics">
-                      {(repo.topics || []).slice(0, 3).map((topic) => (
-                        <span key={topic} className="topic-tag">{topic}</span>
-                      ))}
-                      {(repo.topics || []).length > 3 && (
-                        <span className="topic-more">+{(repo.topics || []).length - 3} more</span>
+                      
+                      <p className="repo-description-condensed">{repo.description || 'No description available'}</p>
+                      
+                      <div className="repo-stats-condensed">
+                        <div className="stat">
+                          <span className="stat-icon">⭐</span>
+                          <span>{repo.stargazers_count || 0}</span>
+                        </div>
+                        <div className="stat">
+                          <span className="stat-icon">🍴</span>
+                          <span>{repo.forks_count || 0}</span>
+                        </div>
+                      </div>
+
+                      {selectedRepository?.id === repo.id && (
+                        <div className="selection-indicator-condensed">
+                          <span>✓</span>
+                        </div>
                       )}
                     </div>
-                    
-                    <div className="repo-stats">
-                      <div className="stat">
-                        <span className="stat-icon">⭐</span>
-                        <span>{repo.stargazers_count || 0}</span>
+                  ))}
+                </div>
+              ) : (
+                /* Use regular format before any scanning */
+                <div className="repo-grid">
+                  {repositories.map((repo) => (
+                    <div 
+                      key={repo.id}
+                      className={`repo-card ${selectedRepository?.id === repo.id ? 'selected' : ''}`}
+                      onClick={() => handleRepositorySelect(repo)}
+                    >
+                      <div className="repo-header-info">
+                        <h3>{repo.name}</h3>
+                        <div className="repo-meta">
+                          {repo.is_template && (
+                            <span className="template-badge">
+                              {repo.template_config?.name || 'Template'}
+                            </span>
+                          )}
+                          {repo.private && <span className="private-badge">Private</span>}
+                          {repo.language && <span className="language-badge">{repo.language}</span>}
+                          {repo.smart_guidelines_compatible && (
+                            <span className="compatible-badge">SMART Guidelines</span>
+                          )}
+                        </div>
                       </div>
-                      <div className="stat">
-                        <span className="stat-icon">🍴</span>
-                        <span>{repo.forks_count || 0}</span>
+                      
+                      <p className="repo-description">{repo.description || 'No description available'}</p>
+                      
+                      <div className="repo-topics">
+                        {(repo.topics || []).slice(0, 3).map((topic) => (
+                          <span key={topic} className="topic-tag">{topic}</span>
+                        ))}
+                        {(repo.topics || []).length > 3 && (
+                          <span className="topic-more">+{(repo.topics || []).length - 3} more</span>
+                        )}
                       </div>
-                      <div className="stat">
-                        <span className="stat-icon">📅</span>
-                        <span>Updated {formatDate(repo.updated_at)}</span>
+                      
+                      <div className="repo-stats">
+                        <div className="stat">
+                          <span className="stat-icon">⭐</span>
+                          <span>{repo.stargazers_count || 0}</span>
+                        </div>
+                        <div className="stat">
+                          <span className="stat-icon">🍴</span>
+                          <span>{repo.forks_count || 0}</span>
+                        </div>
+                        <div className="stat">
+                          <span className="stat-icon">📅</span>
+                          <span>Updated {formatDate(repo.updated_at)}</span>
+                        </div>
                       </div>
-                    </div>
 
-                    {selectedRepository?.id === repo.id && (
-                      <div className="selection-indicator">
-                        <span>✓ Selected</span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                      {selectedRepository?.id === repo.id && (
+                        <div className="selection-indicator">
+                          <span>✓ Selected</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="selection-footer">
                 {action !== 'edit' && (

@@ -798,6 +798,15 @@ body.theme-light .dak-selection {
   overflow: hidden;
 }
 
+/* Post-scanning condensed grid layout */
+.repo-grid-condensed {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 3rem;
+  max-height: none; /* Allow full height unlike the scanning layout */
+}
+
 .scanning-section {
   padding: 1.5rem;
   border-right: 1px solid var(--who-border-color);
