@@ -403,3 +403,48 @@
     font-size: 0.8rem;
   }
 }
+
+/* Dark theme specific overrides */
+body.theme-dark .user-dropdown {
+  background-color: var(--who-dropdown-bg, #1a2380);
+  border-color: var(--who-border-color, rgba(255, 255, 255, 0.2));
+}
+
+body.theme-dark .dropdown-item {
+  color: var(--who-text-secondary, rgba(255, 255, 255, 0.8));
+}
+
+body.theme-dark .dropdown-item:hover {
+  background-color: var(--who-dropdown-hover-bg, rgba(255, 255, 255, 0.15));
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .bookmarks-header {
+  background-color: var(--who-dropdown-hover-bg, rgba(255, 255, 255, 0.15));
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .bookmarks-dropdown {
+  background-color: var(--who-dropdown-bg, #1a2380);
+}
+
+body.theme-dark .bookmark-item:hover {
+  background-color: var(--who-dropdown-hover-bg, rgba(255, 255, 255, 0.15));
+}
+
+body.theme-dark .bookmark-link {
+  color: var(--who-text-secondary, rgba(255, 255, 255, 0.8));
+}
+
+body.theme-dark .bookmark-link:hover {
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .bookmark-group-header {
+  background-color: var(--who-bg-light, rgba(255, 255, 255, 0.05));
+  color: var(--who-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+body.theme-dark .no-bookmarks {
+  color: var(--who-text-muted, rgba(255, 255, 255, 0.6));
+}

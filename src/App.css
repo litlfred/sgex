@@ -39,6 +39,9 @@ body.theme-dark {
   --who-hover-bg: rgba(255, 255, 255, 0.1);
   --who-bg-light: rgba(255, 255, 255, 0.05);
   --who-selected-bg: rgba(0, 108, 190, 0.3);
+  /* Dropdown specific overrides for better visibility */
+  --who-dropdown-bg: #1a2380;
+  --who-dropdown-hover-bg: rgba(255, 255, 255, 0.15);
 }
 
 body {
