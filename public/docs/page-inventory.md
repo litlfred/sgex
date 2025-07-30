@@ -130,7 +130,7 @@ All pages **MUST**:
 - **Reporting**: Detailed feedback with specific improvement suggestions
 
 ### Developer Support
-- **Documentation**: `docs/framework-developer-guide.md`
+- **Documentation**: `public/docs/framework-developer-guide.md`
 - **Examples**: Multiple migrated pages serve as templates
 - **Tooling**: Automated detection of compliance issues
 - **Guidelines**: Clear migration patterns and troubleshooting

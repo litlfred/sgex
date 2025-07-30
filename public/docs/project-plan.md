@@ -80,7 +80,7 @@ The SMART Guidelines Exchange (SGEX) Workbench is a browser-based, standards-com
 ## Documentation Structure
 
 ```
-docs/
+public/docs/
 ├── project-plan.md          # This document
 ├── requirements.md          # Functional and non-functional requirements
 ├── solution-architecture.md # Technical architecture and design

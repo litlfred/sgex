@@ -190,7 +190,7 @@ sgex/
 │   ├── config/          # Application configuration
 │   ├── tests/           # Test utilities and fixtures
 │   └── utils/           # Helper functions
-├── docs/                # Comprehensive project documentation
+├── public/docs/         # Comprehensive project documentation
 │   ├── requirements.md      # Detailed functional requirements
 │   ├── solution-architecture.md  # Technical architecture
 │   ├── dak-components.md    # DAK component specifications
@@ -202,10 +202,10 @@ sgex/
 ## Important Documentation
 
 ### Essential Reading
-- **[docs/requirements.md](docs/requirements.md)**: Comprehensive functional and non-functional requirements
-- **[docs/solution-architecture.md](docs/solution-architecture.md)**: Technical architecture and design decisions
-- **[docs/dak-components.md](docs/dak-components.md)**: Detailed guide to the 8 DAK components
-- **[docs/project-plan.md](docs/project-plan.md)**: Project milestones and planning
+- **[public/docs/requirements.md](public/docs/requirements.md)**: Comprehensive functional and non-functional requirements
+- **[public/docs/solution-architecture.md](public/docs/solution-architecture.md)**: Technical architecture and design decisions
+- **[public/docs/dak-components.md](public/docs/dak-components.md)**: Detailed guide to the 8 DAK components
+- **[public/docs/project-plan.md](public/docs/project-plan.md)**: Project milestones and planning
 - **[README.md](README.md)**: Development setup and basic usage
 
 ### WHO SMART Guidelines Resources

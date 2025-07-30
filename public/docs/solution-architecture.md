@@ -34,8 +34,8 @@ The SGEX Workbench implements a comprehensive "Manage a DAK" workflow as defined
 5. **PCMT** - Product catalog management
 
 **Workflow Diagrams:**
-- **BPMN Diagram:** [`docs/workflows/manage-dak-workflow.bpmn`](workflows/manage-dak-workflow.bpmn)
-- **Sequence Diagram:** [`docs/workflows/manage-dak-sequence.puml`](workflows/manage-dak-sequence.puml)
+- **BPMN Diagram:** [`public/docs/workflows/manage-dak-workflow.bpmn`](workflows/manage-dak-workflow.bpmn)
+- **Sequence Diagram:** [`public/docs/workflows/manage-dak-sequence.puml`](workflows/manage-dak-sequence.puml)
 
 **Workflow Components:**
 - **DAK Action Selection:** Choose between edit, fork, or create DAK
