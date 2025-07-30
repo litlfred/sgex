@@ -105,46 +105,99 @@ const DAKDashboardContent = () => {
     }
   };
 
+  // Define the 9 core DAK components based on WHO SMART Guidelines documentation
   const dakComponents = [
+    // Core Components (Level 2)
+    {
+      id: 'health-interventions',
+      title: 'Health Interventions and Recommendations',
+      description: 'Clinical guidelines and health intervention specifications that define evidence-based care recommendations',
+      icon: '📖',
+      path: 'health-interventions',
+      level: 'Level 2: Core Components',
+      color: '#0078d4'
+    },
+    {
+      id: 'generic-personas',
+      title: 'Generic Personas',
+      description: 'Standardized user roles and actor definitions that represent different types of healthcare workers and patients',
+      icon: '👥',
+      path: 'actor-editor',
+      level: 'Level 2: Core Components',
+      color: '#107c10'
+    },
+    {
+      id: 'user-scenarios',
+      title: 'User Scenarios',
+      description: 'Narrative descriptions of how different personas interact with the system in specific healthcare contexts',
+      icon: '📝',
+      path: 'user-scenarios',
+      level: 'Level 2: Core Components',
+      color: '#881798'
+    },
     {
       id: 'business-processes',
-      title: 'Business Processes',
-      description: 'Workflow definitions and process models',
+      title: 'Generic Business Processes and Workflows',
+      description: 'BPMN workflows and business process definitions that model clinical workflows and care pathways',
       icon: '🔄',
       path: 'business-process-selection',
-      level: 'Level 2: Business Logic'
+      level: 'Level 2: Core Components',
+      color: '#d13438'
+    },
+    {
+      id: 'core-data-elements',
+      title: 'Core Data Elements',
+      description: 'Essential data structures and terminology needed for clinical data capture and exchange',
+      icon: '🗃️',
+      path: 'core-data-dictionary-viewer',
+      level: 'Level 2: Core Components',
+      color: '#ff8c00'
     },
     {
       id: 'decision-support',
-      title: 'Decision Support Logic',
-      description: 'Clinical decision support rules and algorithms', 
-      icon: '🧠',
+      title: 'Decision-Support Logic',
+      description: 'DMN decision tables and clinical decision support rules that encode clinical logic',
+      icon: '🎯',
       path: 'decision-support-logic',
-      level: 'Level 2: Business Logic'
+      level: 'Level 2: Core Components',
+      color: '#00bcf2'
     },
     {
-      id: 'data-dictionary',
-      title: 'Core Data Dictionary',
-      description: 'Essential data elements and definitions',
+      id: 'program-indicators',
+      title: 'Program Indicators',
+      description: 'Performance indicators and measurement definitions for monitoring and evaluation',
       icon: '📊',
-      path: 'core-data-dictionary-viewer',
-      level: 'Level 2: Business Logic'
+      path: 'program-indicators',
+      level: 'Level 2: Core Components',
+      color: '#498205'
     },
     {
-      id: 'forms',
-      title: 'Data Entry Forms',
-      description: 'User interface forms for data collection',
-      icon: '📝',
-      path: 'forms',
-      level: 'Level 2: Business Logic'
+      id: 'functional-requirements',
+      title: 'Functional and Non-Functional Requirements',
+      description: 'System requirements specifications that define capabilities and constraints',
+      icon: '⚙️',
+      path: 'functional-requirements',
+      level: 'Level 2: Core Components',
+      color: '#6b69d6'
     },
+    {
+      id: 'testing',
+      title: 'Testing',
+      description: 'Feature files and test scenarios for validating the DAK implementation',
+      icon: '🧪',
+      path: 'testing-viewer',
+      level: 'Level 2: Core Components',
+      color: '#8b5cf6'
+    },
+    // Additional Components (Level 3)
     {
       id: 'terminology',
       title: 'Terminology',
       description: 'Code systems, value sets, and concept maps',
       icon: '🏷️',
       path: 'terminology',
-      level: 'Level 3: Technical Implementation'
+      level: 'Level 3: Technical Implementation',
+      color: '#ff8c00'
     },
     {
       id: 'profiles',
@@ -152,7 +205,8 @@ const DAKDashboardContent = () => {
       description: 'FHIR resource profiles and constraints',
       icon: '🔧',
       path: 'profiles',
-      level: 'Level 3: Technical Implementation'
+      level: 'Level 3: Technical Implementation',
+      color: '#00bcf2'
     },
     {
       id: 'extensions',
@@ -160,7 +214,8 @@ const DAKDashboardContent = () => {
       description: 'Custom FHIR extensions and modifications',
       icon: '🧩',
       path: 'extensions',
-      level: 'Level 3: Technical Implementation'
+      level: 'Level 3: Technical Implementation',
+      color: '#498205'
     },
     {
       id: 'test-data',
@@ -168,12 +223,13 @@ const DAKDashboardContent = () => {
       description: 'Sample data and testing resources',
       icon: '🧪',
       path: 'test-data',
-      level: 'Level 3: Technical Implementation'
+      level: 'Level 3: Technical Implementation',
+      color: '#8b5cf6'
     }
   ];
 
-  const coreComponents = dakComponents.filter(comp => comp.level.includes('Level 2'));
-  const additionalComponents = dakComponents.filter(comp => comp.level.includes('Level 3'));
+  const coreComponents = dakComponents.filter(comp => comp.level.includes('Level 2: Core Components'));
+  const additionalComponents = dakComponents.filter(comp => comp.level.includes('Level 3: Technical Implementation'));
 
   return (
     <div className="dak-dashboard">
@@ -214,7 +270,7 @@ const DAKDashboardContent = () => {
             className={`tab-button ${activeTab === 'core' ? 'active' : ''}`}
             onClick={() => setActiveTab('core')}
           >
-            Core Components ({coreComponents.length})
+            9 Core Components
           </button>
           <button 
             className={`tab-button ${activeTab === 'additional' ? 'active' : ''}`}
@@ -232,50 +288,44 @@ const DAKDashboardContent = () => {
 
         <div className="dashboard-content">
           {activeTab === 'core' && (
-            <div className="components-grid">
-              <h2>Level 2: Business Logic & Processes</h2>
-              <div className="component-cards">
-                {coreComponents.map(component => (
-                  <div 
-                    key={component.id}
-                    className="component-card"
-                    onClick={() => handleComponentNavigate(component.path)}
-                  >
-                    <div className="component-icon">{component.icon}</div>
-                    <h3>{component.title}</h3>
-                    <p>{component.description}</p>
-                    {issueCounts[component.id] > 0 && (
-                      <div className="issue-badge">
-                        {issueCounts[component.id]} issues
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+            <div className="components-grid core-components">
+              {coreComponents.map(component => (
+                <div 
+                  key={component.id}
+                  className="component-card"
+                  onClick={() => handleComponentNavigate(component.path)}
+                >
+                  <div className="component-icon">{component.icon}</div>
+                  <h3>{component.title}</h3>
+                  <p>{component.description}</p>
+                  {issueCounts[component.id] > 0 && (
+                    <div className="issue-badge">
+                      {issueCounts[component.id]} issues
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
           {activeTab === 'additional' && (
-            <div className="components-grid">
-              <h2>Level 3: Technical Implementation</h2>
-              <div className="component-cards">
-                {additionalComponents.map(component => (
-                  <div 
-                    key={component.id}
-                    className="component-card"
-                    onClick={() => handleComponentNavigate(component.path)}
-                  >
-                    <div className="component-icon">{component.icon}</div>
-                    <h3>{component.title}</h3>
-                    <p>{component.description}</p>
-                    {issueCounts[component.id] > 0 && (
-                      <div className="issue-badge">
-                        {issueCounts[component.id]} issues
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+            <div className="components-grid additional-components">
+              {additionalComponents.map(component => (
+                <div 
+                  key={component.id}
+                  className="component-card"
+                  onClick={() => handleComponentNavigate(component.path)}
+                >
+                  <div className="component-icon">{component.icon}</div>
+                  <h3>{component.title}</h3>
+                  <p>{component.description}</p>
+                  {issueCounts[component.id] > 0 && (
+                    <div className="issue-badge">
+                      {issueCounts[component.id]} issues
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
