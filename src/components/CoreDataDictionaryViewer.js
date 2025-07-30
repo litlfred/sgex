@@ -66,9 +66,7 @@ const CoreDataDictionaryViewer = () => {
     return concepts;
   }, []);
 
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
+
 
   const handleBackToDashboard = () => {
     if (user && repo) {

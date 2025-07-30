@@ -5,7 +5,6 @@ import githubService from '../services/githubService';
 import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
 import cacheManagementService from '../services/cacheManagementService';
-import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
@@ -23,7 +22,6 @@ const DAKDashboard = () => {
   const [loading, setLoading] = useState(!profile || !repository);
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
-  const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
@@ -226,7 +224,6 @@ const DAKDashboard = () => {
           setHasWriteAccess(false);
         }
       }
-      setCheckingPermissions(false);
     };
 
     checkPermissions();
@@ -405,23 +402,6 @@ const DAKDashboard = () => {
   ];
 
   // Handle branch selection change
-  const handleBranchChange = (branch) => {
-    setSelectedBranch(branch);
-    branchContextService.setSelectedBranch(repository, branch);
-    
-    // Update the URL to include the branch parameter
-    const owner = repository.owner?.login || repository.full_name.split('/')[0];
-    const repoName = repository.name;
-    const newPath = `/dashboard/${owner}/${repoName}/${branch}`;
-    
-    navigate(newPath, {
-      state: {
-        profile,
-        repository,
-        selectedBranch: branch
-      }
-    });
-  };
 
   const handleComponentClick = (event, component) => {
     const navigationState = {
@@ -515,19 +495,6 @@ const DAKDashboard = () => {
 
   const handleBackToRepos = () => {
     navigate('/repositories', { state: { profile } });
-  };
-
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
-  const handleUserMenuToggle = () => {
-    setShowUserMenu(!showUserMenu);
-  };
-
-  const handleClearCacheClick = () => {
-    setShowUserMenu(false);
-    setShowClearCacheConfirm(true);
   };
 
   const handleClearCacheConfirm = () => {
