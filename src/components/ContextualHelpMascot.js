@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import helpContentService from '../services/helpContentService';
+import cacheManagementService from '../services/cacheManagementService';
 import HelpModal from './HelpModal';
 import LanguageSelector from './LanguageSelector';
 import './ContextualHelpMascot.css';
@@ -11,6 +12,8 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [helpSticky, setHelpSticky] = useState(false);
   const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [cacheClearing, setCacheClearing] = useState(false);
+  const [cacheCleared, setCacheCleared] = useState(false);
 
   // Load theme preference from localStorage on mount
   useEffect(() => {
@@ -76,6 +79,32 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
 
   const handleCloseModal = () => {
     setSelectedHelpTopic(null);
+  };
+
+  const handleFlushCache = async () => {
+    if (cacheClearing) return; // Prevent multiple clicks
+    
+    setCacheClearing(true);
+    setCacheCleared(false);
+    
+    try {
+      const success = cacheManagementService.clearAllCache();
+      if (success) {
+        setCacheCleared(true);
+        // Auto-hide success message after 3 seconds
+        setTimeout(() => {
+          setCacheCleared(false);
+        }, 3000);
+      } else {
+        console.error('Failed to clear cache');
+        alert('Failed to clear cache. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+      alert('Error clearing cache. Please try again.');
+    } finally {
+      setCacheClearing(false);
+    }
   };
 
   // Always render the mascot now since we have universal topics
@@ -161,6 +190,25 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                     {/* Language Selector in Help Menu */}
                     <div className="help-menu-divider"></div>
                     <LanguageSelector className="help-menu-language-selector" />
+                    
+                    {/* Flush Cache Option */}
+                    <div className="help-menu-divider"></div>
+                    <div className="help-menu-cache-section">
+                      {cacheCleared ? (
+                        <div className="cache-success-message">
+                          ✅ Cache cleared successfully!
+                        </div>
+                      ) : (
+                        <button
+                          className="help-cache-btn"
+                          onClick={handleFlushCache}
+                          disabled={cacheClearing}
+                          title="Clear all cached data including repository info, branch context, and staging ground data"
+                        >
+                          {cacheClearing ? '🔄 Clearing...' : '🗑️ Flush Cache'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div>
@@ -168,6 +216,25 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                     {/* Language Selector in Help Menu */}
                     <div className="help-menu-divider"></div>
                     <LanguageSelector className="help-menu-language-selector" />
+                    
+                    {/* Flush Cache Option */}
+                    <div className="help-menu-divider"></div>
+                    <div className="help-menu-cache-section">
+                      {cacheCleared ? (
+                        <div className="cache-success-message">
+                          ✅ Cache cleared successfully!
+                        </div>
+                      ) : (
+                        <button
+                          className="help-cache-btn"
+                          onClick={handleFlushCache}
+                          disabled={cacheClearing}
+                          title="Clear all cached data including repository info, branch context, and staging ground data"
+                        >
+                          {cacheClearing ? '🔄 Clearing...' : '🗑️ Flush Cache'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

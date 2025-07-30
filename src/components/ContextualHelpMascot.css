@@ -521,3 +521,81 @@ body.theme-dark .bubble-tail::after {
 .help-thought-bubble {
   z-index: 1001;
 }
+
+/* Help menu divider */
+.help-menu-divider {
+  height: 1px;
+  background: var(--who-border-color, #e0e0e0);
+  margin: 12px 0;
+  opacity: 0.5;
+}
+
+/* Cache management section */
+.help-menu-cache-section {
+  margin-top: 8px;
+}
+
+.help-cache-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: var(--who-hover-bg, #f8f9fa);
+  border: 1px solid var(--who-border-color, #e0e0e0);
+  border-radius: 6px;
+  padding: 10px 16px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--who-text-primary, #333);
+  transition: all 0.2s ease;
+}
+
+.help-cache-btn:hover:not(:disabled) {
+  background: var(--who-selected-bg, rgba(0, 108, 190, 0.1));
+  border-color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #006cbe);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 108, 190, 0.1);
+}
+
+.help-cache-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 108, 190, 0.1);
+}
+
+.help-cache-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cache-success-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: var(--who-success-bg, #d4edda);
+  border: 1px solid var(--who-success-border, #c3e6cb);
+  border-radius: 6px;
+  padding: 10px 16px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--who-success-text, #155724);
+  animation: fadeInSuccess 0.3s ease-out;
+}
+
+@keyframes fadeInSuccess {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
