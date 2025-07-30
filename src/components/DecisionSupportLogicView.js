@@ -28,6 +28,8 @@ const DecisionSupportLogicView = () => {
   const [selectedDialog, setSelectedDialog] = useState(null);
   const [cqlModal, setCqlModal] = useState(null);
   const [activeSection, setActiveSection] = useState('variables'); // 'variables' or 'tables'
+  const [enhancedFullwidth, setEnhancedFullwidth] = useState(false);
+  const [autoHide, setAutoHide] = useState(false);
 
   // Initialize repository data if not available
   const initializeData = useCallback(async () => {
@@ -635,6 +637,14 @@ define "Contraindication Present":
     });
   };
 
+  const handleToggleEnhancedFullwidth = () => {
+    setEnhancedFullwidth(!enhancedFullwidth);
+  };
+
+  const handleToggleAutoHide = () => {
+    setAutoHide(!autoHide);
+  };
+
 
 
   if (loading) {
@@ -669,7 +679,7 @@ define "Contraindication Present":
 
   return (
     <PageLayout pageName="decision-support-logic">
-      <div className="decision-support-view">
+      <div className={`decision-support-view ${enhancedFullwidth ? 'enhanced-fullwidth' : ''} ${autoHide ? 'auto-hide' : ''}`}>
       <div className="view-content">
 
         <div className="view-main">
@@ -698,6 +708,24 @@ define "Contraindication Present":
               <span className="tab-icon">📋</span>
               <span className="tab-text">Decision Tables</span>
             </button>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+              <button 
+                className="tab-button"
+                onClick={handleToggleAutoHide}
+                title="Toggle auto-hide headers"
+                style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}
+              >
+                {autoHide ? '📌' : '👁️'}
+              </button>
+              <button 
+                className="tab-button"
+                onClick={handleToggleEnhancedFullwidth}
+                title="Toggle enhanced fullwidth mode"
+                style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}
+              >
+                {enhancedFullwidth ? '🔳' : '⛶'}
+              </button>
+            </div>
           </div>
 
           {/* Variables Section */}

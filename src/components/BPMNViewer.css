@@ -3,15 +3,56 @@
   padding: 0 !important;
 }
 
+/* Enhanced fullwidth mode - take over full main container */
+.page-main:has(.bpmn-viewer.enhanced-fullwidth) {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #0078d4;
+}
+
+/* Hide page layout header when in enhanced fullwidth */
+.page-layout:has(.bpmn-viewer.enhanced-fullwidth) .page-header {
+  display: none;
+}
+
 /* Fallback for browsers that don't support :has() */
 .page-layout .page-main .bpmn-viewer {
   margin: -1rem;
+}
+
+.page-layout .page-main .bpmn-viewer.enhanced-fullwidth {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  margin: 0;
 }
 
 .bpmn-viewer {
   min-height: 100vh;
   background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.bpmn-viewer.enhanced-fullwidth {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  min-height: 100vh;
+  height: 100vh;
 }
 
 .viewer-header {
@@ -121,6 +162,22 @@
   padding: 1.5rem 2rem;
   background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
   color: white;
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  position: relative;
+  z-index: 20;
+}
+
+/* Auto-hide toolbar unless hovered */
+.bpmn-viewer.auto-hide .viewer-toolbar {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+
+.bpmn-viewer.auto-hide:hover .viewer-toolbar,
+.bpmn-viewer.auto-hide .viewer-toolbar:hover,
+.bpmn-viewer.auto-hide .viewer-toolbar:focus-within {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 .toolbar-left {
@@ -186,6 +243,23 @@
   position: relative;
   height: 600px;
   border-bottom: 1px solid #e1e5e9;
+  flex: 1;
+}
+
+/* In enhanced fullwidth mode, use all available space */
+.bpmn-viewer.enhanced-fullwidth .diagram-container {
+  height: calc(100vh - 120px); /* Account for toolbar */
+}
+
+/* In auto-hide mode, expand to fill space */
+.bpmn-viewer.auto-hide .diagram-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100vh;
+  z-index: 10;
 }
 
 .bpmn-container {
@@ -259,6 +333,22 @@
 .diagram-info {
   padding: 2rem;
   background: #f8f9fa;
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  position: relative;
+  z-index: 20;
+}
+
+/* Auto-hide footer unless hovered */
+.bpmn-viewer.auto-hide .diagram-info {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+.bpmn-viewer.auto-hide:hover .diagram-info,
+.bpmn-viewer.auto-hide .diagram-info:hover,
+.bpmn-viewer.auto-hide .diagram-info:focus-within {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 .info-section {
@@ -322,6 +412,19 @@
 .access-badge.read {
   background: #fff3cd;
   color: #856404;
+}
+
+.view-mode-info {
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  background: #e3f2fd;
+  color: #1565c0;
 }
 
 .permission-notice {

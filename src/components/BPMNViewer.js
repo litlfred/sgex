@@ -16,6 +16,8 @@ const BPMNViewerComponent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
+  const [enhancedFullwidth, setEnhancedFullwidth] = useState(false);
+  const [autoHide, setAutoHide] = useState(false);
 
   // Check write permissions
   useEffect(() => {
@@ -370,6 +372,14 @@ const BPMNViewerComponent = () => {
     });
   };
 
+  const handleToggleEnhancedFullwidth = () => {
+    setEnhancedFullwidth(!enhancedFullwidth);
+  };
+
+  const handleToggleAutoHide = () => {
+    setAutoHide(!autoHide);
+  };
+
   if (!profile || !repository || !selectedFile) {
     navigate('/');
     return <div>Redirecting...</div>;
@@ -377,7 +387,7 @@ const BPMNViewerComponent = () => {
 
   return (
     <PageLayout pageName="bpmn-viewer">
-      <div className="bpmn-viewer">
+      <div className={`bpmn-viewer ${enhancedFullwidth ? 'enhanced-fullwidth' : ''} ${autoHide ? 'auto-hide' : ''}`}>
       <div className="viewer-content">
 
         <div className="viewer-main">
@@ -387,6 +397,20 @@ const BPMNViewerComponent = () => {
               <span className="view-mode-badge">👁️ Read-Only View</span>
             </div>
             <div className="toolbar-right">
+              <button 
+                className="action-btn secondary"
+                onClick={handleToggleAutoHide}
+                title="Toggle auto-hide headers/footers"
+              >
+                {autoHide ? '📌' : '👁️'} Auto-Hide
+              </button>
+              <button 
+                className="action-btn secondary"
+                onClick={handleToggleEnhancedFullwidth}
+                title="Toggle enhanced fullwidth mode"
+              >
+                {enhancedFullwidth ? '🔳' : '⛶'} Full Container
+              </button>
               <button 
                 className="action-btn secondary"
                 onClick={handleBackToSelection}
@@ -458,20 +482,26 @@ const BPMNViewerComponent = () => {
               <div className="info-grid">
                 <div className="info-item">
                   <label>File Name:</label>
-                  <span>{selectedFile.name}</span>
+                  <span>{selectedFile?.name || 'No file selected'}</span>
                 </div>
                 <div className="info-item">
                   <label>File Path:</label>
-                  <span className="file-path">{selectedFile.path}</span>
+                  <span className="file-path">{selectedFile?.path || 'N/A'}</span>
                 </div>
                 <div className="info-item">
                   <label>File Size:</label>
-                  <span>{(selectedFile.size / 1024).toFixed(1)} KB</span>
+                  <span>{selectedFile?.size ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'N/A'}</span>
                 </div>
                 <div className="info-item">
                   <label>Access Level:</label>
                   <span className={`access-badge ${hasWriteAccess ? 'write' : 'read'}`}>
                     {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only'}
+                  </span>
+                </div>
+                <div className="info-item">
+                  <label>View Mode:</label>
+                  <span className="view-mode-info">
+                    {enhancedFullwidth ? '⛶ Full Container' : autoHide ? '👁️ Auto-Hide' : '📺 Fullwidth'}
                   </span>
                 </div>
               </div>
