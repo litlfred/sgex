@@ -126,6 +126,16 @@
   font-weight: 600;
 }
 
+.local-indicator {
+  color: #0078d4;
+  font-weight: 600;
+}
+
+.save-mode-indicator {
+  color: #605e5c;
+  font-style: italic;
+}
+
 .editor-links {
   display: flex;
   gap: 10px;
@@ -190,6 +200,24 @@
   color: #106ebe;
 }
 
+.btn-link.danger {
+  color: #d13438;
+}
+
+.btn-link.danger:hover {
+  color: #b02a2f;
+}
+
+.btn-info {
+  background-color: #0078d4;
+  color: white;
+  border: 1px solid #005a9e;
+}
+
+.btn-info:hover:not(:disabled) {
+  background-color: #106ebe;
+}
+
 .editor-error {
   display: flex;
   align-items: center;
@@ -214,6 +242,24 @@
   border-right: none;
   color: #0066cc;
   font-size: 14px;
+}
+
+.local-storage-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background-color: #f0f9ff;
+  border: 1px solid #b3e5fc;
+  border-left: none;
+  border-right: none;
+  color: #0277bd;
+  font-size: 14px;
+}
+
+.local-storage-notice .btn-link {
+  margin-left: 8px;
+  padding: 2px 6px;
 }
 
 .error-icon, .info-icon {

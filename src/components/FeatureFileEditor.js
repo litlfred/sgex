@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import githubService from '../services/githubService';
+import localStorageService from '../services/localStorageService';
 import './FeatureFileEditor.css';
 
 const FeatureFileEditor = ({ 
@@ -19,11 +20,26 @@ const FeatureFileEditor = ({
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [saveMode, setSaveMode] = useState('github'); // 'github' or 'local'
+  const [savedLocally, setSavedLocally] = useState(false);
 
   useEffect(() => {
     setContent(initialContent);
     setHasChanges(false);
-  }, [initialContent]);
+    setSavedLocally(false);
+    
+    // Determine save mode based on authentication and demo status
+    const canSaveToGitHub = githubService.isAuth() && !isDemo;
+    setSaveMode(canSaveToGitHub ? 'github' : 'local');
+    
+    // Check if there's a local version of this file
+    if (file && file.path) {
+      const localContent = localStorageService.getLocalContent(file.path);
+      if (localContent && localContent !== initialContent) {
+        setSavedLocally(true);
+      }
+    }
+  }, [initialContent, isDemo, file]);
 
   const handleContentChange = (e) => {
     const newContent = e.target.value;
@@ -32,38 +48,62 @@ const FeatureFileEditor = ({
   };
 
   const handleSave = async () => {
-    if (!hasChanges || isDemo) return;
+    if (!hasChanges) return;
 
     try {
       setIsSaving(true);
       setSaveError(null);
 
-      // Extract owner and repo name
-      let owner, repoName;
-      if (repository.owner?.login) {
-        owner = repository.owner.login;
-        repoName = repository.name;
-      } else if (repository.full_name) {
-        [owner, repoName] = repository.full_name.split('/');
+      if (saveMode === 'github') {
+        // Save to GitHub (existing functionality)
+        let owner, repoName;
+        if (repository.owner?.login) {
+          owner = repository.owner.login;
+          repoName = repository.name;
+        } else if (repository.full_name) {
+          [owner, repoName] = repository.full_name.split('/');
+        }
+
+        await githubService.updateFile(
+          owner,
+          repoName,
+          file.path,
+          content,
+          `Update ${file.name}`,
+          selectedBranch || repository.default_branch || 'main'
+        );
+
+        setHasChanges(false);
+        onSave && onSave(content);
+        
+        // Show success message briefly
+        setTimeout(() => {
+          setIsEditing(false);
+        }, 1000);
+
+      } else {
+        // Save to local storage
+        const metadata = {
+          repository: repository.full_name || `${repository.owner?.login}/${repository.name}`,
+          branch: selectedBranch || repository.default_branch || 'main',
+          fileName: file.name
+        };
+
+        const saved = localStorageService.saveLocal(file.path, content, metadata);
+        
+        if (saved) {
+          setHasChanges(false);
+          setSavedLocally(true);
+          onSave && onSave(content);
+          
+          // Show success message briefly
+          setTimeout(() => {
+            setIsEditing(false);
+          }, 1000);
+        } else {
+          throw new Error('Failed to save to local storage');
+        }
       }
-
-      // Save the file content back to GitHub
-      await githubService.updateFile(
-        owner,
-        repoName,
-        file.path,
-        content,
-        `Update ${file.name}`,
-        selectedBranch || repository.default_branch || 'main'
-      );
-
-      setHasChanges(false);
-      onSave && onSave(content);
-      
-      // Show success message briefly
-      setTimeout(() => {
-        setIsEditing(false);
-      }, 1000);
 
     } catch (error) {
       console.error('Error saving file:', error);
@@ -85,6 +125,48 @@ const FeatureFileEditor = ({
     setSaveError(null);
   };
 
+  const handleExportLocal = () => {
+    try {
+      const exportData = localStorageService.exportLocalChanges('json');
+      const url = URL.createObjectURL(exportData);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `sgex-feature-files-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting local changes:', error);
+      setSaveError(`Failed to export: ${error.message}`);
+    }
+  };
+
+  const handleLoadLocal = () => {
+    if (file && file.path) {
+      const localContent = localStorageService.getLocalContent(file.path);
+      if (localContent) {
+        if (hasChanges && !window.confirm('Loading local version will discard current changes. Continue?')) {
+          return;
+        }
+        setContent(localContent);
+        setHasChanges(localContent !== initialContent);
+        setSavedLocally(true);
+      }
+    }
+  };
+
+  const handleDiscardLocal = () => {
+    if (file && file.path && window.confirm('This will permanently delete the local version. Continue?')) {
+      localStorageService.removeLocal(file.path);
+      setSavedLocally(false);
+      if (content !== initialContent) {
+        setContent(initialContent);
+        setHasChanges(false);
+      }
+    }
+  };
+
   if (!isOpen || !file) return null;
 
   return (
@@ -101,10 +183,18 @@ const FeatureFileEditor = ({
                 <button 
                   className="btn btn-primary"
                   onClick={() => setIsEditing(true)}
-                  disabled={isDemo}
                 >
-                  {isDemo ? 'Edit (Demo Mode)' : 'Edit'}
+                  Edit {saveMode === 'local' ? '(Local)' : ''}
                 </button>
+                {savedLocally && saveMode === 'local' && (
+                  <button 
+                    className="btn btn-info"
+                    onClick={handleLoadLocal}
+                    title="Load local version"
+                  >
+                    Load Local
+                  </button>
+                )}
                 <button 
                   className="btn btn-secondary"
                   onClick={onClose}
@@ -117,9 +207,9 @@ const FeatureFileEditor = ({
                 <button 
                   className="btn btn-success"
                   onClick={handleSave}
-                  disabled={!hasChanges || isSaving || isDemo}
+                  disabled={!hasChanges || isSaving}
                 >
-                  {isSaving ? 'Saving...' : 'Save'}
+                  {isSaving ? 'Saving...' : `Save ${saveMode === 'local' ? 'Locally' : 'to GitHub'}`}
                 </button>
                 <button 
                   className="btn btn-secondary"
@@ -128,6 +218,15 @@ const FeatureFileEditor = ({
                 >
                   Cancel
                 </button>
+                {saveMode === 'local' && localStorageService.hasLocalChanges() && (
+                  <button 
+                    className="btn btn-info"
+                    onClick={handleExportLocal}
+                    title="Export all local changes"
+                  >
+                    Export All
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -185,10 +284,33 @@ const FeatureFileEditor = ({
           </div>
         )}
 
+        {saveMode === 'local' && !isDemo && (
+          <div className="local-storage-notice">
+            <span className="info-icon">💾</span>
+            Local Mode: Changes will be saved to your browser's local storage. 
+            {savedLocally && ' Local version available.'} 
+            <button 
+              className="btn-link"
+              onClick={handleExportLocal}
+              disabled={!localStorageService.hasLocalChanges()}
+            >
+              Export changes
+            </button>
+            {savedLocally && (
+              <button 
+                className="btn-link danger"
+                onClick={handleDiscardLocal}
+              >
+                Discard local
+              </button>
+            )}
+          </div>
+        )}
+
         {isDemo && (
           <div className="demo-notice">
-            <span className="info-icon">ℹ️</span>
-            Demo Mode: Editing is disabled. In a real repository with write permissions, you would be able to edit and save changes.
+            <span className="info-icon">🧪</span>
+            Demo Mode: Changes are saved locally for demonstration. In a real repository with write permissions, changes would be saved to GitHub.
           </div>
         )}
 
@@ -196,6 +318,8 @@ const FeatureFileEditor = ({
           <div className="editor-info">
             <span>Gherkin Feature File</span>
             {hasChanges && <span className="changes-indicator">• Unsaved changes</span>}
+            {savedLocally && <span className="local-indicator">• Local version available</span>}
+            {saveMode === 'local' && <span className="save-mode-indicator">• Local storage mode</span>}
           </div>
           <div className="editor-links">
             <a 
