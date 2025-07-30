@@ -60,7 +60,7 @@ const WelcomePage = () => {
   };
 
   const handleAuthoringClick = (event) => {
-    handleNavigationClick(event, '/sgex/select_profile', navigate);
+    handleNavigationClick(event, '/select_profile', navigate);
   };
 
   const handleLoginClick = (event) => {
@@ -84,7 +84,7 @@ const WelcomePage = () => {
       action: 'edit'
     };
     
-    handleNavigationClick(event, `/sgex/dak-selection/${demoProfile.login}`, navigate, navigationState);
+    handleNavigationClick(event, `/dak-selection/${demoProfile.login}`, navigate, navigationState);
   };
 
   const handleDismissWarning = () => {

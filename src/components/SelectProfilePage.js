@@ -174,7 +174,7 @@ const SelectProfilePage = () => {
 
   const handleProfileSelect = (event, profile) => {
     const navigationState = { profile };
-    handleNavigationClick(event, `/sgex/dak-action/${profile.login}`, navigate, navigationState);
+    handleNavigationClick(event, `/dak-action/${profile.login}`, navigate, navigationState);
   };
 
   const handleDismissWarning = () => {
