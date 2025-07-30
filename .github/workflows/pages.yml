@@ -326,6 +326,30 @@ jobs:
           
           repo_root="$(pwd)"
           
+          # Critical safety check: ensure we're on gh-pages branch
+          current_branch=$(git branch --show-current)
+          echo "Current branch: $current_branch"
+          
+          if [[ "$current_branch" != "gh-pages" ]]; then
+            echo "ERROR: Not on gh-pages branch! Current branch: $current_branch"
+            echo "This is a critical safety failure - aborting deployment"
+            exit 1
+          fi
+          
+          # Additional validation: ensure we're not on a source branch
+          if [[ "$current_branch" == "${{ github.ref_name }}" ]]; then
+            echo "ERROR: Still on source branch ${{ github.ref_name }}!"
+            echo "This should not happen - branch switching failed"
+            exit 1
+          fi
+          
+          # Verify we have the expected gh-pages branch structure
+          if [[ ! -f "README.md" ]] || ! grep -q "GitHub Pages" README.md 2>/dev/null; then
+            echo "WARNING: Expected gh-pages branch structure not found"
+            echo "This might indicate we're on the wrong branch or the branch is corrupted"
+          fi
+          
+          echo "✅ Branch validation passed - proceeding with staging changes"
           echo "Staging changes for commit"
           
           # Add all changes
@@ -342,6 +366,14 @@ jobs:
             - Refreshed root landing page with branch listings
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
+            
+            # Final safety check before push
+            push_branch=$(git branch --show-current)
+            if [[ "$push_branch" != "gh-pages" ]]; then
+              echo "ERROR: Branch changed during commit process! Now on: $push_branch"
+              echo "Aborting push for safety"
+              exit 1
+            fi
             
             echo "Pushing to gh-pages..."
             git push origin gh-pages
