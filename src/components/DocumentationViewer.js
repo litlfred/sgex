@@ -5,23 +5,6 @@ import './DocumentationViewer.css';
 
 // Dynamically generate documentation files structure
 const generateDocFiles = () => {
-  // Static mapping for files with custom titles or special handling
-  const customTitles = {
-    'README.md': 'Documentation Overview',
-    'UI_STYLING_REQUIREMENTS.md': 'UI Styling Requirements',
-    'WHO_CORS_WORKAROUND.md': 'WHO CORS Workaround',
-    'bpmn-integration.md': 'BPMN Integration',
-    'dak-components.md': 'DAK Components',
-    'decision-table-editor.md': 'Decision Table Editor',
-    'framework-developer-guide.md': 'Framework Developer Guide',
-    'page-framework.md': 'Page Framework',
-    'page-inventory.md': 'Page Inventory',
-    'project-plan.md': 'Project Plan',
-    'qa-testing.md': 'QA Testing',
-    'requirements.md': 'Requirements',
-    'solution-architecture.md': 'Solution Architecture',
-    'workflows/README.md': 'Workflows Overview'
-  };
 
   const files = {
     'overview': { file: 'README.md', title: 'Documentation Overview', category: 'root' },
