@@ -1,0 +1,197 @@
+/* Save Buttons Container Styles */
+
+.save-buttons-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.save-buttons-container.layout-vertical {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.save-buttons-container.layout-horizontal {
+  flex-direction: row;
+}
+
+/* Button sizing */
+.save-buttons-container.size-small {
+  gap: 0.5rem;
+}
+
+.save-buttons-container.size-medium {
+  gap: 0.75rem;
+}
+
+.save-buttons-container.size-large {
+  gap: 1rem;
+}
+
+/* Save buttons */
+.save-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: #007bff;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.save-button:hover:not(.disabled) {
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+.save-button:active:not(.disabled) {
+  transform: translateY(0);
+}
+
+.save-button.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Button variants */
+.save-button-local {
+  background: #28a745;
+  border-color: #28a745;
+}
+
+.save-button-local:hover:not(.disabled) {
+  background: #1e7e34;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.save-button-github {
+  background: #6f42c1;
+  border-color: #6f42c1;
+}
+
+.save-button-github:hover:not(.disabled) {
+  background: #5a32a3;
+  box-shadow: 0 2px 4px rgba(111, 66, 193, 0.3);
+}
+
+/* Success state */
+.save-button.success {
+  background: #155724;
+  border-color: #155724;
+  cursor: default;
+}
+
+.save-button.success:hover {
+  background: #155724;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Button content */
+.button-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.button-text {
+  white-space: nowrap;
+}
+
+/* Size variants */
+.save-buttons-container.size-small .save-button {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  min-width: 100px;
+}
+
+.save-buttons-container.size-large .save-button {
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+  min-width: 140px;
+}
+
+/* Status indicators */
+.github-unavailable,
+.demo-mode-indicator,
+.local-storage-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  border: 1px solid;
+}
+
+.github-unavailable {
+  color: #6c757d;
+  background: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.demo-mode-indicator {
+  color: #856404;
+  background: #fff3cd;
+  border-color: #ffeaa7;
+}
+
+.local-storage-indicator {
+  color: #0f5132;
+  background: #d1e7dd;
+  border-color: #a3cfbb;
+}
+
+.unavailable-icon,
+.demo-icon,
+.local-icon {
+  flex-shrink: 0;
+}
+
+.unavailable-text,
+.demo-text,
+.local-text {
+  font-weight: 500;
+}
+
+.github-unavailable small {
+  display: block;
+  opacity: 0.8;
+  font-size: 0.75rem;
+}
+
+/* Vertical layout adjustments */
+.save-buttons-container.layout-vertical .save-button {
+  width: 100%;
+  min-width: auto;
+}
+
+.save-buttons-container.layout-vertical .github-unavailable,
+.save-buttons-container.layout-vertical .demo-mode-indicator,
+.save-buttons-container.layout-vertical .local-storage-indicator {
+  text-align: center;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .save-buttons-container.layout-horizontal {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .save-button {
+    width: 100%;
+    min-width: auto;
+  }
+}

@@ -100,6 +100,124 @@ const MyPage = () => {
 export default MyPage;
 ```
 
+### Asset Editor Usage
+
+For asset editors (BPMN, CQL, DMN, Feature Files, etc.), use the enhanced `AssetEditorLayout`:
+
+```jsx
+import React, { useState } from 'react';
+import { AssetEditorLayout, useAssetSave } from '../components/framework';
+
+const MyAssetEditor = ({ file, repository, branch }) => {
+  const [content, setContent] = useState('');
+  const [originalContent] = useState('');
+  
+  const {
+    hasChanges,
+    isSavingLocal,
+    isSavingGitHub,
+    saveError,
+    saveLocal,
+    saveToGitHub,
+    clearError
+  } = useAssetSave({
+    file,
+    repository,
+    branch,
+    content,
+    originalContent,
+    onSave: (savedContent, saveType) => {
+      console.log(`Saved to ${saveType}:`, savedContent);
+    }
+  });
+
+  return (
+    <AssetEditorLayout
+      pageName="my-asset-editor"
+      file={file}
+      repository={repository}
+      branch={branch}
+      content={content}
+      originalContent={originalContent}
+      hasChanges={hasChanges}
+      onSave={(content, saveType) => console.log('Save callback:', saveType)}
+    >
+      <div className="editor-content">
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Edit your asset content here..."
+        />
+      </div>
+    </AssetEditorLayout>
+  );
+};
+
+export default MyAssetEditor;
+```
+
+## Enhanced Asset Editor Framework
+
+The framework provides a specialized layout for asset editors with consistent save functionality:
+
+### Key Features
+
+- **Independent Save States**: "Save Local" and "Save GitHub" buttons maintain separate disabled/loading states
+- **Confirmation Messages**: Success feedback with auto-dismiss after save operations
+- **Commit Message Dialog**: GitHub saves prompt for commit message with validation
+- **Error Handling**: Consistent error display with dismissible messages
+- **Local Storage Integration**: Automatic detection and management of local file versions
+- **Demo Mode Support**: Graceful handling of demo/unauthenticated states
+
+### Save Button Behavior
+
+#### Save Local Button
+- Saves content to browser localStorage
+- Shows confirmation message on success
+- Automatically disables after successful save
+- Re-enables when content changes again
+- Independent of GitHub save state
+
+#### Save to GitHub Button  
+- Only visible when user is authenticated and not in demo mode
+- Opens commit message dialog when clicked
+- Validates commit message before proceeding
+- Shows progress indicator during GitHub API calls
+- Automatically disables after successful commit
+- Re-enables when content changes again
+
+### AssetEditorLayout Props
+
+```jsx
+<AssetEditorLayout
+  // Required props
+  pageName="editor-name"           // Unique identifier for the editor
+  file={{ name: 'file.ext', path: 'path/to/file' }}  // File information
+  repository={repositoryObject}    // GitHub repository object
+  branch="main"                    // Current branch name
+  content="current content"        // Current editor content
+  originalContent="original"       // Original file content for change detection
+  
+  // State props
+  hasChanges={true}               // Whether content has changed
+  isDemo={false}                  // Whether in demo mode
+  
+  // Callbacks
+  onSave={(content, saveType) => {}}  // Called after successful save
+  onContentChange={(content) => {}}   // Called when content changes
+  
+  // UI customization
+  showSaveButtons={true}          // Whether to show save buttons
+  saveButtonsPosition="top"       // "top", "bottom", or "both"
+  
+  // PageLayout props can also be passed through
+  showHeader={true}
+  showMascot={true}
+>
+  {/* Your editor content goes here */}
+</AssetEditorLayout>
+```
+
 ### Accessing Page Context
 
 Use the page hooks to access URL parameters and context:
@@ -134,6 +252,91 @@ const DAKComponentPage = () => {
 };
 
 export default DAKComponentPage;
+```
+
+### Using the Asset Save Hook
+
+For custom asset editors, you can use the `useAssetSave` hook independently:
+
+```jsx
+import React, { useState } from 'react';
+import { useAssetSave, SaveButtonsContainer, CommitMessageDialog } from '../components/framework';
+
+const CustomAssetEditor = ({ file, repository, branch }) => {
+  const [content, setContent] = useState('');
+  const [originalContent] = useState('');
+  const [showCommitDialog, setShowCommitDialog] = useState(false);
+  const [commitMessage, setCommitMessage] = useState('');
+  
+  const {
+    hasChanges,
+    isSavingLocal,
+    isSavingGitHub,
+    saveError,
+    localSaveSuccess,
+    githubSaveSuccess,
+    canSaveToGitHub,
+    saveLocal,
+    saveToGitHub,
+    clearError
+  } = useAssetSave({
+    file,
+    repository,
+    branch,
+    content,
+    originalContent,
+    onSave: (savedContent, saveType) => {
+      console.log(`Content saved to ${saveType}`);
+    }
+  });
+
+  const handleSaveGitHub = () => setShowCommitDialog(true);
+  
+  const handleCommit = async (message) => {
+    const success = await saveToGitHub(message);
+    if (success) {
+      setShowCommitDialog(false);
+      setCommitMessage('');
+    }
+  };
+
+  return (
+    <div className="custom-editor">
+      <SaveButtonsContainer
+        hasChanges={hasChanges}
+        isSavingLocal={isSavingLocal}
+        isSavingGitHub={isSavingGitHub}
+        canSaveToGitHub={canSaveToGitHub}
+        localSaveSuccess={localSaveSuccess}
+        githubSaveSuccess={githubSaveSuccess}
+        onSaveLocal={saveLocal}
+        onSaveGitHub={handleSaveGitHub}
+      />
+      
+      {saveError && (
+        <div className="error-message">
+          {saveError}
+          <button onClick={clearError}>✕</button>
+        </div>
+      )}
+      
+      <textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+      />
+      
+      <CommitMessageDialog
+        isOpen={showCommitDialog}
+        commitMessage={commitMessage}
+        setCommitMessage={setCommitMessage}
+        onCommit={handleCommit}
+        onCancel={() => setShowCommitDialog(false)}
+        isSaving={isSavingGitHub}
+        fileName={file?.name}
+      />
+    </div>
+  );
+};
 ```
 
 ### Custom Header Configuration
@@ -307,9 +510,20 @@ When creating new pages, developers **MUST**:
 4. **Handle errors gracefully**: Let the framework handle errors, don't suppress them
 5. **Test all page types**: Ensure pages work in authenticated and demo modes
 
+### Additional Requirements for Asset Editors
+
+When creating asset editors, developers **MUST**:
+
+1. **Use AssetEditorLayout**: All asset editors must use `AssetEditorLayout` for consistent save functionality
+2. **Implement Independent Save States**: Local and GitHub save operations must maintain independent disabled states
+3. **Provide Content Change Detection**: Must accurately track `hasChanges` state
+4. **Handle Save Callbacks**: Implement `onSave` callback to handle post-save operations
+5. **Support Demo Mode**: Asset editors must work in both authenticated and demo modes
+6. **Validate File Information**: Ensure proper file path and metadata for save operations
+
 ### Code Review Checklist
 
-- [ ] Page wrapped with `PageLayout`
+- [ ] Page wrapped with `PageLayout` or `AssetEditorLayout`
 - [ ] Appropriate page type and URL pattern used
 - [ ] Page name specified for help integration
 - [ ] Error handling follows framework patterns
@@ -317,6 +531,10 @@ When creating new pages, developers **MUST**:
 - [ ] Help mascot is present and functional
 - [ ] Works in both authenticated and demo modes
 - [ ] Responsive design maintained
+- [ ] **Asset editors only**: Independent save button states implemented
+- [ ] **Asset editors only**: Content change detection working correctly
+- [ ] **Asset editors only**: Both local and GitHub save operations tested
+- [ ] **Asset editors only**: Commit message dialog functions properly
 
 ## Migration Guide
 
