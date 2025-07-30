@@ -661,7 +661,7 @@ const DAKDashboard = () => {
               </div>
             )}
           </div>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+          
         </div>
       </div>
 

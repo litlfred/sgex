@@ -729,7 +729,7 @@ define "Contraindication Present":
               <span className="context-owner">@{profile.login}</span>
             </>
           )}
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+          
         </div>
       </div>
 

@@ -487,6 +487,11 @@ Best regards,
           
           {showMenu && (
             <div className="help-menu-dropdown">
+              <button onClick={() => window.open('/sgex/docs/overview', '_blank')} className="menu-item">
+                <span className="menu-icon">📖</span>
+                Documentation
+              </button>
+              
               <button onClick={handleBugReport} className="menu-item">
                 <img src="/sgex/bug-report-icon.svg" alt="Bug" className="menu-icon" />
                 File Bug Report

@@ -3,6 +3,37 @@ class HelpContentService {
   constructor() {
     // Universal help topics that appear on all pages
     this.universalTopics = {
+      documentation: {
+        id: 'sgex-documentation',
+        title: 'Documentation',
+        badge: '/sgex/cat-paw-book-icon.svg',
+        type: 'slideshow',
+        content: [
+          {
+            title: 'SGEX Workbench Documentation',
+            content: `
+              <p>Access comprehensive documentation for SGEX Workbench and WHO SMART Guidelines:</p>
+              <div class="bug-report-options">
+                <button class="bug-type-btn" onclick="window.open('/sgex/docs/overview', '_blank')">
+                  📖 SGEX Workbench Overview - Learn about SGEX features and capabilities
+                </button>
+                <button class="bug-type-btn" onclick="window.open('/sgex/docs/getting-started', '_blank')">
+                  🚀 Getting Started Guide - Step-by-step tutorial for new users
+                </button>
+                <button class="bug-type-btn" onclick="window.open('/sgex/docs/dak-components', '_blank')">
+                  🧩 DAK Components - Understanding Digital Adaptation Kit structure
+                </button>
+                <button class="bug-type-btn" onclick="window.open('https://smart.who.int/', '_blank')">
+                  🌐 WHO SMART Guidelines - Official WHO SMART Guidelines documentation
+                </button>
+              </div>
+              <div class="help-tip">
+                <strong>💡 Tip:</strong> The documentation includes detailed guides for each component type, API references, and implementation examples.
+              </div>
+            `
+          }
+        ]
+      },
       bugReport: {
         id: 'report-sgex-bug',
         title: 'Report a SGeX bug',
@@ -618,7 +649,7 @@ class HelpContentService {
 
   // Get universal topics based on context (e.g., if DAK is selected)
   getUniversalTopics(contextData = {}) {
-    const topics = [this.universalTopics.bugReport];
+    const topics = [this.universalTopics.documentation, this.universalTopics.bugReport];
     
     // Add DAK feedback if we have DAK context
     if (contextData.selectedDak || contextData.repository) {

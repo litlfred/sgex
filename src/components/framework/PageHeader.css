@@ -138,13 +138,28 @@
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  padding: 0.3rem;
+  padding: 0.3rem 0.8rem;
   border-radius: 4px;
   transition: background-color 0.2s;
+  border: 1px solid var(--who-border-color, #dee2e6);
+  background-color: var(--who-card-bg, white);
+}
+
+.user-info::after {
+  content: '▼';
+  font-size: 0.7rem;
+  color: var(--who-text-muted, #999);
+  margin-left: 0.3rem;
+  transition: transform 0.2s;
+}
+
+.user-controls:hover .user-info::after {
+  transform: rotate(180deg);
 }
 
 .user-info:hover {
   background-color: var(--who-hover-bg, #e9ecef);
+  border-color: var(--who-blue, #006cbe);
 }
 
 .user-avatar {
@@ -169,13 +184,14 @@
   background-color: var(--who-card-bg, white);
   border: 1px solid var(--who-border-color, #dee2e6);
   border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   min-width: 160px;
   z-index: 1000;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-10px);
   transition: all 0.2s;
+  margin-top: 4px;
 }
 
 .user-controls:hover .user-dropdown {

@@ -441,7 +441,7 @@ const BPMNViewerEnhanced = () => {
             <span className="context-repo">{repository.name}</span>
             <span className="context-component">Business Process Viewer</span>
           </div>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+          
         </div>
       </div>
 

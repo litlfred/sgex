@@ -99,6 +99,7 @@
   overflow: hidden;
   z-index: 1001;
   min-width: 200px;
+  border: 1px solid #dee2e6;
 }
 
 .menu-item {
