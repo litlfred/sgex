@@ -283,17 +283,6 @@ const ActorEditor = () => {
     <PageLayout pageName="actor-editor">
       <div className="actor-editor">
         <div className="editor-content">
-        <div className="breadcrumb">
-          <span onClick={handleBackToDashboard} className="breadcrumb-link">Dashboard</span>
-          <span className="breadcrumb-separator">→</span>
-          <span className="breadcrumb-current">Actor Definitions</span>
-          {editActorId && (
-            <>
-              <span className="breadcrumb-separator">→</span>
-              <span className="breadcrumb-current">{editActorId}</span>
-            </>
-          )}
-        </div>
 
         <div className="editor-toolbar">
           <div className="toolbar-left">
