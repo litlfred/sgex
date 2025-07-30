@@ -1,0 +1,135 @@
+{
+  "app": {
+    "title": "ورشة عمل SGEX",
+    "subtitle": "تبادل الإرشادات الذكية لمنظمة الصحة العالمية",
+    "description": "محرر تعاوني لمجموعات التكيف الرقمي (DAK) للإرشادات الذكية لمنظمة الصحة العالمية"
+  },
+  "navigation": {
+    "home": "الرئيسية",
+    "dashboard": "لوحة التحكم",
+    "repositories": "المستودعات",
+    "documentation": "التوثيق",
+    "help": "المساعدة"
+  },
+  "auth": {
+    "signIn": "تسجيل الدخول",
+    "signOut": "تسجيل الخروج",
+    "signInWithPAT": "تسجيل الدخول باستخدام رمز الوصول الشخصي",
+    "authRequired": "مطلوب مصادقة GitHub. يرجى المصادقة أولاً.",
+    "setupToken": "قم بإعداد رمز الوصول الشخصي الخاص بك على GitHub"
+  },
+  "landing": {
+    "welcome": "مرحباً بك في ورشة عمل SGEX",
+    "subtitle": "محرر تعاوني لتبادل الإرشادات الذكية لمنظمة الصحة العالمية",  
+    "getStarted": "البدء",
+    "browseDAKs": "تصفح مجموعات DAK",
+    "learnMore": "اعرف المزيد",
+    "selectAction": "ماذا تريد أن تفعل؟",
+    "createNew": "إنشاء DAK جديد",
+    "editExisting": "تحرير DAK موجود",
+    "explorePublic": "استكشاف مجموعات DAK العامة"
+  },
+  "dak": {
+    "title": "مجموعة التكيف الرقمي",
+    "components": "مكونات DAK",
+    "status": "الحالة",
+    "lastModified": "آخر تعديل",
+    "branch": "الفرع",
+    "repository": "المستودع",
+    "healthInterventions": "التدخلات الصحية والتوصيات",
+    "genericPersonas": "الشخصيات العامة",
+    "userScenarios": "سيناريوهات المستخدم",
+    "businessProcesses": "العمليات التجارية العامة وتدفقات العمل",
+    "coreDataElements": "عناصر البيانات الأساسية",
+    "decisionSupportLogic": "منطق دعم القرار",
+    "programIndicators": "مؤشرات البرنامج",
+    "requirements": "المتطلبات الوظيفية وغير الوظيفية"
+  },
+  "repository": {
+    "select": "اختيار المستودع",
+    "search": "البحث في المستودعات...",
+    "noResults": "لم يتم العثور على مستودعات",
+    "loading": "جاري تحميل المستودعات...",
+    "error": "خطأ في تحميل المستودعات",
+    "public": "عام",
+    "private": "خاص",
+    "fork": "نسخة مستقلة",
+    "stars": "النجوم",
+    "language": "اللغة"
+  },
+  "organization": {
+    "select": "اختيار المنظمة",
+    "personal": "المستودعات الشخصية",
+    "organizations": "المنظمات"
+  },
+  "branch": {
+    "select": "اختيار الفرع",
+    "current": "الفرع الحالي",
+    "switchTo": "التبديل إلى {{branch}}",
+    "createNew": "إنشاء فرع جديد"
+  },
+  "editor": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "edit": "تحرير",
+    "preview": "معاينة",
+    "unsavedChanges": "لديك تغييرات غير محفوظة",
+    "saveChanges": "حفظ التغييرات",
+    "discardChanges": "تجاهل التغييرات"
+  },
+  "help": {
+    "title": "المساعدة والتوثيق",
+    "contextualHelp": "المساعدة السياقية",
+    "documentation": "التوثيق",
+    "support": "الدعم",
+    "feedback": "ملاحظات",
+    "close": "إغلاق"
+  },
+  "theme": {
+    "toggle": "تبديل النمط",
+    "dark": "النمط المظلم",
+    "light": "النمط الفاتح"
+  },
+  "language": {
+    "select": "اختيار اللغة",
+    "english": "English",
+    "french": "Français",
+    "spanish": "Español",
+    "arabic": "العربية"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "success": "نجح",
+    "warning": "تحذير",
+    "info": "معلومات",
+    "ok": "موافق",
+    "cancel": "إلغاء",
+    "yes": "نعم",
+    "no": "لا",
+    "search": "بحث",
+    "filter": "تصفية",
+    "sort": "ترتيب",
+    "refresh": "تحديث",
+    "retry": "إعادة المحاولة",
+    "back": "عودة",
+    "next": "التالي",
+    "previous": "السابق",
+    "close": "إغلاق"
+  },
+  "errors": {
+    "generic": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+    "network": "خطأ في الشبكة. يرجى التحقق من الاتصال.",
+    "unauthorized": "غير مخول لتنفيذ هذا الإجراء.",
+    "notFound": "المورد المطلوب غير موجود.",
+    "validation": "يرجى التحقق من الإدخال والمحاولة مرة أخرى."
+  },
+  "dashboard": {
+    "title": "لوحة تحكم DAK",
+    "overview": "نظرة عامة",
+    "components": "المكونات",
+    "status": "الحالة",
+    "activity": "النشاط الحديث",
+    "errorLoading": "خطأ في تحميل لوحة التحكم"
+  }
+}

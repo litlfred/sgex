@@ -27,11 +27,25 @@
   left: 30px;
 }
 
-/* Theme Toggle Container */
+/* Theme and Language Controls Container */
 .theme-toggle-container {
   display: flex;
-  justify-content: center;
-  margin-bottom: 5px;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+/* Language selector in mascot */
+.mascot-language-selector {
+  transform: scale(0.85);
+  transform-origin: center;
+}
+
+.mascot-language-selector .language-toggle {
+  min-width: 100px;
+  padding: 6px 10px;
+  font-size: 12px;
 }
 
 /* Theme Toggle Button (Light Switch) */

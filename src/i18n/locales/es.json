@@ -1,0 +1,135 @@
+{
+  "app": {
+    "title": "Taller SGEX",
+    "subtitle": "Intercambio de Directrices Inteligentes OMS",
+    "description": "Editor colaborativo para Kits de Adaptación Digital (DAK) de Directrices Inteligentes OMS"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "dashboard": "Panel de Control",
+    "repositories": "Repositorios",
+    "documentation": "Documentación",
+    "help": "Ayuda"
+  },
+  "auth": {
+    "signIn": "Iniciar Sesión",
+    "signOut": "Cerrar Sesión",
+    "signInWithPAT": "Iniciar sesión con Token de Acceso Personal",
+    "authRequired": "Se requiere autenticación de GitHub. Por favor, autentíquese primero.",
+    "setupToken": "Configure su Token de Acceso Personal de GitHub"
+  },
+  "landing": {
+    "welcome": "Bienvenido al Taller SGEX",
+    "subtitle": "Editor colaborativo de Intercambio de Directrices Inteligentes OMS",
+    "getStarted": "Comenzar",
+    "browseDAKs": "Explorar DAKs",
+    "learnMore": "Saber Más",
+    "selectAction": "¿Qué le gustaría hacer?",
+    "createNew": "Crear Nuevo DAK",
+    "editExisting": "Editar DAK Existente",
+    "explorePublic": "Explorar DAKs Públicos"
+  },
+  "dak": {
+    "title": "Kit de Adaptación Digital",
+    "components": "Componentes DAK",
+    "status": "Estado",
+    "lastModified": "Última Modificación",
+    "branch": "Rama",
+    "repository": "Repositorio",
+    "healthInterventions": "Intervenciones Sanitarias y Recomendaciones",
+    "genericPersonas": "Personas Genéricas",
+    "userScenarios": "Escenarios de Usuario",
+    "businessProcesses": "Procesos de Negocio Genéricos y Flujos de Trabajo",
+    "coreDataElements": "Elementos de Datos Esenciales",
+    "decisionSupportLogic": "Lógica de Apoyo a la Decisión",
+    "programIndicators": "Indicadores de Programa",
+    "requirements": "Requisitos Funcionales y No Funcionales"
+  },
+  "repository": {
+    "select": "Seleccionar Repositorio",
+    "search": "Buscar repositorios...",
+    "noResults": "No se encontraron repositorios",
+    "loading": "Cargando repositorios...",
+    "error": "Error al cargar repositorios",
+    "public": "Público",
+    "private": "Privado",
+    "fork": "Fork",
+    "stars": "Estrellas",
+    "language": "Idioma"
+  },
+  "organization": {
+    "select": "Seleccionar Organización",
+    "personal": "Repositorios Personales",
+    "organizations": "Organizaciones"
+  },
+  "branch": {
+    "select": "Seleccionar Rama",
+    "current": "Rama Actual",
+    "switchTo": "Cambiar a {{branch}}",
+    "createNew": "Crear Nueva Rama"
+  },
+  "editor": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "preview": "Vista Previa",
+    "unsavedChanges": "Tiene cambios sin guardar",
+    "saveChanges": "Guardar Cambios",
+    "discardChanges": "Descartar Cambios"
+  },
+  "help": {
+    "title": "Ayuda y Documentación",
+    "contextualHelp": "Ayuda Contextual",
+    "documentation": "Documentación",
+    "support": "Soporte",
+    "feedback": "Comentarios",
+    "close": "Cerrar"
+  },
+  "theme": {
+    "toggle": "Alternar Tema",
+    "dark": "Modo Oscuro",
+    "light": "Modo Claro"
+  },
+  "language": {
+    "select": "Seleccionar Idioma",
+    "english": "English",
+    "french": "Français",
+    "spanish": "Español",
+    "arabic": "العربية"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "warning": "Advertencia",
+    "info": "Información",
+    "ok": "Aceptar",
+    "cancel": "Cancelar",
+    "yes": "Sí",
+    "no": "No",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "refresh": "Actualizar",
+    "retry": "Reintentar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "close": "Cerrar"
+  },
+  "errors": {
+    "generic": "Ocurrió un error. Por favor, inténtelo de nuevo.",
+    "network": "Error de red. Por favor, verifique su conexión.",
+    "unauthorized": "No está autorizado para realizar esta acción.",
+    "notFound": "El recurso solicitado no fue encontrado.",
+    "validation": "Por favor, verifique su entrada e inténtelo de nuevo."
+  },
+  "dashboard": {
+    "title": "Panel de Control DAK",
+    "overview": "Resumen",
+    "components": "Componentes",
+    "status": "Estado",
+    "activity": "Actividad Reciente",
+    "errorLoading": "Error al Cargar el Panel de Control"
+  }
+}
