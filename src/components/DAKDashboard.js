@@ -248,7 +248,7 @@ const DAKDashboard = () => {
 
 
 
-  // Define the 8 core DAK components based on WHO SMART Guidelines documentation
+  // Define the 9 core DAK components based on WHO SMART Guidelines documentation
   const coreDAKComponents = [
     {
       id: 'health-interventions',
@@ -337,6 +337,17 @@ const DAKDashboard = () => {
       fileTypes: ['Requirements', 'Specification'],
       count: 32,
       editor: 'Requirements editor with structured templates'
+    },
+    {
+      id: 'testing',
+      name: 'Testing',
+      description: 'Feature files and test scenarios for validating the DAK implementation',
+      icon: '🧪',
+      type: 'L2',
+      color: '#8b5cf6',
+      fileTypes: ['Feature', 'Test'],
+      count: 0,
+      editor: 'Testing viewer with feature file browser'
     }
   ];
 
@@ -498,6 +509,12 @@ const DAKDashboard = () => {
     // For generic-personas, navigate to actor editor
     if (component.id === 'generic-personas') {
       handleNavigationClick(event, '/actor-editor', navigate, navigationState);
+      return;
+    }
+
+    // For testing, navigate to testing viewer
+    if (component.id === 'testing') {
+      handleNavigationClick(event, '/testing-viewer', navigate, navigationState);
       return;
     }
 
@@ -708,11 +725,11 @@ const DAKDashboard = () => {
             </button>
           </div>
 
-          {/* 8 Core DAK Components Section */}
+          {/* 9 Core DAK Components Section */}
           {activeTab === 'core' && (
             <div className="components-section active">
               <div className="section-header">
-                <h3 className="section-title">8 Core DAK Components</h3>
+                <h3 className="section-title">9 Core DAK Components</h3>
                 <p className="section-description">
                   Essential components that form the foundation of any WHO SMART Guidelines Digital Adaptation Kit
                 </p>
