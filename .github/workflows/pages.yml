@@ -217,6 +217,11 @@ jobs:
           echo "Building root landing page..."
           node scripts/build-multi-branch.js root
           
+          # Save build directory before switching branches
+          echo "Preserving root build..."
+          mkdir -p /tmp/root-build-backup
+          cp -a build/. /tmp/root-build-backup/
+          
           # Switch back to gh-pages
           git checkout gh-pages
           
@@ -238,7 +243,10 @@ jobs:
           find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name '.github' -exec rm -rf {} +
           
           # Copy root landing page
-          cp -a build/. .
+          cp -a /tmp/root-build-backup/. .
+          
+          # Clean up temporary build backup
+          rm -rf /tmp/root-build-backup
           
           # Restore branch directories
           if [[ -d /tmp/branch-backup ]]; then
@@ -261,16 +269,24 @@ jobs:
               echo "Deploying main branch from current build..."
               git checkout ${{ github.ref_name }}
               node scripts/build-multi-branch.js branch
+              # Save build before switching branches
+              mkdir -p /tmp/main-build-backup
+              cp -a build/. /tmp/main-build-backup/
               git checkout gh-pages
-              cp -a build/. sgex/main/
+              cp -a /tmp/main-build-backup/. sgex/main/
+              rm -rf /tmp/main-build-backup
             else
               # Check out main branch and build it
               echo "Building main branch separately..."
               if git show-ref --verify --quiet refs/remotes/origin/main; then
                 git checkout main
                 node scripts/build-multi-branch.js branch
+                # Save build before switching branches
+                mkdir -p /tmp/main-build-backup
+                cp -a build/. /tmp/main-build-backup/
                 git checkout gh-pages
-                cp -a build/. sgex/main/
+                cp -a /tmp/main-build-backup/. sgex/main/
+                rm -rf /tmp/main-build-backup
               else
                 echo "Warning: Main branch not found, /sgex/main/ will not be available"
               fi
@@ -286,10 +302,20 @@ jobs:
           if [[ "${{ github.ref_name }}" != "main" ]]; then
             git checkout ${{ github.ref_name }}
             node scripts/build-multi-branch.js branch
+            # Save build before switching branches
+            mkdir -p /tmp/branch-build-backup
+            cp -a build/. /tmp/branch-build-backup/
             git checkout gh-pages
+            cp -a /tmp/branch-build-backup/. "$sgex_branch_dir/"
+            rm -rf /tmp/branch-build-backup
+          else
+            # If we're on main branch and main directory exists, copy from there
+            if [[ -d "sgex/main" ]]; then
+              cp -a sgex/main/. "$sgex_branch_dir/"
+            else
+              echo "Warning: Main branch build not available for branch-specific copy"
+            fi
           fi
-          
-          cp -a build/. "$sgex_branch_dir/"
           
           echo "✅ Root landing page deployed"
 
@@ -300,6 +326,30 @@ jobs:
           
           repo_root="$(pwd)"
           
+          # Critical safety check: ensure we're on gh-pages branch
+          current_branch=$(git branch --show-current)
+          echo "Current branch: $current_branch"
+          
+          if [[ "$current_branch" != "gh-pages" ]]; then
+            echo "ERROR: Not on gh-pages branch! Current branch: $current_branch"
+            echo "This is a critical safety failure - aborting deployment"
+            exit 1
+          fi
+          
+          # Additional validation: ensure we're not on a source branch
+          if [[ "$current_branch" == "${{ github.ref_name }}" ]]; then
+            echo "ERROR: Still on source branch ${{ github.ref_name }}!"
+            echo "This should not happen - branch switching failed"
+            exit 1
+          fi
+          
+          # Verify we have the expected gh-pages branch structure
+          if [[ ! -f "README.md" ]] || ! grep -q "GitHub Pages" README.md 2>/dev/null; then
+            echo "WARNING: Expected gh-pages branch structure not found"
+            echo "This might indicate we're on the wrong branch or the branch is corrupted"
+          fi
+          
+          echo "✅ Branch validation passed - proceeding with staging changes"
           echo "Staging changes for commit"
           
           # Add all changes
@@ -316,6 +366,14 @@ jobs:
             - Refreshed root landing page with branch listings
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
+            
+            # Final safety check before push
+            push_branch=$(git branch --show-current)
+            if [[ "$push_branch" != "gh-pages" ]]; then
+              echo "ERROR: Branch changed during commit process! Now on: $push_branch"
+              echo "Aborting push for safety"
+              exit 1
+            fi
             
             echo "Pushing to gh-pages..."
             git push origin gh-pages
