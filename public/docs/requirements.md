@@ -4,7 +4,25 @@
 
 The SMART Guidelines Exchange (SGEX) Workbench is a browser-based, static web application designed for collaborative editing of WHO SMART Guidelines Digital Adaptation Kits (DAKs) content stored in GitHub repositories.
 
-## 1.1 System Actors
+### 1.1 Definition of a WHO SMART Guidelines Digital Adaptation Kit
+
+A **GitHub Repository which is a WHO SMART Guidelines Digital Adaptation Kit** is defined as one that:
+
+1. **Has a `sushi-config.yaml` file in the root of the repository**
+2. **If found, it should parse the YAML and look for the key 'dependencies' which is a list and which should have a key 'smart.who.int.base'**
+
+This definition ensures that only repositories that are genuinely WHO SMART Guidelines Digital Adaptation Kits are recognized and processed by the SGEX Workbench, providing a clear and technical validation mechanism.
+
+**Example**: A valid DAK repository should have a `sushi-config.yaml` file with content similar to:
+```yaml
+dependencies:
+  smart.who.int.base: current
+  # ... other dependencies
+```
+
+For reference, see the WHO DAK repository example at: https://github.com/WorldHealthOrganization/smart-immunizations/blob/main/sushi-config.yaml
+
+## 1.2 System Actors
 
 The SGEX Workbench operates within an ecosystem of actors that collaborate to enable effective DAK management and editing:
 
@@ -53,6 +71,12 @@ The SGEX Workbench operates within an ecosystem of actors that collaborate to en
 - Context preservation (repo/artifact context)
 - Support for new GitHub account creation flow
 
+**REQ-AUTH-003**: The system SHALL provide reliable authentication loading states
+- No infinite loading states during authentication failures
+- Proper error handling with fallback to authentication form
+- Clear loading indicators during profile data retrieval
+- Graceful degradation when GitHub API requests fail
+
 **REQ-AUTH-003**: The system SHALL respect GitHub repository permissions
 - All authorization managed through GitHub repository settings
 - No custom permission system required
@@ -69,6 +93,18 @@ The SGEX Workbench operates within an ecosystem of actors that collaborate to en
 - List available DAK repositories
 - Repository selection interface
 - Navigate to repository-specific home page
+
+**REQ-REPO-003**: The system SHALL display official logos and avatars for organizations
+- Organizations (e.g., WHO) SHALL display their official logo/avatar retrieved from GitHub
+- Avatars SHALL be properly sized and positioned within profile cards
+- Profile cards SHALL maintain visual consistency across different organization types
+
+**REQ-REPO-004**: The system SHALL provide DAK repository count indicators
+- Users and organizations with scanned DAK repositories SHALL display a notification badge
+- The badge SHALL show the number of found DAK repositories in the upper right corner of the avatar
+- The badge SHALL be visually distinctive with appropriate color coding and animation
+- The badge SHALL only appear when DAK repositories are found (count > 0)
+- During repository scanning, a "Scanning..." indicator SHALL be displayed
 
 ### 2.3 DAK Component Management
 
@@ -131,7 +167,57 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - Breadcrumb navigation for user orientation
 - Component-specific validation and error handling
 
-### 2.4 File Operations
+**REQ-DAK-007**: The system SHALL support enhanced business process selection navigation
+- Business process navigation SHALL NOT require permission validation at initial click
+- Permission checks SHALL occur only when attempting to edit or create BPMN diagrams
+- The system SHALL provide a dedicated business process selection interface showing:
+  - List of all BPMN files in `input/business-processes/` directory
+  - File metadata (name, path, size) for each BPMN diagram
+  - Three action modes per file: View (read-only), Edit (permission-required), Source (XML viewing)
+- Read-only BPMN viewing SHALL use `bpmn-js/NavigatedViewer` without editing capabilities
+- Source viewing SHALL display formatted XML with copy, download, and GitHub integration features
+- All business process screens SHALL maintain consistent breadcrumb navigation
+- Permission notices SHALL be clearly displayed for users without write access
+
+**REQ-DAK-008**: The system SHALL provide public Decision Support Logic viewing capabilities
+- Decision Support Logic component card SHALL always display a 'View' link accessible to all users (authenticated or not)
+- The system SHALL provide a dedicated Decision Support Logic view page with two main sections:
+  1. **Variables Section**: Dynamic display of DAK.DT code system content as a sortable, searchable table
+  2. **Decision Tables Section**: List of DMN files from `input/decision-logic/` directory with comprehensive linking
+- Variables table SHALL include columns: Code, Display, Definition, Table, Tab, and CQL (rendered as formatted code blocks)
+- Decision tables SHALL provide three types of links per file:
+  - **DMN Source**: Pop-up dialog displaying raw DMN content with copy functionality
+  - **GitHub Source**: Direct link to the file on GitHub repository
+  - **HTML Rendering**: Link to corresponding HTML file in `input/pagecontent/` (when available)
+- All DMN and HTML renderings SHALL use styling from WHO DMN stylesheet (https://github.com/WorldHealthOrganization/smart-base/blob/main/input/scripts/includes/dmn.css)
+- All Decision Support Logic features SHALL be accessible without authentication
+- Navigation SHALL support direct URL access with repository parameters: `/decision-support-logic/:user/:repo/:branch`
+
+### 2.4 URL Patterns and Routing
+
+**REQ-URL-001**: The system SHALL use consistent URL patterns for DAK component pages
+- DAK component pages SHALL follow the pattern: `/{component}/{user}/{repo}` or `/{component}/{user}/{repo}/{branch}`
+- Core Data Dictionary viewer SHALL use: `/core-data-dictionary-viewer/{user}/{repo}/{branch}`
+- Business process selection SHALL use: `/business-process-selection/{user}/{repo}/{branch}`
+- Dashboard SHALL use: `/dashboard/{user}/{repo}/{branch}`
+- URL parameters SHALL take precedence over location state for navigation context
+- Components SHALL support both URL-based and state-based navigation for backward compatibility
+
+**REQ-URL-002**: The system SHALL maintain URL parameter consistency
+- `{user}`: GitHub username or organization name (owner of the repository)
+- `{repo}`: Repository name
+- `{branch}`: Git branch name (optional, defaults to repository default branch)
+- URL patterns SHALL be used for shareable links and direct navigation
+- Navigation between DAK components SHALL preserve URL parameter context
+
+**REQ-URL-003**: The system SHALL support GitHub Pages URL generation
+- Branch-based URL generation for FHIR IG Publisher artifacts:
+  - Main branch: `https://{user}.github.io/{repo}/`
+  - Other branches: `https://{user}.github.io/{repo}/branches/{branch}`
+- Artifact links for Code Systems, Value Sets, Logical Models, and Concept Maps
+- Standard Dictionaries section with Core Data Dictionary CodeSystem link
+
+### 2.5 File Operations
 
 **REQ-FILE-001**: The system SHALL provide file browser functionality
 - Navigate file structure within repositories
@@ -166,6 +252,21 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - Monaco Editor for advanced XML editing
 - Syntax highlighting and validation
 - Support for complex XML structures
+
+**REQ-EDIT-005**: The system SHALL provide Core Data Dictionary viewing capabilities
+- Dedicated viewer for Component 2 Core Data Dictionary (DAK Component: Core Data Elements)
+- Accessible from both "Core Data Elements" (8 Core Components) and "Terminology" (Additional Components)
+- URL pattern following REQ-URL-001: `/core-data-dictionary-viewer/{user}/{repo}/{branch}`
+- Context preservation through URL parameters with fallback to location state
+- FHIR FSH file detection and display from `input/fsh/` directory
+- Source code modal viewer with syntax highlighting for FSH files
+- Direct GitHub source code links for each FSH file
+- Publications section with automated gh-pages branch detection
+- Branch-based URL generation for FHIR IG Publisher artifacts (per REQ-URL-003)
+- Artifact links for Code Systems, Value Sets, Logical Models, and Concept Maps
+- Standard Dictionaries section with Core Data Dictionary CodeSystem link
+- Help integration with contextual help topics and notification badges for repositories without gh-pages
+- Consistent blue background styling matching DAK Dashboard component pages
 
 ### 2.6 Form-Based Data Entry
 
@@ -270,7 +371,13 @@ For detailed information about each DAK component, see [DAK Components Documenta
 
 **REQ-UX-003**: The system SHALL provide a consistent "Get Help" feature
 - SGEX mascot-based help button available throughout the application
-- Context-sensitive help dialogs with step-by-step guidance
+- **Fixed positioning**: Mascot appears as a fixed UI element in the bottom-right corner of each page
+- **Transparent background**: Mascot images have transparent backgrounds for seamless integration
+- **Interactive help behavior**:
+  - **Hover interaction**: When user hovers over the mascot, a contextual help dialog appears as a thought bubble
+  - **Click interaction**: When user clicks the mascot, the help dialog becomes sticky and remains visible until manually closed
+  - **Thought bubble design**: Help content appears in a speech bubble pointing to the mascot
+- Context-sensitive help dialogs with step-by-step guidance tailored to the current page
 - Interactive slideshow for GitHub Personal Access Token creation
 - Hamburger menu with additional support options:
   - File Bug Report functionality linking to GitHub issues
@@ -316,6 +423,28 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - Monaco Editor for code editing
 - Octokit for GitHub API access
 
+### 5.3 FHIR IG Publisher and GitHub Workflows
+
+**REQ-INT-004**: The system SHALL support FHIR Implementation Guide Publisher integration
+- DAK repositories use the FHIR IG Publisher to generate published artifacts from FSH source files
+- Each branch (except gh-pages) triggers the IG Publisher on every commit via GitHub Actions
+- Published content is deployed to the gh-pages branch for web access
+- The Core Data Dictionary viewer integrates with this publishing workflow to provide artifact links
+
+**REQ-INT-005**: The system SHALL understand branch-to-publication relationships
+- **Main branch publication**: Content accessible at `https://{user}.github.io/{repo}/`
+- **Feature branch publication**: Content accessible at `https://{user}.github.io/{repo}/branches/{branch}`
+- **Source files**: FHIR FSH files stored in `input/fsh/` directory
+- **Published artifacts**: Generated HTML documentation and FHIR resources
+- **Artifact categories**: Code Systems, Value Sets, Logical Models, Concept Maps available at standardized paths
+
+**REQ-INT-006**: The system SHALL provide GitHub Pages setup guidance
+- Detect repositories without gh-pages branch configuration
+- Provide contextual help links to WHO IG Starter Kit documentation
+- Reference setup instructions at https://smart.who.int/ig-starter-kit/v1.0.0/ig_setup.html#ghpages-build
+- Display notification badges in help system for repositories requiring setup
+- Guide users through common setup and troubleshooting scenarios
+
 ## 6. Constraints
 
 ### 6.1 Technical Constraints
@@ -345,6 +474,111 @@ For detailed information about each DAK component, see [DAK Components Documenta
 - GitHub REST API stability
 - Third-party library maintenance (bpmn-js, dmn-js, JSON Forms)
 - WHO SMART Guidelines branding materials availability
+
+## 9. Staging Ground for DAK Changes
+
+### 9.1 Overview
+
+**REQ-STAGING-001**: The system SHALL provide a "Staging Ground" for managing local DAK changes before committing to GitHub
+- The staging ground serves as a temporary workspace for DAK authors to make and validate changes
+- All changes must pass compliance validation before being committed to the repository
+- Local changes are stored in browser localStorage with timestamp and rollback capabilities
+- Staging ground integrates with all DAK component editing tools
+
+### 9.2 Data Structure
+
+**REQ-STAGING-002**: The system SHALL maintain a structured data dictionary for staging ground with the following properties:
+- **message**: A commit message provided by the DAK Author when saving changes
+- **files**: Array of file objects containing:
+  - **path**: Relative path of the file within the repository
+  - **content**: Full file content (editing tools provide complete files, not diffs)
+  - **metadata**: Additional metadata necessary for commit operations
+  - **timestamp**: When the file was last modified in staging
+- **timestamp**: Overall timestamp when the staging ground was last updated
+- **branch**: Target branch for the changes
+
+**REQ-STAGING-003**: The system SHALL support multiple timestamped saves in local storage
+- Each save operation creates a separate entry with timestamp
+- DAK authors can roll back to earlier saved versions
+- Local storage manages versioning and cleanup of old saves
+
+### 9.3 Compliance Validation
+
+**REQ-STAGING-004**: The system SHALL provide comprehensive compliance validation with three severity levels:
+- **Error**: Compliance failures that block commit/save operations
+- **Warning**: Issues that should be addressed but don't prevent saving
+- **Info**: Informational messages about best practices or suggestions
+
+**REQ-STAGING-005**: The system SHALL support validation execution in multiple environments:
+- **Client-side in React**: Real-time validation in SGeX Workbench interface
+- **Command-line**: For users working with git checkout and command-line tools
+- **IDE integration**: For users editing in their preferred development environment
+
+**REQ-STAGING-006**: The system SHALL block save operations when error-level validation failures exist
+- Save button remains disabled until errors are resolved
+- Optional override mechanism (disabled by default) allows saving despite errors
+- Clear error messages guide users toward resolution
+
+### 9.4 User Interface
+
+**REQ-STAGING-007**: The system SHALL display staging ground status in the DAK Dashboard through a collapsible interface:
+- **Title bar** (always visible) showing:
+  - Status indicator badge with number of files changed
+  - Horizontal stoplight validation indicator with severity badges:
+    - Red: Number of error-level compliance test failures
+    - Amber/Orange: Number of warning-level compliance test failures  
+    - Green: Number of info-level compliance test results
+  - Colors light up only when no failures exist for that severity level
+- **Expanded content** (initially collapsed) showing:
+  - Detailed list of changed files
+  - Validation results with specific messages
+  - Save button and commit message interface
+
+**REQ-STAGING-008**: The system SHALL provide a save dialog interface:
+- Commit message input field (required)
+- Validation status display with expansion for details
+- Option to override error-level validations (disabled by default)
+- Clear error handling with user-friendly resolution guidance
+
+### 9.5 Integration Interfaces
+
+**REQ-STAGING-009**: The system SHALL provide standardized interfaces for DAK component editing tools:
+- **File contribution interface**: Allows editing tools to add/update files in staging ground
+- **Status query interface**: Tools can check current staging ground state
+- **Validation trigger interface**: Tools can request validation of their contributions
+
+**REQ-STAGING-010**: The system SHALL support integration with existing DAK editing workflows:
+- BPMN editor integration for business process files
+- DMN editor integration for decision support logic
+- Form-based editors for structured DAK components
+- File browser integration for direct file modifications
+
+### 9.6 Persistence and Versioning
+
+**REQ-STAGING-011**: The system SHALL implement robust local storage management:
+- Browser localStorage for client-side persistence
+- Automatic cleanup of old saves (configurable retention period)
+- Conflict detection when multiple browser tabs modify the same DAK
+- Export/import functionality for staging ground state
+
+**REQ-STAGING-012**: The system SHALL support rollback to previous saves:
+- List of available save points with timestamps
+- Preview capability showing changes between saves
+- One-click rollback to any previous save state
+- Confirmation dialogs to prevent accidental data loss
+
+### 9.7 GitHub Integration
+
+**REQ-STAGING-013**: The system SHALL seamlessly integrate staging ground with GitHub operations:
+- Staging ground changes translate directly to GitHub commit operations
+- Branch selection and creation through staging ground interface
+- Pull request creation workflow incorporating staged changes
+- Conflict resolution when remote changes affect staged files
+
+**REQ-STAGING-014**: The system SHALL maintain consistency between staging ground and repository state:
+- Detection of conflicts with remote changes
+- Merge capabilities for non-conflicting changes
+- Clear indicators when staging ground is out of sync with selected branch
 
 ---
 
