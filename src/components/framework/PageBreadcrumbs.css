@@ -1,0 +1,152 @@
+/* Unified Page Breadcrumbs Styling */
+.page-breadcrumbs {
+  margin: 0;
+  padding: 0.75rem 0;
+  background: var(--who-primary-bg, #ffffff);
+}
+
+.breadcrumb-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+.breadcrumb-link {
+  background: none;
+  border: none;
+  color: var(--who-blue, #006cbe);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0.25rem 0;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  transition: color 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+  color: var(--who-blue-dark, #004a99);
+  text-decoration: none;
+}
+
+.breadcrumb-link:focus {
+  outline: 2px solid var(--who-blue, #006cbe);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.breadcrumb-separator {
+  color: var(--who-text-muted, #6c757d);
+  margin: 0 0.5rem;
+  font-weight: normal;
+  user-select: none;
+}
+
+.breadcrumb-current {
+  color: var(--who-text-primary, #333);
+  font-weight: 500;
+  padding: 0.25rem 0;
+}
+
+/* Dark theme support - using body class instead of data-theme attribute */
+body.theme-dark .breadcrumb-link {
+  color: #4dabf7;
+  font-weight: 500;
+}
+
+body.theme-dark .breadcrumb-link:hover {
+  color: #74c0fc;
+}
+
+body.theme-dark .breadcrumb-link:focus {
+  outline-color: #4dabf7;
+}
+
+body.theme-dark .breadcrumb-separator {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+}
+
+body.theme-dark .breadcrumb-current {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* RTL language support */
+[dir="rtl"] .breadcrumb-list {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .breadcrumb-separator::before {
+  content: '‹';
+}
+
+[dir="rtl"] .breadcrumb-separator {
+  content: '';
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .page-breadcrumbs {
+    margin-bottom: 1rem;
+  }
+  
+  .breadcrumb-list {
+    font-size: 0.8rem;
+  }
+  
+  .breadcrumb-separator {
+    margin: 0 0.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .breadcrumb-list {
+    flex-wrap: wrap;
+    gap: 0.2rem 0;
+  }
+  
+  .breadcrumb-item {
+    flex-shrink: 0;
+  }
+  
+  .breadcrumb-separator {
+    margin: 0 0.25rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .breadcrumb-link {
+    text-decoration: underline;
+    font-weight: 600;
+  }
+  
+  .breadcrumb-current {
+    font-weight: 700;
+  }
+  
+  .breadcrumb-separator {
+    font-weight: 600;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .breadcrumb-link {
+    transition: none;
+  }
+}

@@ -632,7 +632,7 @@ class GitHubService {
               path: file.path
             });
 
-            const content = atob(contentResponse.data.content);
+            const content = decodeURIComponent(escape(atob(contentResponse.data.content)));
             
             // Parse workflow name from YAML (simple regex approach)
             const nameMatch = content.match(/^name:\s*(.+)$/m);
@@ -968,7 +968,7 @@ class GitHubService {
         console.log('🔧 githubService.getFileContent: Decoding base64 content...');
         console.log('📊 githubService.getFileContent: Base64 content length:', data.content.length);
         
-        const content = atob(data.content);
+        const content = decodeURIComponent(escape(atob(data.content)));
         console.log(`✅ githubService.getFileContent: Successfully fetched and decoded file content`);
         console.log('📏 githubService.getFileContent: Final content length:', content.length, 'characters');
         console.log('👀 githubService.getFileContent: Content preview (first 200 chars):', content.substring(0, 200));
@@ -1256,6 +1256,43 @@ class GitHubService {
       }
     } catch (error) {
       console.error(`Failed to get directory contents for ${path}:`, error);
+      throw error;
+    }
+  }
+
+  // Update file content (requires authentication)
+  async updateFile(owner, repo, path, content, message, branch = 'main') {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to update files');
+    }
+
+    try {
+      // First, get the current file to get its SHA
+      const { data: currentFile } = await this.octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref: branch
+      });
+
+      if (Array.isArray(currentFile)) {
+        throw new Error('Path is a directory, not a file');
+      }
+
+      // Update the file
+      const { data } = await this.octokit.rest.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path,
+        message,
+        content: btoa(unescape(encodeURIComponent(content))),
+        sha: currentFile.sha,
+        branch
+      });
+
+      return data;
+    } catch (error) {
+      console.error(`Failed to update file ${path}:`, error);
       throw error;
     }
   }
