@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import PATLogin from './PATLogin';
 import CollaborationModal from './CollaborationModal';
@@ -57,7 +56,7 @@ const WelcomePage = () => {
   };
 
   const handleAuthoringClick = (event) => {
-    handleNavigationClick(event, '/select_profile', navigate);
+    handleNavigationClick(event, '/sgex/select_profile', navigate);
   };
 
   const handleLoginClick = (event) => {
@@ -84,7 +83,7 @@ const WelcomePage = () => {
       action: 'edit'
     };
     
-    handleNavigationClick(event, `/dak-selection/${demoProfile.login}`, navigate, navigationState);
+    handleNavigationClick(event, `/sgex/dak-selection/${demoProfile.login}`, navigate, navigationState);
   };
 
   const handleDismissWarning = () => {
