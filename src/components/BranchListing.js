@@ -154,6 +154,7 @@ const BranchListing = () => {
   };
 
   const loadMorePRs = async () => {
+    try {
       const owner = 'litlfred';
       const repo = 'sgex';
       const nextPage = prPage + 1;
