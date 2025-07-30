@@ -44,10 +44,6 @@ const PageHeader = () => {
     navigate('/');
   };
 
-  const handleDocumentation = () => {
-    window.open('/sgex/docs/overview', '_blank');
-  };
-
   const handleGitHubRepo = () => {
     if (repository?.html_url) {
       window.open(repository.html_url, '_blank');
@@ -95,7 +91,6 @@ const PageHeader = () => {
     return bookmarkService.getBookmarksGroupedByPage();
   };
 
-  const shouldShowDocumentationButton = pageName !== 'documentation';
   const shouldShowGitHubRepo = type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET;
   const shouldShowBranchSelector = type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET;
   const currentBookmark = getCurrentPageBookmark();
@@ -143,13 +138,6 @@ const PageHeader = () => {
 
       {/* Right side - Navigation and user controls */}
       <div className="page-header-right">
-        {/* Documentation button (except on documentation page) */}
-        {shouldShowDocumentationButton && (
-          <button className="header-btn documentation-btn" onClick={handleDocumentation}>
-            📖 Documentation
-          </button>
-        )}
-        
         {/* GitHub repository button (DAK and Asset pages) */}
         {shouldShowGitHubRepo && repository && (
           <button className="header-btn github-repo-btn" onClick={handleGitHubRepo}>
