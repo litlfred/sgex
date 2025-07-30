@@ -224,10 +224,6 @@
   margin: 0;
 }
 
-.bookmark-actions {
-  border-bottom: 1px solid var(--who-border-light, #f0f0f0);
-}
-
 .bookmark-action {
   font-weight: 500;
   color: var(--who-blue, #006cbe);
@@ -235,12 +231,6 @@
 
 .bookmark-action:hover {
   background-color: var(--who-blue-light, #e3f2fd);
-}
-
-.bookmarks-divider {
-  height: 1px;
-  background-color: var(--who-border-light, #f0f0f0);
-  margin: 0.5rem 0;
 }
 
 .bookmarks-list {

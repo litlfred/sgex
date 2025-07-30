@@ -184,6 +184,23 @@ const PageHeader = () => {
                   GitHub Profile
                 </button>
                 
+                {/* Add/Remove current page bookmark - moved to same level as bookmarks */}
+                {currentBookmark ? (
+                  <button 
+                    className="dropdown-item bookmark-action"
+                    onClick={() => handleRemoveBookmark(currentBookmark.id)}
+                  >
+                    ⭐ Remove Bookmark
+                  </button>
+                ) : (
+                  <button 
+                    className="dropdown-item bookmark-action"
+                    onClick={handleBookmarkCurrentPage}
+                  >
+                    ☆ Add Bookmark
+                  </button>
+                )}
+                
                 {/* Bookmarks submenu */}
                 <div className="bookmarks-section">
                   <div className="dropdown-item bookmarks-header" onClick={() => setShowBookmarkDropdown(!showBookmarkDropdown)}>
@@ -193,29 +210,9 @@ const PageHeader = () => {
                   
                   {showBookmarkDropdown && (
                     <div className="bookmarks-dropdown">
-                      {/* Add/Remove current page bookmark */}
-                      <div className="bookmark-actions">
-                        {currentBookmark ? (
-                          <button 
-                            className="dropdown-item bookmark-action"
-                            onClick={() => handleRemoveBookmark(currentBookmark.id)}
-                          >
-                            ⭐ Remove Bookmark
-                          </button>
-                        ) : (
-                          <button 
-                            className="dropdown-item bookmark-action"
-                            onClick={handleBookmarkCurrentPage}
-                          >
-                            ☆ Add Bookmark
-                          </button>
-                        )}
-                      </div>
-                      
                       {/* Bookmarks list grouped by page */}
-                      {bookmarksGrouped.length > 0 && (
+                      {bookmarksGrouped.length > 0 ? (
                         <div className="bookmarks-list">
-                          <div className="bookmarks-divider"></div>
                           {bookmarksGrouped.map(group => (
                             <div key={group.pageName} className="bookmark-group">
                               <div className="bookmark-group-header">{group.pageName}</div>
@@ -240,9 +237,7 @@ const PageHeader = () => {
                             </div>
                           ))}
                         </div>
-                      )}
-                      
-                      {bookmarksGrouped.length === 0 && !currentBookmark && (
+                      ) : (
                         <div className="no-bookmarks">No bookmarks yet</div>
                       )}
                     </div>
