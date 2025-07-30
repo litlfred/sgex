@@ -1,187 +1,185 @@
-# Page Framework Compliance Inventory
+# Page Inventory
 
-This document tracks the compliance status of all pages in the SGEX Workbench with the Page Framework requirements. The framework ensures consistent user experience, error handling, help integration, and URL validation across all pages.
+This document tracks all pages in the SGEX Workbench application and their internationalization status.
 
-## Current Status Summary (Updated)
+## Page Status Legend
 
-**Overall Framework Compliance: 43% (10/23 pages fully compliant)**
+- ✅ **Complete**: Full internationalization implemented and tested
+- ⚠️ **Partial**: Some internationalization, needs completion
+- ❌ **Missing**: No internationalization implemented
+- 🚫 **N/A**: Component doesn't need internationalization (utilities, tests, etc.)
 
-- ✅ **Fully Compliant**: 10 pages (43%)
-- ⚠️ **Partially Compliant**: 13 pages (57%)  
-- ❌ **Non-Compliant**: 0 pages (0%)
+## Core Pages
 
-## Framework Requirements Summary
+| Component | Status | Type | Description | I18n Keys |
+|-----------|--------|------|-------------|-----------|
+| LandingPage | ✅ | Top-Level | Main application landing page | `app.*`, `landing.*` |
+| DAKDashboard | ✅ | DAK | DAK project dashboard | `dashboard.*`, `common.*` |
+| NotFound | ❌ | Top-Level | 404 error page | Needs implementation |
 
-All pages **MUST**:
-- ✅ Be wrapped with `PageLayout` component
-- ✅ Specify a unique `pageName` for help and analytics
-- ✅ Follow established URL patterns (Top-Level, User, DAK, Asset)
-- ✅ Use framework hooks (`usePageParams`, `useDAKParams`) instead of direct `useParams()`
-- ✅ Display consistent header with appropriate components
-- ✅ Include contextual help mascot (bottom-right)
-- ✅ Let framework handle error boundaries and error reporting
-- ✅ Work in both authenticated and demo modes
+## User & Organization Pages
 
-## Page Types and URL Patterns
+| Component | Status | Type | Description | I18n Keys |
+|-----------|--------|------|-------------|-----------|
+| OrganizationSelection | ❌ | User | Select GitHub organization | Needs implementation |
+| RepositorySelection | ❌ | User | Select repository from user/org | Needs implementation |
+| DAKActionSelection | ❌ | User | Select action for DAK project | Needs implementation |
+| DAKSelection | ❌ | User | Select DAK from available options | Needs implementation |
 
-### Top-Level Pages
-**URL Pattern**: `/sgex/{page_name}`
-**Context**: No additional context from URL
+## DAK Project Pages
 
-### User Pages  
-**URL Pattern**: `/sgex/{page_name}/{user}`
-**Context**: GitHub user or organization
+| Component | Status | Type | Description | I18n Keys |
+|-----------|--------|------|-------------|-----------|
+| DAKConfiguration | ❌ | DAK | Configure DAK project settings | Needs implementation |
+| DAKStatusBox | ❌ | DAK | Display DAK project status | Needs implementation |
+| BusinessProcessSelection | ❌ | DAK | Select business process | Needs implementation |
+| CoreDataDictionaryViewer | ❌ | DAK | View core data dictionary | Needs implementation |
+| DecisionSupportLogicView | ❌ | DAK | View decision support logic | Needs implementation |
 
-### DAK Pages
-**URL Pattern**: `/sgex/{page_name}/{user}/{repo}[/{branch}]`
-**Context**: GitHub user, repository, optional branch
+## Asset Editor Pages
 
-### Asset Pages
-**URL Pattern**: `/sgex/{page_name}/{user}/{repo}/{branch}/{asset}`
-**Context**: GitHub user, repository, branch, specific asset
+| Component | Status | Type | Description | I18n Keys |
+|-----------|--------|------|-------------|-----------|
+| ComponentEditor | ❌ | Asset | Edit DAK components | Needs implementation |
+| ActorEditor | ❌ | Asset | Edit FHIR actors | Needs implementation |
+| BPMNEditor | ❌ | Asset | Edit BPMN diagrams | Needs implementation |
+| PagesManager | ❌ | Asset | Manage documentation pages | Needs implementation |
 
-## Current Page Compliance Status
+## Asset Viewer Pages
 
-### ✅ FULLY COMPLIANT (10 pages - 43%)
+| Component | Status | Type | Description | I18n Keys |
+|-----------|--------|------|-------------|-----------|
+| BPMNViewer | ❌ | Asset | View BPMN diagrams | Needs implementation |
+| BPMNViewerEnhanced | ❌ | Asset | Enhanced BPMN viewer | Needs implementation |
+| BPMNSource | ❌ | Asset | View BPMN source code | Needs implementation |
+| DocumentationViewer | ❌ | Asset | View project documentation | Needs implementation |
 
-| Page Component | Route | Page Type | Migration Status |
-|---|---|---|---|
-| `LandingPage` | `/` | Top-Level | ✅ **MIGRATED** - Wrapped both auth states, removed custom header |
-| `DAKActionSelection` | `/dak-action[/:user]` | User/Top-Level | ✅ **MIGRATED** - Added PageLayout, kept breadcrumbs |
-| `RepositorySelection` | `/repositories` | Top-Level | ✅ **MIGRATED** - Framework wrapper, removed custom elements |
-| `OrganizationSelection` | `/organization-selection` | Top-Level | ✅ **MIGRATED** - PageLayout integration, kept navigation |
-| `DAKConfiguration` | `/dak-configuration` | Top-Level | ✅ **MIGRATED** - Framework compliant with breadcrumbs |
-| `NotFound` | `*` (catch-all) | Utility | ✅ **MIGRATED** - PageLayout wrapper with redirect message |
-| `BPMNViewerTestComponent` | `/test-bpmn-viewer` | Top-Level | ✅ **MIGRATED** - Simple framework wrapper |
-| `LandingPageWithFramework` | `/test-framework` | Top-Level | ✅ **NATIVE** - Built with framework from start |
-| `DAKDashboardWithFramework` | `/test-framework-dashboard/:user/:repo[/:branch]` | DAK | ✅ **NATIVE** - Framework-native implementation |
-| `TestDocumentationPage` | `/test-documentation` | Top-Level | ✅ **NATIVE** - Framework demo page |
+## Authentication Pages
 
-### ⚠️ PARTIALLY COMPLIANT (13 pages - 57%)
+| Component | Status | Type | Description | I18n Keys |
+|-----------|--------|------|-------------|-----------|
+| PATLogin | ❌ | Top-Level | GitHub PAT login | Needs implementation |
+| PATSetupInstructions | ❌ | Top-Level | PAT setup instructions | Needs implementation |
 
-| Page Component | Route | Page Type | Compliance Score | Missing Elements |
-|---|---|---|---|---|
-| `DAKDashboard` | `/dashboard[/:user/:repo[/:branch]]` | DAK/Top-Level | 3/5 (60%) | PageLayout wrapper |
-| `DAKSelection` | `/dak-selection[/:user]` | User/Top-Level | 2/5 (40%) | PageLayout, remove manual help |
-| `TestDashboard` | `/test-dashboard` | Top-Level | 2/5 (40%) | PageLayout, remove manual help |
-| `CoreDataDictionaryViewer` | `/core-data-dictionary-viewer[/:user/:repo[/:branch]]` | DAK/Top-Level | 2/5 (40%) | PageLayout, remove manual help |
-| `ComponentEditor` | `/editor/:componentId` | Asset | 2/5 (40%) | PageLayout, remove manual help |
-| `ActorEditor` | `/actor-editor` | Top-Level | 2/5 (40%) | PageLayout, remove manual help |
-| `BusinessProcessSelection` | `/business-process-selection[/:user/:repo[/:branch]]` | DAK/Top-Level | 2/5 (40%) | PageLayout, remove manual help |
-| `BPMNEditor` | `/bpmn-editor` | Top-Level | 2/5 (40%) | PageLayout, remove manual help |
-| `BPMNViewer` | `/bpmn-viewer` | Top-Level | 2/5 (40%) | PageLayout, remove manual help |
-| `BPMNSource` | `/bpmn-source` | Top-Level | 2/5 (40%) | PageLayout, remove manual help |
-| `DocumentationViewer` | `/docs/:docId` | Top-Level | 2/5 (40%) | PageLayout, remove manual help |
-| `DecisionSupportLogicView` | `/decision-support-logic[/:user/:repo[/:branch]]` | DAK/Top-Level | 3/5 (60%) | PageLayout wrapper |
-| `PagesManager` | `/pages` | Top-Level | 2/5 (40%) | PageLayout, remove manual help |
+## Integration Pages
 
-### 🔧 UTILITY/MODAL COMPONENTS (Not requiring full framework)
+| Component | Status | Type | Description | I18n Keys |
+|-----------|--------|------|-------------|-----------|
+| GitHubActionsIntegration | ❌ | DAK | GitHub Actions integration | Needs implementation |
+| Publications | ❌ | DAK | Manage publications | Needs implementation |
+| WHODigitalLibrary | ❌ | DAK | WHO Digital Library integration | Needs implementation |
 
-| Component | Usage | Framework Needs |
-|---|---|---|
-| `PATLogin` | Authentication modal | Excluded from compliance |
-| `HelpButton` | UI component | Part of framework |
-| `HelpModal` | Modal component | Excluded from compliance |
-| `SaveDialog` | Modal component | Excluded from compliance |
-| Framework components | Core system | Part of framework |
+## Modal & Dialog Components
 
-## Migration Success Stories
+| Component | Status | Type | Description | I18n Keys |
+|-----------|--------|------|-------------|-----------|
+| HelpModal | ❌ | Modal | Display help content | Needs implementation |
+| SaveDialog | ❌ | Modal | Save confirmation dialog | Needs implementation |
+| PageEditModal | ❌ | Modal | Edit page content | Needs implementation |
+| PageViewModal | ❌ | Modal | View page content | Needs implementation |
 
-### High-Priority Pages Successfully Migrated
-1. **LandingPage** - Main entry point now has consistent header and help
-2. **DAKActionSelection** - Key user workflow with proper navigation context
-3. **RepositorySelection** - Repository selection with unified experience
-4. **OrganizationSelection** - Organization selection with breadcrumb navigation
-5. **DAKConfiguration** - DAK setup with framework compliance
+## UI Components
 
-### Migration Benefits Achieved
-- ✅ **Consistent Headers**: All migrated pages show appropriate elements based on page type
-- ✅ **Automatic Error Handling**: Framework error boundaries catch and report issues
-- ✅ **Unified Help System**: Contextual help mascot appears consistently
-- ✅ **URL Validation**: Framework validates parameters and handles invalid routes
-- ✅ **Responsive Design**: Framework maintains responsive behavior
-- ✅ **Auth Mode Support**: All pages work in authenticated and demo modes
+| Component | Status | Type | Description | I18n Keys |
+|-----------|--------|------|-------------|-----------|
+| LanguageSelector | ✅ | UI | Language selection dropdown | `language.*` |
+| ContextualHelpMascot | ❌ | UI | Help mascot with tooltips | Needs implementation |
+| HelpButton | ❌ | UI | Generic help button | Needs implementation |
+| BranchSelector | ❌ | UI | Git branch selection | Needs implementation |
+| CommitsSlider | ❌ | UI | Browse commit history | Needs implementation |
 
-## Remaining Migration Opportunities
+## Framework Components
 
-### Strategic Considerations
+| Component | Status | Type | Description | I18n Keys |
+|-----------|--------|------|-------------|-----------|
+| PageLayout | ❌ | Framework | Main page layout wrapper | Needs implementation |
+| PageHeader | ❌ | Framework | Page header component | Needs implementation |
+| ErrorHandler | ❌ | Framework | Error handling wrapper | Needs implementation |
+| PageProvider | 🚫 | Framework | Context provider (no UI) | N/A |
 
-**Large Complex Pages** (500+ lines):
-- `DAKSelection` (901 lines) - Consider incremental migration
-- `ActorEditor` (991 lines) - Large editor with complex functionality
-- `ComponentEditor` - Asset editor with extensive features
+## Test & Development Components
 
-**Medium Pages** (200-400 lines):
-- `DocumentationViewer` (237 lines) - Good migration candidate
-- `TestDashboard` (184 lines) - Simple test page, easy migration
-- `CoreDataDictionaryViewer` - Data display component
+| Component | Status | Type | Description | I18n Keys |
+|-----------|--------|------|-------------|-----------|
+| TestDashboard | 🚫 | Test | Development testing page | N/A |
+| TestDocumentationPage | 🚫 | Test | Documentation testing | N/A |
+| BPMNViewerTestComponent | 🚫 | Test | BPMN viewer testing | N/A |
+| LandingPageWithFramework | 🚫 | Test | Framework testing page | N/A |
+| DAKDashboardWithFramework | 🚫 | Test | Framework testing page | N/A |
 
-**Alternative Approaches**:
-- Some pages have framework-native versions available
-- Consider routing updates to use framework versions where feature-complete
-- Focus on high-traffic user-facing pages for maximum impact
+## Summary Statistics
 
-## Automated Compliance Enforcement
+- **Total Components**: 44
+- **Complete (✅)**: 3 (7%)
+- **Missing (❌)**: 35 (80%)
+- **Not Applicable (🚫)**: 6 (13%)
 
-### QA Validation System
-- **Script**: `npm run check-framework-compliance`
-- **GitHub Action**: Runs on all PRs affecting component files
-- **Validation Rules**: 5-point compliance check per page
-- **Reporting**: Detailed feedback with specific improvement suggestions
+## Priority Implementation Order
 
-### Developer Support
-- **Documentation**: `docs/framework-developer-guide.md`
-- **Examples**: Multiple migrated pages serve as templates
-- **Tooling**: Automated detection of compliance issues
-- **Guidelines**: Clear migration patterns and troubleshooting
+### Phase 1: Critical User Flow (High Priority)
+1. NotFound - Error page
+2. PATLogin - Authentication
+3. OrganizationSelection - User flow
+4. RepositorySelection - User flow
+5. DAKActionSelection - User flow
 
-## Framework Compliance Checklist
+### Phase 2: Core DAK Functionality (Medium Priority)
+6. DAKConfiguration - DAK setup
+7. DAKStatusBox - Status display
+8. BusinessProcessSelection - Process selection
+9. CoreDataDictionaryViewer - Data viewing
+10. DecisionSupportLogicView - Logic viewing
 
-For each page migration, ensure:
+### Phase 3: Framework & UI Components (Medium Priority)
+11. PageLayout - Framework core
+12. PageHeader - Framework core
+13. ErrorHandler - Framework core
+14. ContextualHelpMascot - Help system
+15. HelpModal - Help system
+16. BranchSelector - Git operations
 
-- [ ] Import `PageLayout` from `./framework`
-- [ ] Wrap page content with `<PageLayout pageName="unique-name">`
-- [ ] Remove custom header implementations (let PageLayout handle)
-- [ ] Replace `useParams()` with appropriate framework hooks
-- [ ] Remove manual `ContextualHelpMascot` imports (PageLayout includes it)
-- [ ] Remove custom error handling (let PageLayout's ErrorBoundary handle)
-- [ ] Test in both authenticated and demo modes
-- [ ] Verify proper URL parameter handling
-- [ ] Confirm help mascot appears and functions
-- [ ] Check header shows appropriate elements for page type
+### Phase 4: Asset Management (Low Priority)
+17. ComponentEditor - Asset editing
+18. ActorEditor - Asset editing
+19. BPMNEditor - Asset editing
+20. PagesManager - Content management
+21. DocumentationViewer - Content viewing
+22. BPMNViewer - Asset viewing
 
-## Impact Assessment
+### Phase 5: Advanced Features (Lowest Priority)
+23. GitHubActionsIntegration - CI/CD
+24. Publications - Publishing
+25. WHODigitalLibrary - Integration
+26. Various modal components
+27. Utility components
 
-### Compliance Improvement
-- **Before**: 13% compliance (3/23 pages)
-- **After**: 43% compliance (10/23 pages)
-- **Improvement**: +30 percentage points, +7 additional compliant pages
+## Implementation Requirements
 
-### User Experience Benefits
-- Consistent navigation and branding across 43% of application
-- Automatic error reporting and recovery on major user workflows  
-- Unified help system on primary user journeys
-- Proper URL validation on key pages
+For each component marked as ❌ Missing:
 
-### Developer Experience Benefits  
-- Automated compliance checking prevents regressions
-- Clear migration guidance reduces onboarding time
-- Framework handles common concerns (headers, errors, help)
-- Consistent patterns across migrated pages
+1. **Add useTranslation import**: `import { useTranslation } from 'react-i18next';`
+2. **Initialize hook**: `const { t } = useTranslation();`
+3. **Replace hardcoded text**: Convert all user-visible strings to `t('key')`
+4. **Add translation entries**: Update all language files
+5. **Test language switching**: Verify all text translates correctly
 
-## Next Steps
+## Translation Key Organization
 
-### For Continued Migration
-1. **Target medium-complexity pages first** (TestDashboard, DocumentationViewer)
-2. **Use migrated pages as templates** for similar functionality
-3. **Leverage framework hooks** for consistent parameter handling
-4. **Test thoroughly** in both authentication modes
-5. **Run compliance checker** before submitting PRs
+Keys should be organized hierarchically by component:
 
-### For Framework Evolution
-1. **Monitor compliance trends** through automated reporting
-2. **Gather developer feedback** on migration experience
-3. **Enhance framework features** based on common needs
-4. **Update documentation** as patterns emerge
-
-The framework compliance system is now fully operational and successfully enforcing consistent user experience across the SGEX Workbench application.
+```json
+{
+  "componentName": {
+    "title": "Component Title",
+    "subtitle": "Component Subtitle", 
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "success": "Success message",
+      "error": "Error message"
+    }
+  }
+}
+```

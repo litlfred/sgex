@@ -1,0 +1,109 @@
+{
+  "app": {
+    "title": "SGEX Workbench",
+    "subtitle": "OMS Échange de Directives SMART",
+    "description": "Un éditeur collaboratif conforme aux normes basé sur navigateur pour les kits d'adaptation numérique des directives SMART de l'OMS (DAK)."
+  },
+  "navigation": {
+    "documentation": "📖 Documentation",
+    "logout": "Déconnexion",
+    "dashboard": "Tableau de bord",
+    "home": "Accueil"
+  },
+  "landing": {
+    "welcome": "Bienvenue sur SGEX Workbench",
+    "description": "Un éditeur collaboratif conforme aux normes basé sur navigateur pour les kits d'adaptation numérique des directives SMART de l'OMS (DAK).",
+    "connect_github": "Connectez votre compte GitHub pour commencer :",
+    "try_demo": "Voulez-vous essayer sans authentification ?",
+    "demo_mode": "🎭 Essayer le Mode Démo",
+    "demo_note": "Le mode démo présente l'affichage de scan DAK amélioré avec des données fictives.",
+    "need_help": "Besoin d'aide pour commencer ? Consultez notre",
+    "documentation_link": "documentation",
+    "learn_more": "complète pour en savoir plus sur SGEX Workbench et les composants DAK.",
+    "profile_selection": "Sélectionner le Profil ou l'Organisation",
+    "choose_profile": "Choisissez le profil GitHub ou l'organisation contenant vos dépôts DAK :",
+    "loading_profile": "Chargement des données de profil...",
+    "personal_repositories": "Dépôts Personnels",
+    "organization_repositories": "Dépôts d'Organisation"
+  },
+  "dashboard": {
+    "title": "Tableau de bord DAK",
+    "loading": "Chargement...",
+    "select_branch": "Sélectionner la Branche",
+    "core_components": "Composants Principaux",
+    "additional_components": "Composants Supplémentaires",
+    "publications": "Publications",
+    "clear_cache": "Vider le Cache",
+    "user_menu": "Menu Utilisateur"
+  },
+  "errors": {
+    "failed_fetch_user": "Échec de récupération des données utilisateur. Veuillez vérifier votre connexion et réessayer.",
+    "github_auth_required": "Authentification GitHub requise. Veuillez vous authentifier d'abord.",
+    "user_not_found": "Impossible d'accéder au DAK demandé. Utilisateur '{{user}}' introuvable ou inaccessible.",
+    "repo_not_found": "Impossible d'accéder au DAK demandé. Dépôt '{{user}}/{{repo}}' introuvable ou inaccessible.",
+    "generic_error": "Une erreur s'est produite. Veuillez réessayer."
+  },
+  "buttons": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "refresh": "Actualiser"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "warning": "Avertissement",
+    "success": "Succès",
+    "info": "Information",
+    "dismiss": "Fermer"
+  },
+  "language": {
+    "selector": "Langue",
+    "english": "English (US)",
+    "french": "Français",
+    "spanish": "Español"
+  },
+  "help": {
+    "getHelp": "Obtenir de l'aide"
+  },
+  "notFound": {
+    "authenticatedMessage": "La page \"{{path}}\" est introuvable. Vous avez été redirigé vers la page d'accueil.",
+    "unauthenticatedMessage": "La page \"{{path}}\" est introuvable. Veuillez vous connecter ou essayer le mode démo pour commencer."
+  },
+  "patLogin": {
+    "tokenLabel": "Jeton d'Accès Personnel GitHub",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
+    "signInButton": "Se connecter avec le Jeton d'Accès Personnel",
+    "authenticating": "Authentification...",
+    "errors": {
+      "noToken": "Veuillez saisir un Jeton d'Accès Personnel GitHub",
+      "invalidToken": "Jeton d'Accès Personnel invalide. Veuillez vérifier votre jeton et réessayer.",
+      "insufficientPermissions": "Le jeton n'a pas les permissions suffisantes. Assurez-vous que votre jeton a les portées 'repo' et 'read:org'.",
+      "authFailed": "Échec de l'authentification. Veuillez vérifier votre connexion et réessayer."
+    }
+  },
+  "branchSelector": {
+    "loading": "Chargement des branches...",
+    "createButton": "Créer une nouvelle branche",
+    "errors": {
+      "failedToLoad": "Échec du chargement des branches",
+      "nameRequired": "Le nom de la branche est requis",
+      "invalidName": "Le nom de la branche ne peut contenir que des lettres, chiffres, points, tirets et tirets bas",
+      "nameExists": "Une branche avec ce nom existe déjà",
+      "createFailed": "Échec de la création de la branche. Veuillez vérifier vos permissions."
+    },
+    "modal": {
+      "title": "Créer une Nouvelle Branche",
+      "nameLabel": "Nom de la Branche",
+      "namePlaceholder": "feature/nouveau-composant-dak",
+      "createFrom": "Créer depuis",
+      "creating": "Création...",
+      "createButton": "Créer la Branche"
+    }
+  }
+}

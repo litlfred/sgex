@@ -1,0 +1,216 @@
+.language-selector {
+  position: relative;
+  z-index: 1000;
+}
+
+.language-selector-top-right {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.language-selector-top-left {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+
+.language-selector-inline {
+  display: inline-block;
+}
+
+.language-label {
+  font-size: 0.875rem;
+  color: #666;
+  margin-right: 0.5rem;
+}
+
+.language-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.language-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.language-button:hover {
+  background: #f8f9fa;
+  border-color: #007bff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.language-button:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+.language-flag {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.language-name {
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+}
+
+.language-arrow {
+  font-size: 0.75rem;
+  color: #666;
+  transition: transform 0.2s ease;
+}
+
+.language-arrow.open {
+  transform: rotate(180deg);
+}
+
+.language-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.25rem;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  min-width: 180px;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-align: left;
+}
+
+.language-option:hover {
+  background: #f8f9fa;
+}
+
+.language-option.active {
+  background: #e3f2fd;
+  color: #007bff;
+}
+
+.language-option.active .language-name {
+  font-weight: 600;
+}
+
+.language-check {
+  margin-left: auto;
+  color: #007bff;
+  font-weight: bold;
+}
+
+.language-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .language-selector-top-right {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+  
+  .language-selector-top-left {
+    top: 0.5rem;
+    left: 0.5rem;
+  }
+  
+  .language-button {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .language-name {
+    display: none; /* Hide text on mobile, show only flag */
+  }
+  
+  .language-menu {
+    min-width: 150px;
+  }
+  
+  .language-option {
+    padding: 0.5rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .language-button {
+    border-width: 2px;
+  }
+  
+  .language-option.active {
+    background: #000;
+    color: #fff;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .language-button,
+  .language-arrow,
+  .language-option {
+    transition: none;
+  }
+}
+
+/* Dark mode support (if implemented in the future) */
+@media (prefers-color-scheme: dark) {
+  .language-button {
+    background: #333;
+    border-color: #555;
+    color: white;
+  }
+  
+  .language-button:hover {
+    background: #444;
+    border-color: #007bff;
+  }
+  
+  .language-menu {
+    background: #333;
+    border-color: #555;
+  }
+  
+  .language-option {
+    background: #333;
+    color: white;
+  }
+  
+  .language-option:hover {
+    background: #444;
+  }
+  
+  .language-option.active {
+    background: #1a365d;
+    color: #90cdf4;
+  }
+}

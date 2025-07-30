@@ -116,7 +116,7 @@ sgex/
 │   ├── components/  # React components
 │   ├── App.js       # Main application component
 │   └── index.js     # Application entry point
-├── docs/            # Project documentation
+├── public/docs/     # Project documentation
 ├── package.json     # Dependencies and scripts
 └── README.md        # This file
 ```
@@ -153,7 +153,7 @@ The SGEX Workbench supports editing of the **8 core Digital Adaptation Kit (DAK)
 ### Additional Components
 The SGEX Workbench also supports additional structured knowledge representations including Terminology, FHIR Profiles, FHIR Extensions, FHIR Questionnaires, and Test Data & Examples.
 
-For detailed information about each component, see the [DAK Components Documentation](docs/dak-components.md).
+For detailed information about each component, see the [DAK Components Documentation](public/docs/dak-components.md).
 
 *Note: Scheduling tables are considered a special case of decision tables and are included within the Decision Support Logic component.*
 
@@ -165,12 +165,12 @@ This app is designed for deployment on **GitHub Pages** in the gh-pages branch o
 
 ## Documentation
 
-All project documentation is located in the `docs/` directory:
+All project documentation is located in the `public/docs/` directory:
 
-- [Project Plan](docs/project-plan.md) - Overall project planning and milestones
-- [Requirements](docs/requirements.md) - Detailed functional and non-functional requirements
-- [Solution Architecture](docs/solution-architecture.md) - Technical architecture and design decisions
-- [DAK Components](docs/dak-components.md) - Comprehensive guide to the 8 WHO SMART Guidelines DAK components
+- [Project Plan](public/docs/project-plan.md) - Overall project planning and milestones
+- [Requirements](public/docs/requirements.md) - Detailed functional and non-functional requirements
+- [Solution Architecture](public/docs/solution-architecture.md) - Technical architecture and design decisions
+- [DAK Components](public/docs/dak-components.md) - Comprehensive guide to the 8 WHO SMART Guidelines DAK components
 
 ## License
 

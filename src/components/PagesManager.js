@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import stagingGroundService from '../services/stagingGroundService';
-import BranchSelector from './BranchSelector';
-import HelpButton from './HelpButton';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import PageViewModal from './PageViewModal';
 import PageEditModal from './PageEditModal';
 import DAKStatusBox from './DAKStatusBox';
@@ -14,13 +12,12 @@ const PagesManager = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const { profile, repository, component, selectedBranch } = location.state || {};
+  const { profile, repository, selectedBranch } = location.state || {};
   
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
-  const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [initializingAuth, setInitializingAuth] = useState(true);
   const [viewModalPage, setViewModalPage] = useState(null);
   const [editModalPage, setEditModalPage] = useState(null);
@@ -72,7 +69,6 @@ const PagesManager = () => {
           setHasWriteAccess(false);
         }
       }
-      setCheckingPermissions(false);
     };
 
     if (!initializingAuth) {
@@ -397,68 +393,30 @@ const PagesManager = () => {
     });
   };
 
+  // Redirect if missing required context - use useEffect to avoid render issues
+  useEffect(() => {
+    if (!profile || !repository) {
+      navigate('/');
+    }
+  }, [profile, repository, navigate]);
+
   if (!profile || !repository) {
-    navigate('/');
-    return <div>Redirecting...</div>;
+    return (
+      <PageLayout pageName="pages-manager">
+        <div className="pages-manager">
+          <div className="redirecting-state">
+            <h2>Redirecting...</h2>
+            <p>Missing required context. Redirecting to home page...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
   }
 
   return (
-    <div className="pages-manager">
-      <div className="pages-header">
-        <div className="header-left">
-          <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
-          </div>
-          <div className="repo-status">
-            <div className="repo-info">
-              <a 
-                href={`https://github.com/${repository.full_name}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="context-repo-link"
-                title="View repository on GitHub"
-              >
-                <span className="repo-icon">📁</span>
-                <span className="context-repo">{repository.name}</span>
-                <span className="external-link">↗</span>
-              </a>
-            </div>
-            <div className="branch-info">
-              <BranchSelector
-                repository={repository}
-                selectedBranch={selectedBranch}
-                onBranchChange={(branch) => {
-                  // Reload pages when branch changes
-                  navigate('/pages', {
-                    state: { profile, repository, component, selectedBranch: branch }
-                  });
-                }}
-                className="header-branch-selector"
-              />
-            </div>
-            {!checkingPermissions && (
-              <span className={`access-level ${hasWriteAccess ? 'write' : 'read'}`}>
-                {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only Access'}
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="header-right">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <span className="context-owner">@{profile.login}</span>
-          <HelpButton 
-            helpTopic="pages-manager"
-            contextData={{ repository, hasWriteAccess }}
-          />
-        </div>
-      </div>
-
-      <div className="pages-content">
+    <PageLayout pageName="pages-manager">
+      <div className="pages-manager">
+        <div className="pages-content">
         <div className="breadcrumb">
           <button onClick={handleHomeNavigation} className="breadcrumb-link">
             Select Profile
@@ -628,12 +586,6 @@ const PagesManager = () => {
         </div>
       </div>
 
-      <ContextualHelpMascot 
-        pageId="pages-manager"
-        position="bottom-right"
-        contextData={{ repository, hasWriteAccess, pages }}
-      />
-
       {/* View Modal */}
       {viewModalPage && (
         <PageViewModal
@@ -650,7 +602,8 @@ const PagesManager = () => {
           onSave={handleSavePage}
         />
       )}
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 

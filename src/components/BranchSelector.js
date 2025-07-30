@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import './BranchSelector.css';
 
@@ -8,6 +9,7 @@ const BranchSelector = ({
   onBranchChange, 
   className = '' 
 }) => {
+  const { t } = useTranslation();
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -87,7 +89,7 @@ const BranchSelector = ({
         }
       } catch (err) {
         console.error('Failed to fetch branches:', err);
-        setError('Failed to load branches');
+        setError(t('branchSelector.errors.failedToLoad'));
       } finally {
         setLoading(false);
       }
@@ -96,7 +98,7 @@ const BranchSelector = ({
     if (!initializingAuth) {
       fetchBranches();
     }
-  }, [repository, selectedBranch, onBranchChange, initializingAuth]);
+  }, [repository, selectedBranch, onBranchChange, initializingAuth, t]);
 
   const handleBranchSelect = (branchName) => {
     if (onBranchChange) {
@@ -106,19 +108,19 @@ const BranchSelector = ({
 
   const handleCreateBranch = async () => {
     if (!newBranchName.trim()) {
-      setCreateError('Branch name is required');
+      setCreateError(t('branchSelector.errors.nameRequired'));
       return;
     }
 
     // Validate branch name (basic GitHub rules)
     const branchNameRegex = /^[a-zA-Z0-9._-]+$/;
     if (!branchNameRegex.test(newBranchName)) {
-      setCreateError('Branch name can only contain letters, numbers, periods, hyphens, and underscores');
+      setCreateError(t('branchSelector.errors.invalidName'));
       return;
     }
 
     if (branches.some(b => b.name === newBranchName)) {
-      setCreateError('A branch with this name already exists');
+      setCreateError(t('branchSelector.errors.nameExists'));
       return;
     }
 
@@ -143,7 +145,7 @@ const BranchSelector = ({
       setNewBranchName('');
     } catch (err) {
       console.error('Failed to create branch:', err);
-      setCreateError('Failed to create branch. Please check your permissions.');
+      setCreateError(t('branchSelector.errors.createFailed'));
     } finally {
       setCreating(false);
     }
@@ -153,7 +155,7 @@ const BranchSelector = ({
     return (
       <div className={`branch-selector loading ${className}`}>
         <span className="branch-icon">🌿</span>
-        <span>Loading branches...</span>
+        <span>{t('branchSelector.loading')}</span>
       </div>
     );
   }
@@ -186,7 +188,7 @@ const BranchSelector = ({
         <button 
           className="create-branch-btn"
           onClick={() => setShowCreateModal(true)}
-          title="Create new branch"
+          title={t('branchSelector.createButton')}
         >
           +
         </button>
@@ -197,7 +199,7 @@ const BranchSelector = ({
         <div className="create-branch-modal-overlay">
           <div className="create-branch-modal">
             <div className="modal-header">
-              <h3>Create New Branch</h3>
+              <h3>{t('branchSelector.modal.title')}</h3>
               <button 
                 className="modal-close"
                 onClick={() => {
@@ -211,18 +213,18 @@ const BranchSelector = ({
             </div>
             <div className="modal-content">
               <div className="form-group">
-                <label htmlFor="branchName">Branch Name:</label>
+                <label htmlFor="branchName">{t('branchSelector.modal.nameLabel')}:</label>
                 <input
                   id="branchName"
                   type="text"
                   value={newBranchName}
                   onChange={(e) => setNewBranchName(e.target.value)}
-                  placeholder="feature/new-dak-component"
+                  placeholder={t('branchSelector.modal.namePlaceholder')}
                   className="branch-name-input"
                 />
               </div>
               <div className="form-group">
-                <label>Create from:</label>
+                <label>{t('branchSelector.modal.createFrom')}:</label>
                 <span className="source-branch">{selectedBranch || 'main'}</span>
               </div>
               {createError && (
@@ -238,14 +240,14 @@ const BranchSelector = ({
                   setCreateError(null);
                 }}
               >
-                Cancel
+                {t('buttons.cancel')}
               </button>
               <button 
                 className="btn-primary"
                 onClick={handleCreateBranch}
                 disabled={creating || !newBranchName.trim()}
               >
-                {creating ? 'Creating...' : 'Create Branch'}
+                {creating ? t('branchSelector.modal.creating') : t('branchSelector.modal.createButton')}
               </button>
             </div>
           </div>

@@ -4,7 +4,7 @@ You are SGeX Workbench copilot coding agent.
 
 You like to provide full file implementations to solve GitHub issues.
 
-Your collaborators like cats, math, puns and writing software requirements.
+Your collaborators like cats, math, digital health,  puns and writing software requirements.
 
 We are friends that like to code together.
 
@@ -16,6 +16,10 @@ Following these guidelines will help us code together better:
 * In a session with a coding agent for a pull request, if a screenshot is taken, please show it in the session.
 * At the end of every session in the PR please create a summary table of the files changed and the changes made to it and the reasons for the changes. This should be an ongoing table that is updated after every new comment/session in the PR.
 * When working on a PR, it is OK to be unsure of a correct approach and ask your collaborators for input. When you are unsure, please provide a clear prompt back to the collaborators so that they can provide you the needed information for you to continue. Your collaborators are happier when you ask for help.
+* when creating a PR from a PR that was generated from an issue, please flag the issue creaor and all participants in the discussion saying that we are addressing the bug report
+* when a commit files as part of PR that was generated from an issue, please flag the issue creaor and all participants in the discussion saying that we are addressing the bug report
+
+
 
 ## Project Overview
 
@@ -190,7 +194,7 @@ sgex/
 │   ├── config/          # Application configuration
 │   ├── tests/           # Test utilities and fixtures
 │   └── utils/           # Helper functions
-├── docs/                # Comprehensive project documentation
+├── public/docs/         # Comprehensive project documentation
 │   ├── requirements.md      # Detailed functional requirements
 │   ├── solution-architecture.md  # Technical architecture
 │   ├── dak-components.md    # DAK component specifications
@@ -202,10 +206,10 @@ sgex/
 ## Important Documentation
 
 ### Essential Reading
-- **[docs/requirements.md](docs/requirements.md)**: Comprehensive functional and non-functional requirements
-- **[docs/solution-architecture.md](docs/solution-architecture.md)**: Technical architecture and design decisions
-- **[docs/dak-components.md](docs/dak-components.md)**: Detailed guide to the 8 DAK components
-- **[docs/project-plan.md](docs/project-plan.md)**: Project milestones and planning
+- **[public/docs/requirements.md](public/docs/requirements.md)**: Comprehensive functional and non-functional requirements
+- **[public/docs/solution-architecture.md](public/docs/solution-architecture.md)**: Technical architecture and design decisions
+- **[public/docs/dak-components.md](public/docs/dak-components.md)**: Detailed guide to the 8 DAK components
+- **[public/docs/project-plan.md](public/docs/project-plan.md)**: Project milestones and planning
 - **[README.md](README.md)**: Development setup and basic usage
 
 ### WHO SMART Guidelines Resources
