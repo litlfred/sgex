@@ -217,6 +217,11 @@ jobs:
           echo "Building root landing page..."
           node scripts/build-multi-branch.js root
           
+          # Save build directory before switching branches
+          echo "Preserving root build..."
+          mkdir -p /tmp/root-build-backup
+          cp -a build/. /tmp/root-build-backup/
+          
           # Switch back to gh-pages
           git checkout gh-pages
           
@@ -238,7 +243,10 @@ jobs:
           find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name '.github' -exec rm -rf {} +
           
           # Copy root landing page
-          cp -a build/. .
+          cp -a /tmp/root-build-backup/. .
+          
+          # Clean up temporary build backup
+          rm -rf /tmp/root-build-backup
           
           # Restore branch directories
           if [[ -d /tmp/branch-backup ]]; then
@@ -261,16 +269,24 @@ jobs:
               echo "Deploying main branch from current build..."
               git checkout ${{ github.ref_name }}
               node scripts/build-multi-branch.js branch
+              # Save build before switching branches
+              mkdir -p /tmp/main-build-backup
+              cp -a build/. /tmp/main-build-backup/
               git checkout gh-pages
-              cp -a build/. sgex/main/
+              cp -a /tmp/main-build-backup/. sgex/main/
+              rm -rf /tmp/main-build-backup
             else
               # Check out main branch and build it
               echo "Building main branch separately..."
               if git show-ref --verify --quiet refs/remotes/origin/main; then
                 git checkout main
                 node scripts/build-multi-branch.js branch
+                # Save build before switching branches
+                mkdir -p /tmp/main-build-backup
+                cp -a build/. /tmp/main-build-backup/
                 git checkout gh-pages
-                cp -a build/. sgex/main/
+                cp -a /tmp/main-build-backup/. sgex/main/
+                rm -rf /tmp/main-build-backup
               else
                 echo "Warning: Main branch not found, /sgex/main/ will not be available"
               fi
@@ -286,10 +302,20 @@ jobs:
           if [[ "${{ github.ref_name }}" != "main" ]]; then
             git checkout ${{ github.ref_name }}
             node scripts/build-multi-branch.js branch
+            # Save build before switching branches
+            mkdir -p /tmp/branch-build-backup
+            cp -a build/. /tmp/branch-build-backup/
             git checkout gh-pages
+            cp -a /tmp/branch-build-backup/. "$sgex_branch_dir/"
+            rm -rf /tmp/branch-build-backup
+          else
+            # If we're on main branch and main directory exists, copy from there
+            if [[ -d "sgex/main" ]]; then
+              cp -a sgex/main/. "$sgex_branch_dir/"
+            else
+              echo "Warning: Main branch build not available for branch-specific copy"
+            fi
           fi
-          
-          cp -a build/. "$sgex_branch_dir/"
           
           echo "✅ Root landing page deployed"
 
