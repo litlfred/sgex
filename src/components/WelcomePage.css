@@ -96,6 +96,11 @@ body.theme-light .welcome-page-content {
   backdrop-filter: blur(10px);
   position: relative;
   overflow: hidden;
+  /* Harmonic ratio: width = 300px, height = φ * width = 1.618 * 300px ≈ 485px */
+  min-height: 485px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .action-card::before {
@@ -125,18 +130,21 @@ body.theme-light .welcome-page-content {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 120px;
+  flex: 1;
+  min-height: 280px;
 }
 
 .card-icon img {
-  max-width: 120px;
-  height: 120px;
+  width: 100%;
+  height: 100%;
+  max-width: 280px;
+  max-height: 280px;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .card-icon .icon-symbol {
-  font-size: 3rem;
+  font-size: 4rem;
   display: block;
 }
 
@@ -145,6 +153,7 @@ body.theme-light .welcome-page-content {
   line-height: 1.5;
   color: var(--who-text-secondary);
   margin: 0;
+  flex-shrink: 0;
 }
 
 .collaboration-card:hover {
@@ -202,41 +211,6 @@ body.theme-light .welcome-page-content {
   color: var(--who-text-muted);
   font-style: italic;
   margin: 0.5rem 0 0 0;
-}
-
-.auth-section {
-  background: var(--who-card-bg);
-  border: 1px solid var(--who-border-color);
-  border-radius: 24px;
-  padding: 3rem;
-  margin: 4rem auto 0;
-  max-width: 600px;
-  backdrop-filter: blur(10px);
-  text-align: center;
-}
-
-.auth-section h3 {
-  font-size: 1.5rem;
-  margin: 0 0 1rem 0;
-  color: var(--who-text-primary);
-  font-weight: 600;
-}
-
-.auth-section p {
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--who-text-secondary);
-  margin: 0 0 2rem 0;
-}
-
-.error-message {
-  background: rgba(255, 107, 107, 0.2);
-  border: 1px solid rgba(255, 107, 107, 0.4);
-  color: #ffcccb;
-  padding: 0.8rem;
-  border-radius: 6px;
-  margin-top: 1rem;
-  backdrop-filter: blur(10px);
 }
 
 /* Warning message styles */
@@ -339,11 +313,16 @@ body.theme-light .welcome-page-content {
   
   .action-card {
     padding: 2rem;
+    min-height: 400px;
   }
   
-  .auth-section {
-    padding: 2rem;
-    margin: 3rem 1rem 0;
+  .card-icon {
+    min-height: 200px;
+  }
+  
+  .card-icon img {
+    max-width: 200px;
+    max-height: 200px;
   }
 }
 
@@ -358,5 +337,19 @@ body.theme-light .welcome-page-content {
   
   .action-card {
     padding: 1.5rem;
+    min-height: 320px;
+  }
+  
+  .card-icon {
+    min-height: 160px;
+  }
+  
+  .card-icon img {
+    max-width: 160px;
+    max-height: 160px;
+  }
+  
+  .card-icon .icon-symbol {
+    font-size: 3rem;
   }
 }

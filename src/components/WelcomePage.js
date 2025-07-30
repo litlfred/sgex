@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import githubService from '../services/githubService';
-import PATLogin from './PATLogin';
+import LoginModal from './LoginModal';
 import CollaborationModal from './CollaborationModal';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
@@ -10,7 +10,7 @@ import './WelcomePage.css';
 const WelcomePage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showCollaborationModal, setShowCollaborationModal] = useState(false);
-  const [error, setError] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [warningMessage, setWarningMessage] = useState(null);
 
   const navigate = useNavigate();
@@ -44,15 +44,19 @@ const WelcomePage = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
-  const handleAuthSuccess = (token, octokitInstance) => {
+  const handleAuthSuccess = (token, octokitInstance, username) => {
     // Store token in session storage for this session
     sessionStorage.setItem('github_token', token);
+    
+    // Store username if provided for better UX
+    if (username) {
+      sessionStorage.setItem('github_username', username);
+    }
     
     // Use the provided Octokit instance directly
     githubService.authenticateWithOctokit(octokitInstance);
     
     setIsAuthenticated(true);
-    setError(null);
   };
 
   const handleAuthoringClick = (event) => {
@@ -60,11 +64,8 @@ const WelcomePage = () => {
   };
 
   const handleLoginClick = (event) => {
-    // Scroll to login section or show login modal
-    const authSection = document.querySelector('.auth-section');
-    if (authSection) {
-      authSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    event.preventDefault();
+    setShowLoginModal(true);
   };
 
   const handleDemoMode = (event) => {
@@ -96,6 +97,10 @@ const WelcomePage = () => {
 
   const handleCollaborationClose = () => {
     setShowCollaborationModal(false);
+  };
+
+  const handleLoginModalClose = () => {
+    setShowLoginModal(false);
   };
 
   return (
@@ -172,22 +177,13 @@ const WelcomePage = () => {
           </div>
         </div>
 
-        {/* Login Section (shown when not authenticated and login card is clicked) */}
-        {!isAuthenticated && (
-          <div className="auth-section">
-            <h3>Sign In with Personal Access Token</h3>
-            <p>
-              SGEX Workbench uses GitHub Personal Access Tokens for secure authentication without requiring any backend server setup.
-            </p>
-            
-            <PATLogin onAuthSuccess={handleAuthSuccess} />
-            
-            {error && (
-              <div className="error-message">
-                {error}
-              </div>
-            )}
-          </div>
+        {/* Login Modal */}
+        {showLoginModal && (
+          <LoginModal 
+            isOpen={showLoginModal}
+            onClose={handleLoginModalClose}
+            onAuthSuccess={handleAuthSuccess}
+          />
         )}
 
         {/* Collaboration Modal */}
