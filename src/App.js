@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './i18n'; // Initialize i18n
 import WelcomePage from './components/WelcomePage';
 import SelectProfilePage from './components/SelectProfilePage';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
@@ -9,7 +9,6 @@ import { handleNavigationClick } from '../utils/navigationUtils';
 import './WelcomePage.css';
 
 const WelcomePage = () => {
-  const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showCollaborationModal, setShowCollaborationModal] = useState(false);
   const [error, setError] = useState(null);
