@@ -28,10 +28,7 @@ const BPMNEditor = () => {
       if (containerRef.current && !modelerRef.current && selectedFile) {
         try {
           modelerRef.current = new BpmnModeler({
-            container: containerRef.current,
-            keyboard: {
-              bindTo: window
-            }
+            container: containerRef.current
           });
           console.log('BPMN modeler initialized successfully');
         } catch (error) {
@@ -147,10 +144,7 @@ const BPMNEditor = () => {
           // Initialize modeler if not already done
           if (!modelerRef.current && containerRef.current) {
             modelerRef.current = new BpmnModeler({
-              container: containerRef.current,
-              keyboard: {
-                bindTo: window
-              }
+              container: containerRef.current
             });
             console.log('BPMN modeler initialized for file loading');
           }
