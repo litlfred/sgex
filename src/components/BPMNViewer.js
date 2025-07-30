@@ -236,10 +236,7 @@ const BPMNViewerComponent = () => {
           });
           
           viewerRef.current = new BpmnViewer({
-            container: containerRef.current,
-            keyboard: {
-              bindTo: window
-            }
+            container: containerRef.current
           });
           console.log('✅ BPMNViewer: BPMN viewer initialized successfully');
           console.log('📞 BPMNViewer: About to call loadBpmnContent()...');
@@ -265,10 +262,7 @@ const BPMNViewerComponent = () => {
                 try {
                   console.log('🔄 BPMNViewer: Retrying viewer creation after cleanup...');
                   viewerRef.current = new BpmnViewer({
-                    container: containerRef.current,
-                    keyboard: {
-                      bindTo: window
-                    }
+                    container: containerRef.current
                   });
                   console.log('✅ BPMNViewer: BPMN viewer initialized successfully on retry');
                   loadBpmnContent();
