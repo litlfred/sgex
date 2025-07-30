@@ -31,6 +31,13 @@ class HelpContentService {
               <div class="help-tip">
                 <strong>💡 Tip:</strong> Please provide as much detail as possible including steps to reproduce, expected behavior, and actual behavior.
               </div>
+              <div class="help-fallback">
+                <strong>🔗 Can't access GitHub?</strong> If the buttons above don't work in your environment:
+                <ol>
+                  <li>Email us directly at <a href="mailto:smart@who.int?subject=SGEX Bug Report">smart@who.int</a></li>
+                  <li>Or visit <a href="https://github.com/litlfred/sgex/issues/new" target="_blank">github.com/litlfred/sgex/issues/new</a> manually</li>
+                </ol>
+              </div>
             `
           }
         ]

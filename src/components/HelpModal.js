@@ -52,7 +52,33 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
         }
 
         const url = createContextualUrl(baseUrl, params);
-        window.open(url, '_blank');
+        
+        // Try to open the GitHub issue, but handle cases where external links are blocked
+        try {
+          const newWindow = window.open(url, '_blank');
+          
+          // Check if the window was blocked or failed to open
+          if (!newWindow || newWindow.closed) {
+            // Fallback: show instructions to manually open the link
+            window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
+          } else {
+            // Check if the window actually loaded after a brief delay
+            setTimeout(() => {
+              try {
+                if (newWindow.closed || !newWindow.location || newWindow.location.href === 'about:blank') {
+                  newWindow.close();
+                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
+                }
+              } catch (e) {
+                // Cross-origin restriction means it probably loaded successfully
+                // or the check failed due to security - either way, don't show fallback
+              }
+            }, 1000);
+          }
+        } catch (error) {
+          console.warn('Failed to open GitHub issue:', error);
+          window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
+        }
       },
 
       openDakIssue: (issueType) => {
@@ -92,7 +118,130 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
         }
 
         const url = createContextualUrl(baseUrl, params);
-        window.open(url, '_blank');
+        
+        // Try to open the GitHub issue, but handle cases where external links are blocked
+        try {
+          const newWindow = window.open(url, '_blank');
+          
+          // Check if the window was blocked or failed to open
+          if (!newWindow || newWindow.closed) {
+            // Fallback: show instructions to manually open the link
+            window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
+          } else {
+            // Check if the window actually loaded after a brief delay
+            setTimeout(() => {
+              try {
+                if (newWindow.closed || !newWindow.location || newWindow.location.href === 'about:blank') {
+                  newWindow.close();
+                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
+                }
+              } catch (e) {
+                // Cross-origin restriction means it probably loaded successfully
+                // or the check failed due to security - either way, don't show fallback
+              }
+            }, 1000);
+          }
+        } catch (error) {
+          console.warn('Failed to open DAK issue:', error);
+          window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
+        }
+      },
+
+      // Function to show fallback instructions when GitHub access is blocked
+      showFallbackInstructions: (reason, url, issueType) => {
+        const instructions = {
+          'github-blocked': {
+            title: 'GitHub Access Required',
+            message: `
+              <div class="help-fallback-notice">
+                <h4>🔗 GitHub Link Blocked</h4>
+                <p>It looks like GitHub access is restricted in your current environment.</p>
+                <h5>To report this issue:</h5>
+                <ol>
+                  <li>Copy the link below</li>
+                  <li>Open it in a browser with GitHub access</li>
+                  <li>Fill out the issue template</li>
+                </ol>
+                <div class="fallback-url">
+                  <strong>Link to copy:</strong><br>
+                  <textarea readonly onclick="this.select()" style="width: 100%; height: 60px; margin: 5px 0; padding: 5px; font-family: monospace; font-size: 12px;">${url}</textarea>
+                </div>
+                <p><em>💡 Tip: You can also email us at <a href="mailto:smart@who.int">smart@who.int</a> with your issue details.</em></p>
+              </div>
+            `
+          }
+        };
+
+        const fallback = instructions[reason] || {
+          title: 'External Link Issue',
+          message: `<p>Unable to open external link. Please copy and visit: <br><code>${url}</code></p>`
+        };
+
+        // Create a temporary modal-like alert for fallback instructions
+        const existingFallback = document.querySelector('.help-fallback-overlay');
+        if (existingFallback) {
+          existingFallback.remove();
+        }
+
+        const fallbackOverlay = document.createElement('div');
+        fallbackOverlay.className = 'help-fallback-overlay';
+        fallbackOverlay.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10000;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        `;
+
+        const fallbackModal = document.createElement('div');
+        fallbackModal.style.cssText = `
+          background: white;
+          border-radius: 8px;
+          padding: 20px;
+          max-width: 500px;
+          max-height: 80vh;
+          overflow-y: auto;
+          position: relative;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        `;
+
+        fallbackModal.innerHTML = `
+          <button onclick="this.closest('.help-fallback-overlay').remove()" style="
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+          ">×</button>
+          <h3 style="margin-top: 0; color: #333;">${fallback.title}</h3>
+          <div style="color: #555; line-height: 1.5;">${fallback.message}</div>
+        `;
+
+        fallbackOverlay.appendChild(fallbackModal);
+        document.body.appendChild(fallbackOverlay);
+
+        // Click outside to close
+        fallbackOverlay.addEventListener('click', (e) => {
+          if (e.target === fallbackOverlay) {
+            fallbackOverlay.remove();
+          }
+        });
+
+        // Auto-remove after 30 seconds
+        setTimeout(() => {
+          if (document.body.contains(fallbackOverlay)) {
+            fallbackOverlay.remove();
+          }
+        }, 30000);
       }
     };
 
@@ -130,7 +279,17 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
       }
       
       const url = `https://github.com/litlfred/sgex/issues/new?${params.toString()}`;
-      window.open(url, '_blank');
+      
+      // Try to open with error handling
+      try {
+        const newWindow = window.open(url, '_blank');
+        if (!newWindow || newWindow.closed) {
+          window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, 'bug');
+        }
+      } catch (error) {
+        console.warn('Failed to open GitHub issue:', error);
+        window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, 'bug');
+      }
     }
   };
 
