@@ -48,7 +48,8 @@ const PageContext = ({ customBreadcrumbs }) => {
     });
 
     // Add user context for user/DAK/asset pages
-    if ((type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile) {
+    // For dak-action pages, don't show "Select Repository" since no repo has been chosen yet
+    if ((type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile && pageName !== 'dak-action') {
       breadcrumbs.push({
         label: 'Select Repository',
         path: `/select_repository/${profile.login}`,
