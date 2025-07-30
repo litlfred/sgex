@@ -1,0 +1,308 @@
+.bookmarks-section {
+  margin-bottom: 2rem;
+  background: var(--who-secondary-bg);
+  border-radius: 12px;
+  border: 1px solid var(--who-border-color);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.bookmarks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: var(--who-light-blue-light);
+  border-bottom: 1px solid var(--who-border-color);
+}
+
+body.theme-dark .bookmarks-header {
+  background: var(--who-navy);
+}
+
+.bookmarks-title-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.bookmarks-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--who-text-primary);
+}
+
+.bookmarks-icon {
+  color: var(--who-yellow, #f39c12);
+  font-size: 1.2rem;
+}
+
+.bookmark-count {
+  color: var(--who-text-secondary);
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+.bookmarks-toggle {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: var(--who-text-secondary);
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.bookmarks-toggle:hover {
+  background-color: var(--who-light-blue);
+  color: var(--who-text-primary);
+}
+
+.toggle-icon {
+  display: inline-block;
+  transition: transform 0.2s ease;
+  font-size: 0.8rem;
+}
+
+.toggle-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.clear-bookmarks-btn {
+  padding: 0.5rem 1rem;
+  background: var(--who-red, #e74c3c);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-bookmarks-btn:hover {
+  background: var(--who-red-dark, #c0392b);
+  transform: translateY(-1px);
+}
+
+.bookmarks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.bookmark-card {
+  background: var(--who-primary-bg);
+  border: 1px solid var(--who-border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.bookmark-card:hover {
+  border-color: var(--who-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.bookmark-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.bookmark-card .repo-header-info {
+  flex: 1;
+  margin-right: 0.5rem;
+}
+
+.bookmark-card .repo-header-info h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--who-text-primary);
+  line-height: 1.3;
+}
+
+.bookmark-card .repo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.bookmark-card .repo-meta .template-badge,
+.bookmark-card .repo-meta .private-badge,
+.bookmark-card .repo-meta .language-badge,
+.bookmark-card .repo-meta .compatible-badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.bookmark-card .repo-meta .template-badge {
+  background: var(--who-purple-light, #e8d5ff);
+  color: var(--who-purple, #8e44ad);
+}
+
+.bookmark-card .repo-meta .private-badge {
+  background: var(--who-red-light, #fce4e6);
+  color: var(--who-red, #e74c3c);
+}
+
+.bookmark-card .repo-meta .language-badge {
+  background: var(--who-light-blue-light);
+  color: var(--who-blue);
+}
+
+.bookmark-card .repo-meta .compatible-badge {
+  background: var(--who-green-light, #d5f4e6);
+  color: var(--who-green, #27ae60);
+}
+
+.bookmark-card-button {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  flex-shrink: 0;
+}
+
+.bookmark-description {
+  color: var(--who-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0 0 0.75rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.bookmark-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.bookmark-topics .topic-tag {
+  background: var(--who-light-blue-light);
+  color: var(--who-blue);
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.bookmark-topics .topic-more {
+  color: var(--who-text-tertiary);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.bookmark-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  color: var(--who-text-secondary);
+  font-size: 0.8rem;
+}
+
+.bookmark-stats .stat {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.bookmark-stats .stat-icon {
+  font-size: 0.9rem;
+}
+
+.bookmark-meta {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--who-border-color);
+  text-align: right;
+}
+
+.bookmarked-date {
+  color: var(--who-text-tertiary);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+/* Dark mode adjustments */
+body.theme-dark .bookmark-card {
+  background: var(--who-secondary-bg);
+}
+
+body.theme-dark .bookmark-card:hover {
+  border-color: var(--who-blue-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+body.theme-dark .bookmark-card .repo-meta .template-badge {
+  background: var(--who-purple, #8e44ad);
+  color: white;
+}
+
+body.theme-dark .bookmark-card .repo-meta .private-badge {
+  background: var(--who-red, #e74c3c);
+  color: white;
+}
+
+body.theme-dark .bookmark-card .repo-meta .language-badge {
+  background: var(--who-blue);
+  color: white;
+}
+
+body.theme-dark .bookmark-card .repo-meta .compatible-badge {
+  background: var(--who-green, #27ae60);
+  color: white;
+}
+
+body.theme-dark .bookmark-topics .topic-tag {
+  background: var(--who-blue);
+  color: white;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .bookmarks-grid {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+  
+  .bookmarks-header {
+    padding: 1rem;
+  }
+  
+  .bookmarks-title-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .bookmark-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .bookmark-card .repo-header-info {
+    margin-right: 0;
+  }
+  
+  .bookmark-card-button {
+    align-self: flex-end;
+  }
+}

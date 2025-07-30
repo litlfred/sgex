@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import { PageLayout } from './framework';
+import BookmarksSection from './BookmarksSection';
+import BookmarkButton from './BookmarkButton';
 import './RepositorySelection.css';
 
 const RepositorySelection = () => {
@@ -132,49 +134,58 @@ const RepositorySelection = () => {
               </p>
             </div>
           ) : (
-            <div className="repo-grid">
-              {repositories.map((repo) => (
-                <div 
-                  key={repo.id}
-                  className="repo-card"
-                  onClick={() => handleRepositorySelect(repo)}
-                >
-                  <div className="repo-header-info">
-                    <h3>{repo.name}</h3>
-                    <div className="repo-meta">
-                      {repo.private && <span className="private-badge">Private</span>}
-                      {repo.language && <span className="language-badge">{repo.language}</span>}
+            <>
+              <BookmarksSection 
+                onRepositorySelect={handleRepositorySelect}
+                profile={profile}
+              />
+              
+              <div className="repo-grid">
+                {repositories.map((repo) => (
+                  <div 
+                    key={repo.id}
+                    className="repo-card"
+                    onClick={() => handleRepositorySelect(repo)}
+                  >
+                    <BookmarkButton repository={repo} />
+                    
+                    <div className="repo-header-info">
+                      <h3>{repo.name}</h3>
+                      <div className="repo-meta">
+                        {repo.private && <span className="private-badge">Private</span>}
+                        {repo.language && <span className="language-badge">{repo.language}</span>}
+                      </div>
+                    </div>
+                    
+                    <p className="repo-description">{repo.description || 'No description available'}</p>
+                    
+                    <div className="repo-topics">
+                      {(repo.topics || []).slice(0, 3).map((topic) => (
+                        <span key={topic} className="topic-tag">{topic}</span>
+                      ))}
+                      {(repo.topics || []).length > 3 && (
+                        <span className="topic-more">+{(repo.topics || []).length - 3} more</span>
+                      )}
+                    </div>
+                    
+                    <div className="repo-stats">
+                      <div className="stat">
+                        <span className="stat-icon">⭐</span>
+                        <span>{repo.stargazers_count || 0}</span>
+                      </div>
+                      <div className="stat">
+                        <span className="stat-icon">🍴</span>
+                        <span>{repo.forks_count || 0}</span>
+                      </div>
+                      <div className="stat">
+                        <span className="stat-icon">📅</span>
+                        <span>Updated {formatDate(repo.updated_at)}</span>
+                      </div>
                     </div>
                   </div>
-                  
-                  <p className="repo-description">{repo.description || 'No description available'}</p>
-                  
-                  <div className="repo-topics">
-                    {(repo.topics || []).slice(0, 3).map((topic) => (
-                      <span key={topic} className="topic-tag">{topic}</span>
-                    ))}
-                    {(repo.topics || []).length > 3 && (
-                      <span className="topic-more">+{(repo.topics || []).length - 3} more</span>
-                    )}
-                  </div>
-                  
-                  <div className="repo-stats">
-                    <div className="stat">
-                      <span className="stat-icon">⭐</span>
-                      <span>{repo.stargazers_count || 0}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-icon">🍴</span>
-                      <span>{repo.forks_count || 0}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-icon">📅</span>
-                      <span>Updated {formatDate(repo.updated_at)}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
           </div>
         </div>

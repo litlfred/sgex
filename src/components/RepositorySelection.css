@@ -168,6 +168,7 @@ body.theme-light .repository-selection {
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
   text-align: left;
+  position: relative;
 }
 
 .repo-card:hover {

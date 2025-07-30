@@ -1,0 +1,113 @@
+.bookmark-button {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  position: relative;
+  min-width: 2rem;
+  min-height: 2rem;
+}
+
+.bookmark-button:hover {
+  background-color: var(--who-light-blue-light);
+  transform: scale(1.1);
+}
+
+.bookmark-button:active {
+  transform: scale(0.95);
+}
+
+.bookmark-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+/* Not bookmarked state */
+.bookmark-button.not-bookmarked .bookmark-icon {
+  color: var(--who-text-secondary);
+}
+
+.bookmark-button.not-bookmarked:hover .bookmark-icon {
+  color: var(--who-blue);
+}
+
+/* Bookmarked state */
+.bookmark-button.bookmarked .bookmark-icon {
+  color: var(--who-yellow, #f39c12);
+}
+
+.bookmark-button.bookmarked:hover .bookmark-icon {
+  color: var(--who-yellow-dark, #e67e22);
+}
+
+/* Dark mode adjustments */
+body.theme-dark .bookmark-button:hover {
+  background-color: var(--who-secondary-bg);
+}
+
+body.theme-dark .bookmark-button.not-bookmarked .bookmark-icon {
+  color: var(--who-text-tertiary);
+}
+
+body.theme-dark .bookmark-button.not-bookmarked:hover .bookmark-icon {
+  color: var(--who-blue-light);
+}
+
+/* Focus styles for accessibility */
+.bookmark-button:focus {
+  outline: 2px solid var(--who-blue);
+  outline-offset: 2px;
+}
+
+/* Size variants */
+.bookmark-button.small {
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0.25rem;
+}
+
+.bookmark-button.small .bookmark-icon {
+  font-size: 1rem;
+}
+
+.bookmark-button.large {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0.75rem;
+}
+
+.bookmark-button.large .bookmark-icon {
+  font-size: 1.5rem;
+}
+
+/* Positioning in repository cards */
+.repo-card .bookmark-button {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 10;
+  background-color: var(--who-primary-bg);
+  border: 1px solid var(--who-border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.repo-card:hover .bookmark-button {
+  opacity: 1;
+}
+
+/* Animation for bookmark toggle */
+@keyframes bookmarkToggle {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.bookmark-button.bookmarked .bookmark-icon {
+  animation: bookmarkToggle 0.3s ease;
+}

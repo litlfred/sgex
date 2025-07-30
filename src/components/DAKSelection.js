@@ -4,6 +4,8 @@ import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import dakTemplates from '../config/dak-templates.json';
 import ContextualHelpMascot from './ContextualHelpMascot';
+import BookmarksSection from './BookmarksSection';
+import BookmarkButton from './BookmarkButton';
 import './DAKSelection.css';
 
 const DAKSelection = () => {
@@ -739,6 +741,8 @@ const DAKSelection = () => {
                       className={`repo-card ${selectedRepository?.id === repo.id ? 'selected' : ''} scanning-found`}
                       onClick={() => handleRepositorySelect(repo)}
                     >
+                      <BookmarkButton repository={repo} />
+                      
                       <div className="repo-header-info">
                         <h3>{repo.name} <span className="new-badge">✨ Found</span></h3>
                         <div className="repo-meta">
@@ -811,6 +815,12 @@ const DAKSelection = () => {
             </div>
           ) : (
             <>
+              <BookmarksSection 
+                onRepositorySelect={handleRepositorySelect}
+                profile={profile}
+                action={action}
+              />
+              
               <div className="repo-grid">
                 {repositories.map((repo) => (
                   <div 
@@ -818,6 +828,8 @@ const DAKSelection = () => {
                     className={`repo-card ${selectedRepository?.id === repo.id ? 'selected' : ''}`}
                     onClick={() => handleRepositorySelect(repo)}
                   >
+                    <BookmarkButton repository={repo} />
+                    
                     <div className="repo-header-info">
                       <h3>{repo.name}</h3>
                       <div className="repo-meta">
