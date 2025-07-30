@@ -23,6 +23,7 @@ import PagesManager from './components/PagesManager';
 import NotFound from './components/NotFound';
 import LandingPageWithFramework from './components/LandingPageWithFramework';
 import DAKDashboardWithFramework from './components/DAKDashboardWithFramework';
+import DashboardRedirect from './components/DashboardRedirect';
 import TestDocumentationPage from './components/TestDocumentationPage';
 import AssetEditorTest from './components/AssetEditorTest';
 import logger from './utils/logger';
@@ -55,7 +56,7 @@ function App() {
             <Route path="/organization-selection" element={<OrganizationSelection />} />
             <Route path="/dak-configuration" element={<DAKConfiguration />} />
             <Route path="/repositories" element={<RepositorySelection />} />
-            <Route path="/dashboard" element={<DAKDashboardWithFramework />} />
+            <Route path="/dashboard" element={<DashboardRedirect />} />
             <Route path="/dashboard/:user/:repo" element={<DAKDashboardWithFramework />} />
             <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboardWithFramework />} />
             <Route path="/test-dashboard" element={<TestDashboard />} />
