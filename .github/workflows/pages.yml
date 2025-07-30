@@ -1,32 +1,31 @@
-name: Deploy to GitHub Pages
+name: Safe Multi-Branch GitHub Pages Deployment
 
 on:
   push:
-    paths-ignore:
-      - 'docs/qa-report.html'
-      - 'public/docs/qa-report.html'
-      - 'docs/github-issues-analysis.md'
-  pull_request:
+    branches-ignore:
+      - 'gh-pages'  # Never run on gh-pages branch
     paths-ignore:
       - 'docs/qa-report.html'
       - 'public/docs/qa-report.html'
       - 'docs/github-issues-analysis.md'
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.ref_name }}"
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for gh-pages branch
         
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -37,45 +36,250 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build React app
-        run: npm run build
-        env:
-          CI: false
-
       - name: Generate QA Report
         run: node scripts/generate-qa-report.js
 
       - name: Generate Issues Analysis
         run: node scripts/analyze-github-issues.js
-        
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-        
-      - name: Prepare site
+
+      - name: Build branch-specific React app
+        run: node scripts/build-multi-branch.js branch
+        env:
+          CI: false
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+
+      - name: Validate branch directory safety
+        id: validate_branch
+        shell: bash
         run: |
-          mkdir -p _site
-          # Copy React build output
-          cp -r build/* _site/
-          # Copy documentation
-          mkdir -p _site/docs
-          cp docs/*.md _site/docs/
-          # Copy QA report
-          if [ -f docs/qa-report.html ]; then
-            cp docs/qa-report.html _site/docs/
-          fi
-          # Copy root index.html as fallback
-          if [ ! -f _site/index.html ]; then
-            cp index.html _site/
+          set -e
+          
+          # Get and sanitize branch name
+          branch="${{ github.ref_name }}"
+          echo "Processing branch: $branch"
+          
+          # Validate branch name (no dangerous characters)
+          if [[ "$branch" =~ [^a-zA-Z0-9._/-] ]]; then
+            echo "ERROR: Branch name contains unsafe characters: $branch"
+            exit 1
           fi
           
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+          # Ensure we're in the repository root
+          repo_root="$(pwd)"
+          echo "Repository root: $repo_root"
+          
+          # Calculate target directory path
+          target_dir="$repo_root/$branch"
+          resolved_target="$(readlink -f "$target_dir")"
+          
+          echo "Target directory: $target_dir"
+          echo "Resolved target: $resolved_target"
+          
+          # Critical safety validation
+          if [[ "$resolved_target" != "$repo_root"* ]]; then
+            echo "ERROR: Target directory is outside repository root"
+            echo "Repository root: $repo_root"
+            echo "Resolved target: $resolved_target"
+            exit 1
+          fi
+          
+          if [[ ${#resolved_target} -le ${#repo_root} ]]; then
+            echo "ERROR: Target directory path is not longer than repository root"
+            echo "Repository root length: ${#repo_root}"
+            echo "Target directory length: ${#resolved_target}"
+            exit 1
+          fi
+          
+          # Additional safety: ensure target is exactly one level deeper
+          expected_path="$repo_root/$branch"
+          if [[ "$resolved_target" != "$expected_path" ]]; then
+            echo "ERROR: Target directory does not match expected path"
+            echo "Expected: $expected_path"
+            echo "Resolved: $resolved_target"
+            exit 1
+          fi
+          
+          echo "✅ Branch directory validation passed"
+          echo "branch_dir=$resolved_target" >> "$GITHUB_OUTPUT"
+          echo "branch_name=$branch" >> "$GITHUB_OUTPUT"
 
-  deploy:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Checkout gh-pages branch
+        shell: bash
+        run: |
+          set -e
+          
+          # Check if gh-pages branch exists
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            echo "Checking out existing gh-pages branch"
+            git checkout gh-pages
+          else
+            echo "Creating new gh-pages branch"
+            git checkout --orphan gh-pages
+            git rm -rf .
+            echo "# GitHub Pages" > README.md
+            git add README.md
+            git commit -m "Initial gh-pages branch"
+            git push origin gh-pages
+          fi
+
+      - name: Clean old deployment for this branch (with validation)
+        shell: bash
+        run: |
+          set -e
+          
+          branch_dir="${{ steps.validate_branch.outputs.branch_dir }}"
+          repo_root="$(pwd)"
+          
+          echo "Cleaning old deployment"
+          echo "Branch directory: $branch_dir"
+          echo "Repository root: $repo_root"
+          
+          # Re-validate before any destructive operations
+          resolved_dir="$(readlink -f "$branch_dir")"
+          if [[ "$resolved_dir" != "$repo_root"* ]] || [[ ${#resolved_dir} -le ${#repo_root} ]]; then
+            echo "ERROR: Safety validation failed during cleanup"
+            exit 1
+          fi
+          
+          # Use git to safely remove the branch directory
+          if [[ -d "$branch_dir" ]]; then
+            echo "Removing existing deployment: $branch_dir"
+            git rm -rf "$branch_dir" || echo "Directory didn't exist in git"
+          else
+            echo "No existing deployment to clean"
+          fi
+
+      - name: Copy new build to branch directory (with validation)
+        shell: bash
+        run: |
+          set -e
+          
+          branch_dir="${{ steps.validate_branch.outputs.branch_dir }}"
+          repo_root="$(pwd)"
+          
+          echo "Copying new build to branch directory"
+          echo "Branch directory: $branch_dir"
+          echo "Repository root: $repo_root"
+          
+          # Final validation before copy
+          resolved_dir="$(readlink -f "$branch_dir")"
+          if [[ "$resolved_dir" != "$repo_root"* ]] || [[ ${#resolved_dir} -le ${#repo_root} ]]; then
+            echo "ERROR: Safety validation failed during copy"
+            exit 1
+          fi
+          
+          # Create branch directory and copy build
+          mkdir -p "$branch_dir"
+          cp -a build/. "$branch_dir/"
+          
+          # Verify index.html exists
+          if [[ ! -f "$branch_dir/index.html" ]]; then
+            echo "ERROR: index.html not found in build output"
+            exit 1
+          fi
+          
+          echo "✅ Build copied successfully to $branch_dir"
+
+      - name: Build and deploy root landing page
+        shell: bash
+        run: |
+          set -e
+          
+          # Switch back to the original branch to build landing page
+          git checkout ${{ github.ref_name }}
+          
+          # Build the root landing page
+          echo "Building root landing page..."
+          node scripts/build-multi-branch.js root
+          
+          # Switch back to gh-pages
+          git checkout gh-pages
+          
+          # Copy landing page to root (but preserve branch directories)
+          echo "Deploying root landing page..."
+          
+          # Save existing branch directories
+          if ls -d */ > /dev/null 2>&1; then
+            echo "Preserving existing branch directories..."
+            mkdir -p /tmp/branch-backup
+            for dir in */; do
+              if [[ "$dir" != "sgex/" ]]; then  # Don't backup the main content dir
+                cp -r "$dir" /tmp/branch-backup/
+              fi
+            done
+          fi
+          
+          # Clear root (except .git)
+          find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name '.github' -exec rm -rf {} +
+          
+          # Copy root landing page
+          cp -a build/. .
+          
+          # Restore branch directories
+          if [[ -d /tmp/branch-backup ]]; then
+            cp -r /tmp/branch-backup/* .
+            rm -rf /tmp/branch-backup
+          fi
+          
+          # Ensure main application is accessible at /sgex/main/
+          if [[ ! -d "sgex" ]]; then
+            mkdir -p sgex
+          fi
+          
+          # Copy current branch to /sgex/branch-name/
+          branch_name="${{ steps.validate_branch.outputs.branch_name }}"
+          sgex_branch_dir="sgex/$branch_name"
+          mkdir -p "$sgex_branch_dir"
+          
+          # Switch back to get the branch build
+          git checkout ${{ github.ref_name }}
+          node scripts/build-multi-branch.js branch
+          git checkout gh-pages
+          
+          cp -a build/. "$sgex_branch_dir/"
+          
+          echo "✅ Root landing page deployed"
+
+      - name: Stage and commit changes (with validation)
+        shell: bash
+        run: |
+          set -e
+          
+          repo_root="$(pwd)"
+          
+          echo "Staging changes for commit"
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add all changes
+          git add -A
+          
+          # Check if there are changes to commit
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            echo "Committing changes..."
+            git commit -m "🚀 Deploy ${{ github.ref_name }} branch preview
+
+            - Updated branch preview for ${{ github.ref_name }}
+            - Refreshed root landing page with branch listings
+            - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+            - Commit: ${{ github.sha }}"
+            
+            echo "Pushing to gh-pages..."
+            git push origin gh-pages
+            
+            echo "✅ Deployment completed successfully"
+          fi
+
+      - name: Output deployment info
+        shell: bash
+        run: |
+          branch_name="${{ steps.validate_branch.outputs.branch_name }}"
+          echo "🎉 Deployment Summary:"
+          echo "- Branch: $branch_name"
+          echo "- Branch Preview: https://litlfred.github.io/sgex/sgex/$branch_name/"
+          echo "- Landing Page: https://litlfred.github.io/sgex/"
+          echo "- Commit: ${{ github.sha }}"

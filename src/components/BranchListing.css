@@ -1,0 +1,180 @@
+.branch-listing {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.branch-listing-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.branch-listing-header h1 {
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.branch-listing-header .subtitle {
+  font-size: 1.2rem;
+  color: #666;
+  margin: 0;
+}
+
+.branch-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.branch-card {
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  padding: 1.5rem;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.branch-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-color: #0366d6;
+}
+
+.branch-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.branch-name {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #0366d6;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.branch-commit {
+  background: #f1f3f4;
+  color: #586069;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.875rem;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.branch-card-body {
+  margin-bottom: 1rem;
+}
+
+.branch-date {
+  color: #586069;
+  font-size: 0.9rem;
+  margin: 0 0 1rem 0;
+}
+
+.branch-preview-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0366d6;
+  color: white;
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.branch-preview-link:hover {
+  background: #0256cc;
+  text-decoration: none;
+  color: white;
+}
+
+.branch-card-footer {
+  border-top: 1px solid #e1e5e9;
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.branch-path {
+  color: #6a737d;
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.no-branches {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  color: #6a737d;
+}
+
+.no-branches p {
+  margin: 0.5rem 0;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 3rem;
+  color: #6a737d;
+}
+
+.error {
+  color: #d73a49;
+}
+
+.branch-listing-footer {
+  text-align: center;
+  padding: 2rem;
+  border-top: 1px solid #e1e5e9;
+  color: #6a737d;
+}
+
+.branch-listing-footer p {
+  margin: 0.5rem 0;
+}
+
+.branch-listing-footer a {
+  color: #0366d6;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.branch-listing-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .branch-listing {
+    padding: 1rem;
+  }
+  
+  .branch-cards {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .branch-listing-header h1 {
+    font-size: 2rem;
+  }
+  
+  .branch-card {
+    padding: 1rem;
+  }
+  
+  .branch-card-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+}
