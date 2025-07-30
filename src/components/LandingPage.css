@@ -570,6 +570,7 @@ body.theme-light .landing-page {
   border-radius: 6px;
   margin-top: 1rem;
   backdrop-filter: blur(10px);
+  text-align: center;
 }
 
 .error-help {
