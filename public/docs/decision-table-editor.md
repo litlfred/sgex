@@ -8,6 +8,7 @@ The editor supports multiple types of decision logic tables including:
 - **Scheduling Tables**: Immunization and appointment scheduling logic
 - **Contraindications Tables**: Medical contraindication checking and safety rules
 - **Eligibility Tables**: Patient eligibility and qualification assessments
+
 ## Core Features
 
 ### Table Structure
