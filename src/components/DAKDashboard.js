@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import dakValidationService from '../services/dakValidationService';
@@ -7,7 +7,7 @@ import branchContextService from '../services/branchContextService';
 import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
-import { PageLayout } from './framework';
+import { PageLayout, usePageParams } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKDashboard.css';
 
@@ -15,7 +15,8 @@ const DAKDashboard = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, repo, branch } = useParams();
+  const { params } = usePageParams();
+  const { user, repo, branch } = params || {};
   
   // Try to get data from location.state first, then from URL params
   const [profile, setProfile] = useState(location.state?.profile || null);
@@ -487,13 +488,25 @@ const DAKDashboard = () => {
 
     // For generic-personas, navigate to actor editor
     if (component.id === 'generic-personas') {
-      handleNavigationClick(event, '/actor-editor', navigate, navigationState);
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/actor-editor/${owner}/${repoName}/${selectedBranch}`
+        : `/actor-editor/${owner}/${repoName}`;
+      
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
     // For testing, navigate to testing viewer
     if (component.id === 'testing') {
-      handleNavigationClick(event, '/testing-viewer', navigate, navigationState);
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/testing-viewer/${owner}/${repoName}/${selectedBranch}`
+        : `/testing-viewer/${owner}/${repoName}`;
+      
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
@@ -509,9 +522,7 @@ const DAKDashboard = () => {
     handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
   };
 
-  const handleBackToRepos = () => {
-    navigate('/repositories', { state: { profile } });
-  };
+
 
   if (loading) {
     return (
@@ -552,17 +563,6 @@ const DAKDashboard = () => {
     <PageLayout pageName="dak-dashboard">
       <div className="dak-dashboard">
       <div className="dashboard-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBackToRepos} className="breadcrumb-link">
-            Select Repository
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">DAK Components</span>
-        </div>
 
         <div className="dashboard-main">
           <div className="dashboard-intro">

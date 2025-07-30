@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import MDEditor from '@uiw/react-md-editor';
-import { PageLayout } from './framework';
+import { PageLayout, usePageParams } from './framework';
 import './DecisionSupportLogicView.css';
 
 const DecisionSupportLogicView = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, repo, branch } = useParams();
+  const { params } = usePageParams();
+  const { user, repo, branch } = params || {};
   
   // State from location or URL params
   const [profile, setProfile] = useState(location.state?.profile || null);
@@ -634,25 +635,7 @@ define "Contraindication Present":
     });
   };
 
-  const handleBackToDashboard = () => {
-    if (repository && profile) {
-      const owner = repository.owner?.login || repository.full_name.split('/')[0];
-      const repoName = repository.name;
-      const path = selectedBranch 
-        ? `/dashboard/${owner}/${repoName}/${selectedBranch}`
-        : `/dashboard/${owner}/${repoName}`;
-      
-      navigate(path, {
-        state: {
-          profile,
-          repository,
-          selectedBranch
-        }
-      });
-    } else {
-      navigate('/');
-    }
-  };
+
 
   if (loading) {
     return (
@@ -688,17 +671,6 @@ define "Contraindication Present":
     <PageLayout pageName="decision-support-logic">
       <div className="decision-support-view">
       <div className="view-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBackToDashboard} className="breadcrumb-link">
-            DAK Components
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Decision Support Logic</span>
-        </div>
 
         <div className="view-main">
           <div className="view-intro">

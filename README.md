@@ -1,10 +1,31 @@
 # SGEX Workbench (WHO SMART Guidelines Exchange)
 
-
 <div align="center">
   <img src="public/sgex-mascot.png" alt="SGEX Workbench Helper" width="200" height="200">
   <p><em>Meet your SGEX Workbench Helper - here to guide you through WHO SMART Guidelines DAK editing!</em></p>
 </div>
+
+## Mission Statement
+
+SGEX is an experimental collaborative project developing a workbench of tools to make it easier and faster to develop high fidelity SMART Guidelines Digital Adaptation Kits (DAKs). Our mission is to empower healthcare organizations worldwide to create and maintain standards-compliant digital health implementations through:
+
+- **Collaborative Development**: Every contribution matters, whether reporting bugs, testing features, or sharing feedback
+- **AI-Powered Assistance**: Hybrid approach combining human insight with AI coding agents for efficient development
+- **Community-Driven Evolution**: Real-time improvement through collaborative discussion and iterative refinement
+- **Real-World Impact**: Building tools that help healthcare workers worldwide deliver better patient care
+
+## How to Contribute
+
+Contributing to SGEX is a collaborative journey that combines human creativity with AI assistance:
+
+1. **🐛 Start with Feedback**: Report bugs, request features, or suggest improvements through our issue tracker
+2. **🤖 AI-Powered Development**: Issues may be assigned to coding agents for initial analysis and implementation
+3. **🌟 Community Collaboration**: The community reviews, tests, and refines changes through collaborative discussion
+4. **🚀 Real-Time Evolution**: The workbench continuously evolves based on actual usage and feedback from healthcare professionals
+
+Every contribution helps improve digital health tools for healthcare workers worldwide. Whether you're reporting a bug, testing a feature, or sharing feedback, you're part of building the future of digital health tooling.
+
+**Ready to contribute?** Visit our [landing page](https://litlfred.github.io/sgex/) to get started or use the help mascot on any page to quickly report issues.
 
 This repository contains the source code, schemas, and documentation for the SGEX Workbench—a browser-based, standards-compliant collaborative editor for WHO SMART Guidelines Digital Adaptation Kits (DAKs).
 

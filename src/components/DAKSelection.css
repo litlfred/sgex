@@ -70,36 +70,6 @@ body.theme-light .dak-selection {
   margin: 0 auto;
 }
 
-.breadcrumb {
-  margin-bottom: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.breadcrumb-link {
-  background: none;
-  border: none;
-  color: var(--who-text-primary);
-  cursor: pointer;
-  text-decoration: underline;
-  font-size: inherit;
-}
-
-.breadcrumb-link:hover {
-  color: var(--who-blue);
-}
-
-.breadcrumb-separator {
-  color: var(--who-text-muted);
-}
-
-.breadcrumb-current {
-  color: var(--who-text-primary);
-  font-weight: 500;
-}
-
 .dak-selection .selection-main {
   background: var(--who-card-bg);
   backdrop-filter: blur(10px);

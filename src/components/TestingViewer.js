@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import githubService from '../services/githubService';
 import { PageLayout } from './framework';
+import FeatureFileEditor from './FeatureFileEditor';
 import './TestingViewer.css';
 
 // Demo feature files data for when in demo mode
@@ -148,6 +151,9 @@ const TestingViewer = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileContent, setFileContent] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
+  const [editorFile, setEditorFile] = useState(null);
+  const [editorContent, setEditorContent] = useState('');
 
   useEffect(() => {
     const fetchFeatureFiles = async () => {
@@ -276,6 +282,52 @@ const TestingViewer = () => {
     }
   };
 
+  const handleEditFile = async (file) => {
+    try {
+      setLoading(true);
+      
+      // Check if we're in demo mode
+      const isDemoMode = repository.isDemo || 
+                        (repository.owner && repository.owner.login === 'demo-user') ||
+                        (repository.full_name && repository.full_name.startsWith('demo-user/'));
+      
+      if (isDemoMode) {
+        // Find the demo file content
+        const demoFile = DEMO_FEATURE_FILES.find(df => df.name === file.name);
+        if (demoFile) {
+          setTimeout(() => {
+            setEditorFile(file);
+            setEditorContent(demoFile.content);
+            setShowEditor(true);
+            setLoading(false);
+          }, 500); // Simulate loading time
+        } else {
+          setError(`Demo content not found for file: ${file.name}`);
+          setLoading(false);
+        }
+        return;
+      }
+
+      // For real repositories, fetch from GitHub
+      const response = await fetch(file.download_url);
+      const content = await response.text();
+      setEditorFile(file);
+      setEditorContent(content);
+      setShowEditor(true);
+    } catch (err) {
+      console.error('Error loading file content for editing:', err);
+      setError(`Error loading file: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveFile = (newContent) => {
+    // Update the content if it was successfully saved
+    setEditorContent(newContent);
+    console.log('File saved successfully');
+  };
+
   const handleBack = () => {
     navigate('/dashboard', { 
       state: { profile, repository, selectedBranch } 
@@ -298,7 +350,19 @@ const TestingViewer = () => {
             </button>
           </div>
           <div className="testing-modal-content">
-            <pre className="feature-content">{fileContent}</pre>
+            <SyntaxHighlighter
+              language="gherkin"
+              style={oneLight}
+              customStyle={{
+                margin: 0,
+                borderRadius: '4px',
+                fontSize: '14px',
+                lineHeight: '1.5',
+                minHeight: '400px'
+              }}
+            >
+              {fileContent}
+            </SyntaxHighlighter>
           </div>
           <div className="testing-modal-footer">
             <a 
@@ -374,6 +438,12 @@ const TestingViewer = () => {
                   >
                     View
                   </button>
+                  <button 
+                    className="btn btn-success"
+                    onClick={() => handleEditFile(file)}
+                  >
+                    Edit
+                  </button>
                   <a 
                     href={file.url} 
                     target="_blank" 
@@ -389,6 +459,19 @@ const TestingViewer = () => {
         )}
 
         {renderModal()}
+
+        <FeatureFileEditor
+          file={editorFile}
+          repository={repository}
+          selectedBranch={selectedBranch}
+          isOpen={showEditor}
+          onClose={() => setShowEditor(false)}
+          onSave={handleSaveFile}
+          initialContent={editorContent}
+          isDemo={repository.isDemo || 
+                  (repository.owner && repository.owner.login === 'demo-user') ||
+                  (repository.full_name && repository.full_name.startsWith('demo-user/'))}
+        />
       </div>
     </PageLayout>
   );

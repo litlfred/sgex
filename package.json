@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "SGEX Workbench - WHO SMART Guidelines Exchange collaborative editor",
   "private": true,
-  "homepage": "https://litlfred.github.io/sgex",
+  "homepage": "/",
   "dependencies": {
     "@octokit/rest": "^22.0.0",
     "@testing-library/jest-dom": "^6.6.4",
@@ -20,6 +20,7 @@
     "react-i18next": "^15.6.1",
     "react-router-dom": "^6.30.1",
     "react-scripts": "5.0.1",
+    "react-syntax-highlighter": "^15.6.1",
     "web-vitals": "^5.0.3"
   },
   "scripts": {

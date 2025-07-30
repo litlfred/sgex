@@ -1,15 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import dakTemplates from '../config/dak-templates.json';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout, usePageParams } from './framework';
 import './DAKSelection.css';
 
 const DAKSelection = () => {
+  return (
+    <PageLayout pageName="dak-selection">
+      <DAKSelectionContent />
+    </PageLayout>
+  );
+};
+
+const DAKSelectionContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user: userParam } = useParams();
+  const { params } = usePageParams();
+  const userParam = params?.user;
   const [repositories, setRepositories] = useState([]);
   const [selectedRepository, setSelectedRepository] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -551,10 +560,6 @@ const DAKSelection = () => {
     await simulateEnhancedScanning();
   };
 
-  const handleBack = () => {
-    navigate('/dak-action', { state: { profile: profile } });
-  };
-
   const handleHomeNavigation = () => {
     navigate('/');
   };
@@ -591,18 +596,6 @@ const DAKSelection = () => {
       </div>
 
       <div className="selection-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBack} className="breadcrumb-link">
-            Choose DAK Action
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Select DAK</span>
-        </div>
-
         <div className="selection-main">
           <div className="selection-intro">
             <h2>{config.title}</h2>
@@ -889,11 +882,6 @@ const DAKSelection = () => {
           )}
         </div>
       </div>
-      
-      <ContextualHelpMascot 
-        pageId="dak-selection"
-        contextData={{ profile, selectedRepository, action }}
-      />
     </div>
   );
 };

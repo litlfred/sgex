@@ -185,6 +185,15 @@
   background-color: #edebe9;
 }
 
+.btn-success {
+  background-color: #107c10;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #0e6e0e;
+}
+
 /* Modal Styles */
 .testing-modal-overlay {
   position: fixed;
@@ -256,6 +265,7 @@
   word-wrap: break-word;
   margin: 0;
   min-height: 400px;
+  color: #323130;
 }
 
 .testing-modal-footer {

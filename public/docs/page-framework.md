@@ -100,6 +100,47 @@ const MyPage = () => {
 export default MyPage;
 ```
 
+### Breadcrumb Configuration
+
+The framework automatically generates contextual breadcrumbs based on the page type and URL structure:
+
+#### Automatic Breadcrumbs
+```jsx
+// Framework automatically generates breadcrumbs based on URL and page context
+<PageLayout pageName="actor-editor">
+  <div>Page content</div>
+</PageLayout>
+// Results in: "Select Profile › Select Repository › DAK Components › Actor Definitions"
+```
+
+#### Custom Breadcrumbs
+For special navigation flows, you can override with custom breadcrumbs:
+
+```jsx
+<PageLayout 
+  pageName="special-page"
+  customBreadcrumbs={[
+    { label: 'Home', path: '/', onClick: () => navigate('/') },
+    { label: 'Special Section', path: '/special' },
+    { label: 'Current Page' } // No path = current page
+  ]}
+>
+  <div>Page content</div>
+</PageLayout>
+```
+
+#### Disabling Breadcrumbs
+For pages that shouldn't show breadcrumbs (like modals or landing pages):
+
+```jsx
+<PageLayout 
+  pageName="modal-page"
+  showBreadcrumbs={false}
+>
+  <div>Modal content</div>
+</PageLayout>
+```
+
 ### Accessing Page Context
 
 Use the page hooks to access URL parameters and context:
@@ -306,6 +347,38 @@ When creating new pages, developers **MUST**:
 3. **Follow URL patterns**: Use the established URL patterns for consistency
 4. **Handle errors gracefully**: Let the framework handle errors, don't suppress them
 5. **Test all page types**: Ensure pages work in authenticated and demo modes
+6. **Use framework breadcrumbs**: Do not implement custom breadcrumb HTML/CSS
+
+### Breadcrumb Requirements
+
+**❌ DO NOT:**
+```jsx
+// Don't implement custom breadcrumb HTML
+<div className="breadcrumb">
+  <button className="breadcrumb-link">Home</button>
+  <span className="breadcrumb-separator">›</span>
+  <span className="breadcrumb-current">Current Page</span>
+</div>
+```
+
+**✅ DO:**
+```jsx
+// Let the framework handle breadcrumbs automatically
+<PageLayout pageName="my-page">
+  <div>Page content without custom breadcrumbs</div>
+</PageLayout>
+
+// Or provide custom breadcrumbs if needed
+<PageLayout 
+  pageName="special-page"
+  customBreadcrumbs={[
+    { label: 'Home', path: '/' },
+    { label: 'Current Page' }
+  ]}
+>
+  <div>Page content</div>
+</PageLayout>
+```
 
 ### Code Review Checklist
 
@@ -315,6 +388,7 @@ When creating new pages, developers **MUST**:
 - [ ] Error handling follows framework patterns
 - [ ] Header components display correctly
 - [ ] Help mascot is present and functional
+- [ ] **Breadcrumbs use framework implementation (no custom breadcrumb HTML/CSS)**
 - [ ] Works in both authenticated and demo modes
 - [ ] Responsive design maintained
 
