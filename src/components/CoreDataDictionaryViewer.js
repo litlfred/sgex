@@ -5,6 +5,14 @@ import { PageLayout, usePageParams } from './framework';
 import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {
+  return (
+    <PageLayout pageName="core-data-dictionary-viewer">
+      <CoreDataDictionaryViewerContent />
+    </PageLayout>
+  );
+};
+
+const CoreDataDictionaryViewerContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { params } = usePageParams();
@@ -65,29 +73,6 @@ const CoreDataDictionaryViewer = () => {
     
     return concepts;
   }, []);
-
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
-  const handleBackToDashboard = () => {
-    if (user && repo) {
-      // Use URL parameters for navigation
-      const dashboardPath = branch ? 
-        `/dashboard/${user}/${repo}/${branch}` : 
-        `/dashboard/${user}/${repo}`;
-      navigate(dashboardPath);
-    } else {
-      // Fallback to state-based navigation
-      navigate('/dashboard', { 
-        state: { 
-          profile, 
-          repository, 
-          selectedBranch 
-        } 
-      });
-    }
-  };
 
   // Fetch FSH files from input/fsh directory
   useEffect(() => {
@@ -267,55 +252,18 @@ const CoreDataDictionaryViewer = () => {
 
   if (loading) {
     return (
-      <PageLayout pageName="core-data-dictionary-viewer">
-        <div className="core-data-dictionary-viewer loading-state">
-          <div className="loading-content">
-            <h2>Loading Core Data Dictionary...</h2>
-            <p>Fetching FHIR FSH files and repository data...</p>
-          </div>
+      <div className="core-data-dictionary-viewer loading-state">
+        <div className="loading-content">
+          <h2>Loading Core Data Dictionary...</h2>
+          <p>Fetching FHIR FSH files and repository data...</p>
         </div>
-      </PageLayout>
+      </div>
     );
   }
 
   return (
-    <PageLayout pageName="core-data-dictionary-viewer">
       <div className="core-data-dictionary-viewer">
-      <div className="viewer-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile?.avatar_url || `https://github.com/${user || profile?.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repo || repository?.name}</span>
-            <span className="context-component">Core Data Dictionary</span>
-          </div>
-        </div>
-      </div>
-
       <div className="viewer-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
-            Select Repository
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBackToDashboard} className="breadcrumb-link">
-            DAK Components
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Core Data Dictionary</span>
-        </div>
-
         <div className="viewer-main">
           <div className="component-intro">
             <div className="component-icon" style={{ color: component?.color || '#0078d4' }}>
@@ -608,8 +556,7 @@ const CoreDataDictionaryViewer = () => {
         </div>
       )}
       </div>
-    </PageLayout>
-  );
+    );
 };
 
 export default CoreDataDictionaryViewer;

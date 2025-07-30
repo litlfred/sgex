@@ -6,7 +6,7 @@ import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
   return (
-    <PageLayout pageName="dak-action-selection" showHeader={false}>
+    <PageLayout pageName="dak-action">
       <DAKActionSelectionContent />
     </PageLayout>
   );
@@ -84,24 +84,12 @@ const DAKActionSelectionContent = () => {
     handleNavigationClick(event, `/dak-selection/${profile.login}`, navigate, navigationState);
   };
 
-  const handleBackToProfile = () => {
-    navigate('/', { state: { profile } });
-  };
-
   if (!profile) {
     return <div>Redirecting...</div>;
   }
 
   return (
     <div className="action-content">
-      <div className="breadcrumb">
-        <button onClick={handleBackToProfile} className="breadcrumb-link">
-          Select Profile
-        </button>
-        <span className="breadcrumb-separator">›</span>
-        <span className="breadcrumb-current">Choose DAK Action</span>
-      </div>
-
       <div className="action-main">
         <div className="action-intro">
           <h2>Manage a DAK</h2>
