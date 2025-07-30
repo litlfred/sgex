@@ -3,6 +3,12 @@
 ## Overview
 This tool enables structured authoring and editing of decision tables for use in digital health guidelines, particularly for generating Decision Model and Notation (DMN) files with embedded Clinical Quality Language (CQL). It allows users to define decision logic, manage rule inputs and outputs, and attach guidance and annotations in a structured format.
 
+The editor supports multiple types of decision logic tables including:
+- **Decision Logic Tables**: General clinical decision support rules and algorithms
+- **Scheduling Tables**: Immunization and appointment scheduling logic
+- **Contraindications Tables**: Medical contraindication checking and safety rules
+- **Eligibility Tables**: Patient eligibility and qualification assessments
+
 ## Core Features
 
 ### Table Structure
@@ -14,6 +20,32 @@ Each decision table consists of:
 - **Metadata**: Decision table-level metadata such as `id`, `name`, `trigger`, and `businessRule`.
 
 Each row in the table represents a **rule**, with cell values corresponding to logical expressions.
+
+## Editor Features
+
+### Table Management
+- **Create New Tables**: Initialize decision tables with configurable inputs, outputs, and metadata
+- **Import Existing Tables**: Load and edit existing DMN files from repository
+- **Table Validation**: Real-time validation of decision logic and completeness checking
+- **Export Formats**: Generate DMN XML, HTML documentation, and structured markdown
+
+### Rule Editing
+- **Visual Rule Builder**: Drag-and-drop interface for constructing decision rules
+- **Expression Editor**: Syntax-highlighted editor for CQL and DMN expressions
+- **Rule Testing**: Built-in testing framework with sample data validation
+- **Conflict Detection**: Automatic detection of overlapping or conflicting rules
+
+### Collaboration Features
+- **Version Control**: Full Git integration with branch-based collaboration
+- **Change Tracking**: Visual diff showing rule modifications and additions
+- **Comments & Review**: Inline commenting system for collaborative review
+- **Approval Workflow**: Structured approval process for clinical decision logic
+
+### Integration Capabilities
+- **CQL Library Integration**: Direct integration with Clinical Quality Language libraries
+- **FHIR Resource Mapping**: Automatic mapping to FHIR PlanDefinition resources
+- **WHO Standards Compliance**: Built-in validation against WHO SMART Guidelines standards
+- **External System Integration**: Support for terminology services and clinical databases
 
 ### Example Input Table (Structured BCG Schedule Table)
 
@@ -302,7 +334,9 @@ Each row in the table represents a **rule**, with cell values corresponding to l
 
 ### Example Output (DMN XML Extract for BCG Schedule)
 
-<pre><code class="language-xml">
+The following DMN XML demonstrates the structured output format with proper syntax highlighting for enhanced readability:
+
+```xml
 <dmn:definitions xmlns:dmn="https://www.omg.org/spec/DMN/20240513/MODEL/" namespace="http://smart.who.int/immunizations" label="IMMZ.D2 Determine required vaccination(s) if any" id="DAK.DT.IMMZ.D2.DT.BCG">
   <dmn:decision id="DAK.DT.IMMZ.D2.DT.BCG" label="IMMZ.D2 Determine required vaccination(s) if any">
     <dmn:question>IMMZ.D2 Determine required vaccination(s) if any</dmn:question>
@@ -1445,4 +1479,38 @@ Moderate-to-late preterm infants (gestational age &gt; 31 weeks) and low-birth-w
     </dmn:decisionTable>
   </dmn:decision>
 </dmn:definitions>
-</code></pre>
+```
+
+### DMN XML Structure Explanation
+
+The DMN XML structure includes several key components:
+
+1. **Namespace Declarations**: Define the DMN specification version and related schemas
+2. **Decision Definition**: Metadata about the decision including ID, label, and business question
+3. **Input Expressions**: Define the data elements that feed into the decision logic
+4. **Output Definitions**: Specify the possible outcomes and their data types
+5. **Decision Rules**: Individual rules that map input conditions to outputs
+6. **Annotations**: Additional documentation and references for clinical context
+7. **Visual Diagram**: Optional DMNDI section for graphical representation
+
+## Technical Implementation
+
+### Editor Architecture
+The decision table editor is built as a React component integrated into the SGEX Workbench framework:
+
+- **Component Structure**: Modular design with separate components for table editing, rule management, and validation
+- **State Management**: Centralized state management using React hooks for table data and editor preferences
+- **Data Persistence**: Direct integration with GitHub API for version-controlled storage
+- **Real-time Collaboration**: Support for multiple users editing tables simultaneously
+
+### File Format Support
+- **DMN XML**: Primary format following OMG DMN 1.3 specification
+- **JSON Schema**: Intermediate format for editor state management
+- **Markdown**: Documentation export for human-readable rule descriptions
+- **CSV/Excel**: Import/export for non-technical stakeholders
+
+### Standards Compliance
+- **OMG DMN 1.3**: Full compliance with Decision Model and Notation standard
+- **WHO SMART Guidelines**: Adherence to WHO digital health implementation standards
+- **FHIR R4**: Integration with FHIR Clinical Decision Support resources
+- **CQL**: Support for Clinical Quality Language expressions in rule definitions

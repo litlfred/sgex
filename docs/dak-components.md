@@ -68,8 +68,51 @@ Digital Adaptation Kits (DAKs) are structured packages of clinical logic and imp
 - **L2 Representation**: DMN decision tables conforming to [OMG DMN 1.3 specification](https://www.omg.org/spec/DMN/1.3/)
 - **L3 Representation**: FHIR PlanDefinition with decision logic
 - **Purpose**: Define automated decision-making rules, clinical algorithms, and care recommendations
-- **Editor**: DMN decision table editor with validation
+- **Editor**: DMN decision table editor with validation and real-time collaboration features
 - **Note**: Scheduling tables are a special case of decision tables and are included within this component
+
+#### Decision Logic Table Types
+
+The decision table editor supports multiple types of clinical decision logic:
+
+1. **Decision Logic Tables**: General clinical decision support rules and algorithms for care recommendations
+2. **Scheduling Tables**: Immunization and appointment scheduling logic with temporal constraints
+3. **Contraindications Tables**: Medical contraindication checking and safety rules for treatment eligibility
+4. **Eligibility Tables**: Patient eligibility and qualification assessments for programs and interventions
+
+#### Editor Features
+
+**Table Management**:
+- Create new tables with configurable inputs, outputs, and metadata
+- Import and edit existing DMN files from repository
+- Real-time validation of decision logic and completeness checking
+- Export to DMN XML, HTML documentation, and structured markdown
+
+**Rule Editing**:
+- Visual rule builder with drag-and-drop interface for constructing decision rules
+- Syntax-highlighted editor for CQL and DMN expressions with autocomplete
+- Built-in testing framework with sample data validation
+- Automatic detection of overlapping or conflicting rules
+
+**Collaboration Features**:
+- Full Git integration with branch-based collaboration workflows
+- Visual diff showing rule modifications and additions
+- Inline commenting system for collaborative review processes
+- Structured approval workflow for clinical decision logic changes
+
+**Integration Capabilities**:
+- Direct integration with Clinical Quality Language (CQL) libraries
+- Automatic mapping to FHIR PlanDefinition resources
+- Built-in validation against WHO SMART Guidelines standards
+- Support for terminology services and clinical databases
+
+#### Technical Implementation
+
+The decision table editor follows modern web development practices:
+- **React Component Architecture**: Modular design with reusable components
+- **Real-time State Management**: Centralized state with immediate validation feedback  
+- **GitHub API Integration**: Direct file editing with version control
+- **Standards Compliance**: Full DMN 1.3 and WHO SMART Guidelines compliance
 
 ### 7. Program Indicators
 

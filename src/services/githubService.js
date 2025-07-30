@@ -1091,6 +1091,41 @@ class GitHubService {
     }
   }
 
+  // Update a single file in the repository
+  async updateFile(owner, repo, path, content, message, branch = 'main', operation = 'update') {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      // Use the createCommit method with a single file
+      const files = [{
+        path: path,
+        content: content
+      }];
+
+      const result = await this.createCommit(owner, repo, branch, message, files);
+      
+      return {
+        sha: result.sha,
+        commit: {
+          sha: result.sha,
+          html_url: result.html_url,
+          message: result.message,
+          author: result.author,
+          committer: result.committer
+        },
+        content: {
+          path: path,
+          sha: result.sha // This will be the tree SHA, not file SHA, but sufficient for our needs
+        }
+      };
+    } catch (error) {
+      console.error('Failed to update file:', error);
+      throw error;
+    }
+  }
+
   // Get recent commits for a repository branch
   async getRecentCommits(owner, repo, branch = 'main', per_page = 5) {
     if (!this.isAuth()) {

@@ -18,6 +18,7 @@ import BPMNSource from './components/BPMNSource';
 import BPMNViewerTestComponent from './components/BPMNViewerTestComponent';
 import DocumentationViewer from './components/DocumentationViewer';
 import DecisionSupportLogicView from './components/DecisionSupportLogicView';
+import DecisionTableEditor from './components/DecisionTableEditor';
 import TestDashboard from './components/TestDashboard';
 import PagesManager from './components/PagesManager';
 import NotFound from './components/NotFound';
@@ -75,6 +76,8 @@ function App() {
             <Route path="/decision-support-logic" element={<DecisionSupportLogicView />} />
             <Route path="/decision-support-logic/:user/:repo" element={<DecisionSupportLogicView />} />
             <Route path="/decision-support-logic/:user/:repo/:branch" element={<DecisionSupportLogicView />} />
+            <Route path="/decision-table-editor/:user/:repo/:branch/:tableId" element={<DecisionTableEditor />} />
+            <Route path="/decision-table-editor/:tableId" element={<DecisionTableEditor />} />
             <Route path="/docs/:docId" element={<DocumentationViewer />} />
             <Route path="/pages" element={<PagesManager />} />
             
