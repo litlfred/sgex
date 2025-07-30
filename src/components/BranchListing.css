@@ -6,29 +6,126 @@
 
 .branch-listing-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 .branch-listing-header h1 {
   font-size: 2.5rem;
   color: #2c3e50;
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.sgex-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
 }
 
 .branch-listing-header .subtitle {
   font-size: 1.2rem;
   color: #666;
-  margin: 0;
+  margin: 0 0 2rem 0;
+  font-style: italic;
 }
 
-.branch-cards {
+/* Main action buttons */
+.main-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.contribute-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.contribute-btn.primary {
+  background: #28a745;
+  color: white;
+}
+
+.contribute-btn.primary:hover {
+  background: #218838;
+  color: white;
+  text-decoration: none;
+}
+
+.contribute-btn.secondary {
+  background: #0366d6;
+  color: white;
+}
+
+.contribute-btn.secondary:hover {
+  background: #0256cc;
+  color: white;
+  text-decoration: none;
+}
+
+.contribute-btn.tertiary {
+  background: #6f42c1;
+  color: white;
+}
+
+.contribute-btn.tertiary:hover {
+  background: #5a32a3;
+  color: white;
+  text-decoration: none;
+}
+
+/* Preview tabs */
+.preview-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #586069;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: #0366d6;
+}
+
+.tab-button.active {
+  color: #0366d6;
+  border-bottom-color: #0366d6;
+}
+
+/* Cards styling - unified for branches and PRs */
+.branch-cards, .pr-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 1.5rem;
   margin-bottom: 3rem;
 }
 
-.branch-card {
+.preview-card {
   border: 1px solid #e1e5e9;
   border-radius: 12px;
   padding: 1.5rem;
@@ -38,28 +135,30 @@
   position: relative;
 }
 
-.branch-card:hover {
+.preview-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   border-color: #0366d6;
 }
 
-.branch-card-header {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
+  gap: 1rem;
 }
 
-.branch-name {
+.item-name {
   margin: 0;
   font-size: 1.4rem;
   color: #0366d6;
   font-weight: 600;
   word-break: break-word;
+  flex: 1;
 }
 
-.branch-commit {
+.commit-badge, .state-badge {
   background: #f1f3f4;
   color: #586069;
   padding: 0.25rem 0.5rem;
@@ -70,17 +169,33 @@
   flex-shrink: 0;
 }
 
-.branch-card-body {
+.state-badge.open {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.state-badge.closed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.card-body {
   margin-bottom: 1rem;
 }
 
-.branch-date {
+.item-date, .pr-meta {
   color: #586069;
   font-size: 0.9rem;
   margin: 0 0 1rem 0;
 }
 
-.branch-preview-link {
+.pr-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.preview-link, .pr-link {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -91,34 +206,115 @@
   border-radius: 8px;
   font-weight: 500;
   transition: background-color 0.2s ease;
+  font-size: 0.9rem;
 }
 
-.branch-preview-link:hover {
+.preview-link:hover, .pr-link:hover {
   background: #0256cc;
   text-decoration: none;
   color: white;
 }
 
-.branch-card-footer {
+.pr-link {
+  background: #6f42c1;
+}
+
+.pr-link:hover {
+  background: #5a32a3;
+}
+
+.card-footer {
   border-top: 1px solid #e1e5e9;
   padding-top: 1rem;
   margin-top: 1rem;
 }
 
-.branch-path {
+.preview-path {
   color: #6a737d;
   font-size: 0.8rem;
   word-break: break-all;
 }
 
-.no-branches {
+/* PR section specific styles */
+.pr-section {
+  margin-bottom: 3rem;
+}
+
+.pr-controls {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.pr-search {
+  width: 100%;
+  max-width: 500px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #ffffff;
+}
+
+.pr-search:focus {
+  outline: none;
+  border-color: #0366d6;
+  box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+}
+
+.pr-card {
+  border-left: 4px solid #0366d6;
+}
+
+.pr-card .item-name {
+  font-size: 1.2rem;
+  line-height: 1.4;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.pagination-btn {
+  background: #f8f9fa;
+  border: 1px solid #e1e5e9;
+  color: #0366d6;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #e1e7fd;
+  border-color: #0366d6;
+}
+
+.pagination-btn:disabled {
+  color: #6a737d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pagination-info {
+  color: #586069;
+  font-size: 0.9rem;
+}
+
+.no-items {
   grid-column: 1 / -1;
   text-align: center;
   padding: 3rem;
   color: #6a737d;
 }
 
-.no-branches p {
+.no-items p {
   margin: 0.5rem 0;
 }
 
@@ -132,25 +328,142 @@
   color: #d73a49;
 }
 
+/* Footer */
 .branch-listing-footer {
-  text-align: center;
-  padding: 2rem;
   border-top: 1px solid #e1e5e9;
+  padding: 2rem 0;
+  margin-top: 3rem;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.footer-left {
+  flex-shrink: 0;
+}
+
+.footer-center {
+  text-align: center;
   color: #6a737d;
 }
 
-.branch-listing-footer p {
+.footer-center p {
   margin: 0.5rem 0;
 }
 
-.branch-listing-footer a {
+.source-link, .footer-center a {
   color: #0366d6;
   text-decoration: none;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.branch-listing-footer a:hover {
+.source-link:hover, .footer-center a:hover {
   text-decoration: underline;
+}
+
+/* Contribute modal styles */
+.contribute-slide {
+  text-align: center;
+  padding: 1rem;
+}
+
+.mascot-container {
+  margin-bottom: 1.5rem;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.contribute-mascot {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin: 0 0.5rem;
+}
+
+.contribute-mascot.bug-report {
+  filter: sepia(1) hue-rotate(320deg) saturate(2);
+}
+
+.contribute-mascot.coding-agent {
+  filter: sepia(1) hue-rotate(180deg) saturate(1.5);
+}
+
+.contribute-mascot.community {
+  width: 80px;
+  height: 80px;
+}
+
+.contribute-mascot.celebrate {
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.mascot-group {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.thought-bubble {
+  position: absolute;
+  top: -20px;
+  right: 20%;
+  background: white;
+  border: 2px solid #0366d6;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 2rem 0;
+  align-items: center;
+}
+
+.contribute-footer {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+  margin-top: 2rem;
 }
 
 /* Responsive design */
@@ -159,22 +472,78 @@
     padding: 1rem;
   }
   
-  .branch-cards {
+  .branch-cards, .pr-cards {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
   
   .branch-listing-header h1 {
     font-size: 2rem;
+    flex-direction: column;
+    gap: 0.5rem;
   }
   
-  .branch-card {
+  .preview-card {
     padding: 1rem;
   }
   
-  .branch-card-header {
+  .card-header {
     flex-direction: column;
     gap: 0.5rem;
     align-items: flex-start;
+  }
+
+  .main-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .contribute-btn {
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+  }
+
+  .preview-tabs {
+    flex-direction: column;
+  }
+
+  .tab-button {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e1e5e9;
+    border-radius: 0;
+  }
+
+  .tab-button.active {
+    border-bottom-color: #0366d6;
+    background: #f8f9fa;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .pr-actions {
+    justify-content: center;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .mascot-group {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .action-buttons {
+    width: 100%;
+  }
+
+  .contribute-btn {
+    width: 100%;
+    max-width: none;
   }
 }

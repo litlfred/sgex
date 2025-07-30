@@ -251,15 +251,43 @@ jobs:
             mkdir -p sgex
           fi
           
+          # Always ensure main branch is available at /sgex/main/
+          echo "Ensuring main branch is available at /sgex/main/..."
+          if [[ ! -d "sgex/main" ]]; then
+            mkdir -p sgex/main
+            
+            # Check if we're on main branch, if so, copy current build
+            if [[ "${{ github.ref_name }}" == "main" ]]; then
+              echo "Deploying main branch from current build..."
+              git checkout ${{ github.ref_name }}
+              node scripts/build-multi-branch.js branch
+              git checkout gh-pages
+              cp -a build/. sgex/main/
+            else
+              # Check out main branch and build it
+              echo "Building main branch separately..."
+              if git show-ref --verify --quiet refs/remotes/origin/main; then
+                git checkout main
+                node scripts/build-multi-branch.js branch
+                git checkout gh-pages
+                cp -a build/. sgex/main/
+              else
+                echo "Warning: Main branch not found, /sgex/main/ will not be available"
+              fi
+            fi
+          fi
+          
           # Copy current branch to /sgex/safe-branch-name/
           safe_branch_name="${{ steps.validate_branch.outputs.safe_branch_name }}"
           sgex_branch_dir="sgex/$safe_branch_name"
           mkdir -p "$sgex_branch_dir"
           
-          # Switch back to get the branch build
-          git checkout ${{ github.ref_name }}
-          node scripts/build-multi-branch.js branch
-          git checkout gh-pages
+          # Switch back to get the branch build (if not already main)
+          if [[ "${{ github.ref_name }}" != "main" ]]; then
+            git checkout ${{ github.ref_name }}
+            node scripts/build-multi-branch.js branch
+            git checkout gh-pages
+          fi
           
           cp -a build/. "$sgex_branch_dir/"
           
