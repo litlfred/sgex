@@ -322,6 +322,10 @@ Best regards,
     window.open(`mailto:smart@who.int?subject=${subject}&body=${body}`);
   };
 
+  const handleDocumentation = () => {
+    window.open('/sgex/docs/overview', '_blank');
+  };
+
   const handlePrevSlide = () => {
     if (currentSlide > 0) {
       setCurrentSlide(currentSlide - 1);
@@ -487,6 +491,11 @@ Best regards,
           
           {showMenu && (
             <div className="help-menu-dropdown">
+              <button onClick={handleDocumentation} className="menu-item">
+                <span className="menu-icon">📖</span>
+                Documentation
+              </button>
+              
               <button onClick={handleBugReport} className="menu-item">
                 <img src="/sgex/bug-report-icon.svg" alt="Bug" className="menu-icon" />
                 File Bug Report
