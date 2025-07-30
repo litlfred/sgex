@@ -1,0 +1,140 @@
+{
+  "app": {
+    "title": "Atelier SGEX",
+    "subtitle": "Échange de Directives Intelligentes OMS",
+    "description": "Éditeur collaboratif pour les Kits d'Adaptation Numérique (DAK) des Directives Intelligentes OMS"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "dashboard": "Tableau de Bord",
+    "repositories": "Dépôts",
+    "documentation": "Documentation",
+    "help": "Aide"
+  },
+  "auth": {
+    "signIn": "Se Connecter",
+    "signOut": "Se Déconnecter",
+    "signInWithPAT": "Se connecter avec un Jeton d'Accès Personnel",
+    "authRequired": "Authentification GitHub requise. Veuillez vous authentifier d'abord.",
+    "setupToken": "Configurez votre Jeton d'Accès Personnel GitHub"
+  },
+  "landing": {
+    "welcome": "Bienvenue dans l'Atelier SGEX",
+    "subtitle": "Éditeur collaboratif d'Échange de Directives Intelligentes OMS",
+    "getStarted": "Commencer",
+    "browseDAKs": "Parcourir les DAK",
+    "learnMore": "En Savoir Plus",
+    "selectAction": "Que souhaitez-vous faire ?",
+    "createNew": "Créer un Nouveau DAK",
+    "editExisting": "Modifier un DAK Existant",
+    "explorePublic": "Explorer les DAK Publics"
+  },
+  "dak": {
+    "title": "Kit d'Adaptation Numérique",
+    "components": "Composants DAK",
+    "status": "Statut",
+    "lastModified": "Dernière Modification",
+    "branch": "Branche",
+    "repository": "Dépôt",
+    "healthInterventions": "Interventions Sanitaires et Recommandations",
+    "genericPersonas": "Personas Génériques",
+    "userScenarios": "Scénarios Utilisateur",
+    "businessProcesses": "Processus Métier Génériques et Flux de Travail",
+    "coreDataElements": "Éléments de Données Essentiels",
+    "decisionSupportLogic": "Logique d'Aide à la Décision",
+    "programIndicators": "Indicateurs de Programme",
+    "requirements": "Exigences Fonctionnelles et Non Fonctionnelles"
+  },
+  "repository": {
+    "select": "Sélectionner un Dépôt",
+    "search": "Rechercher des dépôts...",
+    "noResults": "Aucun dépôt trouvé",
+    "loading": "Chargement des dépôts...",
+    "error": "Erreur lors du chargement des dépôts",
+    "public": "Public",
+    "private": "Privé",
+    "fork": "Fork",
+    "stars": "Étoiles",
+    "language": "Langue"
+  },
+  "organization": {
+    "select": "Sélectionner une Organisation",
+    "personal": "Dépôts Personnels",
+    "organizations": "Organisations"
+  },
+  "branch": {
+    "select": "Sélectionner une Branche",
+    "current": "Branche Actuelle",
+    "switchTo": "Basculer vers {{branch}}",
+    "createNew": "Créer une Nouvelle Branche"
+  },
+  "editor": {
+    "save": "Sauvegarder",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "preview": "Aperçu",
+    "unsavedChanges": "Vous avez des modifications non sauvegardées",
+    "saveChanges": "Sauvegarder les Modifications",
+    "discardChanges": "Ignorer les Modifications"
+  },
+  "demo": {
+    "title": "Voulez-vous essayer sans authentification ?",
+    "tryDemoMode": "🎭 Essayer le Mode Démo",
+    "description": "Le mode démo présente l'affichage amélioré de scan DAK avec des données fictives."
+  },
+  "help": {
+    "title": "Aide et Documentation",
+    "contextualHelp": "Aide Contextuelle",
+    "documentation": "Documentation",
+    "support": "Support",
+    "feedback": "Commentaires",
+    "close": "Fermer"
+  },
+  "theme": {
+    "toggle": "Basculer le Thème",
+    "dark": "Mode Sombre",
+    "light": "Mode Clair"
+  },
+  "language": {
+    "select": "Sélectionner la Langue",
+    "english": "English",
+    "french": "Français",
+    "spanish": "Español",
+    "arabic": "العربية"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "warning": "Avertissement",
+    "info": "Information",
+    "ok": "OK",
+    "cancel": "Annuler",
+    "yes": "Oui",
+    "no": "Non",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "refresh": "Actualiser",
+    "retry": "Réessayer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "close": "Fermer"
+  },
+  "errors": {
+    "generic": "Une erreur s'est produite. Veuillez réessayer.",
+    "network": "Erreur réseau. Veuillez vérifier votre connexion.",
+    "unauthorized": "Vous n'êtes pas autorisé à effectuer cette action.",
+    "notFound": "La ressource demandée n'a pas été trouvée.",
+    "validation": "Veuillez vérifier votre saisie et réessayer."
+  },
+  "dashboard": {
+    "title": "Tableau de Bord DAK",
+    "overview": "Aperçu",
+    "components": "Composants",
+    "status": "Statut",
+    "activity": "Activité Récente",
+    "errorLoading": "Erreur lors du Chargement du Tableau de Bord"
+  }
+}

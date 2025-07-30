@@ -27,11 +27,13 @@
   left: 30px;
 }
 
-/* Theme Toggle Container */
+/* Theme Controls Container */
 .theme-toggle-container {
   display: flex;
-  justify-content: center;
-  margin-bottom: 5px;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 /* Theme Toggle Button (Light Switch) */

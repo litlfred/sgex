@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import helpContentService from '../services/helpContentService';
 import HelpModal from './HelpModal';
+import LanguageSelector from './LanguageSelector';
 import './ContextualHelpMascot.css';
 
 const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', contextData = {}, notificationBadge = false }) => {
+  const { t, i18n } = useTranslation();
   const [showHelp, setShowHelp] = useState(false);
   const [helpSticky, setHelpSticky] = useState(false);
   const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
@@ -27,6 +30,14 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
     document.body.className = isDarkMode ? 'theme-dark' : 'theme-light';
     localStorage.setItem('sgex-theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
+
+  // Update document direction for RTL languages
+  useEffect(() => {
+    const currentLang = i18n.language || 'en';
+    const isRTL = ['ar', 'he', 'fa'].includes(currentLang);
+    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+    document.documentElement.lang = currentLang;
+  }, [i18n.language]);
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
@@ -75,13 +86,13 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   return (
     <>
       <div className={`contextual-help-mascot ${position}`}>
-        {/* Theme toggle button positioned under mascot */}
+        {/* Theme Controls */}
         <div className="theme-toggle-container">
           <button 
             className={`theme-toggle-btn ${isDarkMode ? 'dark' : 'light'}`}
             onClick={toggleTheme}
-            aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
-            title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+            aria-label={t('theme.toggle')}
+            title={t('theme.toggle')}
           >
             {isDarkMode ? '🌞' : '🌙'}
           </button>
@@ -129,7 +140,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
               <div className="help-text">
                 {helpTopics.length > 0 ? (
                   <div className="help-topics-list">
-                    <h4>Get Help</h4>
+                    <h4>{t('help.title')}</h4>
                     {helpTopics.map((topic) => (
                       <button
                         key={topic.id}
@@ -146,9 +157,18 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                         <span className="help-topic-title">{topic.title}</span>
                       </button>
                     ))}
+                    
+                    {/* Language Selector in Help Menu */}
+                    <div className="help-menu-divider"></div>
+                    <LanguageSelector className="help-menu-language-selector" />
                   </div>
                 ) : (
-                  helpContent
+                  <div>
+                    {helpContent}
+                    {/* Language Selector in Help Menu */}
+                    <div className="help-menu-divider"></div>
+                    <LanguageSelector className="help-menu-language-selector" />
+                  </div>
                 )}
               </div>
             </div>

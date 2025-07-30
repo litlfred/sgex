@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import PATLogin from './PATLogin';
@@ -8,6 +9,7 @@ import { handleNavigationClick } from '../utils/navigationUtils';
 import './LandingPage.css';
 
 const LandingPage = () => {
+  const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const [organizations, setOrganizations] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -226,14 +228,13 @@ const LandingPage = () => {
             </div>
           )}
           <div className="welcome-section">
-            <h2>Welcome to SGEX Workbench</h2>
+            <h2>{t('landing.welcome')}</h2>
             <p>
-              A browser-based, standards-compliant collaborative editor for 
-              WHO SMART Guidelines Digital Adaptation Kits (DAKs).
+              {t('app.description')}
             </p>
             
             <div className="auth-section">
-              <p>Connect your GitHub account to get started:</p>
+              <p>{t('auth.signInWithPAT')}:</p>
               <PATLogin 
                 onAuthSuccess={handleAuthSuccess}
               />
@@ -298,8 +299,8 @@ const LandingPage = () => {
           </div>
         ) : (
           <div className="profile-selection">
-            <h2>Select Profile or Organization</h2>
-            <p>Choose the GitHub profile or organization containing your DAK repositories:</p>
+            <h2>{t('organization.select')}</h2>
+            <p>{t('organization.personal')}:</p>
             
             {error && <div className="error-message">{error}</div>}
             
@@ -345,7 +346,7 @@ const LandingPage = () => {
                   <h3>{org.name || org.login}</h3>
                   <p>@{org.login}</p>
                   <div className="profile-badges">
-                    <span className="profile-type">Organization</span>
+                    <span className="profile-type">{t('organization.organizations')}</span>
                     {org.isWHO && <span className="who-badge">WHO Official</span>}
                   </div>
                 </div>
