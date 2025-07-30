@@ -6,6 +6,7 @@ import './DocumentationViewer.css';
 // Dynamically generate documentation files structure
 const generateDocFiles = () => {
   // Static mapping for files with custom titles or special handling
+  // eslint-disable-next-line no-unused-vars
   const customTitles = {
     'README.md': 'Documentation Overview',
     'UI_STYLING_REQUIREMENTS.md': 'UI Styling Requirements',
