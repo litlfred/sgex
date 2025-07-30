@@ -1,0 +1,274 @@
+/* Feature File Editor Styles */
+.feature-editor-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.feature-editor-modal {
+  background: white;
+  border-radius: 8px;
+  width: 95vw;
+  max-width: 1200px;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.feature-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e1dfdd;
+  background-color: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+}
+
+.editor-title h3 {
+  margin: 0 0 4px 0;
+  color: #323130;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.editor-title .file-path {
+  color: #605e5c;
+  font-size: 14px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.feature-editor-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-container {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.feature-editor-textarea {
+  flex: 1;
+  border: none;
+  border-right: 1px solid #e1dfdd;
+  padding: 20px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  background-color: #fafafa;
+  color: #323130;
+  outline: none;
+}
+
+.feature-editor-textarea:focus {
+  background-color: #ffffff;
+}
+
+.editor-preview {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #ffffff;
+}
+
+.editor-preview h4 {
+  margin: 0 0 15px 0;
+  color: #323130;
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 1px solid #e1dfdd;
+  padding-bottom: 8px;
+}
+
+.feature-viewer {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.feature-editor-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-top: 1px solid #e1dfdd;
+  background-color: #f8f9fa;
+  border-radius: 0 0 8px 8px;
+}
+
+.editor-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #605e5c;
+  font-size: 14px;
+}
+
+.changes-indicator {
+  color: #d13438;
+  font-weight: 600;
+}
+
+.editor-links {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #0078d4;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #106ebe;
+}
+
+.btn-secondary {
+  background-color: #f3f2f1;
+  color: #323130;
+  border: 1px solid #d2d0ce;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #edebe9;
+}
+
+.btn-success {
+  background-color: #107c10;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #0e6e0e;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #0078d4;
+  text-decoration: underline;
+  padding: 4px 8px;
+}
+
+.btn-link:hover {
+  color: #106ebe;
+}
+
+.editor-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background-color: #fdf2f2;
+  border: 1px solid #fecaca;
+  border-left: none;
+  border-right: none;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+.demo-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background-color: #f0f8ff;
+  border: 1px solid #b3d9ff;
+  border-left: none;
+  border-right: none;
+  color: #0066cc;
+  font-size: 14px;
+}
+
+.error-icon, .info-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .feature-editor-modal {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .editor-container {
+    flex-direction: column;
+  }
+
+  .feature-editor-textarea {
+    border-right: none;
+    border-bottom: 1px solid #e1dfdd;
+    height: 50%;
+  }
+
+  .editor-preview {
+    height: 50%;
+  }
+
+  .feature-editor-footer {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
+
+/* Syntax highlighting customizations for Gherkin */
+.feature-editor .token.keyword {
+  color: #0066cc;
+  font-weight: bold;
+}
+
+.feature-editor .token.string {
+  color: #d14;
+}
+
+.feature-editor .token.comment {
+  color: #999;
+  font-style: italic;
+}
+
+.feature-editor .token.tag {
+  color: #690;
+}
+
+.feature-editor .token.variable {
+  color: #e90;
+}

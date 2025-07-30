@@ -1260,6 +1260,43 @@ class GitHubService {
     }
   }
 
+  // Update file content (requires authentication)
+  async updateFile(owner, repo, path, content, message, branch = 'main') {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to update files');
+    }
+
+    try {
+      // First, get the current file to get its SHA
+      const { data: currentFile } = await this.octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref: branch
+      });
+
+      if (Array.isArray(currentFile)) {
+        throw new Error('Path is a directory, not a file');
+      }
+
+      // Update the file
+      const { data } = await this.octokit.rest.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path,
+        message,
+        content: Buffer.from(content).toString('base64'),
+        sha: currentFile.sha,
+        branch
+      });
+
+      return data;
+    } catch (error) {
+      console.error(`Failed to update file ${path}:`, error);
+      throw error;
+    }
+  }
+
   // Get commits for a repository (supports unauthenticated access)
   async getCommits(owner, repo, options = {}) {
     try {
