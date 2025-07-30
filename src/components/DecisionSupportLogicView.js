@@ -688,17 +688,6 @@ define "Contraindication Present":
     <PageLayout pageName="decision-support-logic">
       <div className="decision-support-view">
       <div className="view-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBackToDashboard} className="breadcrumb-link">
-            DAK Components
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Decision Support Logic</span>
-        </div>
 
         <div className="view-main">
           <div className="view-intro">
