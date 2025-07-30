@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import './TestDashboard.css';
 
 const TestDashboard = () => {
@@ -91,29 +91,9 @@ const TestDashboard = () => {
   };
 
   return (
-    <div className="test-dashboard">
-      <div className="dashboard-header">
-        <div className="who-branding">
-          <h1>SGEX Workbench (Test Mode)</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={mockProfile.avatar_url} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{mockRepository.name}</span>
-            <span className="context-owner">@{mockProfile.login}</span>
-            <span className="access-level read">
-              👁️ Read-Only Access (Test Mode)
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="dashboard-content">
+    <PageLayout pageName="test-dashboard">
+      <div className="test-dashboard">
+        <div className="dashboard-content">
         <div className="breadcrumb">
           <span className="breadcrumb-current">DAK Components (Test Mode)</span>
         </div>
@@ -173,11 +153,8 @@ const TestDashboard = () => {
         </div>
       </div>
       
-      <ContextualHelpMascot 
-        pageId="test-dashboard"
-        contextData={{ mockProfile, mockRepository }}
-      />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 
