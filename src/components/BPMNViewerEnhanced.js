@@ -381,7 +381,13 @@ const BPMNViewerEnhanced = () => {
       return;
     }
 
-    navigate('/bpmn-editor', {
+    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+    const repoName = repository.name;
+    const path = selectedBranch 
+      ? `/bpmn-editor/${owner}/${repoName}/${selectedBranch}`
+      : `/bpmn-editor/${owner}/${repoName}`;
+
+    navigate(path, {
       state: {
         profile,
         repository,

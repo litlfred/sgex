@@ -488,13 +488,25 @@ const DAKDashboard = () => {
 
     // For generic-personas, navigate to actor editor
     if (component.id === 'generic-personas') {
-      handleNavigationClick(event, '/actor-editor', navigate, navigationState);
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/actor-editor/${owner}/${repoName}/${selectedBranch}`
+        : `/actor-editor/${owner}/${repoName}`;
+      
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
     // For testing, navigate to testing viewer
     if (component.id === 'testing') {
-      handleNavigationClick(event, '/testing-viewer', navigate, navigationState);
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/testing-viewer/${owner}/${repoName}/${selectedBranch}`
+        : `/testing-viewer/${owner}/${repoName}`;
+      
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
