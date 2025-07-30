@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import githubService from '../services/githubService';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import './BPMNViewer.css';
 
 const BPMNViewerComponent = () => {
@@ -370,26 +370,8 @@ const BPMNViewerComponent = () => {
   }
 
   return (
-    <div className="bpmn-viewer">
-      <div className="viewer-header">
-        <div className="who-branding">
-          <h1>SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repository.name}</span>
-            <span className="context-component">Business Process Viewer</span>
-          </div>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-        </div>
-      </div>
-
+    <PageLayout pageName="bpmn-viewer">
+      <div className="bpmn-viewer">
       <div className="viewer-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
@@ -521,12 +503,8 @@ const BPMNViewerComponent = () => {
           </div>
         </div>
       </div>
-      
-      <ContextualHelpMascot 
-        pageId="bpmn-viewer"
-        contextData={{ profile, repository, selectedFile }}
-      />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 

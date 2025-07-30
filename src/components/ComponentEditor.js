@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { PageLayout } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import WHODigitalLibrary from './WHODigitalLibrary';
 import './ComponentEditor.css';
@@ -164,26 +165,8 @@ const ComponentEditor = () => {
   }
 
   return (
-    <div className="component-editor">
-      <div className="editor-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repository.name}</span>
-            <span className="context-component">{currentComponent.name}</span>
-          </div>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-        </div>
-      </div>
-
+    <PageLayout pageName="component-editor">
+      <div className="component-editor">
       <div className="editor-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
@@ -242,12 +225,8 @@ const ComponentEditor = () => {
           </div>
         </div>
       </div>
-      
-      <ContextualHelpMascot 
-        pageId="component-editor"
-        contextData={{ profile, repository, component: currentComponent }}
-      />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 
