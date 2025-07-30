@@ -635,25 +635,7 @@ define "Contraindication Present":
     });
   };
 
-  const handleBackToDashboard = () => {
-    if (repository && profile) {
-      const owner = repository.owner?.login || repository.full_name.split('/')[0];
-      const repoName = repository.name;
-      const path = selectedBranch 
-        ? `/dashboard/${owner}/${repoName}/${selectedBranch}`
-        : `/dashboard/${owner}/${repoName}`;
-      
-      navigate(path, {
-        state: {
-          profile,
-          repository,
-          selectedBranch
-        }
-      });
-    } else {
-      navigate('/');
-    }
-  };
+
 
   if (loading) {
     return (

@@ -510,9 +510,7 @@ const DAKDashboard = () => {
     handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
   };
 
-  const handleBackToRepos = () => {
-    navigate('/repositories', { state: { profile } });
-  };
+
 
   if (loading) {
     return (

@@ -7,7 +7,7 @@ import './ActorEditor.css';
 const ActorEditor = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, repository, selectedBranch, editActorId } = location.state || {};
+  const { profile, repository, editActorId } = location.state || {};
 
   // State management
   const [actorDefinition, setActorDefinition] = useState(null);
@@ -235,16 +235,7 @@ const ActorEditor = () => {
     }
   };
 
-  // Navigation handlers
-  const handleBackToDashboard = () => {
-    navigate('/dashboard', {
-      state: {
-        profile,
-        repository,
-        selectedBranch
-      }
-    });
-  };
+
 
   // Redirect if missing required context - use useEffect to avoid render issues
   useEffect(() => {

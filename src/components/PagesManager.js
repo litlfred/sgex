@@ -383,15 +383,7 @@ const PagesManager = () => {
     }
   };
 
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
 
-  const handleBackToDashboard = () => {
-    navigate('/dashboard', { 
-      state: { profile, repository }
-    });
-  };
 
   // Redirect if missing required context - use useEffect to avoid render issues
   useEffect(() => {
