@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import useDAKUrlParams from '../hooks/useDAKUrlParams';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './BusinessProcessSelection.css';
 
@@ -221,31 +221,8 @@ const BusinessProcessSelection = () => {
   }
 
   return (
-    <div className="business-process-selection">
-      <div className="selection-header">
-        <div className="who-branding">
-          <h1>SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repository.name}</span>
-            <span className="context-component">Business Processes</span>
-            {!checkingPermissions && (
-              <span className={`access-level ${hasWriteAccess ? 'write' : 'read'}`}>
-                {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only Access'}
-              </span>
-            )}
-          </div>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-        </div>
-      </div>
-
+    <PageLayout pageName="business-process-selection">
+      <div className="business-process-selection">
       <div className="selection-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
@@ -343,12 +320,8 @@ const BusinessProcessSelection = () => {
           )}
         </div>
       </div>
-      
-      <ContextualHelpMascot 
-        pageId="business-process-selection"
-        contextData={{ profile, repository, component }}
-      />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 

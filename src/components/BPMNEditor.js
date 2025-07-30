@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 import { Octokit } from '@octokit/rest';
-import ContextualHelpMascot from './ContextualHelpMascot';
+import { PageLayout } from './framework';
 import './BPMNEditor.css';
 
 const BPMNEditor = () => {
@@ -13,10 +13,6 @@ const BPMNEditor = () => {
   
   const { profile, repository, component } = location.state || {};
   
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
   const [bpmnFiles, setBpmnFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -325,26 +321,8 @@ const BPMNEditor = () => {
   }
 
   return (
-    <div className="bpmn-editor">
-      <div className="editor-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repository.name}</span>
-            <span className="context-component">Business Processes</span>
-          </div>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-        </div>
-      </div>
-
+    <PageLayout pageName="bpmn-editor">
+      <div className="bpmn-editor">
       <div className="editor-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
@@ -464,12 +442,8 @@ const BPMNEditor = () => {
           </div>
         </div>
       )}
-      
-      <ContextualHelpMascot 
-        pageId="bpmn-editor"
-        contextData={{ profile, repository, component, selectedFile }}
-      />
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 
