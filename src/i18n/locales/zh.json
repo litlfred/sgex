@@ -1,0 +1,144 @@
+{
+  "app": {
+    "title": "SGEX 工作台",
+    "subtitle": "世界卫生组织智能指南交换",
+    "description": "世界卫生组织智能指南数字适应工具包 (DAK) 协作编辑器"
+  },
+  "navigation": {
+    "home": "主页",
+    "dashboard": "仪表板",
+    "repositories": "存储库",
+    "documentation": "文档",
+    "help": "帮助"
+  },
+  "auth": {
+    "signIn": "登录",
+    "signOut": "登出",
+    "signInWithPAT": "使用个人访问令牌登录",
+    "authRequired": "需要 GitHub 身份验证。请先进行身份验证。",
+    "setupToken": "设置您的 GitHub 个人访问令牌"
+  },
+  "landing": {
+    "welcome": "欢迎使用 SGEX 工作台",
+    "subtitle": "世界卫生组织智能指南交换协作编辑器",
+    "getStarted": "开始使用",
+    "browseDAKs": "浏览 DAK",
+    "learnMore": "了解更多",
+    "selectAction": "您想要做什么？",
+    "createNew": "创建新的 DAK",
+    "editExisting": "编辑现有 DAK",
+    "explorePublic": "探索公共 DAK"
+  },
+  "dak": {
+    "title": "数字适应工具包",
+    "components": "DAK 组件",
+    "status": "状态",
+    "lastModified": "最后修改",
+    "branch": "分支",
+    "repository": "存储库",
+    "healthInterventions": "健康干预措施和建议",
+    "genericPersonas": "通用角色",
+    "userScenarios": "用户场景",
+    "businessProcesses": "通用业务流程和工作流",
+    "coreDataElements": "核心数据元素",
+    "decisionSupportLogic": "决策支持逻辑",
+    "programIndicators": "程序指标",
+    "requirements": "功能和非功能需求"
+  },
+  "repository": {
+    "select": "选择存储库",
+    "search": "搜索存储库...",
+    "noResults": "未找到存储库",
+    "loading": "正在加载存储库...",
+    "error": "加载存储库时出错",
+    "public": "公共",
+    "private": "私有",
+    "fork": "分叉",
+    "stars": "星标",
+    "language": "语言"
+  },
+  "organization": {
+    "select": "选择组织",
+    "personal": "个人存储库",
+    "organizations": "组织"
+  },
+  "branch": {
+    "select": "选择分支",
+    "current": "当前分支",
+    "switchTo": "切换到 {{branch}}",
+    "createNew": "创建新分支"
+  },
+  "editor": {
+    "save": "保存",
+    "cancel": "取消",
+    "edit": "编辑",
+    "preview": "预览",
+    "unsavedChanges": "您有未保存的更改",
+    "saveChanges": "保存更改",
+    "discardChanges": "丢弃更改"
+  },
+  "demo": {
+    "title": "想要在不进行身份验证的情况下尝试吗？",
+    "tryDemoMode": "🎭 尝试演示模式",
+    "description": "演示模式展示带有模拟数据的增强 DAK 扫描显示。"
+  },
+  "help": {
+    "title": "帮助和文档",
+    "contextualHelp": "上下文帮助",
+    "documentation": "文档",
+    "support": "支持",
+    "feedback": "反馈",
+    "close": "关闭"
+  },
+  "theme": {
+    "toggle": "切换主题",
+    "dark": "深色模式",
+    "light": "浅色模式"
+  },
+  "language": {
+    "select": "选择语言",
+    "english": "English",
+    "french": "Français",
+    "spanish": "Español",
+    "arabic": "العربية",
+    "chinese": "中文",
+    "russian": "Русский",
+    "search": "搜索语言...",
+    "addLanguage": "添加语言"
+  },
+  "common": {
+    "loading": "正在加载...",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告",
+    "info": "信息",
+    "ok": "确定",
+    "cancel": "取消",
+    "yes": "是",
+    "no": "否",
+    "search": "搜索",
+    "filter": "筛选",
+    "sort": "排序",
+    "refresh": "刷新",
+    "retry": "重试",
+    "back": "返回",
+    "next": "下一个",
+    "previous": "上一个",
+    "close": "关闭"
+  },
+  "errors": {
+    "generic": "发生错误。请重试。",
+    "network": "网络错误。请检查您的连接。",
+    "unauthorized": "您无权执行此操作。",
+    "notFound": "未找到请求的资源。",
+    "validation": "请检查您的输入并重试。"
+  },
+  "dashboard": {
+    "title": "DAK 仪表板",
+    "overview": "概览",
+    "components": "组件",
+    "status": "状态",
+    "activity": "最近活动",
+    "errorLoading": "加载仪表板时出错"
+  }
+}
