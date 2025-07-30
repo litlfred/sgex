@@ -1,0 +1,51 @@
+<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cat paw -->
+  <g fill="#006cbe" stroke="#004a99" stroke-width="0.5">
+    <!-- Main paw pad -->
+    <ellipse cx="10" cy="14" rx="4" ry="2.5" />
+    
+    <!-- Toe pads -->
+    <circle cx="7" cy="10" r="1.5" />
+    <circle cx="10" cy="9" r="1.5" />
+    <circle cx="13" cy="10" r="1.5" />
+  </g>
+  
+  <!-- Lock being held -->
+  <g fill="#FFD700" stroke="#B8860B" stroke-width="0.5">
+    <!-- Lock body -->
+    <rect x="8" y="4" width="4" height="3" rx="0.5" />
+    
+    <!-- Lock shackle -->
+    <path d="M 9 4 C 9 2.5 11 2.5 11 4" fill="none" stroke="#B8860B" stroke-width="0.8" />
+    
+    <!-- Keyhole -->
+    <circle cx="10" cy="5.5" r="0.4" fill="#B8860B" />
+    <rect x="9.8" y="5.5" width="0.4" height="0.8" fill="#B8860B" />
+  </g>
+  
+  <!-- Key -->
+  <g fill="#C0C0C0" stroke="#808080" stroke-width="0.3">
+    <!-- Key shaft -->
+    <rect x="12" y="5.8" width="5" height="0.4" />
+    
+    <!-- Key teeth -->
+    <rect x="16.5" y="5.4" width="0.5" height="0.4" />
+    <rect x="15.5" y="6.2" width="0.5" height="0.4" />
+    
+    <!-- Key head -->
+    <circle cx="12.2" cy="6" r="0.8" fill="none" stroke="#808080" stroke-width="0.5" />
+  </g>
+  
+  <!-- Sparkle effects around lock/key -->
+  <g fill="#FFD700" opacity="0.8">
+    <circle cx="6" cy="3" r="0.3" />
+    <circle cx="14" cy="2" r="0.3" />
+    <circle cx="16" cy="7" r="0.3" />
+    
+    <!-- Small sparkle crosses -->
+    <g stroke="#FFD700" stroke-width="0.5" opacity="0.6">
+      <path d="M 5 5 L 5.6 5.6 M 5.6 5 L 5 5.6" />
+      <path d="M 15 3 L 15.6 3.6 M 15.6 3 L 15 3.6" />
+    </g>
+  </g>
+</svg>

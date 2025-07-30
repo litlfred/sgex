@@ -188,7 +188,7 @@
 /* Help Thought Bubble */
 .help-thought-bubble {
   position: absolute;
-  background: var(--who-card-bg, #ffffff);
+  background: #ffffff; /* Solid white for light mode */
   border: 4px solid var(--who-blue, #006cbe);
   border-radius: 20px;
   padding: 20px;
@@ -197,6 +197,11 @@
   box-shadow: 0 8px 32px rgba(0, 108, 190, 0.15), 0 0 0 3px rgba(255, 255, 255, 0.8);
   animation: bubbleAppear 0.15s ease-out;
   z-index: 1001;
+}
+
+/* Dark mode thought bubble - solid color for readability */
+body.theme-dark .help-thought-bubble {
+  background: #1a2380; /* WHO Navy Light - solid color for readability */
 }
 
 /* Fade out animation for thought bubble */
@@ -230,11 +235,16 @@
   position: absolute;
   width: 23px;
   height: 23px;
-  background: var(--who-card-bg, #ffffff);
+  background: #ffffff; /* Solid white for light mode */
   border: 3px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
   z-index: 1002;
+}
+
+/* Dark mode bubble tail */
+body.theme-dark .bubble-tail {
+  background: #1a2380; /* WHO Navy Light - solid color for readability */
 }
 
 .bubble-tail::before {
@@ -242,11 +252,16 @@
   position: absolute;
   width: 20px;
   height: 20px;
-  background: var(--who-card-bg, #ffffff);
+  background: #ffffff; /* Solid white for light mode */
   border: 4px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
   z-index: 1003;
+}
+
+/* Dark mode bubble tail before pseudo-element */
+body.theme-dark .bubble-tail::before {
+  background: #1a2380; /* WHO Navy Light - solid color for readability */
 }
 
 .bubble-tail::after {
@@ -254,11 +269,16 @@
   position: absolute;
   width: 15px;
   height: 15px;
-  background: var(--who-card-bg, #ffffff);
+  background: #ffffff; /* Solid white for light mode */
   border: 4px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
   z-index: 1004;
+}
+
+/* Dark mode bubble tail after pseudo-element */
+body.theme-dark .bubble-tail::after {
+  background: #1a2380; /* WHO Navy Light - solid color for readability */
 }
 
 /* Position tail based on mascot position */

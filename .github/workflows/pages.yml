@@ -234,16 +234,26 @@ jobs:
             done
           fi
           
+          # Save the build directory before clearing root
+          echo "Backing up build directory..."
+          mkdir -p /tmp/build-backup
+          cp -a build/. /tmp/build-backup/
+          
           # Clear root (except .git)
           find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name '.github' -exec rm -rf {} +
           
-          # Copy root landing page
-          cp -a build/. .
+          # Copy root landing page from backup
+          cp -a /tmp/build-backup/. .
           
           # Restore branch directories
           if [[ -d /tmp/branch-backup ]]; then
             cp -r /tmp/branch-backup/* .
             rm -rf /tmp/branch-backup
+          fi
+          
+          # Clean up build backup
+          if [[ -d /tmp/build-backup ]]; then
+            rm -rf /tmp/build-backup
           fi
           
           # Ensure main application is accessible at /sgex/main/
@@ -259,9 +269,18 @@ jobs:
           # Switch back to get the branch build
           git checkout ${{ github.ref_name }}
           node scripts/build-multi-branch.js branch
+          
+          # Save the branch build before switching back
+          mkdir -p /tmp/branch-build-backup
+          cp -a build/. /tmp/branch-build-backup/
+          
           git checkout gh-pages
           
-          cp -a build/. "$sgex_branch_dir/"
+          # Copy from branch build backup
+          cp -a /tmp/branch-build-backup/. "$sgex_branch_dir/"
+          
+          # Clean up branch build backup
+          rm -rf /tmp/branch-build-backup
           
           echo "✅ Root landing page deployed"
 
