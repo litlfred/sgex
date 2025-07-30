@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { PageLayout } from './framework';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import WHODigitalLibrary from './WHODigitalLibrary';
 import './ComponentEditor.css';
 
@@ -25,6 +26,10 @@ const ComponentEditor = () => {
   const handleReferencesChange = useCallback((references) => {
     setSelectedReferences(references);
   }, []);
+
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
 
   // For health-interventions, we can work without full context for now
   if (!profile || !repository) {

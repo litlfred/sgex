@@ -39,7 +39,6 @@ const BusinessProcessSelection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
-  const [checkingPermissions, setCheckingPermissions] = useState(true);
 
   // Check write permissions
   useEffect(() => {
@@ -54,7 +53,6 @@ const BusinessProcessSelection = () => {
           setHasWriteAccess(false);
         }
       }
-      setCheckingPermissions(false);
     };
 
     checkPermissions();
