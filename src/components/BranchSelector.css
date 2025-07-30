@@ -15,10 +15,11 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--who-blue, #006cbe);
+  border: 1px solid var(--who-blue-light, #338dd6);
   border-radius: 6px;
   padding: 0.25rem 0.5rem;
+  color: white;
 }
 
 .branch-icon {
@@ -29,7 +30,7 @@
 .branch-select {
   background: transparent;
   border: none;
-  color: inherit;
+  color: white;
   font-size: inherit;
   font-family: inherit;
   outline: none;
@@ -39,7 +40,7 @@
 }
 
 .branch-select:focus {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--who-blue-light, #338dd6);
   border-radius: 4px;
 }
 
