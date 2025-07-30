@@ -10,7 +10,6 @@ import './PageHeader.css';
 const PageHeader = () => {
   const { 
     type, 
-    pageName, 
     profile, 
     repository, 
     branch, 

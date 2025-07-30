@@ -27,17 +27,10 @@ const ComponentEditor = () => {
     setSelectedReferences(references);
   }, []);
 
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
   // For health-interventions, we can work without full context for now
   if (!profile || !repository) {
     if (currentComponent?.id === 'health-interventions') {
       // Allow access to health-interventions editor without full context
-      // Use placeholder data for now
-      const placeholderProfile = { login: 'demo-user', avatar_url: '/sgex/sgex-mascot.png', name: 'Demo User' };
-      const placeholderRepo = { name: 'demo-repository' };
       
       return (
         <PageLayout pageName="component-editor">
@@ -126,7 +119,6 @@ const ComponentEditor = () => {
           }}
         />
       </div>
-      </PageLayout>
     </PageLayout>
     );
   }
