@@ -696,6 +696,17 @@ const DecisionTableEditor = () => {
           <div className="editor-toolbar">
             <div className="toolbar-left">
               <h2>🎯 Decision Table Editor</h2>
+              <div className="file-context">
+                {tableId === 'new' ? (
+                  <span className="source-file-info new-file">
+                    📄 New table (not saved yet)
+                  </span>
+                ) : (
+                  <span className="source-file-info">
+                    📄 Editing: <code>input/dmn/{tableId}.dmn</code>
+                  </span>
+                )}
+              </div>
               {hasChanges && <span className="changes-indicator">• Unsaved changes</span>}
             </div>
             <div className="toolbar-right">
