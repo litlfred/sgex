@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import MDEditor from '@uiw/react-md-editor';
-import { PageLayout } from './framework';
+import { PageLayout, usePageParams } from './framework';
 import './DecisionSupportLogicView.css';
 
 const DecisionSupportLogicView = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, repo, branch } = useParams();
+  const { params } = usePageParams();
+  const { user, repo, branch } = params || {};
   
   // State from location or URL params
   const [profile, setProfile] = useState(location.state?.profile || null);
