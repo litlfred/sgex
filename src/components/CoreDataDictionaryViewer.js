@@ -5,6 +5,14 @@ import { PageLayout, usePageParams } from './framework';
 import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {
+  return (
+    <PageLayout pageName="core-data-dictionary-viewer">
+      <CoreDataDictionaryViewerContent />
+    </PageLayout>
+  );
+};
+
+const CoreDataDictionaryViewerContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { params } = usePageParams();
@@ -267,19 +275,16 @@ const CoreDataDictionaryViewer = () => {
 
   if (loading) {
     return (
-      <PageLayout pageName="core-data-dictionary-viewer">
-        <div className="core-data-dictionary-viewer loading-state">
-          <div className="loading-content">
-            <h2>Loading Core Data Dictionary...</h2>
-            <p>Fetching FHIR FSH files and repository data...</p>
-          </div>
+      <div className="core-data-dictionary-viewer loading-state">
+        <div className="loading-content">
+          <h2>Loading Core Data Dictionary...</h2>
+          <p>Fetching FHIR FSH files and repository data...</p>
         </div>
-      </PageLayout>
+      </div>
     );
   }
 
   return (
-    <PageLayout pageName="core-data-dictionary-viewer">
       <div className="core-data-dictionary-viewer">
       <div className="viewer-header">
         <div className="who-branding">
@@ -608,8 +613,7 @@ const CoreDataDictionaryViewer = () => {
         </div>
       )}
       </div>
-    </PageLayout>
-  );
+    );
 };
 
 export default CoreDataDictionaryViewer;

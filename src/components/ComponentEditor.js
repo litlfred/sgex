@@ -6,6 +6,14 @@ import WHODigitalLibrary from './WHODigitalLibrary';
 import './ComponentEditor.css';
 
 const ComponentEditor = () => {
+  return (
+    <PageLayout pageName="component-editor">
+      <ComponentEditorContent />
+    </PageLayout>
+  );
+};
+
+const ComponentEditorContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { params } = usePageParams();
@@ -150,8 +158,7 @@ const ComponentEditor = () => {
   }
 
   return (
-    <PageLayout pageName="component-editor">
-      <div className="component-editor">
+    <div className="component-editor">
       <div className="editor-content">
 
         <div className="editor-main">
@@ -196,8 +203,7 @@ const ComponentEditor = () => {
         </div>
       </div>
       </div>
-    </PageLayout>
-  );
+    );
 };
 
 export default ComponentEditor;

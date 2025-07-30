@@ -6,6 +6,14 @@ import { PageLayout, usePageParams } from './framework';
 import './DecisionSupportLogicView.css';
 
 const DecisionSupportLogicView = () => {
+  return (
+    <PageLayout pageName="decision-support-logic">
+      <DecisionSupportLogicViewContent />
+    </PageLayout>
+  );
+};
+
+const DecisionSupportLogicViewContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { params } = usePageParams();
@@ -668,8 +676,7 @@ define "Contraindication Present":
   }
 
   return (
-    <PageLayout pageName="decision-support-logic">
-      <div className="decision-support-view">
+    <div className="decision-support-view">
       <div className="view-content">
 
         <div className="view-main">
@@ -997,8 +1004,7 @@ define "Contraindication Present":
         </div>
       )}
       </div>
-    </PageLayout>
-  );
+    );
 };
 
 export default DecisionSupportLogicView;
