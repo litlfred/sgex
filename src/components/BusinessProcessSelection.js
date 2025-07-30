@@ -146,6 +146,12 @@ const BusinessProcessSelection = () => {
       return;
     }
 
+    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+    const repoName = repository.name;
+    const path = selectedBranch 
+      ? `/bpmn-editor/${owner}/${repoName}/${selectedBranch}`
+      : `/bpmn-editor/${owner}/${repoName}`;
+
     const navigationState = {
       profile,
       repository,
@@ -155,10 +161,16 @@ const BusinessProcessSelection = () => {
       mode: 'edit'
     };
     
-    handleNavigationClick(event, '/bpmn-editor', navigate, navigationState);
+    handleNavigationClick(event, path, navigate, navigationState);
   };
 
   const handleView = (event, file) => {
+    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+    const repoName = repository.name;
+    const path = selectedBranch 
+      ? `/bpmn-viewer/${owner}/${repoName}/${selectedBranch}`
+      : `/bpmn-viewer/${owner}/${repoName}`;
+
     const navigationState = {
       profile,
       repository,
@@ -168,10 +180,16 @@ const BusinessProcessSelection = () => {
       mode: 'view'
     };
     
-    handleNavigationClick(event, '/bpmn-viewer', navigate, navigationState);
+    handleNavigationClick(event, path, navigate, navigationState);
   };
 
   const handleViewSource = (event, file) => {
+    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+    const repoName = repository.name;
+    const path = selectedBranch 
+      ? `/bpmn-source/${owner}/${repoName}/${selectedBranch}`
+      : `/bpmn-source/${owner}/${repoName}`;
+
     const navigationState = {
       profile,
       repository,
@@ -180,7 +198,7 @@ const BusinessProcessSelection = () => {
       selectedBranch
     };
     
-    handleNavigationClick(event, '/bpmn-source', navigate, navigationState);
+    handleNavigationClick(event, path, navigate, navigationState);
   };
 
   if (dakLoading) {

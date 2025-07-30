@@ -1,6 +1,7 @@
 import React from 'react';
 import { PageProvider, usePage } from './PageProvider';
 import PageHeader from './PageHeader';
+import PageBreadcrumbs from './PageBreadcrumbs';
 import ErrorHandler from './ErrorHandler';
 import ContextualHelpMascot from '../ContextualHelpMascot';
 import './PageLayout.css';
@@ -44,7 +45,13 @@ class PageErrorBoundary extends React.Component {
 /**
  * Inner layout component that uses page context
  */
-const PageLayoutInner = ({ children, showHeader = true, showMascot = true }) => {
+const PageLayoutInner = ({ 
+  children, 
+  showHeader = true, 
+  showMascot = true, 
+  showBreadcrumbs = true, 
+  customBreadcrumbs 
+}) => {
   const { loading, error, pageName } = usePage();
 
   // Show loading state
@@ -87,6 +94,7 @@ const PageLayoutInner = ({ children, showHeader = true, showMascot = true }) => 
   return (
     <div className="page-layout">
       {showHeader && <PageHeader />}
+      {showBreadcrumbs && <PageBreadcrumbs customBreadcrumbs={customBreadcrumbs} />}
       <main className="page-main">
         {children}
         {showMascot && (
@@ -108,12 +116,19 @@ const PageLayout = ({
   children, 
   pageName, 
   showHeader = true, 
-  showMascot = true 
+  showMascot = true,
+  showBreadcrumbs = true,
+  customBreadcrumbs
 }) => {
   return (
     <PageErrorBoundary>
       <PageProvider pageName={pageName}>
-        <PageLayoutInner showHeader={showHeader} showMascot={showMascot}>
+        <PageLayoutInner 
+          showHeader={showHeader} 
+          showMascot={showMascot}
+          showBreadcrumbs={showBreadcrumbs}
+          customBreadcrumbs={customBreadcrumbs}
+        >
           {children}
         </PageLayoutInner>
       </PageProvider>

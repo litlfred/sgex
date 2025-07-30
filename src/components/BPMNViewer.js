@@ -341,7 +341,13 @@ const BPMNViewerComponent = () => {
       return;
     }
 
-    navigate('/bpmn-editor', {
+    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+    const repoName = repository.name;
+    const path = selectedBranch 
+      ? `/bpmn-editor/${owner}/${repoName}/${selectedBranch}`
+      : `/bpmn-editor/${owner}/${repoName}`;
+
+    navigate(path, {
       state: {
         profile,
         repository,
@@ -373,25 +379,6 @@ const BPMNViewerComponent = () => {
     <PageLayout pageName="bpmn-viewer">
       <div className="bpmn-viewer">
       <div className="viewer-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
-            Select Repository
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/dashboard', { state: { profile, repository } })} className="breadcrumb-link">
-            DAK Components
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBackToSelection} className="breadcrumb-link">
-            Business Processes
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">{selectedFile.name}</span>
-        </div>
 
         <div className="viewer-main">
           <div className="viewer-toolbar">

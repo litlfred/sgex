@@ -7,7 +7,7 @@ import './ActorEditor.css';
 const ActorEditor = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, repository, selectedBranch, editActorId } = location.state || {};
+  const { profile, repository, editActorId } = location.state || {};
 
   // State management
   const [actorDefinition, setActorDefinition] = useState(null);
@@ -235,16 +235,7 @@ const ActorEditor = () => {
     }
   };
 
-  // Navigation handlers
-  const handleBackToDashboard = () => {
-    navigate('/dashboard', {
-      state: {
-        profile,
-        repository,
-        selectedBranch
-      }
-    });
-  };
+
 
   // Redirect if missing required context - use useEffect to avoid render issues
   useEffect(() => {
@@ -283,17 +274,6 @@ const ActorEditor = () => {
     <PageLayout pageName="actor-editor">
       <div className="actor-editor">
         <div className="editor-content">
-        <div className="breadcrumb">
-          <span onClick={handleBackToDashboard} className="breadcrumb-link">Dashboard</span>
-          <span className="breadcrumb-separator">→</span>
-          <span className="breadcrumb-current">Actor Definitions</span>
-          {editActorId && (
-            <>
-              <span className="breadcrumb-separator">→</span>
-              <span className="breadcrumb-current">{editActorId}</span>
-            </>
-          )}
-        </div>
 
         <div className="editor-toolbar">
           <div className="toolbar-left">

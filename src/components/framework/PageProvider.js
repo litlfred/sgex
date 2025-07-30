@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../../services/githubService';
 import dakValidationService from '../../services/dakValidationService';
+import profileSubscriptionService from '../../services/profileSubscriptionService';
 
 /**
  * Page types supported by the framework
@@ -166,6 +167,29 @@ export const PageProvider = ({ children, pageName }) => {
           asset,
           isAuthenticated: githubService.isAuth()
         }));
+
+        // Handle profile subscriptions asynchronously
+        const handleSubscriptions = async () => {
+          try {
+            const currentUser = await githubService.getCurrentUser();
+            if (currentUser) {
+              profileSubscriptionService.ensureCurrentUserSubscribed(currentUser);
+            }
+          } catch (error) {
+            // Current user fetch failed, but continue with visited profile logic
+            console.debug('Could not fetch current user for subscriptions:', error);
+          }
+
+          // Auto-add visited profiles (if not demo and not already subscribed)
+          if (profile && !profile.isDemo && (pageState.type === PAGE_TYPES.USER || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET)) {
+            profileSubscriptionService.autoAddVisitedProfile(profile);
+          }
+        };
+
+        // Run subscription logic without blocking the main page load
+        if (githubService.isAuth()) {
+          handleSubscriptions();
+        }
 
       } catch (error) {
         console.error('Page data loading error:', error);

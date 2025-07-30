@@ -496,13 +496,25 @@ const DAKDashboardContent = () => {
 
     // For generic-personas, navigate to actor editor
     if (component.id === 'generic-personas') {
-      handleNavigationClick(event, '/actor-editor', navigate, navigationState);
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/actor-editor/${owner}/${repoName}/${selectedBranch}`
+        : `/actor-editor/${owner}/${repoName}`;
+      
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
     // For testing, navigate to testing viewer
     if (component.id === 'testing') {
-      handleNavigationClick(event, '/testing-viewer', navigate, navigationState);
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/testing-viewer/${owner}/${repoName}/${selectedBranch}`
+        : `/testing-viewer/${owner}/${repoName}`;
+      
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
@@ -518,9 +530,7 @@ const DAKDashboardContent = () => {
     handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
   };
 
-  const handleBackToRepos = () => {
-    navigate('/repositories', { state: { profile } });
-  };
+
 
   if (loading) {
     return (
@@ -558,19 +568,11 @@ const DAKDashboardContent = () => {
   }
 
   return (
-    <div className="dak-dashboard">
-    <div className="dashboard-content">
-      <div className="breadcrumb">
-        <button onClick={() => navigate('/')} className="breadcrumb-link">
-          Select Profile
-        </button>
-        <span className="breadcrumb-separator">›</span>
-        <button onClick={handleBackToRepos} className="breadcrumb-link">
-          Select Repository
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">DAK Components</span>
-        </div>
+
+    <PageLayout pageName="dak-dashboard">
+      <div className="dak-dashboard">
+      <div className="dashboard-content">
+
 
         <div className="dashboard-main">
           <div className="dashboard-intro">
