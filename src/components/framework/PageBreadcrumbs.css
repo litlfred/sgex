@@ -33,6 +33,7 @@
   padding: 0.25rem 0;
   font-size: inherit;
   font-family: inherit;
+  font-weight: bold;
   line-height: inherit;
   transition: color 0.2s ease;
 }
@@ -49,22 +50,22 @@
 }
 
 .breadcrumb-separator {
-  color: var(--who-text-muted, #6c757d);
+  color: var(--who-blue, #006cbe);
   margin: 0 0.5rem;
-  font-weight: normal;
+  font-weight: bold;
   user-select: none;
 }
 
 .breadcrumb-current {
-  color: var(--who-text-primary, #333);
-  font-weight: 500;
+  color: var(--who-blue, #006cbe);
+  font-weight: bold;
   padding: 0.25rem 0;
 }
 
 /* Dark theme support - using body class instead of data-theme attribute */
 body.theme-dark .breadcrumb-link {
   color: #4dabf7;
-  font-weight: 500;
+  font-weight: bold;
 }
 
 body.theme-dark .breadcrumb-link:hover {
@@ -76,13 +77,13 @@ body.theme-dark .breadcrumb-link:focus {
 }
 
 body.theme-dark .breadcrumb-separator {
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 600;
+  color: #4dabf7;
+  font-weight: bold;
 }
 
 body.theme-dark .breadcrumb-current {
-  color: #ffffff;
-  font-weight: 600;
+  color: #4dabf7;
+  font-weight: bold;
 }
 
 /* RTL language support */

@@ -112,33 +112,7 @@ const PageHeader = () => {
           <h1>SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
-        
-        {/* Context information */}
-        {(type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile && (
-          <div className="page-context">
-            <span className="context-separator">/</span>
-            <span className="context-user" onClick={handleGitHubUser}>
-              <img src={profile.avatar_url} alt={`${profile.login} avatar`} className="context-avatar" />
-              {profile.login}
-            </span>
-          </div>
-        )}
-        
-        {(type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && repository && (
-          <div className="page-context">
-            <span className="context-separator">/</span>
-            <span className="context-repo" onClick={handleGitHubRepo}>
-              {repository.name}
-            </span>
-          </div>
-        )}
-        
-        {type === PAGE_TYPES.ASSET && branch && (
-          <div className="page-context">
-            <span className="context-separator">@</span>
-            <span className="context-branch">{branch}</span>
-          </div>
-        )}
+
       </div>
 
       {/* Right side - Navigation and user controls */}

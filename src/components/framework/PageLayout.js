@@ -1,6 +1,7 @@
 import React from 'react';
 import { PageProvider, usePage } from './PageProvider';
 import PageHeader from './PageHeader';
+import PageContext from './PageContext';
 import PageBreadcrumbs from './PageBreadcrumbs';
 import ErrorHandler from './ErrorHandler';
 import ContextualHelpMascot from '../ContextualHelpMascot';
@@ -94,6 +95,7 @@ const PageLayoutInner = ({
   return (
     <div className="page-layout">
       {showHeader && <PageHeader />}
+      <PageContext />
       {showBreadcrumbs && <PageBreadcrumbs customBreadcrumbs={customBreadcrumbs} />}
       <main className="page-main">
         {children}
