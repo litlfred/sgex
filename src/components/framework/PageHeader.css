@@ -142,13 +142,13 @@
   border-radius: 4px;
   transition: background-color 0.2s;
   border: 1px solid var(--who-border-color, #dee2e6);
-  background-color: var(--who-card-bg, white);
+  background-color: var(--who-blue-dark, #004a99);
 }
 
 .user-info::after {
   content: '▼';
   font-size: 0.7rem;
-  color: var(--who-text-muted, #999);
+  color: rgba(255, 255, 255, 0.8);
   margin-left: 0.3rem;
   transition: transform 0.2s;
 }
@@ -158,8 +158,8 @@
 }
 
 .user-info:hover {
-  background-color: var(--who-hover-bg, #e9ecef);
-  border-color: var(--who-blue, #006cbe);
+  background-color: var(--who-blue, #006cbe);
+  border-color: var(--who-blue-light, #338dd6);
 }
 
 .user-avatar {
@@ -170,7 +170,7 @@
 
 .user-name {
   font-size: 0.9rem;
-  color: var(--who-text-secondary, #495057);
+  color: rgba(255, 255, 255, 0.9);
   max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -181,7 +181,7 @@
   position: absolute;
   top: 100%;
   right: 0;
-  background-color: var(--who-card-bg, white);
+  background-color: var(--who-blue-dark, #004a99);
   border: 1px solid var(--who-border-color, #dee2e6);
   border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -211,12 +211,12 @@
   text-align: left;
   cursor: pointer;
   font-size: 0.9rem;
-  color: var(--who-text-secondary, #495057);
+  color: rgba(255, 255, 255, 0.9);
   transition: background-color 0.2s;
 }
 
 .dropdown-item:hover {
-  background-color: var(--who-hover-bg, #f8f9fa);
+  background-color: var(--who-blue, #006cbe);
 }
 
 .dropdown-item .github-icon {
@@ -226,11 +226,11 @@
 }
 
 .logout-btn {
-  color: #dc3545;
+  color: #ff6b6b;
 }
 
 .logout-btn:hover {
-  background-color: #f8d7da;
+  background-color: rgba(255, 107, 107, 0.1);
 }
 
 /* Login button */
