@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { PageLayout } from './framework';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import './DocumentationViewer.css';
 
 // Dynamically generate documentation files structure
@@ -137,44 +137,37 @@ const DocumentationViewer = () => {
 
   if (loading) {
     return (
-      <PageLayout pageName="documentation-viewer">
-        <div className="documentation-viewer">
-          <div className="doc-content">
-            <div className="loading">
-              <div className="spinner"></div>
-              <p>Loading documentation...</p>
-            </div>
-          </div>
+      <div className="documentation-viewer">
+        <div className="documentation-loading">
+          <div className="spinner"></div>
+          <p>Loading documentation...</p>
         </div>
-      </PageLayout>
+        <ContextualHelpMascot pageId="documentation" />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <PageLayout pageName="documentation-viewer">
-        <div className="documentation-viewer">
-          <div className="doc-content">
-            <div className="error-state">
-              <h2>Error</h2>
-              <p>{error}</p>
-              <button onClick={() => window.location.reload()} className="retry-btn">
-                Try Again
-              </button>
-            </div>
-          </div>
+      <div className="documentation-viewer">
+        <div className="documentation-error">
+          <h2>Error</h2>
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()} className="retry-btn">
+            Try Again
+          </button>
         </div>
-      </PageLayout>
+        <ContextualHelpMascot pageId="documentation" />
+      </div>
     );
   }
 
   return (
-    <PageLayout pageName="documentation-viewer">
-      <div className="documentation-viewer">
-        <div className="doc-content">
-        <div className="doc-sidebar">
-          <h3>Documentation</h3>
-          <nav className="doc-menu">
+    <div className="documentation-viewer">
+      <div className="doc-content">
+      <div className="doc-sidebar">
+        <h3>Documentation</h3>
+        <nav className="doc-menu">
             {(() => {
               // Group files by category
               const grouped = {};
@@ -225,8 +218,8 @@ const DocumentationViewer = () => {
         </div>
       </div>
       
-      </div>
-    </PageLayout>
+      <ContextualHelpMascot pageId="documentation" />
+    </div>
   );
 };
 
