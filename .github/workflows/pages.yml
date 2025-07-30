@@ -269,9 +269,18 @@ jobs:
           # Switch back to get the branch build
           git checkout ${{ github.ref_name }}
           node scripts/build-multi-branch.js branch
+          
+          # Save the branch build before switching back
+          mkdir -p /tmp/branch-build-backup
+          cp -a build/. /tmp/branch-build-backup/
+          
           git checkout gh-pages
           
-          cp -a build/. "$sgex_branch_dir/"
+          # Copy from branch build backup
+          cp -a /tmp/branch-build-backup/. "$sgex_branch_dir/"
+          
+          # Clean up branch build backup
+          rm -rf /tmp/branch-build-backup
           
           echo "✅ Root landing page deployed"
 
