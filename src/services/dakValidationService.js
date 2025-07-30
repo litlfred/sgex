@@ -126,6 +126,7 @@ class DAKValidationService {
       // Demo repositories for testing
       'litlfred/smart-guidelines-demo',
       'litlfred/sgex-demo',
+      'litlfred/smart-pcmt-vaxprequal',
       'who/smart-guidelines',
       'who/smart-anc-toolkit',
       'who/smart-immunizations',

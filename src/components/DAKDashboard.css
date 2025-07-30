@@ -48,7 +48,7 @@ body.theme-light .dak-dashboard {
 }
 
 .who-branding h1 {
-  color: var(--who-text-primary);
+  color: white;
   font-size: 2rem;
   margin: 0;
   font-weight: 700;
