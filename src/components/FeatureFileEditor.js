@@ -111,7 +111,6 @@ const FeatureFileEditor = ({
         selectedBranch || repository.default_branch || 'main'
       );
 
-      setHasChanges(false);
       onSave && onSave(content);
       
       // Show success message briefly and close editor
