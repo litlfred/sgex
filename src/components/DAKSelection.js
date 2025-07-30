@@ -7,6 +7,14 @@ import { PageLayout, usePageParams } from './framework';
 import './DAKSelection.css';
 
 const DAKSelection = () => {
+  return (
+    <PageLayout pageName="dak-selection">
+      <DAKSelectionContent />
+    </PageLayout>
+  );
+};
+
+const DAKSelectionContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { params } = usePageParams();
@@ -575,23 +583,22 @@ const DAKSelection = () => {
   const config = getActionConfig();
 
   return (
-    <PageLayout pageName="dak-selection">
-      <div className="dak-selection">
-        <div className="selection-header">
-          <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
-          </div>
-          <div className="profile-info">
-            <img 
-              src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-              alt="Profile" 
-              className="profile-avatar" 
-            />
-            <span>{profile.name || profile.login}</span>
-            <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-          </div>
+    <div className="dak-selection">
+      <div className="selection-header">
+        <div className="who-branding">
+          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
+          <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
+        <div className="profile-info">
+          <img 
+            src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
+            alt="Profile" 
+            className="profile-avatar" 
+          />
+          <span>{profile.name || profile.login}</span>
+          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+        </div>
+      </div>
 
       <div className="selection-content">
         <div className="breadcrumb">
@@ -892,8 +899,7 @@ const DAKSelection = () => {
           )}
         </div>
       </div>
-      </div>
-    </PageLayout>
+    </div>
   );
 };
 
