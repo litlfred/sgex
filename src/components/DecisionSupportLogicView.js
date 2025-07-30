@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { PageLayout } from './framework';
 import githubService from '../services/githubService';
 import MDEditor from '@uiw/react-md-editor';
 import './DecisionSupportLogicView.css';
@@ -634,6 +633,10 @@ define "Contraindication Present":
     });
   };
 
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
+
   const handleBackToDashboard = () => {
     if (repository && profile) {
       const owner = repository.owner?.login || repository.full_name.split('/')[0];
@@ -685,9 +688,51 @@ define "Contraindication Present":
   }
 
   return (
-    <PageLayout pageName="decision-support-logic">
-      <div className="decision-support-view">
-        <div className="view-content">
+    <div className="decision-support-view">
+      <div className="view-header">
+        <div className="header-left">
+          <div className="who-branding">
+            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
+            <p className="subtitle">WHO SMART Guidelines Exchange</p>
+          </div>
+          <div className="repo-context">
+            {repository && (
+              <div className="repo-info">
+                <a 
+                  href={`https://github.com/${repository.full_name}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="context-repo-link"
+                  title="View repository on GitHub"
+                >
+                  <span className="repo-icon">📁</span>
+                  <span className="context-repo">{repository.name}</span>
+                  <span className="external-link">↗</span>
+                </a>
+                {selectedBranch && (
+                  <span className="branch-info">
+                    <code className="branch-display">{selectedBranch}</code>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="header-right">
+          {profile && (
+            <>
+              <img 
+                src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
+                alt="Profile" 
+                className="context-avatar" 
+              />
+              <span className="context-owner">@{profile.login}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="view-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
@@ -1024,8 +1069,7 @@ define "Contraindication Present":
           </div>
         </div>
       )}
-      </div>
-    </PageLayout>
+    </div>
   );
 };
 

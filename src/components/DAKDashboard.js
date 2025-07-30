@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { PageLayout } from './framework';
 import githubService from '../services/githubService';
 import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
 import cacheManagementService from '../services/cacheManagementService';
+import BranchSelector from './BranchSelector';
 import HelpButton from './HelpButton';
+import ContextualHelpMascot from './ContextualHelpMascot';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
 import { handleNavigationClick } from '../utils/navigationUtils';
@@ -22,6 +23,7 @@ const DAKDashboard = () => {
   const [loading, setLoading] = useState(!profile || !repository);
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
+  const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
@@ -224,6 +226,7 @@ const DAKDashboard = () => {
           setHasWriteAccess(false);
         }
       }
+      setCheckingPermissions(false);
     };
 
     checkPermissions();
@@ -402,6 +405,23 @@ const DAKDashboard = () => {
   ];
 
   // Handle branch selection change
+  const handleBranchChange = (branch) => {
+    setSelectedBranch(branch);
+    branchContextService.setSelectedBranch(repository, branch);
+    
+    // Update the URL to include the branch parameter
+    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+    const repoName = repository.name;
+    const newPath = `/dashboard/${owner}/${repoName}/${branch}`;
+    
+    navigate(newPath, {
+      state: {
+        profile,
+        repository,
+        selectedBranch: branch
+      }
+    });
+  };
 
   const handleComponentClick = (event, component) => {
     const navigationState = {
@@ -497,6 +517,19 @@ const DAKDashboard = () => {
     navigate('/repositories', { state: { profile } });
   };
 
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
+
+  const handleUserMenuToggle = () => {
+    setShowUserMenu(!showUserMenu);
+  };
+
+  const handleClearCacheClick = () => {
+    setShowUserMenu(false);
+    setShowClearCacheConfirm(true);
+  };
+
   const handleClearCacheConfirm = () => {
     const success = cacheManagementService.clearAllCache();
     setShowClearCacheConfirm(false);
@@ -554,9 +587,67 @@ const DAKDashboard = () => {
   }
 
   return (
-    <PageLayout pageName="dak-dashboard">
-      <div className="dak-dashboard">
-        <div className="dashboard-content">
+    <div className="dak-dashboard">
+      <div className="dashboard-header">
+        <div className="header-left">
+          <div className="who-branding">
+            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
+            <p className="subtitle">WHO SMART Guidelines Exchange</p>
+          </div>
+          <div className="repo-status">
+            <div className="repo-info">
+              <a 
+                href={`https://github.com/${repository.full_name}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="context-repo-link"
+                title="View repository on GitHub"
+              >
+                <span className="repo-icon">📁</span>
+                <span className="context-repo">{repository.name}</span>
+                <span className="external-link">↗</span>
+              </a>
+            </div>
+            <div className="branch-info">
+              <BranchSelector
+                repository={repository}
+                selectedBranch={selectedBranch}
+                onBranchChange={handleBranchChange}
+                className="header-branch-selector"
+              />
+            </div>
+            {!checkingPermissions && (
+              <span className={`access-level ${hasWriteAccess ? 'write' : 'read'}`}>
+                {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only Access'}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="header-right">
+          <div className="user-menu-container">
+            <div className="user-info" onClick={handleUserMenuToggle}>
+              <img 
+                src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
+                alt="Profile" 
+                className="context-avatar" 
+              />
+              <span className="context-owner">@{profile.login}</span>
+              <span className="menu-arrow">▼</span>
+            </div>
+            
+            {showUserMenu && (
+              <div className="user-dropdown-menu">
+                <div className="dropdown-item" onClick={handleClearCacheClick}>
+                  <span className="dropdown-icon">🚽</span>
+                  <span className="dropdown-text">Clear Cache</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="dashboard-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
@@ -828,8 +919,13 @@ const DAKDashboard = () => {
         </div>
       )}
 
-      </div>
-    </PageLayout>
+      {/* Contextual Help Mascot */}
+      <ContextualHelpMascot 
+        pageId="dak-dashboard"
+        position="bottom-right"
+        contextData={{ profile, repository, hasWriteAccess }}
+      />
+    </div>
   );
 };
 

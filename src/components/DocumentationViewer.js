@@ -3,23 +3,48 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { PageLayout } from './framework';
 import './DocumentationViewer.css';
 
-// Map of available documentation files
-const docFiles = {
-  'overview': { file: 'README.md', title: 'Documentation Overview' },
-  'dak-components': { file: 'dak-components.md', title: 'DAK Components' },
-  'requirements': { file: 'requirements.md', title: 'Requirements' },
-  'architecture': { file: 'solution-architecture.md', title: 'Solution Architecture' },
-  'project-plan': { file: 'project-plan.md', title: 'Project Plan' },
-  'bpmn-integration': { file: 'bpmn-integration.md', title: 'BPMN Integration' },
-  'page-framework': { file: 'page-framework.md', title: 'Page Framework' },
-  'framework-developer-guide': { file: 'framework-developer-guide.md', title: 'Framework Developer Guide' },
-  'page-inventory': { file: 'page-inventory.md', title: 'Page Inventory' },
-  'qa-testing': { file: 'qa-testing.md', title: 'QA Testing' },
-  'ui-styling-requirements': { file: 'UI_STYLING_REQUIREMENTS.md', title: 'UI Styling Requirements' },
-  'who-cors-workaround': { file: 'WHO_CORS_WORKAROUND.md', title: 'WHO CORS Workaround' },
-  'workflows-overview': { file: 'workflows/README.md', title: 'Workflows Overview' },
-  'qa-report': { file: 'qa-report.html', title: 'QA Report', isHtml: true }
+// Dynamically generate documentation files structure
+const generateDocFiles = () => {
+  // Static mapping for files with custom titles or special handling
+  // eslint-disable-next-line no-unused-vars
+  const customTitles = {
+    'README.md': 'Documentation Overview',
+    'UI_STYLING_REQUIREMENTS.md': 'UI Styling Requirements',
+    'WHO_CORS_WORKAROUND.md': 'WHO CORS Workaround',
+    'bpmn-integration.md': 'BPMN Integration',
+    'dak-components.md': 'DAK Components',
+    'decision-table-editor.md': 'Decision Table Editor',
+    'framework-developer-guide.md': 'Framework Developer Guide',
+    'page-framework.md': 'Page Framework',
+    'page-inventory.md': 'Page Inventory',
+    'project-plan.md': 'Project Plan',
+    'qa-testing.md': 'QA Testing',
+    'requirements.md': 'Requirements',
+    'solution-architecture.md': 'Solution Architecture',
+    'workflows/README.md': 'Workflows Overview'
+  };
+
+  const files = {
+    'overview': { file: 'README.md', title: 'Documentation Overview', category: 'root' },
+    'bpmn-integration': { file: 'bpmn-integration.md', title: 'BPMN Integration', category: 'root' },
+    'dak-components': { file: 'dak-components.md', title: 'DAK Components', category: 'root' },
+    'decision-table-editor': { file: 'decision-table-editor.md', title: 'Decision Table Editor', category: 'root' },
+    'framework-developer-guide': { file: 'framework-developer-guide.md', title: 'Framework Developer Guide', category: 'root' },
+    'page-framework': { file: 'page-framework.md', title: 'Page Framework', category: 'root' },
+    'page-inventory': { file: 'page-inventory.md', title: 'Page Inventory', category: 'root' },
+    'project-plan': { file: 'project-plan.md', title: 'Project Plan', category: 'root' },
+    'qa-testing': { file: 'qa-testing.md', title: 'QA Testing', category: 'root' },
+    'requirements': { file: 'requirements.md', title: 'Requirements', category: 'root' },
+    'solution-architecture': { file: 'solution-architecture.md', title: 'Solution Architecture', category: 'root' },
+    'ui-styling-requirements': { file: 'UI_STYLING_REQUIREMENTS.md', title: 'UI Styling Requirements', category: 'root' },
+    'who-cors-workaround': { file: 'WHO_CORS_WORKAROUND.md', title: 'WHO CORS Workaround', category: 'root' },
+    'workflows-overview': { file: 'workflows/README.md', title: 'Workflows Overview', category: 'workflows' }
+  };
+
+  return files;
 };
+
+const docFiles = generateDocFiles();
 
 const DocumentationViewer = () => {
   const { docId } = useParams();
@@ -82,14 +107,6 @@ const DocumentationViewer = () => {
     loadDocumentation();
   }, [docId]);
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
   const renderMarkdown = (markdown) => {
     // Simple markdown to HTML conversion for basic formatting
     let html = markdown;
@@ -138,48 +155,34 @@ const DocumentationViewer = () => {
 
   if (loading) {
     return (
-      <div className="documentation-viewer">
-        <div className="doc-header">
-          <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
-          </div>
-          <button onClick={handleBack} className="back-btn">
-            ← Back
-          </button>
-        </div>
-        <div className="doc-content">
-          <div className="loading">
-            <div className="spinner"></div>
-            <p>Loading documentation...</p>
+      <PageLayout pageName="documentation-viewer">
+        <div className="documentation-viewer">
+          <div className="doc-content">
+            <div className="loading">
+              <div className="spinner"></div>
+              <p>Loading documentation...</p>
+            </div>
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="documentation-viewer">
-        <div className="doc-header">
-          <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
-          </div>
-          <button onClick={handleBack} className="back-btn">
-            ← Back
-          </button>
-        </div>
-        <div className="doc-content">
-          <div className="error-state">
-            <h2>Error</h2>
-            <p>{error}</p>
-            <button onClick={() => window.location.reload()} className="retry-btn">
-              Try Again
-            </button>
+      <PageLayout pageName="documentation-viewer">
+        <div className="documentation-viewer">
+          <div className="doc-content">
+            <div className="error-state">
+              <h2>Error</h2>
+              <p>{error}</p>
+              <button onClick={() => window.location.reload()} className="retry-btn">
+                Try Again
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
@@ -187,18 +190,46 @@ const DocumentationViewer = () => {
     <PageLayout pageName="documentation-viewer">
       <div className="documentation-viewer">
         <div className="doc-content">
-          <div className="doc-sidebar">
+        <div className="doc-sidebar">
           <h3>Documentation</h3>
           <nav className="doc-menu">
-            {Object.entries(docFiles).map(([key, doc]) => (
-              <button
-                key={key}
-                className={`doc-menu-item ${docId === key ? 'active' : ''}`}
-                onClick={() => navigate(`/docs/${key}`)}
-              >
-                {doc.title}
-              </button>
-            ))}
+            {(() => {
+              // Group files by category
+              const grouped = {};
+              Object.entries(docFiles).forEach(([key, doc]) => {
+                if (!grouped[doc.category]) {
+                  grouped[doc.category] = [];
+                }
+                grouped[doc.category].push({ key, ...doc });
+              });
+
+              // Sort within each category
+              Object.keys(grouped).forEach(category => {
+                grouped[category].sort((a, b) => a.title.localeCompare(b.title));
+              });
+
+              // Render sections
+              return Object.entries(grouped)
+                .sort(([a], [b]) => a === 'root' ? -1 : b === 'root' ? 1 : a.localeCompare(b))
+                .map(([category, items]) => (
+                  <div key={category} className="doc-category">
+                    {category !== 'root' && (
+                      <div className="doc-category-header">
+                        {category.charAt(0).toUpperCase() + category.slice(1)}
+                      </div>
+                    )}
+                    {items.map(({ key, title }) => (
+                      <button
+                        key={key}
+                        className={`doc-menu-item ${docId === key ? 'active' : ''} ${category !== 'root' ? 'doc-menu-item-nested' : ''}`}
+                        onClick={() => navigate(`/docs/${key}`)}
+                      >
+                        {title}
+                      </button>
+                    ))}
+                  </div>
+                ));
+            })()}
           </nav>
         </div>
 
@@ -210,7 +241,8 @@ const DocumentationViewer = () => {
             }}
           />
         </div>
-        </div>
+      </div>
+      
       </div>
     </PageLayout>
   );

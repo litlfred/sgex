@@ -246,19 +246,36 @@ const ActorEditor = () => {
     });
   };
 
+  // Redirect if missing required context - use useEffect to avoid render issues
+  useEffect(() => {
+    if (!profile || !repository) {
+      navigate('/');
+    }
+  }, [profile, repository, navigate]);
+
   if (!profile || !repository) {
-    navigate('/');
-    return <div>Redirecting...</div>;
+    return (
+      <PageLayout pageName="actor-editor">
+        <div className="actor-editor">
+          <div className="redirecting-state">
+            <h2>Redirecting...</h2>
+            <p>Missing required context. Redirecting to home page...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
   }
 
   if (loading) {
     return (
-      <div className="actor-editor loading-state">
-        <div className="loading-content">
-          <h2>Loading Actor Editor...</h2>
-          <p>Initializing editor and loading data...</p>
+      <PageLayout pageName="actor-editor">
+        <div className="actor-editor loading-state">
+          <div className="loading-content">
+            <h2>Loading Actor Editor...</h2>
+            <p>Initializing editor and loading data...</p>
+          </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 

@@ -26,7 +26,7 @@ export const WHO_COLORS = {
  * Theme provider component
  */
 export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   // Load theme preference from localStorage on mount
   useEffect(() => {
@@ -34,9 +34,10 @@ export const ThemeProvider = ({ children }) => {
     if (savedTheme) {
       setIsDarkMode(savedTheme === 'dark');
     } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDarkMode(prefersDark);
+      // Check if user explicitly prefers light mode
+      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+      // Default to dark mode unless user explicitly prefers light
+      setIsDarkMode(!prefersLight);
     }
   }, []);
 

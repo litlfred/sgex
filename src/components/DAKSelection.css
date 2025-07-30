@@ -178,14 +178,14 @@ body.theme-light .dak-selection {
 .loading {
   text-align: center;
   padding: 3rem;
-  color: white;
+  color: var(--who-text-primary);
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top: 4px solid white;
+  border: 4px solid var(--who-border-color);
+  border-top: 4px solid var(--who-text-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
@@ -199,19 +199,19 @@ body.theme-light .dak-selection {
 .error-state, .empty-state {
   text-align: center;
   padding: 3rem;
-  color: white;
+  color: var(--who-text-primary);
 }
 
 .error-state h3, .empty-state h3 {
-  color: white;
+  color: var(--who-text-primary);
   margin-bottom: 1rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .retry-btn {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--who-card-bg);
+  color: var(--who-text-primary);
+  border: 1px solid var(--who-border-color);
   padding: 0.75rem 1.5rem;
   border-radius: 6px;
   cursor: pointer;
@@ -221,8 +221,8 @@ body.theme-light .dak-selection {
 }
 
 .retry-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: var(--who-hover-bg);
+  border-color: var(--who-blue);
 }
 
 .repo-grid {
@@ -233,26 +233,26 @@ body.theme-light .dak-selection {
 }
 
 .dak-selection .repo-card {
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid var(--who-border-color);
   border-radius: 12px;
   padding: 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--who-card-bg);
   backdrop-filter: blur(10px);
 }
 
 .dak-selection .repo-card:hover {
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: var(--who-blue);
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--who-hover-bg);
 }
 
 .dak-selection .repo-card.selected {
-  border-color: rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--who-blue);
+  background: var(--who-selected-bg);
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
 
@@ -262,7 +262,7 @@ body.theme-light .dak-selection {
 
 .dak-selection .repo-header-info h3 {
   margin: 0 0 0.5rem 0;
-  color: white !important;
+  color: var(--who-text-primary) !important;
   font-size: 1.2rem;
   font-weight: 600;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -302,18 +302,18 @@ body.theme-light .dak-selection {
 
 .compatible-badge {
   background: rgba(40, 167, 69, 0.3);
-  color: white;
+  color: var(--who-text-primary);
   border: 1px solid rgba(40, 167, 69, 0.5);
 }
 
 
 
 .repo-description {
-  color: white !important;
+  color: var(--who-text-primary) !important;
 }
 
 .dak-selection .repo-description {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--who-text-secondary);
   line-height: 1.5;
   margin-bottom: 1rem;
   min-height: 3rem;
@@ -327,16 +327,16 @@ body.theme-light .dak-selection {
 }
 
 .dak-selection .topic-tag {
-  background: rgba(255, 255, 255, 0.2);
-  color: white !important;
+  background: var(--who-selected-bg);
+  color: var(--who-text-primary) !important;
   padding: 0.25rem 0.5rem;
   border-radius: 12px;
   font-size: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--who-border-color);
 }
 
 .topic-more {
-  color: rgba(255, 255, 255, 0.8) !important;
+  color: var(--who-text-muted) !important;
   font-size: 0.75rem;
   font-style: italic;
 }
@@ -344,7 +344,7 @@ body.theme-light .dak-selection {
 .dak-selection .repo-stats {
   display: flex;
   gap: 1rem;
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: var(--who-text-secondary) !important;
   font-size: 0.8rem;
   margin-bottom: 1rem;
 }
@@ -363,14 +363,14 @@ body.theme-light .dak-selection {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: rgba(255, 255, 255, 0.3);
-  color: white;
+  background: var(--who-selected-bg);
+  color: var(--who-text-primary);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 500;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--who-border-color);
 }
 
 .selection-footer {
@@ -378,9 +378,9 @@ body.theme-light .dak-selection {
 }
 
 .continue-btn {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--who-card-bg);
+  color: var(--who-text-primary);
+  border: 1px solid var(--who-border-color);
   padding: 1rem 2rem;
   border-radius: 6px;
   font-size: 1rem;
@@ -392,15 +392,15 @@ body.theme-light .dak-selection {
 }
 
 .continue-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: var(--who-hover-bg);
+  border-color: var(--who-blue);
   transform: translateY(-1px);
 }
 
 .continue-btn:disabled {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.5);
+  background: var(--who-card-bg);
+  border-color: var(--who-border-color);
+  color: var(--who-text-muted);
   cursor: not-allowed;
   transform: none;
 }
@@ -410,7 +410,7 @@ body.theme-light .dak-selection {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  color: white;
+  color: var(--who-text-primary);
   font-size: 0.9rem;
   font-style: italic;
   padding: 1rem;
@@ -440,7 +440,7 @@ body.theme-light .dak-selection {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: white;
+  color: var(--who-text-primary);
   font-size: 0.9rem;
   backdrop-filter: blur(10px);
 }
@@ -452,18 +452,18 @@ body.theme-light .dak-selection {
 .rescan-link {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--who-blue);
   cursor: pointer;
   text-decoration: underline;
   font-size: inherit;
 }
 
 .rescan-link:hover:not(:disabled) {
-  color: white;
+  color: var(--who-blue-light);
 }
 
 .rescan-link:disabled {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--who-text-muted);
   cursor: not-allowed;
   text-decoration: none;
 }
