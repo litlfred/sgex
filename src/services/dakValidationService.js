@@ -137,6 +137,8 @@ class DAKValidationService {
     ];
 
     const fullName = `${owner}/${repo}`;
+    
+    // Check against known repositories first
     const isKnown = knownDAKRepos.some(knownRepo => 
       knownRepo.toLowerCase() === fullName.toLowerCase()
     );
@@ -144,10 +146,32 @@ class DAKValidationService {
     if (isKnown) {
       console.log(`Demo mode: ${fullName} recognized as valid DAK repository`);
       return true;
-    } else {
-      console.log(`Demo mode: ${fullName} not recognized as valid DAK repository`);
-      return false;
     }
+    
+    // Check for dynamically generated demo DAK repositories
+    // These follow specific patterns matching the mock repositories in DAKSelection.js
+    const demoDakPatterns = [
+      /^[^/]+\/anc-dak$/i,                    // */anc-dak
+      /^[^/]+\/immunization-dak$/i,           // */immunization-dak  
+      /^[^/]+\/maternal-health-dak$/i,        // */maternal-health-dak
+      /^[^/]+\/(.*-)?health.*-dak$/i,         // */health-related-dak (health-dak, maternal-health-dak, etc.)
+      /^[^/]+\/.*care.*-dak$/i,               // */care-related-dak (anc-dak, care-dak, etc.)
+      /^[^/]+\/.*immunization.*-dak$/i,       // */immunization-related-dak
+      /^[^/]+\/smart-anc-toolkit$/i,          // */smart-anc-toolkit
+      /^[^/]+\/smart-immunizations$/i,        // */smart-immunizations  
+      /^[^/]+\/smart-guidelines$/i,           // */smart-guidelines
+      /^[^/]+\/smart-guidelines-demo$/i       // */smart-guidelines-demo
+    ];
+    
+    const matchesPattern = demoDakPatterns.some(pattern => pattern.test(fullName));
+    
+    if (matchesPattern) {
+      console.log(`Demo mode: ${fullName} recognized as valid DAK repository (pattern match)`);
+      return true;
+    }
+
+    console.log(`Demo mode: ${fullName} not recognized as valid DAK repository`);
+    return false;
   }
 }
 
