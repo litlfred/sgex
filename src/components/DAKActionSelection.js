@@ -6,7 +6,7 @@ import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
   return (
-    <PageLayout pageName="dak-action-selection">
+    <PageLayout pageName="dak-action-selection" showHeader={false}>
       <DAKActionSelectionContent />
     </PageLayout>
   );

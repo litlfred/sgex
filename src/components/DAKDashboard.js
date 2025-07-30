@@ -570,7 +570,6 @@ const DAKDashboardContent = () => {
   return (
     <div className="dak-dashboard">
       <div className="dashboard-content">
-
         <div className="dashboard-main">
           <div className="dashboard-intro">
             <h2>{t('dak.components')}</h2>
