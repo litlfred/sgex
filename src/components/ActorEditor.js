@@ -1,13 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import actorDefinitionService from '../services/actorDefinitionService';
-import { PageLayout } from './framework';
+import { PageLayout, usePageParams } from './framework';
 import './ActorEditor.css';
 
 const ActorEditor = () => {
+  return (
+    <PageLayout pageName="actor-editor">
+      <ActorEditorContent />
+    </PageLayout>
+  );
+};
+
+const ActorEditorContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, repository, editActorId } = location.state || {};
+  const { profile, repository } = usePageParams();
+  const { editActorId } = location.state || {};
 
   // State management
   const [actorDefinition, setActorDefinition] = useState(null);
@@ -237,43 +246,32 @@ const ActorEditor = () => {
 
 
 
-  // Redirect if missing required context - use useEffect to avoid render issues
-  useEffect(() => {
-    if (!profile || !repository) {
-      navigate('/');
-    }
-  }, [profile, repository, navigate]);
-
-  if (!profile || !repository) {
+    // Wait for framework to load repository data if URL parameters are provided  
+  if (!profile && !repository) {
     return (
-      <PageLayout pageName="actor-editor">
-        <div className="actor-editor">
-          <div className="redirecting-state">
-            <h2>Redirecting...</h2>
-            <p>Missing required context. Redirecting to home page...</p>
-          </div>
+      <div className="actor-editor loading-state">
+        <div className="loading-content">
+          <h2>Loading...</h2>
+          <p>Loading user profile and repository data...</p>
         </div>
-      </PageLayout>
+      </div>
     );
   }
 
   if (loading) {
     return (
-      <PageLayout pageName="actor-editor">
-        <div className="actor-editor loading-state">
-          <div className="loading-content">
-            <h2>Loading Actor Editor...</h2>
-            <p>Initializing editor and loading data...</p>
-          </div>
+      <div className="actor-editor loading-state">
+        <div className="loading-content">
+          <h2>Loading Actor Editor...</h2>
+          <p>Initializing editor and loading data...</p>
         </div>
-      </PageLayout>
+      </div>
     );
   }
 
   return (
-    <PageLayout pageName="actor-editor">
-      <div className="actor-editor">
-        <div className="editor-content">
+    <div className="actor-editor">
+      <div className="editor-content">
 
         <div className="editor-toolbar">
           <div className="toolbar-left">
@@ -484,7 +482,6 @@ const ActorEditor = () => {
       )}
 
       </div>
-    </PageLayout>
   );
 };
 

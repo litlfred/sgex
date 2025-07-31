@@ -7,13 +7,10 @@ import './CoreDataDictionaryViewer.css';
 const CoreDataDictionaryViewer = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { params } = usePageParams();
+  const { user, profile, repository, branch } = usePageParams();
   
-  // Get data from URL params or location state (for backward compatibility)
-  const { profile, repository, component, selectedBranch } = location.state || {};
-  const user = params?.user;
-  const repo = params?.repo;
-  const branch = params?.branch;
+  // Get component from location state (for backward compatibility when navigating from dashboard)
+  const { component, selectedBranch } = location.state || {};
   
   const [fshFiles, setFshFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,14 +29,14 @@ const CoreDataDictionaryViewer = () => {
   // Generate base URL for IG Publisher artifacts
   const getBaseUrl = useCallback((branchName) => {
     const owner = user || repository?.owner?.login || repository?.full_name.split('/')[0];
-    const repoName = repo || repository?.name;
+    const repoName = repository?.name;
     
     if (branchName === (repository?.default_branch || 'main')) {
       return `https://${owner}.github.io/${repoName}`;
     } else {
       return `https://${owner}.github.io/${repoName}/branches/${branchName}`;
     }
-  }, [user, repository, repo]);
+  }, [user, repository]);
 
   // Parse DAK.fsh file to extract concepts
   const parseDakFshConcepts = useCallback((content) => {
@@ -71,11 +68,11 @@ const CoreDataDictionaryViewer = () => {
   };
 
   const handleBackToDashboard = () => {
-    if (user && repo) {
+    if (user && repository?.name) {
       // Use URL parameters for navigation
       const dashboardPath = branch ? 
-        `/dashboard/${user}/${repo}/${branch}` : 
-        `/dashboard/${user}/${repo}`;
+        `/dashboard/${user}/${repository.name}/${branch}` : 
+        `/dashboard/${user}/${repository.name}`;
       navigate(dashboardPath);
     } else {
       // Fallback to state-based navigation
@@ -96,7 +93,7 @@ const CoreDataDictionaryViewer = () => {
       const currentRepository = repository;
       const currentBranch = branch || selectedBranch;
       const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
-      const currentRepo = repo || repository?.name;
+      const currentRepo = repository?.name;
       
       if ((!currentRepository && (!currentUser || !currentRepo)) || !currentBranch) {
         setLoading(false);
@@ -227,7 +224,7 @@ const CoreDataDictionaryViewer = () => {
     };
 
     fetchFshFiles();
-  }, [repository, selectedBranch, user, repo, branch, getBaseUrl, parseDakFshConcepts]);
+  }, [repository, selectedBranch, user, branch, getBaseUrl, parseDakFshConcepts]);
 
   // Fetch file content for modal display
   const handleViewSource = async (file) => {
@@ -237,7 +234,7 @@ const CoreDataDictionaryViewer = () => {
       setShowModal(true);
 
       const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
-      const currentRepo = repo || repository?.name;
+      const currentRepo = repository?.name;
       const currentBranch = branch || selectedBranch;
       
       const content = await githubService.getFileContent(
@@ -260,9 +257,9 @@ const CoreDataDictionaryViewer = () => {
     setFileContent('');
   };
 
-  if ((!profile || !repository || !component) && !user && !repo) {
-    navigate('/');
-    return <div>Redirecting...</div>;
+  // Wait for framework to load required data
+  if (!user || !repository) {
+    return <div>Loading...</div>;
   }
 
   if (loading) {
@@ -293,7 +290,7 @@ const CoreDataDictionaryViewer = () => {
             className="context-avatar" 
           />
           <div className="context-details">
-            <span className="context-repo">{repo || repository?.name}</span>
+            <span className="context-repo">{repository?.name}</span>
             <span className="context-component">Core Data Dictionary</span>
           </div>
         </div>

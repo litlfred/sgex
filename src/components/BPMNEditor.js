@@ -2,16 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 import { Octokit } from '@octokit/rest';
-import { AssetEditorLayout } from './framework';
+import { AssetEditorLayout, usePageParams } from './framework';
 import './BPMNEditor.css';
 
 const BPMNEditor = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { profile, repository } = usePageParams();
+  const { component } = location.state || {};
   const modelerRef = useRef(null);
   const containerRef = useRef(null);
-  
-  const { profile, repository, component } = location.state || {};
   
   const [bpmnFiles, setBpmnFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -61,7 +61,7 @@ const BPMNEditor = () => {
   useEffect(() => {
     const loadBpmnFiles = async () => {
       if (!profile || !repository) {
-        navigate('/');
+        // Wait for framework to load profile and repository data
         return;
       }
 
@@ -320,9 +320,9 @@ const BPMNEditor = () => {
     }
   };
 
+  // Wait for framework to load required data
   if (!profile || !repository || !component) {
-    navigate('/');
-    return <div>Redirecting...</div>;
+    return <div>Loading...</div>;
   }
 
   // Check if there are changes in the BPMN diagram

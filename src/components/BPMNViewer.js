@@ -2,16 +2,16 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import githubService from '../services/githubService';
-import { PageLayout } from './framework';
+import { PageLayout, usePageParams } from './framework';
 import './BPMNViewer.css';
 
 const BPMNViewerComponent = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { profile, repository } = usePageParams();
+  const { component, selectedFile, selectedBranch } = location.state || {};
   const viewerRef = useRef(null);
   const containerRef = useRef(null);
-  
-  const { profile, repository, component, selectedFile, selectedBranch } = location.state || {};
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -365,8 +365,7 @@ const BPMNViewerComponent = () => {
   };
 
   if (!profile || !repository || !selectedFile) {
-    navigate('/');
-    return <div>Redirecting...</div>;
+    return <div>Loading...</div>;
   }
 
   return (

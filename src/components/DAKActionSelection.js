@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageLayout, usePageParams } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKActionSelection.css';
@@ -13,42 +13,8 @@ const DAKActionSelection = () => {
 };
 
 const DAKActionSelectionContent = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const { params } = usePageParams();
-  const userParam = params?.user;
-  
-  const { profile } = location.state || {};
-
-  // Validate user parameter and profile consistency
-  useEffect(() => {
-    // If no user parameter in URL and no profile in state, redirect to landing
-    if (!userParam && !profile) {
-      navigate('/');
-      return;
-    }
-    
-    // If user parameter exists but no profile - redirect to landing
-    if (userParam && !profile) {
-      navigate('/');
-      return;
-    }
-    
-    // If user parameter exists and profile exists but they don't match - redirect to landing
-    if (userParam && profile && profile.login !== userParam) {
-      navigate('/');
-      return;
-    }
-    
-    // If profile exists but no user parameter, redirect to include user in URL
-    if (profile && !userParam) {
-      navigate(`/dak-action/${profile.login}`, { 
-        state: { profile },
-        replace: true 
-      });
-      return;
-    }
-  }, [userParam, profile, navigate]);
+  const { user, profile } = usePageParams();
 
   const dakActions = [
     {
@@ -77,19 +43,19 @@ const DAKActionSelectionContent = () => {
   const handleActionSelect = (event, actionId) => {
     // Navigate directly to the DAK selection with the chosen action and user parameter
     const navigationState = { 
-      profile, 
       action: actionId 
     };
     
-    handleNavigationClick(event, `/sgex/dak-selection/${profile.login}`, navigate, navigationState);
+    handleNavigationClick(event, `/sgex/dak-selection/${user}`, navigate, navigationState);
   };
 
   const handleBackToProfile = () => {
-    navigate('/', { state: { profile } });
+    navigate('/');
   };
 
-  if (!profile) {
-    return <div>Redirecting...</div>;
+  // Wait for framework to load user profile
+  if (!user || !profile) {
+    return <div>Loading...</div>;
   }
 
   return (

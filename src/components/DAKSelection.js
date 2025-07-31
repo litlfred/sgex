@@ -17,7 +17,7 @@ const DAKSelection = () => {
 const DAKSelectionContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, profile, params } = usePageParams();
+  const { user, profile } = usePageParams();
   const [repositories, setRepositories] = useState([]);
   const [selectedRepository, setSelectedRepository] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -1,43 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import useDAKUrlParams from '../hooks/useDAKUrlParams';
-import { PageLayout } from './framework';
+import { PageLayout, usePageParams } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './BusinessProcessSelection.css';
 
 const BusinessProcessSelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { profile, repository, branch } = usePageParams();
+  const { selectedBranch } = location.state || { selectedBranch: branch };
   
-  // Use the DAK URL params hook to get profile, repository, and branch
-  const { 
-    profile, 
-    repository, 
-    selectedBranch, 
-    loading: dakLoading, 
-    error: dakError 
-  } = useDAKUrlParams();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Debug logging for repository data flow
-  console.log('🚀 BusinessProcessSelection: Hook data received:', {
-    hasProfile: !!profile,
-    hasRepository: !!repository,
-    profileLogin: profile?.login,
-    repositoryName: repository?.name,
-    repositoryFullName: repository?.full_name,
-    repositoryOwner: repository?.owner?.login,
-    selectedBranch,
-    dakLoading,
-    dakError
-  });
   
   // Get component from location.state if available (when navigating from dashboard)
   const { component } = location.state || {};
   
   const [bpmnFiles, setBpmnFiles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
 
   // Check write permissions
@@ -62,7 +43,7 @@ const BusinessProcessSelection = () => {
   useEffect(() => {
     const loadBpmnFiles = async () => {
       if (!repository) {
-        navigate('/');
+        // Wait for framework to load repository data
         return;
       }
 
@@ -201,23 +182,24 @@ const BusinessProcessSelection = () => {
     handleNavigationClick(event, path, navigate, navigationState);
   };
 
-  if (dakLoading) {
+  // Wait for framework to load required data
+  if (!profile || !repository) {
     return (
       <div className="business-process-selection loading-state">
         <div className="loading-content">
-          <h2>Loading DAK Data...</h2>
-          <p>Fetching repository and user data...</p>
+          <h2>Loading...</h2>
+          <p>Loading user profile and repository data...</p>
         </div>
       </div>
     );
   }
 
-  if (dakError) {
+  if (error) {
     return (
       <div className="business-process-selection error-state">
         <div className="error-content">
-          <h2>Error Loading DAK Data</h2>
-          <p>{dakError}</p>
+          <h2>Error Loading Data</h2>
+          <p>{error}</p>
           <div className="error-actions">
             <button onClick={() => navigate('/')} className="action-btn primary">
               Return to Home
@@ -229,11 +211,6 @@ const BusinessProcessSelection = () => {
         </div>
       </div>
     );
-  }
-
-  if (!profile || !repository) {
-    navigate('/');
-    return <div>Redirecting...</div>;
   }
 
   return (

@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import { PageLayout } from './framework';
+import { PageLayout, usePageParams } from './framework';
 import './BPMNSource.css';
 
 const BPMNSource = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  const { profile, repository, component, selectedFile, selectedBranch } = location.state || {};
+  const { profile, repository } = usePageParams();
+  const { component, selectedFile, selectedBranch } = location.state || {};
   
   // Essential debug logging for troubleshooting branch URL issue
   console.log('BPMNSource: Received selectedBranch =', selectedBranch);
@@ -147,20 +147,13 @@ const BPMNSource = () => {
     return url;
   };
 
-  // Redirect if missing required context - use useEffect to avoid render issues
-  useEffect(() => {
-    if (!profile || !repository || !selectedFile) {
-      navigate('/');
-    }
-  }, [profile, repository, selectedFile, navigate]);
-
   if (!profile || !repository || !selectedFile) {
     return (
       <PageLayout pageName="bpmn-source">
         <div className="bpmn-source">
-          <div className="redirecting-state">
-            <h2>Redirecting...</h2>
-            <p>Missing required context. Redirecting to home page...</p>
+          <div className="loading-state">
+            <h2>Loading...</h2>
+            <p>Loading required data...</p>
           </div>
         </div>
       </PageLayout>
