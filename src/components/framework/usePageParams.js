@@ -53,8 +53,12 @@ export const usePageParams = () => {
 export const useDAKParams = () => {
   const pageParams = usePageParams();
   
-  if (pageParams.type !== PAGE_TYPES.DAK && pageParams.type !== PAGE_TYPES.ASSET) {
-    throw new Error('useDAKParams can only be used on DAK or Asset pages');
+  // Only throw error if page is fully loaded and type is not DAK/ASSET
+  // This prevents errors during initial loading or page type determination
+  if (!pageParams.loading && 
+      pageParams.type !== PAGE_TYPES.DAK && 
+      pageParams.type !== PAGE_TYPES.ASSET) {
+    throw new Error(`useDAKParams can only be used on DAK or Asset pages. Current page type: ${pageParams.type}`);
   }
 
   return {
