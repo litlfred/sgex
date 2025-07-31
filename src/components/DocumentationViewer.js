@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PageLayout, usePageParams } from './framework';
+import { useNavigate, useParams } from 'react-router-dom';
+import { PageLayout } from './framework';
 import './DocumentationViewer.css';
 
 // Dynamically generate documentation files structure
@@ -29,8 +29,7 @@ const generateDocFiles = () => {
 const docFiles = generateDocFiles();
 
 const DocumentationViewer = () => {
-  const { params } = usePageParams();
-  const docId = params?.docId;
+  const { docId } = useParams();
   const navigate = useNavigate();
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
