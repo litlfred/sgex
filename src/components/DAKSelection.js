@@ -17,8 +17,7 @@ const DAKSelection = () => {
 const DAKSelectionContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { params } = usePageParams();
-  const userParam = params?.user;
+  const { user, profile, params } = usePageParams();
   const [repositories, setRepositories] = useState([]);
   const [selectedRepository, setSelectedRepository] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,37 +27,8 @@ const DAKSelectionContent = () => {
   const [currentlyScanningRepos, setCurrentlyScanningRepos] = useState(new Set());
   const [usingCachedData, setUsingCachedData] = useState(false);
   
-  const { profile, action } = location.state || {};
-
-  // Validate user parameter and profile consistency
-  useEffect(() => {
-    // If no user parameter in URL and no profile in state, redirect to landing
-    if (!userParam && !profile) {
-      navigate('/');
-      return;
-    }
-    
-    // If user parameter exists but no profile - redirect to landing
-    if (userParam && !profile) {
-      navigate('/');
-      return;
-    }
-    
-    // If user parameter exists and profile exists but they don't match - redirect to landing
-    if (userParam && profile && profile.login !== userParam) {
-      navigate('/');
-      return;
-    }
-    
-    // If profile exists but no user parameter, redirect to include user in URL
-    if (profile && !userParam) {
-      navigate(`/dak-selection/${profile.login}`, { 
-        state: { profile, action },
-        replace: true 
-      });
-      return;
-    }
-  }, [userParam, profile, action, navigate]);
+  // Get action from location state, or default to 'edit' for direct URL access
+  const action = location.state?.action || 'edit';
 
   // Helper function to extract user and repo from repository object
   const getRepositoryPath = (repository) => {
@@ -464,14 +434,14 @@ const DAKSelectionContent = () => {
   }, [profile, action, getMockRepositories, simulateEnhancedScanning]);
 
   useEffect(() => {
-    // Only proceed if we have valid profile, action and userParam consistency
-    if (!profile || !action || !userParam || profile.login !== userParam) {
+    // Only proceed if we have a valid user parameter and the framework has loaded a profile
+    if (!user || !profile) {
       return;
     }
     
     // Always check cache first on initial load
     fetchRepositories(false, false); // forceRescan=false, useCachedData=false (but still check cache first)
-  }, [profile, action, userParam, fetchRepositories]);
+  }, [user, profile, action, fetchRepositories]);
 
   const handleRepositorySelect = (repo) => {
     setSelectedRepository(repo);
@@ -568,8 +538,8 @@ const DAKSelectionContent = () => {
     });
   };
 
-  if (!profile || !action || !userParam || profile.login !== userParam) {
-    return <div className="dak-selection"><div style={{color: 'white', textAlign: 'center', padding: '2rem'}}>Redirecting...</div></div>;
+  if (!user || !profile) {
+    return <div className="dak-selection"><div style={{color: 'white', textAlign: 'center', padding: '2rem'}}>Loading user profile...</div></div>;
   }
 
   const config = getActionConfig();
