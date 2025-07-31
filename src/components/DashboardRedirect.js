@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PageLayout } from './framework';
 
 /**
  * Component that redirects users from /dashboard to /dak-action
@@ -13,7 +14,13 @@ const DashboardRedirect = () => {
     navigate('/dak-action', { replace: true });
   }, [navigate]);
 
-  return null;
+  return (
+    <PageLayout pageName="dashboard-redirect">
+      <div className="redirect-message">
+        <p>Redirecting to DAK Action Selection...</p>
+      </div>
+    </PageLayout>
+  );
 };
 
 export default DashboardRedirect;
