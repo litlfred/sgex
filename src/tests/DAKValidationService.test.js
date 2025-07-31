@@ -100,6 +100,7 @@ dependencies:
       expect(dakValidationService.validateDemoDAKRepository('WorldHealthOrganization', 'smart-immunizations')).toBe(true);
       expect(dakValidationService.validateDemoDAKRepository('WorldHealthOrganization', 'smart-anc-toolkit')).toBe(true);
       expect(dakValidationService.validateDemoDAKRepository('WorldHealthOrganization', 'smart-base')).toBe(true);
+      expect(dakValidationService.validateDemoDAKRepository('WorldHealthOrganization', 'smart-ips-pilgrimage')).toBe(true);
     });
 
     test('returns true for known demo repositories', () => {
@@ -111,6 +112,12 @@ dependencies:
       expect(dakValidationService.validateDemoDAKRepository('litlfred', 'smart-trust-gdhcnv')).toBe(false);
       expect(dakValidationService.validateDemoDAKRepository('user', 'random-repo')).toBe(false);
       expect(dakValidationService.validateDemoDAKRepository('someone', 'not-a-dak')).toBe(false);
+    });
+
+    test('returns true for WHO smart-* repositories via pattern matching', () => {
+      expect(dakValidationService.validateDemoDAKRepository('WorldHealthOrganization', 'smart-maternal-health')).toBe(true);
+      expect(dakValidationService.validateDemoDAKRepository('WorldHealthOrganization', 'smart-covid-19')).toBe(true);
+      expect(dakValidationService.validateDemoDAKRepository('WorldHealthOrganization', 'smart-some-new-repo')).toBe(true);
     });
 
     test('is case insensitive', () => {

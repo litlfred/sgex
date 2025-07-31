@@ -122,6 +122,7 @@ class DAKValidationService {
       'WorldHealthOrganization/smart-hiv',
       'WorldHealthOrganization/smart-tb',
       'WorldHealthOrganization/smart-base',
+      'WorldHealthOrganization/smart-ips-pilgrimage',
       
       // Demo repositories for testing
       'litlfred/smart-guidelines-demo',
@@ -160,7 +161,8 @@ class DAKValidationService {
       /^[^/]+\/smart-anc-toolkit$/i,          // */smart-anc-toolkit
       /^[^/]+\/smart-immunizations$/i,        // */smart-immunizations  
       /^[^/]+\/smart-guidelines$/i,           // */smart-guidelines
-      /^[^/]+\/smart-guidelines-demo$/i       // */smart-guidelines-demo
+      /^[^/]+\/smart-guidelines-demo$/i,      // */smart-guidelines-demo
+      /^WorldHealthOrganization\/smart-.*$/i  // WHO smart-* repositories
     ];
     
     const matchesPattern = demoDakPatterns.some(pattern => pattern.test(fullName));
