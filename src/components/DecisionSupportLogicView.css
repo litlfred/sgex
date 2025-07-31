@@ -1,8 +1,52 @@
 /* Decision Support Logic View Styles */
+/* Override PageLayout padding for fullwidth DMN viewer */
 .decision-support-view {
-  min-height: 100vh;
+  margin: -1rem;
+}
+
+/* Enhanced fullwidth mode - take over entire viewport */
+.decision-support-view.enhanced-fullwidth {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  margin: 0;
+  background: #f8f9fa;
+}
+
+/* Hide everything else when in enhanced fullwidth mode */
+body:has(.decision-support-view.enhanced-fullwidth) .page-header,
+body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
+  display: none !important;
+}
+
+/* Fallback for browsers without :has() support */
+.enhanced-fullwidth-active .page-header,
+.enhanced-fullwidth-active .page-breadcrumb {
+  display: none !important;
+}
+
+.decision-support-view {
+  height: 100vh; /* Fixed height to display size */
   background: #f8f9fa;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Enhanced fullwidth mode styling */
+.decision-support-view.enhanced-fullwidth {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  height: 100vh;
 }
 
 .decision-support-view .view-header {
@@ -19,6 +63,42 @@
   display: flex;
   align-items: center;
   gap: 2rem;
+}
+
+/* Header badges for artifact and DAK component types */
+.decision-support-view .artifact-badges {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-left: 1rem;
+}
+
+.decision-support-view .artifact-badge {
+  background: rgba(255, 255, 255, 0.9);
+  color: #0078d4;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.decision-support-view .artifact-badge.dmn {
+  background: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+  border-color: #ff9800;
+}
+
+.decision-support-view .dak-component-badge {
+  background: rgba(33, 150, 243, 0.1);
+  color: #2196f3;
+  padding: 0.2rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid rgba(33, 150, 243, 0.3);
 }
 
 .decision-support-view .who-branding .clickable-title {
@@ -94,9 +174,13 @@
 }
 
 .decision-support-view .view-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Section Toggle Tabs */
@@ -113,6 +197,36 @@
   margin-left: auto;
   margin-right: auto;
   box-shadow: 0 4px 12px rgba(0, 120, 212, 0.2);
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  position: relative;
+  z-index: 20;
+}
+
+/* Auto-hide section tabs - slide up when hidden */
+.decision-support-view.auto-hide .section-tabs {
+  position: fixed;
+  top: -100px; /* Hide by moving above viewport */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  transition: top 0.3s ease-in-out;
+}
+
+/* Show section tabs on hover over the entire viewer */
+.decision-support-view.auto-hide:hover .section-tabs {
+  top: 1rem;
+}
+
+/* Add invisible hover trigger area at top for section tabs */
+.decision-support-view.auto-hide::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  z-index: 1002;
+  pointer-events: auto;
 }
 
 .decision-support-view .tab-button {
@@ -155,14 +269,28 @@
 
 /* Section Styles */
 .decision-support-view .components-section {
-  margin-bottom: 4rem;
+  flex: 1;
+  min-height: 0; /* Allow flexbox to shrink */
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.4s ease;
   background: white;
   border-radius: 0.5rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  overflow: hidden;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.decision-support-view.auto-hide .components-section {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 60px; /* Space for condensed footer */
+  margin: 0;
+  z-index: 10;
+  border-radius: 0;
 }
 
 .decision-support-view .components-section.active {
@@ -226,6 +354,24 @@
   background: white;
   border-radius: 0.5rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  position: relative;
+  z-index: 20;
+}
+
+/* Auto-hide header unless hovered */
+.decision-support-view.auto-hide .view-intro {
+  position: fixed;
+  top: -250px; /* Hide by moving above viewport */
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  transition: top 0.3s ease-in-out;
+  margin: 0 2rem;
+}
+
+.decision-support-view.auto-hide:hover .view-intro {
+  top: 100px; /* Show below the section tabs */
 }
 
 .decision-support-view .view-intro h2 {
@@ -1039,4 +1185,79 @@
     align-items: flex-start;
     gap: 0.5rem;
   }
+}
+
+/* Condensed Footer Styles */
+.decision-support-view .diagram-info {
+  padding: 0.8rem 2rem;
+  background: #f8f9fa;
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  position: relative;
+  z-index: 20;
+  border-top: 1px solid #dee2e6;
+  height: 60px; /* Fixed condensed height */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+/* Auto-hide footer - slide down when hidden */
+.decision-support-view.auto-hide .diagram-info {
+  position: fixed;
+  bottom: -70px; /* Hide by moving below viewport */
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  transition: bottom 0.3s ease-in-out;
+  height: 60px;
+}
+
+/* Show footer on hover over the entire viewer */
+.decision-support-view.auto-hide:hover .diagram-info {
+  bottom: 0;
+}
+
+/* Add invisible hover trigger area at bottom */
+.decision-support-view.auto-hide::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  z-index: 1002;
+  pointer-events: auto;
+}
+
+/* Condensed footer layout */
+.decision-support-view .condensed-file-info {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.decision-support-view .condensed-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.decision-support-view .condensed-info-item .label {
+  font-weight: 500;
+  color: #333;
+}
+
+.decision-support-view .condensed-info-item .value {
+  color: #666;
+}
+
+.decision-support-view .condensed-view-mode {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }

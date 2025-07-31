@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import MDEditor from '@uiw/react-md-editor';
-import { PageLayout, usePageParams } from './framework';
+import { PageLayout } from './framework';
 import './DecisionSupportLogicView.css';
 
 const DecisionSupportLogicView = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { params } = usePageParams();
+  const params = useParams();
   const { user, repo, branch } = params || {};
   
   // State from location or URL params
@@ -28,6 +28,8 @@ const DecisionSupportLogicView = () => {
   const [selectedDialog, setSelectedDialog] = useState(null);
   const [cqlModal, setCqlModal] = useState(null);
   const [activeSection, setActiveSection] = useState('variables'); // 'variables' or 'tables'
+  const [enhancedFullwidth, setEnhancedFullwidth] = useState(false);
+  const [autoHide, setAutoHide] = useState(false);
 
   // Initialize repository data if not available
   const initializeData = useCallback(async () => {
@@ -635,6 +637,43 @@ define "Contraindication Present":
     });
   };
 
+  const handleToggleEnhancedFullwidth = () => {
+    const newState = !enhancedFullwidth;
+    setEnhancedFullwidth(newState);
+    
+    // Add/remove class on body for enhanced fullwidth mode
+    if (newState) {
+      document.body.classList.add('enhanced-fullwidth-active');
+    } else {
+      document.body.classList.remove('enhanced-fullwidth-active');
+    }
+  };
+
+  const handleToggleAutoHide = () => {
+    setAutoHide(!autoHide);
+  };
+
+  // Cleanup effect for enhanced fullwidth
+  useEffect(() => {
+    return () => {
+      // Clean up body class on unmount
+      document.body.classList.remove('enhanced-fullwidth-active');
+    };
+  }, []);
+
+  // Update body class when enhanced fullwidth changes
+  useEffect(() => {
+    if (enhancedFullwidth) {
+      document.body.classList.add('enhanced-fullwidth-active');
+    } else {
+      document.body.classList.remove('enhanced-fullwidth-active');
+    }
+    
+    return () => {
+      document.body.classList.remove('enhanced-fullwidth-active');
+    };
+  }, [enhancedFullwidth]);
+
 
 
   if (loading) {
@@ -669,12 +708,18 @@ define "Contraindication Present":
 
   return (
     <PageLayout pageName="decision-support-logic">
-      <div className="decision-support-view">
+      <div className={`decision-support-view ${enhancedFullwidth ? 'enhanced-fullwidth' : ''} ${autoHide ? 'auto-hide' : ''}`}>
       <div className="view-content">
 
         <div className="view-main">
           <div className="view-intro">
-            <h2>🎯 Decision Support Logic</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+              <h2>🎯 Decision Support Logic</h2>
+              <div className="artifact-badges">
+                <span className="artifact-badge dmn">📊 DMN</span>
+                <span className="dak-component-badge">🧠 Decision Logic</span>
+              </div>
+            </div>
             <p>
               Explore decision variables and tables that encode clinical logic for 
               {repository ? ` ${repository.name}` : ' this DAK'}. 
@@ -698,6 +743,24 @@ define "Contraindication Present":
               <span className="tab-icon">📋</span>
               <span className="tab-text">Decision Tables</span>
             </button>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+              <button 
+                className="tab-button"
+                onClick={handleToggleAutoHide}
+                title="Toggle auto-hide headers"
+                style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}
+              >
+                {autoHide ? '📌' : '👁️'}
+              </button>
+              <button 
+                className="tab-button"
+                onClick={handleToggleEnhancedFullwidth}
+                title="Toggle enhanced fullwidth mode"
+                style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}
+              >
+                {enhancedFullwidth ? '🔳' : '⛶'}
+              </button>
+            </div>
           </div>
 
           {/* Variables Section */}
@@ -895,6 +958,35 @@ define "Contraindication Present":
               )}
             </div>
           )}
+        </div>
+
+        {/* Condensed Footer */}
+        <div className="diagram-info">
+          <div className="condensed-file-info">
+            <div className="condensed-info-item">
+              <span className="label">📊</span>
+              <span className="value">DMN Decision Logic</span>
+            </div>
+            <div className="condensed-info-item">
+              <span className="label">📁</span>
+              <span className="value">{repository?.name || 'Repository'}</span>
+            </div>
+            <div className="condensed-info-item">
+              <span className="label">🌿</span>
+              <span className="value">{selectedBranch || 'main'}</span>
+            </div>
+            <div className="condensed-info-item">
+              <span className="label">📈</span>
+              <span className="value">{filteredVariables.length} Variables</span>
+            </div>
+          </div>
+          <div className="condensed-view-mode">
+            <span className="condensed-info-item">
+              <span className="value">
+                {enhancedFullwidth ? '⛶ Full Container' : autoHide ? '👁️ Auto-Hide' : '📺 Fullwidth'}
+              </span>
+            </span>
+          </div>
         </div>
       </div>
 

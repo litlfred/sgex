@@ -16,6 +16,8 @@ const BPMNViewerComponent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
+  const [enhancedFullwidth, setEnhancedFullwidth] = useState(false);
+  const [autoHide, setAutoHide] = useState(false);
 
   // Check write permissions
   useEffect(() => {
@@ -364,6 +366,43 @@ const BPMNViewerComponent = () => {
     });
   };
 
+  const handleToggleEnhancedFullwidth = () => {
+    const newState = !enhancedFullwidth;
+    setEnhancedFullwidth(newState);
+    
+    // Add/remove class on body for enhanced fullwidth mode
+    if (newState) {
+      document.body.classList.add('enhanced-fullwidth-active');
+    } else {
+      document.body.classList.remove('enhanced-fullwidth-active');
+    }
+  };
+
+  const handleToggleAutoHide = () => {
+    setAutoHide(!autoHide);
+  };
+
+  // Cleanup effect for enhanced fullwidth
+  useEffect(() => {
+    return () => {
+      // Clean up body class on unmount
+      document.body.classList.remove('enhanced-fullwidth-active');
+    };
+  }, []);
+
+  // Update body class when enhanced fullwidth changes
+  useEffect(() => {
+    if (enhancedFullwidth) {
+      document.body.classList.add('enhanced-fullwidth-active');
+    } else {
+      document.body.classList.remove('enhanced-fullwidth-active');
+    }
+    
+    return () => {
+      document.body.classList.remove('enhanced-fullwidth-active');
+    };
+  }, [enhancedFullwidth]);
+
   if (!profile || !repository || !selectedFile) {
     navigate('/');
     return <div>Redirecting...</div>;
@@ -371,16 +410,34 @@ const BPMNViewerComponent = () => {
 
   return (
     <PageLayout pageName="bpmn-viewer">
-      <div className="bpmn-viewer">
+      <div className={`bpmn-viewer ${enhancedFullwidth ? 'enhanced-fullwidth' : ''} ${autoHide ? 'auto-hide' : ''}`}>
       <div className="viewer-content">
 
         <div className="viewer-main">
           <div className="viewer-toolbar">
             <div className="toolbar-left">
               <h3>{selectedFile.name}</h3>
+              <div className="artifact-badges">
+                <span className="artifact-badge bpmn">📊 BPMN</span>
+                <span className="dak-component-badge">🔄 Business Process</span>
+              </div>
               <span className="view-mode-badge">👁️ Read-Only View</span>
             </div>
             <div className="toolbar-right">
+              <button 
+                className="action-btn secondary"
+                onClick={handleToggleAutoHide}
+                title="Toggle auto-hide headers/footers"
+              >
+                {autoHide ? '📌' : '👁️'} Auto-Hide
+              </button>
+              <button 
+                className="action-btn secondary"
+                onClick={handleToggleEnhancedFullwidth}
+                title="Toggle enhanced fullwidth mode"
+              >
+                {enhancedFullwidth ? '🔳' : '⛶'} Full Container
+              </button>
               <button 
                 className="action-btn secondary"
                 onClick={handleBackToSelection}
@@ -447,40 +504,30 @@ const BPMNViewerComponent = () => {
           </div>
 
           <div className="diagram-info">
-            <div className="info-section">
-              <h4>File Information</h4>
-              <div className="info-grid">
-                <div className="info-item">
-                  <label>File Name:</label>
-                  <span>{selectedFile.name}</span>
-                </div>
-                <div className="info-item">
-                  <label>File Path:</label>
-                  <span className="file-path">{selectedFile.path}</span>
-                </div>
-                <div className="info-item">
-                  <label>File Size:</label>
-                  <span>{(selectedFile.size / 1024).toFixed(1)} KB</span>
-                </div>
-                <div className="info-item">
-                  <label>Access Level:</label>
-                  <span className={`access-badge ${hasWriteAccess ? 'write' : 'read'}`}>
-                    {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only'}
-                  </span>
-                </div>
+            <div className="condensed-file-info">
+              <div className="condensed-info-item">
+                <span className="label">📁</span>
+                <span className="value">{selectedFile?.name || 'No file'}</span>
+              </div>
+              <div className="condensed-info-item">
+                <span className="label">📏</span>
+                <span className="value">{selectedFile?.size ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'N/A'}</span>
+              </div>
+              <div className="condensed-info-item">
+                <span className="label">🌿</span>
+                <span className="value">{selectedBranch || 'main'}</span>
               </div>
             </div>
-
-            {!hasWriteAccess && (
-              <div className="permission-notice">
-                <h4>🔒 Read-Only Access</h4>
-                <p>
-                  You currently have read-only access to this repository. 
-                  To edit BPMN diagrams, you need write permissions. 
-                  Contact the repository administrator or update your GitHub Personal Access Token with write permissions.
-                </p>
-              </div>
-            )}
+            <div className="condensed-view-mode">
+              <span className={`condensed-access-badge ${hasWriteAccess ? 'write' : 'read'}`}>
+                {hasWriteAccess ? '✏️ Edit' : '👁️ Read'}
+              </span>
+              <span className="condensed-info-item">
+                <span className="value">
+                  {enhancedFullwidth ? '⛶ Full Container' : autoHide ? '👁️ Auto-Hide' : '📺 Fullwidth'}
+                </span>
+              </span>
+            </div>
           </div>
         </div>
       </div>
