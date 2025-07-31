@@ -12,6 +12,10 @@ const WelcomePage = () => {
   const [showCollaborationModal, setShowCollaborationModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [warningMessage, setWarningMessage] = useState(null);
+  const [tokenName, setTokenName] = useState('');
+  const [patToken, setPatToken] = useState('');
+  const [patError, setPATError] = useState('');
+  const [patLoading, setPATLoading] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -103,6 +107,52 @@ const WelcomePage = () => {
     setShowLoginModal(false);
   };
 
+  const handlePATSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!patToken.trim()) {
+      setPATError("Please enter a GitHub Personal Access Token");
+      return;
+    }
+
+    setPATLoading(true);
+    setPATError('');
+    
+    try {
+      // Test the token by creating an Octokit instance and making a test request
+      const { Octokit } = await import('@octokit/rest');
+      const octokit = new Octokit({ auth: patToken.trim() });
+      
+      // Test the token by fetching user info
+      const userResponse = await octokit.rest.users.getAuthenticated();
+      
+      // Call success callback with token and octokit instance
+      handleAuthSuccess(patToken.trim(), octokit, userResponse.data.login);
+    } catch (err) {
+      console.error('PAT authentication failed:', err);
+      
+      if (err.status === 401) {
+        setPATError('Invalid Personal Access Token. Please check your token and try again.');
+      } else if (err.status === 403) {
+        setPATError("Token doesn't have sufficient permissions. Please ensure your token has 'repo' and 'read:org' scopes.");
+      } else {
+        setPATError('Authentication failed. Please check your connection and try again.');
+      }
+    } finally {
+      setPATLoading(false);
+    }
+  };
+
+  const handleTokenNameChange = (e) => {
+    setTokenName(e.target.value);
+    if (patError) setPATError(''); // Clear error when user starts typing
+  };
+
+  const handlePATTokenChange = (e) => {
+    setPatToken(e.target.value);
+    if (patError) setPATError(''); // Clear error when user starts typing
+  };
+
   return (
     <PageLayout pageName="welcome" showBreadcrumbs={false}>
       <div className="welcome-page-content">
@@ -162,17 +212,55 @@ const WelcomePage = () => {
                   <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
                 </div>
               )}
-            </div>
 
-            {/* Demo Mode Card */}
-            <div className="demo-card">
-              <h4>Want to try without signing in?</h4>
-              <button onClick={handleDemoMode} className="demo-btn">
-                🎭 Try Demo Mode
-              </button>
-              <p className="demo-note">
-                Demo mode showcases the enhanced DAK scanning display with mock data.
-              </p>
+              {/* PAT Login + Demo Card */}
+              <div className="action-card pat-demo-card">
+                {/* PAT Login Section */}
+                <div className="pat-section">
+                  <h4>Quick PAT Login</h4>
+                  <form onSubmit={handlePATSubmit} className="pat-form">
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        value={tokenName}
+                        onChange={handleTokenNameChange}
+                        placeholder="Token name"
+                        className="token-name-input"
+                        disabled={patLoading || isAuthenticated}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <input
+                        type="password"
+                        value={patToken}
+                        onChange={handlePATTokenChange}
+                        placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                        className={`token-input ${patError ? 'error' : ''}`}
+                        disabled={patLoading || isAuthenticated}
+                      />
+                    </div>
+                    <button 
+                      type="submit" 
+                      className="pat-login-btn" 
+                      disabled={patLoading || !patToken.trim() || isAuthenticated}
+                    >
+                      {patLoading ? 'Signing In...' : '🔑 Sign In'}
+                    </button>
+                  </form>
+                  {patError && <div className="pat-error">{patError}</div>}
+                </div>
+
+                {/* Demo Section */}
+                <div className="demo-section">
+                  <h4>Want to try without signing in?</h4>
+                  <button onClick={handleDemoMode} className="demo-btn">
+                    🎭 Try Demo Mode
+                  </button>
+                  <p className="demo-note">
+                    Demo mode showcases the enhanced DAK scanning display with mock data.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
