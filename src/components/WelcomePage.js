@@ -196,24 +196,7 @@ const WelcomePage = () => {
                 <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
               </div>
 
-              {/* Login/Authoring Card */}
-              {!isAuthenticated ? (
-                <div className="action-card login-card" onClick={handleLoginClick}>
-                  <div className="card-icon">
-                    <span className="icon-symbol">🔑</span>
-                  </div>
-                  <p>Sign in with your GitHub Personal Access Token to start editing DAKs.</p>
-                </div>
-              ) : (
-                <div className="action-card authoring-card" onClick={handleAuthoringClick}>
-                  <div className="card-icon">
-                    <img src="/authoring.png" alt="Authoring" />
-                  </div>
-                  <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
-                </div>
-              )}
-
-              {/* PAT Login + Demo Card */}
+              {/* PAT Login + Demo Card (Middle) */}
               <div className="action-card pat-demo-card">
                 {/* PAT Login Section */}
                 <div className="pat-section">
@@ -261,6 +244,23 @@ const WelcomePage = () => {
                   </p>
                 </div>
               </div>
+
+              {/* Login/Authoring Card */}
+              {!isAuthenticated ? (
+                <div className="action-card login-card" onClick={handleLoginClick}>
+                  <div className="card-icon">
+                    <span className="icon-symbol">🔑</span>
+                  </div>
+                  <p>Sign in with your GitHub Personal Access Token to start editing DAKs.</p>
+                </div>
+              ) : (
+                <div className="action-card authoring-card" onClick={handleAuthoringClick}>
+                  <div className="card-icon">
+                    <img src="/authoring.png" alt="Authoring" />
+                  </div>
+                  <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
