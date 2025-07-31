@@ -28,6 +28,9 @@ class GitHubService {
       this.logger.auth('Authentication successful', { duration });
       this.logger.performance('GitHub authentication', duration);
       
+      // Trigger authentication state change event
+      this.dispatchAuthChange();
+      
       return true;
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -48,6 +51,10 @@ class GitHubService {
       this.tokenType = 'oauth';
       
       this.logger.auth('OAuth authentication successful', { tokenType: this.tokenType });
+      
+      // Trigger authentication state change event
+      this.dispatchAuthChange();
+      
       return true;
     } catch (error) {
       this.logger.auth('OAuth authentication failed', { error: error.message });
@@ -55,6 +62,14 @@ class GitHubService {
       this.isAuthenticated = false;
       return false;
     }
+  }
+
+  // Dispatch authentication state change event
+  dispatchAuthChange() {
+    // Use custom event to notify components of auth state changes
+    window.dispatchEvent(new CustomEvent('githubAuthChange', { 
+      detail: { isAuthenticated: this.isAuthenticated } 
+    }));
   }
 
   // Check token permissions and type
@@ -1368,6 +1383,9 @@ class GitHubService {
     this.permissions = null;
     localStorage.removeItem('github_token');
     sessionStorage.removeItem('github_token');
+    
+    // Dispatch authentication state change event
+    this.dispatchAuthChange();
     
     // Clear branch context on logout
     try {

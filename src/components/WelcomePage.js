@@ -43,10 +43,29 @@ const WelcomePage = () => {
       setIsAuthenticated(githubService.isAuthenticated);
     };
 
-    // Check periodically for auth state changes
-    const interval = setInterval(checkAuthState, 1000);
+    // Check immediately
+    checkAuthState();
     
-    return () => clearInterval(interval);
+    // Listen for custom authentication events
+    const handleAuthChange = (event) => {
+      setIsAuthenticated(event.detail.isAuthenticated);
+    };
+    
+    // Set up event listener for logout events instead of polling
+    const handleStorageChange = (e) => {
+      if (e.key === 'github_token' && !e.newValue) {
+        // Token was removed, user logged out
+        setIsAuthenticated(false);
+      }
+    };
+    
+    window.addEventListener('githubAuthChange', handleAuthChange);
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('githubAuthChange', handleAuthChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Handle warning message from navigation state

@@ -219,10 +219,35 @@ export const PageProvider = ({ children, pageName }) => {
       }
     };
 
-    // Check periodically for auth state changes (for logout detection)
-    const interval = setInterval(checkAuthState, 1000);
+    // Check immediately
+    checkAuthState();
+
+    // Listen for custom authentication events
+    const handleAuthChange = (event) => {
+      setPageState(prev => ({
+        ...prev,
+        isAuthenticated: event.detail.isAuthenticated
+      }));
+    };
+
+    // Set up event listener for storage changes (logout detection)
+    const handleStorageChange = (e) => {
+      if (e.key === 'github_token') {
+        checkAuthState();
+      }
+    };
     
-    return () => clearInterval(interval);
+    window.addEventListener('githubAuthChange', handleAuthChange);
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Backup polling with longer interval for edge cases
+    const interval = setInterval(checkAuthState, 5000);
+    
+    return () => {
+      window.removeEventListener('githubAuthChange', handleAuthChange);
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
   }, [pageState.isAuthenticated]);
 
   const value = {

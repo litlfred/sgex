@@ -26,14 +26,33 @@ const PageHeader = () => {
 
   // Fetch current user if authenticated but no profile from page context
   useEffect(() => {
-    if (isAuthenticated && !profile) {
-      githubService.getCurrentUser()
-        .then(user => setCurrentUser(user))
-        .catch(error => console.debug('Could not fetch current user:', error));
-    } else {
-      setCurrentUser(null);
-    }
-  }, [isAuthenticated, profile]);
+    const updateCurrentUser = async () => {
+      if (isAuthenticated && !profile && !currentUser) {
+        try {
+          const user = await githubService.getCurrentUser();
+          setCurrentUser(user);
+        } catch (error) {
+          console.debug('Could not fetch current user:', error);
+        }
+      } else if (!isAuthenticated || profile) {
+        // Clear current user if not authenticated or if we have profile from context
+        setCurrentUser(null);
+      }
+    };
+
+    updateCurrentUser();
+
+    // Listen for authentication changes
+    const handleAuthChange = () => {
+      updateCurrentUser();
+    };
+
+    window.addEventListener('githubAuthChange', handleAuthChange);
+    
+    return () => {
+      window.removeEventListener('githubAuthChange', handleAuthChange);
+    };
+  }, [isAuthenticated, profile, currentUser]);
 
   const handleLogout = () => {
     githubService.logout();
