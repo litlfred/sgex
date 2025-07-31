@@ -85,6 +85,7 @@ body.theme-light .welcome-page-content {
   overflow-x: auto;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  justify-content: center;
 }
 
 /* Custom scrollbar styling */
