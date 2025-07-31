@@ -43,11 +43,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate QA Report
-        run: node scripts/generate-qa-report.js
+#      - name: Generate QA Report
+#        run: node scripts/generate-qa-report.js
 
-      - name: Generate Issues Analysis
-        run: node scripts/analyze-github-issues.js
+#      - name: Generate Issues Analysis
+#        run: node scripts/analyze-github-issues.js
 
       - name: Build branch-specific React app
         run: node scripts/build-multi-branch.js branch
