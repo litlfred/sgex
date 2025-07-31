@@ -161,21 +161,29 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 
 /* Auto-hide toolbar - slide up when hidden */
 .bpmn-viewer.auto-hide .viewer-toolbar {
-  transform: translateY(-100%);
-  opacity: 0;
+  position: fixed;
+  top: -150px; /* Hide by moving above viewport */
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  transition: top 0.3s ease-in-out;
+}
+
+/* Show toolbar on hover over the entire viewer */
+.bpmn-viewer.auto-hide:hover .viewer-toolbar {
+  top: 0;
+}
+
+/* Add invisible hover trigger area at top */
+.bpmn-viewer.auto-hide::before {
+  content: '';
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1001;
-}
-
-/* Show toolbar on hover */
-.bpmn-viewer.auto-hide:hover .viewer-toolbar,
-.bpmn-viewer.auto-hide .viewer-toolbar:hover,
-.bpmn-viewer.auto-hide .viewer-toolbar:focus-within {
-  transform: translateY(0);
-  opacity: 1;
+  height: 80px;
+  z-index: 1002;
+  pointer-events: auto;
 }
 
 .toolbar-left {
@@ -338,23 +346,31 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 
 /* Auto-hide footer - slide down when hidden */
 .bpmn-viewer.auto-hide .diagram-info {
-  transform: translateY(100%);
-  opacity: 0;
   position: fixed;
-  bottom: 0;
+  bottom: -250px; /* Hide by moving below viewport */
   left: 0;
   right: 0;
   z-index: 1001;
   background: #f8f9fa;
   border-top: 1px solid #dee2e6;
+  transition: bottom 0.3s ease-in-out;
 }
 
-/* Show footer on hover */
-.bpmn-viewer.auto-hide:hover .diagram-info,
-.bpmn-viewer.auto-hide .diagram-info:hover,
-.bpmn-viewer.auto-hide .diagram-info:focus-within {
-  transform: translateY(0);
-  opacity: 1;
+/* Show footer on hover over the entire viewer */
+.bpmn-viewer.auto-hide:hover .diagram-info {
+  bottom: 0;
+}
+
+/* Add invisible hover trigger area at bottom */
+.bpmn-viewer.auto-hide::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  z-index: 1002;
+  pointer-events: auto;
 }
 
 .info-section {

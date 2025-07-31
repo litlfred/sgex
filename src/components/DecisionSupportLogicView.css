@@ -164,21 +164,29 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
 
 /* Auto-hide section tabs - slide up when hidden */
 .decision-support-view.auto-hide .section-tabs {
-  transform: translateY(-100%);
-  opacity: 0;
   position: fixed;
-  top: 0;
+  top: -100px; /* Hide by moving above viewport */
   left: 50%;
-  transform: translateX(-50%) translateY(-100%);
+  transform: translateX(-50%);
   z-index: 1001;
+  transition: top 0.3s ease-in-out;
 }
 
-/* Show section tabs on hover */
-.decision-support-view.auto-hide:hover .section-tabs,
-.decision-support-view.auto-hide .section-tabs:hover,
-.decision-support-view.auto-hide .section-tabs:focus-within {
-  transform: translateX(-50%) translateY(1rem);
-  opacity: 1;
+/* Show section tabs on hover over the entire viewer */
+.decision-support-view.auto-hide:hover .section-tabs {
+  top: 1rem;
+}
+
+/* Add invisible hover trigger area at top for section tabs */
+.decision-support-view.auto-hide::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  z-index: 1002;
+  pointer-events: auto;
 }
 
 .decision-support-view .tab-button {
@@ -310,15 +318,17 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
 
 /* Auto-hide header unless hovered */
 .decision-support-view.auto-hide .view-intro {
-  transform: translateY(-100%);
-  opacity: 0;
+  position: fixed;
+  top: -250px; /* Hide by moving above viewport */
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  transition: top 0.3s ease-in-out;
+  margin: 0 2rem;
 }
 
-.decision-support-view.auto-hide:hover .view-intro,
-.decision-support-view.auto-hide .view-intro:hover,
-.decision-support-view.auto-hide .view-intro:focus-within {
-  transform: translateY(0);
-  opacity: 1;
+.decision-support-view.auto-hide:hover .view-intro {
+  top: 100px; /* Show below the section tabs */
 }
 
 .decision-support-view .view-intro h2 {
