@@ -18,8 +18,19 @@ const branchName = process.env.GITHUB_REF_NAME || 'main';
 
 console.log(`🚀 Starting ${buildMode} build for branch: ${branchName}`);
 
+function ensureDependencies() {
+  const nodeModulesPath = path.join(__dirname, '..', 'node_modules');
+  if (!fs.existsSync(nodeModulesPath)) {
+    console.log('📦 Installing dependencies...');
+    execSync('npm ci', { stdio: 'inherit' });
+  }
+}
+
 function createBranchSpecificBuild() {
   console.log('📦 Building branch-specific React app...');
+  
+  // Ensure dependencies are available
+  ensureDependencies();
   
   // Standard React build for the branch
   execSync('npm run build', { stdio: 'inherit' });
@@ -29,6 +40,9 @@ function createBranchSpecificBuild() {
 
 function createRootLandingPageApp() {
   console.log('🏠 Creating root landing page application...');
+  
+  // Ensure dependencies are available
+  ensureDependencies();
   
   // Create a temporary React app that only renders BranchListing
   const tempAppContent = `
