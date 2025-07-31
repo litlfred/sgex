@@ -66,8 +66,7 @@ body.theme-light .dak-action-selection {
 
 .action-content {
   padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .breadcrumb {
@@ -129,9 +128,33 @@ body.theme-light .dak-action-selection {
 }
 
 .actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  display: flex;
   gap: 2rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+  justify-content: center;
+  flex-wrap: nowrap;
+  scroll-behavior: smooth;
+  /* Custom scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: var(--who-border-color) transparent;
+}
+
+.actions-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.actions-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.actions-grid::-webkit-scrollbar-thumb {
+  background: var(--who-border-color);
+  border-radius: 4px;
+}
+
+.actions-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--who-blue);
 }
 
 .action-card {
@@ -143,6 +166,8 @@ body.theme-light .dak-action-selection {
   position: relative;
   background: var(--who-card-bg);
   backdrop-filter: blur(10px);
+  flex: 0 0 350px;
+  min-width: 350px;
 }
 
 .action-card:hover {
