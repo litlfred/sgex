@@ -6,7 +6,7 @@ import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
   return (
-    <PageLayout pageName="dak-action-selection" showHeader={false}>
+    <PageLayout pageName="dak-action-selection">
       <DAKActionSelectionContent />
     </PageLayout>
   );
@@ -57,31 +57,20 @@ const DAKActionSelectionContent = () => {
     handleNavigationClick(event, `/dak-selection/${effectiveProfile.login}`, navigate, navigationState);
   };
 
-  const handleBackToProfile = () => {
-    navigate('/', { state: { profile: effectiveProfile } });
-  };
-
   if (!effectiveProfile) {
     return <div>Redirecting...</div>;
   }
 
   return (
     <div className="action-content">
-      <div className="breadcrumb">
-        <button onClick={handleBackToProfile} className="breadcrumb-link">
-          Select Profile
-        </button>
-        <span className="breadcrumb-separator">›</span>
-        <span className="breadcrumb-current">Choose DAK Action</span>
-      </div>
-
       <div className="action-main">
+        <div className="action-header">
+          <div className="action-title">
+            <h1>Manage a DAK</h1>
+            <p className="action-subtitle">Choose how you would like to work with a WHO SMART Guidelines Digital Adaptation Kit (DAK). Each option provides different workflows for DAK management and editing.</p>
+          </div>
+        </div>
         <div className="action-intro">
-          <h2>Manage a DAK</h2>
-          <p>
-            Choose how you would like to work with a WHO SMART Guidelines Digital Adaptation Kit (DAK). 
-            Each option provides different workflows for DAK management and editing.
-          </p>
         </div>
 
         <div className="actions-grid">

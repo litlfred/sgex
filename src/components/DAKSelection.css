@@ -31,6 +31,27 @@ body.theme-light .dak-selection {
   padding: 2rem;
 }
 
+.selection-header {
+  border-bottom: 2px solid var(--who-border-color);
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+}
+
+.selection-title h1 {
+  color: var(--who-text-primary);
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.selection-subtitle {
+  color: var(--who-text-secondary);
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 400;
+}
+
 .selection-intro {
   text-align: center;
   margin-bottom: 3rem;
