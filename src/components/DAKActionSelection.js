@@ -6,7 +6,7 @@ import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
   return (
-    <PageLayout pageName="dak-action-selection" showHeader={false}>
+    <PageLayout pageName="dak-action-selection">
       <DAKActionSelectionContent />
     </PageLayout>
   );
@@ -55,10 +55,6 @@ const DAKActionSelectionContent = () => {
     };
     
     handleNavigationClick(event, `/dak-selection/${effectiveProfile.login}`, navigate, navigationState);
-  };
-
-  const handleBackToProfile = () => {
-    navigate('/', { state: { profile: effectiveProfile } });
   };
 
   if (!effectiveProfile) {
