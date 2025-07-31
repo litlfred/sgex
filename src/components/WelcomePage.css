@@ -85,6 +85,12 @@ body.theme-light .welcome-page-content {
   margin-bottom: 3rem;
 }
 
+/* When there are only 2 cards (authenticated state), center them with max 2 columns */
+.card-grid:has(.action-card:nth-child(2):last-child) {
+  grid-template-columns: repeat(2, minmax(300px, 1fr));
+  justify-content: center;
+}
+
 .action-card {
   background: var(--who-card-bg);
   border: 1px solid var(--who-border-color);

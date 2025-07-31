@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import githubService from '../services/githubService';
-import LoginModal from './LoginModal';
 import CollaborationModal from './CollaborationModal';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
@@ -10,7 +9,6 @@ import './WelcomePage.css';
 const WelcomePage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showCollaborationModal, setShowCollaborationModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [warningMessage, setWarningMessage] = useState(null);
   const [tokenName, setTokenName] = useState('');
   const [patToken, setPatToken] = useState('');
@@ -67,11 +65,6 @@ const WelcomePage = () => {
     handleNavigationClick(event, '/select_profile', navigate);
   };
 
-  const handleLoginClick = (event) => {
-    event.preventDefault();
-    setShowLoginModal(true);
-  };
-
   const handleDemoMode = (event) => {
     // Create a mock profile for demonstration purposes
     const demoProfile = {
@@ -101,10 +94,6 @@ const WelcomePage = () => {
 
   const handleCollaborationClose = () => {
     setShowCollaborationModal(false);
-  };
-
-  const handleLoginModalClose = () => {
-    setShowLoginModal(false);
   };
 
   const handlePATSubmit = async (e) => {
@@ -196,83 +185,67 @@ const WelcomePage = () => {
                 <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
               </div>
 
-              {/* PAT Login + Demo Card (Middle) */}
-              <div className="action-card pat-demo-card">
-                {/* PAT Login Section */}
-                <div className="pat-section">
-                  <h4>Quick PAT Login</h4>
-                  <form onSubmit={handlePATSubmit} className="pat-form">
-                    <div className="form-group">
-                      <input
-                        type="text"
-                        value={tokenName}
-                        onChange={handleTokenNameChange}
-                        placeholder="Token name"
-                        className="token-name-input"
-                        disabled={patLoading || isAuthenticated}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <input
-                        type="password"
-                        value={patToken}
-                        onChange={handlePATTokenChange}
-                        placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                        className={`token-input ${patError ? 'error' : ''}`}
-                        disabled={patLoading || isAuthenticated}
-                      />
-                    </div>
-                    <button 
-                      type="submit" 
-                      className="pat-login-btn" 
-                      disabled={patLoading || !patToken.trim() || isAuthenticated}
-                    >
-                      {patLoading ? 'Signing In...' : '🔑 Sign In'}
+              {/* PAT Login + Demo Card (Middle) - Only show when not authenticated */}
+              {!isAuthenticated && (
+                <div className="action-card pat-demo-card">
+                  {/* PAT Login Section */}
+                  <div className="pat-section">
+                    <h4>Quick PAT Login</h4>
+                    <form onSubmit={handlePATSubmit} className="pat-form">
+                      <div className="form-group">
+                        <input
+                          type="text"
+                          value={tokenName}
+                          onChange={handleTokenNameChange}
+                          placeholder="Token name"
+                          className="token-name-input"
+                          disabled={patLoading}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <input
+                          type="password"
+                          value={patToken}
+                          onChange={handlePATTokenChange}
+                          placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                          className={`token-input ${patError ? 'error' : ''}`}
+                          disabled={patLoading}
+                        />
+                      </div>
+                      <button 
+                        type="submit" 
+                        className="pat-login-btn" 
+                        disabled={patLoading || !patToken.trim()}
+                      >
+                        {patLoading ? 'Signing In...' : '🔑 Sign In'}
+                      </button>
+                    </form>
+                    {patError && <div className="pat-error">{patError}</div>}
+                  </div>
+
+                  {/* Demo Section */}
+                  <div className="demo-section">
+                    <h4>Want to try without signing in?</h4>
+                    <button onClick={handleDemoMode} className="demo-btn">
+                      🎭 Try Demo Mode
                     </button>
-                  </form>
-                  {patError && <div className="pat-error">{patError}</div>}
-                </div>
-
-                {/* Demo Section */}
-                <div className="demo-section">
-                  <h4>Want to try without signing in?</h4>
-                  <button onClick={handleDemoMode} className="demo-btn">
-                    🎭 Try Demo Mode
-                  </button>
-                  <p className="demo-note">
-                    Demo mode showcases the enhanced DAK scanning display with mock data.
-                  </p>
-                </div>
-              </div>
-
-              {/* Login/Authoring Card */}
-              {!isAuthenticated ? (
-                <div className="action-card login-card" onClick={handleLoginClick}>
-                  <div className="card-icon">
-                    <span className="icon-symbol">🔑</span>
+                    <p className="demo-note">
+                      Demo mode showcases the enhanced DAK scanning display with mock data.
+                    </p>
                   </div>
-                  <p>Sign in with your GitHub Personal Access Token to start editing DAKs.</p>
-                </div>
-              ) : (
-                <div className="action-card authoring-card" onClick={handleAuthoringClick}>
-                  <div className="card-icon">
-                    <img src="/authoring.png" alt="Authoring" />
-                  </div>
-                  <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
                 </div>
               )}
+
+              {/* Authoring Card - Always show */}
+              <div className="action-card authoring-card" onClick={handleAuthoringClick}>
+                <div className="card-icon">
+                  <img src="/authoring.png" alt="Authoring" />
+                </div>
+                <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Login Modal */}
-        {showLoginModal && (
-          <LoginModal 
-            isOpen={showLoginModal}
-            onClose={handleLoginModalClose}
-            onAuthSuccess={handleAuthSuccess}
-          />
-        )}
 
         {/* Collaboration Modal */}
         {showCollaborationModal && (
