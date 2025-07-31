@@ -285,6 +285,7 @@ jobs:
               cp -a build/. /tmp/main-build-backup/
               git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
               git checkout gh-pages
+              mkdir -p sgex/main  # Ensure directory exists after branch switch and clean
               cp -a /tmp/main-build-backup/. sgex/main/
               rm -rf /tmp/main-build-backup
             else
@@ -300,6 +301,7 @@ jobs:
                 cp -a build/. /tmp/main-build-backup/
                 git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
                 git checkout gh-pages
+                mkdir -p sgex/main  # Ensure directory exists after branch switch and clean
                 cp -a /tmp/main-build-backup/. sgex/main/
                 rm -rf /tmp/main-build-backup
               else
@@ -324,6 +326,7 @@ jobs:
             cp -a build/. /tmp/branch-build-backup/
             git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
             git checkout gh-pages
+            mkdir -p "$sgex_branch_dir"  # Ensure directory exists after branch switch and clean
             cp -a /tmp/branch-build-backup/. "$sgex_branch_dir/"
             rm -rf /tmp/branch-build-backup
           else
