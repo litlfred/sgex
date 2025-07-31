@@ -276,6 +276,77 @@ class GitHubService {
     return this.getSmartGuidelinesRepositories(owner, type);
   }
 
+  // Get public repositories for unauthenticated users (without SMART guidelines filtering)
+  async getPublicRepositories(owner, type = 'user') {
+    try {
+      // Create an unauthenticated Octokit instance for public API access
+      const publicOctokit = new Octokit();
+      
+      let repositories = [];
+      let page = 1;
+      let hasMorePages = true;
+
+      // Fetch public repositories using pagination
+      while (hasMorePages) {
+        let response;
+        if (type === 'user') {
+          response = await publicOctokit.rest.repos.listForUser({
+            username: owner,
+            sort: 'updated',
+            per_page: 30, // Lower limit for unauthenticated users
+            page: page,
+          });
+        } else {
+          response = await publicOctokit.rest.repos.listForOrg({
+            org: owner,
+            sort: 'updated',
+            per_page: 30, // Lower limit for unauthenticated users
+            page: page,
+          });
+        }
+
+        // Only include public repositories
+        const publicRepos = response.data.filter(repo => !repo.private);
+        repositories = repositories.concat(publicRepos);
+        
+        // Check if there are more pages (limit to first few pages for unauthenticated users)
+        hasMorePages = response.data.length === 30 && page < 3; // Max 3 pages for unauthenticated users
+        page++;
+      }
+
+      // For unauthenticated users, we can't check SMART guidelines compatibility
+      // but we can filter by repository topics or name patterns that suggest DAK repositories
+      const dakLikeRepos = repositories.filter(repo => {
+        const nameMatches = repo.name.toLowerCase().includes('dak') || 
+                           repo.name.toLowerCase().includes('smart') ||
+                           repo.name.toLowerCase().includes('guidelines') ||
+                           repo.name.toLowerCase().includes('who') ||
+                           repo.name.toLowerCase().includes('anc') ||
+                           repo.name.toLowerCase().includes('tb');
+        
+        const topicMatches = (repo.topics || []).some(topic => 
+          ['dak', 'smart-guidelines', 'who', 'health', 'smart', 'guidelines'].includes(topic.toLowerCase())
+        );
+        
+        const descriptionMatches = (repo.description || '').toLowerCase().includes('smart') ||
+                                  (repo.description || '').toLowerCase().includes('guidelines') ||
+                                  (repo.description || '').toLowerCase().includes('dak') ||
+                                  (repo.description || '').toLowerCase().includes('who');
+
+        return nameMatches || topicMatches || descriptionMatches;
+      });
+
+      return dakLikeRepos.map(repo => ({
+        ...repo,
+        smart_guidelines_compatible: null, // Unknown for unauthenticated users
+        is_public_access: true
+      }));
+    } catch (error) {
+      console.error('Failed to fetch public repositories:', error);
+      throw error;
+    }
+  }
+
   // Check if a repository has sushi-config.yaml with smart.who.int.base dependency
   async checkSmartGuidelinesCompatibility(owner, repo, retryCount = 2) {
     if (!this.isAuth()) {
