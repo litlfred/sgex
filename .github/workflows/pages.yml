@@ -136,6 +136,8 @@ jobs:
           # Check if gh-pages branch exists
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
             echo "Checking out existing gh-pages branch"
+            # Handle potential conflicts by cleaning untracked files that would be overwritten
+            git clean -fd
             git checkout gh-pages
           else
             echo "Creating new gh-pages branch"
@@ -211,6 +213,7 @@ jobs:
           set -e
           
           # Switch back to the original branch to build landing page
+          git clean -fd  # Clean untracked files before checkout
           git checkout ${{ github.ref_name }}
           
           # Build the root landing page
@@ -223,6 +226,7 @@ jobs:
           cp -a build/. /tmp/root-build-backup/
           
           # Switch back to gh-pages
+          git clean -fd  # Clean untracked files before checkout
           git checkout gh-pages
           
           # Copy landing page to root (but preserve branch directories)
@@ -267,11 +271,13 @@ jobs:
             # Check if we're on main branch, if so, copy current build
             if [[ "${{ github.ref_name }}" == "main" ]]; then
               echo "Deploying main branch from current build..."
+              git clean -fd  # Clean untracked files before checkout
               git checkout ${{ github.ref_name }}
               node scripts/build-multi-branch.js branch
               # Save build before switching branches
               mkdir -p /tmp/main-build-backup
               cp -a build/. /tmp/main-build-backup/
+              git clean -fd  # Clean untracked files before checkout
               git checkout gh-pages
               cp -a /tmp/main-build-backup/. sgex/main/
               rm -rf /tmp/main-build-backup
@@ -279,11 +285,13 @@ jobs:
               # Check out main branch and build it
               echo "Building main branch separately..."
               if git show-ref --verify --quiet refs/remotes/origin/main; then
+                git clean -fd  # Clean untracked files before checkout
                 git checkout main
                 node scripts/build-multi-branch.js branch
                 # Save build before switching branches
                 mkdir -p /tmp/main-build-backup
                 cp -a build/. /tmp/main-build-backup/
+                git clean -fd  # Clean untracked files before checkout
                 git checkout gh-pages
                 cp -a /tmp/main-build-backup/. sgex/main/
                 rm -rf /tmp/main-build-backup
@@ -300,11 +308,13 @@ jobs:
           
           # Switch back to get the branch build (if not already main)
           if [[ "${{ github.ref_name }}" != "main" ]]; then
+            git clean -fd  # Clean untracked files before checkout
             git checkout ${{ github.ref_name }}
             node scripts/build-multi-branch.js branch
             # Save build before switching branches
             mkdir -p /tmp/branch-build-backup
             cp -a build/. /tmp/branch-build-backup/
+            git clean -fd  # Clean untracked files before checkout
             git checkout gh-pages
             cp -a /tmp/branch-build-backup/. "$sgex_branch_dir/"
             rm -rf /tmp/branch-build-backup
