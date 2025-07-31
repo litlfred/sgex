@@ -151,9 +151,14 @@ sgex/
 
 ### Troubleshooting
 
+If you encounter build or installation issues:
+
+- **eslint-scope module not found**: See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed solutions
 - **Port 3000 already in use**: The development server will automatically try to use an alternative port (3001, 3002, etc.)
 - **Build issues**: Try deleting `node_modules/` and `package-lock.json`, then run `npm install` again
 - **Memory issues**: If you encounter JavaScript heap out of memory errors, try setting `NODE_OPTIONS=--max-old-space-size=4096` before running build commands
+
+For more detailed troubleshooting guidance, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 For more information about contributing, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
