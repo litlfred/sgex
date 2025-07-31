@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import DAKSelection from '../components/DAKSelection';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
@@ -89,7 +89,9 @@ describe('DAKSelection Progressive Scanning', () => {
     await act(async () => {
       render(
         <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: mockLocationState }]}>
-          <DAKSelection />
+          <Routes>
+            <Route path="/dak-selection/:user" element={<DAKSelection />} />
+          </Routes>
         </MemoryRouter>
       );
     });
@@ -124,7 +126,9 @@ describe('DAKSelection Progressive Scanning', () => {
     await act(async () => {
       render(
         <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: mockLocationState }]}>
-          <DAKSelection />
+          <Routes>
+            <Route path="/dak-selection/:user" element={<DAKSelection />} />
+          </Routes>
         </MemoryRouter>
       );
     });

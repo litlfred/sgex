@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { BrowserRouter, MemoryRouter } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter, Routes, Route } from 'react-router-dom';
 import DAKSelection from '../components/DAKSelection';
 
 // Mock the services
@@ -47,7 +47,9 @@ describe('DAKSelection Direct Navigation', () => {
 
     render(
       <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: mockLocationState }]}>
-        <DAKSelection />
+        <Routes>
+          <Route path="/dak-selection/:user" element={<DAKSelection />} />
+        </Routes>
       </MemoryRouter>
     );
 
@@ -92,7 +94,9 @@ describe('DAKSelection Direct Navigation', () => {
 
     render(
       <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: mockLocationState }]}>
-        <DAKSelection />
+        <Routes>
+          <Route path="/dak-selection/:user" element={<DAKSelection />} />
+        </Routes>
       </MemoryRouter>
     );
 
@@ -132,7 +136,9 @@ describe('DAKSelection Direct Navigation', () => {
 
     render(
       <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: mockLocationState }]}>
-        <DAKSelection />
+        <Routes>
+          <Route path="/dak-selection/:user" element={<DAKSelection />} />
+        </Routes>
       </MemoryRouter>
     );
 
@@ -161,7 +167,9 @@ describe('DAKSelection Direct Navigation', () => {
 
     render(
       <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: mockLocationState }]}>
-        <DAKSelection />
+        <Routes>
+          <Route path="/dak-selection/:user" element={<DAKSelection />} />
+        </Routes>
       </MemoryRouter>
     );
 

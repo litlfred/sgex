@@ -469,35 +469,8 @@ const DAKSelectionContent = () => {
       return;
     }
     
-    // For 'create' action, always load templates (no caching needed)
-    if (action === 'create') {
-      fetchRepositories(false, false);
-      return;
-    }
-    
-    // For 'edit' and 'fork' actions, check cache freshness first
-    if (githubService.isAuth()) {
-      try {
-        const cachedData = repositoryCacheService.getCachedRepositories(
-          profile.login, 
-          profile.type === 'org' ? 'org' : 'user'
-        );
-        
-        if (cachedData) {
-          // We have fresh cached data, use it
-          console.log('Using fresh cached data, no need to scan');
-          setRepositories(cachedData.repositories.sort((a, b) => a.name.localeCompare(b.name)));
-          setUsingCachedData(true);
-          setLoading(false);
-          return;
-        }
-      } catch (cacheError) {
-        console.warn('Error checking repository cache:', cacheError);
-      }
-    }
-    
-    // No cache or cache is stale - fetch repositories
-    fetchRepositories(false, false);
+    // Always check cache first on initial load
+    fetchRepositories(false, false); // forceRescan=false, useCachedData=false (but still check cache first)
   }, [profile, action, userParam, fetchRepositories]);
 
   const handleRepositorySelect = (repo) => {

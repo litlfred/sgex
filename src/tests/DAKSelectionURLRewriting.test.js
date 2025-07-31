@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { BrowserRouter, MemoryRouter } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter, Routes, Route } from 'react-router-dom';
 import DAKSelection from '../components/DAKSelection';
 import * as githubService from '../services/githubService';
 import * as repositoryCacheService from '../services/repositoryCacheService';
@@ -66,7 +66,9 @@ describe('DAKSelection URL Rewriting', () => {
 
     const { container } = render(
       <MemoryRouter initialEntries={initialEntries}>
-        <DAKSelection />
+        <Routes>
+          <Route path="/dak-selection/:user" element={<DAKSelection />} />
+        </Routes>
       </MemoryRouter>
     );
 
