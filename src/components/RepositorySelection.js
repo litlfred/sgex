@@ -101,7 +101,7 @@ const RepositorySelection = () => {
             Select Profile
           </button>
           <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Select Repository</span>
+          <span className="breadcrumb-current">Select DAK</span>
         </div>
 
         <div className="repo-main">

@@ -46,7 +46,7 @@
     "requirements": "Functional and Non-Functional Requirements"
   },
   "repository": {
-    "select": "Select Repository",
+    "select": "Select DAK",
     "search": "Search repositories...",
     "noResults": "No repositories found",
     "loading": "Loading repositories...",

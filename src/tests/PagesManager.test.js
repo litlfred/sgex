@@ -143,7 +143,7 @@ describe('PagesManager', () => {
 
     // Check breadcrumb elements
     expect(screen.getByRole('button', { name: /Select Profile/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Select Repository/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Select DAK/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /DAK Components/i })).toBeInTheDocument();
     // The "Pages" text appears in multiple places, so we'll check for breadcrumb current specifically
     expect(screen.getByText('Pages', { selector: '.breadcrumb-current' })).toBeInTheDocument();

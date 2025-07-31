@@ -246,7 +246,7 @@ const BusinessProcessSelection = () => {
           </button>
           <span className="breadcrumb-separator">›</span>
           <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
-            Select Repository
+            Select DAK
           </button>
           <span className="breadcrumb-separator">›</span>
           <button 
