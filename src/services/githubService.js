@@ -278,10 +278,6 @@ class GitHubService {
 
   // Check if a repository has sushi-config.yaml with smart.who.int.base dependency
   async checkSmartGuidelinesCompatibility(owner, repo, retryCount = 2) {
-    if (!this.isAuth()) {
-      return false;
-    }
-
     // Check cache first to prevent redundant downloads
     const cachedResult = repositoryCompatibilityCache.get(owner, repo);
     if (cachedResult !== null) {
@@ -289,8 +285,11 @@ class GitHubService {
     }
 
     try {
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
       // Try to get sushi-config.yaml from the repository root
-      const { data } = await this.octokit.rest.repos.getContent({
+      const { data } = await octokit.rest.repos.getContent({
         owner,
         repo,
         path: 'sushi-config.yaml',
@@ -335,11 +334,10 @@ class GitHubService {
 
   // Get repositories that are SMART guidelines compatible
   async getSmartGuidelinesRepositories(owner, type = 'user') {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
       let repositories = [];
       let page = 1;
       let hasMorePages = true;
@@ -348,14 +346,14 @@ class GitHubService {
       while (hasMorePages) {
         let response;
         if (type === 'user') {
-          response = await this.octokit.rest.repos.listForUser({
+          response = await octokit.rest.repos.listForUser({
             username: owner,
             sort: 'updated',
             per_page: 100,
             page: page,
           });
         } else {
-          response = await this.octokit.rest.repos.listForOrg({
+          response = await octokit.rest.repos.listForOrg({
             org: owner,
             sort: 'updated',
             per_page: 100,
@@ -391,11 +389,10 @@ class GitHubService {
 
   // Get repositories with progressive scanning (for real-time updates)
   async getSmartGuidelinesRepositoriesProgressive(owner, type = 'user', onRepositoryFound = null, onProgress = null) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
+      // Use authenticated octokit if available, otherwise create a public instance for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
       let repositories = [];
       let page = 1;
       let hasMorePages = true;
@@ -404,14 +401,14 @@ class GitHubService {
       while (hasMorePages) {
         let response;
         if (type === 'user') {
-          response = await this.octokit.rest.repos.listForUser({
+          response = await octokit.rest.repos.listForUser({
             username: owner,
             sort: 'updated',
             per_page: 100,
             page: page,
           });
         } else {
-          response = await this.octokit.rest.repos.listForOrg({
+          response = await octokit.rest.repos.listForOrg({
             org: owner,
             sort: 'updated',
             per_page: 100,

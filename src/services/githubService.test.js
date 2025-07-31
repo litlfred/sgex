@@ -88,6 +88,44 @@ describe('GitHubService', () => {
       expect(result[0].smart_guidelines_compatible).toBe(true);
     });
 
+    it('should work without authentication for public repositories', async () => {
+      // Don't authenticate githubService - it should still work for public repos
+      
+      // Mock repository list
+      const mockRepos = [
+        {
+          id: 1,
+          name: 'public-smart-repo',
+          owner: { login: 'litlfred' },
+          full_name: 'litlfred/public-smart-repo',
+          description: 'A public SMART guidelines repository'
+        }
+      ];
+
+      mockOctokit.rest.repos.listForUser.mockResolvedValue({
+        data: mockRepos
+      });
+
+      // Mock sushi-config.yaml content with smart.who.int.base dependency
+      mockOctokit.rest.repos.getContent.mockResolvedValue({
+        data: {
+          type: 'file',
+          content: Buffer.from(`dependencies:
+  smart.who.int.base:
+    id: sb
+    version: 0.1.0`).toString('base64')
+        }
+      });
+
+      const result = await githubService.getSmartGuidelinesRepositories('litlfred', 'user');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('public-smart-repo');
+      expect(result[0].smart_guidelines_compatible).toBe(true);
+      // Verify that a new Octokit instance was used (not the authenticated one)
+      expect(Octokit).toHaveBeenCalled();
+    });
+
     it('should handle errors gracefully when checking sushi-config.yaml (strict mode)', async () => {
       // Mock authentication
       githubService.authenticate('fake-token');
@@ -213,6 +251,49 @@ describe('GitHubService', () => {
 
       expect(result).toBe(true);
       expect(mockOctokit.rest.repos.getContent).toHaveBeenCalledTimes(2);
+    });
+
+    it('should work without authentication for public repositories', async () => {
+      // Don't authenticate githubService - it should still work for public repos
+      
+      // Mock successful response from public repository
+      mockOctokit.rest.repos.getContent.mockResolvedValue({
+        data: {
+          type: 'file',
+          content: Buffer.from(`dependencies:
+  smart.who.int.base:
+    id: sb
+    version: 0.1.0`).toString('base64')
+        }
+      });
+
+      const result = await githubService.checkSmartGuidelinesCompatibility('litlfred', 'public-smart-repo');
+
+      expect(result).toBe(true);
+      expect(mockOctokit.rest.repos.getContent).toHaveBeenCalledWith({
+        owner: 'litlfred',
+        repo: 'public-smart-repo',
+        path: 'sushi-config.yaml'
+      });
+    });
+
+    it('should return false without authentication when public repo has no smart.who.int.base dependency', async () => {
+      // Don't authenticate githubService
+      
+      // Mock response without smart.who.int.base dependency
+      mockOctokit.rest.repos.getContent.mockResolvedValue({
+        data: {
+          type: 'file',
+          content: Buffer.from(`dependencies:
+  some.other.base:
+    id: other
+    version: 1.0.0`).toString('base64')
+        }
+      });
+
+      const result = await githubService.checkSmartGuidelinesCompatibility('litlfred', 'public-regular-repo');
+
+      expect(result).toBe(false);
     });
   });
 
