@@ -85,6 +85,8 @@ body.theme-light .welcome-page-content {
   margin-bottom: 3rem;
 }
 
+
+
 .action-card {
   background: var(--who-card-bg);
   border: 1px solid var(--who-border-color);
@@ -171,47 +173,142 @@ body.theme-light .welcome-page-content {
   background: var(--who-hover-bg);
 }
 
-.demo-card {
-  background: var(--who-selected-bg);
-  border: 1px solid var(--who-blue);
-  border-radius: 20px;
-  padding: 2rem;
-  text-align: center;
-  backdrop-filter: blur(10px);
+/* PAT + Demo Card Styles */
+.pat-demo-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  cursor: default;
+  pointer-events: auto;
 }
 
-.demo-card h4 {
-  font-size: 1.2rem;
+.pat-demo-card::before {
+  display: none;
+}
+
+.pat-demo-card:hover {
+  transform: none;
+  border-color: var(--who-border-color);
+  box-shadow: none;
+}
+
+.pat-demo-card:hover::before {
+  opacity: 0;
+}
+
+.pat-section {
+  flex: 1;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--who-border-color);
+  margin-bottom: 1.5rem;
+}
+
+.pat-section h4 {
+  font-size: 1.1rem;
   margin: 0 0 1rem 0;
+  color: var(--who-text-primary);
+  font-weight: 600;
+}
+
+.pat-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pat-form .form-group {
+  margin: 0;
+}
+
+.token-name-input,
+.pat-form .token-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--who-border-color);
+  border-radius: 6px;
+  background: var(--who-card-bg);
+  color: var(--who-text-primary);
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.token-name-input:focus,
+.pat-form .token-input:focus {
+  outline: none;
+  border-color: var(--who-blue);
+  box-shadow: 0 0 0 2px rgba(0, 108, 190, 0.2);
+}
+
+.pat-form .token-input.error {
+  border-color: #dc3545;
+}
+
+.pat-login-btn {
+  background: var(--who-blue);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pat-login-btn:hover:not(:disabled) {
+  background: var(--who-blue-dark);
+}
+
+.pat-login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pat-error {
+  color: #dc3545;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  line-height: 1.3;
+}
+
+.demo-section {
+  text-align: center;
+}
+
+.demo-section h4 {
+  font-size: 1rem;
+  margin: 0 0 0.75rem 0;
   color: var(--who-text-primary);
   font-weight: 500;
 }
 
-.demo-btn {
+.demo-section .demo-btn {
   background: var(--who-blue);
   color: white;
   border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin: 1rem 0;
-}
-
-.demo-btn:hover {
-  background: var(--who-blue-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 108, 190, 0.3);
-}
-
-.demo-note {
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
   font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0.5rem 0;
+}
+
+.demo-section .demo-btn:hover {
+  background: var(--who-blue-dark);
+  transform: translateY(-1px);
+}
+
+.demo-section .demo-note {
+  font-size: 0.8rem;
   color: var(--who-text-muted);
   font-style: italic;
   margin: 0.5rem 0 0 0;
+  line-height: 1.3;
 }
+
+
 
 /* Warning message styles */
 .warning-message {

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import githubService from '../services/githubService';
-import LoginModal from './LoginModal';
 import CollaborationModal from './CollaborationModal';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
@@ -10,8 +9,11 @@ import './WelcomePage.css';
 const WelcomePage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showCollaborationModal, setShowCollaborationModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [warningMessage, setWarningMessage] = useState(null);
+  const [tokenName, setTokenName] = useState('');
+  const [patToken, setPatToken] = useState('');
+  const [patError, setPATError] = useState('');
+  const [patLoading, setPATLoading] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,6 +35,18 @@ const WelcomePage = () => {
     };
 
     initializeAuth();
+  }, []);
+
+  // Listen for authentication state changes (for logout)
+  useEffect(() => {
+    const checkAuthState = () => {
+      setIsAuthenticated(githubService.isAuthenticated);
+    };
+
+    // Check periodically for auth state changes
+    const interval = setInterval(checkAuthState, 1000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Handle warning message from navigation state
@@ -61,11 +75,6 @@ const WelcomePage = () => {
 
   const handleAuthoringClick = (event) => {
     handleNavigationClick(event, '/select_profile', navigate);
-  };
-
-  const handleLoginClick = (event) => {
-    event.preventDefault();
-    setShowLoginModal(true);
   };
 
   const handleDemoMode = (event) => {
@@ -99,8 +108,50 @@ const WelcomePage = () => {
     setShowCollaborationModal(false);
   };
 
-  const handleLoginModalClose = () => {
-    setShowLoginModal(false);
+  const handlePATSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!patToken.trim()) {
+      setPATError("Please enter a GitHub Personal Access Token");
+      return;
+    }
+
+    setPATLoading(true);
+    setPATError('');
+    
+    try {
+      // Test the token by creating an Octokit instance and making a test request
+      const { Octokit } = await import('@octokit/rest');
+      const octokit = new Octokit({ auth: patToken.trim() });
+      
+      // Test the token by fetching user info
+      const userResponse = await octokit.rest.users.getAuthenticated();
+      
+      // Call success callback with token and octokit instance
+      handleAuthSuccess(patToken.trim(), octokit, userResponse.data.login);
+    } catch (err) {
+      console.error('PAT authentication failed:', err);
+      
+      if (err.status === 401) {
+        setPATError('Invalid Personal Access Token. Please check your token and try again.');
+      } else if (err.status === 403) {
+        setPATError("Token doesn't have sufficient permissions. Please ensure your token has 'repo' and 'read:org' scopes.");
+      } else {
+        setPATError('Authentication failed. Please check your connection and try again.');
+      }
+    } finally {
+      setPATLoading(false);
+    }
+  };
+
+  const handleTokenNameChange = (e) => {
+    setTokenName(e.target.value);
+    if (patError) setPATError(''); // Clear error when user starts typing
+  };
+
+  const handlePATTokenChange = (e) => {
+    setPatToken(e.target.value);
+    if (patError) setPATError(''); // Clear error when user starts typing
   };
 
   return (
@@ -148,45 +199,67 @@ const WelcomePage = () => {
                 <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
               </div>
 
-              {/* Login/Authoring Card */}
-              {!isAuthenticated ? (
-                <div className="action-card login-card" onClick={handleLoginClick}>
-                  <div className="card-icon">
-                    <span className="icon-symbol">🔑</span>
+              {/* PAT Login + Demo Card (Middle) - Only show when not authenticated */}
+              {!isAuthenticated && (
+                <div className="action-card pat-demo-card">
+                  {/* PAT Login Section */}
+                  <div className="pat-section">
+                    <h4>Quick PAT Login</h4>
+                    <form onSubmit={handlePATSubmit} className="pat-form">
+                      <div className="form-group">
+                        <input
+                          type="text"
+                          value={tokenName}
+                          onChange={handleTokenNameChange}
+                          placeholder="Token name"
+                          className="token-name-input"
+                          disabled={patLoading}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <input
+                          type="password"
+                          value={patToken}
+                          onChange={handlePATTokenChange}
+                          placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                          className={`token-input ${patError ? 'error' : ''}`}
+                          disabled={patLoading}
+                        />
+                      </div>
+                      <button 
+                        type="submit" 
+                        className="pat-login-btn" 
+                        disabled={patLoading || !patToken.trim()}
+                      >
+                        {patLoading ? 'Signing In...' : '🔑 Sign In'}
+                      </button>
+                    </form>
+                    {patError && <div className="pat-error">{patError}</div>}
                   </div>
-                  <p>Sign in with your GitHub Personal Access Token to start editing DAKs.</p>
-                </div>
-              ) : (
-                <div className="action-card authoring-card" onClick={handleAuthoringClick}>
-                  <div className="card-icon">
-                    <img src="/authoring.png" alt="Authoring" />
+
+                  {/* Demo Section */}
+                  <div className="demo-section">
+                    <h4>Want to try without signing in?</h4>
+                    <button onClick={handleDemoMode} className="demo-btn">
+                      🎭 Try Demo Mode
+                    </button>
+                    <p className="demo-note">
+                      Demo mode showcases the enhanced DAK scanning display with mock data.
+                    </p>
                   </div>
-                  <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
                 </div>
               )}
-            </div>
 
-            {/* Demo Mode Card */}
-            <div className="demo-card">
-              <h4>Want to try without signing in?</h4>
-              <button onClick={handleDemoMode} className="demo-btn">
-                🎭 Try Demo Mode
-              </button>
-              <p className="demo-note">
-                Demo mode showcases the enhanced DAK scanning display with mock data.
-              </p>
+              {/* Authoring Card - Always show */}
+              <div className="action-card authoring-card" onClick={handleAuthoringClick}>
+                <div className="card-icon">
+                  <img src="/authoring.png" alt="Authoring" />
+                </div>
+                <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Login Modal */}
-        {showLoginModal && (
-          <LoginModal 
-            isOpen={showLoginModal}
-            onClose={handleLoginModalClose}
-            onAuthSuccess={handleAuthSuccess}
-          />
-        )}
 
         {/* Collaboration Modal */}
         {showCollaborationModal && (
