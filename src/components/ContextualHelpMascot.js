@@ -80,9 +80,17 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   };
 
   const handleHelpTopicClick = (topic) => {
-    setSelectedHelpTopic(topic);
-    setShowHelp(false);
-    setHelpSticky(false);
+    // If it's an action type, execute the action immediately
+    if (topic.type === 'action' && topic.action) {
+      topic.action();
+      setShowHelp(false);
+      setHelpSticky(false);
+    } else {
+      // For slideshow and other types, show in modal
+      setSelectedHelpTopic(topic);
+      setShowHelp(false);
+      setHelpSticky(false);
+    }
   };
 
   const handleCloseModal = () => {

@@ -3,6 +3,24 @@ class HelpContentService {
   constructor() {
     // Universal help topics that appear on all pages
     this.universalTopics = {
+      documentation: {
+        id: 'sgex-documentation',
+        title: 'View Documentation',
+        badge: '/sgex/cat-paw-info-icon.svg',
+        type: 'action',
+        action: () => {
+          // Navigate to documentation viewer in the same window
+          const currentPath = window.location.pathname;
+          const basePath = currentPath.includes('/sgex') ? '/sgex' : '';
+          window.location.href = `${basePath}/docs/overview`;
+        },
+        content: `
+          <p>Access comprehensive documentation and guides for using SGEX Workbench.</p>
+          <div class="help-tip">
+            <strong>📖 Available Documentation:</strong> Requirements, Architecture, DAK Components, User Guides, and more.
+          </div>
+        `
+      },
       bugReport: {
         id: 'report-sgex-bug',
         title: 'Report a SGeX bug',
@@ -618,7 +636,10 @@ class HelpContentService {
 
   // Get universal topics based on context (e.g., if DAK is selected)
   getUniversalTopics(contextData = {}) {
-    const topics = [this.universalTopics.bugReport];
+    const topics = [
+      this.universalTopics.documentation,
+      this.universalTopics.bugReport
+    ];
     
     // Add DAK feedback if we have DAK context
     if (contextData.selectedDak || contextData.repository) {
