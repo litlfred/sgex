@@ -21,7 +21,6 @@ body.theme-light .welcome-page-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: calc(100vh - 120px);
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -30,7 +29,6 @@ body.theme-light .welcome-page-content {
   display: flex;
   align-items: center;
   gap: 3rem;
-  margin-bottom: 4rem;
   text-align: center;
 }
 
@@ -75,14 +73,37 @@ body.theme-light .welcome-page-content {
 
 .welcome-cards {
   width: 100%;
-  max-width: 800px;
+  padding: 2rem 0;
+  background: var(--who-secondary-bg);
+  border-top: 1px solid var(--who-border-color);
 }
 
 .card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  display: flex;
   gap: 2rem;
-  margin-bottom: 3rem;
+  padding: 0 2rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar styling */
+.card-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.card-grid::-webkit-scrollbar-track {
+  background: var(--who-card-bg);
+  border-radius: 4px;
+}
+
+.card-grid::-webkit-scrollbar-thumb {
+  background: var(--who-blue);
+  border-radius: 4px;
+}
+
+.card-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--who-blue-dark);
 }
 
 
@@ -98,11 +119,15 @@ body.theme-light .welcome-page-content {
   backdrop-filter: blur(10px);
   position: relative;
   overflow: hidden;
+  /* Fixed width for horizontal scrolling */
+  min-width: 300px;
+  width: 300px;
   /* Harmonic ratio: width = 300px, height = φ * width = 1.618 * 300px ≈ 485px */
   min-height: 485px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .action-card::before {
@@ -389,7 +414,6 @@ body.theme-light .welcome-page-content {
   .welcome-intro {
     flex-direction: column;
     gap: 2rem;
-    margin-bottom: 3rem;
   }
   
   .welcome-mascot img {
@@ -409,14 +433,20 @@ body.theme-light .welcome-page-content {
     font-size: 1rem;
   }
   
+  .welcome-cards {
+    padding: 1.5rem 0;
+  }
+  
   .card-grid {
-    grid-template-columns: 1fr;
+    padding: 0 1rem;
     gap: 1.5rem;
   }
   
   .action-card {
     padding: 2rem;
     min-height: 400px;
+    min-width: 280px;
+    width: 280px;
   }
   
   .card-icon {
@@ -441,6 +471,8 @@ body.theme-light .welcome-page-content {
   .action-card {
     padding: 1.5rem;
     min-height: 320px;
+    min-width: 250px;
+    width: 250px;
   }
   
   .card-icon {
