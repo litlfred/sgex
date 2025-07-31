@@ -49,7 +49,7 @@ const ComponentEditorContent = () => {
         </div>
       );
     } else {
-      navigate('/');
+      navigate('/sgex/');
       return <div>Redirecting...</div>;
     }
   }

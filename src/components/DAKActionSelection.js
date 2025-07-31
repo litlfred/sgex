@@ -24,25 +24,25 @@ const DAKActionSelectionContent = () => {
   useEffect(() => {
     // If no user parameter in URL and no profile in state, redirect to landing
     if (!userParam && !profile) {
-      navigate('/');
+      navigate('/sgex/');
       return;
     }
     
     // If user parameter exists but no profile - redirect to landing
     if (userParam && !profile) {
-      navigate('/');
+      navigate('/sgex/');
       return;
     }
     
     // If user parameter exists and profile exists but they don't match - redirect to landing
     if (userParam && profile && profile.login !== userParam) {
-      navigate('/');
+      navigate('/sgex/');
       return;
     }
     
     // If profile exists but no user parameter, redirect to include user in URL
     if (profile && !userParam) {
-      navigate(`/dak-action/${profile.login}`, { 
+      navigate(`/sgex/dak-action/${profile.login}`, { 
         state: { profile },
         replace: true 
       });
@@ -81,7 +81,7 @@ const DAKActionSelectionContent = () => {
       action: actionId 
     };
     
-    handleNavigationClick(event, `/dak-selection/${profile.login}`, navigate, navigationState);
+    handleNavigationClick(event, `/sgex/dak-selection/${profile.login}`, navigate, navigationState);
   };
 
   if (!profile) {

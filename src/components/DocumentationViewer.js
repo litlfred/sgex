@@ -29,14 +29,6 @@ const generateDocFiles = () => {
 const docFiles = generateDocFiles();
 
 const DocumentationViewer = () => {
-  return (
-    <PageLayout pageName="documentation-viewer">
-      <DocumentationViewerContent />
-    </PageLayout>
-  );
-};
-
-const DocumentationViewerContent = () => {
   const { params } = usePageParams();
   const docId = params?.docId;
   const navigate = useNavigate();
@@ -178,11 +170,12 @@ const DocumentationViewerContent = () => {
   }
 
   return (
-    <div className="documentation-viewer">
-      <div className="doc-content">
-      <div className="doc-sidebar">
-        <h3>Documentation</h3>
-        <nav className="doc-menu">
+    <PageLayout pageName="documentation-viewer">
+      <div className="documentation-viewer">
+        <div className="doc-content">
+        <div className="doc-sidebar">
+          <h3>Documentation</h3>
+          <nav className="doc-menu">
             {(() => {
               // Group files by category
               const grouped = {};
@@ -234,7 +227,8 @@ const DocumentationViewerContent = () => {
       </div>
       
       </div>
-    );
+    </PageLayout>
+  );
 };
 
 export default DocumentationViewer;

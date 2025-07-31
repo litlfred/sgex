@@ -127,7 +127,6 @@ class DAKValidationService {
       'litlfred/smart-guidelines-demo',
       'litlfred/sgex-demo',
       'litlfred/smart-pcmt-vaxprequal',
-      'litlfred/smart-ips-pilgrimage',
       'who/smart-guidelines',
       'who/smart-anc-toolkit',
       'who/smart-immunizations',
