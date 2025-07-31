@@ -188,7 +188,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                       title={t('theme.toggle')}
                     >
                       <span className="theme-icon">{isDarkMode ? '🌞' : '🌙'}</span>
-                      <span className="theme-label">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                      <span className="theme-label">{isDarkMode ? t('theme.switchToLight', 'Light Mode') : t('theme.switchToDark', 'Dark Mode')}</span>
                     </button>
                     
                     {/* Flush Cache Option */}
@@ -226,7 +226,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                       title={t('theme.toggle')}
                     >
                       <span className="theme-icon">{isDarkMode ? '🌞' : '🌙'}</span>
-                      <span className="theme-label">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                      <span className="theme-label">{isDarkMode ? t('theme.switchToLight', 'Light Mode') : t('theme.switchToDark', 'Dark Mode')}</span>
                     </button>
                     
                     {/* Flush Cache Option */}
