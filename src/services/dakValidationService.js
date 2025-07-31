@@ -67,13 +67,15 @@ class DAKValidationService {
    */
   async fetchSushiConfig(owner, repo, branch = 'main') {
     try {
-      // Use the same approach as githubService - get the octokit instance
-      const octokit = githubService.isAuth() ? githubService.octokit : null;
-      
-      if (!octokit) {
-        // In unauthenticated mode, we can't fetch file contents reliably
-        console.log(`Cannot fetch sushi-config.yaml for ${owner}/${repo} - not authenticated`);
-        return null;
+      // Use authenticated octokit if available, otherwise create unauthenticated instance
+      let octokit;
+      if (githubService.isAuth()) {
+        octokit = githubService.octokit;
+      } else {
+        // For unauthenticated access to public repositories
+        const { Octokit } = await import('@octokit/rest');
+        octokit = new Octokit();
+        console.log(`Using unauthenticated access for ${owner}/${repo}`);
       }
 
       // Try main branch first if no branch specified

@@ -62,12 +62,43 @@ const useDAKUrlParams = () => {
 
           // Check if githubService is authenticated (allow demo mode to proceed without auth)
           if (!githubService.isAuth()) {
-            console.log('🚫 useDAKUrlParams: Not authenticated, entering demo mode');
-            // In demo mode, use the DAK validation service for demo repositories
-            const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
+            console.log('🚫 useDAKUrlParams: Not authenticated, attempting validation for public repository');
             
-            if (!isValidDAK) {
-              console.log('❌ useDAKUrlParams: Demo DAK validation failed, redirecting home');
+            // First try to validate as a real DAK repository using public API
+            const isValidDAK = await dakValidationService.validateDAKRepository(user, repo, branch);
+            
+            if (isValidDAK) {
+              console.log('✅ useDAKUrlParams: Public DAK validation passed, creating demo-style data');
+              const demoProfile = {
+                login: user,
+                name: user.charAt(0).toUpperCase() + user.slice(1),
+                avatar_url: `https://github.com/${user}.png`,
+                type: 'User',
+                isDemo: true
+              };
+
+              const demoRepository = {
+                name: repo,
+                full_name: `${user}/${repo}`,
+                owner: { login: user },
+                default_branch: branch || 'main',
+                html_url: `https://github.com/${user}/${repo}`,
+                isDemo: true
+              };
+
+              setProfile(demoProfile);
+              setRepository(demoRepository);
+              setSelectedBranch(branch || 'main');
+              setLoading(false);
+              return;
+            }
+            
+            // If real validation failed, try demo validation as fallback
+            console.log('🚫 useDAKUrlParams: Public DAK validation failed, trying demo mode');
+            const isDemoValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
+            
+            if (!isDemoValidDAK) {
+              console.log('❌ useDAKUrlParams: Demo DAK validation also failed, redirecting home');
               navigate('/', { 
                 state: { 
                   warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
