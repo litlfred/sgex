@@ -3,7 +3,6 @@ import { PageLayout } from './index';
 import SaveButtonsContainer from './SaveButtonsContainer';
 import CommitMessageDialog from './CommitMessageDialog';
 import dataAccessLayer from '../../services/dataAccessLayer';
-import userAccessService from '../../services/userAccessService';
 import './AssetEditorLayout.css';
 
 /**
@@ -169,29 +168,6 @@ const AssetEditorLayout = ({
         }
         throw new Error(errorMessage);
       }
-        [owner, repoName] = repository.full_name.split('/');
-      } else {
-        throw new Error('Repository information not available');
-      }
-
-      await githubService.updateFile(
-        owner,
-        repoName,
-        file.path,
-        content,
-        message.trim(),
-        branch || repository?.default_branch || 'main'
-      );
-
-      setGithubSaveSuccess(true);
-      setShowCommitDialog(false);
-      setCommitMessage('');
-      onSave && onSave(content, 'github');
-      
-      // Auto-hide success message after 3 seconds
-      setTimeout(() => {
-        setGithubSaveSuccess(false);
-      }, 3000);
 
     } catch (error) {
       console.error('Error saving file to GitHub:', error);
@@ -207,16 +183,6 @@ const AssetEditorLayout = ({
     setCommitMessage('');
   }, []);
 
-  // Check if there's a local version of this file
-  React.useEffect(() => {
-    if (file?.path) {
-      const localContent = localStorageService.getLocalContent(file.path);
-      if (localContent && localContent !== originalContent) {
-        setSavedLocally(true);
-      }
-    }
-  }, [file?.path, originalContent]);
-
   const saveButtonsProps = {
     // States
     hasChanges,
@@ -225,14 +191,10 @@ const AssetEditorLayout = ({
     canSaveToGitHub,
     localSaveSuccess,
     githubSaveSuccess,
-    savedLocally,
     
     // Handlers
     onSaveLocal: handleSaveLocal,
-    onSaveGitHub: handleSaveGitHub,
-    
-    // Configuration
-    isDemo
+    onSaveGitHub: handleSaveGitHub
   };
 
   return (

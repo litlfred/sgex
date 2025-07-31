@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { PageLayout, AssetEditorLayout } from './index';
-import { usePageParams, useDAKParams } from './usePageParams';
+import { usePageParams } from './usePageParams';
 import userAccessService from '../../services/userAccessService';
 import dataAccessLayer from '../../services/dataAccessLayer';
 
@@ -75,8 +75,6 @@ export class ToolDefinition {
    * Check if current user can access this tool
    */
   async canAccess() {
-    const userType = userAccessService.getUserType();
-    
     if (this.requiresAuth && userAccessService.isUnauthenticated()) {
       return false;
     }
@@ -113,11 +111,7 @@ const ToolWrapper = ({ toolDefinition, ...props }) => {
     content: null
   });
 
-  React.useEffect(() => {
-    initializeTool();
-  }, [pageParams.user, pageParams.repository, pageParams.branch, pageParams.asset]);
-
-  const initializeTool = async () => {
+  const initializeTool = React.useCallback(async () => {
     try {
       setToolState(prev => ({ ...prev, loading: true, error: null }));
 
@@ -156,8 +150,7 @@ const ToolWrapper = ({ toolDefinition, ...props }) => {
         await toolDefinition.onInit({
           pageParams,
           assets,
-          content,
-          userType: userAccessService.getUserType()
+          content
         });
       }
 
@@ -184,7 +177,11 @@ const ToolWrapper = ({ toolDefinition, ...props }) => {
         toolDefinition.onError(error, { pageParams });
       }
     }
-  };
+  }, [toolDefinition, pageParams]);
+
+  React.useEffect(() => {
+    initializeTool();
+  }, [initializeTool]);
 
   const handleAssetSave = async (newContent, saveType) => {
     if (!pageParams.asset) return;

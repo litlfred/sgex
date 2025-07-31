@@ -5,7 +5,7 @@
  * for a unified asset management experience across all user types.
  */
 
-import userAccessService, { USER_TYPES, ACCESS_LEVELS } from './userAccessService';
+import userAccessService from './userAccessService';
 import stagingGroundService from './stagingGroundService';
 import githubService from './githubService';
 import logger from '../utils/logger';

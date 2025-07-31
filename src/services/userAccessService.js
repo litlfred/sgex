@@ -6,7 +6,6 @@
  */
 
 import githubService from './githubService';
-import dakValidationService from './dakValidationService';
 import logger from '../utils/logger';
 
 /**
