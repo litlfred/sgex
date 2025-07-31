@@ -423,6 +423,10 @@ const BPMNViewerComponent = () => {
           <div className="viewer-toolbar">
             <div className="toolbar-left">
               <h3>{selectedFile.name}</h3>
+              <div className="artifact-badges">
+                <span className="artifact-badge bpmn">📊 BPMN</span>
+                <span className="dak-component-badge">🔄 Business Process</span>
+              </div>
               <span className="view-mode-badge">👁️ Read-Only View</span>
             </div>
             <div className="toolbar-right">
@@ -506,46 +510,30 @@ const BPMNViewerComponent = () => {
           </div>
 
           <div className="diagram-info">
-            <div className="info-section">
-              <h4>File Information</h4>
-              <div className="info-grid">
-                <div className="info-item">
-                  <label>File Name:</label>
-                  <span>{selectedFile?.name || 'No file selected'}</span>
-                </div>
-                <div className="info-item">
-                  <label>File Path:</label>
-                  <span className="file-path">{selectedFile?.path || 'N/A'}</span>
-                </div>
-                <div className="info-item">
-                  <label>File Size:</label>
-                  <span>{selectedFile?.size ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'N/A'}</span>
-                </div>
-                <div className="info-item">
-                  <label>Access Level:</label>
-                  <span className={`access-badge ${hasWriteAccess ? 'write' : 'read'}`}>
-                    {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only'}
-                  </span>
-                </div>
-                <div className="info-item">
-                  <label>View Mode:</label>
-                  <span className="view-mode-info">
-                    {enhancedFullwidth ? '⛶ Full Container' : autoHide ? '👁️ Auto-Hide' : '📺 Fullwidth'}
-                  </span>
-                </div>
+            <div className="condensed-file-info">
+              <div className="condensed-info-item">
+                <span className="label">📁</span>
+                <span className="value">{selectedFile?.name || 'No file'}</span>
+              </div>
+              <div className="condensed-info-item">
+                <span className="label">📏</span>
+                <span className="value">{selectedFile?.size ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'N/A'}</span>
+              </div>
+              <div className="condensed-info-item">
+                <span className="label">🌿</span>
+                <span className="value">{selectedBranch || 'main'}</span>
               </div>
             </div>
-
-            {!hasWriteAccess && (
-              <div className="permission-notice">
-                <h4>🔒 Read-Only Access</h4>
-                <p>
-                  You currently have read-only access to this repository. 
-                  To edit BPMN diagrams, you need write permissions. 
-                  Contact the repository administrator or update your GitHub Personal Access Token with write permissions.
-                </p>
-              </div>
-            )}
+            <div className="condensed-view-mode">
+              <span className={`condensed-access-badge ${hasWriteAccess ? 'write' : 'read'}`}>
+                {hasWriteAccess ? '✏️ Edit' : '👁️ Read'}
+              </span>
+              <span className="condensed-info-item">
+                <span className="value">
+                  {enhancedFullwidth ? '⛶ Full Container' : autoHide ? '👁️ Auto-Hide' : '📺 Fullwidth'}
+                </span>
+              </span>
+            </div>
           </div>
         </div>
       </div>

@@ -713,7 +713,13 @@ define "Contraindication Present":
 
         <div className="view-main">
           <div className="view-intro">
-            <h2>🎯 Decision Support Logic</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+              <h2>🎯 Decision Support Logic</h2>
+              <div className="artifact-badges">
+                <span className="artifact-badge dmn">📊 DMN</span>
+                <span className="dak-component-badge">🧠 Decision Logic</span>
+              </div>
+            </div>
             <p>
               Explore decision variables and tables that encode clinical logic for 
               {repository ? ` ${repository.name}` : ' this DAK'}. 
@@ -952,6 +958,35 @@ define "Contraindication Present":
               )}
             </div>
           )}
+        </div>
+
+        {/* Condensed Footer */}
+        <div className="diagram-info">
+          <div className="condensed-file-info">
+            <div className="condensed-info-item">
+              <span className="label">📊</span>
+              <span className="value">DMN Decision Logic</span>
+            </div>
+            <div className="condensed-info-item">
+              <span className="label">📁</span>
+              <span className="value">{repository?.name || 'Repository'}</span>
+            </div>
+            <div className="condensed-info-item">
+              <span className="label">🌿</span>
+              <span className="value">{selectedBranch || 'main'}</span>
+            </div>
+            <div className="condensed-info-item">
+              <span className="label">📈</span>
+              <span className="value">{filteredVariables.length} Variables</span>
+            </div>
+          </div>
+          <div className="condensed-view-mode">
+            <span className="condensed-info-item">
+              <span className="value">
+                {enhancedFullwidth ? '⛶ Full Container' : autoHide ? '👁️ Auto-Hide' : '📺 Fullwidth'}
+              </span>
+            </span>
+          </div>
         </div>
       </div>
 

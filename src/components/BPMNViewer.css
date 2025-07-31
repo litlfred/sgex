@@ -28,11 +28,13 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 }
 
 .bpmn-viewer {
-  min-height: 100vh;
+  height: 100vh; /* Fixed height to display size */
   background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Enhanced fullwidth mode styling */
@@ -43,7 +45,6 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
   right: 0;
   bottom: 0;
   z-index: 1000;
-  min-height: 100vh;
   height: 100vh;
 }
 
@@ -106,6 +107,9 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
   max-width: none;
   margin: 0;
   width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .breadcrumb {
@@ -145,6 +149,10 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .viewer-toolbar {
@@ -198,6 +206,54 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
   font-weight: 600;
 }
 
+/* Header badges for artifact and DAK component types */
+.artifact-badges {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-left: 1rem;
+}
+
+.artifact-badge {
+  background: rgba(255, 255, 255, 0.9);
+  color: #0078d4;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.artifact-badge.bpmn {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+  border-color: #4caf50;
+}
+
+.artifact-badge.dmn {
+  background: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+  border-color: #ff9800;
+}
+
+.artifact-badge.fhir {
+  background: rgba(156, 39, 176, 0.1);
+  color: #9c27b0;
+  border-color: #9c27b0;
+}
+
+.dak-component-badge {
+  background: rgba(33, 150, 243, 0.1);
+  color: #2196f3;
+  padding: 0.2rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
 .view-mode-badge {
   background: rgba(255, 255, 255, 0.2);
   padding: 0.3rem 0.8rem;
@@ -247,14 +303,15 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 
 .diagram-container {
   position: relative;
-  height: 600px;
-  border-bottom: 1px solid #e1e5e9;
   flex: 1;
+  border-bottom: 1px solid #e1e5e9;
+  height: 100%;
+  min-height: 0; /* Allow flexbox to shrink */
 }
 
 /* In enhanced fullwidth mode, use all available space */
 .bpmn-viewer.enhanced-fullwidth .diagram-container {
-  height: calc(100vh - 120px); /* Account for toolbar */
+  height: calc(100vh - 100px); /* Account for toolbar */
 }
 
 /* In auto-hide mode, expand to fill space */
@@ -263,8 +320,8 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 100vh;
+  bottom: 60px; /* Space for condensed footer */
+  height: auto;
   z-index: 10;
 }
 
@@ -337,23 +394,30 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 }
 
 .diagram-info {
-  padding: 2rem;
+  padding: 0.8rem 2rem;
   background: #f8f9fa;
   transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
   position: relative;
   z-index: 20;
+  border-top: 1px solid #dee2e6;
+  height: 60px; /* Fixed condensed height */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
 }
 
 /* Auto-hide footer - slide down when hidden */
 .bpmn-viewer.auto-hide .diagram-info {
   position: fixed;
-  bottom: -250px; /* Hide by moving below viewport */
+  bottom: -70px; /* Hide by moving below viewport */
   left: 0;
   right: 0;
   z-index: 1001;
   background: #f8f9fa;
   border-top: 1px solid #dee2e6;
   transition: bottom 0.3s ease-in-out;
+  height: 60px;
 }
 
 /* Show footer on hover over the entire viewer */
@@ -373,34 +437,56 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
   pointer-events: auto;
 }
 
-.info-section {
-  margin-bottom: 2rem;
+/* Condensed footer layout */
+.condensed-file-info {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  font-size: 0.85rem;
+  color: #666;
 }
 
-.info-section h4 {
-  margin: 0 0 1rem 0;
+.condensed-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.condensed-info-item .label {
+  font-weight: 500;
   color: #333;
-  font-size: 1.1rem;
-  font-weight: 600;
 }
 
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+.condensed-info-item .value {
+  color: #666;
+}
+
+.condensed-view-mode {
+  display: flex;
+  align-items: center;
   gap: 1rem;
 }
 
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.info-item label {
-  font-size: 0.85rem;
-  color: #666;
+.condensed-access-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
 }
+
+.condensed-access-badge.write {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.condensed-access-badge.read {
+  background: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+/* Legacy styles for backward compatibility - can be removed */
 
 .info-item span {
   font-size: 0.95rem;

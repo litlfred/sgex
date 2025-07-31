@@ -29,6 +29,27 @@ border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 }
 ```
 
+## Fixed Height Layout Standards
+
+All viewer components **MUST** implement fixed height layout for optimal display usage:
+
+### Required Layout Implementation
+- **Main Container**: `height: 100vh` with `display: flex; flex-direction: column`
+- **Content Sections**: Use `flex: 1` and `min-height: 0` for proper scrolling
+- **Footer**: Fixed `height: 60px` with condensed information layout
+
+For detailed requirements, see [Fixed Height Layout Requirements](fixed-height-layout-requirements.md).
+
+## Header Badge Standards
+
+All pages **MUST** display artifact and DAK component type badges in headers, not footers:
+
+### Required Badge Implementation
+- **Artifact Type Badges**: File type identification (BPMN, DMN, FHIR, etc.)
+- **DAK Component Badges**: Component classification (Business Process, Decision Logic, etc.)
+- **Header Positioning**: Badges must appear in page headers alongside titles
+- **Color Coding**: Consistent color scheme as defined in layout requirements
+
 ## Breadcrumb Standards
 
 All pages **MUST** use the consistent breadcrumb system provided by the page framework:
