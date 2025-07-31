@@ -188,75 +188,75 @@ const WelcomePage = () => {
               </p>
             </div>
           </div>
+        </div>
 
-          <div className="welcome-cards">
-            <div className="card-grid">
-              {/* Collaboration Card */}
-              <div className="action-card collaboration-card" onClick={handleCollaborationOpen}>
-                <div className="card-icon">
-                  <img src="/collaboration.png" alt="Collaboration" />
-                </div>
-                <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
+        <div className="welcome-cards">
+          <div className="card-grid">
+            {/* Collaboration Card */}
+            <div className="action-card collaboration-card" onClick={handleCollaborationOpen}>
+              <div className="card-icon">
+                <img src="/collaboration.png" alt="Collaboration" />
               </div>
+              <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
+            </div>
 
-              {/* PAT Login + Demo Card (Middle) - Only show when not authenticated */}
-              {!isAuthenticated && (
-                <div className="action-card pat-demo-card">
-                  {/* PAT Login Section */}
-                  <div className="pat-section">
-                    <h4>Quick PAT Login</h4>
-                    <form onSubmit={handlePATSubmit} className="pat-form">
-                      <div className="form-group">
-                        <input
-                          type="text"
-                          value={tokenName}
-                          onChange={handleTokenNameChange}
-                          placeholder="Token name"
-                          className="token-name-input"
-                          disabled={patLoading}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <input
-                          type="password"
-                          value={patToken}
-                          onChange={handlePATTokenChange}
-                          placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                          className={`token-input ${patError ? 'error' : ''}`}
-                          disabled={patLoading}
-                        />
-                      </div>
-                      <button 
-                        type="submit" 
-                        className="pat-login-btn" 
-                        disabled={patLoading || !patToken.trim()}
-                      >
-                        {patLoading ? 'Signing In...' : '🔑 Sign In'}
-                      </button>
-                    </form>
-                    {patError && <div className="pat-error">{patError}</div>}
-                  </div>
-
-                  {/* Demo Section */}
-                  <div className="demo-section">
-                    <h4>Want to try without signing in?</h4>
-                    <button onClick={handleDemoMode} className="demo-btn">
-                      🎭 Try Demo Mode
+            {/* PAT Login + Demo Card (Middle) - Only show when not authenticated */}
+            {!isAuthenticated && (
+              <div className="action-card pat-demo-card">
+                {/* PAT Login Section */}
+                <div className="pat-section">
+                  <h4>Quick PAT Login</h4>
+                  <form onSubmit={handlePATSubmit} className="pat-form">
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        value={tokenName}
+                        onChange={handleTokenNameChange}
+                        placeholder="Token name"
+                        className="token-name-input"
+                        disabled={patLoading}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <input
+                        type="password"
+                        value={patToken}
+                        onChange={handlePATTokenChange}
+                        placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                        className={`token-input ${patError ? 'error' : ''}`}
+                        disabled={patLoading}
+                      />
+                    </div>
+                    <button 
+                      type="submit" 
+                      className="pat-login-btn" 
+                      disabled={patLoading || !patToken.trim()}
+                    >
+                      {patLoading ? 'Signing In...' : '🔑 Sign In'}
                     </button>
-                    <p className="demo-note">
-                      Demo mode showcases the enhanced DAK scanning display with mock data.
-                    </p>
-                  </div>
+                  </form>
+                  {patError && <div className="pat-error">{patError}</div>}
                 </div>
-              )}
 
-              {/* Authoring Card - Always show */}
-              <div className="action-card authoring-card" onClick={handleAuthoringClick}>
-                <div className="card-icon">
-                  <img src="/authoring.png" alt="Authoring" />
+                {/* Demo Section */}
+                <div className="demo-section">
+                  <h4>Want to try without signing in?</h4>
+                  <button onClick={handleDemoMode} className="demo-btn">
+                    🎭 Try Demo Mode
+                  </button>
+                  <p className="demo-note">
+                    Demo mode showcases the enhanced DAK scanning display with mock data.
+                  </p>
                 </div>
-                <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
               </div>
+            )}
+
+            {/* Authoring Card - Always show */}
+            <div className="action-card authoring-card" onClick={handleAuthoringClick}>
+              <div className="card-icon">
+                <img src="/authoring.png" alt="Authoring" />
+              </div>
+              <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
             </div>
           </div>
         </div>
