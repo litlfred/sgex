@@ -109,14 +109,16 @@ const WelcomePage = () => {
         {warningMessage && (
           <div className="warning-message">
             <div className="warning-content">
-              <span className="warning-icon">⚠️</span>
-              <span className="warning-text">{warningMessage}</span>
+              <div className="warning-header">
+                <span className="warning-icon">⚠️</span>
+                <span className="warning-text">{warningMessage}</span>
+              </div>
               <button 
                 className="warning-dismiss" 
                 onClick={handleDismissWarning}
                 aria-label="Dismiss warning"
               >
-                ×
+                × Dismiss
               </button>
             </div>
           </div>

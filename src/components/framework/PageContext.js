@@ -42,7 +42,7 @@ const PageContext = ({ customBreadcrumbs }) => {
 
     // Always start with home
     breadcrumbs.push({
-      label: 'Select Profile',
+      label: 'Home',
       path: '/',
       onClick: () => navigate('/')
     });
@@ -51,8 +51,8 @@ const PageContext = ({ customBreadcrumbs }) => {
     if ((type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile) {
       breadcrumbs.push({
         label: 'Select Repository',
-        path: `/select_repository/${profile.login}`,
-        onClick: () => navigate(`/select_repository/${profile.login}`)
+        path: `/repositories`,
+        onClick: () => navigate(`/repositories`, { state: { profile } })
       });
     }
 
