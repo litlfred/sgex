@@ -1,14 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { PageLayout } from './index';
 import SaveButtonsContainer from './SaveButtonsContainer';
 import CommitMessageDialog from './CommitMessageDialog';
-import githubService from '../../services/githubService';
-import localStorageService from '../../services/localStorageService';
+import dataAccessLayer from '../../services/dataAccessLayer';
 import './AssetEditorLayout.css';
 
 /**
  * Enhanced page framework for asset editors
- * Provides consistent save functionality with independent local/GitHub save states
+ * Provides consistent save functionality with user access integration
  */
 const AssetEditorLayout = ({
   children,
@@ -21,7 +20,6 @@ const AssetEditorLayout = ({
   content,
   originalContent,
   hasChanges = false,
-  isDemo = false,
   // Save callbacks
   onSave,
   onContentChange,
@@ -36,16 +34,36 @@ const AssetEditorLayout = ({
   const [isSavingLocal, setIsSavingLocal] = useState(false);
   const [isSavingGitHub, setIsSavingGitHub] = useState(false);
   const [saveError, setSaveError] = useState(null);
-  const [savedLocally, setSavedLocally] = useState(false);
   const [localSaveSuccess, setLocalSaveSuccess] = useState(false);
   const [githubSaveSuccess, setGithubSaveSuccess] = useState(false);
+  const [saveOptions, setSaveOptions] = useState(null);
   
   // Commit dialog state
   const [showCommitDialog, setShowCommitDialog] = useState(false);
   const [commitMessage, setCommitMessage] = useState('');
 
-  // Check if user can save to GitHub
-  const canSaveToGitHub = githubService.isAuth() && !isDemo;
+  // Load save options based on current user and repository
+  useEffect(() => {
+    const loadSaveOptions = async () => {
+      if (repository) {
+        try {
+          const options = await dataAccessLayer.getSaveOptions(
+            repository.owner?.login,
+            repository.name,
+            branch
+          );
+          setSaveOptions(options);
+        } catch (error) {
+          console.error('Error loading save options:', error);
+        }
+      }
+    };
+
+    loadSaveOptions();
+  }, [repository, branch]);
+
+  // Check if user can save to GitHub based on access service
+  const canSaveToGitHub = saveOptions?.canSaveGitHub && saveOptions?.showSaveGitHub;
 
   // Handle local save
   const handleSaveLocal = useCallback(async () => {
@@ -56,18 +74,15 @@ const AssetEditorLayout = ({
       setSaveError(null);
       setLocalSaveSuccess(false);
 
-      // Save to local storage
-      const metadata = {
+      // Use data access layer for local save
+      const result = await dataAccessLayer.saveAssetLocal(file.path, content, {
         repository: repository?.full_name || `${repository?.owner?.login}/${repository?.name}`,
         branch: branch || repository?.default_branch || 'main',
         fileName: file.name,
         timestamp: new Date().toISOString()
-      };
-
-      const saved = localStorageService.saveLocal(file.path, content, metadata);
+      });
       
-      if (saved) {
-        setSavedLocally(true);
+      if (result.result === 'success') {
         setLocalSaveSuccess(true);
         onSave && onSave(content, 'local');
         
@@ -76,7 +91,7 @@ const AssetEditorLayout = ({
           setLocalSaveSuccess(false);
         }, 3000);
       } else {
-        throw new Error('Failed to save to local storage');
+        throw new Error(result.message || 'Failed to save to local storage');
       }
 
     } catch (error) {
@@ -123,35 +138,36 @@ const AssetEditorLayout = ({
         return;
       }
 
-      // Default GitHub save logic
-      let owner, repoName;
-      if (repository?.owner?.login) {
-        owner = repository.owner.login;
-        repoName = repository.name;
-      } else if (repository?.full_name) {
-        [owner, repoName] = repository.full_name.split('/');
-      } else {
-        throw new Error('Repository information not available');
-      }
-
-      await githubService.updateFile(
-        owner,
-        repoName,
+      // Use data access layer for GitHub save
+      const result = await dataAccessLayer.saveAssetGitHub(
+        repository?.owner?.login,
+        repository?.name,
+        branch,
         file.path,
         content,
-        message.trim(),
-        branch || repository?.default_branch || 'main'
+        message.trim()
       );
 
-      setGithubSaveSuccess(true);
-      setShowCommitDialog(false);
-      setCommitMessage('');
-      onSave && onSave(content, 'github');
-      
-      // Auto-hide success message after 3 seconds
-      setTimeout(() => {
-        setGithubSaveSuccess(false);
-      }, 3000);
+      if (result.result === 'success') {
+        setGithubSaveSuccess(true);
+        setShowCommitDialog(false);
+        setCommitMessage('');
+        onSave && onSave(content, 'github');
+        
+        // Auto-hide success message after 3 seconds
+        setTimeout(() => {
+          setGithubSaveSuccess(false);
+        }, 3000);
+      } else {
+        // Handle different result types
+        let errorMessage = result.message;
+        if (result.result === 'demo_mode_blocked') {
+          errorMessage = 'Demo users cannot save to GitHub. You can save changes locally instead.';
+        } else if (result.result === 'permission_denied') {
+          errorMessage = 'You do not have permission to save to this repository.';
+        }
+        throw new Error(errorMessage);
+      }
 
     } catch (error) {
       console.error('Error saving file to GitHub:', error);
@@ -167,16 +183,6 @@ const AssetEditorLayout = ({
     setCommitMessage('');
   }, []);
 
-  // Check if there's a local version of this file
-  React.useEffect(() => {
-    if (file?.path) {
-      const localContent = localStorageService.getLocalContent(file.path);
-      if (localContent && localContent !== originalContent) {
-        setSavedLocally(true);
-      }
-    }
-  }, [file?.path, originalContent]);
-
   const saveButtonsProps = {
     // States
     hasChanges,
@@ -185,14 +191,10 @@ const AssetEditorLayout = ({
     canSaveToGitHub,
     localSaveSuccess,
     githubSaveSuccess,
-    savedLocally,
     
     // Handlers
     onSaveLocal: handleSaveLocal,
-    onSaveGitHub: handleSaveGitHub,
-    
-    // Configuration
-    isDemo
+    onSaveGitHub: handleSaveGitHub
   };
 
   return (

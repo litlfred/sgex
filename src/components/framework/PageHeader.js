@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { usePage, PAGE_TYPES } from './PageProvider';
 import BranchSelector from '../BranchSelector';
+import AccessBadge from './AccessBadge';
 import githubService from '../../services/githubService';
+import userAccessService from '../../services/userAccessService';
 import bookmarkService from '../../services/bookmarkService';
 import './PageHeader.css';
 
@@ -22,18 +24,32 @@ const PageHeader = () => {
 
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showBookmarkDropdown, setShowBookmarkDropdown] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [authenticatedUser, setAuthenticatedUser] = useState(null);
 
-  // Fetch current user if authenticated but no profile from page context
+  // Always fetch the authenticated user for login button display
   useEffect(() => {
-    if (isAuthenticated && !profile) {
-      githubService.getCurrentUser()
-        .then(user => setCurrentUser(user))
-        .catch(error => console.debug('Could not fetch current user:', error));
+    if (isAuthenticated) {
+      const fetchAuthenticatedUser = async () => {
+        try {
+          // Use userAccessService to get the current user (handles both authenticated and demo users)
+          const user = userAccessService.getCurrentUser();
+          if (user) {
+            setAuthenticatedUser(user);
+          } else {
+            // Fallback to githubService for backwards compatibility
+            const githubUser = await githubService.getCurrentUser();
+            setAuthenticatedUser(githubUser);
+          }
+        } catch (error) {
+          console.debug('Could not fetch authenticated user:', error);
+        }
+      };
+      
+      fetchAuthenticatedUser();
     } else {
-      setCurrentUser(null);
+      setAuthenticatedUser(null);
     }
-  }, [isAuthenticated, profile]);
+  }, [isAuthenticated]);
 
   const handleLogout = () => {
     githubService.logout();
@@ -51,16 +67,17 @@ const PageHeader = () => {
   };
 
   const handleGitHubUser = () => {
-    if (displayProfile?.html_url) {
-      window.open(displayProfile.html_url, '_blank');
-    } else if (displayProfile?.login) {
-      window.open(`https://github.com/${displayProfile.login}`, '_blank');
+    // Always navigate to the authenticated user's GitHub profile, not the DAK owner's
+    if (authenticatedUser?.html_url) {
+      window.open(authenticatedUser.html_url, '_blank');
+    } else if (authenticatedUser?.login) {
+      window.open(`https://github.com/${authenticatedUser.login}`, '_blank');
     }
   };
 
   const handleBookmarkCurrentPage = () => {
     const context = {
-      user: displayProfile?.login,
+      user: authenticatedUser?.login, // Use authenticated user for bookmarks
       repository,
       branch,
       asset
@@ -95,9 +112,6 @@ const PageHeader = () => {
   const shouldShowBranchSelector = type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET;
   const currentBookmark = getCurrentPageBookmark();
   const bookmarksGrouped = getBookmarksGrouped();
-  
-  // Use profile from page context if available, otherwise use currentUser
-  const displayProfile = profile || currentUser;
 
   return (
     <header className="page-header">
@@ -112,6 +126,16 @@ const PageHeader = () => {
 
       {/* Right side - Navigation and user controls */}
       <div className="page-header-right">
+        {/* Access badge for DAK and Asset pages */}
+        {(type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && repository && (
+          <AccessBadge 
+            owner={repository.owner?.login || profile?.login}
+            repo={repository.name}
+            branch={branch}
+            className="header-access-badge"
+          />
+        )}
+        
         {/* GitHub repository button (DAK and Asset pages) */}
         {shouldShowGitHubRepo && repository && (
           <button className="header-btn github-repo-btn" onClick={handleGitHubRepo}>
@@ -143,11 +167,11 @@ const PageHeader = () => {
         )}
         
         {/* User info and controls */}
-        {(isAuthenticated || profile?.isDemo) && displayProfile ? (
+        {(isAuthenticated || profile?.isDemo) && authenticatedUser ? (
           <div className="user-controls">
             <div className="user-info" onClick={() => setShowUserDropdown(!showUserDropdown)}>
-              <img src={displayProfile.avatar_url} alt="User avatar" className="user-avatar" />
-              <span className="user-name">{displayProfile.name || displayProfile.login}</span>
+              <img src={authenticatedUser.avatar_url} alt="User avatar" className="user-avatar" />
+              <span className="user-name">{authenticatedUser.name || authenticatedUser.login}</span>
               <span className="dropdown-arrow">▼</span>
             </div>
             {showUserDropdown && (
