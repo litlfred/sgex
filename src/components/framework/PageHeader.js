@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePage, PAGE_TYPES } from './PageProvider';
 import BranchSelector from '../BranchSelector';
+import AccessBadge from './AccessBadge';
 import githubService from '../../services/githubService';
 import bookmarkService from '../../services/bookmarkService';
 import './PageHeader.css';
@@ -112,6 +113,16 @@ const PageHeader = () => {
 
       {/* Right side - Navigation and user controls */}
       <div className="page-header-right">
+        {/* Access badge for DAK and Asset pages */}
+        {(type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && repository && (
+          <AccessBadge 
+            owner={repository.owner?.login || profile?.login}
+            repo={repository.name}
+            branch={branch}
+            className="header-access-badge"
+          />
+        )}
+        
         {/* GitHub repository button (DAK and Asset pages) */}
         {shouldShowGitHubRepo && repository && (
           <button className="header-btn github-repo-btn" onClick={handleGitHubRepo}>
