@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePage } from './PageProvider';
 import ContextualHelpMascot from '../ContextualHelpMascot';
 import './ErrorHandler.css';
@@ -7,6 +8,7 @@ import './ErrorHandler.css';
  * Error handler component with automatic bug reporting functionality
  */
 const ErrorHandler = ({ error, onRetry }) => {
+  const navigate = useNavigate();
   // Try to get page context, but provide defaults if not available
   let pageName = 'unknown';
   try {
@@ -66,7 +68,7 @@ ${error}
   };
 
   const handleGoHome = () => {
-    window.location.href = '/sgex/';
+    navigate('/');
   };
 
   return (
