@@ -84,12 +84,32 @@ export const PageProvider = ({ children, pageName }) => {
               try {
                 profile = await githubService.getUser(user);
               } catch (err) {
+                // For dashboard pages, redirect instead of throwing error
+                if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
+                  navigate('/', { 
+                    state: { 
+                      warningMessage: `Could not access the requested DAK. User '${user}' not found or not accessible.` 
+                    }, 
+                    replace: true 
+                  });
+                  return;
+                }
                 throw new Error(`User '${user}' not found or not accessible.`);
               }
             } else {
               // Demo mode for DAK validation
               const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
               if (!isValidDAK) {
+                // For dashboard pages, redirect instead of throwing error
+                if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
+                  navigate('/', { 
+                    state: { 
+                      warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
+                    }, 
+                    replace: true 
+                  });
+                  return;
+                }
                 throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
               }
               profile = {
@@ -109,12 +129,48 @@ export const PageProvider = ({ children, pageName }) => {
                 // Validate it's a DAK repository
                 const isValidDAK = await dakValidationService.validateDAKRepository(user, repo, selectedBranch || repository.default_branch);
                 if (!isValidDAK) {
+                  // For dashboard pages, redirect instead of throwing error
+                  if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
+                    navigate('/', { 
+                      state: { 
+                        warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' is not a valid DAK repository.` 
+                      }, 
+                      replace: true 
+                    });
+                    return;
+                  }
                   throw new Error(`Repository '${user}/${repo}' is not a valid DAK repository.`);
                 }
               } catch (err) {
+                // For dashboard pages, redirect instead of throwing error
+                if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
+                  navigate('/', { 
+                    state: { 
+                      warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
+                    }, 
+                    replace: true 
+                  });
+                  return;
+                }
                 throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
               }
             } else {
+              // For demo mode, validate the demo repository exists
+              const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
+              if (!isValidDAK) {
+                // For dashboard pages, redirect instead of throwing error
+                if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
+                  navigate('/', { 
+                    state: { 
+                      warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
+                    }, 
+                    replace: true 
+                  });
+                  return;
+                }
+                throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
+              }
+              
               repository = {
                 name: repo,
                 full_name: `${user}/${repo}`,
@@ -133,6 +189,16 @@ export const PageProvider = ({ children, pageName }) => {
             try {
               await githubService.getFileContent(user, repo, asset, selectedBranch);
             } catch (err) {
+              // For asset pages, redirect instead of throwing error  
+              if (pageName === 'asset' || pageName.includes('editor') || pageName.includes('viewer')) {
+                navigate('/', { 
+                  state: { 
+                    warningMessage: `Could not access the requested asset. Asset '${asset}' not found in repository.` 
+                  }, 
+                  replace: true 
+                });
+                return;
+              }
               throw new Error(`Asset '${asset}' not found in repository.`);
             }
           }
@@ -144,7 +210,14 @@ export const PageProvider = ({ children, pageName }) => {
             try {
               profile = await githubService.getUser(user);
             } catch (err) {
-              throw new Error(`User '${user}' not found or not accessible.`);
+              // For user pages, redirect instead of throwing error
+              navigate('/', { 
+                state: { 
+                  warningMessage: `Could not access the requested user. User '${user}' not found or not accessible.` 
+                }, 
+                replace: true 
+              });
+              return;
             }
           } else {
             profile = {
