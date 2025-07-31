@@ -22,7 +22,15 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
       setIsDarkMode(savedTheme === 'dark');
     } else {
       // Check if user explicitly prefers light mode
-      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+      let prefersLight = false;
+      try {
+        if (window.matchMedia) {
+          prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+        }
+      } catch (e) {
+        // Fallback for test environments
+        prefersLight = false;
+      }
       // Default to dark mode unless user explicitly prefers light
       setIsDarkMode(!prefersLight);
     }
@@ -136,7 +144,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
           
           {/* Question mark thought bubble - always show since we always have topics now */}
           {!notificationBadge && (
-            <div className="question-bubble">
+            <div className={`question-bubble ${showHelp ? 'help-open' : ''}`}>
               ?
             </div>
           )}

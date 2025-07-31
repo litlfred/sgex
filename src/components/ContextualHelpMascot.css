@@ -74,6 +74,11 @@
   box-shadow: 0 2px 8px rgba(0, 108, 190, 0.3);
 }
 
+/* Stop pulsing animation when help menu is open */
+.question-bubble.help-open {
+  animation: none;
+}
+
 @keyframes pulse {
   0% {
     transform: scale(1);
