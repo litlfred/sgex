@@ -81,7 +81,7 @@ const DAKActionSelectionContent = () => {
       action: actionId 
     };
     
-    handleNavigationClick(event, `/dak-selection/${profile.login}`, navigate, navigationState);
+    handleNavigationClick(event, `/sgex/dak-selection/${profile.login}`, navigate, navigationState);
   };
 
   const handleBackToProfile = () => {
