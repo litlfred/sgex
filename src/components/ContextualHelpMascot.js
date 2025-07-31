@@ -115,18 +115,6 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   return (
     <>
       <div className={`contextual-help-mascot ${position}`}>
-        {/* Theme Controls */}
-        <div className="theme-toggle-container">
-          <button 
-            className={`theme-toggle-btn ${isDarkMode ? 'dark' : 'light'}`}
-            onClick={toggleTheme}
-            aria-label={t('theme.toggle')}
-            title={t('theme.toggle')}
-          >
-            {isDarkMode ? '🌞' : '🌙'}
-          </button>
-        </div>
-        
         <div 
           className="mascot-container"
           onMouseEnter={handleMouseEnter}
@@ -191,6 +179,18 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                     <div className="help-menu-divider"></div>
                     <LanguageSelector className="help-menu-language-selector" />
                     
+                    {/* Theme Toggle in Help Menu */}
+                    <div className="help-menu-divider"></div>
+                    <button 
+                      className={`help-theme-toggle-btn ${isDarkMode ? 'dark' : 'light'}`}
+                      onClick={toggleTheme}
+                      aria-label={t('theme.toggle')}
+                      title={t('theme.toggle')}
+                    >
+                      <span className="theme-icon">{isDarkMode ? '🌞' : '🌙'}</span>
+                      <span className="theme-label">{isDarkMode ? t('theme.switchToLight', 'Light Mode') : t('theme.switchToDark', 'Dark Mode')}</span>
+                    </button>
+                    
                     {/* Flush Cache Option */}
                     <div className="help-menu-divider"></div>
                     <div className="help-menu-cache-section">
@@ -216,6 +216,18 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                     {/* Language Selector in Help Menu */}
                     <div className="help-menu-divider"></div>
                     <LanguageSelector className="help-menu-language-selector" />
+                    
+                    {/* Theme Toggle in Help Menu */}
+                    <div className="help-menu-divider"></div>
+                    <button 
+                      className={`help-theme-toggle-btn ${isDarkMode ? 'dark' : 'light'}`}
+                      onClick={toggleTheme}
+                      aria-label={t('theme.toggle')}
+                      title={t('theme.toggle')}
+                    >
+                      <span className="theme-icon">{isDarkMode ? '🌞' : '🌙'}</span>
+                      <span className="theme-label">{isDarkMode ? t('theme.switchToLight', 'Light Mode') : t('theme.switchToDark', 'Dark Mode')}</span>
+                    </button>
                     
                     {/* Flush Cache Option */}
                     <div className="help-menu-divider"></div>
