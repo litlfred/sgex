@@ -20,26 +20,30 @@ const generateQAReport = () => {
   console.log('📊 Running tests with coverage...');
   let testResults = {};
   let coverageData = {};
+  let startTime = Date.now(); // Initialize timing
 
   try {
     // Run tests with timeout and graceful failure handling
-    console.log('Running tests with timeout and coverage...');
-    const testOutput = execSync('timeout 120s npm test -- --watchAll=false --coverage --verbose --json --testTimeout=30000 --bail --passWithNoTests 2>/dev/null || echo "TESTS_FAILED"', { 
+    console.log('🔍 Starting test execution with verbose output...');
+    console.log('⏱️  Test timeout set to 120 seconds with 30s per individual test');
+    console.log('📝 Running: npm test -- --watchAll=false --coverage --verbose --json --testTimeout=30000 --bail --passWithNoTests');
+    
+    startTime = Date.now(); // Reset timing for actual test execution
+    const testOutput = execSync('timeout 120s npm test -- --watchAll=false --coverage --verbose --json --testTimeout=30000 --bail --passWithNoTests', { 
       encoding: 'utf8',
       cwd: process.cwd(),
-      timeout: 150000  // 2.5 minutes total timeout
+      timeout: 150000,  // 2.5 minutes total timeout
+      stdio: ['inherit', 'pipe', 'pipe']  // Show stderr for debugging
     });
 
-    // Check if tests failed due to timeout or other issues
-    if (testOutput.includes('TESTS_FAILED')) {
-      console.warn('⚠️  Tests failed or timed out, using fallback data...');
-      throw new Error('Test execution failed');
-    }
+    const executionTime = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`⏱️  Test execution completed in ${executionTime} seconds`);
 
     // Parse the last JSON object from the output (Jest results)
     const lines = testOutput.split('\n').filter(line => line.trim());
     let jsonOutput = '';
     
+    console.log('📋 Parsing test results...');
     for (let i = lines.length - 1; i >= 0; i--) {
       if (lines[i].startsWith('{')) {
         jsonOutput = lines[i];
@@ -49,13 +53,68 @@ const generateQAReport = () => {
 
     if (jsonOutput) {
       testResults = JSON.parse(jsonOutput);
-      console.log(`✅ Successfully ran ${testResults.numTotalTests || 0} tests`);
+      const totalTests = testResults.numTotalTests || 0;
+      const passedTests = testResults.numPassedTests || 0;
+      const failedTests = testResults.numFailedTests || 0;
+      
+      console.log(`✅ Test execution summary:`);
+      console.log(`   📊 Total tests: ${totalTests}`);
+      console.log(`   ✅ Passed: ${passedTests}`);
+      console.log(`   ❌ Failed: ${failedTests}`);
+      
+      // Show detailed results for each test file
+      if (testResults.testResults && testResults.testResults.length > 0) {
+        console.log('📁 Test files executed:');
+        testResults.testResults.forEach((result, index) => {
+          const fileName = result.name ? result.name.split('/').pop() : `Test ${index + 1}`;
+          const status = result.status || 'unknown';
+          const numTests = (result.assertionResults || []).length;
+          const statusIcon = status === 'passed' ? '✅' : status === 'failed' ? '❌' : '⚠️';
+          console.log(`   ${statusIcon} ${fileName} (${numTests} tests, ${status})`);
+          
+          // Show failed tests details
+          if (result.assertionResults) {
+            const failedTests = result.assertionResults.filter(test => test.status === 'failed');
+            if (failedTests.length > 0) {
+              console.log(`      Failed tests in ${fileName}:`);
+              failedTests.forEach(test => {
+                console.log(`        ❌ ${test.title}`);
+                if (test.failureMessages && test.failureMessages.length > 0) {
+                  console.log(`           Error: ${test.failureMessages[0].split('\n')[0]}`);
+                }
+              });
+            }
+          }
+        });
+      }
     } else {
       throw new Error('No JSON output found from tests');
     }
   } catch (error) {
-    console.warn('⚠️  Test execution encountered issues, continuing with minimal data...');
-    console.warn(`Error details: ${error.message}`);
+    const executionTime = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.warn(`⚠️  Test execution encountered issues after ${executionTime} seconds`);
+    console.warn(`🔍 Error details: ${error.message}`);
+    
+    // Check if it's a timeout error
+    if (error.message.includes('timeout')) {
+      console.warn('⏰ Tests timed out - this may indicate hanging tests');
+      console.warn('💡 Consider increasing timeout or checking for infinite loops in tests');
+    }
+    
+    // Check if there's any partial output that might be useful
+    if (error.stdout) {
+      console.log('📤 Partial test output captured:');
+      const lines = error.stdout.split('\n').slice(-10); // Show last 10 lines
+      lines.forEach(line => console.log(`   ${line}`));
+    }
+    
+    if (error.stderr) {
+      console.log('🚨 Error output:');
+      const errorLines = error.stderr.split('\n').slice(-10); // Show last 10 lines of errors
+      errorLines.forEach(line => console.log(`   ${line}`));
+    }
+    
+    console.warn('⚠️  Continuing with minimal data for QA report generation...');
     testResults = {
       numTotalTests: 0,
       numPassedTests: 0,
@@ -67,31 +126,46 @@ const generateQAReport = () => {
   }
 
   // Read coverage data if available
+  console.log('📈 Checking for coverage data...');
   try {
     const coveragePath = path.join(process.cwd(), 'coverage', 'coverage-summary.json');
     if (fs.existsSync(coveragePath)) {
       coverageData = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
+      const total = coverageData.total || {};
+      console.log('✅ Coverage data found:');
+      console.log(`   📊 Statements: ${(total.statements?.pct || 0).toFixed(1)}%`);
+      console.log(`   🔀 Branches: ${(total.branches?.pct || 0).toFixed(1)}%`);
+      console.log(`   📝 Functions: ${(total.functions?.pct || 0).toFixed(1)}%`);
+      console.log(`   📄 Lines: ${(total.lines?.pct || 0).toFixed(1)}%`);
+    } else {
+      console.warn('⚠️  Coverage file not found at:', coveragePath);
+      throw new Error('Coverage file not found');
     }
   } catch (error) {
-    console.warn('⚠️  Coverage data not available');
+    console.warn('⚠️  Coverage data not available:', error.message);
     coverageData = { total: { lines: { pct: 0 }, functions: { pct: 0 }, branches: { pct: 0 }, statements: { pct: 0 } } };
   }
 
   // Generate HTML report
+  console.log('📄 Generating HTML QA report...');
   const htmlReport = generateHTMLReport(testResults, coverageData);
 
   // Ensure both docs and public/docs directories exist
+  console.log('📁 Creating output directories...');
   const docsDir = path.join(process.cwd(), 'docs');
   const publicDocsDir = path.join(process.cwd(), 'public', 'docs');
   
   if (!fs.existsSync(docsDir)) {
     fs.mkdirSync(docsDir, { recursive: true });
+    console.log('✅ Created docs directory');
   }
   if (!fs.existsSync(publicDocsDir)) {
     fs.mkdirSync(publicDocsDir, { recursive: true });
+    console.log('✅ Created public/docs directory');
   }
 
   // Write the report to both locations for compatibility
+  console.log('💾 Writing QA report files...');
   const reportPath = path.join(docsDir, 'qa-report.html');
   const publicReportPath = path.join(publicDocsDir, 'qa-report.html');
   
@@ -100,6 +174,7 @@ const generateQAReport = () => {
 
   console.log(`✅ QA Report generated successfully: ${reportPath}`);
   console.log(`✅ QA Report also available for development server: ${publicReportPath}`);
+  console.log('🎉 QA report generation completed!');
   return reportPath;
 };
 
