@@ -7,6 +7,85 @@ import './ComponentEditor.css';
 
 const ComponentEditor = () => {
   const location = useLocation();
+  
+  // Handle health-interventions routes with PageLayout framework
+  if (location.pathname.includes('/health-interventions/')) {
+    return (
+      <PageLayout pageName="health-interventions">
+        <HealthInterventionsEditor />
+      </PageLayout>
+    );
+  }
+  
+  // For other routes, use existing logic
+  return <ComponentEditorContent />;
+};
+
+const HealthInterventionsEditor = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { params } = usePageParams();
+  const [selectedReferences, setSelectedReferences] = useState([]);
+  
+  // Get data from URL params or location state
+  const { profile, repository } = location.state || {};
+  const user = params?.user;
+  const repo = params?.repo;
+  
+  const currentComponent = { id: 'health-interventions', name: 'Health Interventions' };
+
+  const handleReferencesChange = useCallback((references) => {
+    setSelectedReferences(references);
+  }, []);
+
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
+
+  // Render WHO Digital Library for health-interventions component
+  return (
+    <div className="component-editor">
+      <div className="editor-header">
+        <div className="who-branding">
+          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
+          <p className="subtitle">WHO SMART Guidelines Exchange</p>
+        </div>
+        <div className="context-info">
+          <img 
+            src={profile?.avatar_url || user ? `https://github.com/${user}.png` : '/sgex/sgex-mascot.png'} 
+            alt="Profile" 
+            className="context-avatar" 
+          />
+          <div className="context-details">
+            <span className="context-repo">{repository?.name || repo || 'Repository'}</span>
+            <span className="context-component">{currentComponent.name}</span>
+          </div>
+          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+        </div>
+      </div>
+
+      <div className="editor-content">
+        <WHODigitalLibrary 
+          onReferencesChange={handleReferencesChange}
+          selectedReferences={selectedReferences}
+        />
+      </div>
+      
+      <ContextualHelpMascot 
+        pageId="health-interventions-editor"
+        contextData={{ 
+          profile: profile || { login: user }, 
+          repository: repository || { name: repo }, 
+          component: currentComponent,
+          selectedReferencesCount: selectedReferences.length 
+        }}
+      />
+    </div>
+  );
+};
+
+const ComponentEditorContent = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { params } = usePageParams();
   const [selectedReferences, setSelectedReferences] = useState([]);
@@ -16,7 +95,7 @@ const ComponentEditor = () => {
   // Determine component from route or state
   let currentComponent = component;
   
-  // Handle direct access to editor-health-interventions route
+  // Handle direct access to editor-health-interventions route (legacy)
   if (location.pathname === '/sgex/editor-health-interventions' && !component) {
     currentComponent = { id: 'health-interventions', name: 'Health Interventions' };
   } else if (params.componentId && !component) {
@@ -31,7 +110,7 @@ const ComponentEditor = () => {
     navigate('/');
   };
 
-  // For health-interventions, we can work without full context for now
+  // For legacy editor-health-interventions route, allow access without full context
   if (!profile || !repository) {
     if (currentComponent?.id === 'health-interventions') {
       // Allow access to health-interventions editor without full context
@@ -77,76 +156,6 @@ const ComponentEditor = () => {
       navigate('/');
       return <div>Redirecting...</div>;
     }
-  }
-
-  // Render WHO Digital Library for health-interventions component
-  if (currentComponent?.id === 'health-interventions') {
-    return (
-      <div className="component-editor">
-        <div className="editor-header">
-          <div className="who-branding">
-            <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
-          </div>
-          <div className="context-info">
-            <img 
-              src={profile.avatar_url || `https://github.com/${profile.login}.png`} 
-              alt="Profile" 
-              className="context-avatar" 
-            />
-            <div className="context-details">
-              <span className="context-repo">{repository.name}</span>
-              <span className="context-component">{currentComponent.name}</span>
-            </div>
-            <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-          </div>
-        </div>
-
-        <div className="editor-content">
-
-          <div className="editor-main">
-            <div className="component-intro">
-              <div className="component-icon" style={{ color: currentComponent.color }}>
-                {currentComponent.icon}
-              </div>
-              <div className="intro-content">
-                <h2>{currentComponent.name}</h2>
-                <p>
-                  Manage clinical guidelines and health intervention specifications by searching and selecting 
-                  publications from digital libraries. References are stored using Dublin Core metadata standards.
-                </p>
-                <div className="component-info">
-                  <div className="info-item">
-                    <strong>Connected Library:</strong> WHO Digital Library (IRIS)
-                  </div>
-                  <div className="info-item">
-                    <strong>Metadata Standard:</strong> Dublin Core
-                  </div>
-                  <div className="info-item">
-                    <strong>Storage:</strong> Client-side (localStorage)
-                  </div>
-                  <div className="info-item">
-                    <strong>References Selected:</strong> {selectedReferences.length}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <WHODigitalLibrary onReferencesChange={handleReferencesChange} />
-          </div>
-        </div>
-        
-        <ContextualHelpMascot 
-          pageId="health-interventions-editor"
-          contextData={{ 
-            profile, 
-            repository, 
-            component: currentComponent,
-            selectedReferencesCount: selectedReferences.length 
-          }}
-        />
-      </div>
-    );
   }
 
   return (
