@@ -217,6 +217,10 @@ jobs:
           git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
           git checkout ${{ github.ref_name }}
           
+          # Ensure dependencies are installed before building
+          echo "Installing dependencies for root landing page build..."
+          npm ci
+          
           # Build the root landing page
           echo "Building root landing page..."
           node scripts/build-multi-branch.js root
@@ -274,6 +278,7 @@ jobs:
               echo "Deploying main branch from current build..."
               git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
               git checkout ${{ github.ref_name }}
+              npm ci
               node scripts/build-multi-branch.js branch
               # Save build before switching branches
               mkdir -p /tmp/main-build-backup
@@ -288,6 +293,7 @@ jobs:
               if git show-ref --verify --quiet refs/remotes/origin/main; then
                 git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
                 git checkout main
+                npm ci
                 node scripts/build-multi-branch.js branch
                 # Save build before switching branches
                 mkdir -p /tmp/main-build-backup
@@ -311,6 +317,7 @@ jobs:
           if [[ "${{ github.ref_name }}" != "main" ]]; then
             git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
             git checkout ${{ github.ref_name }}
+            npm ci
             node scripts/build-multi-branch.js branch
             # Save build before switching branches
             mkdir -p /tmp/branch-build-backup
