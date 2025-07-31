@@ -3,6 +3,19 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import PagesManager from '../components/PagesManager';
 
+// Mock react-i18next
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key) => {
+      // Return translations for the keys we use
+      const translations = {
+        'repository.select': 'Select DAK'
+      };
+      return translations[key] || key;
+    }
+  })
+}));
+
 // Mock the services
 jest.mock('../services/githubService', () => ({
   checkRepositoryWritePermissions: jest.fn().mockResolvedValue(false),

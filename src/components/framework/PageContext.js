@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { usePage, PAGE_TYPES } from './PageProvider';
 import './PageContext.css';
 
@@ -7,6 +8,7 @@ import './PageContext.css';
  * Unified navigation component with avatar on left and two-row content on right
  */
 const PageContext = ({ customBreadcrumbs }) => {
+  const { t } = useTranslation();
   const { 
     type, 
     pageName,
@@ -50,7 +52,7 @@ const PageContext = ({ customBreadcrumbs }) => {
     // Add user context for user/DAK/asset pages
     if ((type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile) {
       breadcrumbs.push({
-        label: 'Select DAK',
+        label: t('repository.select'),
         path: `/select_repository/${profile.login}`,
         onClick: () => navigate(`/select_repository/${profile.login}`)
       });
@@ -73,7 +75,7 @@ const PageContext = ({ customBreadcrumbs }) => {
     const pageLabels = {
       'landing': 'Home',
       'landing-unauthenticated': 'Home',
-      'repositories': 'Select DAK', 
+      'repositories': t('repository.select'), 
       'dak-selection': 'Select DAK',
       'dak-action': 'Choose DAK Action',
       'dashboard': 'DAK Components',
