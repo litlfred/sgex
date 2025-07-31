@@ -37,6 +37,18 @@ const WelcomePage = () => {
     initializeAuth();
   }, []);
 
+  // Listen for authentication state changes (for logout)
+  useEffect(() => {
+    const checkAuthState = () => {
+      setIsAuthenticated(githubService.isAuthenticated);
+    };
+
+    // Check periodically for auth state changes
+    const interval = setInterval(checkAuthState, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   // Handle warning message from navigation state
   useEffect(() => {
     if (location.state?.warningMessage) {

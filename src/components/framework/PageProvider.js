@@ -207,6 +207,24 @@ export const PageProvider = ({ children, pageName }) => {
     }
   }, [user, repo, params.branch, asset, pageState.type, location.state]);
 
+  // Monitor authentication state changes
+  useEffect(() => {
+    const checkAuthState = () => {
+      const currentAuthState = githubService.isAuth();
+      if (currentAuthState !== pageState.isAuthenticated) {
+        setPageState(prev => ({
+          ...prev,
+          isAuthenticated: currentAuthState
+        }));
+      }
+    };
+
+    // Check periodically for auth state changes (for logout detection)
+    const interval = setInterval(checkAuthState, 1000);
+    
+    return () => clearInterval(interval);
+  }, [pageState.isAuthenticated]);
+
   const value = {
     ...pageState,
     navigate,
