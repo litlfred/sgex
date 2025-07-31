@@ -587,9 +587,13 @@ const DAKSelectionContent = () => {
     <div className="dak-selection">
       <div className="selection-content">
         <div className="selection-main">
+          <div className="selection-header">
+            <div className="selection-title">
+              <h1>{config.title}</h1>
+              <p className="selection-subtitle">{config.description}</p>
+            </div>
+          </div>
           <div className="selection-intro">
-            <h2>{config.title}</h2>
-            <p>{config.description}</p>
             {action === 'create' && (
               <div className="template-notice">
                 <span className="notice-icon">ℹ️</span>
