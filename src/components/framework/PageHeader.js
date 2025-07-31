@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { usePage, PAGE_TYPES } from './PageProvider';
 import BranchSelector from '../BranchSelector';
 import githubService from '../../services/githubService';
+import bookmarkService from '../../services/bookmarkService';
 import './PageHeader.css';
 
 /**
@@ -14,10 +15,13 @@ const PageHeader = () => {
     profile, 
     repository, 
     branch, 
+    asset,
     isAuthenticated,
     navigate 
   } = usePage();
 
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showBookmarkDropdown, setShowBookmarkDropdown] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [fetchingUser, setFetchingUser] = useState(false);
 
@@ -75,9 +79,47 @@ const PageHeader = () => {
     }
   };
 
+  const handleBookmarkCurrentPage = () => {
+    const context = {
+      user: displayProfile?.login,
+      repository,
+      branch,
+      asset
+    };
+    
+    const currentUrl = window.location.pathname;
+    bookmarkService.addBookmark(pageName, currentUrl, context);
+    setShowBookmarkDropdown(false);
+  };
+
+  const handleRemoveBookmark = (bookmarkId) => {
+    bookmarkService.removeBookmark(bookmarkId);
+    // Force re-render by toggling dropdown
+    setShowBookmarkDropdown(false);
+    setTimeout(() => setShowBookmarkDropdown(true), 50);
+  };
+
+  const handleBookmarkNavigation = (bookmark) => {
+    navigate(bookmark.url);
+    setShowBookmarkDropdown(false);
+  };
+
+  const getCurrentPageBookmark = () => {
+    return bookmarkService.getBookmarkByUrl(window.location.pathname);
+  };
+
+  const getBookmarksGrouped = () => {
+    return bookmarkService.getBookmarksGroupedByPage();
+  };
+
   const shouldShowDocumentationButton = pageName !== 'documentation';
   const shouldShowGitHubRepo = type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET;
   const shouldShowBranchSelector = type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET;
+  const currentBookmark = getCurrentPageBookmark();
+  const bookmarksGrouped = getBookmarksGrouped();
+  
+  // Use profile from page context if available, otherwise use currentUser
+  const displayProfile = profile || currentUser;
 
   return (
     <header className="page-header">
@@ -156,13 +198,14 @@ const PageHeader = () => {
         )}
         
         {/* User info and controls */}
-        {(isAuthenticated && (profile || currentUser)) || (profile?.isDemo) ? (
+        {(isAuthenticated || profile?.isDemo) && displayProfile ? (
           <div className="user-controls">
-            <div className="user-info">
-              <img src={(profile || currentUser)?.avatar_url} alt="User avatar" className="user-avatar" />
-              <span className="user-name">{(profile || currentUser)?.name || (profile || currentUser)?.login}</span>
+            <div className="user-info" onClick={() => setShowUserDropdown(!showUserDropdown)}>
+              <img src={displayProfile.avatar_url} alt="User avatar" className="user-avatar" />
+              <span className="user-name">{displayProfile.name || displayProfile.login}</span>
+              <span className="dropdown-arrow">▼</span>
             </div>
-            {(isAuthenticated || profile?.isDemo) && (
+            {showUserDropdown && (
               <div className="user-dropdown">
                 <button className="dropdown-item" onClick={handleGitHubUser}>
                   <svg className="github-icon" viewBox="0 0 16 16" width="16" height="16">
@@ -170,10 +213,71 @@ const PageHeader = () => {
                   </svg>
                   GitHub Profile
                 </button>
+                
+                {/* Add/Remove current page bookmark - moved to same level as bookmarks */}
+                {currentBookmark ? (
+                  <button 
+                    className="dropdown-item bookmark-action"
+                    onClick={() => handleRemoveBookmark(currentBookmark.id)}
+                  >
+                    ⭐ Remove Bookmark
+                  </button>
+                ) : (
+                  <button 
+                    className="dropdown-item bookmark-action"
+                    onClick={handleBookmarkCurrentPage}
+                  >
+                    ☆ Add Bookmark
+                  </button>
+                )}
+                
+                {/* Bookmarks submenu */}
+                <div className="bookmarks-section">
+                  <div className="dropdown-item bookmarks-header" onClick={() => setShowBookmarkDropdown(!showBookmarkDropdown)}>
+                    📖 Bookmarks
+                    <span className="dropdown-arrow">{showBookmarkDropdown ? '▲' : '▼'}</span>
+                  </div>
+                  
+                  {showBookmarkDropdown && (
+                    <div className="bookmarks-dropdown">
+                      {/* Bookmarks list grouped by page */}
+                      {bookmarksGrouped.length > 0 ? (
+                        <div className="bookmarks-list">
+                          {bookmarksGrouped.map(group => (
+                            <div key={group.pageName} className="bookmark-group">
+                              <div className="bookmark-group-header">{group.pageName}</div>
+                              {group.bookmarks.map(bookmark => (
+                                <div key={bookmark.id} className="bookmark-item">
+                                  <button 
+                                    className="bookmark-link"
+                                    onClick={() => handleBookmarkNavigation(bookmark)}
+                                    title={bookmark.url}
+                                  >
+                                    {bookmark.title}
+                                  </button>
+                                  <button 
+                                    className="bookmark-remove"
+                                    onClick={() => handleRemoveBookmark(bookmark.id)}
+                                    title="Remove bookmark"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="no-bookmarks">No bookmarks yet</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
                 {isAuthenticated && (
                   <button className="dropdown-item logout-btn" onClick={handleLogout}>
                     Logout
-                  </button>  
+                  </button>
                 )}
               </div>
             )}
