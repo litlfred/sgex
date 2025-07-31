@@ -70,6 +70,8 @@ function App() {
             <Route path="/core-data-dictionary-viewer/:user/:repo/:branch" element={<CoreDataDictionaryViewer />} />
             <Route path="/editor/:componentId" element={<ComponentEditor />} />
             <Route path="/editor-health-interventions" element={<ComponentEditor />} />
+            <Route path="/health-interventions/:user/:repo" element={<ComponentEditor />} />
+            <Route path="/health-interventions/:user/:repo/:branch" element={<ComponentEditor />} />
             <Route path="/actor-editor" element={<ActorEditor />} />
             <Route path="/actor-editor/:user/:repo" element={<ActorEditor />} />
             <Route path="/actor-editor/:user/:repo/:branch" element={<ActorEditor />} />
