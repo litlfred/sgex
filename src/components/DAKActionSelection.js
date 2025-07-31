@@ -5,8 +5,32 @@ import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Generate custom breadcrumbs that represent the actual DAK action navigation flow
+  const generateDAKActionBreadcrumbs = () => {
+    const breadcrumbs = [
+      {
+        label: 'Select Profile',
+        path: '/',
+        onClick: () => navigate('/')
+      },
+      {
+        label: 'Choose DAK Action',
+        current: true
+      }
+    ];
+
+    return breadcrumbs;
+  };
+
   return (
-    <PageLayout pageName="dak-action" showHeader={false}>
+    <PageLayout 
+      pageName="dak-action" 
+      showHeader={false}
+      customBreadcrumbs={generateDAKActionBreadcrumbs()}
+    >
       <DAKActionSelectionContent />
     </PageLayout>
   );

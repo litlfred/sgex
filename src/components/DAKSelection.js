@@ -7,8 +7,47 @@ import { PageLayout, usePageParams } from './framework';
 import './DAKSelection.css';
 
 const DAKSelection = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Generate custom breadcrumbs that represent the actual DAK selection navigation flow
+  const generateDAKSelectionBreadcrumbs = () => {
+    // Get user from URL path
+    const pathParts = location.pathname.split('/');
+    const user = pathParts[pathParts.indexOf('dak-selection') + 1];
+
+    const breadcrumbs = [
+      {
+        label: 'Select Profile',
+        path: '/',
+        onClick: () => navigate('/')
+      }
+    ];
+
+    // Add the DAK Action step since that's where users come from to get to DAK Selection
+    if (user) {
+      breadcrumbs.push({
+        label: 'Choose DAK Action', 
+        path: `/dak-action/${user}`,
+        onClick: () => navigate(`/dak-action/${user}`)
+      });
+    }
+
+    // Current page
+    breadcrumbs.push({
+      label: 'Select DAK',
+      current: true
+    });
+
+    return breadcrumbs;
+  };
+
   return (
-    <PageLayout pageName="dak-selection" showHeader={false}>
+    <PageLayout 
+      pageName="dak-selection" 
+      showHeader={false}
+      customBreadcrumbs={generateDAKSelectionBreadcrumbs()}
+    >
       <DAKSelectionContent />
     </PageLayout>
   );

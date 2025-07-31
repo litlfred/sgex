@@ -56,8 +56,7 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
   });
 
   // Add user context for user/DAK/asset pages
-  // For dak-action and dak-selection pages, don't show "Select Repository" since they have their own specific workflows
-  if ((type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile && pageName !== 'dak-action' && pageName !== 'dak-selection') {
+  if ((type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile) {
     breadcrumbs.push({
       label: 'Select Repository',
       path: `/sgex/repositories/${profile.login}`,
