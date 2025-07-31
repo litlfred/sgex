@@ -158,6 +158,28 @@ body.theme-light .dak-action-selection {
   box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
 
+.action-card.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: not-allowed;
+  background: var(--who-disabled-bg, #f5f5f5);
+}
+
+.action-card.disabled:hover {
+  transform: none;
+  border-color: var(--who-border-color);
+  box-shadow: none;
+  background: var(--who-disabled-bg, #f5f5f5);
+}
+
+.auth-notice {
+  background: #e3f2fd;
+  padding: 12px;
+  border-radius: 4px;
+  margin-top: 12px;
+  border-left: 4px solid var(--who-blue);
+}
+
 .action-header-content {
   display: flex;
   align-items: center;

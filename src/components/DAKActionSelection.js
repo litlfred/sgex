@@ -20,6 +20,18 @@ const DAKActionSelectionContent = () => {
   // Use profile from framework (PageProvider) or location state
   const effectiveProfile = profile || location.state?.profile;
 
+  // For unauthenticated users without a profile, create a default one
+  // This allows them to see the page and understand the options available
+  const fallbackProfile = !effectiveProfile ? {
+    login: 'demo-user',
+    name: 'Demo User', 
+    avatar_url: '/sgex-mascot.png',
+    type: 'User',
+    isUnauthenticated: true
+  } : null;
+
+  const displayProfile = effectiveProfile || fallbackProfile;
+
   // Note: Profile validation is handled by PageLayout framework
   // When accessing directly via URL, the framework will load the profile based on URL params
 
@@ -48,6 +60,12 @@ const DAKActionSelectionContent = () => {
   ];
 
   const handleActionSelect = (event, actionId) => {
+    // For unauthenticated users, show info message about signing in
+    if (!effectiveProfile || displayProfile.isUnauthenticated) {
+      alert('Please sign in to GitHub to manage DAKs. You can browse public repositories and view their content without signing in.');
+      return;
+    }
+
     // Navigate directly to the DAK selection with the chosen action and user parameter
     const navigationState = { 
       profile: effectiveProfile, 
@@ -61,10 +79,7 @@ const DAKActionSelectionContent = () => {
     navigate('/', { state: { profile: effectiveProfile } });
   };
 
-  if (!effectiveProfile) {
-    return <div>Redirecting...</div>;
-  }
-
+  // Always show the page content - displayProfile will have either the real profile or fallback
   return (
     <div className="action-content">
       <div className="breadcrumb">
@@ -82,13 +97,19 @@ const DAKActionSelectionContent = () => {
             Choose how you would like to work with a WHO SMART Guidelines Digital Adaptation Kit (DAK). 
             Each option provides different workflows for DAK management and editing.
           </p>
+          {displayProfile.isUnauthenticated && (
+            <div className="auth-notice" style={{ background: '#e3f2fd', padding: '12px', borderRadius: '4px', marginTop: '12px' }}>
+              <strong>Note:</strong> You are viewing as an unauthenticated user. Sign in to GitHub to create, edit, or fork DAKs.
+              You can browse public repositories without signing in.
+            </div>
+          )}
         </div>
 
         <div className="actions-grid">
           {dakActions.map((action) => (
             <div 
               key={action.id}
-              className={`action-card`}
+              className={`action-card ${displayProfile.isUnauthenticated ? 'disabled' : ''}`}
               onClick={(event) => handleActionSelect(event, action.id)}
               style={{ '--action-color': action.color }}
             >

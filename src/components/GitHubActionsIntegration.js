@@ -15,30 +15,32 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
 
   // Load workflows and recent runs
   const loadWorkflowData = async () => {
-    if (!githubService.isAuth()) {
-      // In demo mode or without auth, show placeholder data
-      setWorkflows([]);
-      setWorkflowRuns([]);
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
-      // Load workflows
-      const workflowsData = await githubService.getWorkflows(owner, repoName);
-      setWorkflows(workflowsData);
+      if (githubService.isAuth()) {
+        // Authenticated users get full workflow data
+        const workflowsData = await githubService.getWorkflows(owner, repoName);
+        setWorkflows(workflowsData);
 
-      // Load recent workflow runs
-      const runsData = await githubService.getWorkflowRuns(owner, repoName, {
-        branch: branch,
-        per_page: 5
-      });
-      setWorkflowRuns(runsData.workflow_runs || []);
+        const runsData = await githubService.getWorkflowRuns(owner, repoName, {
+          branch: branch,
+          per_page: 5
+        });
+        setWorkflowRuns(runsData.workflow_runs || []);
+      } else {
+        // Unauthenticated users get public workflow data
+        const publicWorkflowData = await githubService.getPublicWorkflows(owner, repoName);
+        setWorkflows(publicWorkflowData.workflows || []);
+        setWorkflowRuns(publicWorkflowData.recentRuns || []);
+      }
     } catch (err) {
       console.error('Error loading workflow data:', err);
-      setError('Failed to load GitHub Actions data');
+      const errorMessage = githubService.isAuth() 
+        ? 'Failed to load GitHub Actions data'
+        : 'Failed to load public GitHub Actions data. Repository may be private or have no public workflows.';
+      setError(errorMessage);
       setWorkflows([]);
       setWorkflowRuns([]);
     } finally {
@@ -170,13 +172,19 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
     );
   }
 
-  if (!githubService.isAuth()) {
+  // Show placeholder when no workflows are available (for both auth and unauth users)
+  if (!loading && !error && workflows.length === 0 && workflowRuns.length === 0) {
     return (
       <div className="github-actions-placeholder">
         <div className="placeholder-content">
           <span className="placeholder-icon">⚡</span>
           <h4>GitHub Actions Integration</h4>
-          <p>Sign in to GitHub to view and manage workflow runs</p>
+          <p>
+            {githubService.isAuth() 
+              ? 'No GitHub Actions workflows found in this repository.'
+              : 'No public GitHub Actions workflows found. Repository may be private or have no workflows.'
+            }
+          </p>
           <a 
             href={`https://github.com/${owner}/${repoName}/actions`}
             target="_blank"

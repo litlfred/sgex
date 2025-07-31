@@ -761,6 +761,63 @@ class GitHubService {
     }
   }
 
+  // Get public workflows and recent runs (works for unauthenticated users on public repos)
+  async getPublicWorkflows(owner, repo) {
+    try {
+      const publicOctokit = new Octokit();
+      
+      // Try to get the .github/workflows directory
+      const { data } = await publicOctokit.rest.repos.getContent({
+        owner,
+        repo,
+        path: '.github/workflows'
+      });
+
+      // Filter for YAML/YML files
+      const workflowFiles = Array.isArray(data) 
+        ? data.filter(file => file.name.endsWith('.yml') || file.name.endsWith('.yaml'))
+        : [];
+
+      // For public access, we'll get basic workflow info without parsing all details
+      const workflows = workflowFiles.map(file => ({
+        name: file.name.replace(/\.(yml|yaml)$/, ''),
+        filename: file.name,
+        path: file.path,
+        size: file.size,
+        sha: file.sha,
+        url: file.html_url,
+        triggers: ['push'], // default assumption for public view
+        lastModified: 'Unknown'
+      }));
+
+      // Try to get some recent workflow runs via the Actions API (public)
+      let recentRuns = [];
+      try {
+        const runsResponse = await publicOctokit.rest.actions.listWorkflowRunsForRepo({
+          owner,
+          repo,
+          per_page: 5
+        });
+        recentRuns = runsResponse.data.workflow_runs || [];
+      } catch (runsError) {
+        console.warn('Could not fetch public workflow runs:', runsError);
+        // Continue without runs - workflows list is still useful
+      }
+
+      return {
+        workflows,
+        recentRuns
+      };
+    } catch (error) {
+      if (error.status === 404) {
+        // No .github/workflows directory exists or repo is private
+        return { workflows: [], recentRuns: [] };
+      }
+      console.error('Failed to fetch public workflows:', error);
+      throw error;
+    }
+  }
+
   // Get workflow runs for a repository
   async getWorkflowRuns(owner, repo, options = {}) {
     if (!this.isAuth()) {
@@ -1303,6 +1360,138 @@ class GitHubService {
       };
     } catch (error) {
       console.error('Failed to fetch repository stats:', error);
+      throw error;
+    }
+  }
+
+  // Get public repository statistics (works for unauthenticated users on public repos)
+  async getPublicRepositoryStats(owner, repo, branch = 'main') {
+    try {
+      const [recentCommits, openPRsCount, openIssuesCount] = await Promise.allSettled([
+        this.getPublicRecentCommits(owner, repo, branch, 1),
+        this.getPublicOpenPullRequestsCount(owner, repo),
+        this.getPublicOpenIssuesCount(owner, repo)
+      ]);
+
+      return {
+        recentCommits: recentCommits.status === 'fulfilled' ? recentCommits.value : [],
+        openPullRequestsCount: openPRsCount.status === 'fulfilled' ? openPRsCount.value : 0,
+        openIssuesCount: openIssuesCount.status === 'fulfilled' ? openIssuesCount.value : 0,
+        errors: {
+          recentCommits: recentCommits.status === 'rejected' ? recentCommits.reason : null,
+          openPullRequestsCount: openPRsCount.status === 'rejected' ? openPRsCount.reason : null,
+          openIssuesCount: openIssuesCount.status === 'rejected' ? openIssuesCount.reason : null
+        }
+      };
+    } catch (error) {
+      console.error('Failed to fetch public repository stats:', error);
+      throw error;
+    }
+  }
+
+  // Get recent commits from public repository
+  async getPublicRecentCommits(owner, repo, branch = 'main', per_page = 5) {
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/commits`, { sha: branch, per_page, auth: 'public' });
+
+    try {
+      const publicOctokit = new Octokit();
+      const response = await publicOctokit.rest.repos.listCommits({
+        owner,
+        repo,
+        sha: branch,
+        per_page
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/commits`, response.status, Date.now() - startTime);
+      
+      return response.data.map(commit => ({
+        sha: commit.sha,
+        message: commit.commit.message,
+        author: {
+          name: commit.commit.author.name,
+          email: commit.commit.author.email,
+          date: commit.commit.author.date
+        },
+        committer: {
+          name: commit.commit.committer.name,
+          email: commit.commit.committer.email,
+          date: commit.commit.committer.date
+        },
+        html_url: commit.html_url,
+        stats: commit.stats
+      }));
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/commits`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch public recent commits:', error);
+      throw error;
+    }
+  }
+
+  // Get open pull requests count from public repository
+  async getPublicOpenPullRequestsCount(owner, repo) {
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls`, { state: 'open', per_page: 1, auth: 'public' });
+
+    try {
+      const publicOctokit = new Octokit();
+      const response = await publicOctokit.rest.pulls.list({
+        owner,
+        repo,
+        state: 'open',
+        per_page: 1
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, response.status, Date.now() - startTime);
+      
+      // GitHub includes the total count in the response headers
+      const linkHeader = response.headers.link;
+      if (linkHeader && linkHeader.includes('rel="last"')) {
+        const lastPageMatch = linkHeader.match(/page=(\d+)>; rel="last"/);
+        if (lastPageMatch) {
+          return parseInt(lastPageMatch[1], 10);
+        }
+      }
+      
+      // Fallback: use the length of returned items (may not be accurate for large counts)
+      return response.data.length;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch public pull requests count:', error);
+      throw error;
+    }
+  }
+
+  // Get open issues count from public repository
+  async getPublicOpenIssuesCount(owner, repo) {
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues`, { state: 'open', per_page: 1, auth: 'public' });
+
+    try {
+      const publicOctokit = new Octokit();
+      const response = await publicOctokit.rest.issues.listForRepo({
+        owner,
+        repo,
+        state: 'open',
+        per_page: 1
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues`, response.status, Date.now() - startTime);
+      
+      // GitHub includes the total count in the response headers
+      const linkHeader = response.headers.link;
+      if (linkHeader && linkHeader.includes('rel="last"')) {
+        const lastPageMatch = linkHeader.match(/page=(\d+)>; rel="last"/);
+        if (lastPageMatch) {
+          return parseInt(lastPageMatch[1], 10);
+        }
+      }
+      
+      // Fallback: use the length of returned items (may not be accurate for large counts)
+      return response.data.length;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch public issues count:', error);
       throw error;
     }
   }

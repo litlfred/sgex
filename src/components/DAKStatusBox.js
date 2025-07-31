@@ -20,27 +20,34 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
 
   // Load repository statistics
   const loadRepositoryStats = useCallback(async () => {
-    if (!githubService.isAuth()) {
-      return;
-    }
-
     setRepositoryStats(prev => ({ ...prev, statsLoading: true, statsError: null }));
 
     try {
-      const stats = await githubService.getRepositoryStats(owner, repoName, branch);
+      let stats;
+      if (githubService.isAuth()) {
+        // Authenticated users get full stats
+        stats = await githubService.getRepositoryStats(owner, repoName, branch);
+      } else {
+        // Unauthenticated users get public stats
+        stats = await githubService.getPublicRepositoryStats(owner, repoName, branch);
+      }
+      
       setRepositoryStats({
-        recentCommits: stats.recentCommits,
-        openPullRequestsCount: stats.openPullRequestsCount,
-        openIssuesCount: stats.openIssuesCount,
+        recentCommits: stats.recentCommits || [],
+        openPullRequestsCount: stats.openPullRequestsCount || 0,
+        openIssuesCount: stats.openIssuesCount || 0,
         statsLoading: false,
         statsError: null
       });
     } catch (err) {
       console.error('Error loading repository stats:', err);
+      const errorMessage = githubService.isAuth() 
+        ? 'Failed to load repository statistics'
+        : 'Failed to load public repository statistics. Repository may be private.';
       setRepositoryStats(prev => ({
         ...prev,
         statsLoading: false,
-        statsError: 'Failed to load repository statistics'
+        statsError: errorMessage
       }));
     }
   }, [owner, repoName, branch]);
