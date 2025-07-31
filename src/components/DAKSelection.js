@@ -776,7 +776,7 @@ const DAKSelectionContent = () => {
             <>
               {hasCompletedScanning ? (
                 /* Use condensed format after scanning has been completed */
-                <div className="repo-grid-condensed">
+                <div className="repo-grid-condensed-post-scan">
                   {repositories.map((repo) => (
                     <div 
                       key={repo.id}

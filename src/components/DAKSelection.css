@@ -798,13 +798,23 @@ body.theme-light .dak-selection {
   overflow: hidden;
 }
 
-/* Post-scanning condensed grid layout */
-.repo-grid-condensed {
+/* Post-scanning condensed grid layout - two columns */
+.repo-grid-condensed-post-scan {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin-bottom: 3rem;
   max-height: none; /* Allow full height unlike the scanning layout */
+}
+
+/* Scanning display - single column flex for discovered repos */
+.repository-section .repo-grid-condensed {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-right: 0.5rem; /* Space for scrollbar */
 }
 
 .scanning-section {
@@ -906,15 +916,6 @@ body.theme-light .dak-selection {
   color: var(--who-text-primary);
   font-size: 1.1rem;
   font-weight: 600;
-}
-
-.repo-grid-condensed {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding-right: 0.5rem; /* Space for scrollbar */
 }
 
 .no-repos-yet {
@@ -1117,7 +1118,7 @@ body.theme-light .dak-selection {
     gap: 1rem;
   }
 
-  .repo-grid-condensed {
+  .repo-grid-condensed-post-scan {
     grid-template-columns: 1fr;
   }
 
