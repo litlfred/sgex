@@ -1,40 +1,31 @@
 /* Decision Support Logic View Styles */
 /* Override PageLayout padding for fullwidth DMN viewer */
-.page-main:has(.decision-support-view) {
-  padding: 0 !important;
-}
-
-/* Enhanced fullwidth mode - take over full main container */
-.page-main:has(.decision-support-view.enhanced-fullwidth) {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 100;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: #f8f9fa;
-}
-
-/* Hide page layout header when in enhanced fullwidth */
-.page-layout:has(.decision-support-view.enhanced-fullwidth) .page-header {
-  display: none;
-}
-
-/* Fallback for browsers that don't support :has() */
-.page-layout .page-main .decision-support-view {
+.decision-support-view {
   margin: -1rem;
 }
 
-.page-layout .page-main .decision-support-view.enhanced-fullwidth {
+/* Enhanced fullwidth mode - take over entire viewport */
+.decision-support-view.enhanced-fullwidth {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 100;
+  z-index: 1000;
   margin: 0;
+  background: #f8f9fa;
+}
+
+/* Hide everything else when in enhanced fullwidth mode */
+body:has(.decision-support-view.enhanced-fullwidth) .page-header,
+body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
+  display: none !important;
+}
+
+/* Fallback for browsers without :has() support */
+.enhanced-fullwidth-active .page-header,
+.enhanced-fullwidth-active .page-breadcrumb {
+  display: none !important;
 }
 
 .decision-support-view {
@@ -45,13 +36,15 @@
   overflow: hidden;
 }
 
+/* Enhanced fullwidth mode styling */
 .decision-support-view.enhanced-fullwidth {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 100;
+  z-index: 1000;
+  min-height: 100vh;
   height: 100vh;
 }
 
@@ -169,16 +162,22 @@
   z-index: 20;
 }
 
-/* Auto-hide section tabs unless hovered */
+/* Auto-hide section tabs - slide up when hidden */
 .decision-support-view.auto-hide .section-tabs {
   transform: translateY(-100%);
   opacity: 0;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%);
+  z-index: 1001;
 }
 
+/* Show section tabs on hover */
 .decision-support-view.auto-hide:hover .section-tabs,
 .decision-support-view.auto-hide .section-tabs:hover,
 .decision-support-view.auto-hide .section-tabs:focus-within {
-  transform: translateY(0);
+  transform: translateX(-50%) translateY(1rem);
   opacity: 1;
 }
 

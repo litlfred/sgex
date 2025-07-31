@@ -638,12 +638,41 @@ define "Contraindication Present":
   };
 
   const handleToggleEnhancedFullwidth = () => {
-    setEnhancedFullwidth(!enhancedFullwidth);
+    const newState = !enhancedFullwidth;
+    setEnhancedFullwidth(newState);
+    
+    // Add/remove class on body for enhanced fullwidth mode
+    if (newState) {
+      document.body.classList.add('enhanced-fullwidth-active');
+    } else {
+      document.body.classList.remove('enhanced-fullwidth-active');
+    }
   };
 
   const handleToggleAutoHide = () => {
     setAutoHide(!autoHide);
   };
+
+  // Cleanup effect for enhanced fullwidth
+  useEffect(() => {
+    return () => {
+      // Clean up body class on unmount
+      document.body.classList.remove('enhanced-fullwidth-active');
+    };
+  }, []);
+
+  // Update body class when enhanced fullwidth changes
+  useEffect(() => {
+    if (enhancedFullwidth) {
+      document.body.classList.add('enhanced-fullwidth-active');
+    } else {
+      document.body.classList.remove('enhanced-fullwidth-active');
+    }
+    
+    return () => {
+      document.body.classList.remove('enhanced-fullwidth-active');
+    };
+  }, [enhancedFullwidth]);
 
 
 
