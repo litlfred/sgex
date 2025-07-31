@@ -376,3 +376,159 @@ body.theme-dark .collaboration-modal .modal-header {
     margin: 0.5rem 0;
   }
 }
+
+/* Pronunciation slide styles */
+.pronunciation-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.pronunciation-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin: 1rem 0;
+}
+
+.sgex-logo {
+  text-align: center;
+  flex: 1;
+}
+
+.sgex-text {
+  font-size: 4rem;
+  font-weight: 700;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.s-letter {
+  color: var(--who-teal, #4a9b8e);
+}
+
+.ge-letter {
+  color: var(--who-purple, #8b5a9f);
+  font-size: 0.8em;
+  vertical-align: super;
+}
+
+.x-letter {
+  color: var(--who-teal, #4a9b8e);
+}
+
+.pronunciation-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.pronunciation-text {
+  font-family: 'Courier New', monospace;
+  font-size: 1.2rem;
+  color: var(--who-text-secondary);
+  background: var(--who-card-bg);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--who-border-color);
+}
+
+.pronunciation-simple {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--who-blue);
+}
+
+.mascot-image {
+  flex-shrink: 0;
+}
+
+.mascot-image img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.pronunciation-explanation {
+  text-align: center;
+  max-width: 600px;
+}
+
+.pronunciation-breakdown {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 1.5rem 0;
+}
+
+.syllable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
+  border-radius: 8px;
+  min-width: 120px;
+}
+
+.syllable-part {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--who-text-primary);
+}
+
+.syllable-pronunciation {
+  font-size: 0.9rem;
+  color: var(--who-text-secondary);
+  font-style: italic;
+}
+
+.pronunciation-note {
+  font-style: italic;
+  color: var(--who-text-muted);
+  font-size: 0.95rem;
+  margin-top: 1.5rem;
+}
+
+/* Responsive adjustments for pronunciation slide */
+@media (max-width: 768px) {
+  .pronunciation-visual {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .sgex-text {
+    font-size: 3rem;
+  }
+  
+  .pronunciation-breakdown {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .syllable {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .sgex-text {
+    font-size: 2.5rem;
+  }
+  
+  .pronunciation-simple {
+    font-size: 1.3rem;
+  }
+  
+  .mascot-image img {
+    width: 100px;
+    height: 100px;
+  }
+}
