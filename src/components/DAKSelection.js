@@ -17,8 +17,13 @@ const DAKSelection = () => {
 const DAKSelectionContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { params } = usePageParams();
+  const { params, profile } = usePageParams();
   const userParam = params?.user;
+  
+  // Use profile from framework (PageProvider) or location state
+  const effectiveProfile = profile || location.state?.profile;
+  const { action } = location.state || {};
+  
   const [repositories, setRepositories] = useState([]);
   const [selectedRepository, setSelectedRepository] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,38 +32,42 @@ const DAKSelectionContent = () => {
   const [scanProgress, setScanProgress] = useState(null);
   const [currentlyScanningRepos, setCurrentlyScanningRepos] = useState(new Set());
   const [usingCachedData, setUsingCachedData] = useState(false);
-  
-  const { profile, action } = location.state || {};
 
   // Validate user parameter and profile consistency
   useEffect(() => {
     // If no user parameter in URL and no profile in state, redirect to landing
-    if (!userParam && !profile) {
+    if (!userParam && !effectiveProfile) {
       navigate('/');
       return;
     }
     
+    // If user parameter exists but no action - redirect to action selection
+    if (userParam && !action) {
+      navigate(`/dak-action/${userParam}`, { replace: true });
+      return;
+    }
+    
     // If user parameter exists but no profile - redirect to landing
-    if (userParam && !profile) {
+    if (userParam && !effectiveProfile) {
       navigate('/');
       return;
     }
     
     // If user parameter exists and profile exists but they don't match - redirect to landing
-    if (userParam && profile && profile.login !== userParam) {
+    if (userParam && effectiveProfile && effectiveProfile.login !== userParam) {
       navigate('/');
       return;
     }
     
     // If profile exists but no user parameter, redirect to include user in URL
-    if (profile && !userParam) {
-      navigate(`/dak-selection/${profile.login}`, { 
-        state: { profile, action },
+    if (effectiveProfile && !userParam) {
+      navigate(`/dak-selection/${effectiveProfile.login}`, { 
+        state: { profile: effectiveProfile, action },
         replace: true 
       });
       return;
     }
-  }, [userParam, profile, action, navigate]);
+  }, [userParam, effectiveProfile, action, navigate]);
 
   // Helper function to extract user and repo from repository object
   const getRepositoryPath = (repository) => {
@@ -111,7 +120,7 @@ const DAKSelectionContent = () => {
   };
 
   const getMockRepositories = useCallback(() => {
-    if (!profile || !profile.login) {
+    if (!effectiveProfile || !effectiveProfile.login) {
       return [];
     }
     
@@ -120,9 +129,9 @@ const DAKSelectionContent = () => {
       {
         id: 1,
         name: 'maternal-health-dak',
-        full_name: `${profile.login}/maternal-health-dak`,
+        full_name: `${effectiveProfile.login}/maternal-health-dak`,
         description: 'WHO SMART Guidelines for Maternal Health - Digital Adaptation Kit',
-        html_url: `https://github.com/${profile.login}/maternal-health-dak`,
+        html_url: `https://github.com/${effectiveProfile.login}/maternal-health-dak`,
         topics: ['who', 'smart-guidelines', 'maternal-health', 'dak'],
         language: 'FML',
         stargazers_count: 12,
@@ -133,9 +142,9 @@ const DAKSelectionContent = () => {
       {
         id: 2,
         name: 'immunization-dak',
-        full_name: `${profile.login}/immunization-dak`,
+        full_name: `${effectiveProfile.login}/immunization-dak`,
         description: 'Digital Adaptation Kit for Immunization Guidelines',
-        html_url: `https://github.com/${profile.login}/immunization-dak`,
+        html_url: `https://github.com/${effectiveProfile.login}/immunization-dak`,
         topics: ['who', 'smart-guidelines', 'immunization', 'vaccines'],
         language: 'FML',
         stargazers_count: 8,
@@ -146,9 +155,9 @@ const DAKSelectionContent = () => {
       {
         id: 3,
         name: 'anc-dak',
-        full_name: `${profile.login}/anc-dak`,
+        full_name: `${effectiveProfile.login}/anc-dak`,
         description: 'Antenatal Care Digital Adaptation Kit based on WHO guidelines',
-        html_url: `https://github.com/${profile.login}/anc-dak`,
+        html_url: `https://github.com/${effectiveProfile.login}/anc-dak`,
         topics: ['who', 'anc', 'antenatal-care', 'smart-guidelines'],
         language: 'FML',
         stargazers_count: 15,
@@ -159,9 +168,9 @@ const DAKSelectionContent = () => {
       {
         id: 4,
         name: 'regular-health-app',
-        full_name: `${profile.login}/regular-health-app`,
+        full_name: `${effectiveProfile.login}/regular-health-app`,
         description: 'A regular health application without SMART Guidelines',
-        html_url: `https://github.com/${profile.login}/regular-health-app`,
+        html_url: `https://github.com/${effectiveProfile.login}/regular-health-app`,
         topics: ['health', 'app', 'javascript'],
         language: 'JavaScript',
         stargazers_count: 5,
@@ -172,9 +181,9 @@ const DAKSelectionContent = () => {
       {
         id: 5,
         name: 'medical-database',
-        full_name: `${profile.login}/medical-database`,
+        full_name: `${effectiveProfile.login}/medical-database`,
         description: 'Medical database with FHIR but not SMART Guidelines',
-        html_url: `https://github.com/${profile.login}/medical-database`,
+        html_url: `https://github.com/${effectiveProfile.login}/medical-database`,
         topics: ['fhir', 'database', 'medical'],
         language: 'SQL',
         stargazers_count: 7,
@@ -186,7 +195,7 @@ const DAKSelectionContent = () => {
 
     // Filter to only return SMART guidelines compatible repositories
     return allMockRepos.filter(repo => repo.smart_guidelines_compatible);
-  }, [profile]);
+  }, [effectiveProfile]);
 
   const simulateEnhancedScanning = useCallback(async () => {
     setIsScanning(true);
@@ -303,7 +312,7 @@ const DAKSelectionContent = () => {
         // Always check cache first unless explicitly forcing a rescan
         if (githubService.isAuth() && !forceRescan) {
           try {
-            cachedData = repositoryCacheService.getCachedRepositories(profile.login, profile.type === 'org' ? 'org' : 'user');
+            cachedData = repositoryCacheService.getCachedRepositories(effectiveProfile.login, effectiveProfile.type === 'org' ? 'org' : 'user');
           } catch (cacheError) {
             console.warn('Error accessing repository cache:', cacheError);
           }
@@ -311,7 +320,7 @@ const DAKSelectionContent = () => {
 
         if (cachedData && !forceRescan) {
           // Use cached data - show immediately
-          console.log('Using cached repository data', repositoryCacheService.getCacheInfo(profile.login, profile.type === 'org' ? 'org' : 'user'));
+          console.log('Using cached repository data', repositoryCacheService.getCacheInfo(effectiveProfile.login, effectiveProfile.type === 'org' ? 'org' : 'user'));
           repos = cachedData.repositories;
           setUsingCachedData(true);
           // Sort cached repositories alphabetically
@@ -335,8 +344,8 @@ const DAKSelectionContent = () => {
             });
             
             const scanPromise = githubService.getSmartGuidelinesRepositoriesProgressive(
-              profile.login, 
-              profile.type === 'org' ? 'org' : 'user',
+              effectiveProfile.login, 
+              effectiveProfile.type === 'org' ? 'org' : 'user',
               // onRepositoryFound callback - add repo to list immediately in alphabetical order
               (foundRepo) => {
                 setRepositories(prevRepos => {
@@ -420,8 +429,8 @@ const DAKSelectionContent = () => {
             
             // Cache the results for future quick access
             repositoryCacheService.setCachedRepositories(
-              profile.login, 
-              profile.type === 'org' ? 'org' : 'user', 
+              effectiveProfile.login, 
+              effectiveProfile.type === 'org' ? 'org' : 'user', 
               repos
             );
             
@@ -461,17 +470,17 @@ const DAKSelectionContent = () => {
         setCurrentlyScanningRepos(new Set());
       }
     }
-  }, [profile, action, getMockRepositories, simulateEnhancedScanning]);
+  }, [effectiveProfile, action, getMockRepositories, simulateEnhancedScanning]);
 
   useEffect(() => {
     // Only proceed if we have valid profile, action and userParam consistency
-    if (!profile || !action || !userParam || profile.login !== userParam) {
+    if (!effectiveProfile || !action || !userParam || effectiveProfile.login !== userParam) {
       return;
     }
     
     // Always check cache first on initial load
     fetchRepositories(false, false); // forceRescan=false, useCachedData=false (but still check cache first)
-  }, [profile, action, userParam, fetchRepositories]);
+  }, [effectiveProfile, action, userParam, fetchRepositories]);
 
   const handleRepositorySelect = (repo) => {
     setSelectedRepository(repo);
@@ -485,7 +494,7 @@ const DAKSelectionContent = () => {
           const dashboardUrl = `/dashboard/${repoPath.user}/${repoPath.repo}`;
           navigate(dashboardUrl, {
             state: {
-              profile,
+              profile: effectiveProfile,
               repository: repo,
               action
             }
@@ -495,7 +504,7 @@ const DAKSelectionContent = () => {
           const config = getActionConfig();
           navigate(config.nextRoute, {
             state: {
-              profile,
+              profile: effectiveProfile,
               repository: repo,
               action
             }
@@ -520,7 +529,7 @@ const DAKSelectionContent = () => {
         const dashboardUrl = `/dashboard/${repoPath.user}/${repoPath.repo}`;
         navigate(dashboardUrl, {
           state: {
-            profile: profile,
+            profile: effectiveProfile,
             repository: selectedRepository,
             action: action
           }
@@ -529,7 +538,7 @@ const DAKSelectionContent = () => {
         // Fallback to original behavior if unable to extract path
         navigate(config.nextRoute, {
           state: {
-            profile: profile,
+            profile: effectiveProfile,
             repository: selectedRepository,
             action: action
           }
@@ -539,7 +548,7 @@ const DAKSelectionContent = () => {
       // Go to organization selection for fork/create
       navigate(config.nextRoute, {
         state: {
-          profile: profile,
+          profile: effectiveProfile,
           sourceRepository: selectedRepository,
           action: action
         }
@@ -568,7 +577,7 @@ const DAKSelectionContent = () => {
     });
   };
 
-  if (!profile || !action || !userParam || profile.login !== userParam) {
+  if (!effectiveProfile || !action || !userParam || effectiveProfile.login !== userParam) {
     return <div className="dak-selection"><div style={{color: 'white', textAlign: 'center', padding: '2rem'}}>Redirecting...</div></div>;
   }
 
@@ -613,7 +622,7 @@ const DAKSelectionContent = () => {
                         >
                           🔄 Rescan Repositories
                         </button>
-                        {repositoryCacheService.getCachedRepositories(profile.login, profile.type === 'org' ? 'org' : 'user') && (
+                        {repositoryCacheService.getCachedRepositories(effectiveProfile.login, effectiveProfile.type === 'org' ? 'org' : 'user') && (
                           <button 
                             onClick={handleUseCachedData} 
                             className="cache-btn"
