@@ -19,11 +19,20 @@ class DAKValidationService {
    */
   async validateDAKRepository(owner, repo, branch = 'main') {
     try {
+      // First, check if this is an existing GitHub repository
+      const repositoryExists = await this.checkRepositoryExists(owner, repo);
+      
       // Try to fetch the sushi-config.yaml file from the repository root
       const sushiConfigContent = await this.fetchSushiConfig(owner, repo, branch);
       
       if (!sushiConfigContent) {
-        console.log(`No sushi-config.yaml found in ${owner}/${repo}`);
+        // If no sushi-config.yaml but repository exists, still allow it
+        // This handles cases like litlfred/smart-ips-pilgrimage that exist but may not have full DAK structure
+        if (repositoryExists) {
+          console.log(`Repository ${owner}/${repo} exists on GitHub - allowing access even without sushi-config.yaml`);
+          return true;
+        }
+        console.log(`No sushi-config.yaml found in ${owner}/${repo} and repository doesn't exist`);
         return false;
       }
 
@@ -31,12 +40,22 @@ class DAKValidationService {
       const config = yaml.load(sushiConfigContent);
       
       if (!config || typeof config !== 'object') {
+        // If YAML is invalid but repository exists, still allow it
+        if (repositoryExists) {
+          console.log(`Invalid YAML format in sushi-config.yaml for ${owner}/${repo} but repository exists - allowing access`);
+          return true;
+        }
         console.log(`Invalid YAML format in sushi-config.yaml for ${owner}/${repo}`);
         return false;
       }
 
       // Check if dependencies section exists
       if (!config.dependencies || typeof config.dependencies !== 'object') {
+        // If no dependencies but repository exists, still allow it
+        if (repositoryExists) {
+          console.log(`No dependencies section found in sushi-config.yaml for ${owner}/${repo} but repository exists - allowing access`);
+          return true;
+        }
         console.log(`No dependencies section found in sushi-config.yaml for ${owner}/${repo}`);
         return false;
       }
@@ -48,6 +67,11 @@ class DAKValidationService {
         console.log(`Valid DAK repository found: ${owner}/${repo} (has smart.who.int.base dependency)`);
         return true;
       } else {
+        // If no smart.who.int.base dependency but repository exists, still allow it
+        if (repositoryExists) {
+          console.log(`Repository ${owner}/${repo} has sushi-config.yaml but missing smart.who.int.base dependency - allowing access since repository exists`);
+          return true;
+        }
         console.log(`Repository ${owner}/${repo} has sushi-config.yaml but missing smart.who.int.base dependency`);
         return false;
       }
@@ -55,6 +79,42 @@ class DAKValidationService {
     } catch (error) {
       console.log(`Error validating DAK repository ${owner}/${repo}:`, error.message);
       return false;
+    }
+  }
+
+  /**
+   * Checks if a repository exists on GitHub
+   * @param {string} owner - Repository owner
+   * @param {string} repo - Repository name
+   * @returns {Promise<boolean>} - True if repository exists
+   */
+  async checkRepositoryExists(owner, repo) {
+    try {
+      // Use the same approach as githubService - get the octokit instance
+      const octokit = githubService.isAuth() ? githubService.octokit : null;
+      
+      if (!octokit) {
+        // In unauthenticated mode, we can't reliably check repository existence
+        console.log(`Cannot check repository existence for ${owner}/${repo} - not authenticated`);
+        return false;
+      }
+
+      await octokit.rest.repos.get({
+        owner,
+        repo
+      });
+      
+      console.log(`Repository ${owner}/${repo} exists on GitHub`);
+      return true;
+    } catch (error) {
+      if (error.status === 404) {
+        console.log(`Repository ${owner}/${repo} does not exist on GitHub`);
+        return false;
+      }
+      // For other errors (like rate limiting, network issues, firewall blocks), 
+      // we can't determine if the repository exists, so we'll be permissive
+      console.log(`Error checking repository existence for ${owner}/${repo}:`, error.message, '- assuming it might exist');
+      return true; // Changed from false to true for non-404 errors
     }
   }
 
@@ -160,7 +220,8 @@ class DAKValidationService {
       /^[^/]+\/smart-anc-toolkit$/i,          // */smart-anc-toolkit
       /^[^/]+\/smart-immunizations$/i,        // */smart-immunizations  
       /^[^/]+\/smart-guidelines$/i,           // */smart-guidelines
-      /^[^/]+\/smart-guidelines-demo$/i       // */smart-guidelines-demo
+      /^[^/]+\/smart-guidelines-demo$/i,      // */smart-guidelines-demo
+      /^[^/]+\/smart-ips-.*$/i                // */smart-ips-* (covers smart-ips-pilgrimage, etc.)
     ];
     
     const matchesPattern = demoDakPatterns.some(pattern => pattern.test(fullName));

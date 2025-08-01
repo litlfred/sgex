@@ -271,9 +271,100 @@ class GitHubService {
   }
 
   // Get repositories for a user or organization (now filters by SMART Guidelines compatibility)
-  async getRepositories(owner, type = 'user') {
+  async getRepositories(owner, type = 'user', isDemo = false) {
+    // Handle demo mode - return demo repositories without requiring authentication
+    if (isDemo || owner === 'demo-user') {
+      return this.getDemoRepositories(owner);
+    }
+    
     // Use the new SMART guidelines filtering method
     return this.getSmartGuidelinesRepositories(owner, type);
+  }
+
+  // Get demo repositories for demo mode (no authentication required)
+  getDemoRepositories(owner) {
+    const demoRepos = [
+      {
+        id: 'demo-smart-anc',
+        name: 'smart-anc',
+        full_name: `${owner}/smart-anc`,
+        description: 'Demo SMART Guidelines Digital Adaptation Kit for Antenatal Care',
+        private: false,
+        owner: {
+          login: owner,
+          id: 'demo-owner',
+          avatar_url: `https://github.com/${owner}.png`,
+          type: 'User'
+        },
+        html_url: `https://github.com/${owner}/smart-anc`,
+        clone_url: `https://github.com/${owner}/smart-anc.git`,
+        language: 'FSH',
+        stargazers_count: 15,
+        forks_count: 3,
+        open_issues_count: 2,
+        topics: ['who', 'smart-guidelines', 'dak', 'antenatal-care', 'health'],
+        created_at: '2023-01-15T10:00:00Z',
+        updated_at: '2024-12-15T14:30:00Z',
+        pushed_at: '2024-12-15T14:30:00Z',
+        default_branch: 'main',
+        smart_guidelines_compatible: true,
+        isDemo: true
+      },
+      {
+        id: 'demo-smart-tb',
+        name: 'smart-tb',
+        full_name: `${owner}/smart-tb`,
+        description: 'Demo SMART Guidelines Digital Adaptation Kit for Tuberculosis Care',
+        private: false,
+        owner: {
+          login: owner,
+          id: 'demo-owner',
+          avatar_url: `https://github.com/${owner}.png`,
+          type: 'User'
+        },
+        html_url: `https://github.com/${owner}/smart-tb`,
+        clone_url: `https://github.com/${owner}/smart-tb.git`,
+        language: 'FSH',
+        stargazers_count: 8,
+        forks_count: 1,
+        open_issues_count: 0,
+        topics: ['who', 'smart-guidelines', 'dak', 'tuberculosis', 'health'],
+        created_at: '2023-03-20T15:00:00Z',
+        updated_at: '2024-11-30T09:15:00Z',
+        pushed_at: '2024-11-30T09:15:00Z',
+        default_branch: 'main',
+        smart_guidelines_compatible: true,
+        isDemo: true
+      },
+      {
+        id: 'demo-smart-ips-pilgrimage',
+        name: 'smart-ips-pilgrimage',
+        full_name: `${owner}/smart-ips-pilgrimage`,
+        description: 'Demo SMART Guidelines International Patient Summary for Pilgrimage',
+        private: false,
+        owner: {
+          login: owner,
+          id: 'demo-owner',
+          avatar_url: `https://github.com/${owner}.png`,
+          type: 'User'
+        },
+        html_url: `https://github.com/${owner}/smart-ips-pilgrimage`,
+        clone_url: `https://github.com/${owner}/smart-ips-pilgrimage.git`,
+        language: 'FSH',
+        stargazers_count: 12,
+        forks_count: 2,
+        open_issues_count: 1,
+        topics: ['who', 'smart-guidelines', 'dak', 'ips', 'pilgrimage', 'health'],
+        created_at: '2023-06-10T12:00:00Z',
+        updated_at: '2024-12-01T16:45:00Z',
+        pushed_at: '2024-12-01T16:45:00Z',
+        default_branch: 'main',
+        smart_guidelines_compatible: true,
+        isDemo: true
+      }
+    ];
+
+    return Promise.resolve(demoRepos);
   }
 
   // Check if a repository has sushi-config.yaml with smart.who.int.base dependency

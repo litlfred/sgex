@@ -9,13 +9,18 @@ import './RepositorySelection.css';
 const RepositorySelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user: userParam } = useParams();
+  const { user } = useParams();
   const [repositories, setRepositories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null);
   
-  // Get profile from location.state or URL parameters
+  // Initialize user access service
+  useEffect(() => {
+    userAccessService.initialize();
+  }, []);
+
+  // Get profile from location.state or URL parameters with enhanced resolution
   const getProfile = useCallback(() => {
     // First try to get from location.state (legacy behavior)
     if (location.state?.profile) {
@@ -23,23 +28,18 @@ const RepositorySelection = () => {
     }
     
     // If we have a user parameter, create a basic profile
-    if (userParam) {
+    if (user) {
       return {
-        login: userParam,
+        login: user,
         type: 'User', // Default to User, will be updated when we fetch actual data
-        name: userParam
+        name: user
       };
     }
     
     return null;
-  }, [location.state, userParam]);
+  }, [location.state, user]);
 
-  // Initialize user access service
-  useEffect(() => {
-    userAccessService.initialize();
-  }, []);
-
-  // Determine profile and fetch user data if needed
+  // Determine profile and fetch user data if needed - combining both approaches
   useEffect(() => {
     const initializeProfile = async () => {
       const currentProfile = getProfile();
@@ -51,37 +51,67 @@ const RepositorySelection = () => {
       }
 
       // If we only have basic profile from URL, try to fetch full profile data
-      if (userParam && !location.state?.profile) {
+      if (user && !location.state?.profile) {
         try {
           let fullProfile;
           
-          // Try to determine if it's a user or organization
-          // First try as organization
-          try {
-            const orgData = await githubService.getOrganization(userParam);
-            fullProfile = {
-              ...orgData,
-              type: 'Organization'
-            };
-          } catch (orgError) {
-            // If that fails, try as user
+          if (githubService.isAuth()) {
+            // For authenticated users, try to determine if it's a user or organization
             try {
-              const userData = await githubService.getUser(userParam);
+              const orgData = await githubService.getOrganization(user);
               fullProfile = {
-                ...userData,
-                type: 'User'
+                ...orgData,
+                type: 'Organization'
               };
-            } catch (userError) {
-              console.error('Failed to fetch profile data:', userError);
-              setError(`Could not find user or organization: ${userParam}`);
-              return;
+            } catch (orgError) {
+              // If that fails, try as user
+              try {
+                const userData = await githubService.getUser(user);
+                fullProfile = {
+                  ...userData,
+                  type: 'User'
+                };
+              } catch (userError) {
+                console.error('Failed to fetch profile data:', userError);
+                setError(`Could not find user or organization: ${user}`);
+                return;
+              }
+            }
+          } else {
+            // For unauthenticated users, create a demo profile with organization detection
+            try {
+              const orgData = await githubService.getOrganization(user);
+              fullProfile = {
+                ...orgData,
+                type: 'Organization',
+                isDemo: true
+              };
+            } catch (orgError) {
+              // If organization fetch fails, try user or create basic demo profile
+              try {
+                const userData = await githubService.getUser(user);
+                fullProfile = {
+                  ...userData,
+                  type: 'User',
+                  isDemo: true
+                };
+              } catch (userError) {
+                // Create basic demo profile as fallback
+                fullProfile = {
+                  login: user,
+                  name: user.charAt(0).toUpperCase() + user.slice(1),
+                  avatar_url: `https://github.com/${user}.png`,
+                  type: 'User',
+                  isDemo: true
+                };
+              }
             }
           }
           
           setProfile(fullProfile);
         } catch (error) {
           console.error('Error fetching profile:', error);
-          setError(`Failed to load profile: ${userParam}`);
+          setError(`Failed to load profile: ${user}`);
         }
       } else {
         setProfile(currentProfile);
@@ -89,7 +119,7 @@ const RepositorySelection = () => {
     };
 
     initializeProfile();
-  }, [userParam, location.state, navigate, getProfile]);
+  }, [user, location.state, navigate, getProfile]);
 
   const fetchRepositories = useCallback(async (forceRefresh = false) => {
     if (!profile) return;
@@ -123,8 +153,8 @@ const RepositorySelection = () => {
       
       let repos;
       if (githubService.isAuth()) {
-        // Authenticated user - use authenticated API
-        repos = await githubService.getRepositories(profile.login, profileType);
+        // Authenticated user - use authenticated API with demo support
+        repos = await githubService.getRepositories(profile.login, profileType, profile.isDemo);
       } else {
         // Unauthenticated user - fetch public repositories only
         repos = await githubService.getPublicRepositories(profile.login, profileType);
@@ -198,6 +228,7 @@ const RepositorySelection = () => {
   }, [profile]);
 
   useEffect(() => {
+    // Only fetch repositories if we have a profile
     if (profile) {
       fetchRepositories();
     }

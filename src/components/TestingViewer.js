@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import githubService from '../services/githubService';
-import { PageLayout } from './framework';
+import { PageLayout, useDAKParams } from './framework';
 import FeatureFileEditor from './FeatureFileEditor';
 import './TestingViewer.css';
 
@@ -141,9 +141,16 @@ const DEMO_FEATURE_FILES = [
 ];
 
 const TestingViewer = () => {
-  const location = useLocation();
+  return (
+    <PageLayout pageName="testing-viewer">
+      <TestingViewerContent />
+    </PageLayout>
+  );
+};
+
+const TestingViewerContent = () => {
   const navigate = useNavigate();
-  const { profile, repository, selectedBranch } = location.state || {};
+  const { profile, repository, branch } = useDAKParams();
 
   const [featureFiles, setFeatureFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -213,7 +220,7 @@ const TestingViewer = () => {
           owner,
           repoName,
           'input/testing',
-          selectedBranch || repository.default_branch || 'main'
+          branch || repository.default_branch || 'main'
         );
 
         // Filter for .feature files
@@ -240,7 +247,7 @@ const TestingViewer = () => {
     };
 
     fetchFeatureFiles();
-  }, [profile, repository, selectedBranch]);
+  }, [profile, repository, branch]);
 
   const handleViewFile = async (file) => {
     try {
@@ -329,9 +336,7 @@ const TestingViewer = () => {
   };
 
   const handleBack = () => {
-    navigate('/dashboard', { 
-      state: { profile, repository, selectedBranch } 
-    });
+    navigate(`/dashboard/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
   };
 
   const renderModal = () => {
@@ -463,7 +468,7 @@ const TestingViewer = () => {
         <FeatureFileEditor
           file={editorFile}
           repository={repository}
-          selectedBranch={selectedBranch}
+          selectedBranch={branch}
           isOpen={showEditor}
           onClose={() => setShowEditor(false)}
           onSave={handleSaveFile}

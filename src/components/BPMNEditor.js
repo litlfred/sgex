@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 import { Octokit } from '@octokit/rest';
-import { AssetEditorLayout } from './framework';
+import { AssetEditorLayout, useDAKParams } from './framework';
 import './BPMNEditor.css';
 
 const BPMNEditor = () => {
-  const location = useLocation();
   const navigate = useNavigate();
+  const { profile, repository, branch } = useDAKParams();
   const modelerRef = useRef(null);
   const containerRef = useRef(null);
-  
-  const { profile, repository, component } = location.state || {};
   
   const [bpmnFiles, setBpmnFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -320,7 +318,7 @@ const BPMNEditor = () => {
     }
   };
 
-  if (!profile || !repository || !component) {
+  if (!profile || !repository) {
     navigate('/');
     return <div>Redirecting...</div>;
   }
@@ -333,7 +331,7 @@ const BPMNEditor = () => {
       pageName="bpmn-editor"
       file={selectedFile}
       repository={repository}
-      branch="main" // You might want to get this from props or state
+      branch={branch || 'main'}
       content={currentXmlContent}
       originalContent={originalXmlContent}
       hasChanges={hasChanges}

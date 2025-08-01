@@ -24,7 +24,9 @@ const PageContext = createContext(null);
  */
 export const usePage = () => {
   const context = useContext(PageContext);
+  console.log('usePage: called, context is:', context ? 'available' : 'null');
   if (!context) {
+    console.error('usePage: PageContext is null - component not wrapped in PageProvider');
     throw new Error('usePage must be used within a PageProvider');
   }
   return context;
@@ -34,7 +36,11 @@ export const usePage = () => {
  * Determine page type from URL parameters
  */
 const determinePageType = (params) => {
-  const { user, repo, asset } = params;
+  const { user, repo } = params;
+  const asset = params['*']; // Wildcard parameter for asset path
+  
+  console.log('PageProvider: determinePageType called with params:', params);
+  console.log('PageProvider: extracted values:', { user, repo, asset });
   
   if (asset) return PAGE_TYPES.ASSET;
   if (user && repo) return PAGE_TYPES.DAK;
@@ -50,6 +56,12 @@ export const PageProvider = ({ children, pageName }) => {
   const location = useLocation();
   const navigate = useNavigate();
   
+  console.log('PageProvider: initialized with:', {
+    pageName,
+    params,
+    locationPathname: location.pathname
+  });
+  
   const [pageState, setPageState] = useState({
     type: determinePageType(params),
     pageName,
@@ -64,7 +76,8 @@ export const PageProvider = ({ children, pageName }) => {
   });
 
   // Extract URL parameters
-  const { user, repo, asset } = params;
+  const { user, repo } = params;
+  const asset = params['*']; // Wildcard parameter for asset path
 
   // Load data based on page type
   useEffect(() => {

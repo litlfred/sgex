@@ -1,13 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import actorDefinitionService from '../services/actorDefinitionService';
-import { PageLayout } from './framework';
+import { PageLayout, useDAKParams } from './framework';
 import './ActorEditor.css';
 
 const ActorEditor = () => {
-  const location = useLocation();
+  return (
+    <PageLayout pageName="actor-editor">
+      <ActorEditorContent />
+    </PageLayout>
+  );
+};
+
+const ActorEditorContent = () => {
   const navigate = useNavigate();
-  const { profile, repository, editActorId } = location.state || {};
+  const { profile, repository, branch } = useDAKParams();
+  
+  // For now, we'll set editActorId to null since it's not in URL params
+  // This could be enhanced later to support URL-based actor editing
+  const editActorId = null;
 
   // State management
   const [actorDefinition, setActorDefinition] = useState(null);
@@ -148,13 +159,7 @@ const ActorEditor = () => {
         
         // Update the URL to reflect we're now editing this actor
         if (!editActorId) {
-          navigate(`/actor-editor`, {
-            state: {
-              ...location.state,
-              editActorId: actorDefinition.id
-            },
-            replace: true
-          });
+          navigate(`/actor-editor/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
         }
       } else {
         setErrors({ general: result.error });
@@ -203,13 +208,7 @@ const ActorEditor = () => {
       setShowActorList(false);
       
       // Update URL
-      navigate(`/actor-editor`, {
-        state: {
-          ...location.state,
-          editActorId: actorId
-        },
-        replace: true
-      });
+      navigate(`/actor-editor/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
     }
   };
 
@@ -223,13 +222,7 @@ const ActorEditor = () => {
         // If we're currently editing this actor, create a new one
         if (editActorId === actorId) {
           setActorDefinition(actorDefinitionService.createEmptyActorDefinition());
-          navigate(`/actor-editor`, {
-            state: {
-              ...location.state,
-              editActorId: null
-            },
-            replace: true
-          });
+          navigate(`/actor-editor/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
         }
       }
     }
