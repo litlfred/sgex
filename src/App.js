@@ -58,6 +58,7 @@ function App() {
             <Route path="/organization-selection" element={<OrganizationSelection />} />
             <Route path="/dak-configuration" element={<DAKConfiguration />} />
             <Route path="/repositories" element={<RepositoryRedirect />} />
+            <Route path="/repositories/:user" element={<RepositoryRedirect />} />
             <Route path="/dashboard" element={<DashboardRedirect />} />
             <Route path="/dashboard/:user/:repo" element={<DAKDashboardWithFramework />} />
             <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboardWithFramework />} />

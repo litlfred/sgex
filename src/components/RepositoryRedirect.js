@@ -1,29 +1,36 @@
 import React, { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 const RepositoryRedirect = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useParams();
 
   useEffect(() => {
     // Redirect to DAK selection instead of repositories
     const profile = location.state?.profile;
     const action = location.state?.action;
     
-    if (profile) {
-      // If we have a profile, redirect to user-specific DAK selection
+    if (user) {
+      // If we have a user parameter from the route, redirect to user-specific DAK selection
+      navigate(`/dak-selection/${user}`, { 
+        state: { profile, action },
+        replace: true 
+      });
+    } else if (profile) {
+      // If we have a profile in state, redirect to user-specific DAK selection
       navigate(`/dak-selection/${profile.login}`, { 
         state: { profile, action },
         replace: true 
       });
     } else {
-      // If no profile, redirect to general DAK selection
+      // If no user or profile, redirect to general DAK selection
       navigate('/dak-selection', { 
         state: { action },
         replace: true 
       });
     }
-  }, [location, navigate]);
+  }, [location, navigate, user]);
 
   return (
     <div style={{

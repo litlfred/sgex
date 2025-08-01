@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import githubService from '../services/githubService';
 import CollaborationModal from './CollaborationModal';
+import HelpModal from './HelpModal';
+import helpContentService from '../services/helpContentService';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './WelcomePage.css';
@@ -9,6 +11,7 @@ import './WelcomePage.css';
 const WelcomePage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showCollaborationModal, setShowCollaborationModal] = useState(false);
+  const [showPATHelp, setShowPATHelp] = useState(false);
   const [warningMessage, setWarningMessage] = useState(null);
   const [tokenName, setTokenName] = useState('');
   const [patToken, setPatToken] = useState('');
@@ -236,6 +239,15 @@ const WelcomePage = () => {
                     </button>
                   </form>
                   {patError && <div className="pat-error">{patError}</div>}
+                  <div className="pat-help-link">
+                    <button 
+                      type="button"
+                      className="pat-help-btn" 
+                      onClick={() => setShowPATHelp(true)}
+                    >
+                      📖 Help creating a PAT
+                    </button>
+                  </div>
                 </div>
 
                 {/* Demo Section */}
@@ -264,6 +276,15 @@ const WelcomePage = () => {
         {/* Collaboration Modal */}
         {showCollaborationModal && (
           <CollaborationModal onClose={handleCollaborationClose} />
+        )}
+
+        {/* PAT Help Modal */}
+        {showPATHelp && (
+          <HelpModal
+            helpTopic={helpContentService.getHelpTopic('github-pat-setup')}
+            contextData={{ pageId: 'welcome' }}
+            onClose={() => setShowPATHelp(false)}
+          />
         )}
       </div>
     </PageLayout>

@@ -57,6 +57,14 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
 
   // Add user context for user/DAK/asset pages
   if ((type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile) {
+    // Add DAK Action breadcrumb first
+    breadcrumbs.push({
+      label: 'Choose DAK Action',
+      path: `/dak-action/${profile.login}`,
+      onClick: () => navigate(`/dak-action/${profile.login}`, { state: { profile } })
+    });
+    
+    // Then add repository selection breadcrumb
     breadcrumbs.push({
       label: 'Select Repository',
       path: `/dak-selection/${profile.login}`,
@@ -71,8 +79,8 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
     if (ownerLogin) {
       breadcrumbs.push({
         label: 'DAK Components',
-        path: `/sgex/dashboard/${ownerLogin}/${repository.name}${branchPath}`,
-        onClick: () => navigate(`/sgex/dashboard/${ownerLogin}/${repository.name}${branchPath}`)
+        path: `/dashboard/${ownerLogin}/${repository.name}${branchPath}`,
+        onClick: () => navigate(`/dashboard/${ownerLogin}/${repository.name}${branchPath}`)
       });
     }
   }

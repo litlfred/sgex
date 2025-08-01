@@ -461,7 +461,7 @@ const BPMNViewerEnhanced = () => {
             Select Repository
           </button>
           <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/dashboard', { state: { profile, repository } })} className="breadcrumb-link">
+          <button onClick={() => navigate(`/dashboard/${profile.login}/${repository.name}`, { state: { profile, repository } })} className="breadcrumb-link">
             DAK Components
           </button>
           <span className="breadcrumb-separator">›</span>

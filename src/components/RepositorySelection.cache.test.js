@@ -118,7 +118,7 @@ describe('RepositorySelection Caching', () => {
     expect(repositoryCacheService.getCachedRepositories).toHaveBeenCalledWith('testuser', 'user');
     
     // Should have called GitHub service since no cache was available
-    expect(githubService.getRepositories).toHaveBeenCalledWith('testuser', 'user');
+    expect(githubService.getRepositories).toHaveBeenCalledWith('testuser', 'user', undefined);
     
     // Should have cached the fresh results
     expect(repositoryCacheService.setCachedRepositories).toHaveBeenCalledWith('testuser', 'user', mockRepositories);
@@ -156,7 +156,7 @@ describe('RepositorySelection Caching', () => {
     expect(repositoryCacheService.getCachedRepositories).toHaveBeenCalledWith('testorg', 'org');
     
     // Should have called GitHub service with org type
-    expect(githubService.getRepositories).toHaveBeenCalledWith('testorg', 'org');
+    expect(githubService.getRepositories).toHaveBeenCalledWith('testorg', 'org', undefined);
     
     // Should have cached with org type
     expect(repositoryCacheService.setCachedRepositories).toHaveBeenCalledWith('testorg', 'org', mockRepositories);
@@ -183,7 +183,7 @@ describe('RepositorySelection Caching', () => {
     });
 
     // Should have still tried to fetch fresh data
-    expect(githubService.getRepositories).toHaveBeenCalledWith('testuser', 'user');
+    expect(githubService.getRepositories).toHaveBeenCalledWith('testuser', 'user', undefined);
     
     // Should have still tried to cache the results
     expect(repositoryCacheService.setCachedRepositories).toHaveBeenCalledWith('testuser', 'user', mockRepositories);
