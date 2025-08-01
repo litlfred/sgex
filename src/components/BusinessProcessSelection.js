@@ -117,7 +117,38 @@ const BusinessProcessSelection = () => {
         
         console.log(`Found ${bpmnFiles.length} BPMN files:`, bpmnFiles.map(f => f.path));
         
-        setBpmnFiles(bpmnFiles);
+        // If no files found and we're in demo mode, provide fallback files
+        if (bpmnFiles.length === 0 && profile?.isDemo) {
+          console.log('No BPMN files found in demo mode, providing fallback demo files');
+          const demoFiles = [
+            {
+              name: 'patient-registration.bpmn',
+              path: 'input/business-processes/patient-registration.bpmn',
+              sha: 'demo-sha-1',
+              size: 2048,
+              download_url: '#',
+              html_url: '#'
+            },
+            {
+              name: 'vaccination-workflow.bpmn',
+              path: 'input/business-processes/vaccination-workflow.bpmn',
+              sha: 'demo-sha-2',
+              size: 3072,
+              download_url: '#'
+            },
+            {
+              name: 'appointment-scheduling.bpmn',
+              path: 'input/business-processes/appointment-scheduling.bpmn',
+              sha: 'demo-sha-3',
+              size: 1536,
+              download_url: '#'
+            }
+          ];
+          setBpmnFiles(demoFiles);
+        } else {
+          setBpmnFiles(bpmnFiles);
+        }
+        
         setLoading(false);
       } catch (apiError) {
         console.error('Failed to fetch BPMN files from repository:', apiError);
