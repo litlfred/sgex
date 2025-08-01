@@ -409,7 +409,7 @@ Best regards,
         content: helpTopic.type === 'slideshow' ? renderSlideshow() : (
           <div className="help-content">
             <div className="mascot-message">
-              <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="help-mascot" />
+              <img src="/sgex/sgex-mascot-tabby.svg" alt="SGEX Helper" className="help-mascot" />
               <div className="message-bubble">
                 <div dangerouslySetInnerHTML={{ __html: helpTopic.content }} />
               </div>
@@ -428,7 +428,7 @@ Best regards,
           content: (
             <div className="help-content">
               <div className="mascot-message">
-                <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="help-mascot" />
+                <img src="/sgex/sgex-mascot-tabby.svg" alt="SGEX Helper" className="help-mascot" />
                 <div className="message-bubble">
                   <p>SGEX Workbench uses GitHub Personal Access Tokens for secure authentication!</p>
                   <p><strong>How it works:</strong></p>
@@ -451,7 +451,7 @@ Best regards,
           content: (
             <div className="help-content">
               <div className="mascot-message">
-                <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="help-mascot" />
+                <img src="/sgex/sgex-mascot-tabby.svg" alt="SGEX Helper" className="help-mascot" />
                 <div className="message-bubble">
                   <p>Hi! I'm here to help you with the SGEX Workbench.</p>
                   <p>Use the menu in the top right to get additional support options.</p>

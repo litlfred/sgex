@@ -181,7 +181,7 @@ const WelcomePage = () => {
         <div className="welcome-hero">
           <div className="welcome-intro">
             <div className="welcome-mascot">
-              <img src="/sgex-mascot.png" alt="SGEX Workbench Helper" />
+              <img src="/sgex-mascot-tabby.svg" alt="SGEX Workbench Helper (Tabby Cat)" />
             </div>
             <div className="welcome-text">
               <h1>SGEX Workbench</h1>

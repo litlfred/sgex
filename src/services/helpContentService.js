@@ -6,7 +6,7 @@ class HelpContentService {
       documentation: {
         id: 'sgex-documentation',
         title: 'View Documentation',
-        badge: '/sgex/cat-paw-info-icon.svg',
+        badge: '/sgex/cat-paw-info-icon-tabby.svg',
         type: 'action',
         action: () => {
           // Navigate to documentation viewer in the same window
@@ -24,7 +24,7 @@ class HelpContentService {
       bugReport: {
         id: 'report-sgex-bug',
         title: 'Report a SGeX bug',
-        badge: '/sgex/cat-paw-bug-icon.svg',
+        badge: '/sgex/cat-paw-bug-icon-tabby.svg',
         type: 'slideshow',
         content: [
           {
@@ -98,7 +98,7 @@ class HelpContentService {
         {
           id: 'github-pat-setup',
           title: 'How to Create a GitHub Personal Access Token',
-          badge: '/sgex/cat-paw-lock-icon.svg',
+          badge: '/sgex/cat-paw-lock-icon-tabby.svg',
           type: 'slideshow',
           content: [
             {
@@ -364,7 +364,7 @@ class HelpContentService {
         {
           id: 'pat-authentication-help',
           title: 'Using Personal Access Tokens',
-          badge: '/sgex/cat-paw-lock-icon.svg',
+          badge: '/sgex/cat-paw-lock-icon-tabby.svg',
           type: 'slideshow',
           content: [
             {
@@ -389,7 +389,7 @@ class HelpContentService {
         {
           id: 'detailed-pat-setup',
           title: 'Detailed PAT Setup Guide',
-          badge: '/sgex/cat-paw-lock-icon.svg',
+          badge: '/sgex/cat-paw-lock-icon-tabby.svg',
           type: 'slideshow',
           content: [
             {
@@ -419,7 +419,7 @@ class HelpContentService {
         {
           id: 'github-pat-setup',
           title: 'How to Create a GitHub Personal Access Token',
-          badge: '/sgex/cat-paw-lock-icon.svg',
+          badge: '/sgex/cat-paw-lock-icon-tabby.svg',
           type: 'slideshow',
           content: [
             {
@@ -518,7 +518,7 @@ class HelpContentService {
         {
           id: 'core-data-dictionary-help',
           title: 'Understanding Core Data Dictionary',
-          badge: '/sgex/cat-paw-info-icon.svg',
+          badge: '/sgex/cat-paw-info-icon-tabby.svg',
           type: 'slideshow',
           content: [
             {
@@ -560,7 +560,7 @@ class HelpContentService {
         {
           id: 'github-pages-setup',
           title: 'Setting Up GitHub Pages',
-          badge: '/sgex/cat-paw-settings-icon.svg',
+          badge: '/sgex/cat-paw-settings-icon-tabby.svg',
           type: 'slideshow',
           content: [
             {
@@ -608,7 +608,7 @@ class HelpContentService {
         {
           id: 'business-process-help',
           title: 'Understanding Business Processes',
-          badge: '/sgex/cat-paw-workflow-icon.svg',
+          badge: '/sgex/cat-paw-workflow-icon-tabby.svg',
           type: 'slideshow',
           content: [
             {
@@ -650,7 +650,7 @@ class HelpContentService {
         {
           id: 'page-content-help',
           title: 'Managing Page Content',
-          badge: '/sgex/cat-paw-document-icon.svg',
+          badge: '/sgex/cat-paw-document-icon-tabby.svg',
           type: 'slideshow',
           content: [
             {
