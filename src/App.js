@@ -7,7 +7,6 @@ import DAKActionSelection from './components/DAKActionSelection';
 import DAKSelection from './components/DAKSelection';
 import OrganizationSelection from './components/OrganizationSelection';
 import DAKConfiguration from './components/DAKConfiguration';
-import RepositorySelection from './components/RepositorySelection';
 import ComponentEditor from './components/ComponentEditor';
 import CoreDataDictionaryViewer from './components/CoreDataDictionaryViewer';
 import ActorEditor from './components/ActorEditor';
@@ -27,6 +26,7 @@ import DAKDashboardWithFramework from './components/DAKDashboardWithFramework';
 import DashboardRedirect from './components/DashboardRedirect';
 import TestDocumentationPage from './components/TestDocumentationPage';
 import AssetEditorTest from './components/AssetEditorTest';
+import RepositoryRedirect from './components/RepositoryRedirect';
 import logger from './utils/logger';
 import './App.css';
 
@@ -57,7 +57,7 @@ function App() {
             <Route path="/dak-selection" element={<DAKSelection />} />
             <Route path="/organization-selection" element={<OrganizationSelection />} />
             <Route path="/dak-configuration" element={<DAKConfiguration />} />
-            <Route path="/repositories" element={<RepositorySelection />} />
+            <Route path="/repositories" element={<RepositoryRedirect />} />
             <Route path="/dashboard" element={<DashboardRedirect />} />
             <Route path="/dashboard/:user/:repo" element={<DAKDashboardWithFramework />} />
             <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboardWithFramework />} />

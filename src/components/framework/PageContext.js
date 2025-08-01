@@ -51,8 +51,8 @@ const PageContext = ({ customBreadcrumbs }) => {
     if ((type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile) {
       breadcrumbs.push({
         label: 'Select Repository',
-        path: `/repositories`,
-        onClick: () => navigate(`/repositories`, { state: { profile } })
+        path: `/dak-selection/${profile.login}`,
+        onClick: () => navigate(`/dak-selection/${profile.login}`, { state: { profile } })
       });
     }
 

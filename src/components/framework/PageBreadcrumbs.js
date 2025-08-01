@@ -59,8 +59,8 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
   if ((type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile) {
     breadcrumbs.push({
       label: 'Select Repository',
-      path: `/sgex/repositories/${profile.login}`,
-      onClick: () => navigate(`/sgex/repositories/${profile.login}`)
+      path: `/dak-selection/${profile.login}`,
+      onClick: () => navigate(`/dak-selection/${profile.login}`, { state: { profile } })
     });
   }
 
