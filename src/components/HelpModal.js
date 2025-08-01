@@ -30,18 +30,47 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
         const baseUrl = `https://github.com/litlfred/sgex/issues/new`;
         let params = {};
 
+        // Check if user should have copilot auto-assigned
+        const shouldAssignCopilot = () => {
+          // Only assign copilot for DAK repo owner or if user is member of the organization
+          if (!contextData.selectedDak || !contextData.profile) {
+            return false;
+          }
+          
+          const userLogin = contextData.profile.login;
+          const dakOwner = contextData.selectedDak.owner?.login || contextData.selectedDak.full_name?.split('/')[0];
+          
+          // If user is the DAK repository owner
+          if (userLogin === dakOwner) {
+            return true;
+          }
+          
+          // Check if user is member of organization (if DAK owner is an org)
+          if (contextData.selectedDak.owner?.type === 'Organization') {
+            // For now, we can't easily check org membership client-side
+            // This would require additional API calls. Skip auto-assignment for safety.
+            return false;
+          }
+          
+          return false;
+        };
+
         switch (issueType) {
           case 'bug':
             params.template = 'bug_report.yml';
-            params.labels = 'bug reports';
-            // Try to auto-assign copilot for bug reports
-            params.assignees = 'copilot';
+            params.labels = 'bug+reports'; // URL encode spaces as +
+            // Only auto-assign copilot if user is DAK owner or org member
+            if (shouldAssignCopilot()) {
+              params.assignees = 'copilot';
+            }
             break;
           case 'feature':
             params.template = 'feature_request.yml';
-            params.labels = 'feature request';
-            // Try to auto-assign copilot for feature requests
-            params.assignees = 'copilot';
+            params.labels = 'feature+request'; // URL encode spaces as +
+            // Only auto-assign copilot if user is DAK owner or org member
+            if (shouldAssignCopilot()) {
+              params.assignees = 'copilot';
+            }
             break;
           case 'dak-content':
             params.template = 'dak_content_error.yml';
@@ -91,19 +120,48 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
         const baseUrl = `https://github.com/${repository.owner}/${repository.name}/issues/new`;
         let params = {};
 
+        // Check if user should have copilot auto-assigned
+        const shouldAssignCopilot = () => {
+          // Only assign copilot for DAK repo owner or if user is member of the organization
+          if (!contextData.profile) {
+            return false;
+          }
+          
+          const userLogin = contextData.profile.login;
+          const dakOwner = repository.owner?.login || repository.owner;
+          
+          // If user is the DAK repository owner
+          if (userLogin === dakOwner) {
+            return true;
+          }
+          
+          // Check if user is member of organization (if DAK owner is an org)
+          if (repository.owner?.type === 'Organization') {
+            // For now, we can't easily check org membership client-side
+            // This would require additional API calls. Skip auto-assignment for safety.
+            return false;
+          }
+          
+          return false;
+        };
+
         switch (issueType) {
           case 'bug':
             // For DAK bugs, use the main bug report template
             params.template = 'bug_report.yml';
-            params.labels = 'bug reports,dak-issue';
-            params.assignees = 'copilot';
+            params.labels = 'bug+reports,dak-issue'; // URL encode spaces as +
+            if (shouldAssignCopilot()) {
+              params.assignees = 'copilot';
+            }
             break;
           case 'improvement':
           case 'feature':
             // For DAK improvements, use the main feature request template
             params.template = 'feature_request.yml';
-            params.labels = 'feature request,dak-improvement';
-            params.assignees = 'copilot';
+            params.labels = 'feature+request,dak-improvement'; // URL encode spaces as +
+            if (shouldAssignCopilot()) {
+              params.assignees = 'copilot';
+            }
             break;
           case 'content':
             // For DAK content feedback, use the dedicated template
@@ -272,11 +330,39 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
       // Fallback to direct URL
       const params = new URLSearchParams({
         template: 'bug_report.yml',
-        labels: 'bug reports',
-        assignees: 'copilot',
+        labels: 'bug+reports', // URL encode spaces as +
         sgex_page: contextData.pageId || 'unknown',
         sgex_current_url: window.location.href
       });
+      
+      // Check if user should have copilot auto-assigned
+      const shouldAssignCopilot = () => {
+        // Only assign copilot for DAK repo owner or if user is member of the organization
+        if (!contextData.selectedDak || !contextData.profile) {
+          return false;
+        }
+        
+        const userLogin = contextData.profile.login;
+        const dakOwner = contextData.selectedDak.owner?.login || contextData.selectedDak.full_name?.split('/')[0];
+        
+        // If user is the DAK repository owner
+        if (userLogin === dakOwner) {
+          return true;
+        }
+        
+        // Check if user is member of organization (if DAK owner is an org)
+        if (contextData.selectedDak.owner?.type === 'Organization') {
+          // For now, we can't easily check org membership client-side
+          // This would require additional API calls. Skip auto-assignment for safety.
+          return false;
+        }
+        
+        return false;
+      };
+      
+      if (shouldAssignCopilot()) {
+        params.set('assignees', 'copilot');
+      }
       
       if (contextData.selectedDak?.name) {
         params.set('sgex_selected_dak', contextData.selectedDak.name);
@@ -298,7 +384,8 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   };
 
   const handleDAKFeedback = () => {
-    if (contextData.repository) {
+    const repository = contextData.repository || contextData.selectedDak;
+    if (repository) {
       // Default to opening content error as the primary DAK feedback type
       if (window.helpModalInstance?.openDakIssue) {
         window.helpModalInstance.openDakIssue('content');
@@ -505,10 +592,10 @@ Best regards,
                 File Bug Report
               </button>
               
-              {contextData.repository && (
+              {(contextData.repository || contextData.selectedDak) && (
                 <button onClick={handleDAKFeedback} className="menu-item">
                   <span className="menu-icon">📝</span>
-                  Provide DAK Feedback
+                  DAK Content Feedback
                 </button>
               )}
               

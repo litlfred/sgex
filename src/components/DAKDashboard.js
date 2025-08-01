@@ -13,30 +13,74 @@ import { handleNavigationClick } from '../utils/navigationUtils';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
-  return (
-    <PageLayout pageName="dak-dashboard">
-      <DAKDashboardContent />
-    </PageLayout>
-  );
-};
-
-const DAKDashboardContent = () => {
-  const { t } = useTranslation();
   const location = useLocation();
-  const navigate = useNavigate();
   const { user, repo, branch } = useParams();
   
   // Try to get data from location.state first, then from URL params
   const [profile, setProfile] = useState(location.state?.profile || null);
   const [repository, setRepository] = useState(location.state?.repository || null);
+  const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
+  
+  // Prepare context data for the help system
+  const contextData = {
+    pageId: 'dak-dashboard',
+    profile,
+    repository,
+    selectedDak: repository,
+    selectedBranch
+  };
+
+  return (
+    <PageLayout pageName="dak-dashboard" contextData={contextData}>
+      <DAKDashboardContent 
+        initialProfile={profile}
+        initialRepository={repository}
+        initialSelectedBranch={selectedBranch}
+        onProfileChange={setProfile}
+        onRepositoryChange={setRepository}
+        onSelectedBranchChange={setSelectedBranch}
+      />
+    </PageLayout>
+  );
+};
+
+const DAKDashboardContent = ({ 
+  initialProfile = null, 
+  initialRepository = null, 
+  initialSelectedBranch = null,
+  onProfileChange = () => {},
+  onRepositoryChange = () => {},
+  onSelectedBranchChange = () => {}
+}) => {
+  const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, repo, branch } = useParams();
+  
+  // Try to get data from props first, then from location.state
+  const [profile, setProfile] = useState(initialProfile || location.state?.profile || null);
+  const [repository, setRepository] = useState(initialRepository || location.state?.repository || null);
   const [loading, setLoading] = useState(!profile || !repository);
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
-  const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
+  const [selectedBranch, setSelectedBranch] = useState(initialSelectedBranch || location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Update parent when state changes
+  useEffect(() => {
+    onProfileChange(profile);
+  }, [profile, onProfileChange]);
+
+  useEffect(() => {
+    onRepositoryChange(repository);
+  }, [repository, onRepositoryChange]);
+
+  useEffect(() => {
+    onSelectedBranchChange(selectedBranch);
+  }, [selectedBranch, onSelectedBranchChange]);
 
   // Fetch data from URL parameters if not available in location.state
   useEffect(() => {

@@ -45,7 +45,17 @@ The page should load without errors and function normally.
 
 `);
 
-    return `https://github.com/litlfred/sgex/issues/new?template=bug_report.yml&title=${title}&body=${body}&labels=bug%20reports,page-framework-error&assignees=copilot`;
+    // Only include assignees if it's appropriate (same logic as HelpModal)
+    let assigneeParam = '';
+    try {
+      // Get user context if available (this would need to be passed from parent component)
+      // For now, don't auto-assign copilot from the error handler for security
+      // User can manually assign in the issue if needed
+    } catch (e) {
+      // No user context available
+    }
+
+    return `https://github.com/litlfred/sgex/issues/new?template=bug_report.yml&title=${title}&body=${body}&labels=bug+reports,page-framework-error${assigneeParam}`;
   };
 
   const handleSendBugReport = () => {
