@@ -638,10 +638,12 @@ const DAKDashboardContent = ({
 
           {/* Discussions Status Bar - show when repository is selected */}
           {repository && (
-            <DiscussionsStatusBar 
-              repository={repository}
-              selectedBranch={selectedBranch}
-            />
+            <div className="discussions-status-container">
+              <DiscussionsStatusBar 
+                repository={repository}
+                selectedBranch={selectedBranch}
+              />
+            </div>
           )}
 
           {/* Tab Navigation */}
