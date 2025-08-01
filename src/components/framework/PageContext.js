@@ -196,7 +196,7 @@ const PageContext = ({ customBreadcrumbs }) => {
               </>
             )}
             {repository && (
-              <span className="page-context-repo" onClick={handleGitHubRepo}>
+              <span className="page-context-repo">
                 {repository.name}
               </span>
             )}
@@ -238,7 +238,6 @@ const PageContext = ({ customBreadcrumbs }) => {
                             >
                               <span className="branch-icon">🌿</span>
                               {b.name}
-                              {b.name === repository.default_branch && <span className="default-badge">default</span>}
                               {b.name === branch && <span className="current-badge">current</span>}
                             </button>
                           ))
