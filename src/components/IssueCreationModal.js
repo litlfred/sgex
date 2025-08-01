@@ -255,7 +255,19 @@ const IssueCreationModal = ({
     } catch (err) {
       console.error('Failed to create issue:', err);
       
-      if (err.message.includes('authentication') || err.message.includes('GitHub API')) {
+      // Check for various GitHub API permission errors
+      const errorMessage = err.message || '';
+      const isPermissionError = 
+        errorMessage.includes('authentication') || 
+        errorMessage.includes('GitHub API') ||
+        errorMessage.includes('Resource not accessible by personal access token') ||
+        errorMessage.includes('Not Found') ||
+        errorMessage.includes('403') ||
+        errorMessage.includes('401') ||
+        err.status === 403 ||
+        err.status === 401;
+      
+      if (isPermissionError) {
         // Fall back to GitHub URL method
         setError('Unable to create issue directly. Opening GitHub...');
         const fallbackUrl = generateFallbackUrl();

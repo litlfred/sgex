@@ -333,14 +333,8 @@ Best regards,
     const slides = helpTopic.content;
     const currentSlideData = slides[currentSlide];
 
-    // Handle DAK feedback buttons by replacing onclick handlers
+    // Handle DAK feedback buttons - content already has correct handlers
     let processedContent = currentSlideData.content;
-    if (helpTopic.id === 'provide-dak-feedback') {
-      processedContent = processedContent.replace(
-        /onclick="this\.openDakIssue\('([^']+)'\)"/g,
-        `onclick="window.helpModalInstance?.openDakIssue('$1')"`
-      );
-    }
 
     return (
       <div className="help-slideshow">
