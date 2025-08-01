@@ -14,6 +14,12 @@
   height: 100%;
 }
 
+.bpmn-preview-svg {
+  width: 100%;
+  height: 100%;
+  background: var(--who-card-bg);
+}
+
 .preview-loading {
   display: flex;
   align-items: center;
@@ -48,29 +54,17 @@
   100% { transform: rotate(360deg); }
 }
 
-/* BPMN.js specific styling for preview */
-.bpmn-preview .djs-container {
-  background: var(--who-card-bg) !important;
+/* SVG text styling for different themes */
+.bpmn-preview-svg text {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.bpmn-preview .djs-palette,
-.bpmn-preview .dmn-palette {
-  display: none !important;
+/* Dark mode adjustments for SVG */
+body.theme-dark .bpmn-preview-svg {
+  background: var(--who-card-bg);
 }
 
-.bpmn-preview .djs-context-pad {
-  display: none !important;
-}
-
-.bpmn-preview .djs-popup {
-  display: none !important;
-}
-
-/* Dark mode adjustments for BPMN viewer */
-body.theme-dark .bpmn-preview .djs-container {
-  background: var(--who-card-bg) !important;
-}
-
-body.theme-dark .bpmn-preview svg {
-  background: transparent !important;
+body.theme-dark .bpmn-preview {
+  background: var(--who-card-bg);
+  border-color: var(--who-border-color);
 }
