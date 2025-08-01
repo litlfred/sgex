@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import BpmnViewer from 'bpmn-js';
+import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import githubService from '../services/githubService';
 import './BPMNPreview.css';
 
@@ -139,21 +139,28 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
           }
         }
 
-        // Create and initialize viewer
-        const viewer = new BpmnViewer({
-          container: containerRef.current
-        });
+        // Create and initialize viewer with simple options
+        const viewer = new BpmnViewer();
 
         viewerRef.current = viewer;
 
-        // Import XML and handle it properly
-        await viewer.importXML(bpmnXml);
+        try {
+          // Mount the viewer to container
+          viewer.attachTo(containerRef.current);
+          
+          // Import XML
+          await viewer.importXML(bpmnXml);
+          
+          // Fit to viewport for preview
+          const canvas = viewer.get('canvas');
+          canvas.zoom('fit-viewport');
 
-        // Fit to viewport for preview
-        const canvas = viewer.get('canvas');
-        canvas.zoom('fit-viewport');
-
-        setLoading(false);
+          setLoading(false);
+        } catch (importError) {
+          console.error('Failed to import BPMN XML:', importError);
+          setError('Failed to load preview');
+          setLoading(false);
+        }
 
       } catch (renderError) {
         console.error('Failed to render BPMN preview:', renderError);
@@ -173,6 +180,12 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
         viewerRef.current = null;
       }
     };
+
+    // Only run if we have all required props
+    if (!file || !repository || !containerRef.current) {
+      setLoading(false);
+      return;
+    }
 
     loadPreview();
 
