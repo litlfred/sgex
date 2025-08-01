@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import githubService from '../services/githubService';
-import { PageLayout } from './framework';
+import { PageLayout, useDAKParams } from './framework';
 import './BPMNViewer.css';
 
 const BPMNViewerComponent = () => {
@@ -11,7 +11,27 @@ const BPMNViewerComponent = () => {
   const viewerRef = useRef(null);
   const containerRef = useRef(null);
   
+  // Try to get data from framework params first, then fall back to location state
+  let frameworkData = null;
+  try {
+    frameworkData = useDAKParams();
+  } catch (e) {
+    // Not a DAK/Asset page, use location state only
+  }
+  
   const { profile, repository, component, selectedFile, selectedBranch } = location.state || {};
+  
+  // Use framework data if available, otherwise use location state
+  const currentProfile = frameworkData?.profile || profile;
+  const currentRepository = frameworkData?.repository || repository;
+  const currentBranch = frameworkData?.branch || selectedBranch;
+  const assetPath = frameworkData?.asset;
+  
+  // If we have asset path from URL, create a selectedFile object
+  const currentSelectedFile = assetPath ? {
+    name: assetPath.split('/').pop(),
+    path: assetPath
+  } : selectedFile;
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,10 +42,10 @@ const BPMNViewerComponent = () => {
   // Check write permissions
   useEffect(() => {
     const checkPermissions = async () => {
-      if (repository && profile) {
+      if (currentRepository && currentProfile) {
         try {
           // Simple permission check - in real app, this would use githubService
-          const writeAccess = profile.token && repository.permissions?.push;
+          const writeAccess = currentProfile.token && currentRepository.permissions?.push;
           setHasWriteAccess(writeAccess || false);
         } catch (error) {
           console.warn('Could not check write permissions:', error);
@@ -35,32 +55,32 @@ const BPMNViewerComponent = () => {
     };
 
     checkPermissions();
-  }, [repository, profile]);
+  }, [currentRepository, currentProfile]);
 
   // Load BPMN file content
   const loadBpmnContent = useCallback(async () => {
     console.log('🚀 BPMNViewer: loadBpmnContent called with:', {
       hasViewer: !!viewerRef.current,
-      selectedFile: selectedFile,
-      repository: repository ? {
-        name: repository.name,
-        owner: repository.owner
+      selectedFile: currentSelectedFile,
+      repository: currentRepository ? {
+        name: currentRepository.name,
+        owner: currentRepository.owner
       } : null
     });
 
-    if (!viewerRef.current || !selectedFile || !repository) {
+    if (!viewerRef.current || !currentSelectedFile || !currentRepository) {
       console.warn('❌ BPMNViewer: Missing required parameters for loadBpmnContent:', {
         hasViewer: !!viewerRef.current,
-        hasSelectedFile: !!selectedFile,
-        hasRepository: !!repository
+        hasSelectedFile: !!currentSelectedFile,
+        hasRepository: !!currentRepository
       });
       return;
     }
 
     // Declare variables outside try block so they're accessible in catch block
-    const owner = repository.owner?.login || repository.full_name.split('/')[0];
-    const repoName = repository.name;
-    const ref = selectedBranch || 'main';
+    const owner = currentRepository.owner?.login || currentRepository.full_name.split('/')[0];
+    const repoName = currentRepository.name;
+    const ref = currentBranch || 'main';
 
     try {
       console.log('📡 BPMNViewer: Setting loading state to true');
@@ -69,16 +89,16 @@ const BPMNViewerComponent = () => {
 
       console.log('🔍 BPMNViewer: Repository and file analysis:', {
         repository: {
-          name: repository.name,
-          full_name: repository.full_name,
-          owner: repository.owner,
-          isDemo: repository.isDemo,
-          default_branch: repository.default_branch
+          name: currentRepository.name,
+          full_name: currentRepository.full_name,
+          owner: currentRepository.owner,
+          isDemo: currentRepository.isDemo,
+          default_branch: currentRepository.default_branch
         },
         selectedFile: {
-          name: selectedFile.name,
-          path: selectedFile.path,
-          size: selectedFile.size
+          name: currentSelectedFile.name,
+          path: currentSelectedFile.path,
+          size: currentSelectedFile.size
         },
         derivedOwner: owner,
         repoName: repoName,
@@ -86,8 +106,8 @@ const BPMNViewerComponent = () => {
         githubServiceAuthenticated: githubService.isAuth()
       });
 
-      console.log(`📂 BPMNViewer: Preparing to load BPMN content from ${owner}/${repoName}:${selectedFile.path} (ref: ${ref})`);
-      console.log('📋 BPMNViewer: Full selected file object:', JSON.stringify(selectedFile, null, 2));
+      console.log(`📂 BPMNViewer: Preparing to load BPMN content from ${owner}/${repoName}:${currentSelectedFile.path} (ref: ${ref})`);
+      console.log('📋 BPMNViewer: Full selected file object:', JSON.stringify(currentSelectedFile, null, 2));
       
       // Add a timeout for the entire loading process
       console.log('⏰ BPMNViewer: Setting up 30-second timeout for loading process');
@@ -102,13 +122,13 @@ const BPMNViewerComponent = () => {
         console.log(`🌐 BPMNViewer: About to call githubService.getFileContent with params:`, {
           owner,
           repoName,
-          path: selectedFile.path,
+          path: currentSelectedFile.path,
           ref
         });
         
         console.log('🌐 BPMNViewer: Making GitHub API call...');
         const startTime = Date.now();
-        const bpmnXml = await githubService.getFileContent(owner, repoName, selectedFile.path, ref);
+        const bpmnXml = await githubService.getFileContent(owner, repoName, currentSelectedFile.path, ref);
         const endTime = Date.now();
         
         console.log(`✅ BPMNViewer: Successfully loaded BPMN content from repository in ${endTime - startTime}ms`);
