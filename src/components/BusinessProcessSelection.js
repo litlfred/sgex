@@ -116,11 +116,9 @@ const BusinessProcessSelection = () => {
         
         const bpmnFiles = await githubService.getBpmnFiles(owner, repoName, ref);
         
-        console.log(`Found ${bpmnFiles.length} BPMN files:`, bpmnFiles.map(f => f.path));
-        
-        // For demo mode, if no real BPMN files are found, provide fallback BPMN files
-        if (profile?.isDemo && bpmnFiles.length === 0) {
-          console.log('Providing fallback demo BPMN files for demo mode');
+        // If no files found and we're in demo mode, provide fallback files
+        if (bpmnFiles.length === 0 && profile?.isDemo) {
+          console.log('No BPMN files found in demo mode, providing fallback demo files');
           const demoFiles = [
             {
               name: 'patient-registration.bpmn',
@@ -146,11 +144,10 @@ const BusinessProcessSelection = () => {
             }
           ];
           setBpmnFiles(demoFiles);
-          setLoading(false);
-          return;
+        } else {
+          setBpmnFiles(bpmnFiles);
         }
         
-        setBpmnFiles(bpmnFiles);
         setLoading(false);
       } catch (apiError) {
         console.error('Failed to fetch BPMN files from repository:', apiError);
@@ -213,9 +210,8 @@ const BusinessProcessSelection = () => {
 
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const repoName = repository.name;
-    const path = selectedBranch 
-      ? `/bpmn-editor/${owner}/${repoName}/${selectedBranch}`
-      : `/bpmn-editor/${owner}/${repoName}`;
+    const branch = selectedBranch || 'main';
+    const path = `/bpmn-editor/${owner}/${repoName}/${branch}/${file.path}`;
 
     const navigationState = {
       profile,
@@ -232,9 +228,8 @@ const BusinessProcessSelection = () => {
   const handleView = (event, file) => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const repoName = repository.name;
-    const path = selectedBranch 
-      ? `/bpmn-viewer/${owner}/${repoName}/${selectedBranch}`
-      : `/bpmn-viewer/${owner}/${repoName}`;
+    const branch = selectedBranch || 'main';
+    const path = `/bpmn-viewer/${owner}/${repoName}/${branch}/${file.path}`;
 
     const navigationState = {
       profile,
@@ -251,9 +246,8 @@ const BusinessProcessSelection = () => {
   const handleViewSource = (event, file) => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const repoName = repository.name;
-    const path = selectedBranch 
-      ? `/bpmn-source/${owner}/${repoName}/${selectedBranch}`
-      : `/bpmn-source/${owner}/${repoName}`;
+    const branch = selectedBranch || 'main';
+    const path = `/bpmn-source/${owner}/${repoName}/${branch}/${file.path}`;
 
     const navigationState = {
       profile,

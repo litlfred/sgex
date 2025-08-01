@@ -6,6 +6,7 @@ jest.mock('../services/githubService', () => ({
   octokit: {
     rest: {
       repos: {
+        get: jest.fn(),
         getContent: jest.fn()
       }
     }
@@ -31,6 +32,12 @@ dependencies:
 `;
 
       githubService.isAuth.mockReturnValue(true);
+      
+      // Mock repository existence check
+      githubService.octokit.rest.repos.get.mockResolvedValue({
+        data: { name: 'smart-immunizations', full_name: 'WorldHealthOrganization/smart-immunizations' }
+      });
+      
       githubService.octokit.rest.repos.getContent.mockResolvedValue({
         data: {
           type: 'file',
@@ -53,6 +60,10 @@ dependencies:
 `;
 
       githubService.isAuth.mockReturnValue(true);
+      
+      // Mock repository does not exist (404)
+      githubService.octokit.rest.repos.get.mockRejectedValue({ status: 404 });
+      
       githubService.octokit.rest.repos.getContent.mockResolvedValue({
         data: {
           type: 'file',
@@ -66,6 +77,10 @@ dependencies:
 
     test('returns false for repository without sushi-config.yaml', async () => {
       githubService.isAuth.mockReturnValue(true);
+      
+      // Mock repository does not exist (404)
+      githubService.octokit.rest.repos.get.mockRejectedValue({ status: 404 });
+      
       githubService.octokit.rest.repos.getContent.mockRejectedValue({ status: 404 });
 
       const result = await dakValidationService.validateDAKRepository('user', 'no-config-repo');
@@ -83,6 +98,10 @@ dependencies:
       const invalidYaml = 'invalid: yaml: content: [unclosed';
 
       githubService.isAuth.mockReturnValue(true);
+      
+      // Mock repository does not exist (404) 
+      githubService.octokit.rest.repos.get.mockRejectedValue({ status: 404 });
+      
       githubService.octokit.rest.repos.getContent.mockResolvedValue({
         data: {
           type: 'file',

@@ -415,6 +415,76 @@ class HelpContentService {
           ]
         }
       ],
+      'welcome': [
+        {
+          id: 'github-pat-setup',
+          title: 'How to Create a GitHub Personal Access Token',
+          badge: '/sgex/cat-paw-lock-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Step 1: Go to GitHub Settings',
+              content: `
+                <p>Navigate to your GitHub account settings:</p>
+                <ol>
+                  <li>Click your profile picture in the top right</li>
+                  <li>Select "Settings" from the dropdown</li>
+                  <li>Go to "Developer settings" → "Personal access tokens"</li>
+                  <li>Choose "Fine-grained tokens" (recommended) or "Tokens (classic)"</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>💡 Tip:</strong> Fine-grained tokens provide better security with repository-specific access.
+                </div>
+              `
+            },
+            {
+              title: 'Step 2: Generate New Token',
+              content: `
+                <p>Create your new token:</p>
+                <ol>
+                  <li>Click "Generate new token"</li>
+                  <li>Give it a descriptive name like "SGEX Workbench"</li>
+                  <li>Set expiration (90 days recommended)</li>
+                  <li>Select repository access (specific repos or all)</li>
+                </ol>
+                <div class="help-warning">
+                  <strong>⚠️ Important:</strong> You'll only see the token once, so copy it immediately!
+                </div>
+              `
+            },
+            {
+              title: 'Step 3: Set Required Permissions',
+              content: `
+                <p>For <strong>fine-grained tokens</strong>, enable:</p>
+                <ul>
+                  <li><strong>Contents:</strong> Read and Write</li>
+                  <li><strong>Metadata:</strong> Read</li>
+                  <li><strong>Pull requests:</strong> Read and Write</li>
+                </ul>
+                <p>For <strong>classic tokens</strong>, select:</p>
+                <ul>
+                  <li><strong>repo</strong> - Full control of private repositories</li>
+                  <li><strong>read:org</strong> - Read org and team membership</li>
+                </ul>
+              `
+            },
+            {
+              title: 'Step 4: Use Your Token',
+              content: `
+                <p>Now you can authenticate with SGEX:</p>
+                <ol>
+                  <li>Copy your newly generated token</li>
+                  <li>Paste it into the login form</li>
+                  <li>Click "Sign in with Personal Access Token"</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>🔒 Security:</strong> Your token is stored securely in your browser and never shared with servers.
+                </div>
+              `
+            }
+          ]
+        }
+      ],
       'dak-configuration': [
         {
           id: 'dak-configuration-guide',
