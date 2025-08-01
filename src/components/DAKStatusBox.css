@@ -1,7 +1,7 @@
 /* DAK Status Box - Staging Ground */
 .dak-status-box {
-  background: white;
-  border: 1px solid #e9ecef;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 8px;
   margin-bottom: 24px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
