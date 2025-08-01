@@ -285,77 +285,79 @@ const BranchListing = () => {
         console.error('Error fetching data:', err);
         setError(err.message);
         
-        // Fallback to mock data for development/demo purposes
-        console.log('Using fallback mock data for demonstration...');
-        const mockBranches = [
-          {
-            name: 'main',
-            safeName: 'main',
-            commit: { sha: 'abc1234' },
-            url: './sgex/main/index.html',
-            lastModified: new Date().toLocaleDateString()
-          },
-          {
-            name: 'feature/user-auth',
-            safeName: 'feature-user-auth',
-            commit: { sha: 'def5678' },
-            url: './sgex/feature-user-auth/index.html',
-            lastModified: new Date(Date.now() - 86400000).toLocaleDateString()
-          },
-          {
-            name: 'fix/api-endpoints',
-            safeName: 'fix-api-endpoints',
-            commit: { sha: 'ghi9012' },
-            url: './sgex/fix-api-endpoints/index.html',
-            lastModified: new Date(Date.now() - 172800000).toLocaleDateString()
-          }
-        ];
+        // Only use fallback data in development or when GitHub API is blocked
+        if (process.env.NODE_ENV === 'development' || err.message.includes('Failed to fetch')) {
+          console.log('Using fallback mock data for demonstration...');
+          const mockBranches = [
+            {
+              name: 'main',
+              safeName: 'main',
+              commit: { sha: 'abc1234' },
+              url: './sgex/main/index.html',
+              lastModified: new Date().toLocaleDateString()
+            },
+            {
+              name: 'feature/user-auth',
+              safeName: 'feature-user-auth',
+              commit: { sha: 'def5678' },
+              url: './sgex/feature-user-auth/index.html',
+              lastModified: new Date(Date.now() - 86400000).toLocaleDateString()
+            },
+            {
+              name: 'fix/api-endpoints',
+              safeName: 'fix-api-endpoints',
+              commit: { sha: 'ghi9012' },
+              url: './sgex/fix-api-endpoints/index.html',
+              lastModified: new Date(Date.now() - 172800000).toLocaleDateString()
+            }
+          ];
 
-        const mockPRs = [
-          {
-            id: 1,
-            number: 123,
-            title: 'Improve multi-page selector landing page for GitHub deployment',
-            state: 'open',
-            author: 'copilot',
-            branchName: 'copilot/fix-459',
-            safeBranchName: 'copilot-fix-459',
-            url: './sgex/copilot-fix-459/index.html',
-            prUrl: 'https://github.com/litlfred/sgex/pull/123',
-            updatedAt: new Date().toLocaleDateString(),
-            createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
-          },
-          {
-            id: 2,
-            number: 122,
-            title: 'Add dark mode support',
-            state: 'closed',
-            author: 'developer',
-            branchName: 'feature/dark-mode',
-            safeBranchName: 'feature-dark-mode',
-            url: './sgex/feature-dark-mode/index.html',
-            prUrl: 'https://github.com/litlfred/sgex/pull/122',
-            updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
-            createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
-          },
-          {
-            id: 3,
-            number: 121,
-            title: 'Fix authentication flow',
-            state: 'open',
-            author: 'contributor',
-            branchName: 'fix/auth-flow',
-            safeBranchName: 'fix-auth-flow',
-            url: './sgex/fix-auth-flow/index.html',
-            prUrl: 'https://github.com/litlfred/sgex/pull/121',
-            updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
-            createdAt: new Date(Date.now() - 432000000).toLocaleDateString()
-          }
-        ];
+          const mockPRs = [
+            {
+              id: 1,
+              number: 123,
+              title: 'Improve multi-page selector landing page for GitHub deployment',
+              state: 'open',
+              author: 'copilot',
+              branchName: 'copilot/fix-459',
+              safeBranchName: 'copilot-fix-459',
+              url: './sgex/copilot-fix-459/index.html',
+              prUrl: 'https://github.com/litlfred/sgex/pull/123',
+              updatedAt: new Date().toLocaleDateString(),
+              createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
+            },
+            {
+              id: 2,
+              number: 122,
+              title: 'Add dark mode support',
+              state: 'closed',
+              author: 'developer',
+              branchName: 'feature/dark-mode',
+              safeBranchName: 'feature-dark-mode',
+              url: './sgex/feature-dark-mode/index.html',
+              prUrl: 'https://github.com/litlfred/sgex/pull/122',
+              updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
+              createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
+            },
+            {
+              id: 3,
+              number: 121,
+              title: 'Fix authentication flow',
+              state: 'open',
+              author: 'contributor',
+              branchName: 'fix/auth-flow',
+              safeBranchName: 'fix-auth-flow',
+              url: './sgex/fix-auth-flow/index.html',
+              prUrl: 'https://github.com/litlfred/sgex/pull/121',
+              updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
+              createdAt: new Date(Date.now() - 432000000).toLocaleDateString()
+            }
+          ];
 
-        setBranches(mockBranches);
-        setPullRequests(mockPRs);
-        setError(null); // Clear error since we have fallback data
+          setBranches(mockBranches);
+          setPullRequests(mockPRs);
+          setError(null); // Clear error since we have fallback data
+        }
       } finally {
         setLoading(false);
       }
