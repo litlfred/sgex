@@ -139,16 +139,15 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
           }
         }
 
-        // Create and initialize viewer with simple options
+        // Create and initialize viewer with clean separation
         const viewer = new BpmnViewer();
-
         viewerRef.current = viewer;
 
         try {
-          // Mount the viewer to container
-          viewer.attachTo(containerRef.current);
+          // Attach viewer to container first
+          await viewer.attachTo(containerRef.current);
           
-          // Import XML
+          // Then import XML
           await viewer.importXML(bpmnXml);
           
           // Fit to viewport for preview
@@ -182,12 +181,11 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
     };
 
     // Only run if we have all required props
-    if (!file || !repository || !containerRef.current) {
+    if (file && repository && containerRef.current) {
+      loadPreview();
+    } else {
       setLoading(false);
-      return;
     }
-
-    loadPreview();
 
     return cleanup;
   }, [file, repository, selectedBranch, profile]);
