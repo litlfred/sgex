@@ -13,7 +13,13 @@ export const usePageParams = () => {
       
       // Update branch in URL path
       if (pathParts.length >= 5) {
-        pathParts[5] = newBranch;
+        if (pathParts.length === 5) {
+          // No branch in URL, append it
+          pathParts.push(newBranch);
+        } else {
+          // Branch exists, replace it
+          pathParts[5] = newBranch;
+        }
         navigate(pathParts.join('/'));
       }
     }

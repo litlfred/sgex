@@ -1,7 +1,7 @@
 /* DAK Status Box - Staging Ground */
 .dak-status-box {
-  background: white;
-  border: 1px solid #e9ecef;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 8px;
   margin-bottom: 24px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -190,6 +190,27 @@ body.theme-dark .commit-sha a {
   color: #4dabf7;
 }
 
+/* Dark mode support for additional elements */
+body.theme-dark .stats-error {
+  background: rgba(255, 193, 7, 0.15);
+  border-color: rgba(255, 193, 7, 0.4);
+  color: #ffc107;
+}
+
+body.theme-dark .error-message {
+  background: rgba(220, 53, 69, 0.15);
+  border-color: rgba(220, 53, 69, 0.4);
+  color: #ff6b6b;
+}
+
+body.theme-dark .expand-icon {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+body.theme-dark .commit-sha {
+  color: #4dabf7;
+}
+
 .status-indicators {
   display: flex;
   align-items: center;
@@ -266,7 +287,7 @@ body.theme-dark .commit-sha a {
 
 .expand-icon {
   font-size: 12px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.8);
   transition: transform 0.2s ease;
 }
 
@@ -277,7 +298,8 @@ body.theme-dark .commit-sha a {
 /* Status Content */
 .status-content {
   padding: 20px;
-  background: dodgerblue;
+  background: var(--who-card-bg);
+  border-top: 1px solid var(--who-border-color);
 }
 
 .loading-indicator {
@@ -286,7 +308,7 @@ body.theme-dark .commit-sha a {
   gap: 8px;
   padding: 20px;
   justify-content: center;
-  color: #666;
+  color: var(--who-text-secondary);
 }
 
 .loading-spinner {
@@ -303,8 +325,8 @@ body.theme-dark .commit-sha a {
   align-items: center;
   gap: 8px;
   padding: 16px;
-  background: #f8d7da;
-  border: 1px solid #f5c6cb;
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.3);
   border-radius: 6px;
   color: #721c24;
 }
@@ -326,13 +348,13 @@ body.theme-dark .commit-sha a {
   margin: 0 0 12px 0;
   font-size: 1.1em;
   font-weight: 600;
-  color: #333;
+  color: var(--who-text-primary);
 }
 
 /* Changed Files */
 .changed-files {
-  background: dodgerblue;
-  border: 1px solid #bbdefb;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   overflow: hidden;
 }
@@ -342,7 +364,7 @@ body.theme-dark .commit-sha a {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--who-border-color);
 }
 
 .file-item:last-child {
@@ -375,7 +397,7 @@ body.theme-dark .commit-sha a {
 }
 
 .file-size {
-  background: var(--who-hover-bg);
+  background: var(--who-selected-bg);
   padding: 2px 6px;
   border-radius: 4px;
   color: var(--who-text-secondary);
@@ -408,14 +430,14 @@ body.theme-dark .commit-sha a {
 
 .file-actions {
   padding: 12px 16px;
-  background: dodgerblue;
-  border-top: 1px solid #e9ecef;
+  background: var(--who-hover-bg);
+  border-top: 1px solid var(--who-border-color);
 }
 
 .no-changes {
   text-align: center;
   padding: 32px 16px;
-  color: #666;
+  color: var(--who-text-secondary);
 }
 
 .no-changes p {
@@ -429,8 +451,8 @@ body.theme-dark .commit-sha a {
 
 /* Validation Results */
 .validation-summary-detailed {
-  background: dodgerblue;
-  border: 1px solid #e9ecef;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   padding: 16px;
 }
@@ -447,8 +469,8 @@ body.theme-dark .commit-sha a {
   gap: 8px;
   padding: 8px 12px;
   border-radius: 6px;
-  background: white;
-  border: 1px solid #e9ecef;
+  background: var(--who-hover-bg);
+  border: 1px solid var(--who-border-color);
 }
 
 .count-item.clean {
@@ -468,12 +490,12 @@ body.theme-dark .commit-sha a {
 .count-number {
   font-weight: bold;
   font-size: 16px;
-  color: #333;
+  color: var(--who-text-primary);
 }
 
 .count-label {
   font-size: 12px;
-  color: #666;
+  color: var(--who-text-secondary);
   text-transform: uppercase;
   font-weight: 500;
 }
@@ -500,8 +522,8 @@ body.theme-dark .commit-sha a {
 
 /* Commit Preview */
 .commit-preview {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   padding: 12px;
 }
@@ -510,7 +532,7 @@ body.theme-dark .commit-sha a {
   margin: 0;
   font-family: 'Courier New', monospace;
   font-size: 13px;
-  color: #333;
+  color: var(--who-text-primary);
   white-space: pre-wrap;
 }
 
@@ -532,20 +554,20 @@ body.theme-dark .commit-sha a {
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   text-decoration: none;
-  color: #333;
+  color: var(--who-text-primary);
   font-size: 13px;
   transition: all 0.2s ease;
   position: relative;
 }
 
 .quick-link:hover {
-  background: #e9ecef;
+  background: var(--who-hover-bg);
   text-decoration: none;
-  color: #333;
+  color: var(--who-text-primary);
 }
 
 .link-icon {
@@ -554,7 +576,7 @@ body.theme-dark .commit-sha a {
 
 .external-indicator {
   font-size: 10px;
-  color: #666;
+  color: var(--who-text-muted);
   margin-left: auto;
 }
 
@@ -588,8 +610,8 @@ body.theme-dark .commit-sha a {
 .last-commit {
   margin-left: 20px;
   padding: 8px 12px;
-  background: #f1f3f4;
-  border: 1px solid #dadce0;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 4px;
   font-size: 12px;
 }
@@ -598,7 +620,7 @@ body.theme-dark .commit-sha a {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #666;
+  color: var(--who-text-secondary);
   font-style: italic;
 }
 
@@ -606,30 +628,30 @@ body.theme-dark .commit-sha a {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  color: #333;
+  color: var(--who-text-primary);
   text-decoration: none;
 }
 
 .commit-link:hover {
-  color: #0366d6;
+  color: var(--who-blue);
   text-decoration: none;
 }
 
 .commit-sha {
   font-family: 'Courier New', monospace;
   font-weight: bold;
-  color: #0366d6;
+  color: var(--who-blue);
   font-size: 11px;
 }
 
 .commit-message {
   font-weight: 500;
-  color: #333;
+  color: var(--who-text-primary);
   line-height: 1.3;
 }
 
 .commit-meta {
-  color: #666;
+  color: var(--who-text-secondary);
   font-size: 10px;
   font-style: italic;
 }
@@ -640,8 +662,8 @@ body.theme-dark .commit-sha a {
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
   border-radius: 4px;
   color: #856404;
   font-size: 12px;

@@ -91,8 +91,8 @@ body.theme-light .dak-selection {
 }
 
 .documentation-info {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--who-selected-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   padding: 1rem;
   margin-top: 1.5rem;
@@ -105,7 +105,7 @@ body.theme-light .dak-selection {
 .documentation-info p {
   margin: 0;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--who-text-secondary);
 }
 
 .documentation-info .doc-link {
@@ -358,9 +358,9 @@ body.theme-light .dak-selection {
   font-size: 0.9rem;
   font-style: italic;
   padding: 1rem;
-  background: rgba(0, 120, 212, 0.05);
+  background: var(--who-selected-bg);
   border-radius: 8px;
-  border: 1px solid rgba(0, 120, 212, 0.2);
+  border: 1px solid var(--who-border-color);
 }
 
 .direct-selection-note .note-icon {
@@ -377,8 +377,8 @@ body.theme-light .dak-selection {
 }
 
 .cache-info {
-  background: rgba(0, 120, 212, 0.1);
-  border: 1px solid rgba(0, 120, 212, 0.3);
+  background: var(--who-selected-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   padding: 0.75rem 1rem;
   display: flex;
@@ -402,8 +402,18 @@ body.theme-light .dak-selection {
   font-size: inherit;
 }
 
+/* Improve visibility in dark mode */
+body.theme-dark .rescan-link {
+  color: var(--who-blue-light);
+}
+
 .rescan-link:hover:not(:disabled) {
   color: var(--who-blue-light);
+}
+
+/* Better hover color for dark mode */
+body.theme-dark .rescan-link:hover:not(:disabled) {
+  color: #90caf9;
 }
 
 .rescan-link:disabled {
@@ -425,9 +435,23 @@ body.theme-light .dak-selection {
   backdrop-filter: blur(10px);
 }
 
+/* Improve visibility in dark mode */
+body.theme-dark .rescan-btn {
+  background: rgba(0, 120, 212, 0.5);
+  border: 1px solid rgba(0, 120, 212, 0.8);
+  color: #ffffff;
+}
+
 .rescan-btn:hover:not(:disabled) {
   background: rgba(0, 120, 212, 0.5);
   border-color: rgba(0, 120, 212, 0.7);
+}
+
+/* Better hover effect for dark mode */
+body.theme-dark .rescan-btn:hover:not(:disabled) {
+  background: rgba(0, 120, 212, 0.7);
+  border-color: rgba(0, 120, 212, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.3);
 }
 
 .rescan-btn:disabled {
@@ -477,14 +501,14 @@ body.theme-light .dak-selection {
 }
 
 .demo-info {
-  background: rgba(0, 120, 212, 0.1);
-  border: 1px solid rgba(0, 120, 212, 0.3);
+  background: var(--who-selected-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: white;
+  color: var(--who-text-primary);
   font-size: 0.9rem;
   backdrop-filter: blur(10px);
 }
