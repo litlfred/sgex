@@ -241,59 +241,16 @@ const BPMNViewerComponent = () => {
     }
   }, [currentSelectedFile, currentRepository, currentBranch]);
 
-  // Cleanup function
-  const cleanupViewer = useCallback(() => {
-    console.log('🧹 BPMNViewer: Cleaning up viewer');
-    if (viewerRef.current) {
-      try {
-        viewerRef.current.destroy();
-      } catch (error) {
-        console.warn('⚠️ BPMNViewer: Error destroying viewer:', error);
-      }
-      viewerRef.current = null;
-    }
-    
+  const cleanupContainer = useCallback(() => {
     if (containerRef.current) {
       containerRef.current.innerHTML = '';
       console.log('🧹 BPMNViewer: Container cleaned up');
     }
   }, []);
 
-  const initializeViewer = () => {
-    console.log('🛠️ BPMNViewer: initializeViewer called with:', {
-      hasContainer: !!containerRef.current,
-      hasViewer: !!viewerRef.current,
-      selectedFile: currentSelectedFile ? currentSelectedFile.name : 'none',
-      containerRefCurrent: containerRef.current,
-      viewerRefCurrent: viewerRef.current
-    });
-
-    if (containerRef.current && !viewerRef.current && currentSelectedFile) {
-      try {
-        console.log('🔧 BPMNViewer: Creating new BPMN viewer for:', currentSelectedFile.name);
-        
-        // Clean container first
-        containerRef.current.innerHTML = '';
-        
-        // Create viewer
-        const viewer = new BpmnViewer();
-        viewerRef.current = viewer;
-        
-        // Attach to container
-        viewer.attachTo(containerRef.current);
-        
-        console.log('✅ BPMNViewer: BPMN viewer initialized successfully');
-      } catch (error) {
-        console.error('❌ BPMNViewer: Failed to initialize viewer:', error);
-        setError(`Failed to initialize BPMN viewer: ${error.message}`);
-      }
-    }
-  };
-
   // Initialize BPMN viewer - simplified to avoid race conditions
   useEffect(() => {
-    initializeViewer();
-  }, [currentSelectedFile]);
+    const initializeViewer = () => {
       console.log('🛠️ BPMNViewer: initializeViewer called with:', {
         hasContainer: !!containerRef.current,
         hasViewer: !!viewerRef.current,
@@ -368,6 +325,7 @@ const BPMNViewerComponent = () => {
                   viewerRef.current ? 'Viewer already exists' : 
                   !currentSelectedFile ? 'No selected file' : 'Unknown'
         });
+      }
     };
 
     const waitForContainer = (attempt = 0) => {
@@ -403,7 +361,7 @@ const BPMNViewerComponent = () => {
         viewerRef.current = null;
       }
     };
-  }, [currentSelectedFile, loadBpmnContent]);
+  }, [currentSelectedFile, loadBpmnContent, cleanupContainer]);
 
   const handleEditMode = () => {
     if (!hasWriteAccess) {
