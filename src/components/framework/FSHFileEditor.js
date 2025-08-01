@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { registerEnhancedFSH, enhancedFSHStyles } from '../../utils/fshSyntax';
 import './FSHFileEditor.css';
 
 /**
@@ -29,6 +30,11 @@ const FSHFileEditor = ({
     setEditorContent(content);
     setHasChanges(false);
   }, [content]);
+
+  // Register enhanced FSH syntax on component mount
+  useEffect(() => {
+    registerEnhancedFSH();
+  }, []);
 
   // Basic FSH validation (minimal implementation)
   const validateContent = useCallback((fshContent) => {
@@ -124,26 +130,20 @@ const FSHFileEditor = ({
     }
   }, [handleSave]);
 
-  // Custom FSH syntax highlighting style
+  // Enhanced FSH syntax highlighting style
   const fshStyle = {
     ...prism,
+    ...enhancedFSHStyles,
     'pre[class*="language-"]': {
       ...prism['pre[class*="language-"]'],
+      ...enhancedFSHStyles['pre[class*="language-"]'],
       background: '#fff',
       border: 'none',
       borderRadius: '0',
-      fontSize: '14px',
-      lineHeight: '1.5',
       overflow: 'visible',
       padding: '0',
       margin: '0',
       ...customStyle
-    },
-    'code[class*="language-"]': {
-      ...prism['code[class*="language-"]'],
-      background: 'transparent',
-      fontSize: '14px',
-      lineHeight: '1.5'
     }
   };
 
@@ -243,21 +243,6 @@ const FSHFileEditor = ({
   );
 };
 
-// Register FSH language with react-syntax-highlighter if not already registered
-if (typeof window !== 'undefined' && window.Prism) {
-  window.Prism.languages.fsh = {
-    'comment': /\/\/.*|\/\*[\s\S]*?\*\//,
-    'string': /"(?:[^"\\]|\\.)*"/,
-    'keyword': /\b(?:Profile|Extension|Instance|ValueSet|CodeSystem|ConceptMap|StructureDefinition|Logical|Resource|Mapping|RuleSet|Invariant|Alias)\b/,
-    'fsh-keyword': /\b(?:Parent|Id|Title|Description|Usage|Severity|Expression|Source|Target|Equivalence|Comment|XPath)\b/,
-    'fsh-constraint': /\b(?:only|or|and|from|exactly|contains|named|insert|include|exclude)\b/,
-    'fsh-cardinality': /\d+\.\.\*|\d+\.\.\d+|\d+/,
-    'fsh-datatype': /\b(?:string|boolean|integer|decimal|date|dateTime|time|code|uri|url|canonical|base64Binary|instant|oid|id|markdown|unsignedInt|positiveInt|uuid|Address|Age|Annotation|Attachment|CodeableConcept|Coding|ContactPoint|Count|Distance|Duration|HumanName|Identifier|Money|Period|Quantity|Range|Ratio|Reference|SampledData|Signature|Timing|ContactDetail|Contributor|DataRequirement|Expression|ParameterDefinition|RelatedArtifact|TriggerDefinition|UsageContext|Dosage|Meta)\b/,
-    'fsh-profile': /\*\s+\w+/,
-    'punctuation': /[{}[\];(),.:]/,
-    'operator': /=|\^/,
-    'number': /\b\d+(?:\.\d+)?\b/
-  };
-}
+// Note: Enhanced FSH language registration is handled by the registerEnhancedFSH() utility
 
 export default FSHFileEditor;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import { PageLayout, usePageParams, FSHFileViewer, FSHFileEditor } from './framework';
+import { PageLayout, useDAKParams, FSHFileViewer, FSHFileEditor } from './framework';
 import { processLogicalModelsToArchiMate, parseLogicalModel } from '../utils/archiMateExtraction';
 import './CoreDataDictionaryViewer.css';
 
@@ -14,15 +14,12 @@ const CoreDataDictionaryViewer = () => {
 };
 
 const CoreDataDictionaryViewerContent = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const { params } = usePageParams();
+  const { profile, repository, branch } = useDAKParams();
   
-  // Get data from URL params or location state (for backward compatibility)
-  const { profile, repository, component, selectedBranch } = location.state || {};
-  const user = params?.user;
-  const repo = params?.repo;
-  const branch = params?.branch;
+  // Get data from URL params using the cleaner approach
+  const user = profile?.login;
+  const repo = repository?.name;
   
   const [fshFiles, setFshFiles] = useState([]);
   const [logicalModelFiles, setLogicalModelFiles] = useState([]);
@@ -81,13 +78,8 @@ const CoreDataDictionaryViewerContent = () => {
   // Fetch FSH files from input/fsh directory
   useEffect(() => {
     const fetchFshFiles = async () => {
-      // Support both URL params and state-based data
-      const currentRepository = repository;
-      const currentBranch = branch || selectedBranch;
-      const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
-      const currentRepo = repo || repository?.name;
-      
-      if ((!currentRepository && (!currentUser || !currentRepo)) || !currentBranch) {
+      // Use the simplified parameter approach from main branch
+      if (!repository || !branch) {
         setLoading(false);
         return;
       }
@@ -116,10 +108,10 @@ const CoreDataDictionaryViewerContent = () => {
         // Try to fetch the input/fsh directory
         try {
           const fshDirContents = await githubService.getDirectoryContents(
-            currentUser, 
-            currentRepo, 
+            user, 
+            repo, 
             'input/fsh', 
-            currentBranch
+            branch
           );
 
           // Filter for .fsh files
@@ -145,10 +137,10 @@ const CoreDataDictionaryViewerContent = () => {
         // Try to fetch logical models from input/fsh/models directory
         try {
           const modelsDirContents = await githubService.getDirectoryContents(
-            currentUser, 
-            currentRepo, 
+            user, 
+            repo, 
             'input/fsh/models', 
-            currentBranch
+            branch
           );
 
           // Filter for .fsh files containing logical models
@@ -175,10 +167,10 @@ const CoreDataDictionaryViewerContent = () => {
         // Try to fetch the DAK.fsh file specifically from input/fsh/codesystems/
         try {
           const dakFile = await githubService.getDirectoryContents(
-            currentUser,
-            currentRepo,
+            user,
+            repo,
             'input/fsh/codesystems',
-            currentBranch
+            branch
           );
           
           // Look for DAK.fsh file
@@ -194,10 +186,10 @@ const CoreDataDictionaryViewerContent = () => {
             // Fetch and parse DAK.fsh content for table display
             try {
               const dakContent = await githubService.getFileContent(
-                currentUser,
-                currentRepo,
+                user,
+                repo,
                 dakFsh.path,
-                currentBranch
+                branch
               );
               const concepts = parseDakFshConcepts(dakContent);
               setDakConcepts(concepts);
@@ -222,7 +214,7 @@ const CoreDataDictionaryViewerContent = () => {
         }
 
         // Fetch branches to check for gh-pages
-        const allBranches = await githubService.getBranches(currentUser, currentRepo);
+        const allBranches = await githubService.getBranches(user, repo);
         const branchNames = allBranches.map(b => b.name);
         setBranches(branchNames.filter(name => name !== 'gh-pages'));
         const hasGhPagesVar = branchNames.includes('gh-pages');
@@ -230,7 +222,7 @@ const CoreDataDictionaryViewerContent = () => {
 
         // Check if published DAK exists if we have gh-pages
         if (hasGhPagesVar) {
-          const baseUrl = getBaseUrl(currentBranch);
+          const baseUrl = getBaseUrl(branch);
           const dakExists = await checkPublishedDakExists(baseUrl);
           setHasPublishedDak(dakExists);
         } else {
@@ -246,7 +238,7 @@ const CoreDataDictionaryViewerContent = () => {
     };
 
     fetchFshFiles();
-  }, [repository, selectedBranch, user, repo, branch, getBaseUrl, parseDakFshConcepts]);
+  }, [repository, branch, user, repo, getBaseUrl, parseDakFshConcepts]);
 
   // Fetch file content for modal display
   const handleViewSource = async (file, mode = 'view') => {
@@ -255,16 +247,12 @@ const CoreDataDictionaryViewerContent = () => {
       setFileContent('Loading...');
       setModalMode(mode);
       setShowModal(true);
-
-      const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
-      const currentRepo = repo || repository?.name;
-      const currentBranch = branch || selectedBranch;
       
       const content = await githubService.getFileContent(
-        currentUser,
-        currentRepo,
+        user,
+        repo,
         file.path,
-        currentBranch
+        branch
       );
 
       setFileContent(content);
@@ -280,7 +268,7 @@ const CoreDataDictionaryViewerContent = () => {
     setFileContent('');
   };
 
-  if ((!profile || !repository || !component) && !user && !repo) {
+  if (!profile || !repository) {
     navigate('/');
     return <div>Redirecting...</div>;
   }
@@ -299,8 +287,8 @@ const CoreDataDictionaryViewerContent = () => {
   return (
     <>
       <div className="component-intro">
-        <div className="component-icon" style={{ color: component?.color || '#0078d4' }}>
-          {component?.icon || '📊'}
+        <div className="component-icon" style={{ color: '#0078d4' }}>
+          📊
         </div>
         <div className="intro-content">
           <h2>Core Data Dictionary Viewer</h2>
@@ -308,9 +296,9 @@ const CoreDataDictionaryViewerContent = () => {
             View canonical representations of Component 2 Core Data Dictionary including FHIR CodeSystems, 
             ValueSets, and ConceptMaps stored in FSH format.
           </p>
-          {(branch || selectedBranch) && (
+          {branch && (
             <div className="branch-info">
-              <strong>Branch:</strong> <code>{branch || selectedBranch}</code>
+              <strong>Branch:</strong> <code>{branch}</code>
             </div>
           )}
         </div>
@@ -398,7 +386,7 @@ const CoreDataDictionaryViewerContent = () => {
                     ) : hasPublishedDak ? (
                       <div className="dictionary-links">
                         <a 
-                          href={`${getBaseUrl(branch || selectedBranch)}/CodeSystem-DAK.html`}
+                          href={`${getBaseUrl(branch)}/CodeSystem-DAK.html`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="dictionary-link primary"
@@ -538,9 +526,9 @@ const CoreDataDictionaryViewerContent = () => {
           <div className="logical-models-section">
             <LogicalModelsContent 
               logicalModelFiles={logicalModelFiles}
-              user={user || repository?.owner?.login || repository?.full_name.split('/')[0]}
-              repo={repo || repository?.name}
-              branch={branch || selectedBranch}
+              user={user}
+              repo={repo}
+              branch={branch}
               onViewSource={handleViewSource}
             />
           </div>
