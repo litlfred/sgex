@@ -20,16 +20,15 @@ const ErrorHandler = ({ error, onRetry }) => {
   const [userExplanation, setUserExplanation] = useState('');
 
   const generateBugReportUrl = () => {
-    const title = encodeURIComponent('User should not have reached this page');
-    const body = encodeURIComponent(`
+    const title = encodeURIComponent('[Bug]: Page Error - User should not have reached this page');
+    const body = encodeURIComponent(`**What happened?**
+An error occurred while using the SGEX Workbench application.
+
 **Error Information:**
 - Page: ${pageName}
 - URL: ${window.location.href}
 - Error: ${error}
 - Timestamp: ${new Date().toISOString()}
-- User Agent: ${navigator.userAgent}
-
-**Context:**
 - Browser: ${navigator.userAgent}
 - Viewport: ${window.innerWidth}x${window.innerHeight}
 - Referrer: ${document.referrer || 'Direct access'}
@@ -37,18 +36,16 @@ const ErrorHandler = ({ error, onRetry }) => {
 **User Explanation:**
 ${userExplanation || 'No additional details provided'}
 
-**Steps to Reproduce:**
+**Expected behavior**
+The page should load without errors and function normally.
+
+**Steps to reproduce**
 1. Navigate to: ${window.location.href}
-2. [Please add any additional steps]
+2. [Please add any additional steps that led to this error]
 
-**Expected Behavior:**
-The page should load without errors.
+`);
 
-**Actual Behavior:**
-${error}
-    `);
-
-    return `https://github.com/litlfred/sgex/issues/new?title=${title}&body=${body}&labels=bug,user-error`;
+    return `https://github.com/litlfred/sgex/issues/new?template=bug_report.yml&title=${title}&body=${body}&labels=bug%20reports,page-framework-error&assignees=copilot`;
   };
 
   const handleSendBugReport = () => {

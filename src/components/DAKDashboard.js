@@ -6,6 +6,7 @@ import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
 import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
+import DiscussionsStatusBar from './DiscussionsStatusBar';
 import Publications from './Publications';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
@@ -588,6 +589,14 @@ const DAKDashboardContent = () => {
               selectedBranch={selectedBranch}
               hasWriteAccess={hasWriteAccess}
               profile={profile}
+            />
+          )}
+
+          {/* Discussions Status Bar - show when repository is selected */}
+          {repository && (
+            <DiscussionsStatusBar 
+              repository={repository}
+              selectedBranch={selectedBranch}
             />
           )}
 

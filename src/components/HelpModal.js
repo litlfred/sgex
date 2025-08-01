@@ -34,10 +34,14 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
           case 'bug':
             params.template = 'bug_report.yml';
             params.labels = 'bug reports';
+            // Try to auto-assign copilot for bug reports
+            params.assignees = 'copilot';
             break;
           case 'feature':
             params.template = 'feature_request.yml';
             params.labels = 'feature request';
+            // Try to auto-assign copilot for feature requests
+            params.assignees = 'copilot';
             break;
           case 'dak-content':
             params.template = 'dak_content_error.yml';
@@ -92,12 +96,14 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
             // For DAK bugs, use the main bug report template
             params.template = 'bug_report.yml';
             params.labels = 'bug reports,dak-issue';
+            params.assignees = 'copilot';
             break;
           case 'improvement':
           case 'feature':
             // For DAK improvements, use the main feature request template
             params.template = 'feature_request.yml';
             params.labels = 'feature request,dak-improvement';
+            params.assignees = 'copilot';
             break;
           case 'content':
             // For DAK content feedback, use the dedicated template
@@ -267,6 +273,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
       const params = new URLSearchParams({
         template: 'bug_report.yml',
         labels: 'bug reports',
+        assignees: 'copilot',
         sgex_page: contextData.pageId || 'unknown',
         sgex_current_url: window.location.href
       });
