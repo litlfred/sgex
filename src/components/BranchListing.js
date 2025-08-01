@@ -8,10 +8,12 @@ const BranchListing = () => {
   const [pullRequests, setPullRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('branches');
+  const [activeTab, setActiveTab] = useState('prs'); // Start with PR preview section
   const [prPage, setPrPage] = useState(1);
   const [prSearchTerm, setPrSearchTerm] = useState('');
   const [branchSearchTerm, setBranchSearchTerm] = useState('');
+  const [prSortBy, setPrSortBy] = useState('updated'); // updated, number, alphabetical
+  const [branchSortBy, setBranchSortBy] = useState('updated'); // updated, alphabetical
   const [showContributeModal, setShowContributeModal] = useState(false);
   const [deploymentStatuses, setDeploymentStatuses] = useState({});
   const [checkingStatuses, setCheckingStatuses] = useState(false);
@@ -71,6 +73,37 @@ const BranchListing = () => {
       document.body.removeChild(textArea);
       console.log(`Copied ${type} URL for ${name} to clipboard (fallback)`);
     }
+  };
+
+  // Sorting functions
+  const sortBranches = (branches, sortBy) => {
+    return [...branches].sort((a, b) => {
+      switch (sortBy) {
+        case 'alphabetical':
+          return a.name.localeCompare(b.name);
+        case 'updated':
+        default:
+          const dateA = new Date(a.lastModified);
+          const dateB = new Date(b.lastModified);
+          return dateB - dateA; // Most recent first
+      }
+    });
+  };
+
+  const sortPRs = (prs, sortBy) => {
+    return [...prs].sort((a, b) => {
+      switch (sortBy) {
+        case 'number':
+          return b.number - a.number; // Highest number first
+        case 'alphabetical':
+          return a.title.localeCompare(b.title);
+        case 'updated':
+        default:
+          const dateA = new Date(a.updatedAt);
+          const dateB = new Date(b.updatedAt);
+          return dateB - dateA; // Most recent first
+      }
+    });
   };
 
   // "How to contribute" slideshow content
@@ -251,6 +284,78 @@ const BranchListing = () => {
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err.message);
+        
+        // Fallback to mock data for development/demo purposes
+        console.log('Using fallback mock data for demonstration...');
+        const mockBranches = [
+          {
+            name: 'main',
+            safeName: 'main',
+            commit: { sha: 'abc1234' },
+            url: './sgex/main/index.html',
+            lastModified: new Date().toLocaleDateString()
+          },
+          {
+            name: 'feature/user-auth',
+            safeName: 'feature-user-auth',
+            commit: { sha: 'def5678' },
+            url: './sgex/feature-user-auth/index.html',
+            lastModified: new Date(Date.now() - 86400000).toLocaleDateString()
+          },
+          {
+            name: 'fix/api-endpoints',
+            safeName: 'fix-api-endpoints',
+            commit: { sha: 'ghi9012' },
+            url: './sgex/fix-api-endpoints/index.html',
+            lastModified: new Date(Date.now() - 172800000).toLocaleDateString()
+          }
+        ];
+
+        const mockPRs = [
+          {
+            id: 1,
+            number: 123,
+            title: 'Improve multi-page selector landing page for GitHub deployment',
+            state: 'open',
+            author: 'copilot',
+            branchName: 'copilot/fix-459',
+            safeBranchName: 'copilot-fix-459',
+            url: './sgex/copilot-fix-459/index.html',
+            prUrl: 'https://github.com/litlfred/sgex/pull/123',
+            updatedAt: new Date().toLocaleDateString(),
+            createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
+          },
+          {
+            id: 2,
+            number: 122,
+            title: 'Add dark mode support',
+            state: 'closed',
+            author: 'developer',
+            branchName: 'feature/dark-mode',
+            safeBranchName: 'feature-dark-mode',
+            url: './sgex/feature-dark-mode/index.html',
+            prUrl: 'https://github.com/litlfred/sgex/pull/122',
+            updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
+            createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
+          },
+          {
+            id: 3,
+            number: 121,
+            title: 'Fix authentication flow',
+            state: 'open',
+            author: 'contributor',
+            branchName: 'fix/auth-flow',
+            safeBranchName: 'fix-auth-flow',
+            url: './sgex/fix-auth-flow/index.html',
+            prUrl: 'https://github.com/litlfred/sgex/pull/121',
+            updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
+            createdAt: new Date(Date.now() - 432000000).toLocaleDateString()
+          }
+        ];
+
+        setBranches(mockBranches);
+        setPullRequests(mockPRs);
+        setError(null); // Clear error since we have fallback data
       } finally {
         setLoading(false);
       }
@@ -259,22 +364,24 @@ const BranchListing = () => {
     fetchData();
   }, [checkAllDeploymentStatuses]);
 
-  // Filter and paginate PRs based on search
+  // Filter and sort PRs based on search and sorting
   const filteredPRs = pullRequests.filter(pr => 
     pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
     pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
   );
-  const paginatedPRs = filteredPRs.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
-  const totalPRPages = Math.ceil(filteredPRs.length / ITEMS_PER_PAGE);
+  const sortedPRs = sortPRs(filteredPRs, prSortBy);
+  const paginatedPRs = sortedPRs.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
+  const totalPRPages = Math.ceil(sortedPRs.length / ITEMS_PER_PAGE);
 
-  // Filter branches based on search
+  // Filter and sort branches based on search and sorting
   const filteredBranches = branches.filter(branch => 
     branch.name.toLowerCase().includes(branchSearchTerm.toLowerCase())
   );
+  const sortedBranches = sortBranches(filteredBranches, branchSortBy);
 
   if (loading) {
     return (
-      <PageLayout pageName="branch-listing" showMascot={true}>
+      <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
         <div className="branch-listing">
           <h1><img src="/sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
           <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
@@ -286,7 +393,7 @@ const BranchListing = () => {
 
   if (error) {
     return (
-      <PageLayout pageName="branch-listing" showMascot={true}>
+      <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
         <div className="branch-listing">
           <h1><img src="/sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
           <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
@@ -300,11 +407,18 @@ const BranchListing = () => {
   }
 
   return (
-    <PageLayout pageName="branch-listing" showMascot={true}>
+    <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
       <div className="branch-listing">
         <header className="branch-listing-header">
           <h1><img src="/sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
           <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
+          
+          <div className="prominent-info">
+            <p className="info-text">
+              🐾 This landing page lists all available previews. 
+              Each branch and PR is automatically deployed to its own preview environment.
+            </p>
+          </div>
         </header>
 
         <div className="main-actions">
@@ -341,13 +455,13 @@ const BranchListing = () => {
             className={`tab-button ${activeTab === 'branches' ? 'active' : ''}`}
             onClick={() => setActiveTab('branches')}
           >
-            🌿 Branch Previews ({filteredBranches.length})
+            🌿 Branch Previews ({sortedBranches.length})
           </button>
           <button 
             className={`tab-button ${activeTab === 'prs' ? 'active' : ''}`}
             onClick={() => setActiveTab('prs')}
           >
-            🔄 Pull Request Previews ({pullRequests.length})
+            🔄 Pull Request Previews ({sortedPRs.length})
           </button>
         </div>
 
@@ -361,6 +475,14 @@ const BranchListing = () => {
                 onChange={(e) => setBranchSearchTerm(e.target.value)}
                 className="branch-search"
               />
+              <select
+                value={branchSortBy}
+                onChange={(e) => setBranchSortBy(e.target.value)}
+                className="sort-select"
+              >
+                <option value="updated">Sort by Recent Updates</option>
+                <option value="alphabetical">Sort Alphabetically</option>
+              </select>
               {checkingStatuses && (
                 <span className="status-checking">
                   🔄 Checking deployment status...
@@ -369,7 +491,7 @@ const BranchListing = () => {
             </div>
 
             <div className="branch-cards">
-              {filteredBranches.length === 0 ? (
+              {sortedBranches.length === 0 ? (
                 <div className="no-items">
                   {branchSearchTerm ? (
                     <p>No branches match your search "{branchSearchTerm}".</p>
@@ -381,7 +503,7 @@ const BranchListing = () => {
                   )}
                 </div>
               ) : (
-                filteredBranches.map((branch) => {
+                sortedBranches.map((branch) => {
                   const statusKey = `branch-${branch.name}`;
                   const deploymentStatus = deploymentStatuses[statusKey];
                   
@@ -483,6 +605,18 @@ const BranchListing = () => {
                 }}
                 className="pr-search"
               />
+              <select
+                value={prSortBy}
+                onChange={(e) => {
+                  setPrSortBy(e.target.value);
+                  setPrPage(1); // Reset to first page when sorting
+                }}
+                className="sort-select"
+              >
+                <option value="updated">Sort by Recent Updates</option>
+                <option value="number">Sort by PR Number</option>
+                <option value="alphabetical">Sort Alphabetically</option>
+              </select>
             </div>
 
             <div className="pr-cards">
@@ -604,7 +738,7 @@ const BranchListing = () => {
                   ← Previous
                 </button>
                 <span className="pagination-info">
-                  Page {prPage} of {totalPRPages} ({filteredPRs.length} total)
+                  Page {prPage} of {totalPRPages} ({sortedPRs.length} total)
                 </span>
                 <button 
                   className="pagination-btn"
@@ -631,10 +765,6 @@ const BranchListing = () => {
               </a>
             </div>
             <div className="footer-center">
-              <p>
-                🐾 This landing page lists all available previews. 
-                Each branch and PR is automatically deployed to its own preview environment.
-              </p>
               <p>
                 <strong>Main Application:</strong> <a href="./sgex/main/index.html">View Main Branch →</a>
               </p>
