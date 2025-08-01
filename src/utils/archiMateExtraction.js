@@ -20,7 +20,6 @@ export function parseLogicalModel(fshContent, fileName) {
     fileName: fileName
   };
 
-  let currentSection = null;
   let inLogicalDefinition = false;
 
   for (let i = 0; i < lines.length; i++) {
@@ -82,7 +81,7 @@ export function parseLogicalModel(fshContent, fileName) {
  */
 function parseFieldDefinition(line) {
   // Pattern: * fieldName cardinality datatype "description"
-  const match = line.match(/\*\s+([^\s\[]+)(\s+\[[^\]]+\])?\s+([^\s"]+)(\s+"([^"]+)")?/);
+  const match = line.match(/\*\s+([^\s[]+)(\s+\[[^\]]+\])?\s+([^\s"]+)(\s+"([^"]+)")?/);
   
   if (!match) {
     return null;
