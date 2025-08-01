@@ -297,6 +297,26 @@ body.theme-light .welcome-page-content {
   line-height: 1.3;
 }
 
+.pat-help-link {
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+.pat-help-btn {
+  background: none;
+  border: none;
+  color: var(--who-blue);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0.25rem;
+  transition: color 0.2s ease;
+}
+
+.pat-help-btn:hover {
+  color: var(--who-blue-dark);
+}
+
 .demo-section {
   text-align: center;
 }
