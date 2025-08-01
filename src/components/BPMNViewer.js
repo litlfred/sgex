@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import githubService from '../services/githubService';
@@ -12,12 +12,7 @@ const BPMNViewerComponent = () => {
   const containerRef = useRef(null);
   
   // Try to get data from framework params first, then fall back to location state
-  let frameworkData = null;
-  try {
-    frameworkData = useDAKParams();
-  } catch (e) {
-    // Not a DAK/Asset page, use location state only
-  }
+  const frameworkData = useDAKParams();
   
   const { profile, repository, component, selectedFile, selectedBranch } = location.state || {};
   
@@ -28,10 +23,12 @@ const BPMNViewerComponent = () => {
   const assetPath = frameworkData?.asset;
   
   // If we have asset path from URL, create a selectedFile object
-  const currentSelectedFile = assetPath ? {
-    name: assetPath.split('/').pop(),
-    path: assetPath
-  } : selectedFile;
+  const currentSelectedFile = useMemo(() => {
+    return assetPath ? {
+      name: assetPath.split('/').pop(),
+      path: assetPath
+    } : selectedFile;
+  }, [assetPath, selectedFile]);
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -184,8 +181,8 @@ const BPMNViewerComponent = () => {
           ref: ref
         },
         file: {
-          name: selectedFile.name,
-          path: selectedFile.path
+          name: currentSelectedFile.name,
+          path: currentSelectedFile.path
         }
       });
       
@@ -222,7 +219,7 @@ const BPMNViewerComponent = () => {
       console.log('🔄 BPMNViewer: Setting loading state to false due to error');
       setLoading(false);
     }
-  }, [selectedFile, repository, selectedBranch]);
+  }, [currentSelectedFile, currentRepository, currentBranch]);
 
   // Initialize BPMN viewer with improved container readiness check
   useEffect(() => {
@@ -238,12 +235,12 @@ const BPMNViewerComponent = () => {
       console.log('🛠️ BPMNViewer: initializeViewer called with:', {
         hasContainer: !!containerRef.current,
         hasViewer: !!viewerRef.current,
-        selectedFile: selectedFile ? selectedFile.name : 'none',
+        selectedFile: currentSelectedFile ? currentSelectedFile.name : 'none',
         containerRefCurrent: containerRef.current,
         viewerRefCurrent: viewerRef.current
       });
 
-      if (containerRef.current && !viewerRef.current && selectedFile) {
+      if (containerRef.current && !viewerRef.current && currentSelectedFile) {
         try {
           // Clean the container before creating a new viewer
           cleanupContainer();
@@ -304,10 +301,10 @@ const BPMNViewerComponent = () => {
         console.log('⚠️ BPMNViewer: Skipping viewer initialization:', {
           hasContainer: !!containerRef.current,
           hasViewer: !!viewerRef.current,
-          hasSelectedFile: !!selectedFile,
+          hasSelectedFile: !!currentSelectedFile,
           reason: !containerRef.current ? 'No container' : 
                   viewerRef.current ? 'Viewer already exists' : 
-                  !selectedFile ? 'No selected file' : 'Unknown'
+                  !currentSelectedFile ? 'No selected file' : 'Unknown'
         });
       }
     };
@@ -328,11 +325,11 @@ const BPMNViewerComponent = () => {
       }
     };
 
-    if (selectedFile) {
-      console.log('⏰ BPMNViewer: Starting container readiness check for selectedFile:', selectedFile.name);
+    if (currentSelectedFile) {
+      console.log('⏰ BPMNViewer: Starting container readiness check for selectedFile:', currentSelectedFile.name);
       waitForContainer();
     } else {
-      console.log('❌ BPMNViewer: No selectedFile, skipping viewer initialization');
+      console.log('❌ BPMNViewer: No currentSelectedFile, skipping viewer initialization');
     }
 
     return () => {
@@ -349,7 +346,7 @@ const BPMNViewerComponent = () => {
       // Also clean up the container on unmount
       cleanupContainer();
     };
-  }, [selectedFile, loadBpmnContent]);
+  }, [currentSelectedFile, loadBpmnContent]);
 
   const handleEditMode = () => {
     if (!hasWriteAccess) {
@@ -357,19 +354,19 @@ const BPMNViewerComponent = () => {
       return;
     }
 
-    const owner = repository.owner?.login || repository.full_name.split('/')[0];
-    const repoName = repository.name;
-    const path = selectedBranch 
-      ? `/bpmn-editor/${owner}/${repoName}/${selectedBranch}`
+    const owner = currentRepository.owner?.login || currentRepository.full_name.split('/')[0];
+    const repoName = currentRepository.name;
+    const path = currentBranch 
+      ? `/bpmn-editor/${owner}/${repoName}/${currentBranch}`
       : `/bpmn-editor/${owner}/${repoName}`;
 
     navigate(path, {
       state: {
-        profile,
-        repository,
+        profile: currentProfile,
+        repository: currentRepository,
         component,
-        selectedFile,
-        selectedBranch,
+        selectedFile: currentSelectedFile,
+        selectedBranch: currentBranch,
         mode: 'edit'
       }
     });
@@ -378,10 +375,10 @@ const BPMNViewerComponent = () => {
   const handleBackToSelection = () => {
     navigate('/business-process-selection', {
       state: {
-        profile,
-        repository,
+        profile: currentProfile,
+        repository: currentRepository,
         component,
-        selectedBranch
+        selectedBranch: currentBranch
       }
     });
   };
@@ -423,7 +420,7 @@ const BPMNViewerComponent = () => {
     };
   }, [enhancedFullwidth]);
 
-  if (!profile || !repository || !selectedFile) {
+  if (!currentProfile || !currentRepository || !currentSelectedFile) {
     navigate('/');
     return <div>Redirecting...</div>;
   }
@@ -436,7 +433,7 @@ const BPMNViewerComponent = () => {
         <div className="viewer-main">
           <div className="viewer-toolbar">
             <div className="toolbar-left">
-              <h3>{selectedFile.name}</h3>
+              <h3>{currentSelectedFile.name}</h3>
               <div className="artifact-badges">
                 <span className="artifact-badge bpmn">📊 BPMN</span>
                 <span className="dak-component-badge">🔄 Business Process</span>
@@ -482,7 +479,7 @@ const BPMNViewerComponent = () => {
                 <div className="loading-info">
                   <p>Loading BPMN diagram...</p>
                   <p className="loading-details">
-                    Fetching {selectedFile.name} from {repository.name}
+                    Fetching {currentSelectedFile.name} from {currentRepository.name}
                   </p>
                   <p className="loading-hint">
                     This may take a few moments for large files or slow connections.
@@ -502,7 +499,7 @@ const BPMNViewerComponent = () => {
                   <button 
                     className="action-btn secondary"
                     onClick={() => navigate('/business-process-selection', {
-                      state: { profile, repository, component, selectedBranch }
+                      state: { profile: currentProfile, repository: currentRepository, component, selectedBranch: currentBranch }
                     })}
                   >
                     ← Back to List
@@ -527,15 +524,15 @@ const BPMNViewerComponent = () => {
             <div className="condensed-file-info">
               <div className="condensed-info-item">
                 <span className="label">📁</span>
-                <span className="value">{selectedFile?.name || 'No file'}</span>
+                <span className="value">{currentSelectedFile?.name || 'No file'}</span>
               </div>
               <div className="condensed-info-item">
                 <span className="label">📏</span>
-                <span className="value">{selectedFile?.size ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'N/A'}</span>
+                <span className="value">{currentSelectedFile?.size ? `${(currentSelectedFile.size / 1024).toFixed(1)} KB` : 'N/A'}</span>
               </div>
               <div className="condensed-info-item">
                 <span className="label">🌿</span>
-                <span className="value">{selectedBranch || 'main'}</span>
+                <span className="value">{currentBranch || 'main'}</span>
               </div>
             </div>
             <div className="condensed-view-mode">
