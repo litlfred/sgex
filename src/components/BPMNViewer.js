@@ -98,20 +98,79 @@ const BPMNViewerComponent = () => {
       }, 30000); // 30 second timeout
       
       try {
-        // Use githubService to fetch file content (works for both public and private repos)
-        console.log(`🌐 BPMNViewer: About to call githubService.getFileContent with params:`, {
-          owner,
-          repoName,
-          path: selectedFile.path,
-          ref
-        });
+        let bpmnXml;
+        const isDemo = selectedFile.path?.includes('demo/') || selectedFile.sha?.startsWith('demo-');
         
-        console.log('🌐 BPMNViewer: Making GitHub API call...');
-        const startTime = Date.now();
-        const bpmnXml = await githubService.getFileContent(owner, repoName, selectedFile.path, ref);
-        const endTime = Date.now();
+        if (isDemo) {
+          // For demo files, generate BPMN XML locally
+          console.log('🎭 BPMNViewer: Demo file detected, generating BPMN content locally');
+          const processName = selectedFile.name.replace('.bpmn', '').replace(/[-_]/g, ' ');
+          bpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
+                  id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_${selectedFile.name.replace(/[^a-zA-Z0-9]/g, '_')}" isExecutable="false">
+    <bpmn:startEvent id="StartEvent_1" name="Start">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_1" name="${processName}">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="EndEvent_1" name="End">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="EndEvent_1" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_${selectedFile.name.replace(/[^a-zA-Z0-9]/g, '_')}">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="158" y="125" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1">
+        <dc:Bounds x="250" y="60" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="402" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="410" y="125" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="188" y="100" />
+        <di:waypoint x="250" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="350" y="100" />
+        <di:waypoint x="402" y="100" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>`;
+          console.log('✅ BPMNViewer: Generated demo BPMN content locally');
+        } else {
+          // For real files, use githubService to fetch file content
+          console.log(`🌐 BPMNViewer: About to call githubService.getFileContent with params:`, {
+            owner,
+            repoName,
+            path: selectedFile.path,
+            ref
+          });
+          
+          console.log('🌐 BPMNViewer: Making GitHub API call...');
+          const startTime = Date.now();
+          bpmnXml = await githubService.getFileContent(owner, repoName, selectedFile.path, ref);
+          const endTime = Date.now();
+          
+          console.log(`✅ BPMNViewer: Successfully loaded BPMN content from repository in ${endTime - startTime}ms`);
+        }
         
-        console.log(`✅ BPMNViewer: Successfully loaded BPMN content from repository in ${endTime - startTime}ms`);
         console.log('📏 BPMNViewer: Content length:', bpmnXml.length);
         console.log('👀 BPMNViewer: Content preview (first 200 chars):', bpmnXml.substring(0, 200));
         console.log('🔍 BPMNViewer: Content type check - contains bpmn:definitions:', bpmnXml.includes('bpmn:definitions'));
