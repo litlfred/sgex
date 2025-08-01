@@ -1,0 +1,76 @@
+.bpmn-preview {
+  width: 100%;
+  height: 120px;
+  border: 1px solid var(--who-border-color);
+  border-radius: 4px;
+  background: var(--who-card-bg);
+  overflow: hidden;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.preview-container {
+  width: 100%;
+  height: 100%;
+}
+
+.preview-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--who-text-secondary);
+  font-size: 0.9rem;
+  gap: 0.5rem;
+}
+
+.preview-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--who-border-color);
+  border-top: 2px solid var(--who-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.preview-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--who-text-muted);
+  font-size: 0.9rem;
+  background: var(--who-hover-bg);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* BPMN.js specific styling for preview */
+.bpmn-preview .djs-container {
+  background: var(--who-card-bg) !important;
+}
+
+.bpmn-preview .djs-palette,
+.bpmn-preview .dmn-palette {
+  display: none !important;
+}
+
+.bpmn-preview .djs-context-pad {
+  display: none !important;
+}
+
+.bpmn-preview .djs-popup {
+  display: none !important;
+}
+
+/* Dark mode adjustments for BPMN viewer */
+body.theme-dark .bpmn-preview .djs-container {
+  background: var(--who-card-bg) !important;
+}
+
+body.theme-dark .bpmn-preview svg {
+  background: transparent !important;
+}

@@ -91,37 +91,6 @@ body.theme-light .business-process-selection {
   margin: 0 auto;
 }
 
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  font-size: 0.9rem;
-}
-
-.breadcrumb-link {
-  background: none;
-  border: none;
-  color: var(--who-text-primary);
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-  font-size: inherit;
-}
-
-.breadcrumb-link:hover {
-  color: var(--who-blue);
-}
-
-.breadcrumb-separator {
-  color: var(--who-text-muted);
-  margin: 0 0.2rem;
-}
-
-.breadcrumb-current {
-  color: var(--who-text-primary);
-  font-weight: 500;
-}
 
 .selection-main {
   background: var(--who-card-bg);
@@ -134,6 +103,18 @@ body.theme-light .business-process-selection {
 .selection-intro {
   padding: 2rem;
   border-bottom: 1px solid var(--who-border-color);
+  background: var(--who-secondary-bg);
+  color: var(--who-text-primary);
+}
+
+/* Light mode selection-intro - subtle background */
+body.theme-light .selection-intro {
+  background: var(--who-light-blue-light);
+  color: var(--who-text-primary);
+}
+
+/* Dark mode selection-intro - blue gradient */
+body.theme-dark .selection-intro {
   background: linear-gradient(135deg, var(--who-blue) 0%, var(--who-blue-dark) 100%);
   color: var(--who-text-primary);
 }
@@ -224,7 +205,7 @@ body.theme-light .business-process-selection {
   background: var(--who-card-bg);
   border: 1px solid var(--who-border-color);
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 1rem;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -236,15 +217,27 @@ body.theme-light .business-process-selection {
   border-color: var(--who-blue);
 }
 
+/* Dark mode card improvements */
+body.theme-dark .file-card {
+  background: var(--who-card-bg);
+  border-color: var(--who-border-color);
+  color: var(--who-text-primary);
+}
+
+body.theme-dark .file-card:hover {
+  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.1);
+  border-color: var(--who-blue);
+}
+
 .file-header {
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .file-icon {
-  font-size: 2rem;
+  font-size: 1.5rem;
   color: var(--who-blue);
   flex-shrink: 0;
 }
@@ -254,56 +247,76 @@ body.theme-light .business-process-selection {
 }
 
 .file-name {
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.25rem 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #333;
+  color: var(--who-text-primary);
   word-break: break-word;
 }
 
+.file-info-compact {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--who-hover-bg);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
 .file-path {
-  margin: 0 0 0.25rem 0;
-  font-size: 0.85rem;
-  color: #666;
+  color: var(--who-text-secondary);
   font-family: 'Consolas', 'Monaco', monospace;
   word-break: break-all;
+  flex: 1;
 }
 
 .file-size {
-  margin: 0;
-  font-size: 0.8rem;
-  color: #888;
+  color: var(--who-text-muted);
+  white-space: nowrap;
+}
+
+/* Dark mode text improvements */
+body.theme-dark .file-name {
+  color: var(--who-text-primary);
+}
+
+body.theme-dark .file-path {
+  color: var(--who-text-secondary);
+}
+
+body.theme-dark .file-size {
+  color: var(--who-text-muted);
 }
 
 .file-actions {
   display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 0.5rem;
 }
 
 .action-btn {
   flex: 1;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid transparent;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .view-btn {
-  background: #e3f2fd;
-  color: #1976d2;
-  border-color: #bbdefb;
+  background: var(--who-light-blue-light);
+  color: var(--who-blue-dark);
+  border-color: var(--who-light-blue);
 }
 
 .view-btn:hover {
-  background: #bbdefb;
+  background: var(--who-light-blue);
   transform: translateY(-1px);
 }
 
@@ -319,9 +332,9 @@ body.theme-light .business-process-selection {
 }
 
 .edit-btn.disabled {
-  background: #f5f5f5;
-  color: #bbb;
-  border-color: #e0e0e0;
+  background: var(--who-hover-bg);
+  color: var(--who-text-muted);
+  border-color: var(--who-border-color);
   cursor: not-allowed;
 }
 
@@ -336,23 +349,38 @@ body.theme-light .business-process-selection {
   transform: translateY(-1px);
 }
 
-.permission-notice {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 6px;
-  border-left: 4px solid #f39c12;
+/* Dark mode button improvements */
+body.theme-dark .view-btn {
+  background: rgba(0, 108, 190, 0.2);
+  color: var(--who-light-blue);
+  border-color: rgba(0, 108, 190, 0.3);
 }
 
-.permission-notice p {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #856404;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+body.theme-dark .view-btn:hover {
+  background: rgba(0, 108, 190, 0.3);
 }
+
+body.theme-dark .edit-btn {
+  background: rgba(46, 125, 50, 0.2);
+  color: #81c784;
+  border-color: rgba(46, 125, 50, 0.3);
+}
+
+body.theme-dark .edit-btn:hover:not(.disabled) {
+  background: rgba(46, 125, 50, 0.3);
+}
+
+body.theme-dark .source-btn {
+  background: rgba(245, 124, 0, 0.2);
+  color: #ffb74d;
+  border-color: rgba(245, 124, 0, 0.3);
+}
+
+body.theme-dark .source-btn:hover {
+  background: rgba(245, 124, 0, 0.3);
+}
+
+
 
 /* Responsive design */
 @media (max-width: 768px) {
