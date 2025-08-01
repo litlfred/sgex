@@ -50,7 +50,16 @@ jobs:
         run: node scripts/analyze-github-issues.js
 
       - name: Build branch-specific React app
-        run: node scripts/build-multi-branch.js branch
+        run: |
+          # Set the correct base path for the branch deployment
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            export BASE_PATH="/sgex/main/"
+          else
+            safe_branch_name=$(echo "${{ github.ref_name }}" | tr '/' '-')
+            export BASE_PATH="/sgex/${safe_branch_name}/"
+          fi
+          echo "Building with BASE_PATH: $BASE_PATH"
+          node scripts/build-multi-branch.js branch
         env:
           CI: false
           GITHUB_REF_NAME: ${{ github.ref_name }}
@@ -75,12 +84,19 @@ jobs:
           safe_branch_name=$(echo "$branch" | tr '/' '-')
           echo "Safe branch name: $safe_branch_name"
           
+          # Use simplified path structure: main goes to /main/, others to /safe-branch-name/
+          if [[ "$branch" == "main" ]]; then
+            target_subdir="main"
+          else
+            target_subdir="$safe_branch_name"
+          fi
+          
           # Ensure we're in the repository root
           repo_root="$(pwd)"
           echo "Repository root: $repo_root"
           
-          # Calculate target directory path using safe name
-          target_dir="$repo_root/$safe_branch_name"
+          # Calculate target directory path using simplified structure
+          target_dir="$repo_root/$target_subdir"
           
           echo "Target directory: $target_dir"
           
@@ -100,7 +116,7 @@ jobs:
           fi
           
           # Additional safety: ensure target is exactly one level deeper
-          expected_path="$repo_root/$safe_branch_name"
+          expected_path="$repo_root/$target_subdir"
           if [[ "$target_dir" != "$expected_path" ]]; then
             echo "ERROR: Target directory does not match expected path"
             echo "Expected: $expected_path"
@@ -127,6 +143,7 @@ jobs:
           echo "branch_dir=$resolved_target" >> "$GITHUB_OUTPUT"
           echo "branch_name=$branch" >> "$GITHUB_OUTPUT"
           echo "safe_branch_name=$safe_branch_name" >> "$GITHUB_OUTPUT"
+          echo "target_subdir=$target_subdir" >> "$GITHUB_OUTPUT"
 
       - name: Checkout gh-pages branch
         shell: bash
@@ -234,7 +251,7 @@ jobs:
           git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
           git checkout gh-pages
           
-          # Copy landing page to root (but preserve branch directories)
+          # Deploy landing page to root (but preserve branch directories)
           echo "Deploying root landing page..."
           
           # Save existing branch directories
@@ -242,9 +259,7 @@ jobs:
             echo "Preserving existing branch directories..."
             mkdir -p /tmp/branch-backup
             for dir in */; do
-              if [[ "$dir" != "sgex/" ]]; then  # Don't backup the main content dir
-                cp -r "$dir" /tmp/branch-backup/
-              fi
+              cp -r "$dir" /tmp/branch-backup/
             done
           fi
           
@@ -253,6 +268,12 @@ jobs:
           
           # Copy root landing page
           cp -a /tmp/root-build-backup/. .
+          
+          # Ensure no build directory exists in root after copying
+          if [[ -d "build" ]]; then
+            echo "Removing unwanted build directory from gh-pages root..."
+            rm -rf build
+          fi
           
           # Clean up temporary build backup
           rm -rf /tmp/root-build-backup
@@ -263,15 +284,10 @@ jobs:
             rm -rf /tmp/branch-backup
           fi
           
-          # Ensure main application is accessible at /sgex/main/
-          if [[ ! -d "sgex" ]]; then
-            mkdir -p sgex
-          fi
-          
-          # Always ensure main branch is available at /sgex/main/
-          echo "Ensuring main branch is available at /sgex/main/..."
-          if [[ ! -d "sgex/main" ]]; then
-            mkdir -p sgex/main
+          # Ensure main branch is always available at /main/
+          echo "Ensuring main branch is available at /main/..."
+          if [[ ! -d "main" ]] || [[ "${{ github.ref_name }}" == "main" ]]; then
+            mkdir -p main
             
             # Check if we're on main branch, if so, copy current build
             if [[ "${{ github.ref_name }}" == "main" ]]; then
@@ -279,67 +295,44 @@ jobs:
               git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
               git checkout ${{ github.ref_name }}
               npm ci
+              # Build main with correct base path
+              export BASE_PATH="/sgex/main/"
               node scripts/build-multi-branch.js branch
               # Save build before switching branches
               mkdir -p /tmp/main-build-backup
               cp -a build/. /tmp/main-build-backup/
               git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
               git checkout gh-pages
-              mkdir -p sgex/main  # Ensure directory exists after branch switch and clean
-              cp -a /tmp/main-build-backup/. sgex/main/
+              mkdir -p main  # Ensure directory exists after branch switch and clean
+              cp -a /tmp/main-build-backup/. main/
               rm -rf /tmp/main-build-backup
             else
               # Check out main branch and build it
               echo "Building main branch separately..."
               if git show-ref --verify --quiet refs/remotes/origin/main; then
+                # Save current (updated) build script before switching branches
+                cp scripts/build-multi-branch.js /tmp/updated-build-script.js
                 git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
                 git checkout main
+                # Use the updated build script from our current branch
+                cp /tmp/updated-build-script.js scripts/build-multi-branch.js
                 npm ci
+                # Build main with correct base path
+                export BASE_PATH="/sgex/main/"
                 node scripts/build-multi-branch.js branch
                 # Save build before switching branches
                 mkdir -p /tmp/main-build-backup
                 cp -a build/. /tmp/main-build-backup/
                 git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
                 git checkout gh-pages
-                mkdir -p sgex/main  # Ensure directory exists after branch switch and clean
-                cp -a /tmp/main-build-backup/. sgex/main/
+                mkdir -p main  # Ensure directory exists after branch switch and clean
+                cp -a /tmp/main-build-backup/. main/
                 rm -rf /tmp/main-build-backup
+                # Clean up the temporary script
+                rm -f /tmp/updated-build-script.js
               else
-                echo "Warning: Main branch not found, /sgex/main/ will not be available"
+                echo "Warning: Main branch not found, /main/ will not be available"
               fi
-            fi
-          fi
-          
-          # Copy current branch to /sgex/safe-branch-name/
-          safe_branch_name="${{ steps.validate_branch.outputs.safe_branch_name }}"
-          sgex_branch_dir="sgex/$safe_branch_name"
-          mkdir -p "$sgex_branch_dir"
-          
-          # Switch back to get the branch build (if not already main)
-          if [[ "${{ github.ref_name }}" != "main" ]]; then
-            git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
-            git checkout ${{ github.ref_name }}
-            npm ci
-            node scripts/build-multi-branch.js branch
-            # Save build before switching branches
-            mkdir -p /tmp/branch-build-backup
-            cp -a build/. /tmp/branch-build-backup/
-            git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
-            git checkout gh-pages
-            mkdir -p "$sgex_branch_dir"  # Ensure directory exists after branch switch and clean
-            cp -a /tmp/branch-build-backup/. "$sgex_branch_dir/"
-            rm -rf /tmp/branch-build-backup
-          else
-            # If we're on main branch, check if we need to copy to a different location
-            if [[ "$sgex_branch_dir" != "sgex/main" ]]; then
-              # Copy from main directory to branch-specific directory
-              if [[ -d "sgex/main" ]]; then
-                cp -a sgex/main/. "$sgex_branch_dir/"
-              else
-                echo "Warning: Main branch build not available for branch-specific copy"
-              fi
-            else
-              echo "✅ Main branch already deployed to sgex/main, no additional copy needed"
             fi
           fi
           
@@ -378,6 +371,12 @@ jobs:
           echo "✅ Branch validation passed - proceeding with staging changes"
           echo "Staging changes for commit"
           
+          # Clean up any build directory that shouldn't be in gh-pages
+          if [[ -d "build" ]]; then
+            echo "Removing build directory from gh-pages..."
+            rm -rf build
+          fi
+          
           # Add all changes
           git add -A
           
@@ -410,10 +409,11 @@ jobs:
       - name: Output deployment info
         shell: bash
         run: |
-          safe_branch_name="${{ steps.validate_branch.outputs.safe_branch_name }}"
+          target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
           echo "🎉 Deployment Summary:"
           echo "- Branch: ${{ steps.validate_branch.outputs.branch_name }}"
-          echo "- Safe Branch Name: $safe_branch_name"
-          echo "- Branch Preview: https://litlfred.github.io/sgex/sgex/$safe_branch_name/"
+          echo "- Target Directory: $target_subdir"
+          echo "- Branch Preview: https://litlfred.github.io/sgex/$target_subdir/"
           echo "- Landing Page: https://litlfred.github.io/sgex/"
+          echo "- Main App: https://litlfred.github.io/sgex/main/"
           echo "- Commit: ${{ github.sha }}"
