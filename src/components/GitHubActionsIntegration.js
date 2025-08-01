@@ -38,7 +38,16 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
       setWorkflowRuns(runsData.workflow_runs || []);
     } catch (err) {
       console.error('Error loading workflow data:', err);
-      setError('Failed to load GitHub Actions data');
+      
+      // Check if it's a permission error
+      if (err.status === 403 || err.message.includes('permission') || err.message.includes('forbidden')) {
+        setError('Your Personal Access Token does not have permission to view GitHub Actions for this repository. Please create a new token with "Actions: Read" permission.');
+      } else if (err.status === 404) {
+        setError('No GitHub Actions workflows found for this repository.');
+      } else {
+        setError('Failed to load GitHub Actions data. Please check your internet connection and try again.');
+      }
+      
       setWorkflows([]);
       setWorkflowRuns([]);
     } finally {
@@ -175,7 +184,6 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
       <div className="github-actions-placeholder">
         <div className="placeholder-content">
           <span className="placeholder-icon">⚡</span>
-          <h4>GitHub Actions Integration</h4>
           <p>Sign in to GitHub to view and manage workflow runs</p>
           <a 
             href={`https://github.com/${owner}/${repoName}/actions`}
@@ -193,7 +201,6 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
   return (
     <div className="github-actions-integration">
       <div className="actions-header">
-        <h4>⚡ GitHub Actions</h4>
         <a 
           href={`https://github.com/${owner}/${repoName}/actions`}
           target="_blank"

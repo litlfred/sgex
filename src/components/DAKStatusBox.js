@@ -37,10 +37,18 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
       });
     } catch (err) {
       console.error('Error loading repository stats:', err);
+      
+      let errorMessage = 'Failed to load repository statistics';
+      if (err.status === 403 || err.message.includes('permission') || err.message.includes('forbidden')) {
+        errorMessage = 'Your Personal Access Token does not have permission to view repository statistics. Please create a new token with appropriate permissions.';
+      } else if (err.status === 404) {
+        errorMessage = 'Repository not found or not accessible.';
+      }
+      
       setRepositoryStats(prev => ({
         ...prev,
         statsLoading: false,
-        statsError: 'Failed to load repository statistics'
+        statsError: errorMessage
       }));
     }
   }, [owner, repoName, branch]);
@@ -125,7 +133,7 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
           ) : repositoryStats.statsError ? (
             <div className="error-message">
               <span className="error-icon">⚠️</span>
-              {repositoryStats.statsError}
+              <div className="error-text">{repositoryStats.statsError}</div>
             </div>
           ) : (
             <>

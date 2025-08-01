@@ -126,8 +126,9 @@ const PageHeader = () => {
 
       {/* Right side - Navigation and user controls */}
       <div className="page-header-right">
-        {/* Access badge for DAK and Asset pages */}
-        {(type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && repository && (
+        {/* Access badge for DAK and Asset pages (but not dashboard) */}
+        {(type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && repository && 
+         !pageName.includes('dashboard') && (
           <AccessBadge 
             owner={repository.owner?.login || profile?.login}
             repo={repository.name}

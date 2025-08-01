@@ -107,7 +107,6 @@ const CommitsSlider = ({ repository, selectedBranch }) => {
   return (
     <div className="commits-slider-container">
       <div className="slider-header">
-        <h4>📈 Recent Commits</h4>
         <div className="slider-controls">
           <button 
             className="slider-control left" 
