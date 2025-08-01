@@ -180,9 +180,8 @@ const BusinessProcessSelection = () => {
 
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const repoName = repository.name;
-    const path = selectedBranch 
-      ? `/bpmn-editor/${owner}/${repoName}/${selectedBranch}`
-      : `/bpmn-editor/${owner}/${repoName}`;
+    const branch = selectedBranch || 'main';
+    const path = `/bpmn-editor/${owner}/${repoName}/${branch}/${file.path}`;
 
     const navigationState = {
       profile,
@@ -199,9 +198,8 @@ const BusinessProcessSelection = () => {
   const handleView = (event, file) => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const repoName = repository.name;
-    const path = selectedBranch 
-      ? `/bpmn-viewer/${owner}/${repoName}/${selectedBranch}`
-      : `/bpmn-viewer/${owner}/${repoName}`;
+    const branch = selectedBranch || 'main';
+    const path = `/bpmn-viewer/${owner}/${repoName}/${branch}/${file.path}`;
 
     const navigationState = {
       profile,
@@ -218,9 +216,8 @@ const BusinessProcessSelection = () => {
   const handleViewSource = (event, file) => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const repoName = repository.name;
-    const path = selectedBranch 
-      ? `/bpmn-source/${owner}/${repoName}/${selectedBranch}`
-      : `/bpmn-source/${owner}/${repoName}`;
+    const branch = selectedBranch || 'main';
+    const path = `/bpmn-source/${owner}/${repoName}/${branch}/${file.path}`;
 
     const navigationState = {
       profile,

@@ -57,25 +57,42 @@ export const usePageParams = () => {
  * Hook specifically for DAK pages (DAK and Asset page types)
  */
 export const useDAKParams = () => {
-  const pageParams = usePageParams();
-  
-  // Only throw error if page is fully loaded and type is not DAK/ASSET
-  // This prevents errors during initial loading or page type determination
-  if (!pageParams.loading && 
-      pageParams.type !== PAGE_TYPES.DAK && 
-      pageParams.type !== PAGE_TYPES.ASSET) {
-    throw new Error(`useDAKParams can only be used on DAK or Asset pages. Current page type: ${pageParams.type}`);
-  }
+  try {
+    const pageParams = usePageParams();
+    
+    // Only throw error if page is fully loaded and type is not DAK/ASSET
+    // This prevents errors during initial loading or page type determination
+    if (!pageParams.loading && 
+        pageParams.type !== PAGE_TYPES.DAK && 
+        pageParams.type !== PAGE_TYPES.ASSET) {
+      throw new Error(`useDAKParams can only be used on DAK or Asset pages. Current page type: ${pageParams.type}`);
+    }
 
-  return {
-    user: pageParams.user,
-    profile: pageParams.profile,
-    repository: pageParams.repository,
-    branch: pageParams.branch,
-    asset: pageParams.asset,
-    updateBranch: pageParams.updateBranch,
-    navigate: pageParams.navigate
-  };
+    return {
+      user: pageParams.user,
+      profile: pageParams.profile,
+      repository: pageParams.repository,
+      branch: pageParams.branch,
+      asset: pageParams.asset,
+      updateBranch: pageParams.updateBranch,
+      navigate: pageParams.navigate
+    };
+  } catch (error) {
+    // If PageProvider is not ready yet, return empty object
+    if (error.message.includes('usePage must be used within a PageProvider')) {
+      console.log('useDAKParams: PageProvider not ready yet, returning empty data');
+      return {
+        user: null,
+        profile: null,
+        repository: null,
+        branch: null,
+        asset: null,
+        updateBranch: () => {},
+        navigate: () => {}
+      };
+    }
+    throw error;
+  }
 };
 
 /**

@@ -14,6 +14,9 @@ const BPMNViewerComponent = () => {
   // Try to get data from framework params first, then fall back to location state
   const frameworkData = useDAKParams();
   
+  console.log('BPMNViewer: Framework data received:', frameworkData);
+  console.log('BPMNViewer: Location state:', location.state);
+  
   const { profile, repository, component, selectedFile, selectedBranch } = location.state || {};
   
   // Use framework data if available, otherwise use location state
@@ -21,6 +24,13 @@ const BPMNViewerComponent = () => {
   const currentRepository = frameworkData?.repository || repository;
   const currentBranch = frameworkData?.branch || selectedBranch;
   const assetPath = frameworkData?.asset;
+  
+  console.log('BPMNViewer: Final computed values:', {
+    currentProfile: !!currentProfile,
+    currentRepository: !!currentRepository,
+    currentBranch,
+    assetPath
+  });
   
   // If we have asset path from URL, create a selectedFile object
   const currentSelectedFile = useMemo(() => {
@@ -420,9 +430,21 @@ const BPMNViewerComponent = () => {
     };
   }, [enhancedFullwidth]);
 
+  // Handle redirect when data is missing
+  useEffect(() => {
+    if (!currentProfile || !currentRepository || !currentSelectedFile) {
+      console.log('BPMNViewer: Missing required data, redirecting to home:', {
+        hasProfile: !!currentProfile,
+        hasRepository: !!currentRepository,
+        hasSelectedFile: !!currentSelectedFile
+      });
+      navigate('/');
+    }
+  }, [currentProfile, currentRepository, currentSelectedFile, navigate]);
+
+  // Don't render the component if we're missing required data
   if (!currentProfile || !currentRepository || !currentSelectedFile) {
-    navigate('/');
-    return <div>Redirecting...</div>;
+    return <div>Loading or redirecting...</div>;
   }
 
   return (
