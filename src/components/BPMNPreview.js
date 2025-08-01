@@ -26,13 +26,14 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
 
   // Create a simple SVG representation of a BPMN workflow
   const processName = file.name.replace('.bpmn', '').replace(/[-_]/g, ' ');
+  const isDemo = file.path?.includes('demo/') || file.sha?.startsWith('demo-');
   
   return (
     <div className="bpmn-preview">
       <div className="preview-container">
         <svg width="100%" height="120" viewBox="0 0 500 120" className="bpmn-preview-svg">
           {/* Background */}
-          <rect width="500" height="120" fill="var(--who-card-bg)" stroke="none"/>
+          <rect width="500" height="120" fill="var(--bpmn-preview-bg)" stroke="none"/>
           
           {/* Start Event */}
           <circle cx="50" cy="60" r="18" fill="none" stroke="var(--who-blue)" strokeWidth="2"/>
@@ -62,7 +63,9 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
           </defs>
           
           {/* BPMN indicator */}
-          <text x="450" y="110" textAnchor="middle" fontSize="8" fill="var(--who-text-muted)">BPMN</text>
+          <text x="450" y="110" textAnchor="middle" fontSize="8" fill="var(--who-text-muted)">
+            {isDemo ? 'BPMN Preview' : 'BPMN'}
+          </text>
         </svg>
       </div>
     </div>

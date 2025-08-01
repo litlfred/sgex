@@ -114,13 +114,17 @@ const BusinessProcessSelection = () => {
           }
         });
         
-        // For demo mode, provide fallback BPMN files immediately
-        if (profile?.isDemo) {
+        const bpmnFiles = await githubService.getBpmnFiles(owner, repoName, ref);
+        
+        console.log(`Found ${bpmnFiles.length} BPMN files:`, bpmnFiles.map(f => f.path));
+        
+        // For demo mode, if no real BPMN files are found, provide fallback BPMN files
+        if (profile?.isDemo && bpmnFiles.length === 0) {
           console.log('Providing fallback demo BPMN files for demo mode');
           const demoFiles = [
             {
               name: 'patient-registration.bpmn',
-              path: 'input/business-processes/patient-registration.bpmn',
+              path: 'demo/business-processes/patient-registration.bpmn',
               sha: 'demo-sha-1',
               size: 2048,
               download_url: '#',
@@ -128,14 +132,14 @@ const BusinessProcessSelection = () => {
             },
             {
               name: 'vaccination-workflow.bpmn',
-              path: 'input/business-processes/vaccination-workflow.bpmn',
+              path: 'demo/business-processes/vaccination-workflow.bpmn',
               sha: 'demo-sha-2',
               size: 3072,
               download_url: '#'
             },
             {
               name: 'appointment-scheduling.bpmn',
-              path: 'input/business-processes/appointment-scheduling.bpmn',
+              path: 'demo/business-processes/appointment-scheduling.bpmn',
               sha: 'demo-sha-3',
               size: 1536,
               download_url: '#'
@@ -145,10 +149,6 @@ const BusinessProcessSelection = () => {
           setLoading(false);
           return;
         }
-        
-        const bpmnFiles = await githubService.getBpmnFiles(owner, repoName, ref);
-        
-        console.log(`Found ${bpmnFiles.length} BPMN files:`, bpmnFiles.map(f => f.path));
         
         setBpmnFiles(bpmnFiles);
         setLoading(false);
@@ -161,7 +161,7 @@ const BusinessProcessSelection = () => {
           const demoFiles = [
             {
               name: 'patient-registration.bpmn',
-              path: 'input/business-processes/patient-registration.bpmn',
+              path: 'demo/business-processes/patient-registration.bpmn',
               sha: 'demo-sha-1',
               size: 2048,
               download_url: '#',
@@ -169,14 +169,14 @@ const BusinessProcessSelection = () => {
             },
             {
               name: 'vaccination-workflow.bpmn',
-              path: 'input/business-processes/vaccination-workflow.bpmn',
+              path: 'demo/business-processes/vaccination-workflow.bpmn',
               sha: 'demo-sha-2',
               size: 3072,
               download_url: '#'
             },
             {
               name: 'appointment-scheduling.bpmn',
-              path: 'input/business-processes/appointment-scheduling.bpmn',
+              path: 'demo/business-processes/appointment-scheduling.bpmn',
               sha: 'demo-sha-3',
               size: 1536,
               download_url: '#'
