@@ -269,6 +269,12 @@ jobs:
           # Copy root landing page
           cp -a /tmp/root-build-backup/. .
           
+          # Ensure no build directory exists in root after copying
+          if [[ -d "build" ]]; then
+            echo "Removing unwanted build directory from gh-pages root..."
+            rm -rf build
+          fi
+          
           # Clean up temporary build backup
           rm -rf /tmp/root-build-backup
           
@@ -358,6 +364,12 @@ jobs:
           
           echo "✅ Branch validation passed - proceeding with staging changes"
           echo "Staging changes for commit"
+          
+          # Clean up any build directory that shouldn't be in gh-pages
+          if [[ -d "build" ]]; then
+            echo "Removing build directory from gh-pages..."
+            rm -rf build
+          fi
           
           # Add all changes
           git add -A
