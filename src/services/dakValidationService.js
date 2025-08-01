@@ -160,7 +160,8 @@ class DAKValidationService {
       /^[^/]+\/smart-anc-toolkit$/i,          // */smart-anc-toolkit
       /^[^/]+\/smart-immunizations$/i,        // */smart-immunizations  
       /^[^/]+\/smart-guidelines$/i,           // */smart-guidelines
-      /^[^/]+\/smart-guidelines-demo$/i       // */smart-guidelines-demo
+      /^[^/]+\/smart-guidelines-demo$/i,      // */smart-guidelines-demo
+      /^[^/]+\/smart-ips-.*$/i                // */smart-ips-* (covers smart-ips-pilgrimage, etc.)
     ];
     
     const matchesPattern = demoDakPatterns.some(pattern => pattern.test(fullName));

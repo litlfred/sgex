@@ -6,9 +6,10 @@ describe('Branch Switching Fix - DAK Validation', () => {
     expect(isValid).toBe(true);
   });
 
-  test('litlfred/smart-ips-pilgrimage should be recognized as valid DAK repository in authenticated mode', async () => {
+  test('litlfred/smart-ips-pilgrimage should NOT be recognized as valid DAK repository in authenticated mode', async () => {
+    // Demo repositories should not be accessible to authenticated users
     const isValid = await dakValidationService.validateDAKRepository('litlfred', 'smart-ips-pilgrimage');
-    expect(isValid).toBe(true);
+    expect(isValid).toBe(false);
   });
 
   test('should recognize smart-ips-* pattern repositories as valid DAK in demo mode', () => {
@@ -37,7 +38,8 @@ describe('Branch Switching Fix - DAK Validation', () => {
   });
 
   test('should be case insensitive for repository matching in authenticated mode', async () => {
+    // Demo repositories should not be accessible to authenticated users, even with case variations
     const isValid = await dakValidationService.validateDAKRepository('litlfred', 'SMART-IPS-PILGRIMAGE');
-    expect(isValid).toBe(true);
+    expect(isValid).toBe(false);
   });
 });
