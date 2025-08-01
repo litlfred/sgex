@@ -271,7 +271,7 @@ body.theme-light .dak-dashboard {
 
 
 /* Tab Navigation Styles - Horizontal Toggle Button Group */
-.tab-navigation {
+.dashboard-tabs {
   display: flex;
   justify-content: center;
   margin: 2rem 0 3rem 0;
@@ -610,7 +610,7 @@ body.theme-light .dak-dashboard {
   }
 
   /* Tab Navigation Mobile - Keep Horizontal */
-  .tab-navigation {
+  .dashboard-tabs {
     max-width: none;
     margin: 1.5rem 0 2rem 0;
     padding: 0.4rem;
