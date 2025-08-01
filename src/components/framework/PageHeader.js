@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { usePage, PAGE_TYPES } from './PageProvider';
-import BranchSelector from '../BranchSelector';
-import AccessBadge from './AccessBadge';
+import { usePage } from './PageProvider';
 import githubService from '../../services/githubService';
 import userAccessService from '../../services/userAccessService';
 import bookmarkService from '../../services/bookmarkService';
@@ -12,7 +10,6 @@ import './PageHeader.css';
  */
 const PageHeader = () => {
   const { 
-    type, 
     pageName, 
     profile, 
     repository, 
@@ -102,7 +99,6 @@ const PageHeader = () => {
     return bookmarkService.getBookmarksGroupedByPage();
   };
 
-  const shouldShowBranchSelector = type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET;
   const currentBookmark = getCurrentPageBookmark();
   const bookmarksGrouped = getBookmarksGrouped();
 
@@ -119,38 +115,6 @@ const PageHeader = () => {
 
       {/* Right side - Navigation and user controls */}
       <div className="page-header-right">
-        {/* Access badge for DAK and Asset pages */}
-        {(type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && repository && (
-          <AccessBadge 
-            owner={repository.owner?.login || profile?.login}
-            repo={repository.name}
-            branch={branch}
-            className="header-access-badge"
-          />
-        )}
-        
-
-        
-        {/* Branch selector (DAK and Asset pages) */}
-        {shouldShowBranchSelector && repository && (
-          <div className="header-branch-selector">
-            <BranchSelector
-              repository={repository}
-              selectedBranch={branch}
-              onBranchChange={(newBranch) => {
-                // Update URL with new branch
-                const currentPath = window.location.pathname;
-                const pathParts = currentPath.split('/');
-                if (pathParts.length >= 5) {
-                  pathParts[5] = newBranch; // Replace branch part
-                  navigate(pathParts.join('/'));
-                }
-              }}
-              className="header-branch-selector-component"
-            />
-          </div>
-        )}
-        
         {/* User info and controls */}
         {(isAuthenticated || profile?.isDemo) && authenticatedUser ? (
           <div className="user-controls">

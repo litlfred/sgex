@@ -120,6 +120,141 @@
   font-size: 0.9rem;
 }
 
+/* Compact Branch Selector Styling */
+.page-context-branch-selector {
+  position: relative;
+  display: inline-block;
+}
+
+.page-context-branch-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: monospace;
+  font-weight: bold;
+  color: var(--who-blue, #006cbe);
+  background-color: var(--who-hover-bg, #e9ecef);
+  padding: 0.25rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-context-branch-btn:hover {
+  background-color: var(--who-blue-light, #e3f2fd);
+  border-color: var(--who-blue, #006cbe);
+}
+
+.branch-icon {
+  font-size: 0.8rem;
+}
+
+.branch-dropdown-arrow {
+  font-size: 0.7rem;
+  margin-left: 0.2rem;
+  transition: transform 0.2s ease;
+}
+
+.branch-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  min-width: 200px;
+  background: var(--who-card-bg, white);
+  border: 1px solid var(--who-border-color, #dee2e6);
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 300px;
+  overflow: hidden;
+}
+
+.branch-search {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--who-border-color, #dee2e6);
+}
+
+.branch-search-input {
+  width: 100%;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--who-border-color, #dee2e6);
+  border-radius: 3px;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.branch-search-input:focus {
+  border-color: var(--who-blue, #006cbe);
+  box-shadow: 0 0 0 2px rgba(0, 108, 190, 0.2);
+}
+
+.branch-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.branch-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--who-text-secondary, #495057);
+  transition: background-color 0.2s ease;
+  font-family: monospace;
+}
+
+.branch-item:hover {
+  background-color: var(--who-hover-bg, #f8f9fa);
+}
+
+.branch-item.current {
+  background-color: var(--who-blue-light, #e3f2fd);
+  color: var(--who-blue-dark, #004a99);
+  font-weight: bold;
+}
+
+.branch-item.loading,
+.branch-item.no-results {
+  color: var(--who-text-muted, #6c757d);
+  font-style: italic;
+  cursor: default;
+  font-family: inherit;
+}
+
+.branch-item.loading:hover,
+.branch-item.no-results:hover {
+  background-color: transparent;
+}
+
+.default-badge,
+.current-badge {
+  margin-left: auto;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 2px;
+  font-weight: normal;
+  font-family: inherit;
+}
+
+.default-badge {
+  background-color: var(--who-text-muted, #6c757d);
+  color: white;
+}
+
+.current-badge {
+  background-color: var(--who-blue, #006cbe);
+  color: white;
+}
+
 /* Second row: Breadcrumbs styling */
 .page-context-breadcrumbs {
   padding: 0;
@@ -212,6 +347,65 @@ body.theme-dark .page-context-branch {
   color: #4dabf7;
 }
 
+/* Dark theme support for branch selector */
+body.theme-dark .page-context-branch-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #4dabf7;
+}
+
+body.theme-dark .page-context-branch-btn:hover {
+  background-color: rgba(77, 171, 247, 0.2);
+  border-color: #4dabf7;
+}
+
+body.theme-dark .branch-dropdown {
+  background: #003a5c;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .branch-search {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .branch-search-input {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+body.theme-dark .branch-search-input:focus {
+  border-color: #4dabf7;
+  box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.2);
+}
+
+body.theme-dark .branch-item {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+body.theme-dark .branch-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+body.theme-dark .branch-item.current {
+  background-color: rgba(77, 171, 247, 0.2);
+  color: #74c0fc;
+}
+
+body.theme-dark .branch-item.loading,
+body.theme-dark .branch-item.no-results {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+body.theme-dark .default-badge {
+  background-color: rgba(255, 255, 255, 0.6);
+  color: #003a5c;
+}
+
+body.theme-dark .current-badge {
+  background-color: #4dabf7;
+  color: #003a5c;
+}
+
 body.theme-dark .breadcrumb-current {
   color: #4dabf7;
 }
@@ -267,6 +461,30 @@ body.theme-dark .context-btn:hover {
   .context-btn .github-icon {
     width: 12px;
     height: 12px;
+  }
+  
+  /* Branch selector responsive styles */
+  .page-context-branch-btn {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8rem;
+  }
+  
+  .branch-dropdown {
+    min-width: 160px;
+  }
+  
+  .branch-search {
+    padding: 0.4rem;
+  }
+  
+  .branch-search-input {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.8rem;
+  }
+  
+  .branch-item {
+    padding: 0.3rem 0.4rem;
+    font-size: 0.8rem;
   }
 }
 
