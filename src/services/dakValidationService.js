@@ -111,9 +111,10 @@ class DAKValidationService {
         console.log(`Repository ${owner}/${repo} does not exist on GitHub`);
         return false;
       }
-      // For other errors (like rate limiting), we'll assume the repository might exist
-      console.log(`Error checking repository existence for ${owner}/${repo}:`, error.message);
-      return false;
+      // For other errors (like rate limiting, network issues, firewall blocks), 
+      // we can't determine if the repository exists, so we'll be permissive
+      console.log(`Error checking repository existence for ${owner}/${repo}:`, error.message, '- assuming it might exist');
+      return true; // Changed from false to true for non-404 errors
     }
   }
 
