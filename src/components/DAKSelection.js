@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
@@ -22,6 +22,8 @@ const DAKSelectionContent = () => {
   
   // Use profile from framework (PageProvider) or location state
   const effectiveProfile = profile || location.state?.profile;
+  const effectiveProfileRef = useRef();
+  effectiveProfileRef.current = effectiveProfile;
   const { action } = location.state || {};
   
   const [repositories, setRepositories] = useState([]);
@@ -120,7 +122,8 @@ const DAKSelectionContent = () => {
   };
 
   const getMockRepositories = useCallback(() => {
-    if (!effectiveProfile || !effectiveProfile.login) {
+    const profile = effectiveProfileRef.current;
+    if (!profile || !profile.login) {
       return [];
     }
     
@@ -129,9 +132,9 @@ const DAKSelectionContent = () => {
       {
         id: 1,
         name: 'maternal-health-dak',
-        full_name: `${effectiveProfile.login}/maternal-health-dak`,
+        full_name: `${profile.login}/maternal-health-dak`,
         description: 'WHO SMART Guidelines for Maternal Health - Digital Adaptation Kit',
-        html_url: `https://github.com/${effectiveProfile.login}/maternal-health-dak`,
+        html_url: `https://github.com/${profile.login}/maternal-health-dak`,
         topics: ['who', 'smart-guidelines', 'maternal-health', 'dak'],
         language: 'FML',
         stargazers_count: 12,
@@ -142,9 +145,9 @@ const DAKSelectionContent = () => {
       {
         id: 2,
         name: 'immunization-dak',
-        full_name: `${effectiveProfile.login}/immunization-dak`,
+        full_name: `${profile.login}/immunization-dak`,
         description: 'Digital Adaptation Kit for Immunization Guidelines',
-        html_url: `https://github.com/${effectiveProfile.login}/immunization-dak`,
+        html_url: `https://github.com/${profile.login}/immunization-dak`,
         topics: ['who', 'smart-guidelines', 'immunization', 'vaccines'],
         language: 'FML',
         stargazers_count: 8,
@@ -155,9 +158,9 @@ const DAKSelectionContent = () => {
       {
         id: 3,
         name: 'anc-dak',
-        full_name: `${effectiveProfile.login}/anc-dak`,
+        full_name: `${profile.login}/anc-dak`,
         description: 'Antenatal Care Digital Adaptation Kit based on WHO guidelines',
-        html_url: `https://github.com/${effectiveProfile.login}/anc-dak`,
+        html_url: `https://github.com/${profile.login}/anc-dak`,
         topics: ['who', 'anc', 'antenatal-care', 'smart-guidelines'],
         language: 'FML',
         stargazers_count: 15,
@@ -168,9 +171,9 @@ const DAKSelectionContent = () => {
       {
         id: 4,
         name: 'regular-health-app',
-        full_name: `${effectiveProfile.login}/regular-health-app`,
+        full_name: `${profile.login}/regular-health-app`,
         description: 'A regular health application without SMART Guidelines',
-        html_url: `https://github.com/${effectiveProfile.login}/regular-health-app`,
+        html_url: `https://github.com/${profile.login}/regular-health-app`,
         topics: ['health', 'app', 'javascript'],
         language: 'JavaScript',
         stargazers_count: 5,
@@ -181,9 +184,9 @@ const DAKSelectionContent = () => {
       {
         id: 5,
         name: 'medical-database',
-        full_name: `${effectiveProfile.login}/medical-database`,
+        full_name: `${profile.login}/medical-database`,
         description: 'Medical database with FHIR but not SMART Guidelines',
-        html_url: `https://github.com/${effectiveProfile.login}/medical-database`,
+        html_url: `https://github.com/${profile.login}/medical-database`,
         topics: ['fhir', 'database', 'medical'],
         language: 'SQL',
         stargazers_count: 7,
@@ -195,7 +198,7 @@ const DAKSelectionContent = () => {
 
     // Filter to only return SMART guidelines compatible repositories
     return allMockRepos.filter(repo => repo.smart_guidelines_compatible);
-  }, [effectiveProfile]);
+  }, []);
 
   const simulateEnhancedScanning = useCallback(async () => {
     setIsScanning(true);
@@ -470,7 +473,8 @@ const DAKSelectionContent = () => {
         setCurrentlyScanningRepos(new Set());
       }
     }
-  }, [effectiveProfile, action, getMockRepositories, simulateEnhancedScanning]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveProfile, action]);
 
   useEffect(() => {
     // Only proceed if we have valid profile, action and userParam consistency
