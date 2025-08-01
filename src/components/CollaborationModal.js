@@ -94,6 +94,19 @@ const CollaborationModal = ({ onClose }) => {
           </div>
         </div>
       )
+    },
+    {
+      title: "How to Pronounce",
+      content: (
+        <div className="slide-content">
+          <div className="pronunciation-image">
+            <img 
+              src="https://github.com/user-attachments/assets/ac49bc04-a463-476e-8f2c-56a89e4035eb" 
+              alt="How to Pronounce SGeX" 
+            />
+          </div>
+        </div>
+      )
     }
   ];
 
