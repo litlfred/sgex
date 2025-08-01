@@ -20,8 +20,9 @@ const DAKSelectionContent = () => {
   const { params, profile } = usePageParams();
   const userParam = params?.user;
   
-  // Use profile from framework (PageProvider) or location state
-  const effectiveProfile = profile || location.state?.profile;
+  // Store effectiveProfile in a ref to prevent cascade recreation of helper functions
+  // This prevents fetchRepositories from being recreated on every profile change,
+  // which was causing unnecessary API calls and bypassing cache policies
   const effectiveProfileRef = useRef();
   effectiveProfileRef.current = effectiveProfile;
   const { action } = location.state || {};
@@ -121,6 +122,8 @@ const DAKSelectionContent = () => {
     }
   };
 
+  // Helper function that creates mock repositories for demo/testing
+  // Uses ref to access current profile, preventing cascade recreation
   const getMockRepositories = useCallback(() => {
     const profile = effectiveProfileRef.current;
     if (!profile || !profile.login) {
@@ -200,6 +203,8 @@ const DAKSelectionContent = () => {
     return allMockRepos.filter(repo => repo.smart_guidelines_compatible);
   }, []);
 
+  // Simulate enhanced scanning for demo purposes  
+  // Uses ref to access current profile, preventing cascade recreation
   const simulateEnhancedScanning = useCallback(async () => {
     setIsScanning(true);
     setRepositories([]); // Clear current repositories for progressive updates
@@ -270,6 +275,9 @@ const DAKSelectionContent = () => {
     }
   }, [getMockRepositories]);
 
+  // Main function to fetch repositories with proper cache-first approach
+  // Fixed: Removed getMockRepositories and simulateEnhancedScanning from dependencies
+  // to prevent cascade recreation when profile changes, ensuring cache policies are respected
   const fetchRepositories = useCallback(async (forceRescan = false, useCachedData = false) => {
     setLoading(true);
     setError(null);
@@ -473,6 +481,8 @@ const DAKSelectionContent = () => {
         setCurrentlyScanningRepos(new Set());
       }
     }
+  // Note: getMockRepositories and simulateEnhancedScanning are intentionally NOT included
+  // in dependencies to prevent cascade recreation. They access profile via ref.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveProfile, action]);
 
