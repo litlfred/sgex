@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import githubService from '../services/githubService';
-import { PageLayout } from './framework';
+import { PageLayout, useDAKParams } from './framework';
 import './BPMNViewer.css';
 
 const BPMNViewerComponent = () => {
@@ -11,7 +11,34 @@ const BPMNViewerComponent = () => {
   const viewerRef = useRef(null);
   const containerRef = useRef(null);
   
+  // Try to get data from framework params first, then fall back to location state
+  const frameworkData = useDAKParams();
+  
+  console.log('BPMNViewer: Framework data received:', frameworkData);
+  console.log('BPMNViewer: Location state:', location.state);
+  
   const { profile, repository, component, selectedFile, selectedBranch } = location.state || {};
+  
+  // Use framework data if available, otherwise use location state
+  const currentProfile = frameworkData?.profile || profile;
+  const currentRepository = frameworkData?.repository || repository;
+  const currentBranch = frameworkData?.branch || selectedBranch;
+  const assetPath = frameworkData?.asset;
+  
+  console.log('BPMNViewer: Final computed values:', {
+    currentProfile: !!currentProfile,
+    currentRepository: !!currentRepository,
+    currentBranch,
+    assetPath
+  });
+  
+  // If we have asset path from URL, create a selectedFile object
+  const currentSelectedFile = useMemo(() => {
+    return assetPath ? {
+      name: assetPath.split('/').pop(),
+      path: assetPath
+    } : selectedFile;
+  }, [assetPath, selectedFile]);
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,10 +49,10 @@ const BPMNViewerComponent = () => {
   // Check write permissions
   useEffect(() => {
     const checkPermissions = async () => {
-      if (repository && profile) {
+      if (currentRepository && currentProfile) {
         try {
           // Simple permission check - in real app, this would use githubService
-          const writeAccess = profile.token && repository.permissions?.push;
+          const writeAccess = currentProfile.token && currentRepository.permissions?.push;
           setHasWriteAccess(writeAccess || false);
         } catch (error) {
           console.warn('Could not check write permissions:', error);
@@ -35,32 +62,32 @@ const BPMNViewerComponent = () => {
     };
 
     checkPermissions();
-  }, [repository, profile]);
+  }, [currentRepository, currentProfile]);
 
   // Load BPMN file content
   const loadBpmnContent = useCallback(async () => {
     console.log('🚀 BPMNViewer: loadBpmnContent called with:', {
       hasViewer: !!viewerRef.current,
-      selectedFile: selectedFile,
-      repository: repository ? {
-        name: repository.name,
-        owner: repository.owner
+      selectedFile: currentSelectedFile,
+      repository: currentRepository ? {
+        name: currentRepository.name,
+        owner: currentRepository.owner
       } : null
     });
 
-    if (!viewerRef.current || !selectedFile || !repository) {
+    if (!viewerRef.current || !currentSelectedFile || !currentRepository) {
       console.warn('❌ BPMNViewer: Missing required parameters for loadBpmnContent:', {
         hasViewer: !!viewerRef.current,
-        hasSelectedFile: !!selectedFile,
-        hasRepository: !!repository
+        hasSelectedFile: !!currentSelectedFile,
+        hasRepository: !!currentRepository
       });
       return;
     }
 
     // Declare variables outside try block so they're accessible in catch block
-    const owner = repository.owner?.login || repository.full_name.split('/')[0];
-    const repoName = repository.name;
-    const ref = selectedBranch || 'main';
+    const owner = currentRepository.owner?.login || currentRepository.full_name.split('/')[0];
+    const repoName = currentRepository.name;
+    const ref = currentBranch || 'main';
 
     try {
       console.log('📡 BPMNViewer: Setting loading state to true');
@@ -69,16 +96,16 @@ const BPMNViewerComponent = () => {
 
       console.log('🔍 BPMNViewer: Repository and file analysis:', {
         repository: {
-          name: repository.name,
-          full_name: repository.full_name,
-          owner: repository.owner,
-          isDemo: repository.isDemo,
-          default_branch: repository.default_branch
+          name: currentRepository.name,
+          full_name: currentRepository.full_name,
+          owner: currentRepository.owner,
+          isDemo: currentRepository.isDemo,
+          default_branch: currentRepository.default_branch
         },
         selectedFile: {
-          name: selectedFile.name,
-          path: selectedFile.path,
-          size: selectedFile.size
+          name: currentSelectedFile.name,
+          path: currentSelectedFile.path,
+          size: currentSelectedFile.size
         },
         derivedOwner: owner,
         repoName: repoName,
@@ -86,8 +113,8 @@ const BPMNViewerComponent = () => {
         githubServiceAuthenticated: githubService.isAuth()
       });
 
-      console.log(`📂 BPMNViewer: Preparing to load BPMN content from ${owner}/${repoName}:${selectedFile.path} (ref: ${ref})`);
-      console.log('📋 BPMNViewer: Full selected file object:', JSON.stringify(selectedFile, null, 2));
+      console.log(`📂 BPMNViewer: Preparing to load BPMN content from ${owner}/${repoName}:${currentSelectedFile.path} (ref: ${ref})`);
+      console.log('📋 BPMNViewer: Full selected file object:', JSON.stringify(currentSelectedFile, null, 2));
       
       // Add a timeout for the entire loading process
       console.log('⏰ BPMNViewer: Setting up 30-second timeout for loading process');
@@ -102,13 +129,13 @@ const BPMNViewerComponent = () => {
         console.log(`🌐 BPMNViewer: About to call githubService.getFileContent with params:`, {
           owner,
           repoName,
-          path: selectedFile.path,
+          path: currentSelectedFile.path,
           ref
         });
         
         console.log('🌐 BPMNViewer: Making GitHub API call...');
         const startTime = Date.now();
-        const bpmnXml = await githubService.getFileContent(owner, repoName, selectedFile.path, ref);
+        const bpmnXml = await githubService.getFileContent(owner, repoName, currentSelectedFile.path, ref);
         const endTime = Date.now();
         
         console.log(`✅ BPMNViewer: Successfully loaded BPMN content from repository in ${endTime - startTime}ms`);
@@ -164,8 +191,8 @@ const BPMNViewerComponent = () => {
           ref: ref
         },
         file: {
-          name: selectedFile.name,
-          path: selectedFile.path
+          name: currentSelectedFile.name,
+          path: currentSelectedFile.path
         }
       });
       
@@ -202,7 +229,7 @@ const BPMNViewerComponent = () => {
       console.log('🔄 BPMNViewer: Setting loading state to false due to error');
       setLoading(false);
     }
-  }, [selectedFile, repository, selectedBranch]);
+  }, [currentSelectedFile, currentRepository, currentBranch]);
 
   // Initialize BPMN viewer with improved container readiness check
   useEffect(() => {
@@ -218,12 +245,12 @@ const BPMNViewerComponent = () => {
       console.log('🛠️ BPMNViewer: initializeViewer called with:', {
         hasContainer: !!containerRef.current,
         hasViewer: !!viewerRef.current,
-        selectedFile: selectedFile ? selectedFile.name : 'none',
+        selectedFile: currentSelectedFile ? currentSelectedFile.name : 'none',
         containerRefCurrent: containerRef.current,
         viewerRefCurrent: viewerRef.current
       });
 
-      if (containerRef.current && !viewerRef.current && selectedFile) {
+      if (containerRef.current && !viewerRef.current && currentSelectedFile) {
         try {
           // Clean the container before creating a new viewer
           cleanupContainer();
@@ -284,10 +311,10 @@ const BPMNViewerComponent = () => {
         console.log('⚠️ BPMNViewer: Skipping viewer initialization:', {
           hasContainer: !!containerRef.current,
           hasViewer: !!viewerRef.current,
-          hasSelectedFile: !!selectedFile,
+          hasSelectedFile: !!currentSelectedFile,
           reason: !containerRef.current ? 'No container' : 
                   viewerRef.current ? 'Viewer already exists' : 
-                  !selectedFile ? 'No selected file' : 'Unknown'
+                  !currentSelectedFile ? 'No selected file' : 'Unknown'
         });
       }
     };
@@ -308,11 +335,11 @@ const BPMNViewerComponent = () => {
       }
     };
 
-    if (selectedFile) {
-      console.log('⏰ BPMNViewer: Starting container readiness check for selectedFile:', selectedFile.name);
+    if (currentSelectedFile) {
+      console.log('⏰ BPMNViewer: Starting container readiness check for selectedFile:', currentSelectedFile.name);
       waitForContainer();
     } else {
-      console.log('❌ BPMNViewer: No selectedFile, skipping viewer initialization');
+      console.log('❌ BPMNViewer: No currentSelectedFile, skipping viewer initialization');
     }
 
     return () => {
@@ -329,7 +356,7 @@ const BPMNViewerComponent = () => {
       // Also clean up the container on unmount
       cleanupContainer();
     };
-  }, [selectedFile, loadBpmnContent]);
+  }, [currentSelectedFile, loadBpmnContent]);
 
   const handleEditMode = () => {
     if (!hasWriteAccess) {
@@ -337,19 +364,19 @@ const BPMNViewerComponent = () => {
       return;
     }
 
-    const owner = repository.owner?.login || repository.full_name.split('/')[0];
-    const repoName = repository.name;
-    const path = selectedBranch 
-      ? `/bpmn-editor/${owner}/${repoName}/${selectedBranch}`
+    const owner = currentRepository.owner?.login || currentRepository.full_name.split('/')[0];
+    const repoName = currentRepository.name;
+    const path = currentBranch 
+      ? `/bpmn-editor/${owner}/${repoName}/${currentBranch}`
       : `/bpmn-editor/${owner}/${repoName}`;
 
     navigate(path, {
       state: {
-        profile,
-        repository,
+        profile: currentProfile,
+        repository: currentRepository,
         component,
-        selectedFile,
-        selectedBranch,
+        selectedFile: currentSelectedFile,
+        selectedBranch: currentBranch,
         mode: 'edit'
       }
     });
@@ -358,10 +385,10 @@ const BPMNViewerComponent = () => {
   const handleBackToSelection = () => {
     navigate('/business-process-selection', {
       state: {
-        profile,
-        repository,
+        profile: currentProfile,
+        repository: currentRepository,
         component,
-        selectedBranch
+        selectedBranch: currentBranch
       }
     });
   };
@@ -403,9 +430,43 @@ const BPMNViewerComponent = () => {
     };
   }, [enhancedFullwidth]);
 
-  if (!profile || !repository || !selectedFile) {
-    navigate('/');
-    return <div>Redirecting...</div>;
+  // Handle redirect when data is missing
+  useEffect(() => {
+    // Check if we're on an asset URL pattern (has more than 5 path segments after /sgex)
+    const pathSegments = location.pathname.split('/').filter(segment => segment);
+    const isAssetURL = pathSegments.length > 5; // /sgex/bpmn-viewer/user/repo/branch/asset...
+    
+    // If we're on an asset URL, wait for framework to load before deciding to redirect
+    if (isAssetURL) {
+      // Only redirect if we have both no framework data AND no location state
+      if (!frameworkData?.profile && !frameworkData?.repository && !frameworkData?.asset && 
+          !currentProfile && !currentRepository && !currentSelectedFile) {
+        console.log('BPMNViewer: On asset URL but no data available from framework or location state, redirecting to home');
+        navigate('/');
+      }
+    } else {
+      // For non-asset URLs, use the original logic
+      if (!currentProfile || !currentRepository || !currentSelectedFile) {
+        console.log('BPMNViewer: Missing required data, redirecting to home:', {
+          hasProfile: !!currentProfile,
+          hasRepository: !!currentRepository,
+          hasSelectedFile: !!currentSelectedFile
+        });
+        navigate('/');
+      }
+    }
+  }, [currentProfile, currentRepository, currentSelectedFile, frameworkData, location.pathname, navigate]);
+
+  // Don't render the component if we're missing required data, unless we're on asset URL and framework is loading
+  const pathSegments = location.pathname.split('/').filter(segment => segment);
+  const isAssetURL = pathSegments.length > 5;
+  
+  if (!currentProfile || !currentRepository || !currentSelectedFile) {
+    if (isAssetURL && (!frameworkData?.profile || !frameworkData?.repository || !frameworkData?.asset)) {
+      // Framework might still be loading for asset URL
+      return <div>Loading framework data...</div>;
+    }
+    return <div>Loading or redirecting...</div>;
   }
 
   return (
@@ -416,7 +477,7 @@ const BPMNViewerComponent = () => {
         <div className="viewer-main">
           <div className="viewer-toolbar">
             <div className="toolbar-left">
-              <h3>{selectedFile.name}</h3>
+              <h3>{currentSelectedFile.name}</h3>
               <div className="artifact-badges">
                 <span className="artifact-badge bpmn">📊 BPMN</span>
                 <span className="dak-component-badge">🔄 Business Process</span>
@@ -462,7 +523,7 @@ const BPMNViewerComponent = () => {
                 <div className="loading-info">
                   <p>Loading BPMN diagram...</p>
                   <p className="loading-details">
-                    Fetching {selectedFile.name} from {repository.name}
+                    Fetching {currentSelectedFile.name} from {currentRepository.name}
                   </p>
                   <p className="loading-hint">
                     This may take a few moments for large files or slow connections.
@@ -482,7 +543,7 @@ const BPMNViewerComponent = () => {
                   <button 
                     className="action-btn secondary"
                     onClick={() => navigate('/business-process-selection', {
-                      state: { profile, repository, component, selectedBranch }
+                      state: { profile: currentProfile, repository: currentRepository, component, selectedBranch: currentBranch }
                     })}
                   >
                     ← Back to List
@@ -507,15 +568,15 @@ const BPMNViewerComponent = () => {
             <div className="condensed-file-info">
               <div className="condensed-info-item">
                 <span className="label">📁</span>
-                <span className="value">{selectedFile?.name || 'No file'}</span>
+                <span className="value">{currentSelectedFile?.name || 'No file'}</span>
               </div>
               <div className="condensed-info-item">
                 <span className="label">📏</span>
-                <span className="value">{selectedFile?.size ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'N/A'}</span>
+                <span className="value">{currentSelectedFile?.size ? `${(currentSelectedFile.size / 1024).toFixed(1)} KB` : 'N/A'}</span>
               </div>
               <div className="condensed-info-item">
                 <span className="label">🌿</span>
-                <span className="value">{selectedBranch || 'main'}</span>
+                <span className="value">{currentBranch || 'main'}</span>
               </div>
             </div>
             <div className="condensed-view-mode">
