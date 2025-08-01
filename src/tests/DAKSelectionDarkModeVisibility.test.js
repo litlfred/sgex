@@ -1,6 +1,6 @@
 /**
  * Test for Dark Mode Text Visibility Issue #424
- * This test verifies that the "Rescan Repositories" text is visible in both light and dark modes
+ * This test verifies that the "Rescan Repositories" button and "Refresh" link are visible in both light and dark modes
  */
 
 import React from 'react';
@@ -20,7 +20,7 @@ describe('DAKSelection Dark Mode Visibility Fix', () => {
     // Create a test element with rescan-link class
     const testElement = document.createElement('button');
     testElement.className = 'rescan-link';
-    testElement.textContent = 'Rescan Repositories';
+    testElement.textContent = 'Refresh';
     document.body.appendChild(testElement);
 
     // Get computed styles
@@ -64,7 +64,7 @@ describe('DAKSelection Dark Mode Visibility Fix', () => {
     // Create test elements
     const linkElement = document.createElement('button');
     linkElement.className = 'rescan-link';
-    linkElement.textContent = 'Rescan Repositories';
+    linkElement.textContent = 'Refresh';
     
     const btnElement = document.createElement('button');
     btnElement.className = 'rescan-btn';
