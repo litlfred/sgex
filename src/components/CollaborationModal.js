@@ -99,41 +99,11 @@ const CollaborationModal = ({ onClose }) => {
       title: "How to Pronounce",
       content: (
         <div className="slide-content">
-          <div className="pronunciation-content">
-            <div className="pronunciation-visual">
-              <div className="sgex-logo">
-                <span className="sgex-text">
-                  <span className="s-letter">S</span>
-                  <span className="ge-letter">Ge</span>
-                  <span className="x-letter">X</span>
-                </span>
-                <div className="pronunciation-guide">
-                  <span className="pronunciation-text">/seɪdʒ ɛks/</span>
-                  <span className="pronunciation-simple">"Sage X"</span>
-                </div>
-              </div>
-              <div className="mascot-image">
-                <img src="/sgex-mascot.png" alt="SGEX Mascot" />
-              </div>
-            </div>
-            <div className="pronunciation-explanation">
-              <p>
-                <strong>SGeX</strong> is pronounced as <strong>"Sage X"</strong> - like the herb sage, followed by the letter X.
-              </p>
-              <div className="pronunciation-breakdown">
-                <div className="syllable">
-                  <span className="syllable-part">S-Ge</span>
-                  <span className="syllable-pronunciation">sounds like "Sage"</span>
-                </div>
-                <div className="syllable">
-                  <span className="syllable-part">X</span>
-                  <span className="syllable-pronunciation">sounds like "X"</span>
-                </div>
-              </div>
-              <p className="pronunciation-note">
-                The "Ge" in SGeX represents the wisdom of the sage - fitting for a tool that helps create smart healthcare guidelines!
-              </p>
-            </div>
+          <div className="pronunciation-image">
+            <img 
+              src="https://github.com/user-attachments/assets/ac49bc04-a463-476e-8f2c-56a89e4035eb" 
+              alt="How to Pronounce SGeX" 
+            />
           </div>
         </div>
       )
