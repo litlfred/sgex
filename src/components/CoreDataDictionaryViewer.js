@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, usePageParams } from './framework';
+// Note: FSH components and ArchiMate extraction utilities available for future use
+// import { FSHFileViewer, FSHFileEditor } from './framework';
+// import { processLogicalModelsToArchiMate, parseLogicalModel } from '../utils/archiMateExtraction';
 import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {

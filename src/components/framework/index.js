@@ -26,3 +26,7 @@ export {
   createDashboard,
   TOOL_TYPES
 } from './ToolDefinition';
+
+// FSH file handling components
+export { default as FSHFileViewer } from './FSHFileViewer';
+export { default as FSHFileEditor } from './FSHFileEditor';

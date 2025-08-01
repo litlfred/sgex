@@ -1,0 +1,336 @@
+.fsh-file-editor {
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+.fsh-file-editor.readonly {
+  border-color: #dee2e6;
+}
+
+.fsh-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  font-weight: 500;
+}
+
+.fsh-editor-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fsh-file-name {
+  color: #495057;
+  font-size: 14px;
+}
+
+.fsh-file-type {
+  background: #0078d4;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.fsh-changes-indicator {
+  color: #e36209;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.fsh-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.validation-status {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.validation-status.has-errors {
+  background: #fff5f5;
+  color: #d73a49;
+  border: 1px solid #fdaeb7;
+}
+
+.validation-status.has-warnings {
+  background: #fffbf0;
+  color: #e36209;
+  border: 1px solid #f4c430;
+}
+
+.save-btn {
+  background: #0078d4;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: #106ebe;
+}
+
+.save-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.fsh-editor-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.fsh-editor-wrapper {
+  position: relative;
+  height: 100%;
+  min-height: 300px;
+}
+
+.fsh-editor-textarea {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  color: transparent;
+  caret-color: #24292e;
+  background: transparent;
+  z-index: 2;
+  tab-size: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow: auto;
+}
+
+.fsh-editor-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.fsh-editor-overlay pre {
+  margin: 0 !important;
+  padding: 1rem !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+  white-space: pre !important;
+  word-wrap: normal !important;
+}
+
+.fsh-editor-overlay code {
+  background: transparent !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  color: inherit !important;
+}
+
+/* Custom FSH syntax highlighting for editor */
+.fsh-editor-overlay .token.keyword {
+  color: #d73a49;
+  font-weight: bold;
+}
+
+.fsh-editor-overlay .token.fsh-keyword {
+  color: #6f42c1;
+  font-weight: 600;
+}
+
+.fsh-editor-overlay .token.fsh-constraint {
+  color: #e36209;
+  font-weight: 500;
+}
+
+.fsh-editor-overlay .token.fsh-datatype {
+  color: #005cc5;
+  font-weight: 500;
+}
+
+.fsh-editor-overlay .token.fsh-cardinality {
+  color: #22863a;
+  font-weight: 600;
+}
+
+.fsh-editor-overlay .token.fsh-profile {
+  color: #6f42c1;
+  font-style: italic;
+}
+
+.fsh-editor-overlay .token.string {
+  color: #032f62;
+}
+
+.fsh-editor-overlay .token.comment {
+  color: #6a737d;
+  font-style: italic;
+}
+
+.fsh-editor-overlay .token.punctuation {
+  color: #24292e;
+}
+
+.fsh-editor-overlay .token.operator {
+  color: #d73a49;
+}
+
+.fsh-editor-overlay .token.number {
+  color: #005cc5;
+}
+
+/* Validation panel */
+.fsh-validation-panel {
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.validation-header {
+  padding: 8px 16px;
+  background: #e9ecef;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.validation-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.validation-list {
+  padding: 0;
+  margin: 0;
+}
+
+.validation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #f1f3f4;
+  font-size: 12px;
+}
+
+.validation-item:last-child {
+  border-bottom: none;
+}
+
+.validation-item.error {
+  background: #fff5f5;
+  border-left: 3px solid #d73a49;
+}
+
+.validation-item.warning {
+  background: #fffbf0;
+  border-left: 3px solid #e36209;
+}
+
+.validation-line {
+  font-weight: 600;
+  color: #6a737d;
+  min-width: 60px;
+}
+
+.validation-message {
+  color: #24292e;
+  line-height: 1.4;
+}
+
+/* Scrollbar styling */
+.fsh-editor-textarea::-webkit-scrollbar,
+.fsh-validation-panel::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.fsh-editor-textarea::-webkit-scrollbar-track,
+.fsh-validation-panel::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.fsh-editor-textarea::-webkit-scrollbar-thumb,
+.fsh-validation-panel::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.fsh-editor-textarea::-webkit-scrollbar-thumb:hover,
+.fsh-validation-panel::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Line numbers styling for readonly mode */
+.fsh-file-editor.readonly .line-numbers-rows {
+  border-right: 1px solid #e9ecef;
+  margin-right: 1em;
+  padding-right: 1em;
+}
+
+.fsh-file-editor.readonly .line-numbers-rows > span {
+  color: #6a737d;
+  font-size: 12px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .fsh-editor-header {
+    padding: 8px 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .fsh-editor-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .fsh-file-name {
+    font-size: 13px;
+  }
+  
+  .fsh-editor-textarea,
+  .fsh-editor-overlay pre {
+    padding: 0.75rem !important;
+  }
+  
+  .fsh-editor-textarea,
+  .fsh-editor-overlay code {
+    font-size: 12px !important;
+  }
+}
