@@ -8,6 +8,7 @@
 .page-context-content {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   max-width: 100%;
 }
@@ -29,6 +30,42 @@
   gap: 0.125rem;
   min-width: 0; /* Allow text to truncate */
   flex: 1;
+}
+
+/* Context actions - GitHub buttons and other actions */
+.page-context-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Context buttons styling */
+.context-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--who-border-color, #dee2e6);
+  background-color: var(--who-card-bg, white);
+  color: var(--who-text-secondary, #495057);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.context-btn:hover {
+  background-color: var(--who-hover-bg, #e9ecef);
+  border-color: var(--who-border-color, #adb5bd);
+  color: var(--who-blue, #006cbe);
+}
+
+.context-btn .github-icon {
+  fill: currentColor;
+  width: 14px;
+  height: 14px;
 }
 
 /* Individual rows for user/repo and breadcrumbs */
@@ -179,6 +216,19 @@ body.theme-dark .breadcrumb-current {
   color: #4dabf7;
 }
 
+/* Dark theme support for context buttons */
+body.theme-dark .context-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+body.theme-dark .context-btn:hover {
+  background-color: rgba(77, 171, 247, 0.2);
+  border-color: rgba(77, 171, 247, 0.4);
+  color: #74c0fc;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .page-context-container {
@@ -208,6 +258,16 @@ body.theme-dark .breadcrumb-current {
   .breadcrumb-list {
     gap: 0.25rem;
   }
+  
+  .context-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .context-btn .github-icon {
+    width: 12px;
+    height: 12px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -223,6 +283,11 @@ body.theme-dark .breadcrumb-current {
   
   .page-context-info {
     width: 100%;
+  }
+  
+  .page-context-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
   
   .page-context-row {

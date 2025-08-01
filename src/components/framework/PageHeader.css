@@ -112,10 +112,6 @@
   color: var(--who-blue, #006cbe);
 }
 
-.github-repo-btn .github-icon {
-  fill: currentColor;
-}
-
 /* Branch selector in header */
 .header-branch-selector {
   display: flex;
