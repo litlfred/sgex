@@ -44,10 +44,10 @@ function createBranchSpecificBuild() {
       packageJson.homepage = basePath;
       console.log(`🔧 Setting homepage to: ${basePath}`);
     } else {
-      // Default path structure: /branch-name/ for main, /safe-branch-name/ for others
+      // Default path structure: /sgex/branch-name/ for main, /sgex/safe-branch-name/ for others
       const safeBranchName = branchName === 'main' ? 'main' : branchName.replace(/[^a-zA-Z0-9._-]/g, '-');
-      packageJson.homepage = `/${safeBranchName}/`;
-      console.log(`🔧 Setting homepage to: /${safeBranchName}/`);
+      packageJson.homepage = `/sgex/${safeBranchName}/`;
+      console.log(`🔧 Setting homepage to: /sgex/${safeBranchName}/`);
     }
     
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
@@ -107,8 +107,8 @@ export default App;
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
     const originalHomepage = packageJson.homepage;
     
-    // For root landing page, we want it to be at the GitHub Pages root
-    packageJson.homepage = '/';
+    // For root landing page, we want it to be at the GitHub Pages root for this repository
+    packageJson.homepage = '/sgex/';
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
     
     // Build the landing page app

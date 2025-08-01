@@ -53,10 +53,10 @@ jobs:
         run: |
           # Set the correct base path for the branch deployment
           if [[ "${{ github.ref_name }}" == "main" ]]; then
-            export BASE_PATH="/main/"
+            export BASE_PATH="/sgex/main/"
           else
             safe_branch_name=$(echo "${{ github.ref_name }}" | tr '/' '-')
-            export BASE_PATH="/${safe_branch_name}/"
+            export BASE_PATH="/sgex/${safe_branch_name}/"
           fi
           echo "Building with BASE_PATH: $BASE_PATH"
           node scripts/build-multi-branch.js branch
@@ -290,7 +290,7 @@ jobs:
               git checkout ${{ github.ref_name }}
               npm ci
               # Build main with correct base path
-              export BASE_PATH="/main/"
+              export BASE_PATH="/sgex/main/"
               node scripts/build-multi-branch.js branch
               # Save build before switching branches
               mkdir -p /tmp/main-build-backup
@@ -308,7 +308,7 @@ jobs:
                 git checkout main
                 npm ci
                 # Build main with correct base path
-                export BASE_PATH="/main/"
+                export BASE_PATH="/sgex/main/"
                 node scripts/build-multi-branch.js branch
                 # Save build before switching branches
                 mkdir -p /tmp/main-build-backup
