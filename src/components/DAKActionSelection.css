@@ -189,6 +189,8 @@ body.theme-light .dak-action-selection {
   backdrop-filter: blur(10px);
   flex: 0 0 350px;
   min-width: 350px;
+  display: flex;
+  flex-direction: column;
 }
 
 .action-card:hover {
@@ -217,7 +219,7 @@ body.theme-light .dak-action-selection {
   align-items: flex-start;
   flex: 1;
   min-height: 280px;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .action-icon img {
@@ -238,29 +240,32 @@ body.theme-light .dak-action-selection {
 }
 
 .action-description {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
 .action-description p {
   color: var(--who-text-secondary);
-  line-height: 1.6;
+  line-height: 1.5;
   margin: 0;
+  font-size: 0.9rem;
 }
 
 .workflow-steps {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 1rem;
+  gap: 0.15rem;
+  margin-bottom: 0.5rem;
 }
 
 .step {
   background: var(--who-hover-bg);
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
   color: var(--who-text-secondary);
   border: 1px solid var(--who-border-color);
+  text-align: center;
 }
 
 /* Responsive Design */
