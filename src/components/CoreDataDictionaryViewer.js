@@ -348,7 +348,225 @@ const CoreDataDictionaryViewerContent = () => {
       {/* Core Data Dictionary Section */}
       {activeSection === 'core-data-dictionary' && (
         <div className="core-data-dictionary-section">
-          <p>Core Data Dictionary content will be displayed here.</p>
+          {/* DAK Concepts Table */}
+          {dakConcepts.length > 0 && (
+            <div className="dak-concepts-section">
+              <h3>DAK Concepts ({dakConcepts.length} total)</h3>
+              <div className="dak-table-controls">
+                <input
+                  type="text"
+                  placeholder="Search concepts..."
+                  value={dakTableSearch}
+                  onChange={(e) => setDakTableSearch(e.target.value)}
+                  className="search-input"
+                />
+              </div>
+              <div className="dak-concepts-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Display</th>
+                      <th>Definition</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dakConcepts
+                      .filter(concept => 
+                        !dakTableSearch || 
+                        concept.code.toLowerCase().includes(dakTableSearch.toLowerCase()) ||
+                        concept.display.toLowerCase().includes(dakTableSearch.toLowerCase()) ||
+                        concept.definition.toLowerCase().includes(dakTableSearch.toLowerCase())
+                      )
+                      .map((concept, index) => (
+                        <tr key={index}>
+                          <td className="concept-code">{concept.code}</td>
+                          <td className="concept-display">{concept.display}</td>
+                          <td className="concept-definition">{concept.definition}</td>
+                        </tr>
+                      ))
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Main content layout with two columns */}
+          <div className="two-column-layout">
+            {/* Standard Dictionaries Section - Left Column */}
+            <div className="section standard-dictionaries-section left-column">
+              <h3>Standard Dictionaries</h3>
+              
+              <div className="subsection">
+                <h4>Code Systems</h4>
+                
+                {/* DAK Source File Links */}
+                {dakFshFile && (
+                  <div className="dak-source-section">
+                    <h5>DAK Source File (FSH)</h5>
+                    <div className="dak-source-links">
+                      <button 
+                        className="action-btn primary"
+                        onClick={() => handleViewSource(dakFshFile)}
+                        title="View DAK.fsh source code with syntax highlighting"
+                      >
+                        📄 View Source
+                      </button>
+                      <a 
+                        href={dakFshFile.html_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="action-btn secondary"
+                        title="View DAK.fsh source on GitHub"
+                      >
+                        🔗 GitHub Source ↗
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Published DAK CodeSystem */}
+                {hasGhPages ? (
+                  <div className="dak-published-section">
+                    <h5>Published CodeSystem</h5>
+                    {checkingPublishedDak ? (
+                      <p className="checking-published">Checking published version...</p>
+                    ) : hasPublishedDak ? (
+                      <div className="dictionary-links">
+                        <a 
+                          href={`${getBaseUrl(branch)}/CodeSystem-DAK.html`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="dictionary-link primary"
+                        >
+                          📊 View Published Core Data Dictionary (DAK) ↗
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="unpublished-dak">
+                        <span className="disabled-link">Core Data Dictionary (DAK)</span>
+                        <p className="unpublished-note">
+                          ⚠️ The published version is not yet available. The CodeSystem-DAK.html file has not been published to GitHub Pages.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="no-publication-note">
+                    Published CodeSystems will be available once GitHub Pages is configured.
+                  </p>
+                )}
+              </div>
+
+              <div className="subsection">
+                <h4>Value Sets</h4>
+                <div className="placeholder-links">
+                  <span className="placeholder-link">Actors (Coming Soon)</span>
+                  <span className="placeholder-link">Workflows (Coming Soon)</span>
+                  <span className="placeholder-link">Decision Tables (Coming Soon)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Publications Section - Right Column */}
+            {hasGhPages ? (
+              <div className="section publications-section right-column">
+                <h3>Publications</h3>
+                <p>Published FHIR Implementation Guide artifacts generated by the IG Publisher</p>
+                
+                {branches.sort().map((branchName) => (
+                  <div key={branchName} className="branch-publication">
+                    <h4>Branch: <code>{branchName}</code></h4>
+                    <div className="artifact-links">
+                      <a 
+                        href={`${getBaseUrl(branchName)}/artifacts.html#terminology-code-systems`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="artifact-link"
+                      >
+                        Code Systems ↗
+                      </a>
+                      <a 
+                        href={`${getBaseUrl(branchName)}/artifacts.html#terminology-value-sets`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="artifact-link"
+                      >
+                        Value Sets ↗
+                      </a>
+                      <a 
+                        href={`${getBaseUrl(branchName)}/artifacts.html#structures-logical-models`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="artifact-link"
+                      >
+                        Logical Models ↗
+                      </a>
+                      <a 
+                        href={`${getBaseUrl(branchName)}/artifacts.html#terminology-concept-maps`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="artifact-link"
+                      >
+                        Concept Maps ↗
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="section no-publications-section right-column">
+                <h3>Publications</h3>
+                <div className="no-gh-pages-message">
+                  <p>📋 No published artifacts available</p>
+                  <p>This repository does not have a <code>gh-pages</code> branch for publishing FHIR Implementation Guide artifacts.</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* FHIR FSH Files Section */}
+          <div className="section fsh-files-section">
+            <h3>FHIR FSH Source Files</h3>
+            <p>FHIR Shorthand (FSH) files containing CodeSystems, ValueSets, and ConceptMaps</p>
+            
+            {fshFiles.length === 0 ? (
+              <div className="no-files-message">
+                <p>No FHIR FSH files found in <code>input/fsh/</code> directory.</p>
+                <p>Core Data Dictionary files should be stored in FSH format in this location.</p>
+              </div>
+            ) : (
+              <div className="fsh-files-grid">
+                {fshFiles.map((file) => (
+                  <div key={file.path} className="fsh-file-card">
+                    <div className="file-header">
+                      <div className="file-icon">📄</div>
+                      <div className="file-name">{file.name}</div>
+                    </div>
+                    <div className="file-actions">
+                      <button 
+                        className="action-btn primary"
+                        onClick={() => handleViewSource(file)}
+                        title="View source code with syntax highlighting"
+                      >
+                        View Source
+                      </button>
+                      <a 
+                        href={file.html_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="action-btn secondary"
+                        title="View source on GitHub"
+                      >
+                        GitHub ↗
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
