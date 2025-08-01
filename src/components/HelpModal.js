@@ -1,113 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import IssueCreationModal from './IssueCreationModal';
 import './HelpModal.css';
 
 const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [showIssueCreationModal, setShowIssueCreationModal] = useState(false);
+  const [issueCreationType, setIssueCreationType] = useState('bug');
+  const [issueRepository, setIssueRepository] = useState(null);
 
   // Set up global reference for inline onclick handlers
   useEffect(() => {
-    const createContextualUrl = (baseUrl, params) => {
-      const urlParams = new URLSearchParams(params);
-      
-      // Add contextual information
-      if (contextData.pageId) {
-        urlParams.set('sgex_page', contextData.pageId);
-      }
-      
-      const currentUrl = window.location.href;
-      urlParams.set('sgex_current_url', currentUrl);
-      
-      if (contextData.selectedDak?.name) {
-        urlParams.set('sgex_selected_dak', contextData.selectedDak.name);
-      }
-      
-      return `${baseUrl}?${urlParams.toString()}`;
-    };
 
     window.helpModalInstance = {
       openSgexIssue: (issueType) => {
-        const baseUrl = `https://github.com/litlfred/sgex/issues/new`;
-        let params = {};
-
-        // Check if user should have copilot auto-assigned
-        const shouldAssignCopilot = () => {
-          // Only assign copilot for DAK repo owner or if user is member of the organization
-          if (!contextData.selectedDak || !contextData.profile) {
-            return false;
-          }
-          
-          const userLogin = contextData.profile.login;
-          const dakOwner = contextData.selectedDak.owner?.login || contextData.selectedDak.full_name?.split('/')[0];
-          
-          // If user is the DAK repository owner
-          if (userLogin === dakOwner) {
-            return true;
-          }
-          
-          // Check if user is member of organization (if DAK owner is an org)
-          if (contextData.selectedDak.owner?.type === 'Organization') {
-            // For now, we can't easily check org membership client-side
-            // This would require additional API calls. Skip auto-assignment for safety.
-            return false;
-          }
-          
-          return false;
-        };
-
-        switch (issueType) {
-          case 'bug':
-            params.template = 'bug_report.yml';
-            params.labels = 'bug+reports'; // URL encode spaces as +
-            // Only auto-assign copilot if user is DAK owner or org member
-            if (shouldAssignCopilot()) {
-              params.assignees = 'copilot';
-            }
-            break;
-          case 'feature':
-            params.template = 'feature_request.yml';
-            params.labels = 'feature+request'; // URL encode spaces as +
-            // Only auto-assign copilot if user is DAK owner or org member
-            if (shouldAssignCopilot()) {
-              params.assignees = 'copilot';
-            }
-            break;
-          case 'dak-content':
-            params.template = 'dak_content_error.yml';
-            params.labels = 'authoring';
-            break;
-          default:
-            params.labels = 'needs-triage';
-        }
-
-        const url = createContextualUrl(baseUrl, params);
-        
-        // Try to open the GitHub issue, but handle cases where external links are blocked
-        try {
-          const newWindow = window.open(url, '_blank');
-          
-          // Check if the window was blocked or failed to open
-          if (!newWindow || newWindow.closed) {
-            // Fallback: show instructions to manually open the link
-            window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
-          } else {
-            // Check if the window actually loaded after a brief delay
-            setTimeout(() => {
-              try {
-                if (newWindow.closed || !newWindow.location || newWindow.location.href === 'about:blank') {
-                  newWindow.close();
-                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
-                }
-              } catch (e) {
-                // Cross-origin restriction means it probably loaded successfully
-                // or the check failed due to security - either way, don't show fallback
-              }
-            }, 1000);
-          }
-        } catch (error) {
-          console.warn('Failed to open GitHub issue:', error);
-          window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
-        }
+        // Use the issue creation modal instead of opening GitHub directly
+        setIssueCreationType(issueType);
+        setIssueRepository(null); // Use default SGEX repo
+        setShowIssueCreationModal(true);
       },
 
       openDakIssue: (issueType) => {
@@ -117,95 +27,10 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
           return;
         }
 
-        const baseUrl = `https://github.com/${repository.owner}/${repository.name}/issues/new`;
-        let params = {};
-
-        // Check if user should have copilot auto-assigned
-        const shouldAssignCopilot = () => {
-          // Only assign copilot for DAK repo owner or if user is member of the organization
-          if (!contextData.profile) {
-            return false;
-          }
-          
-          const userLogin = contextData.profile.login;
-          const dakOwner = repository.owner?.login || repository.owner;
-          
-          // If user is the DAK repository owner
-          if (userLogin === dakOwner) {
-            return true;
-          }
-          
-          // Check if user is member of organization (if DAK owner is an org)
-          if (repository.owner?.type === 'Organization') {
-            // For now, we can't easily check org membership client-side
-            // This would require additional API calls. Skip auto-assignment for safety.
-            return false;
-          }
-          
-          return false;
-        };
-
-        switch (issueType) {
-          case 'bug':
-            // For DAK bugs, use the main bug report template
-            params.template = 'bug_report.yml';
-            params.labels = 'bug+reports,dak-issue'; // URL encode spaces as +
-            if (shouldAssignCopilot()) {
-              params.assignees = 'copilot';
-            }
-            break;
-          case 'improvement':
-          case 'feature':
-            // For DAK improvements, use the main feature request template
-            params.template = 'feature_request.yml';
-            params.labels = 'feature+request,dak-improvement'; // URL encode spaces as +
-            if (shouldAssignCopilot()) {
-              params.assignees = 'copilot';
-            }
-            break;
-          case 'content':
-            // For DAK content feedback, use the dedicated template
-            params.template = 'dak_content_error.yml';
-            params.labels = 'authoring';
-            break;
-          default:
-            params.template = 'dak_content_error.yml';
-            params.labels = 'authoring';
-        }
-
-        // Add DAK-specific context
-        if (repository.name) {
-          params.sgex_dak_repository = `${repository.owner}/${repository.name}`;
-        }
-
-        const url = createContextualUrl(baseUrl, params);
-        
-        // Try to open the GitHub issue, but handle cases where external links are blocked
-        try {
-          const newWindow = window.open(url, '_blank');
-          
-          // Check if the window was blocked or failed to open
-          if (!newWindow || newWindow.closed) {
-            // Fallback: show instructions to manually open the link
-            window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
-          } else {
-            // Check if the window actually loaded after a brief delay
-            setTimeout(() => {
-              try {
-                if (newWindow.closed || !newWindow.location || newWindow.location.href === 'about:blank') {
-                  newWindow.close();
-                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
-                }
-              } catch (e) {
-                // Cross-origin restriction means it probably loaded successfully
-                // or the check failed due to security - either way, don't show fallback
-              }
-            }, 1000);
-          }
-        } catch (error) {
-          console.warn('Failed to open DAK issue:', error);
-          window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
-        }
+        // Use the issue creation modal for DAK issues
+        setIssueCreationType(issueType === 'content' ? 'dak-content' : issueType);
+        setIssueRepository(repository);
+        setShowIssueCreationModal(true);
       },
 
       // Function to show fallback instructions when GitHub access is blocked
@@ -323,74 +148,53 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   };
 
   const handleBugReport = () => {
-    // Use the new SGEX issue reporting system
+    // Use the new issue creation modal instead of GitHub URLs
     if (window.helpModalInstance?.openSgexIssue) {
       window.helpModalInstance.openSgexIssue('bug');
     } else {
-      // Fallback to direct URL
-      const params = new URLSearchParams({
-        template: 'bug_report.yml',
-        labels: 'bug+reports', // URL encode spaces as +
-        sgex_page: contextData.pageId || 'unknown',
-        sgex_current_url: window.location.href
-      });
-      
-      // Check if user should have copilot auto-assigned
-      const shouldAssignCopilot = () => {
-        // Only assign copilot for DAK repo owner or if user is member of the organization
-        if (!contextData.selectedDak || !contextData.profile) {
-          return false;
-        }
-        
-        const userLogin = contextData.profile.login;
-        const dakOwner = contextData.selectedDak.owner?.login || contextData.selectedDak.full_name?.split('/')[0];
-        
-        // If user is the DAK repository owner
-        if (userLogin === dakOwner) {
-          return true;
-        }
-        
-        // Check if user is member of organization (if DAK owner is an org)
-        if (contextData.selectedDak.owner?.type === 'Organization') {
-          // For now, we can't easily check org membership client-side
-          // This would require additional API calls. Skip auto-assignment for safety.
-          return false;
-        }
-        
-        return false;
-      };
-      
-      if (shouldAssignCopilot()) {
-        params.set('assignees', 'copilot');
-      }
-      
-      if (contextData.selectedDak?.name) {
-        params.set('sgex_selected_dak', contextData.selectedDak.name);
-      }
-      
-      const url = `https://github.com/litlfred/sgex/issues/new?${params.toString()}`;
-      
-      // Try to open with error handling
-      try {
-        const newWindow = window.open(url, '_blank');
-        if (!newWindow || newWindow.closed) {
-          window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, 'bug');
-        }
-      } catch (error) {
-        console.warn('Failed to open GitHub issue:', error);
-        window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, 'bug');
-      }
+      // Direct fallback
+      setIssueCreationType('bug');
+      setIssueRepository(null);
+      setShowIssueCreationModal(true);
     }
   };
 
   const handleDAKFeedback = () => {
     const repository = contextData.repository || contextData.selectedDak;
     if (repository) {
-      // Default to opening content error as the primary DAK feedback type
+      // Use the new issue creation modal for DAK content feedback
       if (window.helpModalInstance?.openDakIssue) {
         window.helpModalInstance.openDakIssue('content');
+      } else {
+        // Direct fallback
+        setIssueCreationType('dak-content');
+        setIssueRepository(repository);
+        setShowIssueCreationModal(true);
       }
     }
+  };
+
+  const handleFeatureRequest = () => {
+    // Use the new issue creation modal for feature requests
+    if (window.helpModalInstance?.openSgexIssue) {
+      window.helpModalInstance.openSgexIssue('feature');
+    } else {
+      // Direct fallback
+      setIssueCreationType('feature');
+      setIssueRepository(null);
+      setShowIssueCreationModal(true);
+    }
+  };
+
+  const handleIssueCreationSuccess = (issue) => {
+    console.log('Issue created successfully:', issue);
+    // Show success message or redirect to the created issue
+    alert(`Issue #${issue.number} created successfully: ${issue.title}`);
+  };
+
+  const handleIssueCreationError = (error) => {
+    console.error('Failed to create issue:', error);
+    // Error is already shown in the modal
   };
 
   const handleEmailSupport = () => {
@@ -557,61 +361,79 @@ Best regards,
   const { title, content } = getHelpContent();
 
   return (
-    <div className="help-modal-overlay" onClick={handleOverlayClick}>
-      <div className="help-modal">
-        <div className="help-modal-header">
-          <h2>{title}</h2>
-          <div className="help-modal-actions">
-            <button 
-              className="hamburger-menu-btn"
-              onClick={handleMenuToggle}
-              aria-label="More options"
-            >
-              <span></span>
-              <span></span>
-              <span></span>
-            </button>
-            <button 
-              className="close-btn"
-              onClick={onClose}
-              aria-label="Close help"
-            >
-              ×
-            </button>
-          </div>
-          
-          {showMenu && (
-            <div className="help-menu-dropdown">
-              <button onClick={handleDocumentation} className="menu-item">
-                <span className="menu-icon">📖</span>
-                Documentation
+    <>
+      <div className="help-modal-overlay" onClick={handleOverlayClick}>
+        <div className="help-modal">
+          <div className="help-modal-header">
+            <h2>{title}</h2>
+            <div className="help-modal-actions">
+              <button 
+                className="hamburger-menu-btn"
+                onClick={handleMenuToggle}
+                aria-label="More options"
+              >
+                <span></span>
+                <span></span>
+                <span></span>
               </button>
-              
-              <button onClick={handleBugReport} className="menu-item">
-                <img src="/sgex/bug-report-icon.svg" alt="Bug" className="menu-icon" />
-                File Bug Report
-              </button>
-              
-              {(contextData.repository || contextData.selectedDak) && (
-                <button onClick={handleDAKFeedback} className="menu-item">
-                  <span className="menu-icon">📝</span>
-                  DAK Content Feedback
-                </button>
-              )}
-              
-              <button onClick={handleEmailSupport} className="menu-item">
-                <span className="menu-icon">📧</span>
-                Email Support
+              <button 
+                className="close-btn"
+                onClick={onClose}
+                aria-label="Close help"
+              >
+                ×
               </button>
             </div>
-          )}
-        </div>
-        
-        <div className="help-modal-content">
-          {content}
+            
+            {showMenu && (
+              <div className="help-menu-dropdown">
+                <button onClick={handleDocumentation} className="menu-item">
+                  <span className="menu-icon">📖</span>
+                  Documentation
+                </button>
+                
+                <button onClick={handleBugReport} className="menu-item">
+                  <img src="/sgex/bug-report-icon.svg" alt="Bug" className="menu-icon" />
+                  Bug Report
+                </button>
+                
+                <button onClick={handleFeatureRequest} className="menu-item">
+                  <span className="menu-icon">💡</span>
+                  Feature Request
+                </button>
+                
+                {(contextData.repository || contextData.selectedDak) && (
+                  <button onClick={handleDAKFeedback} className="menu-item">
+                    <span className="menu-icon">📝</span>
+                    DAK Content Feedback
+                  </button>
+                )}
+                
+                <button onClick={handleEmailSupport} className="menu-item">
+                  <span className="menu-icon">📧</span>
+                  Email Support
+                </button>
+              </div>
+            )}
+          </div>
+          
+          <div className="help-modal-content">
+            {content}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Issue Creation Modal */}
+      <IssueCreationModal
+        isOpen={showIssueCreationModal}
+        onClose={() => setShowIssueCreationModal(false)}
+        issueType={issueCreationType}
+        repository={issueRepository}
+        contextData={contextData}
+        onSuccess={handleIssueCreationSuccess}
+        onError={handleIssueCreationError}
+      />
+    </>
   );
 };
 

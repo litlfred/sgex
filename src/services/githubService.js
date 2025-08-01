@@ -1360,6 +1360,48 @@ class GitHubService {
     }
   }
 
+  // Create a new issue
+  async createIssue(owner, repo, issueData) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to create issues');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('POST', `/repos/${owner}/${repo}/issues`, issueData);
+
+    try {
+      const response = await this.octokit.rest.issues.create({
+        owner,
+        repo,
+        title: issueData.title,
+        body: issueData.body,
+        labels: issueData.labels || [],
+        assignees: issueData.assignees || [],
+        milestone: issueData.milestone
+      });
+
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, response.status, Date.now() - startTime);
+      this.logger.info('Issue created successfully', { 
+        issueNumber: response.data.number,
+        title: issueData.title,
+        owner,
+        repo
+      });
+
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, error.status || 'error', Date.now() - startTime);
+      this.logger.error('Failed to create issue', { 
+        error: error.message,
+        owner,
+        repo,
+        title: issueData.title
+      });
+      console.error('Failed to create issue:', error);
+      throw error;
+    }
+  }
+
   // Logout
   logout() {
     this.octokit = null;

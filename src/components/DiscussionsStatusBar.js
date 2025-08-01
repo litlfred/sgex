@@ -240,9 +240,14 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
       return;
     }
     
-    // Open GitHub new issue page with DAK Content Feedback template
-    const url = `https://github.com/${owner}/${repoName}/issues/new?template=dak_content_error.yml&labels=authoring`;
-    window.open(url, '_blank');
+    // Use the help modal system to create DAK content feedback
+    if (window.helpModalInstance?.openDakIssue) {
+      window.helpModalInstance.openDakIssue('content');
+    } else {
+      // Fallback: Open GitHub new issue page with DAK Content Feedback template
+      const url = `https://github.com/${owner}/${repoName}/issues/new?template=dak_content_error.yml&labels=authoring`;
+      window.open(url, '_blank');
+    }
   };
 
   const handleIssueClick = (issue) => {
