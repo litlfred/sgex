@@ -258,7 +258,7 @@ body.theme-dark .file-card:hover {
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: var(--who-hover-bg);
+  background: transparent;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.8rem;
