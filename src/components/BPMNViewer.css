@@ -588,58 +588,108 @@ body.theme-light .bpmn-viewer {
 }
 
 /* Override BPMN.js inline styles for dark mode support */
-/* Target all SVG shapes and elements in the BPMN diagram */
-.bpmn-container svg .djs-visual > * {
-  fill: var(--who-primary-bg) !important;
-  stroke: var(--who-border-color) !important;
+/* These rules use high specificity to override inline styles applied by bpmn-js */
+
+/* Main SVG container background */
+.bpmn-container svg,
+.bpmn-container .bjs-container svg,
+.bpmn-container .djs-container svg {
+  background-color: var(--who-primary-bg) !important;
+  background: var(--who-primary-bg) !important;
 }
 
-.bpmn-container svg .djs-element .djs-visual > rect,
-.bpmn-container svg .djs-element .djs-visual > circle,
-.bpmn-container svg .djs-element .djs-visual > polygon,
-.bpmn-container svg .djs-element .djs-visual > path {
+/* Viewport background */
+.bpmn-container .viewport,
+.bpmn-container .djs-container .viewport {
+  background-color: var(--who-primary-bg) !important;
+  background: var(--who-primary-bg) !important;
+}
+
+/* Target all SVG elements with highest specificity */
+.bpmn-container svg *[fill="white"],
+.bpmn-container svg *[fill="#ffffff"],
+.bpmn-container svg *[fill="#FFFFFF"] {
   fill: var(--who-card-bg) !important;
+}
+
+.bpmn-container svg *[stroke="rgb(34, 36, 42)"],
+.bpmn-container svg *[stroke="#222428"],
+.bpmn-container svg *[stroke="black"] {
   stroke: var(--who-text-primary) !important;
 }
 
-/* Task boxes */
+/* Override all elements with inline fill styles */
+.bpmn-container svg rect[style*="fill:"],
+.bpmn-container svg circle[style*="fill:"],
+.bpmn-container svg polygon[style*="fill:"],
+.bpmn-container svg path[style*="fill:"] {
+  fill: var(--who-card-bg) !important;
+}
+
+/* Override all elements with inline stroke styles */
+.bpmn-container svg rect[style*="stroke:"],
+.bpmn-container svg circle[style*="stroke:"],
+.bpmn-container svg polygon[style*="stroke:"],
+.bpmn-container svg path[style*="stroke:"] {
+  stroke: var(--who-text-primary) !important;
+}
+
+/* Specific BPMN element types */
+.bpmn-container svg .djs-element .djs-visual > rect,
 .bpmn-container svg g[data-element-id] rect {
   fill: var(--who-card-bg) !important;
   stroke: var(--who-text-primary) !important;
 }
 
-/* Text elements */
-.bpmn-container svg text {
-  fill: var(--who-text-primary) !important;
-}
-
-/* Connection lines */
-.bpmn-container svg .djs-connection .djs-visual > path {
-  stroke: var(--who-text-secondary) !important;
-  fill: none !important;
-}
-
-/* Start/End event circles */
-.bpmn-container svg g[data-element-id*="Event"] circle {
-  fill: var(--who-primary-bg) !important;
+.bpmn-container svg .djs-element .djs-visual > circle,
+.bpmn-container svg g[data-element-id] circle {
+  fill: var(--who-card-bg) !important;
   stroke: var(--who-text-primary) !important;
 }
 
-/* Gateway diamonds */
-.bpmn-container svg g[data-element-id*="Gateway"] polygon {
+.bpmn-container svg .djs-element .djs-visual > polygon,
+.bpmn-container svg g[data-element-id] polygon {
   fill: var(--who-hover-bg) !important;
   stroke: var(--who-text-primary) !important;
 }
 
-/* Sequence flow arrows */
-.bpmn-container svg .djs-connection .djs-visual > path[marker-end] {
+/* Text elements */
+.bpmn-container svg text,
+.bpmn-container svg .djs-element text {
+  fill: var(--who-text-primary) !important;
+  color: var(--who-text-primary) !important;
+}
+
+/* Connection lines and paths */
+.bpmn-container svg .djs-connection .djs-visual > path,
+.bpmn-container svg .djs-connection path {
   stroke: var(--who-text-secondary) !important;
+  fill: none !important;
 }
 
 /* BPMN markers (arrows, etc.) */
-.bpmn-container svg defs marker path {
+.bpmn-container svg defs marker path,
+.bpmn-container svg marker path {
   fill: var(--who-text-secondary) !important;
   stroke: var(--who-text-secondary) !important;
+}
+
+/* Force all SVG children to use theme colors */
+.bpmn-container svg .djs-visual > * {
+  fill: var(--who-card-bg) !important;
+  stroke: var(--who-text-primary) !important;
+}
+
+/* Specific overrides for common bpmn-js inline styles */
+.bpmn-container svg *[fill-opacity] {
+  fill-opacity: 0.9 !important;
+}
+
+/* Catch-all for any remaining white backgrounds */
+.bpmn-container svg *[fill*="white"],
+.bpmn-container svg *[fill*="#fff"],
+.bpmn-container svg *[fill*="#FFF"] {
+  fill: var(--who-card-bg) !important;
 }
 
 /* Responsive design */
