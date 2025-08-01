@@ -96,6 +96,11 @@ const WelcomePage = () => {
     handleNavigationClick(event, `/dak-selection/${demoProfile.login}`, navigate, navigationState);
   };
 
+  const handleDAKManagementClick = (event) => {
+    // Navigate directly to DAK action selection for unauthenticated users
+    handleNavigationClick(event, '/dak-action', navigate);
+  };
+
   const handleDismissWarning = () => {
     setWarningMessage(null);
   };
@@ -244,8 +249,11 @@ const WelcomePage = () => {
                   <button onClick={handleDemoMode} className="demo-btn">
                     🎭 Try Demo Mode
                   </button>
+                  <button onClick={handleDAKManagementClick} className="demo-btn" style={{marginTop: '8px'}}>
+                    ⚙️ Browse DAK Management
+                  </button>
                   <p className="demo-note">
-                    Demo mode showcases the enhanced DAK scanning display with mock data.
+                    Demo mode showcases the enhanced DAK scanning display with mock data. DAK Management lets you explore the available workflows.
                   </p>
                 </div>
               </div>
