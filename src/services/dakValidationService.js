@@ -18,14 +18,6 @@ class DAKValidationService {
    * @returns {Promise<boolean>} - True if repository is a valid DAK
    */
   async validateDAKRepository(owner, repo, branch = 'main') {
-    // Check if this is a demo repository first
-    // Demo repositories should use demo validation even in authenticated mode
-    const isDemoRepo = this.validateDemoDAKRepository(owner, repo);
-    if (isDemoRepo) {
-      console.log(`Repository ${owner}/${repo} is a demo repository, using demo validation`);
-      return true;
-    }
-    
     try {
       // Try to fetch the sushi-config.yaml file from the repository root
       const sushiConfigContent = await this.fetchSushiConfig(owner, repo, branch);
@@ -135,7 +127,6 @@ class DAKValidationService {
       'litlfred/smart-guidelines-demo',
       'litlfred/sgex-demo',
       'litlfred/smart-pcmt-vaxprequal',
-      'litlfred/smart-ips-pilgrimage',
       'who/smart-guidelines',
       'who/smart-anc-toolkit',
       'who/smart-immunizations',
@@ -169,8 +160,7 @@ class DAKValidationService {
       /^[^/]+\/smart-anc-toolkit$/i,          // */smart-anc-toolkit
       /^[^/]+\/smart-immunizations$/i,        // */smart-immunizations  
       /^[^/]+\/smart-guidelines$/i,           // */smart-guidelines
-      /^[^/]+\/smart-guidelines-demo$/i,      // */smart-guidelines-demo
-      /^[^/]+\/smart-ips-.*$/i                // */smart-ips-* (covers smart-ips-pilgrimage, etc.)
+      /^[^/]+\/smart-guidelines-demo$/i       // */smart-guidelines-demo
     ];
     
     const matchesPattern = demoDakPatterns.some(pattern => pattern.test(fullName));
