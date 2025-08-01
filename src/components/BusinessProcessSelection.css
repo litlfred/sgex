@@ -282,7 +282,7 @@ body.theme-dark .file-name {
 }
 
 body.theme-dark .file-path {
-  color: var(--who-text-secondary);
+  color: var(--who-text-primary);
 }
 
 body.theme-dark .file-size {
