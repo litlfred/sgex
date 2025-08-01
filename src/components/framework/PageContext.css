@@ -83,6 +83,16 @@
   font-size: 0.9rem;
 }
 
+/* Branch selector styling integration */
+.page-context-branch-selector {
+  /* Inherit the monospace styling from the context */
+}
+
+.page-context-branch-selector .branch-button {
+  /* Override any padding/margin to match the context spacing */
+  margin: 0;
+}
+
 /* Second row: Breadcrumbs styling */
 .page-context-breadcrumbs {
   padding: 0;

@@ -1,5 +1,6 @@
 import React from 'react';
 import { usePage, PAGE_TYPES } from './PageProvider';
+import CompactBranchSelector from '../CompactBranchSelector';
 import './PageContext.css';
 
 /**
@@ -13,6 +14,7 @@ const PageContext = ({ customBreadcrumbs }) => {
     profile, 
     repository, 
     branch,
+    asset,
     navigate 
   } = usePage();
 
@@ -133,10 +135,38 @@ const PageContext = ({ customBreadcrumbs }) => {
                 {repository.name}
               </span>
             )}
-            {branch && (type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && (
+            {branch && (type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && repository && (
               <>
                 <span className="page-context-separator">@</span>
-                <span className="page-context-branch">{branch}</span>
+                <CompactBranchSelector 
+                  repository={repository}
+                  selectedBranch={branch}
+                  onBranchChange={(newBranch) => {
+                    // Navigate to the same page but with the new branch
+                    const branchPath = newBranch && newBranch !== 'main' ? `/${newBranch}` : '';
+                    const ownerLogin = repository.owner?.login || repository.full_name?.split('/')[0];
+                    if (ownerLogin) {
+                      // Construct the new URL based on current page type
+                      let newPath;
+                      if (type === PAGE_TYPES.ASSET && asset) {
+                        // For asset pages, we need to include the asset in the path
+                        newPath = `/sgex/dashboard/${ownerLogin}/${repository.name}${branchPath}`;
+                        // Note: Asset navigation would need additional logic to maintain the asset context
+                      } else {
+                        // For DAK dashboard pages
+                        newPath = `/sgex/dashboard/${ownerLogin}/${repository.name}${branchPath}`;
+                      }
+                      navigate(newPath, { 
+                        state: { 
+                          profile, 
+                          repository, 
+                          selectedBranch: newBranch 
+                        } 
+                      });
+                    }
+                  }}
+                  className="page-context-branch-selector"
+                />
               </>
             )}
           </div>
