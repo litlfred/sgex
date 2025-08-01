@@ -70,7 +70,11 @@ const PageContext = ({ customBreadcrumbs }) => {
     // Update URL with new branch
     const currentPath = window.location.pathname;
     const pathParts = currentPath.split('/');
-    if (pathParts.length >= 5) {
+    
+    // URL structure: /sgex/dashboard/{user}/{repo}/{branch}
+    // After splitting: ['', 'sgex', 'dashboard', '{user}', '{repo}', '{branch}']
+    // So branch is at index 5 when including the empty string at index 0
+    if (pathParts.length >= 6) {
       pathParts[5] = newBranch; // Replace branch part
       navigate(pathParts.join('/'));
     }
