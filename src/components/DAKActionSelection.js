@@ -81,11 +81,8 @@ const DAKActionSelectionContent = () => {
               onClick={(event) => handleActionSelect(event, action.id)}
               style={{ '--action-color': action.color }}
             >
-              <div className="action-header-content">
-                <div className="action-icon" style={{ color: action.color }}>
-                  <img src={action.icon} alt={`${action.title} icon`} />
-                </div>
-                <h3>{action.title}</h3>
+              <div className="action-icon" style={{ color: action.color }}>
+                <img src={action.icon} alt={action.title} />
               </div>
               
               <div className="action-description">
