@@ -270,10 +270,10 @@ body.theme-light .dak-dashboard {
 }
 
 
-/* Tab Navigation Styles - Full Width */
+/* Tab Navigation Styles - Horizontal Toggle Button Group */
 .tab-navigation {
   display: flex;
-  justify-content: stretch;
+  justify-content: center;
   margin: 2rem 0 3rem 0;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -281,6 +281,9 @@ body.theme-light .dak-dashboard {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .tab-button {
@@ -288,17 +291,19 @@ body.theme-light .dak-dashboard {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.8rem;
-  padding: 1rem 1.5rem;
+  gap: 0.5rem;
+  padding: 0.8rem 1rem;
   border: none;
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
   position: relative;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .tab-button:hover {
@@ -313,12 +318,14 @@ body.theme-light .dak-dashboard {
 }
 
 .tab-icon {
-  font-size: 1.2rem;
+  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .tab-text {
-  flex: 1;
   text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 
@@ -602,20 +609,25 @@ body.theme-light .dak-dashboard {
     flex-wrap: wrap;
   }
 
-  /* Tab Navigation Mobile */
+  /* Tab Navigation Mobile - Keep Horizontal */
   .tab-navigation {
-    flex-direction: column;
-    gap: 0.5rem;
     max-width: none;
+    margin: 1.5rem 0 2rem 0;
+    padding: 0.4rem;
   }
 
   .tab-button {
-    flex: none;
-    padding: 0.8rem 1rem;
+    padding: 0.7rem 0.5rem;
+    font-size: 0.8rem;
+    gap: 0.3rem;
+  }
+
+  .tab-icon {
+    font-size: 0.9rem;
   }
 
   .tab-text {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
   }
 }
 
