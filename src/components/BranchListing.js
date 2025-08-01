@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from './framework';
 import HelpModal from './HelpModal';
 import './BranchListing.css';
@@ -11,9 +11,67 @@ const BranchListing = () => {
   const [activeTab, setActiveTab] = useState('branches');
   const [prPage, setPrPage] = useState(1);
   const [prSearchTerm, setPrSearchTerm] = useState('');
+  const [branchSearchTerm, setBranchSearchTerm] = useState('');
   const [showContributeModal, setShowContributeModal] = useState(false);
+  const [deploymentStatuses, setDeploymentStatuses] = useState({});
+  const [checkingStatuses, setCheckingStatuses] = useState(false);
 
   const ITEMS_PER_PAGE = 5;
+
+  // Function to check deployment status
+  const checkDeploymentStatus = async (url) => {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      if (response.ok) {
+        return 'active';
+      } else if (response.status === 404) {
+        return 'not-found';
+      } else {
+        return 'errored';
+      }
+    } catch (error) {
+      return 'errored';
+    }
+  };
+
+  // Function to check deployment statuses for all items
+  const checkAllDeploymentStatuses = useCallback(async (branchData, prData) => {
+    setCheckingStatuses(true);
+    const statuses = {};
+    
+    // Check branches
+    for (const branch of branchData) {
+      const status = await checkDeploymentStatus(branch.url);
+      statuses[`branch-${branch.name}`] = status;
+    }
+    
+    // Check PRs
+    for (const pr of prData) {
+      const status = await checkDeploymentStatus(pr.url);
+      statuses[`pr-${pr.id}`] = status;
+    }
+    
+    setDeploymentStatuses(statuses);
+    setCheckingStatuses(false);
+  }, []);
+
+  // Function to copy URL to clipboard
+  const copyToClipboard = async (url, type, name) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      // You could add a toast notification here
+      console.log(`Copied ${type} URL for ${name} to clipboard`);
+    } catch (error) {
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      console.log(`Copied ${type} URL for ${name} to clipboard (fallback)`);
+    }
+  };
 
   // "How to contribute" slideshow content
   const contributeHelpTopic = {
@@ -187,6 +245,9 @@ const BranchListing = () => {
         
         setBranches(filteredBranches);
         setPullRequests(formattedPRs);
+        
+        // Check deployment statuses
+        await checkAllDeploymentStatuses(filteredBranches, formattedPRs);
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err.message);
@@ -196,7 +257,7 @@ const BranchListing = () => {
     };
 
     fetchData();
-  }, []);
+  }, [checkAllDeploymentStatuses]);
 
   // Filter and paginate PRs based on search
   const filteredPRs = pullRequests.filter(pr => 
@@ -205,6 +266,11 @@ const BranchListing = () => {
   );
   const paginatedPRs = filteredPRs.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
   const totalPRPages = Math.ceil(filteredPRs.length / ITEMS_PER_PAGE);
+
+  // Filter branches based on search
+  const filteredBranches = branches.filter(branch => 
+    branch.name.toLowerCase().includes(branchSearchTerm.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -275,7 +341,7 @@ const BranchListing = () => {
             className={`tab-button ${activeTab === 'branches' ? 'active' : ''}`}
             onClick={() => setActiveTab('branches')}
           >
-            🌿 Branch Previews ({branches.length})
+            🌿 Branch Previews ({filteredBranches.length})
           </button>
           <button 
             className={`tab-button ${activeTab === 'prs' ? 'active' : ''}`}
@@ -286,44 +352,121 @@ const BranchListing = () => {
         </div>
 
         {activeTab === 'branches' && (
-          <div className="branch-cards">
-            {branches.length === 0 ? (
-              <div className="no-items">
-                <p>No branch previews available at the moment.</p>
-                <p>Branch previews will appear here when code is pushed to branches.</p>
-              </div>
-            ) : (
-              branches.map((branch) => (
-                <div key={branch.name} className="preview-card">
-                  <div className="card-header">
-                    <h3 className="item-name">{branch.name}</h3>
-                    <span className="commit-badge">
-                      {branch.commit.sha.substring(0, 7)}
-                    </span>
-                  </div>
-                  
-                  <div className="card-body">
-                    <p className="item-date">
-                      Last updated: {branch.lastModified}
-                    </p>
-                    
-                    <a 
-                      href={branch.url} 
-                      className="preview-link"
-                      rel="noopener noreferrer"
-                    >
-                      <span>🚀 View Preview</span>
-                    </a>
-                  </div>
+          <div className="branch-section">
+            <div className="branch-controls">
+              <input
+                type="text"
+                placeholder="Search branches by name..."
+                value={branchSearchTerm}
+                onChange={(e) => setBranchSearchTerm(e.target.value)}
+                className="branch-search"
+              />
+              {checkingStatuses && (
+                <span className="status-checking">
+                  🔄 Checking deployment status...
+                </span>
+              )}
+            </div>
 
-                  <div className="card-footer">
-                    <small className="preview-path">
-                      Preview URL: {branch.url}
-                    </small>
-                  </div>
+            <div className="branch-cards">
+              {filteredBranches.length === 0 ? (
+                <div className="no-items">
+                  {branchSearchTerm ? (
+                    <p>No branches match your search "{branchSearchTerm}".</p>
+                  ) : (
+                    <>
+                      <p>No branch previews available at the moment.</p>
+                      <p>Branch previews will appear here when code is pushed to branches.</p>
+                    </>
+                  )}
                 </div>
-              ))
-            )}
+              ) : (
+                filteredBranches.map((branch) => {
+                  const statusKey = `branch-${branch.name}`;
+                  const deploymentStatus = deploymentStatuses[statusKey];
+                  
+                  return (
+                    <div key={branch.name} className="preview-card">
+                      <div className="card-header">
+                        <h3 className="item-name">{branch.name}</h3>
+                        <div className="card-badges">
+                          <span className="commit-badge">
+                            {branch.commit.sha.substring(0, 7)}
+                          </span>
+                          {deploymentStatus && (
+                            <span className={`status-badge ${deploymentStatus}`}>
+                              {deploymentStatus === 'active' && '🟢 Active'}
+                              {deploymentStatus === 'not-found' && '🟡 Building'}
+                              {deploymentStatus === 'errored' && '🔴 Error'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="card-body">
+                        <p className="item-date">
+                          Last updated: {branch.lastModified}
+                        </p>
+                        
+                        <div className="branch-actions">
+                          {deploymentStatus === 'active' ? (
+                            <a 
+                              href={branch.url} 
+                              className="preview-link"
+                              rel="noopener noreferrer"
+                            >
+                              <span>🚀 View Preview</span>
+                            </a>
+                          ) : deploymentStatus === 'not-found' ? (
+                            <div className="deployment-message">
+                              <span className="building-message">
+                                🔄 Deployment in progress. Please check back in a few minutes.
+                              </span>
+                            </div>
+                          ) : deploymentStatus === 'errored' ? (
+                            <div className="deployment-message">
+                              <span className="error-message">
+                                ❌ Deployment failed. Please check the GitHub Actions logs or contact support.
+                              </span>
+                              <a 
+                                href={`https://github.com/litlfred/sgex/actions`}
+                                className="actions-link"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                View Actions Log
+                              </a>
+                            </div>
+                          ) : (
+                            <a 
+                              href={branch.url} 
+                              className="preview-link"
+                              rel="noopener noreferrer"
+                            >
+                              <span>🚀 View Preview</span>
+                            </a>
+                          )}
+                          
+                          <button 
+                            className="copy-btn"
+                            onClick={() => copyToClipboard(branch.url, 'branch', branch.name)}
+                            title="Copy URL to clipboard"
+                          >
+                            📋 Copy URL
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="card-footer">
+                        <small className="preview-path">
+                          Preview URL: {branch.url}
+                        </small>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         )}
 
@@ -352,49 +495,102 @@ const BranchListing = () => {
                   )}
                 </div>
               ) : (
-                paginatedPRs.map((pr) => (
-                  <div key={pr.id} className="preview-card pr-card">
-                    <div className="card-header">
-                      <h3 className="item-name">#{pr.number}: {pr.title}</h3>
-                      <span className={`state-badge ${pr.state}`}>
-                        {pr.state === 'open' ? '🟢' : '🔴'} {pr.state}
-                      </span>
-                    </div>
-                    
-                    <div className="card-body">
-                      <p className="pr-meta">
-                        <strong>Branch:</strong> {pr.branchName} • <strong>Author:</strong> {pr.author}
-                      </p>
-                      <p className="item-date">
-                        Created: {pr.createdAt} • Updated: {pr.updatedAt}
-                      </p>
+                paginatedPRs.map((pr) => {
+                  const statusKey = `pr-${pr.id}`;
+                  const deploymentStatus = deploymentStatuses[statusKey];
+                  
+                  return (
+                    <div key={pr.id} className="preview-card pr-card">
+                      <div className="card-header">
+                        <h3 className="item-name">#{pr.number}: {pr.title}</h3>
+                        <div className="card-badges">
+                          <span className={`state-badge ${pr.state}`}>
+                            {pr.state === 'open' ? '🟢' : '🔴'} {pr.state}
+                          </span>
+                          {deploymentStatus && (
+                            <span className={`status-badge ${deploymentStatus}`}>
+                              {deploymentStatus === 'active' && '🟢 Active'}
+                              {deploymentStatus === 'not-found' && '🟡 Building'}
+                              {deploymentStatus === 'errored' && '🔴 Error'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                       
-                      <div className="pr-actions">
-                        <a 
-                          href={pr.url} 
-                          className="preview-link"
-                          rel="noopener noreferrer"
-                        >
-                          <span>🚀 View Preview</span>
-                        </a>
-                        <a 
-                          href={pr.prUrl} 
-                          className="pr-link"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <span>📋 View PR</span>
-                        </a>
+                      <div className="card-body">
+                        <p className="pr-meta">
+                          <strong>Branch:</strong> {pr.branchName} • <strong>Author:</strong> {pr.author}
+                        </p>
+                        <p className="item-date">
+                          Created: {pr.createdAt} • Updated: {pr.updatedAt}
+                        </p>
+                        
+                        <div className="pr-actions">
+                          {deploymentStatus === 'active' ? (
+                            <a 
+                              href={pr.url} 
+                              className="preview-link"
+                              rel="noopener noreferrer"
+                            >
+                              <span>🚀 View Preview</span>
+                            </a>
+                          ) : deploymentStatus === 'not-found' ? (
+                            <div className="deployment-message">
+                              <span className="building-message">
+                                🔄 Deployment in progress. Please check back in a few minutes.
+                              </span>
+                            </div>
+                          ) : deploymentStatus === 'errored' ? (
+                            <div className="deployment-message">
+                              <span className="error-message">
+                                ❌ Deployment failed. Please check the GitHub Actions logs or contact support.
+                              </span>
+                              <a 
+                                href={`https://github.com/litlfred/sgex/actions`}
+                                className="actions-link"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                View Actions Log
+                              </a>
+                            </div>
+                          ) : (
+                            <a 
+                              href={pr.url} 
+                              className="preview-link"
+                              rel="noopener noreferrer"
+                            >
+                              <span>🚀 View Preview</span>
+                            </a>
+                          )}
+                          
+                          <button 
+                            className="copy-btn"
+                            onClick={() => copyToClipboard(pr.url, 'PR', `#${pr.number}`)}
+                            title="Copy URL to clipboard"
+                          >
+                            📋 Copy URL
+                          </button>
+                          
+                          <a 
+                            href={pr.prUrl} 
+                            className="pr-link"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <span>📋 View PR</span>
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="card-footer">
+                        <small className="preview-path">
+                          Preview URL: {pr.url}
+                        </small>
                       </div>
                     </div>
-
-                    <div className="card-footer">
-                      <small className="preview-path">
-                        Preview URL: {pr.url}
-                      </small>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
