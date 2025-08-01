@@ -127,6 +127,7 @@ class DAKValidationService {
       'litlfred/smart-guidelines-demo',
       'litlfred/sgex-demo',
       'litlfred/smart-pcmt-vaxprequal',
+      'litlfred/smart-ips-pilgrimage',
       'who/smart-guidelines',
       'who/smart-anc-toolkit',
       'who/smart-immunizations',
@@ -160,7 +161,8 @@ class DAKValidationService {
       /^[^/]+\/smart-anc-toolkit$/i,          // */smart-anc-toolkit
       /^[^/]+\/smart-immunizations$/i,        // */smart-immunizations  
       /^[^/]+\/smart-guidelines$/i,           // */smart-guidelines
-      /^[^/]+\/smart-guidelines-demo$/i       // */smart-guidelines-demo
+      /^[^/]+\/smart-guidelines-demo$/i,      // */smart-guidelines-demo
+      /^[^/]+\/smart-ips-.*$/i                // */smart-ips-* (covers smart-ips-pilgrimage, etc.)
     ];
     
     const matchesPattern = demoDakPatterns.some(pattern => pattern.test(fullName));
