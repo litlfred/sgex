@@ -1,17 +1,28 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import githubService from '../services/githubService';
-import { PageLayout } from './framework';
+import { PageLayout, useDAKParams } from './framework';
 import './BPMNViewer.css';
 
 const BPMNViewerComponent = () => {
-  const location = useLocation();
+  return (
+    <PageLayout pageName="bpmn-viewer">
+      <BPMNViewerContent />
+    </PageLayout>
+  );
+};
+
+const BPMNViewerContent = () => {
   const navigate = useNavigate();
+  const { profile, repository, branch } = useDAKParams();
   const viewerRef = useRef(null);
   const containerRef = useRef(null);
   
-  const { profile, repository, component, selectedFile, selectedBranch } = location.state || {};
+  // For now, we'll handle selectedFile separately since it's not part of URL
+  // This could be enhanced later to support file selection via URL params
+  const selectedFile = null;
+  const selectedBranch = branch;
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -347,7 +358,6 @@ const BPMNViewerComponent = () => {
       state: {
         profile,
         repository,
-        component,
         selectedFile,
         selectedBranch,
         mode: 'edit'
@@ -360,7 +370,6 @@ const BPMNViewerComponent = () => {
       state: {
         profile,
         repository,
-        component,
         selectedBranch
       }
     });
@@ -482,7 +491,7 @@ const BPMNViewerComponent = () => {
                   <button 
                     className="action-btn secondary"
                     onClick={() => navigate('/business-process-selection', {
-                      state: { profile, repository, component, selectedBranch }
+                      state: { profile, repository, selectedBranch }
                     })}
                   >
                     ← Back to List

@@ -175,9 +175,9 @@ const TestingViewerContent = () => {
         setError(null);
 
         // Check if we're in demo mode - improved detection for demo repositories
-        const isDemoMode = repository.isDemo || 
-                          (repository.owner && repository.owner.login === 'demo-user') ||
-                          (repository.full_name && repository.full_name.startsWith('demo-user/'));
+        const isDemoMode = repository?.isDemo || 
+                          (repository?.owner && repository.owner.login === 'demo-user') ||
+                          (repository?.full_name && repository.full_name.startsWith('demo-user/'));
         
         if (isDemoMode) {
           // Use demo data in demo mode
@@ -254,9 +254,9 @@ const TestingViewerContent = () => {
       setLoading(true);
       
       // Check if we're in demo mode - improved detection for demo repositories
-      const isDemoMode = repository.isDemo || 
-                        (repository.owner && repository.owner.login === 'demo-user') ||
-                        (repository.full_name && repository.full_name.startsWith('demo-user/'));
+      const isDemoMode = repository?.isDemo || 
+                        (repository?.owner && repository.owner.login === 'demo-user') ||
+                        (repository?.full_name && repository.full_name.startsWith('demo-user/'));
       
       if (isDemoMode) {
         // Find the demo file content
@@ -294,9 +294,9 @@ const TestingViewerContent = () => {
       setLoading(true);
       
       // Check if we're in demo mode
-      const isDemoMode = repository.isDemo || 
-                        (repository.owner && repository.owner.login === 'demo-user') ||
-                        (repository.full_name && repository.full_name.startsWith('demo-user/'));
+      const isDemoMode = repository?.isDemo || 
+                        (repository?.owner && repository.owner.login === 'demo-user') ||
+                        (repository?.full_name && repository.full_name.startsWith('demo-user/'));
       
       if (isDemoMode) {
         // Find the demo file content
@@ -473,9 +473,9 @@ const TestingViewerContent = () => {
           onClose={() => setShowEditor(false)}
           onSave={handleSaveFile}
           initialContent={editorContent}
-          isDemo={repository.isDemo || 
-                  (repository.owner && repository.owner.login === 'demo-user') ||
-                  (repository.full_name && repository.full_name.startsWith('demo-user/'))}
+          isDemo={repository?.isDemo || 
+                  (repository?.owner && repository.owner.login === 'demo-user') ||
+                  (repository?.full_name && repository.full_name.startsWith('demo-user/'))}
         />
       </div>
     </PageLayout>
