@@ -74,8 +74,14 @@ const PageContext = ({ customBreadcrumbs }) => {
     // URL structure: /sgex/dashboard/{user}/{repo}/{branch}
     // After splitting: ['', 'sgex', 'dashboard', '{user}', '{repo}', '{branch}']
     // So branch is at index 5 when including the empty string at index 0
-    if (pathParts.length >= 6) {
-      pathParts[5] = newBranch; // Replace branch part
+    if (pathParts.length >= 5) {
+      if (pathParts.length === 5) {
+        // No branch in URL, append it
+        pathParts.push(newBranch);
+      } else {
+        // Branch exists, replace it
+        pathParts[5] = newBranch;
+      }
       navigate(pathParts.join('/'));
     }
     setShowBranchDropdown(false);
