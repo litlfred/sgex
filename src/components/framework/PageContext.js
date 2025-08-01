@@ -51,8 +51,8 @@ const PageContext = ({ customBreadcrumbs }) => {
     if ((type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile) {
       breadcrumbs.push({
         label: 'Select Repository',
-        path: `/repositories`,
-        onClick: () => navigate(`/repositories`, { state: { profile } })
+        path: `/repositories/${profile.login}`,
+        onClick: () => navigate(`/repositories/${profile.login}`, { state: { profile } })
       });
     }
 
@@ -63,8 +63,8 @@ const PageContext = ({ customBreadcrumbs }) => {
       if (ownerLogin) {
         breadcrumbs.push({
           label: 'DAK Components',
-          path: `/sgex/dashboard/${ownerLogin}/${repository.name}${branchPath}`,
-          onClick: () => navigate(`/sgex/dashboard/${ownerLogin}/${repository.name}${branchPath}`)
+          path: `/dashboard/${ownerLogin}/${repository.name}${branchPath}`,
+          onClick: () => navigate(`/dashboard/${ownerLogin}/${repository.name}${branchPath}`)
         });
       }
     }
