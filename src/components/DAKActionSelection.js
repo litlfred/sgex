@@ -6,7 +6,7 @@ import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
   return (
-    <PageLayout pageName="dak-action-selection" showHeader={false}>
+    <PageLayout pageName="dak-action-selection">
       <DAKActionSelectionContent />
     </PageLayout>
   );
@@ -75,34 +75,23 @@ const DAKActionSelectionContent = () => {
     handleNavigationClick(event, `/dak-selection/${effectiveProfile.login}`, navigate, navigationState);
   };
 
-  const handleBackToProfile = () => {
-    navigate('/', { state: { profile: effectiveProfile } });
-  };
-
   // Always show the page content - displayProfile will have either the real profile or fallback
   return (
     <div className="action-content">
-      <div className="breadcrumb">
-        <button onClick={handleBackToProfile} className="breadcrumb-link">
-          Select Profile
-        </button>
-        <span className="breadcrumb-separator">›</span>
-        <span className="breadcrumb-current">Choose DAK Action</span>
-      </div>
-
       <div className="action-main">
+        <div className="action-header">
+          <div className="action-title">
+            <h1>Manage a DAK</h1>
+            <p className="action-subtitle">Choose how you would like to work with a WHO SMART Guidelines Digital Adaptation Kit (DAK). Each option provides different workflows for DAK management and editing.</p>
+            {displayProfile.isUnauthenticated && (
+              <div className="auth-notice" style={{ background: '#e3f2fd', padding: '12px', borderRadius: '4px', marginTop: '12px' }}>
+                <strong>Note:</strong> You are viewing as an unauthenticated user. Sign in to GitHub to create, edit, or fork DAKs.
+                You can browse public repositories without signing in.
+              </div>
+            )}
+          </div>
+        </div>
         <div className="action-intro">
-          <h2>Manage a DAK</h2>
-          <p>
-            Choose how you would like to work with a WHO SMART Guidelines Digital Adaptation Kit (DAK). 
-            Each option provides different workflows for DAK management and editing.
-          </p>
-          {displayProfile.isUnauthenticated && (
-            <div className="auth-notice" style={{ background: '#e3f2fd', padding: '12px', borderRadius: '4px', marginTop: '12px' }}>
-              <strong>Note:</strong> You are viewing as an unauthenticated user. Sign in to GitHub to create, edit, or fork DAKs.
-              You can browse public repositories without signing in.
-            </div>
-          )}
         </div>
 
         <div className="actions-grid">
