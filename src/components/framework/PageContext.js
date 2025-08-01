@@ -52,7 +52,7 @@ const PageContext = ({ customBreadcrumbs }) => {
       breadcrumbs.push({
         label: 'Select Repository',
         path: `/dak-selection/${profile.login}`,
-        onClick: () => navigate(`/dak-selection/${profile.login}`, { state: { profile } })
+        onClick: () => navigate(`/dak-selection/${profile.login}`, { state: { profile, action: 'edit' } })
       });
     }
 
