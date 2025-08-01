@@ -310,8 +310,12 @@ jobs:
               # Check out main branch and build it
               echo "Building main branch separately..."
               if git show-ref --verify --quiet refs/remotes/origin/main; then
+                # Save current (updated) build script before switching branches
+                cp scripts/build-multi-branch.js /tmp/updated-build-script.js
                 git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
                 git checkout main
+                # Use the updated build script from our current branch
+                cp /tmp/updated-build-script.js scripts/build-multi-branch.js
                 npm ci
                 # Build main with correct base path
                 export BASE_PATH="/sgex/main/"
@@ -324,6 +328,8 @@ jobs:
                 mkdir -p main  # Ensure directory exists after branch switch and clean
                 cp -a /tmp/main-build-backup/. main/
                 rm -rf /tmp/main-build-backup
+                # Clean up the temporary script
+                rm -f /tmp/updated-build-script.js
               else
                 echo "Warning: Main branch not found, /main/ will not be available"
               fi
