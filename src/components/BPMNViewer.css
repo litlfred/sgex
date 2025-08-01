@@ -615,6 +615,19 @@ body.theme-light .bpmn-viewer {
 .bpmn-container svg *[stroke="rgb(34, 36, 42)"],
 .bpmn-container svg *[stroke="#222428"],
 .bpmn-container svg *[stroke="black"] {
+  stroke: var(--who-text-secondary) !important;
+}
+
+/* Theme-specific stroke colors for inline styles */
+body.theme-light .bpmn-container svg *[stroke="rgb(34, 36, 42)"],
+body.theme-light .bpmn-container svg *[stroke="#222428"],
+body.theme-light .bpmn-container svg *[stroke="black"] {
+  stroke: #333333 !important;
+}
+
+body.theme-dark .bpmn-container svg *[stroke="rgb(34, 36, 42)"],
+body.theme-dark .bpmn-container svg *[stroke="#222428"],
+body.theme-dark .bpmn-container svg *[stroke="black"] {
   stroke: var(--who-text-primary) !important;
 }
 
@@ -631,6 +644,21 @@ body.theme-light .bpmn-viewer {
 .bpmn-container svg circle[style*="stroke:"],
 .bpmn-container svg polygon[style*="stroke:"],
 .bpmn-container svg path[style*="stroke:"] {
+  stroke: var(--who-text-secondary) !important;
+}
+
+/* Theme-specific stroke colors for better visibility */
+body.theme-light .bpmn-container svg rect[style*="stroke:"],
+body.theme-light .bpmn-container svg circle[style*="stroke:"],
+body.theme-light .bpmn-container svg polygon[style*="stroke:"],
+body.theme-light .bpmn-container svg path[style*="stroke:"] {
+  stroke: #333333 !important;
+}
+
+body.theme-dark .bpmn-container svg rect[style*="stroke:"],
+body.theme-dark .bpmn-container svg circle[style*="stroke:"],
+body.theme-dark .bpmn-container svg polygon[style*="stroke:"],
+body.theme-dark .bpmn-container svg path[style*="stroke:"] {
   stroke: var(--who-text-primary) !important;
 }
 
@@ -638,18 +666,37 @@ body.theme-light .bpmn-viewer {
 .bpmn-container svg .djs-element .djs-visual > rect,
 .bpmn-container svg g[data-element-id] rect {
   fill: var(--who-card-bg) !important;
-  stroke: var(--who-text-primary) !important;
+  stroke: var(--who-text-secondary) !important;
 }
 
 .bpmn-container svg .djs-element .djs-visual > circle,
 .bpmn-container svg g[data-element-id] circle {
   fill: var(--who-card-bg) !important;
-  stroke: var(--who-text-primary) !important;
+  stroke: var(--who-text-secondary) !important;
 }
 
 .bpmn-container svg .djs-element .djs-visual > polygon,
 .bpmn-container svg g[data-element-id] polygon {
   fill: var(--who-hover-bg) !important;
+  stroke: var(--who-text-secondary) !important;
+}
+
+/* Theme-specific strokes for BPMN elements */
+body.theme-light .bpmn-container svg .djs-element .djs-visual > rect,
+body.theme-light .bpmn-container svg g[data-element-id] rect,
+body.theme-light .bpmn-container svg .djs-element .djs-visual > circle,
+body.theme-light .bpmn-container svg g[data-element-id] circle,
+body.theme-light .bpmn-container svg .djs-element .djs-visual > polygon,
+body.theme-light .bpmn-container svg g[data-element-id] polygon {
+  stroke: #333333 !important;
+}
+
+body.theme-dark .bpmn-container svg .djs-element .djs-visual > rect,
+body.theme-dark .bpmn-container svg g[data-element-id] rect,
+body.theme-dark .bpmn-container svg .djs-element .djs-visual > circle,
+body.theme-dark .bpmn-container svg g[data-element-id] circle,
+body.theme-dark .bpmn-container svg .djs-element .djs-visual > polygon,
+body.theme-dark .bpmn-container svg g[data-element-id] polygon {
   stroke: var(--who-text-primary) !important;
 }
 
@@ -658,6 +705,7 @@ body.theme-light .bpmn-viewer {
 .bpmn-container svg .djs-element text {
   fill: var(--who-text-primary) !important;
   color: var(--who-text-primary) !important;
+  font-weight: normal !important;
 }
 
 /* Connection lines and paths */
@@ -677,6 +725,15 @@ body.theme-light .bpmn-viewer {
 /* Force all SVG children to use theme colors */
 .bpmn-container svg .djs-visual > * {
   fill: var(--who-card-bg) !important;
+  stroke: var(--who-text-secondary) !important;
+}
+
+/* Theme-specific strokes for all visual elements */
+body.theme-light .bpmn-container svg .djs-visual > * {
+  stroke: #333333 !important;
+}
+
+body.theme-dark .bpmn-container svg .djs-visual > * {
   stroke: var(--who-text-primary) !important;
 }
 
