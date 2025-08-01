@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import { PageLayout, useDAKParams, FSHFileViewer, FSHFileEditor } from './framework';
-import { processLogicalModelsToArchiMate, parseLogicalModel } from '../utils/archiMateExtraction';
+import { PageLayout, useDAKParams } from './framework';
 import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {
@@ -75,10 +74,33 @@ const CoreDataDictionaryViewerContent = () => {
     return concepts;
   }, []);
 
+  const handleHomeNavigation = () => {
+    navigate('/');
+  };
+
+  const handleBackToDashboard = () => {
+    if (user && repo) {
+      // Use URL parameters for navigation
+      const dashboardPath = branch ? 
+        `/dashboard/${user}/${repo}/${branch}` : 
+        `/dashboard/${user}/${repo}`;
+      navigate(dashboardPath);
+    } else {
+      // Fallback to state-based navigation
+      navigate('/dashboard', { 
+        state: { 
+          profile, 
+          repository, 
+          branch 
+        } 
+      });
+    }
+  };
+
   // Fetch FSH files from input/fsh directory
   useEffect(() => {
     const fetchFshFiles = async () => {
-      // Use the simplified parameter approach from main branch
+      // Use the simplified parameter approach
       if (!repository || !branch) {
         setLoading(false);
         return;
@@ -285,47 +307,83 @@ const CoreDataDictionaryViewerContent = () => {
   }
 
   return (
-    <>
-      {error && (
-        <div className="error-message">
-          <h3>⚠️ Error</h3>
-          <p>{error}</p>
+    <div className="core-data-dictionary-viewer">
+      <div className="viewer-header">
+        <div className="who-branding">
+          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
+          <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
-      )}
-
-      {/* Documentation Link */}
-      <div className="documentation-section">
-        <p>
-          <a 
-            href="https://smart.who.int/ig-starter-kit/v1.0.0/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="documentation-link"
-          >
-            📚 WHO IG Starter Kit Documentation ↗
-          </a>
-        </p>
+        <div className="context-info">
+          <img 
+            src={profile?.avatar_url || `https://github.com/${user || profile?.login}.png`} 
+            alt="Profile" 
+            className="context-avatar" 
+          />
+          <div className="context-details">
+            <span className="context-repo">{repo || repository?.name}</span>
+            <span className="context-component">Core Data Dictionary</span>
+          </div>
+        </div>
       </div>
 
-      {/* Section Toggle */}
-      <div className="section-toggle">
-        <button 
-          className={`toggle-btn ${activeSection === 'core-data-dictionary' ? 'active' : ''}`}
-          onClick={() => setActiveSection('core-data-dictionary')}
-        >
-          📊 Core Data Dictionary
-        </button>
-        <button 
-          className={`toggle-btn ${activeSection === 'logical-models' ? 'active' : ''}`}
-          onClick={() => setActiveSection('logical-models')}
-        >
-          🏗️ Logical Models
-        </button>
-      </div>
+      <div className="viewer-content">
+        <div className="breadcrumb">
+          <button onClick={() => navigate('/')} className="breadcrumb-link">
+            Select Profile
+          </button>
+          <span className="breadcrumb-separator">›</span>
+          <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
+            Select Repository
+          </button>
+          <span className="breadcrumb-separator">›</span>
+          <button onClick={handleBackToDashboard} className="breadcrumb-link">
+            DAK Components
+          </button>
+          <span className="breadcrumb-separator">›</span>
+          <span className="breadcrumb-current">Core Data Dictionary</span>
+        </div>
 
-      {/* Main content layout */}
-      <div className="viewer-main">
-        {activeSection === 'core-data-dictionary' && (
+        <div className="viewer-main">
+          <div className="component-intro">
+            <div className="component-icon" style={{ color: '#0078d4' }}>
+              📊
+            </div>
+            <div className="intro-content">
+              <h2>Core Data Dictionary Viewer</h2>
+              <p>
+                View canonical representations of Component 2 Core Data Dictionary including FHIR CodeSystems, 
+                ValueSets, and ConceptMaps stored in FSH format.
+              </p>
+              {branch && (
+                <div className="branch-info">
+                  <strong>Branch:</strong> <code>{branch}</code>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {error && (
+            <div className="error-message">
+              <h3>⚠️ Error</h3>
+              <p>{error}</p>
+            </div>
+          )}
+
+          {/* Documentation Link */}
+          <div className="documentation-section">
+            <p>
+              <a 
+                href="https://smart.who.int/ig-starter-kit/v1.0.0/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="documentation-link"
+              >
+                📚 WHO IG Starter Kit Documentation ↗
+              </a>
+            </p>
+          </div>
+
+          {/* Main content layout with two columns */}
           <div className="two-column-layout">
             {/* Standard Dictionaries Section - Left Column */}
             <div className="section standard-dictionaries-section left-column">
@@ -502,22 +560,9 @@ const CoreDataDictionaryViewerContent = () => {
               </div>
             )}
           </div>
-        )}
 
-        {activeSection === 'logical-models' && (
-          <div className="logical-models-section">
-            <LogicalModelsContent 
-              logicalModelFiles={logicalModelFiles}
-              user={user}
-              repo={repo}
-              branch={branch}
-              onViewSource={handleViewSource}
-            />
-          </div>
-        )}
-
-        {/* FHIR FSH Files Section - Always visible */}
-        <div className="section fsh-files-section">
+          {/* FHIR FSH Files Section */}
+          <div className="section fsh-files-section">
             <h3>FHIR FSH Source Files</h3>
             <p>FHIR Shorthand (FSH) files containing CodeSystems, ValueSets, and ConceptMaps</p>
             
@@ -558,50 +603,20 @@ const CoreDataDictionaryViewerContent = () => {
             )}
           </div>
         </div>
+      </div>
 
       {/* Source Code Modal */}
       {showModal && selectedFile && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content fsh-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{selectedFile.name}</h3>
-              <div className="modal-actions">
-                {modalMode === 'view' && (
-                  <button 
-                    className="mode-switch-btn"
-                    onClick={() => setModalMode('edit')}
-                    title="Switch to edit mode"
-                  >
-                    ✏️ Edit
-                  </button>
-                )}
-                {modalMode === 'edit' && (
-                  <button 
-                    className="mode-switch-btn"
-                    onClick={() => setModalMode('view')}
-                    title="Switch to view mode"
-                  >
-                    👁️ View
-                  </button>
-                )}
-                <button className="modal-close" onClick={closeModal}>×</button>
-              </div>
+              <button className="modal-close" onClick={closeModal}>×</button>
             </div>
             <div className="modal-body">
-              {modalMode === 'view' ? (
-                <FSHFileViewer
-                  content={fileContent}
-                  fileName={selectedFile.name}
-                  showFileName={false}
-                />
-              ) : (
-                <FSHFileEditor
-                  content={fileContent}
-                  fileName={selectedFile.name}
-                  showFileName={false}
-                  onChange={(newContent) => setFileContent(newContent)}
-                />
-              )}
+              <pre className="fsh-code">
+                <code>{fileContent}</code>
+              </pre>
             </div>
             <div className="modal-footer">
               <a 
@@ -619,7 +634,7 @@ const CoreDataDictionaryViewerContent = () => {
           </div>
         </div>
       )}
-    </>
+      </div>
   );
 };
 
@@ -627,88 +642,6 @@ const CoreDataDictionaryViewerContent = () => {
  * Logical Models Content Component
  */
 const LogicalModelsContent = ({ logicalModelFiles, user, repo, branch, onViewSource }) => {
-  const [archiMateLoading, setArchiMateLoading] = useState(false);
-
-  // Handle ArchiMate extraction for all logical models
-  const handleExtractAllToArchiMate = async () => {
-    if (logicalModelFiles.length === 0) {
-      alert('No logical models found to extract.');
-      return;
-    }
-
-    setArchiMateLoading(true);
-    try {
-      // Fetch content for all logical model files
-      const filesWithContent = await Promise.all(
-        logicalModelFiles.map(async (file) => {
-          try {
-            const content = await githubService.getFileContent(user, repo, file.path, branch);
-            return { ...file, content };
-          } catch (err) {
-            console.warn(`Failed to fetch content for ${file.name}:`, err);
-            return { ...file, content: null };
-          }
-        })
-      );
-
-      // Process files and extract ArchiMate
-      const result = processLogicalModelsToArchiMate(filesWithContent);
-
-      if (result.error) {
-        alert(`ArchiMate extraction failed: ${result.error}`);
-      } else {
-        // Create and download XML file
-        const blob = new Blob([result.xml], { type: 'application/xml' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${repo}-logical-models-archimate.xml`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
-    } catch (err) {
-      console.error('Error extracting ArchiMate:', err);
-      alert('Failed to extract ArchiMate. Please check the console for details.');
-    } finally {
-      setArchiMateLoading(false);
-    }
-  };
-
-  // Handle individual LM ArchiMate extraction
-  const handleExtractSingleToArchiMate = async (file) => {
-    try {
-      const content = await githubService.getFileContent(user, repo, file.path, branch);
-      const logicalModel = parseLogicalModel(content, file.name);
-      
-      if (!logicalModel.id) {
-        alert('No logical model found in this file.');
-        return;
-      }
-
-      const result = processLogicalModelsToArchiMate([{ ...file, content }]);
-      
-      if (result.error) {
-        alert(`ArchiMate extraction failed: ${result.error}`);
-      } else {
-        // Create and download XML file
-        const blob = new Blob([result.xml], { type: 'application/xml' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${logicalModel.id}-archimate.xml`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
-    } catch (err) {
-      console.error('Error extracting ArchiMate for single LM:', err);
-      alert('Failed to extract ArchiMate. Please check the console for details.');
-    }
-  };
-
   return (
     <div className="logical-models-content">
       {/* Global Tools for Logical Models */}
@@ -717,12 +650,11 @@ const LogicalModelsContent = ({ logicalModelFiles, user, repo, branch, onViewSou
         <p>Tools that operate on all Logical Models in the DAK at once.</p>
         <div className="global-tools-actions">
           <button
-            className={`global-tool-btn ${archiMateLoading ? 'loading' : ''}`}
-            onClick={handleExtractAllToArchiMate}
-            disabled={archiMateLoading || logicalModelFiles.length === 0}
+            className="global-tool-btn"
+            disabled={logicalModelFiles.length === 0}
             title={logicalModelFiles.length === 0 ? 'No logical models found' : 'Extract all logical models to ArchiMate DataObjects with relationships'}
           >
-            {archiMateLoading ? '⏳ Extracting...' : '🏗️ Extract All to ArchiMate'}
+            🏗️ Extract All to ArchiMate
           </button>
           {logicalModelFiles.length > 0 && (
             <span className="tool-info">
@@ -750,7 +682,6 @@ const LogicalModelsContent = ({ logicalModelFiles, user, repo, branch, onViewSou
                 file={file}
                 onView={() => onViewSource(file, 'view')}
                 onEdit={() => onViewSource(file, 'edit')}
-                onExtractArchiMate={() => handleExtractSingleToArchiMate(file)}
               />
             ))}
           </div>
@@ -763,7 +694,7 @@ const LogicalModelsContent = ({ logicalModelFiles, user, repo, branch, onViewSou
 /**
  * Individual Logical Model Card Component
  */
-const LogicalModelCard = ({ file, onView, onEdit, onExtractArchiMate }) => {
+const LogicalModelCard = ({ file, onView, onEdit }) => {
   return (
     <div className="logical-model-card">
       <div className="file-header">
@@ -784,13 +715,6 @@ const LogicalModelCard = ({ file, onView, onEdit, onExtractArchiMate }) => {
           title="Edit logical model"
         >
           ✏️ Edit
-        </button>
-        <button 
-          className="action-btn archimate"
-          onClick={onExtractArchiMate}
-          title="Extract to ArchiMate format"
-        >
-          🏗️ ArchiMate
         </button>
         <a 
           href={file.html_url}
