@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
+import BpmnViewer from 'bpmn-js';
 import githubService from '../services/githubService';
 import './BPMNPreview.css';
 
@@ -141,26 +141,18 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
 
         // Create and initialize viewer
         const viewer = new BpmnViewer({
-          container: containerRef.current,
-          width: '100%',
-          height: '160px'
+          container: containerRef.current
         });
 
         viewerRef.current = viewer;
 
-        // Set a timeout for rendering
-        const renderTimeout = setTimeout(() => {
-          setError('Preview timed out');
-          setLoading(false);
-        }, 5000);
-
+        // Import XML and handle it properly
         await viewer.importXML(bpmnXml);
 
         // Fit to viewport for preview
         const canvas = viewer.get('canvas');
         canvas.zoom('fit-viewport');
 
-        clearTimeout(renderTimeout);
         setLoading(false);
 
       } catch (renderError) {

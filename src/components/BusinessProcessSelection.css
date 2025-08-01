@@ -399,7 +399,6 @@ body.theme-dark .source-btn:hover {
   }
 
   .files-grid {
-    grid-template-columns: 1fr;
     gap: 1rem;
     padding: 1rem;
   }
