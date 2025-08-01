@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import IssueCreationModal from './IssueCreationModal';
+import githubService from '../services/githubService';
 import './HelpModal.css';
 
 const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
@@ -11,10 +12,43 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
 
   // Set up global reference for inline onclick handlers
   useEffect(() => {
+    // Helper function to generate GitHub issue URL for non-authenticated users
+    const generateGitHubUrl = (issueType, repository = null) => {
+      const repoInfo = repository ? 
+        { owner: repository.owner?.login || repository.owner, repo: repository.name } :
+        { owner: 'litlfred', repo: 'sgex' };
+      
+      const params = new URLSearchParams();
+      
+      // Set template based on issue type
+      if (issueType === 'bug') {
+        params.set('template', 'bug_report.yml');
+        params.set('labels', 'bug+reports');
+      } else if (issueType === 'feature') {
+        params.set('template', 'feature_request.yml');
+        params.set('labels', 'feature+request');
+      } else if (issueType === 'content' || issueType === 'dak-content') {
+        params.set('template', 'dak_content_error.yml');
+        params.set('labels', 'authoring');
+      }
+      
+      // Add context
+      params.set('sgex_current_url', window.location.href);
+      
+      return `https://github.com/${repoInfo.owner}/${repoInfo.repo}/issues/new?${params.toString()}`;
+    };
 
     window.helpModalInstance = {
       openSgexIssue: (issueType) => {
-        // Use the issue creation modal instead of opening GitHub directly
+        // Check if user is authenticated
+        if (!githubService.isAuth()) {
+          // Open GitHub directly for non-authenticated users
+          const githubUrl = generateGitHubUrl(issueType);
+          window.open(githubUrl, '_blank');
+          return;
+        }
+
+        // Use the issue creation modal for authenticated users
         setIssueCreationType(issueType);
         setIssueRepository(null); // Use default SGEX repo
         setShowIssueCreationModal(true);
@@ -27,7 +61,15 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
           return;
         }
 
-        // Use the issue creation modal for DAK issues
+        // Check if user is authenticated
+        if (!githubService.isAuth()) {
+          // Open GitHub directly for non-authenticated users
+          const githubUrl = generateGitHubUrl(issueType === 'content' ? 'dak-content' : issueType, repository);
+          window.open(githubUrl, '_blank');
+          return;
+        }
+
+        // Use the issue creation modal for authenticated users
         setIssueCreationType(issueType === 'content' ? 'dak-content' : issueType);
         setIssueRepository(repository);
         setShowIssueCreationModal(true);
@@ -147,12 +189,45 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
     setShowMenu(!showMenu);
   };
 
+  // Helper function to generate GitHub issue URL for non-authenticated users
+  const generateGitHubUrl = (issueType, repository = null) => {
+    const repoInfo = repository ? 
+      { owner: repository.owner?.login || repository.owner, repo: repository.name } :
+      { owner: 'litlfred', repo: 'sgex' };
+    
+    const params = new URLSearchParams();
+    
+    // Set template based on issue type
+    if (issueType === 'bug') {
+      params.set('template', 'bug_report.yml');
+      params.set('labels', 'bug+reports');
+    } else if (issueType === 'feature') {
+      params.set('template', 'feature_request.yml');
+      params.set('labels', 'feature+request');
+    } else if (issueType === 'content' || issueType === 'dak-content') {
+      params.set('template', 'dak_content_error.yml');
+      params.set('labels', 'authoring');
+    }
+    
+    // Add context
+    params.set('sgex_current_url', window.location.href);
+    
+    return `https://github.com/${repoInfo.owner}/${repoInfo.repo}/issues/new?${params.toString()}`;
+  };
+
   const handleBugReport = () => {
-    // Use the new issue creation modal instead of GitHub URLs
+    // Check if user is authenticated
+    if (!githubService.isAuth()) {
+      // Open GitHub directly for non-authenticated users
+      const githubUrl = generateGitHubUrl('bug');
+      window.open(githubUrl, '_blank');
+      return;
+    }
+
+    // Use the issue creation modal for authenticated users
     if (window.helpModalInstance?.openSgexIssue) {
       window.helpModalInstance.openSgexIssue('bug');
     } else {
-      // Direct fallback
       setIssueCreationType('bug');
       setIssueRepository(null);
       setShowIssueCreationModal(true);
@@ -161,25 +236,42 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
 
   const handleDAKFeedback = () => {
     const repository = contextData.repository || contextData.selectedDak;
-    if (repository) {
-      // Use the new issue creation modal for DAK content feedback
-      if (window.helpModalInstance?.openDakIssue) {
-        window.helpModalInstance.openDakIssue('content');
-      } else {
-        // Direct fallback
-        setIssueCreationType('dak-content');
-        setIssueRepository(repository);
-        setShowIssueCreationModal(true);
-      }
+    if (!repository) {
+      console.warn('No DAK repository specified for feedback');
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!githubService.isAuth()) {
+      // Open GitHub directly for non-authenticated users
+      const githubUrl = generateGitHubUrl('content', repository);
+      window.open(githubUrl, '_blank');
+      return;
+    }
+
+    // Use the issue creation modal for authenticated users
+    if (window.helpModalInstance?.openDakIssue) {
+      window.helpModalInstance.openDakIssue('content');
+    } else {
+      setIssueCreationType('dak-content');
+      setIssueRepository(repository);
+      setShowIssueCreationModal(true);
     }
   };
 
   const handleFeatureRequest = () => {
-    // Use the new issue creation modal for feature requests
+    // Check if user is authenticated
+    if (!githubService.isAuth()) {
+      // Open GitHub directly for non-authenticated users
+      const githubUrl = generateGitHubUrl('feature');
+      window.open(githubUrl, '_blank');
+      return;
+    }
+
+    // Use the issue creation modal for authenticated users
     if (window.helpModalInstance?.openSgexIssue) {
       window.helpModalInstance.openSgexIssue('feature');
     } else {
-      // Direct fallback
       setIssueCreationType('feature');
       setIssueRepository(null);
       setShowIssueCreationModal(true);

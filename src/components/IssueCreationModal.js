@@ -73,21 +73,8 @@ const IssueCreationModal = ({
               label: 'Feature Description',
               type: 'textarea',
               required: true,
-              description: 'A clear description of what you want to happen.'
-            },
-            {
-              id: 'use-case',
-              label: 'Use Case',
-              type: 'textarea',
-              required: true,
-              description: 'Describe the use case and why this feature would be beneficial.'
-            },
-            {
-              id: 'alternatives',
-              label: 'Alternatives Considered',
-              type: 'textarea',
-              required: false,
-              description: 'Any alternative solutions or workarounds you\'ve considered.'
+              description: 'Describe the feature you\'d like to see added and why it would be useful.',
+              placeholder: 'Please provide a clear description of the feature you\'re requesting...'
             }
           ]
         };
