@@ -432,18 +432,40 @@ const BPMNViewerComponent = () => {
 
   // Handle redirect when data is missing
   useEffect(() => {
-    if (!currentProfile || !currentRepository || !currentSelectedFile) {
-      console.log('BPMNViewer: Missing required data, redirecting to home:', {
-        hasProfile: !!currentProfile,
-        hasRepository: !!currentRepository,
-        hasSelectedFile: !!currentSelectedFile
-      });
-      navigate('/');
+    // Check if we're on an asset URL pattern (has more than 5 path segments after /sgex)
+    const pathSegments = location.pathname.split('/').filter(segment => segment);
+    const isAssetURL = pathSegments.length > 5; // /sgex/bpmn-viewer/user/repo/branch/asset...
+    
+    // If we're on an asset URL, wait for framework to load before deciding to redirect
+    if (isAssetURL) {
+      // Only redirect if we have both no framework data AND no location state
+      if (!frameworkData?.profile && !frameworkData?.repository && !frameworkData?.asset && 
+          !currentProfile && !currentRepository && !currentSelectedFile) {
+        console.log('BPMNViewer: On asset URL but no data available from framework or location state, redirecting to home');
+        navigate('/');
+      }
+    } else {
+      // For non-asset URLs, use the original logic
+      if (!currentProfile || !currentRepository || !currentSelectedFile) {
+        console.log('BPMNViewer: Missing required data, redirecting to home:', {
+          hasProfile: !!currentProfile,
+          hasRepository: !!currentRepository,
+          hasSelectedFile: !!currentSelectedFile
+        });
+        navigate('/');
+      }
     }
-  }, [currentProfile, currentRepository, currentSelectedFile, navigate]);
+  }, [currentProfile, currentRepository, currentSelectedFile, frameworkData, location.pathname, navigate]);
 
-  // Don't render the component if we're missing required data
+  // Don't render the component if we're missing required data, unless we're on asset URL and framework is loading
+  const pathSegments = location.pathname.split('/').filter(segment => segment);
+  const isAssetURL = pathSegments.length > 5;
+  
   if (!currentProfile || !currentRepository || !currentSelectedFile) {
+    if (isAssetURL && (!frameworkData?.profile || !frameworkData?.repository || !frameworkData?.asset)) {
+      // Framework might still be loading for asset URL
+      return <div>Loading framework data...</div>;
+    }
     return <div>Loading or redirecting...</div>;
   }
 

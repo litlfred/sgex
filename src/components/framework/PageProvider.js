@@ -36,7 +36,8 @@ export const usePage = () => {
  * Determine page type from URL parameters
  */
 const determinePageType = (params) => {
-  const { user, repo, asset } = params;
+  const { user, repo } = params;
+  const asset = params['*']; // Wildcard parameter for asset path
   
   console.log('PageProvider: determinePageType called with params:', params);
   console.log('PageProvider: extracted values:', { user, repo, asset });
@@ -75,7 +76,8 @@ export const PageProvider = ({ children, pageName }) => {
   });
 
   // Extract URL parameters
-  const { user, repo, asset } = params;
+  const { user, repo } = params;
+  const asset = params['*']; // Wildcard parameter for asset path
 
   // Load data based on page type
   useEffect(() => {

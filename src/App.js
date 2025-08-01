@@ -90,7 +90,7 @@ function App() {
             <Route path="/bpmn-viewer" element={<BPMNViewer />} />
             <Route path="/bpmn-viewer/:user/:repo" element={<BPMNViewer />} />
             <Route path="/bpmn-viewer/:user/:repo/:branch" element={<BPMNViewer />} />
-            <Route path="/bpmn-viewer/:user/:repo/:branch/:asset" element={<BPMNViewer />} />
+            <Route path="/bpmn-viewer/:user/:repo/:branch/*" element={<BPMNViewer />} />
             <Route path="/test-bpmn-viewer" element={<BPMNViewerTestComponent />} />
             <Route path="/bpmn-source" element={<BPMNSource />} />
             <Route path="/bpmn-source/:user/:repo" element={<BPMNSource />} />
