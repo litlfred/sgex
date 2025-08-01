@@ -587,6 +587,61 @@ body.theme-light .bpmn-viewer {
   display: none !important;
 }
 
+/* Override BPMN.js inline styles for dark mode support */
+/* Target all SVG shapes and elements in the BPMN diagram */
+.bpmn-container svg .djs-visual > * {
+  fill: var(--who-primary-bg) !important;
+  stroke: var(--who-border-color) !important;
+}
+
+.bpmn-container svg .djs-element .djs-visual > rect,
+.bpmn-container svg .djs-element .djs-visual > circle,
+.bpmn-container svg .djs-element .djs-visual > polygon,
+.bpmn-container svg .djs-element .djs-visual > path {
+  fill: var(--who-card-bg) !important;
+  stroke: var(--who-text-primary) !important;
+}
+
+/* Task boxes */
+.bpmn-container svg g[data-element-id] rect {
+  fill: var(--who-card-bg) !important;
+  stroke: var(--who-text-primary) !important;
+}
+
+/* Text elements */
+.bpmn-container svg text {
+  fill: var(--who-text-primary) !important;
+}
+
+/* Connection lines */
+.bpmn-container svg .djs-connection .djs-visual > path {
+  stroke: var(--who-text-secondary) !important;
+  fill: none !important;
+}
+
+/* Start/End event circles */
+.bpmn-container svg g[data-element-id*="Event"] circle {
+  fill: var(--who-primary-bg) !important;
+  stroke: var(--who-text-primary) !important;
+}
+
+/* Gateway diamonds */
+.bpmn-container svg g[data-element-id*="Gateway"] polygon {
+  fill: var(--who-hover-bg) !important;
+  stroke: var(--who-text-primary) !important;
+}
+
+/* Sequence flow arrows */
+.bpmn-container svg .djs-connection .djs-visual > path[marker-end] {
+  stroke: var(--who-text-secondary) !important;
+}
+
+/* BPMN markers (arrows, etc.) */
+.bpmn-container svg defs marker path {
+  fill: var(--who-text-secondary) !important;
+  stroke: var(--who-text-secondary) !important;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .viewer-header {
