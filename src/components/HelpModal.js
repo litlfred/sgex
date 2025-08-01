@@ -33,19 +33,15 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
         switch (issueType) {
           case 'bug':
             params.template = 'bug_report.yml';
-            params.labels = 'bug';
+            params.labels = 'bug reports';
             break;
           case 'feature':
             params.template = 'feature_request.yml';
-            params.labels = 'enhancement';
+            params.labels = 'feature request';
             break;
-          case 'question':
-            params.template = 'question.yml';
-            params.labels = 'question';
-            break;
-          case 'documentation':
-            params.template = 'documentation.yml';
-            params.labels = 'documentation';
+          case 'dak-content':
+            params.template = 'dak_content_error.yml';
+            params.labels = 'authoring';
             break;
           default:
             params.labels = 'needs-triage';
@@ -93,23 +89,24 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
 
         switch (issueType) {
           case 'bug':
-            params.template = 'dak_bug_report.yml';
-            params.labels = 'bug,dak-issue';
+            // For DAK bugs, use the main bug report template
+            params.template = 'bug_report.yml';
+            params.labels = 'bug reports,dak-issue';
             break;
           case 'improvement':
-            params.template = 'dak_feature_request.yml';
-            params.labels = 'enhancement,dak-improvement';
+          case 'feature':
+            // For DAK improvements, use the main feature request template
+            params.template = 'feature_request.yml';
+            params.labels = 'feature request,dak-improvement';
             break;
           case 'content':
+            // For DAK content feedback, use the dedicated template
             params.template = 'dak_content_error.yml';
-            params.labels = 'content-issue,clinical-content';
-            break;
-          case 'question':
-            params.template = 'dak_question.yml';
-            params.labels = 'question,dak-question';
+            params.labels = 'authoring';
             break;
           default:
-            params.labels = 'dak-feedback';
+            params.template = 'dak_content_error.yml';
+            params.labels = 'authoring';
         }
 
         // Add DAK-specific context
@@ -269,7 +266,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
       // Fallback to direct URL
       const params = new URLSearchParams({
         template: 'bug_report.yml',
-        labels: 'bug',
+        labels: 'bug reports',
         sgex_page: contextData.pageId || 'unknown',
         sgex_current_url: window.location.href
       });
