@@ -132,7 +132,7 @@ const SelectProfilePage = () => {
     }
   }, [loadCachedDakCounts]);
 
-  // Initial authentication check and redirect if not authenticated
+  // Initial authentication check and setup
   useEffect(() => {
     const initializeAuth = () => {
       // Check if user is already authenticated from previous session
@@ -144,17 +144,15 @@ const SelectProfilePage = () => {
         } else {
           sessionStorage.removeItem('github_token');
           localStorage.removeItem('github_token');
-          // Redirect to welcome page if not authenticated
-          navigate('/', { replace: true });
+          setIsAuthenticated(false);
         }
       } else {
-        // Redirect to welcome page if no token
-        navigate('/', { replace: true });
+        setIsAuthenticated(false);
       }
     };
 
     initializeAuth();
-  }, [navigate]);
+  }, []);
 
   // Handle warning message from navigation state
   useEffect(() => {
@@ -165,24 +163,59 @@ const SelectProfilePage = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
-  // Fetch user data when authentication state changes
+  // Fetch user data when authentication state changes (authenticated users only)
   useEffect(() => {
     if (isAuthenticated && !user) {
       fetchUserData();
     }
   }, [isAuthenticated, user, fetchUserData]);
 
+  // For unauthenticated users, load default public profiles
+  useEffect(() => {
+    const loadPublicProfiles = async () => {
+      if (!isAuthenticated) {
+        setLoading(true);
+        try {
+          // Load WHO organization as the main public profile available
+          const whoOrganization = await githubService.getWHOOrganization();
+          setOrganizations([whoOrganization]);
+        } catch (error) {
+          console.error('Error loading public profiles:', error);
+          // Fallback to hardcoded WHO organization
+          const whoFallback = {
+            id: 'who-organization',
+            login: 'WorldHealthOrganization',
+            name: 'World Health Organization',
+            description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+            avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+            html_url: 'https://github.com/WorldHealthOrganization',
+            type: 'Organization',
+            isWHO: true
+          };
+          setOrganizations([whoFallback]);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    if (!isAuthenticated) {
+      loadPublicProfiles();
+    }
+  }, [isAuthenticated]);
+
   const handleProfileSelect = (event, profile) => {
+    // Navigate to repository selection for the selected profile
     const navigationState = { profile };
-    handleNavigationClick(event, `/dak-action/${profile.login}`, navigate, navigationState);
+    handleNavigationClick(event, `/repositories/${profile.login}`, navigate, navigationState);
   };
 
   const handleDismissWarning = () => {
     setWarningMessage(null);
   };
 
-  // Don't render anything if not authenticated (will redirect)
-  if (!isAuthenticated) {
+  // Don't render anything while loading initial auth state
+  if (loading && isAuthenticated === null) {
     return null;
   }
 
@@ -214,32 +247,38 @@ const SelectProfilePage = () => {
           </div>
         ) : (
           <div className="profile-selection">
-            <h2>{t('organization.select')}</h2>
-            <p>{t('organization.personal')}:</p>
+            <h2>{isAuthenticated ? t('organization.select') : 'Select Organization'}</h2>
+            {isAuthenticated ? (
+              <p>{t('organization.personal')}:</p>
+            ) : (
+              <p>Choose an organization to browse public repositories:</p>
+            )}
             
             {error && <div className="error-message">{error}</div>}
             
             {/* Horizontal profile grid */}
             <div className="profile-grid-horizontal">
-              {/* Personal Profile */}
-              <div 
-                className="profile-card"
-                onClick={(event) => handleProfileSelect(event, { type: 'user', ...user })}
-              >
-                <div className="profile-card-header">
-                  <img src={user?.avatar_url} alt="Personal profile" />
-                  {dakCounts[`user-${user?.login}`] > 0 && (
-                    <div className="dak-count-badge">
-                      {dakCounts[`user-${user?.login}`]}
-                    </div>
-                  )}
+              {/* Personal Profile - only for authenticated users */}
+              {isAuthenticated && user && (
+                <div 
+                  className="profile-card"
+                  onClick={(event) => handleProfileSelect(event, { type: 'user', ...user })}
+                >
+                  <div className="profile-card-header">
+                    <img src={user?.avatar_url} alt="Personal profile" />
+                    {dakCounts[`user-${user?.login}`] > 0 && (
+                      <div className="dak-count-badge">
+                        {dakCounts[`user-${user?.login}`]}
+                      </div>
+                    )}
+                  </div>
+                  <h3>{user?.name || user?.login}</h3>
+                  <p>Personal repositories</p>
+                  <div className="profile-badges">
+                    <span className="profile-type">Personal</span>
+                  </div>
                 </div>
-                <h3>{user?.name || user?.login}</h3>
-                <p>Personal repositories</p>
-                <div className="profile-badges">
-                  <span className="profile-type">Personal</span>
-                </div>
-              </div>
+              )}
               
               {/* Organization Profiles */}
               {organizations.map((org) => (
@@ -262,11 +301,18 @@ const SelectProfilePage = () => {
                   <h3>{org.name || org.login}</h3>
                   <p>@{org.login}</p>
                   <div className="profile-badges">
-                    <span className="profile-type">{t('organization.organizations')}</span>
+                    <span className="profile-type">{isAuthenticated ? t('organization.organizations') : 'Organization'}</span>
                     {org.isWHO && <span className="who-badge">WHO Official</span>}
                   </div>
                 </div>
               ))}
+              
+              {/* Show message if no profiles available */}
+              {!isAuthenticated && organizations.length === 0 && (
+                <div className="no-profiles-message">
+                  <p>No public profiles available. Please try again later or sign in for more options.</p>
+                </div>
+              )}
             </div>
           </div>
         )}

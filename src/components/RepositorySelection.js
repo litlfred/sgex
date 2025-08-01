@@ -1,25 +1,104 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
+import userAccessService from '../services/userAccessService';
 import { PageLayout } from './framework';
 import './RepositorySelection.css';
 
 const RepositorySelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user: userParam } = useParams();
   const [repositories, setRepositories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [profile, setProfile] = useState(null);
   
-  const profile = location.state?.profile;
+  // Get profile from location.state or URL parameters
+  const getProfile = useCallback(() => {
+    // First try to get from location.state (legacy behavior)
+    if (location.state?.profile) {
+      return location.state.profile;
+    }
+    
+    // If we have a user parameter, create a basic profile
+    if (userParam) {
+      return {
+        login: userParam,
+        type: 'User', // Default to User, will be updated when we fetch actual data
+        name: userParam
+      };
+    }
+    
+    return null;
+  }, [location.state, userParam]);
+
+  // Initialize user access service
+  useEffect(() => {
+    userAccessService.initialize();
+  }, []);
+
+  // Determine profile and fetch user data if needed
+  useEffect(() => {
+    const initializeProfile = async () => {
+      const currentProfile = getProfile();
+      
+      if (!currentProfile) {
+        // No profile specified, redirect to profile selection
+        navigate('/select_profile');
+        return;
+      }
+
+      // If we only have basic profile from URL, try to fetch full profile data
+      if (userParam && !location.state?.profile) {
+        try {
+          let fullProfile;
+          
+          // Try to determine if it's a user or organization
+          // First try as organization
+          try {
+            const orgData = await githubService.getOrganization(userParam);
+            fullProfile = {
+              ...orgData,
+              type: 'Organization'
+            };
+          } catch (orgError) {
+            // If that fails, try as user
+            try {
+              const userData = await githubService.getUser(userParam);
+              fullProfile = {
+                ...userData,
+                type: 'User'
+              };
+            } catch (userError) {
+              console.error('Failed to fetch profile data:', userError);
+              setError(`Could not find user or organization: ${userParam}`);
+              return;
+            }
+          }
+          
+          setProfile(fullProfile);
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+          setError(`Failed to load profile: ${userParam}`);
+        }
+      } else {
+        setProfile(currentProfile);
+      }
+    };
+
+    initializeProfile();
+  }, [userParam, location.state, navigate, getProfile]);
 
   const fetchRepositories = useCallback(async (forceRefresh = false) => {
+    if (!profile) return;
+    
     setLoading(true);
     setError(null);
     
     try {
-      const profileType = profile.type;
+      const profileType = profile.type === 'Organization' ? 'org' : 'user';
       
       // First, check cache unless we're forcing a refresh
       if (!forceRefresh) {
@@ -41,7 +120,15 @@ const RepositorySelection = () => {
       
       // No cached data or forced refresh - fetch from GitHub
       console.log(`Fetching fresh repositories for ${profile.login} (${profileType})`);
-      const repos = await githubService.getRepositories(profile.login, profileType);
+      
+      let repos;
+      if (githubService.isAuth()) {
+        // Authenticated user - use authenticated API
+        repos = await githubService.getRepositories(profile.login, profileType);
+      } else {
+        // Unauthenticated user - fetch public repositories only
+        repos = await githubService.getPublicRepositories(profile.login, profileType);
+      }
       
       // Cache the fetched repositories
       try {
@@ -53,28 +140,29 @@ const RepositorySelection = () => {
       setRepositories(repos);
     } catch (error) {
       console.error('Error fetching repositories:', error);
-      setError('Failed to fetch repositories. Please check your connection and try again.');
+      
+      if (error.status === 404) {
+        setError(`No repositories found for ${profile.login}. This user or organization may not exist or may not have any public repositories.`);
+      } else if (error.status === 403) {
+        setError('Access forbidden. You may need to sign in to view these repositories.');
+      } else {
+        setError('Failed to fetch repositories. Please check your connection and try again.');
+      }
     } finally {
       setLoading(false);
     }
   }, [profile]);
 
   useEffect(() => {
-    if (!profile) {
-      navigate('/');
-      return;
+    if (profile) {
+      fetchRepositories();
     }
-    
-    fetchRepositories();
-  }, [profile, navigate, fetchRepositories]);
+  }, [profile, fetchRepositories]);
 
   const handleRepositorySelect = (repo) => {
-    navigate('/dashboard', { 
-      state: { 
-        profile, 
-        repository: repo 
-      } 
-    });
+    // Navigate to dashboard with the selected repository
+    const targetUrl = `/dashboard/${repo.owner.login}/${repo.name}`;
+    navigate(targetUrl);
   };
 
   const formatDate = (dateString) => {
@@ -88,7 +176,10 @@ const RepositorySelection = () => {
   if (!profile) {
     return (
       <PageLayout pageName="repository-selection">
-        <div>Redirecting...</div>
+        <div className="loading">
+          <div className="spinner"></div>
+          <p>Loading profile...</p>
+        </div>
       </PageLayout>
     );
   }
@@ -97,11 +188,11 @@ const RepositorySelection = () => {
     <PageLayout pageName="repository-selection">
       <div className="repo-content">
         <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
+          <button onClick={() => navigate('/select_profile')} className="breadcrumb-link">
             Select Profile
           </button>
           <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Select Repository</span>
+          <span className="breadcrumb-current">{profile.name || profile.login} Repositories</span>
         </div>
 
         <div className="repo-main">

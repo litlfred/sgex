@@ -506,6 +506,59 @@ class GitHubService {
     }
   }
 
+  // Get public repositories for unauthenticated users (without SMART guidelines filtering)
+  async getPublicRepositories(owner, type = 'user') {
+    try {
+      // Create a public Octokit instance (no authentication required)
+      const octokit = new Octokit();
+      
+      let repositories = [];
+      let page = 1;
+      let hasMorePages = true;
+
+      // Fetch all public repositories using pagination
+      while (hasMorePages) {
+        let response;
+        if (type === 'user') {
+          response = await octokit.rest.repos.listForUser({
+            username: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        } else {
+          response = await octokit.rest.repos.listForOrg({
+            org: owner,
+            sort: 'updated',
+            per_page: 100,
+            page: page,
+          });
+        }
+
+        repositories = repositories.concat(response.data);
+        
+        // Check if there are more pages
+        hasMorePages = response.data.length === 100;
+        page++;
+        
+        // Safety check to prevent infinite loops
+        if (page > 50) {
+          console.warn(`Stopped fetching repositories after page ${page} for ${owner}`);
+          break;
+        }
+      }
+
+      // Filter for public repositories only (though the API should only return public ones for unauthenticated requests)
+      const publicRepositories = repositories.filter(repo => !repo.private);
+      
+      console.log(`Fetched ${publicRepositories.length} public repositories for ${owner} (${type})`);
+      return publicRepositories;
+    } catch (error) {
+      console.error('Failed to fetch public repositories:', error);
+      throw error;
+    }
+  }
+
   // Get a specific repository
   async getRepository(owner, repo) {
     try {
