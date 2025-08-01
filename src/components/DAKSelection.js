@@ -612,7 +612,7 @@ const DAKSelectionContent = () => {
                       className="rescan-link"
                       disabled={isScanning}
                     >
-                      {isScanning ? 'Scanning...' : 'Rescan Repositories'}
+                      {isScanning ? 'Scanning...' : 'Refresh'}
                     </button>
                   </div>
                 ) : (

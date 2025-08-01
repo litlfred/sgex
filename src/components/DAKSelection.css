@@ -402,8 +402,18 @@ body.theme-light .dak-selection {
   font-size: inherit;
 }
 
+/* Improve visibility in dark mode */
+body.theme-dark .rescan-link {
+  color: var(--who-blue-light);
+}
+
 .rescan-link:hover:not(:disabled) {
   color: var(--who-blue-light);
+}
+
+/* Better hover color for dark mode */
+body.theme-dark .rescan-link:hover:not(:disabled) {
+  color: #90caf9;
 }
 
 .rescan-link:disabled {
@@ -425,9 +435,23 @@ body.theme-light .dak-selection {
   backdrop-filter: blur(10px);
 }
 
+/* Improve visibility in dark mode */
+body.theme-dark .rescan-btn {
+  background: rgba(0, 120, 212, 0.5);
+  border: 1px solid rgba(0, 120, 212, 0.8);
+  color: #ffffff;
+}
+
 .rescan-btn:hover:not(:disabled) {
   background: rgba(0, 120, 212, 0.5);
   border-color: rgba(0, 120, 212, 0.7);
+}
+
+/* Better hover effect for dark mode */
+body.theme-dark .rescan-btn:hover:not(:disabled) {
+  background: rgba(0, 120, 212, 0.7);
+  border-color: rgba(0, 120, 212, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.3);
 }
 
 .rescan-btn:disabled {
