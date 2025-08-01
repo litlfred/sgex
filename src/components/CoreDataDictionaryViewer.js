@@ -286,24 +286,6 @@ const CoreDataDictionaryViewerContent = () => {
 
   return (
     <>
-      <div className="component-intro">
-        <div className="component-icon" style={{ color: '#0078d4' }}>
-          📊
-        </div>
-        <div className="intro-content">
-          <h2>Core Data Dictionary Viewer</h2>
-          <p>
-            View canonical representations of Component 2 Core Data Dictionary including FHIR CodeSystems, 
-            ValueSets, and ConceptMaps stored in FSH format.
-          </p>
-          {branch && (
-            <div className="branch-info">
-              <strong>Branch:</strong> <code>{branch}</code>
-            </div>
-          )}
-        </div>
-      </div>
-
       {error && (
         <div className="error-message">
           <h3>⚠️ Error</h3>
