@@ -15,6 +15,7 @@ const { execSync } = require('child_process');
 // Get build mode from environment or command line
 const buildMode = process.env.BUILD_MODE || process.argv[2] || 'branch';
 const branchName = process.env.GITHUB_REF_NAME || 'main';
+const basePath = process.env.BASE_PATH || process.argv[3] || null;
 
 console.log(`🚀 Starting ${buildMode} build for branch: ${branchName}`);
 
@@ -32,10 +33,35 @@ function createBranchSpecificBuild() {
   // Ensure dependencies are available
   ensureDependencies();
   
-  // Standard React build for the branch
-  execSync('npm run build', { stdio: 'inherit' });
+  // Update package.json homepage for branch-specific deployment
+  const packageJsonPath = path.join(__dirname, '..', 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  const originalHomepage = packageJson.homepage;
   
-  console.log(`✅ Branch-specific build completed for: ${branchName}`);
+  try {
+    // Set homepage based on branch and base path
+    if (basePath) {
+      packageJson.homepage = basePath;
+      console.log(`🔧 Setting homepage to: ${basePath}`);
+    } else {
+      // Default path structure: /branch-name/ for main, /safe-branch-name/ for others
+      const safeBranchName = branchName === 'main' ? 'main' : branchName.replace(/[^a-zA-Z0-9._-]/g, '-');
+      packageJson.homepage = `/${safeBranchName}/`;
+      console.log(`🔧 Setting homepage to: /${safeBranchName}/`);
+    }
+    
+    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+    
+    // Standard React build for the branch
+    execSync('npm run build', { stdio: 'inherit' });
+    
+    console.log(`✅ Branch-specific build completed for: ${branchName}`);
+    
+  } finally {
+    // Always restore original package.json
+    packageJson.homepage = originalHomepage;
+    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+  }
 }
 
 function createRootLandingPageApp() {
