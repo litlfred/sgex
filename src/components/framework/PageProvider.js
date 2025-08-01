@@ -278,7 +278,7 @@ export const PageProvider = ({ children, pageName }) => {
     if ((pageState.type !== PAGE_TYPES.TOP_LEVEL && user) || pageState.type === PAGE_TYPES.TOP_LEVEL) {
       loadPageData();
     }
-  }, [user, repo, params.branch, asset, pageState.type, location.state]);
+  }, [user, repo, params.branch, asset, pageState.type, location.state, navigate, pageName]);
 
   // Monitor authentication state changes
   useEffect(() => {
