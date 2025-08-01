@@ -142,7 +142,7 @@
 
 .file-path {
   margin: 0;
-  color: #605e5c;
+  color: var(--who-text-secondary);
   font-size: 14px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }

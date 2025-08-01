@@ -363,7 +363,7 @@ body.theme-dark .commit-sha a {
 .file-path {
   font-family: 'Courier New', monospace;
   font-size: 13px;
-  color: #333;
+  color: var(--who-text-primary);
 }
 
 .file-meta {
@@ -371,13 +371,14 @@ body.theme-dark .commit-sha a {
   align-items: center;
   gap: 12px;
   font-size: 12px;
-  color: #666;
+  color: var(--who-text-secondary);
 }
 
 .file-size {
-  background: #e9ecef;
+  background: var(--who-hover-bg);
   padding: 2px 6px;
   border-radius: 4px;
+  color: var(--who-text-secondary);
 }
 
 .file-time {
