@@ -29,12 +29,24 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 
 .bpmn-viewer {
   height: 100vh; /* Fixed height to display size */
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: var(--who-primary-bg);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  color: var(--who-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode gradient overlay */
+body.theme-dark .bpmn-viewer {
+  background: linear-gradient(135deg, var(--who-navy) 0%, var(--who-secondary-bg) 100%);
+}
+
+/* Light mode gradient overlay */
+body.theme-light .bpmn-viewer {
+  background: linear-gradient(135deg, var(--who-light-blue) 0%, var(--who-light-blue-light) 100%);
 }
 
 /* Enhanced fullwidth mode styling */
@@ -145,7 +157,7 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 }
 
 .viewer-main {
-  background: #ffffff;
+  background: var(--who-card-bg);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -153,6 +165,7 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
   display: flex;
   flex-direction: column;
   height: 100%;
+  border: 1px solid var(--who-border-color);
 }
 
 .viewer-toolbar {
@@ -160,11 +173,12 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
-  color: white;
+  background: var(--who-secondary-bg);
+  color: var(--who-text-primary);
   transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
   position: relative;
   z-index: 20;
+  border-bottom: 1px solid var(--who-border-color);
 }
 
 /* Auto-hide toolbar - slide up when hidden */
@@ -215,15 +229,15 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 }
 
 .artifact-badge {
-  background: rgba(255, 255, 255, 0.9);
-  color: #0078d4;
+  background: var(--who-hover-bg);
+  color: var(--who-blue);
   padding: 0.2rem 0.6rem;
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--who-border-color);
 }
 
 .artifact-badge.bpmn {
@@ -255,11 +269,13 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 }
 
 .view-mode-badge {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--who-hover-bg);
   padding: 0.3rem 0.8rem;
   border-radius: 15px;
   font-size: 0.85rem;
   font-weight: 500;
+  color: var(--who-text-primary);
+  border: 1px solid var(--who-border-color);
 }
 
 .toolbar-right {
@@ -281,23 +297,23 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 }
 
 .action-btn.primary {
-  background: #ffffff;
+  background: var(--who-blue);
   color: white;
 }
 
 .action-btn.primary:hover {
-  background: #f0f8ff;
+  background: var(--who-blue-light);
   transform: translateY(-1px);
 }
 
 .action-btn.secondary {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--who-hover-bg);
+  color: var(--who-text-primary);
+  border: 1px solid var(--who-border-color);
 }
 
 .action-btn.secondary:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--who-selected-bg);
   transform: translateY(-1px);
 }
 
@@ -328,7 +344,7 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 .bpmn-container {
   width: 100%;
   height: 100%;
-  background: #fafafa;
+  background: var(--who-primary-bg);
 }
 
 .loading-overlay,
@@ -342,8 +358,8 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #fafafa;
-  color: #666;
+  background: var(--who-primary-bg);
+  color: var(--who-text-secondary);
 }
 
 .loading-info {
@@ -357,13 +373,13 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 
 .loading-details {
   font-size: 0.9rem;
-  color: #888;
+  color: var(--who-text-muted);
   font-weight: 500;
 }
 
 .loading-hint {
   font-size: 0.8rem;
-  color: #aaa;
+  color: var(--who-text-muted);
   font-style: italic;
 }
 
@@ -376,8 +392,8 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #e1e5e9;
-  border-top: 4px solid #0078d4;
+  border: 4px solid var(--who-border-color);
+  border-top: 4px solid var(--who-blue);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -395,11 +411,11 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 
 .diagram-info {
   padding: 0.8rem 2rem;
-  background: #f8f9fa;
+  background: var(--who-secondary-bg);
   transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
   position: relative;
   z-index: 20;
-  border-top: 1px solid #dee2e6;
+  border-top: 1px solid var(--who-border-color);
   height: 60px; /* Fixed condensed height */
   display: flex;
   align-items: center;
@@ -414,8 +430,8 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
   left: 0;
   right: 0;
   z-index: 1001;
-  background: #f8f9fa;
-  border-top: 1px solid #dee2e6;
+  background: var(--who-secondary-bg);
+  border-top: 1px solid var(--who-border-color);
   transition: bottom 0.3s ease-in-out;
   height: 60px;
 }
@@ -443,7 +459,7 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
   align-items: center;
   gap: 2rem;
   font-size: 0.85rem;
-  color: #666;
+  color: var(--who-text-secondary);
 }
 
 .condensed-info-item {
@@ -454,11 +470,11 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 
 .condensed-info-item .label {
   font-weight: 500;
-  color: #333;
+  color: var(--who-text-primary);
 }
 
 .condensed-info-item .value {
-  color: #666;
+  color: var(--who-text-secondary);
 }
 
 .condensed-view-mode {
@@ -490,15 +506,17 @@ body:has(.bpmn-viewer.enhanced-fullwidth) .page-breadcrumb {
 
 .info-item span {
   font-size: 0.95rem;
-  color: #333;
+  color: var(--who-text-primary);
 }
 
 .file-path {
   font-family: 'Consolas', 'Monaco', monospace;
-  background: #e9ecef;
+  background: var(--who-hover-bg);
+  color: var(--who-text-primary);
   padding: 0.3rem 0.5rem;
   border-radius: 4px;
   word-break: break-all;
+  border: 1px solid var(--who-border-color);
 }
 
 .access-badge {
