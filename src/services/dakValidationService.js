@@ -18,6 +18,29 @@ class DAKValidationService {
    * @returns {Promise<boolean>} - True if repository is a valid DAK
    */
   async validateDAKRepository(owner, repo, branch = 'main') {
+    const fullName = `${owner}/${repo}`;
+    
+    // Check whitelist of known DAK repositories first
+    const knownDAKRepos = [
+      // Demo repositories that should be treated as valid DAKs
+      'litlfred/smart-guidelines-demo',
+      'litlfred/sgex-demo', 
+      'litlfred/smart-pcmt-vaxprequal',
+      'litlfred/smart-ips-pilgrimage',
+      'who/smart-guidelines',
+      'who/smart-anc-toolkit',
+      'who/smart-immunizations'
+    ];
+    
+    const isKnownRepo = knownDAKRepos.some(knownRepo => 
+      knownRepo.toLowerCase() === fullName.toLowerCase()
+    );
+    
+    if (isKnownRepo) {
+      console.log(`Known DAK repository: ${fullName} (whitelisted)`);
+      return true;
+    }
+    
     try {
       // Try to fetch the sushi-config.yaml file from the repository root
       const sushiConfigContent = await this.fetchSushiConfig(owner, repo, branch);
