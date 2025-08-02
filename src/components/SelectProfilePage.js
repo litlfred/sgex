@@ -47,6 +47,46 @@ const SelectProfilePage = () => {
     setDakCounts(counts);
   }, []);
 
+  const fetchGuestModeData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // In guest mode, we can only show public organizations
+      let orgsData = [];
+      
+      // Always include WHO organization for guest mode
+      try {
+        const whoOrganization = await githubService.getWHOOrganization();
+        orgsData.push(whoOrganization);
+      } catch (whoError) {
+        console.warn('Could not fetch WHO organization data, using fallback:', whoError);
+        
+        // Fallback to hardcoded WHO organization
+        const whoOrganization = {
+          id: 'who-organization',
+          login: 'WorldHealthOrganization',
+          name: 'World Health Organization',
+          description: 'The World Health Organization is a specialized agency of the United Nations responsible for international public health.',
+          avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
+          html_url: 'https://github.com/WorldHealthOrganization',
+          type: 'Organization',
+          isWHO: true
+        };
+        orgsData.push(whoOrganization);
+      }
+      
+      setOrganizations(orgsData);
+      setUser(null); // No user in guest mode
+      
+    } catch (error) {
+      console.error('Error fetching guest mode data:', error);
+      setError('Failed to fetch organization data. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const fetchUserData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -135,6 +175,16 @@ const SelectProfilePage = () => {
   // Initial authentication check and redirect if not authenticated
   useEffect(() => {
     const initializeAuth = () => {
+      // Check if we're in guest mode (passed from welcome page)
+      const isGuestModeRequested = location.state?.guestMode;
+      
+      if (isGuestModeRequested) {
+        // Enable guest mode for browsing public repositories
+        githubService.enableGuestMode();
+        setIsAuthenticated(false);
+        return;
+      }
+      
       // Check if user is already authenticated from previous session
       const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
       if (token) {
@@ -148,13 +198,19 @@ const SelectProfilePage = () => {
           navigate('/', { replace: true });
         }
       } else {
-        // Redirect to welcome page if no token
+        // Check if already in guest mode from a previous navigation
+        if (githubService.isGuestMode()) {
+          setIsAuthenticated(false);
+          return;
+        }
+        
+        // Redirect to welcome page if no token and not in guest mode
         navigate('/', { replace: true });
       }
     };
 
     initializeAuth();
-  }, [navigate]);
+  }, [navigate, location.state]);
 
   // Handle warning message from navigation state
   useEffect(() => {
@@ -165,12 +221,14 @@ const SelectProfilePage = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
-  // Fetch user data when authentication state changes
+  // Fetch user data when authentication state changes or in guest mode
   useEffect(() => {
     if (isAuthenticated && !user) {
       fetchUserData();
+    } else if (!isAuthenticated && githubService.isGuestMode() && organizations.length === 0) {
+      fetchGuestModeData();
     }
-  }, [isAuthenticated, user, fetchUserData]);
+  }, [isAuthenticated, user, organizations.length, fetchUserData, fetchGuestModeData]);
 
   const handleProfileSelect = (event, profile) => {
     const navigationState = { profile };
@@ -181,8 +239,8 @@ const SelectProfilePage = () => {
     setWarningMessage(null);
   };
 
-  // Don't render anything if not authenticated (will redirect)
-  if (!isAuthenticated) {
+  // Don't render anything if not authenticated and not in guest mode (will redirect)
+  if (!isAuthenticated && !githubService.isGuestMode()) {
     return null;
   }
 

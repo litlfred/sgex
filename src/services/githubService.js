@@ -363,6 +363,11 @@ class GitHubService {
     this.logger.auth('Guest mode enabled');
   }
 
+  // Check if in guest mode
+  isGuestMode() {
+    return this.guestMode;
+  }
+
   // Check token permissions and type
   async checkTokenPermissions() {
     if (!this.isAuth()) {

@@ -199,28 +199,7 @@ body.theme-light .welcome-page-content {
   background: var(--who-hover-bg);
 }
 
-/* PAT + Demo Card Styles */
-.pat-demo-card {
-  display: flex;
-  flex-direction: column;
-  padding: 1.5rem;
-  cursor: default;
-  pointer-events: auto;
-}
-
-.pat-demo-card::before {
-  display: none;
-}
-
-.pat-demo-card:hover {
-  transform: none;
-  border-color: var(--who-border-color);
-  box-shadow: none;
-}
-
-.pat-demo-card:hover::before {
-  opacity: 0;
-}
+/* Legacy PAT + Demo Card Styles - Removed (replaced by OAuth styles below) */
 
 .pat-section {
   flex: 1;
@@ -515,6 +494,22 @@ body.theme-light .welcome-page-content {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  cursor: default;
+  pointer-events: auto;
+}
+
+.oauth-demo-card::before {
+  display: none;
+}
+
+.oauth-demo-card:hover {
+  transform: none;
+  border-color: var(--who-border-color);
+  box-shadow: none;
+}
+
+.oauth-demo-card:hover::before {
+  opacity: 0;
 }
 
 .oauth-section {
