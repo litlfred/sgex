@@ -28,8 +28,215 @@
 .branch-listing-header .subtitle {
   font-size: 1.2rem;
   color: #666;
-  margin: 0 0 2rem 0;
+  margin: 0 0 1rem 0;
   font-style: italic;
+}
+
+.prominent-info {
+  background: var(--who-secondary-bg, #f8f9fa);
+  border: 2px solid var(--who-blue, #0366d6);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.info-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--who-text-primary, #333);
+  margin: 0;
+}
+
+/* Authentication section */
+.auth-section {
+  background: var(--who-tertiary-bg, #f8f9fa);
+  border: 1px solid var(--who-border-color, #e1e5e9);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.login-section h3 {
+  color: var(--who-text-primary, #333);
+  margin-bottom: 1rem;
+}
+
+.login-section p {
+  color: var(--who-text-secondary, #586069);
+  margin-bottom: 1rem;
+}
+
+.authenticated-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.authenticated-section p {
+  color: #28a745;
+  font-weight: 500;
+  margin: 0;
+}
+
+.logout-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: #c82333;
+}
+
+/* PR Filter section */
+.pr-filter-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pr-filter-section label {
+  font-weight: 500;
+  color: var(--who-text-primary, #333);
+}
+
+.filter-select {
+  padding: 0.5rem;
+  border: 1px solid var(--who-border-color, #e1e5e9);
+  border-radius: 6px;
+  background: var(--who-card-bg, #ffffff);
+  color: var(--who-text-primary, #333);
+  cursor: pointer;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--who-blue, #0366d6);
+  box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+}
+
+/* Comments section */
+.pr-comments-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--who-border-color, #e1e5e9);
+}
+
+.pr-comments-section h4 {
+  margin: 0 0 1rem 0;
+  color: var(--who-text-primary, #333);
+  font-size: 1rem;
+}
+
+.comments-loading {
+  color: var(--who-text-secondary, #586069);
+  font-style: italic;
+  padding: 0.5rem;
+}
+
+.comments-list {
+  margin-bottom: 1rem;
+}
+
+.comment-item {
+  background: var(--who-secondary-bg, #f8f9fa);
+  border: 1px solid var(--who-border-color, #e1e5e9);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.comment-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.comment-author {
+  font-weight: 600;
+  color: var(--who-blue, #0366d6);
+  font-size: 0.9rem;
+}
+
+.comment-date {
+  color: var(--who-text-secondary, #586069);
+  font-size: 0.8rem;
+  margin-left: auto;
+}
+
+.comment-body {
+  color: var(--who-text-primary, #333);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.no-comments {
+  color: var(--who-text-secondary, #586069);
+  font-style: italic;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.comment-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.comment-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--who-border-color, #e1e5e9);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.comment-input:focus {
+  outline: none;
+  border-color: var(--who-blue, #0366d6);
+  box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+}
+
+.submit-comment-btn {
+  align-self: flex-start;
+  background: var(--who-blue, #0366d6);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.submit-comment-btn:hover:not(:disabled) {
+  background: #0256cc;
+}
+
+.submit-comment-btn:disabled {
+  background: var(--who-text-muted, #6a737d);
+  cursor: not-allowed;
 }
 
 /* Main action buttons */
@@ -93,7 +300,7 @@
   display: flex;
   justify-content: center;
   margin-bottom: 2rem;
-  border-bottom: 1px solid #e1e5e9;
+  border-bottom: 1px solid var(--who-border-color, #e1e5e9);
 }
 
 .tab-button {
@@ -102,19 +309,19 @@
   padding: 1rem 2rem;
   font-size: 1.1rem;
   font-weight: 500;
-  color: #586069;
+  color: var(--who-text-secondary, #586069);
   cursor: pointer;
   border-bottom: 3px solid transparent;
   transition: all 0.2s ease;
 }
 
 .tab-button:hover {
-  color: #0366d6;
+  color: var(--who-blue, #0366d6);
 }
 
 .tab-button.active {
-  color: #0366d6;
-  border-bottom-color: #0366d6;
+  color: var(--who-blue, #0366d6);
+  border-bottom-color: var(--who-blue, #0366d6);
 }
 
 /* Cards styling - unified for branches and PRs */
@@ -155,6 +362,23 @@
   box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
 }
 
+.sort-select {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--who-border-color, #e1e5e9);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--who-card-bg, #ffffff);
+  color: var(--who-text-primary, #333);
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--who-blue, #0366d6);
+  box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+}
+
 .status-checking {
   color: #0366d6;
   font-size: 0.9rem;
@@ -165,10 +389,10 @@
 }
 
 .preview-card {
-  border: 1px solid #e1e5e9;
+  border: 1px solid var(--who-border-color, #e1e5e9);
   border-radius: 12px;
   padding: 1.5rem;
-  background: #ffffff;
+  background: var(--who-card-bg, #ffffff);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   position: relative;
@@ -177,7 +401,7 @@
 .preview-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  border-color: #0366d6;
+  border-color: var(--who-blue, #0366d6);
 }
 
 .card-header {
@@ -199,15 +423,15 @@
 .item-name {
   margin: 0;
   font-size: 1.4rem;
-  color: #0366d6;
+  color: var(--who-blue, #0366d6);
   font-weight: 600;
   word-break: break-word;
   flex: 1;
 }
 
 .commit-badge, .state-badge, .status-badge {
-  background: #f1f3f4;
-  color: #586069;
+  background: var(--who-hover-bg, #f1f3f4);
+  color: var(--who-text-secondary, #586069);
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
@@ -247,7 +471,7 @@
 }
 
 .item-date, .pr-meta {
-  color: #586069;
+  color: var(--who-text-secondary, #586069);
   font-size: 0.9rem;
   margin: 0 0 1rem 0;
 }
@@ -353,6 +577,16 @@
   word-break: break-all;
 }
 
+.preview-url-link {
+  color: #0366d6;
+  text-decoration: none;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+.preview-url-link:hover {
+  text-decoration: underline;
+}
+
 /* PR section specific styles moved to branch-section, pr-section above */
 
 .pr-card {
@@ -374,9 +608,9 @@
 }
 
 .pagination-btn {
-  background: #f8f9fa;
-  border: 1px solid #e1e5e9;
-  color: #0366d6;
+  background: var(--who-hover-bg, #f8f9fa);
+  border: 1px solid var(--who-border-color, #e1e5e9);
+  color: var(--who-blue, #0366d6);
   padding: 0.5rem 1rem;
   border-radius: 6px;
   cursor: pointer;
@@ -385,18 +619,18 @@
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #e1e7fd;
-  border-color: #0366d6;
+  background: var(--who-selected-bg, #e1e7fd);
+  border-color: var(--who-blue, #0366d6);
 }
 
 .pagination-btn:disabled {
-  color: #6a737d;
+  color: var(--who-text-muted, #6a737d);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 .pagination-info {
-  color: #586069;
+  color: var(--who-text-secondary, #586069);
   font-size: 0.9rem;
 }
 
@@ -423,7 +657,7 @@
 
 /* Footer */
 .branch-listing-footer {
-  border-top: 1px solid #e1e5e9;
+  border-top: 1px solid var(--who-border-color, #e1e5e9);
   padding: 2rem 0;
   margin-top: 3rem;
 }
@@ -441,7 +675,7 @@
 
 .footer-center {
   text-align: center;
-  color: #6a737d;
+  color: var(--who-text-secondary, #6a737d);
 }
 
 .footer-center p {
@@ -449,7 +683,7 @@
 }
 
 .source-link, .footer-center a {
-  color: #0366d6;
+  color: var(--who-blue, #0366d6);
   text-decoration: none;
   font-weight: 500;
   display: inline-flex;
@@ -630,6 +864,15 @@
   .branch-controls, .pr-controls {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .pr-filter-section {
+    justify-content: center;
+  }
+
+  .authenticated-section {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
   .copy-btn, .actions-link {
