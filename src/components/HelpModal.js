@@ -47,6 +47,10 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
             params.template = 'documentation.yml';
             params.labels = 'documentation';
             break;
+          case 'blank':
+            // No template specified - this will allow users to create a blank issue
+            params.labels = 'blank-issue';
+            break;
           default:
             params.labels = 'needs-triage';
         }
@@ -107,6 +111,10 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
           case 'question':
             params.template = 'dak_question.yml';
             params.labels = 'question,dak-question';
+            break;
+          case 'blank':
+            // No template specified - this will allow users to create a blank issue
+            params.labels = 'blank-issue,dak-feedback';
             break;
           default:
             params.labels = 'dak-feedback';
