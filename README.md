@@ -187,7 +187,44 @@ For more information on DAK authoring, see the [WHO SMART Guidelines IG Starter 
 
 ## Deployment
 
-This app is designed for deployment on **GitHub Pages** in the gh-pages branch of the smart-base repo. Currently the gh-pages branch deploys to https://worldhealthorganization.github.io/smart-base/ when in draft and http://smart.who.int when published. Publishing is handled by the IG publisher https://github.com/HL7/fhir-ig-publisher
+The SGEX Workbench uses an advanced **multi-branch GitHub Pages deployment system** that automatically builds and deploys every branch for preview and testing purposes.
+
+### How the Workbench is Deployed
+
+The workbench is deployed using GitHub Actions workflows that:
+
+1. **Automatically build and deploy** every pushed branch to its own preview URL
+2. **Generate a dynamic landing page** that lists all available branch previews
+3. **Maintain the main application** always accessible at a stable URL
+4. **Use GitHub Pages** for static hosting without requiring backend infrastructure
+
+### Branch Structure and Access
+
+#### Main Branch
+- **Main Application**: https://litlfred.github.io/sgex/main/
+- **Purpose**: The primary stable version of the workbench
+- **Auto-deployed**: Every commit to the `main` branch
+
+#### Feature Branches  
+- **Branch Previews**: https://litlfred.github.io/sgex/{branch-name}/
+- **Purpose**: Individual feature development and testing
+- **Auto-deployed**: Every commit to any feature branch
+- **URL Format**: Branch names with slashes are converted to dashes (e.g., `feature/new-editor` becomes `feature-new-editor`)
+
+#### Landing Page
+- **Branch Selector**: https://litlfred.github.io/sgex/
+- **Purpose**: Browse and access all available branch deployments
+- **Features**: Lists all branches with pull request previews, metadata, and direct access links
+
+### Deployment Workflow
+
+1. **Push to any branch** → Triggers automatic GitHub Actions workflow
+2. **Build process** → Installs dependencies, runs tests, builds React app
+3. **Branch deployment** → Creates/updates preview at branch-specific URL  
+4. **Landing page update** → Refreshes main page with current branch listings
+5. **Live in minutes** → Changes are accessible within 2-3 minutes
+
+This deployment system enables seamless collaboration by providing isolated preview environments for every feature branch while maintaining a stable main application.
 
 ## Documentation
 
