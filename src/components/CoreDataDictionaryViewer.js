@@ -21,6 +21,7 @@ const CoreDataDictionaryViewerContent = () => {
   const repo = repository?.name;
   
   const [fshFiles, setFshFiles] = useState([]);
+  const [logicalModels, setLogicalModels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -33,6 +34,7 @@ const CoreDataDictionaryViewerContent = () => {
   const [dakTableSearch, setDakTableSearch] = useState('');
   const [hasPublishedDak, setHasPublishedDak] = useState(false);
   const [checkingPublishedDak, setCheckingPublishedDak] = useState(false);
+  const [activeSection, setActiveSection] = useState('core-data-dictionary'); // Toggle between sections
 
   // Generate base URL for IG Publisher artifacts
   const getBaseUrl = useCallback((branchName) => {
@@ -70,29 +72,6 @@ const CoreDataDictionaryViewerContent = () => {
     
     return concepts;
   }, []);
-
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
-  const handleBackToDashboard = () => {
-    if (user && repo) {
-      // Use URL parameters for navigation
-      const dashboardPath = branch ? 
-        `/dashboard/${user}/${repo}/${branch}` : 
-        `/dashboard/${user}/${repo}`;
-      navigate(dashboardPath);
-    } else {
-      // Fallback to state-based navigation
-      navigate('/dashboard', { 
-        state: { 
-          profile, 
-          repository, 
-          branch 
-        } 
-      });
-    }
-  };
 
   // Fetch FSH files from input/fsh directory
   useEffect(() => {
@@ -155,6 +134,36 @@ const CoreDataDictionaryViewerContent = () => {
             setFshFiles([]);
           } else {
             throw err;
+          }
+        }
+
+        // Try to fetch logical models from input/fsh/models directory
+        try {
+          const modelsDirContents = await githubService.getDirectoryContents(
+            currentUser,
+            currentRepo,
+            'input/fsh/models',
+            currentBranch
+          );
+
+          // Filter for .fsh files (Logical Models)
+          const logicalModelsList = modelsDirContents
+            .filter(file => file.name.endsWith('.fsh') && file.type === 'file')
+            .map(file => ({
+              name: file.name,
+              path: file.path,
+              download_url: file.download_url,
+              html_url: file.html_url
+            }));
+
+          setLogicalModels(logicalModelsList);
+        } catch (err) {
+          if (err.status === 404) {
+            // input/fsh/models directory doesn't exist
+            setLogicalModels([]);
+          } else {
+            console.warn('Error fetching logical models:', err);
+            setLogicalModels([]);
           }
         }
 
@@ -282,43 +291,26 @@ const CoreDataDictionaryViewerContent = () => {
   }
 
   return (
-    <div className="core-data-dictionary-viewer">
-      <div className="viewer-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile?.avatar_url || `https://github.com/${user || profile?.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repo || repository?.name}</span>
-            <span className="context-component">Core Data Dictionary</span>
-          </div>
-        </div>
+    <div className="core-data-dictionary-content">
+      {/* Toggle Navigation */}
+      <div className="section-toggle">
+        <button 
+          className={`toggle-btn ${activeSection === 'core-data-dictionary' ? 'active' : ''}`}
+          onClick={() => setActiveSection('core-data-dictionary')}
+        >
+          📊 Core Data Dictionary
+        </button>
+        <button 
+          className={`toggle-btn ${activeSection === 'logical-models' ? 'active' : ''}`}
+          onClick={() => setActiveSection('logical-models')}
+        >
+          🧩 Logical Models
+        </button>
       </div>
 
-      <div className="viewer-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
-            Select Repository
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBackToDashboard} className="breadcrumb-link">
-            DAK Components
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Core Data Dictionary</span>
-        </div>
-
-        <div className="viewer-main">
+      {/* Core Data Dictionary Section */}
+      {activeSection === 'core-data-dictionary' && (
+        <div className="section-content core-data-dictionary-section">
           <div className="component-intro">
             <div className="component-icon" style={{ color: '#0078d4' }}>
               📊
@@ -578,7 +570,104 @@ const CoreDataDictionaryViewerContent = () => {
             )}
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Logical Models Section */}
+      {activeSection === 'logical-models' && (
+        <div className="section-content logical-models-section">
+          <div className="component-intro">
+            <div className="component-icon" style={{ color: '#8B5CF6' }}>
+              🧩
+            </div>
+            <div className="intro-content">
+              <h2>Logical Models Management</h2>
+              <p>
+                Manage, view, edit, and extract FHIR Logical Models from FSH format. 
+                Transform Logical Models into ArchiMate Data Objects for enterprise architecture.
+              </p>
+              {branch && (
+                <div className="branch-info">
+                  <strong>Branch:</strong> <code>{branch}</code>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {error && (
+            <div className="error-message">
+              <h3>⚠️ Error</h3>
+              <p>{error}</p>
+            </div>
+          )}
+
+          {/* Global Tools Section */}
+          <div className="section global-tools-section">
+            <h3>Global Tools</h3>
+            <p>Tools that operate on all Logical Models in the DAK</p>
+            <div className="global-tools">
+              <button className="action-btn primary" disabled>
+                🏗️ Extract All to ArchiMate (Coming Soon)
+              </button>
+            </div>
+          </div>
+
+          {/* Logical Models Listing */}
+          <div className="section logical-models-list-section">
+            <h3>Logical Models</h3>
+            <p>FHIR Logical Models from <code>inputs/fsh/models/</code> directory</p>
+            
+            {logicalModels.length === 0 ? (
+              <div className="no-files-message">
+                <p>No Logical Model files found in <code>inputs/fsh/models/</code> directory.</p>
+                <p>Logical Models should be stored in FSH format in this location.</p>
+              </div>
+            ) : (
+              <div className="lm-files-grid">
+                {logicalModels.map((model) => (
+                  <div key={model.path} className="lm-file-card">
+                    <div className="file-header">
+                      <div className="file-icon">🧩</div>
+                      <div className="file-name">{model.name}</div>
+                    </div>
+                    <div className="file-actions">
+                      <button 
+                        className="action-btn primary"
+                        onClick={() => handleViewSource(model)}
+                        title="View Logical Model source"
+                      >
+                        👁️ View
+                      </button>
+                      <button 
+                        className="action-btn secondary"
+                        disabled
+                        title="Edit Logical Model (Coming Soon)"
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button 
+                        className="action-btn tertiary"
+                        disabled
+                        title="Extract to ArchiMate (Coming Soon)"
+                      >
+                        🏗️ Extract
+                      </button>
+                      <a 
+                        href={model.html_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="action-btn secondary"
+                        title="View source on GitHub"
+                      >
+                        GitHub ↗
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Source Code Modal */}
       {showModal && selectedFile && (
@@ -609,7 +698,7 @@ const CoreDataDictionaryViewerContent = () => {
           </div>
         </div>
       )}
-      </div>
+    </div>
   );
 };
 
