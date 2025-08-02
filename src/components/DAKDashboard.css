@@ -280,7 +280,7 @@ body.theme-light .dak-dashboard {
   padding: 0.5rem;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  max-width: 600px;
+  max-width: 900px;
 }
 
 .tab-button {
@@ -667,6 +667,10 @@ body.theme-light .dak-dashboard {
   .tab-button {
     flex: none;
     padding: 0.8rem 1rem;
+  }
+
+  .tab-icon {
+    font-size: 1.1rem;
   }
 
   .tab-text {

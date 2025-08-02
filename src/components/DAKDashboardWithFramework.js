@@ -247,23 +247,23 @@ const DAKDashboardContent = () => {
           />
         )}
 
-        <div className="tab-navigation-fullwidth">
+        <div className="tab-navigation">
           <button 
-            className={`tab-button-fullwidth ${activeTab === 'core' ? 'active' : ''}`}
+            className={`tab-button ${activeTab === 'core' ? 'active' : ''}`}
             onClick={() => setActiveTab('core')}
           >
             <span className="tab-icon">⭐</span>
             <span className="tab-text">9 Core Components</span>
           </button>
           <button 
-            className={`tab-button-fullwidth ${activeTab === 'additional' ? 'active' : ''}`}
+            className={`tab-button ${activeTab === 'additional' ? 'active' : ''}`}
             onClick={() => setActiveTab('additional')}
           >
             <span className="tab-icon">🔧</span>
             <span className="tab-text">Additional Components ({additionalComponents.length})</span>
           </button>
           <button 
-            className={`tab-button-fullwidth ${activeTab === 'publications' ? 'active' : ''}`}
+            className={`tab-button ${activeTab === 'publications' ? 'active' : ''}`}
             onClick={() => setActiveTab('publications')}
           >
             <span className="tab-icon">📚</span>
