@@ -509,3 +509,146 @@ body.theme-light .welcome-page-content {
     font-size: 3rem;
   }
 }
+
+/* OAuth Device Flow Card Styles */
+.oauth-demo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.oauth-section {
+  flex: 1;
+}
+
+.demo-section,
+.guest-section {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+}
+
+.demo-section h4,
+.guest-section h4 {
+  margin: 0 0 1rem 0;
+  color: var(--who-text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.demo-btn,
+.guest-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--who-text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0.5rem 0;
+}
+
+.demo-btn:hover,
+.guest-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.demo-note,
+.guest-note {
+  margin: 0.75rem 0 0 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+}
+
+/* User Info Card Styles */
+.user-info-card {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border: 2px solid #28a745;
+  color: #155724;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.user-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid #28a745;
+  object-fit: cover;
+}
+
+.user-details {
+  flex: 1;
+}
+
+.user-details h4 {
+  margin: 0 0 0.5rem 0;
+  color: #155724;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.user-details p {
+  margin: 0 0 1rem 0;
+  color: #155724;
+  opacity: 0.8;
+}
+
+.sign-out-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: #155724;
+  border: 1px solid #28a745;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sign-out-btn:hover {
+  background: rgba(40, 167, 69, 0.1);
+}
+
+/* Responsive adjustments for new components */
+@media (max-width: 768px) {
+  .oauth-demo-card {
+    gap: 1.5rem;
+  }
+  
+  .demo-section,
+  .guest-section {
+    padding: 1rem;
+  }
+  
+  .user-info {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .user-avatar {
+    width: 60px;
+    height: 60px;
+  }
+}
