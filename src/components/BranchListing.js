@@ -1005,7 +1005,7 @@ const BranchListing = () => {
             </div>
             <div className="footer-center">
               <p>
-                <strong>Main Application:</strong> <a href="./sgex/main/index.html">View Main Branch →</a>
+                <strong>Main Application:</strong> <a href="./main/index.html">View Main Branch →</a>
               </p>
             </div>
           </div>
