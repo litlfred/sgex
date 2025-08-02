@@ -25,9 +25,6 @@ const BranchListing = () => {
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentInputs, setCommentInputs] = useState({});
   const [submittingComments, setSubmittingComments] = useState({});
-  const [expandedDiscussions, setExpandedDiscussions] = useState({});
-  const [discussionSummaries, setDiscussionSummaries] = useState({});
-  const [loadingSummaries, setLoadingSummaries] = useState(false);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -43,140 +40,6 @@ const BranchListing = () => {
     setGithubToken(null);
     setIsAuthenticated(false);
     sessionStorage.removeItem('github_token');
-  };
-
-  // Function to fetch PR comments summary
-  const fetchPRCommentsSummary = useCallback(async (prNumber) => {
-    if (!githubToken) return null;
-    
-    try {
-      const response = await fetch(
-        `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-        {
-          headers: {
-            'Authorization': `token ${githubToken}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch comments: ${response.status}`);
-      }
-      
-      const comments = await response.json();
-      if (comments.length === 0) {
-        return { count: 0, lastComment: null };
-      }
-      
-      const lastComment = comments[comments.length - 1];
-      return {
-        count: comments.length,
-        lastComment: {
-          author: lastComment.user.login,
-          created_at: new Date(lastComment.created_at),
-          avatar_url: lastComment.user.avatar_url
-        }
-      };
-    } catch (error) {
-      console.error(`Error fetching comment summary for PR ${prNumber}:`, error);
-      return null;
-    }
-  }, [githubToken]);
-
-  // Function to fetch all PR comments (for expanded view)
-  const fetchAllPRComments = useCallback(async (prNumber) => {
-    if (!githubToken) return [];
-    
-    try {
-      const response = await fetch(
-        `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-        {
-          headers: {
-            'Authorization': `token ${githubToken}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch comments: ${response.status}`);
-      }
-      
-      const comments = await response.json();
-      return comments.map(comment => ({
-        id: comment.id,
-        author: comment.user.login,
-        body: comment.body,
-        created_at: new Date(comment.created_at).toLocaleDateString(),
-        avatar_url: comment.user.avatar_url
-      }));
-    } catch (error) {
-      console.error(`Error fetching all comments for PR ${prNumber}:`, error);
-      return [];
-    }
-  }, [githubToken]);
-
-  // Function to load discussion summaries for visible PRs
-  const loadDiscussionSummaries = useCallback(async (prs) => {
-    if (!githubToken || prs.length === 0) return;
-    
-    setLoadingSummaries(true);
-    const summaries = {};
-    
-    for (const pr of prs) {
-      summaries[pr.number] = await fetchPRCommentsSummary(pr.number);
-    }
-    
-    setDiscussionSummaries(summaries);
-    setLoadingSummaries(false);
-  }, [githubToken, fetchPRCommentsSummary]);
-
-  // Function to toggle discussion expansion
-  const toggleDiscussion = async (prNumber) => {
-    const isExpanded = expandedDiscussions[prNumber];
-    
-    if (!isExpanded) {
-      // Load all comments when expanding
-      const comments = await fetchAllPRComments(prNumber);
-      setPrComments(prev => ({ ...prev, [prNumber]: comments }));
-    }
-    
-    setExpandedDiscussions(prev => ({
-      ...prev,
-      [prNumber]: !isExpanded
-    }));
-  };
-
-  // Function to get discussion summary text
-  const getDiscussionSummaryText = (prNumber) => {
-    const summary = discussionSummaries[prNumber];
-    
-    if (loadingSummaries) {
-      return "Loading discussion...";
-    }
-    
-    if (!summary || summary.count === 0) {
-      return "No comments yet";
-    }
-    
-    const { count, lastComment } = summary;
-    const timeAgo = lastComment ? getTimeAgo(lastComment.created_at) : '';
-    
-    return `${count} comment${count > 1 ? 's' : ''}, last by ${lastComment.author} ${timeAgo}`;
-  };
-
-  // Helper function to get relative time
-  const getTimeAgo = (date) => {
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'today';
-    if (diffDays === 1) return '1 day ago';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
-    return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
   };
 
   // Function to fetch PR comments
@@ -242,15 +105,9 @@ const BranchListing = () => {
       // Clear the comment input
       setCommentInputs(prev => ({ ...prev, [prNumber]: '' }));
       
-      // Refresh both full comments (if expanded) and summary
-      if (expandedDiscussions[prNumber]) {
-        const updatedComments = await fetchAllPRComments(prNumber);
-        setPrComments(prev => ({ ...prev, [prNumber]: updatedComments }));
-      }
-      
-      // Refresh the discussion summary
-      const updatedSummary = await fetchPRCommentsSummary(prNumber);
-      setDiscussionSummaries(prev => ({ ...prev, [prNumber]: updatedSummary }));
+      // Refresh comments for this PR
+      const updatedComments = await fetchPRComments(prNumber);
+      setPrComments(prev => ({ ...prev, [prNumber]: updatedComments }));
       
       return true;
     } catch (error) {
@@ -548,9 +405,9 @@ const BranchListing = () => {
         // Check deployment statuses
         await checkAllDeploymentStatuses(filteredBranches, formattedPRs);
         
-        // Load discussion summaries for PRs if authenticated
+        // Load comments for PRs if authenticated
         if (githubToken) {
-          await loadDiscussionSummaries(formattedPRs.slice(0, ITEMS_PER_PAGE));
+          await loadCommentsForPRs(formattedPRs.slice(0, ITEMS_PER_PAGE));
         }
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -635,9 +492,9 @@ const BranchListing = () => {
     };
 
     fetchData();
-  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadDiscussionSummaries]);
+  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadCommentsForPRs]);
 
-  // Load summaries for visible PRs when page changes
+  // Load comments for visible PRs when page changes
   useEffect(() => {
     if (isAuthenticated && pullRequests.length > 0) {
       const filtered = pullRequests.filter(pr => 
@@ -646,9 +503,9 @@ const BranchListing = () => {
       );
       const sorted = sortPRs(filtered, prSortBy);
       const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
-      loadDiscussionSummaries(paginated);
+      loadCommentsForPRs(paginated);
     }
-  }, [prPage, prSearchTerm, prSortBy, pullRequests, isAuthenticated, loadDiscussionSummaries]);
+  }, [prPage, prSearchTerm, prSortBy, pullRequests, isAuthenticated, loadCommentsForPRs]);
 
   // Filter and sort PRs based on search and sorting
   const filteredPRs = pullRequests.filter(pr => 
@@ -985,96 +842,53 @@ const BranchListing = () => {
                           Created: {pr.createdAt} • Updated: {pr.updatedAt}
                         </p>
                         
-                        {/* Discussion Summary Section */}
+                        {/* Comments Section */}
                         {isAuthenticated && (
-                          <div>
-                            {/* Discussion Summary Status Bar */}
-                            <div 
-                              className="discussion-summary-bar"
-                              onClick={() => toggleDiscussion(pr.number)}
-                            >
-                              <div className="discussion-summary-text">
-                                <span className="discussion-summary-icon">💬</span>
-                                {getDiscussionSummaryText(pr.number)}
-                              </div>
-                              <span className={`discussion-expand-icon ${expandedDiscussions[pr.number] ? 'expanded' : ''}`}>
-                                ▶
-                              </span>
-                            </div>
-
-                            {/* Expanded Discussion Section */}
-                            {expandedDiscussions[pr.number] && (
-                              <div className="discussion-expanded-section">
-                                <div className="discussion-header">
-                                  <h4 className="discussion-title">Discussion</h4>
-                                  <div className="discussion-actions">
-                                    <a 
-                                      href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="discussion-action-btn"
-                                    >
-                                      📁 View Files
-                                    </a>
-                                    <a 
-                                      href={pr.prUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="discussion-action-btn secondary"
-                                    >
-                                      🔗 Full Discussion
-                                    </a>
-                                  </div>
-                                </div>
-                                
-                                {/* Comment Input at Top */}
-                                <div className="comment-input-section">
-                                  <textarea
-                                    value={commentInputs[pr.number] || ''}
-                                    onChange={(e) => setCommentInputs(prev => ({
-                                      ...prev,
-                                      [pr.number]: e.target.value
-                                    }))}
-                                    placeholder="Add a comment..."
-                                    className="comment-input"
-                                    rows={3}
-                                  />
-                                  <button
-                                    onClick={() => submitComment(pr.number, commentInputs[pr.number])}
-                                    disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
-                                    className="submit-comment-btn"
-                                  >
-                                    {submittingComments[pr.number] ? 'Submitting...' : 'Add Comment'}
-                                  </button>
-                                </div>
-                                
-                                {/* Scrollable Comments Area */}
-                                <div className="discussion-scroll-area">
-                                  {loadingComments ? (
-                                    <div className="comments-loading">Loading full discussion...</div>
-                                  ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
-                                    <div className="comments-list">
-                                      {prComments[pr.number].map((comment) => (
-                                        <div key={comment.id} className="comment-item">
-                                          <div className="comment-header">
-                                            <img 
-                                              src={comment.avatar_url} 
-                                              alt={comment.author} 
-                                              className="comment-avatar"
-                                            />
-                                            <span className="comment-author">{comment.author}</span>
-                                            <span className="comment-date">{comment.created_at}</span>
-                                          </div>
-                                          <div className="comment-body">{comment.body}</div>
-                                        </div>
-                                      ))}
+                          <div className="pr-comments-section">
+                            <h4>Recent Comments:</h4>
+                            {loadingComments ? (
+                              <div className="comments-loading">Loading comments...</div>
+                            ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
+                              <div className="comments-list">
+                                {prComments[pr.number].map((comment) => (
+                                  <div key={comment.id} className="comment-item">
+                                    <div className="comment-header">
+                                      <img 
+                                        src={comment.avatar_url} 
+                                        alt={comment.author} 
+                                        className="comment-avatar"
+                                      />
+                                      <span className="comment-author">{comment.author}</span>
+                                      <span className="comment-date">{comment.created_at}</span>
                                     </div>
-                                  ) : (
-                                    <div className="no-comments">No comments yet. Be the first to comment!</div>
-                                  )}
-                                </div>
+                                    <div className="comment-body">{comment.body}</div>
+                                  </div>
+                                ))}
                               </div>
+                            ) : (
+                              <div className="no-comments">No recent comments</div>
                             )}
+                            
+                            {/* Comment Input */}
+                            <div className="comment-input-section">
+                              <textarea
+                                value={commentInputs[pr.number] || ''}
+                                onChange={(e) => setCommentInputs(prev => ({
+                                  ...prev,
+                                  [pr.number]: e.target.value
+                                }))}
+                                placeholder="Add a comment..."
+                                className="comment-input"
+                                rows={3}
+                              />
+                              <button
+                                onClick={() => submitComment(pr.number, commentInputs[pr.number])}
+                                disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
+                                className="submit-comment-btn"
+                              >
+                                {submittingComments[pr.number] ? 'Submitting...' : 'Add Comment'}
+                              </button>
+                            </div>
                           </div>
                         )}
                         
