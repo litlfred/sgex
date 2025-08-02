@@ -155,6 +155,13 @@
   font-family: 'Monaco', 'Consolas', monospace;
 }
 
+/* Dark mode support for commit SHA */
+body.theme-dark .commit-sha code {
+  background: rgba(255, 255, 255, 0.2);
+  color: #4dabf7;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
 .commit-link {
   color: var(--who-text-secondary);
   text-decoration: none;
