@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PageLayout, useDAKParams } from './framework';
 import githubService from '../services/githubService';
+import stagingGroundService from '../services/stagingGroundService';
 // import { useTranslation } from 'react-i18next'; // TODO: Add i18n support later
 import './QuestionnaireEditor.css';
 
@@ -22,74 +23,81 @@ const QuestionnaireEditorContent = () => {
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Load questionnaires from input/questionnaires/
+  // Initialize staging ground service
   useEffect(() => {
-    const loadQuestionnaires = async () => {
-      if (!profile || !repository || !githubService.isAuth()) {
-        setLoading(false);
-        return;
-      }
+    if (repository && branch) {
+      stagingGroundService.initialize(repository, branch);
+    }
+  }, [repository, branch]);
 
-      try {
-        setLoading(true);
-        setError(null);
+  // Load questionnaires from input/questionnaires/
+  const loadQuestionnaires = useCallback(async () => {
+    if (!profile || !repository || !githubService.isAuth()) {
+      setLoading(false);
+      return;
+    }
 
-        // Try to get the questionnaires directory
-        const questionnaireFiles = await githubService.getDirectoryContents(
-          repository.owner.login,
-          repository.name,
-          'input/questionnaires',
-          branch
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Try to get the questionnaires directory
+      const questionnaireFiles = await githubService.getDirectoryContents(
+        repository.owner.login,
+        repository.name,
+        'input/questionnaires',
+        branch
+      );
+
+      if (questionnaireFiles && questionnaireFiles.length > 0) {
+        // Filter for .json files and load their content
+        const jsonFiles = questionnaireFiles.filter(file => 
+          file.name.endsWith('.json') && file.type === 'file'
         );
 
-        if (questionnaireFiles && questionnaireFiles.length > 0) {
-          // Filter for .json files and load their content
-          const jsonFiles = questionnaireFiles.filter(file => 
-            file.name.endsWith('.json') && file.type === 'file'
-          );
+        const questionnaireData = await Promise.all(
+          jsonFiles.map(async (file) => {
+            try {
+              const content = await githubService.getFileContent(
+                repository.owner.login,
+                repository.name,
+                file.path,
+                branch
+              );
+              const parsedContent = JSON.parse(content);
+              return {
+                ...file,
+                content: parsedContent,
+                isValid: parsedContent.resourceType === 'Questionnaire'
+              };
+            } catch (error) {
+              console.warn(`Error loading questionnaire ${file.name}:`, error);
+              return {
+                ...file,
+                content: null,
+                isValid: false,
+                error: error.message
+              };
+            }
+          })
+        );
 
-          const questionnaireData = await Promise.all(
-            jsonFiles.map(async (file) => {
-              try {
-                const content = await githubService.getFileContent(
-                  repository.owner.login,
-                  repository.name,
-                  file.path,
-                  branch
-                );
-                const parsedContent = JSON.parse(content);
-                return {
-                  ...file,
-                  content: parsedContent,
-                  isValid: parsedContent.resourceType === 'Questionnaire'
-                };
-              } catch (error) {
-                console.warn(`Error loading questionnaire ${file.name}:`, error);
-                return {
-                  ...file,
-                  content: null,
-                  isValid: false,
-                  error: error.message
-                };
-              }
-            })
-          );
-
-          setQuestionnaires(questionnaireData);
-        } else {
-          setQuestionnaires([]);
-        }
-      } catch (error) {
-        console.error('Error loading questionnaires:', error);
-        setError(`Failed to load questionnaires: ${error.message}`);
+        setQuestionnaires(questionnaireData);
+      } else {
         setQuestionnaires([]);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    loadQuestionnaires();
+    } catch (error) {
+      console.error('Error loading questionnaires:', error);
+      setError(`Failed to load questionnaires: ${error.message}`);
+      setQuestionnaires([]);
+    } finally {
+      setLoading(false);
+    }
   }, [profile, repository, branch]);
+
+  useEffect(() => {
+    loadQuestionnaires();
+  }, [loadQuestionnaires]);
 
   const createNewQuestionnaire = () => {
     const newQuestionnaire = {
@@ -126,57 +134,64 @@ const QuestionnaireEditorContent = () => {
       const filePath = `input/questionnaires/${selectedQuestionnaire.name}`;
       const contentString = JSON.stringify(updatedContent, null, 2);
 
-      if (selectedQuestionnaire.isNew) {
-        // Create new file
-        await githubService.createFile(
-          repository.owner.login,
-          repository.name,
-          filePath,
-          contentString,
-          `Add new questionnaire: ${updatedContent.title || updatedContent.name}`,
-          branch
-        );
-      } else {
-        // Update existing file
-        await githubService.updateFile(
-          repository.owner.login,
-          repository.name,
-          filePath,
-          contentString,
-          `Update questionnaire: ${updatedContent.title || updatedContent.name}`,
-          selectedQuestionnaire.sha,
-          branch
-        );
-      }
+      // Use staging ground service to stage the file instead of direct GitHub operations
+      const success = stagingGroundService.updateFile(
+        filePath,
+        contentString,
+        {
+          title: updatedContent.title || updatedContent.name || 'Questionnaire',
+          filename: selectedQuestionnaire.name,
+          tool: 'QuestionnaireEditor',
+          contentType: 'application/fhir+json',
+          resourceType: 'Questionnaire',
+          operation: selectedQuestionnaire.isNew ? 'create' : 'update'
+        }
+      );
 
-      // Refresh the questionnaires list
-      window.location.reload();
+      if (success) {
+        // Update commit message for the staging ground
+        const commitMessage = selectedQuestionnaire.isNew 
+          ? `Add new questionnaire: ${updatedContent.title || updatedContent.name}`
+          : `Update questionnaire: ${updatedContent.title || updatedContent.name}`;
+        
+        stagingGroundService.updateCommitMessage(commitMessage);
+
+        // Close editor and refresh list
+        setSelectedQuestionnaire(null);
+        setIsEditing(false);
+        
+        // Refresh the questionnaires list to show any changes
+        loadQuestionnaires();
+      } else {
+        throw new Error('Failed to stage questionnaire changes');
+      }
     } catch (error) {
-      console.error('Error saving questionnaire:', error);
-      setError(`Failed to save questionnaire: ${error.message}`);
+      console.error('Error staging questionnaire:', error);
+      setError(`Failed to stage questionnaire: ${error.message}`);
     }
   };
 
   const deleteQuestionnaire = async (questionnaire) => {
-    if (!window.confirm(`Are you sure you want to delete ${questionnaire.name}?`)) {
-      return;
-    }
-
-    try {
-      await githubService.deleteFile(
-        repository.owner.login,
-        repository.name,
-        questionnaire.path,
-        `Delete questionnaire: ${questionnaire.name}`,
-        questionnaire.sha,
-        branch
-      );
-
-      // Refresh the questionnaires list
-      window.location.reload();
-    } catch (error) {
-      console.error('Error deleting questionnaire:', error);
-      setError(`Failed to delete questionnaire: ${error.message}`);
+    // Check if the file is currently staged
+    const stagingGround = stagingGroundService.getStagingGround();
+    const stagedFile = stagingGround.files.find(f => f.path === questionnaire.path);
+    
+    if (stagedFile) {
+      // If the file is already staged, remove it from staging
+      if (window.confirm(`Remove ${questionnaire.name} from staging area?`)) {
+        const success = stagingGroundService.removeFile(questionnaire.path);
+        if (success) {
+          // Refresh the questionnaires list
+          loadQuestionnaires();
+        } else {
+          setError('Failed to remove questionnaire from staging');
+        }
+      }
+    } else {
+      // For files not in staging, we'll need to stage them for deletion
+      // Since the current framework doesn't support staged deletions,
+      // we'll show a message about using GitHub directly for deletions
+      alert(`To delete ${questionnaire.name}, you need to delete it directly from GitHub or use the Git interface. The staging system currently only supports file additions and modifications.`);
     }
   };
 
@@ -221,14 +236,19 @@ const QuestionnaireEditorContent = () => {
   return (
     <div className="questionnaire-editor">
       <div className="questionnaire-header">
-        <h1>FHIR Questionnaire Assets</h1>
-        <p>Manage FHIR Questionnaire resources in the input/questionnaires/ directory</p>
-        <button 
-          className="btn-primary create-questionnaire-btn"
-          onClick={createNewQuestionnaire}
-        >
-          + Create New Questionnaire
-        </button>
+        <div className="questionnaire-header-content">
+          <div className="questionnaire-header-text">
+            <h1>FHIR Questionnaire Assets</h1>
+            <p>Manage FHIR Questionnaire resources in the input/questionnaires/ directory</p>
+            <p className="staging-note">Changes will be staged for review before committing to GitHub</p>
+          </div>
+          <button 
+            className="btn-primary create-questionnaire-btn"
+            onClick={createNewQuestionnaire}
+          >
+            + Create New Questionnaire
+          </button>
+        </div>
       </div>
 
       {questionnaires.length === 0 ? (
@@ -296,7 +316,7 @@ const QuestionnaireEditorContent = () => {
                   className="btn-danger"
                   onClick={() => deleteQuestionnaire(questionnaire)}
                 >
-                  Delete
+                  Remove
                 </button>
               </div>
             </div>
@@ -343,7 +363,7 @@ const QuestionnaireEditorForm = ({ questionnaire, onSave, onCancel }) => {
             onClick={handleSave}
             disabled={!isModified}
           >
-            Save
+            Stage Changes
           </button>
         </div>
       </div>
