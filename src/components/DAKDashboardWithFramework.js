@@ -18,7 +18,6 @@ const DAKDashboardContent = () => {
   const { profile, repository, branch, navigate } = useDAKParams();
   
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
-  const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
   const [issueCounts, setIssueCounts] = useState({});
@@ -40,7 +39,7 @@ const DAKDashboardContent = () => {
         console.error('Error checking repository permissions:', error);
         setHasWriteAccess(false);
       } finally {
-        setCheckingPermissions(false);
+        // Permission checking is now handled by the framework
       }
     };
 
@@ -240,20 +239,6 @@ const DAKDashboardContent = () => {
               Digital Adaptation Kit for {profile?.name || profile?.login}
             </p>
           </div>
-          
-          {checkingPermissions ? (
-            <div className="permissions-check">
-              <span>Checking permissions...</span>
-            </div>
-          ) : (
-            <div className="permissions-status">
-              {hasWriteAccess ? (
-                <span className="write-access">✅ Write Access</span>
-              ) : (
-                <span className="read-access">👁️ Read Only</span>
-              )}
-            </div>
-          )}
         </div>
 
         {repository && (
@@ -265,24 +250,27 @@ const DAKDashboardContent = () => {
           />
         )}
 
-        <div className="dashboard-tabs">
+        <div className="tab-navigation-fullwidth">
           <button 
-            className={`tab-button ${activeTab === 'core' ? 'active' : ''}`}
+            className={`tab-button-fullwidth ${activeTab === 'core' ? 'active' : ''}`}
             onClick={() => setActiveTab('core')}
           >
-            9 Core Components
+            <span className="tab-icon">⭐</span>
+            <span className="tab-text">9 Core Components</span>
           </button>
           <button 
-            className={`tab-button ${activeTab === 'additional' ? 'active' : ''}`}
+            className={`tab-button-fullwidth ${activeTab === 'additional' ? 'active' : ''}`}
             onClick={() => setActiveTab('additional')}
           >
-            Additional Components ({additionalComponents.length})
+            <span className="tab-icon">🔧</span>
+            <span className="tab-text">Additional Components ({additionalComponents.length})</span>
           </button>
           <button 
-            className={`tab-button ${activeTab === 'publications' ? 'active' : ''}`}
+            className={`tab-button-fullwidth ${activeTab === 'publications' ? 'active' : ''}`}
             onClick={() => setActiveTab('publications')}
           >
-            Publications
+            <span className="tab-icon">📚</span>
+            <span className="tab-text">Publications</span>
           </button>
         </div>
 
