@@ -1,0 +1,263 @@
+.oauth-device-flow {
+  width: 100%;
+}
+
+.oauth-section {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  border: 1px solid #e1e4e8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.oauth-section h4 {
+  margin: 0 0 1rem 0;
+  color: #24292e;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.oauth-description {
+  margin: 0 0 1.5rem 0;
+  color: #586069;
+  line-height: 1.5;
+}
+
+.permissions-info {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f6f8fa;
+  border-radius: 6px;
+  border: 1px solid #e1e4e8;
+}
+
+.permissions-info h5 {
+  margin: 0 0 0.75rem 0;
+  color: #24292e;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.permissions-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.permission-item {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #586069;
+}
+
+.permission-item code {
+  display: inline-block;
+  margin-right: 0.5rem;
+  padding: 0.2rem 0.4rem;
+  background: #e1e4e8;
+  border-radius: 3px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.85rem;
+  color: #24292e;
+  font-weight: 500;
+  min-width: 100px;
+}
+
+.github-oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #24292e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.github-oauth-btn:hover {
+  background: #1f252a;
+}
+
+.github-oauth-btn:active {
+  background: #1a1f23;
+}
+
+.github-icon {
+  font-size: 1.1rem;
+}
+
+.oauth-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.oauth-status.loading {
+  padding: 2rem 1rem;
+}
+
+.oauth-status.success {
+  padding: 2rem 1rem;
+  color: #28a745;
+}
+
+.oauth-status.error {
+  padding: 2rem 1rem;
+  color: #d73a49;
+}
+
+.spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 3px solid #24292e;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.success-icon,
+.error-icon {
+  font-size: 2rem;
+}
+
+.device-flow-instructions {
+  text-align: center;
+}
+
+.verification-step {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f6f8fa;
+  border-radius: 6px;
+  border: 1px solid #e1e4e8;
+}
+
+.verification-step p {
+  margin: 0 0 1rem 0;
+  color: #24292e;
+  font-weight: 500;
+}
+
+.device-code {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.user-code {
+  padding: 0.75rem 1rem;
+  background: #24292e;
+  color: white;
+  border-radius: 6px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  border: 2px solid #24292e;
+}
+
+.copy-btn {
+  padding: 0.5rem;
+  background: transparent;
+  border: 1px solid #e1e4e8;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.copy-btn:hover {
+  background: #f6f8fa;
+}
+
+.verification-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #0366d6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.verification-btn:hover {
+  background: #0256cc;
+}
+
+.verification-btn:active {
+  background: #024dbc;
+}
+
+.time-remaining {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  color: #856404;
+  font-size: 0.9rem;
+}
+
+.retry-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #0366d6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: #0256cc;
+}
+
+.retry-btn:active {
+  background: #024dbc;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .oauth-section {
+    padding: 1rem;
+  }
+  
+  .device-code {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .user-code {
+    font-size: 1rem;
+  }
+  
+  .verification-btn {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+}

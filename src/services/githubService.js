@@ -2,6 +2,7 @@ import { Octokit } from '@octokit/rest';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
 import logger from '../utils/logger';
+import GITHUB_CONFIG from '../config/github';
 
 class GitHubService {
   constructor() {
@@ -10,6 +11,12 @@ class GitHubService {
     this.permissions = null;
     this.tokenType = null; // 'classic', 'fine-grained', or 'oauth'
     this.logger = logger.getLogger('GitHubService');
+    
+    // Per-repository token management (in-memory only)
+    this.repoTokens = new Map(); // Map of 'owner/repo' -> { token, scopes, octokit }
+    this.currentRepo = null; // Currently active repository
+    this.guestMode = false; // Whether user is browsing without authentication
+    
     this.logger.debug('GitHubService instance created');
   }
 
@@ -55,6 +62,305 @@ class GitHubService {
       this.isAuthenticated = false;
       return false;
     }
+  }
+
+  // OAuth Device Flow methods
+  
+  // Step 1: Initialize OAuth device flow
+  async initiateDeviceFlow(scopes = GITHUB_CONFIG.DEFAULT_SCOPES) {
+    this.logger.auth('Starting OAuth device flow', { scopes });
+    
+    try {
+      // Use GitHub's OAuth device flow endpoint
+      const response = await fetch('https://github.com/login/device/code', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          client_id: GITHUB_CONFIG.CLIENT_ID,
+          scope: scopes.join(' ')
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Device flow initiation failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      this.logger.auth('Device flow initiated successfully', { 
+        device_code: data.device_code ? 'present' : 'missing',
+        verification_uri: data.verification_uri,
+        expires_in: data.expires_in 
+      });
+
+      return {
+        device_code: data.device_code,
+        user_code: data.user_code,
+        verification_uri: data.verification_uri,
+        verification_uri_complete: data.verification_uri_complete,
+        expires_in: data.expires_in,
+        interval: data.interval || 5
+      };
+    } catch (error) {
+      this.logger.auth('Device flow initiation failed', { error: error.message });
+      console.error('Failed to initiate device flow:', error);
+      throw error;
+    }
+  }
+
+  // Step 2: Poll for device flow completion
+  async pollDeviceFlowToken(deviceCode, interval = 5) {
+    this.logger.auth('Starting device flow token polling', { deviceCode: deviceCode ? 'present' : 'missing', interval });
+    
+    try {
+      const response = await fetch('https://github.com/login/oauth/access_token', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          client_id: GITHUB_CONFIG.CLIENT_ID,
+          device_code: deviceCode,
+          grant_type: 'urn:ietf:params:oauth:grant-type:device_code'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Token polling failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.error) {
+        if (data.error === 'authorization_pending') {
+          this.logger.auth('Device flow authorization still pending');
+          return { status: 'pending' };
+        } else if (data.error === 'slow_down') {
+          this.logger.auth('Device flow polling too fast, slowing down');
+          return { status: 'slow_down' };
+        } else if (data.error === 'expired_token') {
+          this.logger.auth('Device flow token expired');
+          return { status: 'expired' };
+        } else if (data.error === 'access_denied') {
+          this.logger.auth('Device flow access denied by user');
+          return { status: 'denied' };
+        } else {
+          throw new Error(`Device flow error: ${data.error} - ${data.error_description}`);
+        }
+      }
+
+      this.logger.auth('Device flow token received successfully', { 
+        tokenType: data.token_type,
+        scope: data.scope 
+      });
+
+      return {
+        status: 'success',
+        access_token: data.access_token,
+        token_type: data.token_type,
+        scope: data.scope
+      };
+    } catch (error) {
+      this.logger.auth('Device flow token polling failed', { error: error.message });
+      console.error('Failed to poll device flow token:', error);
+      throw error;
+    }
+  }
+
+  // Complete OAuth device flow authentication
+  async authenticateWithDeviceFlow(accessToken, scopes) {
+    this.logger.auth('Completing device flow authentication', { scopes });
+    
+    try {
+      const octokit = new Octokit({ auth: accessToken });
+      
+      // Test the token by fetching user info
+      const userResponse = await octokit.rest.users.getAuthenticated();
+      
+      // Store the authentication
+      this.octokit = octokit;
+      this.isAuthenticated = true;
+      this.tokenType = 'oauth';
+      
+      this.logger.auth('Device flow authentication completed successfully', { 
+        username: userResponse.data.login,
+        tokenType: this.tokenType,
+        scopes 
+      });
+
+      return {
+        success: true,
+        user: userResponse.data,
+        scopes,
+        token: accessToken
+      };
+    } catch (error) {
+      this.logger.auth('Device flow authentication completion failed', { error: error.message });
+      console.error('Failed to complete device flow authentication:', error);
+      this.isAuthenticated = false;
+      throw error;
+    }
+  }
+
+  // Per-Repository Token Management
+
+  // Set token for specific repository
+  setRepositoryToken(owner, repo, token, scopes) {
+    const repoKey = `${owner}/${repo}`;
+    this.logger.auth('Setting repository token', { repo: repoKey, scopes });
+    
+    try {
+      const octokit = new Octokit({ auth: token });
+      this.repoTokens.set(repoKey, {
+        token,
+        scopes: scopes || [],
+        octokit,
+        timestamp: Date.now()
+      });
+      
+      this.logger.auth('Repository token set successfully', { repo: repoKey });
+      return true;
+    } catch (error) {
+      this.logger.auth('Failed to set repository token', { repo: repoKey, error: error.message });
+      console.error('Failed to set repository token:', error);
+      return false;
+    }
+  }
+
+  // Get token for specific repository
+  getRepositoryToken(owner, repo) {
+    const repoKey = `${owner}/${repo}`;
+    return this.repoTokens.get(repoKey);
+  }
+
+  // Switch to repository context
+  switchToRepository(owner, repo) {
+    const repoKey = `${owner}/${repo}`;
+    this.currentRepo = repoKey;
+    this.logger.debug('Switched to repository context', { repo: repoKey });
+    
+    const repoAuth = this.repoTokens.get(repoKey);
+    if (repoAuth) {
+      // Use repository-specific authentication
+      this.octokit = repoAuth.octokit;
+      this.isAuthenticated = true;
+      this.tokenType = 'oauth';
+      this.guestMode = false;
+      this.logger.auth('Using repository-specific authentication', { repo: repoKey, scopes: repoAuth.scopes });
+    } else {
+      // Fall back to guest mode for this repository
+      this.guestMode = true;
+      this.isAuthenticated = false;
+      this.octokit = new Octokit(); // Public API access only
+      this.logger.auth('Switched to guest mode for repository', { repo: repoKey });
+    }
+    
+    return this.getRepositoryAccessLevel(owner, repo);
+  }
+
+  // Get access level for repository
+  getRepositoryAccessLevel(owner, repo) {
+    const repoKey = `${owner}/${repo}`;
+    const repoAuth = this.repoTokens.get(repoKey);
+    
+    if (!repoAuth) {
+      return {
+        level: 'read-only',
+        canComment: false,
+        canManageWorkflows: false,
+        scopes: [],
+        authenticated: false
+      };
+    }
+
+    const scopes = repoAuth.scopes;
+    const hasPublicRepo = scopes.includes('public_repo');
+    const hasRepo = scopes.includes('repo');
+    const hasWorkflow = scopes.includes('workflow');
+
+    return {
+      level: (hasPublicRepo || hasRepo) ? 'read-write' : 'read-only',
+      canComment: hasPublicRepo || hasRepo,
+      canManageWorkflows: hasWorkflow,
+      scopes,
+      authenticated: true
+    };
+  }
+
+  // Check if repository requires additional scopes for an action
+  checkRequiredScopes(owner, repo, action) {
+    const repoKey = `${owner}/${repo}`;
+    const repoAuth = this.repoTokens.get(repoKey);
+    const currentScopes = repoAuth ? repoAuth.scopes : [];
+    
+    const actionRequirements = {
+      'comment': ['public_repo'], // Can also use 'repo' for private repos
+      'workflow': ['workflow'],
+      'write': ['public_repo'] // Can also use 'repo' for private repos
+    };
+
+    const requiredScopes = actionRequirements[action] || [];
+    const missingScopes = requiredScopes.filter(scope => !currentScopes.includes(scope));
+    
+    return {
+      hasPermission: missingScopes.length === 0,
+      missingScopes,
+      requiredScopes
+    };
+  }
+
+  // Remove repository token (revoke access)
+  removeRepositoryToken(owner, repo) {
+    const repoKey = `${owner}/${repo}`;
+    const removed = this.repoTokens.delete(repoKey);
+    
+    if (removed) {
+      this.logger.auth('Repository token removed', { repo: repoKey });
+      
+      // If this was the current repository, switch to guest mode
+      if (this.currentRepo === repoKey) {
+        this.switchToRepository(owner, repo);
+      }
+    }
+    
+    return removed;
+  }
+
+  // Get all repository tokens (for management UI)
+  getAllRepositoryTokens() {
+    const tokens = [];
+    for (const [repoKey, auth] of this.repoTokens.entries()) {
+      const [owner, repo] = repoKey.split('/');
+      tokens.push({
+        owner,
+        repo,
+        scopes: auth.scopes,
+        timestamp: auth.timestamp
+      });
+    }
+    return tokens;
+  }
+
+  // Clear all repository tokens
+  clearAllRepositoryTokens() {
+    this.repoTokens.clear();
+    this.currentRepo = null;
+    this.guestMode = true;
+    this.isAuthenticated = false;
+    this.octokit = new Octokit(); // Public API access only
+    this.logger.auth('All repository tokens cleared');
+  }
+
+  // Enable guest mode (read-only browsing)
+  enableGuestMode() {
+    this.guestMode = true;
+    this.isAuthenticated = false;
+    this.octokit = new Octokit(); // Public API access only
+    this.logger.auth('Guest mode enabled');
   }
 
   // Check token permissions and type
