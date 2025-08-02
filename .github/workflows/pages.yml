@@ -237,6 +237,16 @@ jobs:
         run: |
           set -e
           
+          # IMPORTANT: Save existing branch directories FIRST (including the newly created one)
+          echo "Preserving all branch directories (including newly created)..."
+          if ls -d */ > /dev/null 2>&1; then
+            mkdir -p /tmp/branch-backup
+            for dir in */; do
+              echo "Backing up directory: $dir"
+              cp -r "$dir" /tmp/branch-backup/
+            done
+          fi
+          
           # Switch back to the original branch to build landing page
           # Stash any uncommitted changes including untracked files before checkout
           git stash -u -m "Stash before switching to ${{ github.ref_name }}" || echo "Nothing to stash"
@@ -265,19 +275,12 @@ jobs:
           # Deploy landing page to root (but preserve branch directories)
           echo "Deploying root landing page..."
           
-          # Save existing branch directories
-          if ls -d */ > /dev/null 2>&1; then
-            echo "Preserving existing branch directories..."
-            mkdir -p /tmp/branch-backup
-            for dir in */; do
-              cp -r "$dir" /tmp/branch-backup/
-            done
-          fi
-          
-          # Clear root (except .git)
+          # Clear root (except .git) - this will remove all directories temporarily  
+          echo "Clearing root directory (temporarily)..."
           find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name '.github' -exec rm -rf {} +
           
           # Copy root landing page
+          echo "Deploying root landing page files..."
           cp -a /tmp/root-build-backup/. .
           
           # Ensure no build directory exists in root after copying
@@ -289,8 +292,9 @@ jobs:
           # Clean up temporary build backup
           rm -rf /tmp/root-build-backup
           
-          # Restore branch directories
+          # Restore all branch directories (including the newly created one)
           if [[ -d /tmp/branch-backup ]]; then
+            echo "Restoring all branch directories..."
             cp -r /tmp/branch-backup/* .
             rm -rf /tmp/branch-backup
           fi
