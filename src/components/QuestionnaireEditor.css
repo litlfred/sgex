@@ -314,6 +314,36 @@
   gap: 0.75rem;
 }
 
+/* Form Tabs */
+.form-tabs {
+  display: flex;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e1dfdd;
+  padding: 0 2rem;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 1rem 1.5rem;
+  font-size: 0.9rem;
+  color: #605e5c;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: #323130;
+  background: rgba(0, 120, 212, 0.05);
+}
+
+.tab-button.active {
+  color: #0078d4;
+  border-bottom-color: #0078d4;
+  background: rgba(0, 120, 212, 0.05);
+}
+
 .form-content {
   padding: 2rem;
   max-height: calc(100vh - 200px);
@@ -343,16 +373,187 @@
 }
 
 .form-field input,
-.form-field select {
+.form-field select,
+.form-field textarea {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #d2d0ce;
   border-radius: 4px;
   font-size: 1rem;
+  font-family: inherit;
 }
 
 .form-field input:focus,
-.form-field select:focus {
+.form-field select:focus,
+.form-field textarea:focus {
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+.form-field textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Visual Editor Components */
+.visual-editor-container {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e1dfdd;
+  overflow: hidden;
+}
+
+.visual-editor-toolbar {
+  background: #f8f9fa;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e1dfdd;
+}
+
+.visual-editor-toolbar h3 {
+  margin: 0 0 0.5rem;
+  color: #323130;
+}
+
+.visual-editor-loading {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.visual-editor-loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #0078d4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+.visual-editor-error {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #ffeaea;
+  border-radius: 8px;
+  border: 1px solid #d13438;
+}
+
+.visual-editor-error .error-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.visual-editor-error h3 {
+  color: #d13438;
+  margin-bottom: 1rem;
+}
+
+.lhc-forms-container {
+  background: white;
+  border-radius: 4px;
+}
+
+/* LHC-Forms Placeholder Styles */
+.lhc-forms-placeholder {
+  background: #f8f9fa;
+  border: 2px dashed #d2d0ce;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-content {
+  max-width: 600px;
+}
+
+.placeholder-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.placeholder-content h4 {
+  margin-bottom: 1rem;
+  color: #323130;
+  font-size: 1.5rem;
+}
+
+.placeholder-content ul {
+  text-align: left;
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.placeholder-content li {
+  margin-bottom: 0.5rem;
+  color: #605e5c;
+}
+
+.questionnaire-preview {
+  background: white;
+  border: 1px solid #e1dfdd;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1.5rem;
+  text-align: left;
+}
+
+.questionnaire-preview h5 {
+  margin: 0 0 0.75rem;
+  color: #323130;
+}
+
+.preview-stats {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.preview-stats span {
+  background: #f3f2f1;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: #323130;
+}
+
+/* LHC-Forms Integration Styles */
+.lhc-forms-container .lf-form-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #323130;
+  margin-bottom: 1rem;
+}
+
+.lhc-forms-container .lf-item {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #e1dfdd;
+  border-radius: 4px;
+}
+
+.lhc-forms-container .lf-item-label {
+  font-weight: 500;
+  color: #323130;
+  margin-bottom: 0.5rem;
+}
+
+.lhc-forms-container input,
+.lhc-forms-container textarea,
+.lhc-forms-container select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d2d0ce;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.lhc-forms-container input:focus,
+.lhc-forms-container textarea:focus,
+.lhc-forms-container select:focus {
   outline: none;
   border-color: #0078d4;
   box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);

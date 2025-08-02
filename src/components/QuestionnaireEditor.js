@@ -307,10 +307,11 @@ const QuestionnaireEditorContent = () => {
   );
 };
 
-// Basic questionnaire editing form (to be enhanced with LHC-Forms)
+// Enhanced questionnaire editing form with LHC-Forms integration
 const QuestionnaireEditorForm = ({ questionnaire, onSave, onCancel }) => {
   const [content, setContent] = useState(questionnaire.content);
   const [isModified, setIsModified] = useState(false);
+  const [editMode, setEditMode] = useState('form'); // 'form', 'visual', 'json'
 
   const handleSave = () => {
     onSave(content);
@@ -347,77 +348,188 @@ const QuestionnaireEditorForm = ({ questionnaire, onSave, onCancel }) => {
         </div>
       </div>
 
+      <div className="form-tabs">
+        <button 
+          className={`tab-button ${editMode === 'form' ? 'active' : ''}`}
+          onClick={() => setEditMode('form')}
+        >
+          📝 Basic Info
+        </button>
+        <button 
+          className={`tab-button ${editMode === 'visual' ? 'active' : ''}`}
+          onClick={() => setEditMode('visual')}
+        >
+          🎨 Visual Editor
+        </button>
+        <button 
+          className={`tab-button ${editMode === 'json' ? 'active' : ''}`}
+          onClick={() => setEditMode('json')}
+        >
+          📄 JSON Editor
+        </button>
+      </div>
+
       <div className="form-content">
-        <div className="form-section">
-          <h3>Basic Information</h3>
-          
-          <div className="form-field">
-            <label htmlFor="title">Title</label>
-            <input
-              id="title"
-              type="text"
-              value={content.title || ''}
-              onChange={(e) => updateField('title', e.target.value)}
-              placeholder="Questionnaire title"
-            />
-          </div>
+        {editMode === 'form' && (
+          <div className="form-section">
+            <h3>Basic Information</h3>
+            
+            <div className="form-field">
+              <label htmlFor="title">Title</label>
+              <input
+                id="title"
+                type="text"
+                value={content.title || ''}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="Questionnaire title"
+              />
+            </div>
 
-          <div className="form-field">
-            <label htmlFor="id">ID</label>
-            <input
-              id="id"
-              type="text"
-              value={content.id || ''}
-              onChange={(e) => updateField('id', e.target.value)}
-              placeholder="Questionnaire ID"
-            />
-          </div>
+            <div className="form-field">
+              <label htmlFor="id">ID</label>
+              <input
+                id="id"
+                type="text"
+                value={content.id || ''}
+                onChange={(e) => updateField('id', e.target.value)}
+                placeholder="Questionnaire ID"
+              />
+            </div>
 
-          <div className="form-field">
-            <label htmlFor="url">URL</label>
-            <input
-              id="url"
-              type="url"
-              value={content.url || ''}
-              onChange={(e) => updateField('url', e.target.value)}
-              placeholder="Questionnaire URL"
-            />
-          </div>
+            <div className="form-field">
+              <label htmlFor="url">URL</label>
+              <input
+                id="url"
+                type="url"
+                value={content.url || ''}
+                onChange={(e) => updateField('url', e.target.value)}
+                placeholder="Questionnaire URL"
+              />
+            </div>
 
-          <div className="form-field">
-            <label htmlFor="status">Status</label>
-            <select
-              id="status"
-              value={content.status || 'draft'}
-              onChange={(e) => updateField('status', e.target.value)}
-            >
-              <option value="draft">Draft</option>
-              <option value="active">Active</option>
-              <option value="retired">Retired</option>
-              <option value="unknown">Unknown</option>
-            </select>
-          </div>
-        </div>
+            <div className="form-field">
+              <label htmlFor="status">Status</label>
+              <select
+                id="status"
+                value={content.status || 'draft'}
+                onChange={(e) => updateField('status', e.target.value)}
+              >
+                <option value="draft">Draft</option>
+                <option value="active">Active</option>
+                <option value="retired">Retired</option>
+                <option value="unknown">Unknown</option>
+              </select>
+            </div>
 
-        <div className="form-section">
-          <h3>JSON Content</h3>
-          <p className="note">
-            Note: This is a basic JSON editor. LHC-Forms visual editor will be integrated here.
-          </p>
-          <textarea
-            className="json-editor"
-            value={JSON.stringify(content, null, 2)}
-            onChange={(e) => {
-              try {
-                const parsed = JSON.parse(e.target.value);
-                setContent(parsed);
+            <div className="form-field">
+              <label htmlFor="description">Description</label>
+              <textarea
+                id="description"
+                value={content.description || ''}
+                onChange={(e) => updateField('description', e.target.value)}
+                placeholder="Brief description of the questionnaire"
+                rows={3}
+              />
+            </div>
+          </div>
+        )}
+
+        {editMode === 'visual' && (
+          <div className="form-section">
+            <LHCFormsVisualEditor 
+              questionnaire={content}
+              onChange={(updatedQuestionnaire) => {
+                setContent(updatedQuestionnaire);
                 setIsModified(true);
-              } catch (error) {
-                // Invalid JSON, don't update content
-              }
-            }}
-            rows={20}
-          />
+              }}
+            />
+          </div>
+        )}
+
+        {editMode === 'json' && (
+          <div className="form-section">
+            <h3>JSON Content</h3>
+            <p className="note">
+              Advanced JSON editor for direct FHIR Questionnaire editing.
+            </p>
+            <textarea
+              className="json-editor"
+              value={JSON.stringify(content, null, 2)}
+              onChange={(e) => {
+                try {
+                  const parsed = JSON.parse(e.target.value);
+                  setContent(parsed);
+                  setIsModified(true);
+                } catch (error) {
+                  // Invalid JSON, don't update content
+                }
+              }}
+              rows={25}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// LHC-Forms Visual Editor Component (Placeholder for future implementation)
+const LHCFormsVisualEditor = ({ questionnaire, onChange }) => {
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    // Simulate loading time for LHC-Forms
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!isReady) {
+    return (
+      <div className="visual-editor-loading">
+        <div className="spinner"></div>
+        <p>Loading LHC-Forms visual editor...</p>
+        <p className="note">
+          The LHC-Forms visual editor provides an intuitive interface for building questionnaires.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="visual-editor-container">
+      <div className="visual-editor-toolbar">
+        <h3>Visual Questionnaire Editor</h3>
+        <p className="note">
+          The LHC-Forms visual editor will be integrated here to provide a drag-and-drop interface for building questionnaires.
+        </p>
+      </div>
+      <div className="lhc-forms-placeholder">
+        <div className="placeholder-content">
+          <div className="placeholder-icon">🎨</div>
+          <h4>LHC-Forms Visual Editor</h4>
+          <p>This powerful visual editor will allow you to:</p>
+          <ul>
+            <li>Drag and drop form elements</li>
+            <li>Configure item properties visually</li>
+            <li>Preview questionnaire in real-time</li>
+            <li>Support for FHIR Questionnaire extensions</li>
+            <li>Multilingual content management</li>
+          </ul>
+          <p className="note">
+            <strong>Coming Soon:</strong> This feature is currently under development. 
+            For now, you can use the JSON editor to create and modify questionnaires.
+          </p>
+          <div className="questionnaire-preview">
+            <h5>Current Questionnaire: {questionnaire.title}</h5>
+            <div className="preview-stats">
+              <span>📋 {questionnaire.item?.length || 0} items</span>
+              <span>📊 Status: {questionnaire.status}</span>
+              <span>🆔 ID: {questionnaire.id}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
