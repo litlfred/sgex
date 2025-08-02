@@ -592,7 +592,7 @@ const DAKDashboardContent = () => {
           )}
 
           {/* Tab Navigation */}
-          <div className="tab-navigation">
+          <div className="dashboard-tabs">
             <button 
               className={`tab-button ${activeTab === 'core' ? 'active' : ''}`}
               onClick={() => setActiveTab('core')}
