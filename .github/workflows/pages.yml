@@ -13,6 +13,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  pull-requests: write
 
 concurrency:
   group: "pages-${{ github.ref_name }}"
@@ -492,3 +493,113 @@ jobs:
           echo ""
           echo "📋 Deployment info for downstream tools:"
           echo "$deployment_json"
+
+      - name: Comment PR with deployment URLs
+        if: always() && steps.deployment_info.outputs.deployment_status == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              // Get deployment info
+              const branchName = '${{ steps.deployment_info.outputs.branch_name }}';
+              const branchUrl = '${{ steps.deployment_info.outputs.branch_url }}';
+              const landingUrl = '${{ steps.deployment_info.outputs.landing_url }}';
+              const mainUrl = '${{ steps.deployment_info.outputs.main_url }}';
+              const commitSha = '${{ steps.deployment_info.outputs.commit_sha }}';
+              const deployedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+              
+              // Find PR associated with this commit
+              const { data: prs } = await github.rest.repos.listPullRequests({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${branchName}`
+              });
+              
+              let prNumber = null;
+              
+              // Check if this push is from a PR branch
+              if (prs.length > 0) {
+                prNumber = prs[0].number;
+              } else {
+                // Also check if this commit exists in any open PR
+                const { data: allPrs } = await github.rest.repos.listPullRequests({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open'
+                });
+                
+                for (const pr of allPrs) {
+                  try {
+                    const { data: commits } = await github.rest.pulls.listCommits({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      pull_number: pr.number
+                    });
+                    
+                    if (commits.some(commit => commit.sha === commitSha)) {
+                      prNumber = pr.number;
+                      break;
+                    }
+                  } catch (error) {
+                    console.log(`Error checking commits for PR ${pr.number}:`, error.message);
+                  }
+                }
+              }
+              
+              if (!prNumber) {
+                console.log('No associated pull request found for this deployment');
+                return;
+              }
+              
+              console.log(`Found associated PR #${prNumber} for branch ${branchName}`);
+              
+              // Create comment body with escaped template literals
+              const commentBody = '## 🚀 Deployment Preview Ready!\n\n' +
+                '**Branch:** `' + branchName + '`\n' +
+                '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
+                '**Deployed:** ' + deployedAt + '\n\n' +
+                '### 🌐 Preview URLs\n' +
+                '- **Branch Preview:** [' + branchUrl + '](' + branchUrl + ')\n' +
+                '- **Landing Page:** [' + landingUrl + '](' + landingUrl + ')\n' +
+                '- **Main App:** [' + mainUrl + '](' + mainUrl + ')\n\n' +
+                '---\n' +
+                'The branch preview is automatically updated with each push to this branch.';
+              
+              // Find existing deployment comment
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+              });
+              
+              const existingComment = comments.find(comment => 
+                comment.body.includes('🚀 Deployment Preview Ready!')
+              );
+              
+              if (existingComment) {
+                // Update existing comment
+                console.log('Updating existing deployment comment');
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: commentBody
+                });
+              } else {
+                // Create new comment
+                console.log('Creating new deployment comment');
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: commentBody
+                });
+              }
+              
+              console.log(`✅ Successfully posted deployment URLs to PR #${prNumber}`);
+              
+            } catch (error) {
+              console.error('Error posting deployment comment:', error);
+              // Don't fail the workflow if commenting fails
+            }
