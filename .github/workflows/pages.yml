@@ -428,6 +428,10 @@ jobs:
             fi
             
             echo "Pushing to gh-pages..."
+            # Pull any remote changes first to avoid conflicts
+            git pull origin gh-pages --rebase || {
+              echo "Pull failed, attempting to push anyway..."
+            }
             git push origin gh-pages
             
             echo "✅ Deployment completed successfully"
