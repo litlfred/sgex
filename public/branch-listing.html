@@ -426,6 +426,52 @@
             color: #991b1b;
         }
 
+        .deployment-status {
+            background: var(--who-hover-bg);
+            color: var(--who-text-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .deployment-status.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .deployment-status.failure {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .deployment-status.in_progress {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .deployment-status.queued {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .deployment-status.checking {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .deployment-status.no_deployment {
+            background: #f9fafb;
+            color: #9ca3af;
+        }
+
+        .deployment-status.error {
+            background: #fecaca;
+            color: #dc2626;
+        }
+
         .card-body {
             margin-bottom: 1rem;
         }
@@ -442,7 +488,7 @@
             flex-wrap: wrap;
         }
 
-        .preview-link, .pr-link, .copy-btn {
+        .preview-link, .pr-link {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
@@ -464,15 +510,6 @@
         .preview-link:hover {
             background: #0256cc;
             text-decoration: none;
-            color: white;
-        }
-
-        .copy-btn {
-            background: #28a745;
-        }
-
-        .copy-btn:hover {
-            background: #218838;
             color: white;
         }
 
@@ -945,6 +982,7 @@
             const [prPage, setPrPage] = useState(1);
             const [prSearchTerm, setPrSearchTerm] = useState('');
             const [prSortBy, setPrSortBy] = useState('updated');
+            const [prSortDirection, setPrSortDirection] = useState('desc');
             const [prFilter, setPrFilter] = useState('open');
             const [isAuthenticated, setIsAuthenticated] = useState(false);
             const [githubToken, setGithubToken] = useState(null);
@@ -955,8 +993,120 @@
             const [expandedDiscussions, setExpandedDiscussions] = useState({});
             const [discussionSummaries, setDiscussionSummaries] = useState({});
             const [loadingSummaries, setLoadingSummaries] = useState(false);
+            const [deploymentStatuses, setDeploymentStatuses] = useState({});
+            const [lastDeploymentCheck, setLastDeploymentCheck] = useState(null);
 
             const ITEMS_PER_PAGE = 10;
+
+            // Function to fetch deployment status for a branch
+            const fetchDeploymentStatus = async (branchName) => {
+                if (!githubToken) return null;
+                
+                try {
+                    // Get the latest workflow runs for pages-build-deployment
+                    const response = await fetch(
+                        `https://api.github.com/repos/litlfred/sgex/actions/runs?branch=${branchName}&workflow_id=pages-build-deployment`,
+                        {
+                            headers: {
+                                'Authorization': `token ${githubToken}`,
+                                'Accept': 'application/vnd.github.v3+json'
+                            }
+                        }
+                    );
+                    
+                    if (!response.ok) {
+                        // If workflow not found or unauthorized, try general search
+                        const generalResponse = await fetch(
+                            `https://api.github.com/repos/litlfred/sgex/actions/runs?branch=${branchName}&per_page=5`,
+                            {
+                                headers: {
+                                    'Authorization': `token ${githubToken}`,
+                                    'Accept': 'application/vnd.github.v3+json'
+                                }
+                            }
+                        );
+                        
+                        if (!generalResponse.ok) {
+                            throw new Error(`Failed to fetch deployment status: ${generalResponse.status}`);
+                        }
+                        
+                        const generalData = await generalResponse.json();
+                        // Look for pages-related workflows
+                        const pagesRuns = generalData.workflow_runs.filter(run => 
+                            run.name.toLowerCase().includes('pages') || 
+                            run.name.toLowerCase().includes('deploy')
+                        );
+                        
+                        if (pagesRuns.length === 0) {
+                            return { status: 'no_deployment', conclusion: null, updated_at: new Date() };
+                        }
+                        
+                        const latestRun = pagesRuns[0];
+                        return {
+                            status: latestRun.status,
+                            conclusion: latestRun.conclusion,
+                            updated_at: new Date(latestRun.updated_at),
+                            html_url: latestRun.html_url
+                        };
+                    }
+                    
+                    const data = await response.json();
+                    if (data.workflow_runs.length === 0) {
+                        return { status: 'no_deployment', conclusion: null, updated_at: new Date() };
+                    }
+                    
+                    const latestRun = data.workflow_runs[0];
+                    return {
+                        status: latestRun.status,
+                        conclusion: latestRun.conclusion,
+                        updated_at: new Date(latestRun.updated_at),
+                        html_url: latestRun.html_url
+                    };
+                } catch (error) {
+                    console.error(`Error fetching deployment status for ${branchName}:`, error);
+                    return { status: 'error', conclusion: null, updated_at: new Date() };
+                }
+            };
+
+            // Function to update deployment statuses for all visible PRs
+            const updateDeploymentStatuses = useCallback(async (prs) => {
+                if (!githubToken || prs.length === 0) return;
+                
+                const statuses = {};
+                for (const pr of prs) {
+                    statuses[pr.branchName] = await fetchDeploymentStatus(pr.branchName);
+                }
+                
+                setDeploymentStatuses(prev => ({ ...prev, ...statuses }));
+                setLastDeploymentCheck(new Date());
+            }, [githubToken]);
+
+            // Function to get deployment status display
+            const getDeploymentStatusDisplay = (branchName) => {
+                const status = deploymentStatuses[branchName];
+                if (!status) return { text: 'Checking...', className: 'checking' };
+                
+                switch (status.status) {
+                    case 'completed':
+                        if (status.conclusion === 'success') {
+                            return { text: 'Deployed ✅', className: 'success' };
+                        } else if (status.conclusion === 'failure') {
+                            return { text: 'Failed ❌', className: 'failure' };
+                        } else {
+                            return { text: 'Completed', className: 'completed' };
+                        }
+                    case 'in_progress':
+                        return { text: 'Deploying 🔄', className: 'in_progress' };
+                    case 'queued':
+                        return { text: 'Queued ⏳', className: 'queued' };
+                    case 'no_deployment':
+                        return { text: 'No deployment', className: 'no_deployment' };
+                    case 'error':
+                        return { text: 'Check failed', className: 'error' };
+                    default:
+                        return { text: status.status, className: 'unknown' };
+                }
+            };
 
             // GitHub authentication functions
             const handleAuthSuccess = (token, octokitInstance) => {
@@ -1201,36 +1351,25 @@
                 setLoadingComments(false);
             }, [githubToken]);
 
-            // Copy to clipboard function
-            const copyToClipboard = async (url, type, name) => {
-                try {
-                    await navigator.clipboard.writeText(url);
-                    console.log(`Copied ${type} URL for ${name} to clipboard`);
-                } catch (error) {
-                    const textArea = document.createElement('textarea');
-                    textArea.value = url;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    console.log(`Copied ${type} URL for ${name} to clipboard (fallback)`);
-                }
-            };
-
             // Sorting functions
-            const sortPRs = (prs, sortBy) => {
+            const sortPRs = (prs, sortBy, direction = 'desc') => {
                 return [...prs].sort((a, b) => {
+                    let comparison = 0;
                     switch (sortBy) {
                         case 'number':
-                            return b.number - a.number;
+                            comparison = b.number - a.number;
+                            break;
                         case 'alphabetical':
-                            return a.title.localeCompare(b.title);
+                            comparison = a.title.localeCompare(b.title);
+                            break;
                         case 'updated':
                         default:
                             const dateA = new Date(a.updatedAt);
                             const dateB = new Date(b.updatedAt);
-                            return dateB - dateA;
+                            comparison = dateB - dateA;
+                            break;
                     }
+                    return direction === 'asc' ? -comparison : comparison;
                 });
             };
 
@@ -1334,18 +1473,42 @@
                         pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
                         pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
                     );
-                    const sorted = sortPRs(filtered, prSortBy);
+                    const sorted = sortPRs(filtered, prSortBy, prSortDirection);
                     const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
                     loadDiscussionSummaries(paginated);
+                    updateDeploymentStatuses(paginated);
                 }
-            }, [prPage, prSearchTerm, prSortBy, pullRequests, isAuthenticated, loadDiscussionSummaries]);
+            }, [prPage, prSearchTerm, prSortBy, prSortDirection, pullRequests, isAuthenticated, loadDiscussionSummaries, updateDeploymentStatuses]);
+
+            // Periodic deployment status updates every 7 seconds
+            useEffect(() => {
+                if (!isAuthenticated || pullRequests.length === 0) return;
+
+                const updateCurrentPageDeployments = () => {
+                    const filtered = pullRequests.filter(pr => 
+                        pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
+                        pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
+                    );
+                    const sorted = sortPRs(filtered, prSortBy, prSortDirection);
+                    const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
+                    updateDeploymentStatuses(paginated);
+                };
+
+                // Initial update
+                updateCurrentPageDeployments();
+
+                // Set up periodic updates every 7 seconds
+                const interval = setInterval(updateCurrentPageDeployments, 7000);
+
+                return () => clearInterval(interval);
+            }, [prPage, prSearchTerm, prSortBy, prSortDirection, pullRequests, isAuthenticated, updateDeploymentStatuses]);
 
             // Filter and sort PRs
             const filteredPRs = pullRequests.filter(pr => 
                 pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
                 pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
             );
-            const sortedPRs = sortPRs(filteredPRs, prSortBy);
+            const sortedPRs = sortPRs(filteredPRs, prSortBy, prSortDirection);
             const paginatedPRs = sortedPRs.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
             const totalPRPages = Math.ceil(sortedPRs.length / ITEMS_PER_PAGE);
 
@@ -1476,6 +1639,21 @@
                                 <option value="number">Sort by PR Number</option>
                                 <option value="alphabetical">Sort Alphabetically</option>
                             </select>
+                            <div className="pr-filter-section">
+                                <label htmlFor="sort-direction">Order:</label>
+                                <select
+                                    id="sort-direction"
+                                    value={prSortDirection}
+                                    onChange={(e) => {
+                                        setPrSortDirection(e.target.value);
+                                        setPrPage(1);
+                                    }}
+                                    className="sort-select"
+                                >
+                                    <option value="desc">Descending</option>
+                                    <option value="asc">Ascending</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div className="pr-cards">
@@ -1496,6 +1674,11 @@
                                                 <span className={`state-badge ${pr.state}`}>
                                                     {pr.state === 'open' ? '🟢' : '🔴'} {pr.state}
                                                 </span>
+                                                {isAuthenticated && (
+                                                    <span className={`deployment-status ${getDeploymentStatusDisplay(pr.branchName).className}`}>
+                                                        {getDeploymentStatusDisplay(pr.branchName).text}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                         
@@ -1603,18 +1786,11 @@
                                                 <a 
                                                     href={pr.url} 
                                                     className="preview-link"
+                                                    target="_blank"
                                                     rel="noopener noreferrer"
                                                 >
                                                     <span>🚀 View Preview</span>
                                                 </a>
-                                                
-                                                <button 
-                                                    className="copy-btn"
-                                                    onClick={() => copyToClipboard(pr.url, 'PR', `#${pr.number}`)}
-                                                    title="Copy URL to clipboard"
-                                                >
-                                                    📋 Copy URL
-                                                </button>
                                                 
                                                 <a 
                                                     href={pr.prUrl} 
