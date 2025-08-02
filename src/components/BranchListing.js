@@ -639,7 +639,7 @@ const BranchListing = () => {
     };
 
     fetchData();
-  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadCommentsForPRs]);
+  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadCommentsForPRs, loadDiscussionSummaries]);
 
   // Load summaries for visible PRs when page changes
   useEffect(() => {
