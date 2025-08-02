@@ -2,7 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 import { Octokit } from '@octokit/rest';
-import { AssetEditorLayout, useDAKParams } from './framework';
+import { 
+  PageLayout, 
+  SaveButtonsContainer, 
+  CommitMessageDialog, 
+  useDAKParams 
+} from './framework';
+import dataAccessLayer from '../services/dataAccessLayer';
 import './BPMNEditor.css';
 
 const BPMNEditor = () => {
@@ -17,6 +23,18 @@ const BPMNEditor = () => {
   const [error, setError] = useState(null);
   const [currentXmlContent, setCurrentXmlContent] = useState('');
   const [originalXmlContent, setOriginalXmlContent] = useState('');
+  
+  // Save states (previously handled by AssetEditorLayout)
+  const [isSavingLocal, setIsSavingLocal] = useState(false);
+  const [isSavingGitHub, setIsSavingGitHub] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [localSaveSuccess, setLocalSaveSuccess] = useState(false);
+  const [githubSaveSuccess, setGithubSaveSuccess] = useState(false);
+  const [saveOptions, setSaveOptions] = useState(null);
+  
+  // Commit dialog state
+  const [showCommitDialog, setShowCommitDialog] = useState(false);
+  const [commitMessage, setCommitMessage] = useState('');
 
   // Initialize BPMN modeler
   useEffect(() => {
@@ -54,6 +72,26 @@ const BPMNEditor = () => {
       }
     };
   }, [selectedFile]);
+
+  // Load save options based on current user and repository
+  useEffect(() => {
+    const loadSaveOptions = async () => {
+      if (repository) {
+        try {
+          const options = await dataAccessLayer.getSaveOptions(
+            repository.owner?.login,
+            repository.name,
+            branch
+          );
+          setSaveOptions(options);
+        } catch (error) {
+          console.error('Error loading save options:', error);
+        }
+      }
+    };
+
+    loadSaveOptions();
+  }, [repository, branch]);
 
   // Load BPMN files from repository
   useEffect(() => {
@@ -152,13 +190,93 @@ const BPMNEditor = () => {
     }
   }, [selectedFile]);
 
-  // Handle save completion
-  const handleSave = async (content, saveType) => {
-    console.log(`BPMN diagram saved to ${saveType}`);
-    if (saveType === 'github') {
-      // After GitHub save, update the original content
-      setOriginalXmlContent(content);
+  // Check if user can save to GitHub based on access service
+  const canSaveToGitHub = saveOptions?.canSaveGitHub && saveOptions?.showSaveGitHub;
+
+  // Handle local save
+  const handleSaveLocal = async () => {
+    if (!hasChanges || !selectedFile?.path) return;
+
+    try {
+      setIsSavingLocal(true);
+      setSaveError(null);
+      setLocalSaveSuccess(false);
+
+      // Export BPMN XML first
+      const { xml } = await modelerRef.current.saveXML({ format: true });
+
+      // Use data access layer for local save
+      const result = await dataAccessLayer.saveAssetLocal(selectedFile.path, xml, {
+        repository: repository?.full_name || `${repository?.owner?.login}/${repository?.name}`,
+        branch: branch || repository?.default_branch || 'main',
+        fileName: selectedFile.name,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (result.result === 'success') {
+        setLocalSaveSuccess(true);
+        setCurrentXmlContent(xml);
+        
+        // Auto-hide success message after 3 seconds
+        setTimeout(() => {
+          setLocalSaveSuccess(false);
+        }, 3000);
+      } else {
+        throw new Error(result.message || 'Failed to save to local storage');
+      }
+
+    } catch (error) {
+      console.error('Error saving file locally:', error);
+      setSaveError(`Failed to save locally: ${error.message}`);
+    } finally {
+      setIsSavingLocal(false);
     }
+  };
+
+  // Handle GitHub save - shows commit dialog
+  const handleSaveGitHub = () => {
+    if (!hasChanges || !canSaveToGitHub) return;
+    
+    setSaveError(null);
+    setShowCommitDialog(true);
+  };
+
+  // Handle commit to GitHub with message
+  const handleCommitToGitHub = async (message) => {
+    if (!message.trim() || !selectedFile?.path) return;
+
+    try {
+      setIsSavingGitHub(true);
+      setSaveError(null);
+      setGithubSaveSuccess(false);
+
+      // Use the existing custom save function
+      const success = await customSaveToGitHub(message.trim());
+      if (success) {
+        setGithubSaveSuccess(true);
+        setShowCommitDialog(false);
+        setCommitMessage('');
+        
+        // Auto-hide success message after 3 seconds
+        setTimeout(() => {
+          setGithubSaveSuccess(false);
+        }, 3000);
+      } else {
+        throw new Error('GitHub save failed');
+      }
+
+    } catch (error) {
+      console.error('Error saving file to GitHub:', error);
+      setSaveError(`Failed to save to GitHub: ${error.message}`);
+    } finally {
+      setIsSavingGitHub(false);
+    }
+  };
+
+  // Handle commit dialog cancel
+  const handleCancelCommit = () => {
+    setShowCommitDialog(false);
+    setCommitMessage('');
   };
 
   // Custom save to GitHub function that exports XML and uses GitHub API
@@ -327,20 +445,51 @@ const BPMNEditor = () => {
   const hasChanges = currentXmlContent !== originalXmlContent;
 
   return (
-    <AssetEditorLayout
-      pageName="bpmn-editor"
-      file={selectedFile}
-      repository={repository}
-      branch={branch || 'main'}
-      content={currentXmlContent}
-      originalContent={originalXmlContent}
-      hasChanges={hasChanges}
-      onSave={handleSave}
-      saveButtonsPosition="top"
-      // Custom save function for GitHub to handle BPMN XML export
-      customSaveToGitHub={customSaveToGitHub}
-    >
+    <PageLayout pageName="bpmn-editor">
       <div className="bpmn-editor">
+        {/* Top save buttons */}
+        <div className="save-buttons-top">
+          <SaveButtonsContainer
+            hasChanges={hasChanges}
+            isSavingLocal={isSavingLocal}
+            isSavingGitHub={isSavingGitHub}
+            canSaveToGitHub={canSaveToGitHub}
+            localSaveSuccess={localSaveSuccess}
+            githubSaveSuccess={githubSaveSuccess}
+            onSaveLocal={handleSaveLocal}
+            onSaveGitHub={handleSaveGitHub}
+          />
+        </div>
+
+        {/* Error display */}
+        {saveError && (
+          <div className="bpmn-editor-error">
+            <span className="error-icon">⚠️</span>
+            {saveError}
+            <button 
+              className="btn-link error-dismiss"
+              onClick={() => setSaveError(null)}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Success messages */}
+        {localSaveSuccess && (
+          <div className="bpmn-editor-success">
+            <span className="success-icon">✅</span>
+            Changes saved locally successfully!
+          </div>
+        )}
+        
+        {githubSaveSuccess && (
+          <div className="bpmn-editor-success">
+            <span className="success-icon">✅</span>
+            Changes committed to GitHub successfully!
+          </div>
+        )}
+
         <div className="editor-content">
           <div className="bpmn-workspace">
             <div className="file-browser">
@@ -399,8 +548,21 @@ const BPMNEditor = () => {
             </div>
           </div>
         </div>
+
+        {/* Commit message dialog */}
+        {showCommitDialog && (
+          <CommitMessageDialog
+            isOpen={showCommitDialog}
+            commitMessage={commitMessage}
+            setCommitMessage={setCommitMessage}
+            onCommit={handleCommitToGitHub}
+            onCancel={handleCancelCommit}
+            isSaving={isSavingGitHub}
+            fileName={selectedFile?.name}
+          />
+        )}
       </div>
-    </AssetEditorLayout>
+    </PageLayout>
   );
 };
 

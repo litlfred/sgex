@@ -3,6 +3,61 @@
   padding: 0 !important;
 }
 
+/* Save buttons positioning */
+.save-buttons-top {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+/* Error and success message styles */
+.bpmn-editor-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #fff2f2;
+  border: 1px solid #ffb3b3;
+  border-radius: 6px;
+  color: #d73502;
+  margin-bottom: 1rem;
+}
+
+.bpmn-editor-success {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #f0f9f0;
+  border: 1px solid #90c695;
+  border-radius: 6px;
+  color: #0f7b0f;
+  margin-bottom: 1rem;
+}
+
+.error-icon,
+.success-icon {
+  font-size: 1.1em;
+}
+
+.error-dismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  cursor: pointer;
+  color: #d73502;
+  padding: 0;
+  line-height: 1;
+}
+
+.error-dismiss:hover {
+  opacity: 0.7;
+}
+
 /* Enhanced fullwidth mode - take over full main container */
 .page-main:has(.bpmn-editor.enhanced-fullwidth) {
   position: fixed;
