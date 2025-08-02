@@ -517,7 +517,7 @@ const BranchListing = () => {
               name: branch.name,
               safeName: safeName,
               commit: branch.commit,
-              url: `./sgex/${safeName}/index.html`,
+              url: `./${safeName}/index.html`,
               lastModified: branch.commit.commit?.committer?.date 
                 ? new Date(branch.commit.commit.committer.date).toLocaleDateString()
                 : 'Unknown'
@@ -535,7 +535,7 @@ const BranchListing = () => {
             author: pr.user.login,
             branchName: pr.head.ref,
             safeBranchName: safeBranchName,
-            url: `./sgex/${safeBranchName}/index.html`,
+            url: `./${safeBranchName}/index.html`,
             prUrl: pr.html_url,
             updatedAt: new Date(pr.updated_at).toLocaleDateString(),
             createdAt: new Date(pr.created_at).toLocaleDateString()
@@ -564,21 +564,21 @@ const BranchListing = () => {
               name: 'main',
               safeName: 'main',
               commit: { sha: 'abc1234' },
-              url: './sgex/main/index.html',
+              url: './main/index.html',
               lastModified: new Date().toLocaleDateString()
             },
             {
               name: 'feature/user-auth',
               safeName: 'feature-user-auth',
               commit: { sha: 'def5678' },
-              url: './sgex/feature-user-auth/index.html',
+              url: './feature-user-auth/index.html',
               lastModified: new Date(Date.now() - 86400000).toLocaleDateString()
             },
             {
               name: 'fix/api-endpoints',
               safeName: 'fix-api-endpoints',
               commit: { sha: 'ghi9012' },
-              url: './sgex/fix-api-endpoints/index.html',
+              url: './fix-api-endpoints/index.html',
               lastModified: new Date(Date.now() - 172800000).toLocaleDateString()
             }
           ];
@@ -592,7 +592,7 @@ const BranchListing = () => {
               author: 'copilot',
               branchName: 'copilot/fix-459',
               safeBranchName: 'copilot-fix-459',
-              url: './sgex/copilot-fix-459/index.html',
+              url: './copilot-fix-459/index.html',
               prUrl: 'https://github.com/litlfred/sgex/pull/123',
               updatedAt: new Date().toLocaleDateString(),
               createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
@@ -605,7 +605,7 @@ const BranchListing = () => {
               author: 'developer',
               branchName: 'feature/dark-mode',
               safeBranchName: 'feature-dark-mode',
-              url: './sgex/feature-dark-mode/index.html',
+              url: './feature-dark-mode/index.html',
               prUrl: 'https://github.com/litlfred/sgex/pull/122',
               updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
               createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
@@ -618,7 +618,7 @@ const BranchListing = () => {
               author: 'contributor',
               branchName: 'fix/auth-flow',
               safeBranchName: 'fix-auth-flow',
-              url: './sgex/fix-auth-flow/index.html',
+              url: './fix-auth-flow/index.html',
               prUrl: 'https://github.com/litlfred/sgex/pull/121',
               updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
               createdAt: new Date(Date.now() - 432000000).toLocaleDateString()

@@ -21,6 +21,15 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    outputs:
+      branch_name: ${{ steps.deployment_info.outputs.branch_name }}
+      target_directory: ${{ steps.deployment_info.outputs.target_directory }}
+      branch_url: ${{ steps.deployment_info.outputs.branch_url }}
+      landing_url: ${{ steps.deployment_info.outputs.landing_url }}
+      main_url: ${{ steps.deployment_info.outputs.main_url }}
+      commit_sha: ${{ steps.deployment_info.outputs.commit_sha }}
+      deployment_status: ${{ steps.deployment_info.outputs.deployment_status }}
+      deployment_json: ${{ steps.deployment_info.outputs.deployment_json }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -237,6 +246,16 @@ jobs:
         run: |
           set -e
           
+          # IMPORTANT: Save existing branch directories FIRST (including the newly created one)
+          echo "Preserving all branch directories (including newly created)..."
+          if ls -d */ > /dev/null 2>&1; then
+            mkdir -p /tmp/branch-backup
+            for dir in */; do
+              echo "Backing up directory: $dir"
+              cp -r "$dir" /tmp/branch-backup/
+            done
+          fi
+          
           # Switch back to the original branch to build landing page
           # Stash any uncommitted changes including untracked files before checkout
           git stash -u -m "Stash before switching to ${{ github.ref_name }}" || echo "Nothing to stash"
@@ -265,19 +284,12 @@ jobs:
           # Deploy landing page to root (but preserve branch directories)
           echo "Deploying root landing page..."
           
-          # Save existing branch directories
-          if ls -d */ > /dev/null 2>&1; then
-            echo "Preserving existing branch directories..."
-            mkdir -p /tmp/branch-backup
-            for dir in */; do
-              cp -r "$dir" /tmp/branch-backup/
-            done
-          fi
-          
-          # Clear root (except .git)
+          # Clear root (except .git) - this will remove all directories temporarily  
+          echo "Clearing root directory (temporarily)..."
           find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name '.github' -exec rm -rf {} +
           
           # Copy root landing page
+          echo "Deploying root landing page files..."
           cp -a /tmp/root-build-backup/. .
           
           # Ensure no build directory exists in root after copying
@@ -289,8 +301,9 @@ jobs:
           # Clean up temporary build backup
           rm -rf /tmp/root-build-backup
           
-          # Restore branch directories
+          # Restore all branch directories (including the newly created one)
           if [[ -d /tmp/branch-backup ]]; then
+            echo "Restoring all branch directories..."
             cp -r /tmp/branch-backup/* .
             rm -rf /tmp/branch-backup
           fi
@@ -434,13 +447,52 @@ jobs:
           fi
 
       - name: Output deployment info
+        id: deployment_info
         shell: bash
         run: |
           target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
+          branch_name="${{ steps.validate_branch.outputs.branch_name }}"
+          commit_sha="${{ github.sha }}"
+          branch_url="https://litlfred.github.io/sgex/$target_subdir/"
+          landing_url="https://litlfred.github.io/sgex/"
+          main_url="https://litlfred.github.io/sgex/main/"
+          
+          # Human-readable output (preserving existing format)
           echo "🎉 Deployment Summary:"
-          echo "- Branch: ${{ steps.validate_branch.outputs.branch_name }}"
+          echo "- Branch: $branch_name"
           echo "- Target Directory: $target_subdir"
-          echo "- Branch Preview: https://litlfred.github.io/sgex/$target_subdir/"
-          echo "- Landing Page: https://litlfred.github.io/sgex/"
-          echo "- Main App: https://litlfred.github.io/sgex/main/"
-          echo "- Commit: ${{ github.sha }}"
+          echo "- Branch Preview: $branch_url"
+          echo "- Landing Page: $landing_url"
+          echo "- Main App: $main_url"
+          echo "- Commit: $commit_sha"
+          
+          # GitHub Actions outputs for downstream tools
+          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
+          echo "target_directory=$target_subdir" >> $GITHUB_OUTPUT
+          echo "branch_url=$branch_url" >> $GITHUB_OUTPUT
+          echo "landing_url=$landing_url" >> $GITHUB_OUTPUT
+          echo "main_url=$main_url" >> $GITHUB_OUTPUT
+          echo "commit_sha=$commit_sha" >> $GITHUB_OUTPUT
+          echo "deployment_status=success" >> $GITHUB_OUTPUT
+          
+          # JSON output for easy parsing
+          deployment_json=$(cat <<EOF
+          {
+            "branch_name": "$branch_name",
+            "target_directory": "$target_subdir",
+            "branch_url": "$branch_url",
+            "landing_url": "$landing_url",
+            "main_url": "$main_url",
+            "commit_sha": "$commit_sha",
+            "deployment_status": "success",
+            "deployed_at": "$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          }
+          EOF
+          )
+          echo "deployment_json<<EOF" >> $GITHUB_OUTPUT
+          echo "$deployment_json" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo ""
+          echo "📋 Deployment info for downstream tools:"
+          echo "$deployment_json"
