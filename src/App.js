@@ -27,6 +27,7 @@ import DAKDashboardWithFramework from './components/DAKDashboardWithFramework';
 import DashboardRedirect from './components/DashboardRedirect';
 import TestDocumentationPage from './components/TestDocumentationPage';
 import AssetEditorTest from './components/AssetEditorTest';
+import QuestionnaireEditor from './components/QuestionnaireEditor';
 import logger from './utils/logger';
 import './App.css';
 
@@ -103,6 +104,10 @@ function App() {
             <Route path="/decision-support-logic/:user/:repo" element={<DecisionSupportLogicView />} />
             <Route path="/decision-support-logic/:user/:repo/:branch" element={<DecisionSupportLogicView />} />
             <Route path="/decision-support-logic/:user/:repo/:branch/*" element={<DecisionSupportLogicView />} />
+            <Route path="/questionnaire-editor" element={<QuestionnaireEditor />} />
+            <Route path="/questionnaire-editor/:user/:repo" element={<QuestionnaireEditor />} />
+            <Route path="/questionnaire-editor/:user/:repo/:branch" element={<QuestionnaireEditor />} />
+            <Route path="/questionnaire-editor/:user/:repo/:branch/*" element={<QuestionnaireEditor />} />
             <Route path="/docs/:docId" element={<DocumentationViewer />} />
             <Route path="/pages" element={<PagesManager />} />
             

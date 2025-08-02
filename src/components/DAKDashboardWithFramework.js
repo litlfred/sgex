@@ -218,6 +218,15 @@ const DAKDashboardContent = () => {
       color: '#498205'
     },
     {
+      id: 'questionnaires',
+      title: 'FHIR Questionnaires',
+      description: 'FHIR Questionnaire resources for data collection forms',
+      icon: '📋',
+      path: 'questionnaire-editor',
+      level: 'Level 3: Technical Implementation',
+      color: '#6b69d6'
+    },
+    {
       id: 'test-data',
       title: 'Test Data & Examples',
       description: 'Sample data and testing resources',
