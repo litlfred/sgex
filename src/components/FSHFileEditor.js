@@ -39,7 +39,7 @@ const FSHFileEditor = ({
       setEditorContent(content);
       setHasChanges(false);
     }
-  }, [content]);
+  }, [content, editorContent]);
 
   // Handle content changes
   const handleContentChange = (event) => {
