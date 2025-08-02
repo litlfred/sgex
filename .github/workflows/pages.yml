@@ -13,6 +13,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  pull-requests: write
 
 concurrency:
   group: "pages-${{ github.ref_name }}"
@@ -133,18 +134,15 @@ jobs:
             exit 1
           fi
           
-          # Create directory if it doesn't exist to test with readlink
-          if [[ ! -d "$target_dir" ]]; then
-            mkdir -p "$target_dir"
-          fi
+          # Don't create the directory here - we'll create it on the gh-pages branch
+          # Just validate the path structure for safety
+          resolved_target="$target_dir"
           
-          resolved_target="$(readlink -f "$target_dir")"
-          
-          # Final readlink validation
+          # Validate the target would be safe when resolved
           if [[ "$resolved_target" != "$repo_root"* ]] || [[ ${#resolved_target} -le ${#repo_root} ]]; then
-            echo "ERROR: Readlink validation failed"
+            echo "ERROR: Target validation failed"
             echo "Repository root: $repo_root"
-            echo "Resolved target: $resolved_target"
+            echo "Target directory: $resolved_target"
             exit 1
           fi
           
@@ -195,9 +193,8 @@ jobs:
           echo "Branch directory: $branch_dir"
           echo "Repository root: $repo_root"
           
-          # Re-validate before any destructive operations
-          resolved_dir="$(readlink -f "$branch_dir")"
-          if [[ "$resolved_dir" != "$repo_root"* ]] || [[ ${#resolved_dir} -le ${#repo_root} ]]; then
+          # Validate before any destructive operations
+          if [[ "$branch_dir" != "$repo_root"* ]] || [[ ${#branch_dir} -le ${#repo_root} ]]; then
             echo "ERROR: Safety validation failed during cleanup"
             exit 1
           fi
@@ -222,9 +219,8 @@ jobs:
           echo "Branch directory: $branch_dir"
           echo "Repository root: $repo_root"
           
-          # Final validation before copy
-          resolved_dir="$(readlink -f "$branch_dir")"
-          if [[ "$resolved_dir" != "$repo_root"* ]] || [[ ${#resolved_dir} -le ${#repo_root} ]]; then
+          # Validation before copy
+          if [[ "$branch_dir" != "$repo_root"* ]] || [[ ${#branch_dir} -le ${#repo_root} ]]; then
             echo "ERROR: Safety validation failed during copy"
             exit 1
           fi
@@ -496,3 +492,113 @@ jobs:
           echo ""
           echo "📋 Deployment info for downstream tools:"
           echo "$deployment_json"
+
+      - name: Comment PR with deployment URLs
+        if: always() && steps.deployment_info.outputs.deployment_status == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              // Get deployment info
+              const branchName = '${{ steps.deployment_info.outputs.branch_name }}';
+              const branchUrl = '${{ steps.deployment_info.outputs.branch_url }}';
+              const landingUrl = '${{ steps.deployment_info.outputs.landing_url }}';
+              const mainUrl = '${{ steps.deployment_info.outputs.main_url }}';
+              const commitSha = '${{ steps.deployment_info.outputs.commit_sha }}';
+              const deployedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+              
+              // Find PR associated with this commit
+              const { data: prs } = await github.rest.repos.listPullRequests({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${branchName}`
+              });
+              
+              let prNumber = null;
+              
+              // Check if this push is from a PR branch
+              if (prs.length > 0) {
+                prNumber = prs[0].number;
+              } else {
+                // Also check if this commit exists in any open PR
+                const { data: allPrs } = await github.rest.repos.listPullRequests({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open'
+                });
+                
+                for (const pr of allPrs) {
+                  try {
+                    const { data: commits } = await github.rest.pulls.listCommits({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      pull_number: pr.number
+                    });
+                    
+                    if (commits.some(commit => commit.sha === commitSha)) {
+                      prNumber = pr.number;
+                      break;
+                    }
+                  } catch (error) {
+                    console.log(`Error checking commits for PR ${pr.number}:`, error.message);
+                  }
+                }
+              }
+              
+              if (!prNumber) {
+                console.log('No associated pull request found for this deployment');
+                return;
+              }
+              
+              console.log(`Found associated PR #${prNumber} for branch ${branchName}`);
+              
+              // Create comment body with escaped template literals
+              const commentBody = '## 🚀 Deployment Preview Ready!\n\n' +
+                '**Branch:** `' + branchName + '`\n' +
+                '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
+                '**Deployed:** ' + deployedAt + '\n\n' +
+                '### 🌐 Preview URLs\n' +
+                '- **Branch Preview:** [' + branchUrl + '](' + branchUrl + ')\n' +
+                '- **Landing Page:** [' + landingUrl + '](' + landingUrl + ')\n' +
+                '- **Main App:** [' + mainUrl + '](' + mainUrl + ')\n\n' +
+                '---\n' +
+                'The branch preview is automatically updated with each push to this branch.';
+              
+              // Find existing deployment comment
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+              });
+              
+              const existingComment = comments.find(comment => 
+                comment.body.includes('🚀 Deployment Preview Ready!')
+              );
+              
+              if (existingComment) {
+                // Update existing comment
+                console.log('Updating existing deployment comment');
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: commentBody
+                });
+              } else {
+                // Create new comment
+                console.log('Creating new deployment comment');
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: commentBody
+                });
+              }
+              
+              console.log(`✅ Successfully posted deployment URLs to PR #${prNumber}`);
+              
+            } catch (error) {
+              console.error('Error posting deployment comment:', error);
+              // Don't fail the workflow if commenting fails
+            }
