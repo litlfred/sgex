@@ -22,8 +22,8 @@ const HelpButton = ({ helpTopic, contextData = {} }) => {
         aria-label="Get Help"
       >
         <img 
-          src="/sgex/sgex-mascot-tabby.svg" 
-          alt="SGEX Helper (Tabby Cat)" 
+          src="/sgex/sgex-mascot.png" 
+          alt="SGEX Helper" 
           className="help-mascot-icon"
         />
       </button>

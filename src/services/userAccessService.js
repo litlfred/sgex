@@ -105,7 +105,7 @@ class UserAccessService {
       return {
         login: 'demo-user',
         name: 'Demo User',
-        avatar_url: '/sgex-mascot-tabby.svg',
+        avatar_url: '/sgex-mascot.png',
         type: 'User',
         isDemo: true,
         demoData: this.getDemoData()
