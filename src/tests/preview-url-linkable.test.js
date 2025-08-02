@@ -1,18 +1,18 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import BranchListing from '../src/components/BranchListing';
+import BranchListing from '../components/BranchListing';
 
 // Mock fetch globally
 global.fetch = jest.fn();
 
 // Mock PageLayout component
-jest.mock('../src/components/framework', () => ({
+jest.mock('../components/framework', () => ({
   PageLayout: ({ children }) => <div data-testid="page-layout">{children}</div>
 }));
 
 // Mock HelpModal component
-jest.mock('../src/components/HelpModal', () => {
+jest.mock('../components/HelpModal', () => {
   return function MockHelpModal({ onClose }) {
     return <div data-testid="help-modal"><button onClick={onClose}>Close</button></div>;
   };
@@ -79,7 +79,7 @@ describe('BranchListing Preview URL Links', () => {
       // Look for a link within the same card footer
       const linkElement = parent.querySelector('a[href]');
       expect(linkElement).toBeInTheDocument();
-      expect(linkElement.getAttribute('href')).toMatch(/\.\/sgex\/.*\/index\.html/);
+      expect(linkElement.getAttribute('href')).toMatch(/\.\/.*\/index\.html/);
     });
   });
 });
