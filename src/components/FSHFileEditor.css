@@ -1,0 +1,226 @@
+/* FSH File Editor Styles */
+.fsh-file-editor {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.fsh-editor-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fsh-filename {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.fsh-file-icon {
+  font-size: 1.1rem;
+}
+
+.modified-indicator {
+  color: #dc3545;
+  font-weight: 700;
+  margin-left: 0.25rem;
+}
+
+.fsh-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.validation-status {
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.validation-status.error {
+  background: #fff5f5;
+  color: #c53030;
+  border: 1px solid #fed7d7;
+}
+
+.save-btn {
+  padding: 0.5rem 1rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: #218838;
+}
+
+.save-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.fsh-editor-content {
+  flex: 1;
+  position: relative;
+  min-height: 300px;
+  max-height: 600px;
+  overflow: auto;
+}
+
+.fsh-editor-textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 1rem;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  background: #fafafa;
+  color: #2c3e50;
+  tab-size: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
+.fsh-editor-textarea.dark {
+  background: #1e1e1e;
+  color: #d4d4d4;
+}
+
+.fsh-editor-textarea:focus {
+  background: white;
+  box-shadow: inset 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+.fsh-editor-textarea.dark:focus {
+  background: #2d2d30;
+}
+
+.fsh-validation-panel {
+  background: #fff8e1;
+  border-top: 1px solid #ffcc02;
+  padding: 0.75rem 1rem;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.fsh-validation-panel h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: #f57c00;
+  font-weight: 600;
+}
+
+.validation-errors {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.validation-error {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+  padding: 0.25rem 0;
+}
+
+.validation-error.error {
+  color: #c53030;
+}
+
+.validation-error.warning {
+  color: #f57c00;
+}
+
+.line-number {
+  font-weight: 600;
+  min-width: 60px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.error-message {
+  flex: 1;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .fsh-editor-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .fsh-editor-actions {
+    gap: 0.5rem;
+  }
+  
+  .fsh-editor-content {
+    min-height: 250px;
+    max-height: 400px;
+  }
+  
+  .fsh-editor-textarea {
+    min-height: 250px;
+    font-size: 0.8rem;
+  }
+  
+  .fsh-filename {
+    font-size: 0.9rem;
+  }
+}
+
+/* Compact mode */
+.fsh-file-editor.compact {
+  border-radius: 4px;
+}
+
+.fsh-file-editor.compact .fsh-editor-header {
+  padding: 0.5rem 0.75rem;
+}
+
+.fsh-file-editor.compact .fsh-editor-content {
+  min-height: 200px;
+  max-height: 300px;
+}
+
+.fsh-file-editor.compact .fsh-editor-textarea {
+  min-height: 200px;
+  font-size: 0.8rem;
+  padding: 0.75rem;
+}
+
+/* Syntax highlighting overrides for read-only mode */
+.fsh-file-editor pre[class*="language-"] {
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+.fsh-file-editor code[class*="language-"] {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+}

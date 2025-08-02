@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
+import FSHFileViewer from './FSHFileViewer';
 import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {
@@ -678,9 +679,12 @@ const CoreDataDictionaryViewerContent = () => {
               <button className="modal-close" onClick={closeModal}>×</button>
             </div>
             <div className="modal-body">
-              <pre className="fsh-code">
-                <code>{fileContent}</code>
-              </pre>
+              <FSHFileViewer 
+                content={fileContent}
+                filename={selectedFile.name}
+                showLineNumbers={true}
+                theme="dark"
+              />
             </div>
             <div className="modal-footer">
               <a 

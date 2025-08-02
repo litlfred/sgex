@@ -1,0 +1,129 @@
+/* FSH File Viewer Styles */
+.fsh-file-viewer {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.fsh-viewer-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+}
+
+.fsh-filename {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.fsh-file-icon {
+  font-size: 1.1rem;
+}
+
+.fsh-content {
+  position: relative;
+  overflow: auto;
+  max-height: 600px;
+}
+
+.fsh-content-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #6c757d;
+  background: #f8f9fa;
+}
+
+/* Custom syntax highlighting overrides */
+.fsh-file-viewer pre[class*="language-"] {
+  margin: 0 !important;
+  padding: 1rem !important;
+  border-radius: 0 !important;
+}
+
+.fsh-file-viewer code[class*="language-"] {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+}
+
+/* FSH-specific token styling */
+.token.fsh-keyword {
+  color: #ff79c6;
+  font-weight: 600;
+}
+
+.token.cardinality {
+  color: #8be9fd;
+  font-weight: 500;
+}
+
+.token.code {
+  color: #50fa7b;
+  font-weight: 500;
+}
+
+.token.url {
+  color: #8be9fd;
+  text-decoration: underline;
+}
+
+/* Line number styling */
+.fsh-file-viewer .react-syntax-highlighter-line-number {
+  color: #6c757d !important;
+  border-right: 1px solid #e2e8f0 !important;
+  padding-right: 0.5rem !important;
+  margin-right: 0.5rem !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .fsh-content {
+    max-height: 400px;
+  }
+  
+  .fsh-file-viewer code[class*="language-"] {
+    font-size: 0.8rem !important;
+  }
+  
+  .fsh-viewer-header {
+    padding: 0.5rem;
+  }
+  
+  .fsh-filename {
+    font-size: 0.9rem;
+  }
+}
+
+/* Compact mode */
+.fsh-file-viewer.compact {
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.fsh-file-viewer.compact .fsh-viewer-header {
+  padding: 0.5rem 0.75rem;
+}
+
+.fsh-file-viewer.compact .fsh-filename {
+  font-size: 0.9rem;
+}
+
+.fsh-file-viewer.compact .fsh-content {
+  max-height: 300px;
+}
+
+.fsh-file-viewer.compact pre[class*="language-"] {
+  padding: 0.75rem !important;
+}
+
+.fsh-file-viewer.compact code[class*="language-"] {
+  font-size: 0.8rem !important;
+}
