@@ -48,7 +48,8 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
           return;
         }
 
-        // Use the issue creation modal for authenticated users
+        // Always use the issue creation modal for authenticated users
+        // The modal will handle PAT permission errors during submission
         setIssueCreationType(issueType);
         setIssueRepository(null); // Use default SGEX repo
         setShowIssueCreationModal(true);
@@ -69,7 +70,8 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
           return;
         }
 
-        // Use the issue creation modal for authenticated users
+        // Always use the issue creation modal for authenticated users
+        // The modal will handle PAT permission errors during submission
         setIssueCreationType(issueType === 'content' ? 'dak-content' : issueType);
         setIssueRepository(repository);
         setShowIssueCreationModal(true);

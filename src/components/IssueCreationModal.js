@@ -213,11 +213,6 @@ const IssueCreationModal = ({
     try {
       const { owner, repo } = getRepoInfo();
       
-      // Check if we have GitHub API access
-      if (!githubService.isAuth()) {
-        throw new Error('GitHub authentication required');
-      }
-
       // Build issue data
       const issueData = {
         title: templateConfig.titlePrefix + (formData.title || formData.description || 'Issue reported from SGEX'),
@@ -268,8 +263,8 @@ const IssueCreationModal = ({
         err.status === 401;
       
       if (isPermissionError) {
-        // Fall back to GitHub URL method
-        setError('Unable to create issue directly. Opening GitHub...');
+        // Fall back to GitHub URL method with pre-filled form data
+        setError('Unable to create issue directly. Opening GitHub with your details...');
         const fallbackUrl = generateFallbackUrl();
         window.open(fallbackUrl, '_blank');
         setTimeout(() => {
@@ -293,12 +288,19 @@ const IssueCreationModal = ({
                          'dak_content_error.yml');
     
     // Pre-fill the title if available
-    if (formData.title || formData.description) {
-      params.set('title', templateConfig.titlePrefix + (formData.title || formData.description));
+    if (formData.title) {
+      params.set('title', templateConfig.titlePrefix + formData.title);
     }
     
     // Add labels
     params.set('labels', templateConfig.labels.join(',').replace(/\s+/g, '+'));
+    
+    // Pre-fill all form field data
+    templateConfig.fields.forEach(field => {
+      if (formData[field.id] && formData[field.id].trim()) {
+        params.set(field.id, formData[field.id]);
+      }
+    });
     
     // Add context
     if (contextData.pageId) {
