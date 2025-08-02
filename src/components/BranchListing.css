@@ -577,6 +577,16 @@
   word-break: break-all;
 }
 
+.preview-url-link {
+  color: #0366d6;
+  text-decoration: none;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+.preview-url-link:hover {
+  text-decoration: underline;
+}
+
 /* PR section specific styles moved to branch-section, pr-section above */
 
 .pr-card {
