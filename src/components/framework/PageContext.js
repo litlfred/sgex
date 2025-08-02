@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { usePage, PAGE_TYPES } from './PageProvider';
 import AccessBadge from './AccessBadge';
 import githubService from '../../services/githubService';
@@ -315,6 +316,16 @@ const PageContext = ({ customBreadcrumbs }) => {
       </div>
     </div>
   );
+};
+
+PageContext.propTypes = {
+  customBreadcrumbs: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      path: PropTypes.string,
+      onClick: PropTypes.func
+    })
+  )
 };
 
 export default PageContext;
