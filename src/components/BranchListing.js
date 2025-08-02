@@ -43,7 +43,7 @@ const BranchListing = () => {
   };
 
   // Function to fetch PR comments
-  const fetchPRComments = async (prNumber) => {
+  const fetchPRComments = useCallback(async (prNumber) => {
     if (!githubToken) return [];
     
     try {
@@ -74,7 +74,7 @@ const BranchListing = () => {
       console.error(`Error fetching comments for PR ${prNumber}:`, error);
       return [];
     }
-  };
+  }, [githubToken]);
 
   // Function to submit a comment
   const submitComment = async (prNumber, commentText) => {
@@ -131,7 +131,7 @@ const BranchListing = () => {
     
     setPrComments(comments);
     setLoadingComments(false);
-  }, [githubToken]);
+  }, [githubToken, fetchPRComments]);
 
   // Check for existing authentication on component mount
   useEffect(() => {
