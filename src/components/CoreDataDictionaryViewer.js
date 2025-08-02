@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
+import FSHFileViewer from './FSHFileViewer';
 import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {
@@ -577,18 +578,21 @@ const CoreDataDictionaryViewerContent = () => {
         </div>
       </div>
 
-      {/* Source Code Modal */}
+      {/* FSH File Viewer Modal */}
       {showModal && selectedFile && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content fsh-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{selectedFile.name}</h3>
+              <h3>View FSH File</h3>
               <button className="modal-close" onClick={closeModal}>×</button>
             </div>
             <div className="modal-body">
-              <pre className="fsh-code">
-                <code>{fileContent}</code>
-              </pre>
+              <FSHFileViewer 
+                content={fileContent}
+                fileName={selectedFile.name}
+                showLineNumbers={true}
+                className="modal-fsh-viewer"
+              />
             </div>
             <div className="modal-footer">
               <a 

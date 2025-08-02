@@ -618,6 +618,11 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
+.modal-content.fsh-modal {
+  max-width: 1200px;
+  max-height: 95vh;
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -629,7 +634,6 @@
 .modal-header h3 {
   margin: 0;
   color: #2c3e50;
-  font-family: 'Consolas', 'Monaco', monospace;
 }
 
 .modal-close {
@@ -654,17 +658,14 @@
   padding: 0;
 }
 
-.fsh-code {
+.modal-body .modal-fsh-viewer {
+  border-radius: 0;
+  box-shadow: none;
   margin: 0;
-  padding: 2rem;
-  background: #f8f9fa;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: #2c3e50;
-  overflow: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
+}
+
+.modal-body .modal-fsh-viewer .fsh-file-header {
+  display: none; /* Hide duplicate header in modal */
 }
 
 .modal-footer {
@@ -759,11 +760,6 @@
   .modal-header,
   .modal-footer {
     padding: 1rem;
-  }
-
-  .fsh-code {
-    padding: 1rem;
-    font-size: 0.8rem;
   }
 }
 
