@@ -825,6 +825,69 @@
   background: #e9ecef;
   color: #6c757d;
 }
+
+/* Extraction Status Styles */
+.extraction-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.extraction-status.loading {
+  background: #fff8e1;
+  border: 1px solid #ffcc02;
+  color: #f57c00;
+}
+
+.extraction-status.success {
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  color: #0369a1;
+}
+
+.extraction-status.error {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  color: #c53030;
+}
+
+.extraction-status .spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.extraction-status .icon {
+  font-size: 1.1rem;
+}
+
+.extraction-status .message {
+  flex: 1;
+}
+
+.extraction-info {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.extraction-info p {
+  margin: 0.5rem 0;
+}
+
+.extraction-info small {
+  color: #6c757d;
+  font-size: 0.85rem;
+}
 @media (max-width: 768px) {
   .viewer-header {
     flex-direction: column;

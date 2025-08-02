@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
 import FSHFileViewer from './FSHFileViewer';
+import { parseFSHLogicalModel, generateArchiMateModel, validateArchiMateXML, logicalModelToDataObject } from '../utils/archiMateExtractor';
 import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {
@@ -36,6 +37,8 @@ const CoreDataDictionaryViewerContent = () => {
   const [hasPublishedDak, setHasPublishedDak] = useState(false);
   const [checkingPublishedDak, setCheckingPublishedDak] = useState(false);
   const [activeSection, setActiveSection] = useState('core-data-dictionary'); // Toggle between sections
+  const [parsedLogicalModels, setParsedLogicalModels] = useState([]);
+  const [extractionStatus, setExtractionStatus] = useState(null);
 
   // Generate base URL for IG Publisher artifacts
   const getBaseUrl = useCallback((branchName) => {
@@ -158,6 +161,27 @@ const CoreDataDictionaryViewerContent = () => {
             }));
 
           setLogicalModels(logicalModelsList);
+          
+          // Parse logical models for ArchiMate extraction
+          const parsedModels = [];
+          for (const model of logicalModelsList) {
+            try {
+              const content = await githubService.getFileContent(
+                currentUser,
+                currentRepo,
+                model.path,
+                currentBranch
+              );
+              
+              const parsedModel = parseFSHLogicalModel(content, model.name);
+              if (parsedModel) {
+                parsedModels.push(parsedModel);
+              }
+            } catch (contentErr) {
+              console.warn(`Could not parse logical model ${model.name}:`, contentErr);
+            }
+          }
+          setParsedLogicalModels(parsedModels);
         } catch (err) {
           if (err.status === 404) {
             // input/fsh/models directory doesn't exist
@@ -274,6 +298,140 @@ const CoreDataDictionaryViewerContent = () => {
     setSelectedFile(null);
     setFileContent('');
   };
+
+  // Handle individual logical model extraction to ArchiMate
+  const handleExtractSingle = useCallback(async (model) => {
+    try {
+      setExtractionStatus({ type: 'loading', message: `Extracting ${model.name} to ArchiMate...` });
+      
+      const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
+      const currentRepo = repo || repository?.name;
+      const currentBranch = branch;
+      
+      // Get the file content
+      const content = await githubService.getFileContent(
+        currentUser,
+        currentRepo,
+        model.path,
+        currentBranch
+      );
+      
+      // Parse the logical model
+      const parsedModel = parseFSHLogicalModel(content, model.name);
+      if (!parsedModel) {
+        throw new Error('Could not parse logical model from FSH content');
+      }
+      
+      // Generate single DataObject XML
+      const dataObjectXML = logicalModelToDataObject(parsedModel);
+      if (!dataObjectXML) {
+        throw new Error('Could not generate ArchiMate DataObject from logical model');
+      }
+      
+      // Create a simple ArchiMate model with just this DataObject
+      const fullXML = generateArchiMateModel([parsedModel], {
+        modelName: `${parsedModel.title || parsedModel.id} - ArchiMate DataObject`,
+        modelId: `lm-${parsedModel.id.toLowerCase()}`,
+        version: '1.0.0'
+      });
+      
+      // Validate the XML
+      const validation = validateArchiMateXML(fullXML);
+      if (!validation.success) {
+        throw new Error(`ArchiMate XML validation failed: ${validation.errors.join(', ')}`);
+      }
+      
+      // Download the file
+      const blob = new Blob([fullXML], { type: 'application/xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${parsedModel.id}-archimate.xml`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setExtractionStatus({ 
+        type: 'success', 
+        message: `Successfully extracted ${parsedModel.title || parsedModel.id} to ArchiMate XML` 
+      });
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setExtractionStatus(null), 3000);
+      
+    } catch (error) {
+      console.error('Error extracting logical model to ArchiMate:', error);
+      setExtractionStatus({ 
+        type: 'error', 
+        message: `Failed to extract ${model.name}: ${error.message}` 
+      });
+      
+      // Clear error message after 5 seconds
+      setTimeout(() => setExtractionStatus(null), 5000);
+    }
+  }, [user, repository, repo, branch]);
+
+  // Handle extraction of all logical models to ArchiMate
+  const handleExtractAll = useCallback(async () => {
+    try {
+      if (parsedLogicalModels.length === 0) {
+        setExtractionStatus({ 
+          type: 'error', 
+          message: 'No logical models found to extract' 
+        });
+        setTimeout(() => setExtractionStatus(null), 3000);
+        return;
+      }
+      
+      setExtractionStatus({ 
+        type: 'loading', 
+        message: `Extracting ${parsedLogicalModels.length} logical models to ArchiMate...` 
+      });
+      
+      // Generate complete ArchiMate model with all logical models and relationships
+      const fullXML = generateArchiMateModel(parsedLogicalModels, {
+        modelName: `${repository?.name || 'FHIR'} Logical Models`,
+        modelId: `${repository?.name?.toLowerCase() || 'fhir'}-logical-models`,
+        version: '1.0.0'
+      });
+      
+      // Validate the XML
+      const validation = validateArchiMateXML(fullXML);
+      if (!validation.success) {
+        throw new Error(`ArchiMate XML validation failed: ${validation.errors.join(', ')}`);
+      }
+      
+      // Download the file
+      const blob = new Blob([fullXML], { type: 'application/xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${repository?.name || 'fhir'}-logical-models-archimate.xml`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setExtractionStatus({ 
+        type: 'success', 
+        message: `Successfully extracted ${parsedLogicalModels.length} logical models to ArchiMate XML with relationships` 
+      });
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setExtractionStatus(null), 3000);
+      
+    } catch (error) {
+      console.error('Error extracting all logical models to ArchiMate:', error);
+      setExtractionStatus({ 
+        type: 'error', 
+        message: `Failed to extract logical models: ${error.message}` 
+      });
+      
+      // Clear error message after 5 seconds
+      setTimeout(() => setExtractionStatus(null), 5000);
+    }
+  }, [parsedLogicalModels, repository]);
 
   if (!profile || !repository) {
     navigate('/');
@@ -605,11 +763,42 @@ const CoreDataDictionaryViewerContent = () => {
           <div className="section global-tools-section">
             <h3>Global Tools</h3>
             <p>Tools that operate on all Logical Models in the DAK</p>
+            
+            {/* Extraction Status */}
+            {extractionStatus && (
+              <div className={`extraction-status ${extractionStatus.type}`}>
+                {extractionStatus.type === 'loading' && <span className="spinner">⏳</span>}
+                {extractionStatus.type === 'success' && <span className="icon">✅</span>}
+                {extractionStatus.type === 'error' && <span className="icon">❌</span>}
+                <span className="message">{extractionStatus.message}</span>
+              </div>
+            )}
+            
             <div className="global-tools">
-              <button className="action-btn primary" disabled>
-                🏗️ Extract All to ArchiMate (Coming Soon)
+              <button 
+                className="action-btn primary"
+                onClick={handleExtractAll}
+                disabled={parsedLogicalModels.length === 0 || extractionStatus?.type === 'loading'}
+                title={parsedLogicalModels.length === 0 ? 'No logical models found' : `Extract ${parsedLogicalModels.length} logical models to ArchiMate`}
+              >
+                🏗️ Extract All to ArchiMate ({parsedLogicalModels.length})
               </button>
             </div>
+            
+            {parsedLogicalModels.length > 0 && (
+              <div className="extraction-info">
+                <p>
+                  <strong>Available for extraction:</strong> {parsedLogicalModels.length} logical model{parsedLogicalModels.length !== 1 ? 's' : ''} 
+                  ({parsedLogicalModels.map(m => m.title || m.id).join(', ')})
+                </p>
+                <p>
+                  <small>
+                    ArchiMate extraction will generate DataObjects with composition and aggregation relationships 
+                    based on field types and references.
+                  </small>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Logical Models Listing */}
@@ -647,8 +836,9 @@ const CoreDataDictionaryViewerContent = () => {
                       </button>
                       <button 
                         className="action-btn tertiary"
-                        disabled
-                        title="Extract to ArchiMate (Coming Soon)"
+                        onClick={() => handleExtractSingle(model)}
+                        disabled={extractionStatus?.type === 'loading'}
+                        title="Extract to ArchiMate DataObject"
                       >
                         🏗️ Extract
                       </button>
