@@ -40,17 +40,47 @@ function createBranchSpecificBuild() {
   
   try {
     // Set homepage based on branch and base path
+    let deploymentPath;
     if (basePath) {
       packageJson.homepage = basePath;
+      deploymentPath = basePath;
       console.log(`🔧 Setting homepage to: ${basePath}`);
     } else {
       // Default path structure: /main/ for main, /safe-branch-name/ for others
       const safeBranchName = branchName === 'main' ? 'main' : branchName.replace(/[^a-zA-Z0-9._-]/g, '-');
-      packageJson.homepage = `/${safeBranchName}/`;
-      console.log(`🔧 Setting homepage to: /${safeBranchName}/`);
+      deploymentPath = `/${safeBranchName}/`;
+      packageJson.homepage = deploymentPath;
+      console.log(`🔧 Setting homepage to: ${deploymentPath}`);
     }
     
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+    
+    // Update manifest.json for subdirectory deployment
+    const manifestPath = path.join(__dirname, '..', 'public', 'manifest.json');
+    const manifestBackupPath = path.join(__dirname, '..', 'public', 'manifest.json.backup');
+    
+    if (fs.existsSync(manifestPath)) {
+      // Backup original manifest.json
+      fs.copyFileSync(manifestPath, manifestBackupPath);
+      
+      // Update manifest.json paths for subdirectory deployment
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+      const originalManifest = { ...manifest };
+      
+      // Update start_url for subdirectory deployment
+      manifest.start_url = deploymentPath;
+      
+      // Update icon paths for subdirectory deployment
+      if (manifest.icons && Array.isArray(manifest.icons)) {
+        manifest.icons = manifest.icons.map(icon => ({
+          ...icon,
+          src: icon.src.startsWith('/') ? icon.src : `${deploymentPath}${icon.src}`
+        }));
+      }
+      
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+      console.log(`🔧 Updated manifest.json for subdirectory deployment`);
+    }
     
     // Standard React build for the branch
     execSync('npm run build', { stdio: 'inherit' });
@@ -61,6 +91,16 @@ function createBranchSpecificBuild() {
     // Always restore original package.json
     packageJson.homepage = originalHomepage;
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+    
+    // Restore original manifest.json if backup exists
+    const manifestPath = path.join(__dirname, '..', 'public', 'manifest.json');
+    const manifestBackupPath = path.join(__dirname, '..', 'public', 'manifest.json.backup');
+    
+    if (fs.existsSync(manifestBackupPath)) {
+      fs.copyFileSync(manifestBackupPath, manifestPath);
+      fs.unlinkSync(manifestBackupPath);
+      console.log(`🔧 Restored original manifest.json`);
+    }
   }
 }
 
