@@ -583,7 +583,13 @@ const BranchListing = () => {
 
                       <div className="card-footer">
                         <small className="preview-path">
-                          Preview URL: {branch.url}
+                          Preview URL: <a 
+                            href={branch.url} 
+                            className="preview-url-link"
+                            rel="noopener noreferrer"
+                          >
+                            {branch.url}
+                          </a>
                         </small>
                       </div>
                     </div>
@@ -721,7 +727,13 @@ const BranchListing = () => {
 
                       <div className="card-footer">
                         <small className="preview-path">
-                          Preview URL: {pr.url}
+                          Preview URL: <a 
+                            href={pr.url} 
+                            className="preview-url-link"
+                            rel="noopener noreferrer"
+                          >
+                            {pr.url}
+                          </a>
                         </small>
                       </div>
                     </div>
