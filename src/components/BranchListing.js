@@ -239,7 +239,7 @@ const BranchListing = () => {
         content: `
           <div class="contribute-slide">
             <div class="mascot-container">
-              <img src="./sgex-mascot.png" alt="SGEX Mascot" class="contribute-mascot" />
+              <img src="./sgex-mascot_grey_tabby.png" alt="SGEX Mascot" class="contribute-mascot" />
             </div>
             <h3>What is SGEX?</h3>
             <p>SGEX is an experimental collaborative project developing a workbench of tools to make it easier and faster to develop high fidelity SMART Guidelines Digital Adaptation Kits.</p>
@@ -252,7 +252,7 @@ const BranchListing = () => {
         content: `
           <div class="contribute-slide">
             <div class="mascot-container">
-              <img src="./sgex-mascot.png" alt="SGEX Mascot examining a bug" class="contribute-mascot bug-report" />
+              <img src="./sgex-mascot_grey_tabby.png" alt="SGEX Mascot examining a bug" class="contribute-mascot bug-report" />
             </div>
             <h3>🐛 Found something that needs fixing?</h3>
             <p>Every great contribution starts with identifying what can be improved:</p>
@@ -271,7 +271,7 @@ const BranchListing = () => {
         content: `
           <div class="contribute-slide">
             <div class="mascot-container">
-              <img src="./sgex-mascot.png" alt="Robotic SGEX Mascot" class="contribute-mascot coding-agent" />
+              <img src="./sgex-mascot_grey_tabby.png" alt="Robotic SGEX Mascot" class="contribute-mascot coding-agent" />
             </div>
             <h3>🤖 AI-Powered Development</h3>
             <p>Once your issue is triaged, it may be assigned to one of our coding agents:</p>
@@ -291,9 +291,9 @@ const BranchListing = () => {
           <div class="contribute-slide">
             <div class="mascot-container">
               <div class="mascot-group">
-                <img src="./sgex-mascot.png" alt="SGEX Mascot 1" class="contribute-mascot community" />
-                <img src="./sgex-mascot.png" alt="SGEX Mascot 2" class="contribute-mascot community" />
-                <img src="./sgex-mascot.png" alt="SGEX Mascot 3" class="contribute-mascot community" />
+                <img src="./sgex-mascot_grey_tabby.png" alt="SGEX Mascot 1" class="contribute-mascot community" />
+                <img src="./sgex-mascot_grey_tabby.png" alt="SGEX Mascot 2" class="contribute-mascot community" />
+                <img src="./sgex-mascot_grey_tabby.png" alt="SGEX Mascot 3" class="contribute-mascot community" />
               </div>
               <div class="thought-bubble">💫</div>
             </div>
@@ -314,7 +314,7 @@ const BranchListing = () => {
         content: `
           <div class="contribute-slide">
             <div class="mascot-container">
-              <img src="./sgex-mascot.png" alt="SGEX Mascot celebrating" class="contribute-mascot celebrate" />
+              <img src="./sgex-mascot_grey_tabby.png" alt="SGEX Mascot celebrating" class="contribute-mascot celebrate" />
             </div>
             <h3>🚀 Ready to Contribute?</h3>
             <div class="action-buttons">
@@ -526,7 +526,7 @@ const BranchListing = () => {
     return (
       <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
         <div className="branch-listing">
-          <h1><img src="./sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
+          <h1><img src="./sgex-mascot_grey_tabby.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
           <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
           <div className="loading">Loading previews...</div>
         </div>
@@ -538,7 +538,7 @@ const BranchListing = () => {
     return (
       <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
         <div className="branch-listing">
-          <h1><img src="./sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
+          <h1><img src="./sgex-mascot_grey_tabby.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
           <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
           <div className="error">
             <p>Failed to load previews: {error}</p>
@@ -553,7 +553,7 @@ const BranchListing = () => {
     <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
       <div className="branch-listing">
         <header className="branch-listing-header">
-          <h1><img src="./sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
+          <h1><img src="./sgex-mascot_grey_tabby.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
           <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
           
           <div className="prominent-info">

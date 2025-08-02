@@ -52,7 +52,7 @@ const HealthInterventionsEditor = () => {
         </div>
         <div className="context-info">
           <img 
-            src={profile?.avatar_url || user ? `https://github.com/${user}.png` : '/sgex/sgex-mascot.png'} 
+            src={profile?.avatar_url || user ? `https://github.com/${user}.png` : '/sgex/sgex-mascot_grey_tabby.png'} 
             alt="Profile" 
             className="context-avatar" 
           />
@@ -115,7 +115,7 @@ const ComponentEditorContent = () => {
     if (currentComponent?.id === 'health-interventions') {
       // Allow access to health-interventions editor without full context
       // Use placeholder data for now
-      const placeholderProfile = { login: 'demo-user', avatar_url: '/sgex/sgex-mascot.png', name: 'Demo User' };
+      const placeholderProfile = { login: 'demo-user', avatar_url: '/sgex/sgex-mascot_grey_tabby.png', name: 'Demo User' };
       const placeholderRepo = { name: 'demo-repository' };
       
       return (

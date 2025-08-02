@@ -78,7 +78,7 @@ ${error}
               <div className="error-help-content">
                 <div className="error-mascot-large">
                   <img 
-                    src="/sgex/sgex-mascot.png" 
+                    src="/sgex/sgex-mascot_grey_tabby.png" 
                     alt="SGEX Helper" 
                     className="large-mascot-icon"
                   />

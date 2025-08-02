@@ -181,7 +181,7 @@ const WelcomePage = () => {
         <div className="welcome-hero">
           <div className="welcome-intro">
             <div className="welcome-mascot">
-              <img src="/sgex-mascot.png" alt="SGEX Workbench Helper" />
+              <img src="/sgex-mascot_grey_tabby.png" alt="SGEX Workbench Helper" />
             </div>
             <div className="welcome-text">
               <h1>SGEX Workbench</h1>
@@ -198,7 +198,7 @@ const WelcomePage = () => {
             {/* Authoring Card - Always show */}
             <div className="action-card authoring-card" onClick={handleAuthoringClick}>
               <div className="card-icon">
-                <img src="/authoring.png" alt="Authoring" />
+                <img src="/authoring_grey_tabby.png" alt="Authoring" />
               </div>
               <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
             </div>
@@ -266,7 +266,7 @@ const WelcomePage = () => {
             {/* Collaboration Card */}
             <div className="action-card collaboration-card" onClick={handleCollaborationOpen}>
               <div className="card-icon">
-                <img src="/collaboration.png" alt="Collaboration" />
+                <img src="/collaboration_grey_tabby.png" alt="Collaboration" />
               </div>
               <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
             </div>

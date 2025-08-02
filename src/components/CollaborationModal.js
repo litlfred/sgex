@@ -69,7 +69,7 @@ const CollaborationModal = ({ onClose }) => {
       content: (
         <div className="slide-content">
           <div className="collaboration-image">
-            <img src="/collaboration.png" alt="Collaboration in SGEX" />
+            <img src="/collaboration_grey_tabby.png" alt="Collaboration in SGEX" />
           </div>
           <p>
             Every contribution helps improve digital health tools for healthcare workers worldwide. Whether you're reporting a bug, testing a feature, or sharing feedback, you're part of building the future of digital health tooling.

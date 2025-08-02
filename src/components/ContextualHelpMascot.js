@@ -138,7 +138,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
           onClick={handleClick}
         >
           <img 
-            src="/sgex-mascot.png" 
+            src="/sgex-mascot_grey_tabby.png" 
             alt="SGEX Helper" 
             className="mascot-icon"
           />
