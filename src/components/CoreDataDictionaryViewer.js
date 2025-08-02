@@ -33,6 +33,7 @@ const CoreDataDictionaryViewerContent = () => {
   const [dakTableSearch, setDakTableSearch] = useState('');
   const [hasPublishedDak, setHasPublishedDak] = useState(false);
   const [checkingPublishedDak, setCheckingPublishedDak] = useState(false);
+  const [activeSection, setActiveSection] = useState('core-data-dictionary');
 
   // Generate base URL for IG Publisher artifacts
   const getBaseUrl = useCallback((branchName) => {
@@ -281,6 +282,22 @@ const CoreDataDictionaryViewerContent = () => {
             </div>
           </div>
 
+          {/* Section Navigation Tabs */}
+          <div className="section-tabs">
+            <button 
+              className={`tab-button ${activeSection === 'core-data-dictionary' ? 'active' : ''}`}
+              onClick={() => setActiveSection('core-data-dictionary')}
+            >
+              📊 Core Data Dictionary
+            </button>
+            <button 
+              className={`tab-button ${activeSection === 'logical-models' ? 'active' : ''}`}
+              onClick={() => setActiveSection('logical-models')}
+            >
+              🗂️ Logical Models
+            </button>
+          </div>
+
           {error && (
             <div className="error-message">
               <h3>⚠️ Error</h3>
@@ -289,18 +306,20 @@ const CoreDataDictionaryViewerContent = () => {
           )}
 
           {/* Documentation Link */}
-          <div className="documentation-section">
-            <p>
-              <a 
-                href="https://smart.who.int/ig-starter-kit/v1.0.0/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="documentation-link"
-              >
-                📚 WHO IG Starter Kit Documentation ↗
-              </a>
-            </p>
-          </div>
+          {activeSection === 'core-data-dictionary' && (
+            <div className="core-data-dictionary-section">
+              <div className="documentation-section">
+                <p>
+                  <a 
+                    href="https://smart.who.int/ig-starter-kit/v1.0.0/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="documentation-link"
+                  >
+                    📚 WHO IG Starter Kit Documentation ↗
+                  </a>
+                </p>
+              </div>
 
           {/* Main content layout with two columns */}
           <div className="two-column-layout">
@@ -521,6 +540,40 @@ const CoreDataDictionaryViewerContent = () => {
               </div>
             )}
           </div>
+        </div>
+        )}
+
+        {/* Logical Models Section */}
+        {activeSection === 'logical-models' && (
+          <div className="logical-models-section">
+            <div className="global-tools">
+              <h3>Global Tools</h3>
+              <div className="global-tools-buttons">
+                <button className="action-btn primary" disabled>
+                  📦 Extract All to ArchiMate (Coming Soon)
+                </button>
+                <button className="action-btn secondary" disabled>
+                  🔄 Refresh All Models (Coming Soon)
+                </button>
+              </div>
+            </div>
+
+            <div className="logical-models-list">
+              <h3>Logical Models</h3>
+              <p>FHIR Logical Models stored as StructureDefinitions in FSH format under <code>inputs/fsh/models/</code></p>
+              
+              <div className="placeholder-message">
+                <p>🔧 Logical Models functionality is being implemented.</p>
+                <p>This section will scan for <code>*.fsh</code> files in <code>inputs/fsh/models/</code> and provide:</p>
+                <ul>
+                  <li>📄 View - FSH file viewer with syntax highlighting</li>
+                  <li>✏️ Edit - FSH file editor for logical models</li>
+                  <li>📊 Extract to ArchiMate - Individual LM to DataObject conversion</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
         </div>
       </div>
 
