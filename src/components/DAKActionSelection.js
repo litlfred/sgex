@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PageLayout, usePageParams } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
+import useThemeImage from '../hooks/useThemeImage';
 import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
@@ -17,6 +18,11 @@ const DAKActionSelectionContent = () => {
   const navigate = useNavigate();
   const { profile } = usePageParams();
   
+  // Theme-aware action images
+  const editingImage = useThemeImage('editing.png');
+  const forkingImage = useThemeImage('forking.png');
+  const createImage = useThemeImage('create.png');
+  
   // Use profile from framework (PageProvider) or location state
   const effectiveProfile = profile || location.state?.profile;
 
@@ -28,21 +34,21 @@ const DAKActionSelectionContent = () => {
       id: 'edit',
       title: 'Edit Existing DAK',
       description: 'Select and modify an existing DAK that you have permission to edit. Changes will be made directly to the repository.',
-      icon: `${process.env.PUBLIC_URL || ''}/editing.png`,
+      icon: editingImage,
       color: '#0078d4'
     },
     {
       id: 'fork', 
       title: 'Fork Existing DAK',
       description: 'Create a copy of an existing DAK in your own organization or account. You will be able to modify the forked version independently.',
-      icon: `${process.env.PUBLIC_URL || ''}/forking.png`,
+      icon: forkingImage,
       color: '#107c10'
     },
     {
       id: 'create',
       title: 'Create New DAK',
       description: 'Create a new DAK from the WHO SMART Guidelines template (smart-ig-empty). You\'ll configure basic parameters and start with a clean template.',
-      icon: `${process.env.PUBLIC_URL || ''}/create.png`,
+      icon: createImage,
       color: '#881798'
     }
   ];

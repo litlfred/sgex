@@ -1288,10 +1288,15 @@ class GitHubService {
   async getBpmnFiles(owner, repo, ref = 'main') {
     const allBpmnFiles = [];
     
-    // Try both possible directory names: 'input/business-processes' and 'input/business-process'
+    // Try multiple possible directory names where BPMN files might be stored
     const possiblePaths = [
       'input/business-processes',
-      'input/business-process'
+      'input/business-process',
+      'public/docs/workflows',
+      'docs/workflows',
+      'workflows',
+      'bpmn',
+      'processes'
     ];
 
     for (const path of possiblePaths) {

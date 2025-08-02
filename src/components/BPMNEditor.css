@@ -180,12 +180,12 @@
 
 .file-browser-header h3 {
   margin: 0 0 0.25rem 0;
-  color: #333;
+  color: var(--who-text-primary);
   font-size: 1rem;
 }
 
 .file-path {
-  color: #666;
+  color: var(--who-text-secondary);
   font-size: 0.75rem;
   font-family: monospace;
 }

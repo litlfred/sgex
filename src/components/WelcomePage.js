@@ -7,6 +7,7 @@ import OAuthDeviceFlow from './OAuthDeviceFlow';
 import helpContentService from '../services/helpContentService';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
+import useThemeImage from '../hooks/useThemeImage';
 import './WelcomePage.css';
 
 const WelcomePage = () => {
@@ -18,6 +19,11 @@ const WelcomePage = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Theme-aware image paths
+  const mascotImage = useThemeImage('sgex-mascot.png');
+  const authoringImage = useThemeImage('authoring.png');
+  const collaborationImage = useThemeImage('collaboration.png');
 
   // Initial authentication check - runs once on mount
   useEffect(() => {
@@ -148,7 +154,7 @@ const WelcomePage = () => {
         <div className="welcome-hero">
           <div className="welcome-intro">
             <div className="welcome-mascot">
-              <img src="/sgex-mascot.png" alt="SGEX Workbench Helper" />
+              <img src={mascotImage} alt="SGEX Workbench Helper" />
             </div>
             <div className="welcome-text">
               <h1>SGEX Workbench</h1>
@@ -165,7 +171,7 @@ const WelcomePage = () => {
             {/* Authoring Card - Always show */}
             <div className="action-card authoring-card" onClick={handleAuthoringClick}>
               <div className="card-icon">
-                <img src="/authoring.png" alt="Authoring" />
+                <img src={authoringImage} alt="Authoring" />
               </div>
               <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
             </div>
@@ -240,7 +246,7 @@ const WelcomePage = () => {
             {/* Collaboration Card */}
             <div className="action-card collaboration-card" onClick={handleCollaborationOpen}>
               <div className="card-icon">
-                <img src="/collaboration.png" alt="Collaboration" />
+                <img src={collaborationImage} alt="Collaboration" />
               </div>
               <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
             </div>

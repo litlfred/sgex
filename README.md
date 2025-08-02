@@ -222,7 +222,20 @@ The workbench is deployed using GitHub Actions workflows that:
 2. **Build process** → Installs dependencies, runs tests, builds React app
 3. **Branch deployment** → Creates/updates preview at branch-specific URL  
 4. **Landing page update** → Refreshes main page with current branch listings
-5. **Live in minutes** → Changes are accessible within 2-3 minutes
+5. **PR comment** → Automatically posts deployment URLs to associated pull request conversations
+6. **Live in minutes** → Changes are accessible within 2-3 minutes
+
+#### Pull Request Integration
+
+When you push to a branch that's associated with an open pull request, the deployment workflow automatically:
+
+- **Detects the associated PR** by branch name or commit SHA
+- **Posts a comment** with all deployment URLs directly in the PR conversation  
+- **Updates existing comments** instead of creating duplicates
+- **Includes branch preview, landing page, and main app URLs** for easy access
+- **Shows deployment timestamp and commit information** for reference
+
+This integration makes it easy for reviewers to immediately access and test changes without manually navigating to deployment URLs.
 
 This deployment system enables seamless collaboration by providing isolated preview environments for every feature branch while maintaining a stable main application.
 
