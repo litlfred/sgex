@@ -16,7 +16,7 @@ const CoreDataDictionaryViewerContent = () => {
   const navigate = useNavigate();
   const { profile, repository, branch } = useDAKParams();
   
-  // Get data from URL params using the cleaner approach
+  // Get data from URL params
   const user = profile?.login;
   const repo = repository?.name;
   
@@ -74,34 +74,18 @@ const CoreDataDictionaryViewerContent = () => {
     return concepts;
   }, []);
 
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
 
-  const handleBackToDashboard = () => {
-    if (user && repo) {
-      // Use URL parameters for navigation
-      const dashboardPath = branch ? 
-        `/dashboard/${user}/${repo}/${branch}` : 
-        `/dashboard/${user}/${repo}`;
-      navigate(dashboardPath);
-    } else {
-      // Fallback to state-based navigation
-      navigate('/dashboard', { 
-        state: { 
-          profile, 
-          repository, 
-          branch 
-        } 
-      });
-    }
-  };
 
   // Fetch FSH files from input/fsh directory
   useEffect(() => {
     const fetchFshFiles = async () => {
-      // Use the simplified parameter approach
-      if (!repository || !branch) {
+      // Support both URL params and state-based data
+      const currentRepository = repository;
+      const currentBranch = branch;
+      const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
+      const currentRepo = repo || repository?.name;
+      
+      if ((!currentRepository && (!currentUser || !currentRepo)) || !currentBranch) {
         setLoading(false);
         return;
       }
@@ -130,10 +114,10 @@ const CoreDataDictionaryViewerContent = () => {
         // Try to fetch the input/fsh directory
         try {
           const fshDirContents = await githubService.getDirectoryContents(
-            user, 
-            repo, 
+            currentUser, 
+            currentRepo, 
             'input/fsh', 
-            branch
+            currentBranch
           );
 
           // Filter for .fsh files
@@ -159,10 +143,10 @@ const CoreDataDictionaryViewerContent = () => {
         // Try to fetch logical models from input/fsh/models directory
         try {
           const modelsDirContents = await githubService.getDirectoryContents(
-            user, 
-            repo, 
+            currentUser, 
+            currentRepo, 
             'input/fsh/models', 
-            branch
+            currentBranch
           );
 
           // Filter for .fsh files containing logical models
@@ -189,10 +173,10 @@ const CoreDataDictionaryViewerContent = () => {
         // Try to fetch the DAK.fsh file specifically from input/fsh/codesystems/
         try {
           const dakFile = await githubService.getDirectoryContents(
-            user,
-            repo,
+            currentUser,
+            currentRepo,
             'input/fsh/codesystems',
-            branch
+            currentBranch
           );
           
           // Look for DAK.fsh file
@@ -208,10 +192,10 @@ const CoreDataDictionaryViewerContent = () => {
             // Fetch and parse DAK.fsh content for table display
             try {
               const dakContent = await githubService.getFileContent(
-                user,
-                repo,
+                currentUser,
+                currentRepo,
                 dakFsh.path,
-                branch
+                currentBranch
               );
               const concepts = parseDakFshConcepts(dakContent);
               setDakConcepts(concepts);
@@ -236,7 +220,7 @@ const CoreDataDictionaryViewerContent = () => {
         }
 
         // Fetch branches to check for gh-pages
-        const allBranches = await githubService.getBranches(user, repo);
+        const allBranches = await githubService.getBranches(currentUser, currentRepo);
         const branchNames = allBranches.map(b => b.name);
         setBranches(branchNames.filter(name => name !== 'gh-pages'));
         const hasGhPagesVar = branchNames.includes('gh-pages');
@@ -244,7 +228,7 @@ const CoreDataDictionaryViewerContent = () => {
 
         // Check if published DAK exists if we have gh-pages
         if (hasGhPagesVar) {
-          const baseUrl = getBaseUrl(branch);
+          const baseUrl = getBaseUrl(currentBranch);
           const dakExists = await checkPublishedDakExists(baseUrl);
           setHasPublishedDak(dakExists);
         } else {
@@ -271,8 +255,8 @@ const CoreDataDictionaryViewerContent = () => {
       setShowModal(true);
       
       const content = await githubService.getFileContent(
-        user,
-        repo,
+        user || repository?.owner?.login || repository?.full_name.split('/')[0],
+        repo || repository?.name,
         file.path,
         branch
       );
@@ -348,50 +332,6 @@ const CoreDataDictionaryViewerContent = () => {
       {/* Core Data Dictionary Section */}
       {activeSection === 'core-data-dictionary' && (
         <div className="core-data-dictionary-section">
-          {/* DAK Concepts Table */}
-          {dakConcepts.length > 0 && (
-            <div className="dak-concepts-section">
-              <h3>DAK Concepts ({dakConcepts.length} total)</h3>
-              <div className="dak-table-controls">
-                <input
-                  type="text"
-                  placeholder="Search concepts..."
-                  value={dakTableSearch}
-                  onChange={(e) => setDakTableSearch(e.target.value)}
-                  className="search-input"
-                />
-              </div>
-              <div className="dak-concepts-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Code</th>
-                      <th>Display</th>
-                      <th>Definition</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dakConcepts
-                      .filter(concept => 
-                        !dakTableSearch || 
-                        concept.code.toLowerCase().includes(dakTableSearch.toLowerCase()) ||
-                        concept.display.toLowerCase().includes(dakTableSearch.toLowerCase()) ||
-                        concept.definition.toLowerCase().includes(dakTableSearch.toLowerCase())
-                      )
-                      .map((concept, index) => (
-                        <tr key={index}>
-                          <td className="concept-code">{concept.code}</td>
-                          <td className="concept-display">{concept.display}</td>
-                          <td className="concept-definition">{concept.definition}</td>
-                        </tr>
-                      ))
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
           {/* Main content layout with two columns */}
           <div className="two-column-layout">
             {/* Standard Dictionaries Section - Left Column */}
@@ -458,6 +398,50 @@ const CoreDataDictionaryViewerContent = () => {
                   </p>
                 )}
               </div>
+
+              {/* DAK Concepts Table */}
+              {dakConcepts.length > 0 && (
+                <div className="subsection">
+                  <h4>DAK Concepts ({dakConcepts.length} total)</h4>
+                  <div className="dak-table-controls">
+                    <input
+                      type="text"
+                      placeholder="Search concepts..."
+                      value={dakTableSearch}
+                      onChange={(e) => setDakTableSearch(e.target.value)}
+                      className="search-input"
+                    />
+                  </div>
+                  <div className="dak-concepts-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Code</th>
+                          <th>Display</th>
+                          <th>Definition</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dakConcepts
+                          .filter(concept => 
+                            !dakTableSearch || 
+                            concept.code.toLowerCase().includes(dakTableSearch.toLowerCase()) ||
+                            concept.display.toLowerCase().includes(dakTableSearch.toLowerCase()) ||
+                            concept.definition.toLowerCase().includes(dakTableSearch.toLowerCase())
+                          )
+                          .map((concept, index) => (
+                            <tr key={index}>
+                              <td className="concept-code">{concept.code}</td>
+                              <td className="concept-display">{concept.display}</td>
+                              <td className="concept-definition">{concept.definition}</td>
+                            </tr>
+                          ))
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
 
               <div className="subsection">
                 <h4>Value Sets</h4>
@@ -588,7 +572,7 @@ const CoreDataDictionaryViewerContent = () => {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content fsh-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{selectedFile.name}</h3>
+              <h3>{selectedFile.name} {modalMode === 'edit' ? '(Edit Mode)' : '(View Mode)'}</h3>
               <div className="modal-actions">
                 <button className="modal-close" onClick={closeModal}>×</button>
               </div>
