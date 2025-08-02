@@ -1,0 +1,14 @@
+Deployment trigger #3 - Fixed React Router basename for subdirectory deployment
+
+This trigger is to test the fix for GitHub Pages deployment where the React Router 
+basename is now dynamically set based on the PUBLIC_URL environment variable.
+
+The issue was that React Router was hardcoded with basename="/sgex" but for 
+subdirectory deployments like copilot-fix-418, it should use basename="/copilot-fix-418/"
+
+Fixed in App.js:
+- Changed from hardcoded `basename="/sgex"`
+- To dynamic `basename={process.env.PUBLIC_URL || '/sgex'}`
+
+This should resolve the issue where the deployed application wasn't loading 
+properly at https://litlfred.github.io/sgex/copilot-fix-418/

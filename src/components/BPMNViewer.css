@@ -344,7 +344,16 @@ body.theme-light .bpmn-viewer {
 .bpmn-container {
   width: 100%;
   height: 100%;
-  background: var(--who-primary-bg);
+  background: var(--bpmn-preview-bg, #f8f9ff);
+}
+
+/* CSS Variables for BPMN backgrounds */
+:root {
+  --bpmn-preview-bg: #f8f9ff; /* Very light blue for light mode */
+}
+
+body.theme-dark {
+  --bpmn-preview-bg: #1a1a2e; /* Dark blue for dark mode */
 }
 
 .loading-overlay,
