@@ -330,7 +330,7 @@ jobs:
                 # Stash any uncommitted changes including untracked files before checkout
                 git stash -u -m "Stash before switching to main" || echo "Nothing to stash"
                 git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
-                git checkout main
+                git checkout origin/main
                 # Use the updated build script from our current branch
                 cp /tmp/updated-build-script.js scripts/build-multi-branch.js
                 npm ci
