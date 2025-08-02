@@ -29,7 +29,7 @@ const HealthInterventionsEditor = () => {
   const [selectedReferences, setSelectedReferences] = useState([]);
   
   // Theme-aware mascot image for fallback avatar
-  const mascotImage = useThemeImage('/sgex/sgex-mascot.png');
+  const mascotImage = useThemeImage('sgex-mascot.png');
   
   // Get data from URL params or location state
   const { profile, repository } = location.state || {};
@@ -95,7 +95,7 @@ const ComponentEditorContent = () => {
   const [selectedReferences, setSelectedReferences] = useState([]);
   
   // Theme-aware mascot image for fallback avatar
-  const mascotImage = useThemeImage('/sgex/sgex-mascot.png');
+  const mascotImage = useThemeImage('sgex-mascot.png');
   
   const { profile, repository, component } = location.state || {};
 

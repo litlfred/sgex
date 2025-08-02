@@ -17,7 +17,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [cacheCleared, setCacheCleared] = useState(false);
 
   // Theme-aware mascot image
-  const mascotImage = useThemeImage('/sgex-mascot.png');
+  const mascotImage = useThemeImage('sgex-mascot.png');
 
   // Load theme preference from localStorage on mount
   useEffect(() => {

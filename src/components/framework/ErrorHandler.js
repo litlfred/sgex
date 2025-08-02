@@ -20,7 +20,7 @@ const ErrorHandler = ({ error, onRetry }) => {
   const [bugReportSent, setBugReportSent] = useState(false);
 
   // Theme-aware mascot image
-  const mascotImage = useThemeImage('/sgex/sgex-mascot.png');
+  const mascotImage = useThemeImage('sgex-mascot.png');
   const [userExplanation, setUserExplanation] = useState('');
 
   const generateBugReportUrl = () => {

@@ -7,7 +7,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Theme-aware mascot image
-  const mascotImage = useThemeImage('/sgex/sgex-mascot.png');
+  const mascotImage = useThemeImage('sgex-mascot.png');
 
   // Set up global reference for inline onclick handlers
   useEffect(() => {

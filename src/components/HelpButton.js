@@ -7,7 +7,7 @@ const HelpButton = ({ helpTopic, contextData = {} }) => {
   const [showHelp, setShowHelp] = useState(false);
 
   // Theme-aware mascot image
-  const mascotImage = useThemeImage('/sgex/sgex-mascot.png');
+  const mascotImage = useThemeImage('sgex-mascot.png');
 
   const handleHelpClick = () => {
     setShowHelp(true);

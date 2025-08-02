@@ -19,9 +19,9 @@ const DAKActionSelectionContent = () => {
   const { profile } = usePageParams();
   
   // Theme-aware action images
-  const editingImage = useThemeImage(`${process.env.PUBLIC_URL || ''}/editing.png`);
-  const forkingImage = useThemeImage(`${process.env.PUBLIC_URL || ''}/forking.png`);
-  const createImage = useThemeImage(`${process.env.PUBLIC_URL || ''}/create.png`);
+  const editingImage = useThemeImage('editing.png');
+  const forkingImage = useThemeImage('forking.png');
+  const createImage = useThemeImage('create.png');
   
   // Use profile from framework (PageProvider) or location state
   const effectiveProfile = profile || location.state?.profile;

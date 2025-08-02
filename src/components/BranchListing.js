@@ -16,7 +16,7 @@ const BranchListing = () => {
   const [branchSearchTerm, setBranchSearchTerm] = useState('');
 
   // Theme-aware mascot image
-  const mascotImage = useThemeImage('./sgex-mascot.png');
+  const mascotImage = useThemeImage('sgex-mascot.png');
   const [prSortBy, setPrSortBy] = useState('updated'); // updated, number, alphabetical
   const [branchSortBy, setBranchSortBy] = useState('updated'); // updated, alphabetical
   const [showContributeModal, setShowContributeModal] = useState(false);

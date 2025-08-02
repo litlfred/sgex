@@ -6,7 +6,7 @@ const CollaborationModal = ({ onClose }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Theme-aware collaboration image
-  const collaborationImage = useThemeImage('/collaboration.png');
+  const collaborationImage = useThemeImage('collaboration.png');
 
   const slides = [
     {

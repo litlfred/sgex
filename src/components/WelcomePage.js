@@ -23,9 +23,9 @@ const WelcomePage = () => {
   const location = useLocation();
 
   // Theme-aware image paths
-  const mascotImage = useThemeImage('/sgex-mascot.png');
-  const authoringImage = useThemeImage('/authoring.png');
-  const collaborationImage = useThemeImage('/collaboration.png');
+  const mascotImage = useThemeImage('sgex-mascot.png');
+  const authoringImage = useThemeImage('authoring.png');
+  const collaborationImage = useThemeImage('collaboration.png');
 
   // Initial authentication check - runs once on mount
   useEffect(() => {
