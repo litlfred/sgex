@@ -42,13 +42,19 @@ function createBranchSpecificBuild() {
     // Set homepage based on branch and base path
     let deploymentPath;
     if (basePath) {
-      packageJson.homepage = basePath;
-      deploymentPath = basePath;
-      console.log(`🔧 Setting homepage to: ${basePath}`);
+      // For GitHub Pages, ensure the repository name is included in the path
+      // basePath comes in format like "/copilot-fix-418/" but needs to be "/sgex/copilot-fix-418/"
+      if (basePath.startsWith('/') && !basePath.startsWith('/sgex/')) {
+        deploymentPath = `/sgex${basePath}`;
+      } else {
+        deploymentPath = basePath;
+      }
+      packageJson.homepage = deploymentPath;
+      console.log(`🔧 Setting homepage to: ${deploymentPath}`);
     } else {
-      // Default path structure: /main/ for main, /safe-branch-name/ for others
+      // Default path structure: /sgex/main/ for main, /sgex/safe-branch-name/ for others
       const safeBranchName = branchName === 'main' ? 'main' : branchName.replace(/[^a-zA-Z0-9._-]/g, '-');
-      deploymentPath = `/${safeBranchName}/`;
+      deploymentPath = `/sgex/${safeBranchName}/`;
       packageJson.homepage = deploymentPath;
       console.log(`🔧 Setting homepage to: ${deploymentPath}`);
     }
