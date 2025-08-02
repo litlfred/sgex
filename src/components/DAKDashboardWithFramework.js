@@ -27,7 +27,6 @@ const DAKDashboardContent = () => {
     const checkWritePermissions = async () => {
       if (!repository || !githubService.isAuth()) {
         setHasWriteAccess(false);
-        setCheckingPermissions(false);
         return;
       }
 
@@ -38,8 +37,6 @@ const DAKDashboardContent = () => {
       } catch (error) {
         console.error('Error checking repository permissions:', error);
         setHasWriteAccess(false);
-      } finally {
-        // Permission checking is now handled by the framework
       }
     };
 
