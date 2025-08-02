@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
+import useThemeImage from '../hooks/useThemeImage';
 import './CollaborationModal.css';
 
 const CollaborationModal = ({ onClose }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Theme-aware collaboration image
+  const collaborationImage = useThemeImage('/collaboration.png');
 
   const slides = [
     {
@@ -69,7 +73,7 @@ const CollaborationModal = ({ onClose }) => {
       content: (
         <div className="slide-content">
           <div className="collaboration-image">
-            <img src="/collaboration_grey_tabby.png" alt="Collaboration in SGEX" />
+            <img src={collaborationImage} alt="Collaboration in SGEX" />
           </div>
           <p>
             Every contribution helps improve digital health tools for healthcare workers worldwide. Whether you're reporting a bug, testing a feature, or sharing feedback, you're part of building the future of digital health tooling.

@@ -7,6 +7,7 @@
 
 import githubService from './githubService';
 import logger from '../utils/logger';
+import { getThemeImagePath } from '../utils/themeUtils';
 
 /**
  * User types supported by the access framework
@@ -105,7 +106,7 @@ class UserAccessService {
       return {
         login: 'demo-user',
         name: 'Demo User',
-        avatar_url: '/sgex-mascot_grey_tabby.png',
+        avatar_url: getThemeImagePath('/sgex-mascot.png'),
         type: 'User',
         isDemo: true,
         demoData: this.getDemoData()

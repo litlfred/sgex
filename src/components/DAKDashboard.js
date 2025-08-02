@@ -9,6 +9,7 @@ import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
+import useThemeImage from '../hooks/useThemeImage';
 import './DAKDashboard.css';
 
 const DAKDashboard = () => {
@@ -24,6 +25,9 @@ const DAKDashboardContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, repo, branch } = useParams();
+  
+  // Theme-aware mascot image for dialog
+  const mascotImage = useThemeImage('/sgex/sgex-mascot.png');
   
   // Try to get data from location.state first, then from URL params
   const [profile, setProfile] = useState(location.state?.profile || null);
@@ -735,7 +739,7 @@ const DAKDashboardContent = () => {
             </div>
             <div className="dialog-content">
               <div className="dialog-mascot">
-                <img src="/sgex/sgex-mascot_grey_tabby.png" alt="SGEX Helper" className="dialog-mascot-img" />
+                <img src={mascotImage} alt="SGEX Helper" className="dialog-mascot-img" />
                 <div className="mascot-message">
                   <p>You need edit permissions to modify DAK components!</p>
                   <p>Your current token only provides read access to this repository.</p>

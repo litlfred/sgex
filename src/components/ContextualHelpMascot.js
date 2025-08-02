@@ -4,6 +4,7 @@ import helpContentService from '../services/helpContentService';
 import cacheManagementService from '../services/cacheManagementService';
 import HelpModal from './HelpModal';
 import LanguageSelector from './LanguageSelector';
+import useThemeImage from '../hooks/useThemeImage';
 import './ContextualHelpMascot.css';
 
 const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', contextData = {}, notificationBadge = false }) => {
@@ -14,6 +15,9 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [cacheClearing, setCacheClearing] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
+
+  // Theme-aware mascot image
+  const mascotImage = useThemeImage('/sgex-mascot.png');
 
   // Load theme preference from localStorage on mount
   useEffect(() => {
@@ -138,7 +142,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
           onClick={handleClick}
         >
           <img 
-            src="/sgex-mascot_grey_tabby.png" 
+            src={mascotImage} 
             alt="SGEX Helper" 
             className="mascot-icon"
           />

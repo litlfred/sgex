@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import useThemeImage from '../hooks/useThemeImage';
 import './HelpModal.css';
 
 const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Theme-aware mascot image
+  const mascotImage = useThemeImage('/sgex/sgex-mascot.png');
 
   // Set up global reference for inline onclick handlers
   useEffect(() => {
@@ -417,7 +421,7 @@ Best regards,
         content: helpTopic.type === 'slideshow' ? renderSlideshow() : (
           <div className="help-content">
             <div className="mascot-message">
-              <img src="/sgex/sgex-mascot_grey_tabby.png" alt="SGEX Helper" className="help-mascot" />
+              <img src={mascotImage} alt="SGEX Helper" className="help-mascot" />
               <div className="message-bubble">
                 <div dangerouslySetInnerHTML={{ __html: helpTopic.content }} />
               </div>
@@ -436,7 +440,7 @@ Best regards,
           content: (
             <div className="help-content">
               <div className="mascot-message">
-                <img src="/sgex/sgex-mascot_grey_tabby.png" alt="SGEX Helper" className="help-mascot" />
+                <img src={mascotImage} alt="SGEX Helper" className="help-mascot" />
                 <div className="message-bubble">
                   <p>SGEX Workbench uses GitHub Personal Access Tokens for secure authentication!</p>
                   <p><strong>How it works:</strong></p>
@@ -459,7 +463,7 @@ Best regards,
           content: (
             <div className="help-content">
               <div className="mascot-message">
-                <img src="/sgex/sgex-mascot_grey_tabby.png" alt="SGEX Helper" className="help-mascot" />
+                <img src={mascotImage} alt="SGEX Helper" className="help-mascot" />
                 <div className="message-bubble">
                   <p>Hi! I'm here to help you with the SGEX Workbench.</p>
                   <p>Use the menu in the top right to get additional support options.</p>
