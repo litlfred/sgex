@@ -134,18 +134,15 @@ jobs:
             exit 1
           fi
           
-          # Create directory if it doesn't exist to test with readlink
-          if [[ ! -d "$target_dir" ]]; then
-            mkdir -p "$target_dir"
-          fi
+          # Don't create the directory here - we'll create it on the gh-pages branch
+          # Just validate the path structure for safety
+          resolved_target="$target_dir"
           
-          resolved_target="$(readlink -f "$target_dir")"
-          
-          # Final readlink validation
+          # Validate the target would be safe when resolved
           if [[ "$resolved_target" != "$repo_root"* ]] || [[ ${#resolved_target} -le ${#repo_root} ]]; then
-            echo "ERROR: Readlink validation failed"
+            echo "ERROR: Target validation failed"
             echo "Repository root: $repo_root"
-            echo "Resolved target: $resolved_target"
+            echo "Target directory: $resolved_target"
             exit 1
           fi
           
@@ -196,9 +193,8 @@ jobs:
           echo "Branch directory: $branch_dir"
           echo "Repository root: $repo_root"
           
-          # Re-validate before any destructive operations
-          resolved_dir="$(readlink -f "$branch_dir")"
-          if [[ "$resolved_dir" != "$repo_root"* ]] || [[ ${#resolved_dir} -le ${#repo_root} ]]; then
+          # Validate before any destructive operations
+          if [[ "$branch_dir" != "$repo_root"* ]] || [[ ${#branch_dir} -le ${#repo_root} ]]; then
             echo "ERROR: Safety validation failed during cleanup"
             exit 1
           fi
@@ -223,9 +219,8 @@ jobs:
           echo "Branch directory: $branch_dir"
           echo "Repository root: $repo_root"
           
-          # Final validation before copy
-          resolved_dir="$(readlink -f "$branch_dir")"
-          if [[ "$resolved_dir" != "$repo_root"* ]] || [[ ${#resolved_dir} -le ${#repo_root} ]]; then
+          # Validation before copy
+          if [[ "$branch_dir" != "$repo_root"* ]] || [[ ${#branch_dir} -le ${#repo_root} ]]; then
             echo "ERROR: Safety validation failed during copy"
             exit 1
           fi
@@ -241,6 +236,12 @@ jobs:
           fi
           
           echo "✅ Build copied successfully to $branch_dir"
+          
+          # Immediately backup this branch directory to prevent it from being lost during root deployment
+          echo "Backing up newly created branch directory..."
+          mkdir -p /tmp/current-branch-backup
+          cp -r "$branch_dir" "/tmp/current-branch-backup/"
+          echo "✅ Branch directory backed up to /tmp/current-branch-backup"
 
       - name: Build and deploy root landing page
         shell: bash
@@ -275,12 +276,16 @@ jobs:
           # Deploy landing page to root (but preserve branch directories)
           echo "Deploying root landing page..."
           
-          # Save existing branch directories
+          # Save existing branch directories (excluding the current one that's already backed up)
           if ls -d */ > /dev/null 2>&1; then
             echo "Preserving existing branch directories..."
             mkdir -p /tmp/branch-backup
             for dir in */; do
-              cp -r "$dir" /tmp/branch-backup/
+              # Skip the current branch directory since we have a separate backup
+              dir_name="${dir%/}"
+              if [[ "$dir_name" != "${{ steps.validate_branch.outputs.target_subdir }}" ]]; then
+                cp -r "$dir" /tmp/branch-backup/
+              fi
             done
           fi
           
@@ -299,10 +304,18 @@ jobs:
           # Clean up temporary build backup
           rm -rf /tmp/root-build-backup
           
-          # Restore branch directories
+          # Restore existing branch directories
           if [[ -d /tmp/branch-backup ]]; then
             cp -r /tmp/branch-backup/* .
             rm -rf /tmp/branch-backup
+          fi
+          
+          # Restore the current branch directory
+          if [[ -d /tmp/current-branch-backup ]]; then
+            echo "Restoring current branch directory..."
+            cp -r /tmp/current-branch-backup/* .
+            rm -rf /tmp/current-branch-backup
+            echo "✅ Current branch directory restored"
           fi
           
           # Ensure main branch is always available at /main/
