@@ -28,8 +28,24 @@
 .branch-listing-header .subtitle {
   font-size: 1.2rem;
   color: #666;
-  margin: 0 0 2rem 0;
+  margin: 0 0 1rem 0;
   font-style: italic;
+}
+
+.prominent-info {
+  background: var(--who-secondary-bg, #f8f9fa);
+  border: 2px solid var(--who-blue, #0366d6);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.info-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--who-text-primary, #333);
+  margin: 0;
 }
 
 /* Main action buttons */
@@ -93,7 +109,7 @@
   display: flex;
   justify-content: center;
   margin-bottom: 2rem;
-  border-bottom: 1px solid #e1e5e9;
+  border-bottom: 1px solid var(--who-border-color, #e1e5e9);
 }
 
 .tab-button {
@@ -102,19 +118,19 @@
   padding: 1rem 2rem;
   font-size: 1.1rem;
   font-weight: 500;
-  color: #586069;
+  color: var(--who-text-secondary, #586069);
   cursor: pointer;
   border-bottom: 3px solid transparent;
   transition: all 0.2s ease;
 }
 
 .tab-button:hover {
-  color: #0366d6;
+  color: var(--who-blue, #0366d6);
 }
 
 .tab-button.active {
-  color: #0366d6;
-  border-bottom-color: #0366d6;
+  color: var(--who-blue, #0366d6);
+  border-bottom-color: var(--who-blue, #0366d6);
 }
 
 /* Cards styling - unified for branches and PRs */
@@ -155,6 +171,23 @@
   box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
 }
 
+.sort-select {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--who-border-color, #e1e5e9);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--who-card-bg, #ffffff);
+  color: var(--who-text-primary, #333);
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--who-blue, #0366d6);
+  box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+}
+
 .status-checking {
   color: #0366d6;
   font-size: 0.9rem;
@@ -165,10 +198,10 @@
 }
 
 .preview-card {
-  border: 1px solid #e1e5e9;
+  border: 1px solid var(--who-border-color, #e1e5e9);
   border-radius: 12px;
   padding: 1.5rem;
-  background: #ffffff;
+  background: var(--who-card-bg, #ffffff);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   position: relative;
@@ -177,7 +210,7 @@
 .preview-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  border-color: #0366d6;
+  border-color: var(--who-blue, #0366d6);
 }
 
 .card-header {
@@ -199,15 +232,15 @@
 .item-name {
   margin: 0;
   font-size: 1.4rem;
-  color: #0366d6;
+  color: var(--who-blue, #0366d6);
   font-weight: 600;
   word-break: break-word;
   flex: 1;
 }
 
 .commit-badge, .state-badge, .status-badge {
-  background: #f1f3f4;
-  color: #586069;
+  background: var(--who-hover-bg, #f1f3f4);
+  color: var(--who-text-secondary, #586069);
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
@@ -247,7 +280,7 @@
 }
 
 .item-date, .pr-meta {
-  color: #586069;
+  color: var(--who-text-secondary, #586069);
   font-size: 0.9rem;
   margin: 0 0 1rem 0;
 }
@@ -374,9 +407,9 @@
 }
 
 .pagination-btn {
-  background: #f8f9fa;
-  border: 1px solid #e1e5e9;
-  color: #0366d6;
+  background: var(--who-hover-bg, #f8f9fa);
+  border: 1px solid var(--who-border-color, #e1e5e9);
+  color: var(--who-blue, #0366d6);
   padding: 0.5rem 1rem;
   border-radius: 6px;
   cursor: pointer;
@@ -385,18 +418,18 @@
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #e1e7fd;
-  border-color: #0366d6;
+  background: var(--who-selected-bg, #e1e7fd);
+  border-color: var(--who-blue, #0366d6);
 }
 
 .pagination-btn:disabled {
-  color: #6a737d;
+  color: var(--who-text-muted, #6a737d);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 .pagination-info {
-  color: #586069;
+  color: var(--who-text-secondary, #586069);
   font-size: 0.9rem;
 }
 
@@ -423,7 +456,7 @@
 
 /* Footer */
 .branch-listing-footer {
-  border-top: 1px solid #e1e5e9;
+  border-top: 1px solid var(--who-border-color, #e1e5e9);
   padding: 2rem 0;
   margin-top: 3rem;
 }
@@ -441,7 +474,7 @@
 
 .footer-center {
   text-align: center;
-  color: #6a737d;
+  color: var(--who-text-secondary, #6a737d);
 }
 
 .footer-center p {
@@ -449,7 +482,7 @@
 }
 
 .source-link, .footer-center a {
-  color: #0366d6;
+  color: var(--who-blue, #0366d6);
   text-decoration: none;
   font-weight: 500;
   display: inline-flex;
