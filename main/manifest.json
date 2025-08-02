@@ -3,22 +3,22 @@
   "name": "SGEX Workbench - WHO SMART Guidelines Exchange",
   "icons": [
     {
-      "src": "/main/favicon.ico",
+      "src": "/sgex/main/favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     },
     {
-      "src": "/main/logo192.png",
+      "src": "/sgex/main/logo192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/main/logo512.png",
+      "src": "/sgex/main/logo512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
-  "start_url": "/main/",
+  "start_url": "/sgex/main/",
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#ffffff"
