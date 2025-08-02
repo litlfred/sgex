@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import MDEditor from '@uiw/react-md-editor';
 import stagingGroundService from '../services/stagingGroundService';
 import './PageEditModal.css';
@@ -91,6 +92,19 @@ const PageEditModal = ({ page, onClose, onSave }) => {
       </div>
     </div>
   );
+};
+
+PageEditModal.propTypes = {
+  page: PropTypes.shape({
+    path: PropTypes.string,
+    title: PropTypes.string,
+    filename: PropTypes.string,
+    content: PropTypes.shape({
+      content: PropTypes.string
+    })
+  }).isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired
 };
 
 export default PageEditModal;

@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { usePage, PAGE_TYPES } from './PageProvider';
 import './PageBreadcrumbs.css';
 
@@ -138,6 +139,16 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
       </ol>
     </nav>
   );
+};
+
+PageBreadcrumbs.propTypes = {
+  customBreadcrumbs: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      path: PropTypes.string,
+      onClick: PropTypes.func
+    })
+  )
 };
 
 export default PageBreadcrumbs;
