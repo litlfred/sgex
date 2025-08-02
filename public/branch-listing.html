@@ -426,6 +426,47 @@
             color: #991b1b;
         }
 
+        .deployment-status {
+            background: var(--who-hover-bg);
+            color: var(--who-text-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .deployment-status.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .deployment-status.failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .deployment-status.in-progress {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .deployment-status.queued {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .deployment-status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .deployment-status.unknown {
+            background: var(--who-hover-bg);
+            color: var(--who-text-muted);
+        }
+
         .card-body {
             margin-bottom: 1rem;
         }
@@ -442,7 +483,7 @@
             flex-wrap: wrap;
         }
 
-        .preview-link, .pr-link, .copy-btn {
+        .preview-link, .pr-link {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
@@ -464,15 +505,6 @@
         .preview-link:hover {
             background: #0256cc;
             text-decoration: none;
-            color: white;
-        }
-
-        .copy-btn {
-            background: #28a745;
-        }
-
-        .copy-btn:hover {
-            background: #218838;
             color: white;
         }
 
@@ -945,6 +977,8 @@
             const [prPage, setPrPage] = useState(1);
             const [prSearchTerm, setPrSearchTerm] = useState('');
             const [prSortBy, setPrSortBy] = useState('updated');
+            const [prSortOrder, setPrSortOrder] = useState('desc');
+            const [deploymentStatuses, setDeploymentStatuses] = useState({});
             const [prFilter, setPrFilter] = useState('open');
             const [isAuthenticated, setIsAuthenticated] = useState(false);
             const [githubToken, setGithubToken] = useState(null);
@@ -1201,36 +1235,96 @@
                 setLoadingComments(false);
             }, [githubToken]);
 
-            // Copy to clipboard function
-            const copyToClipboard = async (url, type, name) => {
+            // Function to check deployment status for a branch
+            const checkDeploymentStatus = async (safeBranchName) => {
                 try {
-                    await navigator.clipboard.writeText(url);
-                    console.log(`Copied ${type} URL for ${name} to clipboard`);
+                    const response = await fetch(
+                        `https://api.github.com/repos/litlfred/sgex/actions/workflows/deploy.yml/runs?branch=${safeBranchName}&per_page=1`,
+                        {
+                            headers: githubToken ? {
+                                'Authorization': `token ${githubToken}`,
+                                'Accept': 'application/vnd.github.v3+json'
+                            } : {
+                                'Accept': 'application/vnd.github.v3+json'
+                            }
+                        }
+                    );
+                    
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch deployment status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    if (data.workflow_runs && data.workflow_runs.length > 0) {
+                        const latestRun = data.workflow_runs[0];
+                        return {
+                            status: latestRun.status,
+                            conclusion: latestRun.conclusion,
+                            html_url: latestRun.html_url,
+                            created_at: latestRun.created_at
+                        };
+                    }
+                    
+                    return { status: 'unknown', conclusion: null };
                 } catch (error) {
-                    const textArea = document.createElement('textarea');
-                    textArea.value = url;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    console.log(`Copied ${type} URL for ${name} to clipboard (fallback)`);
+                    console.error(`Error checking deployment status for ${safeBranchName}:`, error);
+                    return { status: 'error', conclusion: 'error' };
+                }
+            };
+
+            // Function to update deployment statuses for visible PRs
+            const updateDeploymentStatuses = useCallback(async (prs) => {
+                if (prs.length === 0) return;
+                
+                const statuses = {};
+                for (const pr of prs) {
+                    statuses[pr.safeBranchName] = await checkDeploymentStatus(pr.safeBranchName);
+                }
+                
+                setDeploymentStatuses(prev => ({ ...prev, ...statuses }));
+            }, [githubToken]);
+
+            // Function to get deployment status display info
+            const getDeploymentStatusInfo = (safeBranchName) => {
+                const status = deploymentStatuses[safeBranchName];
+                if (!status) return { text: 'Checking...', class: 'unknown' };
+                
+                if (status.status === 'completed' && status.conclusion === 'success') {
+                    return { text: '✅ Deployed', class: 'success' };
+                } else if (status.status === 'completed' && status.conclusion === 'failure') {
+                    return { text: '❌ Failed', class: 'failed' };
+                } else if (status.status === 'in_progress') {
+                    return { text: '🔄 Deploying', class: 'in-progress' };
+                } else if (status.status === 'queued') {
+                    return { text: '⏳ Queued', class: 'queued' };
+                } else if (status.status === 'error') {
+                    return { text: '⚠️ Error', class: 'error' };
+                } else {
+                    return { text: '❓ Unknown', class: 'unknown' };
                 }
             };
 
             // Sorting functions
-            const sortPRs = (prs, sortBy) => {
+            const sortPRs = (prs, sortBy, sortOrder = 'desc') => {
                 return [...prs].sort((a, b) => {
+                    let comparison = 0;
                     switch (sortBy) {
                         case 'number':
-                            return b.number - a.number;
+                            comparison = b.number - a.number;
+                            break;
                         case 'alphabetical':
-                            return a.title.localeCompare(b.title);
+                            comparison = a.title.localeCompare(b.title);
+                            break;
                         case 'updated':
                         default:
                             const dateA = new Date(a.updatedAt);
                             const dateB = new Date(b.updatedAt);
-                            return dateB - dateA;
+                            comparison = dateB - dateA;
+                            break;
                     }
+                    
+                    // Reverse comparison for ascending order
+                    return sortOrder === 'asc' ? -comparison : comparison;
                 });
             };
 
@@ -1269,7 +1363,7 @@
                                 author: pr.user.login,
                                 branchName: pr.head.ref,
                                 safeBranchName: safeBranchName,
-                                url: `./sgex/${safeBranchName}/index.html`,
+                                url: `./${safeBranchName}/index.html`,
                                 prUrl: pr.html_url,
                                 updatedAt: new Date(pr.updated_at).toLocaleDateString(),
                                 createdAt: new Date(pr.created_at).toLocaleDateString()
@@ -1327,6 +1421,28 @@
                 fetchData();
             }, [prFilter, githubToken, loadDiscussionSummaries]);
 
+            // Poll deployment statuses every 7 seconds for visible PRs
+            useEffect(() => {
+                if (pullRequests.length === 0) return;
+                
+                const filtered = pullRequests.filter(pr => 
+                    pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
+                    pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
+                );
+                const sorted = sortPRs(filtered, prSortBy, prSortOrder);
+                const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
+                
+                // Initial status check
+                updateDeploymentStatuses(paginated);
+                
+                // Set up polling every 7 seconds
+                const interval = setInterval(() => {
+                    updateDeploymentStatuses(paginated);
+                }, 7000);
+                
+                return () => clearInterval(interval);
+            }, [pullRequests, prSearchTerm, prSortBy, prSortOrder, prPage, updateDeploymentStatuses]);
+
             // Load comments when pagination changes
             useEffect(() => {
                 if (isAuthenticated && pullRequests.length > 0) {
@@ -1334,18 +1450,18 @@
                         pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
                         pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
                     );
-                    const sorted = sortPRs(filtered, prSortBy);
+                    const sorted = sortPRs(filtered, prSortBy, prSortOrder);
                     const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
                     loadDiscussionSummaries(paginated);
                 }
-            }, [prPage, prSearchTerm, prSortBy, pullRequests, isAuthenticated, loadDiscussionSummaries]);
+            }, [prPage, prSearchTerm, prSortBy, prSortOrder, pullRequests, isAuthenticated, loadDiscussionSummaries]);
 
             // Filter and sort PRs
             const filteredPRs = pullRequests.filter(pr => 
                 pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
                 pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
             );
-            const sortedPRs = sortPRs(filteredPRs, prSortBy);
+            const sortedPRs = sortPRs(filteredPRs, prSortBy, prSortOrder);
             const paginatedPRs = sortedPRs.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
             const totalPRPages = Math.ceil(sortedPRs.length / ITEMS_PER_PAGE);
 
@@ -1476,6 +1592,17 @@
                                 <option value="number">Sort by PR Number</option>
                                 <option value="alphabetical">Sort Alphabetically</option>
                             </select>
+                            <select
+                                value={prSortOrder}
+                                onChange={(e) => {
+                                    setPrSortOrder(e.target.value);
+                                    setPrPage(1);
+                                }}
+                                className="sort-select"
+                            >
+                                <option value="desc">Descending</option>
+                                <option value="asc">Ascending</option>
+                            </select>
                         </div>
 
                         <div className="pr-cards">
@@ -1495,6 +1622,9 @@
                                             <div className="card-badges">
                                                 <span className={`state-badge ${pr.state}`}>
                                                     {pr.state === 'open' ? '🟢' : '🔴'} {pr.state}
+                                                </span>
+                                                <span className={`deployment-status ${getDeploymentStatusInfo(pr.safeBranchName).class}`}>
+                                                    {getDeploymentStatusInfo(pr.safeBranchName).text}
                                                 </span>
                                             </div>
                                         </div>
@@ -1603,18 +1733,11 @@
                                                 <a 
                                                     href={pr.url} 
                                                     className="preview-link"
+                                                    target="_blank"
                                                     rel="noopener noreferrer"
                                                 >
                                                     <span>🚀 View Preview</span>
                                                 </a>
-                                                
-                                                <button 
-                                                    className="copy-btn"
-                                                    onClick={() => copyToClipboard(pr.url, 'PR', `#${pr.number}`)}
-                                                    title="Copy URL to clipboard"
-                                                >
-                                                    📋 Copy URL
-                                                </button>
                                                 
                                                 <a 
                                                     href={pr.prUrl} 
