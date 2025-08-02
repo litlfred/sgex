@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from './framework';
 import HelpModal from './HelpModal';
+import PATLogin from './PATLogin';
 import './BranchListing.css';
 
 const BranchListing = () => {
@@ -17,8 +18,129 @@ const BranchListing = () => {
   const [showContributeModal, setShowContributeModal] = useState(false);
   const [deploymentStatuses, setDeploymentStatuses] = useState({});
   const [checkingStatuses, setCheckingStatuses] = useState(false);
+  const [prFilter, setPrFilter] = useState('open'); // 'open', 'closed', 'all'
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [githubToken, setGithubToken] = useState(null);
+  const [prComments, setPrComments] = useState({});
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [commentInputs, setCommentInputs] = useState({});
+  const [submittingComments, setSubmittingComments] = useState({});
 
-  const ITEMS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = 10;
+
+  // GitHub authentication functions
+  const handleAuthSuccess = (token, octokitInstance) => {
+    setGithubToken(token);
+    setIsAuthenticated(true);
+    // Store token for session
+    sessionStorage.setItem('github_token', token);
+  };
+
+  const handleLogout = () => {
+    setGithubToken(null);
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('github_token');
+  };
+
+  // Function to fetch PR comments
+  const fetchPRComments = async (prNumber) => {
+    if (!githubToken) return [];
+    
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
+        {
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch comments: ${response.status}`);
+      }
+      
+      const comments = await response.json();
+      // Return last 4 comments, truncated to 2 lines each
+      return comments.slice(-4).map(comment => ({
+        id: comment.id,
+        author: comment.user.login,
+        body: comment.body.split('\n').slice(0, 2).join('\n').substring(0, 200) + (comment.body.length > 200 ? '...' : ''),
+        created_at: new Date(comment.created_at).toLocaleDateString(),
+        avatar_url: comment.user.avatar_url
+      }));
+    } catch (error) {
+      console.error(`Error fetching comments for PR ${prNumber}:`, error);
+      return [];
+    }
+  };
+
+  // Function to submit a comment
+  const submitComment = async (prNumber, commentText) => {
+    if (!githubToken || !commentText.trim()) return false;
+    
+    setSubmittingComments(prev => ({ ...prev, [prNumber]: true }));
+    
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            body: commentText
+          })
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to submit comment: ${response.status}`);
+      }
+      
+      // Clear the comment input
+      setCommentInputs(prev => ({ ...prev, [prNumber]: '' }));
+      
+      // Refresh comments for this PR
+      const updatedComments = await fetchPRComments(prNumber);
+      setPrComments(prev => ({ ...prev, [prNumber]: updatedComments }));
+      
+      return true;
+    } catch (error) {
+      console.error(`Error submitting comment for PR ${prNumber}:`, error);
+      return false;
+    } finally {
+      setSubmittingComments(prev => ({ ...prev, [prNumber]: false }));
+    }
+  };
+
+  // Function to load comments for all visible PRs
+  const loadCommentsForPRs = useCallback(async (prs) => {
+    if (!githubToken || prs.length === 0) return;
+    
+    setLoadingComments(true);
+    const comments = {};
+    
+    for (const pr of prs) {
+      comments[pr.number] = await fetchPRComments(pr.number);
+    }
+    
+    setPrComments(comments);
+    setLoadingComments(false);
+  }, [githubToken]);
+
+  // Check for existing authentication on component mount
+  useEffect(() => {
+    const token = sessionStorage.getItem('github_token');
+    if (token) {
+      setGithubToken(token);
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   // Function to check deployment status
   const checkDeploymentStatus = async (url) => {
@@ -117,7 +239,7 @@ const BranchListing = () => {
         content: `
           <div class="contribute-slide">
             <div class="mascot-container">
-              <img src="/sgex-mascot.png" alt="SGEX Mascot" class="contribute-mascot" />
+              <img src="./sgex-mascot.png" alt="SGEX Mascot" class="contribute-mascot" />
             </div>
             <h3>What is SGEX?</h3>
             <p>SGEX is an experimental collaborative project developing a workbench of tools to make it easier and faster to develop high fidelity SMART Guidelines Digital Adaptation Kits.</p>
@@ -130,7 +252,7 @@ const BranchListing = () => {
         content: `
           <div class="contribute-slide">
             <div class="mascot-container">
-              <img src="/sgex-mascot.png" alt="SGEX Mascot examining a bug" class="contribute-mascot bug-report" />
+              <img src="./sgex-mascot.png" alt="SGEX Mascot examining a bug" class="contribute-mascot bug-report" />
             </div>
             <h3>🐛 Found something that needs fixing?</h3>
             <p>Every great contribution starts with identifying what can be improved:</p>
@@ -149,7 +271,7 @@ const BranchListing = () => {
         content: `
           <div class="contribute-slide">
             <div class="mascot-container">
-              <img src="/sgex-mascot.png" alt="Robotic SGEX Mascot" class="contribute-mascot coding-agent" />
+              <img src="./sgex-mascot.png" alt="Robotic SGEX Mascot" class="contribute-mascot coding-agent" />
             </div>
             <h3>🤖 AI-Powered Development</h3>
             <p>Once your issue is triaged, it may be assigned to one of our coding agents:</p>
@@ -169,9 +291,9 @@ const BranchListing = () => {
           <div class="contribute-slide">
             <div class="mascot-container">
               <div class="mascot-group">
-                <img src="/sgex-mascot.png" alt="SGEX Mascot 1" class="contribute-mascot community" />
-                <img src="/sgex-mascot.png" alt="SGEX Mascot 2" class="contribute-mascot community" />
-                <img src="/sgex-mascot.png" alt="SGEX Mascot 3" class="contribute-mascot community" />
+                <img src="./sgex-mascot.png" alt="SGEX Mascot 1" class="contribute-mascot community" />
+                <img src="./sgex-mascot.png" alt="SGEX Mascot 2" class="contribute-mascot community" />
+                <img src="./sgex-mascot.png" alt="SGEX Mascot 3" class="contribute-mascot community" />
               </div>
               <div class="thought-bubble">💫</div>
             </div>
@@ -192,7 +314,7 @@ const BranchListing = () => {
         content: `
           <div class="contribute-slide">
             <div class="mascot-container">
-              <img src="/sgex-mascot.png" alt="SGEX Mascot celebrating" class="contribute-mascot celebrate" />
+              <img src="./sgex-mascot.png" alt="SGEX Mascot celebrating" class="contribute-mascot celebrate" />
             </div>
             <h3>🚀 Ready to Contribute?</h3>
             <div class="action-buttons">
@@ -234,8 +356,9 @@ const BranchListing = () => {
         }
         const branchData = await branchResponse.json();
         
-        // Fetch pull requests
-        const prResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls?state=all&sort=updated&per_page=100`);
+        // Fetch pull requests based on filter
+        const prState = prFilter === 'all' ? 'all' : prFilter;
+        const prResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls?state=${prState}&sort=updated&per_page=100`);
         if (!prResponse.ok) {
           throw new Error(`Failed to fetch pull requests: ${prResponse.status}`);
         }
@@ -281,6 +404,11 @@ const BranchListing = () => {
         
         // Check deployment statuses
         await checkAllDeploymentStatuses(filteredBranches, formattedPRs);
+        
+        // Load comments for PRs if authenticated
+        if (githubToken) {
+          await loadCommentsForPRs(formattedPRs.slice(0, ITEMS_PER_PAGE));
+        }
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err.message);
@@ -364,7 +492,20 @@ const BranchListing = () => {
     };
 
     fetchData();
-  }, [checkAllDeploymentStatuses]);
+  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadCommentsForPRs]);
+
+  // Load comments for visible PRs when page changes
+  useEffect(() => {
+    if (isAuthenticated && pullRequests.length > 0) {
+      const filtered = pullRequests.filter(pr => 
+        pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
+        pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
+      );
+      const sorted = sortPRs(filtered, prSortBy);
+      const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
+      loadCommentsForPRs(paginated);
+    }
+  }, [prPage, prSearchTerm, prSortBy, pullRequests, isAuthenticated, loadCommentsForPRs]);
 
   // Filter and sort PRs based on search and sorting
   const filteredPRs = pullRequests.filter(pr => 
@@ -385,7 +526,7 @@ const BranchListing = () => {
     return (
       <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
         <div className="branch-listing">
-          <h1><img src="/sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
+          <h1><img src="./sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
           <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
           <div className="loading">Loading previews...</div>
         </div>
@@ -397,7 +538,7 @@ const BranchListing = () => {
     return (
       <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
         <div className="branch-listing">
-          <h1><img src="/sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
+          <h1><img src="./sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
           <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
           <div className="error">
             <p>Failed to load previews: {error}</p>
@@ -412,7 +553,7 @@ const BranchListing = () => {
     <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
       <div className="branch-listing">
         <header className="branch-listing-header">
-          <h1><img src="/sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
+          <h1><img src="./sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
           <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
           
           <div className="prominent-info">
@@ -420,6 +561,24 @@ const BranchListing = () => {
               🐾 This landing page lists all available previews. 
               Each branch and PR is automatically deployed to its own preview environment.
             </p>
+          </div>
+          
+          {/* Authentication Section */}
+          <div className="auth-section">
+            {!isAuthenticated ? (
+              <div className="login-section">
+                <h3>🔐 GitHub Authentication</h3>
+                <p>Login with your GitHub Personal Access Token to view and add comments to pull requests:</p>
+                <PATLogin onAuthSuccess={handleAuthSuccess} />
+              </div>
+            ) : (
+              <div className="authenticated-section">
+                <p>✅ Authenticated - You can now view and add comments to pull requests</p>
+                <button onClick={handleLogout} className="logout-btn">
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </header>
 
@@ -597,6 +756,22 @@ const BranchListing = () => {
         {activeTab === 'prs' && (
           <div className="pr-section">
             <div className="pr-controls">
+              <div className="pr-filter-section">
+                <label htmlFor="pr-filter">Filter PRs:</label>
+                <select
+                  id="pr-filter"
+                  value={prFilter}
+                  onChange={(e) => {
+                    setPrFilter(e.target.value);
+                    setPrPage(1); // Reset to first page when filtering
+                  }}
+                  className="filter-select"
+                >
+                  <option value="open">Open PRs Only</option>
+                  <option value="closed">Closed PRs Only</option>
+                  <option value="all">All PRs</option>
+                </select>
+              </div>
               <input
                 type="text"
                 placeholder="Search pull requests by title or author..."
@@ -660,6 +835,56 @@ const BranchListing = () => {
                         <p className="item-date">
                           Created: {pr.createdAt} • Updated: {pr.updatedAt}
                         </p>
+                        
+                        {/* Comments Section */}
+                        {isAuthenticated && (
+                          <div className="pr-comments-section">
+                            <h4>Recent Comments:</h4>
+                            {loadingComments ? (
+                              <div className="comments-loading">Loading comments...</div>
+                            ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
+                              <div className="comments-list">
+                                {prComments[pr.number].map((comment) => (
+                                  <div key={comment.id} className="comment-item">
+                                    <div className="comment-header">
+                                      <img 
+                                        src={comment.avatar_url} 
+                                        alt={comment.author} 
+                                        className="comment-avatar"
+                                      />
+                                      <span className="comment-author">{comment.author}</span>
+                                      <span className="comment-date">{comment.created_at}</span>
+                                    </div>
+                                    <div className="comment-body">{comment.body}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="no-comments">No recent comments</div>
+                            )}
+                            
+                            {/* Comment Input */}
+                            <div className="comment-input-section">
+                              <textarea
+                                value={commentInputs[pr.number] || ''}
+                                onChange={(e) => setCommentInputs(prev => ({
+                                  ...prev,
+                                  [pr.number]: e.target.value
+                                }))}
+                                placeholder="Add a comment..."
+                                className="comment-input"
+                                rows={3}
+                              />
+                              <button
+                                onClick={() => submitComment(pr.number, commentInputs[pr.number])}
+                                disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
+                                className="submit-comment-btn"
+                              >
+                                {submittingComments[pr.number] ? 'Submitting...' : 'Add Comment'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                         
                         <div className="pr-actions">
                           {deploymentStatus === 'active' ? (
