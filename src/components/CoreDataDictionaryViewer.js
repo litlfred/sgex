@@ -75,7 +75,6 @@ const CoreDataDictionaryViewerContent = () => {
   }, []);
 
 
-
   // Fetch FSH files from input/fsh directory
   useEffect(() => {
     const fetchFshFiles = async () => {
@@ -253,12 +252,16 @@ const CoreDataDictionaryViewerContent = () => {
       setFileContent('Loading...');
       setModalMode(mode);
       setShowModal(true);
+
+      const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
+      const currentRepo = repo || repository?.name;
+      const currentBranch = branch;
       
       const content = await githubService.getFileContent(
-        user || repository?.owner?.login || repository?.full_name.split('/')[0],
-        repo || repository?.name,
+        currentUser,
+        currentRepo,
         file.path,
-        branch
+        currentBranch
       );
 
       setFileContent(content);
@@ -272,6 +275,7 @@ const CoreDataDictionaryViewerContent = () => {
     setShowModal(false);
     setSelectedFile(null);
     setFileContent('');
+    setModalMode('view');
   };
 
   if (!profile || !repository) {
@@ -332,6 +336,7 @@ const CoreDataDictionaryViewerContent = () => {
       {/* Core Data Dictionary Section */}
       {activeSection === 'core-data-dictionary' && (
         <div className="core-data-dictionary-section">
+
           {/* Main content layout with two columns */}
           <div className="two-column-layout">
             {/* Standard Dictionaries Section - Left Column */}
