@@ -44,10 +44,10 @@ function createBranchSpecificBuild() {
       packageJson.homepage = basePath;
       console.log(`🔧 Setting homepage to: ${basePath}`);
     } else {
-      // Default path structure: /sgex/branch-name/ for main, /sgex/safe-branch-name/ for others
+      // Default path structure: /main/ for main, /safe-branch-name/ for others
       const safeBranchName = branchName === 'main' ? 'main' : branchName.replace(/[^a-zA-Z0-9._-]/g, '-');
-      packageJson.homepage = `/sgex/${safeBranchName}/`;
-      console.log(`🔧 Setting homepage to: /sgex/${safeBranchName}/`);
+      packageJson.homepage = `/${safeBranchName}/`;
+      console.log(`🔧 Setting homepage to: /${safeBranchName}/`);
     }
     
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
