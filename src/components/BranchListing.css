@@ -287,6 +287,19 @@
   cursor: not-allowed;
 }
 
+.comment-error-message {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 6px;
+  padding: 0.75rem;
+  color: #c53030;
+  font-size: 0.9rem;
+  margin: 0.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .comment-auth-message {
   background: var(--who-tertiary-bg, #f8f9fa);
   border: 1px solid var(--who-border-color, #e1e5e9);
