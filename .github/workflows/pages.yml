@@ -310,10 +310,30 @@ jobs:
             fi
             
             echo "Pushing to gh-pages..."
-            # Pull any remote changes first to avoid conflicts
-            git pull origin gh-pages --rebase || {
-              echo "Pull failed, attempting to push anyway..."
-            }
+            # Fetch latest remote changes first to avoid conflicts
+            git fetch origin gh-pages
+            
+            # Try to merge remote changes if they exist
+            if git rev-parse --verify origin/gh-pages >/dev/null 2>&1; then
+              echo "Checking for remote changes on gh-pages..."
+              # Check if we need to merge remote changes
+              LOCAL=$(git rev-parse HEAD)
+              REMOTE=$(git rev-parse origin/gh-pages)
+              
+              if [ "$LOCAL" != "$REMOTE" ]; then
+                echo "Remote changes detected, attempting to merge..."
+                # Try to merge remote changes
+                if git merge origin/gh-pages --no-edit; then
+                  echo "Successfully merged remote changes"
+                else
+                  echo "Merge failed, using force push with lease for safety"
+                  git push --force-with-lease origin gh-pages
+                  exit 0
+                fi
+              fi
+            fi
+            
+            # Push normally if no conflicts or after successful merge
             git push origin gh-pages
             
             echo "✅ Deployment completed successfully"
