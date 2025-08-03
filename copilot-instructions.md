@@ -15,7 +15,8 @@ Following these guidelines will help us code together better:
 * If you start looking at a PR, then it should be updated to [WIP] if it is not already until your analysis is done; when done mark it as [REVIEW] if it is ready for review by your collaborators.
 * In a session with a coding agent for a pull request, if a screenshot is taken, please show it in the session.
 * At the end of every session in the PR please create a summary table of the files changed and the changes made to it and the reasons for the changes. This should be an ongoing table that is updated after every new comment/session in the PR.
-* When working on a PR, it is OK to be unsure of a correct approach and ask your collaborators for input. When you are unsure, please provide a clear prompt back to the collaborators so that they can provide you the needed information for you to continue. Your collaborators are happier when you ask for help.
+* in a pull request conversation, keep an ongoing requirements.md file, summarize the initial requirements and any synthesize any further requirements that come in during the course of the conversation. when making a proposed commit, if there are any functional requirements that came out. they should be incorporated into the public/docs/
+* when woeking on a PR, it is OK to be unsure of a correct approach and ask your collaborators for input. When you are unsure, please provide a clear prompt back to the collaborators so that they can provide you the needed information for you to continue. Your collaborators are happier when you ask for help.
 * if a page is added then it SHALL confirm to the page requirements on public/docs/
 
 ## Project Overview

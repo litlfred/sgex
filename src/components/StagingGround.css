@@ -1,10 +1,10 @@
 /* Staging Ground Section Styles */
 .staging-ground-section {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--who-card-bg);
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
-  border: 1px solid rgba(0, 108, 190, 0.2);
+  border: 1px solid var(--who-border-color);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #24292e;
+  color: var(--who-text-primary);
   font-size: 1.5rem;
   font-weight: 600;
   margin: 0 0 0.5rem 0;
@@ -27,7 +27,7 @@
 }
 
 .staging-ground-section .files-badge {
-  background: #0078d4;
+  background: var(--who-blue);
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
@@ -36,7 +36,7 @@
 }
 
 .staging-ground-section .section-description {
-  color: #6a737d;
+  color: var(--who-text-secondary);
   font-size: 1rem;
   margin: 0;
   line-height: 1.5;
@@ -55,9 +55,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--who-hover-bg);
   border-radius: 8px;
-  border: 1px solid #e1e4e8;
+  border: 1px solid var(--who-border-color);
 }
 
 .status-indicators {
@@ -114,21 +114,21 @@
 }
 
 .save-btn.disabled {
-  background: #6c757d;
+  background: var(--who-text-muted);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 /* Files Section */
 .staging-files-section {
-  background: white;
-  border: 1px solid #e1e4e8;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 8px;
   padding: 1.5rem;
 }
 
 .staging-files-section h4 {
-  color: #24292e;
+  color: var(--who-text-primary);
   font-size: 1.1rem;
   margin: 0 0 1rem 0;
   display: flex;
@@ -147,9 +147,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: #f8f9fa;
+  background: var(--who-hover-bg);
   border-radius: 6px;
-  border: 1px solid #e1e4e8;
+  border: 1px solid var(--who-border-color);
 }
 
 .file-info {
@@ -166,7 +166,7 @@
 .file-path {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.9rem;
-  color: #24292e;
+  color: var(--who-text-primary);
   word-break: break-all;
 }
 
@@ -175,7 +175,7 @@
   align-items: center;
   gap: 1rem;
   font-size: 0.8rem;
-  color: #6a737d;
+  color: var(--who-text-secondary);
 }
 
 .file-size,
@@ -217,12 +217,12 @@
 }
 
 .action-btn.secondary {
-  background: #6c757d;
+  background: var(--who-text-muted);
   color: white;
 }
 
 .action-btn.secondary:hover {
-  background: #545b62;
+  background: var(--who-text-secondary);
 }
 
 .action-btn.small {
@@ -233,7 +233,7 @@
 .no-changes {
   text-align: center;
   padding: 2rem;
-  color: #6a737d;
+  color: var(--who-text-secondary);
 }
 
 .no-changes p {
@@ -247,14 +247,14 @@
 
 /* Commit Message Section */
 .commit-message-section {
-  background: white;
-  border: 1px solid #e1e4e8;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 8px;
   padding: 1.5rem;
 }
 
 .commit-message-section h4 {
-  color: #24292e;
+  color: var(--who-text-primary);
   font-size: 1.1rem;
   margin: 0 0 1rem 0;
   display: flex;
@@ -263,8 +263,8 @@
 }
 
 .commit-preview {
-  background: #f8f9fa;
-  border: 1px solid #e1e4e8;
+  background: var(--who-hover-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   padding: 1rem;
 }
@@ -273,7 +273,7 @@
   margin: 0;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.9rem;
-  color: #24292e;
+  color: var(--who-text-primary);
   white-space: pre-wrap;
 }
 
@@ -284,7 +284,7 @@
   justify-content: center;
   gap: 0.75rem;
   padding: 2rem;
-  color: #6a737d;
+  color: var(--who-text-secondary);
 }
 
 .loading-spinner {
@@ -310,62 +310,6 @@
 
 .error-icon {
   font-size: 1.2rem;
-}
-
-/* Dark mode support */
-body.theme-dark .staging-ground-section {
-  background: rgba(26, 35, 128, 0.95);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-body.theme-dark .staging-ground-section .section-title {
-  color: #ffffff;
-}
-
-body.theme-dark .staging-ground-section .section-description {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-body.theme-dark .staging-status-bar {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-body.theme-dark .staging-files-section,
-body.theme-dark .commit-message-section {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-body.theme-dark .staging-files-section h4,
-body.theme-dark .commit-message-section h4 {
-  color: #ffffff;
-}
-
-body.theme-dark .file-item {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-body.theme-dark .file-path {
-  color: #ffffff;
-}
-
-body.theme-dark .file-meta {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-body.theme-dark .commit-preview {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-body.theme-dark .commit-preview p {
-  color: #ffffff;
-}
-
-body.theme-dark .no-changes {
-  color: rgba(255, 255, 255, 0.8);
 }
 
 /* Responsive Design */

@@ -33,20 +33,23 @@ import './App.css';
 function App() {
   const appLogger = logger.getLogger('App');
   
+  // Get basename from PUBLIC_URL or default to /sgex
+  const basename = process.env.PUBLIC_URL || '/sgex';
+  
   React.useEffect(() => {
     appLogger.componentMount();
     appLogger.info('SGEX Workbench application started', { 
       environment: process.env.NODE_ENV,
-      basename: '/sgex'
+      basename: basename
     });
     
     return () => {
       appLogger.componentUnmount();
     };
-  }, [appLogger]);
+  }, [appLogger, basename]);
 
   return (
-    <Router basename="/sgex">
+    <Router basename={basename}>
       <div className="App">
           <Routes>
             <Route path="/" element={<WelcomePage />} />

@@ -45,6 +45,9 @@ class HelpContentService {
                 <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('documentation')">
                   📚 Documentation Issue - Report problems with documentation
                 </button>
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('blank')">
+                  📝 Blank Issue - Create an issue without a template
+                </button>
               </div>
               <div class="help-tip">
                 <strong>💡 Tip:</strong> Please provide as much detail as possible including steps to reproduce, expected behavior, and actual behavior.
@@ -82,6 +85,9 @@ class HelpContentService {
                 </button>
                 <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('question')">
                   ❓ DAK Question - Ask about this DAK's implementation
+                </button>
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('blank')">
+                  📝 Blank DAK Issue - Create an issue without a template
                 </button>
               </div>
               <div class="help-tip">

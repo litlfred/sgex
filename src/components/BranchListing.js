@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from './framework';
 import HelpModal from './HelpModal';
 import PATLogin from './PATLogin';
+import useThemeImage from '../hooks/useThemeImage';
 import './BranchListing.css';
 
 const BranchListing = () => {
@@ -13,6 +14,9 @@ const BranchListing = () => {
   const [prPage, setPrPage] = useState(1);
   const [prSearchTerm, setPrSearchTerm] = useState('');
   const [branchSearchTerm, setBranchSearchTerm] = useState('');
+
+  // Theme-aware mascot image
+  const mascotImage = useThemeImage('sgex-mascot.png');
   const [prSortBy, setPrSortBy] = useState('updated'); // updated, number, alphabetical
   const [branchSortBy, setBranchSortBy] = useState('updated'); // updated, alphabetical
   const [showContributeModal, setShowContributeModal] = useState(false);
@@ -25,6 +29,9 @@ const BranchListing = () => {
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentInputs, setCommentInputs] = useState({});
   const [submittingComments, setSubmittingComments] = useState({});
+  const [expandedDiscussions, setExpandedDiscussions] = useState({});
+  const [discussionSummaries, setDiscussionSummaries] = useState({});
+  const [loadingSummaries, setLoadingSummaries] = useState(false);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -40,6 +47,140 @@ const BranchListing = () => {
     setGithubToken(null);
     setIsAuthenticated(false);
     sessionStorage.removeItem('github_token');
+  };
+
+  // Function to fetch PR comments summary
+  const fetchPRCommentsSummary = useCallback(async (prNumber) => {
+    if (!githubToken) return null;
+    
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
+        {
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch comments: ${response.status}`);
+      }
+      
+      const comments = await response.json();
+      if (comments.length === 0) {
+        return { count: 0, lastComment: null };
+      }
+      
+      const lastComment = comments[comments.length - 1];
+      return {
+        count: comments.length,
+        lastComment: {
+          author: lastComment.user.login,
+          created_at: new Date(lastComment.created_at),
+          avatar_url: lastComment.user.avatar_url
+        }
+      };
+    } catch (error) {
+      console.error(`Error fetching comment summary for PR ${prNumber}:`, error);
+      return null;
+    }
+  }, [githubToken]);
+
+  // Function to fetch all PR comments (for expanded view)
+  const fetchAllPRComments = useCallback(async (prNumber) => {
+    if (!githubToken) return [];
+    
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
+        {
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch comments: ${response.status}`);
+      }
+      
+      const comments = await response.json();
+      return comments.map(comment => ({
+        id: comment.id,
+        author: comment.user.login,
+        body: comment.body,
+        created_at: new Date(comment.created_at).toLocaleDateString(),
+        avatar_url: comment.user.avatar_url
+      }));
+    } catch (error) {
+      console.error(`Error fetching all comments for PR ${prNumber}:`, error);
+      return [];
+    }
+  }, [githubToken]);
+
+  // Function to load discussion summaries for visible PRs
+  const loadDiscussionSummaries = useCallback(async (prs) => {
+    if (!githubToken || prs.length === 0) return;
+    
+    setLoadingSummaries(true);
+    const summaries = {};
+    
+    for (const pr of prs) {
+      summaries[pr.number] = await fetchPRCommentsSummary(pr.number);
+    }
+    
+    setDiscussionSummaries(summaries);
+    setLoadingSummaries(false);
+  }, [githubToken, fetchPRCommentsSummary]);
+
+  // Function to toggle discussion expansion
+  const toggleDiscussion = async (prNumber) => {
+    const isExpanded = expandedDiscussions[prNumber];
+    
+    if (!isExpanded) {
+      // Load all comments when expanding
+      const comments = await fetchAllPRComments(prNumber);
+      setPrComments(prev => ({ ...prev, [prNumber]: comments }));
+    }
+    
+    setExpandedDiscussions(prev => ({
+      ...prev,
+      [prNumber]: !isExpanded
+    }));
+  };
+
+  // Function to get discussion summary text
+  const getDiscussionSummaryText = (prNumber) => {
+    const summary = discussionSummaries[prNumber];
+    
+    if (loadingSummaries) {
+      return "Loading discussion...";
+    }
+    
+    if (!summary || summary.count === 0) {
+      return "No comments yet";
+    }
+    
+    const { count, lastComment } = summary;
+    const timeAgo = lastComment ? getTimeAgo(lastComment.created_at) : '';
+    
+    return `${count} comment${count > 1 ? 's' : ''}, last by ${lastComment.author} ${timeAgo}`;
+  };
+
+  // Helper function to get relative time
+  const getTimeAgo = (date) => {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'today';
+    if (diffDays === 1) return '1 day ago';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
+    return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
   };
 
   // Function to fetch PR comments
@@ -105,9 +246,15 @@ const BranchListing = () => {
       // Clear the comment input
       setCommentInputs(prev => ({ ...prev, [prNumber]: '' }));
       
-      // Refresh comments for this PR
-      const updatedComments = await fetchPRComments(prNumber);
-      setPrComments(prev => ({ ...prev, [prNumber]: updatedComments }));
+      // Refresh both full comments (if expanded) and summary
+      if (expandedDiscussions[prNumber]) {
+        const updatedComments = await fetchAllPRComments(prNumber);
+        setPrComments(prev => ({ ...prev, [prNumber]: updatedComments }));
+      }
+      
+      // Refresh the discussion summary
+      const updatedSummary = await fetchPRCommentsSummary(prNumber);
+      setDiscussionSummaries(prev => ({ ...prev, [prNumber]: updatedSummary }));
       
       return true;
     } catch (error) {
@@ -239,7 +386,7 @@ const BranchListing = () => {
         content: `
           <div class="contribute-slide">
             <div class="mascot-container">
-              <img src="./sgex-mascot.png" alt="SGEX Mascot" class="contribute-mascot" />
+              <img src="${mascotImage}" alt="SGEX Mascot" class="contribute-mascot" />
             </div>
             <h3>What is SGEX?</h3>
             <p>SGEX is an experimental collaborative project developing a workbench of tools to make it easier and faster to develop high fidelity SMART Guidelines Digital Adaptation Kits.</p>
@@ -252,7 +399,7 @@ const BranchListing = () => {
         content: `
           <div class="contribute-slide">
             <div class="mascot-container">
-              <img src="./sgex-mascot.png" alt="SGEX Mascot examining a bug" class="contribute-mascot bug-report" />
+              <img src="${mascotImage}" alt="SGEX Mascot examining a bug" class="contribute-mascot bug-report" />
             </div>
             <h3>🐛 Found something that needs fixing?</h3>
             <p>Every great contribution starts with identifying what can be improved:</p>
@@ -271,7 +418,7 @@ const BranchListing = () => {
         content: `
           <div class="contribute-slide">
             <div class="mascot-container">
-              <img src="./sgex-mascot.png" alt="Robotic SGEX Mascot" class="contribute-mascot coding-agent" />
+              <img src="${mascotImage}" alt="Robotic SGEX Mascot" class="contribute-mascot coding-agent" />
             </div>
             <h3>🤖 AI-Powered Development</h3>
             <p>Once your issue is triaged, it may be assigned to one of our coding agents:</p>
@@ -291,9 +438,9 @@ const BranchListing = () => {
           <div class="contribute-slide">
             <div class="mascot-container">
               <div class="mascot-group">
-                <img src="./sgex-mascot.png" alt="SGEX Mascot 1" class="contribute-mascot community" />
-                <img src="./sgex-mascot.png" alt="SGEX Mascot 2" class="contribute-mascot community" />
-                <img src="./sgex-mascot.png" alt="SGEX Mascot 3" class="contribute-mascot community" />
+                <img src="${mascotImage}" alt="SGEX Mascot 1" class="contribute-mascot community" />
+                <img src="${mascotImage}" alt="SGEX Mascot 2" class="contribute-mascot community" />
+                <img src="${mascotImage}" alt="SGEX Mascot 3" class="contribute-mascot community" />
               </div>
               <div class="thought-bubble">💫</div>
             </div>
@@ -314,7 +461,7 @@ const BranchListing = () => {
         content: `
           <div class="contribute-slide">
             <div class="mascot-container">
-              <img src="./sgex-mascot.png" alt="SGEX Mascot celebrating" class="contribute-mascot celebrate" />
+              <img src="${mascotImage}" alt="SGEX Mascot celebrating" class="contribute-mascot celebrate" />
             </div>
             <h3>🚀 Ready to Contribute?</h3>
             <div class="action-buttons">
@@ -374,7 +521,7 @@ const BranchListing = () => {
               name: branch.name,
               safeName: safeName,
               commit: branch.commit,
-              url: `./sgex/${safeName}/index.html`,
+              url: `./${safeName}/index.html`,
               lastModified: branch.commit.commit?.committer?.date 
                 ? new Date(branch.commit.commit.committer.date).toLocaleDateString()
                 : 'Unknown'
@@ -392,7 +539,7 @@ const BranchListing = () => {
             author: pr.user.login,
             branchName: pr.head.ref,
             safeBranchName: safeBranchName,
-            url: `./sgex/${safeBranchName}/index.html`,
+            url: `./${safeBranchName}/index.html`,
             prUrl: pr.html_url,
             updatedAt: new Date(pr.updated_at).toLocaleDateString(),
             createdAt: new Date(pr.created_at).toLocaleDateString()
@@ -405,9 +552,9 @@ const BranchListing = () => {
         // Check deployment statuses
         await checkAllDeploymentStatuses(filteredBranches, formattedPRs);
         
-        // Load comments for PRs if authenticated
+        // Load discussion summaries for PRs if authenticated
         if (githubToken) {
-          await loadCommentsForPRs(formattedPRs.slice(0, ITEMS_PER_PAGE));
+          await loadDiscussionSummaries(formattedPRs.slice(0, ITEMS_PER_PAGE));
         }
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -421,21 +568,21 @@ const BranchListing = () => {
               name: 'main',
               safeName: 'main',
               commit: { sha: 'abc1234' },
-              url: './sgex/main/index.html',
+              url: './main/index.html',
               lastModified: new Date().toLocaleDateString()
             },
             {
               name: 'feature/user-auth',
               safeName: 'feature-user-auth',
               commit: { sha: 'def5678' },
-              url: './sgex/feature-user-auth/index.html',
+              url: './feature-user-auth/index.html',
               lastModified: new Date(Date.now() - 86400000).toLocaleDateString()
             },
             {
               name: 'fix/api-endpoints',
               safeName: 'fix-api-endpoints',
               commit: { sha: 'ghi9012' },
-              url: './sgex/fix-api-endpoints/index.html',
+              url: './fix-api-endpoints/index.html',
               lastModified: new Date(Date.now() - 172800000).toLocaleDateString()
             }
           ];
@@ -449,7 +596,7 @@ const BranchListing = () => {
               author: 'copilot',
               branchName: 'copilot/fix-459',
               safeBranchName: 'copilot-fix-459',
-              url: './sgex/copilot-fix-459/index.html',
+              url: './copilot-fix-459/index.html',
               prUrl: 'https://github.com/litlfred/sgex/pull/123',
               updatedAt: new Date().toLocaleDateString(),
               createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
@@ -462,7 +609,7 @@ const BranchListing = () => {
               author: 'developer',
               branchName: 'feature/dark-mode',
               safeBranchName: 'feature-dark-mode',
-              url: './sgex/feature-dark-mode/index.html',
+              url: './feature-dark-mode/index.html',
               prUrl: 'https://github.com/litlfred/sgex/pull/122',
               updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
               createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
@@ -475,7 +622,7 @@ const BranchListing = () => {
               author: 'contributor',
               branchName: 'fix/auth-flow',
               safeBranchName: 'fix-auth-flow',
-              url: './sgex/fix-auth-flow/index.html',
+              url: './fix-auth-flow/index.html',
               prUrl: 'https://github.com/litlfred/sgex/pull/121',
               updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
               createdAt: new Date(Date.now() - 432000000).toLocaleDateString()
@@ -492,9 +639,9 @@ const BranchListing = () => {
     };
 
     fetchData();
-  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadCommentsForPRs]);
+  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadCommentsForPRs, loadDiscussionSummaries]);
 
-  // Load comments for visible PRs when page changes
+  // Load summaries for visible PRs when page changes
   useEffect(() => {
     if (isAuthenticated && pullRequests.length > 0) {
       const filtered = pullRequests.filter(pr => 
@@ -503,9 +650,9 @@ const BranchListing = () => {
       );
       const sorted = sortPRs(filtered, prSortBy);
       const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
-      loadCommentsForPRs(paginated);
+      loadDiscussionSummaries(paginated);
     }
-  }, [prPage, prSearchTerm, prSortBy, pullRequests, isAuthenticated, loadCommentsForPRs]);
+  }, [prPage, prSearchTerm, prSortBy, pullRequests, isAuthenticated, loadDiscussionSummaries]);
 
   // Filter and sort PRs based on search and sorting
   const filteredPRs = pullRequests.filter(pr => 
@@ -526,7 +673,7 @@ const BranchListing = () => {
     return (
       <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
         <div className="branch-listing">
-          <h1><img src="./sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
+          <h1><img src={mascotImage} alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
           <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
           <div className="loading">Loading previews...</div>
         </div>
@@ -538,7 +685,7 @@ const BranchListing = () => {
     return (
       <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
         <div className="branch-listing">
-          <h1><img src="./sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
+          <h1><img src={mascotImage} alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
           <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
           <div className="error">
             <p>Failed to load previews: {error}</p>
@@ -553,7 +700,7 @@ const BranchListing = () => {
     <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
       <div className="branch-listing">
         <header className="branch-listing-header">
-          <h1><img src="./sgex-mascot.png" alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
+          <h1><img src={mascotImage} alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
           <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
           
           <div className="prominent-info">
@@ -842,53 +989,96 @@ const BranchListing = () => {
                           Created: {pr.createdAt} • Updated: {pr.updatedAt}
                         </p>
                         
-                        {/* Comments Section */}
+                        {/* Discussion Summary Section */}
                         {isAuthenticated && (
-                          <div className="pr-comments-section">
-                            <h4>Recent Comments:</h4>
-                            {loadingComments ? (
-                              <div className="comments-loading">Loading comments...</div>
-                            ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
-                              <div className="comments-list">
-                                {prComments[pr.number].map((comment) => (
-                                  <div key={comment.id} className="comment-item">
-                                    <div className="comment-header">
-                                      <img 
-                                        src={comment.avatar_url} 
-                                        alt={comment.author} 
-                                        className="comment-avatar"
-                                      />
-                                      <span className="comment-author">{comment.author}</span>
-                                      <span className="comment-date">{comment.created_at}</span>
-                                    </div>
-                                    <div className="comment-body">{comment.body}</div>
-                                  </div>
-                                ))}
+                          <div>
+                            {/* Discussion Summary Status Bar */}
+                            <div 
+                              className="discussion-summary-bar"
+                              onClick={() => toggleDiscussion(pr.number)}
+                            >
+                              <div className="discussion-summary-text">
+                                <span className="discussion-summary-icon">💬</span>
+                                {getDiscussionSummaryText(pr.number)}
                               </div>
-                            ) : (
-                              <div className="no-comments">No recent comments</div>
-                            )}
-                            
-                            {/* Comment Input */}
-                            <div className="comment-input-section">
-                              <textarea
-                                value={commentInputs[pr.number] || ''}
-                                onChange={(e) => setCommentInputs(prev => ({
-                                  ...prev,
-                                  [pr.number]: e.target.value
-                                }))}
-                                placeholder="Add a comment..."
-                                className="comment-input"
-                                rows={3}
-                              />
-                              <button
-                                onClick={() => submitComment(pr.number, commentInputs[pr.number])}
-                                disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
-                                className="submit-comment-btn"
-                              >
-                                {submittingComments[pr.number] ? 'Submitting...' : 'Add Comment'}
-                              </button>
+                              <span className={`discussion-expand-icon ${expandedDiscussions[pr.number] ? 'expanded' : ''}`}>
+                                ▶
+                              </span>
                             </div>
+
+                            {/* Expanded Discussion Section */}
+                            {expandedDiscussions[pr.number] && (
+                              <div className="discussion-expanded-section">
+                                <div className="discussion-header">
+                                  <h4 className="discussion-title">Discussion</h4>
+                                  <div className="discussion-actions">
+                                    <a 
+                                      href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="discussion-action-btn"
+                                    >
+                                      📁 View Files
+                                    </a>
+                                    <a 
+                                      href={pr.prUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="discussion-action-btn secondary"
+                                    >
+                                      🔗 Full Discussion
+                                    </a>
+                                  </div>
+                                </div>
+                                
+                                {/* Comment Input at Top */}
+                                <div className="comment-input-section">
+                                  <textarea
+                                    value={commentInputs[pr.number] || ''}
+                                    onChange={(e) => setCommentInputs(prev => ({
+                                      ...prev,
+                                      [pr.number]: e.target.value
+                                    }))}
+                                    placeholder="Add a comment..."
+                                    className="comment-input"
+                                    rows={3}
+                                  />
+                                  <button
+                                    onClick={() => submitComment(pr.number, commentInputs[pr.number])}
+                                    disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
+                                    className="submit-comment-btn"
+                                  >
+                                    {submittingComments[pr.number] ? 'Submitting...' : 'Add Comment'}
+                                  </button>
+                                </div>
+                                
+                                {/* Scrollable Comments Area */}
+                                <div className="discussion-scroll-area">
+                                  {loadingComments ? (
+                                    <div className="comments-loading">Loading full discussion...</div>
+                                  ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
+                                    <div className="comments-list">
+                                      {prComments[pr.number].map((comment) => (
+                                        <div key={comment.id} className="comment-item">
+                                          <div className="comment-header">
+                                            <img 
+                                              src={comment.avatar_url} 
+                                              alt={comment.author} 
+                                              className="comment-avatar"
+                                            />
+                                            <span className="comment-author">{comment.author}</span>
+                                            <span className="comment-date">{comment.created_at}</span>
+                                          </div>
+                                          <div className="comment-body">{comment.body}</div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="no-comments">No comments yet. Be the first to comment!</div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                         

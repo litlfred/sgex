@@ -9,6 +9,10 @@ on:
       - 'src/App.js'
       - 'scripts/check-framework-compliance.js'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   framework-compliance:
     runs-on: ubuntu-latest
@@ -61,11 +65,25 @@ jobs:
             For migration guidance, see [Page Framework Documentation](../docs/page-framework.md).
             `;
             
+            // Get pull request number - handle both PR and issue contexts
+            const prNumber = context.payload.pull_request?.number || context.issue?.number;
+            console.log('Event context:', {
+              eventName: context.eventName,
+              prNumber: prNumber,
+              hasPullRequest: !!context.payload.pull_request,
+              hasIssue: !!context.issue
+            });
+            
+            if (!prNumber) {
+              console.log('No pull request number found, skipping comment');
+              return;
+            }
+            
             // Find existing compliance comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: prNumber,
             });
             
             const existingComment = comments.find(comment => 
@@ -74,6 +92,7 @@ jobs:
             
             if (existingComment) {
               // Update existing comment
+              console.log('Updating existing compliance comment');
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -82,10 +101,11 @@ jobs:
               });
             } else {
               // Create new comment
+              console.log('Creating new compliance comment');
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number: prNumber,
                 body: commentBody
               });
             }
@@ -93,21 +113,30 @@ jobs:
           } catch (error) {
             console.error('Error running compliance check:', error);
             
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: `## ❌ Page Framework Compliance Check Failed
-              
-              The compliance check encountered an error:
-              \`\`\`
-              ${error.message}
-              \`\`\`
-              
-              Please check the action logs for more details.`
-            });
+            // Get pull request number for error reporting
+            const prNumber = context.payload.pull_request?.number || context.issue?.number;
             
-            process.exit(1);
+            if (prNumber) {
+              try {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: `## ❌ Page Framework Compliance Check Failed
+                  
+                  The compliance check encountered an error:
+                  \`\`\`
+                  ${error.message}
+                  \`\`\`
+                  
+                  Please check the action logs for more details.`
+                });
+              } catch (commentError) {
+                console.error('Failed to create error comment:', commentError);
+              }
+            }
+            
+            // Don't exit with error code here - let the next step handle compliance failures
           }
 
     - name: Fail on non-compliance

@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import HelpModal from './HelpModal';
+import useThemeImage from '../hooks/useThemeImage';
 import './HelpButton.css';
 
 const HelpButton = ({ helpTopic, contextData = {} }) => {
   const [showHelp, setShowHelp] = useState(false);
+
+  // Theme-aware mascot image
+  const mascotImage = useThemeImage('sgex-mascot.png');
 
   const handleHelpClick = () => {
     setShowHelp(true);
@@ -22,7 +26,7 @@ const HelpButton = ({ helpTopic, contextData = {} }) => {
         aria-label="Get Help"
       >
         <img 
-          src="/sgex/sgex-mascot.png" 
+          src={mascotImage} 
           alt="SGEX Helper" 
           className="help-mascot-icon"
         />
