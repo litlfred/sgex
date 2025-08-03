@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from './framework';
 import HelpModal from './HelpModal';
 import PATLogin from './PATLogin';
+import WorkflowStatus from './WorkflowStatus';
+import githubActionsService from '../services/githubActionsService';
 import useThemeImage from '../hooks/useThemeImage';
 import './BranchListing.css';
 
@@ -32,6 +34,8 @@ const BranchListing = () => {
   const [expandedDiscussions, setExpandedDiscussions] = useState({});
   const [discussionSummaries, setDiscussionSummaries] = useState({});
   const [loadingSummaries, setLoadingSummaries] = useState(false);
+  const [workflowStatuses, setWorkflowStatuses] = useState({});
+  const [loadingWorkflowStatuses, setLoadingWorkflowStatuses] = useState(false);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -41,12 +45,16 @@ const BranchListing = () => {
     setIsAuthenticated(true);
     // Store token for session
     sessionStorage.setItem('github_token', token);
+    // Set token for GitHub Actions service
+    githubActionsService.setToken(token);
   };
 
   const handleLogout = () => {
     setGithubToken(null);
     setIsAuthenticated(false);
     sessionStorage.removeItem('github_token');
+    // Clear token from GitHub Actions service
+    githubActionsService.setToken(null);
   };
 
   // Function to fetch PR comments summary
@@ -265,6 +273,56 @@ const BranchListing = () => {
     }
   };
 
+  // Function to load workflow statuses for branches
+  const loadWorkflowStatuses = useCallback(async (branchData, prData) => {
+    if (!githubToken) return;
+    
+    setLoadingWorkflowStatuses(true);
+    
+    try {
+      // Get all branch names (from both branches and PRs)
+      const branchNames = [
+        ...branchData.map(branch => branch.name),
+        ...prData.map(pr => pr.branchName)
+      ];
+      
+      const uniqueBranchNames = [...new Set(branchNames)];
+      const statuses = await githubActionsService.getWorkflowStatusForBranches(uniqueBranchNames);
+      
+      setWorkflowStatuses(statuses);
+    } catch (error) {
+      console.error('Error loading workflow statuses:', error);
+    } finally {
+      setLoadingWorkflowStatuses(false);
+    }
+  }, [githubToken]);
+
+  // Function to trigger workflow for a branch
+  const triggerWorkflow = useCallback(async (branchName) => {
+    if (!githubToken) {
+      alert('Please authenticate to trigger workflows');
+      return;
+    }
+    
+    try {
+      const success = await githubActionsService.triggerWorkflow(branchName);
+      if (success) {
+        alert(`Workflow triggered for branch: ${branchName}`);
+        // Refresh workflow statuses after a short delay
+        setTimeout(() => {
+          const currentBranches = branches.length > 0 ? branches : [];
+          const currentPRs = pullRequests.length > 0 ? pullRequests : [];
+          loadWorkflowStatuses(currentBranches, currentPRs);
+        }, 2000);
+      } else {
+        alert(`Failed to trigger workflow for branch: ${branchName}`);
+      }
+    } catch (error) {
+      console.error('Error triggering workflow:', error);
+      alert(`Error triggering workflow: ${error.message}`);
+    }
+  }, [githubToken, branches, pullRequests, loadWorkflowStatuses]);
+
   // Function to load comments for all visible PRs
   const loadCommentsForPRs = useCallback(async (prs) => {
     if (!githubToken || prs.length === 0) return;
@@ -286,6 +344,8 @@ const BranchListing = () => {
     if (token) {
       setGithubToken(token);
       setIsAuthenticated(true);
+      // Set token for GitHub Actions service
+      githubActionsService.setToken(token);
     }
   }, []);
 
@@ -552,6 +612,11 @@ const BranchListing = () => {
         // Check deployment statuses
         await checkAllDeploymentStatuses(filteredBranches, formattedPRs);
         
+        // Load workflow statuses if authenticated
+        if (githubToken) {
+          await loadWorkflowStatuses(filteredBranches, formattedPRs);
+        }
+        
         // Load discussion summaries for PRs if authenticated
         if (githubToken) {
           await loadDiscussionSummaries(formattedPRs.slice(0, ITEMS_PER_PAGE));
@@ -639,7 +704,7 @@ const BranchListing = () => {
     };
 
     fetchData();
-  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadCommentsForPRs, loadDiscussionSummaries]);
+  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadCommentsForPRs, loadWorkflowStatuses, loadDiscussionSummaries]);
 
   // Load summaries for visible PRs when page changes
   useEffect(() => {
@@ -885,6 +950,15 @@ const BranchListing = () => {
                             📋 Copy URL
                           </button>
                         </div>
+
+                        {/* Workflow Status */}
+                        <WorkflowStatus
+                          workflowStatus={workflowStatuses[branch.name]}
+                          branchName={branch.name}
+                          onTriggerWorkflow={triggerWorkflow}
+                          isAuthenticated={isAuthenticated}
+                          isLoading={loadingWorkflowStatuses}
+                        />
                       </div>
 
                       <div className="card-footer">
@@ -1138,6 +1212,15 @@ const BranchListing = () => {
                             <span>📋 View PR</span>
                           </a>
                         </div>
+
+                        {/* Workflow Status */}
+                        <WorkflowStatus
+                          workflowStatus={workflowStatuses[pr.branchName]}
+                          branchName={pr.branchName}
+                          onTriggerWorkflow={triggerWorkflow}
+                          isAuthenticated={isAuthenticated}
+                          isLoading={loadingWorkflowStatuses}
+                        />
                       </div>
 
                       <div className="card-footer">
