@@ -31,11 +31,15 @@ const OAuthRedirectFlow = ({ onAuthSuccess, onError, scopes = GITHUB_CONFIG.DEFA
   const handleGitHubOAuth = () => {
     componentLogger.userAction('Starting GitHub OAuth redirect', { scopes });
     
+    // Use main deployment URL for redirect to ensure OAuth app configuration works
+    // Branch deployments redirect to main deployment for OAuth completion
+    const mainDeploymentUrl = `${window.location.origin}/sgex/`;
+    
     // Build GitHub OAuth URL
     const params = new URLSearchParams({
       client_id: GITHUB_CONFIG.CLIENT_ID,
       scope: scopes.join(' '),
-      redirect_uri: window.location.origin + window.location.pathname,
+      redirect_uri: mainDeploymentUrl,
       state: Math.random().toString(36).substring(7) // Simple CSRF protection
     });
     
