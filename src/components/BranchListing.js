@@ -785,7 +785,7 @@ const BranchListing = () => {
                 <div className="cache-info">
                   <small>
                     {cacheInfo.exists 
-                      ? `Cached data (${cacheInfo.ageMinutes}m old)` 
+                      ? `📊 Data cached (${cacheInfo.ageMinutes}m old)` 
                       : 'Fresh data'
                     }
                   </small>
