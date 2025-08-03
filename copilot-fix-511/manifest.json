@@ -1,0 +1,25 @@
+{
+  "short_name": "SGEX Workbench",
+  "name": "SGEX Workbench - WHO SMART Guidelines Exchange",
+  "icons": [
+    {
+      "src": "/sgex/copilot-fix-511/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/sgex/copilot-fix-511/logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/sgex/copilot-fix-511/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/sgex/copilot-fix-511/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
