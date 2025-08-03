@@ -31,6 +31,7 @@ const BranchListing = () => {
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentInputs, setCommentInputs] = useState({});
   const [submittingComments, setSubmittingComments] = useState({});
+  const [commentErrors, setCommentErrors] = useState({});
   const [expandedDiscussions, setExpandedDiscussions] = useState({});
   const [discussionSummaries, setDiscussionSummaries] = useState({});
   const [loadingSummaries, setLoadingSummaries] = useState(false);
@@ -242,6 +243,7 @@ const BranchListing = () => {
     if (!githubToken || !commentText.trim()) return false;
     
     setSubmittingComments(prev => ({ ...prev, [prNumber]: true }));
+    setCommentErrors(prev => ({ ...prev, [prNumber]: null })); // Clear previous errors
     
     try {
       const response = await fetch(
@@ -260,7 +262,23 @@ const BranchListing = () => {
       );
       
       if (!response.ok) {
-        throw new Error(`Failed to submit comment: ${response.status}`);
+        let errorMessage = 'Failed to submit comment';
+        
+        if (response.status === 401) {
+          errorMessage = 'Authentication failed. Please check your token permissions.';
+        } else if (response.status === 403) {
+          errorMessage = 'Permission denied. You may not have write access to this repository.';
+        } else if (response.status === 404) {
+          errorMessage = 'Pull request not found or repository access denied.';
+        } else if (response.status === 422) {
+          errorMessage = 'Invalid comment content. Please check your message.';
+        } else if (response.status >= 500) {
+          errorMessage = 'GitHub server error. Please try again later.';
+        } else {
+          errorMessage = `Failed to submit comment (Error ${response.status})`;
+        }
+        
+        throw new Error(errorMessage);
       }
       
       // Clear the comment input
@@ -279,6 +297,11 @@ const BranchListing = () => {
       return true;
     } catch (error) {
       console.error(`Error submitting comment for PR ${prNumber}:`, error);
+      
+      // Set user-friendly error message
+      const errorMessage = error.message || 'An unexpected error occurred while submitting your comment';
+      setCommentErrors(prev => ({ ...prev, [prNumber]: errorMessage }));
+      
       return false;
     } finally {
       setSubmittingComments(prev => ({ ...prev, [prNumber]: false }));
@@ -1119,14 +1142,28 @@ const BranchListing = () => {
                                 <div className="comment-input-section">
                                   <textarea
                                     value={commentInputs[pr.number] || ''}
-                                    onChange={(e) => setCommentInputs(prev => ({
-                                      ...prev,
-                                      [pr.number]: e.target.value
-                                    }))}
+                                    onChange={(e) => {
+                                      setCommentInputs(prev => ({
+                                        ...prev,
+                                        [pr.number]: e.target.value
+                                      }));
+                                      // Clear error when user starts typing
+                                      if (commentErrors[pr.number]) {
+                                        setCommentErrors(prev => ({
+                                          ...prev,
+                                          [pr.number]: null
+                                        }));
+                                      }
+                                    }}
                                     placeholder="Add a comment..."
                                     className="comment-input"
                                     rows={3}
                                   />
+                                  {commentErrors[pr.number] && (
+                                    <div className="comment-error-message">
+                                      ⚠️ {commentErrors[pr.number]}
+                                    </div>
+                                  )}
                                   <button
                                     onClick={() => submitComment(pr.number, commentInputs[pr.number])}
                                     disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
