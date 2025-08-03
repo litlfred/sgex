@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import githubService from '../services/githubService';
 import CollaborationModal from './CollaborationModal';
 import HelpModal from './HelpModal';
-import OAuthDeviceFlow from './OAuthDeviceFlow';
+import OAuthRedirectFlow from './OAuthRedirectFlow';
 import helpContentService from '../services/helpContentService';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
@@ -181,7 +181,7 @@ const WelcomePage = () => {
               <div className="action-card oauth-demo-card">
                 {/* OAuth Login Section */}
                 <div className="oauth-section">
-                  <OAuthDeviceFlow
+                  <OAuthRedirectFlow
                     onAuthSuccess={handleOAuthSuccess}
                     onError={(error) => {
                       console.error('OAuth authentication failed:', error);

@@ -2,7 +2,6 @@ import { Octokit } from '@octokit/rest';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
 import logger from '../utils/logger';
-import GITHUB_CONFIG from '../config/github';
 
 class GitHubService {
   constructor() {
@@ -64,147 +63,11 @@ class GitHubService {
     }
   }
 
-  // OAuth Device Flow methods
+  // OAuth methods (using redirect flow for browser security)
   
-  // Step 1: Initialize OAuth device flow
-  async initiateDeviceFlow(scopes = GITHUB_CONFIG.DEFAULT_SCOPES) {
-    this.logger.auth('Starting OAuth device flow', { scopes });
-    
-    try {
-      // Use GitHub's OAuth device flow endpoint
-      const response = await fetch('https://github.com/login/device/code', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          client_id: GITHUB_CONFIG.CLIENT_ID,
-          scope: scopes.join(' ')
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Device flow initiation failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      this.logger.auth('Device flow initiated successfully', { 
-        device_code: data.device_code ? 'present' : 'missing',
-        verification_uri: data.verification_uri,
-        expires_in: data.expires_in 
-      });
-
-      return {
-        device_code: data.device_code,
-        user_code: data.user_code,
-        verification_uri: data.verification_uri,
-        verification_uri_complete: data.verification_uri_complete,
-        expires_in: data.expires_in,
-        interval: data.interval || 5
-      };
-    } catch (error) {
-      this.logger.auth('Device flow initiation failed', { error: error.message });
-      console.error('Failed to initiate device flow:', error);
-      throw error;
-    }
-  }
-
-  // Step 2: Poll for device flow completion
-  async pollDeviceFlowToken(deviceCode, interval = 5) {
-    this.logger.auth('Starting device flow token polling', { deviceCode: deviceCode ? 'present' : 'missing', interval });
-    
-    try {
-      const response = await fetch('https://github.com/login/oauth/access_token', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          client_id: GITHUB_CONFIG.CLIENT_ID,
-          device_code: deviceCode,
-          grant_type: 'urn:ietf:params:oauth:grant-type:device_code'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Token polling failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.error) {
-        if (data.error === 'authorization_pending') {
-          this.logger.auth('Device flow authorization still pending');
-          return { status: 'pending' };
-        } else if (data.error === 'slow_down') {
-          this.logger.auth('Device flow polling too fast, slowing down');
-          return { status: 'slow_down' };
-        } else if (data.error === 'expired_token') {
-          this.logger.auth('Device flow token expired');
-          return { status: 'expired' };
-        } else if (data.error === 'access_denied') {
-          this.logger.auth('Device flow access denied by user');
-          return { status: 'denied' };
-        } else {
-          throw new Error(`Device flow error: ${data.error} - ${data.error_description}`);
-        }
-      }
-
-      this.logger.auth('Device flow token received successfully', { 
-        tokenType: data.token_type,
-        scope: data.scope 
-      });
-
-      return {
-        status: 'success',
-        access_token: data.access_token,
-        token_type: data.token_type,
-        scope: data.scope
-      };
-    } catch (error) {
-      this.logger.auth('Device flow token polling failed', { error: error.message });
-      console.error('Failed to poll device flow token:', error);
-      throw error;
-    }
-  }
-
-  // Complete OAuth device flow authentication
-  async authenticateWithDeviceFlow(accessToken, scopes) {
-    this.logger.auth('Completing device flow authentication', { scopes });
-    
-    try {
-      const octokit = new Octokit({ auth: accessToken });
-      
-      // Test the token by fetching user info
-      const userResponse = await octokit.rest.users.getAuthenticated();
-      
-      // Store the authentication
-      this.octokit = octokit;
-      this.isAuthenticated = true;
-      this.tokenType = 'oauth';
-      
-      this.logger.auth('Device flow authentication completed successfully', { 
-        username: userResponse.data.login,
-        tokenType: this.tokenType,
-        scopes 
-      });
-
-      return {
-        success: true,
-        user: userResponse.data,
-        scopes,
-        token: accessToken
-      };
-    } catch (error) {
-      this.logger.auth('Device flow authentication completion failed', { error: error.message });
-      console.error('Failed to complete device flow authentication:', error);
-      this.isAuthenticated = false;
-      throw error;
-    }
-  }
+  // Note: OAuth device flow was removed due to CORS restrictions in browsers.
+  // For web applications, use GitHub OAuth App flow with redirects instead.
+  // The device flow requires server-side token exchange to avoid exposing client secrets.
 
   // Per-Repository Token Management
 
