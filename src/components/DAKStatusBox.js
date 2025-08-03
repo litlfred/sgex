@@ -187,8 +187,9 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
                 <h4>⚙️ GitHub Actions</h4>
                 <GitHubActionsIntegration
                   repository={repository}
-                  branch={branch}
+                  selectedBranch={branch}
                   hasWriteAccess={hasWriteAccess}
+                  profile={profile}
                 />
               </div>
             </>

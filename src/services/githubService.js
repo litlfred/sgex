@@ -897,6 +897,64 @@ class GitHubService {
     }
   }
 
+  // Approve a workflow run
+  async approveWorkflowRun(owner, repo, run_id) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.actions.approveWorkflowRun({
+        owner,
+        repo,
+        run_id
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to approve workflow run:', error);
+      throw error;
+    }
+  }
+
+  // Get commit comparison (diff)
+  async getCommitDiff(owner, repo, base, head) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.compareCommits({
+        owner,
+        repo,
+        base,
+        head
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to get commit diff:', error);
+      throw error;
+    }
+  }
+
+  // Get commit details
+  async getCommit(owner, repo, sha) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      const { data } = await this.octokit.rest.repos.getCommit({
+        owner,
+        repo,
+        ref: sha
+      });
+      return data;
+    } catch (error) {
+      console.error('Failed to get commit details:', error);
+      throw error;
+    }
+  }
+
   // Releases API methods
 
   // Get releases for a repository

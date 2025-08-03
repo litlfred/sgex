@@ -244,6 +244,49 @@
   color: var(--who-text-primary);
 }
 
+.approve-btn {
+  background: none;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 4px;
+  color: #28a745;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.approve-btn:hover:not(:disabled) {
+  background: #e8f5e8;
+  transform: scale(1.1);
+}
+
+.approve-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.view-changes-btn {
+  background: none;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 4px;
+  color: var(--who-blue);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.view-changes-btn:hover {
+  background: var(--who-hover-bg);
+  transform: scale(1.1);
+}
+
 .no-runs {
   padding: 2rem;
   text-align: center;

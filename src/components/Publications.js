@@ -42,8 +42,8 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
               updated_at: new Date().toISOString()
             },
             'feature/updates': { 
-              status: 'in_progress', 
-              conclusion: null, 
+              status: 'completed', 
+              conclusion: 'action_required', 
               html_url: `https://github.com/${owner}/${repoName}/actions/runs/123457`,
               updated_at: new Date().toISOString()
             },
@@ -142,6 +142,13 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
         title: 'Last build failed', 
         link: run.html_url,
         className: 'failure' 
+      };
+    } else if (conclusion === 'action_required') {
+      return { 
+        icon: '⏳', 
+        title: 'Workflow requires approval', 
+        link: run.html_url,
+        className: 'approval-required' 
       };
     } else {
       return { 
