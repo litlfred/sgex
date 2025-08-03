@@ -269,6 +269,29 @@ This separation ensures:
 3. **Deploy** → Updates root landing page with independent assets
 4. **Complete** → Updated landing page available within 2-3 minutes
 
+#### How to Update the Landing Page
+
+To manually update the landing page:
+
+1. **Navigate to GitHub Actions** in the repository
+2. **Select "Deploy Landing Page"** workflow
+3. **Click "Run workflow"** 
+4. **Choose source branch** (optional - defaults to current branch)
+5. **Run** the workflow
+
+The landing page will be updated with latest branch listings, pull request previews, and self-contained assets.
+
+### Workflow Independence Benefits
+
+The compartmentalized approach provides several advantages:
+
+- **Isolated Updates**: Branch deployments don't trigger landing page rebuilds
+- **Selective Control**: Landing page can be updated independently when needed
+- **Asset Isolation**: Landing page has its own CSS, JS, and image assets
+- **Build Optimization**: Landing page build is ~83% smaller (only includes BranchListing component)
+- **Deployment Flexibility**: Landing page can use build scripts from any branch
+- **Reduced Complexity**: Each workflow has a single, clear responsibility
+
 ### Pull Request Integration
 
 When you push to a branch with an associated pull request:
