@@ -136,11 +136,11 @@ const CoreDataDictionaryViewerContent = () => {
       setLoadingLogicalModels(true);
       setLogicalModelsError(null);
       
-      // Try to fetch the inputs/fsh/models directory
+      // Try to fetch the input/fsh/models directory
       const modelsDir = await githubService.getDirectoryContents(
         currentUser, 
         currentRepo, 
-        'inputs/fsh/models', 
+        'input/fsh/models', 
         currentBranch
       );
 
@@ -742,7 +742,7 @@ const CoreDataDictionaryViewerContent = () => {
 
             <div className="logical-models-list">
               <h3>Logical Models</h3>
-              <p>FHIR Logical Models stored as StructureDefinitions in FSH format under <code>inputs/fsh/models/</code></p>
+              <p>FHIR Logical Models stored as StructureDefinitions in FSH format under <code>input/fsh/models/</code></p>
               
               {loadingLogicalModels && (
                 <div className="loading-message">
@@ -759,7 +759,7 @@ const CoreDataDictionaryViewerContent = () => {
 
               {!loadingLogicalModels && !logicalModelsError && logicalModels.length === 0 && (
                 <div className="no-models-message">
-                  <p>📂 No logical models found in <code>inputs/fsh/models/</code> directory.</p>
+                  <p>📂 No logical models found in <code>input/fsh/models/</code> directory.</p>
                   <p>Logical models should be stored as <code>*.fsh</code> files in this location.</p>
                 </div>
               )}
