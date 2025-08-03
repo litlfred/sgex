@@ -239,6 +239,30 @@
   cursor: not-allowed;
 }
 
+.comment-auth-message {
+  background: var(--who-tertiary-bg, #f8f9fa);
+  border: 1px solid var(--who-border-color, #e1e5e9);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.comment-auth-message p {
+  margin: 0;
+  color: var(--who-text-secondary, #586069);
+}
+
+.comment-auth-message a {
+  color: var(--who-blue, #0366d6);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.comment-auth-message a:hover {
+  text-decoration: underline;
+}
+
 /* Main action buttons */
 .main-actions {
   display: flex;

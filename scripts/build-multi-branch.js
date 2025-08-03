@@ -111,12 +111,12 @@ function createBranchSpecificBuild() {
 }
 
 function createRootLandingPageApp() {
-  console.log('🏠 Creating root landing page application...');
+  console.log('🏠 Creating self-contained root landing page application...');
   
   // Ensure dependencies are available
   ensureDependencies();
   
-  // Create a temporary React app that only renders BranchListing
+  // Create a temporary React app that only renders BranchListing with self-contained assets
   const tempAppContent = `
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
@@ -157,6 +157,32 @@ export default App;
     packageJson.homepage = '/sgex/';
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
     
+    // Update manifest.json for root deployment  
+    const manifestPath = path.join(__dirname, '..', 'public', 'manifest.json');
+    const manifestBackupPath = path.join(__dirname, '..', 'public', 'manifest.json.backup-landing');
+    
+    if (fs.existsSync(manifestPath)) {
+      // Backup original manifest.json
+      fs.copyFileSync(manifestPath, manifestBackupPath);
+      
+      // Update manifest.json for root deployment
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+      
+      // Update start_url for root deployment
+      manifest.start_url = '/sgex/';
+      
+      // Update icon paths for root deployment - ensure they're self-contained
+      if (manifest.icons && Array.isArray(manifest.icons)) {
+        manifest.icons = manifest.icons.map(icon => ({
+          ...icon,
+          src: icon.src.startsWith('/') ? `/sgex${icon.src}` : `/sgex/${icon.src}`
+        }));
+      }
+      
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+      console.log(`🔧 Updated manifest.json for self-contained root deployment`);
+    }
+    
     // Build the landing page app
     execSync('npm run build', { stdio: 'inherit' });
     
@@ -164,13 +190,23 @@ export default App;
     packageJson.homepage = originalHomepage;
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
     
-    console.log('✅ Root landing page build completed');
+    console.log('✅ Self-contained root landing page build completed');
     
   } finally {
     // Always restore original App.js
     if (fs.existsSync(appJsBackupPath)) {
       fs.copyFileSync(appJsBackupPath, appJsPath);
       fs.unlinkSync(appJsBackupPath);
+    }
+    
+    // Restore original manifest.json if backup exists
+    const manifestPath = path.join(__dirname, '..', 'public', 'manifest.json');
+    const manifestBackupPath = path.join(__dirname, '..', 'public', 'manifest.json.backup-landing');
+    
+    if (fs.existsSync(manifestBackupPath)) {
+      fs.copyFileSync(manifestBackupPath, manifestPath);
+      fs.unlinkSync(manifestBackupPath);
+      console.log(`🔧 Restored original manifest.json`);
     }
   }
 }
