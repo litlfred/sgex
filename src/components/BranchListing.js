@@ -29,7 +29,6 @@ const BranchListing = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [githubToken, setGithubToken] = useState(null);
   const [prComments, setPrComments] = useState({});
-  const [loadingComments, setLoadingComments] = useState(false);
   const [commentInputs, setCommentInputs] = useState({});
   const [submittingComments, setSubmittingComments] = useState({});
   const [expandedDiscussions, setExpandedDiscussions] = useState({});
@@ -214,44 +213,6 @@ const BranchListing = () => {
     return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
   };
 
-  // Function to fetch PR comments
-  const fetchPRComments = useCallback(async (prNumber) => {
-    // Allow fetching comments even without authentication for read-only access
-    
-    try {
-      const headers = {
-        'Accept': 'application/vnd.github.v3+json'
-      };
-      
-      // Add authorization header only if token is available
-      if (githubToken) {
-        headers['Authorization'] = `token ${githubToken}`;
-      }
-      
-      const response = await fetch(
-        `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-        { headers }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch comments: ${response.status}`);
-      }
-      
-      const comments = await response.json();
-      // Return last 4 comments, truncated to 2 lines each
-      return comments.slice(-4).map(comment => ({
-        id: comment.id,
-        author: comment.user.login,
-        body: comment.body.split('\n').slice(0, 2).join('\n').substring(0, 200) + (comment.body.length > 200 ? '...' : ''),
-        created_at: new Date(comment.created_at).toLocaleDateString(),
-        avatar_url: comment.user.avatar_url
-      }));
-    } catch (error) {
-      console.error(`Error fetching comments for PR ${prNumber}:`, error);
-      return [];
-    }
-  }, [githubToken]);
-
   // Function to submit a comment
   const submitComment = async (prNumber, commentText) => {
     if (!githubToken || !commentText.trim()) return false;
@@ -350,20 +311,7 @@ const BranchListing = () => {
     }
   }, [githubToken, branches, pullRequests, loadWorkflowStatuses]);
 
-  // Function to load comments for all visible PRs
-  const loadCommentsForPRs = useCallback(async (prs) => {
-    if (!githubToken || prs.length === 0) return;
-    
-    setLoadingComments(true);
-    const comments = {};
-    
-    for (const pr of prs) {
-      comments[pr.number] = await fetchPRComments(pr.number);
-    }
-    
-    setPrComments(comments);
-    setLoadingComments(false);
-  }, [githubToken, fetchPRComments]);
+
 
   // Check for existing authentication on component mount
   useEffect(() => {
@@ -1215,9 +1163,7 @@ const BranchListing = () => {
                               
                               {/* Scrollable Comments Area */}
                               <div className="discussion-scroll-area">
-                                {loadingComments ? (
-                                  <div className="comments-loading">Loading full discussion...</div>
-                                ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
+                                {prComments[pr.number] && prComments[pr.number].length > 0 ? (
                                   <div className="comments-list">
                                     {prComments[pr.number].map((comment) => (
                                       <div key={comment.id} className="comment-item">
