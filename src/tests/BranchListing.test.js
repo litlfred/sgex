@@ -85,7 +85,7 @@ describe('BranchListing Component', () => {
     });
 
     // Check that sections are properly displayed
-    expect(screen.getByText(/Main Branch/)).toBeInTheDocument();
+    expect(screen.getByText(/🚀 Main Branch/)).toBeInTheDocument();
     expect(screen.getByText(/Pull Request Previews \(\d+\)/)).toBeInTheDocument();
   });
 
