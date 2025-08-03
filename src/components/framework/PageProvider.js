@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../../services/githubService';
 import dakValidationService from '../../services/dakValidationService';
@@ -323,4 +324,9 @@ export const PageProvider = ({ children, pageName }) => {
       {children}
     </PageContext.Provider>
   );
+};
+
+PageProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+  pageName: PropTypes.string.isRequired
 };

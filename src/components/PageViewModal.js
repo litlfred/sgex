@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import './PageViewModal.css';
 
 const PageViewModal = ({ page, onClose }) => {
@@ -82,6 +83,18 @@ const PageViewModal = ({ page, onClose }) => {
       </div>
     </div>
   );
+};
+
+PageViewModal.propTypes = {
+  page: PropTypes.shape({
+    title: PropTypes.string,
+    filename: PropTypes.string,
+    path: PropTypes.string,
+    content: PropTypes.shape({
+      content: PropTypes.string
+    })
+  }).isRequired,
+  onClose: PropTypes.func.isRequired
 };
 
 export default PageViewModal;

@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { PageProvider, usePage } from './PageProvider';
 import PageHeader from './PageHeader';
 import PageContext from './PageContext';
@@ -41,6 +42,10 @@ class PageErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+PageErrorBoundary.propTypes = {
+  children: PropTypes.node.isRequired
+};
 
 /**
  * Inner layout component that uses page context
@@ -109,6 +114,20 @@ const PageLayoutInner = ({
   );
 };
 
+PageLayoutInner.propTypes = {
+  children: PropTypes.node.isRequired,
+  showHeader: PropTypes.bool,
+  showMascot: PropTypes.bool,
+  showBreadcrumbs: PropTypes.bool,
+  customBreadcrumbs: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      path: PropTypes.string,
+      onClick: PropTypes.func
+    })
+  )
+};
+
 /**
  * Main page layout component with framework integration
  */
@@ -134,6 +153,21 @@ const PageLayout = ({
       </PageProvider>
     </PageErrorBoundary>
   );
+};
+
+PageLayout.propTypes = {
+  children: PropTypes.node.isRequired,
+  pageName: PropTypes.string.isRequired,
+  showHeader: PropTypes.bool,
+  showMascot: PropTypes.bool,
+  showBreadcrumbs: PropTypes.bool,
+  customBreadcrumbs: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      path: PropTypes.string,
+      onClick: PropTypes.func
+    })
+  )
 };
 
 export default PageLayout;

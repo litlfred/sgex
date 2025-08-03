@@ -66,6 +66,10 @@
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
+    "@eslint/js": "^9.32.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.3.0",
     "http-proxy-middleware": "^3.0.5",
     "identity-obj-proxy": "^3.0.0",
     "jsdom": "^26.1.0"

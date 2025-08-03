@@ -452,7 +452,7 @@ const PagesManager = () => {
                     <li>The repository contains a <code>sushi-config.yaml</code> file{selectedBranch && ` on branch "${selectedBranch}"`}</li>
                     <li>The sushi-config.yaml file has a <code>pages:</code> section</li>
                     <li>You have access to view the repository contents</li>
-                    {selectedBranch && selectedBranch !== 'main' && <li>The branch "{selectedBranch}" exists and is accessible</li>}
+                    {selectedBranch && selectedBranch !== 'main' && <li>The branch &quot;{selectedBranch}&quot; exists and is accessible</li>}
                   </ul>
                 </div>
               </div>
@@ -463,7 +463,7 @@ const PagesManager = () => {
             <div className="empty-state">
               <div className="empty-icon">📄</div>
               <h3>No pages found</h3>
-              <p>This repository doesn't have any pages defined in sushi-config.yaml</p>
+              <p>This repository doesn&apos;t have any pages defined in sushi-config.yaml</p>
               <div className="empty-actions">
                 <a 
                   href={`https://github.com/${repository.full_name}/blob/${selectedBranch || 'main'}/sushi-config.yaml`}
