@@ -187,57 +187,120 @@ For more information on DAK authoring, see the [WHO SMART Guidelines IG Starter 
 
 ## Deployment
 
-The SGEX Workbench uses an advanced **multi-branch GitHub Pages deployment system** that automatically builds and deploys every branch for preview and testing purposes.
+The SGEX Workbench uses a **compartmentalized multi-branch GitHub Pages deployment system** with separate workflows for branch previews and landing page deployment.
 
-### How the Workbench is Deployed
+### Deployment Architecture
 
-The workbench is deployed using GitHub Actions workflows that:
+The system consists of **two independent workflows**:
 
-1. **Automatically build and deploy** every pushed branch to its own preview URL
-2. **Generate a dynamic landing page** that lists all available branch previews
-3. **Maintain the main application** always accessible at a stable URL
-4. **Use GitHub Pages** for static hosting without requiring backend infrastructure
+1. **Branch Preview Deployment**: Automatically deploys each branch to its own preview URL
+2. **Landing Page Deployment**: Manually triggered deployment of the main landing page
 
-### Branch Structure and Access
+This separation ensures:
+- Branch deployments don't interfere with landing page updates
+- Landing page has self-contained assets (no dependencies on branch directories)
+- Manual control over landing page updates
+- Independent operation of each deployment type
 
-#### Main Branch
-- **Main Application**: https://litlfred.github.io/sgex/main/
-- **Purpose**: The primary stable version of the workbench
-- **Auto-deployed**: Every commit to the `main` branch
+### Branch Preview Deployment
 
-#### Feature Branches  
-- **Branch Previews**: https://litlfred.github.io/sgex/{branch-name}/
+**Workflow**: `Branch Preview Deployment` (`.github/workflows/pages.yml`)
+
+**Automatic Triggers**:
+- Push to any branch (except `gh-pages`)  
+- Pull request events
+- Excludes documentation-only changes
+
+**Process**:
+1. **Builds** branch-specific React app with correct base path
+2. **Deploys** to branch subdirectory (e.g., `/main/`, `/feature-branch/`)
+3. **Posts** deployment URLs to associated pull request comments
+4. **Preserves** existing branch directories and landing page
+
+### Landing Page Deployment
+
+**Workflow**: `Deploy Landing Page` (`.github/workflows/landing-page-deploy.yml`)
+
+**Manual Triggers**:
+- GitHub Actions manual trigger (`workflow_dispatch`)
+- Can be triggered from any branch
+- Uses build scripts from the triggering branch
+
+**Process**:
+1. **Builds** self-contained landing page with branch/PR selectors
+2. **Preserves** all existing branch deployments
+3. **Deploys** landing page to root of GitHub Pages
+4. **Maintains** independent assets (CSS, JS, images)
+
+### URL Structure and Access
+
+#### Main Application
+- **URL**: https://litlfred.github.io/sgex/main/
+- **Purpose**: Primary stable version of the workbench
+- **Deployment**: Automatic via branch preview workflow
+
+#### Feature Branch Previews
+- **URL Pattern**: https://litlfred.github.io/sgex/{branch-name}/
 - **Purpose**: Individual feature development and testing
-- **Auto-deployed**: Every commit to any feature branch
-- **URL Format**: Branch names with slashes are converted to dashes (e.g., `feature/new-editor` becomes `feature-new-editor`)
+- **Deployment**: Automatic on every push to any branch
+- **Naming**: Branch names with slashes converted to dashes (e.g., `feature/new-editor` → `feature-new-editor`)
 
 #### Landing Page
-- **Branch Selector**: https://litlfred.github.io/sgex/
+- **URL**: https://litlfred.github.io/sgex/
 - **Purpose**: Browse and access all available branch deployments
-- **Features**: Lists all branches with pull request previews, metadata, and direct access links
+- **Features**: Branch selector, pull request previews, contribution portal
+- **Deployment**: Manual via landing page deployment workflow
 
-### Deployment Workflow
+### Branch Preview Workflow Details
 
-1. **Push to any branch** → Triggers automatic GitHub Actions workflow
-2. **Build process** → Installs dependencies, runs tests, builds React app
-3. **Branch deployment** → Creates/updates preview at branch-specific URL  
-4. **Landing page update** → Refreshes main page with current branch listings
-5. **PR comment** → Automatically posts deployment URLs to associated pull request conversations
-6. **Live in minutes** → Changes are accessible within 2-3 minutes
+**Triggered by**: Push to any branch, pull request events
 
-#### Pull Request Integration
+1. **Build** → Installs dependencies, builds branch-specific React app
+2. **Deploy** → Updates branch subdirectory on GitHub Pages
+3. **Notify** → Posts deployment URLs to associated pull request comments
+4. **Complete** → Branch preview available within 2-3 minutes
 
-When you push to a branch that's associated with an open pull request, the deployment workflow automatically:
+### Landing Page Update Process
 
-- **Detects the associated PR** by branch name or commit SHA
-- **Posts a comment** with all deployment URLs directly in the PR conversation  
-- **Updates existing comments** instead of creating duplicates
-- **Includes branch preview, landing page, and main app URLs** for easy access
-- **Shows deployment timestamp and commit information** for reference
+**Triggered by**: Manual workflow dispatch in GitHub Actions
 
-This integration makes it easy for reviewers to immediately access and test changes without manually navigating to deployment URLs.
+1. **Build** → Creates self-contained landing page with updated branch listings
+2. **Preserve** → Maintains all existing branch directories
+3. **Deploy** → Updates root landing page with independent assets
+4. **Complete** → Updated landing page available within 2-3 minutes
 
-This deployment system enables seamless collaboration by providing isolated preview environments for every feature branch while maintaining a stable main application.
+#### How to Update the Landing Page
+
+To manually update the landing page:
+
+1. **Navigate to GitHub Actions** in the repository
+2. **Select "Deploy Landing Page"** workflow
+3. **Click "Run workflow"** 
+4. **Choose source branch** (optional - defaults to current branch)
+5. **Run** the workflow
+
+The landing page will be updated with latest branch listings, pull request previews, and self-contained assets.
+
+### Workflow Independence Benefits
+
+The compartmentalized approach provides several advantages:
+
+- **Isolated Updates**: Branch deployments don't trigger landing page rebuilds
+- **Selective Control**: Landing page can be updated independently when needed
+- **Asset Isolation**: Landing page has its own CSS, JS, and image assets
+- **Build Optimization**: Landing page build is ~83% smaller (only includes BranchListing component)
+- **Deployment Flexibility**: Landing page can use build scripts from any branch
+- **Reduced Complexity**: Each workflow has a single, clear responsibility
+
+### Pull Request Integration
+
+When you push to a branch with an associated pull request:
+
+- **Auto-detects** PR by branch name or commit SHA
+- **Posts comment** with deployment URLs in PR conversation
+- **Updates existing** comments instead of creating duplicates
+- **Includes** branch preview URL and deployment metadata
+- **Provides** direct access for reviewers to test changes
 
 ## Documentation
 
