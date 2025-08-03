@@ -153,8 +153,8 @@ if [[ -f ".github/workflows/pages.yml" ]]; then
     echo "✅ Workflow file exists"
     
     # Check for key safety features
-    if grep -q "readlink -f" .github/workflows/pages.yml; then
-        echo "✅ Workflow includes readlink validation"
+    if grep -q "Safety validation failed" .github/workflows/pages.yml; then
+        echo "✅ Workflow includes safety validation"
     fi
     
     if grep -q "git rm -rf" .github/workflows/pages.yml; then
@@ -167,6 +167,10 @@ if [[ -f ".github/workflows/pages.yml" ]]; then
     
     if grep -q "safe_branch_name" .github/workflows/pages.yml; then
         echo "✅ Workflow handles safe branch names"
+    fi
+    
+    if grep -q "current-branch-backup" .github/workflows/pages.yml; then
+        echo "✅ Workflow includes branch directory backup protection"
     fi
 else
     echo "❌ Workflow file missing"

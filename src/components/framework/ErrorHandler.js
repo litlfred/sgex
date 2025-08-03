@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { usePage } from './PageProvider';
 import ContextualHelpMascot from '../ContextualHelpMascot';
+import useThemeImage from '../../hooks/useThemeImage';
 import './ErrorHandler.css';
 
 /**
@@ -17,6 +18,9 @@ const ErrorHandler = ({ error, onRetry }) => {
     console.warn('ErrorHandler used outside of PageProvider context');
   }
   const [bugReportSent, setBugReportSent] = useState(false);
+
+  // Theme-aware mascot image
+  const mascotImage = useThemeImage('sgex-mascot.png');
   const [userExplanation, setUserExplanation] = useState('');
 
   const generateBugReportUrl = () => {
@@ -78,7 +82,7 @@ ${error}
               <div className="error-help-content">
                 <div className="error-mascot-large">
                   <img 
-                    src="/sgex/sgex-mascot.png" 
+                    src={mascotImage} 
                     alt="SGEX Helper" 
                     className="large-mascot-icon"
                   />

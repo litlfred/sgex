@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import useThemeImage from '../hooks/useThemeImage';
 import './HelpModal.css';
 
 const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Theme-aware mascot image
+  const mascotImage = useThemeImage('sgex-mascot.png');
 
   // Set up global reference for inline onclick handlers
   useEffect(() => {
@@ -46,6 +50,10 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
           case 'documentation':
             params.template = 'documentation.yml';
             params.labels = 'documentation';
+            break;
+          case 'blank':
+            // No template specified - this will allow users to create a blank issue
+            params.labels = 'blank-issue';
             break;
           default:
             params.labels = 'needs-triage';
@@ -107,6 +115,10 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
           case 'question':
             params.template = 'dak_question.yml';
             params.labels = 'question,dak-question';
+            break;
+          case 'blank':
+            // No template specified - this will allow users to create a blank issue
+            params.labels = 'blank-issue,dak-feedback';
             break;
           default:
             params.labels = 'dak-feedback';
@@ -409,7 +421,7 @@ Best regards,
         content: helpTopic.type === 'slideshow' ? renderSlideshow() : (
           <div className="help-content">
             <div className="mascot-message">
-              <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="help-mascot" />
+              <img src={mascotImage} alt="SGEX Helper" className="help-mascot" />
               <div className="message-bubble">
                 <div dangerouslySetInnerHTML={{ __html: helpTopic.content }} />
               </div>
@@ -428,7 +440,7 @@ Best regards,
           content: (
             <div className="help-content">
               <div className="mascot-message">
-                <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="help-mascot" />
+                <img src={mascotImage} alt="SGEX Helper" className="help-mascot" />
                 <div className="message-bubble">
                   <p>SGEX Workbench uses GitHub Personal Access Tokens for secure authentication!</p>
                   <p><strong>How it works:</strong></p>
@@ -451,7 +463,7 @@ Best regards,
           content: (
             <div className="help-content">
               <div className="mascot-message">
-                <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="help-mascot" />
+                <img src={mascotImage} alt="SGEX Helper" className="help-mascot" />
                 <div className="message-bubble">
                   <p>Hi! I'm here to help you with the SGEX Workbench.</p>
                   <p>Use the menu in the top right to get additional support options.</p>

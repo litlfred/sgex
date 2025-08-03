@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { PageLayout, usePageParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import WHODigitalLibrary from './WHODigitalLibrary';
+import useThemeImage from '../hooks/useThemeImage';
 import './ComponentEditor.css';
 
 const ComponentEditor = () => {
@@ -26,6 +27,9 @@ const HealthInterventionsEditor = () => {
   const navigate = useNavigate();
   const { params } = usePageParams();
   const [selectedReferences, setSelectedReferences] = useState([]);
+  
+  // Theme-aware mascot image for fallback avatar
+  const mascotImage = useThemeImage('sgex-mascot.png');
   
   // Get data from URL params or location state
   const { profile, repository } = location.state || {};
@@ -52,7 +56,7 @@ const HealthInterventionsEditor = () => {
         </div>
         <div className="context-info">
           <img 
-            src={profile?.avatar_url || user ? `https://github.com/${user}.png` : '/sgex/sgex-mascot.png'} 
+            src={profile?.avatar_url || user ? `https://github.com/${user}.png` : mascotImage} 
             alt="Profile" 
             className="context-avatar" 
           />
@@ -90,6 +94,9 @@ const ComponentEditorContent = () => {
   const { params } = usePageParams();
   const [selectedReferences, setSelectedReferences] = useState([]);
   
+  // Theme-aware mascot image for fallback avatar
+  const mascotImage = useThemeImage('sgex-mascot.png');
+  
   const { profile, repository, component } = location.state || {};
 
   // Determine component from route or state
@@ -115,7 +122,7 @@ const ComponentEditorContent = () => {
     if (currentComponent?.id === 'health-interventions') {
       // Allow access to health-interventions editor without full context
       // Use placeholder data for now
-      const placeholderProfile = { login: 'demo-user', avatar_url: '/sgex/sgex-mascot.png', name: 'Demo User' };
+      const placeholderProfile = { login: 'demo-user', avatar_url: mascotImage, name: 'Demo User' };
       const placeholderRepo = { name: 'demo-repository' };
       
       return (
