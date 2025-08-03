@@ -6,6 +6,23 @@ import BranchListing from '../components/BranchListing';
 // Mock fetch globally
 global.fetch = jest.fn();
 
+// Mock localStorage for cache service
+const localStorageMock = {
+  getItem: jest.fn(() => null),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn()
+};
+global.localStorage = localStorageMock;
+
+// Mock the cache service
+jest.mock('../services/branchListingCacheService', () => ({
+  getCachedData: jest.fn(() => null),
+  setCachedData: jest.fn(() => true),
+  getCacheInfo: jest.fn(() => ({ exists: false, stale: true })),
+  forceRefresh: jest.fn(() => true)
+}));
+
 // Mock PageLayout component
 jest.mock('../components/framework', () => ({
   PageLayout: ({ children, pageName, showMascot }) => (

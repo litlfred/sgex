@@ -4,6 +4,7 @@ import HelpModal from './HelpModal';
 import PATLogin from './PATLogin';
 import WorkflowStatus from './WorkflowStatus';
 import githubActionsService from '../services/githubActionsService';
+import branchListingCacheService from '../services/branchListingCacheService';
 import useThemeImage from '../hooks/useThemeImage';
 import './BranchListing.css';
 
@@ -17,12 +18,10 @@ const BranchListing = () => {
   const [prSortBy, setPrSortBy] = useState('updated'); // updated, number, alphabetical
   const [showContributeModal, setShowContributeModal] = useState(false);
   const [deploymentStatuses, setDeploymentStatuses] = useState({});
-  const [checkingStatuses, setCheckingStatuses] = useState(false);
   const [prFilter, setPrFilter] = useState('open'); // 'open', 'closed', 'all'
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [githubToken, setGithubToken] = useState(null);
   const [prComments, setPrComments] = useState({});
-  const [loadingComments, setLoadingComments] = useState(false);
   const [commentInputs, setCommentInputs] = useState({});
   const [submittingComments, setSubmittingComments] = useState({});
   const [expandedDiscussions, setExpandedDiscussions] = useState({});
@@ -30,11 +29,25 @@ const BranchListing = () => {
   const [loadingSummaries, setLoadingSummaries] = useState(false);
   const [workflowStatuses, setWorkflowStatuses] = useState({});
   const [loadingWorkflowStatuses, setLoadingWorkflowStatuses] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [cacheInfo, setCacheInfo] = useState(null);
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
 
   const ITEMS_PER_PAGE = 10;
+  const GITHUB_OWNER = 'litlfred';
+  const GITHUB_REPO = 'sgex';
+
+  // Function to manually refresh cache and reload data
+  const handleManualRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    
+    // Clear the cache to force fresh data
+    branchListingCacheService.forceRefresh(GITHUB_OWNER, GITHUB_REPO);
+    
+    // The fetchData function will be called by the useEffect when isRefreshing changes
+  }, []);
 
   // GitHub authentication functions
   const handleAuthSuccess = (token, octokitInstance) => {
@@ -196,44 +209,6 @@ const BranchListing = () => {
     return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
   };
 
-  // Function to fetch PR comments
-  const fetchPRComments = useCallback(async (prNumber) => {
-    // Allow fetching comments even without authentication for read-only access
-    
-    try {
-      const headers = {
-        'Accept': 'application/vnd.github.v3+json'
-      };
-      
-      // Add authorization header only if token is available
-      if (githubToken) {
-        headers['Authorization'] = `token ${githubToken}`;
-      }
-      
-      const response = await fetch(
-        `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-        { headers }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch comments: ${response.status}`);
-      }
-      
-      const comments = await response.json();
-      // Return last 4 comments, truncated to 2 lines each
-      return comments.slice(-4).map(comment => ({
-        id: comment.id,
-        author: comment.user.login,
-        body: comment.body.split('\n').slice(0, 2).join('\n').substring(0, 200) + (comment.body.length > 200 ? '...' : ''),
-        created_at: new Date(comment.created_at).toLocaleDateString(),
-        avatar_url: comment.user.avatar_url
-      }));
-    } catch (error) {
-      console.error(`Error fetching comments for PR ${prNumber}:`, error);
-      return [];
-    }
-  }, [githubToken]);
-
   // Function to submit a comment
   const submitComment = async (prNumber, commentText) => {
     if (!githubToken || !commentText.trim()) return false;
@@ -328,21 +303,6 @@ const BranchListing = () => {
     }
   }, [githubToken, pullRequests, loadWorkflowStatuses]);
 
-  // Function to load comments for all visible PRs
-  const loadCommentsForPRs = useCallback(async (prs) => {
-    if (!githubToken || prs.length === 0) return;
-    
-    setLoadingComments(true);
-    const comments = {};
-    
-    for (const pr of prs) {
-      comments[pr.number] = await fetchPRComments(pr.number);
-    }
-    
-    setPrComments(comments);
-    setLoadingComments(false);
-  }, [githubToken, fetchPRComments]);
-
   // Check for existing authentication on component mount
   useEffect(() => {
     const token = sessionStorage.getItem('github_token');
@@ -372,7 +332,6 @@ const BranchListing = () => {
 
   // Function to check deployment statuses for PRs only
   const checkAllDeploymentStatuses = useCallback(async (prData) => {
-    setCheckingStatuses(true);
     const statuses = {};
     
     // Check PRs only
@@ -382,7 +341,6 @@ const BranchListing = () => {
     }
     
     setDeploymentStatuses(statuses);
-    setCheckingStatuses(false);
   }, []);
 
   // Function to copy URL to clipboard
@@ -537,13 +495,40 @@ const BranchListing = () => {
       try {
         setLoading(true);
         
-        // Use GitHub API to fetch PRs for the sgex repository
-        const owner = 'litlfred';
-        const repo = 'sgex';
+        // First, try to get cached data
+        const cachedData = branchListingCacheService.getCachedData(GITHUB_OWNER, GITHUB_REPO);
+        
+        if (cachedData && !isRefreshing) {
+          console.log('Using cached data for PR listing');
+          
+          // Filter PRs based on current filter state
+          const filteredCachedPRs = cachedData.pullRequests.filter(pr => {
+            if (prFilter === 'all') return true;
+            return pr.state === prFilter;
+          });
+          
+          setPullRequests(filteredCachedPRs);
+          setCacheInfo(branchListingCacheService.getCacheInfo(GITHUB_OWNER, GITHUB_REPO));
+          
+          // Still need to check deployment statuses as these change frequently
+          await checkAllDeploymentStatuses(filteredCachedPRs);
+          
+          // Load workflow statuses if authenticated
+          if (githubToken) {
+            await loadWorkflowStatuses(filteredCachedPRs);
+          }
+          
+          // Load discussion summaries for first page
+          await loadDiscussionSummaries(filteredCachedPRs.slice(0, ITEMS_PER_PAGE));
+          return;
+        }
+
+        // If no cached data or refreshing, fetch fresh data
+        console.log('Fetching fresh data from GitHub API');
         
         // Fetch pull requests based on filter
         const prState = prFilter === 'all' ? 'all' : prFilter;
-        const prResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls?state=${prState}&sort=updated&per_page=100`);
+        const prResponse = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/pulls?state=${prState}&sort=updated&per_page=100`);
         if (!prResponse.ok) {
           throw new Error(`Failed to fetch pull requests: ${prResponse.status}`);
         }
@@ -566,6 +551,10 @@ const BranchListing = () => {
             createdAt: new Date(pr.created_at).toLocaleDateString()
           };
         });
+        
+        // Cache the fresh data (we only cache PRs since branches were removed)
+        branchListingCacheService.setCachedData(GITHUB_OWNER, GITHUB_REPO, [], formattedPRs);
+        setCacheInfo(branchListingCacheService.getCacheInfo(GITHUB_OWNER, GITHUB_REPO));
         
         setPullRequests(formattedPRs);
         
@@ -633,11 +622,12 @@ const BranchListing = () => {
         }
       } finally {
         setLoading(false);
+        setIsRefreshing(false); // Reset refresh state
       }
     };
 
     fetchData();
-  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadCommentsForPRs, loadWorkflowStatuses, loadDiscussionSummaries]);
+  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadWorkflowStatuses, loadDiscussionSummaries, isRefreshing]);
 
   // Load summaries for visible PRs when page changes
   useEffect(() => {
@@ -777,8 +767,32 @@ const BranchListing = () => {
 
         {/* PR Section Header */}
         <div className="pr-section-header">
-          <h2>🔄 Pull Request Previews ({sortedPRs.length})</h2>
-          <p>Browse and test pull request changes in isolated preview environments</p>
+          <div className="pr-header-content">
+            <div className="pr-header-text">
+              <h2>🔄 Pull Request Previews ({sortedPRs.length})</h2>
+              <p>Browse and test pull request changes in isolated preview environments</p>
+            </div>
+            <div className="pr-header-actions">
+              <button 
+                className="refresh-btn"
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                title="Refresh PR data (clears 5-minute cache)"
+              >
+                {isRefreshing ? '🔄 Refreshing...' : '🔄 Refresh'}
+              </button>
+              {cacheInfo && (
+                <div className="cache-info">
+                  <small>
+                    {cacheInfo.exists 
+                      ? `Cached data (${cacheInfo.ageMinutes}m old)` 
+                      : 'Fresh data'
+                    }
+                  </small>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* PR Section */}
@@ -936,9 +950,9 @@ const BranchListing = () => {
                             
                             {/* Scrollable Comments Area */}
                             <div className="discussion-scroll-area">
-                              {loadingComments ? (
+                              {!prComments[pr.number] ? (
                                 <div className="comments-loading">Loading full discussion...</div>
-                              ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
+                              ) : prComments[pr.number].length > 0 ? (
                                 <div className="comments-list">
                                   {prComments[pr.number].map((comment) => (
                                     <div key={comment.id} className="comment-item">
