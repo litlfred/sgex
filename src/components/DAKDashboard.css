@@ -280,7 +280,7 @@ body.theme-light .dak-dashboard {
   padding: 0.5rem;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  max-width: 600px;
+  max-width: 900px;
 }
 
 .tab-button {
@@ -319,6 +319,61 @@ body.theme-light .dak-dashboard {
 .tab-text {
   flex: 1;
   text-align: center;
+}
+
+/* Full Width Tab Navigation Styles */
+.tab-navigation-fullwidth {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 2rem 0 3rem 0;
+  max-width: 100%;
+}
+
+.tab-button-fullwidth {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem;
+  padding: 1.25rem 2rem;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+  font-weight: 500;
+  position: relative;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.tab-button-fullwidth:hover {
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.tab-button-fullwidth.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.tab-button-fullwidth .tab-icon {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+.tab-button-fullwidth .tab-text {
+  flex: 1;
+  text-align: left;
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 
@@ -614,8 +669,30 @@ body.theme-light .dak-dashboard {
     padding: 0.8rem 1rem;
   }
 
+  .tab-icon {
+    font-size: 1.1rem;
+  }
+
   .tab-text {
     font-size: 0.9rem;
+  }
+
+  /* Full Width Tab Navigation Mobile */
+  .tab-navigation-fullwidth {
+    margin: 1.5rem 0 2rem 0;
+  }
+
+  .tab-button-fullwidth {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .tab-button-fullwidth .tab-icon {
+    font-size: 1.3rem;
+  }
+
+  .tab-button-fullwidth .tab-text {
+    font-size: 1rem;
   }
 }
 
