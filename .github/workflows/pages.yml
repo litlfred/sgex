@@ -508,7 +508,7 @@ jobs:
               const deployedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
               
               // Find PR associated with this commit
-              const { data: prs } = await github.rest.repos.listPullRequests({
+              const { data: prs } = await github.rest.pulls.list({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 state: 'open',
@@ -522,7 +522,7 @@ jobs:
                 prNumber = prs[0].number;
               } else {
                 // Also check if this commit exists in any open PR
-                const { data: allPrs } = await github.rest.repos.listPullRequests({
+                const { data: allPrs } = await github.rest.pulls.list({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   state: 'open'
