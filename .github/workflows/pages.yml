@@ -1,4 +1,4 @@
-name: Safe Multi-Branch GitHub Pages Deployment
+name: Branch Preview Deployment
 
 on:
   push:
@@ -237,134 +237,8 @@ jobs:
           
           echo "✅ Build copied successfully to $branch_dir"
 
-      - name: Build and deploy root landing page
-        shell: bash
-        run: |
-          set -e
-          
-          # IMPORTANT: Save existing branch directories FIRST (including the newly created one)
-          echo "Preserving all branch directories (including newly created)..."
-          if ls -d */ > /dev/null 2>&1; then
-            mkdir -p /tmp/branch-backup
-            for dir in */; do
-              echo "Backing up directory: $dir"
-              cp -r "$dir" /tmp/branch-backup/
-            done
-          fi
-          
-          # Switch back to the original branch to build landing page
-          # Stash any uncommitted changes including untracked files before checkout
-          git stash -u -m "Stash before switching to ${{ github.ref_name }}" || echo "Nothing to stash"
-          git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
-          git checkout ${{ github.ref_name }}
-          
-          # Ensure dependencies are installed before building
-          echo "Installing dependencies for root landing page build..."
-          npm ci
-          
-          # Build the root landing page
-          echo "Building root landing page..."
-          node scripts/build-multi-branch.js root
-          
-          # Save build directory before switching branches
-          echo "Preserving root build..."
-          mkdir -p /tmp/root-build-backup
-          cp -a build/. /tmp/root-build-backup/
-          
-          # Switch back to gh-pages
-          # Stash any uncommitted changes including untracked files before checkout
-          git stash -u -m "Stash before switching to gh-pages" || echo "Nothing to stash"
-          git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
-          git checkout gh-pages
-          
-          # Deploy landing page to root (but preserve branch directories)
-          echo "Deploying root landing page..."
-          
-          # Clear root (except .git) - this will remove all directories temporarily  
-          echo "Clearing root directory (temporarily)..."
-          find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name '.github' -exec rm -rf {} +
-          
-          # Copy root landing page
-          echo "Deploying root landing page files..."
-          cp -a /tmp/root-build-backup/. .
-          
-          # Ensure no build directory exists in root after copying
-          if [[ -d "build" ]]; then
-            echo "Removing unwanted build directory from gh-pages root..."
-            rm -rf build
-          fi
-          
-          # Clean up temporary build backup
-          rm -rf /tmp/root-build-backup
-          
-          # Restore all branch directories (including the newly created one)
-          if [[ -d /tmp/branch-backup ]]; then
-            echo "Restoring all branch directories..."
-            cp -r /tmp/branch-backup/* .
-            rm -rf /tmp/branch-backup
-          fi
-          
-          # Ensure main branch is always available at /main/
-          echo "Ensuring main branch is available at /main/..."
-          if [[ ! -d "main" ]] || [[ "${{ github.ref_name }}" == "main" ]]; then
-            mkdir -p main
-            
-            # Check if we're on main branch, if so, copy current build
-            if [[ "${{ github.ref_name }}" == "main" ]]; then
-              echo "Deploying main branch from current build..."
-              # Stash any uncommitted changes including untracked files before checkout
-              git stash -u -m "Stash before switching to ${{ github.ref_name }}" || echo "Nothing to stash"
-              git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
-              git checkout ${{ github.ref_name }}
-              npm ci
-              # Build main with correct base path
-              export BASE_PATH="/main/"
-              node scripts/build-multi-branch.js branch
-              # Save build before switching branches
-              mkdir -p /tmp/main-build-backup
-              cp -a build/. /tmp/main-build-backup/
-              # Stash any uncommitted changes including untracked files before checkout
-              git stash -u -m "Stash before switching to gh-pages" || echo "Nothing to stash"
-              git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
-              git checkout gh-pages
-              mkdir -p main  # Ensure directory exists after branch switch and clean
-              cp -a /tmp/main-build-backup/. main/
-              rm -rf /tmp/main-build-backup
-            else
-              # Check out main branch and build it
-              echo "Building main branch separately..."
-              if git show-ref --verify --quiet refs/remotes/origin/main; then
-                # Save current (updated) build script before switching branches
-                cp scripts/build-multi-branch.js /tmp/updated-build-script.js
-                # Stash any uncommitted changes including untracked files before checkout
-                git stash -u -m "Stash before switching to main" || echo "Nothing to stash"
-                git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
-                git checkout origin/main
-                # Use the updated build script from our current branch
-                cp /tmp/updated-build-script.js scripts/build-multi-branch.js
-                npm ci
-                # Build main with correct base path
-                export BASE_PATH="/main/"
-                node scripts/build-multi-branch.js branch
-                # Save build before switching branches
-                mkdir -p /tmp/main-build-backup
-                cp -a build/. /tmp/main-build-backup/
-                # Stash any uncommitted changes including untracked files before checkout
-                git stash -u -m "Stash before switching to gh-pages" || echo "Nothing to stash"
-                git clean -fd -e node_modules  # Clean untracked files before checkout, preserve node_modules
-                git checkout gh-pages
-                mkdir -p main  # Ensure directory exists after branch switch and clean
-                cp -a /tmp/main-build-backup/. main/
-                rm -rf /tmp/main-build-backup
-                # Clean up the temporary script
-                rm -f /tmp/updated-build-script.js
-              else
-                echo "Warning: Main branch not found, /main/ will not be available"
-              fi
-            fi
-          fi
-          
-          echo "✅ Root landing page deployed"
+      # Note: Landing page deployment is now handled by a separate workflow
+      # This workflow focuses solely on branch-specific deployments
 
       - name: Stage and commit changes (with validation)
         shell: bash
@@ -424,7 +298,6 @@ jobs:
             git commit -m "🚀 Deploy ${{ github.ref_name }} branch preview
 
             - Updated branch preview for ${{ github.ref_name }}
-            - Refreshed root landing page with branch listings
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
             
@@ -474,23 +347,23 @@ jobs:
           branch_name="${{ steps.validate_branch.outputs.branch_name }}"
           commit_sha="${{ github.sha }}"
           branch_url="https://litlfred.github.io/sgex/$target_subdir/"
-          landing_url="https://litlfred.github.io/sgex/"
           main_url="https://litlfred.github.io/sgex/main/"
           
           # Human-readable output (preserving existing format)
-          echo "🎉 Deployment Summary:"
+          echo "🎉 Branch Deployment Summary:"
           echo "- Branch: $branch_name"
           echo "- Target Directory: $target_subdir"
           echo "- Branch Preview: $branch_url"
-          echo "- Landing Page: $landing_url"
           echo "- Main App: $main_url"
           echo "- Commit: $commit_sha"
+          echo ""
+          echo "ℹ️  Note: Landing page deployment is handled separately"
+          echo "   Use the 'Deploy Landing Page' workflow to update the root page"
           
           # GitHub Actions outputs for downstream tools
           echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
           echo "target_directory=$target_subdir" >> $GITHUB_OUTPUT
           echo "branch_url=$branch_url" >> $GITHUB_OUTPUT
-          echo "landing_url=$landing_url" >> $GITHUB_OUTPUT
           echo "main_url=$main_url" >> $GITHUB_OUTPUT
           echo "commit_sha=$commit_sha" >> $GITHUB_OUTPUT
           echo "deployment_status=success" >> $GITHUB_OUTPUT
@@ -501,7 +374,6 @@ jobs:
             "branch_name": "$branch_name",
             "target_directory": "$target_subdir",
             "branch_url": "$branch_url",
-            "landing_url": "$landing_url",
             "main_url": "$main_url",
             "commit_sha": "$commit_sha",
             "deployment_status": "success",
@@ -526,13 +398,12 @@ jobs:
               // Get deployment info
               const branchName = '${{ steps.deployment_info.outputs.branch_name }}';
               const branchUrl = '${{ steps.deployment_info.outputs.branch_url }}';
-              const landingUrl = '${{ steps.deployment_info.outputs.landing_url }}';
               const mainUrl = '${{ steps.deployment_info.outputs.main_url }}';
               const commitSha = '${{ steps.deployment_info.outputs.commit_sha }}';
               const deployedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
               
               // Find PR associated with this commit
-              const { data: prs } = await github.rest.repos.listPullRequests({
+              const { data: prs } = await github.rest.pulls.list({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 state: 'open',
@@ -546,7 +417,7 @@ jobs:
                 prNumber = prs[0].number;
               } else {
                 // Also check if this commit exists in any open PR
-                const { data: allPrs } = await github.rest.repos.listPullRequests({
+                const { data: allPrs } = await github.rest.pulls.list({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   state: 'open'
@@ -578,16 +449,16 @@ jobs:
               console.log(`Found associated PR #${prNumber} for branch ${branchName}`);
               
               // Create comment body with escaped template literals
-              const commentBody = '## 🚀 Deployment Preview Ready!\n\n' +
+              const commentBody = '## 🚀 Branch Preview Ready!\n\n' +
                 '**Branch:** `' + branchName + '`\n' +
                 '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
                 '**Deployed:** ' + deployedAt + '\n\n' +
                 '### 🌐 Preview URLs\n' +
                 '- **Branch Preview:** [' + branchUrl + '](' + branchUrl + ')\n' +
-                '- **Landing Page:** [' + landingUrl + '](' + landingUrl + ')\n' +
                 '- **Main App:** [' + mainUrl + '](' + mainUrl + ')\n\n' +
                 '---\n' +
-                'The branch preview is automatically updated with each push to this branch.';
+                'The branch preview is automatically updated with each push to this branch.\n\n' +
+                '_Note: Landing page deployment is handled separately via manual workflow._';
               
               // Find existing deployment comment
               const { data: comments } = await github.rest.issues.listComments({
@@ -597,7 +468,7 @@ jobs:
               });
               
               const existingComment = comments.find(comment => 
-                comment.body.includes('🚀 Deployment Preview Ready!')
+                comment.body.includes('🚀 Branch Preview Ready!')
               );
               
               if (existingComment) {

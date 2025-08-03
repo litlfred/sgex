@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from './framework';
 import HelpModal from './HelpModal';
 import PATLogin from './PATLogin';
+import WorkflowStatus from './WorkflowStatus';
+import githubActionsService from '../services/githubActionsService';
 import useThemeImage from '../hooks/useThemeImage';
 import './BranchListing.css';
 
@@ -32,6 +34,8 @@ const BranchListing = () => {
   const [expandedDiscussions, setExpandedDiscussions] = useState({});
   const [discussionSummaries, setDiscussionSummaries] = useState({});
   const [loadingSummaries, setLoadingSummaries] = useState(false);
+  const [workflowStatuses, setWorkflowStatuses] = useState({});
+  const [loadingWorkflowStatuses, setLoadingWorkflowStatuses] = useState(false);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -41,27 +45,35 @@ const BranchListing = () => {
     setIsAuthenticated(true);
     // Store token for session
     sessionStorage.setItem('github_token', token);
+    // Set token for GitHub Actions service
+    githubActionsService.setToken(token);
   };
 
   const handleLogout = () => {
     setGithubToken(null);
     setIsAuthenticated(false);
     sessionStorage.removeItem('github_token');
+    // Clear token from GitHub Actions service
+    githubActionsService.setToken(null);
   };
 
   // Function to fetch PR comments summary
   const fetchPRCommentsSummary = useCallback(async (prNumber) => {
-    if (!githubToken) return null;
+    // Allow fetching comments even without authentication for read-only access
     
     try {
+      const headers = {
+        'Accept': 'application/vnd.github.v3+json'
+      };
+      
+      // Add authorization header only if token is available
+      if (githubToken) {
+        headers['Authorization'] = `token ${githubToken}`;
+      }
+      
       const response = await fetch(
         `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-        {
-          headers: {
-            'Authorization': `token ${githubToken}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        }
+        { headers }
       );
       
       if (!response.ok) {
@@ -90,17 +102,21 @@ const BranchListing = () => {
 
   // Function to fetch all PR comments (for expanded view)
   const fetchAllPRComments = useCallback(async (prNumber) => {
-    if (!githubToken) return [];
+    // Allow fetching comments even without authentication for read-only access
     
     try {
+      const headers = {
+        'Accept': 'application/vnd.github.v3+json'
+      };
+      
+      // Add authorization header only if token is available
+      if (githubToken) {
+        headers['Authorization'] = `token ${githubToken}`;
+      }
+      
       const response = await fetch(
         `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-        {
-          headers: {
-            'Authorization': `token ${githubToken}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        }
+        { headers }
       );
       
       if (!response.ok) {
@@ -123,7 +139,7 @@ const BranchListing = () => {
 
   // Function to load discussion summaries for visible PRs
   const loadDiscussionSummaries = useCallback(async (prs) => {
-    if (!githubToken || prs.length === 0) return;
+    if (prs.length === 0) return;
     
     setLoadingSummaries(true);
     const summaries = {};
@@ -134,7 +150,7 @@ const BranchListing = () => {
     
     setDiscussionSummaries(summaries);
     setLoadingSummaries(false);
-  }, [githubToken, fetchPRCommentsSummary]);
+  }, [fetchPRCommentsSummary]);
 
   // Function to toggle discussion expansion
   const toggleDiscussion = async (prNumber) => {
@@ -185,17 +201,21 @@ const BranchListing = () => {
 
   // Function to fetch PR comments
   const fetchPRComments = useCallback(async (prNumber) => {
-    if (!githubToken) return [];
+    // Allow fetching comments even without authentication for read-only access
     
     try {
+      const headers = {
+        'Accept': 'application/vnd.github.v3+json'
+      };
+      
+      // Add authorization header only if token is available
+      if (githubToken) {
+        headers['Authorization'] = `token ${githubToken}`;
+      }
+      
       const response = await fetch(
         `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-        {
-          headers: {
-            'Authorization': `token ${githubToken}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        }
+        { headers }
       );
       
       if (!response.ok) {
@@ -265,6 +285,56 @@ const BranchListing = () => {
     }
   };
 
+  // Function to load workflow statuses for branches
+  const loadWorkflowStatuses = useCallback(async (branchData, prData) => {
+    if (!githubToken) return;
+    
+    setLoadingWorkflowStatuses(true);
+    
+    try {
+      // Get all branch names (from both branches and PRs)
+      const branchNames = [
+        ...branchData.map(branch => branch.name),
+        ...prData.map(pr => pr.branchName)
+      ];
+      
+      const uniqueBranchNames = [...new Set(branchNames)];
+      const statuses = await githubActionsService.getWorkflowStatusForBranches(uniqueBranchNames);
+      
+      setWorkflowStatuses(statuses);
+    } catch (error) {
+      console.error('Error loading workflow statuses:', error);
+    } finally {
+      setLoadingWorkflowStatuses(false);
+    }
+  }, [githubToken]);
+
+  // Function to trigger workflow for a branch
+  const triggerWorkflow = useCallback(async (branchName) => {
+    if (!githubToken) {
+      alert('Please authenticate to trigger workflows');
+      return;
+    }
+    
+    try {
+      const success = await githubActionsService.triggerWorkflow(branchName);
+      if (success) {
+        alert(`Workflow triggered for branch: ${branchName}`);
+        // Refresh workflow statuses after a short delay
+        setTimeout(() => {
+          const currentBranches = branches.length > 0 ? branches : [];
+          const currentPRs = pullRequests.length > 0 ? pullRequests : [];
+          loadWorkflowStatuses(currentBranches, currentPRs);
+        }, 2000);
+      } else {
+        alert(`Failed to trigger workflow for branch: ${branchName}`);
+      }
+    } catch (error) {
+      console.error('Error triggering workflow:', error);
+      alert(`Error triggering workflow: ${error.message}`);
+    }
+  }, [githubToken, branches, pullRequests, loadWorkflowStatuses]);
+
   // Function to load comments for all visible PRs
   const loadCommentsForPRs = useCallback(async (prs) => {
     if (!githubToken || prs.length === 0) return;
@@ -286,6 +356,8 @@ const BranchListing = () => {
     if (token) {
       setGithubToken(token);
       setIsAuthenticated(true);
+      // Set token for GitHub Actions service
+      githubActionsService.setToken(token);
     }
   }, []);
 
@@ -552,10 +624,13 @@ const BranchListing = () => {
         // Check deployment statuses
         await checkAllDeploymentStatuses(filteredBranches, formattedPRs);
         
-        // Load discussion summaries for PRs if authenticated
+        // Load workflow statuses if authenticated
         if (githubToken) {
-          await loadDiscussionSummaries(formattedPRs.slice(0, ITEMS_PER_PAGE));
+          await loadWorkflowStatuses(filteredBranches, formattedPRs);
         }
+        
+        // Load discussion summaries for PRs - available for all users
+        await loadDiscussionSummaries(formattedPRs.slice(0, ITEMS_PER_PAGE));
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err.message);
@@ -639,11 +714,11 @@ const BranchListing = () => {
     };
 
     fetchData();
-  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadCommentsForPRs, loadDiscussionSummaries]);
+  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadCommentsForPRs, loadWorkflowStatuses, loadDiscussionSummaries]);
 
   // Load summaries for visible PRs when page changes
   useEffect(() => {
-    if (isAuthenticated && pullRequests.length > 0) {
+    if (pullRequests.length > 0) {
       const filtered = pullRequests.filter(pr => 
         pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
         pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
@@ -652,7 +727,7 @@ const BranchListing = () => {
       const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
       loadDiscussionSummaries(paginated);
     }
-  }, [prPage, prSearchTerm, prSortBy, pullRequests, isAuthenticated, loadDiscussionSummaries]);
+  }, [prPage, prSearchTerm, prSortBy, pullRequests, loadDiscussionSummaries]);
 
   // Filter and sort PRs based on search and sorting
   const filteredPRs = pullRequests.filter(pr => 
@@ -885,6 +960,15 @@ const BranchListing = () => {
                             📋 Copy URL
                           </button>
                         </div>
+
+                        {/* Workflow Status */}
+                        <WorkflowStatus
+                          workflowStatus={workflowStatuses[branch.name]}
+                          branchName={branch.name}
+                          onTriggerWorkflow={triggerWorkflow}
+                          isAuthenticated={isAuthenticated}
+                          isLoading={loadingWorkflowStatuses}
+                        />
                       </div>
 
                       <div className="card-footer">
@@ -989,49 +1073,49 @@ const BranchListing = () => {
                           Created: {pr.createdAt} • Updated: {pr.updatedAt}
                         </p>
                         
-                        {/* Discussion Summary Section */}
-                        {isAuthenticated && (
-                          <div>
-                            {/* Discussion Summary Status Bar */}
-                            <div 
-                              className="discussion-summary-bar"
-                              onClick={() => toggleDiscussion(pr.number)}
-                            >
-                              <div className="discussion-summary-text">
-                                <span className="discussion-summary-icon">💬</span>
-                                {getDiscussionSummaryText(pr.number)}
-                              </div>
-                              <span className={`discussion-expand-icon ${expandedDiscussions[pr.number] ? 'expanded' : ''}`}>
-                                ▶
-                              </span>
+                        {/* Discussion Summary Section - Show for all users */}
+                        <div>
+                          {/* Discussion Summary Status Bar */}
+                          <div 
+                            className="discussion-summary-bar"
+                            onClick={() => toggleDiscussion(pr.number)}
+                          >
+                            <div className="discussion-summary-text">
+                              <span className="discussion-summary-icon">💬</span>
+                              {getDiscussionSummaryText(pr.number)}
                             </div>
+                            <span className={`discussion-expand-icon ${expandedDiscussions[pr.number] ? 'expanded' : ''}`}>
+                              ▶
+                            </span>
+                          </div>
 
-                            {/* Expanded Discussion Section */}
-                            {expandedDiscussions[pr.number] && (
-                              <div className="discussion-expanded-section">
-                                <div className="discussion-header">
-                                  <h4 className="discussion-title">Discussion</h4>
-                                  <div className="discussion-actions">
-                                    <a 
-                                      href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="discussion-action-btn"
-                                    >
-                                      📁 View Files
-                                    </a>
-                                    <a 
-                                      href={pr.prUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="discussion-action-btn secondary"
-                                    >
-                                      🔗 Full Discussion
-                                    </a>
-                                  </div>
+                          {/* Expanded Discussion Section */}
+                          {expandedDiscussions[pr.number] && (
+                            <div className="discussion-expanded-section">
+                              <div className="discussion-header">
+                                <h4 className="discussion-title">Discussion</h4>
+                                <div className="discussion-actions">
+                                  <a 
+                                    href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="discussion-action-btn"
+                                  >
+                                    📁 View Files
+                                  </a>
+                                  <a 
+                                    href={pr.prUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="discussion-action-btn secondary"
+                                  >
+                                    🔗 Full Discussion
+                                  </a>
                                 </div>
-                                
-                                {/* Comment Input at Top */}
+                              </div>
+                              
+                              {/* Comment Input at Top - Only show for authenticated users */}
+                              {isAuthenticated ? (
                                 <div className="comment-input-section">
                                   <textarea
                                     value={commentInputs[pr.number] || ''}
@@ -1051,36 +1135,44 @@ const BranchListing = () => {
                                     {submittingComments[pr.number] ? 'Submitting...' : 'Add Comment'}
                                   </button>
                                 </div>
-                                
-                                {/* Scrollable Comments Area */}
-                                <div className="discussion-scroll-area">
-                                  {loadingComments ? (
-                                    <div className="comments-loading">Loading full discussion...</div>
-                                  ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
-                                    <div className="comments-list">
-                                      {prComments[pr.number].map((comment) => (
-                                        <div key={comment.id} className="comment-item">
-                                          <div className="comment-header">
-                                            <img 
-                                              src={comment.avatar_url} 
-                                              alt={comment.author} 
-                                              className="comment-avatar"
-                                            />
-                                            <span className="comment-author">{comment.author}</span>
-                                            <span className="comment-date">{comment.created_at}</span>
-                                          </div>
-                                          <div className="comment-body">{comment.body}</div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="no-comments">No comments yet. Be the first to comment!</div>
-                                  )}
+                              ) : (
+                                <div className="comment-auth-message">
+                                  <p>
+                                    🔐 <a href="#auth-section" onClick={() => document.querySelector('.auth-section')?.scrollIntoView()}>Sign in</a> to add comments to this discussion
+                                  </p>
                                 </div>
+                              )}
+                              
+                              {/* Scrollable Comments Area */}
+                              <div className="discussion-scroll-area">
+                                {loadingComments ? (
+                                  <div className="comments-loading">Loading full discussion...</div>
+                                ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
+                                  <div className="comments-list">
+                                    {prComments[pr.number].map((comment) => (
+                                      <div key={comment.id} className="comment-item">
+                                        <div className="comment-header">
+                                          <img 
+                                            src={comment.avatar_url} 
+                                            alt={comment.author} 
+                                            className="comment-avatar"
+                                          />
+                                          <span className="comment-author">{comment.author}</span>
+                                          <span className="comment-date">{comment.created_at}</span>
+                                        </div>
+                                        <div className="comment-body">{comment.body}</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="no-comments">
+                                    No comments yet. {isAuthenticated ? 'Be the first to comment!' : 'Sign in to be the first to comment!'}
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        )}
+                            </div>
+                          )}
+                        </div>
                         
                         <div className="pr-actions">
                           {deploymentStatus === 'active' ? (
@@ -1138,6 +1230,15 @@ const BranchListing = () => {
                             <span>📋 View PR</span>
                           </a>
                         </div>
+
+                        {/* Workflow Status */}
+                        <WorkflowStatus
+                          workflowStatus={workflowStatuses[pr.branchName]}
+                          branchName={pr.branchName}
+                          onTriggerWorkflow={triggerWorkflow}
+                          isAuthenticated={isAuthenticated}
+                          isLoading={loadingWorkflowStatuses}
+                        />
                       </div>
 
                       <div className="card-footer">

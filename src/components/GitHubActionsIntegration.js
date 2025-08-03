@@ -38,7 +38,14 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
       setWorkflowRuns(runsData.workflow_runs || []);
     } catch (err) {
       console.error('Error loading workflow data:', err);
-      setError('Failed to load GitHub Actions data');
+      
+      // Check if this is a permissions error
+      if (err.status === 403 || err.message.includes('permission') || err.message.includes('403')) {
+        setError('PAT does not grant permission to view GitHub Actions. Please update your token with Actions read permissions.');
+      } else {
+        setError('Failed to load GitHub Actions data');
+      }
+      
       setWorkflows([]);
       setWorkflowRuns([]);
     } finally {
@@ -193,7 +200,6 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
   return (
     <div className="github-actions-integration">
       <div className="actions-header">
-        <h4>⚡ GitHub Actions</h4>
         <a 
           href={`https://github.com/${owner}/${repoName}/actions`}
           target="_blank"
