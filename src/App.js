@@ -34,8 +34,8 @@ import './App.css';
 function App() {
   const appLogger = logger.getLogger('App');
   
-  // Get basename from PUBLIC_URL or default to /sgex
-  const basename = process.env.PUBLIC_URL || '/sgex';
+  // Get basename from PUBLIC_URL or default to /sgex, but use empty in development if no PUBLIC_URL
+  const basename = process.env.PUBLIC_URL || (process.env.NODE_ENV === 'development' ? '' : '/sgex');
   
   React.useEffect(() => {
     appLogger.componentMount();
