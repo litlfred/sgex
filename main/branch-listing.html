@@ -93,6 +93,55 @@
             margin: 0;
         }
 
+        .cache-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--who-border-color);
+            flex-wrap: wrap;
+        }
+
+        .cache-info {
+            font-size: 0.9rem;
+            color: var(--who-text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--who-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .refresh-btn:hover:not(:disabled) {
+            background: #0256cc;
+            transform: translateY(-1px);
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .refresh-btn:disabled:hover {
+            background: var(--who-blue);
+        }
+
         /* Authentication section */
         .auth-section {
             background: var(--who-tertiary-bg);
@@ -912,7 +961,96 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useCallback } = React;
+            // Simple cache implementation for the standalone page
+            const BranchListingCache = {
+                CACHE_KEY: 'sgex_branch_listing_cache',
+                CACHE_EXPIRY_MINUTES: 5,
+                
+                // Check if cached data is stale (older than 5 minutes)
+                isStale: function(timestamp) {
+                    const now = Date.now();
+                    const cacheAge = now - timestamp;
+                    const maxAge = this.CACHE_EXPIRY_MINUTES * 60 * 1000;
+                    return cacheAge > maxAge;
+                },
+                
+                // Get cached data
+                get: function() {
+                    try {
+                        const cachedData = localStorage.getItem(this.CACHE_KEY);
+                        if (!cachedData) {
+                            console.log('No cached data found');
+                            return null;
+                        }
+                        
+                        const parsed = JSON.parse(cachedData);
+                        if (this.isStale(parsed.timestamp)) {
+                            console.log('Cached data is stale, removing');
+                            localStorage.removeItem(this.CACHE_KEY);
+                            return null;
+                        }
+                        
+                        console.log('Using cached data', { 
+                            age: Math.round((Date.now() - parsed.timestamp) / (60 * 1000)),
+                            prCount: parsed.pullRequests?.length || 0
+                        });
+                        return parsed;
+                    } catch (error) {
+                        console.warn('Error reading cache:', error);
+                        return null;
+                    }
+                },
+                
+                // Set cached data
+                set: function(pullRequests) {
+                    try {
+                        const cacheData = {
+                            pullRequests,
+                            timestamp: Date.now()
+                        };
+                        localStorage.setItem(this.CACHE_KEY, JSON.stringify(cacheData));
+                        console.log('Data cached', { prCount: pullRequests?.length || 0 });
+                        return true;
+                    } catch (error) {
+                        console.warn('Error caching data:', error);
+                        return false;
+                    }
+                },
+                
+                // Clear cache
+                clear: function() {
+                    try {
+                        localStorage.removeItem(this.CACHE_KEY);
+                        console.log('Cache cleared');
+                        return true;
+                    } catch (error) {
+                        console.warn('Error clearing cache:', error);
+                        return false;
+                    }
+                },
+                
+                // Get cache info
+                getInfo: function() {
+                    const cached = this.get();
+                    if (!cached) {
+                        return { exists: false, stale: true };
+                    }
+                    
+                    const age = Date.now() - cached.timestamp;
+                    const ageMinutes = Math.round(age / (60 * 1000));
+                    
+                    return {
+                        exists: true,
+                        stale: this.isStale(cached.timestamp),
+                        age: age,
+                        ageMinutes: ageMinutes,
+                        prCount: cached.pullRequests?.length || 0,
+                        timestamp: new Date(cached.timestamp).toISOString()
+                    };
+                }
+            };
+
+            const { useState, useEffect, useCallback } = React;
 
         // Simple PAT Login Component
         const PATLogin = ({ onAuthSuccess }) => {
@@ -1013,8 +1151,17 @@
             const [expandedDiscussions, setExpandedDiscussions] = useState({});
             const [discussionSummaries, setDiscussionSummaries] = useState({});
             const [loadingSummaries, setLoadingSummaries] = useState(false);
+            const [isRefreshing, setIsRefreshing] = useState(false);
+            const [cacheInfo, setCacheInfo] = useState(null);
 
             const ITEMS_PER_PAGE = 10;
+
+            // Function to manually refresh cache and reload data
+            const handleManualRefresh = () => {
+                setIsRefreshing(true);
+                BranchListingCache.clear();
+                // The useEffect will trigger a refetch when isRefreshing changes
+            };
 
             // GitHub authentication functions
             const handleAuthSuccess = (token, octokitInstance) => {
@@ -1379,6 +1526,22 @@
                     try {
                         setLoading(true);
                         
+                        // Check cache first
+                        const cachedData = BranchListingCache.get();
+                        if (cachedData && !isRefreshing) {
+                            console.log('Using cached PR data');
+                            setPullRequests(cachedData.pullRequests);
+                            setCacheInfo(BranchListingCache.getInfo());
+                            
+                            // Load discussion summaries for first page
+                            await loadDiscussionSummaries(cachedData.pullRequests.slice(0, ITEMS_PER_PAGE));
+                            setLoading(false);
+                            return;
+                        }
+                        
+                        // If no cache or force refresh, fetch from GitHub API
+                        console.log('Fetching fresh PR data from GitHub API');
+                        
                         const owner = 'litlfred';
                         const repo = 'sgex';
                         
@@ -1405,6 +1568,10 @@
                                 createdAt: new Date(pr.created_at).toLocaleDateString()
                             };
                         });
+                        
+                        // Cache the fetched data
+                        BranchListingCache.set(formattedPRs);
+                        setCacheInfo(BranchListingCache.getInfo());
                         
                         setPullRequests(formattedPRs);
                         
@@ -1450,11 +1617,12 @@
                         }
                     } finally {
                         setLoading(false);
+                        setIsRefreshing(false);
                     }
                 };
 
                 fetchData();
-            }, [prFilter, githubToken, loadDiscussionSummaries]);
+            }, [prFilter, githubToken, loadDiscussionSummaries, isRefreshing]);
 
             // Poll deployment statuses every 7 seconds for visible PRs
             useEffect(() => {
@@ -1534,6 +1702,22 @@
                                 🐾 This landing page lists all available previews. 
                                 Each branch and PR is automatically deployed to its own preview environment.
                             </p>
+                            {cacheInfo && cacheInfo.exists && (
+                                <div className="cache-status">
+                                    <span className="cache-info">
+                                        📊 Data cached {cacheInfo.ageMinutes} minute{cacheInfo.ageMinutes !== 1 ? 's' : ''} ago
+                                        {cacheInfo.stale && ' (refreshing...)'}
+                                    </span>
+                                    <button 
+                                        onClick={handleManualRefresh}
+                                        disabled={isRefreshing}
+                                        className="refresh-btn"
+                                        title="Refresh data from GitHub API"
+                                    >
+                                        {isRefreshing ? '🔄' : '🔄'} {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                         
                         <div className="auth-section">
