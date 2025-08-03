@@ -66,7 +66,7 @@ describe('BranchListing Preview URL Links', () => {
     );
 
     // Wait for data to load and find preview URL links
-    await screen.findByText(/Pull Request Previews/);
+    await screen.findByText(/Pull Request Previews \(\d+\)/);
     
     // Check that preview URLs in card footers are clickable links
     const previewUrlLinks = screen.getAllByText(/Preview URL:/);

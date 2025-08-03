@@ -45,33 +45,8 @@ describe('BranchListing Component', () => {
     expect(screen.getByText('Loading previews...')).toBeInTheDocument();
   });
 
-  it('renders branch and PR tabs with enhanced functionality', async () => {
+  it('renders deployment selection page with PR functionality', async () => {
     // Mock successful API responses
-    const mockBranches = [
-      {
-        name: 'main',
-        commit: {
-          sha: 'abc123def456',
-          commit: {
-            committer: {
-              date: '2023-01-01T00:00:00Z'
-            }
-          }
-        }
-      },
-      {
-        name: 'feature/test',
-        commit: {
-          sha: 'def456ghi789',
-          commit: {
-            committer: {
-              date: '2023-01-02T00:00:00Z'
-            }
-          }
-        }
-      }
-    ];
-
     const mockPRs = [
       {
         id: 1,
@@ -87,10 +62,6 @@ describe('BranchListing Component', () => {
     ];
 
     fetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockBranches)
-      })
       .mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(mockPRs)
@@ -109,49 +80,45 @@ describe('BranchListing Component', () => {
 
     // Wait for data to load
     await waitFor(() => {
-      expect(screen.getByText(/Branch Previews/)).toBeInTheDocument();
-      expect(screen.getByText(/Pull Request Previews/)).toBeInTheDocument();
+      expect(screen.getByText(/SGEX Deployment Selection/)).toBeInTheDocument();
+      expect(screen.getByText(/Pull Request Previews \(\d+\)/)).toBeInTheDocument();
     });
 
-    // Check that tabs show counts
-    expect(screen.getByText(/Branch Previews \(2\)/)).toBeInTheDocument();
-    expect(screen.getByText(/Pull Request Previews \(1\)/)).toBeInTheDocument();
+    // Check that sections are properly displayed
+    expect(screen.getByText(/Main Branch/)).toBeInTheDocument();
+    expect(screen.getByText(/Pull Request Previews \(\d+\)/)).toBeInTheDocument();
   });
 
-  it('allows branch filtering', async () => {
-    const mockBranches = [
+  it('allows PR filtering', async () => {
+    const mockPRs = [
       {
-        name: 'main',
-        commit: {
-          sha: 'abc123def456',
-          commit: {
-            committer: {
-              date: '2023-01-01T00:00:00Z'
-            }
-          }
-        }
+        id: 1,
+        number: 123,
+        title: 'Add new feature',
+        state: 'open',
+        user: { login: 'testuser' },
+        head: { ref: 'feature/new-feature' },
+        html_url: 'https://github.com/test/repo/pull/123',
+        updated_at: '2023-01-01T00:00:00Z',
+        created_at: '2023-01-01T00:00:00Z'
       },
       {
-        name: 'feature/authentication',
-        commit: {
-          sha: 'def456ghi789',
-          commit: {
-            committer: {
-              date: '2023-01-02T00:00:00Z'
-            }
-          }
-        }
+        id: 2,
+        number: 124,
+        title: 'Fix authentication bug',
+        state: 'open',
+        user: { login: 'developer' },
+        head: { ref: 'fix/auth-bug' },
+        html_url: 'https://github.com/test/repo/pull/124',
+        updated_at: '2023-01-02T00:00:00Z',
+        created_at: '2023-01-02T00:00:00Z'
       }
     ];
 
     fetch
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockBranches)
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve([])
+        json: () => Promise.resolve(mockPRs)
       })
       .mockResolvedValue({
         ok: true,
@@ -165,17 +132,17 @@ describe('BranchListing Component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('main')).toBeInTheDocument();
-      expect(screen.getByText('feature/authentication')).toBeInTheDocument();
+      expect(screen.getByText(/Add new feature/)).toBeInTheDocument();
+      expect(screen.getByText(/Fix authentication bug/)).toBeInTheDocument();
     });
 
-    // Test branch filtering
-    const branchSearchInput = screen.getByPlaceholderText('Search branches by name...');
-    fireEvent.change(branchSearchInput, { target: { value: 'feature' } });
+    // Test PR filtering
+    const prSearchInput = screen.getByPlaceholderText('Search pull requests by title or author...');
+    fireEvent.change(prSearchInput, { target: { value: 'authentication' } });
 
-    // Should still see feature branch, but not main
-    expect(screen.getByText('feature/authentication')).toBeInTheDocument();
-    expect(screen.queryByText('main')).not.toBeInTheDocument();
+    // Should still see authentication PR, but not the feature PR
+    expect(screen.getByText(/Fix authentication bug/)).toBeInTheDocument();
+    expect(screen.queryByText(/Add new feature/)).not.toBeInTheDocument();
   });
 
   it('handles API errors gracefully', async () => {

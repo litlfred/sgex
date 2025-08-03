@@ -8,19 +8,13 @@ import useThemeImage from '../hooks/useThemeImage';
 import './BranchListing.css';
 
 const BranchListing = () => {
-  const [branches, setBranches] = useState([]);
   const [pullRequests, setPullRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('prs'); // Start with PR preview section
   const [prPage, setPrPage] = useState(1);
   const [prSearchTerm, setPrSearchTerm] = useState('');
-  const [branchSearchTerm, setBranchSearchTerm] = useState('');
 
-  // Theme-aware mascot image
-  const mascotImage = useThemeImage('sgex-mascot.png');
   const [prSortBy, setPrSortBy] = useState('updated'); // updated, number, alphabetical
-  const [branchSortBy, setBranchSortBy] = useState('updated'); // updated, alphabetical
   const [showContributeModal, setShowContributeModal] = useState(false);
   const [deploymentStatuses, setDeploymentStatuses] = useState({});
   const [checkingStatuses, setCheckingStatuses] = useState(false);
@@ -36,6 +30,9 @@ const BranchListing = () => {
   const [loadingSummaries, setLoadingSummaries] = useState(false);
   const [workflowStatuses, setWorkflowStatuses] = useState({});
   const [loadingWorkflowStatuses, setLoadingWorkflowStatuses] = useState(false);
+
+  // Theme-aware mascot image
+  const mascotImage = useThemeImage('sgex-mascot.png');
 
   const ITEMS_PER_PAGE = 10;
 
@@ -273,18 +270,15 @@ const BranchListing = () => {
     }
   };
 
-  // Function to load workflow statuses for branches
-  const loadWorkflowStatuses = useCallback(async (branchData, prData) => {
+  // Function to load workflow statuses for PR branches
+  const loadWorkflowStatuses = useCallback(async (prData) => {
     if (!githubToken) return;
     
     setLoadingWorkflowStatuses(true);
     
     try {
-      // Get all branch names (from both branches and PRs)
-      const branchNames = [
-        ...branchData.map(branch => branch.name),
-        ...prData.map(pr => pr.branchName)
-      ];
+      // Get all PR branch names
+      const branchNames = prData.map(pr => pr.branchName);
       
       const uniqueBranchNames = [...new Set(branchNames)];
       const statuses = await githubActionsService.getWorkflowStatusForBranches(uniqueBranchNames);
@@ -310,9 +304,8 @@ const BranchListing = () => {
         alert(`Workflow triggered for branch: ${branchName}`);
         // Refresh workflow statuses after a short delay
         setTimeout(() => {
-          const currentBranches = branches.length > 0 ? branches : [];
           const currentPRs = pullRequests.length > 0 ? pullRequests : [];
-          loadWorkflowStatuses(currentBranches, currentPRs);
+          loadWorkflowStatuses(currentPRs);
         }, 2000);
       } else {
         alert(`Failed to trigger workflow for branch: ${branchName}`);
@@ -321,7 +314,7 @@ const BranchListing = () => {
       console.error('Error triggering workflow:', error);
       alert(`Error triggering workflow: ${error.message}`);
     }
-  }, [githubToken, branches, pullRequests, loadWorkflowStatuses]);
+  }, [githubToken, pullRequests, loadWorkflowStatuses]);
 
   // Function to load comments for all visible PRs
   const loadCommentsForPRs = useCallback(async (prs) => {
@@ -365,18 +358,12 @@ const BranchListing = () => {
     }
   };
 
-  // Function to check deployment statuses for all items
-  const checkAllDeploymentStatuses = useCallback(async (branchData, prData) => {
+  // Function to check deployment statuses for PRs only
+  const checkAllDeploymentStatuses = useCallback(async (prData) => {
     setCheckingStatuses(true);
     const statuses = {};
     
-    // Check branches
-    for (const branch of branchData) {
-      const status = await checkDeploymentStatus(branch.url);
-      statuses[`branch-${branch.name}`] = status;
-    }
-    
-    // Check PRs
+    // Check PRs only
     for (const pr of prData) {
       const status = await checkDeploymentStatus(pr.url);
       statuses[`pr-${pr.id}`] = status;
@@ -404,21 +391,7 @@ const BranchListing = () => {
     }
   };
 
-  // Sorting functions
-  const sortBranches = (branches, sortBy) => {
-    return [...branches].sort((a, b) => {
-      switch (sortBy) {
-        case 'alphabetical':
-          return a.name.localeCompare(b.name);
-        case 'updated':
-        default:
-          const dateA = new Date(a.lastModified);
-          const dateB = new Date(b.lastModified);
-          return dateB - dateA; // Most recent first
-      }
-    });
-  };
-
+  // Sorting function for PRs
   const sortPRs = (prs, sortBy) => {
     return [...prs].sort((a, b) => {
       switch (sortBy) {
@@ -552,16 +525,9 @@ const BranchListing = () => {
       try {
         setLoading(true);
         
-        // Use GitHub API to fetch branches and PRs for the sgex repository
+        // Use GitHub API to fetch PRs for the sgex repository
         const owner = 'litlfred';
         const repo = 'sgex';
-        
-        // Fetch branches
-        const branchResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches`);
-        if (!branchResponse.ok) {
-          throw new Error(`Failed to fetch branches: ${branchResponse.status}`);
-        }
-        const branchData = await branchResponse.json();
         
         // Fetch pull requests based on filter
         const prState = prFilter === 'all' ? 'all' : prFilter;
@@ -570,23 +536,6 @@ const BranchListing = () => {
           throw new Error(`Failed to fetch pull requests: ${prResponse.status}`);
         }
         const prData = await prResponse.json();
-        
-        // Filter out gh-pages branch and format data
-        const filteredBranches = branchData
-          .filter(branch => branch.name !== 'gh-pages')
-          .map(branch => {
-            // Convert branch name to safe directory name (replace slashes with dashes)
-            const safeName = branch.name.replace(/\//g, '-');
-            return {
-              name: branch.name,
-              safeName: safeName,
-              commit: branch.commit,
-              url: `./${safeName}/index.html`,
-              lastModified: branch.commit.commit?.committer?.date 
-                ? new Date(branch.commit.commit.committer.date).toLocaleDateString()
-                : 'Unknown'
-            };
-          });
         
         // Format PR data
         const formattedPRs = prData.map(pr => {
@@ -606,15 +555,14 @@ const BranchListing = () => {
           };
         });
         
-        setBranches(filteredBranches);
         setPullRequests(formattedPRs);
         
-        // Check deployment statuses
-        await checkAllDeploymentStatuses(filteredBranches, formattedPRs);
+        // Check deployment statuses for PRs only
+        await checkAllDeploymentStatuses(formattedPRs);
         
         // Load workflow statuses if authenticated
         if (githubToken) {
-          await loadWorkflowStatuses(filteredBranches, formattedPRs);
+          await loadWorkflowStatuses(formattedPRs);
         }
         
         // Load discussion summaries for PRs if authenticated
@@ -628,30 +576,6 @@ const BranchListing = () => {
         // Only use fallback data in development or when GitHub API is blocked
         if (process.env.NODE_ENV === 'development' || err.message.includes('Failed to fetch')) {
           console.log('Using fallback mock data for demonstration...');
-          const mockBranches = [
-            {
-              name: 'main',
-              safeName: 'main',
-              commit: { sha: 'abc1234' },
-              url: './main/index.html',
-              lastModified: new Date().toLocaleDateString()
-            },
-            {
-              name: 'feature/user-auth',
-              safeName: 'feature-user-auth',
-              commit: { sha: 'def5678' },
-              url: './feature-user-auth/index.html',
-              lastModified: new Date(Date.now() - 86400000).toLocaleDateString()
-            },
-            {
-              name: 'fix/api-endpoints',
-              safeName: 'fix-api-endpoints',
-              commit: { sha: 'ghi9012' },
-              url: './fix-api-endpoints/index.html',
-              lastModified: new Date(Date.now() - 172800000).toLocaleDateString()
-            }
-          ];
-
           const mockPRs = [
             {
               id: 1,
@@ -694,7 +618,6 @@ const BranchListing = () => {
             }
           ];
 
-          setBranches(mockBranches);
           setPullRequests(mockPRs);
           setError(null); // Clear error since we have fallback data
         }
@@ -728,12 +651,6 @@ const BranchListing = () => {
   const paginatedPRs = sortedPRs.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
   const totalPRPages = Math.ceil(sortedPRs.length / ITEMS_PER_PAGE);
 
-  // Filter and sort branches based on search and sorting
-  const filteredBranches = branches.filter(branch => 
-    branch.name.toLowerCase().includes(branchSearchTerm.toLowerCase())
-  );
-  const sortedBranches = sortBranches(filteredBranches, branchSortBy);
-
   if (loading) {
     return (
       <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
@@ -764,36 +681,73 @@ const BranchListing = () => {
   return (
     <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
       <div className="branch-listing">
-        <header className="branch-listing-header">
-          <h1><img src={mascotImage} alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
-          <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
-          
-          <div className="prominent-info">
-            <p className="info-text">
-              🐾 This landing page lists all available previews. 
-              Each branch and PR is automatically deployed to its own preview environment.
-            </p>
-          </div>
-          
-          {/* Authentication Section */}
-          <div className="auth-section">
-            {!isAuthenticated ? (
-              <div className="login-section">
-                <h3>🔐 GitHub Authentication</h3>
-                <p>Login with your GitHub Personal Access Token to view and add comments to pull requests:</p>
-                <PATLogin onAuthSuccess={handleAuthSuccess} />
+        {/* Top Section: Two cards side by side */}
+        <div className="top-section">
+          {/* Mascot and Explainer Card */}
+          <div className="mascot-card">
+            <div className="mascot-content">
+              <img src={mascotImage} alt="SGEX Mascot" className="large-mascot" />
+              <div className="explainer-content">
+                <h2>SGEX Deployment Selection</h2>
+                <p>Welcome to the SGEX deployment selection page. Here you can browse and access all available pull request previews for the WHO SMART Guidelines Exchange collaborative workbench.</p>
+                <p>Each pull request is automatically deployed to its own preview environment for testing and collaboration.</p>
+                <a 
+                  href="https://github.com/litlfred/sgex" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="source-code-link"
+                >
+                  📦 View Source Code
+                </a>
               </div>
-            ) : (
-              <div className="authenticated-section">
-                <p>✅ Authenticated - You can now view and add comments to pull requests</p>
-                <button onClick={handleLogout} className="logout-btn">
-                  Logout
-                </button>
-              </div>
-            )}
+            </div>
           </div>
-        </header>
 
+          {/* Main Branch Access Card */}
+          <div className="main-branch-card">
+            <div className="main-branch-content">
+              <h2>🚀 Main Branch</h2>
+              <p>Access the stable main branch of the SGEX workbench with the latest published features.</p>
+              <div className="main-branch-actions">
+                <a 
+                  href="./main/index.html" 
+                  className="main-branch-link"
+                  rel="noopener noreferrer"
+                >
+                  Launch Main Branch
+                </a>
+                <a 
+                  href="/sgex/main/docs/" 
+                  className="docs-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  📚 Documentation
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Authentication Section */}
+        <div className="auth-section">
+          {!isAuthenticated ? (
+            <div className="login-section">
+              <h3>🔐 GitHub Authentication</h3>
+              <p>Login with your GitHub Personal Access Token to view and add comments to pull requests:</p>
+              <PATLogin onAuthSuccess={handleAuthSuccess} />
+            </div>
+          ) : (
+            <div className="authenticated-section">
+              <p>✅ Authenticated - You can now view and add comments to pull requests</p>
+              <button onClick={handleLogout} className="logout-btn">
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Main Actions */}
         <div className="main-actions">
           <button 
             className="contribute-btn primary"
@@ -801,18 +755,6 @@ const BranchListing = () => {
           >
             🌟 How to Contribute
           </button>
-          <a 
-            href="/sgex/main/docs/" 
-            className="contribute-btn secondary"
-            target="_blank"
-            rel="noopener noreferrer"
-            onError={(e) => {
-              // Fallback to GitHub docs if main branch docs not available
-              e.target.href = "https://github.com/litlfred/sgex/tree/main/public/docs";
-            }}
-          >
-            📚 Documentation
-          </a>
           <a 
             href="https://github.com/litlfred/sgex/issues/new" 
             className="contribute-btn tertiary"
@@ -823,466 +765,294 @@ const BranchListing = () => {
           </a>
         </div>
 
-        <div className="preview-tabs">
-          <button 
-            className={`tab-button ${activeTab === 'branches' ? 'active' : ''}`}
-            onClick={() => setActiveTab('branches')}
-          >
-            🌿 Branch Previews ({sortedBranches.length})
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'prs' ? 'active' : ''}`}
-            onClick={() => setActiveTab('prs')}
-          >
-            🔄 Pull Request Previews ({sortedPRs.length})
-          </button>
+        {/* PR Section Header */}
+        <div className="pr-section-header">
+          <h2>🔄 Pull Request Previews ({sortedPRs.length})</h2>
+          <p>Browse and test pull request changes in isolated preview environments</p>
         </div>
 
-        {activeTab === 'branches' && (
-          <div className="branch-section">
-            <div className="branch-controls">
-              <input
-                type="text"
-                placeholder="Search branches by name..."
-                value={branchSearchTerm}
-                onChange={(e) => setBranchSearchTerm(e.target.value)}
-                className="branch-search"
-              />
+        {/* PR Section */}
+        <div className="pr-section">
+          <div className="pr-controls">
+            <div className="pr-filter-section">
+              <label htmlFor="pr-filter">Filter PRs:</label>
               <select
-                value={branchSortBy}
-                onChange={(e) => setBranchSortBy(e.target.value)}
-                className="sort-select"
+                id="pr-filter"
+                value={prFilter}
+                onChange={(e) => {
+                  setPrFilter(e.target.value);
+                  setPrPage(1); // Reset to first page when filtering
+                }}
+                className="filter-select"
               >
-                <option value="updated">Sort by Recent Updates</option>
-                <option value="alphabetical">Sort Alphabetically</option>
+                <option value="open">Open PRs Only</option>
+                <option value="closed">Closed PRs Only</option>
+                <option value="all">All PRs</option>
               </select>
-              {checkingStatuses && (
-                <span className="status-checking">
-                  🔄 Checking deployment status...
-                </span>
-              )}
             </div>
+            <input
+              type="text"
+              placeholder="Search pull requests by title or author..."
+              value={prSearchTerm}
+              onChange={(e) => {
+                setPrSearchTerm(e.target.value);
+                setPrPage(1); // Reset to first page when searching
+              }}
+              className="pr-search"
+            />
+            <select
+              value={prSortBy}
+              onChange={(e) => {
+                setPrSortBy(e.target.value);
+                setPrPage(1); // Reset to first page when sorting
+              }}
+              className="sort-select"
+            >
+              <option value="updated">Sort by Recent Updates</option>
+              <option value="number">Sort by PR Number</option>
+              <option value="alphabetical">Sort Alphabetically</option>
+            </select>
+          </div>
 
-            <div className="branch-cards">
-              {sortedBranches.length === 0 ? (
-                <div className="no-items">
-                  {branchSearchTerm ? (
-                    <p>No branches match your search "{branchSearchTerm}".</p>
-                  ) : (
-                    <>
-                      <p>No branch previews available at the moment.</p>
-                      <p>Branch previews will appear here when code is pushed to branches.</p>
-                    </>
-                  )}
-                </div>
-              ) : (
-                sortedBranches.map((branch) => {
-                  const statusKey = `branch-${branch.name}`;
-                  const deploymentStatus = deploymentStatuses[statusKey];
-                  
-                  return (
-                    <div key={branch.name} className="preview-card">
-                      <div className="card-header">
-                        <h3 className="item-name">{branch.name}</h3>
-                        <div className="card-badges">
-                          <span className="commit-badge">
-                            {branch.commit.sha.substring(0, 7)}
+          <div className="pr-cards">
+            {paginatedPRs.length === 0 ? (
+              <div className="no-items">
+                {prSearchTerm ? (
+                  <p>No pull requests match your search "{prSearchTerm}".</p>
+                ) : (
+                  <p>No pull request previews available at the moment.</p>
+                )}
+              </div>
+            ) : (
+              paginatedPRs.map((pr) => {
+                const statusKey = `pr-${pr.id}`;
+                const deploymentStatus = deploymentStatuses[statusKey];
+                
+                return (
+                  <div key={pr.id} className="preview-card pr-card">
+                    <div className="card-header">
+                      <h3 className="item-name">#{pr.number}: {pr.title}</h3>
+                      <div className="card-badges">
+                        <span className={`state-badge ${pr.state}`}>
+                          {pr.state === 'open' ? '🟢' : '🔴'} {pr.state}
+                        </span>
+                        {deploymentStatus && (
+                          <span className={`status-badge ${deploymentStatus}`}>
+                            {deploymentStatus === 'active' && '🟢 Active'}
+                            {deploymentStatus === 'not-found' && '🟡 Building'}
+                            {deploymentStatus === 'errored' && '🔴 Error'}
                           </span>
-                          {deploymentStatus && (
-                            <span className={`status-badge ${deploymentStatus}`}>
-                              {deploymentStatus === 'active' && '🟢 Active'}
-                              {deploymentStatus === 'not-found' && '🟡 Building'}
-                              {deploymentStatus === 'errored' && '🔴 Error'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="card-body">
-                        <p className="item-date">
-                          Last updated: {branch.lastModified}
-                        </p>
-                        
-                        <div className="branch-actions">
-                          {deploymentStatus === 'active' ? (
-                            <a 
-                              href={branch.url} 
-                              className="preview-link"
-                              rel="noopener noreferrer"
-                            >
-                              <span>🚀 View Preview</span>
-                            </a>
-                          ) : deploymentStatus === 'not-found' ? (
-                            <div className="deployment-message">
-                              <span className="building-message">
-                                🔄 Deployment in progress. Please check back in a few minutes.
-                              </span>
-                            </div>
-                          ) : deploymentStatus === 'errored' ? (
-                            <div className="deployment-message">
-                              <span className="error-message">
-                                ❌ Deployment failed. Please check the GitHub Actions logs or contact support.
-                              </span>
-                              <a 
-                                href={`https://github.com/litlfred/sgex/actions`}
-                                className="actions-link"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                View Actions Log
-                              </a>
-                            </div>
-                          ) : (
-                            <a 
-                              href={branch.url} 
-                              className="preview-link"
-                              rel="noopener noreferrer"
-                            >
-                              <span>🚀 View Preview</span>
-                            </a>
-                          )}
-                          
-                          <button 
-                            className="copy-btn"
-                            onClick={() => copyToClipboard(branch.url, 'branch', branch.name)}
-                            title="Copy URL to clipboard"
-                          >
-                            📋 Copy URL
-                          </button>
-                        </div>
-
-                        {/* Workflow Status */}
-                        <WorkflowStatus
-                          workflowStatus={workflowStatuses[branch.name]}
-                          branchName={branch.name}
-                          onTriggerWorkflow={triggerWorkflow}
-                          isAuthenticated={isAuthenticated}
-                          isLoading={loadingWorkflowStatuses}
-                        />
-                      </div>
-
-                      <div className="card-footer">
-                        <small className="preview-path">
-                          Preview URL: <a 
-                            href={branch.url} 
-                            className="preview-url-link"
-                            rel="noopener noreferrer"
-                          >
-                            {branch.url}
-                          </a>
-                        </small>
+                        )}
                       </div>
                     </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'prs' && (
-          <div className="pr-section">
-            <div className="pr-controls">
-              <div className="pr-filter-section">
-                <label htmlFor="pr-filter">Filter PRs:</label>
-                <select
-                  id="pr-filter"
-                  value={prFilter}
-                  onChange={(e) => {
-                    setPrFilter(e.target.value);
-                    setPrPage(1); // Reset to first page when filtering
-                  }}
-                  className="filter-select"
-                >
-                  <option value="open">Open PRs Only</option>
-                  <option value="closed">Closed PRs Only</option>
-                  <option value="all">All PRs</option>
-                </select>
-              </div>
-              <input
-                type="text"
-                placeholder="Search pull requests by title or author..."
-                value={prSearchTerm}
-                onChange={(e) => {
-                  setPrSearchTerm(e.target.value);
-                  setPrPage(1); // Reset to first page when searching
-                }}
-                className="pr-search"
-              />
-              <select
-                value={prSortBy}
-                onChange={(e) => {
-                  setPrSortBy(e.target.value);
-                  setPrPage(1); // Reset to first page when sorting
-                }}
-                className="sort-select"
-              >
-                <option value="updated">Sort by Recent Updates</option>
-                <option value="number">Sort by PR Number</option>
-                <option value="alphabetical">Sort Alphabetically</option>
-              </select>
-            </div>
-
-            <div className="pr-cards">
-              {paginatedPRs.length === 0 ? (
-                <div className="no-items">
-                  {prSearchTerm ? (
-                    <p>No pull requests match your search "{prSearchTerm}".</p>
-                  ) : (
-                    <p>No pull request previews available at the moment.</p>
-                  )}
-                </div>
-              ) : (
-                paginatedPRs.map((pr) => {
-                  const statusKey = `pr-${pr.id}`;
-                  const deploymentStatus = deploymentStatuses[statusKey];
-                  
-                  return (
-                    <div key={pr.id} className="preview-card pr-card">
-                      <div className="card-header">
-                        <h3 className="item-name">#{pr.number}: {pr.title}</h3>
-                        <div className="card-badges">
-                          <span className={`state-badge ${pr.state}`}>
-                            {pr.state === 'open' ? '🟢' : '🔴'} {pr.state}
-                          </span>
-                          {deploymentStatus && (
-                            <span className={`status-badge ${deploymentStatus}`}>
-                              {deploymentStatus === 'active' && '🟢 Active'}
-                              {deploymentStatus === 'not-found' && '🟡 Building'}
-                              {deploymentStatus === 'errored' && '🔴 Error'}
+                    
+                    <div className="card-body">
+                      <p className="pr-meta">
+                        <strong>Branch:</strong> {pr.branchName} • <strong>Author:</strong> {pr.author}
+                      </p>
+                      <p className="item-date">
+                        Created: {pr.createdAt} • Updated: {pr.updatedAt}
+                      </p>
+                      
+                      {/* Discussion Summary Section */}
+                      {isAuthenticated && (
+                        <div>
+                          {/* Discussion Summary Status Bar */}
+                          <div 
+                            className="discussion-summary-bar"
+                            onClick={() => toggleDiscussion(pr.number)}
+                          >
+                            <div className="discussion-summary-text">
+                              <span className="discussion-summary-icon">💬</span>
+                              {getDiscussionSummaryText(pr.number)}
+                            </div>
+                            <span className={`discussion-expand-icon ${expandedDiscussions[pr.number] ? 'expanded' : ''}`}>
+                              ▶
                             </span>
+                          </div>
+
+                          {/* Expanded Discussion Section */}
+                          {expandedDiscussions[pr.number] && (
+                            <div className="discussion-expanded-section">
+                              <div className="discussion-header">
+                                <h4 className="discussion-title">Discussion</h4>
+                                <div className="discussion-actions">
+                                  <a 
+                                    href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="discussion-action-btn"
+                                  >
+                                    📁 View Files
+                                  </a>
+                                  <a 
+                                    href={pr.prUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="discussion-action-btn secondary"
+                                  >
+                                    🔗 Full Discussion
+                                  </a>
+                                </div>
+                              </div>
+                              
+                              {/* Comment Input at Top */}
+                              <div className="comment-input-section">
+                                <textarea
+                                  value={commentInputs[pr.number] || ''}
+                                  onChange={(e) => setCommentInputs(prev => ({
+                                    ...prev,
+                                    [pr.number]: e.target.value
+                                  }))}
+                                  placeholder="Add a comment..."
+                                  className="comment-input"
+                                  rows={3}
+                                />
+                                <button
+                                  onClick={() => submitComment(pr.number, commentInputs[pr.number])}
+                                  disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
+                                  className="submit-comment-btn"
+                                >
+                                  {submittingComments[pr.number] ? 'Submitting...' : 'Add Comment'}
+                                </button>
+                              </div>
+                              
+                              {/* Scrollable Comments Area */}
+                              <div className="discussion-scroll-area">
+                                {loadingComments ? (
+                                  <div className="comments-loading">Loading full discussion...</div>
+                                ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
+                                  <div className="comments-list">
+                                    {prComments[pr.number].map((comment) => (
+                                      <div key={comment.id} className="comment-item">
+                                        <div className="comment-header">
+                                          <img 
+                                            src={comment.avatar_url} 
+                                            alt={comment.author} 
+                                            className="comment-avatar"
+                                          />
+                                          <span className="comment-author">{comment.author}</span>
+                                          <span className="comment-date">{comment.created_at}</span>
+                                        </div>
+                                        <div className="comment-body">{comment.body}</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="no-comments">No comments yet. Be the first to comment!</div>
+                                )}
+                              </div>
+                            </div>
                           )}
                         </div>
-                      </div>
+                      )}
                       
-                      <div className="card-body">
-                        <p className="pr-meta">
-                          <strong>Branch:</strong> {pr.branchName} • <strong>Author:</strong> {pr.author}
-                        </p>
-                        <p className="item-date">
-                          Created: {pr.createdAt} • Updated: {pr.updatedAt}
-                        </p>
-                        
-                        {/* Discussion Summary Section */}
-                        {isAuthenticated && (
-                          <div>
-                            {/* Discussion Summary Status Bar */}
-                            <div 
-                              className="discussion-summary-bar"
-                              onClick={() => toggleDiscussion(pr.number)}
-                            >
-                              <div className="discussion-summary-text">
-                                <span className="discussion-summary-icon">💬</span>
-                                {getDiscussionSummaryText(pr.number)}
-                              </div>
-                              <span className={`discussion-expand-icon ${expandedDiscussions[pr.number] ? 'expanded' : ''}`}>
-                                ▶
-                              </span>
-                            </div>
-
-                            {/* Expanded Discussion Section */}
-                            {expandedDiscussions[pr.number] && (
-                              <div className="discussion-expanded-section">
-                                <div className="discussion-header">
-                                  <h4 className="discussion-title">Discussion</h4>
-                                  <div className="discussion-actions">
-                                    <a 
-                                      href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="discussion-action-btn"
-                                    >
-                                      📁 View Files
-                                    </a>
-                                    <a 
-                                      href={pr.prUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="discussion-action-btn secondary"
-                                    >
-                                      🔗 Full Discussion
-                                    </a>
-                                  </div>
-                                </div>
-                                
-                                {/* Comment Input at Top */}
-                                <div className="comment-input-section">
-                                  <textarea
-                                    value={commentInputs[pr.number] || ''}
-                                    onChange={(e) => setCommentInputs(prev => ({
-                                      ...prev,
-                                      [pr.number]: e.target.value
-                                    }))}
-                                    placeholder="Add a comment..."
-                                    className="comment-input"
-                                    rows={3}
-                                  />
-                                  <button
-                                    onClick={() => submitComment(pr.number, commentInputs[pr.number])}
-                                    disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
-                                    className="submit-comment-btn"
-                                  >
-                                    {submittingComments[pr.number] ? 'Submitting...' : 'Add Comment'}
-                                  </button>
-                                </div>
-                                
-                                {/* Scrollable Comments Area */}
-                                <div className="discussion-scroll-area">
-                                  {loadingComments ? (
-                                    <div className="comments-loading">Loading full discussion...</div>
-                                  ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
-                                    <div className="comments-list">
-                                      {prComments[pr.number].map((comment) => (
-                                        <div key={comment.id} className="comment-item">
-                                          <div className="comment-header">
-                                            <img 
-                                              src={comment.avatar_url} 
-                                              alt={comment.author} 
-                                              className="comment-avatar"
-                                            />
-                                            <span className="comment-author">{comment.author}</span>
-                                            <span className="comment-date">{comment.created_at}</span>
-                                          </div>
-                                          <div className="comment-body">{comment.body}</div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="no-comments">No comments yet. Be the first to comment!</div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
+                      <div className="pr-actions">
+                        {deploymentStatus === 'active' ? (
+                          <a 
+                            href={pr.url} 
+                            className="preview-link"
+                            rel="noopener noreferrer"
+                          >
+                            <span>🚀 View Preview</span>
+                          </a>
+                        ) : deploymentStatus === 'not-found' ? (
+                          <div className="deployment-message">
+                            <span className="building-message">
+                              🔄 Deployment in progress. Please check back in a few minutes.
+                            </span>
                           </div>
+                        ) : deploymentStatus === 'errored' ? (
+                          <div className="deployment-message">
+                            <span className="error-message">
+                              ❌ Deployment failed. Please check the GitHub Actions logs or contact support.
+                            </span>
+                            <a 
+                              href={`https://github.com/litlfred/sgex/actions`}
+                              className="actions-link"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              View Actions Log
+                            </a>
+                          </div>
+                        ) : (
+                          <a 
+                            href={pr.url} 
+                            className="preview-link"
+                            rel="noopener noreferrer"
+                          >
+                            <span>🚀 View Preview</span>
+                          </a>
                         )}
                         
-                        <div className="pr-actions">
-                          {deploymentStatus === 'active' ? (
-                            <a 
-                              href={pr.url} 
-                              className="preview-link"
-                              rel="noopener noreferrer"
-                            >
-                              <span>🚀 View Preview</span>
-                            </a>
-                          ) : deploymentStatus === 'not-found' ? (
-                            <div className="deployment-message">
-                              <span className="building-message">
-                                🔄 Deployment in progress. Please check back in a few minutes.
-                              </span>
-                            </div>
-                          ) : deploymentStatus === 'errored' ? (
-                            <div className="deployment-message">
-                              <span className="error-message">
-                                ❌ Deployment failed. Please check the GitHub Actions logs or contact support.
-                              </span>
-                              <a 
-                                href={`https://github.com/litlfred/sgex/actions`}
-                                className="actions-link"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                View Actions Log
-                              </a>
-                            </div>
-                          ) : (
-                            <a 
-                              href={pr.url} 
-                              className="preview-link"
-                              rel="noopener noreferrer"
-                            >
-                              <span>🚀 View Preview</span>
-                            </a>
-                          )}
-                          
-                          <button 
-                            className="copy-btn"
-                            onClick={() => copyToClipboard(pr.url, 'PR', `#${pr.number}`)}
-                            title="Copy URL to clipboard"
-                          >
-                            📋 Copy URL
-                          </button>
-                          
-                          <a 
-                            href={pr.prUrl} 
-                            className="pr-link"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <span>📋 View PR</span>
-                          </a>
-                        </div>
-
-                        {/* Workflow Status */}
-                        <WorkflowStatus
-                          workflowStatus={workflowStatuses[pr.branchName]}
-                          branchName={pr.branchName}
-                          onTriggerWorkflow={triggerWorkflow}
-                          isAuthenticated={isAuthenticated}
-                          isLoading={loadingWorkflowStatuses}
-                        />
+                        <button 
+                          className="copy-btn"
+                          onClick={() => copyToClipboard(pr.url, 'PR', `#${pr.number}`)}
+                          title="Copy URL to clipboard"
+                        >
+                          📋 Copy URL
+                        </button>
+                        
+                        <a 
+                          href={pr.prUrl} 
+                          className="pr-link"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <span>📋 View PR</span>
+                        </a>
                       </div>
 
-                      <div className="card-footer">
-                        <small className="preview-path">
-                          Preview URL: <a 
-                            href={pr.url} 
-                            className="preview-url-link"
-                            rel="noopener noreferrer"
-                          >
-                            {pr.url}
-                          </a>
-                        </small>
-                      </div>
+                      {/* Workflow Status */}
+                      <WorkflowStatus
+                        workflowStatus={workflowStatuses[pr.branchName]}
+                        branchName={pr.branchName}
+                        onTriggerWorkflow={triggerWorkflow}
+                        isAuthenticated={isAuthenticated}
+                        isLoading={loadingWorkflowStatuses}
+                      />
                     </div>
-                  );
-                })
-              )}
-            </div>
 
-            {totalPRPages > 1 && (
-              <div className="pagination">
-                <button 
-                  className="pagination-btn"
-                  onClick={() => setPrPage(Math.max(1, prPage - 1))}
-                  disabled={prPage === 1}
-                >
-                  ← Previous
-                </button>
-                <span className="pagination-info">
-                  Page {prPage} of {totalPRPages} ({sortedPRs.length} total)
-                </span>
-                <button 
-                  className="pagination-btn"
-                  onClick={() => setPrPage(Math.min(totalPRPages, prPage + 1))}
-                  disabled={prPage === totalPRPages}
-                >
-                  Next →
-                </button>
-              </div>
+                    <div className="card-footer">
+                      <small className="preview-path">
+                        Preview URL: <a 
+                          href={pr.url} 
+                          className="preview-url-link"
+                          rel="noopener noreferrer"
+                        >
+                          {pr.url}
+                        </a>
+                      </small>
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
-        )}
 
-        <footer className="branch-listing-footer">
-          <div className="footer-content">
-            <div className="footer-left">
-              <a 
-                href="https://github.com/litlfred/sgex" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="source-link"
+          {totalPRPages > 1 && (
+            <div className="pagination">
+              <button 
+                className="pagination-btn"
+                onClick={() => setPrPage(Math.max(1, prPage - 1))}
+                disabled={prPage === 1}
               >
-                📦 Source Code
-              </a>
+                ← Previous
+              </button>
+              <span className="pagination-info">
+                Page {prPage} of {totalPRPages} ({sortedPRs.length} total)
+              </span>
+              <button 
+                className="pagination-btn"
+                onClick={() => setPrPage(Math.min(totalPRPages, prPage + 1))}
+                disabled={prPage === totalPRPages}
+              >
+                Next →
+              </button>
             </div>
-            <div className="footer-center">
-              <p>
-                <strong>Main Application:</strong> <a href="./main/index.html">View Main Branch →</a>
-              </p>
-            </div>
-          </div>
-        </footer>
+          )}
+        </div>
 
         {showContributeModal && (
           <HelpModal
