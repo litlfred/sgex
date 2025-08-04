@@ -157,6 +157,11 @@ class GitHubService {
     }
   }
 
+  // Alias method for backward compatibility - delegates to checkRepositoryWritePermissions
+  async checkRepositoryPermissions(owner, repo) {
+    return this.checkRepositoryWritePermissions(owner, repo);
+  }
+
   // Check if authenticated
   isAuth() {
     return this.isAuthenticated && this.octokit !== null;
@@ -1512,6 +1517,11 @@ class GitHubService {
       console.error('Failed to fetch issues:', error);
       throw error;
     }
+  }
+
+  // Alias method for backward compatibility - delegates to getIssues
+  async getRepositoryIssues(owner, repo, options = {}) {
+    return this.getIssues(owner, repo, options);
   }
 
   // Logout
