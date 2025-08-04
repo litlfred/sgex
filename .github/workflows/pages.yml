@@ -394,7 +394,7 @@ jobs:
           echo "- Commit: $commit_sha"
           echo ""
           echo "ℹ️  Note: Landing page deployment is handled separately"
-          echo "   Use the 'Deploy Landing Page' workflow to update the root page"
+          echo "   It will be automatically updated when main branch changes"
           
           # GitHub Actions outputs for downstream tools
           echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
