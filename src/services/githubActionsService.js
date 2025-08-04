@@ -212,7 +212,15 @@ class GitHubActionsService {
       );
 
       if (!response.ok) {
-        throw new Error(`Failed to trigger workflow: ${response.status}`);
+        const errorText = await response.text();
+        console.error(`Workflow trigger failed:`, {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          branch,
+          workflowId
+        });
+        throw new Error(`Failed to trigger workflow: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
       return true;

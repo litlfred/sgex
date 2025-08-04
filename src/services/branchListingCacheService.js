@@ -3,7 +3,7 @@
  * Manages caching of branch and PR preview data with 5-minute expiry
  */
 
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 
 class BranchListingCacheService {
   constructor() {

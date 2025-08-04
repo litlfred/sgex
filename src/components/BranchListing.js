@@ -9,29 +9,21 @@ import useThemeImage from '../hooks/useThemeImage';
 import './BranchListing.css';
 
 const BranchListing = () => {
-  const [branches, setBranches] = useState([]);
   const [pullRequests, setPullRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('prs'); // Start with PR preview section
   const [prPage, setPrPage] = useState(1);
   const [prSearchTerm, setPrSearchTerm] = useState('');
-  const [branchSearchTerm, setBranchSearchTerm] = useState('');
 
-  // Theme-aware mascot image
-  const mascotImage = useThemeImage('sgex-mascot.png');
   const [prSortBy, setPrSortBy] = useState('updated'); // updated, number, alphabetical
-  const [branchSortBy, setBranchSortBy] = useState('updated'); // updated, alphabetical
   const [showContributeModal, setShowContributeModal] = useState(false);
   const [deploymentStatuses, setDeploymentStatuses] = useState({});
-  const [checkingStatuses, setCheckingStatuses] = useState(false);
   const [prFilter, setPrFilter] = useState('open'); // 'open', 'closed', 'all'
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [githubToken, setGithubToken] = useState(null);
   const [prComments, setPrComments] = useState({});
   const [commentInputs, setCommentInputs] = useState({});
   const [submittingComments, setSubmittingComments] = useState({});
-  const [commentErrors, setCommentErrors] = useState({});
   const [expandedDiscussions, setExpandedDiscussions] = useState({});
   const [discussionSummaries, setDiscussionSummaries] = useState({});
   const [loadingSummaries, setLoadingSummaries] = useState(false);
@@ -39,6 +31,9 @@ const BranchListing = () => {
   const [loadingWorkflowStatuses, setLoadingWorkflowStatuses] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [cacheInfo, setCacheInfo] = useState(null);
+
+  // Theme-aware mascot image
+  const mascotImage = useThemeImage('sgex-mascot.png');
 
   const ITEMS_PER_PAGE = 10;
   const GITHUB_OWNER = 'litlfred';
@@ -219,7 +214,6 @@ const BranchListing = () => {
     if (!githubToken || !commentText.trim()) return false;
     
     setSubmittingComments(prev => ({ ...prev, [prNumber]: true }));
-    setCommentErrors(prev => ({ ...prev, [prNumber]: null })); // Clear previous errors
     
     try {
       const response = await fetch(
@@ -238,23 +232,7 @@ const BranchListing = () => {
       );
       
       if (!response.ok) {
-        let errorMessage = 'Failed to submit comment';
-        
-        if (response.status === 401) {
-          errorMessage = 'Authentication failed. Please check your token permissions.';
-        } else if (response.status === 403) {
-          errorMessage = 'Permission denied. You may not have write access to this repository.';
-        } else if (response.status === 404) {
-          errorMessage = 'Pull request not found or repository access denied.';
-        } else if (response.status === 422) {
-          errorMessage = 'Invalid comment content. Please check your message.';
-        } else if (response.status >= 500) {
-          errorMessage = 'GitHub server error. Please try again later.';
-        } else {
-          errorMessage = `Failed to submit comment (Error ${response.status})`;
-        }
-        
-        throw new Error(errorMessage);
+        throw new Error(`Failed to submit comment: ${response.status}`);
       }
       
       // Clear the comment input
@@ -273,29 +251,21 @@ const BranchListing = () => {
       return true;
     } catch (error) {
       console.error(`Error submitting comment for PR ${prNumber}:`, error);
-      
-      // Set user-friendly error message
-      const errorMessage = error.message || 'An unexpected error occurred while submitting your comment';
-      setCommentErrors(prev => ({ ...prev, [prNumber]: errorMessage }));
-      
       return false;
     } finally {
       setSubmittingComments(prev => ({ ...prev, [prNumber]: false }));
     }
   };
 
-  // Function to load workflow statuses for branches
-  const loadWorkflowStatuses = useCallback(async (branchData, prData) => {
+  // Function to load workflow statuses for PR branches
+  const loadWorkflowStatuses = useCallback(async (prData) => {
     if (!githubToken) return;
     
     setLoadingWorkflowStatuses(true);
     
     try {
-      // Get all branch names (from both branches and PRs)
-      const branchNames = [
-        ...branchData.map(branch => branch.name),
-        ...prData.map(pr => pr.branchName)
-      ];
+      // Get all PR branch names
+      const branchNames = prData.map(pr => pr.branchName);
       
       const uniqueBranchNames = [...new Set(branchNames)];
       const statuses = await githubActionsService.getWorkflowStatusForBranches(uniqueBranchNames);
@@ -321,9 +291,8 @@ const BranchListing = () => {
         alert(`Workflow triggered for branch: ${branchName}`);
         // Refresh workflow statuses after a short delay
         setTimeout(() => {
-          const currentBranches = branches.length > 0 ? branches : [];
           const currentPRs = pullRequests.length > 0 ? pullRequests : [];
-          loadWorkflowStatuses(currentBranches, currentPRs);
+          loadWorkflowStatuses(currentPRs);
         }, 2000);
       } else {
         alert(`Failed to trigger workflow for branch: ${branchName}`);
@@ -332,9 +301,7 @@ const BranchListing = () => {
       console.error('Error triggering workflow:', error);
       alert(`Error triggering workflow: ${error.message}`);
     }
-  }, [githubToken, branches, pullRequests, loadWorkflowStatuses]);
-
-
+  }, [githubToken, pullRequests, loadWorkflowStatuses]);
 
   // Check for existing authentication on component mount
   useEffect(() => {
@@ -363,25 +330,17 @@ const BranchListing = () => {
     }
   };
 
-  // Function to check deployment statuses for all items
-  const checkAllDeploymentStatuses = useCallback(async (branchData, prData) => {
-    setCheckingStatuses(true);
+  // Function to check deployment statuses for PRs only
+  const checkAllDeploymentStatuses = useCallback(async (prData) => {
     const statuses = {};
     
-    // Check branches
-    for (const branch of branchData) {
-      const status = await checkDeploymentStatus(branch.url);
-      statuses[`branch-${branch.name}`] = status;
-    }
-    
-    // Check PRs
+    // Check PRs only
     for (const pr of prData) {
       const status = await checkDeploymentStatus(pr.url);
       statuses[`pr-${pr.id}`] = status;
     }
     
     setDeploymentStatuses(statuses);
-    setCheckingStatuses(false);
   }, []);
 
   // Function to copy URL to clipboard
@@ -402,21 +361,7 @@ const BranchListing = () => {
     }
   };
 
-  // Sorting functions
-  const sortBranches = (branches, sortBy) => {
-    return [...branches].sort((a, b) => {
-      switch (sortBy) {
-        case 'alphabetical':
-          return a.name.localeCompare(b.name);
-        case 'updated':
-        default:
-          const dateA = new Date(a.lastModified);
-          const dateB = new Date(b.lastModified);
-          return dateB - dateA; // Most recent first
-      }
-    });
-  };
-
+  // Sorting function for PRs
   const sortPRs = (prs, sortBy) => {
     return [...prs].sort((a, b) => {
       switch (sortBy) {
@@ -545,201 +490,177 @@ const BranchListing = () => {
     ]
   };
 
-  // Main data fetching function
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      
-      // Check cache first
-      const cachedData = branchListingCacheService.getCachedData(GITHUB_OWNER, GITHUB_REPO);
-      if (cachedData && !isRefreshing) {
-        console.log('Using cached branch listing data');
-        setBranches(cachedData.branches);
-        setPullRequests(cachedData.pullRequests);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
         
-        // Update cache info for display
+        // First, try to get cached data
+        const cachedData = branchListingCacheService.getCachedData(GITHUB_OWNER, GITHUB_REPO);
+        
+        if (cachedData && !isRefreshing) {
+          console.log('Using cached data for PR listing');
+          
+          // Filter PRs based on current filter state
+          const filteredCachedPRs = cachedData.pullRequests.filter(pr => {
+            if (prFilter === 'all') return true;
+            return pr.state === prFilter;
+          });
+          
+          setPullRequests(filteredCachedPRs);
+          setCacheInfo(branchListingCacheService.getCacheInfo(GITHUB_OWNER, GITHUB_REPO));
+          
+          // Still need to check deployment statuses as these change frequently
+          await checkAllDeploymentStatuses(filteredCachedPRs);
+          
+          // Load workflow statuses if authenticated
+          if (githubToken) {
+            await loadWorkflowStatuses(filteredCachedPRs);
+          }
+          
+          // Load discussion summaries for first page
+          await loadDiscussionSummaries(filteredCachedPRs.slice(0, ITEMS_PER_PAGE));
+          return;
+        }
+
+        // If no cached data or refreshing, fetch fresh data
+        console.log('Fetching fresh data from GitHub API');
+        
+        // Fetch pull requests based on filter
+        const prState = prFilter === 'all' ? 'all' : prFilter;
+        console.log(`Fetching PRs with state: ${prState} from GitHub API`);
+        
+        const prResponse = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/pulls?state=${prState}&sort=updated&per_page=100`);
+        if (!prResponse.ok) {
+          const errorText = await prResponse.text();
+          console.error(`GitHub API error: ${prResponse.status} - ${errorText}`);
+          throw new Error(`Failed to fetch pull requests: ${prResponse.status} - ${prResponse.statusText}`);
+        }
+        const prData = await prResponse.json();
+        console.log(`Fetched ${prData.length} PRs from GitHub API`);
+        
+        // Format PR data
+        const formattedPRs = prData.map(pr => {
+          const safeBranchName = pr.head.ref.replace(/\//g, '-');
+          return {
+            id: pr.id,
+            number: pr.number,
+            title: pr.title,
+            state: pr.state,
+            author: pr.user.login,
+            branchName: pr.head.ref,
+            safeBranchName: safeBranchName,
+            url: `./${safeBranchName}/index.html`,
+            prUrl: pr.html_url,
+            updatedAt: new Date(pr.updated_at).toLocaleDateString(),
+            createdAt: new Date(pr.created_at).toLocaleDateString()
+          };
+        });
+        
+        // Cache the fresh data (we only cache PRs since branches were removed)
+        branchListingCacheService.setCachedData(GITHUB_OWNER, GITHUB_REPO, [], formattedPRs);
         setCacheInfo(branchListingCacheService.getCacheInfo(GITHUB_OWNER, GITHUB_REPO));
         
-        // Still check deployment statuses and other real-time data
-        await checkAllDeploymentStatuses(cachedData.branches, cachedData.pullRequests);
+        setPullRequests(formattedPRs);
+        
+        // Check deployment statuses for PRs only
+        await checkAllDeploymentStatuses(formattedPRs);
         
         // Load workflow statuses if authenticated
         if (githubToken) {
-          await loadWorkflowStatuses(cachedData.branches, cachedData.pullRequests);
+          await loadWorkflowStatuses(formattedPRs);
         }
         
-        // Load discussion summaries for PRs
-        const filtered = cachedData.pullRequests.filter(pr => 
-          pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
-          pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
-        );
-        const sorted = sortPRs(filtered, prSortBy);
-        const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
-        await loadDiscussionSummaries(paginated);
+        // Load discussion summaries for PRs - available for all users
+        await loadDiscussionSummaries(formattedPRs.slice(0, ITEMS_PER_PAGE));
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err.message);
         
+        // Check if this is a network/CORS issue
+        if (err.message.includes('Failed to fetch') || err.message.includes('CORS')) {
+          console.log('Network/CORS error detected, checking if we can use cache or fallback data...');
+          
+          // Try to use any existing cached data even if stale
+          const cachedDataRaw = localStorage.getItem(branchListingCacheService.getCacheKey(GITHUB_OWNER, GITHUB_REPO));
+          if (cachedDataRaw) {
+            try {
+              const parsed = JSON.parse(cachedDataRaw);
+              console.log('Using stale cached data due to network error');
+              setPullRequests(parsed.pullRequests.filter(pr => {
+                if (prFilter === 'all') return true;
+                return pr.state === prFilter;
+              }));
+              setCacheInfo({
+                exists: true,
+                stale: true,
+                ageMinutes: Math.round((Date.now() - parsed.timestamp) / (60 * 1000)),
+                prCount: parsed.pullRequests?.length || 0
+              });
+              setError('Using cached data (network error occurred)');
+              return;
+            } catch (parseError) {
+              console.error('Error parsing stale cache:', parseError);
+            }
+          }
+        }
+        
+        // Only use fallback data in development or when GitHub API is blocked
+        if (process.env.NODE_ENV === 'development' || err.message.includes('Failed to fetch')) {
+          console.log('Using fallback mock data for demonstration...');
+          const mockPRs = [
+            {
+              id: 1,
+              number: 123,
+              title: 'Improve multi-page selector landing page for GitHub deployment',
+              state: 'open',
+              author: 'copilot',
+              branchName: 'copilot/fix-459',
+              safeBranchName: 'copilot-fix-459',
+              url: './copilot-fix-459/index.html',
+              prUrl: 'https://github.com/litlfred/sgex/pull/123',
+              updatedAt: new Date().toLocaleDateString(),
+              createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
+            },
+            {
+              id: 2,
+              number: 122,
+              title: 'Add dark mode support',
+              state: 'closed',
+              author: 'developer',
+              branchName: 'feature/dark-mode',
+              safeBranchName: 'feature-dark-mode',
+              url: './feature-dark-mode/index.html',
+              prUrl: 'https://github.com/litlfred/sgex/pull/122',
+              updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
+              createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
+            },
+            {
+              id: 3,
+              number: 121,
+              title: 'Fix authentication flow',
+              state: 'open',
+              author: 'contributor',
+              branchName: 'fix/auth-flow',
+              safeBranchName: 'fix-auth-flow',
+              url: './fix-auth-flow/index.html',
+              prUrl: 'https://github.com/litlfred/sgex/pull/121',
+              updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
+              createdAt: new Date(Date.now() - 432000000).toLocaleDateString()
+            }
+          ];
+
+          setPullRequests(mockPRs);
+          setError(null); // Clear error since we have fallback data
+        }
+      } finally {
         setLoading(false);
-        return;
+        setIsRefreshing(false); // Reset refresh state
       }
-      
-      // If no cache or force refresh, fetch from GitHub API
-      console.log('Fetching fresh branch listing data from GitHub API');
-      
-      // Use GitHub API to fetch branches and PRs for the sgex repository
-      // Fetch branches
-      const branchResponse = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/branches`);
-      if (!branchResponse.ok) {
-        throw new Error(`Failed to fetch branches: ${branchResponse.status}`);
-      }
-      const branchData = await branchResponse.json();
-      
-      // Fetch pull requests based on filter
-      const prState = prFilter === 'all' ? 'all' : prFilter;
-      const prResponse = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/pulls?state=${prState}&sort=updated&per_page=100`);
-      if (!prResponse.ok) {
-        throw new Error(`Failed to fetch pull requests: ${prResponse.status}`);
-      }
-      const prData = await prResponse.json();
-      
-      // Filter out gh-pages branch and format data
-      const filteredBranches = branchData
-        .filter(branch => branch.name !== 'gh-pages')
-        .map(branch => {
-          // Convert branch name to safe directory name (replace slashes with dashes)
-          const safeName = branch.name.replace(/\//g, '-');
-          return {
-            name: branch.name,
-            safeName: safeName,
-            commit: branch.commit,
-            url: `./${safeName}/index.html`,
-            lastModified: branch.commit.commit?.committer?.date 
-              ? new Date(branch.commit.commit.committer.date).toLocaleDateString()
-              : 'Unknown'
-          };
-        });
-      
-      // Format PR data
-      const formattedPRs = prData.map(pr => {
-        const safeBranchName = pr.head.ref.replace(/\//g, '-');
-        return {
-          id: pr.id,
-          number: pr.number,
-          title: pr.title,
-          state: pr.state,
-          author: pr.user.login,
-          branchName: pr.head.ref,
-          safeBranchName: safeBranchName,
-          url: `./${safeBranchName}/index.html`,
-          prUrl: pr.html_url,
-          updatedAt: new Date(pr.updated_at).toLocaleDateString(),
-          createdAt: new Date(pr.created_at).toLocaleDateString()
-        };
-      });
-      
-      // Cache the fetched data
-      branchListingCacheService.setCachedData(GITHUB_OWNER, GITHUB_REPO, filteredBranches, formattedPRs);
-      
-      // Update cache info for display
-      setCacheInfo(branchListingCacheService.getCacheInfo(GITHUB_OWNER, GITHUB_REPO));
-      
-      setBranches(filteredBranches);
-      setPullRequests(formattedPRs);
-      
-      // Check deployment statuses
-      await checkAllDeploymentStatuses(filteredBranches, formattedPRs);
-      
-      // Load workflow statuses if authenticated
-      if (githubToken) {
-        await loadWorkflowStatuses(filteredBranches, formattedPRs);
-      }
-      
-      // Load discussion summaries for PRs - available for all users
-      await loadDiscussionSummaries(formattedPRs.slice(0, ITEMS_PER_PAGE));
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err.message);
-      
-      // Only use fallback data in development or when GitHub API is blocked
-      if (process.env.NODE_ENV === 'development' || err.message.includes('Failed to fetch')) {
-        console.log('Using fallback mock data for demonstration...');
-        const mockBranches = [
-          {
-            name: 'main',
-            safeName: 'main',
-            commit: { sha: 'abc1234' },
-            url: './main/index.html',
-            lastModified: new Date().toLocaleDateString()
-          },
-          {
-            name: 'feature/user-auth',
-            safeName: 'feature-user-auth',
-            commit: { sha: 'def5678' },
-            url: './feature-user-auth/index.html',
-            lastModified: new Date(Date.now() - 86400000).toLocaleDateString()
-          },
-          {
-            name: 'fix/api-endpoints',
-            safeName: 'fix-api-endpoints',
-            commit: { sha: 'ghi9012' },
-            url: './fix-api-endpoints/index.html',
-            lastModified: new Date(Date.now() - 172800000).toLocaleDateString()
-          }
-        ];
+    };
 
-        const mockPRs = [
-          {
-            id: 1,
-            number: 123,
-            title: 'Improve multi-page selector landing page for GitHub deployment',
-            state: 'open',
-            author: 'copilot',
-            branchName: 'copilot/fix-459',
-            safeBranchName: 'copilot-fix-459',
-            url: './copilot-fix-459/index.html',
-            prUrl: 'https://github.com/litlfred/sgex/pull/123',
-            updatedAt: new Date().toLocaleDateString(),
-            createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
-          },
-          {
-            id: 2,
-            number: 122,
-            title: 'Add dark mode support',
-            state: 'closed',
-            author: 'developer',
-            branchName: 'feature/dark-mode',
-            safeBranchName: 'feature-dark-mode',
-            url: './feature-dark-mode/index.html',
-            prUrl: 'https://github.com/litlfred/sgex/pull/122',
-            updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
-            createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
-          },
-          {
-            id: 3,
-            number: 121,
-            title: 'Fix authentication flow',
-            state: 'open',
-            author: 'contributor',
-            branchName: 'fix/auth-flow',
-            safeBranchName: 'fix-auth-flow',
-            url: './fix-auth-flow/index.html',
-            prUrl: 'https://github.com/litlfred/sgex/pull/121',
-            updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
-            createdAt: new Date(Date.now() - 432000000).toLocaleDateString()
-          }
-        ];
-
-        setBranches(mockBranches);
-        setPullRequests(mockPRs);
-        setError(null); // Clear error since we have fallback data
-      }
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadWorkflowStatuses, loadDiscussionSummaries, isRefreshing, prSearchTerm, prSortBy, prPage]);
-
-  useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadWorkflowStatuses, loadDiscussionSummaries, isRefreshing]);
 
   // Load summaries for visible PRs when page changes
   useEffect(() => {
@@ -762,12 +683,6 @@ const BranchListing = () => {
   const sortedPRs = sortPRs(filteredPRs, prSortBy);
   const paginatedPRs = sortedPRs.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
   const totalPRPages = Math.ceil(sortedPRs.length / ITEMS_PER_PAGE);
-
-  // Filter and sort branches based on search and sorting
-  const filteredBranches = branches.filter(branch => 
-    branch.name.toLowerCase().includes(branchSearchTerm.toLowerCase())
-  );
-  const sortedBranches = sortBranches(filteredBranches, branchSortBy);
 
   if (loading) {
     return (
@@ -799,52 +714,73 @@ const BranchListing = () => {
   return (
     <PageLayout pageName="branch-listing" showMascot={true} showHeader={false}>
       <div className="branch-listing">
-        <header className="branch-listing-header">
-          <h1><img src={mascotImage} alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
-          <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
-          
-          <div className="prominent-info">
-            <p className="info-text">
-              🐾 This landing page lists all available previews. 
-              Each branch and PR is automatically deployed to its own preview environment.
-            </p>
-            {cacheInfo && cacheInfo.exists && (
-              <div className="cache-status">
-                <span className="cache-info">
-                  📊 Data cached {cacheInfo.ageMinutes} minute{cacheInfo.ageMinutes !== 1 ? 's' : ''} ago
-                  {cacheInfo.stale && ' (refreshing...)'}
-                </span>
-                <button 
-                  onClick={handleManualRefresh}
-                  disabled={isRefreshing}
-                  className="refresh-btn"
-                  title="Refresh data from GitHub API"
+        {/* Top Section: Two cards side by side */}
+        <div className="top-section">
+          {/* Mascot and Explainer Card */}
+          <div className="mascot-card">
+            <div className="mascot-content">
+              <img src={mascotImage} alt="SGEX Mascot" className="large-mascot" />
+              <div className="explainer-content">
+                <h2>SGEX Deployment Selection</h2>
+                <p>Welcome to the SGEX deployment selection page. Here you can browse and access all available pull request previews for the WHO SMART Guidelines Exchange collaborative workbench.</p>
+                <p>Each pull request is automatically deployed to its own preview environment for testing and collaboration.</p>
+                <a 
+                  href="https://github.com/litlfred/sgex" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="source-code-link"
                 >
-                  {isRefreshing ? '🔄' : '🔄'} {isRefreshing ? 'Refreshing...' : 'Refresh'}
-                </button>
+                  📦 View Source Code
+                </a>
               </div>
-            )}
+            </div>
           </div>
-          
-          {/* Authentication Section */}
-          <div className="auth-section">
-            {!isAuthenticated ? (
-              <div className="login-section">
-                <h3>🔐 GitHub Authentication</h3>
-                <p>Login with your GitHub Personal Access Token to view and add comments to pull requests:</p>
-                <PATLogin onAuthSuccess={handleAuthSuccess} />
-              </div>
-            ) : (
-              <div className="authenticated-section">
-                <p>✅ Authenticated - You can now view and add comments to pull requests</p>
-                <button onClick={handleLogout} className="logout-btn">
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </header>
 
+          {/* Main Branch Access Card */}
+          <div className="main-branch-card">
+            <div className="main-branch-content">
+              <h2>🚀 Main Branch</h2>
+              <p>Access the stable main branch of the SGEX workbench with the latest published features.</p>
+              <div className="main-branch-actions">
+                <a 
+                  href="./main/index.html" 
+                  className="main-branch-link"
+                  rel="noopener noreferrer"
+                >
+                  Launch Main Branch
+                </a>
+                <a 
+                  href="/sgex/main/docs/" 
+                  className="docs-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  📚 Documentation
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Authentication Section */}
+        <div className="auth-section">
+          {!isAuthenticated ? (
+            <div className="login-section">
+              <h3>🔐 GitHub Authentication</h3>
+              <p>Login with your GitHub Personal Access Token to view and add comments to pull requests:</p>
+              <PATLogin onAuthSuccess={handleAuthSuccess} />
+            </div>
+          ) : (
+            <div className="authenticated-section">
+              <p>✅ Authenticated - You can now view and add comments to pull requests</p>
+              <button onClick={handleLogout} className="logout-btn">
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Main Actions */}
         <div className="main-actions">
           <button 
             className="contribute-btn primary"
@@ -852,18 +788,6 @@ const BranchListing = () => {
           >
             🌟 How to Contribute
           </button>
-          <a 
-            href="/sgex/main/docs/" 
-            className="contribute-btn secondary"
-            target="_blank"
-            rel="noopener noreferrer"
-            onError={(e) => {
-              // Fallback to GitHub docs if main branch docs not available
-              e.target.href = "https://github.com/litlfred/sgex/tree/main/public/docs";
-            }}
-          >
-            📚 Documentation
-          </a>
           <a 
             href="https://github.com/litlfred/sgex/issues/new" 
             className="contribute-btn tertiary"
@@ -874,486 +798,327 @@ const BranchListing = () => {
           </a>
         </div>
 
-        <div className="preview-tabs">
-          <button 
-            className={`tab-button ${activeTab === 'branches' ? 'active' : ''}`}
-            onClick={() => setActiveTab('branches')}
-          >
-            🌿 Branch Previews ({sortedBranches.length})
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'prs' ? 'active' : ''}`}
-            onClick={() => setActiveTab('prs')}
-          >
-            🔄 Pull Request Previews ({sortedPRs.length})
-          </button>
+        {/* PR Section Header */}
+        <div className="pr-section-header">
+          <div className="pr-header-content">
+            <div className="pr-header-text">
+              <h2>🔄 Pull Request Previews ({sortedPRs.length})</h2>
+              <p>Browse and test pull request changes in isolated preview environments</p>
+            </div>
+            <div className="pr-header-actions">
+              <button 
+                className="refresh-btn"
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                title="Refresh PR data (clears 5-minute cache)"
+              >
+                {isRefreshing ? '🔄 Refreshing...' : '🔄 Refresh'}
+              </button>
+              {cacheInfo && (
+                <div className="cache-info">
+                  <small>
+                    {cacheInfo.exists 
+                      ? `📊 Data cached (${cacheInfo.ageMinutes}m old)` 
+                      : 'Fresh data'
+                    }
+                  </small>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {activeTab === 'branches' && (
-          <div className="branch-section">
-            <div className="branch-controls">
-              <input
-                type="text"
-                placeholder="Search branches by name..."
-                value={branchSearchTerm}
-                onChange={(e) => setBranchSearchTerm(e.target.value)}
-                className="branch-search"
-              />
+        {/* PR Section */}
+        <div className="pr-section">
+          <div className="pr-controls">
+            <div className="pr-filter-section">
+              <label htmlFor="pr-filter">Filter PRs:</label>
               <select
-                value={branchSortBy}
-                onChange={(e) => setBranchSortBy(e.target.value)}
-                className="sort-select"
+                id="pr-filter"
+                value={prFilter}
+                onChange={(e) => {
+                  setPrFilter(e.target.value);
+                  setPrPage(1); // Reset to first page when filtering
+                }}
+                className="filter-select"
               >
-                <option value="updated">Sort by Recent Updates</option>
-                <option value="alphabetical">Sort Alphabetically</option>
+                <option value="open">Open PRs Only</option>
+                <option value="closed">Closed PRs Only</option>
+                <option value="all">All PRs</option>
               </select>
-              {checkingStatuses && (
-                <span className="status-checking">
-                  🔄 Checking deployment status...
-                </span>
-              )}
             </div>
+            <input
+              type="text"
+              placeholder="Search pull requests by title or author..."
+              value={prSearchTerm}
+              onChange={(e) => {
+                setPrSearchTerm(e.target.value);
+                setPrPage(1); // Reset to first page when searching
+              }}
+              className="pr-search"
+            />
+            <select
+              value={prSortBy}
+              onChange={(e) => {
+                setPrSortBy(e.target.value);
+                setPrPage(1); // Reset to first page when sorting
+              }}
+              className="sort-select"
+            >
+              <option value="updated">Sort by Recent Updates</option>
+              <option value="number">Sort by PR Number</option>
+              <option value="alphabetical">Sort Alphabetically</option>
+            </select>
+          </div>
 
-            <div className="branch-cards">
-              {sortedBranches.length === 0 ? (
-                <div className="no-items">
-                  {branchSearchTerm ? (
-                    <p>No branches match your search "{branchSearchTerm}".</p>
-                  ) : (
-                    <>
-                      <p>No branch previews available at the moment.</p>
-                      <p>Branch previews will appear here when code is pushed to branches.</p>
-                    </>
-                  )}
-                </div>
-              ) : (
-                sortedBranches.map((branch) => {
-                  const statusKey = `branch-${branch.name}`;
-                  const deploymentStatus = deploymentStatuses[statusKey];
-                  
-                  return (
-                    <div key={branch.name} className="preview-card">
-                      <div className="card-header">
-                        <h3 className="item-name">{branch.name}</h3>
-                        <div className="card-badges">
-                          <span className="commit-badge">
-                            {branch.commit.sha.substring(0, 7)}
+          <div className="pr-cards">
+            {paginatedPRs.length === 0 ? (
+              <div className="no-items">
+                {prSearchTerm ? (
+                  <p>No pull requests match your search "{prSearchTerm}".</p>
+                ) : (
+                  <p>No pull request previews available at the moment.</p>
+                )}
+              </div>
+            ) : (
+              paginatedPRs.map((pr) => {
+                const statusKey = `pr-${pr.id}`;
+                const deploymentStatus = deploymentStatuses[statusKey];
+                
+                return (
+                  <div key={pr.id} className="preview-card pr-card">
+                    <div className="card-header">
+                      <h3 className="item-name">#{pr.number}: {pr.title}</h3>
+                      <div className="card-badges">
+                        <span className={`state-badge ${pr.state}`}>
+                          {pr.state === 'open' ? '🟢' : '🔴'} {pr.state}
+                        </span>
+                        {deploymentStatus && (
+                          <span className={`status-badge ${deploymentStatus}`}>
+                            {deploymentStatus === 'active' && '🟢 Active'}
+                            {deploymentStatus === 'not-found' && '🟡 Building'}
+                            {deploymentStatus === 'errored' && '🔴 Error'}
                           </span>
-                          {deploymentStatus && (
-                            <span className={`status-badge ${deploymentStatus}`}>
-                              {deploymentStatus === 'active' && '🟢 Active'}
-                              {deploymentStatus === 'not-found' && '🟡 Building'}
-                              {deploymentStatus === 'errored' && '🔴 Error'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="card-body">
-                        <p className="item-date">
-                          Last updated: {branch.lastModified}
-                        </p>
-                        
-                        <div className="branch-actions">
-                          {deploymentStatus === 'active' ? (
-                            <a 
-                              href={branch.url} 
-                              className="preview-link"
-                              rel="noopener noreferrer"
-                            >
-                              <span>🚀 View Preview</span>
-                            </a>
-                          ) : deploymentStatus === 'not-found' ? (
-                            <div className="deployment-message">
-                              <span className="building-message">
-                                🔄 Deployment in progress. Please check back in a few minutes.
-                              </span>
-                            </div>
-                          ) : deploymentStatus === 'errored' ? (
-                            <div className="deployment-message">
-                              <span className="error-message">
-                                ❌ Deployment failed. Please check the GitHub Actions logs or contact support.
-                              </span>
-                              <a 
-                                href={`https://github.com/litlfred/sgex/actions`}
-                                className="actions-link"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                View Actions Log
-                              </a>
-                            </div>
-                          ) : (
-                            <a 
-                              href={branch.url} 
-                              className="preview-link"
-                              rel="noopener noreferrer"
-                            >
-                              <span>🚀 View Preview</span>
-                            </a>
-                          )}
-                          
-                          <button 
-                            className="copy-btn"
-                            onClick={() => copyToClipboard(branch.url, 'branch', branch.name)}
-                            title="Copy URL to clipboard"
-                          >
-                            📋 Copy URL
-                          </button>
-                        </div>
-
-                        {/* Workflow Status */}
-                        <WorkflowStatus
-                          workflowStatus={workflowStatuses[branch.name]}
-                          branchName={branch.name}
-                          onTriggerWorkflow={triggerWorkflow}
-                          isAuthenticated={isAuthenticated}
-                          isLoading={loadingWorkflowStatuses}
-                        />
-                      </div>
-
-                      <div className="card-footer">
-                        <small className="preview-path">
-                          Preview URL: <a 
-                            href={branch.url} 
-                            className="preview-url-link"
-                            rel="noopener noreferrer"
-                          >
-                            {branch.url}
-                          </a>
-                        </small>
+                        )}
                       </div>
                     </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'prs' && (
-          <div className="pr-section">
-            <div className="pr-controls">
-              <div className="pr-filter-section">
-                <label htmlFor="pr-filter">Filter PRs:</label>
-                <select
-                  id="pr-filter"
-                  value={prFilter}
-                  onChange={(e) => {
-                    setPrFilter(e.target.value);
-                    setPrPage(1); // Reset to first page when filtering
-                  }}
-                  className="filter-select"
-                >
-                  <option value="open">Open PRs Only</option>
-                  <option value="closed">Closed PRs Only</option>
-                  <option value="all">All PRs</option>
-                </select>
-              </div>
-              <input
-                type="text"
-                placeholder="Search pull requests by title or author..."
-                value={prSearchTerm}
-                onChange={(e) => {
-                  setPrSearchTerm(e.target.value);
-                  setPrPage(1); // Reset to first page when searching
-                }}
-                className="pr-search"
-              />
-              <select
-                value={prSortBy}
-                onChange={(e) => {
-                  setPrSortBy(e.target.value);
-                  setPrPage(1); // Reset to first page when sorting
-                }}
-                className="sort-select"
-              >
-                <option value="updated">Sort by Recent Updates</option>
-                <option value="number">Sort by PR Number</option>
-                <option value="alphabetical">Sort Alphabetically</option>
-              </select>
-            </div>
-
-            <div className="pr-cards">
-              {paginatedPRs.length === 0 ? (
-                <div className="no-items">
-                  {prSearchTerm ? (
-                    <p>No pull requests match your search "{prSearchTerm}".</p>
-                  ) : (
-                    <p>No pull request previews available at the moment.</p>
-                  )}
-                </div>
-              ) : (
-                paginatedPRs.map((pr) => {
-                  const statusKey = `pr-${pr.id}`;
-                  const deploymentStatus = deploymentStatuses[statusKey];
-                  
-                  return (
-                    <div key={pr.id} className="preview-card pr-card">
-                      <div className="card-header">
-                        <h3 className="item-name">#{pr.number}: {pr.title}</h3>
-                        <div className="card-badges">
-                          <span className={`state-badge ${pr.state}`}>
-                            {pr.state === 'open' ? '🟢' : '🔴'} {pr.state}
-                          </span>
-                          {deploymentStatus && (
-                            <span className={`status-badge ${deploymentStatus}`}>
-                              {deploymentStatus === 'active' && '🟢 Active'}
-                              {deploymentStatus === 'not-found' && '🟡 Building'}
-                              {deploymentStatus === 'errored' && '🔴 Error'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                    
+                    <div className="card-body">
+                      <p className="pr-meta">
+                        <strong>Branch:</strong> {pr.branchName} • <strong>Author:</strong> {pr.author}
+                      </p>
+                      <p className="item-date">
+                        Created: {pr.createdAt} • Updated: {pr.updatedAt}
+                      </p>
                       
-                      <div className="card-body">
-                        <p className="pr-meta">
-                          <strong>Branch:</strong> {pr.branchName} • <strong>Author:</strong> {pr.author}
-                        </p>
-                        <p className="item-date">
-                          Created: {pr.createdAt} • Updated: {pr.updatedAt}
-                        </p>
-                        
-                        {/* Discussion Summary Section - Show for all users */}
-                        <div>
-                          {/* Discussion Summary Status Bar */}
-                          <div 
-                            className="discussion-summary-bar"
-                            onClick={() => toggleDiscussion(pr.number)}
-                          >
-                            <div className="discussion-summary-text">
-                              <span className="discussion-summary-icon">💬</span>
-                              {getDiscussionSummaryText(pr.number)}
-                            </div>
-                            <span className={`discussion-expand-icon ${expandedDiscussions[pr.number] ? 'expanded' : ''}`}>
-                              ▶
-                            </span>
+                      {/* Discussion Summary Section - Show for all users */}
+                      <div>
+                        {/* Discussion Summary Status Bar */}
+                        <div 
+                          className="discussion-summary-bar"
+                          onClick={() => toggleDiscussion(pr.number)}
+                        >
+                          <div className="discussion-summary-text">
+                            <span className="discussion-summary-icon">💬</span>
+                            {getDiscussionSummaryText(pr.number)}
                           </div>
+                          <span className={`discussion-expand-icon ${expandedDiscussions[pr.number] ? 'expanded' : ''}`}>
+                            ▶
+                          </span>
+                        </div>
 
-                          {/* Expanded Discussion Section */}
-                          {expandedDiscussions[pr.number] && (
-                            <div className="discussion-expanded-section">
-                              <div className="discussion-header">
-                                <h4 className="discussion-title">Discussion</h4>
-                                <div className="discussion-actions">
-                                  <a 
-                                    href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="discussion-action-btn"
-                                  >
-                                    📁 View Files
-                                  </a>
-                                  <a 
-                                    href={pr.prUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="discussion-action-btn secondary"
-                                  >
-                                    🔗 Full Discussion
-                                  </a>
-                                </div>
+                        {/* Expanded Discussion Section */}
+                        {expandedDiscussions[pr.number] && (
+                          <div className="discussion-expanded-section">
+                            <div className="discussion-header">
+                              <h4 className="discussion-title">Discussion</h4>
+                              <div className="discussion-actions">
+                                <a 
+                                  href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="discussion-action-btn"
+                                >
+                                  📁 View Files
+                                </a>
+                                <a 
+                                  href={pr.prUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="discussion-action-btn secondary"
+                                >
+                                  🔗 Full Discussion
+                                </a>
                               </div>
-                              
-                              {/* Comment Input at Top - Only show for authenticated users */}
-                              {isAuthenticated ? (
-                                <div className="comment-input-section">
-                                  <textarea
-                                    value={commentInputs[pr.number] || ''}
-                                    onChange={(e) => {
-                                      setCommentInputs(prev => ({
-                                        ...prev,
-                                        [pr.number]: e.target.value
-                                      }));
-                                      // Clear error when user starts typing
-                                      if (commentErrors[pr.number]) {
-                                        setCommentErrors(prev => ({
-                                          ...prev,
-                                          [pr.number]: null
-                                        }));
-                                      }
-                                    }}
-                                    placeholder="Add a comment..."
-                                    className="comment-input"
-                                    rows={3}
-                                  />
-                                  {commentErrors[pr.number] && (
-                                    <div className="comment-error-message">
-                                      ⚠️ {commentErrors[pr.number]}
+                            </div>
+                            
+                            {/* Comment Input at Top - Only show for authenticated users */}
+                            {isAuthenticated ? (
+                              <div className="comment-input-section">
+                                <textarea
+                                  value={commentInputs[pr.number] || ''}
+                                  onChange={(e) => setCommentInputs(prev => ({
+                                    ...prev,
+                                    [pr.number]: e.target.value
+                                  }))}
+                                  placeholder="Add a comment..."
+                                  className="comment-input"
+                                  rows={3}
+                                />
+                                <button
+                                  onClick={() => submitComment(pr.number, commentInputs[pr.number])}
+                                  disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
+                                  className="submit-comment-btn"
+                                >
+                                  {submittingComments[pr.number] ? 'Submitting...' : 'Add Comment'}
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="comment-auth-message">
+                                <p>
+                                  🔐 <a href="#auth-section" onClick={() => document.querySelector('.auth-section')?.scrollIntoView()}>Sign in</a> to add comments to this discussion
+                                </p>
+                              </div>
+                            )}
+                            
+                            {/* Scrollable Comments Area */}
+                            <div className="discussion-scroll-area">
+                              {!prComments[pr.number] ? (
+                                <div className="comments-loading">Loading full discussion...</div>
+                              ) : prComments[pr.number].length > 0 ? (
+                                <div className="comments-list">
+                                  {prComments[pr.number].map((comment) => (
+                                    <div key={comment.id} className="comment-item">
+                                      <div className="comment-header">
+                                        <img 
+                                          src={comment.avatar_url} 
+                                          alt={comment.author} 
+                                          className="comment-avatar"
+                                        />
+                                        <span className="comment-author">{comment.author}</span>
+                                        <span className="comment-date">{comment.created_at}</span>
+                                      </div>
+                                      <div className="comment-body">{comment.body}</div>
                                     </div>
-                                  )}
-                                  <button
-                                    onClick={() => submitComment(pr.number, commentInputs[pr.number])}
-                                    disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
-                                    className="submit-comment-btn"
-                                  >
-                                    {submittingComments[pr.number] ? 'Submitting...' : 'Add Comment'}
-                                  </button>
+                                  ))}
                                 </div>
                               ) : (
-                                <div className="comment-auth-message">
-                                  <p>
-                                    🔐 <a href="#auth-section" onClick={() => document.querySelector('.auth-section')?.scrollIntoView()}>Sign in</a> to add comments to this discussion
-                                  </p>
+                                <div className="no-comments">
+                                  No comments yet. {isAuthenticated ? 'Be the first to comment!' : 'Sign in to be the first to comment!'}
                                 </div>
                               )}
-                              
-                              {/* Scrollable Comments Area */}
-                              <div className="discussion-scroll-area">
-                                {prComments[pr.number] && prComments[pr.number].length > 0 ? (
-                                  <div className="comments-list">
-                                    {prComments[pr.number].map((comment) => (
-                                      <div key={comment.id} className="comment-item">
-                                        <div className="comment-header">
-                                          <img 
-                                            src={comment.avatar_url} 
-                                            alt={comment.author} 
-                                            className="comment-avatar"
-                                          />
-                                          <span className="comment-author">{comment.author}</span>
-                                          <span className="comment-date">{comment.created_at}</span>
-                                        </div>
-                                        <div className="comment-body">{comment.body}</div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <div className="no-comments">
-                                    No comments yet. {isAuthenticated ? 'Be the first to comment!' : 'Sign in to be the first to comment!'}
-                                  </div>
-                                )}
-                              </div>
                             </div>
-                          )}
-                        </div>
-                        
-                        <div className="pr-actions">
-                          {deploymentStatus === 'active' ? (
-                            <a 
-                              href={pr.url} 
-                              className="preview-link"
-                              rel="noopener noreferrer"
-                            >
-                              <span>🚀 View Preview</span>
-                            </a>
-                          ) : deploymentStatus === 'not-found' ? (
-                            <div className="deployment-message">
-                              <span className="building-message">
-                                🔄 Deployment in progress. Please check back in a few minutes.
-                              </span>
-                            </div>
-                          ) : deploymentStatus === 'errored' ? (
-                            <div className="deployment-message">
-                              <span className="error-message">
-                                ❌ Deployment failed. Please check the GitHub Actions logs or contact support.
-                              </span>
-                              <a 
-                                href={`https://github.com/litlfred/sgex/actions`}
-                                className="actions-link"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                View Actions Log
-                              </a>
-                            </div>
-                          ) : (
-                            <a 
-                              href={pr.url} 
-                              className="preview-link"
-                              rel="noopener noreferrer"
-                            >
-                              <span>🚀 View Preview</span>
-                            </a>
-                          )}
-                          
-                          <button 
-                            className="copy-btn"
-                            onClick={() => copyToClipboard(pr.url, 'PR', `#${pr.number}`)}
-                            title="Copy URL to clipboard"
-                          >
-                            📋 Copy URL
-                          </button>
-                          
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="pr-actions">
+                        {deploymentStatus === 'active' ? (
                           <a 
-                            href={pr.prUrl} 
-                            className="pr-link"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <span>📋 View PR</span>
-                          </a>
-                        </div>
-
-                        {/* Workflow Status */}
-                        <WorkflowStatus
-                          workflowStatus={workflowStatuses[pr.branchName]}
-                          branchName={pr.branchName}
-                          onTriggerWorkflow={triggerWorkflow}
-                          isAuthenticated={isAuthenticated}
-                          isLoading={loadingWorkflowStatuses}
-                        />
-                      </div>
-
-                      <div className="card-footer">
-                        <small className="preview-path">
-                          Preview URL: <a 
                             href={pr.url} 
-                            className="preview-url-link"
+                            className="preview-link"
                             rel="noopener noreferrer"
                           >
-                            {pr.url}
+                            <span>🚀 View Preview</span>
                           </a>
-                        </small>
+                        ) : deploymentStatus === 'not-found' ? (
+                          <div className="deployment-message">
+                            <span className="building-message">
+                              🔄 Deployment in progress. Please check back in a few minutes.
+                            </span>
+                          </div>
+                        ) : deploymentStatus === 'errored' ? (
+                          <div className="deployment-message">
+                            <span className="error-message">
+                              ❌ Deployment failed. Please check the GitHub Actions logs or contact support.
+                            </span>
+                            <a 
+                              href={`https://github.com/litlfred/sgex/actions`}
+                              className="actions-link"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              View Actions Log
+                            </a>
+                          </div>
+                        ) : (
+                          <a 
+                            href={pr.url} 
+                            className="preview-link"
+                            rel="noopener noreferrer"
+                          >
+                            <span>🚀 View Preview</span>
+                          </a>
+                        )}
+                      }
+                        
+                        <button 
+                          className="copy-btn"
+                          onClick={() => copyToClipboard(pr.url, 'PR', `#${pr.number}`)}
+                          title="Copy URL to clipboard"
+                        >
+                          📋 Copy URL
+                        </button>
+                        
+                        <a 
+                          href={pr.prUrl} 
+                          className="pr-link"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <span>📋 View PR</span>
+                        </a>
                       </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
 
-            {totalPRPages > 1 && (
-              <div className="pagination">
-                <button 
-                  className="pagination-btn"
-                  onClick={() => setPrPage(Math.max(1, prPage - 1))}
-                  disabled={prPage === 1}
-                >
-                  ← Previous
-                </button>
-                <span className="pagination-info">
-                  Page {prPage} of {totalPRPages} ({sortedPRs.length} total)
-                </span>
-                <button 
-                  className="pagination-btn"
-                  onClick={() => setPrPage(Math.min(totalPRPages, prPage + 1))}
-                  disabled={prPage === totalPRPages}
-                >
-                  Next →
-                </button>
-              </div>
+                      {/* Workflow Status */}
+                      <WorkflowStatus
+                        workflowStatus={workflowStatuses[pr.branchName]}
+                        branchName={pr.branchName}
+                        onTriggerWorkflow={triggerWorkflow}
+                        isAuthenticated={isAuthenticated}
+                        isLoading={loadingWorkflowStatuses}
+                      />
+                    </div>
+
+                    <div className="card-footer">
+                      <small className="preview-path">
+                        Preview URL: <a 
+                          href={pr.url} 
+                          className="preview-url-link"
+                          rel="noopener noreferrer"
+                        >
+                          {pr.url}
+                        </a>
+                      </small>
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
-        )}
 
-        <footer className="branch-listing-footer">
-          <div className="footer-content">
-            <div className="footer-left">
-              <a 
-                href="https://github.com/litlfred/sgex" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="source-link"
+          {totalPRPages > 1 && (
+            <div className="pagination">
+              <button 
+                className="pagination-btn"
+                onClick={() => setPrPage(Math.max(1, prPage - 1))}
+                disabled={prPage === 1}
               >
-                📦 Source Code
-              </a>
+                ← Previous
+              </button>
+              <span className="pagination-info">
+                Page {prPage} of {totalPRPages} ({sortedPRs.length} total)
+              </span>
+              <button 
+                className="pagination-btn"
+                onClick={() => setPrPage(Math.min(totalPRPages, prPage + 1))}
+                disabled={prPage === totalPRPages}
+              >
+                Next →
+              </button>
             </div>
-            <div className="footer-center">
-              <p>
-                <strong>Main Application:</strong> <a href="./main/index.html">View Main Branch →</a>
-              </p>
-            </div>
-          </div>
-        </footer>
+          )}
+        </div>
 
         {showContributeModal && (
           <HelpModal

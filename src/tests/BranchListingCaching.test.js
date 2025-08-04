@@ -64,16 +64,11 @@ describe('BranchListing Caching Integration', () => {
   });
 
   test('should cache PR data after initial fetch', async () => {
-    // Setup fetch mocks
-    fetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockBranchData)
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockPRData)
-      });
+    // Setup fetch mocks - only PR data needed now
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(mockPRData)
+    });
 
     // Render component
     render(
@@ -96,15 +91,9 @@ describe('BranchListing Caching Integration', () => {
 
   test('should use cached data on subsequent renders', async () => {
     // Pre-populate cache
-    const testPRs = [{
-      name: 'main',
-      safeName: 'main',
-      commit: { sha: 'cached123' },
-      url: './main/index.html',
-      lastModified: new Date().toLocaleDateString()
-    }];
+    const testBranches = []; // Empty branches since we don't use them anymore
     
-    const testBranches = [{
+    const testPRs = [{
       id: 1,
       number: 124,
       title: 'Cached PR',
@@ -118,7 +107,7 @@ describe('BranchListing Caching Integration', () => {
       createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
     }];
 
-    branchListingCacheService.setCachedData('litlfred', 'sgex', testPRs, testBranches);
+    branchListingCacheService.setCachedData('litlfred', 'sgex', testBranches, testPRs);
 
     // Render component
     render(
@@ -132,14 +121,18 @@ describe('BranchListing Caching Integration', () => {
       expect(screen.getByText('#124: Cached PR')).toBeInTheDocument();
     });
 
-    // Verify fetch was not called (using cache)
-    expect(fetch).not.toHaveBeenCalled();
+    // Verify fetch was not called for PR data (using cache)
+    // Note: fetch may be called for deployment status checks and comments, which is expected
+    const prFetchCalls = fetch.mock.calls.filter(call => 
+      call[0].includes('/pulls?state=') || call[0].includes('/repos/litlfred/sgex/pulls')
+    );
+    expect(prFetchCalls).toHaveLength(0);
   });
 
   test('should show cache status information', async () => {
     // Pre-populate cache with recent data
-    const testPRs = [];
-    const testBranches = [{
+    const testBranches = []; // Empty branches
+    const testPRs = [{
       id: 1,
       number: 125,
       title: 'Cache Status Test PR',
@@ -153,7 +146,7 @@ describe('BranchListing Caching Integration', () => {
       createdAt: new Date().toLocaleDateString()
     }];
 
-    branchListingCacheService.setCachedData('litlfred', 'sgex', testPRs, testBranches);
+    branchListingCacheService.setCachedData('litlfred', 'sgex', testBranches, testPRs);
 
     // Render component
     render(
@@ -195,15 +188,15 @@ describe('BranchListing Caching Integration', () => {
 
   test('should provide cache info correctly', () => {
     // Cache some test data
-    const testPRs = [];
-    const testBranches = [{
+    const testBranches = [];
+    const testPRs = [{
       id: 1,
       number: 126,
       title: 'Cache Info Test',
       state: 'open'
     }];
 
-    branchListingCacheService.setCachedData('litlfred', 'sgex', testPRs, testBranches);
+    branchListingCacheService.setCachedData('litlfred', 'sgex', testBranches, testPRs);
 
     // Get cache info
     const cacheInfo = branchListingCacheService.getCacheInfo('litlfred', 'sgex');

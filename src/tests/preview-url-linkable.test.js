@@ -24,16 +24,6 @@ describe('BranchListing Preview URL Links', () => {
   });
 
   it('should make preview URLs clickable links', async () => {
-    const mockBranches = [
-      {
-        name: 'feature/test',
-        commit: {
-          sha: 'abc123',
-          commit: { committer: { date: '2023-01-01T00:00:00Z' } }
-        }
-      }
-    ];
-
     const mockPRs = [
       {
         id: 1,
@@ -51,10 +41,6 @@ describe('BranchListing Preview URL Links', () => {
     fetch
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockBranches)
-      })
-      .mockResolvedValueOnce({
-        ok: true,
         json: () => Promise.resolve(mockPRs)
       })
       .mockResolvedValue({ ok: true, status: 200 });
@@ -66,7 +52,7 @@ describe('BranchListing Preview URL Links', () => {
     );
 
     // Wait for data to load and find preview URL links
-    await screen.findByText(/Pull Request Previews/);
+    await screen.findByText(/Pull Request Previews \(\d+\)/);
     
     // Check that preview URLs in card footers are clickable links
     const previewUrlLinks = screen.getAllByText(/Preview URL:/);
