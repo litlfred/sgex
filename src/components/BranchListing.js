@@ -678,7 +678,8 @@ const BranchListing = () => {
   // Filter and sort PRs based on search and sorting
   const filteredPRs = pullRequests.filter(pr => 
     pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
-    pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
+    pr.author.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
+    pr.branchName.toLowerCase().includes(prSearchTerm.toLowerCase())
   );
   const sortedPRs = sortPRs(filteredPRs, prSortBy);
   const paginatedPRs = sortedPRs.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
@@ -850,7 +851,7 @@ const BranchListing = () => {
             </div>
             <input
               type="text"
-              placeholder="Search pull requests by title or author..."
+              placeholder="Search pull requests by title, author, or branch name..."
               value={prSearchTerm}
               onChange={(e) => {
                 setPrSearchTerm(e.target.value);
