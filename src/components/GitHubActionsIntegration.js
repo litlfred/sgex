@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import githubService from '../services/githubService';
+import CommitDiffModal from './CommitDiffModal';
 import './GitHubActionsIntegration.css';
 
-const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }) => {
+const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess, profile }) => {
   const [workflows, setWorkflows] = useState([]);
   const [workflowRuns, setWorkflowRuns] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [triggeringWorkflow, setTriggeringWorkflow] = useState(null);
+  const [approvingRun, setApprovingRun] = useState(null);
+  const [showCommitDiff, setShowCommitDiff] = useState(false);
+  const [selectedCommit, setSelectedCommit] = useState(null);
 
   const owner = repository.owner?.login || repository.full_name.split('/')[0];
   const repoName = repository.name;
@@ -17,8 +21,61 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
   const loadWorkflowData = async () => {
     if (!githubService.isAuth()) {
       // In demo mode or without auth, show placeholder data
-      setWorkflows([]);
-      setWorkflowRuns([]);
+      if (profile?.isDemo || repository?.owner?.login === 'demo-user') {
+        setWorkflows([
+          { 
+            id: 'pages-build', 
+            name: 'Deploy to GitHub Pages', 
+            triggers: ['push', 'manual'],
+            filename: 'pages.yml',
+            url: `https://github.com/${owner}/${repoName}/blob/main/.github/workflows/pages.yml`
+          }
+        ]);
+        setWorkflowRuns([
+          {
+            id: 123456,
+            name: 'Deploy to GitHub Pages',
+            status: 'completed',
+            conclusion: 'success',
+            html_url: `https://github.com/${owner}/${repoName}/actions/runs/123456`,
+            created_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+            updated_at: new Date(Date.now() - 3500000).toISOString(),
+            run_number: 42,
+            actor: { login: 'demo-user' },
+            head_sha: 'abc123def456',
+            display_title: 'Add new feature documentation'
+          },
+          {
+            id: 123457,
+            name: 'Deploy to GitHub Pages',
+            status: 'completed',
+            conclusion: 'action_required',
+            html_url: `https://github.com/${owner}/${repoName}/actions/runs/123457`,
+            created_at: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+            updated_at: new Date(Date.now() - 7100000).toISOString(),
+            run_number: 41,
+            actor: { login: 'demo-user' },
+            head_sha: 'def456ghi789',
+            display_title: 'Update CI configuration for security'
+          },
+          {
+            id: 123458,
+            name: 'Deploy to GitHub Pages',
+            status: 'completed',
+            conclusion: 'failure',
+            html_url: `https://github.com/${owner}/${repoName}/actions/runs/123458`,
+            created_at: new Date(Date.now() - 10800000).toISOString(), // 3 hours ago
+            updated_at: new Date(Date.now() - 10700000).toISOString(),
+            run_number: 40,
+            actor: { login: 'demo-user' },
+            head_sha: 'ghi789jkl012',
+            display_title: 'Fix broken test suite'
+          }
+        ]);
+      } else {
+        setWorkflows([]);
+        setWorkflowRuns([]);
+      }
       return;
     }
 
@@ -82,6 +139,38 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
     }
   };
 
+  // Approve workflow run
+  const handleApproveWorkflow = async (runId) => {
+    if (!hasWriteAccess) return;
+
+    setApprovingRun(runId);
+
+    try {
+      await githubService.approveWorkflowRun(owner, repoName, runId);
+      
+      // Refresh workflow runs after approval
+      setTimeout(() => {
+        loadWorkflowData();
+      }, 2000);
+
+      alert('Workflow approved successfully!');
+    } catch (err) {
+      console.error('Error approving workflow:', err);
+      alert('Failed to approve workflow. Please check your permissions and try again.');
+    } finally {
+      setApprovingRun(null);
+    }
+  };
+
+  // Show commit diff modal
+  const handleViewChanges = (run) => {
+    setSelectedCommit({
+      sha: run.head_sha,
+      message: run.display_title || run.name
+    });
+    setShowCommitDiff(true);
+  };
+
   // Rerun workflow
   const handleRerunWorkflow = async (runId) => {
     if (!hasWriteAccess) return;
@@ -118,6 +207,8 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
         return '⏭️';
       case 'timed_out':
         return '⏰';
+      case 'action_required':
+        return '⏳';
       default:
         return '⚪';
     }
@@ -138,6 +229,8 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
         return '#6c757d';
       case 'timed_out':
         return '#fd7e14';
+      case 'action_required':
+        return '#6f42c1';
       default:
         return '#6c757d';
     }
@@ -177,7 +270,7 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
     );
   }
 
-  if (!githubService.isAuth()) {
+  if (!githubService.isAuth() && !(profile?.isDemo || repository?.owner?.login === 'demo-user')) {
     return (
       <div className="github-actions-placeholder">
         <div className="placeholder-content">
@@ -289,6 +382,16 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
                   </div>
                 </div>
                 <div className="run-actions">
+                  {hasWriteAccess && run.conclusion === 'action_required' && (
+                    <button
+                      className="approve-btn"
+                      onClick={() => handleApproveWorkflow(run.id)}
+                      disabled={approvingRun === run.id}
+                      title="Approve workflow run"
+                    >
+                      {approvingRun === run.id ? '⏳' : '👍'}
+                    </button>
+                  )}
                   {hasWriteAccess && run.conclusion === 'failure' && (
                     <button
                       className="rerun-btn"
@@ -298,6 +401,13 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
                       🔄
                     </button>
                   )}
+                  <button
+                    className="view-changes-btn"
+                    onClick={() => handleViewChanges(run)}
+                    title="View commit changes"
+                  >
+                    📋
+                  </button>
                   <a
                     href={run.html_url}
                     target="_blank"
@@ -320,6 +430,16 @@ const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess }
           </div>
         )}
       </div>
+      
+      {/* Commit Diff Modal */}
+      <CommitDiffModal
+        isOpen={showCommitDiff}
+        onClose={() => setShowCommitDiff(false)}
+        owner={owner}
+        repo={repoName}
+        commitSha={selectedCommit?.sha}
+        commitMessage={selectedCommit?.message}
+      />
     </div>
   );
 };
