@@ -1,5 +1,9 @@
 name: Branch Preview Deployment
 
+# IMPORTANT: This workflow handles ONLY branch preview deployments to subdirectories.
+# It does NOT and MUST NOT update the landing page at the repository root.
+# Landing page updates are handled exclusively by the "Deploy Landing Page" workflow.
+
 on:
   push:
     branches-ignore:
@@ -84,6 +88,12 @@ jobs:
           branch="${{ github.ref_name }}"
           echo "Processing branch: $branch"
           
+          # Critical validation: reject empty or whitespace-only branch names
+          if [[ -z "$branch" ]] || [[ "$branch" =~ ^[[:space:]]*$ ]]; then
+            echo "ERROR: Branch name is empty or contains only whitespace"
+            exit 1
+          fi
+          
           # Validate branch name (no dangerous characters)
           if [[ "$branch" =~ [^a-zA-Z0-9._/-] ]]; then
             echo "ERROR: Branch name contains unsafe characters: $branch"
@@ -93,6 +103,18 @@ jobs:
           # Replace slashes with dashes for safe directory names
           safe_branch_name=$(echo "$branch" | tr '/' '-')
           echo "Safe branch name: $safe_branch_name"
+          
+          # Critical validation: reject problematic directory names
+          if [[ -z "$safe_branch_name" ]] || [[ "$safe_branch_name" == "." ]] || [[ "$safe_branch_name" == ".." ]]; then
+            echo "ERROR: Branch name resolves to unsafe directory name: '$safe_branch_name'"
+            exit 1
+          fi
+          
+          # Reject names that could conflict with git or system directories
+          if [[ "$safe_branch_name" =~ ^\.(git|github)$ ]]; then
+            echo "ERROR: Branch name conflicts with reserved directory: $safe_branch_name"
+            exit 1
+          fi
           
           # Use simplified path structure: main goes to /main/, others to /safe-branch-name/
           if [[ "$branch" == "main" ]]; then
@@ -134,15 +156,29 @@ jobs:
             exit 1
           fi
           
+          # Critical safety: ensure target subdirectory doesn't resolve to root
+          if [[ "$target_subdir" == "." ]] || [[ -z "$target_subdir" ]]; then
+            echo "ERROR: Target subdirectory would resolve to repository root"
+            echo "This would overwrite the landing page - deployment aborted"
+            exit 1
+          fi
+          
           # Don't create the directory here - we'll create it on the gh-pages branch
           # Just validate the path structure for safety
-          resolved_target="$target_dir"
+          resolved_target="$(realpath -m "$target_dir" 2>/dev/null || echo "$target_dir")"
           
           # Validate the target would be safe when resolved
-          if [[ "$resolved_target" != "$repo_root"* ]] || [[ ${#resolved_target} -le ${#repo_root} ]]; then
-            echo "ERROR: Target validation failed"
+          if [[ "$resolved_target" != "$repo_root"* ]] || [[ ${#resolved_target} -le ${#repo_root} ]] || [[ "$resolved_target" == "$repo_root" ]]; then
+            echo "ERROR: Target validation failed - would deploy to or escape repository root"
             echo "Repository root: $repo_root"
-            echo "Target directory: $resolved_target"
+            echo "Target directory: $target_dir"
+            echo "Resolved target: $resolved_target"
+            exit 1
+          fi
+          
+          # Final safety check: ensure resolved path is deeper than repo root
+          if [[ "$resolved_target" == "$repo_root" ]] || [[ "$resolved_target" == "$repo_root/" ]]; then
+            echo "ERROR: Resolved target path equals repository root - this would overwrite the landing page"
             exit 1
           fi
           
@@ -237,8 +273,8 @@ jobs:
           
           echo "✅ Build copied successfully to $branch_dir"
 
-      # Note: Landing page deployment is now handled by a separate workflow
-      # This workflow focuses solely on branch-specific deployments
+      # CRITICAL SAFETY NOTE: Landing page deployment is handled by a separate workflow
+      # This workflow must NEVER deploy to the repository root - only to branch subdirectories
 
       - name: Stage and commit changes (with validation)
         shell: bash
