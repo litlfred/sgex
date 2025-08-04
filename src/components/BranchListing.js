@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from './framework';
 import HelpModal from './HelpModal';
 import PATLogin from './PATLogin';
+import WorkflowStatus from './WorkflowStatus';
+import githubActionsService from '../services/githubActionsService';
+import branchListingCacheService from '../services/branchListingCacheService';
 import useThemeImage from '../hooks/useThemeImage';
 import './BranchListing.css';
 
@@ -26,14 +29,30 @@ const BranchListing = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [githubToken, setGithubToken] = useState(null);
   const [prComments, setPrComments] = useState({});
-  const [loadingComments, setLoadingComments] = useState(false);
   const [commentInputs, setCommentInputs] = useState({});
   const [submittingComments, setSubmittingComments] = useState({});
+  const [commentErrors, setCommentErrors] = useState({});
   const [expandedDiscussions, setExpandedDiscussions] = useState({});
   const [discussionSummaries, setDiscussionSummaries] = useState({});
   const [loadingSummaries, setLoadingSummaries] = useState(false);
+  const [workflowStatuses, setWorkflowStatuses] = useState({});
+  const [loadingWorkflowStatuses, setLoadingWorkflowStatuses] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [cacheInfo, setCacheInfo] = useState(null);
 
   const ITEMS_PER_PAGE = 10;
+  const GITHUB_OWNER = 'litlfred';
+  const GITHUB_REPO = 'sgex';
+
+  // Function to manually refresh cache and reload data
+  const handleManualRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    
+    // Clear the cache to force fresh data
+    branchListingCacheService.forceRefresh(GITHUB_OWNER, GITHUB_REPO);
+    
+    // The fetchData function will be called by the useEffect when isRefreshing changes
+  }, []);
 
   // GitHub authentication functions
   const handleAuthSuccess = (token, octokitInstance) => {
@@ -41,27 +60,35 @@ const BranchListing = () => {
     setIsAuthenticated(true);
     // Store token for session
     sessionStorage.setItem('github_token', token);
+    // Set token for GitHub Actions service
+    githubActionsService.setToken(token);
   };
 
   const handleLogout = () => {
     setGithubToken(null);
     setIsAuthenticated(false);
     sessionStorage.removeItem('github_token');
+    // Clear token from GitHub Actions service
+    githubActionsService.setToken(null);
   };
 
   // Function to fetch PR comments summary
   const fetchPRCommentsSummary = useCallback(async (prNumber) => {
-    if (!githubToken) return null;
+    // Allow fetching comments even without authentication for read-only access
     
     try {
+      const headers = {
+        'Accept': 'application/vnd.github.v3+json'
+      };
+      
+      // Add authorization header only if token is available
+      if (githubToken) {
+        headers['Authorization'] = `token ${githubToken}`;
+      }
+      
       const response = await fetch(
         `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-        {
-          headers: {
-            'Authorization': `token ${githubToken}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        }
+        { headers }
       );
       
       if (!response.ok) {
@@ -90,17 +117,21 @@ const BranchListing = () => {
 
   // Function to fetch all PR comments (for expanded view)
   const fetchAllPRComments = useCallback(async (prNumber) => {
-    if (!githubToken) return [];
+    // Allow fetching comments even without authentication for read-only access
     
     try {
+      const headers = {
+        'Accept': 'application/vnd.github.v3+json'
+      };
+      
+      // Add authorization header only if token is available
+      if (githubToken) {
+        headers['Authorization'] = `token ${githubToken}`;
+      }
+      
       const response = await fetch(
         `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-        {
-          headers: {
-            'Authorization': `token ${githubToken}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        }
+        { headers }
       );
       
       if (!response.ok) {
@@ -123,7 +154,7 @@ const BranchListing = () => {
 
   // Function to load discussion summaries for visible PRs
   const loadDiscussionSummaries = useCallback(async (prs) => {
-    if (!githubToken || prs.length === 0) return;
+    if (prs.length === 0) return;
     
     setLoadingSummaries(true);
     const summaries = {};
@@ -134,7 +165,7 @@ const BranchListing = () => {
     
     setDiscussionSummaries(summaries);
     setLoadingSummaries(false);
-  }, [githubToken, fetchPRCommentsSummary]);
+  }, [fetchPRCommentsSummary]);
 
   // Function to toggle discussion expansion
   const toggleDiscussion = async (prNumber) => {
@@ -183,45 +214,12 @@ const BranchListing = () => {
     return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
   };
 
-  // Function to fetch PR comments
-  const fetchPRComments = useCallback(async (prNumber) => {
-    if (!githubToken) return [];
-    
-    try {
-      const response = await fetch(
-        `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-        {
-          headers: {
-            'Authorization': `token ${githubToken}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch comments: ${response.status}`);
-      }
-      
-      const comments = await response.json();
-      // Return last 4 comments, truncated to 2 lines each
-      return comments.slice(-4).map(comment => ({
-        id: comment.id,
-        author: comment.user.login,
-        body: comment.body.split('\n').slice(0, 2).join('\n').substring(0, 200) + (comment.body.length > 200 ? '...' : ''),
-        created_at: new Date(comment.created_at).toLocaleDateString(),
-        avatar_url: comment.user.avatar_url
-      }));
-    } catch (error) {
-      console.error(`Error fetching comments for PR ${prNumber}:`, error);
-      return [];
-    }
-  }, [githubToken]);
-
   // Function to submit a comment
   const submitComment = async (prNumber, commentText) => {
     if (!githubToken || !commentText.trim()) return false;
     
     setSubmittingComments(prev => ({ ...prev, [prNumber]: true }));
+    setCommentErrors(prev => ({ ...prev, [prNumber]: null })); // Clear previous errors
     
     try {
       const response = await fetch(
@@ -240,7 +238,23 @@ const BranchListing = () => {
       );
       
       if (!response.ok) {
-        throw new Error(`Failed to submit comment: ${response.status}`);
+        let errorMessage = 'Failed to submit comment';
+        
+        if (response.status === 401) {
+          errorMessage = 'Authentication failed. Please check your token permissions.';
+        } else if (response.status === 403) {
+          errorMessage = 'Permission denied. You may not have write access to this repository.';
+        } else if (response.status === 404) {
+          errorMessage = 'Pull request not found or repository access denied.';
+        } else if (response.status === 422) {
+          errorMessage = 'Invalid comment content. Please check your message.';
+        } else if (response.status >= 500) {
+          errorMessage = 'GitHub server error. Please try again later.';
+        } else {
+          errorMessage = `Failed to submit comment (Error ${response.status})`;
+        }
+        
+        throw new Error(errorMessage);
       }
       
       // Clear the comment input
@@ -259,26 +273,68 @@ const BranchListing = () => {
       return true;
     } catch (error) {
       console.error(`Error submitting comment for PR ${prNumber}:`, error);
+      
+      // Set user-friendly error message
+      const errorMessage = error.message || 'An unexpected error occurred while submitting your comment';
+      setCommentErrors(prev => ({ ...prev, [prNumber]: errorMessage }));
+      
       return false;
     } finally {
       setSubmittingComments(prev => ({ ...prev, [prNumber]: false }));
     }
   };
 
-  // Function to load comments for all visible PRs
-  const loadCommentsForPRs = useCallback(async (prs) => {
-    if (!githubToken || prs.length === 0) return;
+  // Function to load workflow statuses for branches
+  const loadWorkflowStatuses = useCallback(async (branchData, prData) => {
+    if (!githubToken) return;
     
-    setLoadingComments(true);
-    const comments = {};
+    setLoadingWorkflowStatuses(true);
     
-    for (const pr of prs) {
-      comments[pr.number] = await fetchPRComments(pr.number);
+    try {
+      // Get all branch names (from both branches and PRs)
+      const branchNames = [
+        ...branchData.map(branch => branch.name),
+        ...prData.map(pr => pr.branchName)
+      ];
+      
+      const uniqueBranchNames = [...new Set(branchNames)];
+      const statuses = await githubActionsService.getWorkflowStatusForBranches(uniqueBranchNames);
+      
+      setWorkflowStatuses(statuses);
+    } catch (error) {
+      console.error('Error loading workflow statuses:', error);
+    } finally {
+      setLoadingWorkflowStatuses(false);
+    }
+  }, [githubToken]);
+
+  // Function to trigger workflow for a branch
+  const triggerWorkflow = useCallback(async (branchName) => {
+    if (!githubToken) {
+      alert('Please authenticate to trigger workflows');
+      return;
     }
     
-    setPrComments(comments);
-    setLoadingComments(false);
-  }, [githubToken, fetchPRComments]);
+    try {
+      const success = await githubActionsService.triggerWorkflow(branchName);
+      if (success) {
+        alert(`Workflow triggered for branch: ${branchName}`);
+        // Refresh workflow statuses after a short delay
+        setTimeout(() => {
+          const currentBranches = branches.length > 0 ? branches : [];
+          const currentPRs = pullRequests.length > 0 ? pullRequests : [];
+          loadWorkflowStatuses(currentBranches, currentPRs);
+        }, 2000);
+      } else {
+        alert(`Failed to trigger workflow for branch: ${branchName}`);
+      }
+    } catch (error) {
+      console.error('Error triggering workflow:', error);
+      alert(`Error triggering workflow: ${error.message}`);
+    }
+  }, [githubToken, branches, pullRequests, loadWorkflowStatuses]);
+
+
 
   // Check for existing authentication on component mount
   useEffect(() => {
@@ -286,6 +342,8 @@ const BranchListing = () => {
     if (token) {
       setGithubToken(token);
       setIsAuthenticated(true);
+      // Set token for GitHub Actions service
+      githubActionsService.setToken(token);
     }
   }, []);
 
@@ -487,163 +545,205 @@ const BranchListing = () => {
     ]
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+  // Main data fetching function
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Check cache first
+      const cachedData = branchListingCacheService.getCachedData(GITHUB_OWNER, GITHUB_REPO);
+      if (cachedData && !isRefreshing) {
+        console.log('Using cached branch listing data');
+        setBranches(cachedData.branches);
+        setPullRequests(cachedData.pullRequests);
         
-        // Use GitHub API to fetch branches and PRs for the sgex repository
-        const owner = 'litlfred';
-        const repo = 'sgex';
+        // Update cache info for display
+        setCacheInfo(branchListingCacheService.getCacheInfo(GITHUB_OWNER, GITHUB_REPO));
         
-        // Fetch branches
-        const branchResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches`);
-        if (!branchResponse.ok) {
-          throw new Error(`Failed to fetch branches: ${branchResponse.status}`);
+        // Still check deployment statuses and other real-time data
+        await checkAllDeploymentStatuses(cachedData.branches, cachedData.pullRequests);
+        
+        // Load workflow statuses if authenticated
+        if (githubToken) {
+          await loadWorkflowStatuses(cachedData.branches, cachedData.pullRequests);
         }
-        const branchData = await branchResponse.json();
         
-        // Fetch pull requests based on filter
-        const prState = prFilter === 'all' ? 'all' : prFilter;
-        const prResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls?state=${prState}&sort=updated&per_page=100`);
-        if (!prResponse.ok) {
-          throw new Error(`Failed to fetch pull requests: ${prResponse.status}`);
-        }
-        const prData = await prResponse.json();
+        // Load discussion summaries for PRs
+        const filtered = cachedData.pullRequests.filter(pr => 
+          pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
+          pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
+        );
+        const sorted = sortPRs(filtered, prSortBy);
+        const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
+        await loadDiscussionSummaries(paginated);
         
-        // Filter out gh-pages branch and format data
-        const filteredBranches = branchData
-          .filter(branch => branch.name !== 'gh-pages')
-          .map(branch => {
-            // Convert branch name to safe directory name (replace slashes with dashes)
-            const safeName = branch.name.replace(/\//g, '-');
-            return {
-              name: branch.name,
-              safeName: safeName,
-              commit: branch.commit,
-              url: `./${safeName}/index.html`,
-              lastModified: branch.commit.commit?.committer?.date 
-                ? new Date(branch.commit.commit.committer.date).toLocaleDateString()
-                : 'Unknown'
-            };
-          });
-        
-        // Format PR data
-        const formattedPRs = prData.map(pr => {
-          const safeBranchName = pr.head.ref.replace(/\//g, '-');
+        setLoading(false);
+        return;
+      }
+      
+      // If no cache or force refresh, fetch from GitHub API
+      console.log('Fetching fresh branch listing data from GitHub API');
+      
+      // Use GitHub API to fetch branches and PRs for the sgex repository
+      // Fetch branches
+      const branchResponse = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/branches`);
+      if (!branchResponse.ok) {
+        throw new Error(`Failed to fetch branches: ${branchResponse.status}`);
+      }
+      const branchData = await branchResponse.json();
+      
+      // Fetch pull requests based on filter
+      const prState = prFilter === 'all' ? 'all' : prFilter;
+      const prResponse = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/pulls?state=${prState}&sort=updated&per_page=100`);
+      if (!prResponse.ok) {
+        throw new Error(`Failed to fetch pull requests: ${prResponse.status}`);
+      }
+      const prData = await prResponse.json();
+      
+      // Filter out gh-pages branch and format data
+      const filteredBranches = branchData
+        .filter(branch => branch.name !== 'gh-pages')
+        .map(branch => {
+          // Convert branch name to safe directory name (replace slashes with dashes)
+          const safeName = branch.name.replace(/\//g, '-');
           return {
-            id: pr.id,
-            number: pr.number,
-            title: pr.title,
-            state: pr.state,
-            author: pr.user.login,
-            branchName: pr.head.ref,
-            safeBranchName: safeBranchName,
-            url: `./${safeBranchName}/index.html`,
-            prUrl: pr.html_url,
-            updatedAt: new Date(pr.updated_at).toLocaleDateString(),
-            createdAt: new Date(pr.created_at).toLocaleDateString()
+            name: branch.name,
+            safeName: safeName,
+            commit: branch.commit,
+            url: `./${safeName}/index.html`,
+            lastModified: branch.commit.commit?.committer?.date 
+              ? new Date(branch.commit.commit.committer.date).toLocaleDateString()
+              : 'Unknown'
           };
         });
-        
-        setBranches(filteredBranches);
-        setPullRequests(formattedPRs);
-        
-        // Check deployment statuses
-        await checkAllDeploymentStatuses(filteredBranches, formattedPRs);
-        
-        // Load discussion summaries for PRs if authenticated
-        if (githubToken) {
-          await loadDiscussionSummaries(formattedPRs.slice(0, ITEMS_PER_PAGE));
-        }
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(err.message);
-        
-        // Only use fallback data in development or when GitHub API is blocked
-        if (process.env.NODE_ENV === 'development' || err.message.includes('Failed to fetch')) {
-          console.log('Using fallback mock data for demonstration...');
-          const mockBranches = [
-            {
-              name: 'main',
-              safeName: 'main',
-              commit: { sha: 'abc1234' },
-              url: './main/index.html',
-              lastModified: new Date().toLocaleDateString()
-            },
-            {
-              name: 'feature/user-auth',
-              safeName: 'feature-user-auth',
-              commit: { sha: 'def5678' },
-              url: './feature-user-auth/index.html',
-              lastModified: new Date(Date.now() - 86400000).toLocaleDateString()
-            },
-            {
-              name: 'fix/api-endpoints',
-              safeName: 'fix-api-endpoints',
-              commit: { sha: 'ghi9012' },
-              url: './fix-api-endpoints/index.html',
-              lastModified: new Date(Date.now() - 172800000).toLocaleDateString()
-            }
-          ];
-
-          const mockPRs = [
-            {
-              id: 1,
-              number: 123,
-              title: 'Improve multi-page selector landing page for GitHub deployment',
-              state: 'open',
-              author: 'copilot',
-              branchName: 'copilot/fix-459',
-              safeBranchName: 'copilot-fix-459',
-              url: './copilot-fix-459/index.html',
-              prUrl: 'https://github.com/litlfred/sgex/pull/123',
-              updatedAt: new Date().toLocaleDateString(),
-              createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
-            },
-            {
-              id: 2,
-              number: 122,
-              title: 'Add dark mode support',
-              state: 'closed',
-              author: 'developer',
-              branchName: 'feature/dark-mode',
-              safeBranchName: 'feature-dark-mode',
-              url: './feature-dark-mode/index.html',
-              prUrl: 'https://github.com/litlfred/sgex/pull/122',
-              updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
-              createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
-            },
-            {
-              id: 3,
-              number: 121,
-              title: 'Fix authentication flow',
-              state: 'open',
-              author: 'contributor',
-              branchName: 'fix/auth-flow',
-              safeBranchName: 'fix-auth-flow',
-              url: './fix-auth-flow/index.html',
-              prUrl: 'https://github.com/litlfred/sgex/pull/121',
-              updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
-              createdAt: new Date(Date.now() - 432000000).toLocaleDateString()
-            }
-          ];
-
-          setBranches(mockBranches);
-          setPullRequests(mockPRs);
-          setError(null); // Clear error since we have fallback data
-        }
-      } finally {
-        setLoading(false);
+      
+      // Format PR data
+      const formattedPRs = prData.map(pr => {
+        const safeBranchName = pr.head.ref.replace(/\//g, '-');
+        return {
+          id: pr.id,
+          number: pr.number,
+          title: pr.title,
+          state: pr.state,
+          author: pr.user.login,
+          branchName: pr.head.ref,
+          safeBranchName: safeBranchName,
+          url: `./${safeBranchName}/index.html`,
+          prUrl: pr.html_url,
+          updatedAt: new Date(pr.updated_at).toLocaleDateString(),
+          createdAt: new Date(pr.created_at).toLocaleDateString()
+        };
+      });
+      
+      // Cache the fetched data
+      branchListingCacheService.setCachedData(GITHUB_OWNER, GITHUB_REPO, filteredBranches, formattedPRs);
+      
+      // Update cache info for display
+      setCacheInfo(branchListingCacheService.getCacheInfo(GITHUB_OWNER, GITHUB_REPO));
+      
+      setBranches(filteredBranches);
+      setPullRequests(formattedPRs);
+      
+      // Check deployment statuses
+      await checkAllDeploymentStatuses(filteredBranches, formattedPRs);
+      
+      // Load workflow statuses if authenticated
+      if (githubToken) {
+        await loadWorkflowStatuses(filteredBranches, formattedPRs);
       }
-    };
+      
+      // Load discussion summaries for PRs - available for all users
+      await loadDiscussionSummaries(formattedPRs.slice(0, ITEMS_PER_PAGE));
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err.message);
+      
+      // Only use fallback data in development or when GitHub API is blocked
+      if (process.env.NODE_ENV === 'development' || err.message.includes('Failed to fetch')) {
+        console.log('Using fallback mock data for demonstration...');
+        const mockBranches = [
+          {
+            name: 'main',
+            safeName: 'main',
+            commit: { sha: 'abc1234' },
+            url: './main/index.html',
+            lastModified: new Date().toLocaleDateString()
+          },
+          {
+            name: 'feature/user-auth',
+            safeName: 'feature-user-auth',
+            commit: { sha: 'def5678' },
+            url: './feature-user-auth/index.html',
+            lastModified: new Date(Date.now() - 86400000).toLocaleDateString()
+          },
+          {
+            name: 'fix/api-endpoints',
+            safeName: 'fix-api-endpoints',
+            commit: { sha: 'ghi9012' },
+            url: './fix-api-endpoints/index.html',
+            lastModified: new Date(Date.now() - 172800000).toLocaleDateString()
+          }
+        ];
 
+        const mockPRs = [
+          {
+            id: 1,
+            number: 123,
+            title: 'Improve multi-page selector landing page for GitHub deployment',
+            state: 'open',
+            author: 'copilot',
+            branchName: 'copilot/fix-459',
+            safeBranchName: 'copilot-fix-459',
+            url: './copilot-fix-459/index.html',
+            prUrl: 'https://github.com/litlfred/sgex/pull/123',
+            updatedAt: new Date().toLocaleDateString(),
+            createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
+          },
+          {
+            id: 2,
+            number: 122,
+            title: 'Add dark mode support',
+            state: 'closed',
+            author: 'developer',
+            branchName: 'feature/dark-mode',
+            safeBranchName: 'feature-dark-mode',
+            url: './feature-dark-mode/index.html',
+            prUrl: 'https://github.com/litlfred/sgex/pull/122',
+            updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
+            createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
+          },
+          {
+            id: 3,
+            number: 121,
+            title: 'Fix authentication flow',
+            state: 'open',
+            author: 'contributor',
+            branchName: 'fix/auth-flow',
+            safeBranchName: 'fix-auth-flow',
+            url: './fix-auth-flow/index.html',
+            prUrl: 'https://github.com/litlfred/sgex/pull/121',
+            updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
+            createdAt: new Date(Date.now() - 432000000).toLocaleDateString()
+          }
+        ];
+
+        setBranches(mockBranches);
+        setPullRequests(mockPRs);
+        setError(null); // Clear error since we have fallback data
+      }
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadWorkflowStatuses, loadDiscussionSummaries, isRefreshing, prSearchTerm, prSortBy, prPage]);
+
+  useEffect(() => {
     fetchData();
-  }, [checkAllDeploymentStatuses, prFilter, githubToken, loadCommentsForPRs, loadDiscussionSummaries]);
+  }, [fetchData]);
 
   // Load summaries for visible PRs when page changes
   useEffect(() => {
-    if (isAuthenticated && pullRequests.length > 0) {
+    if (pullRequests.length > 0) {
       const filtered = pullRequests.filter(pr => 
         pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
         pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
@@ -652,7 +752,7 @@ const BranchListing = () => {
       const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
       loadDiscussionSummaries(paginated);
     }
-  }, [prPage, prSearchTerm, prSortBy, pullRequests, isAuthenticated, loadDiscussionSummaries]);
+  }, [prPage, prSearchTerm, prSortBy, pullRequests, loadDiscussionSummaries]);
 
   // Filter and sort PRs based on search and sorting
   const filteredPRs = pullRequests.filter(pr => 
@@ -708,6 +808,22 @@ const BranchListing = () => {
               🐾 This landing page lists all available previews. 
               Each branch and PR is automatically deployed to its own preview environment.
             </p>
+            {cacheInfo && cacheInfo.exists && (
+              <div className="cache-status">
+                <span className="cache-info">
+                  📊 Data cached {cacheInfo.ageMinutes} minute{cacheInfo.ageMinutes !== 1 ? 's' : ''} ago
+                  {cacheInfo.stale && ' (refreshing...)'}
+                </span>
+                <button 
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="refresh-btn"
+                  title="Refresh data from GitHub API"
+                >
+                  {isRefreshing ? '🔄' : '🔄'} {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                </button>
+              </div>
+            )}
           </div>
           
           {/* Authentication Section */}
@@ -885,6 +1001,15 @@ const BranchListing = () => {
                             📋 Copy URL
                           </button>
                         </div>
+
+                        {/* Workflow Status */}
+                        <WorkflowStatus
+                          workflowStatus={workflowStatuses[branch.name]}
+                          branchName={branch.name}
+                          onTriggerWorkflow={triggerWorkflow}
+                          isAuthenticated={isAuthenticated}
+                          isLoading={loadingWorkflowStatuses}
+                        />
                       </div>
 
                       <div className="card-footer">
@@ -989,60 +1114,74 @@ const BranchListing = () => {
                           Created: {pr.createdAt} • Updated: {pr.updatedAt}
                         </p>
                         
-                        {/* Discussion Summary Section */}
-                        {isAuthenticated && (
-                          <div>
-                            {/* Discussion Summary Status Bar */}
-                            <div 
-                              className="discussion-summary-bar"
-                              onClick={() => toggleDiscussion(pr.number)}
-                            >
-                              <div className="discussion-summary-text">
-                                <span className="discussion-summary-icon">💬</span>
-                                {getDiscussionSummaryText(pr.number)}
-                              </div>
-                              <span className={`discussion-expand-icon ${expandedDiscussions[pr.number] ? 'expanded' : ''}`}>
-                                ▶
-                              </span>
+                        {/* Discussion Summary Section - Show for all users */}
+                        <div>
+                          {/* Discussion Summary Status Bar */}
+                          <div 
+                            className="discussion-summary-bar"
+                            onClick={() => toggleDiscussion(pr.number)}
+                          >
+                            <div className="discussion-summary-text">
+                              <span className="discussion-summary-icon">💬</span>
+                              {getDiscussionSummaryText(pr.number)}
                             </div>
+                            <span className={`discussion-expand-icon ${expandedDiscussions[pr.number] ? 'expanded' : ''}`}>
+                              ▶
+                            </span>
+                          </div>
 
-                            {/* Expanded Discussion Section */}
-                            {expandedDiscussions[pr.number] && (
-                              <div className="discussion-expanded-section">
-                                <div className="discussion-header">
-                                  <h4 className="discussion-title">Discussion</h4>
-                                  <div className="discussion-actions">
-                                    <a 
-                                      href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="discussion-action-btn"
-                                    >
-                                      📁 View Files
-                                    </a>
-                                    <a 
-                                      href={pr.prUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="discussion-action-btn secondary"
-                                    >
-                                      🔗 Full Discussion
-                                    </a>
-                                  </div>
+                          {/* Expanded Discussion Section */}
+                          {expandedDiscussions[pr.number] && (
+                            <div className="discussion-expanded-section">
+                              <div className="discussion-header">
+                                <h4 className="discussion-title">Discussion</h4>
+                                <div className="discussion-actions">
+                                  <a 
+                                    href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="discussion-action-btn"
+                                  >
+                                    📁 View Files
+                                  </a>
+                                  <a 
+                                    href={pr.prUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="discussion-action-btn secondary"
+                                  >
+                                    🔗 Full Discussion
+                                  </a>
                                 </div>
-                                
-                                {/* Comment Input at Top */}
+                              </div>
+                              
+                              {/* Comment Input at Top - Only show for authenticated users */}
+                              {isAuthenticated ? (
                                 <div className="comment-input-section">
                                   <textarea
                                     value={commentInputs[pr.number] || ''}
-                                    onChange={(e) => setCommentInputs(prev => ({
-                                      ...prev,
-                                      [pr.number]: e.target.value
-                                    }))}
+                                    onChange={(e) => {
+                                      setCommentInputs(prev => ({
+                                        ...prev,
+                                        [pr.number]: e.target.value
+                                      }));
+                                      // Clear error when user starts typing
+                                      if (commentErrors[pr.number]) {
+                                        setCommentErrors(prev => ({
+                                          ...prev,
+                                          [pr.number]: null
+                                        }));
+                                      }
+                                    }}
                                     placeholder="Add a comment..."
                                     className="comment-input"
                                     rows={3}
                                   />
+                                  {commentErrors[pr.number] && (
+                                    <div className="comment-error-message">
+                                      ⚠️ {commentErrors[pr.number]}
+                                    </div>
+                                  )}
                                   <button
                                     onClick={() => submitComment(pr.number, commentInputs[pr.number])}
                                     disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
@@ -1051,36 +1190,42 @@ const BranchListing = () => {
                                     {submittingComments[pr.number] ? 'Submitting...' : 'Add Comment'}
                                   </button>
                                 </div>
-                                
-                                {/* Scrollable Comments Area */}
-                                <div className="discussion-scroll-area">
-                                  {loadingComments ? (
-                                    <div className="comments-loading">Loading full discussion...</div>
-                                  ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
-                                    <div className="comments-list">
-                                      {prComments[pr.number].map((comment) => (
-                                        <div key={comment.id} className="comment-item">
-                                          <div className="comment-header">
-                                            <img 
-                                              src={comment.avatar_url} 
-                                              alt={comment.author} 
-                                              className="comment-avatar"
-                                            />
-                                            <span className="comment-author">{comment.author}</span>
-                                            <span className="comment-date">{comment.created_at}</span>
-                                          </div>
-                                          <div className="comment-body">{comment.body}</div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="no-comments">No comments yet. Be the first to comment!</div>
-                                  )}
+                              ) : (
+                                <div className="comment-auth-message">
+                                  <p>
+                                    🔐 <a href="#auth-section" onClick={() => document.querySelector('.auth-section')?.scrollIntoView()}>Sign in</a> to add comments to this discussion
+                                  </p>
                                 </div>
+                              )}
+                              
+                              {/* Scrollable Comments Area */}
+                              <div className="discussion-scroll-area">
+                                {prComments[pr.number] && prComments[pr.number].length > 0 ? (
+                                  <div className="comments-list">
+                                    {prComments[pr.number].map((comment) => (
+                                      <div key={comment.id} className="comment-item">
+                                        <div className="comment-header">
+                                          <img 
+                                            src={comment.avatar_url} 
+                                            alt={comment.author} 
+                                            className="comment-avatar"
+                                          />
+                                          <span className="comment-author">{comment.author}</span>
+                                          <span className="comment-date">{comment.created_at}</span>
+                                        </div>
+                                        <div className="comment-body">{comment.body}</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="no-comments">
+                                    No comments yet. {isAuthenticated ? 'Be the first to comment!' : 'Sign in to be the first to comment!'}
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        )}
+                            </div>
+                          )}
+                        </div>
                         
                         <div className="pr-actions">
                           {deploymentStatus === 'active' ? (
@@ -1138,6 +1283,15 @@ const BranchListing = () => {
                             <span>📋 View PR</span>
                           </a>
                         </div>
+
+                        {/* Workflow Status */}
+                        <WorkflowStatus
+                          workflowStatus={workflowStatuses[pr.branchName]}
+                          branchName={pr.branchName}
+                          onTriggerWorkflow={triggerWorkflow}
+                          isAuthenticated={isAuthenticated}
+                          isLoading={loadingWorkflowStatuses}
+                        />
                       </div>
 
                       <div className="card-footer">
