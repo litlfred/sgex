@@ -2,6 +2,7 @@ import { Octokit } from '@octokit/rest';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
 import logger from '../utils/logger';
+import { sanitizeLogData, maskToken, isValidPATFormat } from '../utils/securityUtils';
 
 class GitHubService {
   constructor() {
@@ -16,7 +17,19 @@ class GitHubService {
   // Initialize with a GitHub token (supports both OAuth and PAT tokens)
   authenticate(token) {
     const startTime = Date.now();
-    this.logger.auth('Starting authentication', { tokenProvided: !!token, tokenLength: token ? token.length : 0 });
+    
+    // Validate token format before proceeding
+    if (!isValidPATFormat(token)) {
+      this.logger.warn('Invalid token format provided for authentication');
+      return false;
+    }
+    
+    const sanitizedLogData = sanitizeLogData({ 
+      tokenProvided: !!token, 
+      tokenLength: token ? token.length : 0,
+      maskedToken: token ? maskToken(token) : null
+    });
+    this.logger.auth('Starting authentication', sanitizedLogData);
     
     try {
       this.octokit = new Octokit({
@@ -31,7 +44,8 @@ class GitHubService {
       return true;
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.logger.auth('Authentication failed', { error: error.message, duration });
+      const sanitizedError = sanitizeLogData({ error: error.message, duration });
+      this.logger.auth('Authentication failed', sanitizedError);
       console.error('Failed to authenticate with GitHub:', error);
       this.isAuthenticated = false;
       return false;

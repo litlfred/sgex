@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useTranslation } from 'react-i18next';
 import logger from "../utils/logger";
+import secureTokenStorage from "../services/secureTokenStorage";
+import { isValidPATFormat, sanitizeLogData } from "../utils/securityUtils";
 import "./PATLogin.css";
 
 const PATLogin = ({ onAuthSuccess }) => {
@@ -17,12 +19,21 @@ const PATLogin = ({ onAuthSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    componentLogger.userAction('PAT login attempt', { tokenProvided: !!token.trim() });
+    const sanitizedLogData = sanitizeLogData({ tokenProvided: !!token.trim() });
+    componentLogger.userAction('PAT login attempt', sanitizedLogData);
     
     if (!token.trim()) {
       const errorMsg = "Please enter a GitHub Personal Access Token";
       setError(errorMsg);
       componentLogger.warn('PAT login failed - no token provided');
+      return;
+    }
+
+    // Validate token format before making API call
+    if (!isValidPATFormat(token.trim())) {
+      const errorMsg = "Invalid Personal Access Token format. Please check your token.";
+      setError(errorMsg);
+      componentLogger.warn('PAT login failed - invalid token format');
       return;
     }
 
@@ -43,21 +54,32 @@ const PATLogin = ({ onAuthSuccess }) => {
       const duration = Date.now() - startTime;
       componentLogger.apiResponse('GET', '/user', userResponse.status, duration);
       
-      componentLogger.auth('PAT authentication successful', { 
+      // Store token securely
+      const tokenStored = secureTokenStorage.storeToken(token.trim(), {
+        username: userResponse.data.login
+      });
+
+      if (!tokenStored) {
+        throw new Error('Failed to store token securely');
+      }
+      
+      const sanitizedAuthData = sanitizeLogData({ 
         username: userResponse.data.login,
         duration 
       });
+      componentLogger.auth('PAT authentication successful', sanitizedAuthData);
       
       // Call success callback with token and octokit instance
       onAuthSuccess(token.trim(), octokit);
     } catch (err) {
       const duration = Date.now() - startTime;
       componentLogger.apiError('GET', '/user', err);
-      componentLogger.auth('PAT authentication failed', { 
+      const sanitizedErrorData = sanitizeLogData({ 
         status: err.status, 
         message: err.message,
         duration 
       });
+      componentLogger.auth('PAT authentication failed', sanitizedErrorData);
       console.error('PAT authentication failed:', err);
       
       if (err.status === 401) {

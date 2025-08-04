@@ -5,6 +5,7 @@ import PATLogin from './PATLogin';
 import WorkflowStatus from './WorkflowStatus';
 import githubActionsService from '../services/githubActionsService';
 import branchListingCacheService from '../services/branchListingCacheService';
+import secureTokenStorage from '../services/secureTokenStorage';
 import useThemeImage from '../hooks/useThemeImage';
 import './BranchListing.css';
 
@@ -58,8 +59,7 @@ const BranchListing = () => {
   const handleAuthSuccess = (token, octokitInstance) => {
     setGithubToken(token);
     setIsAuthenticated(true);
-    // Store token for session
-    sessionStorage.setItem('github_token', token);
+    // Store token securely (this is already done in PATLogin)
     // Set token for GitHub Actions service
     githubActionsService.setToken(token);
   };
@@ -67,7 +67,8 @@ const BranchListing = () => {
   const handleLogout = () => {
     setGithubToken(null);
     setIsAuthenticated(false);
-    sessionStorage.removeItem('github_token');
+    // Clear secure token storage
+    secureTokenStorage.clearToken();
     // Clear token from GitHub Actions service
     githubActionsService.setToken(null);
   };
@@ -338,11 +339,11 @@ const BranchListing = () => {
 
   // Check for existing authentication on component mount
   useEffect(() => {
-    const token = sessionStorage.getItem('github_token');
+    // Check for stored authentication token on component mount
+    const token = secureTokenStorage.getToken();
     if (token) {
       setGithubToken(token);
       setIsAuthenticated(true);
-      // Set token for GitHub Actions service
       githubActionsService.setToken(token);
     }
   }, []);

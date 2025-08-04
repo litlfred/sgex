@@ -1,0 +1,41 @@
+# Security Headers for SGEX Workbench
+# These headers enhance security for the application
+
+/*
+  # Content Security Policy - Prevents XSS and code injection attacks
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://api.github.com https://*.github.com; media-src 'self'; object-src 'none'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
+  
+  # Prevent MIME type sniffing
+  X-Content-Type-Options: nosniff
+  
+  # Prevent clickjacking attacks
+  X-Frame-Options: DENY
+  
+  # Enable XSS protection in older browsers
+  X-XSS-Protection: 1; mode=block
+  
+  # Control referrer information leaked to other sites
+  Referrer-Policy: strict-origin-when-cross-origin
+  
+  # Force HTTPS and prevent downgrade attacks (only for HTTPS sites)
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  
+  # Restrict browser features for privacy and security
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), magnetometer=(), gyroscope=(), fullscreen=(self), payment=()
+
+# Cache control for static assets (security-related)
+/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Don't cache sensitive pages
+/dashboard/*
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+
+# Security for service worker and manifest files
+/service-worker.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  
+/manifest.json
+  Cache-Control: public, max-age=86400
