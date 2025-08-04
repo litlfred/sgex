@@ -18,35 +18,53 @@ jest.mock('../utils/logger', () => ({
 
 import branchListingCacheService from './branchListingCacheService';
 
-// Create a simple localStorage mock that actually works
-const createLocalStorageMock = () => {
-  let store = {};
-  
-  return {
-    getItem: jest.fn((key) => store[key] || null),
-    setItem: jest.fn((key, value) => {
-      if (store._simulateQuotaExceeded) {
-        delete store._simulateQuotaExceeded;
-        throw new Error('Storage quota exceeded');
-      }
-      store[key] = value;
-    }),
-    removeItem: jest.fn((key) => delete store[key]),
-    clear: jest.fn(() => { store = {}; }),
-    get length() { return Object.keys(store).length; },
-    key: jest.fn((index) => Object.keys(store)[index] || null),
-    // Test helpers
-    _store: store,
-    _reset() { store = {}; }
-  };
+// Create a working localStorage mock
+let mockStore = {};
+
+const localStorageMock = {
+  getItem: jest.fn((key) => {
+    return mockStore[key] || null;
+  }),
+  setItem: jest.fn((key, value) => {
+    if (mockStore._simulateQuotaExceeded) {
+      delete mockStore._simulateQuotaExceeded;
+      throw new Error('Storage quota exceeded');
+    }
+    mockStore[key] = value.toString();
+  }),
+  removeItem: jest.fn((key) => {
+    delete mockStore[key];
+  }),
+  clear: jest.fn(() => {
+    mockStore = {};
+  }),
+  get length() {
+    return Object.keys(mockStore).length;
+  },
+  key: jest.fn((index) => Object.keys(mockStore)[index] || null),
+  // Test helpers
+  _reset() { 
+    mockStore = {}; 
+    this.getItem.mockClear();
+    this.setItem.mockClear();
+    this.removeItem.mockClear();
+    this.clear.mockClear();
+  }
 };
 
-const localStorageMock = createLocalStorageMock();
-
+// Replace global localStorage
 Object.defineProperty(global, 'localStorage', {
   value: localStorageMock,
   writable: true
 });
+
+// Also mock window.localStorage if it exists
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'localStorage', {
+    value: localStorageMock,
+    writable: true
+  });
+}
 
 describe('BranchListingCacheService', () => {
   const testOwner = 'litlfred';
@@ -62,7 +80,6 @@ describe('BranchListingCacheService', () => {
 
   beforeEach(() => {
     localStorageMock._reset();
-    jest.clearAllMocks();
   });
 
   describe('Cache Key Generation', () => {
@@ -120,7 +137,7 @@ describe('BranchListingCacheService', () => {
         owner: testOwner,
         repo: testRepo
       };
-      localStorageMock._store[cacheKey] = JSON.stringify(staleData);
+      mockStore[cacheKey] = JSON.stringify(staleData);
       
       const cached = branchListingCacheService.getCachedData(testOwner, testRepo);
       expect(cached).toBeNull();
@@ -188,7 +205,7 @@ describe('BranchListingCacheService', () => {
   describe('Error Handling', () => {
     test('should handle localStorage errors gracefully', () => {
       // Trigger storage quota exceeded error 
-      localStorageMock._store._simulateQuotaExceeded = true;
+      mockStore._simulateQuotaExceeded = true;
 
       const result = branchListingCacheService.setCachedData(
         testOwner, 
@@ -203,7 +220,7 @@ describe('BranchListingCacheService', () => {
       const cacheKey = branchListingCacheService.getCacheKey(testOwner, testRepo);
       
       // Set invalid JSON data
-      localStorageMock._store[cacheKey] = 'invalid json{';
+      mockStore[cacheKey] = 'invalid json{';
       
       const cached = branchListingCacheService.getCachedData(testOwner, testRepo);
       expect(cached).toBeNull();
