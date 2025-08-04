@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/sgex/dependabot-npm_and_yarn-web-vitals-5.1.0/static/css/main.7857d15d.css",
+    "main.js": "/sgex/dependabot-npm_and_yarn-web-vitals-5.1.0/static/js/main.1fe46f1d.js",
+    "static/js/488.4faa50a5.chunk.js": "/sgex/dependabot-npm_and_yarn-web-vitals-5.1.0/static/js/488.4faa50a5.chunk.js",
+    "index.html": "/sgex/dependabot-npm_and_yarn-web-vitals-5.1.0/index.html",
+    "main.7857d15d.css.map": "/sgex/dependabot-npm_and_yarn-web-vitals-5.1.0/static/css/main.7857d15d.css.map",
+    "main.1fe46f1d.js.map": "/sgex/dependabot-npm_and_yarn-web-vitals-5.1.0/static/js/main.1fe46f1d.js.map",
+    "488.4faa50a5.chunk.js.map": "/sgex/dependabot-npm_and_yarn-web-vitals-5.1.0/static/js/488.4faa50a5.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.7857d15d.css",
+    "static/js/main.1fe46f1d.js"
+  ]
+}
