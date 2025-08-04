@@ -194,5 +194,49 @@ describe('GitHubService BPMN functionality', () => {
       expect(files).toHaveLength(1);
       expect(files[0].name).toBe('duplicate.bpmn');
     });
+
+    it('should suppress console warnings for 404 errors', async () => {
+      const mockError = new Error('Not Found');
+      mockError.status = 404;
+      
+      // Create a spy on console.warn to verify it's not called for 404 errors
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      
+      // Mock all paths to return 404 errors
+      mockOctokit.rest.repos.getContent.mockRejectedValue(mockError);
+
+      const files = await githubService.getBpmnFiles('owner', 'repo');
+
+      // Should return empty array when no directories exist
+      expect(files).toEqual([]);
+      
+      // console.warn should not have been called for 404 errors
+      expect(consoleSpy).not.toHaveBeenCalled();
+      
+      consoleSpy.mockRestore();
+    });
+
+    it('should still log warnings for non-404 errors', async () => {
+      const mockError = new Error('Internal Server Error');
+      mockError.status = 500;
+      
+      // Create a spy on console.warn to verify it's called for non-404 errors
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      
+      // Mock first path to return 500 error, others to succeed with empty results
+      mockOctokit.rest.repos.getContent
+        .mockRejectedValueOnce(mockError)
+        .mockResolvedValue({ data: [] });
+
+      const files = await githubService.getBpmnFiles('owner', 'repo');
+
+      // Should return empty array
+      expect(files).toEqual([]);
+      
+      // console.warn should have been called for the 500 error
+      expect(consoleSpy).toHaveBeenCalledWith('Could not fetch BPMN files from input/business-processes:', 'Internal Server Error');
+      
+      consoleSpy.mockRestore();
+    });
   });
 });

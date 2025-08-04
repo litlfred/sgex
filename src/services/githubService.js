@@ -998,8 +998,30 @@ class GitHubService {
   // Recursively fetch BPMN files from a directory and its subdirectories
   async getBpmnFilesRecursive(owner, repo, path, ref = 'main', allFiles = []) {
     try {
-      // Use authenticated octokit if available, otherwise create a public instance
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      // Create a custom logger that suppresses 404 errors for expected BPMN directory searches
+      const quietLogger = {
+        debug: () => {},
+        info: () => {},
+        warn: (message, ...args) => {
+          // Suppress 404 warnings for BPMN directory searches
+          if (typeof message === 'string' && message.includes('404')) {
+            return;
+          }
+          console.warn(message, ...args);
+        },
+        error: (message, ...args) => {
+          // Suppress 404 errors for BPMN directory searches
+          if (typeof message === 'string' && message.includes('404')) {
+            return;
+          }
+          console.error(message, ...args);
+        }
+      };
+
+      // Use authenticated octokit if available, otherwise create a public instance with quiet logger
+      const octokit = this.isAuth() ? this.octokit : new Octokit({
+        log: quietLogger
+      });
       
       const { data } = await octokit.rest.repos.getContent({
         owner,
@@ -1056,7 +1078,10 @@ class GitHubService {
         const files = await this.getBpmnFilesRecursive(owner, repo, path, ref);
         allBpmnFiles.push(...files);
       } catch (error) {
-        console.warn(`Could not fetch BPMN files from ${path}:`, error.message);
+        // Only log warnings for unexpected errors (not 404s which are expected when directories don't exist)
+        if (error.status !== 404) {
+          console.warn(`Could not fetch BPMN files from ${path}:`, error.message);
+        }
         // Continue trying other paths
       }
     }
