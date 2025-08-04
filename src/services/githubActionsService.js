@@ -152,6 +152,16 @@ class GitHubActionsService {
       displayStatus = 'In Progress';
       badgeClass = 'in-progress';
       icon = '🟡';
+    } else if (status === 'waiting') {
+      // Handle workflows waiting for approval or manual intervention
+      displayStatus = 'Awaiting Approval';
+      badgeClass = 'waiting';
+      icon = '🟠';
+    } else if (status === 'requested') {
+      // Handle workflows that are requested but haven't started yet
+      displayStatus = 'Requested';
+      badgeClass = 'requested';
+      icon = '🔵';
     } else if (status === 'completed') {
       if (conclusion === 'success') {
         displayStatus = 'Succeeded';
@@ -161,6 +171,10 @@ class GitHubActionsService {
         displayStatus = 'Failed';
         badgeClass = 'failed';
         icon = '🔴';
+      } else if (conclusion === 'action_required') {
+        displayStatus = 'Action Required';
+        badgeClass = 'action-required';
+        icon = '🟠';
       } else {
         displayStatus = 'Completed';
         badgeClass = 'completed';

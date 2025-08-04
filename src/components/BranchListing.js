@@ -550,7 +550,7 @@ const BranchListing = () => {
             author: pr.user.login,
             branchName: pr.head.ref,
             safeBranchName: safeBranchName,
-            url: `./${safeBranchName}/index.html`,
+            url: `./${safeBranchName}/`,
             prUrl: pr.html_url,
             updatedAt: new Date(pr.updated_at).toLocaleDateString(),
             createdAt: new Date(pr.created_at).toLocaleDateString()
@@ -617,7 +617,7 @@ const BranchListing = () => {
               author: 'copilot',
               branchName: 'copilot/fix-459',
               safeBranchName: 'copilot-fix-459',
-              url: './copilot-fix-459/index.html',
+              url: './copilot-fix-459/',
               prUrl: 'https://github.com/litlfred/sgex/pull/123',
               updatedAt: new Date().toLocaleDateString(),
               createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
@@ -630,7 +630,7 @@ const BranchListing = () => {
               author: 'developer',
               branchName: 'feature/dark-mode',
               safeBranchName: 'feature-dark-mode',
-              url: './feature-dark-mode/index.html',
+              url: './feature-dark-mode/',
               prUrl: 'https://github.com/litlfred/sgex/pull/122',
               updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
               createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
@@ -643,7 +643,7 @@ const BranchListing = () => {
               author: 'contributor',
               branchName: 'fix/auth-flow',
               safeBranchName: 'fix-auth-flow',
-              url: './fix-auth-flow/index.html',
+              url: './fix-auth-flow/',
               prUrl: 'https://github.com/litlfred/sgex/pull/121',
               updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
               createdAt: new Date(Date.now() - 432000000).toLocaleDateString()
@@ -743,7 +743,7 @@ const BranchListing = () => {
               <p>Access the stable main branch of the SGEX workbench with the latest published features.</p>
               <div className="main-branch-actions">
                 <a 
-                  href="./main/index.html" 
+                  href="./main/" 
                   className="main-branch-link"
                   rel="noopener noreferrer"
                 >
@@ -911,6 +911,18 @@ const BranchListing = () => {
                         Created: {pr.createdAt} • Updated: {pr.updatedAt}
                       </p>
                       
+                      {/* PR Actions - View Files button at the top */}
+                      <div className="pr-top-actions">
+                        <a 
+                          href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="view-files-btn"
+                        >
+                          📁 View Files
+                        </a>
+                      </div>
+                      
                       {/* Discussion Summary Section - Show for all users */}
                       <div>
                         {/* Discussion Summary Status Bar */}
@@ -933,14 +945,6 @@ const BranchListing = () => {
                             <div className="discussion-header">
                               <h4 className="discussion-title">Discussion</h4>
                               <div className="discussion-actions">
-                                <a 
-                                  href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="discussion-action-btn"
-                                >
-                                  📁 View Files
-                                </a>
                                 <a 
                                   href={pr.prUrl}
                                   target="_blank"
@@ -1050,7 +1054,6 @@ const BranchListing = () => {
                             <span>🚀 View Preview</span>
                           </a>
                         )}
-                      }
                         
                         <button 
                           className="copy-btn"

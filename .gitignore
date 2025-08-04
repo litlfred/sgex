@@ -82,6 +82,7 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+temp_serve/
 
 # Test artifacts
 /cypress/videos
