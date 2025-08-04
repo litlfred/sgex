@@ -745,6 +745,7 @@ const BranchListing = () => {
                 <a 
                   href="./main/index.html" 
                   className="main-branch-link"
+                  target="_blank"
                   rel="noopener noreferrer"
                 >
                   Launch Main Branch
@@ -1017,6 +1018,7 @@ const BranchListing = () => {
                           <a 
                             href={pr.url} 
                             className="preview-link"
+                            target="_blank"
                             rel="noopener noreferrer"
                           >
                             <span>🚀 View Preview</span>
@@ -1045,6 +1047,7 @@ const BranchListing = () => {
                           <a 
                             href={pr.url} 
                             className="preview-link"
+                            target="_blank"
                             rel="noopener noreferrer"
                           >
                             <span>🚀 View Preview</span>
@@ -1085,6 +1088,7 @@ const BranchListing = () => {
                         Preview URL: <a 
                           href={pr.url} 
                           className="preview-url-link"
+                          target="_blank"
                           rel="noopener noreferrer"
                         >
                           {pr.url}
