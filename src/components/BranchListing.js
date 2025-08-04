@@ -528,11 +528,16 @@ const BranchListing = () => {
         
         // Fetch pull requests based on filter
         const prState = prFilter === 'all' ? 'all' : prFilter;
+        console.log(`Fetching PRs with state: ${prState} from GitHub API`);
+        
         const prResponse = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/pulls?state=${prState}&sort=updated&per_page=100`);
         if (!prResponse.ok) {
-          throw new Error(`Failed to fetch pull requests: ${prResponse.status}`);
+          const errorText = await prResponse.text();
+          console.error(`GitHub API error: ${prResponse.status} - ${errorText}`);
+          throw new Error(`Failed to fetch pull requests: ${prResponse.status} - ${prResponse.statusText}`);
         }
         const prData = await prResponse.json();
+        console.log(`Fetched ${prData.length} PRs from GitHub API`);
         
         // Format PR data
         const formattedPRs = prData.map(pr => {
@@ -571,6 +576,34 @@ const BranchListing = () => {
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err.message);
+        
+        // Check if this is a network/CORS issue
+        if (err.message.includes('Failed to fetch') || err.message.includes('CORS')) {
+          console.log('Network/CORS error detected, checking if we can use cache or fallback data...');
+          
+          // Try to use any existing cached data even if stale
+          const cachedDataRaw = localStorage.getItem(branchListingCacheService.getCacheKey(GITHUB_OWNER, GITHUB_REPO));
+          if (cachedDataRaw) {
+            try {
+              const parsed = JSON.parse(cachedDataRaw);
+              console.log('Using stale cached data due to network error');
+              setPullRequests(parsed.pullRequests.filter(pr => {
+                if (prFilter === 'all') return true;
+                return pr.state === prFilter;
+              }));
+              setCacheInfo({
+                exists: true,
+                stale: true,
+                ageMinutes: Math.round((Date.now() - parsed.timestamp) / (60 * 1000)),
+                prCount: parsed.pullRequests?.length || 0
+              });
+              setError('Using cached data (network error occurred)');
+              return;
+            } catch (parseError) {
+              console.error('Error parsing stale cache:', parseError);
+            }
+          }
+        }
         
         // Only use fallback data in development or when GitHub API is blocked
         if (process.env.NODE_ENV === 'development' || err.message.includes('Failed to fetch')) {

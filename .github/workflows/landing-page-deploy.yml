@@ -92,14 +92,15 @@ jobs:
             git push origin gh-pages
           fi
           
-          # Preserve all existing branch directories
+          # Preserve all existing branch directories (exclude problematic cache directories)
           echo "Preserving existing branch directories..."
           if ls -d */ > /dev/null 2>&1; then
             mkdir -p /tmp/branch-backup
             for dir in */; do
-              if [[ "$dir" != "node_modules/" ]]; then
+              if [[ "$dir" != "node_modules/" && "$dir" != ".cache/" ]]; then
                 echo "Backing up directory: $dir"
-                cp -r "$dir" /tmp/branch-backup/
+                # Exclude cache subdirectories when copying
+                rsync -av --exclude='*/node_modules/.cache' --exclude='*/.cache' "$dir" /tmp/branch-backup/
               fi
             done
           fi
@@ -107,6 +108,11 @@ jobs:
           # Clear root (except .git and branch directories)
           echo "Clearing root directory for landing page deployment..."
           find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name '.github' -exec rm -rf {} +
+          
+          # Also clean up any cache directories that might exist
+          echo "Cleaning up cache directories..."
+          find . -name "node_modules/.cache" -type d -exec rm -rf {} + 2>/dev/null || true
+          find . -name ".cache" -type d -exec rm -rf {} + 2>/dev/null || true
           
           # Deploy landing page to root
           echo "Deploying landing page to root..."

@@ -2,23 +2,7 @@
  * Branch Listing Cache Service Tests
  */
 
-// Mock logger to avoid localStorage conflicts
-jest.mock('../utils/logger', () => ({
-  __esModule: true,
-  default: {
-    getLogger: jest.fn(() => ({
-      debug: jest.fn(),
-      info: jest.fn(), 
-      warn: jest.fn(),
-      error: jest.fn(),
-      cache: jest.fn()
-    }))
-  }
-}));
-
-import branchListingCacheService from './branchListingCacheService';
-
-// Create a working localStorage mock
+// Create a working localStorage mock FIRST
 let mockStore = {};
 
 const localStorageMock = {
@@ -52,7 +36,7 @@ const localStorageMock = {
   }
 };
 
-// Replace global localStorage
+// Replace global localStorage BEFORE any imports
 Object.defineProperty(global, 'localStorage', {
   value: localStorageMock,
   writable: true
@@ -65,6 +49,23 @@ if (typeof window !== 'undefined') {
     writable: true
   });
 }
+
+// Mock logger to avoid localStorage conflicts
+jest.mock('../utils/logger', () => ({
+  __esModule: true,
+  default: {
+    getLogger: jest.fn(() => ({
+      debug: jest.fn(),
+      info: jest.fn(), 
+      warn: jest.fn(),
+      error: jest.fn(),
+      cache: jest.fn()
+    }))
+  }
+}));
+
+// NOW import the cache service after mocks are set up
+import branchListingCacheService from './branchListingCacheService';
 
 describe('BranchListingCacheService', () => {
   const testOwner = 'litlfred';
