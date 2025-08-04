@@ -998,30 +998,8 @@ class GitHubService {
   // Recursively fetch BPMN files from a directory and its subdirectories
   async getBpmnFilesRecursive(owner, repo, path, ref = 'main', allFiles = []) {
     try {
-      // Create a custom logger that suppresses 404 errors for expected BPMN directory searches
-      const quietLogger = {
-        debug: () => {},
-        info: () => {},
-        warn: (message, ...args) => {
-          // Suppress 404 warnings for BPMN directory searches
-          if (typeof message === 'string' && message.includes('404')) {
-            return;
-          }
-          console.warn(message, ...args);
-        },
-        error: (message, ...args) => {
-          // Suppress 404 errors for BPMN directory searches
-          if (typeof message === 'string' && message.includes('404')) {
-            return;
-          }
-          console.error(message, ...args);
-        }
-      };
-
-      // Use authenticated octokit if available, otherwise create a public instance with quiet logger
-      const octokit = this.isAuth() ? this.octokit : new Octokit({
-        log: quietLogger
-      });
+      // Use authenticated octokit if available, otherwise create a public instance
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
       
       const { data } = await octokit.rest.repos.getContent({
         owner,
@@ -1062,15 +1040,10 @@ class GitHubService {
   async getBpmnFiles(owner, repo, ref = 'main') {
     const allBpmnFiles = [];
     
-    // Try multiple possible directory names where BPMN files might be stored
+    // Search for BPMN files in the specified business process directories
     const possiblePaths = [
       'input/business-processes',
-      'input/business-process',
-      'public/docs/workflows',
-      'docs/workflows',
-      'workflows',
-      'bpmn',
-      'processes'
+      'input/business-process'
     ];
 
     for (const path of possiblePaths) {

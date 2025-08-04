@@ -223,7 +223,7 @@ describe('GitHubService BPMN functionality', () => {
       // Create a spy on console.warn to verify it's called for non-404 errors
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
       
-      // Mock first path to return 500 error, others to succeed with empty results
+      // Mock first path to return 500 error, second path to succeed with empty results
       mockOctokit.rest.repos.getContent
         .mockRejectedValueOnce(mockError)
         .mockResolvedValue({ data: [] });
