@@ -110,27 +110,26 @@ export const PageProvider = ({ children, pageName }) => {
                 throw new Error(`User '${user}' not found or not accessible.`);
               }
             } else {
-              // Demo mode for DAK validation
-              const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
-              if (!isValidDAK) {
-                // For dashboard pages, redirect instead of throwing error
-                if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
-                  navigate('/', { 
-                    state: { 
-                      warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
-                    }, 
-                    replace: true 
-                  });
-                  return;
-                }
-                throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
+              // Demo mode - allow broader access for direct URL access
+              // Check if this is a known demo DAK first
+              const isKnownDAK = dakValidationService.validateDemoDAKRepository(user, repo);
+              
+              if (!isKnownDAK) {
+                console.log(`Demo mode: Repository '${user}/${repo}' not in known DAK patterns - allowing access with warning`);
+                // Instead of blocking access, set a flag to show a warning later
+                // This allows users to try accessing any repository via direct URL
+              } else {
+                console.log(`Demo mode: Repository '${user}/${repo}' is a recognized DAK pattern`);
               }
+              
+              // Create demo profile for any user - more permissive for direct URL access
               profile = {
                 login: user,
                 name: user.charAt(0).toUpperCase() + user.slice(1),
                 avatar_url: `https://github.com/${user}.png`,
                 type: 'User',
-                isDemo: true
+                isDemo: true,
+                isUnknownDAK: !isKnownDAK  // Flag to indicate this might not be a valid DAK
               };
             }
           }
@@ -168,29 +167,26 @@ export const PageProvider = ({ children, pageName }) => {
                 throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
               }
             } else {
-              // For demo mode, validate the demo repository exists
+              // Demo mode - allow broader access for direct URL access
               const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
+              
               if (!isValidDAK) {
-                // For dashboard pages, redirect instead of throwing error
-                if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
-                  navigate('/', { 
-                    state: { 
-                      warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
-                    }, 
-                    replace: true 
-                  });
-                  return;
-                }
-                throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
+                console.log(`Demo mode: Repository '${user}/${repo}' not in known DAK patterns - allowing access with warning`);
+                // Don't block access - create a demo repository entry
+                // This allows users to try accessing any repository via direct URL
+              } else {
+                console.log(`Demo mode: Repository '${user}/${repo}' is a recognized DAK pattern`);
               }
               
+              // Create demo repository for any user/repo - more permissive for direct URL access
               repository = {
                 name: repo,
                 full_name: `${user}/${repo}`,
                 owner: { login: user },
                 default_branch: selectedBranch || 'main',
                 html_url: `https://github.com/${user}/${repo}`,
-                isDemo: true
+                isDemo: true,
+                isUnknownDAK: !isValidDAK  // Flag to indicate this might not be a valid DAK
               };
             }
           }
