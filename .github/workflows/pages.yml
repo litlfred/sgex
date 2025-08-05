@@ -74,10 +74,41 @@ jobs:
           fi
           echo "Building with BASE_PATH: $BASE_PATH"
           
-          # Get build script from deploy branch
+          # Get build script from deploy branch (fallback to local if deploy branch doesn't exist)
           echo "Fetching build script from deploy branch..."
-          git fetch origin deploy
-          git checkout origin/deploy -- scripts/build-multi-branch.js
+          if git fetch origin deploy 2>/dev/null; then
+            echo "Deploy branch found, using build script from deploy branch"
+            git checkout origin/deploy -- scripts/build-multi-branch.js
+          else
+            echo "Deploy branch not found, checking if build script exists locally..."
+            if [[ ! -f "scripts/build-multi-branch.js" ]]; then
+              echo "ERROR: Build script not found and deploy branch doesn't exist"
+              echo "Creating minimal build script as fallback..."
+              mkdir -p scripts
+              cat > scripts/build-multi-branch.js << 'EOF'
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+
+console.log('Building React app for deployment...');
+
+// Simplified build process
+try {
+  // Set environment variables
+  process.env.NODE_ENV = 'production';
+  process.env.PUBLIC_URL = process.env.BASE_PATH || '/';
+  
+  // Run the build
+  execSync('npm run build', { stdio: 'inherit' });
+  
+  console.log('✅ Build completed successfully');
+} catch (error) {
+  console.error('❌ Build failed:', error.message);
+  process.exit(1);
+}
+EOF
+            fi
+          fi
           
           # Run the build script
           node scripts/build-multi-branch.js branch
@@ -231,10 +262,12 @@ jobs:
           
           branch_dir="${{ steps.validate_branch.outputs.branch_dir }}"
           repo_root="$(pwd)"
+          target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
           
           echo "Cleaning old deployment"
           echo "Branch directory: $branch_dir"
           echo "Repository root: $repo_root"
+          echo "Target subdirectory: $target_subdir"
           
           # Validate before any destructive operations
           if [[ "$branch_dir" != "$repo_root"* ]] || [[ ${#branch_dir} -le ${#repo_root} ]]; then
@@ -242,10 +275,22 @@ jobs:
             exit 1
           fi
           
-          # Use git to safely remove the branch directory
+          # Additional safety: ensure we're only removing the specific branch directory
+          if [[ "$target_subdir" == "." || "$target_subdir" == ".." || -z "$target_subdir" ]]; then
+            echo "ERROR: Invalid target subdirectory: '$target_subdir'"
+            exit 1
+          fi
+          
+          # Use git to safely remove the specific branch directory only
           if [[ -d "$branch_dir" ]]; then
             echo "Removing existing deployment: $branch_dir"
-            git rm -rf "$branch_dir" || echo "Directory didn't exist in git"
+            # Additional safety: only remove if it matches our expected pattern
+            if [[ "$branch_dir" == "$repo_root/$target_subdir" ]]; then
+              git rm -rf "$target_subdir" 2>/dev/null || echo "Directory didn't exist in git"
+            else
+              echo "ERROR: Branch directory path doesn't match expected pattern"
+              exit 1
+            fi
           else
             echo "No existing deployment to clean"
           fi
