@@ -1524,6 +1524,157 @@ class GitHubService {
     return this.getIssues(owner, repo, options);
   }
 
+  // Get repository forks
+  async getForks(owner, repo, options = {}) {
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/forks`, options);
+
+    try {
+      // Use the GitHub API to fetch forks, no authentication required for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const params = {
+        owner,
+        repo,
+        sort: options.sort || 'newest',
+        per_page: options.per_page || 100,
+        page: options.page || 1
+      };
+
+      const { data } = await octokit.rest.repos.listForks(params);
+      
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/forks`, 200, Date.now() - startTime);
+      
+      // Return formatted fork data
+      return data.map(fork => ({
+        id: fork.id,
+        name: fork.name,
+        full_name: fork.full_name,
+        owner: {
+          login: fork.owner.login,
+          avatar_url: fork.owner.avatar_url,
+          html_url: fork.owner.html_url,
+          type: fork.owner.type
+        },
+        description: fork.description,
+        html_url: fork.html_url,
+        clone_url: fork.clone_url,
+        created_at: fork.created_at,
+        updated_at: fork.updated_at,
+        pushed_at: fork.pushed_at,
+        stargazers_count: fork.stargazers_count,
+        forks_count: fork.forks_count,
+        open_issues_count: fork.open_issues_count,
+        default_branch: fork.default_branch,
+        private: fork.private,
+        fork: fork.fork,
+        parent: fork.parent ? {
+          full_name: fork.parent.full_name,
+          html_url: fork.parent.html_url
+        } : null
+      }));
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/forks`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch repository forks:', error);
+      throw error;
+    }
+  }
+
+  // Get pull requests for a specific repository
+  async getPullRequests(owner, repo, options = {}) {
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls`, options);
+
+    try {
+      // Use the GitHub API to fetch pull requests, no authentication required for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const params = {
+        owner,
+        repo,
+        state: options.state || 'open',
+        sort: options.sort || 'updated',
+        direction: options.direction || 'desc',
+        per_page: options.per_page || 30,
+        page: options.page || 1
+      };
+
+      // Add optional filters
+      if (options.head) {
+        params.head = options.head;
+      }
+      if (options.base) {
+        params.base = options.base;
+      }
+
+      const { data } = await octokit.rest.pulls.list(params);
+      
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, 200, Date.now() - startTime);
+      
+      // Return formatted pull request data
+      return data.map(pr => ({
+        id: pr.id,
+        number: pr.number,
+        title: pr.title,
+        body: pr.body,
+        state: pr.state,
+        locked: pr.locked,
+        user: {
+          login: pr.user.login,
+          avatar_url: pr.user.avatar_url,
+          html_url: pr.user.html_url,
+          type: pr.user.type
+        },
+        created_at: pr.created_at,
+        updated_at: pr.updated_at,
+        closed_at: pr.closed_at,
+        merged_at: pr.merged_at,
+        html_url: pr.html_url,
+        diff_url: pr.diff_url,
+        patch_url: pr.patch_url,
+        head: {
+          ref: pr.head.ref,
+          sha: pr.head.sha,
+          repo: pr.head.repo ? {
+            name: pr.head.repo.name,
+            full_name: pr.head.repo.full_name,
+            owner: {
+              login: pr.head.repo.owner.login,
+              avatar_url: pr.head.repo.owner.avatar_url
+            },
+            html_url: pr.head.repo.html_url
+          } : null
+        },
+        base: {
+          ref: pr.base.ref,
+          sha: pr.base.sha,
+          repo: {
+            name: pr.base.repo.name,
+            full_name: pr.base.repo.full_name,
+            owner: {
+              login: pr.base.repo.owner.login,
+              avatar_url: pr.base.repo.owner.avatar_url
+            },
+            html_url: pr.base.repo.html_url
+          }
+        },
+        draft: pr.draft,
+        mergeable: pr.mergeable,
+        mergeable_state: pr.mergeable_state,
+        comments: pr.comments,
+        review_comments: pr.review_comments,
+        commits: pr.commits,
+        additions: pr.additions,
+        deletions: pr.deletions,
+        changed_files: pr.changed_files
+      }));
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch pull requests:', error);
+      throw error;
+    }
+  }
+
   // Logout
   logout() {
     this.octokit = null;
