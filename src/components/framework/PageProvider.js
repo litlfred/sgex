@@ -97,17 +97,16 @@ export const PageProvider = ({ children, pageName }) => {
               try {
                 profile = await githubService.getUser(user);
               } catch (err) {
-                // For dashboard pages, redirect instead of throwing error
-                if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
-                  navigate('/', { 
-                    state: { 
-                      warningMessage: `Could not access the requested DAK. User '${user}' not found or not accessible.` 
-                    }, 
-                    replace: true 
-                  });
-                  return;
-                }
-                throw new Error(`User '${user}' not found or not accessible.`);
+                console.log(`Authenticated mode: User '${user}' not found via GitHub API - allowing access with warning`);
+                // Instead of redirecting, create a basic profile and let content loading handle the error
+                // This allows authenticated users to try accessing any user via direct URL
+                profile = {
+                  login: user,
+                  name: user.charAt(0).toUpperCase() + user.slice(1),
+                  avatar_url: `https://github.com/${user}.png`,
+                  type: 'User',
+                  isUnknownUser: true  // Flag to indicate this user might not exist
+                };
               }
             } else {
               // Demo mode - allow broader access for direct URL access
@@ -141,30 +140,22 @@ export const PageProvider = ({ children, pageName }) => {
                 // Validate it's a DAK repository
                 const isValidDAK = await dakValidationService.validateDAKRepository(user, repo, selectedBranch || repository.default_branch);
                 if (!isValidDAK) {
-                  // For dashboard pages, redirect instead of throwing error
-                  if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
-                    navigate('/', { 
-                      state: { 
-                        warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' is not a valid DAK repository.` 
-                      }, 
-                      replace: true 
-                    });
-                    return;
-                  }
-                  throw new Error(`Repository '${user}/${repo}' is not a valid DAK repository.`);
+                  console.log(`Authenticated mode: Repository '${user}/${repo}' is not a valid DAK repository - allowing access with warning`);
+                  // Instead of redirecting, flag the repository and let content loading handle the error
+                  repository.isNotValidDAK = true;
                 }
               } catch (err) {
-                // For dashboard pages, redirect instead of throwing error
-                if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
-                  navigate('/', { 
-                    state: { 
-                      warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
-                    }, 
-                    replace: true 
-                  });
-                  return;
-                }
-                throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
+                console.log(`Authenticated mode: Repository '${user}/${repo}' not found via GitHub API - allowing access with warning`);
+                // Instead of redirecting, create a basic repository and let content loading handle the error
+                // This allows authenticated users to try accessing any repository via direct URL
+                repository = {
+                  name: repo,
+                  full_name: `${user}/${repo}`,
+                  owner: { login: user },
+                  default_branch: selectedBranch || 'main',
+                  html_url: `https://github.com/${user}/${repo}`,
+                  isUnknownRepo: true  // Flag to indicate this repository might not exist
+                };
               }
             } else {
               // Demo mode - allow broader access for direct URL access
@@ -198,17 +189,9 @@ export const PageProvider = ({ children, pageName }) => {
             try {
               await githubService.getFileContent(user, repo, asset, selectedBranch);
             } catch (err) {
-              // For asset pages, redirect instead of throwing error  
-              if (pageName === 'asset' || pageName.includes('editor') || pageName.includes('viewer')) {
-                navigate('/', { 
-                  state: { 
-                    warningMessage: `Could not access the requested asset. Asset '${asset}' not found in repository.` 
-                  }, 
-                  replace: true 
-                });
-                return;
-              }
-              throw new Error(`Asset '${asset}' not found in repository.`);
+              console.log(`Asset '${asset}' not found in repository '${user}/${repo}' - allowing access with warning`);
+              // Instead of redirecting, let the asset page handle the error gracefully
+              // This allows users to try accessing any asset via direct URL
             }
           }
         }
@@ -219,14 +202,15 @@ export const PageProvider = ({ children, pageName }) => {
             try {
               profile = await githubService.getUser(user);
             } catch (err) {
-              // For user pages, redirect instead of throwing error
-              navigate('/', { 
-                state: { 
-                  warningMessage: `Could not access the requested user. User '${user}' not found or not accessible.` 
-                }, 
-                replace: true 
-              });
-              return;
+              console.log(`Authenticated mode: User '${user}' not found via GitHub API - allowing access with warning`);
+              // Instead of redirecting, create a basic profile and let content loading handle the error
+              profile = {
+                login: user,
+                name: user.charAt(0).toUpperCase() + user.slice(1),
+                avatar_url: `https://github.com/${user}.png`,
+                type: 'User',
+                isUnknownUser: true  // Flag to indicate this user might not exist
+              };
             }
           } else {
             profile = {
