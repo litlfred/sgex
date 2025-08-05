@@ -1,19 +1,17 @@
 name: Deploy Landing Page
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'docs/qa-report.html'
-      - 'public/docs/qa-report.html'
-      - 'docs/github-issues-analysis.md'
   workflow_dispatch:
     inputs:
       source_branch:
-        description: 'Branch to use for build scripts (defaults to deploy branch)'
+        description: 'Source branch to deploy from (defaults to main)'
         required: false
-        default: 'deploy'
+        default: 'main'
+      force_deployment:
+        description: 'Force deployment even if no changes detected'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -21,18 +19,37 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "landing-page-deploy"
+  group: "landing-page-deployment"
   cancel-in-progress: false
 
 jobs:
   deploy-landing-page:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: https://litlfred.github.io/sgex/
+    outputs:
+      deployment_status: ${{ steps.deployment_info.outputs.deployment_status }}
+      landing_url: ${{ steps.deployment_info.outputs.landing_url }}
+      source_branch: ${{ steps.deployment_info.outputs.source_branch }}
+      commit_sha: ${{ steps.deployment_info.outputs.commit_sha }}
+    
     steps:
-      - name: Checkout deploy branch (or fallback to main)
+      - name: Determine source branch
+        id: source_info
+        shell: bash
+        run: |
+          set -e
+          
+          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
+          echo "source_branch=$source_branch" >> $GITHUB_OUTPUT
+          echo "Using source branch: $source_branch"
+
+      - name: Checkout source branch
         uses: actions/checkout@v4
         with:
-          ref: main  # Use main branch since deploy branch doesn't exist yet
-          fetch-depth: 0  # Fetch full history for gh-pages branch
+          ref: ${{ steps.source_info.outputs.source_branch }}
+          fetch-depth: 0
 
       - name: Configure git user
         shell: bash
@@ -56,6 +73,10 @@ jobs:
           
           echo "Building React landing page application..."
           
+          # Set environment for production build
+          export NODE_ENV=production
+          export PUBLIC_URL=/
+          
           # Build the React app
           npm run build
           
@@ -69,7 +90,7 @@ jobs:
           echo "Build contents:"
           ls -la build/
 
-      - name: Deploy to gh-pages root (preserving existing branches)
+      - name: Deploy to gh-pages root (preserving branch subdirectories)
         shell: bash
         run: |
           set -e
@@ -95,7 +116,7 @@ jobs:
             git push origin gh-pages
           fi
           
-          # CRITICAL: Only remove files, NEVER remove directories (to preserve branch builds)
+          # CRITICAL: Only remove root-level files, NEVER remove directories (to preserve branch builds)
           echo "Removing only root-level files (preserving all branch directories)..."
           
           # List what directories exist for safety verification
@@ -150,51 +171,73 @@ jobs:
           
           # Check if there are changes to commit
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
+              echo "No changes detected, but force deployment requested - creating empty commit"
+              git commit --allow-empty -m "🏠 Force deploy React landing page
+              
+              - Force deployment requested by user
+              - Built from ${{ steps.source_info.outputs.source_branch }} branch
+              - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+              - Commit: ${{ github.sha }}"
+            else
+              echo "No changes to commit and force deployment not requested"
+              exit 0
+            fi
           else
             echo "Committing landing page deployment..."
             
-            # Determine deployment type for commit message
-            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-              deployment_type="manual"
-              trigger_info="Triggered from deploy branch"
-            else
-              deployment_type="automatic"
-              trigger_info="Auto-triggered by push to main"
-            fi
+            git commit -m "🏠 Deploy React landing page
             
-            git commit -m "🏠 Deploy React landing page (${deployment_type})
-
-            - Updated with React app build from main branch
-            - ${trigger_info}
+            - Updated with React app build from ${{ steps.source_info.outputs.source_branch }} branch
+            - Manually triggered deployment
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
-            
-            echo "Pushing to gh-pages..."
-            git pull origin gh-pages --rebase || echo "Pull failed, attempting to push anyway..."
-            git push origin gh-pages
-            
-            echo "✅ React landing page deployment completed successfully"
           fi
+          
+          echo "Pushing to gh-pages..."
+          git fetch origin gh-pages
+          git push origin gh-pages
+          
+          echo "✅ React landing page deployment completed successfully"
 
       - name: Output deployment info
+        id: deployment_info
         shell: bash
         run: |
           landing_url="https://litlfred.github.io/sgex/"
-          
-          # Determine deployment type for output message
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            deployment_type="Manual"
-            trigger_info="Triggered from deploy branch"
-          else
-            deployment_type="Automatic"
-            trigger_info="Auto-triggered by push to main"
-          fi
+          source_branch="${{ steps.source_info.outputs.source_branch }}"
+          commit_sha="${{ github.sha }}"
           
           echo "🏠 React Landing Page Deployment Summary:"
           echo "- Landing Page URL: $landing_url"
-          echo "- Deployment Type: $deployment_type"
-          echo "- $trigger_info"
+          echo "- Source Branch: $source_branch"
           echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          echo "- Source Branch: ${{ github.event.inputs.source_branch || 'deploy' }}"
-          echo "- Commit: ${{ github.sha }}"
+          echo "- Commit: $commit_sha"
+          echo ""
+          echo "ℹ️  Note: Branch subdirectories are preserved and unaffected"
+          
+          # GitHub Actions outputs
+          echo "deployment_status=success" >> $GITHUB_OUTPUT
+          echo "landing_url=$landing_url" >> $GITHUB_OUTPUT
+          echo "source_branch=$source_branch" >> $GITHUB_OUTPUT
+          echo "commit_sha=$commit_sha" >> $GITHUB_OUTPUT
+
+      - name: Create deployment summary
+        if: always() && steps.deployment_info.outputs.deployment_status == 'success'
+        shell: bash
+        run: |
+          echo "## 🏠 Landing Page Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment URL:** https://litlfred.github.io/sgex/" >> $GITHUB_STEP_SUMMARY
+          echo "**Source Branch:** ${{ steps.deployment_info.outputs.source_branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ steps.deployment_info.outputs.commit_sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Landing page successfully deployed to gh-pages root" >> $GITHUB_STEP_SUMMARY
+          echo "- All branch subdirectories preserved" >> $GITHUB_STEP_SUMMARY
+          echo "- No branch deployments affected" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [View Landing Page](https://litlfred.github.io/sgex/)" >> $GITHUB_STEP_SUMMARY
+          echo "- [View Main Branch](https://litlfred.github.io/sgex/main/)" >> $GITHUB_STEP_SUMMARY
