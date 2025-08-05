@@ -1,0 +1,262 @@
+name: Deploy Branch Selector
+
+on:
+  pull_request:
+    branches:
+      - deploy
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to deploy (optional - will auto-detect if running from PR)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  pull-requests: write
+
+concurrency:
+  group: "deploy-branch-selector-${{ github.event.pull_request.number || github.event.inputs.pr_number || 'manual' }}"
+  cancel-in-progress: true
+
+jobs:
+  deploy-branch-selector:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Get PR information
+        id: pr_info
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            HEAD_REF="${{ github.event.pull_request.head.ref }}"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.pr_number }}" ]]; then
+            PR_NUMBER="${{ github.event.inputs.pr_number }}"
+            # We'll need to fetch PR details via API
+            HEAD_SHA="${{ github.sha }}"
+            HEAD_REF="${{ github.ref_name }}"
+          else
+            echo "ERROR: This workflow should only run on PRs or with PR number input"
+            exit 1
+          fi
+          
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "HEAD_SHA=$HEAD_SHA" >> $GITHUB_OUTPUT
+          echo "HEAD_REF=$HEAD_REF" >> $GITHUB_OUTPUT
+          
+          echo "Deploying PR #$PR_NUMBER (SHA: $HEAD_SHA, Ref: $HEAD_REF)"
+
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr_info.outputs.HEAD_SHA }}
+          fetch-depth: 0
+
+      - name: Configure git user
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build branch deployment selector
+        shell: bash
+        run: |
+          set -e
+          
+          echo "Building branch deployment selector React app..."
+          
+          # Build the React app
+          npm run build
+          
+          # Verify build output exists
+          if [[ ! -f "build/index.html" ]]; then
+            echo "ERROR: React build failed - index.html not found in build output"
+            exit 1
+          fi
+          
+          echo "✅ Branch deployment selector build completed successfully"
+          echo "Build contents:"
+          ls -la build/
+
+      - name: Deploy to gh-pages root (preserving existing branches)
+        shell: bash
+        run: |
+          set -e
+          
+          # Save the React app build
+          echo "Preserving React app build..."
+          mkdir -p /tmp/selector-build
+          cp -a build/. /tmp/selector-build/
+          
+          # Checkout gh-pages branch
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            echo "Checking out existing gh-pages branch"
+            git stash -u -m "Stash before gh-pages checkout" || echo "Nothing to stash"
+            git clean -fd -e node_modules
+            git checkout gh-pages
+          else
+            echo "Creating new gh-pages branch"
+            git checkout --orphan gh-pages
+            git rm -rf .
+            echo "# GitHub Pages" > README.md
+            git add README.md
+            git commit -m "Initial gh-pages branch"
+            git push origin gh-pages
+          fi
+          
+          # CRITICAL: Only remove files, NEVER remove directories (to preserve branch builds)
+          echo "Removing only root-level files (preserving all branch directories)..."
+          
+          # List what directories exist for safety verification
+          echo "Existing directories before cleanup:"
+          ls -la */ 2>/dev/null || echo "No directories found"
+          
+          # Remove only specific files that could conflict with deployment selector
+          rm -f index.html
+          rm -f manifest.json  
+          rm -f asset-manifest.json
+          rm -f service-worker.js
+          rm -f robots.txt
+          rm -f favicon.ico
+          rm -f logo*.png
+          rm -f README.md
+          rm -f package.json
+          rm -f package-lock.json
+          
+          # Remove static directory only if it exists at root (not in branch subdirs)
+          if [[ -d "static" ]]; then
+            echo "Removing root static directory..."
+            rm -rf static
+          fi
+          
+          # Deploy deployment selector to root
+          echo "Deploying branch deployment selector to root..."
+          cp -a /tmp/selector-build/. .
+          
+          # Verify existing directories are still there
+          echo "Directories after deployment:"
+          ls -la */ 2>/dev/null || echo "No directories found"
+          
+          # Clean up temporary build
+          rm -rf /tmp/selector-build
+          
+          echo "✅ Branch deployment selector deployed to gh-pages root while preserving all branch directories"
+
+      - name: Commit and push changes
+        shell: bash
+        run: |
+          set -e
+          
+          # Verify we're on gh-pages branch
+          current_branch=$(git branch --show-current)
+          if [[ "$current_branch" != "gh-pages" ]]; then
+            echo "ERROR: Not on gh-pages branch! Current branch: $current_branch"
+            exit 1
+          fi
+          
+          # Stage all changes
+          git add -A
+          
+          # Check if there are changes to commit
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            echo "Committing branch deployment selector..."
+            
+            git commit -m "🌐 Deploy branch deployment selector from PR #${{ steps.pr_info.outputs.PR_NUMBER }}
+
+            - Updated deployment selector from deploy branch PR
+            - Built from commit ${{ steps.pr_info.outputs.HEAD_SHA }}
+            - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+            - Preserves all existing feature branch deployments"
+            
+            echo "Pushing to gh-pages..."
+            git pull origin gh-pages --rebase || echo "Pull failed, attempting to push anyway..."
+            git push origin gh-pages
+            
+            echo "✅ Branch deployment selector deployment completed successfully"
+          fi
+
+      - name: Output deployment info
+        id: deployment
+        shell: bash
+        run: |
+          deployment_url="https://litlfred.github.io/sgex/"
+          
+          echo "🌐 Branch Deployment Selector Summary:"
+          echo "- Deployment URL: $deployment_url"
+          echo "- PR Number: #${{ steps.pr_info.outputs.PR_NUMBER }}"
+          echo "- Source Branch: ${{ steps.pr_info.outputs.HEAD_REF }}"
+          echo "- Commit: ${{ steps.pr_info.outputs.HEAD_SHA }}"
+          echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          
+          echo "page_url=$deployment_url" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🌐 Branch Deployment Selector')
+            );
+            
+            const deploymentUrl = "https://litlfred.github.io/sgex/";
+            const commitSha = "${{ steps.pr_info.outputs.HEAD_SHA }}";
+            const shortSha = commitSha.substring(0, 7);
+            
+            const commentBody = `🌐 **Branch Deployment Selector Deployed**
+            
+            The branch deployment selector has been successfully deployed from this PR.
+            
+            🔗 **View Deployment**: ${deploymentUrl}
+            
+            📋 **Deployment Details**:
+            - **Source**: \`${{ steps.pr_info.outputs.HEAD_REF }}\` branch
+            - **Commit**: \`${shortSha}\`
+            - **Deployed**: ${new Date().toISOString().replace('T', ' ').substring(0, 19)} UTC
+            
+            ℹ️ **Note**: This deployment replaces the root page of the site but preserves all existing feature branch deployments in their subdirectories.
+            
+            ---
+            *Deployment will update automatically when new commits are pushed to this PR.*`;
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }
