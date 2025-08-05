@@ -12,6 +12,18 @@ on:
         required: false
         type: boolean
         default: false
+  workflow_call:
+    inputs:
+      branch:
+        description: 'Branch to build and deploy (defaults to current branch)'
+        required: false
+        type: string
+        default: ''
+      force_deployment:
+        description: 'Force deployment even if no changes detected'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
