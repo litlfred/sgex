@@ -75,8 +75,8 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
           workflow.name.toLowerCase().includes('pages')
         );
 
-        // Fetch recent workflow runs for each branch if ghbuild workflow exists
-        if (ghbuildWorkflow) {
+        // Fetch recent workflow runs for each branch if ghbuild workflow exists and has valid ID
+        if (ghbuildWorkflow && ghbuildWorkflow.id) {
           const runsByBranch = {};
           for (const branch of filteredBranches) {
             try {
@@ -94,6 +94,8 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
             }
           }
           setWorkflowRuns(runsByBranch);
+        } else if (ghbuildWorkflow && !ghbuildWorkflow.id) {
+          console.warn('Found workflow but missing ID:', ghbuildWorkflow);
         }
 
         setLoading(false);
@@ -175,6 +177,12 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
 
     if (!ghbuildWorkflow) {
       alert('No suitable workflow found to restart');
+      return;
+    }
+
+    if (!ghbuildWorkflow.id) {
+      alert('Workflow found but missing ID - cannot restart');
+      console.warn('Workflow missing ID:', ghbuildWorkflow);
       return;
     }
 

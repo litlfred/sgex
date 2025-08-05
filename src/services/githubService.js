@@ -698,87 +698,34 @@ class GitHubService {
 
   // GitHub Actions API methods
   
-  // Get workflows for a repository (detailed version with file parsing)
+  // Get workflows for a repository (using GitHub API to include workflow IDs)
   async getWorkflows(owner, repo) {
     if (!this.isAuth()) {
       throw new Error('Not authenticated with GitHub');
     }
 
     try {
-      // First, try to get the .github/workflows directory
-      const { data } = await this.octokit.rest.repos.getContent({
+      // Use GitHub Actions API to get workflows with their IDs
+      const { data } = await this.octokit.rest.actions.listRepoWorkflows({
         owner,
-        repo,
-        path: '.github/workflows'
+        repo
       });
 
-      // Filter for YAML/YML files
-      const workflowFiles = Array.isArray(data) 
-        ? data.filter(file => file.name.endsWith('.yml') || file.name.endsWith('.yaml'))
-        : [];
-
-      // Fetch workflow details for each file
-      const workflows = await Promise.all(
-        workflowFiles.map(async (file) => {
-          try {
-            // Get file content to parse workflow name
-            const contentResponse = await this.octokit.rest.repos.getContent({
-              owner,
-              repo,
-              path: file.path
-            });
-
-            const content = decodeURIComponent(escape(atob(contentResponse.data.content)));
-            
-            // Parse workflow name from YAML (simple regex approach)
-            const nameMatch = content.match(/^name:\s*(.+)$/m);
-            const workflowName = nameMatch ? nameMatch[1].replace(/['"]/g, '') : file.name.replace(/\.(yml|yaml)$/, '');
-
-            // Parse triggers
-            const onMatch = content.match(/^on:\s*$/m);
-            let triggers = [];
-            if (onMatch) {
-              const pushMatch = content.match(/^\s*push:/m);
-              const prMatch = content.match(/^\s*pull_request:/m);
-              const scheduleMatch = content.match(/^\s*schedule:/m);
-              const workflowDispatchMatch = content.match(/^\s*workflow_dispatch:/m);
-              
-              if (pushMatch) triggers.push('push');
-              if (prMatch) triggers.push('pull_request');
-              if (scheduleMatch) triggers.push('schedule');
-              if (workflowDispatchMatch) triggers.push('manual');
-            }
-
-            return {
-              name: workflowName,
-              filename: file.name,
-              path: file.path,
-              size: file.size,
-              sha: file.sha,
-              url: file.html_url,
-              triggers: triggers.length > 0 ? triggers : ['push'], // default to push if we can't parse
-              lastModified: contentResponse.data.last_modified || 'Unknown'
-            };
-          } catch (error) {
-            console.warn(`Failed to fetch workflow details for ${file.name}:`, error);
-            return {
-              name: file.name.replace(/\.(yml|yaml)$/, ''),
-              filename: file.name,
-              path: file.path,
-              size: file.size,
-              sha: file.sha,
-              url: file.html_url,
-              triggers: ['unknown'],
-              lastModified: 'Unknown'
-            };
-          }
-        })
-      );
-
-      return workflows;
+      return data.workflows.map(workflow => ({
+        id: workflow.id, // This is the crucial missing piece!
+        name: workflow.name,
+        filename: workflow.path.split('/').pop(), // Extract filename from path
+        path: workflow.path,
+        state: workflow.state,
+        created_at: workflow.created_at,
+        updated_at: workflow.updated_at,
+        url: workflow.html_url,
+        triggers: ['unknown'], // GitHub API doesn't provide trigger info directly
+        lastModified: workflow.updated_at
+      }));
     } catch (error) {
       if (error.status === 404) {
-        // No .github/workflows directory exists
+        // No workflows or repository not found
         return [];
       }
       console.error('Failed to fetch workflows:', error);
