@@ -1,4 +1,4 @@
-name: Deploy Branch Selector Landing Page
+name: Deploy React App as Landing Page
 
 on:
   workflow_dispatch:
@@ -54,55 +54,40 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
         
-      - name: Prepare landing page files
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -e
+          echo "Installing Node.js dependencies..."
+          npm ci
+
+      - name: Build React application
         shell: bash
         run: |
           set -e
           
-          echo "Preparing landing page files..."
+          echo "Building React application..."
+          npm run build
           
-          # Create a landing page directory to hold the files
-          mkdir -p landing-page
-          
-          # Use the index.html as the main landing page (contains branch selector functionality)
-          if [[ ! -f "index.html" ]]; then
-            echo "ERROR: Landing page not found at index.html"
+          # Verify build was successful
+          if [[ ! -f "build/index.html" ]]; then
+            echo "ERROR: Build failed - index.html not found in build directory"
             exit 1
           fi
           
-          # Copy index.html to landing page
-          cp index.html landing-page/index.html
-          
-          # Copy essential assets for the landing page
-          if [[ -d "public" ]]; then
-            # Copy assets that the landing page references
-            if [[ -f "public/sgex-mascot.png" ]]; then
-              cp public/sgex-mascot.png landing-page/
-            fi
-            if [[ -f "public/favicon.ico" ]]; then
-              cp public/favicon.ico landing-page/
-            fi
-          fi
-          
-          # Verify landing page exists
-          if [[ ! -f "landing-page/index.html" ]]; then
-            echo "ERROR: Landing page preparation failed - index.html not found"
-            exit 1
-          fi
-          
-          echo "✅ Landing page preparation completed successfully"
-          echo "Landing page contents:"
-          ls -la landing-page/
+          echo "✅ React build completed successfully"
+          echo "Build contents:"
+          ls -la build/
 
       - name: Deploy to gh-pages root (preserving branch subdirectories)
         shell: bash
         run: |
           set -e
           
-          # Save the landing page files
-          echo "Preserving landing page files..."
-          mkdir -p /tmp/landing-build
-          cp -a landing-page/. /tmp/landing-build/
+          # Save the React build files
+          echo "Preserving React build files..."
+          mkdir -p /tmp/react-build
+          cp -a build/. /tmp/react-build/
           
           # Checkout gh-pages branch
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
@@ -138,6 +123,9 @@ jobs:
           rm -f README.md
           rm -f package.json
           rm -f package-lock.json
+          rm -f *.png
+          rm -f *.svg
+          rm -f *.html
           
           # Remove static directory only if it exists at root (not in branch subdirs)
           if [[ -d "static" ]]; then
@@ -145,18 +133,18 @@ jobs:
             rm -rf static
           fi
           
-          # Deploy landing page to root (this will not affect any subdirectories)
-          echo "Deploying landing page to root..."
-          cp -a /tmp/landing-build/. .
+          # Deploy React build to root (this will not affect any subdirectories)
+          echo "Deploying React build to root..."
+          cp -a /tmp/react-build/. .
           
           # Verify existing directories are still there
           echo "Directories after deployment:"
           ls -la */ 2>/dev/null || echo "No directories found"
           
           # Clean up temporary build
-          rm -rf /tmp/landing-build
+          rm -rf /tmp/react-build
           
-          echo "✅ Landing page deployed to gh-pages root while preserving all branch directories"
+          echo "✅ React build deployed to gh-pages root while preserving all branch directories"
 
       - name: Commit and push changes
         shell: bash
@@ -177,7 +165,7 @@ jobs:
           if git diff --cached --quiet; then
             if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
               echo "No changes detected, but force deployment requested - creating empty commit"
-              git commit --allow-empty -m "🚀 Force deploy landing page
+              git commit --allow-empty -m "🚀 Force deploy React build
               
               - Force deployment requested by user
               - Built from ${{ steps.source_info.outputs.source_branch }} branch
@@ -188,11 +176,11 @@ jobs:
               exit 0
             fi
           else
-            echo "Committing landing page deployment..."
+            echo "Committing React build deployment..."
             
-            git commit -m "🚀 Deploy landing page
+            git commit -m "🚀 Deploy React build
             
-            - Updated with landing page from ${{ steps.source_info.outputs.source_branch }} branch
+            - Updated with React build from ${{ steps.source_info.outputs.source_branch }} branch
             - Manually triggered deployment
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
@@ -202,7 +190,7 @@ jobs:
           git fetch origin gh-pages
           git push origin gh-pages
           
-          echo "✅ Landing page deployment completed successfully"
+          echo "✅ React build deployment completed successfully"
 
       - name: Output deployment info
         id: deployment_info
@@ -212,7 +200,7 @@ jobs:
           source_branch="${{ steps.source_info.outputs.source_branch }}"
           commit_sha="${{ github.sha }}"
           
-          echo "🚀 Landing Page Deployment Summary:"
+          echo "🚀 React Build Deployment Summary:"
           echo "- Landing Page URL: $landing_url"
           echo "- Source Branch: $source_branch"
           echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
@@ -230,7 +218,7 @@ jobs:
         if: always() && steps.deployment_info.outputs.deployment_status == 'success'
         shell: bash
         run: |
-          echo "## 🚀 Landing Page Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 React Build Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Deployment URL:** https://litlfred.github.io/sgex/" >> $GITHUB_STEP_SUMMARY
           echo "**Source Branch:** ${{ steps.deployment_info.outputs.source_branch }}" >> $GITHUB_STEP_SUMMARY
@@ -238,7 +226,7 @@ jobs:
           echo "**Deployed:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ✅ Deployment Status" >> $GITHUB_STEP_SUMMARY
-          echo "- Landing page successfully deployed to gh-pages root" >> $GITHUB_STEP_SUMMARY
+          echo "- React build successfully deployed to gh-pages root" >> $GITHUB_STEP_SUMMARY
           echo "- All branch subdirectories preserved" >> $GITHUB_STEP_SUMMARY
           echo "- No branch deployments affected" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
