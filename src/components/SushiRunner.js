@@ -45,38 +45,56 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
         addLog('⚠️ sushi-config.yaml not found in repository', 'warning');
       }
 
-      addLog('🔍 Scanning input/fsh directory...', 'info');
+      addLog('🔍 Scanning input/fsh directory recursively...', 'info');
       
       const fshFiles = [];
       try {
-        // Get directory contents recursively
-        const inputFshContents = await githubService.getDirectoryContents(
-          owner,
-          repoName,
-          'input/fsh',
-          selectedBranch
-        );
-        
-        for (const item of inputFshContents) {
-          if (item.type === 'file' && item.name.endsWith('.fsh')) {
-            try {
-              const fileContent = await githubService.getFileContent(
-                owner,
-                repoName,
-                item.path,
-                selectedBranch
-              );
-              fshFiles.push({
-                name: item.name,
-                path: item.path,
-                content: fileContent
-              });
-              addLog(`📄 Found ${item.name}`, 'success');
-            } catch (err) {
-              addLog(`❌ Failed to fetch ${item.name}: ${err.message}`, 'error');
-            }
+        // Recursively scan for FSH files
+        const scanDirectory = async (dirPath, depth = 0) => {
+          const maxDepth = 5; // Prevent infinite recursion
+          if (depth > maxDepth) {
+            addLog(`⚠️ Maximum directory depth reached for ${dirPath}`, 'warning');
+            return;
           }
-        }
+
+          try {
+            const contents = await githubService.getDirectoryContents(
+              owner,
+              repoName,
+              dirPath,
+              selectedBranch
+            );
+            
+            for (const item of contents) {
+              if (item.type === 'file' && item.name.endsWith('.fsh')) {
+                try {
+                  const fileContent = await githubService.getFileContent(
+                    owner,
+                    repoName,
+                    item.path,
+                    selectedBranch
+                  );
+                  fshFiles.push({
+                    name: item.name,
+                    path: item.path,
+                    content: fileContent
+                  });
+                  addLog(`📄 Found ${item.path}`, 'success');
+                } catch (err) {
+                  addLog(`❌ Failed to fetch ${item.path}: ${err.message}`, 'error');
+                }
+              } else if (item.type === 'dir') {
+                // Recursively scan subdirectories
+                addLog(`📁 Scanning subdirectory: ${item.path}`, 'info');
+                await scanDirectory(item.path, depth + 1);
+              }
+            }
+          } catch (err) {
+            addLog(`⚠️ Could not scan directory ${dirPath}: ${err.message}`, 'warning');
+          }
+        };
+
+        await scanDirectory('input/fsh');
       } catch (err) {
         addLog('⚠️ input/fsh directory not found or empty', 'warning');
       }
