@@ -69,17 +69,13 @@ jobs:
           
           # Copy any additional assets referenced by the landing page
           if [[ -d "public" ]]; then
-            # Copy public assets that the landing page might reference
+            # Copy specific assets that the landing page references
             if [[ -f "public/sgex-mascot.png" ]]; then
               cp public/sgex-mascot.png landing-page/
             fi
             if [[ -f "public/favicon.ico" ]]; then
               cp public/favicon.ico landing-page/
             fi
-            # Copy any other assets from public directory that are referenced
-            find public -name "*.png" -o -name "*.svg" -o -name "*.ico" | head -10 | while read -r file; do
-              cp "$file" landing-page/ 2>/dev/null || true
-            done
           fi
           
           # Verify landing page exists
