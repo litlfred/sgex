@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       source_branch:
-        description: 'Source branch to deploy from (defaults to main)'
+        description: 'Source branch to deploy from (defaults to deploy)'
         required: false
-        default: 'main'
+        default: 'deploy'
       force_deployment:
         description: 'Force deployment even if no changes detected'
         required: false
@@ -38,7 +38,7 @@ jobs:
         run: |
           set -e
           
-          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
+          source_branch="${{ github.event.inputs.source_branch || 'deploy' }}"
           echo "source_branch=$source_branch" >> $GITHUB_OUTPUT
           echo "Using source branch: $source_branch"
 
@@ -54,28 +54,28 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
         
-      - name: Prepare branch selector landing page files
+      - name: Prepare landing page files
         shell: bash
         run: |
           set -e
           
-          echo "Preparing branch selector landing page files..."
+          echo "Preparing landing page files..."
           
           # Create a landing page directory to hold the files
           mkdir -p landing-page
           
-          # Use the branch selector as the main landing page
-          if [[ ! -f "public/branch-listing.html" ]]; then
-            echo "ERROR: Branch selector not found at public/branch-listing.html"
+          # Use the index.html as the main landing page (contains branch selector functionality)
+          if [[ ! -f "index.html" ]]; then
+            echo "ERROR: Landing page not found at index.html"
             exit 1
           fi
           
-          # Copy branch selector as index.html
-          cp public/branch-listing.html landing-page/index.html
+          # Copy index.html to landing page
+          cp index.html landing-page/index.html
           
-          # Copy essential assets for the branch selector
+          # Copy essential assets for the landing page
           if [[ -d "public" ]]; then
-            # Copy assets that the branch selector references
+            # Copy assets that the landing page references
             if [[ -f "public/sgex-mascot.png" ]]; then
               cp public/sgex-mascot.png landing-page/
             fi
@@ -90,7 +90,7 @@ jobs:
             exit 1
           fi
           
-          echo "✅ Branch selector landing page preparation completed successfully"
+          echo "✅ Landing page preparation completed successfully"
           echo "Landing page contents:"
           ls -la landing-page/
 
@@ -145,8 +145,8 @@ jobs:
             rm -rf static
           fi
           
-          # Deploy branch selector to root (this will not affect any subdirectories)
-          echo "Deploying branch selector landing page to root..."
+          # Deploy landing page to root (this will not affect any subdirectories)
+          echo "Deploying landing page to root..."
           cp -a /tmp/landing-build/. .
           
           # Verify existing directories are still there
@@ -156,7 +156,7 @@ jobs:
           # Clean up temporary build
           rm -rf /tmp/landing-build
           
-          echo "✅ Branch selector landing page deployed to gh-pages root while preserving all branch directories"
+          echo "✅ Landing page deployed to gh-pages root while preserving all branch directories"
 
       - name: Commit and push changes
         shell: bash
@@ -177,7 +177,7 @@ jobs:
           if git diff --cached --quiet; then
             if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
               echo "No changes detected, but force deployment requested - creating empty commit"
-              git commit --allow-empty -m "🚀 Force deploy branch selector landing page
+              git commit --allow-empty -m "🚀 Force deploy landing page
               
               - Force deployment requested by user
               - Built from ${{ steps.source_info.outputs.source_branch }} branch
@@ -190,9 +190,9 @@ jobs:
           else
             echo "Committing landing page deployment..."
             
-            git commit -m "🚀 Deploy branch selector landing page
+            git commit -m "🚀 Deploy landing page
             
-            - Updated with branch selector from ${{ steps.source_info.outputs.source_branch }} branch
+            - Updated with landing page from ${{ steps.source_info.outputs.source_branch }} branch
             - Manually triggered deployment
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
@@ -202,7 +202,7 @@ jobs:
           git fetch origin gh-pages
           git push origin gh-pages
           
-          echo "✅ Branch selector landing page deployment completed successfully"
+          echo "✅ Landing page deployment completed successfully"
 
       - name: Output deployment info
         id: deployment_info
@@ -212,7 +212,7 @@ jobs:
           source_branch="${{ steps.source_info.outputs.source_branch }}"
           commit_sha="${{ github.sha }}"
           
-          echo "🚀 Branch Selector Landing Page Deployment Summary:"
+          echo "🚀 Landing Page Deployment Summary:"
           echo "- Landing Page URL: $landing_url"
           echo "- Source Branch: $source_branch"
           echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
@@ -230,7 +230,7 @@ jobs:
         if: always() && steps.deployment_info.outputs.deployment_status == 'success'
         shell: bash
         run: |
-          echo "## 🚀 Branch Selector Landing Page Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Landing Page Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Deployment URL:** https://litlfred.github.io/sgex/" >> $GITHUB_STEP_SUMMARY
           echo "**Source Branch:** ${{ steps.deployment_info.outputs.source_branch }}" >> $GITHUB_STEP_SUMMARY
@@ -238,10 +238,10 @@ jobs:
           echo "**Deployed:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ✅ Deployment Status" >> $GITHUB_STEP_SUMMARY
-          echo "- Branch selector landing page successfully deployed to gh-pages root" >> $GITHUB_STEP_SUMMARY
+          echo "- Landing page successfully deployed to gh-pages root" >> $GITHUB_STEP_SUMMARY
           echo "- All branch subdirectories preserved" >> $GITHUB_STEP_SUMMARY
           echo "- No branch deployments affected" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
-          echo "- [View Branch Selector](https://litlfred.github.io/sgex/)" >> $GITHUB_STEP_SUMMARY
+          echo "- [View Landing Page](https://litlfred.github.io/sgex/)" >> $GITHUB_STEP_SUMMARY
           echo "- [View Main Branch](https://litlfred.github.io/sgex/main/)" >> $GITHUB_STEP_SUMMARY
