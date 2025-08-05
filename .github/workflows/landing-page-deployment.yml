@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       source_branch:
-        description: 'Source branch to deploy from (defaults to deploy)'
+        description: 'Source branch to deploy from (defaults to main)'
         required: false
-        default: 'deploy'
+        default: 'main'
       force_deployment:
         description: 'Force deployment even if no changes detected'
         required: false
@@ -38,7 +38,7 @@ jobs:
         run: |
           set -e
           
-          source_branch="${{ github.event.inputs.source_branch || 'deploy' }}"
+          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
           echo "source_branch=$source_branch" >> $GITHUB_OUTPUT
           echo "Using source branch: $source_branch"
 
