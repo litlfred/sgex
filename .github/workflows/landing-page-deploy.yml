@@ -49,77 +49,33 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build self-contained landing page
+      - name: Build React landing page application
         shell: bash
         run: |
           set -e
           
-          echo "Building self-contained landing page..."
+          echo "Building React landing page application..."
           
-          # Check if we have landing page assets from deploy branch
-          if [[ -f "public/branch-listing.html" ]]; then
-            echo "Using landing page assets from deploy branch..."
-            npm run build:landing
-          else
-            echo "Deploy branch assets not available, creating basic landing page..."
-            
-            # Create a minimal landing page build
-            mkdir -p build
-            
-            cat > build/index.html << 'EOF'
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGEX Workbench</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🚀 SGEX Workbench</h1>
-        <p>WHO SMART Guidelines Exchange</p>
-        
-        <div class="section">
-            <h2>🌟 Main Application</h2>
-            <p><a href="./main/">Launch SGEX Workbench (Main Branch)</a></p>
-        </div>
-        
-        <div class="section">
-            <h2>📝 Branch & PR Previews</h2>
-            <p>Branch and pull request previews are automatically deployed to subdirectories.</p>
-            <p>Each branch is accessible at <code>/branch-name/</code></p>
-        </div>
-        
-        <div class="section">
-            <h2>ℹ️ About</h2>
-            <p>SGEX is an experimental collaborative project developing a workbench of tools to make it easier and faster to develop high fidelity SMART Guidelines Digital Adaptation Kits (DAKs).</p>
-        </div>
-    </div>
-</body>
-</html>
-EOF
-          fi
+          # Build the React app
+          npm run build
           
-          # Verify index.html exists
+          # Verify build output exists
           if [[ ! -f "build/index.html" ]]; then
-            echo "ERROR: index.html not found in build output"
+            echo "ERROR: React build failed - index.html not found in build output"
             exit 1
           fi
           
-          echo "✅ Landing page build completed"
+          echo "✅ React landing page build completed successfully"
+          echo "Build contents:"
+          ls -la build/
 
       - name: Deploy to gh-pages root (preserving existing branches)
         shell: bash
         run: |
           set -e
           
-          # Save the landing page build
-          echo "Preserving landing page build..."
+          # Save the React app build
+          echo "Preserving React app build..."
           mkdir -p /tmp/landing-build
           cp -a build/. /tmp/landing-build/
           
@@ -165,7 +121,7 @@ EOF
           fi
           
           # Deploy landing page to root (this will not affect any subdirectories)
-          echo "Deploying landing page to root..."
+          echo "Deploying React app to root..."
           cp -a /tmp/landing-build/. .
           
           # Verify existing directories are still there
@@ -175,7 +131,7 @@ EOF
           # Clean up temporary build
           rm -rf /tmp/landing-build
           
-          echo "✅ Landing page deployed to gh-pages root while preserving all branch directories"
+          echo "✅ React app deployed to gh-pages root while preserving all branch directories"
 
       - name: Commit and push changes
         shell: bash
@@ -207,9 +163,9 @@ EOF
               trigger_info="Auto-triggered by push to main"
             fi
             
-            git commit -m "🏠 Deploy landing page (${deployment_type})
+            git commit -m "🏠 Deploy React landing page (${deployment_type})
 
-            - Updated landing page with self-contained assets from deploy branch
+            - Updated with React app build from main branch
             - ${trigger_info}
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
@@ -218,7 +174,7 @@ EOF
             git pull origin gh-pages --rebase || echo "Pull failed, attempting to push anyway..."
             git push origin gh-pages
             
-            echo "✅ Landing page deployment completed successfully"
+            echo "✅ React landing page deployment completed successfully"
           fi
 
       - name: Output deployment info
@@ -235,7 +191,7 @@ EOF
             trigger_info="Auto-triggered by push to main"
           fi
           
-          echo "🏠 Landing Page Deployment Summary:"
+          echo "🏠 React Landing Page Deployment Summary:"
           echo "- Landing Page URL: $landing_url"
           echo "- Deployment Type: $deployment_type"
           echo "- $trigger_info"
