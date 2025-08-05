@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       source_branch:
-        description: 'Branch to use for build scripts (defaults to current branch)'
+        description: 'Branch to use for build scripts (defaults to deploy branch)'
         required: false
-        default: ''
+        default: 'deploy'
 
 permissions:
   contents: write
@@ -28,9 +28,10 @@ jobs:
   deploy-landing-page:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout deploy branch (or fallback to main)
         uses: actions/checkout@v4
         with:
+          ref: main  # Use main branch since deploy branch doesn't exist yet
           fetch-depth: 0  # Fetch full history for gh-pages branch
 
       - name: Configure git user
@@ -54,16 +55,55 @@ jobs:
           set -e
           
           echo "Building self-contained landing page..."
-          # Use current branch for build scripts unless specified
-          source_branch="${{ github.event.inputs.source_branch }}"
-          if [[ -z "$source_branch" ]]; then
-            source_branch="${{ github.ref_name }}"
+          
+          # Check if we have landing page assets from deploy branch
+          if [[ -f "public/branch-listing.html" ]]; then
+            echo "Using landing page assets from deploy branch..."
+            npm run build:landing
+          else
+            echo "Deploy branch assets not available, creating basic landing page..."
+            
+            # Create a minimal landing page build
+            mkdir -p build
+            
+            cat > build/index.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGEX Workbench</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 SGEX Workbench</h1>
+        <p>WHO SMART Guidelines Exchange</p>
+        
+        <div class="section">
+            <h2>🌟 Main Application</h2>
+            <p><a href="./main/">Launch SGEX Workbench (Main Branch)</a></p>
+        </div>
+        
+        <div class="section">
+            <h2>📝 Branch & PR Previews</h2>
+            <p>Branch and pull request previews are automatically deployed to subdirectories.</p>
+            <p>Each branch is accessible at <code>/branch-name/</code></p>
+        </div>
+        
+        <div class="section">
+            <h2>ℹ️ About</h2>
+            <p>SGEX is an experimental collaborative project developing a workbench of tools to make it easier and faster to develop high fidelity SMART Guidelines Digital Adaptation Kits (DAKs).</p>
+        </div>
+    </div>
+</body>
+</html>
+EOF
           fi
-          
-          echo "Using build scripts from branch: $source_branch"
-          
-          # Build the landing page with self-contained assets
-          node scripts/build-multi-branch.js landing
           
           # Verify index.html exists
           if [[ ! -f "build/index.html" ]]; then
@@ -73,7 +113,7 @@ jobs:
           
           echo "✅ Landing page build completed"
 
-      - name: Deploy to gh-pages root
+      - name: Deploy to gh-pages root (preserving existing branches)
         shell: bash
         run: |
           set -e
@@ -99,43 +139,43 @@ jobs:
             git push origin gh-pages
           fi
           
-          # Preserve all existing branch directories (exclude problematic cache directories)
-          echo "Preserving existing branch directories..."
-          if ls -d */ > /dev/null 2>&1; then
-            mkdir -p /tmp/branch-backup
-            for dir in */; do
-              if [[ "$dir" != "node_modules/" && "$dir" != ".cache/" ]]; then
-                echo "Backing up directory: $dir"
-                # Exclude cache subdirectories when copying
-                rsync -av --exclude='*/node_modules/.cache' --exclude='*/.cache' "$dir" /tmp/branch-backup/
-              fi
-            done
+          # CRITICAL: Only remove files, NEVER remove directories (to preserve branch builds)
+          echo "Removing only root-level files (preserving all branch directories)..."
+          
+          # List what directories exist for safety verification
+          echo "Existing directories before cleanup:"
+          ls -la */ 2>/dev/null || echo "No directories found"
+          
+          # Remove only specific files that could conflict with landing page
+          rm -f index.html
+          rm -f manifest.json  
+          rm -f asset-manifest.json
+          rm -f service-worker.js
+          rm -f robots.txt
+          rm -f favicon.ico
+          rm -f logo*.png
+          rm -f README.md
+          rm -f package.json
+          rm -f package-lock.json
+          
+          # Remove static directory only if it exists at root (not in branch subdirs)
+          if [[ -d "static" ]]; then
+            echo "Removing root static directory..."
+            rm -rf static
           fi
           
-          # Clear root (except .git and branch directories)
-          echo "Clearing root directory for landing page deployment..."
-          find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name '.github' -exec rm -rf {} +
-          
-          # Also clean up any cache directories that might exist
-          echo "Cleaning up cache directories..."
-          find . -name "node_modules/.cache" -type d -exec rm -rf {} + 2>/dev/null || true
-          find . -name ".cache" -type d -exec rm -rf {} + 2>/dev/null || true
-          
-          # Deploy landing page to root
+          # Deploy landing page to root (this will not affect any subdirectories)
           echo "Deploying landing page to root..."
           cp -a /tmp/landing-build/. .
           
-          # Restore all branch directories
-          if [[ -d /tmp/branch-backup ]]; then
-            echo "Restoring branch directories..."
-            cp -r /tmp/branch-backup/* .
-            rm -rf /tmp/branch-backup
-          fi
+          # Verify existing directories are still there
+          echo "Directories after deployment:"
+          ls -la */ 2>/dev/null || echo "No directories found"
           
           # Clean up temporary build
           rm -rf /tmp/landing-build
           
-          echo "✅ Landing page deployed to gh-pages root"
+          echo "✅ Landing page deployed to gh-pages root while preserving all branch directories"
 
       - name: Commit and push changes
         shell: bash
@@ -161,7 +201,7 @@ jobs:
             # Determine deployment type for commit message
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               deployment_type="manual"
-              trigger_info="Triggered from branch: ${{ github.ref_name }}"
+              trigger_info="Triggered from deploy branch"
             else
               deployment_type="automatic"
               trigger_info="Auto-triggered by push to main"
@@ -169,7 +209,7 @@ jobs:
             
             git commit -m "🏠 Deploy landing page (${deployment_type})
 
-            - Updated landing page with self-contained assets
+            - Updated landing page with self-contained assets from deploy branch
             - ${trigger_info}
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
@@ -189,7 +229,7 @@ jobs:
           # Determine deployment type for output message
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             deployment_type="Manual"
-            trigger_info="Triggered from branch: ${{ github.ref_name }}"
+            trigger_info="Triggered from deploy branch"
           else
             deployment_type="Automatic"
             trigger_info="Auto-triggered by push to main"
@@ -200,4 +240,5 @@ jobs:
           echo "- Deployment Type: $deployment_type"
           echo "- $trigger_info"
           echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "- Source Branch: ${{ github.event.inputs.source_branch || 'deploy' }}"
           echo "- Commit: ${{ github.sha }}"

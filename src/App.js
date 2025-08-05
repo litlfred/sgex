@@ -27,7 +27,6 @@ import DAKDashboardWithFramework from './components/DAKDashboardWithFramework';
 import DashboardRedirect from './components/DashboardRedirect';
 import TestDocumentationPage from './components/TestDocumentationPage';
 import AssetEditorTest from './components/AssetEditorTest';
-import BranchListing from './components/BranchListing';
 import logger from './utils/logger';
 import './App.css';
 
@@ -112,7 +111,6 @@ function App() {
             <Route path="/test-framework-dashboard/:user/:repo/:branch" element={<DAKDashboardWithFramework />} />
             <Route path="/test-documentation" element={<TestDocumentationPage />} />
             <Route path="/test-asset-editor" element={<AssetEditorTest />} />
-            <Route path="/branch-listing" element={<BranchListing />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
