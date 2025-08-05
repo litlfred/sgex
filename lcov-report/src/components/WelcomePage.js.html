@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/79</span>
+                <span class='fraction'>0/82</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/76</span>
+                <span class='fraction'>0/79</span>
             </div>
         
             
@@ -356,7 +356,14 @@
 <a name='L291'></a><a href='#L291'>291</a>
 <a name='L292'></a><a href='#L292'>292</a>
 <a name='L293'></a><a href='#L293'>293</a>
-<a name='L294'></a><a href='#L294'>294</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L294'></a><a href='#L294'>294</a>
+<a name='L295'></a><a href='#L295'>295</a>
+<a name='L296'></a><a href='#L296'>296</a>
+<a name='L297'></a><a href='#L297'>297</a>
+<a name='L298'></a><a href='#L298'>298</a>
+<a name='L299'></a><a href='#L299'>299</a>
+<a name='L300'></a><a href='#L300'>300</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -376,6 +383,11 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -657,6 +669,7 @@ import HelpModal from './HelpModal';
 import helpContentService from '../services/helpContentService';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
+import useThemeImage from '../hooks/useThemeImage';
 import './WelcomePage.css';
 &nbsp;
 const WelcomePage = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
@@ -671,6 +684,11 @@ const WelcomePage = <span class="cstat-no" title="statement not covered" ><span 
 &nbsp;
   const navigate = <span class="cstat-no" title="statement not covered" >useNavigate();</span>
   const location = <span class="cstat-no" title="statement not covered" >useLocation();</span>
+&nbsp;
+  // Theme-aware image paths
+  const mascotImage = <span class="cstat-no" title="statement not covered" >useThemeImage('sgex-mascot.png');</span>
+  const authoringImage = <span class="cstat-no" title="statement not covered" >useThemeImage('authoring.png');</span>
+  const collaborationImage = <span class="cstat-no" title="statement not covered" >useThemeImage('collaboration.png');</span>
 &nbsp;
   // Initial authentication check - runs once on mount
 <span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
@@ -832,7 +850,7 @@ const WelcomePage = <span class="cstat-no" title="statement not covered" ><span 
         &lt;div className="welcome-hero"&gt;
           &lt;div className="welcome-intro"&gt;
             &lt;div className="welcome-mascot"&gt;
-              &lt;img src="/sgex-mascot.png" alt="SGEX Workbench Helper" /&gt;
+              &lt;img src={mascotImage} alt="SGEX Workbench Helper" /&gt;
             &lt;/div&gt;
             &lt;div className="welcome-text"&gt;
               &lt;h1&gt;SGEX Workbench&lt;/h1&gt;
@@ -849,7 +867,7 @@ const WelcomePage = <span class="cstat-no" title="statement not covered" ><span 
             {/* Authoring Card - Always show */}
             &lt;div className="action-card authoring-card" onClick={handleAuthoringClick}&gt;
               &lt;div className="card-icon"&gt;
-                &lt;img src="/authoring.png" alt="Authoring" /&gt;
+                &lt;img src={authoringImage} alt="Authoring" /&gt;
               &lt;/div&gt;
               &lt;p&gt;Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.&lt;/p&gt;
             &lt;/div&gt;
@@ -917,7 +935,7 @@ const WelcomePage = <span class="cstat-no" title="statement not covered" ><span 
             {/* Collaboration Card */}
             &lt;div className="action-card collaboration-card" onClick={handleCollaborationOpen}&gt;
               &lt;div className="card-icon"&gt;
-                &lt;img src="/collaboration.png" alt="Collaboration" /&gt;
+                &lt;img src={collaborationImage} alt="Collaboration" /&gt;
               &lt;/div&gt;
               &lt;p&gt;Learn about our mission, how to contribute, and join our community-driven development process.&lt;/p&gt;
             &lt;/div&gt;
@@ -949,7 +967,7 @@ export default WelcomePage;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-02T16:09:55.911Z
+                at 2025-08-04T19:42:19.878Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

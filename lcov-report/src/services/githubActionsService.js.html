@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">77.38% </span>
+                <span class="strong">68.36% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>65/84</span>
+                <span class='fraction'>67/98</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.31% </span>
+                <span class="strong">70.45% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>29/38</span>
+                <span class='fraction'>31/44</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">77.38% </span>
+                <span class="strong">68.36% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>65/84</span>
+                <span class='fraction'>67/98</span>
             </div>
         
             
@@ -324,7 +324,29 @@
 <a name='L259'></a><a href='#L259'>259</a>
 <a name='L260'></a><a href='#L260'>260</a>
 <a name='L261'></a><a href='#L261'>261</a>
-<a name='L262'></a><a href='#L262'>262</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a>
+<a name='L274'></a><a href='#L274'>274</a>
+<a name='L275'></a><a href='#L275'>275</a>
+<a name='L276'></a><a href='#L276'>276</a>
+<a name='L277'></a><a href='#L277'>277</a>
+<a name='L278'></a><a href='#L278'>278</a>
+<a name='L279'></a><a href='#L279'>279</a>
+<a name='L280'></a><a href='#L280'>280</a>
+<a name='L281'></a><a href='#L281'>281</a>
+<a name='L282'></a><a href='#L282'>282</a>
+<a name='L283'></a><a href='#L283'>283</a>
+<a name='L284'></a><a href='#L284'>284</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -479,6 +501,16 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -487,6 +519,10 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -538,6 +574,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -739,6 +783,16 @@ class GitHubActionsService {
       displayStatus = 'In Progress';
       badgeClass = 'in-progress';
       icon = '🟡';
+    } else <span class="missing-if-branch" title="if path not taken" >I</span>if (status === 'waiting') {
+      // Handle workflows waiting for approval or manual intervention
+<span class="cstat-no" title="statement not covered" >      displayStatus = 'Awaiting Approval';</span>
+<span class="cstat-no" title="statement not covered" >      badgeClass = 'waiting';</span>
+<span class="cstat-no" title="statement not covered" >      icon = '🟠';</span>
+    } else <span class="missing-if-branch" title="if path not taken" >I</span>if (status === 'requested') {
+      // Handle workflows that are requested but haven't started yet
+<span class="cstat-no" title="statement not covered" >      displayStatus = 'Requested';</span>
+<span class="cstat-no" title="statement not covered" >      badgeClass = 'requested';</span>
+<span class="cstat-no" title="statement not covered" >      icon = '🔵';</span>
     } else if (status === 'completed') {
       if (conclusion === 'success') {
         displayStatus = 'Succeeded';
@@ -748,7 +802,11 @@ class GitHubActionsService {
         displayStatus = 'Failed';
         badgeClass = 'failed';
         icon = '🔴';
-      } else <span class="missing-if-branch" title="else path not taken" >E</span>{
+      } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (conclusion === 'action_required') {</span>
+<span class="cstat-no" title="statement not covered" >        displayStatus = 'Action Required';</span>
+<span class="cstat-no" title="statement not covered" >        badgeClass = 'action-required';</span>
+<span class="cstat-no" title="statement not covered" >        icon = '🟠';</span>
+      } else {
 <span class="cstat-no" title="statement not covered" >        displayStatus = 'Completed';</span>
 <span class="cstat-no" title="statement not covered" >        badgeClass = 'completed';</span>
 <span class="cstat-no" title="statement not covered" >        icon = '🟦';</span>
@@ -799,7 +857,15 @@ class GitHubActionsService {
       );
 &nbsp;
       <span class="missing-if-branch" title="if path not taken" >I</span>if (!response.ok) {
-<span class="cstat-no" title="statement not covered" >        throw new Error(`Failed to trigger workflow: ${response.status}`);</span>
+        const errorText = <span class="cstat-no" title="statement not covered" >await response.text();</span>
+<span class="cstat-no" title="statement not covered" >        console.error(`Workflow trigger failed:`, {</span>
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          branch,
+          workflowId
+        });
+<span class="cstat-no" title="statement not covered" >        throw new Error(`Failed to trigger workflow: ${response.status} ${response.statusText} - ${errorText}`);</span>
       }
 &nbsp;
       return true;
@@ -853,7 +919,7 @@ export default githubActionsService;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-03T14:38:33.062Z
+                at 2025-08-04T19:42:19.878Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/16</span>
+                <span class='fraction'>0/19</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/16</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/16</span>
+                <span class='fraction'>0/19</span>
             </div>
         
             
@@ -185,7 +185,14 @@
 <a name='L120'></a><a href='#L120'>120</a>
 <a name='L121'></a><a href='#L121'>121</a>
 <a name='L122'></a><a href='#L122'>122</a>
-<a name='L123'></a><a href='#L123'>123</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -200,6 +207,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -311,6 +323,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PageLayout, usePageParams } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
+import useThemeImage from '../hooks/useThemeImage';
 import './DAKActionSelection.css';
 &nbsp;
 const DAKActionSelection = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
@@ -326,6 +339,11 @@ const DAKActionSelectionContent = <span class="cstat-no" title="statement not co
   const navigate = <span class="cstat-no" title="statement not covered" >useNavigate();</span>
   const { profile } = <span class="cstat-no" title="statement not covered" >usePageParams();</span>
   
+  // Theme-aware action images
+  const editingImage = <span class="cstat-no" title="statement not covered" >useThemeImage('editing.png');</span>
+  const forkingImage = <span class="cstat-no" title="statement not covered" >useThemeImage('forking.png');</span>
+  const createImage = <span class="cstat-no" title="statement not covered" >useThemeImage('create.png');</span>
+  
   // Use profile from framework (PageProvider) or location state
   const effectiveProfile = <span class="cstat-no" title="statement not covered" >profile || location.state?.profile;</span>
 &nbsp;
@@ -337,21 +355,21 @@ const DAKActionSelectionContent = <span class="cstat-no" title="statement not co
       id: 'edit',
       title: 'Edit Existing DAK',
       description: 'Select and modify an existing DAK that you have permission to edit. Changes will be made directly to the repository.',
-      icon: `${process.env.PUBLIC_URL || ''}/editing.png`,
+      icon: editingImage,
       color: '#0078d4'
     },
     {
       id: 'fork', 
       title: 'Fork Existing DAK',
       description: 'Create a copy of an existing DAK in your own organization or account. You will be able to modify the forked version independently.',
-      icon: `${process.env.PUBLIC_URL || ''}/forking.png`,
+      icon: forkingImage,
       color: '#107c10'
     },
     {
       id: 'create',
       title: 'Create New DAK',
       description: 'Create a new DAK from the WHO SMART Guidelines template (smart-ig-empty). You\'ll configure basic parameters and start with a clean template.',
-      icon: `${process.env.PUBLIC_URL || ''}/create.png`,
+      icon: createImage,
       color: '#881798'
     }
   ];
@@ -436,7 +454,7 @@ export default DAKActionSelection;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-02T16:09:55.911Z
+                at 2025-08-04T19:42:19.878Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
