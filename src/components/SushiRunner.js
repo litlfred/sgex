@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import githubService from '../services/githubService';
 import './SushiRunner.css';
 
@@ -7,6 +9,9 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
   const [isRunning, setIsRunning] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [generatedFiles, setGeneratedFiles] = useState([]);
+  const [showFileViewer, setShowFileViewer] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [logLevelToggles, setLogLevelToggles] = useState({
     info: true,
     success: true,
@@ -186,7 +191,9 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
       addLog('🔍 Analyzing FSH files...', 'info');
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Simulate FSH parsing and analysis
+      const generatedResources = [];
+      
+      // Simulate FSH parsing and analysis with file generation
       for (const file of files) {
         addLog(`🔍 Parsing ${file.name}...`, 'info');
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -196,18 +203,130 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
         const profiles = lines.filter(line => line.trim().startsWith('Profile:')).length;
         const instances = lines.filter(line => line.trim().startsWith('Instance:')).length;
         const valueSets = lines.filter(line => line.trim().startsWith('ValueSet:')).length;
+        const codeSystems = lines.filter(line => line.trim().startsWith('CodeSystem:')).length;
         
-        if (profiles > 0) addLog(`  📊 Found ${profiles} Profile(s)`, 'success');
-        if (instances > 0) addLog(`  📊 Found ${instances} Instance(s)`, 'success');
-        if (valueSets > 0) addLog(`  📊 Found ${valueSets} ValueSet(s)`, 'success');
+        if (profiles > 0) {
+          addLog(`  📊 Found ${profiles} Profile(s)`, 'success');
+          // Generate mock profile resources
+          for (let i = 0; i < profiles; i++) {
+            const profileName = `Profile${i + 1}`;
+            generatedResources.push({
+              type: 'StructureDefinition',
+              filename: `StructureDefinition-${profileName}.json`,
+              content: JSON.stringify({
+                resourceType: 'StructureDefinition',
+                id: profileName,
+                url: `http://example.org/fhir/StructureDefinition/${profileName}`,
+                name: profileName,
+                title: `${profileName} Profile`,
+                status: 'draft',
+                fhirVersion: '4.0.1',
+                kind: 'resource',
+                abstract: false,
+                type: 'Patient',
+                baseDefinition: 'http://hl7.org/fhir/StructureDefinition/Patient',
+                derivation: 'constraint',
+                description: `Generated profile from ${file.name}`
+              }, null, 2)
+            });
+          }
+        }
+        
+        if (instances > 0) {
+          addLog(`  📊 Found ${instances} Instance(s)`, 'success');
+          // Generate mock instance resources
+          for (let i = 0; i < instances; i++) {
+            const instanceName = `Example${i + 1}`;
+            generatedResources.push({
+              type: 'Patient',
+              filename: `${instanceName}.json`,
+              content: JSON.stringify({
+                resourceType: 'Patient',
+                id: instanceName,
+                meta: {
+                  profile: [`http://example.org/fhir/StructureDefinition/Profile1`]
+                },
+                identifier: [{
+                  system: 'http://example.org/patients',
+                  value: instanceName
+                }],
+                name: [{
+                  family: 'Doe',
+                  given: ['John']
+                }],
+                gender: 'male',
+                birthDate: '1990-01-01'
+              }, null, 2)
+            });
+          }
+        }
+        
+        if (valueSets > 0) {
+          addLog(`  📊 Found ${valueSets} ValueSet(s)`, 'success');
+          // Generate mock valuesets
+          for (let i = 0; i < valueSets; i++) {
+            const vsName = `ValueSet${i + 1}`;
+            generatedResources.push({
+              type: 'ValueSet',
+              filename: `ValueSet-${vsName}.json`,
+              content: JSON.stringify({
+                resourceType: 'ValueSet',
+                id: vsName,
+                url: `http://example.org/fhir/ValueSet/${vsName}`,
+                name: vsName,
+                title: `${vsName} Value Set`,
+                status: 'draft',
+                description: `Generated ValueSet from ${file.name}`,
+                compose: {
+                  include: [{
+                    system: 'http://example.org/codes',
+                    concept: [
+                      { code: 'code1', display: 'Code 1' },
+                      { code: 'code2', display: 'Code 2' }
+                    ]
+                  }]
+                }
+              }, null, 2)
+            });
+          }
+        }
+        
+        if (codeSystems > 0) {
+          addLog(`  📊 Found ${codeSystems} CodeSystem(s)`, 'success');
+          // Generate mock codesystems
+          for (let i = 0; i < codeSystems; i++) {
+            const csName = `CodeSystem${i + 1}`;
+            generatedResources.push({
+              type: 'CodeSystem',
+              filename: `CodeSystem-${csName}.json`,
+              content: JSON.stringify({
+                resourceType: 'CodeSystem',
+                id: csName,
+                url: `http://example.org/fhir/CodeSystem/${csName}`,
+                name: csName,
+                title: `${csName} Code System`,
+                status: 'draft',
+                content: 'complete',
+                description: `Generated CodeSystem from ${file.name}`,
+                concept: [
+                  { code: 'code1', display: 'Code 1' },
+                  { code: 'code2', display: 'Code 2' }
+                ]
+              }, null, 2)
+            });
+          }
+        }
         
         if (file.isFromStaging) {
           addLog(`  🏗️ File from staging ground`, 'info');
         }
       }
 
+      // Set generated files
+      setGeneratedFiles(generatedResources);
+      
       addLog('✨ SUSHI compilation completed successfully!', 'success');
-      addLog('📦 Generated FHIR resources (simulated)', 'success');
+      addLog(`📦 Generated ${generatedResources.length} FHIR resources`, 'success');
       addLog('📝 Implementation Guide structure created', 'success');
       
       // Simulate some warnings or notes
@@ -221,9 +340,10 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
 
       return {
         success: true,
-        resourceCount: files.length * 2, // Simulate generated resources
+        resourceCount: generatedResources.length,
         warnings: [],
-        errors: []
+        errors: [],
+        generatedFiles: generatedResources
       };
       
     } catch (err) {
@@ -280,6 +400,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
 
   const clearLogs = useCallback(() => {
     setLogs([]);
+    setGeneratedFiles([]);
     setLogLevelToggles({
       info: true,
       success: true,
@@ -486,6 +607,82 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
     setSearchText(value);
   }, []);
 
+  const viewFile = useCallback((file) => {
+    setSelectedFile(file);
+    setShowFileViewer(true);
+  }, []);
+
+  const closeFileViewer = useCallback(() => {
+    setShowFileViewer(false);
+    setSelectedFile(null);
+  }, []);
+
+  const getResourceTypeIcon = (type) => {
+    switch (type) {
+      case 'StructureDefinition': return '🏗️';
+      case 'Patient': return '👤';
+      case 'ValueSet': return '📊';
+      case 'CodeSystem': return '🔢';
+      case 'Organization': return '🏢';
+      case 'Practitioner': return '👨‍⚕️';
+      case 'Observation': return '📋';
+      default: return '📄';
+    }
+  };
+
+  const FileViewerModal = () => {
+    if (!selectedFile) return null;
+
+    return (
+      <div className="file-viewer-overlay">
+        <div className="file-viewer-modal">
+          <div className="file-viewer-header">
+            <h3>
+              {getResourceTypeIcon(selectedFile.type)} {selectedFile.filename}
+            </h3>
+            <div className="file-viewer-actions">
+              <button
+                onClick={() => navigator.clipboard.writeText(selectedFile.content)}
+                className="copy-file-btn"
+                title="Copy file content to clipboard"
+              >
+                📋 Copy
+              </button>
+              <button
+                onClick={closeFileViewer}
+                className="close-file-viewer-btn"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          <div className="file-viewer-content">
+            <SyntaxHighlighter
+              language="json"
+              style={oneLight}
+              showLineNumbers={true}
+              wrapLines={true}
+              customStyle={{
+                fontSize: '14px',
+                lineHeight: '1.4',
+                maxHeight: '70vh',
+                overflow: 'auto'
+              }}
+            >
+              {selectedFile.content}
+            </SyntaxHighlighter>
+          </div>
+          <div className="file-viewer-footer">
+            <span className="file-info">
+              Resource Type: {selectedFile.type} | 
+              Size: {(selectedFile.content.length / 1024).toFixed(1)} KB
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const LogModal = () => (
     <div className="sushi-modal-overlay">
       <div className="sushi-modal">
@@ -572,6 +769,54 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
               </div>
             )}
           </div>
+          
+          {generatedFiles.length > 0 && (
+            <div className="generated-files-section">
+              <h4>📦 Generated FHIR Resources ({generatedFiles.length})</h4>
+              <div className="generated-files-grid">
+                {generatedFiles.map((file, index) => (
+                  <div key={index} className="generated-file-card">
+                    <div className="file-card-header">
+                      <span className="file-icon">{getResourceTypeIcon(file.type)}</span>
+                      <span className="file-name">{file.filename}</span>
+                    </div>
+                    <div className="file-card-details">
+                      <span className="file-type">{file.type}</span>
+                      <span className="file-size">
+                        {(file.content.length / 1024).toFixed(1)} KB
+                      </span>
+                    </div>
+                    <div className="file-card-actions">
+                      <button
+                        onClick={() => viewFile(file)}
+                        className="view-file-btn"
+                        title="View resource content"
+                      >
+                        👁️ View
+                      </button>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(file.content)}
+                        className="copy-file-btn"
+                        title="Copy to clipboard"
+                      >
+                        📋
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="fhir-viewer-suggestions">
+                <h5>💡 Enhanced FHIR Viewing Options</h5>
+                <p>For better FHIR resource visualization, consider these viewers:</p>
+                <ul>
+                  <li><strong>FHIR Tree Viewer:</strong> <code>npm install @types/fhir</code> + custom tree renderer</li>
+                  <li><strong>FHIR Path Viewer:</strong> <code>npm install fhirpath</code> for interactive querying</li>
+                  <li><strong>FHIR UI:</strong> <code>npm install @asymmetrik/fhir-kit-client</code> with UI components</li>
+                  <li><strong>HL7 FHIR Viewer:</strong> Integration with official HL7 FHIR viewers</li>
+                </ul>
+              </div>
+            </div>
+          )}
           
           {error && (
             <div className="error-summary">
@@ -677,6 +922,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
       )}
 
       {showModal && <LogModal />}
+      {showFileViewer && <FileViewerModal />}
     </div>
   );
 };

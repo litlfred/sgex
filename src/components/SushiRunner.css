@@ -656,3 +656,290 @@
     flex-wrap: wrap;
   }
 }
+
+/* Generated Files Section */
+.generated-files-section {
+  background: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+  padding: 1.5rem;
+}
+
+.generated-files-section h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.generated-files-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.generated-file-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.generated-file-card:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.file-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.file-icon {
+  font-size: 1.2rem;
+}
+
+.file-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-card-details {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.file-type {
+  background: #e9ecef;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.file-size {
+  color: #6c757d;
+}
+
+.file-card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.view-file-btn {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: background 0.3s ease;
+}
+
+.view-file-btn:hover {
+  background: #0056b3;
+}
+
+.copy-file-btn {
+  padding: 0.5rem 0.8rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.3s ease;
+}
+
+.copy-file-btn:hover {
+  background: #218838;
+}
+
+.fhir-viewer-suggestions {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.fhir-viewer-suggestions h5 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.fhir-viewer-suggestions p {
+  margin: 0 0 0.5rem 0;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.fhir-viewer-suggestions ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.fhir-viewer-suggestions li {
+  margin-bottom: 0.3rem;
+}
+
+.fhir-viewer-suggestions code {
+  background: #f8f9fa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+
+/* File Viewer Modal */
+.file-viewer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 1rem;
+}
+
+.file-viewer-modal {
+  background: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 1200px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+}
+
+.file-viewer-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.file-viewer-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-viewer-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.copy-file-btn {
+  padding: 0.5rem 1rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.3s ease;
+}
+
+.copy-file-btn:hover {
+  background: #218838;
+}
+
+.close-file-viewer-btn {
+  padding: 0.5rem 1rem;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+
+.close-file-viewer-btn:hover {
+  background: #c82333;
+}
+
+.file-viewer-content {
+  flex: 1;
+  overflow: auto;
+  background: #f8f9fa;
+}
+
+.file-viewer-content pre {
+  margin: 0 !important;
+  background: #f8f9fa !important;
+}
+
+.file-viewer-footer {
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  border-radius: 0 0 8px 8px;
+}
+
+.file-info {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Responsive adjustments for generated files */
+@media (max-width: 768px) {
+  .generated-files-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .generated-file-card {
+    padding: 0.75rem;
+  }
+  
+  .file-card-actions {
+    flex-direction: column;
+  }
+  
+  .file-viewer-modal {
+    margin: 0.5rem;
+    max-height: 95vh;
+  }
+  
+  .file-viewer-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .file-viewer-header h3 {
+    font-size: 1rem;
+  }
+  
+  .fhir-viewer-suggestions {
+    padding: 0.75rem;
+  }
+}
