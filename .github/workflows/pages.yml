@@ -74,40 +74,59 @@ jobs:
           fi
           echo "Building with BASE_PATH: $BASE_PATH"
           
-          # Get build script from deploy branch (fallback to local if deploy branch doesn't exist)
-          echo "Fetching build script from deploy branch..."
-          if git fetch origin deploy 2>/dev/null; then
-            echo "Deploy branch found, using build script from deploy branch"
-            git checkout origin/deploy -- scripts/build-multi-branch.js
-          else
-            echo "Deploy branch not found, checking if build script exists locally..."
-            if [[ ! -f "scripts/build-multi-branch.js" ]]; then
-              echo "ERROR: Build script not found and deploy branch doesn't exist"
-              echo "Creating minimal build script as fallback..."
+          # Try to get build script from deploy branch, create fallback if not available
+          echo "Checking for deploy branch build script..."
+          if git ls-remote --heads origin deploy >/dev/null 2>&1; then
+            echo "Deploy branch exists on remote, fetching build script..."
+            if git fetch origin deploy 2>/dev/null && git checkout origin/deploy -- scripts/build-multi-branch.js 2>/dev/null; then
+              echo "✅ Using build script from deploy branch"
+            else
+              echo "⚠️ Failed to fetch script from deploy branch, using fallback"
               mkdir -p scripts
-              cat > scripts/build-multi-branch.js << 'EOF'
+            fi
+          else
+            echo "⚠️ Deploy branch not found on remote, using fallback build process"
+            mkdir -p scripts
+          fi
+          
+          # Create or use fallback build script if needed
+          if [[ ! -f "scripts/build-multi-branch.js" ]]; then
+            echo "Creating fallback build script..."
+            cat > scripts/build-multi-branch.js << 'EOF'
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-console.log('Building React app for deployment...');
+console.log('🔨 Building React app for deployment (fallback mode)...');
 
-// Simplified build process
 try {
-  // Set environment variables
+  // Set environment variables for React build
   process.env.NODE_ENV = 'production';
   process.env.PUBLIC_URL = process.env.BASE_PATH || '/';
+  process.env.GENERATE_SOURCEMAP = 'false';  // Reduce build size
   
-  // Run the build
+  console.log(`Building with PUBLIC_URL: ${process.env.PUBLIC_URL}`);
+  
+  // Run the standard React build
   execSync('npm run build', { stdio: 'inherit' });
   
+  // Verify build output
+  const buildDir = path.join(process.cwd(), 'build');
+  const indexPath = path.join(buildDir, 'index.html');
+  
+  if (!fs.existsSync(indexPath)) {
+    throw new Error('Build completed but index.html not found');
+  }
+  
   console.log('✅ Build completed successfully');
+  console.log(`📁 Build output available in: ${buildDir}`);
+  
 } catch (error) {
   console.error('❌ Build failed:', error.message);
+  console.error('Stack:', error.stack);
   process.exit(1);
 }
 EOF
-            fi
           fi
           
           # Run the build script
