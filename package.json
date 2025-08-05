@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "SGEX Workbench - WHO SMART Guidelines Exchange collaborative editor",
   "private": true,
-  "homepage": "/sgex/",
+  "homepage": "/",
   "dependencies": {
     "@octokit/rest": "^22.0.0",
     "@testing-library/jest-dom": "^6.6.4",
@@ -26,7 +26,6 @@
   "scripts": {
     "start": "craco start",
     "build": "react-scripts build",
-    "build:multi-branch": "node scripts/build-multi-branch.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve": "npm run build && cd build && python3 -m http.server 3000",
