@@ -53,10 +53,13 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 
 ## 🔒 Security & Approval Process
 
-Both workflows require approval through GitHub's environment protection:
-1. Navigate to repository Settings → Environments → `github-pages`
-2. Configure required reviewers
-3. Workflows will wait for approval before deploying
+Both workflows are manually triggered (`workflow_dispatch`) and require user confirmation:
+1. Navigate to Actions tab
+2. Select the appropriate workflow
+3. Click "Run workflow" and confirm parameters
+4. Workflows will execute immediately upon confirmation
+
+**Note**: Environment protection was removed to resolve deployment issues while maintaining manual trigger control.
 
 ## 📋 Removed Workflows
 

@@ -26,9 +26,6 @@ concurrency:
 jobs:
   deploy-branch:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment_info.outputs.branch_url }}
     outputs:
       branch_name: ${{ steps.deployment_info.outputs.branch_name }}
       target_directory: ${{ steps.deployment_info.outputs.target_directory }}
