@@ -1,155 +1,124 @@
-# SGEX Workbench Documentation Index
+# Manage DAK Workflow Diagrams
 
-## Overview
+This directory contains the complete set of workflow diagrams for the "Manage DAK" functionality in the SGeX Workbench.
 
-This document provides an index and summary of all documentation for the SMART Guidelines Exchange (SGEX) Workbench project.
+## Files
 
-## Documentation Structure
+### BPMN Diagrams
+- **`manage-dak-workflow.bpmn`** - Complete BPMN 2.0 diagram showing all three workflow paths (edit, fork, create)
+- **`manage-dak-workflow.svg`** - SVG export of the BPMN diagram for documentation and web display
 
-### Core Documentation
+### PlantUML Sequence Diagrams
+- **`manage-dak-edit-workflow.puml`** - Sequence diagram for editing existing DAKs
+- **`manage-dak-fork-workflow.puml`** - Sequence diagram for forking existing DAKs  
+- **`manage-dak-create-workflow.puml`** - Sequence diagram for creating new DAKs from templates
 
-1. **[Project Plan](project-plan.md)**
-   - Project overview and scope
-   - Development phases and timeline
-   - Stakeholder information
-   - Risk management
-   - Success criteria
+### Legacy Diagram (Replaced)
+- **`manage-dak-sequence.puml`** - Original unified sequence diagram (kept for reference)
 
-2. **[Requirements](requirements.md)**  
-   - Functional requirements (authentication, repository management, editing)
-   - Non-functional requirements (performance, accessibility, security)
-   - User experience requirements
-   - Integration requirements
-   - Constraints and assumptions
+## Workflow Actors
 
-3. **[Solution Architecture](solution-architecture.md)**
-   - High-level system architecture
-   - Frontend SPA design
-   - GitHub services integration
-   - Security and deployment architecture
-   - Performance and scalability considerations
+All diagrams reference the following actors with clickable links to their definitions in [`../requirements.md`](../requirements.md):
 
-4. **[DAK Components](dak-components.md)**
-   - Comprehensive guide to the 8 WHO SMART Guidelines DAK components
-   - Detailed component descriptions and purposes
-   - Level 2 (Business Logic) vs Level 3 (Technical Implementation) organization
-   - Editor capabilities and file type specifications
+1. **[DAK Author](../requirements.md#req-actor-001)** - L2/L3 author of WHO SMART Guidelines Digital Adaptation Kits
+2. **[SGeX Workbench](../requirements.md#req-actor-002)** - The collaborative editing platform (React application)
+3. **[GitHub](../requirements.md#req-actor-003)** - Version control and repository management platform
+4. **[OCL](../requirements.md#req-actor-004)** - Open Concept Lab terminology management system
+5. **[PCMT](../requirements.md#req-actor-005)** - Product Catalogue Management Tool for health commodities
 
-5. **[Page Framework](page-framework.md)**
-   - Consistent page functionality framework for all pages
-   - URL patterns and page types (Top-Level, User, DAK, Asset)
-   - Header components and navigation patterns
-   - Error handling and automatic bug reporting
-   - Developer requirements and implementation examples
+## Workflow Types
 
-## Key Concepts
+### 1. Edit Existing DAK (`manage-dak-edit-workflow.puml`)
+- Select existing DAK repository with SMART Guidelines compatibility
+- Direct access to component editing interface
+- Integration with OCL and PCMT for terminology and product data
 
-### SGEX Workbench
-A browser-based, static web application for collaborative editing of WHO SMART Guidelines Digital Adaptation Kits (DAKs) content stored in GitHub repositories.
+### 2. Fork Existing DAK (`manage-dak-fork-workflow.puml`)
+- Select source DAK repository 
+- Choose destination organization
+- Fork repository and proceed to editing
+- Maintains connection to original repository for upstream updates
 
-### DAK Components (8 Total)
-The system supports editing of all 8 WHO SMART Guidelines DAK components:
-- **Level 2 (Business Logic & Processes)**: Business Processes, Decision Support Logic, Indicators & Measures, Data Entry Forms  
-- **Level 3 (Technical Implementation)**: Terminology, FHIR Profiles, FHIR Extensions, Test Data & Examples
-- Scheduling tables are considered a special case of decision tables within Decision Support Logic
-- See [DAK Components](dak-components.md) for comprehensive details
+### 3. Create New DAK (`manage-dak-create-workflow.puml`)
+- Template selection from configuration-driven list
+- Organization selection for repository creation
+- DAK parameter configuration (name, title, description, etc.)
+- Repository creation from WHO template with customized sushi-config.yaml
 
-### Technology Stack
-- **Frontend**: React-based Single Page Application
-- **Forms**: JSON Forms for schema-driven UI
-- **Editors**: bpmn-js (BPMN), dmn-js (DMN), Monaco Editor (XML)
-- **Integration**: GitHub Personal Access Tokens + REST API via Octokit
-- **Deployment**: GitHub Pages
+## Template Configuration
 
-### WHO Compliance
-All UI components, terminology, and branding follow WHO SMART Guidelines specifications.
+DAK templates are now managed through a configuration file at [`../../src/config/dak-templates.json`](../../src/config/dak-templates.json), containing:
 
-## Architecture Highlights
+- **WHO template SMART Guidelines** - Based on `WorldHealthOrganization/smart-ig-empty`
+- Extensible structure for additional templates in the future
+- Template metadata including name, description, repository URL, and documentation links
 
-### Client-Side Only
-- No backend server required
-- All processing in browser
-- GitHub handles storage and collaboration
+## Technical Notes
 
-### GitHub-Centric
-- Personal Access Token authentication
-- Repository-based permissions
-- Native GitHub collaboration tools integration
+- All PlantUML diagrams include clickable actor references using `[[../requirements.md#req-actor-xxx ActorName]]` syntax
+- SVG diagram has been corrected to show query operations (orgs/repos) originating from SGeX Workbench, not DAK Author
+- Template selection uses configuration-driven approach rather than hard-coded repositories
+- Diagrams follow WHO SMART Guidelines branding and visual standards
 
-### Standards-Compliant
-- JSON Forms for accessibility (WAI-ARIA)
-- Modern web standards
-- Progressive enhancement
+## Viewing Diagrams
 
-## Development Approach
+- **BPMN**: Use any BPMN 2.0 compatible viewer or the SVG export
+- **PlantUML**: Use PlantUML server, VS Code extensions, or online viewers
+- **SVG**: Can be viewed directly in web browsers or embedded in documentation
 
-### Current Phase: Documentation
-- Requirements definition ✓
-- Solution architecture ✓  
-- Project planning ✓
-- Documentation structure ✓
+## Business Process Navigation Workflow (NEW)
 
-### Future Phases
-- Architecture refinement
-- Implementation planning
-- Development and testing
+### Enhanced Business Process Selection Flow
 
-## Key Features
+As of the latest implementation, the business process navigation workflow has been enhanced to provide a more user-friendly experience with proper permission handling:
 
-### Authentication & Access
-- GitHub Personal Access Token integration
-- Repository permission inheritance
-- Post-authentication redirect to intended view
+#### 1. **Initial Navigation (No Permission Check)**
+- Users can click the "Business Processes" component card on the DAK Dashboard without permission validation
+- Navigates directly to `/business-process-selection` page
+- Shows all available BPMN files in the `input/business-processes/` directory
 
-### Editing Capabilities
-- BPMN diagram editing with SVG generation
-- DMN decision table editing
-- Markdown content editing
-- Raw XML editing for advanced users
+#### 2. **File Selection Interface**
+- Displays grid of BPMN file cards with file information (name, path, size)
+- Each file card provides three action options:
+  - **👁️ View**: Read-only BPMN diagram viewer (available to all users)
+  - **✏️ Edit**: BPMN diagram editor (requires write permissions)
+  - **📄 Source**: XML source code viewer with GitHub integration (available to all users)
 
-### User Experience
-- WHO SMART Guidelines branding
-- Dashboard with 8 DAK component tiles
-- Contextual navigation
-- Accessibility support for visual impairments
-- Internationalization ready (multilingual support)
+#### 3. **Permission-Based Actions**
+- **View Mode**: Uses `bpmn-js/NavigatedViewer` for read-only diagram viewing
+  - No editing palette or tools displayed
+  - Includes "Edit" button for users with write permissions
+  - Clear read-only indicators and permission notices
+- **Edit Mode**: Uses existing `BPMNEditor` with full editing capabilities (permission required)
+- **Source Mode**: Displays formatted XML source code with:
+  - Syntax-highlighted code display
+  - Copy to clipboard functionality
+  - Download file capability
+  - Direct GitHub links for viewing/editing on GitHub
 
-### Collaboration
-- GitHub Issues integration
-- GitHub Projects/Kanban linking
-- GitHub Discussions access
-- Pull request workflow
+#### 4. **Navigation Flow**
+```
+DAK Dashboard → Business Process Selection → [View|Edit|Source] Mode
+     ↓                      ↓                         ↓
+No permission check    Permission check only    Action-specific UI
+```
 
-## Security Model
+#### 5. **Key Features**
+- **Deferred Permission Checking**: Permissions validated only when attempting to edit, not during navigation
+- **Multi-Modal Access**: View, edit, and source examination options for each BPMN file
+- **GitHub Integration**: Direct links to GitHub for file viewing and editing
+- **Consistent Breadcrumb Navigation**: Full navigation path maintained across all screens
+- **Responsive Design**: Mobile-friendly interface for all business process workflows
 
-- Client-side only architecture
-- No secrets in codebase
-- GitHub Personal Access Tokens for authentication
-- Repository permissions for authorization
-- HTTPS-only communication
+This enhancement addresses the requirement to "not check permissions of the DAK Author once they claim the business process button" while providing comprehensive access to BPMN files through multiple interaction modes.
 
-## Deployment Strategy
+## Integration
 
-- Primary: GitHub Pages (smart-base repo)
-- Alternative: Netlify, Vercel, or similar CDN
-- Static site deployment
-- Automatic deployment pipeline
-
-## Accessibility & Internationalization
-
-- WCAG 2.1 AA compliance
-- Screen reader support
-- Keyboard navigation
-- Locale-based content support (e.g., fr_FR)
-- WHO terminology consistency
-
-## Quality Assurance
-
-- Technical accuracy through architectural review
-- WHO SMART Guidelines compliance
-- Consistent documentation formatting
-- Accessibility considerations throughout
-
----
-
-*For detailed information on any topic, refer to the specific documentation files listed above.*
+These diagrams are referenced in:
+- [`../requirements.md`](../requirements.md) - Actor definitions and functional requirements
+- [`../solution-architecture.md`](../solution-architecture.md) - System architecture documentation
+- React application components implementing the actual workflows
+- **NEW**: Business process selection navigation components:
+  - `BusinessProcessSelection.js` - File selection interface
+  - `BPMNViewer.js` - Read-only BPMN diagram viewer
+  - `BPMNSource.js` - XML source code viewer with GitHub integration

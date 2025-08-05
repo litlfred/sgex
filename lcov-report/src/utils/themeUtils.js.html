@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">20% </span>
+                <span class="strong">11.11% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1/5</span>
+                <span class='fraction'>1/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">20% </span>
+                <span class="strong">11.11% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/5</span>
+                <span class='fraction'>1/9</span>
             </div>
         
             
@@ -82,15 +82,36 @@
 <a name='L17'></a><a href='#L17'>17</a>
 <a name='L18'></a><a href='#L18'>18</a>
 <a name='L19'></a><a href='#L19'>19</a>
-<a name='L20'></a><a href='#L20'>20</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -98,26 +119,35 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Utility function to get the appropriate image path based on the current theme
  * This can be used outside React components
- * @param {string} baseImagePath - The base image path (e.g., "/sgex-mascot.png")
+ * @param {string} baseImagePath - The base image path (e.g., "sgex-mascot.png")
  * @returns {string} The theme-appropriate image path
  */
 export const getThemeImagePath = <span class="fstat-no" title="function not covered" >(b</span>aseImagePath) =&gt; {
   const isDarkMode = <span class="cstat-no" title="statement not covered" >document.body.classList.contains('theme-dark');</span>
   
+  // Get the correct base path for the deployment environment
+  const publicUrl = <span class="cstat-no" title="statement not covered" >process.env.PUBLIC_URL || '';</span>
+  
+  // Normalize the base image path (remove leading slash if present)
+  const normalizedPath = <span class="cstat-no" title="statement not covered" >baseImagePath.startsWith('/') ? baseImagePath.slice(1) : baseImagePath;</span>
+  
+  let finalPath;
 <span class="cstat-no" title="statement not covered" >  if (isDarkMode) {</span>
     // Convert base image to dark mode version
-    // e.g., "/sgex-mascot.png" -&gt; "/sgex-mascot_grey_tabby.png"
-<span class="cstat-no" title="statement not covered" >    return baseImagePath.replace(/\.png$/, '_grey_tabby.png');</span>
+    // e.g., "sgex-mascot.png" -&gt; "sgex-mascot_grey_tabby.png"
+    const darkImageName = <span class="cstat-no" title="statement not covered" >normalizedPath.replace(/\.png$/, '_grey_tabby.png');</span>
+<span class="cstat-no" title="statement not covered" >    finalPath = publicUrl ? `${publicUrl}/${darkImageName}` : `/${darkImageName}`;</span>
   } else {
     // Use original image for light mode
-<span class="cstat-no" title="statement not covered" >    return baseImagePath;</span>
+<span class="cstat-no" title="statement not covered" >    finalPath = publicUrl ? `${publicUrl}/${normalizedPath}` : `/${normalizedPath}`;</span>
   }
+  
+<span class="cstat-no" title="statement not covered" >  return finalPath;</span>
 };
 &nbsp;
 export default getThemeImagePath;</pre></td></tr></table></pre>
@@ -127,7 +157,7 @@ export default getThemeImagePath;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-02T20:46:31.709Z
+                at 2025-08-04T19:42:19.878Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

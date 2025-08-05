@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">5.63% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/142</span>
+                <span class='fraction'>0/142</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">3.44% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/29</span>
+                <span class='fraction'>0/29</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">5.92% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/135</span>
+                <span class='fraction'>0/135</span>
             </div>
         
             
@@ -559,7 +559,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -646,7 +646,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -922,7 +922,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -980,19 +980,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1003,8 +1003,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1015,7 +1015,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1039,7 +1039,7 @@ import dataAccessLayer from '../../services/dataAccessLayer';
 /**
  * Tool types supported by the framework
  */
-export const TOOL_TYPES = {
+export const TOOL_TYPES = <span class="cstat-no" title="statement not covered" >{</span>
   VIEWER: 'viewer',        // Read-only asset viewer
   EDITOR: 'editor',        // Asset editor with save capabilities
   DASHBOARD: 'dashboard',  // DAK-level dashboard
@@ -1126,7 +1126,7 @@ export class ToolDefinition {
 /**
  * Wrapper component that handles framework integration
  */
-const ToolWrapper = <span class="fstat-no" title="function not covered" >({</span> toolDefinition, ...props }) =&gt; {
+const ToolWrapper = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span> toolDefinition, ...props }) =&gt; {</span>
   const pageParams = <span class="cstat-no" title="statement not covered" >usePageParams();</span>
   const [toolState, setToolState] = <span class="cstat-no" title="statement not covered" >React.useState({</span>
     loading: true,
@@ -1401,8 +1401,8 @@ const ToolWrapper = <span class="fstat-no" title="function not covered" >({</spa
  * Registry for managing tool definitions
  */
 class ToolRegistry {
-  constructor() {
-    this.tools = new Map();
+<span class="fstat-no" title="function not covered" >  co</span>nstructor() {
+<span class="cstat-no" title="statement not covered" >    this.tools = new Map();</span>
   }
 &nbsp;
   /**
@@ -1460,19 +1460,19 @@ class ToolRegistry {
 }
 &nbsp;
 // Create singleton registry
-const toolRegistry = new ToolRegistry();
+const toolRegistry = <span class="cstat-no" title="statement not covered" >new ToolRegistry();</span>
 &nbsp;
 /**
  * Helper function to create a simple tool
  */
-export const createTool = <span class="fstat-no" title="function not covered" >(c</span>onfig) =&gt; {
+export const createTool = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>onfig) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  return toolRegistry.register(config);</span>
 };
 &nbsp;
 /**
  * Helper function to create an asset editor tool
  */
-export const createAssetEditor = <span class="fstat-no" title="function not covered" >(c</span>onfig) =&gt; {
+export const createAssetEditor = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>onfig) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  return createTool({</span>
     ...config,
     type: TOOL_TYPES.EDITOR,
@@ -1483,7 +1483,7 @@ export const createAssetEditor = <span class="fstat-no" title="function not cove
 /**
  * Helper function to create an asset viewer tool
  */
-export const createAssetViewer = <span class="fstat-no" title="function not covered" >(c</span>onfig) =&gt; {
+export const createAssetViewer = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>onfig) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  return createTool({</span>
     ...config,
     type: TOOL_TYPES.VIEWER,
@@ -1495,7 +1495,7 @@ export const createAssetViewer = <span class="fstat-no" title="function not cove
 /**
  * Helper function to create a dashboard tool
  */
-export const createDashboard = <span class="fstat-no" title="function not covered" >(c</span>onfig) =&gt; {
+export const createDashboard = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>onfig) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  return createTool({</span>
     ...config,
     type: TOOL_TYPES.DASHBOARD,
@@ -1510,7 +1510,7 @@ export default toolRegistry;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-02T16:09:55.911Z
+                at 2025-08-04T19:42:19.878Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
