@@ -11,7 +11,7 @@
 
 .sushi-status-bar {
   padding: 1rem;
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
   color: white;
   cursor: pointer;
   user-select: none;
@@ -19,9 +19,9 @@
 }
 
 .sushi-status-bar:hover {
-  background: linear-gradient(135deg, #ff5252 0%, #e53935 100%);
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
 }
 
 .sushi-status-bar.expanded {

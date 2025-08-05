@@ -616,7 +616,7 @@ const DAKDashboardContent = () => {
               onClick={() => setActiveTab('publications')}
             >
               <span className="tab-icon">📚</span>
-              <span className="tab-text">Publications</span>
+              <span className="tab-text">Validate & Publish</span>
             </button>
           </div>
 
