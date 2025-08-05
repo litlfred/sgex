@@ -361,19 +361,15 @@ jobs:
               const prNumber = prs[0].number;
               console.log(`Found associated PR #${prNumber} for branch ${branchName}`);
               
-              const commentBody = `## 🚀 Branch Preview Deployed!
-
-**Branch:** \`${branchName}\`
-**Commit:** \`${commitSha.substring(0, 7)}\`
-**Deployed:** ${deployedAt}
-
-### 🌐 Preview URL
-[${branchUrl}](${branchUrl})
-
----
-This branch preview was deployed manually and will remain until the next manual deployment.
-
-_Note: This deployment only updates the branch subdirectory and does not affect the landing page._`;
+              const commentBody = '## 🚀 Branch Preview Deployed!\n\n' +
+                '**Branch:** `' + branchName + '`\n' +
+                '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
+                '**Deployed:** ' + deployedAt + '\n\n' +
+                '### 🌐 Preview URL\n' +
+                '[' + branchUrl + '](' + branchUrl + ')\n\n' +
+                '---\n' +
+                'This branch preview was deployed manually and will remain until the next manual deployment.\n\n' +
+                '_Note: This deployment only updates the branch subdirectory and does not affect the landing page._';
               
               // Find existing deployment comment
               const { data: comments } = await github.rest.issues.listComments({
