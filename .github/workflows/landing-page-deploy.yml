@@ -1,6 +1,13 @@
 name: Deploy Landing Page
 
 on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/qa-report.html'
+      - 'public/docs/qa-report.html'
+      - 'docs/github-issues-analysis.md'
   workflow_dispatch:
     inputs:
       source_branch:
@@ -15,7 +22,7 @@ permissions:
 
 concurrency:
   group: "landing-page-deploy"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy-landing-page:
@@ -150,10 +157,20 @@ jobs:
             echo "No changes to commit"
           else
             echo "Committing landing page deployment..."
-            git commit -m "🏠 Deploy landing page (manual trigger)
+            
+            # Determine deployment type for commit message
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              deployment_type="manual"
+              trigger_info="Triggered from branch: ${{ github.ref_name }}"
+            else
+              deployment_type="automatic"
+              trigger_info="Auto-triggered by push to main"
+            fi
+            
+            git commit -m "🏠 Deploy landing page (${deployment_type})
 
             - Updated landing page with self-contained assets
-            - Triggered from branch: ${{ github.ref_name }}
+            - ${trigger_info}
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
             
@@ -169,8 +186,18 @@ jobs:
         run: |
           landing_url="https://litlfred.github.io/sgex/"
           
+          # Determine deployment type for output message
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            deployment_type="Manual"
+            trigger_info="Triggered from branch: ${{ github.ref_name }}"
+          else
+            deployment_type="Automatic"
+            trigger_info="Auto-triggered by push to main"
+          fi
+          
           echo "🏠 Landing Page Deployment Summary:"
           echo "- Landing Page URL: $landing_url"
-          echo "- Source Branch: ${{ github.ref_name }}"
+          echo "- Deployment Type: $deployment_type"
+          echo "- $trigger_info"
           echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo "- Commit: ${{ github.sha }}"
