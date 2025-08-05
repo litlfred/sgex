@@ -12,6 +12,12 @@ on:
       - 'docs/qa-report.html'
       - 'public/docs/qa-report.html'
       - 'docs/github-issues-analysis.md'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build and deploy (defaults to current branch)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -20,7 +26,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: "pages-${{ github.ref_name }}"
+  group: "pages-${{ github.event.inputs.branch || github.ref_name }}"
   cancel-in-progress: true
 
 jobs:
@@ -39,7 +45,34 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.branch || github.ref }}
           fetch-depth: 0  # Fetch full history for gh-pages branch
+
+      - name: Determine branch information
+        id: branch_info
+        shell: bash
+        run: |
+          set -e
+          
+          # Determine the branch being deployed
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ -n "${{ github.event.inputs.branch }}" ]]; then
+              branch_name="${{ github.event.inputs.branch }}"
+              echo "Using manual input branch: $branch_name"
+            else
+              branch_name="${{ github.ref_name }}"
+              echo "Using current branch for manual dispatch: $branch_name"
+            fi
+            deployment_type="manual"
+          else
+            branch_name="${{ github.ref_name }}"
+            echo "Using push trigger branch: $branch_name"
+            deployment_type="automatic"
+          fi
+          
+          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
+          echo "deployment_type=$deployment_type" >> $GITHUB_OUTPUT
+          echo "Building and deploying branch: $branch_name"
 
       - name: Configure git user
         shell: bash
@@ -66,17 +99,18 @@ jobs:
       - name: Build branch-specific React app
         run: |
           # Set the correct base path for the branch deployment
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
+          branch_name="${{ steps.branch_info.outputs.branch_name }}"
+          if [[ "$branch_name" == "main" ]]; then
             export BASE_PATH="/main/"
           else
-            safe_branch_name=$(echo "${{ github.ref_name }}" | tr '/' '-')
+            safe_branch_name=$(echo "$branch_name" | tr '/' '-')
             export BASE_PATH="/${safe_branch_name}/"
           fi
           echo "Building with BASE_PATH: $BASE_PATH"
           node scripts/build-multi-branch.js branch
         env:
           CI: false
-          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
 
       - name: Validate branch directory safety
         id: validate_branch
@@ -85,7 +119,7 @@ jobs:
           set -e
           
           # Get and sanitize branch name
-          branch="${{ github.ref_name }}"
+          branch="${{ steps.branch_info.outputs.branch_name }}"
           echo "Processing branch: $branch"
           
           # Critical validation: reject empty or whitespace-only branch names
@@ -294,8 +328,9 @@ jobs:
           fi
           
           # Additional validation: ensure we're not on a source branch
-          if [[ "$current_branch" == "${{ github.ref_name }}" ]]; then
-            echo "ERROR: Still on source branch ${{ github.ref_name }}!"
+          source_branch="${{ steps.branch_info.outputs.branch_name }}"
+          if [[ "$current_branch" == "$source_branch" ]]; then
+            echo "ERROR: Still on source branch $source_branch!"
             echo "This should not happen - branch switching failed"
             exit 1
           fi
@@ -331,9 +366,10 @@ jobs:
             echo "No changes to commit"
           else
             echo "Committing changes..."
-            git commit -m "🚀 Deploy ${{ github.ref_name }} branch preview
+            git commit -m "🚀 Deploy ${{ steps.branch_info.outputs.branch_name }} branch preview (${{ steps.branch_info.outputs.deployment_type }})
 
-            - Updated branch preview for ${{ github.ref_name }}
+            - Updated branch preview for ${{ steps.branch_info.outputs.branch_name }}
+            - Deployment type: ${{ steps.branch_info.outputs.deployment_type }}
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
             
@@ -380,7 +416,7 @@ jobs:
         shell: bash
         run: |
           target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
-          branch_name="${{ steps.validate_branch.outputs.branch_name }}"
+          branch_name="${{ steps.branch_info.outputs.branch_name }}"
           commit_sha="${{ github.sha }}"
           branch_url="https://litlfred.github.io/sgex/$target_subdir/"
           main_url="https://litlfred.github.io/sgex/main/"
