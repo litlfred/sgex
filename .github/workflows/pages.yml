@@ -76,7 +76,7 @@ jobs:
           
           # Try to get build script from deploy branch, create fallback if not available
           echo "Checking for deploy branch build script..."
-          if git ls-remote --heads origin deploy >/dev/null 2>&1; then
+          if [[ -n "$(git ls-remote --heads origin deploy 2>/dev/null)" ]]; then
             echo "Deploy branch exists on remote, fetching build script..."
             if git fetch origin deploy 2>/dev/null && git checkout origin/deploy -- scripts/build-multi-branch.js 2>/dev/null; then
               echo "✅ Using build script from deploy branch"
