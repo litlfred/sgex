@@ -94,15 +94,15 @@ jobs:
 
       - name: Build branch-specific React app
         run: |
-          # Set the correct base path for the branch deployment
+          # Set the correct public URL for the branch deployment
           branch_name="${{ steps.branch_info.outputs.branch_name }}"
           if [[ "$branch_name" == "main" ]]; then
-            export BASE_PATH="/main/"
+            export PUBLIC_URL="/sgex/main/"
           else
             safe_branch_name=$(echo "$branch_name" | tr '/' '-')
-            export BASE_PATH="/${safe_branch_name}/"
+            export PUBLIC_URL="/sgex/${safe_branch_name}/"
           fi
-          echo "Building with BASE_PATH: $BASE_PATH"
+          echo "Building with PUBLIC_URL: $PUBLIC_URL"
           
           # Build the React app
           npm run build

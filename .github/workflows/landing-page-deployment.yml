@@ -75,7 +75,7 @@ jobs:
           
           # Set environment for production build
           export NODE_ENV=production
-          export PUBLIC_URL=/
+          export PUBLIC_URL=/sgex/
           
           # Build the React app
           npm run build
