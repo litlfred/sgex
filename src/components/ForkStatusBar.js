@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import './ForkStatusBar.css';
 
 const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   
   const [isExpanded, setIsExpanded] = useState(false);
@@ -15,10 +13,10 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
   const [error, setError] = useState(null);
 
   // Get session storage key for this repository
-  const getStorageKey = () => {
+  const getStorageKey = React.useCallback(() => {
     if (!repository) return null;
     return `sgex_fork_status_${repository.full_name}`;
-  };
+  }, [repository]);
 
   // Load expansion state from session storage
   useEffect(() => {
@@ -29,7 +27,7 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
         setIsExpanded(JSON.parse(savedState));
       }
     }
-  }, [repository]);
+  }, [getStorageKey]);
 
   // Save expansion state to session storage
   const toggleExpansion = () => {
