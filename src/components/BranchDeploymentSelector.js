@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { PageLayout } from './framework';
 import useThemeImage from '../hooks/useThemeImage';
+import BranchListingPage from './BranchListingPage';
 import './BranchDeploymentSelector.css';
 
-const BranchDeploymentSelector = () => {
+const BranchDeploymentSelector = ({ mode = 'deployment-selector' }) => {
   const [deployments, setDeployments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,6 +13,9 @@ const BranchDeploymentSelector = () => {
   const mascotImage = useThemeImage('sgex-mascot.png');
 
   useEffect(() => {
+    // Only fetch deployments if we're in deployment selector mode
+    if (mode !== 'deployment-selector') return;
+    
     const fetchDeployments = async () => {
       try {
         setLoading(true);
@@ -61,7 +65,7 @@ const BranchDeploymentSelector = () => {
     };
 
     fetchDeployments();
-  }, []);
+  }, [mode]);
 
   const handleDeploymentSelect = (deployment) => {
     // Navigate to the deployment URL
@@ -82,6 +86,11 @@ const BranchDeploymentSelector = () => {
       return `Updated ${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
     }
   };
+
+  // If mode is 'branch-listing', use the full branch listing page
+  if (mode === 'branch-listing') {
+    return <BranchListingPage />;
+  }
 
   if (loading) {
     return (
