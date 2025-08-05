@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       source_branch:
-        description: 'Branch to use for build scripts (defaults to current branch)'
+        description: 'Branch to use for build scripts (defaults to deploy branch)'
         required: false
-        default: ''
+        default: 'deploy'
 
 permissions:
   contents: write
@@ -28,9 +28,10 @@ jobs:
   deploy-landing-page:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout deploy branch
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.source_branch || 'deploy' }}
           fetch-depth: 0  # Fetch full history for gh-pages branch
 
       - name: Configure git user
@@ -53,17 +54,10 @@ jobs:
         run: |
           set -e
           
-          echo "Building self-contained landing page..."
-          # Use current branch for build scripts unless specified
-          source_branch="${{ github.event.inputs.source_branch }}"
-          if [[ -z "$source_branch" ]]; then
-            source_branch="${{ github.ref_name }}"
-          fi
-          
-          echo "Using build scripts from branch: $source_branch"
+          echo "Building self-contained landing page from deploy branch..."
           
           # Build the landing page with self-contained assets
-          node scripts/build-multi-branch.js landing
+          npm run build:landing
           
           # Verify index.html exists
           if [[ ! -f "build/index.html" ]]; then
@@ -161,7 +155,7 @@ jobs:
             # Determine deployment type for commit message
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               deployment_type="manual"
-              trigger_info="Triggered from branch: ${{ github.ref_name }}"
+              trigger_info="Triggered from deploy branch"
             else
               deployment_type="automatic"
               trigger_info="Auto-triggered by push to main"
@@ -169,7 +163,7 @@ jobs:
             
             git commit -m "🏠 Deploy landing page (${deployment_type})
 
-            - Updated landing page with self-contained assets
+            - Updated landing page with self-contained assets from deploy branch
             - ${trigger_info}
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
@@ -189,7 +183,7 @@ jobs:
           # Determine deployment type for output message
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             deployment_type="Manual"
-            trigger_info="Triggered from branch: ${{ github.ref_name }}"
+            trigger_info="Triggered from deploy branch"
           else
             deployment_type="Automatic"
             trigger_info="Auto-triggered by push to main"
@@ -200,4 +194,5 @@ jobs:
           echo "- Deployment Type: $deployment_type"
           echo "- $trigger_info"
           echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "- Source Branch: ${{ github.event.inputs.source_branch || 'deploy' }}"
           echo "- Commit: ${{ github.sha }}"

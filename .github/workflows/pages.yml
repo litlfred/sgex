@@ -73,6 +73,13 @@ jobs:
             export BASE_PATH="/${safe_branch_name}/"
           fi
           echo "Building with BASE_PATH: $BASE_PATH"
+          
+          # Get build script from deploy branch
+          echo "Fetching build script from deploy branch..."
+          git fetch origin deploy
+          git checkout origin/deploy -- scripts/build-multi-branch.js
+          
+          # Run the build script
           node scripts/build-multi-branch.js branch
         env:
           CI: false
