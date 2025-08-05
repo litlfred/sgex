@@ -38,6 +38,24 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Checkout deploy branch for build content
+        shell: bash
+        run: |
+          set -e
+          
+          echo "Switching to deploy branch for build content..."
+          
+          # Check if deploy branch exists
+          if git show-ref --verify --quiet refs/remotes/origin/deploy; then
+            echo "Deploy branch found, checking out..."
+            git checkout deploy
+          else
+            echo "WARNING: Deploy branch not found, using current branch content"
+            echo "This may not provide the expected landing page assets"
+          fi
+          
+          echo "Current branch: $(git branch --show-current)"
         
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -53,17 +71,19 @@ jobs:
         run: |
           set -e
           
-          echo "Building self-contained landing page..."
-          # Use current branch for build scripts unless specified
-          source_branch="${{ github.event.inputs.source_branch }}"
-          if [[ -z "$source_branch" ]]; then
-            source_branch="${{ github.ref_name }}"
+          echo "Building self-contained landing page from deploy branch..."
+          
+          # Use deploy branch content for building
+          echo "Using build scripts from deploy branch"
+          
+          # Check if deploy branch has the landing page build script
+          if [[ -f "scripts/build-multi-branch.js" ]]; then
+            echo "Using deploy branch build scripts..."
+            node scripts/build-multi-branch.js landing
+          else
+            echo "Deploy branch build scripts not available, using standard build..."
+            npm run build
           fi
-          
-          echo "Using build scripts from branch: $source_branch"
-          
-          # Build the landing page with self-contained assets
-          node scripts/build-multi-branch.js landing
           
           # Verify index.html exists
           if [[ ! -f "build/index.html" ]]; then
@@ -71,7 +91,7 @@ jobs:
             exit 1
           fi
           
-          echo "✅ Landing page build completed"
+          echo "✅ Landing page build completed from deploy branch"
 
       - name: Deploy to gh-pages root
         shell: bash
@@ -161,15 +181,15 @@ jobs:
             # Determine deployment type for commit message
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               deployment_type="manual"
-              trigger_info="Triggered from branch: ${{ github.ref_name }}"
+              trigger_info="Triggered from branch: ${{ github.ref_name }} using deploy branch content"
             else
               deployment_type="automatic"
-              trigger_info="Auto-triggered by push to main"
+              trigger_info="Auto-triggered by push to main using deploy branch content"
             fi
             
-            git commit -m "🏠 Deploy landing page (${deployment_type})
+            git commit -m "🏠 Deploy landing page from deploy branch (${deployment_type})
 
-            - Updated landing page with self-contained assets
+            - Updated landing page with deploy branch assets
             - ${trigger_info}
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
@@ -189,14 +209,15 @@ jobs:
           # Determine deployment type for output message
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             deployment_type="Manual"
-            trigger_info="Triggered from branch: ${{ github.ref_name }}"
+            trigger_info="Triggered from branch: ${{ github.ref_name }} using deploy branch content"
           else
             deployment_type="Automatic"
-            trigger_info="Auto-triggered by push to main"
+            trigger_info="Auto-triggered by push to main using deploy branch content"
           fi
           
           echo "🏠 Landing Page Deployment Summary:"
           echo "- Landing Page URL: $landing_url"
+          echo "- Content Source: Deploy branch"
           echo "- Deployment Type: $deployment_type"
           echo "- $trigger_info"
           echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
