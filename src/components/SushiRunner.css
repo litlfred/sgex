@@ -230,6 +230,26 @@
   gap: 0.5rem;
 }
 
+.copy-all-btn {
+  padding: 0.5rem 1rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.3s ease;
+}
+
+.copy-all-btn:hover:not(:disabled) {
+  background: #218838;
+}
+
+.copy-all-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .clear-logs-btn {
   padding: 0.5rem 1rem;
   background: #6c757d;
@@ -266,6 +286,63 @@
   background: #c82333;
 }
 
+/* Log Controls */
+.log-controls {
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.log-filter-group,
+.log-search-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.log-filter-group label,
+.log-search-group label {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.log-filter-select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: white;
+  min-width: 120px;
+}
+
+.log-search-input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  min-width: 200px;
+}
+
+.log-search-input:focus,
+.log-filter-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.log-stats {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 600;
+}
+
 .sushi-modal-content {
   flex: 1;
   overflow: hidden;
@@ -291,6 +368,11 @@
   border-left: 3px solid transparent;
   padding-left: 0.5rem;
   margin-bottom: 0.25rem;
+  align-items: flex-start;
+}
+
+.log-entry:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .log-entry.log-info {
@@ -327,6 +409,33 @@
 
 .log-message {
   flex: 1;
+}
+
+.copy-log-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #d4d4d4;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  opacity: 0;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.log-entry:hover .copy-log-btn {
+  opacity: 1;
+}
+
+.copy-log-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.copy-log-btn-placeholder {
+  width: 32px;
+  flex-shrink: 0;
 }
 
 .spinner {
@@ -420,5 +529,30 @@
   
   .status-item {
     justify-content: space-between;
+  }
+  
+  .log-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  
+  .log-filter-group,
+  .log-search-group {
+    justify-content: space-between;
+  }
+  
+  .log-search-input {
+    min-width: unset;
+    flex: 1;
+  }
+  
+  .log-stats {
+    margin-left: 0;
+    text-align: center;
+  }
+  
+  .modal-actions {
+    flex-wrap: wrap;
   }
 }

@@ -7,6 +7,8 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
   const [isRunning, setIsRunning] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [logFilter, setLogFilter] = useState('all');
+  const [searchText, setSearchText] = useState('');
   const [sushiConfig, setSushiConfig] = useState(null);
   const [fshFiles, setFshFiles] = useState([]);
   const [includeStagingFiles, setIncludeStagingFiles] = useState(false);
@@ -248,7 +250,40 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
 
   const clearLogs = () => {
     setLogs([]);
+    setLogFilter('all');
+    setSearchText('');
   };
+
+  const copyAllLogs = async () => {
+    const logText = logs.map(log => 
+      `[${new Date(log.timestamp).toLocaleTimeString()}] ${log.message}`
+    ).join('\n');
+    
+    try {
+      await navigator.clipboard.writeText(logText);
+    } catch (err) {
+      console.error('Failed to copy logs:', err);
+    }
+  };
+
+  const copyLogMessage = async (message) => {
+    try {
+      await navigator.clipboard.writeText(message);
+    } catch (err) {
+      console.error('Failed to copy log message:', err);
+    }
+  };
+
+  const filteredLogs = logs.filter(log => {
+    // Filter by log level
+    const matchesFilter = logFilter === 'all' || log.type === logFilter;
+    
+    // Filter by search text
+    const matchesSearch = searchText === '' || 
+      log.message.toLowerCase().includes(searchText.toLowerCase());
+    
+    return matchesFilter && matchesSearch;
+  });
 
   const LogModal = () => (
     <div className="sushi-modal-overlay">
@@ -259,6 +294,14 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
             {includeStagingFiles && <span className="staging-badge">+ Staging</span>}
           </h3>
           <div className="modal-actions">
+            <button 
+              onClick={copyAllLogs}
+              className="copy-all-btn"
+              disabled={logs.length === 0}
+              title="Copy all logs to clipboard"
+            >
+              📋 Copy All
+            </button>
             <button 
               onClick={clearLogs}
               className="clear-logs-btn"
@@ -275,14 +318,59 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
           </div>
         </div>
         
+        <div className="log-controls">
+          <div className="log-filter-group">
+            <label htmlFor="log-level-filter">Filter by level:</label>
+            <select 
+              id="log-level-filter"
+              value={logFilter} 
+              onChange={(e) => setLogFilter(e.target.value)}
+              className="log-filter-select"
+            >
+              <option value="all">All Levels</option>
+              <option value="info">Info</option>
+              <option value="success">Success</option>
+              <option value="warning">Warning</option>
+              <option value="error">Error</option>
+            </select>
+          </div>
+          
+          <div className="log-search-group">
+            <label htmlFor="log-search">Search logs:</label>
+            <input
+              id="log-search"
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search log messages..."
+              className="log-search-input"
+            />
+          </div>
+          
+          <div className="log-stats">
+            {searchText || logFilter !== 'all' ? (
+              <span>Showing {filteredLogs.length} of {logs.length} logs</span>
+            ) : (
+              <span>{logs.length} logs</span>
+            )}
+          </div>
+        </div>
+        
         <div className="sushi-modal-content">
           <div className="log-container">
-            {logs.map(log => (
+            {filteredLogs.map(log => (
               <div key={log.id} className={`log-entry log-${log.type}`}>
                 <span className="log-timestamp">
                   {new Date(log.timestamp).toLocaleTimeString()}
                 </span>
                 <span className="log-message">{log.message}</span>
+                <button 
+                  onClick={() => copyLogMessage(log.message)}
+                  className="copy-log-btn"
+                  title="Copy this message to clipboard"
+                >
+                  📋
+                </button>
               </div>
             ))}
             
@@ -294,6 +382,13 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
                 <span className="log-message">
                   <span className="spinner">⏳</span> Processing...
                 </span>
+                <div className="copy-log-btn-placeholder"></div>
+              </div>
+            )}
+            
+            {filteredLogs.length === 0 && !isRunning && logs.length > 0 && (
+              <div className="log-placeholder">
+                No logs match the current filter criteria...
               </div>
             )}
             
