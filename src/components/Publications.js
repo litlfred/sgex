@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import githubService from '../services/githubService';
 import StagingGround from './StagingGround';
+import SushiRunner from './SushiRunner';
 import './Publications.css';
 
 const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) => {
@@ -9,6 +10,7 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
   const [workflowRuns, setWorkflowRuns] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [stagingFiles, setStagingFiles] = useState([]);
 
   const owner = repository.owner?.login || repository.full_name.split('/')[0];
   const repoName = repository.name;
@@ -216,12 +218,21 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
 
   return (
     <div className="publications-section">
+      {/* SUSHI Runner Section */}
+      <SushiRunner
+        repository={repository}
+        selectedBranch={selectedBranch}
+        profile={profile}
+        stagingFiles={stagingFiles}
+      />
+      
       {/* Staging Ground Section */}
       <StagingGround
         repository={repository}
         selectedBranch={selectedBranch}
         hasWriteAccess={hasWriteAccess}
         profile={profile}
+        onStagingFilesChange={setStagingFiles}
       />
       
       <div className="section-header">

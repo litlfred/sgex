@@ -4,7 +4,7 @@ import dakComplianceService from '../services/dakComplianceService';
 import SaveDialog from './SaveDialog';
 import './StagingGround.css';
 
-const StagingGround = ({ repository, selectedBranch, hasWriteAccess, profile }) => {
+const StagingGround = ({ repository, selectedBranch, hasWriteAccess, profile, onStagingFilesChange }) => {
   const [stagingGround, setStagingGround] = useState(null);
   const [validation, setValidation] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -20,6 +20,11 @@ const StagingGround = ({ repository, selectedBranch, hasWriteAccess, profile }) 
       const currentStagingGround = stagingGroundService.getStagingGround();
       setStagingGround(currentStagingGround);
       
+      // Notify parent component about staging files
+      if (onStagingFilesChange) {
+        onStagingFilesChange(currentStagingGround.files || []);
+      }
+      
       if (currentStagingGround.files.length > 0) {
         await validateStagingGround(currentStagingGround);
       }
@@ -29,7 +34,7 @@ const StagingGround = ({ repository, selectedBranch, hasWriteAccess, profile }) 
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [onStagingFilesChange]);
 
   // Initialize staging ground service
   useEffect(() => {
@@ -41,11 +46,16 @@ const StagingGround = ({ repository, selectedBranch, hasWriteAccess, profile }) 
       const unsubscribe = stagingGroundService.addListener((updatedStagingGround) => {
         setStagingGround(updatedStagingGround);
         validateStagingGround(updatedStagingGround);
+        
+        // Notify parent component about staging files
+        if (onStagingFilesChange) {
+          onStagingFilesChange(updatedStagingGround.files || []);
+        }
       });
 
       return unsubscribe;
     }
-  }, [repository, selectedBranch, loadStagingGroundData]);
+  }, [repository, selectedBranch, loadStagingGroundData, onStagingFilesChange]);
 
   // Validate staging ground
   const validateStagingGround = async (stagingGroundData) => {
