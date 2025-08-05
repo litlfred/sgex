@@ -297,28 +297,76 @@
   flex-wrap: wrap;
 }
 
-.log-filter-group,
-.log-search-group {
+.log-level-toggles {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.log-filter-group label,
-.log-search-group label {
+.toggle-group-label {
   font-size: 0.85rem;
   color: #666;
   font-weight: 600;
   white-space: nowrap;
 }
 
-.log-filter-select {
+.toggle-buttons {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.log-toggle-btn {
   padding: 0.4rem 0.6rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 0.85rem;
   background: white;
-  min-width: 120px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: 70px;
+}
+
+.log-toggle-btn.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.log-toggle-btn.inactive {
+  background: #f8f9fa;
+  color: #666;
+  border-color: #dee2e6;
+}
+
+.log-toggle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.log-toggle-btn.active:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+.log-toggle-btn.inactive:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.log-search-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.log-search-group label {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .log-search-input {
@@ -329,8 +377,7 @@
   min-width: 200px;
 }
 
-.log-search-input:focus,
-.log-filter-select:focus {
+.log-search-input:focus {
   outline: none;
   border-color: #007bff;
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
@@ -341,6 +388,45 @@
   font-size: 0.8rem;
   color: #666;
   font-weight: 600;
+}
+
+/* File Link Styles */
+.file-link {
+  display: inline;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-link.github-link {
+  color: #0366d6;
+  text-decoration: none;
+  background: rgba(3, 102, 214, 0.1);
+}
+
+.file-link.github-link:hover {
+  background: rgba(3, 102, 214, 0.2);
+  text-decoration: underline;
+}
+
+.file-link.staging-link {
+  color: #28a745;
+  background: rgba(40, 167, 69, 0.1);
+}
+
+.file-link.staging-link:hover {
+  background: rgba(40, 167, 69, 0.2);
+}
+
+.file-link.dak-link {
+  color: #6f42c1;
+  background: rgba(111, 66, 193, 0.1);
+}
+
+.file-link.dak-link:hover {
+  background: rgba(111, 66, 193, 0.2);
 }
 
 .sushi-modal-content {
@@ -537,16 +623,30 @@
     gap: 0.5rem;
   }
   
-  .log-filter-group,
-  .log-search-group {
+  .log-level-toggles {
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .toggle-buttons {
+    flex: 1;
     justify-content: space-between;
   }
   
+  .log-toggle-btn {
+    flex: 1;
+    min-width: 60px;
+  }
+  
+  .log-search-group {
+    justify-content: space-between;
+  }
+
   .log-search-input {
     min-width: unset;
     flex: 1;
   }
-  
+
   .log-stats {
     margin-left: 0;
     text-align: center;

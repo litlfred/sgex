@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import githubService from '../services/githubService';
 import './SushiRunner.css';
 
@@ -7,7 +7,12 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
   const [isRunning, setIsRunning] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [logs, setLogs] = useState([]);
-  const [logFilter, setLogFilter] = useState('all');
+  const [logLevelToggles, setLogLevelToggles] = useState({
+    info: true,
+    success: true,
+    warning: true,
+    error: true
+  });
   const [searchText, setSearchText] = useState('');
   const [sushiConfig, setSushiConfig] = useState(null);
   const [fshFiles, setFshFiles] = useState([]);
@@ -266,13 +271,25 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
     }
   };
 
-  const clearLogs = () => {
-    setLogs([]);
-    setLogFilter('all');
-    setSearchText('');
-  };
+  const toggleLogLevel = useCallback((level) => {
+    setLogLevelToggles(prev => ({
+      ...prev,
+      [level]: !prev[level]
+    }));
+  }, []);
 
-  const copyAllLogs = async () => {
+  const clearLogs = useCallback(() => {
+    setLogs([]);
+    setLogLevelToggles({
+      info: true,
+      success: true,
+      warning: true,
+      error: true
+    });
+    setSearchText('');
+  }, []);
+
+  const copyAllLogs = useCallback(async () => {
     const logText = logs.map(log => 
       `[${new Date(log.timestamp).toLocaleTimeString()}] ${log.message}`
     ).join('\n');
@@ -282,26 +299,192 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
     } catch (err) {
       console.error('Failed to copy logs:', err);
     }
-  };
+  }, [logs]);
 
-  const copyLogMessage = async (message) => {
+  const copyLogMessage = useCallback(async (message) => {
     try {
       await navigator.clipboard.writeText(message);
     } catch (err) {
       console.error('Failed to copy log message:', err);
     }
-  };
+  }, []);
 
-  const filteredLogs = logs.filter(log => {
-    // Filter by log level
-    const matchesFilter = logFilter === 'all' || log.type === logFilter;
+  // Function to detect and create links for files mentioned in log messages
+  const parseLogMessage = useCallback((message, logId) => {
+    // Regex to find file paths (ending with .fsh, .yaml, .yml, etc.)
+    const filePathRegex = /([a-zA-Z0-9_/-]+\.(?:fsh|yaml|yml|json))/g;
+    const matches = message.match(filePathRegex);
     
-    // Filter by search text
-    const matchesSearch = searchText === '' || 
-      log.message.toLowerCase().includes(searchText.toLowerCase());
+    if (!matches) {
+      return <span>{message}</span>;
+    }
     
-    return matchesFilter && matchesSearch;
+    let lastIndex = 0;
+    const elements = [];
+    
+    matches.forEach((filePath, index) => {
+      const matchIndex = message.indexOf(filePath, lastIndex);
+      
+      // Add text before the match
+      if (matchIndex > lastIndex) {
+        elements.push(
+          <span key={`${logId}-text-${index}`}>
+            {message.substring(lastIndex, matchIndex)}
+          </span>
+        );
+      }
+      
+      // Determine link type based on file location
+      const createFileLink = (path, text) => {
+        const isFromStaging = stagingFiles.some(f => f.path && f.path.includes(path));
+        
+        if (isFromStaging) {
+          // Link to staging ground
+          return (
+            <span key={`${logId}-link-${index}`} className="file-link staging-link" title="Open in Staging Ground">
+              📝 {text}
+            </span>
+          );
+        } else if (path.startsWith('input/fsh/')) {
+          // Determine DAK component based on directory structure
+          const getDakComponentLink = (fshPath) => {
+            const pathParts = fshPath.split('/');
+            if (pathParts.length > 2) {
+              const subDir = pathParts[2];
+              switch (subDir) {
+                case 'profiles':
+                  return { component: 'Profiles', icon: '👤' };
+                case 'examples':
+                  return { component: 'Examples', icon: '📋' };
+                case 'valuesets':
+                  return { component: 'ValueSets', icon: '📊' };
+                case 'codesystems':
+                  return { component: 'CodeSystems', icon: '🔢' };
+                case 'extensions':
+                  return { component: 'Extensions', icon: '🔧' };
+                default:
+                  return { component: 'FSH Files', icon: '📄' };
+              }
+            }
+            return { component: 'FSH Files', icon: '📄' };
+          };
+          
+          const dakInfo = getDakComponentLink(path);
+          return (
+            <span key={`${logId}-link-${index}`} className="file-link dak-link" title={`View in DAK ${dakInfo.component}`}>
+              {dakInfo.icon} {text}
+            </span>
+          );
+        } else {
+          // Link to GitHub source
+          const githubUrl = `https://github.com/${owner}/${repoName}/blob/${selectedBranch}/${path}`;
+          return (
+            <a 
+              key={`${logId}-link-${index}`}
+              href={githubUrl} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="file-link github-link"
+              title="Open in GitHub"
+            >
+              🔗 {text}
+            </a>
+          );
+        }
+      };
+      
+      elements.push(createFileLink(filePath, filePath));
+      lastIndex = matchIndex + filePath.length;
+    });
+    
+    // Add remaining text
+    if (lastIndex < message.length) {
+      elements.push(
+        <span key={`${logId}-text-end`}>
+          {message.substring(lastIndex)}
+        </span>
+      );
+    }
+    
+    return <span>{elements}</span>;
+  }, [owner, repoName, selectedBranch, stagingFiles]);
+
+  // Optimized filtered logs with useMemo to prevent unnecessary re-computations
+  const filteredLogs = useMemo(() => {
+    return logs.filter(log => {
+      // Filter by log level toggles
+      const isLevelEnabled = logLevelToggles[log.type];
+      
+      // Filter by search text
+      const matchesSearch = searchText === '' || 
+        log.message.toLowerCase().includes(searchText.toLowerCase());
+      
+      return isLevelEnabled && matchesSearch;
+    });
+  }, [logs, logLevelToggles, searchText]);
+
+  // Separate component for log controls to prevent re-renders
+  const LogControls = React.memo(({ 
+    logLevelToggles, 
+    onToggleLogLevel, 
+    searchText, 
+    onSearchChange, 
+    filteredCount, 
+    totalCount 
+  }) => {
+    const handleSearchChange = useCallback((e) => {
+      onSearchChange(e.target.value);
+    }, [onSearchChange]);
+
+    return (
+      <div className="log-controls">
+        <div className="log-level-toggles">
+          <label className="toggle-group-label">Show levels:</label>
+          <div className="toggle-buttons">
+            {[
+              { key: 'info', label: 'Info', icon: 'ℹ️' },
+              { key: 'success', label: 'Success', icon: '✅' },
+              { key: 'warning', label: 'Warning', icon: '⚠️' },
+              { key: 'error', label: 'Error', icon: '❌' }
+            ].map(({ key, label, icon }) => (
+              <button
+                key={key}
+                className={`log-toggle-btn ${logLevelToggles[key] ? 'active' : 'inactive'}`}
+                onClick={() => onToggleLogLevel(key)}
+                title={`Toggle ${label} messages`}
+              >
+                {icon} {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="log-search-group">
+          <label htmlFor="log-search">Search logs:</label>
+          <input
+            id="log-search"
+            type="text"
+            value={searchText}
+            onChange={handleSearchChange}
+            placeholder="Search log messages..."
+            className="log-search-input"
+          />
+        </div>
+        
+        <div className="log-stats">
+          {searchText || Object.values(logLevelToggles).some(v => !v) ? (
+            <span>Showing {filteredCount} of {totalCount} logs</span>
+          ) : (
+            <span>{totalCount} logs</span>
+          )}
+        </div>
+      </div>
+    );
   });
+
+  const handleSearchChange = useCallback((value) => {
+    setSearchText(value);
+  }, []);
 
   const LogModal = () => (
     <div className="sushi-modal-overlay">
@@ -336,43 +519,14 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
           </div>
         </div>
         
-        <div className="log-controls">
-          <div className="log-filter-group">
-            <label htmlFor="log-level-filter">Filter by level:</label>
-            <select 
-              id="log-level-filter"
-              value={logFilter} 
-              onChange={(e) => setLogFilter(e.target.value)}
-              className="log-filter-select"
-            >
-              <option value="all">All Levels</option>
-              <option value="info">Info</option>
-              <option value="success">Success</option>
-              <option value="warning">Warning</option>
-              <option value="error">Error</option>
-            </select>
-          </div>
-          
-          <div className="log-search-group">
-            <label htmlFor="log-search">Search logs:</label>
-            <input
-              id="log-search"
-              type="text"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Search log messages..."
-              className="log-search-input"
-            />
-          </div>
-          
-          <div className="log-stats">
-            {searchText || logFilter !== 'all' ? (
-              <span>Showing {filteredLogs.length} of {logs.length} logs</span>
-            ) : (
-              <span>{logs.length} logs</span>
-            )}
-          </div>
-        </div>
+        <LogControls
+          logLevelToggles={logLevelToggles}
+          onToggleLogLevel={toggleLogLevel}
+          searchText={searchText}
+          onSearchChange={handleSearchChange}
+          filteredCount={filteredLogs.length}
+          totalCount={logs.length}
+        />
         
         <div className="sushi-modal-content">
           <div className="log-container">
@@ -381,7 +535,9 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
                 <span className="log-timestamp">
                   {new Date(log.timestamp).toLocaleTimeString()}
                 </span>
-                <span className="log-message">{log.message}</span>
+                <span className="log-message">
+                  {parseLogMessage(log.message, log.id)}
+                </span>
                 <button 
                   onClick={() => copyLogMessage(log.message)}
                   className="copy-log-btn"
