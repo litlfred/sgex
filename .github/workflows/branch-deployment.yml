@@ -1,6 +1,14 @@
 name: Deploy Feature Branch
 
 on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/branch-deployment.yml'
   workflow_dispatch:
     inputs:
       branch:
@@ -32,7 +40,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: "branch-deployment-${{ github.event.inputs.branch || github.ref_name }}"
+  group: "branch-deployment-${{ github.event.inputs.branch || github.head_ref || github.ref_name }}"
   cancel-in-progress: true
 
 jobs:
@@ -49,7 +57,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch || github.ref }}
+          ref: ${{ github.event.inputs.branch || github.head_ref || github.ref }}
           fetch-depth: 0
 
       - name: Determine branch information
@@ -62,6 +70,9 @@ jobs:
           if [[ -n "${{ github.event.inputs.branch }}" ]]; then
             branch_name="${{ github.event.inputs.branch }}"
             echo "Using manual input branch: $branch_name"
+          elif [[ -n "${{ github.head_ref }}" ]]; then
+            branch_name="${{ github.head_ref }}"
+            echo "Using pull request branch: $branch_name"
           else
             branch_name="${{ github.ref_name }}"
             echo "Using current branch: $branch_name"
