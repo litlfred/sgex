@@ -12,6 +12,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
   const [generatedFiles, setGeneratedFiles] = useState([]);
   const [showFileViewer, setShowFileViewer] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [activeTab, setActiveTab] = useState('logs');
   const [logLevelToggles, setLogLevelToggles] = useState({
     info: true,
     success: true,
@@ -356,6 +357,8 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
     setIsRunning(true);
     setShowModal(true);
     setLogs([]);
+    setGeneratedFiles([]);
+    setActiveTab('logs');
     setError(null);
     setIncludeStagingFiles(withStagingFiles);
 
@@ -401,6 +404,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
   const clearLogs = useCallback(() => {
     setLogs([]);
     setGeneratedFiles([]);
+    setActiveTab('logs');
     setLogLevelToggles({
       info: true,
       success: true,
@@ -725,103 +729,127 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
           totalCount={logs.length}
         />
         
-        <div className="sushi-modal-content">
-          <div className="log-container">
-            {filteredLogs.map(log => (
-              <div key={log.id} className={`log-entry log-${log.type}`}>
-                <span className="log-timestamp">
-                  {new Date(log.timestamp).toLocaleTimeString()}
-                </span>
-                <span className="log-message">
-                  {parseLogMessage(log.message, log.id)}
-                </span>
-                <button 
-                  onClick={() => copyLogMessage(log.message)}
-                  className="copy-log-btn"
-                  title="Copy this message to clipboard"
-                >
-                  📋
-                </button>
-              </div>
-            ))}
-            
-            {isRunning && (
-              <div className="log-entry log-running">
-                <span className="log-timestamp">
-                  {new Date().toLocaleTimeString()}
-                </span>
-                <span className="log-message">
-                  <span className="spinner">⏳</span> Processing...
-                </span>
-                <div className="copy-log-btn-placeholder"></div>
-              </div>
-            )}
-            
-            {filteredLogs.length === 0 && !isRunning && logs.length > 0 && (
-              <div className="log-placeholder">
-                No logs match the current filter criteria...
-              </div>
-            )}
-            
-            {logs.length === 0 && !isRunning && (
-              <div className="log-placeholder">
-                Logs will appear here during SUSHI execution...
-              </div>
-            )}
+        {generatedFiles.length > 0 && (
+          <div className="modal-tabs">
+            <button 
+              className={`tab-button ${activeTab === 'logs' ? 'active' : ''}`}
+              onClick={() => setActiveTab('logs')}
+            >
+              📄 Execution Logs ({logs.length})
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'files' ? 'active' : ''}`}
+              onClick={() => setActiveTab('files')}
+            >
+              📦 Generated Files ({generatedFiles.length})
+            </button>
           </div>
-          
-          {generatedFiles.length > 0 && (
-            <div className="generated-files-section">
-              <h4>📦 Generated FHIR Resources ({generatedFiles.length})</h4>
-              <div className="generated-files-grid">
-                {generatedFiles.map((file, index) => (
-                  <div key={index} className="generated-file-card">
-                    <div className="file-card-header">
-                      <span className="file-icon">{getResourceTypeIcon(file.type)}</span>
-                      <span className="file-name">{file.filename}</span>
-                    </div>
-                    <div className="file-card-details">
-                      <span className="file-type">{file.type}</span>
-                      <span className="file-size">
-                        {(file.content.length / 1024).toFixed(1)} KB
-                      </span>
-                    </div>
-                    <div className="file-card-actions">
-                      <button
-                        onClick={() => viewFile(file)}
-                        className="view-file-btn"
-                        title="View resource content"
-                      >
-                        👁️ View
-                      </button>
-                      <button
-                        onClick={() => navigator.clipboard.writeText(file.content)}
-                        className="copy-file-btn"
-                        title="Copy to clipboard"
-                      >
-                        📋
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="fhir-viewer-suggestions">
-                <h5>💡 Enhanced FHIR Viewing Options</h5>
-                <p>For better FHIR resource visualization, consider these viewers:</p>
-                <ul>
-                  <li><strong>FHIR Tree Viewer:</strong> <code>npm install @types/fhir</code> + custom tree renderer</li>
-                  <li><strong>FHIR Path Viewer:</strong> <code>npm install fhirpath</code> for interactive querying</li>
-                  <li><strong>FHIR UI:</strong> <code>npm install @asymmetrik/fhir-kit-client</code> with UI components</li>
-                  <li><strong>HL7 FHIR Viewer:</strong> Integration with official HL7 FHIR viewers</li>
-                </ul>
-              </div>
+        )}
+        
+        <div className="sushi-modal-content">
+          {(activeTab === 'logs' || generatedFiles.length === 0) && (
+            <div className="log-container">
+              {filteredLogs.map(log => (
+                <div key={log.id} className={`log-entry log-${log.type}`}>
+                  <span className="log-timestamp">
+                    {new Date(log.timestamp).toLocaleTimeString()}
+                  </span>
+                  <span className="log-message">
+                    {parseLogMessage(log.message, log.id)}
+                  </span>
+                  <button 
+                    onClick={() => copyLogMessage(log.message)}
+                    className="copy-log-btn"
+                    title="Copy this message to clipboard"
+                  >
+                    📋
+                  </button>
+                </div>
+              ))}
+              
+              {isRunning && (
+                <div className="log-entry log-running">
+                  <span className="log-timestamp">
+                    {new Date().toLocaleTimeString()}
+                  </span>
+                  <span className="log-message">
+                    <span className="spinner">⏳</span> Processing...
+                  </span>
+                  <div className="copy-log-btn-placeholder"></div>
+                </div>
+              )}
+              
+              {filteredLogs.length === 0 && !isRunning && logs.length > 0 && (
+                <div className="log-placeholder">
+                  No logs match the current filter criteria...
+                </div>
+              )}
+              
+              {logs.length === 0 && !isRunning && (
+                <div className="log-placeholder">
+                  Logs will appear here during SUSHI execution...
+                </div>
+              )}
+              
+              {error && (
+                <div className="error-summary">
+                  <h4>❌ Execution Error</h4>
+                  <p>{error}</p>
+                </div>
+              )}
             </div>
           )}
           
-          {error && (
-            <div className="error-summary">
-              <h4>❌ Execution Error</h4>
-              <p>{error}</p>
+          {activeTab === 'files' && generatedFiles.length > 0 && (
+            <div className="generated-files-container">
+              <div className="generated-files-section">
+                <h4>📦 Generated FHIR Resources ({generatedFiles.length}) - Prototype Demo Data</h4>
+                <div className="prototype-notice">
+                  ⚠️ <strong>Note:</strong> This is prototype demo data for UI testing. Real SUSHI compilation will be implemented with WebAssembly integration.
+                </div>
+                <div className="generated-files-grid">
+                  {generatedFiles.map((file, index) => (
+                    <div key={index} className="generated-file-card">
+                      <div className="file-card-header">
+                        <span className="file-icon">{getResourceTypeIcon(file.type)}</span>
+                        <span className="file-name">{file.filename}</span>
+                      </div>
+                      <div className="file-card-details">
+                        <span className="file-type">{file.type}</span>
+                        <span className="file-size">
+                          {(file.content.length / 1024).toFixed(1)} KB
+                        </span>
+                      </div>
+                      <div className="file-card-actions">
+                        <button
+                          onClick={() => viewFile(file)}
+                          className="view-file-btn"
+                          title="View resource content"
+                        >
+                          👁️ View
+                        </button>
+                        <button
+                          onClick={() => navigator.clipboard.writeText(file.content)}
+                          className="copy-file-btn"
+                          title="Copy to clipboard"
+                        >
+                          📋
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="fhir-viewer-suggestions">
+                  <h5>💡 Enhanced FHIR Viewing Options</h5>
+                  <p>For better FHIR resource visualization, consider these viewers:</p>
+                  <ul>
+                    <li><strong>FHIR Tree Viewer:</strong> <code>npm install @types/fhir</code> + custom tree renderer</li>
+                    <li><strong>FHIR Path Viewer:</strong> <code>npm install fhirpath</code> for interactive querying</li>
+                    <li><strong>FHIR UI:</strong> <code>npm install @asymmetrik/fhir-kit-client</code> with UI components</li>
+                    <li><strong>HL7 FHIR Viewer:</strong> Integration with official HL7 FHIR viewers</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
         </div>
