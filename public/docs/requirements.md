@@ -120,11 +120,11 @@ For detailed information about each DAK component, see [DAK Components Documenta
   2. **Generic personas**
   3. **User scenarios**
   4. **Generic business processes and workflows**
-  5. **Core data elements**
-  6. **Product master data**
-  7. **Decision-support logic**
-  8. **Program indicators**
-  9. **Functional and non-functional requirements**
+  5. **Core data elements** (includes Terminology Services via OCL and Product Master Data via PCMT)
+  6. **Decision-support logic**
+  7. **Program indicators**
+  8. **Functional and non-functional requirements**
+  9. **Test scenarios**
 
 **REQ-DAK-002**: The system SHALL distinguish between L2 and L3 component representations
 - **L2 (Level 2)**: Data model agnostic representations that capture business logic and clinical processes independent of specific technical implementations
