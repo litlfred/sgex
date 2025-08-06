@@ -30,12 +30,24 @@ This document provides an index and summary of all documentation for the SMART G
    - Performance and scalability considerations
 
 4. **[DAK Components](dak-components.md)**
-   - Comprehensive guide to the 8 WHO SMART Guidelines DAK components
+   - Comprehensive guide to the 9 WHO SMART Guidelines DAK components
    - Detailed component descriptions and purposes
    - Level 2 (Business Logic) vs Level 3 (Technical Implementation) organization
    - Editor capabilities and file type specifications
 
-5. **[Page Framework](page-framework.md)**
+5. **[L2/L3 Architecture](l2-l3-architecture.md)**
+   - Comprehensive guide to WHO SMART Guidelines L2/L3 methodology
+   - Operational vs Executable layer implementation details
+   - Component transformation processes and best practices
+   - External system integration patterns
+
+6. **[Asset Management](asset-management.md)**
+   - Complete asset lifecycle management workflows
+   - Asset creation, modification, and distribution processes
+   - Quality assurance and governance frameworks
+   - External system integration (IRIS, OCL, PCMT)
+
+7. **[Page Framework](page-framework.md)**
    - Consistent page functionality framework for all pages
    - URL patterns and page types (Top-Level, User, DAK, Asset)
    - Header components and navigation patterns
@@ -47,11 +59,11 @@ This document provides an index and summary of all documentation for the SMART G
 ### SGEX Workbench
 A browser-based, static web application for collaborative editing of WHO SMART Guidelines Digital Adaptation Kits (DAKs) content stored in GitHub repositories.
 
-### DAK Components (8 Total)
-The system supports editing of all 8 WHO SMART Guidelines DAK components:
-- **Level 2 (Business Logic & Processes)**: Business Processes, Decision Support Logic, Indicators & Measures, Data Entry Forms  
-- **Level 3 (Technical Implementation)**: Terminology, FHIR Profiles, FHIR Extensions, Test Data & Examples
-- Scheduling tables are considered a special case of decision tables within Decision Support Logic
+### DAK Components (9 Total)
+The system supports editing of all 9 WHO SMART Guidelines DAK components:
+- **Core Components (1-5)**: Health Interventions, Generic Personas, User Scenarios, Business Processes, Core Data Elements
+- **Specialized Components (6-7)**: Product Master Data, Decision Support Logic
+- **Management Components (8-9)**: Program Indicators, Functional & Non-Functional Requirements
 - See [DAK Components](dak-components.md) for comprehensive details
 
 ### Technology Stack

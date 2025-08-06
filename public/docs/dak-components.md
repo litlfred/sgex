@@ -1,17 +1,28 @@
 # WHO SMART Guidelines DAK Components
 
-This document provides detailed information about the 8 core Digital Adaptation Kit (DAK) components supported by the SGEX Workbench, as defined by the WHO SMART Guidelines framework.
+This document provides detailed information about the 9 core Digital Adaptation Kit (DAK) components supported by the SGEX Workbench, as defined by the WHO SMART Guidelines framework.
 
-For technical requirements and specifications, see [Requirements Documentation](requirements.md#23-dak-component-management).
+For technical requirements and specifications, see [Requirements Documentation](requirements.md#23-dak-component-management).  
+For comprehensive L2/L3 architecture details, see [L2/L3 Architecture Guide](l2-l3-architecture.md).  
+For asset lifecycle management, see [Asset Management Documentation](asset-management.md).
+
+## WHO SMART Guidelines Context
+
+This work aligns with the WHO SMART IG Starter Kit methodology where:
+- **L1** = Narrative guidelines (human-readable clinical guidelines)
+- **L2** = DAK components (structured operational content independent of technical implementation)
+- **L3** = FHIR resources (machine-executable technical implementations)
+
+Reference: [WHO SMART IG Starter Kit - L2 DAK Authoring](https://smart.who.int/ig-starter-kit/l2_dak_authoring.html)
 
 ## Overview
 
-Digital Adaptation Kits (DAKs) are structured packages of clinical logic and implementation guidance that support the digitization of WHO health guidelines. The SGEX Workbench provides collaborative editing capabilities for all 8 core DAK components, organized into two implementation levels:
+Digital Adaptation Kits (DAKs) are structured packages of clinical logic and implementation guidance that support the digitization of WHO health guidelines. The SGEX Workbench provides collaborative editing capabilities for all 9 core DAK components, organized into two implementation levels:
 
 - **L2 (Level 2)**: Data model agnostic representations that capture business logic and clinical processes independent of specific technical implementations
 - **L3 (Level 3)**: FHIR R4-specific implementations following WHO enterprise architecture specifications at http://smart.who.int/ra
 
-## The 8 Core DAK Components
+## The 9 Core DAK Components
 
 ### 1. Health Interventions and Recommendations
 
@@ -54,7 +65,7 @@ Digital Adaptation Kits (DAKs) are structured packages of clinical logic and imp
 - **Purpose**: Standardize clinical concepts, codes, and data models across systems
 - **Editor**: Data element editor with OCL integration
 
-#### 5.1 Product Master Data
+### 6. Product Master Data
 
 - **Description**: Specialized data management for pharmaceutical and medical product information
 - **L2 Representation**: FHIR CodeSystems and Logical Models
@@ -62,7 +73,7 @@ Digital Adaptation Kits (DAKs) are structured packages of clinical logic and imp
 - **Purpose**: Manage product catalogs, formularies, and pharmaceutical data
 - **Editor**: Product data editor with PCMT integration
 
-### 6. Decision-Support Logic
+### 7. Decision-Support Logic
 
 - **Description**: DMN decision tables and clinical decision support rules that encode clinical logic
 - **L2 Representation**: DMN decision tables conforming to [OMG DMN 1.3 specification](https://www.omg.org/spec/DMN/1.3/)
@@ -71,7 +82,7 @@ Digital Adaptation Kits (DAKs) are structured packages of clinical logic and imp
 - **Editor**: DMN decision table editor with validation
 - **Note**: Scheduling tables are a special case of decision tables and are included within this component
 
-### 7. Program Indicators
+### 8. Program Indicators
 
 - **Description**: Performance indicators and measurement definitions for monitoring and evaluation
 - **L2 Representation**: Logical indicator models
@@ -79,7 +90,7 @@ Digital Adaptation Kits (DAKs) are structured packages of clinical logic and imp
 - **Purpose**: Define key performance indicators, quality measures, and outcome metrics
 - **Editor**: Indicator definition editor with measurement logic
 
-### 8. Functional and Non-Functional Requirements
+### 9. Functional and Non-Functional Requirements
 
 - **Description**: System requirements specifications that define capabilities and constraints
 - **L2 Representation**: Requirements specifications at https://worldhealthorganization.github.io/smart-base/StructureDefinition-FunctionalRequirement.html and https://worldhealthorganization.github.io/smart-base/StructureDefinition-NonFunctionalRequirement.html
