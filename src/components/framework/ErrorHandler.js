@@ -73,7 +73,6 @@ ${error}
     // Extract user/repo from URL or page context
     const user = pageContext?.user;
     const repo = pageContext?.repository?.name;
-    const urlPath = window.location.pathname;
     
     if (lowercaseError.includes('not found') || lowercaseError.includes('not accessible')) {
       if (lowercaseError.includes('user')) {
