@@ -213,6 +213,12 @@ jobs:
             rm -rf build
           fi
           
+          # Remove temporary landing-page directory
+          if [[ -d "landing-page" ]]; then
+            echo "Removing temporary landing-page directory..."
+            rm -rf landing-page
+          fi
+          
           # Verify existing directories are still there
           echo "Directories after deployment:"
           ls -la */ 2>/dev/null || echo "No directories found"
