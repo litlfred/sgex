@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       source_branch:
-        description: 'Source branch to deploy from (defaults to main)'
+        description: 'Source branch to deploy from (defaults to deploy)'
         required: false
-        default: 'main'
+        default: 'deploy'
       force_deployment:
         description: 'Force deployment even if no changes detected'
         required: false
@@ -44,7 +44,7 @@ jobs:
         run: |
           set -e
           
-          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
+          source_branch="${{ github.event.inputs.source_branch || 'deploy' }}"
           echo "source_branch=$source_branch" >> $GITHUB_OUTPUT
           echo "Using source branch: $source_branch"
 
@@ -81,8 +81,8 @@ jobs:
           source_branch="${{ steps.source_info.outputs.source_branch }}"
           
           # Determine correct PUBLIC_URL based on source branch
-          if [[ "$source_branch" == "main" ]]; then
-            # Landing page deployment from main - deploy to /sgex/
+          if [[ "$source_branch" == "deploy" ]]; then
+            # Landing page deployment from deploy - deploy to /sgex/
             export PUBLIC_URL="/sgex/"
             echo "Building React application for /sgex/ deployment (landing page)..."
           else
@@ -111,7 +111,7 @@ jobs:
           
           source_branch="${{ steps.source_info.outputs.source_branch }}"
           
-          if [[ "$source_branch" == "main" ]]; then
+          if [[ "$source_branch" == "deploy" ]]; then
             echo "Preparing React-based branch selector landing page for /sgex/ deployment..."
             
             # Create a landing page directory to hold the files
@@ -160,7 +160,7 @@ jobs:
           echo "Preserving build files..."
           mkdir -p /tmp/deployment-build
           
-          if [[ "$source_branch" == "main" ]]; then
+          if [[ "$source_branch" == "deploy" ]]; then
             # Landing page deployment - copy to tmp for /sgex/ deployment
             cp -a landing-page/. /tmp/deployment-build/
             deployment_type="landing-page"
@@ -329,7 +329,7 @@ jobs:
           git add -A
           
           # Determine commit message based on deployment type
-          if [[ "$source_branch" == "main" ]]; then
+          if [[ "$source_branch" == "deploy" ]]; then
             deployment_msg="🚀 Deploy React-based branch selector landing page"
             deployment_details="- Updated with React-based branch selector from $source_branch branch
             - Landing page deployed to GitHub Pages /sgex/
@@ -380,7 +380,7 @@ jobs:
           source_branch="${{ steps.source_info.outputs.source_branch }}"
           commit_sha="${{ github.sha }}"
           
-          if [[ "$source_branch" == "main" ]]; then
+          if [[ "$source_branch" == "deploy" ]]; then
             deployment_url="https://litlfred.github.io/sgex/"
             deployment_type="landing-page"
             echo "🚀 Branch Selector Landing Page Deployment Summary:"
