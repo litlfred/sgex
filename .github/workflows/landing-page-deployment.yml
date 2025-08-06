@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       source_branch:
-        description: 'Source branch to deploy from (defaults to deploy)'
+        description: 'Source branch to deploy from (defaults to main)'
         required: false
-        default: 'deploy'
+        default: 'main'
       force_deployment:
         description: 'Force deployment even if no changes detected'
         required: false
@@ -38,7 +38,7 @@ jobs:
         run: |
           set -e
           
-          source_branch="${{ github.event.inputs.source_branch || 'deploy' }}"
+          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
           echo "source_branch=$source_branch" >> $GITHUB_OUTPUT
           echo "Using source branch: $source_branch"
 
@@ -71,7 +71,11 @@ jobs:
         shell: bash
         run: |
           set -e
-          echo "Building React application..."
+          echo "Building React application for root deployment..."
+          
+          # Set PUBLIC_URL for root deployment since landing page deploys to GitHub Pages root
+          export PUBLIC_URL="/"
+          
           npm run build
           
           # Verify build was successful
@@ -80,7 +84,7 @@ jobs:
             exit 1
           fi
           
-          echo "✅ React application built successfully"
+          echo "✅ React application built successfully for root deployment"
 
       - name: Prepare branch selector landing page files
         shell: bash
