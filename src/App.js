@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './i18n'; // Initialize i18n
+import BranchListingPage from './components/BranchListingPage';
 import WelcomePage from './components/WelcomePage';
 import SelectProfilePage from './components/SelectProfilePage';
 import DAKActionSelection from './components/DAKActionSelection';
@@ -52,7 +53,8 @@ function App() {
     <Router basename={basename}>
       <div className="App">
           <Routes>
-            <Route path="/" element={<WelcomePage />} />
+            <Route path="/" element={<BranchListingPage />} />
+            <Route path="/workbench" element={<WelcomePage />} />
             <Route path="/select_profile" element={<SelectProfilePage />} />
             <Route path="/dak-action/:user" element={<DAKActionSelection />} />
             <Route path="/dak-action" element={<DAKActionSelection />} />
