@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './i18n'; // Initialize i18n
-import BranchListingPage from './components/BranchListingPage';
+import BranchListing from './components/BranchListing';
 import NotFound from './components/NotFound';
 import logger from './utils/logger';
 import './App.css';
@@ -28,8 +28,8 @@ function App() {
     <Router basename={basename}>
       <div className="App">
           <Routes>
-            <Route path="/" element={<BranchListingPage />} />
-            <Route path="/branch-listing" element={<BranchListingPage />} />
+            <Route path="/" element={<BranchListing />} />
+            <Route path="/branch-listing" element={<BranchListing />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
