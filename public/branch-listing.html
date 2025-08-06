@@ -800,6 +800,73 @@
             padding: 1rem;
         }
 
+        /* Workflow Controls */
+        .workflow-controls {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: var(--who-tertiary-bg);
+            border: 1px solid var(--who-border-color);
+            border-radius: 8px;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .workflow-controls h5 {
+            margin: 0 1rem 0 0;
+            color: var(--who-text-primary);
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .workflow-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .workflow-btn:hover:not(:disabled) {
+            background: #218838;
+        }
+
+        .workflow-btn:disabled {
+            background: var(--who-text-muted);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .workflow-btn.secondary {
+            background: #6f42c1;
+        }
+
+        .workflow-btn.secondary:hover:not(:disabled) {
+            background: #5a32a3;
+        }
+
+        .workflow-link {
+            color: var(--who-blue);
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .workflow-link:hover {
+            text-decoration: underline;
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .branch-listing {
@@ -989,6 +1056,7 @@
             const [expandedDiscussions, setExpandedDiscussions] = useState({});
             const [discussionSummaries, setDiscussionSummaries] = useState({});
             const [loadingSummaries, setLoadingSummaries] = useState(false);
+            const [triggeringWorkflows, setTriggeringWorkflows] = useState({});
 
             const ITEMS_PER_PAGE = 10;
 
@@ -1217,6 +1285,90 @@
                     return false;
                 } finally {
                     setSubmittingComments(prev => ({ ...prev, [prNumber]: false }));
+                }
+            };
+
+            // Function to trigger workflows
+            const triggerWorkflow = async (workflowType, branchName) => {
+                if (!githubToken) {
+                    alert('Please authenticate with GitHub first');
+                    return false;
+                }
+
+                try {
+                    let workflowFile, inputs;
+                    
+                    if (workflowType === 'branch') {
+                        workflowFile = 'branch-deployment.yml';
+                        inputs = {
+                            branch: branchName,
+                            force_deployment: false
+                        };
+                    } else if (workflowType === 'landing') {
+                        workflowFile = 'landing-page-deployment.yml';
+                        inputs = {
+                            source_branch: 'deploy',
+                            force_deployment: false
+                        };
+                    } else {
+                        throw new Error('Invalid workflow type');
+                    }
+
+                    const response = await fetch(
+                        `https://api.github.com/repos/litlfred/sgex/actions/workflows/${workflowFile}/dispatches`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `token ${githubToken}`,
+                                'Accept': 'application/vnd.github.v3+json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                ref: workflowType === 'landing' ? 'deploy' : branchName,
+                                inputs: inputs
+                            })
+                        }
+                    );
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Failed to trigger workflow: ${response.status} ${errorText}`);
+                    }
+
+                    return true;
+                } catch (error) {
+                    console.error(`Error triggering ${workflowType} workflow:`, error);
+                    throw error;
+                }
+            };
+
+            // Handle workflow triggering with UI feedback
+            const handleTriggerWorkflow = async (workflowType, branchName, prNumber) => {
+                const workflowKey = `${workflowType}-${prNumber || 'global'}`;
+                
+                setTriggeringWorkflows(prev => ({ ...prev, [workflowKey]: true }));
+                
+                try {
+                    await triggerWorkflow(workflowType, branchName);
+                    
+                    // Show success message
+                    const workflowName = workflowType === 'branch' ? 'Branch Deployment' : 'Landing Page Deployment';
+                    alert(`${workflowName} triggered successfully! Check GitHub Actions for progress.`);
+                    
+                    // Refresh deployment status
+                    if (prNumber) {
+                        setTimeout(() => {
+                            const pr = pullRequests.find(p => p.number === prNumber);
+                            if (pr) {
+                                checkDeploymentStatus(pr.safeBranchName);
+                            }
+                        }, 2000);
+                    }
+                } catch (error) {
+                    const workflowName = workflowType === 'branch' ? 'Branch Deployment' : 'Landing Page Deployment';
+                    alert(`Failed to trigger ${workflowName}: ${error.message}`);
+                } finally {
+                    setTriggeringWorkflows(prev => ({ ...prev, [workflowKey]: false }));
                 }
             };
 
@@ -1726,6 +1878,45 @@
                                                             </div>
                                                         </div>
                                                     )}
+                                                </div>
+                                            )}
+                                            
+                                            {/* Workflow Controls */}
+                                            {isAuthenticated && (
+                                                <div className="workflow-controls">
+                                                    <h5>⚡ Deploy:</h5>
+                                                    <button
+                                                        onClick={() => handleTriggerWorkflow('branch', pr.branchName, pr.number)}
+                                                        disabled={triggeringWorkflows[`branch-${pr.number}`]}
+                                                        className="workflow-btn"
+                                                        title={`Deploy ${pr.branchName} branch`}
+                                                    >
+                                                        {triggeringWorkflows[`branch-${pr.number}`] ? (
+                                                            <>⏳ Deploying...</>
+                                                        ) : (
+                                                            <>🚀 Deploy Branch</>
+                                                        )}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleTriggerWorkflow('landing', 'deploy', pr.number)}
+                                                        disabled={triggeringWorkflows[`landing-${pr.number}`]}
+                                                        className="workflow-btn secondary"
+                                                        title="Deploy landing page"
+                                                    >
+                                                        {triggeringWorkflows[`landing-${pr.number}`] ? (
+                                                            <>⏳ Deploying...</>
+                                                        ) : (
+                                                            <>🏠 Deploy Landing</>
+                                                        )}
+                                                    </button>
+                                                    <a 
+                                                        href="https://github.com/litlfred/sgex/actions"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="workflow-link"
+                                                    >
+                                                        📊 View Actions
+                                                    </a>
                                                 </div>
                                             )}
                                             
