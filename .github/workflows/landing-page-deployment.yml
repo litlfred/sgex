@@ -1,0 +1,247 @@
+name: Deploy Branch Selector Landing Page
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'Source branch to deploy from (defaults to deploy)'
+        required: false
+        default: 'deploy'
+      force_deployment:
+        description: 'Force deployment even if no changes detected'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "landing-page-deployment"
+  cancel-in-progress: false
+
+jobs:
+  deploy-landing-page:
+    runs-on: ubuntu-latest
+    outputs:
+      deployment_status: ${{ steps.deployment_info.outputs.deployment_status }}
+      landing_url: ${{ steps.deployment_info.outputs.landing_url }}
+      source_branch: ${{ steps.deployment_info.outputs.source_branch }}
+      commit_sha: ${{ steps.deployment_info.outputs.commit_sha }}
+    
+    steps:
+      - name: Determine source branch
+        id: source_info
+        shell: bash
+        run: |
+          set -e
+          
+          source_branch="${{ github.event.inputs.source_branch || 'deploy' }}"
+          echo "source_branch=$source_branch" >> $GITHUB_OUTPUT
+          echo "Using source branch: $source_branch"
+
+      - name: Checkout source branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.source_info.outputs.source_branch }}
+          fetch-depth: 0
+
+      - name: Configure git user
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+      - name: Prepare branch selector landing page files
+        shell: bash
+        run: |
+          set -e
+          
+          echo "Preparing branch selector landing page files..."
+          
+          # Create a landing page directory to hold the files
+          mkdir -p landing-page
+          
+          # Use the branch selector as the main landing page
+          if [[ ! -f "public/branch-listing.html" ]]; then
+            echo "ERROR: Branch selector not found at public/branch-listing.html"
+            exit 1
+          fi
+          
+          # Copy branch selector as index.html
+          cp public/branch-listing.html landing-page/index.html
+          
+          # Copy essential assets for the branch selector
+          if [[ -d "public" ]]; then
+            # Copy assets that the branch selector references
+            if [[ -f "public/sgex-mascot.png" ]]; then
+              cp public/sgex-mascot.png landing-page/
+            fi
+            if [[ -f "public/favicon.ico" ]]; then
+              cp public/favicon.ico landing-page/
+            fi
+          fi
+          
+          # Verify landing page exists
+          if [[ ! -f "landing-page/index.html" ]]; then
+            echo "ERROR: Landing page preparation failed - index.html not found"
+            exit 1
+          fi
+          
+          echo "✅ Branch selector landing page preparation completed successfully"
+          echo "Landing page contents:"
+          ls -la landing-page/
+
+      - name: Deploy to gh-pages root (preserving branch subdirectories)
+        shell: bash
+        run: |
+          set -e
+          
+          # Save the landing page files
+          echo "Preserving landing page files..."
+          mkdir -p /tmp/landing-build
+          cp -a landing-page/. /tmp/landing-build/
+          
+          # Checkout gh-pages branch
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            echo "Checking out existing gh-pages branch"
+            git stash -u -m "Stash before gh-pages checkout" || echo "Nothing to stash"
+            git clean -fd -e node_modules
+            git checkout gh-pages
+          else
+            echo "Creating new gh-pages branch"
+            git checkout --orphan gh-pages
+            git rm -rf .
+            echo "# GitHub Pages" > README.md
+            git add README.md
+            git commit -m "Initial gh-pages branch"
+            git push origin gh-pages
+          fi
+          
+          # CRITICAL: Only remove root-level files, NEVER remove directories (to preserve branch builds)
+          echo "Removing only root-level files (preserving all branch directories)..."
+          
+          # List what directories exist for safety verification
+          echo "Existing directories before cleanup:"
+          ls -la */ 2>/dev/null || echo "No directories found"
+          
+          # Remove only specific files that could conflict with landing page
+          rm -f index.html
+          rm -f manifest.json  
+          rm -f asset-manifest.json
+          rm -f service-worker.js
+          rm -f robots.txt
+          rm -f favicon.ico
+          rm -f logo*.png
+          rm -f README.md
+          rm -f package.json
+          rm -f package-lock.json
+          
+          # Remove static directory only if it exists at root (not in branch subdirs)
+          if [[ -d "static" ]]; then
+            echo "Removing root static directory..."
+            rm -rf static
+          fi
+          
+          # Deploy branch selector to root (this will not affect any subdirectories)
+          echo "Deploying branch selector landing page to root..."
+          cp -a /tmp/landing-build/. .
+          
+          # Verify existing directories are still there
+          echo "Directories after deployment:"
+          ls -la */ 2>/dev/null || echo "No directories found"
+          
+          # Clean up temporary build
+          rm -rf /tmp/landing-build
+          
+          echo "✅ Branch selector landing page deployed to gh-pages root while preserving all branch directories"
+
+      - name: Commit and push changes
+        shell: bash
+        run: |
+          set -e
+          
+          # Verify we're on gh-pages branch
+          current_branch=$(git branch --show-current)
+          if [[ "$current_branch" != "gh-pages" ]]; then
+            echo "ERROR: Not on gh-pages branch! Current branch: $current_branch"
+            exit 1
+          fi
+          
+          # Stage all changes
+          git add -A
+          
+          # Check if there are changes to commit
+          if git diff --cached --quiet; then
+            if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
+              echo "No changes detected, but force deployment requested - creating empty commit"
+              git commit --allow-empty -m "🚀 Force deploy branch selector landing page
+              
+              - Force deployment requested by user
+              - Built from ${{ steps.source_info.outputs.source_branch }} branch
+              - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+              - Commit: ${{ github.sha }}"
+            else
+              echo "No changes to commit and force deployment not requested"
+              exit 0
+            fi
+          else
+            echo "Committing landing page deployment..."
+            
+            git commit -m "🚀 Deploy branch selector landing page
+            
+            - Updated with branch selector from ${{ steps.source_info.outputs.source_branch }} branch
+            - Manually triggered deployment
+            - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+            - Commit: ${{ github.sha }}"
+          fi
+          
+          echo "Pushing to gh-pages..."
+          git fetch origin gh-pages
+          git push origin gh-pages
+          
+          echo "✅ Branch selector landing page deployment completed successfully"
+
+      - name: Output deployment info
+        id: deployment_info
+        shell: bash
+        run: |
+          landing_url="https://litlfred.github.io/sgex/"
+          source_branch="${{ steps.source_info.outputs.source_branch }}"
+          commit_sha="${{ github.sha }}"
+          
+          echo "🚀 Branch Selector Landing Page Deployment Summary:"
+          echo "- Landing Page URL: $landing_url"
+          echo "- Source Branch: $source_branch"
+          echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "- Commit: $commit_sha"
+          echo ""
+          echo "ℹ️  Note: Branch subdirectories are preserved and unaffected"
+          
+          # GitHub Actions outputs
+          echo "deployment_status=success" >> $GITHUB_OUTPUT
+          echo "landing_url=$landing_url" >> $GITHUB_OUTPUT
+          echo "source_branch=$source_branch" >> $GITHUB_OUTPUT
+          echo "commit_sha=$commit_sha" >> $GITHUB_OUTPUT
+
+      - name: Create deployment summary
+        if: always() && steps.deployment_info.outputs.deployment_status == 'success'
+        shell: bash
+        run: |
+          echo "## 🚀 Branch Selector Landing Page Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment URL:** https://litlfred.github.io/sgex/" >> $GITHUB_STEP_SUMMARY
+          echo "**Source Branch:** ${{ steps.deployment_info.outputs.source_branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ steps.deployment_info.outputs.commit_sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch selector landing page successfully deployed to gh-pages root" >> $GITHUB_STEP_SUMMARY
+          echo "- All branch subdirectories preserved" >> $GITHUB_STEP_SUMMARY
+          echo "- No branch deployments affected" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [View Branch Selector](https://litlfred.github.io/sgex/)" >> $GITHUB_STEP_SUMMARY
+          echo "- [View Main Branch](https://litlfred.github.io/sgex/main/)" >> $GITHUB_STEP_SUMMARY
