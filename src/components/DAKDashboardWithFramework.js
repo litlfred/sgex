@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { PageLayout, useDAKParams } from './framework';
 import githubService from '../services/githubService';
 import branchContextService from '../services/branchContextService';
-import helpContentService from '../services/helpContentService';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
-import HelpModal from './HelpModal';
 import './DAKDashboard.css';
 
 const DAKDashboardWithFramework = () => {
@@ -23,7 +21,6 @@ const DAKDashboardContent = () => {
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
   const [issueCounts, setIssueCounts] = useState({});
-  const [showDakHelp, setShowDakHelp] = useState(false);
 
   // Check write permissions
   useEffect(() => {
@@ -102,18 +99,6 @@ const DAKDashboardContent = () => {
         }
       });
     }
-  };
-
-  const handleDakHelpClick = () => {
-    setShowDakHelp(true);
-  };
-
-  const handleCloseDakHelp = () => {
-    setShowDakHelp(false);
-  };
-
-  const getDakAuthoringHelpTopic = () => {
-    return helpContentService.getHelpTopic('dak-authoring-guide');
   };
 
   // Define the 9 core DAK components based on WHO SMART Guidelines documentation
@@ -250,15 +235,6 @@ const DAKDashboardContent = () => {
             <p className="dashboard-subtitle">
               Digital Adaptation Kit for {profile?.name || profile?.login}
             </p>
-            <div className="dashboard-intro-actions">
-              <button 
-                className="dak-help-btn"
-                onClick={handleDakHelpClick}
-                title="Learn how to author a DAK"
-              >
-                📚 Get Help: Authoring a DAK
-              </button>
-            </div>
           </div>
         </div>
 
@@ -364,20 +340,6 @@ const DAKDashboardContent = () => {
               </button>
             </div>
           </div>
-        )}
-
-        {/* DAK Authoring Help Modal */}
-        {showDakHelp && (
-          <HelpModal
-            helpTopic={getDakAuthoringHelpTopic()}
-            contextData={{
-              repository,
-              profile,
-              selectedBranch: branch,
-              pageId: 'dak-dashboard'
-            }}
-            onClose={handleCloseDakHelp}
-          />
         )}
     </div>
   );
