@@ -1,4 +1,4 @@
-name: Deploy Branch Selector Landing Page
+name: Deploy React-based Branch Selector Landing Page
 
 on:
   workflow_dispatch:
@@ -54,35 +54,47 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
         
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -e
+          echo "Installing dependencies..."
+          npm ci
+
+      - name: Build React application
+        shell: bash
+        run: |
+          set -e
+          echo "Building React application..."
+          npm run build
+          
+          # Verify build was successful
+          if [[ ! -f "build/index.html" ]]; then
+            echo "ERROR: React build failed - index.html not found in build directory"
+            exit 1
+          fi
+          
+          echo "✅ React application built successfully"
+
       - name: Prepare branch selector landing page files
         shell: bash
         run: |
           set -e
           
-          echo "Preparing branch selector landing page files..."
+          echo "Preparing branch selector landing page files from React build..."
           
           # Create a landing page directory to hold the files
           mkdir -p landing-page
           
-          # Use the branch selector as the main landing page
-          if [[ ! -f "public/branch-listing.html" ]]; then
-            echo "ERROR: Branch selector not found at public/branch-listing.html"
-            exit 1
-          fi
-          
-          # Copy branch selector as index.html
-          cp public/branch-listing.html landing-page/index.html
-          
-          # Copy essential assets for the branch selector
-          if [[ -d "public" ]]; then
-            # Copy assets that the branch selector references
-            if [[ -f "public/sgex-mascot.png" ]]; then
-              cp public/sgex-mascot.png landing-page/
-            fi
-            if [[ -f "public/favicon.ico" ]]; then
-              cp public/favicon.ico landing-page/
-            fi
-          fi
+          # Copy the entire React build to landing page directory
+          # This includes the React-based BranchListingPage component
+          cp -r build/* landing-page/
           
           # Verify landing page exists
           if [[ ! -f "landing-page/index.html" ]]; then
@@ -90,7 +102,7 @@ jobs:
             exit 1
           fi
           
-          echo "✅ Branch selector landing page preparation completed successfully"
+          echo "✅ React-based branch selector landing page preparation completed successfully"
           echo "Landing page contents:"
           ls -la landing-page/
 
@@ -127,7 +139,7 @@ jobs:
           echo "Existing directories before cleanup:"
           ls -la */ 2>/dev/null || echo "No directories found"
           
-          # Remove only specific files that could conflict with landing page
+          # Remove only specific files that could conflict with the React app deployment
           rm -f index.html
           rm -f manifest.json  
           rm -f asset-manifest.json
@@ -135,6 +147,9 @@ jobs:
           rm -f robots.txt
           rm -f favicon.ico
           rm -f logo*.png
+          rm -f *.png
+          rm -f *.svg
+          rm -f *.html
           rm -f README.md
           rm -f package.json
           rm -f package-lock.json
@@ -145,8 +160,20 @@ jobs:
             rm -rf static
           fi
           
-          # Deploy branch selector to root (this will not affect any subdirectories)
-          echo "Deploying branch selector landing page to root..."
+          # Remove docs directory only if it exists at root (React build may include it)
+          if [[ -d "docs" ]]; then
+            echo "Removing root docs directory..."
+            rm -rf docs
+          fi
+          
+          # Remove schemas directory only if it exists at root (React build may include it)
+          if [[ -d "schemas" ]]; then
+            echo "Removing root schemas directory..."
+            rm -rf schemas
+          fi
+          
+          # Deploy React-based branch selector to root (this will not affect any subdirectories)
+          echo "Deploying React-based branch selector landing page to root..."
           cp -a /tmp/landing-build/. .
           
           # Verify existing directories are still there
@@ -156,7 +183,7 @@ jobs:
           # Clean up temporary build
           rm -rf /tmp/landing-build
           
-          echo "✅ Branch selector landing page deployed to gh-pages root while preserving all branch directories"
+          echo "✅ React-based branch selector landing page deployed to gh-pages root while preserving all branch directories"
 
       - name: Commit and push changes
         shell: bash
@@ -177,7 +204,7 @@ jobs:
           if git diff --cached --quiet; then
             if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
               echo "No changes detected, but force deployment requested - creating empty commit"
-              git commit --allow-empty -m "🚀 Force deploy branch selector landing page
+              git commit --allow-empty -m "🚀 Force deploy React-based branch selector landing page
               
               - Force deployment requested by user
               - Built from ${{ steps.source_info.outputs.source_branch }} branch
@@ -190,9 +217,9 @@ jobs:
           else
             echo "Committing landing page deployment..."
             
-            git commit -m "🚀 Deploy branch selector landing page
+            git commit -m "🚀 Deploy React-based branch selector landing page
             
-            - Updated with branch selector from ${{ steps.source_info.outputs.source_branch }} branch
+            - Updated with React-based branch selector from ${{ steps.source_info.outputs.source_branch }} branch
             - Manually triggered deployment
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
@@ -230,7 +257,7 @@ jobs:
         if: always() && steps.deployment_info.outputs.deployment_status == 'success'
         shell: bash
         run: |
-          echo "## 🚀 Branch Selector Landing Page Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 React-based Branch Selector Landing Page Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Deployment URL:** https://litlfred.github.io/sgex/" >> $GITHUB_STEP_SUMMARY
           echo "**Source Branch:** ${{ steps.deployment_info.outputs.source_branch }}" >> $GITHUB_STEP_SUMMARY
