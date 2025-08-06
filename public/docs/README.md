@@ -61,10 +61,17 @@ A browser-based, static web application for collaborative editing of WHO SMART G
 
 ### DAK Components (9 Total)
 The system supports editing of all 9 WHO SMART Guidelines DAK components:
-- **Core Components (1-5)**: Health Interventions, Generic Personas, User Scenarios, Business Processes, Core Data Elements
-- **Specialized Components (6-7)**: Product Master Data, Decision Support Logic
-- **Management Components (8-9)**: Program Indicators, Functional & Non-Functional Requirements
-- See [DAK Components](dak-components.md) for comprehensive details
+1. Health Interventions and Recommendations
+2. Generic Personas
+3. User Scenarios
+4. Generic Business Processes and Workflows
+5. Core Data Elements (includes Terminology Services via OCL and Product Master Data via PCMT)
+6. Decision-Support Logic
+7. Program Indicators
+8. Functional and Non-Functional Requirements
+9. Test Scenarios
+
+See [DAK Components](dak-components.md) for comprehensive details.
 
 ### Technology Stack
 - **Frontend**: React-based Single Page Application

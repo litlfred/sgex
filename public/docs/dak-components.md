@@ -59,21 +59,14 @@ Digital Adaptation Kits (DAKs) are structured packages of clinical logic and imp
 
 ### 5. Core Data Elements
 
-- **Description**: Essential data structures and terminology needed for clinical data capture and exchange
-- **L2 Representation**: Open Concept Lab (OCL) at https://openconceptlab.org/
+- **Description**: Essential data structures and terminology needed for clinical data capture and exchange, including specialized component services for terminology management and product data
+- **L2 Representation**: Open Concept Lab (OCL) at https://openconceptlab.org/ for terminology services and Product Catalogue Management Tool (PCMT) for product master data
 - **L3 Representation**: FHIR StructureDefinition profiles
 - **Purpose**: Standardize clinical concepts, codes, and data models across systems
-- **Editor**: Data element editor with OCL integration
+- **Editor**: Data element editor with OCL integration for terminology and PCMT integration for product data
+- **Note**: Terminology Services (OCL) and Product Master Data (PCMT) are specialized component services within Core Data Elements
 
-### 6. Product Master Data
-
-- **Description**: Specialized data management for pharmaceutical and medical product information
-- **L2 Representation**: FHIR CodeSystems and Logical Models
-- **L3 Representation**: Product Catalogue Management Tool (PCMT) at https://worldhealthorganization.github.io/smart-pcmt/ and https://productcatalog.io/
-- **Purpose**: Manage product catalogs, formularies, and pharmaceutical data
-- **Editor**: Product data editor with PCMT integration
-
-### 7. Decision-Support Logic
+### 6. Decision-Support Logic
 
 - **Description**: DMN decision tables and clinical decision support rules that encode clinical logic
 - **L2 Representation**: DMN decision tables conforming to [OMG DMN 1.3 specification](https://www.omg.org/spec/DMN/1.3/)
@@ -82,7 +75,7 @@ Digital Adaptation Kits (DAKs) are structured packages of clinical logic and imp
 - **Editor**: DMN decision table editor with validation
 - **Note**: Scheduling tables are a special case of decision tables and are included within this component
 
-### 8. Program Indicators
+### 7. Program Indicators
 
 - **Description**: Performance indicators and measurement definitions for monitoring and evaluation
 - **L2 Representation**: Logical indicator models
@@ -90,7 +83,7 @@ Digital Adaptation Kits (DAKs) are structured packages of clinical logic and imp
 - **Purpose**: Define key performance indicators, quality measures, and outcome metrics
 - **Editor**: Indicator definition editor with measurement logic
 
-### 9. Functional and Non-Functional Requirements
+### 8. Functional and Non-Functional Requirements
 
 - **Description**: System requirements specifications that define capabilities and constraints
 - **L2 Representation**: Requirements specifications at https://worldhealthorganization.github.io/smart-base/StructureDefinition-FunctionalRequirement.html and https://worldhealthorganization.github.io/smart-base/StructureDefinition-NonFunctionalRequirement.html
@@ -98,48 +91,13 @@ Digital Adaptation Kits (DAKs) are structured packages of clinical logic and imp
 - **Purpose**: Document system capabilities, performance requirements, and technical constraints
 - **Editor**: Requirements editor with structured templates
 
-## Additional Structured Knowledge Representations
+### 9. Test Scenarios
 
-The SGEX Workbench also supports additional knowledge types that complement the core DAK components:
-
-| Knowledge Type | L2 Representation | L3 Representation |
-|----------------|-------------------|-------------------|
-| Terminology | Concept definitions and mappings | FHIR CodeSystem/ValueSet |
-| FHIR Profiles | Data model specifications | FHIR StructureDefinition |
-| FHIR Extensions | Extension specifications | FHIR StructureDefinition (extension) |
-| FHIR Questionnaires | FHIR Questionnaires | FHIR Questionnaires coupled with FHIR Structure Map |
-| Test Data & Examples | Test scenarios and sample data | FHIR Examples/test bundles |
-
-## Component Organization
-
-### Visual Representation
-The SGEX Workbench presents these components in a dashboard format with:
-- Distinctive WHO-provided icons and color coding for each component
-- Clear level badges (L2 vs L3) with visual distinction
-- Component-specific navigation and editing capabilities
-- Integration with external systems (IRIS, OCL, PCMT)
-- WHO SMART Guidelines branding and visual identity
-
-### Navigation Structure
-```
-Landing Page → Repository Selection → DAK Components Dashboard → Component Editor
-```
-
-Each component provides:
-- Direct access to specialized editors based on L2/L3 distinction
-- Context-aware editing capabilities  
-- Integration with GitHub collaboration tools
-- Validation and error checking
-- Traceability links between L2 and L3 representations
-
-### External System Integration
-
-The SGEX Workbench integrates with several external systems for DAK component management:
-
-- **IRIS (https://iris.who.int/)**: WHO publication repository with DSpace-based search API for health intervention references
-- **Open Concept Lab (https://openconceptlab.org/)**: Terminology management system with GitHub authentication support
-- **PCMT (https://productcatalog.io/)**: Product Catalogue Management Tool with GitHub authentication support
-- **WHO Enterprise Architecture (http://smart.who.int/ra)**: Reference architecture for FHIR R4 implementations
+- **Description**: Feature files and test scenarios for validating the DAK implementation
+- **L2 Representation**: Test scenario definitions and validation criteria
+- **L3 Representation**: FHIR Test bundles and test cases
+- **Purpose**: Define validation scenarios, test cases, and acceptance criteria for DAK implementation
+- **Editor**: Testing viewer with feature file browser
 
 ## Standards Compliance
 

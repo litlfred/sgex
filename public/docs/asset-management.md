@@ -15,10 +15,11 @@ In the context of SGEX Workbench, **assets** are any digital artifacts that comp
 2. **Personas**: User role definitions and actor specifications
 3. **User Scenarios**: Narrative use cases and interaction workflows
 4. **Business Processes**: BPMN workflow diagrams and process definitions
-5. **Core Data Elements**: OCL terminology definitions and concept mappings
-6. **Product Master Data**: PCMT product catalogs and pharmaceutical information
-7. **Decision Logic**: DMN decision tables and clinical algorithms
-8. **Program Indicators**: Performance measurement definitions and quality metrics
+5. **Core Data Elements**: OCL terminology definitions, concept mappings, and PCMT product catalogs
+6. **Decision Logic**: DMN decision tables and clinical algorithms
+7. **Program Indicators**: Performance measurement definitions and quality metrics
+8. **Requirements**: Functional and non-functional system specifications  
+9. **Test Scenarios**: Feature files and validation test cases
 9. **Requirements**: Functional and non-functional system specifications
 
 #### Supporting Assets
@@ -165,9 +166,9 @@ Implement appropriate security measures:
 - **Version Control**: Synchronize OCL versions with DAK releases
 - **Export/Import**: Bulk operations for large terminology sets
 
-### PCMT Integration (Product Master Data)
-- **Product Catalog Sync**: Synchronize with Product Catalogue Management Tool
-- **Data Validation**: Validate product information against PCMT standards
+### PCMT Integration (Core Data Elements - Product Data)
+- **Product Catalog Sync**: Synchronize with Product Catalogue Management Tool as part of Core Data Elements
+- **Data Validation**: Validate product information against PCMT standards within Core Data Elements component
 - **API Integration**: Programmatic access to product catalog data
 - **Workflow Integration**: Embed PCMT workflows in DAK development process
 

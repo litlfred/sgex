@@ -171,18 +171,18 @@ The SGEX Workbench supports editing of the **9 core Digital Adaptation Kit (DAK)
 2. **Generic Personas** - Standardized user roles and actor definitions  
 3. **User Scenarios** - Narrative descriptions of user interactions with the system
 4. **Generic Business Processes and Workflows** - BPMN workflows and business process definitions
-5. **Core Data Elements** - Essential data structures and terminology for clinical data
-6. **Product Master Data** - Specialized pharmaceutical and medical product information management
-7. **Decision-Support Logic** - DMN decision tables and clinical decision support
-8. **Program Indicators** - Performance indicators and measurement definitions
-9. **Functional and Non-Functional Requirements** - System requirements and specifications
+5. **Core Data Elements** - Essential data structures and terminology for clinical data (includes Terminology Services via OCL and Product Master Data via PCMT)
+6. **Decision-Support Logic** - DMN decision tables and clinical decision support
+7. **Program Indicators** - Performance indicators and measurement definitions
+8. **Functional and Non-Functional Requirements** - System requirements and specifications
+9. **Test Scenarios** - Feature files and test scenarios for validating the DAK implementation
 
 ### Additional Components
 The SGEX Workbench also supports additional structured knowledge representations including Terminology, FHIR Profiles, FHIR Extensions, FHIR Questionnaires, and Test Data & Examples.
 
 For detailed information about each component, see the [DAK Components Documentation](public/docs/dak-components.md).
 
-*Note: Product Master Data has been elevated to a standalone 6th component, and scheduling tables are considered a special case of decision tables within the Decision Support Logic component.*
+*Note: Scheduling tables are considered a special case of decision tables and are included within the Decision Support Logic component.*
 
 For more information on DAK authoring, see the [WHO SMART Guidelines IG Starter Kit](https://smart.who.int/ig-starter-kit/l2_dak_authoring.html).
 

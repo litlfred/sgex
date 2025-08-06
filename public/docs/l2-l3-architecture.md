@@ -35,8 +35,7 @@ Reference: [WHO SMART IG Starter Kit - L2 DAK Authoring](https://smart.who.int/i
 | Personas | Actor definitions and roles | Structured descriptions | User role definitions |
 | User Scenarios | Use case narratives | Textual workflows | User journey documentation |
 | Business Processes | BPMN diagrams | OMG BPMN 2.0 | Clinical workflow modeling |
-| Core Data Elements | OCL concept definitions | Open Concept Lab | Terminology standardization |
-| Product Master Data | Logical models | FHIR CodeSystems | Product catalog structure |
+| Core Data Elements | OCL concept definitions, PCMT product data | Open Concept Lab, PCMT | Terminology and product standardization |
 | Decision Logic | DMN decision tables | OMG DMN 1.3 | Clinical decision rules |
 | Program Indicators | Logical indicator models | Structured definitions | Performance measurement |
 | Requirements | Requirement specifications | WHO smart-base | System capabilities |
@@ -68,8 +67,7 @@ Reference: [WHO SMART IG Starter Kit - L2 DAK Authoring](https://smart.who.int/i
 | Personas | Person/Practitioner profiles | Person, Practitioner | User profile definitions |
 | User Scenarios | Scenario test bundles | Bundle, TestScript | Executable test scenarios |
 | Business Processes | ActivityDefinition/PlanDefinition | ActivityDefinition, PlanDefinition | Executable workflows |
-| Core Data Elements | StructureDefinition profiles | StructureDefinition | Data model constraints |
-| Product Master Data | PCMT integration | CodeSystem, ValueSet | Product catalog FHIR representation |
+| Core Data Elements | StructureDefinition profiles, PCMT CodeSystems | StructureDefinition, CodeSystem, ValueSet | Data model constraints and product catalogs |
 | Decision Logic | PlanDefinition with logic | PlanDefinition, Library | Executable decision rules |
 | Program Indicators | Measure resources | Measure, Library | Computable quality measures |
 | Requirements | ImplementationGuide rules | ImplementationGuide | Technical conformance |
