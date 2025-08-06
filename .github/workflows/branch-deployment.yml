@@ -123,12 +123,14 @@ jobs:
             export PUBLIC_URL="/sgex/${safe_branch_name}/"
           fi
           echo "Building with PUBLIC_URL: $PUBLIC_URL"
+          echo "Building with REACT_APP_GITHUB_REF_NAME: $branch_name"
           
           # Build the React app
           npm run build
         env:
           CI: false
           GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
+          REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
 
       - name: Validate branch directory safety
         id: validate_branch

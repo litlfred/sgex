@@ -1329,6 +1329,35 @@ class GitHubService {
     }
   }
 
+  // Get pull request for a specific branch
+  async getPullRequestForBranch(owner, repo, branchName) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls`, { state: 'open', head: `${owner}:${branchName}` });
+
+    try {
+      const response = await this.octokit.rest.pulls.list({
+        owner,
+        repo,
+        state: 'open',
+        head: `${owner}:${branchName}`,
+        per_page: 1
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, response.status, Date.now() - startTime);
+      
+      // Return the first matching PR or null if none found
+      return response.data.length > 0 ? response.data[0] : null;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch pull request for branch:', error);
+      return null; // Return null instead of throwing to allow graceful fallback
+    }
+  }
+
   // Get open issues count
   async getOpenIssuesCount(owner, repo) {
     if (!this.isAuth()) {
