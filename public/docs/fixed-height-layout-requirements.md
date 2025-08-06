@@ -55,7 +55,7 @@ Support for the following artifact types:
 
 #### DAK Component Type Badges
 
-Support for the 8 core DAK components:
+Support for the 9 core DAK components:
 
 | Component | Badge | Description |
 |-----------|-------|-------------|

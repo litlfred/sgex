@@ -118,7 +118,7 @@ src/
 - Consistent terminology from WHO documentation
 
 **Home Page Layout:**
-- Dashboard/grid layout featuring 8 DAK components
+- Dashboard/grid layout featuring 9 DAK components
 - Each component as navigable card/tile
 - Visual distinction between Level 2 and Level 3 content
 - Clear component identification with WHO-provided icons
