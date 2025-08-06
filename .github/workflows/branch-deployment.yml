@@ -123,12 +123,14 @@ jobs:
             export PUBLIC_URL="/sgex/${safe_branch_name}/"
           fi
           echo "Building with PUBLIC_URL: $PUBLIC_URL"
+          echo "Building with REACT_APP_GITHUB_REF_NAME: $branch_name"
           
           # Build the React app
           npm run build
         env:
           CI: false
           GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
+          REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
 
       - name: Validate branch directory safety
         id: validate_branch
@@ -386,6 +388,10 @@ jobs:
               const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
               const restartUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
               
+              // Create a target name derived from the branch name for the new tab
+              const safeBranchName = branchName.replace(/[^a-zA-Z0-9]/g, '-');
+              const targetName = `sgex-preview-${safeBranchName}`;
+              
               // Find PR associated with this branch
               const { data: prs } = await github.rest.pulls.list({
                 owner: context.repo.owner,
@@ -408,7 +414,7 @@ jobs:
                 '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
                 '**Deployed:** ' + deployedAt + '\n\n' +
                 '### 🌐 Preview URL\n' +
-                '**➡️ [View Branch Preview](' + branchUrl + ')** ⬅️\n\n' +
+                '<a href="' + branchUrl + '" target="' + targetName + '">**➡️ View Branch Preview**</a> ⬅️\n\n' +
                 '### 🔄 Actions\n' +
                 '- 📄 [View Build Logs](' + workflowUrl + ') - See deployment details\n' +
                 '- 🔄 [Restart Build](' + restartUrl + ') - Click "Run workflow" and enter branch: `' + branchName + '`\n\n' +

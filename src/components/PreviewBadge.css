@@ -1,0 +1,114 @@
+.preview-badge-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: 1rem;
+  max-width: 600px; /* Prevent overflow on smaller screens */
+}
+
+.preview-badge {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.preview-badge.clickable {
+  cursor: pointer;
+}
+
+.preview-badge.clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #ff5722, #e68900);
+}
+
+.badge-content {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.badge-label {
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.badge-branch {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.badge-separator {
+  opacity: 0.7;
+  margin: 0 0.2rem;
+  flex-shrink: 0;
+}
+
+.badge-pr-title {
+  font-size: 0.75rem;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.95;
+  flex-shrink: 1;
+}
+
+# Removed - No longer using separate PR title display
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .preview-badge-container {
+    margin-left: 0.5rem;
+    gap: 0.5rem;
+    max-width: 400px;
+  }
+  
+  .preview-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .badge-branch {
+    max-width: 80px;
+    font-size: 0.7rem;
+  }
+  
+  .badge-pr-title {
+    max-width: 200px;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .preview-badge-container {
+    max-width: 300px;
+  }
+  
+  .badge-branch {
+    max-width: 60px;
+  }
+  
+  .badge-pr-title {
+    max-width: 120px;
+  }
+}
