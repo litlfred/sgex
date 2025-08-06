@@ -125,21 +125,14 @@ const PreviewBadge = () => {
         <div className="badge-content">
           <span className="badge-label">Preview:</span>
           <span className="badge-branch">{branchInfo.name}</span>
+          {prInfo && (
+            <>
+              <span className="badge-separator">|</span>
+              <span className="badge-pr-title">{prInfo.title}</span>
+            </>
+          )}
         </div>
       </div>
-      
-      {prInfo && (
-        <div className="pr-title" title={prInfo.title}>
-          <a 
-            href={prInfo.html_url} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="pr-link"
-          >
-            {prInfo.title}
-          </a>
-        </div>
-      )}
     </div>
   );
 };

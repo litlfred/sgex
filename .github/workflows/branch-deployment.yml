@@ -388,6 +388,10 @@ jobs:
               const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
               const restartUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
               
+              // Create a target name derived from the branch name for the new tab
+              const safeBranchName = branchName.replace(/[^a-zA-Z0-9]/g, '-');
+              const targetName = `sgex-preview-${safeBranchName}`;
+              
               // Find PR associated with this branch
               const { data: prs } = await github.rest.pulls.list({
                 owner: context.repo.owner,
@@ -410,7 +414,7 @@ jobs:
                 '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
                 '**Deployed:** ' + deployedAt + '\n\n' +
                 '### 🌐 Preview URL\n' +
-                '**➡️ [View Branch Preview](' + branchUrl + ')** ⬅️\n\n' +
+                '<a href="' + branchUrl + '" target="' + targetName + '">**➡️ View Branch Preview**</a> ⬅️\n\n' +
                 '### 🔄 Actions\n' +
                 '- 📄 [View Build Logs](' + workflowUrl + ') - See deployment details\n' +
                 '- 🔄 [Restart Build](' + restartUrl + ') - Click "Run workflow" and enter branch: `' + branchName + '`\n\n' +
