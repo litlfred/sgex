@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SGEX Branch & PR Previews</title>
-    <script src="https://unpkg.com/react@19/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@19/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         :root {
@@ -727,6 +727,117 @@
             transform: rotate(90deg);
         }
 
+        /* Workflow Controls */
+        .workflow-controls {
+            background: var(--who-tertiary-bg);
+            border: 1px solid var(--who-border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .workflow-controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .workflow-controls-title {
+            font-weight: 600;
+            color: var(--who-text-primary);
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .workflow-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .workflow-trigger-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .workflow-trigger-btn:hover:not(:disabled) {
+            background: #218838;
+        }
+
+        .workflow-trigger-btn:disabled {
+            background: var(--who-text-muted);
+            cursor: not-allowed;
+        }
+
+        .workflow-trigger-btn.branch-deploy {
+            background: #0366d6;
+        }
+
+        .workflow-trigger-btn.branch-deploy:hover:not(:disabled) {
+            background: #0256cc;
+        }
+
+        .workflow-trigger-btn.landing-deploy {
+            background: #6f42c1;
+        }
+
+        .workflow-trigger-btn.landing-deploy:hover:not(:disabled) {
+            background: #5a32a3;
+        }
+
+        .workflow-status-info {
+            font-size: 0.8rem;
+            color: var(--who-text-secondary);
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        .workflow-runs-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--who-border-color);
+        }
+
+        .workflow-runs-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .workflow-run-item {
+            background: var(--who-card-bg);
+            border: 1px solid var(--who-border-color);
+            border-radius: 4px;
+            padding: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .workflow-run-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .workflow-run-link {
+            color: var(--who-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .workflow-run-link:hover {
+            text-decoration: underline;
+        }
+
         /* Expanded Discussion Section */
         .discussion-expanded-section {
             margin-top: 0.5rem;
@@ -890,6 +1001,106 @@
     <script type="text/babel">
         const { useState, useEffect, useCallback } = React;
 
+        // GitHub Actions Service (inline version)
+        class GitHubActionsService {
+            constructor() {
+                this.baseURL = 'https://api.github.com';
+                this.owner = 'litlfred';
+                this.repo = 'sgex';
+            }
+
+            setToken(token) {
+                this.token = token;
+            }
+
+            getHeaders() {
+                const headers = {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                };
+                
+                if (this.token) {
+                    headers['Authorization'] = `token ${this.token}`;
+                }
+                
+                return headers;
+            }
+
+            async getWorkflows() {
+                try {
+                    const response = await fetch(
+                        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows`,
+                        { headers: this.getHeaders() }
+                    );
+                    
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch workflows: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data.workflows.filter(w => w.name.includes('Deploy') || w.path.includes('deploy'));
+                } catch (error) {
+                    console.error('Error fetching workflows:', error);
+                    return [];
+                }
+            }
+
+            async triggerWorkflow(workflowId, branch, inputs = {}) {
+                try {
+                    if (!this.token) {
+                        throw new Error('Authentication required to trigger workflows');
+                    }
+
+                    const response = await fetch(
+                        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows/${workflowId}/dispatches`,
+                        {
+                            method: 'POST',
+                            headers: this.getHeaders(),
+                            body: JSON.stringify({
+                                ref: branch,
+                                inputs: inputs
+                            })
+                        }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to trigger workflow: ${response.status}`);
+                    }
+
+                    return true;
+                } catch (error) {
+                    console.error(`Error triggering workflow:`, error);
+                    return false;
+                }
+            }
+
+            async getWorkflowRuns(workflowId, branch) {
+                try {
+                    const response = await fetch(
+                        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows/${workflowId}/runs?branch=${encodeURIComponent(branch)}&per_page=5`,
+                        { headers: this.getHeaders() }
+                    );
+                    
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch workflow runs: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data.workflow_runs;
+                } catch (error) {
+                    console.error('Error fetching workflow runs:', error);
+                    return [];
+                }
+            }
+
+            isAuthenticated() {
+                return !!this.token;
+            }
+        }
+
+        // Create singleton instance
+        const githubActionsService = new GitHubActionsService();
+
         // Simple PAT Login Component
         const PATLogin = ({ onAuthSuccess }) => {
             const [token, setToken] = useState('');
@@ -989,6 +1200,9 @@
             const [expandedDiscussions, setExpandedDiscussions] = useState({});
             const [discussionSummaries, setDiscussionSummaries] = useState({});
             const [loadingSummaries, setLoadingSummaries] = useState(false);
+            const [availableWorkflows, setAvailableWorkflows] = useState([]);
+            const [workflowRuns, setWorkflowRuns] = useState({});
+            const [triggeringWorkflows, setTriggeringWorkflows] = useState({});
 
             const ITEMS_PER_PAGE = 10;
 
@@ -997,6 +1211,8 @@
                 setGithubToken(token);
                 setIsAuthenticated(true);
                 sessionStorage.setItem('github_token', token);
+                githubActionsService.setToken(token);
+                loadAvailableWorkflows();
             };
 
             const handleLogout = () => {
@@ -1004,6 +1220,59 @@
                 setIsAuthenticated(false);
                 sessionStorage.removeItem('github_token');
                 setPrComments({});
+                setAvailableWorkflows([]);
+                setWorkflowRuns({});
+            };
+
+            // Load available workflows
+            const loadAvailableWorkflows = async () => {
+                try {
+                    const workflows = await githubActionsService.getWorkflows();
+                    setAvailableWorkflows(workflows);
+                } catch (error) {
+                    console.error('Error loading workflows:', error);
+                }
+            };
+
+            // Trigger a workflow for a specific PR
+            const triggerWorkflowForPR = async (pr, workflowId, workflowName) => {
+                const key = `${pr.number}-${workflowId}`;
+                setTriggeringWorkflows(prev => ({ ...prev, [key]: true }));
+                
+                try {
+                    const inputs = {
+                        branch: pr.branchName,
+                        force_deployment: 'true'
+                    };
+                    
+                    const success = await githubActionsService.triggerWorkflow(workflowId, pr.branchName, inputs);
+                    
+                    if (success) {
+                        alert(`✅ ${workflowName} triggered successfully for PR #${pr.number}!`);
+                        // Refresh workflow runs for this PR
+                        loadWorkflowRunsForPR(pr, workflowId);
+                    } else {
+                        alert(`❌ Failed to trigger ${workflowName} for PR #${pr.number}. Check console for details.`);
+                    }
+                } catch (error) {
+                    console.error('Error triggering workflow:', error);
+                    alert(`❌ Error triggering ${workflowName}: ${error.message}`);
+                } finally {
+                    setTriggeringWorkflows(prev => ({ ...prev, [key]: false }));
+                }
+            };
+
+            // Load workflow runs for a specific PR
+            const loadWorkflowRunsForPR = async (pr, workflowId) => {
+                try {
+                    const runs = await githubActionsService.getWorkflowRuns(workflowId, pr.branchName);
+                    setWorkflowRuns(prev => ({
+                        ...prev,
+                        [`${pr.number}-${workflowId}`]: runs
+                    }));
+                } catch (error) {
+                    console.error('Error loading workflow runs:', error);
+                }
             };
 
             // Function to fetch PR comments summary
@@ -1334,6 +1603,8 @@
                 if (token) {
                     setGithubToken(token);
                     setIsAuthenticated(true);
+                    githubActionsService.setToken(token);
+                    loadAvailableWorkflows();
                 }
             }, []);
 
@@ -1726,6 +1997,87 @@
                                                             </div>
                                                         </div>
                                                     )}
+                                                </div>
+                                            )}
+
+                                            {/* Workflow Controls Section */}
+                                            {isAuthenticated && availableWorkflows.length > 0 && (
+                                                <div className="workflow-controls">
+                                                    <div className="workflow-controls-header">
+                                                        <h4 className="workflow-controls-title">🚀 Deployment Controls</h4>
+                                                    </div>
+                                                    <div className="workflow-actions">
+                                                        {availableWorkflows.map((workflow) => {
+                                                            const key = `${pr.number}-${workflow.id}`;
+                                                            const isTriggering = triggeringWorkflows[key];
+                                                            
+                                                            let btnClass = 'workflow-trigger-btn';
+                                                            let btnText = '🚀 Deploy';
+                                                            
+                                                            if (workflow.name.includes('Branch')) {
+                                                                btnClass += ' branch-deploy';
+                                                                btnText = '🌿 Deploy Branch';
+                                                            } else if (workflow.name.includes('Landing')) {
+                                                                btnClass += ' landing-deploy';
+                                                                btnText = '🏠 Deploy Landing';
+                                                            }
+                                                            
+                                                            return (
+                                                                <button
+                                                                    key={workflow.id}
+                                                                    className={btnClass}
+                                                                    onClick={() => triggerWorkflowForPR(pr, workflow.id, workflow.name)}
+                                                                    disabled={isTriggering}
+                                                                    title={`Trigger ${workflow.name} for branch ${pr.branchName}`}
+                                                                >
+                                                                    {isTriggering ? '⏳ Triggering...' : btnText}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    
+                                                    <div className="workflow-status-info">
+                                                        💡 These buttons trigger deployment workflows for this PR's branch ({pr.branchName})
+                                                    </div>
+                                                    
+                                                    {/* Show recent workflow runs if available */}
+                                                    {availableWorkflows.map((workflow) => {
+                                                        const runs = workflowRuns[`${pr.number}-${workflow.id}`];
+                                                        if (!runs || runs.length === 0) return null;
+                                                        
+                                                        return (
+                                                            <div key={workflow.id} className="workflow-runs-section">
+                                                                <div className="workflow-controls-title" style={{fontSize: '0.9rem', marginBottom: '0.5rem'}}>
+                                                                    Recent {workflow.name} runs:
+                                                                </div>
+                                                                <div className="workflow-runs-list">
+                                                                    {runs.slice(0, 3).map((run) => (
+                                                                        <div key={run.id} className="workflow-run-item">
+                                                                            <div className="workflow-run-status">
+                                                                                <span>
+                                                                                    {run.status === 'completed' && run.conclusion === 'success' ? '✅' :
+                                                                                     run.status === 'completed' && run.conclusion === 'failure' ? '❌' :
+                                                                                     run.status === 'in_progress' ? '🔄' :
+                                                                                     run.status === 'queued' ? '⏳' : '❓'}
+                                                                                </span>
+                                                                                <a 
+                                                                                    href={run.html_url} 
+                                                                                    target="_blank" 
+                                                                                    rel="noopener noreferrer"
+                                                                                    className="workflow-run-link"
+                                                                                >
+                                                                                    {run.status} {run.conclusion && `(${run.conclusion})`}
+                                                                                </a>
+                                                                                <span style={{color: 'var(--who-text-secondary)', marginLeft: 'auto'}}>
+                                                                                    {new Date(run.created_at).toLocaleDateString()}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             )}
                                             
