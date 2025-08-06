@@ -27,7 +27,22 @@ export const usePage = () => {
   console.log('usePage: called, context is:', context ? 'available' : 'null');
   if (!context) {
     console.error('usePage: PageContext is null - component not wrapped in PageProvider');
-    throw new Error('usePage must be used within a PageProvider');
+    // Return a default context instead of throwing to make ErrorHandler more resilient
+    return {
+      pageName: 'unknown',
+      user: null,
+      profile: null,
+      repository: null,
+      branch: null,
+      asset: null,
+      type: 'top-level',
+      loading: false,
+      error: null,
+      isAuthenticated: false,
+      navigate: () => {},
+      params: {},
+      location: { pathname: '/' }
+    };
   }
   return context;
 };
