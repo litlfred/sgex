@@ -12,6 +12,11 @@ on:
         required: false
         type: boolean
         default: false
+      clean_old_assets:
+        description: 'Aggressively clean old assets from gh-pages'
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -193,10 +198,38 @@ jobs:
             ls -la */ 2>/dev/null || echo "No directories found"
             
             # Remove only specific files that could conflict with the React app deployment
-            rm -f index.html manifest.json asset-manifest.json service-worker.js
-            rm -f robots.txt favicon.ico logo*.png *.png *.svg *.html README.md
-            rm -f package.json package-lock.json craco.config.js .dockerignore
-            rm -f Dockerfile .env.example coverage-final.json clover.xml
+            rm -f index.html
+            rm -f manifest.json  
+            rm -f asset-manifest.json
+            rm -f service-worker.js
+            rm -f robots.txt
+            rm -f favicon.ico
+            rm -f logo*.png
+            rm -f *.png
+            rm -f *.svg
+            rm -f *.html
+            rm -f README.md
+            rm -f package.json
+            rm -f package-lock.json
+            
+            # Remove ALL versioned CSS and JS files to clean up old builds
+            if [[ "${{ github.event.inputs.clean_old_assets || 'true' }}" == "true" ]]; then
+              echo "Cleaning up old versioned assets (clean_old_assets=true)..."
+              rm -f main.*.css
+              rm -f main.*.css.map
+              rm -f main.*.js
+              rm -f main.*.js.LICENSE.txt
+              rm -f main.*.js.map
+              rm -f *.chunk.js
+              rm -f *.chunk.js.map
+              
+              # Also remove other potential leftover files
+              rm -f lcov.info
+              rm -f coverage-final.json
+              rm -f clover.xml
+            else
+              echo "Skipping old asset cleanup (clean_old_assets=false)"
+            fi
             
             # Remove static directory only if it exists at root (not in branch subdirs)
             if [[ -d "static" ]]; then
@@ -204,13 +237,51 @@ jobs:
               rm -rf static
             fi
             
-            # Remove development artifacts
-            for dir in docs schemas node_modules src public coverage; do
-              if [[ -d "$dir" ]]; then
-                echo "Removing root $dir directory..."
-                rm -rf "$dir"
-              fi
-            done
+            # Remove docs directory only if it exists at root (React build may include it)
+            if [[ -d "docs" ]]; then
+              echo "Removing root docs directory..."
+              rm -rf docs
+            fi
+            
+            # Remove schemas directory only if it exists at root (React build may include it)
+            if [[ -d "schemas" ]]; then
+              echo "Removing root schemas directory..."
+              rm -rf schemas
+            fi
+            
+            # Remove development artifacts that shouldn't be deployed
+            if [[ -d "node_modules" ]]; then
+              echo "Removing node_modules directory..."
+              rm -rf node_modules
+            fi
+            
+            if [[ -d "src" ]]; then
+              echo "Removing src directory..."
+              rm -rf src
+            fi
+            
+            if [[ -d "public" ]]; then
+              echo "Removing public directory..."
+              rm -rf public
+            fi
+            
+            # Remove build tools and configs
+            rm -f craco.config.js
+            rm -f .dockerignore
+            rm -f Dockerfile
+            rm -f .env.example
+            
+            # Remove coverage and test artifacts
+            if [[ -d "coverage" ]]; then
+              echo "Removing coverage directory..."
+              rm -rf coverage
+            fi
+            
+            # Remove lcov-report directory if it exists
+            if [[ -d "lcov-report" ]]; then
+              echo "Removing lcov-report directory..."
+              rm -rf lcov-report
+            fi
             
             # Deploy React-based branch selector to /sgex/ (preserves branch subdirectories)
             cp -a /tmp/deployment-build/. .
@@ -227,7 +298,6 @@ jobs:
             
             echo "Branch deployment completed to subdirectories"
           fi
-          
           # Clean up temporary build
           rm -rf /tmp/deployment-build
           
