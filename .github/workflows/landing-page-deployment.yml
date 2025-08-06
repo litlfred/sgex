@@ -172,9 +172,46 @@ jobs:
             rm -rf schemas
           fi
           
+          # Remove development artifacts that shouldn't be deployed
+          if [[ -d "node_modules" ]]; then
+            echo "Removing node_modules directory..."
+            rm -rf node_modules
+          fi
+          
+          if [[ -d "src" ]]; then
+            echo "Removing src directory..."
+            rm -rf src
+          fi
+          
+          if [[ -d "public" ]]; then
+            echo "Removing public directory..."
+            rm -rf public
+          fi
+          
+          # Remove build tools and configs
+          rm -f craco.config.js
+          rm -f .dockerignore
+          rm -f Dockerfile
+          rm -f .env.example
+          
+          # Remove coverage and test artifacts
+          if [[ -d "coverage" ]]; then
+            echo "Removing coverage directory..."
+            rm -rf coverage
+          fi
+          rm -f coverage-final.json
+          rm -f clover.xml
+          
           # Deploy React-based branch selector to root (this will not affect any subdirectories)
           echo "Deploying React-based branch selector landing page to root..."
           cp -a /tmp/landing-build/. .
+          
+          # CRITICAL: Remove the build directory to avoid duplication
+          # The build directory contains the same files we just copied to root
+          if [[ -d "build" ]]; then
+            echo "Removing build directory to avoid duplication..."
+            rm -rf build
+          fi
           
           # Verify existing directories are still there
           echo "Directories after deployment:"
