@@ -77,9 +77,9 @@ jobs:
           
           # Determine correct PUBLIC_URL based on source branch
           if [[ "$source_branch" == "main" ]]; then
-            # Landing page deployment from main - deploy to root
-            export PUBLIC_URL="/"
-            echo "Building React application for root deployment (landing page)..."
+            # Landing page deployment from main - deploy to /sgex/
+            export PUBLIC_URL="/sgex/"
+            echo "Building React application for /sgex/ deployment (landing page)..."
           else
             # Branch deployment - use branch-specific URL
             safe_branch_name=$(echo "$source_branch" | tr '/' '-')
@@ -107,7 +107,7 @@ jobs:
           source_branch="${{ steps.source_info.outputs.source_branch }}"
           
           if [[ "$source_branch" == "main" ]]; then
-            echo "Preparing React-based branch selector landing page for root deployment..."
+            echo "Preparing React-based branch selector landing page for /sgex/ deployment..."
             
             # Create a landing page directory to hold the files
             mkdir -p landing-page
@@ -156,7 +156,7 @@ jobs:
           mkdir -p /tmp/deployment-build
           
           if [[ "$source_branch" == "main" ]]; then
-            # Landing page deployment - copy to tmp for root deployment
+            # Landing page deployment - copy to tmp for /sgex/ deployment
             cp -a landing-page/. /tmp/deployment-build/
             deployment_type="landing-page"
           else
@@ -183,7 +183,7 @@ jobs:
           fi
           
           if [[ "$deployment_type" == "landing-page" ]]; then
-            echo "Deploying landing page to root..."
+            echo "Deploying landing page to /sgex/..."
             
             # CRITICAL: Only remove root-level files, NEVER remove directories (to preserve branch builds)
             echo "Removing only root-level files (preserving all branch directories)..."
@@ -212,7 +212,7 @@ jobs:
               fi
             done
             
-            # Deploy React-based branch selector to root
+            # Deploy React-based branch selector to /sgex/ (preserves branch subdirectories)
             cp -a /tmp/deployment-build/. .
             
             # Verify existing directories are still there
@@ -262,7 +262,7 @@ jobs:
           if [[ "$source_branch" == "main" ]]; then
             deployment_msg="🚀 Deploy React-based branch selector landing page"
             deployment_details="- Updated with React-based branch selector from $source_branch branch
-            - Landing page deployed to GitHub Pages root
+            - Landing page deployed to GitHub Pages /sgex/
             - All branch subdirectories preserved"
           else
             safe_branch_name=$(echo "$source_branch" | tr '/' '-')
@@ -359,7 +359,7 @@ jobs:
             echo "**Deployed:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### ✅ Deployment Status" >> $GITHUB_STEP_SUMMARY
-            echo "- Branch selector landing page successfully deployed to gh-pages root" >> $GITHUB_STEP_SUMMARY
+            echo "- Branch selector landing page successfully deployed to gh-pages /sgex/" >> $GITHUB_STEP_SUMMARY
             echo "- All branch subdirectories preserved" >> $GITHUB_STEP_SUMMARY
             echo "- No branch deployments affected" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
