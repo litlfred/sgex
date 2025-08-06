@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './i18n'; // Initialize i18n
-import BranchSelector from './components/BranchSelector';
 import BranchListingPage from './components/BranchListingPage';
 import NotFound from './components/NotFound';
 import logger from './utils/logger';
@@ -15,7 +14,7 @@ function App() {
   
   React.useEffect(() => {
     appLogger.componentMount();
-    appLogger.info('SGEX Branch Deployment Selector started', { 
+    appLogger.info('SGEX Branch Listing application started', { 
       environment: process.env.NODE_ENV,
       basename: basename
     });
@@ -29,16 +28,7 @@ function App() {
     <Router basename={basename}>
       <div className="App">
           <Routes>
-            <Route path="/" element={<BranchSelector 
-              repository={{ 
-                name: 'sgex', 
-                full_name: 'litlfred/sgex', 
-                owner: { login: 'litlfred' },
-                default_branch: 'main'
-              }} 
-              selectedBranch="main"
-              onBranchChange={(branch) => console.log('Branch selected:', branch)}
-            />} />
+            <Route path="/" element={<BranchListingPage />} />
             <Route path="/branch-listing" element={<BranchListingPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
