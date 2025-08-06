@@ -110,20 +110,21 @@ The SGEX Workbench operates within an ecosystem of actors that collaborate to en
 
 For detailed information about each DAK component, see [DAK Components Documentation](dak-components.md).
 
-**REQ-DAK-001**: The system SHALL display all 8 WHO SMART Guidelines DAK components on the home page
+**REQ-DAK-001**: The system SHALL display all 9 WHO SMART Guidelines DAK components on the home page
 - Visual dashboard with distinctive cards/tiles for each component
 - WHO SMART Guidelines branding and color codes  
 - WHO-provided icons for each component
 - Clear visual distinction between Level 2 (L2) and Level 3 (L3) component representations
-- The 8 core WHO SMART Guidelines DAK components are:
+- The 9 core WHO SMART Guidelines DAK components are:
   1. **Health interventions and recommendations**
   2. **Generic personas**
   3. **User scenarios**
   4. **Generic business processes and workflows**
   5. **Core data elements**
-  6. **Decision-support logic**
-  7. **Program indicators**
-  8. **Functional and non-functional requirements**
+  6. **Product master data**
+  7. **Decision-support logic**
+  8. **Program indicators**
+  9. **Functional and non-functional requirements**
 
 **REQ-DAK-002**: The system SHALL distinguish between L2 and L3 component representations
 - **L2 (Level 2)**: Data model agnostic representations that capture business logic and clinical processes independent of specific technical implementations

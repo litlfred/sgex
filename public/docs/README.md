@@ -121,7 +121,7 @@ All UI components, terminology, and branding follow WHO SMART Guidelines specifi
 
 ### User Experience
 - WHO SMART Guidelines branding
-- Dashboard with 8 DAK component tiles
+- Dashboard with 9 DAK component tiles
 - Contextual navigation
 - Accessibility support for visual impairments
 - Internationalization ready (multilingual support)
