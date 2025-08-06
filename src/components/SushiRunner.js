@@ -156,7 +156,10 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
 
   const runSushiInBrowser = async (config, files) => {
     try {
-      addLog('🚀 Starting FSH compilation...', 'info');
+      addLog('🚀 Starting FHIR Shorthand compilation...', 'info');
+      
+      // Note: Real SUSHI integration will be available via WebAssembly
+      addLog('ℹ️ Using built-in FSH processor (SUSHI WebAssembly integration planned)', 'info');
       
       addLog('📦 Loading YAML processing library...', 'info');
       const yaml = await import('js-yaml');
