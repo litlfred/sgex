@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
+import helpContentService from '../services/helpContentService';
 import HelpButton from './HelpButton';
+import HelpModal from './HelpModal';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
 import { PageLayout } from './framework';
@@ -40,6 +42,7 @@ const DAKDashboardContent = () => {
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showDakHelp, setShowDakHelp] = useState(false);
 
   // Fetch data from URL parameters if not available in location.state
   useEffect(() => {
@@ -533,6 +536,18 @@ const DAKDashboardContent = () => {
     handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
   };
 
+  const handleDakHelpClick = () => {
+    setShowDakHelp(true);
+  };
+
+  const handleCloseDakHelp = () => {
+    setShowDakHelp(false);
+  };
+
+  const getDakAuthoringHelpTopic = () => {
+    return helpContentService.getHelpTopic('dak-authoring-guide');
+  };
+
 
 
   if (loading) {
@@ -583,6 +598,15 @@ const DAKDashboardContent = () => {
               )}. 
               Components are organized according to the WHO SMART Guidelines framework.
             </p>
+            <div className="dashboard-intro-actions">
+              <button 
+                className="dak-help-btn"
+                onClick={handleDakHelpClick}
+                title="Learn how to author a DAK"
+              >
+                📚 Get Help: Authoring a DAK
+              </button>
+            </div>
           </div>
 
           {/* DAK Status Box - only show when repository and branch are selected */}
@@ -783,6 +807,20 @@ const DAKDashboardContent = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* DAK Authoring Help Modal */}
+      {showDakHelp && (
+        <HelpModal
+          helpTopic={getDakAuthoringHelpTopic()}
+          contextData={{
+            repository,
+            profile,
+            selectedBranch,
+            pageId: 'dak-dashboard'
+          }}
+          onClose={handleCloseDakHelp}
+        />
       )}
     </div>
   );

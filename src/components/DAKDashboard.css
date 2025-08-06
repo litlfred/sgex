@@ -269,6 +269,31 @@ body.theme-light .dak-dashboard {
   line-height: 1.6;
 }
 
+.dashboard-intro-actions {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.dak-help-btn {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dak-help-btn:hover {
+  background: linear-gradient(135deg, #218838, #1c7430);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
 
 /* Tab Navigation Styles */
 .tab-navigation {

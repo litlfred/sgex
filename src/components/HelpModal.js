@@ -9,7 +9,6 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
 
-  // Set up global reference for inline onclick handlers
   useEffect(() => {
     const createContextualUrl = (baseUrl, params) => {
       const urlParams = new URLSearchParams(params);
@@ -159,6 +158,72 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
         }
       },
 
+      // Function to navigate to DAK component from help
+      navigateToComponent: (componentId) => {
+        // Close the help modal first
+        onClose();
+        
+        // Find component card and simulate click
+        setTimeout(() => {
+          const componentCards = document.querySelectorAll('.component-card');
+          for (const card of componentCards) {
+            const cardElement = card.querySelector('h4, h3');
+            if (cardElement) {
+              const cardText = cardElement.textContent.toLowerCase();
+              let matchesComponent = false;
+              
+              switch (componentId) {
+                case 'health-interventions':
+                  matchesComponent = cardText.includes('health interventions') || cardText.includes('recommendations');
+                  break;
+                case 'generic-personas':
+                  matchesComponent = cardText.includes('personas') || cardText.includes('generic personas');
+                  break;
+                case 'user-scenarios':
+                  matchesComponent = cardText.includes('scenarios') || cardText.includes('user scenarios');
+                  break;
+                case 'business-processes':
+                  matchesComponent = cardText.includes('business processes') || cardText.includes('workflows');
+                  break;
+                case 'core-data-elements':
+                  matchesComponent = cardText.includes('core data elements') || cardText.includes('data elements');
+                  break;
+                case 'decision-support':
+                  matchesComponent = cardText.includes('decision') || cardText.includes('support logic');
+                  break;
+                case 'program-indicators':
+                  matchesComponent = cardText.includes('program indicators') || cardText.includes('indicators');
+                  break;
+                case 'functional-requirements':
+                  matchesComponent = cardText.includes('functional') || cardText.includes('requirements');
+                  break;
+                case 'testing':
+                  matchesComponent = cardText.includes('testing');
+                  break;
+                default:
+                  matchesComponent = false;
+                  break;
+              }
+              
+              if (matchesComponent) {
+                // Highlight the component briefly
+                card.style.boxShadow = '0 0 20px rgba(0, 102, 204, 0.6)';
+                card.style.transform = 'scale(1.02)';
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Reset highlight after a moment
+                setTimeout(() => {
+                  card.style.boxShadow = '';
+                  card.style.transform = '';
+                }, 2000);
+                
+                break;
+              }
+            }
+          }
+        }, 300);
+      },
+
       // Function to show fallback instructions when GitHub access is blocked
       showFallbackInstructions: (reason, url, issueType) => {
         const instructions = {
@@ -261,7 +326,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
       // Cleanup
       delete window.helpModalInstance;
     };
-  }, [contextData]);
+  }, [contextData, onClose]);
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -367,6 +432,14 @@ Best regards,
       );
     }
 
+    // Handle DAK component navigation buttons
+    if (helpTopic.id === 'dak-authoring-guide') {
+      processedContent = processedContent.replace(
+        /onclick="window\.helpModalInstance\.navigateToComponent\('([^']+)'\)"/g,
+        `onclick="window.helpModalInstance?.navigateToComponent('$1')"`
+      );
+    }
+
     return (
       <div className="help-slideshow">
         <div className="slideshow-header">
@@ -379,6 +452,15 @@ Best regards,
         <div 
           className="slideshow-content"
           dangerouslySetInnerHTML={{ __html: processedContent }}
+          onClick={(e) => {
+            // Handle component navigation buttons
+            if (e.target.classList.contains('component-btn')) {
+              const componentId = e.target.getAttribute('data-component');
+              if (componentId && window.helpModalInstance?.navigateToComponent) {
+                window.helpModalInstance.navigateToComponent(componentId);
+              }
+            }
+          }}
         />
         
         <div className="slideshow-controls">

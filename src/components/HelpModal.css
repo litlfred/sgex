@@ -465,3 +465,69 @@
 .help-fallback a:hover {
   text-decoration: underline;
 }
+
+/* DAK Authoring Help Styles */
+.component-preview {
+  margin: 20px 0;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.component-layer {
+  margin: 12px 0;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  border-left: 4px solid #0066cc;
+}
+
+.component-layer strong {
+  display: block;
+  color: #0066cc;
+  margin-bottom: 8px;
+  font-size: 1.1em;
+}
+
+.component-layer ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.component-layer li {
+  margin: 4px 0;
+  color: #555;
+}
+
+.help-actions {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.help-action-btn {
+  background: linear-gradient(135deg, #0066cc, #004499);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 8px;
+  min-width: 160px;
+}
+
+.help-action-btn:hover {
+  background: linear-gradient(135deg, #0057b3, #003d80);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.component-btn {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.component-btn:hover {
+  background: linear-gradient(135deg, #218838, #1c7430);
+}
