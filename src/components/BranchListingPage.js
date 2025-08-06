@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from './framework';
 import PATLogin from './PATLogin';
+import WorkflowStatus from './WorkflowStatus';
 import useThemeImage from '../hooks/useThemeImage';
+import githubActionsService from '../services/githubActionsService';
 import './BranchListingPage.css';
 
 const BranchListingPage = () => {
@@ -34,6 +36,8 @@ const BranchListingPage = () => {
         setGithubToken(token);
         setIsAuthenticated(true);
         sessionStorage.setItem('github_token', token);
+        // Set token for GitHub Actions service
+        githubActionsService.setToken(token);
     };
 
     const handleLogout = () => {
@@ -41,6 +45,8 @@ const BranchListingPage = () => {
         setIsAuthenticated(false);
         sessionStorage.removeItem('github_token');
         setPrComments({});
+        // Clear token from GitHub Actions service
+        githubActionsService.setToken(null);
     };
 
     // Function to fetch PR comments summary
@@ -225,6 +231,37 @@ const BranchListingPage = () => {
         }
     };
 
+    // Function to trigger workflow using existing githubActionsService
+    const triggerWorkflow = async (branchName, workflowType = 'branch-deployment') => {
+        if (!isAuthenticated) {
+            alert('Please authenticate with GitHub to trigger workflows.');
+            return;
+        }
+
+        try {
+            // Use the existing service to trigger workflow
+            const success = await githubActionsService.triggerWorkflow(branchName);
+            if (success) {
+                alert(`Workflow triggered successfully for branch ${branchName}!`);
+                // Refresh deployment statuses after a short delay
+                setTimeout(() => {
+                    const filtered = pullRequests.filter(pr => 
+                        pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
+                        pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
+                    );
+                    const sorted = sortPRs(filtered, prSortBy, prSortOrder);
+                    const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
+                    updateDeploymentStatuses(paginated);
+                }, 2000);
+            } else {
+                alert(`Failed to trigger workflow for branch ${branchName}. Please check your permissions and try again.`);
+            }
+        } catch (error) {
+            console.error('Error triggering workflow:', error);
+            alert(`Failed to trigger workflow: ${error.message}`);
+        }
+    };
+
     // Function to check deployment status for a branch
     const checkDeploymentStatus = async (safeBranchName) => {
         try {
@@ -325,6 +362,8 @@ const BranchListingPage = () => {
         if (token) {
             setGithubToken(token);
             setIsAuthenticated(true);
+            // Set token for GitHub Actions service
+            githubActionsService.setToken(token);
         }
     }, []);
 
@@ -726,6 +765,39 @@ const BranchListingPage = () => {
                                                         </div>
                                                     </div>
                                                 )}
+                                            </div>
+                                        )}
+                                        
+                                        {/* Workflow Controls Section */}
+                                        {isAuthenticated && (
+                                            <div className="workflow-controls-section">
+                                                <div className="workflow-header">
+                                                    <h4 className="workflow-title">⚡ Deployment Controls</h4>
+                                                </div>
+                                                <div className="workflow-actions">
+                                                    <button
+                                                        className="workflow-deploy-btn"
+                                                        onClick={() => triggerWorkflow(pr.branchName)}
+                                                        title={`Deploy ${pr.branchName} branch`}
+                                                    >
+                                                        🚀 Deploy Branch
+                                                    </button>
+                                                    <button
+                                                        className="workflow-deploy-btn secondary"
+                                                        onClick={() => triggerWorkflow('main')}
+                                                        title="Deploy landing page"
+                                                    >
+                                                        🏠 Deploy Landing
+                                                    </button>
+                                                    <a
+                                                        href={`https://github.com/litlfred/sgex/actions`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="workflow-link"
+                                                    >
+                                                        📋 View Actions
+                                                    </a>
+                                                </div>
                                             </div>
                                         )}
                                         
