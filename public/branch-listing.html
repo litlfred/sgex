@@ -1038,7 +1038,13 @@
                     }
                     
                     const data = await response.json();
-                    return data.workflows.filter(w => w.name.includes('Deploy') || w.path.includes('deploy'));
+                    // Filter for deployment workflows only
+                    return data.workflows.filter(w => 
+                        w.name.includes('Deploy') || 
+                        w.path.includes('deploy') || 
+                        w.path.includes('branch-deployment') ||
+                        w.path.includes('landing-page')
+                    );
                 } catch (error) {
                     console.error('Error fetching workflows:', error);
                     return [];
@@ -2005,6 +2011,15 @@
                                                 <div className="workflow-controls">
                                                     <div className="workflow-controls-header">
                                                         <h4 className="workflow-controls-title">🚀 Deployment Controls</h4>
+                                                        <a 
+                                                            href={`https://github.com/litlfred/sgex/actions`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="discussion-action-btn"
+                                                            style={{fontSize: '0.8rem', padding: '0.25rem 0.5rem'}}
+                                                        >
+                                                            📊 View Actions
+                                                        </a>
                                                     </div>
                                                     <div className="workflow-actions">
                                                         {availableWorkflows.map((workflow) => {
@@ -2014,10 +2029,10 @@
                                                             let btnClass = 'workflow-trigger-btn';
                                                             let btnText = '🚀 Deploy';
                                                             
-                                                            if (workflow.name.includes('Branch')) {
+                                                            if (workflow.name.includes('Feature Branch') || workflow.path.includes('branch-deployment')) {
                                                                 btnClass += ' branch-deploy';
                                                                 btnText = '🌿 Deploy Branch';
-                                                            } else if (workflow.name.includes('Landing')) {
+                                                            } else if (workflow.name.includes('Landing') || workflow.path.includes('landing-page')) {
                                                                 btnClass += ' landing-deploy';
                                                                 btnText = '🏠 Deploy Landing';
                                                             }
