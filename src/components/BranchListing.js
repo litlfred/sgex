@@ -4,7 +4,7 @@ import HelpModal from './HelpModal';
 import PATLogin from './PATLogin';
 import WorkflowStatus from './WorkflowStatus';
 import githubActionsService from '../services/githubActionsService';
-import branchListingCacheService from '../services/branchListingCacheService';
+import branchListingCacheService from './branchListingCacheService';
 import useThemeImage from '../hooks/useThemeImage';
 import './BranchListing.css';
 
