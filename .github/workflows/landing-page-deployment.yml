@@ -4,14 +4,19 @@ on:
   workflow_dispatch:
     inputs:
       source_branch:
-        description: 'Source branch to deploy from (defaults to deploy)'
+        description: 'Source branch to deploy from (defaults to main)'
         required: false
-        default: 'deploy'
+        default: 'main'
       force_deployment:
         description: 'Force deployment even if no changes detected'
         required: false
         type: boolean
         default: false
+      clean_old_assets:
+        description: 'Aggressively clean old assets from gh-pages'
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -38,7 +43,7 @@ jobs:
         run: |
           set -e
           
-          source_branch="${{ github.event.inputs.source_branch || 'deploy' }}"
+          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
           echo "source_branch=$source_branch" >> $GITHUB_OUTPUT
           echo "Using source branch: $source_branch"
 
@@ -154,6 +159,25 @@ jobs:
           rm -f package.json
           rm -f package-lock.json
           
+          # Remove ALL versioned CSS and JS files to clean up old builds
+          if [[ "${{ github.event.inputs.clean_old_assets || 'true' }}" == "true" ]]; then
+            echo "Cleaning up old versioned assets (clean_old_assets=true)..."
+            rm -f main.*.css
+            rm -f main.*.css.map
+            rm -f main.*.js
+            rm -f main.*.js.LICENSE.txt
+            rm -f main.*.js.map
+            rm -f *.chunk.js
+            rm -f *.chunk.js.map
+            
+            # Also remove other potential leftover files
+            rm -f lcov.info
+            rm -f coverage-final.json
+            rm -f clover.xml
+          else
+            echo "Skipping old asset cleanup (clean_old_assets=false)"
+          fi
+          
           # Remove static directory only if it exists at root (not in branch subdirs)
           if [[ -d "static" ]]; then
             echo "Removing root static directory..."
@@ -199,8 +223,12 @@ jobs:
             echo "Removing coverage directory..."
             rm -rf coverage
           fi
-          rm -f coverage-final.json
-          rm -f clover.xml
+          
+          # Remove lcov-report directory if it exists
+          if [[ -d "lcov-report" ]]; then
+            echo "Removing lcov-report directory..."
+            rm -rf lcov-report
+          fi
           
           # Deploy React-based branch selector to root (this will not affect any subdirectories)
           echo "Deploying React-based branch selector landing page to root..."
