@@ -54,6 +54,7 @@ jobs:
           script: |
             const branchName = '${{ steps.pr_info.outputs.branch_name }}';
             const prNumber = '${{ steps.pr_info.outputs.pr_number }}';
+            const approvedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
             
             // Check if deployment comment already exists
             const { data: comments } = await github.rest.issues.listComments({
@@ -67,16 +68,12 @@ jobs:
               comment.body.includes(`branch: ${branchName}`)
             );
             
-            if (deploymentComment) {
-              console.log('Deployment comment already exists, skipping...');
-              return;
-            }
-            
             const commentBody = `## 🚀 Deploy Feature Branch
             
             This PR has been **approved** and is ready for deployment!
             
             **Branch:** \`${branchName}\`
+            **Approved:** ${approvedAt}
             **Action:** Click the button below to deploy this branch for preview
             
             ### Deploy Now
@@ -90,16 +87,27 @@ jobs:
             
             ---
             
-            _This comment was auto-generated because the PR was approved. The deployment is triggered manually for safety._`;
+            _This comment was updated on approval to provide fresh deployment access. The deployment is triggered manually for safety._`;
             
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body: commentBody
-            });
-            
-            console.log(`✅ Posted deployment comment on PR #${prNumber}`);
+            if (deploymentComment) {
+              // Update existing deployment comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: deploymentComment.id,
+                body: commentBody
+              });
+              console.log(`✅ Updated existing deployment comment on PR #${prNumber}`);
+            } else {
+              // Create new deployment comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+              console.log(`✅ Created new deployment comment on PR #${prNumber}`);
+            }
 
       - name: Comment on excluded branch
         if: steps.pr_info.outputs.should_deploy == 'false'
