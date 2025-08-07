@@ -181,4 +181,132 @@ describe('DAKComplianceService', () => {
     const customIssues2 = result2.filter(r => r.validatorId === 'custom-test');
     expect(customIssues2).toHaveLength(0);
   });
+
+  describe('sushi-config.yaml validation', () => {
+    test('validates valid WHO SMART Guidelines sushi-config.yaml', async () => {
+      const validSushiConfig = `
+id: smart.who.int.test
+canonical: http://smart.who.int/test
+name: Test Guidelines
+title: WHO Test Guidelines
+description: Test implementation guide
+status: draft
+version: 1.0.0
+fhirVersion: 4.0.1
+publisher: World Health Organization (WHO)
+copyrightYear: 2024
+license: CC0-1.0
+jurisdiction:
+  - coding:
+      - system: http://unstats.un.org/unsd/methods/m49/m49.htm
+        code: "001"
+        display: World
+dependencies:
+  smart.who.int.base: current
+  hl7.fhir.uv.extensions.r4: 5.1.0
+`;
+
+      const result = await dakComplianceService.validateFile('sushi-config.yaml', validSushiConfig);
+      const sushiConfigIssues = result.filter(r => r.validatorId === 'sushi-config-valid');
+      expect(sushiConfigIssues).toHaveLength(0);
+    });
+
+    test('validates invalid YAML syntax in sushi-config.yaml', async () => {
+      const invalidYaml = `
+id: smart.who.int.test
+canonical: http://smart.who.int/test
+name: Test Guidelines
+dependencies:
+  - this: is
+  - invalid: yaml: structure
+`;
+
+      const result = await dakComplianceService.validateFile('sushi-config.yaml', invalidYaml);
+      const sushiConfigIssues = result.filter(r => r.validatorId === 'sushi-config-valid');
+      expect(sushiConfigIssues).toHaveLength(1);
+      expect(sushiConfigIssues[0].level).toBe('error');
+      expect(sushiConfigIssues[0].message).toContain('Invalid YAML syntax');
+    });
+
+    test('validates missing required fields in sushi-config.yaml', async () => {
+      const missingSushiConfig = `
+name: Test Guidelines
+description: Test implementation guide
+`;
+
+      const result = await dakComplianceService.validateFile('sushi-config.yaml', missingSushiConfig);
+      const sushiConfigIssues = result.filter(r => r.validatorId === 'sushi-config-valid');
+      expect(sushiConfigIssues).toHaveLength(1);
+      expect(sushiConfigIssues[0].level).toBe('error');
+      expect(sushiConfigIssues[0].message).toContain('validation errors');
+    });
+
+    test('validates missing smart.who.int.base dependency', async () => {
+      const noWHOBaseSushiConfig = `
+id: some.other.project
+canonical: http://example.com/project
+name: Non-WHO Project
+status: draft
+version: 1.0.0
+publisher: Some Organization
+dependencies:
+  hl7.fhir.uv.extensions.r4: 5.1.0
+`;
+
+      const result = await dakComplianceService.validateFile('sushi-config.yaml', noWHOBaseSushiConfig);
+      const sushiConfigIssues = result.filter(r => r.validatorId === 'sushi-config-valid');
+      expect(sushiConfigIssues).toHaveLength(1);
+      expect(sushiConfigIssues[0].level).toBe('error');
+      expect(sushiConfigIssues[0].message).toContain('smart.who.int.base dependency');
+    });
+
+    test('validates invalid version format in sushi-config.yaml', async () => {
+      const invalidVersionSushiConfig = `
+id: smart.who.int.test
+canonical: http://smart.who.int/test
+name: Test Guidelines
+status: draft
+version: invalid-version
+publisher: World Health Organization
+dependencies:
+  smart.who.int.base: current
+`;
+
+      const result = await dakComplianceService.validateFile('sushi-config.yaml', invalidVersionSushiConfig);
+      const sushiConfigIssues = result.filter(r => r.validatorId === 'sushi-config-valid');
+      expect(sushiConfigIssues).toHaveLength(1);
+      expect(sushiConfigIssues[0].level).toBe('error');
+      expect(sushiConfigIssues[0].message).toContain('version');
+    });
+
+    test('validates WHO-specific guidelines compliance', async () => {
+      const whoNonCompliantSushiConfig = `
+id: some.other.project
+canonical: http://smart.who.int/test
+name: Test Guidelines
+status: draft
+version: 1.0.0
+publisher: Some Organization
+dependencies:
+  smart.who.int.base: current
+`;
+
+      const result = await dakComplianceService.validateFile('sushi-config.yaml', whoNonCompliantSushiConfig);
+      const sushiConfigIssues = result.filter(r => r.validatorId === 'sushi-config-valid');
+      expect(sushiConfigIssues).toHaveLength(1);
+      expect(sushiConfigIssues[0].level).toBe('error');
+      expect(sushiConfigIssues[0].message).toContain('WHO SMART Guidelines compliance');
+    });
+
+    test('ignores validation for non-sushi-config files', async () => {
+      const yamlContent = `
+some: yaml
+content: here
+`;
+
+      const result = await dakComplianceService.validateFile('other-config.yaml', yamlContent);
+      const sushiConfigIssues = result.filter(r => r.validatorId === 'sushi-config-valid');
+      expect(sushiConfigIssues).toHaveLength(0);
+    });
+  });
 });

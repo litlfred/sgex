@@ -5,10 +5,27 @@
  * Designed to work in multiple environments: React client-side, command-line, and IDE integration.
  */
 
+import yaml from 'js-yaml';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
+
+// Import schema as a module
+const sushiConfigSchema = require('../schemas/sushi-config.json');
+
 class DAKComplianceService {
   constructor() {
     this.validators = new Map();
+    this.initializeSchemaValidator();
     this.initializeDefaultValidators();
+  }
+
+  /**
+   * Initialize AJV schema validator for sushi-config.yaml
+   */
+  initializeSchemaValidator() {
+    this.ajv = new Ajv({ allErrors: true, verbose: true });
+    addFormats(this.ajv);
+    this.sushiConfigValidator = this.ajv.compile(sushiConfigSchema);
   }
 
   /**
@@ -342,31 +359,104 @@ class DAKComplianceService {
     }
 
     try {
-      // Basic YAML parsing (would need js-yaml library for full implementation)
-      const lines = content.split('\n');
-      const hasName = lines.some(line => line.trim().startsWith('name:'));
-      const hasId = lines.some(line => line.trim().startsWith('id:'));
-      const hasDependencies = lines.some(line => line.trim().startsWith('dependencies:'));
-
-      const issues = [];
-      if (!hasName) issues.push('missing "name" field');
-      if (!hasId) issues.push('missing "id" field');
-      if (!hasDependencies) issues.push('missing "dependencies" section');
-
-      if (issues.length > 0) {
+      // Parse YAML content
+      let parsedConfig;
+      try {
+        parsedConfig = yaml.load(content);
+      } catch (yamlError) {
         return {
-          message: `sushi-config.yaml validation issues: ${issues.join(', ')}`,
+          message: `Invalid YAML syntax: ${yamlError.message}`,
           filePath,
-          suggestion: 'Ensure required fields are present for FHIR IG'
+          suggestion: 'Fix YAML syntax errors and ensure proper indentation'
         };
       }
+
+      if (!parsedConfig || typeof parsedConfig !== 'object') {
+        return {
+          message: 'sushi-config.yaml must contain a valid YAML object',
+          filePath,
+          suggestion: 'Ensure the file contains proper YAML object structure'
+        };
+      }
+
+      // Validate against JSON schema
+      const isValid = this.sushiConfigValidator(parsedConfig);
+      
+      if (!isValid) {
+        const errors = this.sushiConfigValidator.errors;
+        const errorMessages = errors.map(error => {
+          const field = error.instancePath ? error.instancePath.replace('/', '') : error.params?.missingProperty || 'root';
+          let message = `${field}: ${error.message}`;
+          
+          if (error.params?.allowedValues) {
+            message += ` (allowed: ${error.params.allowedValues.join(', ')})`;
+          }
+          
+          return message;
+        });
+
+        return {
+          message: `sushi-config.yaml validation errors: ${errorMessages.join('; ')}`,
+          filePath,
+          suggestion: 'Review the sushi-config.yaml specification at https://fshschool.org/docs/sushi/configuration/',
+          details: errors
+        };
+      }
+
+      // Additional WHO SMART Guidelines specific validation
+      const whoValidation = this.validateWHOSmartGuidelines(parsedConfig);
+      if (whoValidation) {
+        return whoValidation;
+      }
+
       return null;
     } catch (error) {
       return {
         message: 'Failed to validate sushi-config.yaml: ' + error.message,
-        filePath
+        filePath,
+        suggestion: 'Check file format and content structure'
       };
     }
+  }
+
+  /**
+   * Additional validation for WHO SMART Guidelines compliance
+   */
+  validateWHOSmartGuidelines(config) {
+    const issues = [];
+
+    // Check for smart.who.int.base dependency
+    if (!config.dependencies || !config.dependencies['smart.who.int.base']) {
+      issues.push('missing smart.who.int.base dependency (required for WHO DAK compliance)');
+    }
+
+    // Check canonical URL pattern for WHO guidelines
+    if (config.canonical && config.canonical.includes('smart.who.int')) {
+      if (!config.id.startsWith('smart.who.int')) {
+        issues.push('id should start with "smart.who.int" when using WHO canonical URL');
+      }
+    }
+
+    // Check for required WHO metadata
+    if (config.canonical && config.canonical.includes('smart.who.int')) {
+      if (!config.publisher || !config.publisher.toLowerCase().includes('world health organization')) {
+        issues.push('publisher should include "World Health Organization" for WHO guidelines');
+      }
+
+      if (!config.jurisdiction || !Array.isArray(config.jurisdiction)) {
+        issues.push('jurisdiction should be specified for WHO guidelines');
+      }
+    }
+
+    if (issues.length > 0) {
+      return {
+        message: `WHO SMART Guidelines compliance issues: ${issues.join(', ')}`,
+        filePath: 'sushi-config.yaml',
+        suggestion: 'Ensure compliance with WHO SMART Guidelines requirements'
+      };
+    }
+
+    return null;
   }
 
   // Utility methods
