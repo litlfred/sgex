@@ -388,9 +388,11 @@ jobs:
               const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
               const restartUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
               
-              // Create a target name derived from the branch name for the new tab
+              // Create target names derived from the branch name for new tabs
               const safeBranchName = branchName.replace(/[^a-zA-Z0-9]/g, '-');
-              const targetName = `sgex-preview-${safeBranchName}`;
+              const branchTargetName = `sgex-preview-${safeBranchName}`;
+              const mainTargetName = `sgex-main-app`;
+              const mainAppUrl = 'https://litlfred.github.io/sgex/main/';
               
               // Find PR associated with this branch
               const { data: prs } = await github.rest.pulls.list({
@@ -413,8 +415,9 @@ jobs:
                 '**Status:** 🟢 Successfully Deployed\n' +
                 '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
                 '**Deployed:** ' + deployedAt + '\n\n' +
-                '### 🌐 Preview URL\n' +
-                '<a href="' + branchUrl + '" target="' + targetName + '">**➡️ View Branch Preview**</a> ⬅️\n\n' +
+                '### 🌐 Preview URLs\n' +
+                '**Branch Preview:** <a href="' + branchUrl + '" target="' + branchTargetName + '">' + branchUrl + '</a>\n' +
+                '**Main App:** <a href="' + mainAppUrl + '" target="' + mainTargetName + '">' + mainAppUrl + '</a>\n\n' +
                 '### 🔄 Deployment Actions\n' +
                 '**Need to redeploy after updates?** → [**🚀 Click here to redeploy this branch**](' + restartUrl + ') ← \n\n' +
                 '**Instructions for redeployment:**\n' +
