@@ -19,6 +19,7 @@ Following these guidelines will help us code together better:
 * when woeking on a PR, it is OK to be unsure of a correct approach and ask your collaborators for input. When you are unsure, please provide a clear prompt back to the collaborators so that they can provide you the needed information for you to continue. Your collaborators are happier when you ask for help.
 * if a page is added then it SHALL confirm to the page requirements on public/docs/
 
+
 ## Branch-Specific PR Workflow
 
 For issues that need to be fixed on branches other than `main`, use this naming convention:
@@ -44,6 +45,7 @@ To create PRs against non-main branches, the copilot agent needs:
 - **Contents**: Read and Write access to create branches
 - **Pull Requests**: Read and Write access to create PRs against any branch
 - **Actions**: Read access to view workflow status (if applicable)
+
 
 ## Project Overview
 
@@ -326,4 +328,6 @@ npm test -- --coverage     # Generate coverage report
 
 ---
 
+
 *This copilot instruction document is designed to help AI agents quickly understand and contribute to the SGeX Workbench project while maintaining code quality, WHO standards compliance, and collaborative development practices.*
+
