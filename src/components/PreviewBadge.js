@@ -13,6 +13,7 @@ const PreviewBadge = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isSticky, setIsSticky] = useState(false);
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -65,10 +66,13 @@ const PreviewBadge = () => {
     detectBranchAndPR();
   }, []);
 
-  // Handle clicks outside the expanded panel to close it
+  // Handle clicks outside the expanded panel to close it (only if not sticky)
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (expandedRef.current && !expandedRef.current.contains(event.target)) {
+        if (isSticky) {
+          setIsSticky(false);
+        }
         setIsExpanded(false);
       }
     };
@@ -82,7 +86,7 @@ const PreviewBadge = () => {
         document.removeEventListener('touchstart', handleClickOutside);
       };
     }
-  }, [isExpanded]);
+  }, [isExpanded, isSticky]);
 
   const getCurrentBranch = () => {
     // First try environment variable (set during build)
@@ -159,6 +163,21 @@ const PreviewBadge = () => {
     }
   };
 
+  const handleMouseEnter = () => {
+    if (!isSticky && prInfo) {
+      setIsExpanded(true);
+      if (comments.length === 0) {
+        fetchComments();
+      }
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isSticky) {
+      setIsExpanded(false);
+    }
+  };
+
   const handleBadgeClick = (event) => {
     // Prevent event from bubbling up
     event.stopPropagation();
@@ -170,15 +189,16 @@ const PreviewBadge = () => {
       return;
     }
 
-    if (!isExpanded) {
-      // Expand and fetch comments
+    if (isSticky) {
+      // If already sticky, navigate to PR on GitHub
+      window.open(prInfo.html_url, '_blank');
+    } else {
+      // Make it sticky and ensure it's expanded
+      setIsSticky(true);
       setIsExpanded(true);
       if (comments.length === 0) {
         fetchComments();
       }
-    } else {
-      // Already expanded, navigate to PR
-      window.open(prInfo.html_url, '_blank');
     }
   };
 
@@ -232,6 +252,11 @@ const PreviewBadge = () => {
     return text.substring(0, maxLength) + '...';
   };
 
+  const truncateTitle = (title, maxLength = 50) => {
+    if (title.length <= maxLength) return title;
+    return title.substring(0, maxLength) + '...';
+  };
+
   // Don't render anything if loading, error, or not a preview branch
   if (loading || error || !branchInfo) {
     return null;
@@ -240,9 +265,11 @@ const PreviewBadge = () => {
   return (
     <div className="preview-badge-container" ref={expandedRef}>
       <div 
-        className={`preview-badge ${prInfo ? 'clickable' : ''} ${isExpanded ? 'expanded' : ''}`}
+        className={`preview-badge ${prInfo ? 'clickable' : ''} ${isExpanded ? 'expanded' : ''} ${isSticky ? 'sticky' : ''}`}
         onClick={handleBadgeClick}
-        title={isExpanded ? "Click to open PR in GitHub" : prInfo ? `Click to expand PR details: ${prInfo.title}` : `Preview branch: ${branchInfo.name}`}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        title={isSticky ? "Click to open PR in GitHub" : isExpanded ? "Click to keep expanded" : prInfo ? `Hover to preview, click to pin: ${prInfo.title}` : `Preview branch: ${branchInfo.name}`}
       >
         <div className="badge-content">
           <span className="badge-label">Preview:</span>
@@ -250,7 +277,7 @@ const PreviewBadge = () => {
           {prInfo && (
             <>
               <span className="badge-separator">|</span>
-              <span className="badge-pr-title">{prInfo.title}</span>
+              <span className="badge-pr-title">{truncateTitle(prInfo.title)}</span>
             </>
           )}
           {prInfo && (
@@ -279,6 +306,7 @@ const PreviewBadge = () => {
               onClick={(e) => {
                 e.stopPropagation();
                 setIsExpanded(false);
+                setIsSticky(false);
               }}
               title="Close expanded view"
             >

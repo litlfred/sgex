@@ -47,6 +47,11 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+.preview-badge.sticky {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, #e68900, #d77000);
+}
+
 .badge-content {
   display: flex;
   align-items: center;
@@ -80,9 +85,6 @@
 
 .badge-pr-title {
   font-size: 0.75rem;
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
   opacity: 0.95;
   flex-shrink: 1;
 }
@@ -396,7 +398,6 @@
   }
   
   .badge-pr-title {
-    max-width: 200px;
     font-size: 0.7rem;
   }
 
@@ -429,7 +430,7 @@
   }
   
   .badge-pr-title {
-    max-width: 120px;
+    font-size: 0.7rem;
   }
 
   .preview-badge-expanded {
