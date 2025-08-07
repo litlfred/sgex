@@ -279,32 +279,6 @@ jobs:
           
           echo "✅ Build copied successfully to $target_subdir"
 
-      - name: Create build artifact backup
-        shell: bash
-        run: |
-          set -e
-          
-          target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
-          
-          echo "Creating backup of build artifacts for deployment recovery..."
-          
-          # Create a temporary backup directory in /tmp to preserve build artifacts
-          backup_dir="/tmp/sgex-deployment-backup-$$"
-          mkdir -p "$backup_dir"
-          
-          # Copy the target deployment directory for recovery purposes
-          if [[ -d "$target_subdir" ]]; then
-            echo "Backing up target directory: $target_subdir"
-            cp -a "$target_subdir" "$backup_dir/"
-          else
-            echo "Warning: Target directory $target_subdir not found for backup"
-          fi
-          
-          # Store backup path for later steps
-          echo "BACKUP_DIR=$backup_dir" >> $GITHUB_ENV
-          
-          echo "✅ Build artifacts backed up to: $backup_dir"
-
       - name: Stage and commit changes
         shell: bash
         run: |
@@ -327,13 +301,6 @@ jobs:
             rm -rf build
           fi
           
-          # Store target directory info for potential recovery
-          target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
-          backup_dir="$BACKUP_DIR"
-          
-          echo "Target subdirectory: $target_subdir"
-          echo "Backup directory: $backup_dir"
-          
           # Add all changes initially
           git add -A
           
@@ -352,9 +319,9 @@ jobs:
             has_changes=true
           fi
           
-          # Push with improved retry mechanism to handle concurrent deployments
+          # Commit and push with simple retry for transient network issues only
           if [[ "$has_changes" == "true" ]]; then
-            max_retries=5
+            max_retries=3
             retry_count=0
             success=false
             
@@ -362,51 +329,26 @@ jobs:
               retry_count=$((retry_count + 1))
               echo "Deployment attempt $retry_count of $max_retries"
               
-              # Always fetch latest state before attempting operations
+              # Always fetch latest state and rebase before attempting operations
               echo "Fetching latest gh-pages state..."
               git fetch origin gh-pages
               
-              # Check if we're behind remote
-              local_commit=$(git rev-parse HEAD)
-              remote_commit=$(git rev-parse origin/gh-pages)
-              
-              echo "Local commit: $local_commit"
-              echo "Remote commit: $remote_commit"
-              
-              if [[ "$local_commit" != "$remote_commit" ]]; then
-                echo "Local branch is behind remote, performing sync..."
-                
-                # Store current changes in a temporary file for recovery
-                git diff --cached > /tmp/staged-changes.patch || echo "No staged changes to save"
-                
-                # Reset to remote state
-                echo "Resetting to remote state..."
-                git reset --hard origin/gh-pages
-                
-                # Restore our deployment directory from backup
-                echo "Restoring deployment directory from backup..."
-                if [[ -d "$backup_dir/$target_subdir" ]]; then
-                  # Remove any existing target directory and restore from backup
-                  rm -rf "$target_subdir" 2>/dev/null || true
-                  cp -a "$backup_dir/$target_subdir" "./"
-                  echo "✅ Restored $target_subdir from backup"
-                else
-                  echo "❌ Backup directory not found: $backup_dir/$target_subdir"
+              # Always rebase to ensure we have the latest state
+              echo "Rebasing with remote to incorporate any concurrent changes..."
+              if ! git rebase origin/gh-pages; then
+                echo "Rebase failed, checking if we can resolve automatically..."
+                # Check if the conflict is just in different directories (which should auto-resolve)
+                if git status --porcelain | grep -q "^UU"; then
+                  echo "Found merge conflicts that need manual resolution"
+                  git rebase --abort
+                  echo "Cannot automatically resolve conflicts - this shouldn't happen with separate directories"
                   exit 1
-                fi
-                
-                # Re-stage our changes
-                git add -A
-                
-                # Verify we have changes to commit after restore
-                if git diff --cached --quiet && [[ "${{ github.event.inputs.force_deployment }}" != "true" ]]; then
-                  echo "No changes after sync - deployment may be redundant"
-                  success=true
-                  break
+                else
+                  echo "Rebase completed with automatic resolution"
                 fi
               fi
               
-              # Commit changes with retry information
+              # Commit changes
               if git diff --cached --quiet; then
                 if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
                   echo "Creating empty commit for force deployment"
@@ -431,16 +373,16 @@ jobs:
                 - Attempt: $retry_count/$max_retries"
               fi
               
-              # Try to push with increased verbosity
+              # Push to gh-pages
               echo "Pushing to gh-pages (attempt $retry_count)..."
               if git push origin gh-pages; then
                 echo "✅ Push successful on attempt $retry_count"
                 success=true
               else
-                echo "⚠️  Push failed on attempt $retry_count"
+                echo "⚠️ Push failed on attempt $retry_count"
                 if [[ $retry_count -lt $max_retries ]]; then
-                  # Progressive backoff: longer delays for later retries
-                  sleep_time=$((retry_count * 3 + 2))
+                  # Brief delay for transient network issues
+                  sleep_time=$((retry_count * 2))
                   echo "Waiting ${sleep_time} seconds before next attempt..."
                   sleep $sleep_time
                 fi
@@ -449,23 +391,12 @@ jobs:
             
             if [[ "$success" == "false" ]]; then
               echo "❌ Failed to push after $max_retries attempts"
-              echo "This may indicate a persistent conflict or connectivity issue"
+              echo "This may indicate a persistent network issue or repository problem"
               exit 1
             fi
           fi
           
           echo "✅ Deployment completed successfully"
-
-      - name: Cleanup backup artifacts
-        if: always()
-        shell: bash
-        run: |
-          # Clean up temporary backup directory
-          backup_dir="$BACKUP_DIR"
-          if [[ -n "$backup_dir" && -d "$backup_dir" ]]; then
-            echo "Cleaning up backup directory: $backup_dir"
-            rm -rf "$backup_dir"
-          fi
 
       - name: Output deployment info
         id: deployment_info
