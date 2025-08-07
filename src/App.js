@@ -7,7 +7,7 @@ import DAKActionSelection from './components/DAKActionSelection';
 import DAKSelection from './components/DAKSelection';
 import OrganizationSelection from './components/OrganizationSelection';
 import DAKConfiguration from './components/DAKConfiguration';
-
+import RepositorySelection from './components/RepositorySelection';
 import ComponentEditor from './components/ComponentEditor';
 import CoreDataDictionaryViewer from './components/CoreDataDictionaryViewer';
 import ActorEditor from './components/ActorEditor';
@@ -27,15 +27,14 @@ import DAKDashboardWithFramework from './components/DAKDashboardWithFramework';
 import DashboardRedirect from './components/DashboardRedirect';
 import TestDocumentationPage from './components/TestDocumentationPage';
 import AssetEditorTest from './components/AssetEditorTest';
-import BranchListing from './components/BranchListing';
 import logger from './utils/logger';
 import './App.css';
 
 function App() {
   const appLogger = logger.getLogger('App');
   
-  // Get basename from PUBLIC_URL or default to /sgex, but use empty in development if no PUBLIC_URL
-  const basename = process.env.PUBLIC_URL || (process.env.NODE_ENV === 'development' ? '' : '/sgex');
+  // Get basename from PUBLIC_URL or default to /sgex
+  const basename = process.env.PUBLIC_URL || '/sgex';
   
   React.useEffect(() => {
     appLogger.componentMount();
@@ -61,7 +60,8 @@ function App() {
             <Route path="/dak-selection" element={<DAKSelection />} />
             <Route path="/organization-selection" element={<OrganizationSelection />} />
             <Route path="/dak-configuration" element={<DAKConfiguration />} />
-
+            <Route path="/repositories" element={<RepositorySelection />} />
+            <Route path="/repositories/:user" element={<RepositorySelection />} />
             <Route path="/dashboard" element={<DashboardRedirect />} />
             <Route path="/dashboard/:user/:repo" element={<DAKDashboardWithFramework />} />
             <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboardWithFramework />} />
@@ -112,7 +112,6 @@ function App() {
             <Route path="/test-framework-dashboard/:user/:repo/:branch" element={<DAKDashboardWithFramework />} />
             <Route path="/test-documentation" element={<TestDocumentationPage />} />
             <Route path="/test-asset-editor" element={<AssetEditorTest />} />
-            <Route path="/branch-listing" element={<BranchListing />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

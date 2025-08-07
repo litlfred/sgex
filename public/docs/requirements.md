@@ -110,20 +110,21 @@ The SGEX Workbench operates within an ecosystem of actors that collaborate to en
 
 For detailed information about each DAK component, see [DAK Components Documentation](dak-components.md).
 
-**REQ-DAK-001**: The system SHALL display all 8 WHO SMART Guidelines DAK components on the home page
+**REQ-DAK-001**: The system SHALL display all 9 WHO SMART Guidelines DAK components on the home page
 - Visual dashboard with distinctive cards/tiles for each component
 - WHO SMART Guidelines branding and color codes  
 - WHO-provided icons for each component
 - Clear visual distinction between Level 2 (L2) and Level 3 (L3) component representations
-- The 8 core WHO SMART Guidelines DAK components are:
+- The 9 core WHO SMART Guidelines DAK components are:
   1. **Health interventions and recommendations**
   2. **Generic personas**
   3. **User scenarios**
   4. **Generic business processes and workflows**
-  5. **Core data elements**
+  5. **Core data elements** (includes Terminology Services via OCL and Product Master Data via PCMT)
   6. **Decision-support logic**
   7. **Program indicators**
   8. **Functional and non-functional requirements**
+  9. **Test scenarios**
 
 **REQ-DAK-002**: The system SHALL distinguish between L2 and L3 component representations
 - **L2 (Level 2)**: Data model agnostic representations that capture business logic and clinical processes independent of specific technical implementations
@@ -139,8 +140,7 @@ For detailed information about each DAK component, see [DAK Components Documenta
 | Generic personas | Actor definitions and role descriptions | FHIR Person/Practitioner profiles |
 | User scenarios | Use case narratives and workflows | FHIR Scenario test bundles |
 | Generic business processes and workflows | BPMN diagrams (.bpmn) | FHIR ActivityDefinition/PlanDefinition |
-| Core data elements | Open Concept Lab (OCL) at https://openconceptlab.org/ | FHIR StructureDefinition profiles |
-| Product Master Data | FHIR CodeSystems and Logical Models | Product Catalogue Management Tool (PCMT) at https://worldhealthorganization.github.io/smart-pcmt/ and https://productcatalog.io/ |
+| Core data elements | Open Concept Lab (OCL) at https://openconceptlab.org/ and Product Catalogue Management Tool (PCMT) at https://worldhealthorganization.github.io/smart-pcmt/ and https://productcatalog.io/ | FHIR StructureDefinition profiles and CodeSystems |
 | Decision-support logic | DMN decision tables | FHIR PlanDefinition with decision logic |
 | Program indicators | Logical indicator models | FHIR Measure resources |
 | Functional and non-functional requirements | Requirements specifications at https://worldhealthorganization.github.io/smart-base/StructureDefinition-FunctionalRequirement.html and https://worldhealthorganization.github.io/smart-base/StructureDefinition-NonFunctionalRequirement.html | FHIR ImplementationGuide conformance rules |
@@ -255,7 +255,7 @@ For detailed information about each DAK component, see [DAK Components Documenta
 
 **REQ-EDIT-005**: The system SHALL provide Core Data Dictionary viewing capabilities
 - Dedicated viewer for Component 2 Core Data Dictionary (DAK Component: Core Data Elements)
-- Accessible from both "Core Data Elements" (8 Core Components) and "Terminology" (Additional Components)
+- Accessible from "Core Data Elements" (9 Core Components)
 - URL pattern following REQ-URL-001: `/core-data-dictionary-viewer/{user}/{repo}/{branch}`
 - Context preservation through URL parameters with fallback to location state
 - FHIR FSH file detection and display from `input/fsh/` directory

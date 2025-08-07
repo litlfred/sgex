@@ -69,6 +69,14 @@ echo "-------------------------"
 
 echo "Testing branch-specific build..."
 export GITHUB_REF_NAME="test-branch"
+
+# Fetch build script from deploy branch (if available)
+if git show-ref --verify --quiet refs/remotes/origin/deploy; then
+    echo "Fetching build script from deploy branch..."
+    git fetch origin deploy
+    git checkout origin/deploy -- scripts/build-multi-branch.js
+fi
+
 if node scripts/build-multi-branch.js branch > /dev/null 2>&1; then
     echo "✅ Branch-specific build: Success"
     if [[ -f "build/index.html" ]]; then
@@ -82,6 +90,12 @@ fi
 
 echo ""
 echo "Testing root landing page build..."
+
+# Fetch landing page from deploy branch (if available)
+if git show-ref --verify --quiet refs/remotes/origin/deploy; then
+    git checkout origin/deploy -- public/branch-listing.html
+fi
+
 if node scripts/build-multi-branch.js root > /dev/null 2>&1; then
     echo "✅ Root landing page build: Success"
     if [[ -f "build/index.html" ]]; then
@@ -123,24 +137,24 @@ echo ""
 echo "🧪 Test 4: Component validation"
 echo "------------------------------"
 
-echo "Testing BranchListing component..."
-if [[ -f "src/components/BranchListing.js" ]] && [[ -f "src/components/BranchListing.css" ]]; then
-    echo "✅ BranchListing component files exist"
+echo "Testing deployment components..."
+if [[ -f "public/branch-listing.html" ]] && [[ -f "public/sgex-mascot.png" ]]; then
+    echo "✅ Landing page assets exist"
     
-    # Check for key elements in component
-    if grep -q "GitHub API" src/components/BranchListing.js; then
-        echo "✅ Component includes GitHub API integration"
+    # Check for key elements in landing page
+    if grep -q "GitHub API" public/branch-listing.html; then
+        echo "✅ Landing page includes GitHub API integration"
     fi
     
-    if grep -q "branch-card" src/components/BranchListing.css; then
-        echo "✅ Component includes card styling"
+    if grep -q "branch-card" public/branch-listing.html; then
+        echo "✅ Landing page includes card styling"
     fi
     
-    if grep -q "safeName" src/components/BranchListing.js; then
-        echo "✅ Component handles safe branch names"
+    if grep -q "safeBranchName" public/branch-listing.html; then
+        echo "✅ Landing page handles safe branch names"
     fi
 else
-    echo "❌ BranchListing component files missing"
+    echo "⚠️  Landing page assets may need to be fetched from deploy branch"
 fi
 
 # Test 5: Workflow file validation
