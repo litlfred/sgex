@@ -232,7 +232,15 @@ jobs:
             echo "# GitHub Pages" > README.md
             git add README.md
             git commit -m "Initial gh-pages branch"
+            # Use retry logic for initial push as well
+            set +e
             git push origin gh-pages
+            initial_push_exit_code=$?
+            set -e
+            if [[ $initial_push_exit_code -ne 0 ]]; then
+              echo "❌ Failed to create initial gh-pages branch"
+              exit 1
+            fi
           fi
 
       - name: Clean old deployment for this branch
