@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import githubService from '../services/githubService';
-import stagingGroundService from '../services/stagingGroundService';
 import { load as yamlLoad, dump as yamlDump } from 'js-yaml';
 import './SushiDashboard.css';
 
@@ -21,13 +20,7 @@ const SushiDashboard = ({ repository, selectedBranch, hasWriteAccess, profile })
   });
 
   // Load sushi-config.yaml on component mount
-  useEffect(() => {
-    if (repository && selectedBranch) {
-      loadSushiConfig();
-    }
-  }, [repository, selectedBranch]);
-
-  const loadSushiConfig = async () => {
+  const loadSushiConfig = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -64,7 +57,13 @@ const SushiDashboard = ({ repository, selectedBranch, hasWriteAccess, profile })
     } finally {
       setLoading(false);
     }
-  };
+  }, [repository, selectedBranch]);
+
+  useEffect(() => {
+    if (repository && selectedBranch) {
+      loadSushiConfig();
+    }
+  }, [repository, selectedBranch, loadSushiConfig]);
 
   const validateField = (field, value) => {
     const errors = { ...validationErrors };

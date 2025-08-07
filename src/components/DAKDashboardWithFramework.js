@@ -4,6 +4,7 @@ import githubService from '../services/githubService';
 import branchContextService from '../services/branchContextService';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
+import SushiDashboard from './SushiDashboard';
 import './DAKDashboard.css';
 
 const DAKDashboardWithFramework = () => {
@@ -19,7 +20,7 @@ const DAKDashboardContent = () => {
   
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
+  const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', 'sushi', or 'publications'
   const [issueCounts, setIssueCounts] = useState({});
 
   // Check write permissions
@@ -263,6 +264,13 @@ const DAKDashboardContent = () => {
             <span className="tab-text">Additional Components ({additionalComponents.length})</span>
           </button>
           <button 
+            className={`tab-button ${activeTab === 'sushi' ? 'active' : ''}`}
+            onClick={() => setActiveTab('sushi')}
+          >
+            <span className="tab-icon">📄</span>
+            <span className="tab-text">SUSHI Configuration</span>
+          </button>
+          <button 
             className={`tab-button ${activeTab === 'publications' ? 'active' : ''}`}
             onClick={() => setActiveTab('publications')}
           >
@@ -311,6 +319,17 @@ const DAKDashboardContent = () => {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {activeTab === 'sushi' && (
+            <div className="sushi-section">
+              <SushiDashboard
+                repository={repository}
+                selectedBranch={branch}
+                hasWriteAccess={hasWriteAccess}
+                profile={profile}
+              />
             </div>
           )}
 
