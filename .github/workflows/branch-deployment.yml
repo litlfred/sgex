@@ -433,7 +433,13 @@ jobs:
               
               # Try to push with increased verbosity
               echo "Pushing to gh-pages (attempt $retry_count)..."
-              if git push origin gh-pages; then
+              # Temporarily disable exit on error for git push to allow retry logic
+              set +e
+              git push origin gh-pages
+              push_exit_code=$?
+              set -e
+              
+              if [[ $push_exit_code -eq 0 ]]; then
                 echo "✅ Push successful on attempt $retry_count"
                 success=true
               else
