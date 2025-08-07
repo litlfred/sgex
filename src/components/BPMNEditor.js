@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 import { Octokit } from '@octokit/rest';
-import { AssetEditorLayout, useDAKParams } from './framework';
+import { AssetEditorLayout, useAssetParams } from './framework';
 import './BPMNEditor.css';
 
 const BPMNEditor = () => {
   const navigate = useNavigate();
-  const { profile, repository, branch } = useDAKParams();
+  const { profile, repository, branch } = useAssetParams();
   const modelerRef = useRef(null);
   const containerRef = useRef(null);
   

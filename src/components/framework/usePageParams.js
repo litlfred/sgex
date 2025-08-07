@@ -96,6 +96,45 @@ export const useDAKParams = () => {
 };
 
 /**
+ * Hook specifically for Asset pages
+ */
+export const useAssetParams = () => {
+  try {
+    const pageParams = usePageParams();
+    
+    // Only throw error if page is fully loaded and type is not ASSET
+    if (!pageParams.loading && pageParams.type !== PAGE_TYPES.ASSET) {
+      throw new Error(`useAssetParams can only be used on Asset pages. Current page type: ${pageParams.type}`);
+    }
+
+    return {
+      user: pageParams.user,
+      profile: pageParams.profile,
+      repository: pageParams.repository,
+      branch: pageParams.branch,
+      asset: pageParams.asset,
+      updateBranch: pageParams.updateBranch,
+      navigate: pageParams.navigate
+    };
+  } catch (error) {
+    // If PageProvider is not ready yet, return empty object
+    if (error.message.includes('usePage must be used within a PageProvider')) {
+      console.log('useAssetParams: PageProvider not ready yet, returning empty data');
+      return {
+        user: null,
+        profile: null,
+        repository: null,
+        branch: null,
+        asset: null,
+        updateBranch: () => {},
+        navigate: () => {}
+      };
+    }
+    throw error;
+  }
+};
+
+/**
  * Hook specifically for User pages
  */
 export const useUserParams = () => {

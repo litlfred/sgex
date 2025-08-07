@@ -139,24 +139,30 @@ class ComplianceChecker {
       suggestions: []
     };
 
-    // Check 1: Uses PageLayout
-    const hasPageLayout = content.includes('PageLayout') && 
-                         (content.includes('import { PageLayout }') || 
-                          content.includes('import PageLayout') ||
-                          content.includes('from \'./framework\''));
+    // Check 1: Uses PageLayout (directly or through AssetEditorLayout)
+    const hasDirectPageLayout = content.includes('PageLayout') && 
+                               (content.includes('import { PageLayout }') || 
+                                content.includes('import PageLayout') ||
+                                content.includes('from \'./framework\''));
+    const hasAssetEditorLayout = content.includes('AssetEditorLayout') &&
+                                content.includes('from \'./framework\'');
+    const hasPageLayout = hasDirectPageLayout || hasAssetEditorLayout;
+    
     compliance.checks.pageLayout = hasPageLayout;
     if (hasPageLayout) compliance.score++;
     else compliance.issues.push('Missing PageLayout wrapper');
 
-    // Check 2: Has pageName prop
-    const hasPageName = /<PageLayout[^>]+pageName=["']([^"']+)["']/.test(content);
+    // Check 2: Has pageName prop (for PageLayout or AssetEditorLayout)
+    const hasPageName = /<PageLayout[^>]+pageName=["']([^"']+)["']/.test(content) ||
+                       /<AssetEditorLayout[^>]+pageName=["']([^"']+)["']/.test(content);
     compliance.checks.pageName = hasPageName;
     if (hasPageName) compliance.score++;
-    else if (hasPageLayout) compliance.issues.push('PageLayout missing pageName prop');
+    else if (hasPageLayout) compliance.issues.push('PageLayout/AssetEditorLayout missing pageName prop');
 
     // Check 3: Uses framework hooks instead of useParams
     const usesFrameworkHooks = content.includes('usePageParams') || 
                               content.includes('useDAKParams') || 
+                              content.includes('useAssetParams') ||
                               content.includes('useUserParams');
     const usesDirectParams = content.includes('useParams') && !content.includes('//') && 
                            !content.includes('framework');
@@ -191,13 +197,13 @@ class ComplianceChecker {
 
     // Generate suggestions
     if (!hasPageLayout) {
-      compliance.suggestions.push('Wrap component with PageLayout from ./framework');
+      compliance.suggestions.push('Wrap component with PageLayout or AssetEditorLayout from ./framework');
     }
     if (hasPageLayout && !hasPageName) {
-      compliance.suggestions.push('Add unique pageName prop to PageLayout');
+      compliance.suggestions.push('Add unique pageName prop to PageLayout/AssetEditorLayout');
     }
     if (usesDirectParams) {
-      compliance.suggestions.push('Replace useParams() with usePageParams() or useDAKParams()');
+      compliance.suggestions.push('Replace useParams() with usePageParams(), useDAKParams(), or useAssetParams()');
     }
     if (hasManualHelpMascot) {
       compliance.suggestions.push('Remove ContextualHelpMascot import (PageLayout provides it)');
