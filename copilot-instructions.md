@@ -85,6 +85,26 @@ DAK components have two implementation levels:
 | Program indicators | Logical indicator models | FHIR Measure resources |
 | Requirements | Requirements specs | FHIR ImplementationGuide conformance |
 
+## Security and Data Handling Guidelines
+
+### Critical Security Requirements
+- **NEVER USE DEMO DATA FOR AUTHENTICATED USERS**: This is a strict security requirement. When users are authenticated with GitHub tokens, all data must be real and pulled from their actual repositories. Demo data must only be used for unauthenticated demo mode scenarios.
+- **Token Security**: Never log, store, or transmit GitHub Personal Access Tokens in plain text
+- **User Data Privacy**: Respect user privacy and only access repositories with explicit permission
+- **Error Handling**: Never expose sensitive information in error messages or logs
+
+### Data Source Rules
+- **Authenticated Users**: Must use real data from GitHub repositories only
+- **Demo Mode**: Use mock/demo data only when `profile?.isDemo === true` 
+- **File Operations**: Validate all file paths and ensure they exist before creating links
+- **Cache Validation**: Always validate cached data against current repository state
+
+### Implementation Guidelines
+- Check authentication state before determining data sources
+- Use feature flags or environment variables to clearly separate demo and production modes
+- Implement proper error boundaries for authentication failures
+- Document all demo data clearly in code comments
+
 ## Development Workflow
 
 ### Getting Started

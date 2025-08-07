@@ -583,19 +583,22 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
 
   // Function to detect and create links for files mentioned in log messages
   const parseLogMessage = useCallback((message, logId) => {
-    // Regex to find file paths (ending with .fsh, .yaml, .yml, etc.)
-    const filePathRegex = /([a-zA-Z0-9_/-]+\.(?:fsh|yaml|yml|json))/g;
-    const matches = message.match(filePathRegex);
+    // More precise regex to find valid file paths - must be preceded by whitespace or start of line
+    // and must be a complete path (not part of a longer word)
+    const filePathRegex = /(?:^|\s)((?:input\/fsh\/[a-zA-Z0-9_/-]*\/)?[a-zA-Z0-9_.-]+\.(?:fsh|yaml|yml|json))(?=\s|$|[.,!])/g;
+    const matches = [...message.matchAll(filePathRegex)];
     
-    if (!matches) {
+    if (matches.length === 0) {
       return <span>{message}</span>;
     }
     
     let lastIndex = 0;
     const elements = [];
     
-    matches.forEach((filePath, index) => {
-      const matchIndex = message.indexOf(filePath, lastIndex);
+    matches.forEach((match, index) => {
+      const fullMatch = match[0];
+      const filePath = match[1];
+      const matchIndex = match.index;
       
       // Add text before the match
       if (matchIndex > lastIndex) {
@@ -606,14 +609,37 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
         );
       }
       
-      // Determine link type based on file location
+      // Add the leading whitespace if present
+      const leadingWhitespace = fullMatch.substring(0, fullMatch.indexOf(filePath));
+      if (leadingWhitespace) {
+        elements.push(
+          <span key={`${logId}-ws-${index}`}>
+            {leadingWhitespace}
+          </span>
+        );
+      }
+      
+      // Determine link type based on file location and validate the file exists
       const createFileLink = (path, text) => {
-        const isFromStaging = stagingFiles.some(f => f.path && f.path.includes(path));
+        // Check if file exists in our known file lists to avoid creating invalid links
+        const isKnownRepoFile = fshFiles.some(f => f.path === path);
+        const isFromStaging = stagingFiles.some(f => f.path && (f.path === path || f.path.endsWith(`/${path.split('/').pop()}`)));
+        const isSushiConfig = path === 'sushi-config.yaml';
+        
+        // Only create links for files we know exist
+        if (!isKnownRepoFile && !isFromStaging && !isSushiConfig) {
+          // File not found in our known files, return as plain text
+          return (
+            <span key={`${logId}-text-${index}`} className="file-mention">
+              {text}
+            </span>
+          );
+        }
         
         if (isFromStaging) {
           // Link to staging ground
           return (
-            <span key={`${logId}-link-${index}`} className="file-link staging-link" title="Open in Staging Ground">
+            <span key={`${logId}-link-${index}`} className="file-link staging-link" title="File from Staging Ground">
               📝 {text}
             </span>
           );
@@ -648,7 +674,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
             </span>
           );
         } else {
-          // Link to GitHub source
+          // Link to GitHub source for valid repository files
           const githubUrl = `https://github.com/${owner}/${repoName}/blob/${selectedBranch}/${path}`;
           return (
             <a 
@@ -666,7 +692,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
       };
       
       elements.push(createFileLink(filePath, filePath));
-      lastIndex = matchIndex + filePath.length;
+      lastIndex = matchIndex + fullMatch.length;
     });
     
     // Add remaining text
@@ -679,7 +705,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
     }
     
     return <span>{elements}</span>;
-  }, [owner, repoName, selectedBranch, stagingFiles]);
+  }, [owner, repoName, selectedBranch, stagingFiles, fshFiles]);
 
   // Optimized filtered logs with useMemo to prevent unnecessary re-computations
   const filteredLogs = useMemo(() => {
@@ -877,19 +903,28 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
         />
         
         {generatedFiles.length > 0 && (
-          <div className="modal-tabs">
-            <button 
-              className={`tab-button ${activeTab === 'logs' ? 'active' : ''}`}
-              onClick={() => setActiveTab('logs')}
-            >
-              📄 Execution Logs ({logs.length})
-            </button>
-            <button 
-              className={`tab-button ${activeTab === 'files' ? 'active' : ''}`}
-              onClick={() => setActiveTab('files')}
-            >
-              📦 Generated Files ({generatedFiles.length})
-            </button>
+          <div className="modal-section-toggle">
+            <div className="toggle-options">
+              <button 
+                className={`toggle-btn ${activeTab === 'logs' ? 'active' : ''}`}
+                onClick={() => setActiveTab('logs')}
+              >
+                📄 Logs & Messages
+              </button>
+              <button 
+                className={`toggle-btn ${activeTab === 'files' ? 'active' : ''}`}
+                onClick={() => setActiveTab('files')}
+              >
+                📦 Generated Resources
+              </button>
+            </div>
+            <div className="section-info">
+              {activeTab === 'logs' ? (
+                <span className="info-text">{logs.length} log entries • Use toggles to filter by level</span>
+              ) : (
+                <span className="info-text">{generatedFiles.length} FHIR resources generated</span>
+              )}
+            </div>
           </div>
         )}
         
