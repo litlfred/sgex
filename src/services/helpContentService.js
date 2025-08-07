@@ -266,6 +266,78 @@ class HelpContentService {
               `
             }
           ]
+        },
+        {
+          id: 'sushi-configuration-guide',
+          title: 'SUSHI Configuration Management',
+          badge: '/sgex/cat-paw-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Understanding SUSHI Configuration',
+              content: `
+                <p>The <code>sushi-config.yaml</code> file is the central configuration file for your DAK:</p>
+                <h4>Key Configuration Areas:</h4>
+                <ul>
+                  <li><strong>Summary Fields:</strong> Basic metadata like ID, name, version, title</li>
+                  <li><strong>Publisher Information:</strong> Organization details and contact info</li>
+                  <li><strong>Dependencies:</strong> Other implementation guides this DAK depends on</li>
+                  <li><strong>Pages:</strong> Documentation structure and navigation</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>📄 Required:</strong> All WHO SMART Guidelines DAKs must include <code>smart.who.int.base</code> dependency.
+                </div>
+              `
+            },
+            {
+              title: 'Editing SUSHI Configuration',
+              content: `
+                <p>Use the SUSHI Configuration tab to manage your DAK settings:</p>
+                <h4>Inline Editing Features:</h4>
+                <ul>
+                  <li><strong>Summary Fields:</strong> Click "Edit" to modify core metadata inline</li>
+                  <li><strong>Real-time Validation:</strong> Fields are validated as you type</li>
+                  <li><strong>Publisher Management:</strong> Edit name, URL, and email separately</li>
+                  <li><strong>Dependencies:</strong> Add new dependencies or remove existing ones</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💾 Save Changes:</strong> Click "Save" to commit changes directly to GitHub.
+                </div>
+              `
+            },
+            {
+              title: 'Validation Rules',
+              content: `
+                <p>SUSHI configuration fields have specific validation requirements:</p>
+                <h4>Field Requirements:</h4>
+                <ul>
+                  <li><strong>ID:</strong> Lowercase with dots/hyphens only (e.g., who.fhir.anc)</li>
+                  <li><strong>Name:</strong> PascalCase with no spaces (e.g., WHOANCGuidelines)</li>
+                  <li><strong>Version:</strong> Semantic versioning format (e.g., 1.0.0)</li>
+                  <li><strong>FHIR Version:</strong> Valid FHIR version (e.g., 4.0.1)</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>⚠️ Validation Errors:</strong> Fix all validation errors before saving changes.
+                </div>
+              `
+            },
+            {
+              title: 'Source Access and Staging',
+              content: `
+                <p>Access your SUSHI configuration through multiple channels:</p>
+                <h4>Available Actions:</h4>
+                <ul>
+                  <li><strong>View Source:</strong> See raw YAML content in a modal</li>
+                  <li><strong>GitHub Source:</strong> View file directly on GitHub (new tab)</li>
+                  <li><strong>GitHub Edit:</strong> Edit file directly on GitHub (new tab)</li>
+                  <li><strong>Staging Support:</strong> Links for both GitHub and staging versions</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🔧 Advanced Editing:</strong> Use GitHub Edit for complex changes not available in the inline editor.
+                </div>
+              `
+            }
+          ]
         }
       ],
       'dak-selection': [

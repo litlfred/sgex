@@ -7,6 +7,7 @@ import branchContextService from '../services/branchContextService';
 import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
+import SushiDashboard from './SushiDashboard';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
@@ -526,6 +527,13 @@ const DAKDashboardContent = () => {
               <span className="tab-icon">⭐</span>
               <span className="tab-text">9 Core Components</span>
             </button>
+            <button 
+              className={`tab-button-fullwidth ${activeTab === 'sushi' ? 'active' : ''}`}
+              onClick={() => setActiveTab('sushi')}
+            >
+              <span className="tab-icon">📄</span>
+              <span className="tab-text">SUSHI Configuration</span>
+            </button>
             <button
               className={`tab-button-fullwidth ${activeTab === 'publications' ? 'active' : ''}`}
               onClick={() => setActiveTab('publications')}
@@ -580,7 +588,17 @@ const DAKDashboardContent = () => {
             </div>
           )}
 
-
+          {/* SUSHI Configuration Section */}
+          {activeTab === 'sushi' && (
+            <div className="components-section sushi-section active">
+              <SushiDashboard
+                repository={repository}
+                selectedBranch={selectedBranch}
+                hasWriteAccess={hasWriteAccess}
+                profile={profile}
+              />
+            </div>
+          )}
 
           {/* Publications Section */}
           {activeTab === 'publications' && (
