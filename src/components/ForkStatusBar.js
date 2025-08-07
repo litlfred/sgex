@@ -49,8 +49,8 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
       setError(null);
       
       try {
-        // For sgex repository, fetch from litlfred/sgex
-        const forks = await githubService.getRepositoryForks('litlfred', 'sgex');
+        // Fetch forks for the current repository being viewed
+        const forks = await githubService.getRepositoryForks(repository.owner.login, repository.name);
         setForks(forks);
       } catch (err) {
         console.error('Error fetching repository forks:', err);
@@ -124,7 +124,7 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
           <span className="fork-count">{forks.length}</span>
         </div>
         <span className="fork-status-title">
-          {forks.length} fork{forks.length !== 1 ? 's' : ''} of sgex repository
+          {forks.length} fork{forks.length !== 1 ? 's' : ''} of {repository?.name || 'repository'}
         </span>
         <button className="fork-toggle-btn" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
           <span className={`toggle-icon ${isExpanded ? 'expanded' : ''}`}>▼</span>
