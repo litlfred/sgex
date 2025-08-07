@@ -1,7 +1,9 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import githubService from '../services/githubService';
+import sushiWasmService from '../services/sushiWasmService';
+import { WasmLoader, performanceMonitor } from '../utils/wasmLoader';
 import './SushiRunner.css';
 
 const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] }) => {
@@ -24,6 +26,9 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
   const [fshFiles, setFshFiles] = useState([]);
   const [includeStagingFiles, setIncludeStagingFiles] = useState(false);
   const [error, setError] = useState(null);
+  const [executionMode, setExecutionMode] = useState('auto'); // 'auto', 'wasm', 'javascript'
+  const [wasmSupported, setWasmSupported] = useState(false);
+  const [wasmInitialized, setWasmInitialized] = useState(false);
 
   const owner = repository.owner?.login || repository.full_name.split('/')[0];
   const repoName = repository.name;
@@ -36,6 +41,31 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
       timestamp: new Date().toISOString()
     }]);
   }, []);
+
+  // Check WebAssembly support on component mount
+  useEffect(() => {
+    const checkWasmSupport = async () => {
+      const supported = WasmLoader.isSupported();
+      setWasmSupported(supported);
+      
+      if (supported) {
+        addLog('🚀 WebAssembly support detected', 'success');
+        
+        // Initialize WASM service
+        try {
+          await sushiWasmService.initialize();
+          setWasmInitialized(true);
+          addLog('✅ SUSHI WebAssembly service initialized', 'success');
+        } catch (err) {
+          addLog(`⚠️ WASM initialization failed, falling back to JavaScript: ${err.message}`, 'warning');
+        }
+      } else {
+        addLog('⚠️ WebAssembly not supported, using JavaScript fallback', 'warning');
+      }
+    };
+
+    checkWasmSupport();
+  }, [addLog]);
 
   const fetchRepositoryFiles = async () => {
     try {
@@ -156,10 +186,104 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
 
   const runSushiInBrowser = async (config, files) => {
     try {
+      // Determine execution mode
+      const useWasm = executionMode === 'wasm' || 
+                     (executionMode === 'auto' && wasmSupported && wasmInitialized);
+      
+      const mode = useWasm ? 'WebAssembly' : 'JavaScript';
+      addLog(`🚀 Starting FHIR Shorthand compilation using ${mode}...`, 'info');
+      
+      // Start performance monitoring
+      performanceMonitor.startTiming('sushi-compilation', useWasm ? 'wasm' : 'js');
+      
+      let result;
+      
+      if (useWasm) {
+        addLog('🔧 Using WebAssembly SUSHI engine...', 'info');
+        result = await runSushiWithWasm(config, files);
+      } else {
+        addLog('⚙️ Using JavaScript fallback engine...', 'info');
+        result = await runSushiWithJavaScript(config, files);
+      }
+      
+      // End performance monitoring
+      const duration = performanceMonitor.endTiming('sushi-compilation', useWasm ? 'wasm' : 'js');
+      addLog(`⏱️ Compilation completed in ${duration.toFixed(2)}ms using ${mode}`, 'success');
+      
+      return result;
+      
+    } catch (err) {
+      addLog(`❌ Compilation failed: ${err.message}`, 'error');
+      
+      // If WASM failed, try JavaScript fallback
+      if (executionMode === 'auto' && wasmSupported) {
+        addLog('🔄 Attempting JavaScript fallback...', 'info');
+        try {
+          return await runSushiWithJavaScript(config, files);
+        } catch (fallbackErr) {
+          addLog(`❌ JavaScript fallback also failed: ${fallbackErr.message}`, 'error');
+          throw fallbackErr;
+        }
+      }
+      
+      throw err;
+    }
+  };
+
+  const runSushiWithWasm = async (config, files) => {
+    try {
+      addLog('📦 Preparing WebAssembly execution environment...', 'info');
+      
+      // Use the WASM service
+      const result = await sushiWasmService.runSushi(config, files);
+      
+      if (result.success) {
+        addLog(`✅ WebAssembly compilation successful`, 'success');
+        addLog(`📊 Generated ${result.files.length} FHIR resources`, 'success');
+        
+        // Convert WASM output to the expected format
+        const generatedResources = result.files.map(file => ({
+          type: file.resourceType,
+          filename: file.path,
+          content: file.content,
+          id: file.path.split('.')[0],
+          resourceType: file.resourceType
+        }));
+        
+        setGeneratedFiles(generatedResources);
+        
+        // Log any warnings
+        result.warnings.forEach(warning => {
+          addLog(`⚠️ ${warning}`, 'warning');
+        });
+        
+        return {
+          success: true,
+          resourceCount: result.files.length,
+          warnings: result.warnings,
+          errors: result.errors,
+          generatedFiles: generatedResources
+        };
+      } else {
+        // Log errors from WASM compilation
+        result.errors.forEach(error => {
+          addLog(`❌ ${error}`, 'error');
+        });
+        
+        throw new Error(`WASM compilation failed: ${result.errors.join(', ')}`);
+      }
+      
+    } catch (err) {
+      addLog(`💥 WebAssembly execution failed: ${err.message}`, 'error');
+      throw err;
+    }
+  };
+
+  const runSushiWithJavaScript = async (config, files) => {
+    try {
       addLog('🚀 Starting FHIR Shorthand compilation...', 'info');
       
-      // Note: Real SUSHI integration will be available via WebAssembly
-      addLog('ℹ️ Using built-in FSH processor (SUSHI WebAssembly integration planned)', 'info');
+      addLog('ℹ️ Using JavaScript FSH processor (Enhanced with WASM-compatible interface)', 'info');
       
       addLog('📦 Loading YAML processing library...', 'info');
       const yaml = await import('js-yaml');
@@ -1077,6 +1201,61 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
           </div>
 
           <div className="execution-options">
+            <div className="execution-mode-selector">
+              <h4>⚙️ Execution Mode</h4>
+              <div className="mode-options">
+                <label className="mode-option">
+                  <input 
+                    type="radio" 
+                    name="executionMode" 
+                    value="auto" 
+                    checked={executionMode === 'auto'}
+                    onChange={(e) => setExecutionMode(e.target.value)}
+                  />
+                  <span className="mode-label">
+                    🤖 Auto (WebAssembly when available)
+                    {wasmSupported && wasmInitialized && <span className="wasm-badge">WASM Ready</span>}
+                  </span>
+                </label>
+                
+                {wasmSupported && (
+                  <label className="mode-option">
+                    <input 
+                      type="radio" 
+                      name="executionMode" 
+                      value="wasm" 
+                      checked={executionMode === 'wasm'}
+                      onChange={(e) => setExecutionMode(e.target.value)}
+                      disabled={!wasmInitialized}
+                    />
+                    <span className="mode-label">
+                      🚀 WebAssembly (High Performance)
+                      {!wasmInitialized && <span className="loading-badge">Initializing...</span>}
+                    </span>
+                  </label>
+                )}
+                
+                <label className="mode-option">
+                  <input 
+                    type="radio" 
+                    name="executionMode" 
+                    value="javascript" 
+                    checked={executionMode === 'javascript'}
+                    onChange={(e) => setExecutionMode(e.target.value)}
+                  />
+                  <span className="mode-label">
+                    ⚙️ JavaScript (Fallback)
+                  </span>
+                </label>
+              </div>
+              
+              {!wasmSupported && (
+                <div className="wasm-not-supported">
+                  <p>⚠️ WebAssembly is not supported in this browser. JavaScript fallback will be used.</p>
+                </div>
+              )}
+            </div>
+
             <div className="option-group">
               <h4>📂 Repository Files Only</h4>
               <p>
@@ -1110,6 +1289,12 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
           </div>
 
           <div className="sushi-status">
+            <div className="status-item">
+              <span className="label">Execution:</span>
+              <span className="value">
+                {wasmSupported && wasmInitialized ? '🚀 WebAssembly Ready' : '⚙️ JavaScript'}
+              </span>
+            </div>
             <div className="status-item">
               <span className="label">Config:</span>
               <span className="value">{sushiConfig ? '✅ Found' : '❓ Unknown'}</span>
