@@ -25,13 +25,13 @@ Following these guidelines will help us code together better:
 For issues that need to be fixed on branches other than `main`, use this naming convention:
 
 ### Branch Naming Pattern
-- **For main branch fixes**: `copilot/fix-{issue_number}`
-- **For other branch fixes**: `copilot/{target_branch}-fix-{issue_number}`
+- **For main branch fixes**: `copilot-fix-{issue_number}`
+- **For other branch fixes**: `copilot-{target_branch}-fix-{issue_number}`
 
 ### Examples
-- Fix issue #607 on main: `copilot/fix-607`
-- Fix issue #607 on deploy branch: `copilot/deploy-fix-607`
-- Fix issue #123 on feature/new-ui: `copilot/feature-new-ui-fix-123`
+- Fix issue #607 on main: `copilot-fix-607`
+- Fix issue #607 on deploy branch: `copilot-deploy-fix-607`
+- Fix issue #123 on feature/new-ui: `copilot-feature-new-ui-fix-123`
 
 ### Implementation Process
 1. **Create feature branch** from the target branch (not main)

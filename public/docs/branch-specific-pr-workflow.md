@@ -17,16 +17,16 @@ When issues arise in these non-main branches, we need a structured approach to c
 
 ### Pattern
 ```
-copilot/{target_branch}-fix-{issue_number}
+copilot-{target_branch}-fix-{issue_number}
 ```
 
 ### Examples
 | Target Branch | Issue Number | PR Branch Name |
 |---------------|--------------|----------------|
-| `main` | 607 | `copilot/fix-607` |
-| `deploy` | 607 | `copilot/deploy-fix-607` |
-| `feature/new-ui` | 123 | `copilot/feature-new-ui-fix-123` |
-| `release/v2.0` | 456 | `copilot/release-v2.0-fix-456` |
+| `main` | 607 | `copilot-fix-607` |
+| `deploy` | 607 | `copilot-deploy-fix-607` |
+| `feature/new-ui` | 123 | `copilot-feature-new-ui-fix-123` |
+| `release/v2.0` | 456 | `copilot-release-v2.0-fix-456` |
 
 ## Workflow Process
 
@@ -41,10 +41,10 @@ copilot/{target_branch}-fix-{issue_number}
 git fetch origin
 
 # Create feature branch from target branch (not main)
-git checkout -b copilot/{target_branch}-fix-{issue_number} origin/{target_branch}
+git checkout -b copilot-{target_branch}-fix-{issue_number} origin/{target_branch}
 
 # Example: Fix issue #607 in deploy branch
-git checkout -b copilot/deploy-fix-607 origin/deploy
+git checkout -b copilot-deploy-fix-607 origin/deploy
 ```
 
 ### 3. Making Changes
