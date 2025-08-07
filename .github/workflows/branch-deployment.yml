@@ -415,9 +415,15 @@ jobs:
                 '**Deployed:** ' + deployedAt + '\n\n' +
                 '### 🌐 Preview URL\n' +
                 '<a href="' + branchUrl + '" target="' + targetName + '">**➡️ View Branch Preview**</a> ⬅️\n\n' +
-                '### 🔄 Actions\n' +
-                '- 📄 [View Build Logs](' + workflowUrl + ') - See deployment details\n' +
-                '- 🔄 [Restart Build](' + restartUrl + ') - Click "Run workflow" and enter branch: `' + branchName + '`\n\n' +
+                '### 🔄 Deployment Actions\n' +
+                '**Need to redeploy after updates?** → [**🚀 Click here to redeploy this branch**](' + restartUrl + ') ← \n\n' +
+                '**Instructions for redeployment:**\n' +
+                '1. Click the redeploy link above\n' +
+                '2. Click "Run workflow" button  \n' +
+                '3. Enter branch name: `' + branchName + '`\n' +
+                '4. Click "Run workflow" to confirm\n\n' +
+                '**Other actions:**\n' +
+                '- 📄 [View Build Logs](' + workflowUrl + ') - See deployment details\n\n' +
                 '---\n' +
                 '💡 *This branch preview was deployed successfully and will remain until the next deployment.*\n\n' +
                 '_Note: This deployment only updates the branch subdirectory and does not affect the landing page._';
