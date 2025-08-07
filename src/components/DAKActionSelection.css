@@ -282,11 +282,16 @@ body.theme-light .dak-action-selection {
   }
 
   .actions-grid {
-    grid-template-columns: 1fr;
+    flex-wrap: wrap;
+    flex-direction: column;
+    overflow-x: visible;
     gap: 1.5rem;
   }
 
   .action-card {
+    flex: 1 1 auto;
+    min-width: auto;
+    max-width: 100%;
     padding: 1.5rem;
   }
 
