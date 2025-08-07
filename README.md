@@ -162,6 +162,28 @@ For more detailed troubleshooting guidance, see [TROUBLESHOOTING.md](TROUBLESHOO
 
 For more information about contributing, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Security
+
+### Automated Security Reviews
+
+This repository uses **automated security reviews powered by Claude AI** to analyze code changes for potential security vulnerabilities. The security review system:
+
+- Automatically analyzes pull requests for security issues
+- Provides actionable feedback and recommendations
+- Focuses on common vulnerability patterns and best practices
+- Integrates seamlessly with the existing CI/CD pipeline
+
+For detailed information about the security review system, see [Automated Security Reviews Documentation](docs/automated-security-reviews.md).
+
+### Security Best Practices
+
+Contributors should follow security best practices:
+- Never commit secrets, API keys, or sensitive data
+- Validate and sanitize all user inputs
+- Use parameterized queries to prevent injection attacks
+- Implement proper authentication and authorization checks
+- Regularly update dependencies to patch security vulnerabilities
+
 ## WHO SMART Guidelines DAK Components
 
 The SGEX Workbench supports editing of the **9 core Digital Adaptation Kit (DAK) components** as defined by the WHO SMART Guidelines framework. These components are organized according to the official DAK authoring sequence:

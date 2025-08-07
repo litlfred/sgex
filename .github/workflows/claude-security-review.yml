@@ -1,0 +1,230 @@
+name: Claude Security Review
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  security-review:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for proper diff analysis
+
+    - name: Get changed files
+      id: changed-files
+      run: |
+        # Get list of changed files in this PR
+        git diff --name-only origin/${{ github.base_ref }}..HEAD > changed_files.txt
+        
+        # Filter for relevant file types (JavaScript, TypeScript, config files)
+        grep -E '\.(js|jsx|ts|tsx|json|yml|yaml)$' changed_files.txt > security_review_files.txt || true
+        
+        # Check if there are files to review
+        if [ -s security_review_files.txt ]; then
+          echo "has_files=true" >> $GITHUB_OUTPUT
+          echo "Files to review:"
+          cat security_review_files.txt
+        else
+          echo "has_files=false" >> $GITHUB_OUTPUT
+          echo "No relevant files found for security review"
+        fi
+
+    - name: Get file diffs for security analysis
+      if: steps.changed-files.outputs.has_files == 'true'
+      id: get-diffs
+      run: |
+        # Create a comprehensive diff for security analysis
+        echo "## Code Changes for Security Review" > security_analysis.md
+        echo "" >> security_analysis.md
+        
+        while IFS= read -r file; do
+          if [ -f "$file" ]; then
+            echo "### $file" >> security_analysis.md
+            echo '```diff' >> security_analysis.md
+            git diff origin/${{ github.base_ref }}..HEAD -- "$file" >> security_analysis.md
+            echo '```' >> security_analysis.md
+            echo "" >> security_analysis.md
+          fi
+        done < security_review_files.txt
+        
+        # Store the analysis content for the next step
+        echo "diff_content_file=security_analysis.md" >> $GITHUB_OUTPUT
+
+    - name: Claude Security Analysis
+      if: steps.changed-files.outputs.has_files == 'true'
+      id: claude-analysis
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: |
+        # Check if API key is available
+        if [ -z "$ANTHROPIC_API_KEY" ]; then
+          echo "analysis_result=❌ **Claude API Key Not Configured**" >> $GITHUB_OUTPUT
+          echo "analysis_status=missing_key" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        # Create the security analysis prompt
+        cat > security_prompt.json << 'EOF'
+        {
+          "model": "claude-3-sonnet-20240229",
+          "max_tokens": 4000,
+          "system": "You are a security expert reviewing code changes. Analyze the provided code diff for potential security vulnerabilities and provide actionable feedback. Focus on:\n\n1. Authentication and authorization issues\n2. Input validation vulnerabilities\n3. Cross-site scripting (XSS) risks\n4. SQL injection or command injection\n5. Secrets or sensitive data exposure\n6. Insecure API usage\n7. Dependencies with known vulnerabilities\n8. Configuration security issues\n\nProvide specific, actionable recommendations with line numbers when possible. Use a professional but helpful tone.",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please analyze the following code changes for security vulnerabilities:\n\n$(cat security_analysis.md)\n\nProvide a structured security review with:\n1. Summary of overall security posture\n2. Specific vulnerabilities found (if any)\n3. Recommendations for improvement\n4. Security best practices relevant to the changes\n\nFormat your response in markdown suitable for a GitHub PR comment."
+            }
+          ]
+        }
+        EOF
+        
+        # Make API call to Claude
+        response=$(curl -s -X POST "https://api.anthropic.com/v1/messages" \
+          -H "Content-Type: application/json" \
+          -H "x-api-key: $ANTHROPIC_API_KEY" \
+          -H "anthropic-version: 2023-06-01" \
+          -d @security_prompt.json)
+        
+        # Check if the API call was successful
+        if echo "$response" | grep -q '"error"'; then
+          echo "❌ **Claude API Error:** $(echo "$response" | jq -r '.error.message // "Unknown error"')" > claude_result.md
+          echo "analysis_status=api_error" >> $GITHUB_OUTPUT
+        else
+          # Extract the analysis content
+          echo "$response" | jq -r '.content[0].text' > claude_result.md
+          echo "analysis_status=success" >> $GITHUB_OUTPUT
+        fi
+        
+        # Set output for the comment
+        {
+          echo "analysis_result<<EOF"
+          cat claude_result.md
+          echo "EOF"
+        } >> $GITHUB_OUTPUT
+
+    - name: Comment on PR with security analysis
+      if: always() && (steps.changed-files.outputs.has_files == 'true' || steps.claude-analysis.outputs.analysis_status == 'missing_key')
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const analysisStatus = '${{ steps.claude-analysis.outputs.analysis_status }}';
+          const analysisResult = `${{ steps.claude-analysis.outputs.analysis_result }}`;
+          const hasFiles = '${{ steps.changed-files.outputs.has_files }}' === 'true';
+          
+          let commentBody;
+          
+          if (!hasFiles) {
+            commentBody = `## 🔒 Claude Security Review
+            
+            No relevant files were changed in this PR that require security review.
+            
+            **Files checked:** JavaScript, TypeScript, JSON, YAML configuration files
+            
+            ---
+            *Automated security review powered by Claude AI*`;
+          } else if (analysisStatus === 'missing_key') {
+            commentBody = `## 🔒 Claude Security Review
+            
+            ❌ **Configuration Required**
+            
+            The Claude API key is not configured. To enable automated security reviews:
+            
+            1. Go to repository Settings → Secrets and variables → Actions
+            2. Add a new secret named \`ANTHROPIC_API_KEY\`
+            3. Set the value to your Claude API key from https://console.anthropic.com/
+            
+            **Files that would be reviewed:**
+            $(cat security_review_files.txt || echo "No files found")
+            
+            ---
+            *Automated security review powered by Claude AI*`;
+          } else if (analysisStatus === 'api_error') {
+            commentBody = `## 🔒 Claude Security Review
+            
+            ${analysisResult}
+            
+            Please check the API key configuration and try again.
+            
+            ---
+            *Automated security review powered by Claude AI*`;
+          } else {
+            commentBody = `## 🔒 Claude Security Review
+            
+            ${analysisResult}
+            
+            ---
+            
+            ### 📋 Review Summary
+            - **Analysis Engine:** Claude 3 Sonnet
+            - **Files Analyzed:** $(wc -l < security_review_files.txt || echo "0") files
+            - **Review Type:** Automated security vulnerability detection
+            
+            ### 🔧 How to Address Findings
+            1. Review each identified issue carefully
+            2. Implement suggested security improvements
+            3. Test changes thoroughly
+            4. Re-run the security review after fixes
+            
+            ---
+            *Automated security review powered by Claude AI*`;
+          }
+          
+          // Get pull request number
+          const prNumber = context.payload.pull_request.number;
+          
+          // Find existing security review comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: prNumber,
+          });
+          
+          const existingComment = comments.find(comment => 
+            comment.body.includes('Claude Security Review')
+          );
+          
+          if (existingComment) {
+            // Update existing comment
+            console.log('Updating existing security review comment');
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: commentBody
+            });
+          } else {
+            // Create new comment
+            console.log('Creating new security review comment');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: commentBody
+            });
+          }
+
+    - name: Security Review Status Check
+      if: steps.changed-files.outputs.has_files == 'true' && steps.claude-analysis.outputs.analysis_status == 'success'
+      run: |
+        # Check if the analysis found any high-severity security issues
+        # This is a basic check - in practice, you might want more sophisticated parsing
+        analysis_result="${{ steps.claude-analysis.outputs.analysis_result }}"
+        
+        if echo "$analysis_result" | grep -qi "critical\|high.*severity\|vulnerability\|security.*issue"; then
+          echo "🔒 Security review completed with findings. Please review the analysis above."
+          echo "Note: This is an automated analysis. Human review is still recommended."
+          # Don't fail the build automatically - let humans decide
+          exit 0
+        else
+          echo "✅ Security review completed with no critical issues identified."
+          exit 0
+        fi
