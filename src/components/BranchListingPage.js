@@ -30,7 +30,7 @@ const BranchListingPage = () => {
     const mascotImage = useThemeImage('sgex-mascot.png');
 
     // GitHub authentication functions
-    const handleAuthSuccess = (token, octokitInstance) => {
+    const handleAuthSuccess = (token) => {
         setGithubToken(token);
         setIsAuthenticated(true);
         sessionStorage.setItem('github_token', token);
