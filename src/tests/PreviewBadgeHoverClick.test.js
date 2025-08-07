@@ -155,7 +155,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
     expect(expandedPanel).toBeInTheDocument();
   });
 
-  test('navigates to GitHub when clicking sticky badge', async () => {
+  test('collapses when clicking sticky badge', async () => {
     const mockPR = {
       number: 123,
       title: 'Test PR Title',
@@ -171,7 +171,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
     githubService.getPullRequestComments.mockResolvedValue([]);
     githubService.getPullRequestIssueComments.mockResolvedValue([]);
 
-    render(<PreviewBadge />);
+    const { container } = render(<PreviewBadge />);
 
     // Wait for initial load
     await waitFor(() => {
@@ -188,10 +188,25 @@ describe('PreviewBadge Hover and Click Behavior', () => {
       expect(screen.getByText('#123: Test PR Title')).toBeInTheDocument();
     });
 
-    // Second click should open GitHub
+    // Verify it's sticky and expanded
+    expect(badge).toHaveClass('sticky');
+    let expandedPanel = container.querySelector('.preview-badge-expanded');
+    expect(expandedPanel).toBeInTheDocument();
+
+    // Second click should collapse
     fireEvent.click(badge);
 
-    expect(window.open).toHaveBeenCalledWith('https://github.com/litlfred/sgex/pull/123', '_blank');
+    // Wait for collapse
+    await waitFor(() => {
+      expandedPanel = container.querySelector('.preview-badge-expanded');
+      expect(expandedPanel).not.toBeInTheDocument();
+    });
+
+    // Verify sticky class is removed
+    expect(badge).not.toHaveClass('sticky');
+
+    // Verify window.open was never called for GitHub navigation
+    expect(window.open).not.toHaveBeenCalled();
   });
 
   test('close button resets sticky state', async () => {
@@ -239,5 +254,45 @@ describe('PreviewBadge Hover and Click Behavior', () => {
 
     // Verify sticky class is removed
     expect(badge).not.toHaveClass('sticky');
+  });
+
+  test('GitHub navigation works through footer link', async () => {
+    const mockPR = {
+      number: 123,
+      title: 'Test PR Title',
+      state: 'open',
+      html_url: 'https://github.com/litlfred/sgex/pull/123',
+      user: { login: 'testuser' },
+      created_at: '2024-01-01T12:00:00Z',
+      body: 'Test PR description'
+    };
+
+    githubService.isAuth.mockReturnValue(true);
+    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestComments.mockResolvedValue([]);
+    githubService.getPullRequestIssueComments.mockResolvedValue([]);
+
+    render(<PreviewBadge />);
+
+    // Wait for initial load
+    await waitFor(() => {
+      expect(screen.getByText('Test PR Title')).toBeInTheDocument();
+    });
+
+    const badge = screen.getByText('Test PR Title').closest('.preview-badge');
+
+    // Click to make sticky and expand
+    fireEvent.click(badge);
+
+    // Wait for expansion
+    await waitFor(() => {
+      expect(screen.getByText('#123: Test PR Title')).toBeInTheDocument();
+    });
+
+    // Find and verify the GitHub footer link
+    const githubLink = screen.getByText('View on GitHub →');
+    expect(githubLink).toBeInTheDocument();
+    expect(githubLink.closest('a')).toHaveAttribute('href', 'https://github.com/litlfred/sgex/pull/123');
+    expect(githubLink.closest('a')).toHaveAttribute('target', '_blank');
   });
 });

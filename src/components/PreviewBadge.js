@@ -190,8 +190,9 @@ const PreviewBadge = () => {
     }
 
     if (isSticky) {
-      // If already sticky, navigate to PR on GitHub
-      window.open(prInfo.html_url, '_blank');
+      // If already sticky, collapse and remove sticky state
+      setIsSticky(false);
+      setIsExpanded(false);
     } else {
       // Make it sticky and ensure it's expanded
       setIsSticky(true);
@@ -269,7 +270,7 @@ const PreviewBadge = () => {
         onClick={handleBadgeClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        title={isSticky ? "Click to open PR in GitHub" : isExpanded ? "Click to keep expanded" : prInfo ? `Hover to preview, click to pin: ${prInfo.title}` : `Preview branch: ${branchInfo.name}`}
+        title={isSticky ? "Click to collapse" : isExpanded ? "Click to keep expanded" : prInfo ? `Hover to preview, click to pin: ${prInfo.title}` : `Preview branch: ${branchInfo.name}`}
       >
         <div className="badge-content">
           <span className="badge-label">Preview:</span>
