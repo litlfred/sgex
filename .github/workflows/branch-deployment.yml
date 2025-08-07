@@ -40,8 +40,8 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: "gh-pages-deployment"
-  cancel-in-progress: false
+  group: "branch-deployment-${{ github.event.inputs.branch || github.head_ref || github.ref_name }}"
+  cancel-in-progress: true
 
 jobs:
   deploy-branch:
@@ -329,14 +329,23 @@ jobs:
               retry_count=$((retry_count + 1))
               echo "Deployment attempt $retry_count of $max_retries"
               
-              # Always fetch latest state before attempting operations
+              # Always fetch latest state and rebase before attempting operations
               echo "Fetching latest gh-pages state..."
               git fetch origin gh-pages
               
-              # Check if we need to sync with remote
-              if ! git diff --quiet HEAD origin/gh-pages; then
-                echo "Local branch differs from remote, rebasing..."
-                git rebase origin/gh-pages
+              # Always rebase to ensure we have the latest state
+              echo "Rebasing with remote to incorporate any concurrent changes..."
+              if ! git rebase origin/gh-pages; then
+                echo "Rebase failed, checking if we can resolve automatically..."
+                # Check if the conflict is just in different directories (which should auto-resolve)
+                if git status --porcelain | grep -q "^UU"; then
+                  echo "Found merge conflicts that need manual resolution"
+                  git rebase --abort
+                  echo "Cannot automatically resolve conflicts - this shouldn't happen with separate directories"
+                  exit 1
+                else
+                  echo "Rebase completed with automatic resolution"
+                fi
               fi
               
               # Commit changes
