@@ -61,7 +61,7 @@ const QuestionnaireEditor = () => {
         setError(null);
         
         // Get all files from input/questionnaires directory
-        const files = await githubService.getRepositoryContents(
+        const files = await githubService.getDirectoryContents(
           repository.owner.login,
           repository.name,
           'input/questionnaires',
@@ -183,7 +183,7 @@ const QuestionnaireEditor = () => {
         setOriginalContent(content);
         
         // Refresh questionnaires list
-        const files = await githubService.getRepositoryContents(
+        const files = await githubService.getDirectoryContents(
           repository.owner.login,
           repository.name,
           'input/questionnaires',
