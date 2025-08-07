@@ -305,44 +305,102 @@ jobs:
           git add -A
           
           # Check if there are changes to commit
+          has_changes=false
           if git diff --cached --quiet; then
             if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
-              echo "No changes detected, but force deployment requested - creating empty commit"
-              git commit --allow-empty -m "🚀 Force deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
-              
-              - Force deployment requested by user
-              - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-              - Commit: ${{ github.sha }}"
+              echo "No changes detected, but force deployment requested - will create empty commit"
+              has_changes=true
             else
               echo "No changes to commit and force deployment not requested"
               exit 0
             fi
           else
-            echo "Committing changes..."
-            git commit -m "🚀 Deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
-            
-            - Updated branch preview for ${{ steps.branch_info.outputs.branch_name }}
-            - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-            - Commit: ${{ github.sha }}"
+            echo "Changes detected for commit"
+            has_changes=true
           fi
           
-          echo "Pushing to gh-pages..."
-          # Pull and merge any remote changes before pushing
-          git pull origin gh-pages --no-edit --strategy-option=ours || {
-            echo "Pull failed, trying to reset and force sync..."
-            git fetch origin gh-pages
-            git reset --hard origin/gh-pages
-            # Re-stage and commit our changes
-            git add -A
-            if ! git diff --cached --quiet; then
-              git commit -m "🚀 Deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
+          # Push with retry mechanism to handle concurrent deployments
+          if [[ "$has_changes" == "true" ]]; then
+            max_retries=3
+            retry_count=0
+            success=false
+            
+            while [[ $retry_count -lt $max_retries ]] && [[ "$success" == "false" ]]; do
+              retry_count=$((retry_count + 1))
+              echo "Attempt $retry_count of $max_retries"
               
-              - Updated branch preview for ${{ steps.branch_info.outputs.branch_name }}
-              - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-              - Commit: ${{ github.sha }}"
+              # Always fetch latest state before attempting commit/push
+              git fetch origin gh-pages
+              
+              # Check if we're behind remote
+              local_commit=$(git rev-parse HEAD)
+              remote_commit=$(git rev-parse origin/gh-pages)
+              
+              if [[ "$local_commit" != "$remote_commit" ]]; then
+                echo "Local branch is behind remote, syncing..."
+                
+                # Reset to remote state and re-apply our changes
+                git reset --hard origin/gh-pages
+                
+                # Verify our deployment directory still exists after reset
+                if [[ ! -d "$target_subdir" ]]; then
+                  echo "Target directory missing after reset, re-copying build..."
+                  mkdir -p "$target_subdir"
+                  cp -a build/. "$target_subdir/" 2>/dev/null || {
+                    echo "ERROR: Build directory not available for recovery"
+                    exit 1
+                  }
+                fi
+                
+                # Re-stage changes
+                git add -A
+              fi
+              
+              # Commit changes
+              if git diff --cached --quiet; then
+                if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
+                  echo "Creating empty commit for force deployment"
+                  git commit --allow-empty -m "🚀 Force deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
+                  
+                  - Force deployment requested by user
+                  - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+                  - Commit: ${{ github.sha }}
+                  - Retry: $retry_count/$max_retries"
+                else
+                  echo "No changes to commit after sync"
+                  success=true
+                  break
+                fi
+              else
+                echo "Committing changes..."
+                git commit -m "🚀 Deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
+                
+                - Updated branch preview for ${{ steps.branch_info.outputs.branch_name }}
+                - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+                - Commit: ${{ github.sha }}
+                - Retry: $retry_count/$max_retries"
+              fi
+              
+              # Try to push
+              echo "Pushing to gh-pages..."
+              if git push origin gh-pages; then
+                echo "✅ Push successful"
+                success=true
+              else
+                echo "⚠️  Push failed, will retry after delay..."
+                if [[ $retry_count -lt $max_retries ]]; then
+                  sleep_time=$((retry_count * 2))
+                  echo "Waiting ${sleep_time} seconds before retry..."
+                  sleep $sleep_time
+                fi
+              fi
+            done
+            
+            if [[ "$success" == "false" ]]; then
+              echo "❌ Failed to push after $max_retries attempts"
+              exit 1
             fi
-          }
-          git push origin gh-pages
+          fi
           
           echo "✅ Deployment completed successfully"
 
