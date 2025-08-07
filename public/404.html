@@ -15,14 +15,23 @@
       // Note: this 404.html file must be at least 512 bytes for it to work
       // with Internet Explorer (it is currently > 512 bytes)
 
-      // If you're creating a Project Pages site and NOT using a custom domain,
-      // then set pathSegmentsToKeep to 1 (enterprise users may need to set it to > 1).
-      // This way the code will only replace the route part and not the real directory.
-      // For example, for a repo at username.github.io/repo-name, "repo-name" should
-      // be preserved in the path, so if the pathname is "/repo-name/one/two", only
-      // "/one/two" should be replaced with "?/one/two".
+      // For GitHub Pages project sites, we need to handle both main branch and feature branch deployments:
+      // - Main branch: /sgex/dashboard/... (pathSegmentsToKeep = 1)
+      // - Feature branches: /sgex/branch-name/dashboard/... (pathSegmentsToKeep = 2)
+      // We'll dynamically detect this based on the pathname structure.
 
-      var pathSegmentsToKeep = 1;
+      var pathSegments = window.location.pathname.split('/').filter(Boolean);
+      var pathSegmentsToKeep = 1; // Default for main branch
+      
+      // If we have more than 2 segments and the second segment doesn't look like a known route,
+      // assume it's a feature branch deployment
+      if (pathSegments.length > 2) {
+        var secondSegment = pathSegments[1];
+        var knownRoutes = ['dashboard', 'asset-viewer', 'component-editor', 'diff', 'visual-editor'];
+        if (!knownRoutes.includes(secondSegment)) {
+          pathSegmentsToKeep = 2; // Feature branch deployment
+        }
+      }
 
       var l = window.location;
       l.replace(
