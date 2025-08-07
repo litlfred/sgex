@@ -339,6 +339,116 @@ class HelpContentService {
           ]
         }
       ],
+      'questionnaire-editor': [
+        {
+          id: 'using-questionnaire-editor',
+          title: 'Using the FHIR Questionnaire Editor',
+          badge: '/sgex/cat-paw-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'FHIR Questionnaire Overview',
+              content: `
+                <p>The FHIR Questionnaire editor helps you create and modify structured data collection forms:</p>
+                <ul>
+                  <li><strong>Visual Editor:</strong> Uses LHC-Forms for intuitive questionnaire design</li>
+                  <li><strong>FHIR Compliant:</strong> Generates standard FHIR R4 Questionnaire resources</li>
+                  <li><strong>Multilingual:</strong> Support for multiple languages and translations</li>
+                  <li><strong>Preview Mode:</strong> Test questionnaires as they would appear to users</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>📋 File Location:</strong> Questionnaires are stored in <code>input/questionnaires/*.json</code>
+                </div>
+              `
+            },
+            {
+              title: 'Creating New Questionnaires',
+              content: `
+                <p>To create a new FHIR Questionnaire:</p>
+                <ol>
+                  <li>Click "Create New Questionnaire" on the main screen</li>
+                  <li>A template questionnaire will be loaded in the editor</li>
+                  <li>Modify the questionnaire structure using the visual interface</li>
+                  <li>Add questions, sections, and response options</li>
+                  <li>Set validation rules and conditional logic</li>
+                </ol>
+                <div class="help-warning">
+                  <strong>⚠️ Remember:</strong> Save your work regularly using "Save to Staging" or "Commit to GitHub"
+                </div>
+              `
+            },
+            {
+              title: 'Editing Existing Questionnaires',
+              content: `
+                <p>To modify existing questionnaires:</p>
+                <ol>
+                  <li>Select a questionnaire from the list</li>
+                  <li>The questionnaire will load in the LHC-Forms editor</li>
+                  <li>Make your changes using the visual interface</li>
+                  <li>Preview the form to test user experience</li>
+                  <li>Save changes when satisfied</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>💡 Tip:</strong> Use the staging framework to test changes before committing to GitHub
+                </div>
+              `
+            },
+            {
+              title: 'Internationalization Support',
+              content: `
+                <p>The questionnaire editor supports multiple languages:</p>
+                <ul>
+                  <li><strong>Language Selection:</strong> Use the language dropdown to switch between languages</li>
+                  <li><strong>Translations:</strong> Add translations for all text fields</li>
+                  <li><strong>FHIR Extensions:</strong> Uses standard FHIR translation extensions</li>
+                  <li><strong>Preview:</strong> Test questionnaires in different languages</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🌍 Best Practice:</strong> Always provide translations for your target implementation languages
+                </div>
+              `
+            }
+          ]
+        },
+        {
+          id: 'questionnaire-management',
+          title: 'Managing Questionnaire Assets',
+          badge: '/sgex/cat-paw-file-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'File Organization',
+              content: `
+                <p>FHIR Questionnaires are organized as follows:</p>
+                <ul>
+                  <li><strong>Location:</strong> <code>input/questionnaires/</code> directory</li>
+                  <li><strong>Format:</strong> JSON files following FHIR R4 Questionnaire schema</li>
+                  <li><strong>Naming:</strong> Use descriptive names like <code>patient-registration.json</code></li>
+                  <li><strong>Validation:</strong> All files are validated against FHIR schema</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>📁 Convention:</strong> Use kebab-case filenames for consistency
+                </div>
+              `
+            },
+            {
+              title: 'Version Control Integration',
+              content: `
+                <p>The questionnaire editor integrates with GitHub for version control:</p>
+                <ul>
+                  <li><strong>Staging:</strong> Save changes locally before committing</li>
+                  <li><strong>Commits:</strong> Create meaningful commit messages</li>
+                  <li><strong>Branches:</strong> Work on different branches for features</li>
+                  <li><strong>History:</strong> Track changes and revert if needed</li>
+                </ul>
+                <div class="help-warning">
+                  <strong>⚠️ Important:</strong> Always test questionnaires before committing to main branch
+                </div>
+              `
+            }
+          ]
+        }
+      ],
       'component-editor': [
         {
           id: 'component-editor-overview',

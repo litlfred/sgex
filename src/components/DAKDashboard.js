@@ -533,6 +533,13 @@ const DAKDashboardContent = () => {
               <span className="tab-icon">📚</span>
               <span className="tab-text">Publications</span>
             </button>
+            <button
+              className={`tab-button-fullwidth ${activeTab === 'other' ? 'active' : ''}`}
+              onClick={() => setActiveTab('other')}
+            >
+              <span className="tab-icon">🔧</span>
+              <span className="tab-text">Other DAK Components</span>
+            </button>
           </div>
 
           {/* 9 Core DAK Components Section */}
@@ -580,7 +587,66 @@ const DAKDashboardContent = () => {
             </div>
           )}
 
+          {/* Other DAK Components Section */}
+          {activeTab === 'other' && (
+            <div className="components-section other-components active">
+              <div className="section-header">
+                <h3 className="section-title">Other DAK Components</h3>
+                <p className="section-description">
+                  Additional specialized components for advanced DAK functionality and implementation
+                </p>
+              </div>
 
+              <div className="components-grid other-components">
+                <div 
+                  className="component-card l3"
+                  onClick={(event) => {
+                    const component = {
+                      id: 'questionnaire-editor',
+                      name: 'FHIR Questionnaires',
+                      description: 'Structured questionnaires and forms for data collection using FHIR standard'
+                    };
+                    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+                    const repoName = repository.name;
+                    const path = selectedBranch 
+                      ? `/questionnaire-editor/${owner}/${repoName}/${selectedBranch}`
+                      : `/questionnaire-editor/${owner}/${repoName}`;
+                    
+                    const navigationState = {
+                      profile,
+                      repository,
+                      component,
+                      selectedBranch
+                    };
+                    
+                    handleNavigationClick(event, path, navigate, navigationState);
+                  }}
+                  style={{ '--component-color': '#17a2b8' }}
+                >
+                  <div className="component-header">
+                    <div className="component-icon" style={{ color: '#17a2b8' }}>
+                      📋
+                    </div>
+                  </div>
+                  
+                  <div className="component-content">
+                    <h4>FHIR Questionnaires</h4>
+                    <p>Structured questionnaires and forms for data collection using FHIR Questionnaire standard</p>
+                    
+                    <div className="component-meta">
+                      <div className="file-types">
+                        <span className="file-type-tag">JSON</span>
+                        <span className="file-type-tag">FHIR</span>
+                      </div>
+                      <div className="file-count">
+                        questionnaires/
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Publications Section */}
           {activeTab === 'publications' && (
