@@ -718,6 +718,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
     
     let lastIndex = 0;
     const elements = [];
+    let elementCounter = 0; // Add counter for unique keys
     
     matches.forEach((match, index) => {
       const fullMatch = match[0];
@@ -727,7 +728,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
       // Add text before the match
       if (matchIndex > lastIndex) {
         elements.push(
-          <span key={`${logId}-text-${index}`}>
+          <span key={`${logId}-text-${elementCounter++}`}>
             {message.substring(lastIndex, matchIndex)}
           </span>
         );
@@ -737,14 +738,14 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
       const leadingWhitespace = fullMatch.substring(0, fullMatch.indexOf(filePath));
       if (leadingWhitespace) {
         elements.push(
-          <span key={`${logId}-ws-${index}`}>
+          <span key={`${logId}-ws-${elementCounter++}`}>
             {leadingWhitespace}
           </span>
         );
       }
       
       // Determine link type based on file location and validate the file exists
-      const createFileLink = (path, text) => {
+      const createFileLink = (path, text, keyIndex) => {
         // Check if file exists in our known file lists to avoid creating invalid links
         const isKnownRepoFile = fshFiles.some(f => f.path === path);
         const isFromStaging = stagingFiles.some(f => f.path && (f.path === path || f.path.endsWith(`/${path.split('/').pop()}`)));
@@ -754,7 +755,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
         if (!isKnownRepoFile && !isFromStaging && !isSushiConfig) {
           // File not found in our known files, return as plain text
           return (
-            <span key={`${logId}-text-${index}`} className="file-mention">
+            <span key={`${logId}-text-${keyIndex}`} className="file-mention">
               {text}
             </span>
           );
@@ -763,7 +764,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
         if (isFromStaging) {
           // Link to staging ground
           return (
-            <span key={`${logId}-link-${index}`} className="file-link staging-link" title="File from Staging Ground">
+            <span key={`${logId}-staging-${keyIndex}`} className="file-link staging-link" title="File from Staging Ground">
               📝 {text}
             </span>
           );
@@ -793,7 +794,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
           
           const dakInfo = getDakComponentLink(path);
           return (
-            <span key={`${logId}-link-${index}`} className="file-link dak-link" title={`View in DAK ${dakInfo.component}`}>
+            <span key={`${logId}-dak-${keyIndex}`} className="file-link dak-link" title={`View in DAK ${dakInfo.component}`}>
               {dakInfo.icon} {text}
             </span>
           );
@@ -802,7 +803,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
           const githubUrl = `https://github.com/${owner}/${repoName}/blob/${selectedBranch}/${path}`;
           return (
             <a 
-              key={`${logId}-link-${index}`}
+              key={`${logId}-github-${keyIndex}`}
               href={githubUrl} 
               target="_blank" 
               rel="noopener noreferrer" 
@@ -815,14 +816,14 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
         }
       };
       
-      elements.push(createFileLink(filePath, filePath));
+      elements.push(createFileLink(filePath, filePath, elementCounter++));
       lastIndex = matchIndex + fullMatch.length;
     });
     
     // Add remaining text
     if (lastIndex < message.length) {
       elements.push(
-        <span key={`${logId}-text-end`}>
+        <span key={`${logId}-text-end-${elementCounter++}`}>
           {message.substring(lastIndex)}
         </span>
       );
