@@ -15,35 +15,57 @@
       // Note: this 404.html file must be at least 512 bytes for it to work
       // with Internet Explorer (it is currently > 512 bytes)
 
-      // For GitHub Pages project sites, we need to handle both main branch and feature branch deployments:
-      // - Main branch: /sgex/dashboard/... (pathSegmentsToKeep = 1)
-      // - Feature branches: /sgex/branch-name/dashboard/... (pathSegmentsToKeep = 2)
-      // We'll dynamically detect this based on the pathname structure.
-
-      var pathSegments = window.location.pathname.split('/').filter(Boolean);
-      var pathSegmentsToKeep = 1; // Default for main branch
+      // GitHub Pages SPA routing for SGEX deployments
+      // Handles multiple deployment scenarios:
+      // 1. Landing page: /sgex/ (from deploy branch)
+      // 2. Main branch: /sgex/main/dashboard/... 
+      // 3. Feature branches: /sgex/branch-name/dashboard/...
       
-      // If we have more than 2 segments and the second segment doesn't look like a known route,
-      // assume it's a feature branch deployment
-      if (pathSegments.length > 2) {
+      var l = window.location;
+      var pathSegments = l.pathname.split('/').filter(Boolean);
+      
+      // Default assumption: this is a root deployment (/sgex/)
+      var pathSegmentsToKeep = 1;
+      
+      // Detect deployment type based on URL structure
+      if (pathSegments.length >= 2) {
         var secondSegment = pathSegments[1];
         var knownRoutes = ['dashboard', 'asset-viewer', 'component-editor', 'diff', 'visual-editor'];
-        if (!knownRoutes.includes(secondSegment)) {
-          pathSegmentsToKeep = 2; // Feature branch deployment
+        
+        // If second segment is "main" or not a known route, it's a branch deployment
+        if (secondSegment === 'main' || !knownRoutes.includes(secondSegment)) {
+          pathSegmentsToKeep = 2; // Branch deployment: /sgex/main/ or /sgex/branch-name/
         }
+        // Otherwise, it's a direct route like /sgex/dashboard/, keep 1 segment
       }
-
-      var l = window.location;
-      l.replace(
-        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
-        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+      
+      // Perform the SPA redirect
+      var redirectPath = l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/';
+      var routePath = l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/');
+      
+      // Build the new URL with encoded route
+      var newUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        redirectPath + '?/' + routePath.replace(/&/g, '~and~') +
         (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-        l.hash
-      );
+        l.hash;
+      
+      // Debug logging for development (remove in production if needed)
+      console.log('SPA Routing Debug:', {
+        originalPath: l.pathname,
+        pathSegments: pathSegments,
+        pathSegmentsToKeep: pathSegmentsToKeep,
+        redirectPath: redirectPath,
+        routePath: routePath,
+        newUrl: newUrl
+      });
+      
+      l.replace(newUrl);
 
     </script>
   </head>
   <body>
+    <!-- This 404.html handles SPA routing for GitHub Pages -->
+    <!-- It needs to be at the root of gh-pages to work properly -->
+    <!-- Feature branch builds include this file but GitHub Pages ignores them -->
   </body>
 </html>

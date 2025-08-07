@@ -31,9 +31,16 @@
           var decoded = l.search.slice(1).split('&').map(function(s) { 
             return s.replace(/~and~/g, '&')
           }).join('?');
-          window.history.replaceState(null, null,
-              l.pathname.slice(0, -1) + decoded + l.hash
-          );
+          var restoredPath = l.pathname.slice(0, -1) + decoded + l.hash;
+          
+          // Debug logging for development
+          console.log('SPA Route Restoration:', {
+            originalSearch: l.search,
+            decoded: decoded,
+            restoredPath: restoredPath
+          });
+          
+          window.history.replaceState(null, null, restoredPath);
         }
       }(window.location))
     </script>
