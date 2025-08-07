@@ -368,7 +368,21 @@ jobs:
           fi
           
           echo "Pushing to gh-pages..."
-          git fetch origin gh-pages
+          # Pull and merge any remote changes before pushing
+          git pull origin gh-pages --no-edit --strategy-option=ours || {
+            echo "Pull failed, trying to reset and force sync..."
+            git fetch origin gh-pages
+            git reset --hard origin/gh-pages
+            # Re-stage and commit our changes
+            git add -A
+            if ! git diff --cached --quiet; then
+              git commit -m "🚀 Deploy landing page
+              
+              - Updated landing page
+              - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+              - Commit: ${{ github.sha }}"
+            fi
+          }
           git push origin gh-pages
           
           echo "✅ Deployment completed successfully"
