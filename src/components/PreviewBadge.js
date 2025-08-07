@@ -74,9 +74,12 @@ const PreviewBadge = () => {
     };
 
     if (isExpanded) {
+      // Listen for both mouse and touch events to support mobile devices
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('touchstart', handleClickOutside);
       };
     }
   }, [isExpanded]);
@@ -157,7 +160,9 @@ const PreviewBadge = () => {
   };
 
   const handleBadgeClick = (event) => {
+    // Prevent event from bubbling up
     event.stopPropagation();
+    event.preventDefault();
     
     if (!prInfo) {
       // No PR info, just open GitHub repo

@@ -27,6 +27,12 @@
 
 .preview-badge.clickable {
   cursor: pointer;
+  /* Improve touch target for mobile devices */
+  -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .preview-badge.clickable:hover {
@@ -171,6 +177,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Improve touch target for mobile */
+  min-width: 44px;
+  min-height: 44px;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
 }
 
 .close-button:hover {
