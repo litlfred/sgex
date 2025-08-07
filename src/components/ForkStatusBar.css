@@ -75,6 +75,21 @@
   font-size: 0.9rem;
 }
 
+/* Parent Repository Link */
+.parent-repo-link {
+  color: var(--who-primary);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  position: relative;
+}
+
+.parent-repo-link:hover {
+  color: var(--who-primary-dark, #0056b3);
+  text-decoration: underline;
+}
+
 /* Toggle Button */
 .fork-toggle-btn {
   background: none;
@@ -110,6 +125,34 @@
   background: var(--who-primary-bg);
   max-height: 400px;
   overflow-y: auto;
+}
+
+/* Section Titles */
+.section-title {
+  margin: 0;
+  padding: 0.75rem 1rem 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--who-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--who-border-color);
+  background: var(--who-secondary-bg);
+}
+
+/* Parent Section */
+.parent-section {
+  background: rgba(var(--who-primary-rgb, 0, 123, 255), 0.05);
+}
+
+.parent-section .section-title {
+  background: rgba(var(--who-primary-rgb, 0, 123, 255), 0.1);
+  color: var(--who-primary);
+}
+
+/* Forks Section */
+.forks-section {
+  background: var(--who-primary-bg);
 }
 
 .fork-items {
@@ -157,6 +200,32 @@
   font-weight: 600;
   color: var(--who-text-primary);
   margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Parent Badge */
+.parent-badge {
+  background: var(--who-primary);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Parent Item Styling */
+.parent-item {
+  background: rgba(var(--who-primary-rgb, 0, 123, 255), 0.03);
+  border: 1px solid rgba(var(--who-primary-rgb, 0, 123, 255), 0.1);
+}
+
+.parent-item:hover {
+  background: rgba(var(--who-primary-rgb, 0, 123, 255), 0.08);
+  border-color: rgba(var(--who-primary-rgb, 0, 123, 255), 0.2);
 }
 
 .fork-description {
