@@ -70,35 +70,27 @@ const BranchListingPage = () => {
                     }
                 };
             } else {
-                // For unauthenticated requests, make a simple fetch with no auth
-                const headers = {
-                    'Accept': 'application/vnd.github.v3+json'
-                };
-                
-                const response = await fetch(
-                    `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-                    { headers }
-                );
-                
-                if (!response.ok) {
-                    console.warn(`Failed to fetch comments for PR ${prNumber}: ${response.status}`);
+                // For unauthenticated requests, use githubService which handles rate limiting gracefully
+                try {
+                    const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
+                    
+                    if (comments.length === 0) {
+                        return { count: 0, lastComment: null };
+                    }
+                    
+                    const lastComment = comments[comments.length - 1];
+                    return {
+                        count: comments.length,
+                        lastComment: {
+                            author: lastComment.user.login,
+                            created_at: new Date(lastComment.created_at),
+                            avatar_url: lastComment.user.avatar_url
+                        }
+                    };
+                } catch (error) {
+                    console.warn(`Failed to fetch comments for PR ${prNumber}: ${error.message}`);
                     return { count: 0, lastComment: null, error: true };
                 }
-                
-                const comments = await response.json();
-                if (comments.length === 0) {
-                    return { count: 0, lastComment: null };
-                }
-                
-                const lastComment = comments[comments.length - 1];
-                return {
-                    count: comments.length,
-                    lastComment: {
-                        author: lastComment.user.login,
-                        created_at: new Date(lastComment.created_at),
-                        avatar_url: lastComment.user.avatar_url
-                    }
-                };
             }
         } catch (error) {
             console.warn(`Error fetching comment summary for PR ${prNumber}:`, error);
@@ -120,29 +112,20 @@ const BranchListingPage = () => {
                     avatar_url: comment.user.avatar_url
                 }));
             } else {
-                // For unauthenticated requests, make a simple fetch with no auth
-                const headers = {
-                    'Accept': 'application/vnd.github.v3+json'
-                };
-                
-                const response = await fetch(
-                    `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-                    { headers }
-                );
-                
-                if (!response.ok) {
-                    console.warn(`Failed to fetch comments for PR ${prNumber}: ${response.status}`);
+                // For unauthenticated requests, use githubService which handles rate limiting gracefully
+                try {
+                    const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
+                    return comments.map(comment => ({
+                        id: comment.id,
+                        author: comment.user.login,
+                        body: comment.body,
+                        created_at: new Date(comment.created_at).toLocaleDateString(),
+                        avatar_url: comment.user.avatar_url
+                    }));
+                } catch (error) {
+                    console.warn(`Failed to fetch comments for PR ${prNumber}: ${error.message}`);
                     return [];
                 }
-                
-                const comments = await response.json();
-                return comments.map(comment => ({
-                    id: comment.id,
-                    author: comment.user.login,
-                    body: comment.body,
-                    created_at: new Date(comment.created_at).toLocaleDateString(),
-                    avatar_url: comment.user.avatar_url
-                }));
             }
         } catch (error) {
             console.warn(`Error fetching all comments for PR ${prNumber}:`, error);
@@ -279,36 +262,30 @@ const BranchListingPage = () => {
                     return { status: 'unknown', conclusion: null };
                 }
             } else {
-                // For unauthenticated requests, make a simple fetch with no auth
-                const response = await fetch(
-                    `https://api.github.com/repos/litlfred/sgex/actions/workflows/deploy.yml/runs?branch=${safeBranchName}&per_page=1`,
-                    {
-                        headers: {
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
+                // For unauthenticated requests, use githubService which handles rate limiting gracefully
+                try {
+                    const workflowRuns = await githubService.getWorkflowRuns('litlfred', 'sgex', {
+                        branch: safeBranchName,
+                        workflow_id: 'deploy.yml',
+                        per_page: 1
+                    });
+                    
+                    if (workflowRuns.workflow_runs && workflowRuns.workflow_runs.length > 0) {
+                        const latestRun = workflowRuns.workflow_runs[0];
+                        return {
+                            status: latestRun.status,
+                            conclusion: latestRun.conclusion,
+                            html_url: latestRun.html_url,
+                            created_at: latestRun.created_at
+                        };
                     }
-                );
-                
-                if (!response.ok) {
-                    if (response.status === 403) {
-                        // Rate limited - return unknown status instead of error
-                        return { status: 'unknown', conclusion: null };
-                    }
-                    throw new Error(`Failed to fetch deployment status: ${response.status}`);
+                    
+                    return { status: 'unknown', conclusion: null };
+                } catch (error) {
+                    console.warn(`Failed to fetch deployment status for ${safeBranchName}: ${error.message}`);
+                    // Rate limited - return unknown status instead of error
+                    return { status: 'unknown', conclusion: null };
                 }
-                
-                const data = await response.json();
-                if (data.workflow_runs && data.workflow_runs.length > 0) {
-                    const latestRun = data.workflow_runs[0];
-                    return {
-                        status: latestRun.status,
-                        conclusion: latestRun.conclusion,
-                        html_url: latestRun.html_url,
-                        created_at: latestRun.created_at
-                    };
-                }
-                
-                return { status: 'unknown', conclusion: null };
             }
         } catch (error) {
             console.warn(`Error checking deployment status for ${safeBranchName}:`, error);
