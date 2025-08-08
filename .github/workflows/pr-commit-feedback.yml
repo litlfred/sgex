@@ -249,11 +249,11 @@ jobs:
               <table>
               <tr>
               <td align="center">
-              <a href="${branchUrl}" target="${branchTargetName}"><img src="https://img.shields.io/badge/🌐_BRANCH_PREVIEW-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Branch Preview" /></a><br/>
+              <a href="${branchUrl}" target="_blank"><img src="https://img.shields.io/badge/🌐_BRANCH_PREVIEW-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Branch Preview" /></a><br/>
               <sub><b>Open branch preview</b></sub>
               </td>
               <td align="center">
-              <a href="${mainAppUrl}" target="${mainTargetName}"><img src="https://img.shields.io/badge/🏠_MAIN_APP-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Main App" /></a><br/>
+              <a href="${mainAppUrl}" target="_blank"><img src="https://img.shields.io/badge/🏠_MAIN_APP-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Main App" /></a><br/>
               <sub><b>Open main application</b></sub>
               </td>
               </tr>
