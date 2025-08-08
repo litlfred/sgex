@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { PageLayout, AssetEditorLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
@@ -265,7 +264,6 @@ const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
 };
 
 const QuestionnaireEditorContent = () => {
-  const navigate = useNavigate();
   const { repository, branch } = useDAKParams();
   
   // Component state
@@ -542,16 +540,6 @@ const QuestionnaireEditorContent = () => {
     }
   };
 
-  // Navigate back to dashboard
-  const handleBackToDashboard = () => {
-    if (repository && branch) {
-      navigate(`/dashboard/${repository.owner.login}/${repository.name}/${branch}`);
-    } else {
-      // Fallback to home page if repository context is not available
-      navigate('/');
-    }
-  };
-
   // Check if there are changes in the questionnaire
   const hasChanges = questionnaireContent && originalContent &&
     JSON.stringify(questionnaireContent, null, 2) !== originalContent;
@@ -592,26 +580,6 @@ const QuestionnaireEditorContent = () => {
       showSaveButtons={editing}
     >
       <div className="questionnaire-editor">
-        <div className="questionnaire-header">
-          <div className="header-content">
-            <div className="breadcrumb">
-              <button onClick={handleBackToDashboard} className="back-link">
-                ← {repository.name}
-              </button>
-              <span className="separator">/</span>
-              <span>Questionnaire Editor</span>
-              {branch && (
-                <>
-                  <span className="separator">/</span>
-                  <span className="branch">{branch}</span>
-                </>
-              )}
-            </div>
-            <h1>FHIR Questionnaire Editor</h1>
-            <p>Manage and edit FHIR Questionnaire assets for your DAK</p>
-          </div>
-        </div>
-
         <div className="questionnaire-content">
           {error && (
             <div className="error-message">
