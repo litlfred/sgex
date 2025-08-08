@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AssetEditorLayout, useDAKParams } from './framework';
+import { PageLayout, AssetEditorLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
 import './QuestionnaireEditor.css';
@@ -264,7 +264,7 @@ const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
   );
 };
 
-const QuestionnaireEditor = () => {
+const QuestionnaireEditorContent = () => {
   const navigate = useNavigate();
   const { repository, branch } = useDAKParams();
   
@@ -369,6 +369,16 @@ const QuestionnaireEditor = () => {
 
     loadQuestionnaires();
   }, [repository, branch]);
+
+  // Early return if PageProvider context is not ready
+  if (!repository || !branch) {
+    return (
+      <div className="questionnaire-editor-loading">
+        <div className="loading-spinner"></div>
+        <p>Initializing Questionnaire Editor...</p>
+      </div>
+    );
+  }
 
   // Load questionnaire content
   const loadQuestionnaireContent = async (questionnaire) => {
@@ -823,6 +833,14 @@ const QuestionnaireEditor = () => {
         />
       </div>
     </AssetEditorLayout>
+  );
+};
+
+const QuestionnaireEditor = () => {
+  return (
+    <PageLayout pageName="questionnaire-editor">
+      <QuestionnaireEditorContent />
+    </PageLayout>
   );
 };
 
