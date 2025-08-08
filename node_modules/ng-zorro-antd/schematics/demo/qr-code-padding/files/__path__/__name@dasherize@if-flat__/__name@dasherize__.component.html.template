@@ -1,4 +1,0 @@
-
-    <nz-qrcode [nzPadding]="12" nzValue="https://ng.ant.design/"></nz-qrcode>
-    <nz-qrcode [nzPadding]="[12, 24]" nzValue="https://ng.ant.design/"></nz-qrcode>
-  

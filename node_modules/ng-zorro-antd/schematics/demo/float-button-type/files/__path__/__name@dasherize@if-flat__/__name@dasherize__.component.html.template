@@ -1,9 +1,0 @@
-
-    <div class="type">
-      <nz-float-button nzType="primary" style="right: 24px" [nzIcon]="icon"></nz-float-button>
-      <nz-float-button nzType="default" style="right: 94px" [nzIcon]="icon"></nz-float-button>
-    </div>
-    <ng-template #icon>
-      <nz-icon nzType="question-circle" nzTheme="outline"></nz-icon>
-    </ng-template>
-  
