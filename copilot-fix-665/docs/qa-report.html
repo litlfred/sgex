@@ -174,7 +174,7 @@
             <div class="who-branding">
                 <h1>QA Testing Report</h1>
                 <p class="subtitle">SMART Guidelines Exchange (SGEX) Workbench - Quality Assurance Dashboard</p>
-                <p class="timestamp">Generated: 8/8/2025, 6:35:53 PM</p>
+                <p class="timestamp">Generated: 8/8/2025, 10:11:04 PM</p>
             </div>
         </div>
 
@@ -186,7 +186,15 @@
             
             <div style="background: rgba(255, 193, 7, 0.2); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
                 <h3 style="color: #ffc107; margin-top: 0;">⚠️ Tests Skipped</h3>
-                <p>Tests were skipped during QA report generation due to timeout or failures. This is expected in CI environments with failing tests.</p>
+                <p>Tests were skipped during QA report generation due to: Test execution failed or timed out.</p>
+                <p><strong>This is expected behavior in CI environments when tests fail or timeout.</strong></p>
+                <p>Common causes:</p>
+                <ul>
+                    <li>🔧 Import/dependency resolution issues</li>
+                    <li>⏰ Test timeouts (especially component tests)</li>
+                    <li>🧪 Logic errors in test assertions</li>
+                    <li>🚦 CI environment resource limitations</li>
+                </ul>
             </div>
             
             <div class="stats-grid">
