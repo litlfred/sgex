@@ -698,87 +698,34 @@ class GitHubService {
 
   // GitHub Actions API methods
   
-  // Get workflows for a repository (detailed version with file parsing)
+  // Get workflows for a repository (using GitHub API to include workflow IDs)
   async getWorkflows(owner, repo) {
     if (!this.isAuth()) {
       throw new Error('Not authenticated with GitHub');
     }
 
     try {
-      // First, try to get the .github/workflows directory
-      const { data } = await this.octokit.rest.repos.getContent({
+      // Use GitHub Actions API to get workflows with their IDs
+      const { data } = await this.octokit.rest.actions.listRepoWorkflows({
         owner,
-        repo,
-        path: '.github/workflows'
+        repo
       });
 
-      // Filter for YAML/YML files
-      const workflowFiles = Array.isArray(data) 
-        ? data.filter(file => file.name.endsWith('.yml') || file.name.endsWith('.yaml'))
-        : [];
-
-      // Fetch workflow details for each file
-      const workflows = await Promise.all(
-        workflowFiles.map(async (file) => {
-          try {
-            // Get file content to parse workflow name
-            const contentResponse = await this.octokit.rest.repos.getContent({
-              owner,
-              repo,
-              path: file.path
-            });
-
-            const content = decodeURIComponent(escape(atob(contentResponse.data.content)));
-            
-            // Parse workflow name from YAML (simple regex approach)
-            const nameMatch = content.match(/^name:\s*(.+)$/m);
-            const workflowName = nameMatch ? nameMatch[1].replace(/['"]/g, '') : file.name.replace(/\.(yml|yaml)$/, '');
-
-            // Parse triggers
-            const onMatch = content.match(/^on:\s*$/m);
-            let triggers = [];
-            if (onMatch) {
-              const pushMatch = content.match(/^\s*push:/m);
-              const prMatch = content.match(/^\s*pull_request:/m);
-              const scheduleMatch = content.match(/^\s*schedule:/m);
-              const workflowDispatchMatch = content.match(/^\s*workflow_dispatch:/m);
-              
-              if (pushMatch) triggers.push('push');
-              if (prMatch) triggers.push('pull_request');
-              if (scheduleMatch) triggers.push('schedule');
-              if (workflowDispatchMatch) triggers.push('manual');
-            }
-
-            return {
-              name: workflowName,
-              filename: file.name,
-              path: file.path,
-              size: file.size,
-              sha: file.sha,
-              url: file.html_url,
-              triggers: triggers.length > 0 ? triggers : ['push'], // default to push if we can't parse
-              lastModified: contentResponse.data.last_modified || 'Unknown'
-            };
-          } catch (error) {
-            console.warn(`Failed to fetch workflow details for ${file.name}:`, error);
-            return {
-              name: file.name.replace(/\.(yml|yaml)$/, ''),
-              filename: file.name,
-              path: file.path,
-              size: file.size,
-              sha: file.sha,
-              url: file.html_url,
-              triggers: ['unknown'],
-              lastModified: 'Unknown'
-            };
-          }
-        })
-      );
-
-      return workflows;
+      return data.workflows.map(workflow => ({
+        id: workflow.id, // This is the crucial missing piece!
+        name: workflow.name,
+        filename: workflow.path.split('/').pop(), // Extract filename from path
+        path: workflow.path,
+        state: workflow.state,
+        created_at: workflow.created_at,
+        updated_at: workflow.updated_at,
+        url: workflow.html_url,
+        triggers: ['unknown'], // GitHub API doesn't provide trigger info directly
+        lastModified: workflow.updated_at
+      }));
     } catch (error) {
       if (error.status === 404) {
-        // No .github/workflows directory exists
+        // No workflows or repository not found
         return [];
       }
       console.error('Failed to fetch workflows:', error);
@@ -1329,8 +1276,14 @@ class GitHubService {
     }
   }
 
-  // Get pull request for a specific branch
+  // Get pull request for a specific branch (returns first PR only for backward compatibility)
   async getPullRequestForBranch(owner, repo, branchName) {
+    const prs = await this.getPullRequestsForBranch(owner, repo, branchName);
+    return prs && prs.length > 0 ? prs[0] : null;
+  }
+
+  // Get all pull requests for a specific branch
+  async getPullRequestsForBranch(owner, repo, branchName) {
     if (!this.isAuth()) {
       throw new Error('Not authenticated with GitHub');
     }
@@ -1344,17 +1297,95 @@ class GitHubService {
         repo,
         state: 'open',
         head: `${owner}:${branchName}`,
-        per_page: 1
+        per_page: 100 // Get up to 100 PRs for a branch
       });
 
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, response.status, Date.now() - startTime);
       
-      // Return the first matching PR or null if none found
-      return response.data.length > 0 ? response.data[0] : null;
+      // Return all matching PRs or empty array if none found
+      return response.data || [];
     } catch (error) {
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, error.status || 'error', Date.now() - startTime);
-      console.error('Failed to fetch pull request for branch:', error);
-      return null; // Return null instead of throwing to allow graceful fallback
+      console.error('Failed to fetch pull requests for branch:', error);
+      return []; // Return empty array instead of throwing to allow graceful fallback
+    }
+  }
+
+  // Get pull request comments
+  async getPullRequestComments(owner, repo, pullNumber) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, {});
+
+    try {
+      const response = await this.octokit.rest.pulls.listReviewComments({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        per_page: 100
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, response.status, Date.now() - startTime);
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch pull request comments:', error);
+      throw error;
+    }
+  }
+
+  // Get pull request issue comments (general comments on the PR conversation)
+  async getPullRequestIssueComments(owner, repo, pullNumber) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, {});
+
+    try {
+      const response = await this.octokit.rest.issues.listComments({
+        owner,
+        repo,
+        issue_number: pullNumber,
+        per_page: 100
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, response.status, Date.now() - startTime);
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch pull request issue comments:', error);
+      throw error;
+    }
+  }
+
+  // Create a comment on a pull request
+  async createPullRequestComment(owner, repo, pullNumber, body) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('POST', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, { body });
+
+    try {
+      const response = await this.octokit.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number: pullNumber,
+        body
+      });
+
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, response.status, Date.now() - startTime);
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to create pull request comment:', error);
+      throw error;
     }
   }
 
@@ -1569,6 +1600,39 @@ class GitHubService {
     } catch (error) {
       // Service might not be available during testing
       sessionStorage.removeItem('sgex_branch_context');
+    }
+  }
+
+  // Get repository forks
+  async getRepositoryForks(owner, repo, options = {}) {
+    const startTime = Date.now();
+    this.logger.debug('Fetching repository forks', { owner, repo, options });
+
+    try {
+      // Create temporary Octokit instance for unauthenticated access if needed
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      this.logger.apiCall('GET', `/repos/${owner}/${repo}/forks`, options);
+      
+      const { data } = await octokit.rest.repos.listForks({
+        owner,
+        repo,
+        sort: 'newest', // Sort by newest first
+        per_page: options.per_page || 100,
+        page: options.page || 1
+      });
+
+      const duration = Date.now() - startTime;
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/forks`, 200, duration, { forkCount: data.length });
+      this.logger.performance('Repository forks fetch', duration);
+
+      return data;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.apiError('GET', `/repos/${owner}/${repo}/forks`, error);
+      this.logger.performance('Repository forks fetch (failed)', duration);
+      console.error(`Failed to fetch forks for ${owner}/${repo}:`, error);
+      throw error;
     }
   }
 }
