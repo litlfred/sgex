@@ -7,6 +7,12 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/dependency-security.yml'
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/dependency-security.yml'
 
 permissions:
   contents: read
@@ -141,14 +147,21 @@ jobs:
               `;
             }
             
-            // Get pull request number
+            // Get pull request number (only for PR events)
             const prNumber = context.payload.pull_request?.number || context.issue?.number;
             console.log('Event context:', {
               eventName: context.eventName,
               prNumber: prNumber,
               hasPullRequest: !!context.payload.pull_request,
-              hasIssue: !!context.issue
+              hasIssue: !!context.issue,
+              isPush: context.eventName === 'push'
             });
+            
+            // Skip commenting for push events (they don't have PRs to comment on)
+            if (context.eventName === 'push') {
+              console.log('Push event detected - skipping PR comment');
+              return;
+            }
             
             if (!prNumber) {
               console.log('No pull request number found, skipping comment');
