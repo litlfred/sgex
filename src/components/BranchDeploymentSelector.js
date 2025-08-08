@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { PageLayout } from './framework';
 import useThemeImage from '../hooks/useThemeImage';
+import BranchListingPage from './BranchListingPage';
 import './BranchDeploymentSelector.css';
 
-const BranchDeploymentSelector = () => {
+const BranchDeploymentSelector = ({ mode = 'deployment-selector' }) => {
   const [deployments, setDeployments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,6 +13,9 @@ const BranchDeploymentSelector = () => {
   const mascotImage = useThemeImage('sgex-mascot.png');
 
   useEffect(() => {
+    // Only fetch deployments if we're in deployment selector mode
+    if (mode !== 'deployment-selector') return;
+    
     const fetchDeployments = async () => {
       try {
         setLoading(true);
@@ -23,7 +27,7 @@ const BranchDeploymentSelector = () => {
             id: 'main',
             name: 'Main Application',
             branch: 'main',
-            url: '/sgex/',
+            url: './main/',
             description: 'Primary SGEX Workbench application with all features',
             status: 'active',
             lastUpdated: new Date().toISOString(),
@@ -33,7 +37,7 @@ const BranchDeploymentSelector = () => {
             id: 'feature-branch-1',
             name: 'Feature: Enhanced Editor',
             branch: 'feature/enhanced-editor',
-            url: '/sgex/feature-enhanced-editor/',
+            url: './feature-enhanced-editor/',
             description: 'Testing new enhanced component editor features',
             status: 'active',
             lastUpdated: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
@@ -43,7 +47,7 @@ const BranchDeploymentSelector = () => {
             id: 'feature-branch-2',
             name: 'Feature: Improved UI',
             branch: 'feature/improved-ui',
-            url: '/sgex/feature-improved-ui/',
+            url: './feature-improved-ui/',
             description: 'Updated user interface with improved accessibility',
             status: 'active',
             lastUpdated: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
@@ -61,7 +65,7 @@ const BranchDeploymentSelector = () => {
     };
 
     fetchDeployments();
-  }, []);
+  }, [mode]);
 
   const handleDeploymentSelect = (deployment) => {
     // Navigate to the deployment URL
@@ -82,6 +86,11 @@ const BranchDeploymentSelector = () => {
       return `Updated ${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
     }
   };
+
+  // If mode is 'branch-listing', use the full branch listing page
+  if (mode === 'branch-listing') {
+    return <BranchListingPage />;
+  }
 
   if (loading) {
     return (

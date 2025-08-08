@@ -164,17 +164,18 @@ For more information about contributing, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## WHO SMART Guidelines DAK Components
 
-The SGEX Workbench supports editing of the **8 core Digital Adaptation Kit (DAK) components** as defined by the WHO SMART Guidelines framework. These components are organized according to the official DAK authoring sequence:
+The SGEX Workbench supports editing of the **9 core Digital Adaptation Kit (DAK) components** as defined by the WHO SMART Guidelines framework. These components are organized according to the official DAK authoring sequence:
 
-### The 8 Core DAK Components
+### The 9 Core DAK Components
 1. **Health Interventions and Recommendations** - Clinical guidelines and health intervention specifications
 2. **Generic Personas** - Standardized user roles and actor definitions  
 3. **User Scenarios** - Narrative descriptions of user interactions with the system
 4. **Generic Business Processes and Workflows** - BPMN workflows and business process definitions
-5. **Core Data Elements** - Essential data structures and terminology for clinical data
+5. **Core Data Elements** - Essential data structures and terminology for clinical data (includes Terminology Services via OCL and Product Master Data via PCMT)
 6. **Decision-Support Logic** - DMN decision tables and clinical decision support
 7. **Program Indicators** - Performance indicators and measurement definitions
 8. **Functional and Non-Functional Requirements** - System requirements and specifications
+9. **Test Scenarios** - Feature files and test scenarios for validating the DAK implementation
 
 ### Additional Components
 The SGEX Workbench also supports additional structured knowledge representations including Terminology, FHIR Profiles, FHIR Extensions, FHIR Questionnaires, and Test Data & Examples.

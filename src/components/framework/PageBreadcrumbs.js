@@ -71,8 +71,8 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
     if (ownerLogin) {
       breadcrumbs.push({
         label: 'DAK Components',
-        path: `/sgex/dashboard/${ownerLogin}/${repository.name}${branchPath}`,
-        onClick: () => navigate(`/sgex/dashboard/${ownerLogin}/${repository.name}${branchPath}`)
+        path: `/dashboard/${ownerLogin}/${repository.name}${branchPath}`,
+        onClick: () => navigate(`/dashboard/${ownerLogin}/${repository.name}${branchPath}`)
       });
     }
   }
