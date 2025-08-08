@@ -2,10 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from './framework';
 import PATLogin from './PATLogin';
 import githubService from '../services/githubService';
-import secureTokenStorage from '../services/secureTokenStorage';
 import useThemeImage from '../hooks/useThemeImage';
 
 const BranchListingPage = () => {
+    // Track authentication status for dependency arrays
+    const isAuthenticatedForDeps = githubService.isAuth();
+    
     const [pullRequests, setPullRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -16,7 +18,6 @@ const BranchListingPage = () => {
     const [deploymentStatuses, setDeploymentStatuses] = useState({});
     const [prFilter, setPrFilter] = useState('open');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [githubToken, setGithubToken] = useState(null);
     const [prComments, setPrComments] = useState({});
     const [loadingComments] = useState(false); // Removed setLoadingComments as it's not used
     const [commentInputs, setCommentInputs] = useState({});
@@ -35,7 +36,6 @@ const BranchListingPage = () => {
         // Authenticate using githubService which will handle secure storage
         const success = githubService.authenticate(token);
         if (success) {
-            setGithubToken(token);
             setIsAuthenticated(true);
         }
     };
@@ -43,7 +43,6 @@ const BranchListingPage = () => {
 
     // Logout function
     const handleLogout = () => {
-        setGithubToken(null);
         setIsAuthenticated(false);
         githubService.logout(); // Use secure logout method
         setPrComments({});
@@ -53,39 +52,54 @@ const BranchListingPage = () => {
     // Function to fetch PR comments summary
     const fetchPRCommentsSummary = async (prNumber) => {
         try {
-            const headers = {
-                'Accept': 'application/vnd.github.v3+json'
-            };
-            
-            // Add auth header if available for better rate limits
-            if (githubToken) {
-                headers['Authorization'] = `token ${githubToken}`;
-            }
-            
-            const response = await fetch(
-                `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-                { headers }
-            );
-            
-            if (!response.ok) {
-                console.warn(`Failed to fetch comments for PR ${prNumber}: ${response.status}`);
-                return { count: 0, lastComment: null, error: true };
-            }
-            
-            const comments = await response.json();
-            if (comments.length === 0) {
-                return { count: 0, lastComment: null };
-            }
-            
-            const lastComment = comments[comments.length - 1];
-            return {
-                count: comments.length,
-                lastComment: {
-                    author: lastComment.user.login,
-                    created_at: new Date(lastComment.created_at),
-                    avatar_url: lastComment.user.avatar_url
+            // Use githubService if authenticated, otherwise make a public API call
+            if (githubService.isAuth()) {
+                const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
+                
+                if (comments.length === 0) {
+                    return { count: 0, lastComment: null };
                 }
-            };
+                
+                const lastComment = comments[comments.length - 1];
+                return {
+                    count: comments.length,
+                    lastComment: {
+                        author: lastComment.user.login,
+                        created_at: new Date(lastComment.created_at),
+                        avatar_url: lastComment.user.avatar_url
+                    }
+                };
+            } else {
+                // For unauthenticated requests, make a simple fetch with no auth
+                const headers = {
+                    'Accept': 'application/vnd.github.v3+json'
+                };
+                
+                const response = await fetch(
+                    `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
+                    { headers }
+                );
+                
+                if (!response.ok) {
+                    console.warn(`Failed to fetch comments for PR ${prNumber}: ${response.status}`);
+                    return { count: 0, lastComment: null, error: true };
+                }
+                
+                const comments = await response.json();
+                if (comments.length === 0) {
+                    return { count: 0, lastComment: null };
+                }
+                
+                const lastComment = comments[comments.length - 1];
+                return {
+                    count: comments.length,
+                    lastComment: {
+                        author: lastComment.user.login,
+                        created_at: new Date(lastComment.created_at),
+                        avatar_url: lastComment.user.avatar_url
+                    }
+                };
+            }
         } catch (error) {
             console.warn(`Error fetching comment summary for PR ${prNumber}:`, error);
             return { count: 0, lastComment: null, error: true };
@@ -95,33 +109,41 @@ const BranchListingPage = () => {
     // Function to fetch all PR comments (for expanded view)
     const fetchAllPRComments = async (prNumber) => {
         try {
-            const headers = {
-                'Accept': 'application/vnd.github.v3+json'
-            };
-            
-            // Add auth header if available for better rate limits
-            if (githubToken) {
-                headers['Authorization'] = `token ${githubToken}`;
+            // Use githubService if authenticated, otherwise make a public API call
+            if (githubService.isAuth()) {
+                const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
+                return comments.map(comment => ({
+                    id: comment.id,
+                    author: comment.user.login,
+                    body: comment.body,
+                    created_at: new Date(comment.created_at).toLocaleDateString(),
+                    avatar_url: comment.user.avatar_url
+                }));
+            } else {
+                // For unauthenticated requests, make a simple fetch with no auth
+                const headers = {
+                    'Accept': 'application/vnd.github.v3+json'
+                };
+                
+                const response = await fetch(
+                    `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
+                    { headers }
+                );
+                
+                if (!response.ok) {
+                    console.warn(`Failed to fetch comments for PR ${prNumber}: ${response.status}`);
+                    return [];
+                }
+                
+                const comments = await response.json();
+                return comments.map(comment => ({
+                    id: comment.id,
+                    author: comment.user.login,
+                    body: comment.body,
+                    created_at: new Date(comment.created_at).toLocaleDateString(),
+                    avatar_url: comment.user.avatar_url
+                }));
             }
-            
-            const response = await fetch(
-                `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-                { headers }
-            );
-            
-            if (!response.ok) {
-                console.warn(`Failed to fetch comments for PR ${prNumber}: ${response.status}`);
-                return [];
-            }
-            
-            const comments = await response.json();
-            return comments.map(comment => ({
-                id: comment.id,
-                author: comment.user.login,
-                body: comment.body,
-                created_at: new Date(comment.created_at).toLocaleDateString(),
-                avatar_url: comment.user.avatar_url
-            }));
         } catch (error) {
             console.warn(`Error fetching all comments for PR ${prNumber}:`, error);
             return [];
@@ -142,7 +164,7 @@ const BranchListingPage = () => {
         setDiscussionSummaries(summaries);
         setLoadingSummaries(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [githubToken]);
+    }, [isAuthenticatedForDeps]);
 
     // Function to toggle discussion expansion
     const toggleDiscussion = async (prNumber) => {
@@ -201,29 +223,12 @@ const BranchListingPage = () => {
 
     // Function to submit a comment
     const submitComment = async (prNumber, commentText) => {
-        if (!githubToken || !commentText.trim()) return false;
+        if (!githubService.isAuth() || !commentText.trim()) return false;
         
         setSubmittingComments(prev => ({ ...prev, [prNumber]: true }));
         
         try {
-            const response = await fetch(
-                `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `token ${githubToken}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        body: commentText
-                    })
-                }
-            );
-            
-            if (!response.ok) {
-                throw new Error(`Failed to submit comment: ${response.status}`);
-            }
+            await githubService.createPullRequestComment('litlfred', 'sgex', prNumber, commentText);
             
             setCommentInputs(prev => ({ ...prev, [prNumber]: '' }));
             
@@ -249,37 +254,65 @@ const BranchListingPage = () => {
     // Function to check deployment status for a branch
     const checkDeploymentStatus = async (safeBranchName) => {
         try {
-            const response = await fetch(
-                `https://api.github.com/repos/litlfred/sgex/actions/workflows/deploy.yml/runs?branch=${safeBranchName}&per_page=1`,
-                {
-                    headers: githubToken ? {
-                        'Authorization': `token ${githubToken}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    } : {
-                        'Accept': 'application/vnd.github.v3+json'
+            // Use githubService if authenticated, otherwise make a public API call
+            if (githubService.isAuth()) {
+                try {
+                    const workflowRuns = await githubService.getWorkflowRuns('litlfred', 'sgex', {
+                        branch: safeBranchName,
+                        workflow_id: 'deploy.yml',
+                        per_page: 1
+                    });
+                    
+                    if (workflowRuns.workflow_runs && workflowRuns.workflow_runs.length > 0) {
+                        const latestRun = workflowRuns.workflow_runs[0];
+                        return {
+                            status: latestRun.status,
+                            conclusion: latestRun.conclusion,
+                            html_url: latestRun.html_url,
+                            created_at: latestRun.created_at
+                        };
                     }
+                    
+                    return { status: 'unknown', conclusion: null };
+                } catch (authError) {
+                    console.warn(`Authenticated workflow check failed for ${safeBranchName}:`, authError);
+                    return { status: 'unknown', conclusion: null };
                 }
-            );
-            
-            if (!response.ok) {
-                throw new Error(`Failed to fetch deployment status: ${response.status}`);
+            } else {
+                // For unauthenticated requests, make a simple fetch with no auth
+                const response = await fetch(
+                    `https://api.github.com/repos/litlfred/sgex/actions/workflows/deploy.yml/runs?branch=${safeBranchName}&per_page=1`,
+                    {
+                        headers: {
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        // Rate limited - return unknown status instead of error
+                        return { status: 'unknown', conclusion: null };
+                    }
+                    throw new Error(`Failed to fetch deployment status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                if (data.workflow_runs && data.workflow_runs.length > 0) {
+                    const latestRun = data.workflow_runs[0];
+                    return {
+                        status: latestRun.status,
+                        conclusion: latestRun.conclusion,
+                        html_url: latestRun.html_url,
+                        created_at: latestRun.created_at
+                    };
+                }
+                
+                return { status: 'unknown', conclusion: null };
             }
-            
-            const data = await response.json();
-            if (data.workflow_runs && data.workflow_runs.length > 0) {
-                const latestRun = data.workflow_runs[0];
-                return {
-                    status: latestRun.status,
-                    conclusion: latestRun.conclusion,
-                    html_url: latestRun.html_url,
-                    created_at: latestRun.created_at
-                };
-            }
-            
-            return { status: 'unknown', conclusion: null };
         } catch (error) {
-            console.error(`Error checking deployment status for ${safeBranchName}:`, error);
-            return { status: 'error', conclusion: 'error' };
+            console.warn(`Error checking deployment status for ${safeBranchName}:`, error);
+            return { status: 'unknown', conclusion: null };
         }
     };
 
@@ -294,7 +327,7 @@ const BranchListingPage = () => {
         
         setDeploymentStatuses(prev => ({ ...prev, ...statuses }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [githubToken]);
+    }, [isAuthenticatedForDeps]);
 
     // Function to get deployment status display info
     const getDeploymentStatusInfo = (safeBranchName) => {
@@ -346,11 +379,7 @@ const BranchListingPage = () => {
         if (success) {
             const tokenInfo = githubService.getStoredTokenInfo();
             if (tokenInfo) {
-                const tokenData = secureTokenStorage.retrieveToken();
-                if (tokenData) {
-                    setGithubToken(tokenData.token);
-                    setIsAuthenticated(true);
-                }
+                setIsAuthenticated(true);
             }
         }
     }, []);
@@ -365,11 +394,13 @@ const BranchListingPage = () => {
                 const repo = 'sgex';
                 
                 const prState = prFilter === 'all' ? 'all' : prFilter;
-                const prResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls?state=${prState}&sort=updated&per_page=100`);
-                if (!prResponse.ok) {
-                    throw new Error(`Failed to fetch pull requests: ${prResponse.status}`);
-                }
-                const prData = await prResponse.json();
+                
+                // Use githubService instead of direct fetch to handle authentication properly
+                const prData = await githubService.getPullRequests(owner, repo, {
+                    state: prState,
+                    sort: 'updated', 
+                    per_page: 100
+                });
                 
                 const formattedPRs = prData.map(pr => {
                     const safeBranchName = pr.head.ref.replace(/\//g, '-');
@@ -436,7 +467,7 @@ const BranchListingPage = () => {
         };
 
         fetchData();
-    }, [prFilter, githubToken, loadDiscussionSummaries]);
+    }, [prFilter, isAuthenticatedForDeps, loadDiscussionSummaries]);
 
     // Poll deployment statuses every 7 seconds for visible PRs
     useEffect(() => {
@@ -705,7 +736,7 @@ const BranchListingPage = () => {
                                                 </div>
                                                 
                                                 {/* Comment Input at Top - Only for authenticated users */}
-                                                {isAuthenticated && (
+                                                {githubService.isAuth() && (
                                                     <div className="comment-input-section">
                                                         <textarea
                                                             value={commentInputs[pr.number] || ''}
@@ -755,7 +786,7 @@ const BranchListingPage = () => {
                                                         </div>
                                                     ) : (
                                                         <div className="no-comments">
-                                                            {!isAuthenticated ? 
+                                                            {!githubService.isAuth() ? 
                                                                 "No comments yet. Login to add the first comment!" :
                                                                 "No comments yet. Be the first to comment!"
                                                             }
