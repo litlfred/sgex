@@ -560,7 +560,7 @@ const BranchListingPage = () => {
                                 <div className="login-icon">✅</div>
                                 <h3>Logged In</h3>
                                 <p>You can now view and add comments</p>
-                                <button onClick={handleLogout} className="logout-btn">
+                                <button onClick={() => {/* TODO: Implement logout */}} className="logout-btn">
                                     🚪 Logout
                                 </button>
                             </div>
