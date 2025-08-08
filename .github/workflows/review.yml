@@ -1,0 +1,147 @@
+name: PR Review Deployment
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: read
+  actions: write
+  pull-requests: write
+
+jobs:
+  check-approval-and-deploy:
+    runs-on: ubuntu-latest
+    if: github.event.review.state == 'approved'
+    
+    steps:
+      - name: Get PR information
+        id: pr_info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const branchName = pr.head.ref;
+            const baseBranch = pr.base.ref;
+            
+            console.log(`PR #${pr.number}: ${branchName} -> ${baseBranch}`);
+            console.log(`Review state: ${context.payload.review.state}`);
+            
+            // Filter out branches that should not be deployed
+            const excludedBranches = ['gh-pages', 'deploy'];
+            if (excludedBranches.includes(branchName)) {
+              console.log(`Branch ${branchName} is excluded from automatic deployment`);
+              core.setOutput('should_deploy', 'false');
+              core.setOutput('reason', `Branch '${branchName}' is excluded from automatic deployment`);
+            } else {
+              console.log(`Branch ${branchName} is eligible for deployment`);
+              core.setOutput('should_deploy', 'true');
+              core.setOutput('branch_name', branchName);
+              core.setOutput('pr_number', pr.number);
+            }
+            
+            return {
+              shouldDeploy: excludedBranches.includes(branchName) ? false : true,
+              branchName: branchName,
+              prNumber: pr.number,
+              baseBranch: baseBranch
+            };
+
+      - name: Comment on PR with deployment option
+        if: steps.pr_info.outputs.should_deploy == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchName = '${{ steps.pr_info.outputs.branch_name }}';
+            const prNumber = '${{ steps.pr_info.outputs.pr_number }}';
+            const approvedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+            
+            // Check if deployment comment already exists
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const deploymentComment = comments.find(comment => 
+              comment.body.includes('🚀 Deploy Feature Branch') && 
+              comment.body.includes(`branch: ${branchName}`)
+            );
+            
+            const commentBody = `## 🚀 Deploy Feature Branch
+            
+            This PR has been **approved** and is ready for deployment!
+            
+            **Branch:** \`${branchName}\`
+            **Approved:** ${approvedAt}
+            **Action:** Click the button below to deploy this branch for preview
+            
+            ### 🚀 Deploy Now
+            
+            <table>
+            <tr>
+            <td align="center">
+            <a href="https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml?branch=${encodeURIComponent(branchName)}"><img src="https://img.shields.io/badge/🚀_DEPLOY_BRANCH-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Deploy Branch" /></a><br/>
+            <sub><b>Click to deploy this branch</b></sub>
+            </td>
+            </tr>
+            </table>
+            
+            ### 📋 Instructions
+            1. Click the "DEPLOY BRANCH" button above
+            2. Click "Run workflow" button
+            3. Branch name will be pre-filled: \`${branchName}\`
+            4. Confirm deployment
+            
+            **Preview will be available at:** \`https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/\`
+            
+            ---
+            
+            _This comment was updated on approval to provide fresh deployment access. The deployment is triggered manually for safety._`;
+            
+            if (deploymentComment) {
+              // Update existing deployment comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: deploymentComment.id,
+                body: commentBody
+              });
+              console.log(`✅ Updated existing deployment comment on PR #${prNumber}`);
+            } else {
+              // Create new deployment comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+              console.log(`✅ Created new deployment comment on PR #${prNumber}`);
+            }
+
+      - name: Comment on excluded branch
+        if: steps.pr_info.outputs.should_deploy == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchName = '${{ steps.pr_info.outputs.branch_name }}';
+            const prNumber = '${{ steps.pr_info.outputs.pr_number }}';
+            const reason = '${{ steps.pr_info.outputs.reason }}';
+            
+            const commentBody = `## ℹ️ Deployment Skipped
+            
+            This PR has been approved, but automatic deployment is not available for this branch.
+            
+            **Branch:** \`${branchName}\`
+            **Reason:** ${reason}
+            
+            Branches \`gh-pages\` and \`deploy\` are excluded from feature branch deployments as they have special purposes in the deployment pipeline.`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: commentBody
+            });
+            
+            console.log(`ℹ️ Posted exclusion comment on PR #${prNumber}`);

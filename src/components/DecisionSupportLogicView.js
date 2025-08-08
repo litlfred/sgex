@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import MDEditor from '@uiw/react-md-editor';
 import { PageLayout, useDAKParams } from './framework';
-import './DecisionSupportLogicView.css';
 
 const DecisionSupportLogicView = () => {
   return (

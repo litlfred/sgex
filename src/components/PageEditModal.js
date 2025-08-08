@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import MDEditor from '@uiw/react-md-editor';
 import stagingGroundService from '../services/stagingGroundService';
-import './PageEditModal.css';
 
 const PageEditModal = ({ page, onClose, onSave }) => {
   const [content, setContent] = useState(page?.content ? atob(page.content.content) : '');

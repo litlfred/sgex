@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import githubService from '../services/githubService';
-import './CommitsSlider.css';
 
 const CommitsSlider = ({ repository, selectedBranch }) => {
   const [commits, setCommits] = useState([]);

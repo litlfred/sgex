@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import useThemeImage from '../hooks/useThemeImage';
-import './CollaborationModal.css';
 
 const CollaborationModal = ({ onClose }) => {
   const [currentSlide, setCurrentSlide] = useState(0);

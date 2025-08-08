@@ -1,187 +1,100 @@
 /**
  * Branch Listing Cache Service
- * Manages caching of branch and PR preview data with 5-minute expiry
+ * Provides caching functionality for branch and pull request data
  */
 
-import logger from '../utils/logger';
-
 class BranchListingCacheService {
-  constructor() {
-    this.CACHE_KEY_PREFIX = 'sgex_branch_listing_cache_';
-    this.CACHE_EXPIRY_MINUTES = 5; // Cache expires after 5 minutes as per requirements
-    this.logger = logger.getLogger('BranchListingCacheService');
-    this.logger.debug('BranchListingCacheService initialized', { 
-      cacheExpiryMinutes: this.CACHE_EXPIRY_MINUTES 
-    });
-  }
-
-  /**
-   * Generate cache key for branch listing data
-   */
-  getCacheKey(owner, repo) {
-    return `${this.CACHE_KEY_PREFIX}${owner}_${repo}`;
-  }
-
-  /**
-   * Check if cached data is stale (older than 5 minutes)
-   */
-  isStale(timestamp) {
-    const now = Date.now();
-    const cacheAge = now - timestamp;
-    const maxAge = this.CACHE_EXPIRY_MINUTES * 60 * 1000; // 5 minutes in milliseconds
-    return cacheAge > maxAge;
-  }
-
-  /**
-   * Get cached branch listing data (branches and PRs)
-   * Returns null if cache doesn't exist or is stale
-   */
-  getCachedData(owner, repo) {
-    try {
-      const cacheKey = this.getCacheKey(owner, repo);
-      this.logger.cache('get', cacheKey);
-      
-      const cachedData = localStorage.getItem(cacheKey);
-      
-      if (!cachedData) {
-        this.logger.cache('miss', cacheKey, 'No cached data found');
-        return null;
-      }
-
-      const parsed = JSON.parse(cachedData);
-      
-      // Check if cache is stale
-      if (this.isStale(parsed.timestamp)) {
-        // Remove stale cache
-        this.logger.cache('expired', cacheKey, { age: Date.now() - parsed.timestamp });
-        localStorage.removeItem(cacheKey);
-        return null;
-      }
-
-      this.logger.cache('hit', cacheKey, { 
-        branchCount: parsed.branches?.length || 0,
-        prCount: parsed.pullRequests?.length || 0,
-        age: Date.now() - parsed.timestamp
-      });
-
-      return {
-        branches: parsed.branches,
-        pullRequests: parsed.pullRequests,
-        timestamp: parsed.timestamp,
-        owner: parsed.owner,
-        repo: parsed.repo
-      };
-    } catch (error) {
-      const cacheKey = this.getCacheKey(owner, repo);
-      this.logger.error('Error reading branch listing cache', { cacheKey, error: error.message });
-      console.warn('Error reading branch listing cache:', error);
-      return null;
+    constructor() {
+        this.cache = new Map();
+        this.cacheTimestamps = new Map();
+        this.CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
     }
-  }
 
-  /**
-   * Cache branch listing data (branches and PRs)
-   */
-  setCachedData(owner, repo, branches, pullRequests) {
-    try {
-      const cacheKey = this.getCacheKey(owner, repo);
-      const cacheData = {
-        branches,
-        pullRequests,
-        timestamp: Date.now(),
-        owner,
-        repo
-      };
-
-      this.logger.cache('set', cacheKey, { 
-        branchCount: branches?.length || 0,
-        prCount: pullRequests?.length || 0,
-        owner, 
-        repo 
-      });
-
-      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-      return true;
-    } catch (error) {
-      const cacheKey = this.getCacheKey(owner, repo);
-      this.logger.error('Error caching branch listing data', { cacheKey, error: error.message });
-      console.warn('Error caching branch listing data:', error);
-      return false;
+    /**
+     * Generate cache key for a repository
+     */
+    getCacheKey(owner, repo) {
+        return `${owner}/${repo}`;
     }
-  }
 
-  /**
-   * Clear cache for a specific repository
-   */
-  clearCache(owner, repo) {
-    try {
-      const cacheKey = this.getCacheKey(owner, repo);
-      this.logger.cache('clear', cacheKey, { owner, repo });
-      localStorage.removeItem(cacheKey);
-      return true;
-    } catch (error) {
-      const cacheKey = this.getCacheKey(owner, repo);
-      this.logger.error('Error clearing branch listing cache', { cacheKey, error: error.message });
-      console.warn('Error clearing branch listing cache:', error);
-      return false;
+    /**
+     * Check if cache is valid for a given key
+     */
+    isCacheValid(cacheKey) {
+        const timestamp = this.cacheTimestamps.get(cacheKey);
+        if (!timestamp) return false;
+        return Date.now() - timestamp < this.CACHE_DURATION;
     }
-  }
 
-  /**
-   * Clear all branch listing caches
-   */
-  clearAllCaches() {
-    try {
-      const keys = Object.keys(localStorage);
-      let clearedCount = 0;
-      keys.forEach(key => {
-        if (key.startsWith(this.CACHE_KEY_PREFIX)) {
-          localStorage.removeItem(key);
-          clearedCount++;
+    /**
+     * Get cached data for a repository
+     */
+    getCachedData(owner, repo) {
+        const cacheKey = this.getCacheKey(owner, repo);
+        
+        if (this.isCacheValid(cacheKey)) {
+            return this.cache.get(cacheKey);
         }
-      });
-      this.logger.debug('Cleared all branch listing caches', { clearedCount });
-      return true;
-    } catch (error) {
-      this.logger.error('Error clearing all branch listing caches', { error: error.message });
-      console.warn('Error clearing all branch listing caches:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Get cache info for debugging
-   */
-  getCacheInfo(owner, repo) {
-    const cached = this.getCachedData(owner, repo);
-    if (!cached) {
-      return { exists: false, stale: true };
+        
+        return null;
     }
 
-    const age = Date.now() - cached.timestamp;
-    const ageMinutes = Math.round(age / (60 * 1000));
-    
-    return {
-      exists: true,
-      stale: this.isStale(cached.timestamp),
-      age: age,
-      ageMinutes: ageMinutes,
-      branchCount: cached.branches?.length || 0,
-      prCount: cached.pullRequests?.length || 0,
-      timestamp: new Date(cached.timestamp).toISOString()
-    };
-  }
+    /**
+     * Set cached data for a repository
+     */
+    setCachedData(owner, repo, branches, pullRequests) {
+        const cacheKey = this.getCacheKey(owner, repo);
+        const data = {
+            branches: branches || [],
+            pullRequests: pullRequests || []
+        };
+        
+        this.cache.set(cacheKey, data);
+        this.cacheTimestamps.set(cacheKey, Date.now());
+    }
 
-  /**
-   * Force refresh cache - clear existing cache to force fresh data fetch
-   */
-  forceRefresh(owner, repo) {
-    this.logger.info('Force refresh requested', { owner, repo });
-    return this.clearCache(owner, repo);
-  }
+    /**
+     * Force refresh by clearing cache for a repository
+     */
+    forceRefresh(owner, repo) {
+        const cacheKey = this.getCacheKey(owner, repo);
+        this.cache.delete(cacheKey);
+        this.cacheTimestamps.delete(cacheKey);
+    }
+
+    /**
+     * Get cache information for a repository
+     */
+    getCacheInfo(owner, repo) {
+        const cacheKey = this.getCacheKey(owner, repo);
+        const timestamp = this.cacheTimestamps.get(cacheKey);
+        
+        if (!timestamp) {
+            return {
+                cached: false,
+                lastUpdated: null,
+                age: 0
+            };
+        }
+
+        const age = Date.now() - timestamp;
+        return {
+            cached: true,
+            lastUpdated: new Date(timestamp),
+            age: age,
+            valid: this.isCacheValid(cacheKey)
+        };
+    }
+
+    /**
+     * Clear all cache
+     */
+    clearAll() {
+        this.cache.clear();
+        this.cacheTimestamps.clear();
+    }
 }
 
-// Create singleton instance
+// Export singleton instance
 const branchListingCacheService = new BranchListingCacheService();
-
 export default branchListingCacheService;

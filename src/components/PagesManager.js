@@ -6,7 +6,6 @@ import { PageLayout } from './framework';
 import PageViewModal from './PageViewModal';
 import PageEditModal from './PageEditModal';
 import DAKStatusBox from './DAKStatusBox';
-import './PagesManager.css';
 
 const PagesManager = () => {
   const location = useLocation();

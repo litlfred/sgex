@@ -3,7 +3,7 @@ import { usePage } from './PageProvider';
 import githubService from '../../services/githubService';
 import userAccessService from '../../services/userAccessService';
 import bookmarkService from '../../services/bookmarkService';
-import './PageHeader.css';
+import PreviewBadge from '../PreviewBadge';
 
 /**
  * Consistent header component for all pages
@@ -110,7 +110,9 @@ const PageHeader = () => {
           <h1>SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
-
+        
+        {/* Preview badge for non-main branches */}
+        <PreviewBadge />
       </div>
 
       {/* Right side - Navigation and user controls */}

@@ -28,10 +28,8 @@ const BranchListing = () => {
   const [prFilter, setPrFilter] = useState('open'); // 'open', 'closed', 'all'
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [githubToken, setGithubToken] = useState(null);
-  const [prComments, setPrComments] = useState({});
   const [commentInputs, setCommentInputs] = useState({});
   const [submittingComments, setSubmittingComments] = useState({});
-  const [commentErrors, setCommentErrors] = useState({});
   const [expandedDiscussions, setExpandedDiscussions] = useState({});
   const [discussionSummaries, setDiscussionSummaries] = useState({});
   const [loadingSummaries, setLoadingSummaries] = useState(false);
@@ -116,41 +114,41 @@ const BranchListing = () => {
   }, [githubToken]);
 
   // Function to fetch all PR comments (for expanded view)
-  const fetchAllPRComments = useCallback(async (prNumber) => {
-    // Allow fetching comments even without authentication for read-only access
+  // const fetchAllPRComments = useCallback(async (prNumber) => {
+  //   // Allow fetching comments even without authentication for read-only access
     
-    try {
-      const headers = {
-        'Accept': 'application/vnd.github.v3+json'
-      };
+  //   try {
+  //     const headers = {
+  //       'Accept': 'application/vnd.github.v3+json'
+  //     };
       
-      // Add authorization header only if token is available
-      if (githubToken) {
-        headers['Authorization'] = `token ${githubToken}`;
-      }
+  //     // Add authorization header only if token is available
+  //     if (githubToken) {
+  //       headers['Authorization'] = `token ${githubToken}`;
+  //     }
       
-      const response = await fetch(
-        `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-        { headers }
-      );
+  //     const response = await fetch(
+  //       `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
+  //       { headers }
+  //     );
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch comments: ${response.status}`);
-      }
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to fetch comments: ${response.status}`);
+  //     }
       
-      const comments = await response.json();
-      return comments.map(comment => ({
-        id: comment.id,
-        author: comment.user.login,
-        body: comment.body,
-        created_at: new Date(comment.created_at).toLocaleDateString(),
-        avatar_url: comment.user.avatar_url
-      }));
-    } catch (error) {
-      console.error(`Error fetching all comments for PR ${prNumber}:`, error);
-      return [];
-    }
-  }, [githubToken]);
+  //     const comments = await response.json();
+  //     return comments.map(comment => ({
+  //       id: comment.id,
+  //       author: comment.user.login,
+  //       body: comment.body,
+  //       created_at: new Date(comment.created_at).toLocaleDateString(),
+  //       avatar_url: comment.user.avatar_url
+  //     }));
+  //   } catch (error) {
+  //     console.error(`Error fetching all comments for PR ${prNumber}:`, error);
+  //     return [];
+  //   }
+  // }, [githubToken]);
 
   // Function to load discussion summaries for visible PRs
   const loadDiscussionSummaries = useCallback(async (prs) => {
@@ -173,8 +171,8 @@ const BranchListing = () => {
     
     if (!isExpanded) {
       // Load all comments when expanding
-      const comments = await fetchAllPRComments(prNumber);
-      setPrComments(prev => ({ ...prev, [prNumber]: comments }));
+      //const comments = await fetchAllPRComments(prNumber);
+      //setPrComments(prev => ({ ...prev, [prNumber]: comments }));
     }
     
     setExpandedDiscussions(prev => ({
@@ -214,12 +212,12 @@ const BranchListing = () => {
     return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
   };
 
+
   // Function to submit a comment
   const submitComment = async (prNumber, commentText) => {
     if (!githubToken || !commentText.trim()) return false;
     
     setSubmittingComments(prev => ({ ...prev, [prNumber]: true }));
-    setCommentErrors(prev => ({ ...prev, [prNumber]: null })); // Clear previous errors
     
     try {
       const response = await fetch(
@@ -238,23 +236,7 @@ const BranchListing = () => {
       );
       
       if (!response.ok) {
-        let errorMessage = 'Failed to submit comment';
-        
-        if (response.status === 401) {
-          errorMessage = 'Authentication failed. Please check your token permissions.';
-        } else if (response.status === 403) {
-          errorMessage = 'Permission denied. You may not have write access to this repository.';
-        } else if (response.status === 404) {
-          errorMessage = 'Pull request not found or repository access denied.';
-        } else if (response.status === 422) {
-          errorMessage = 'Invalid comment content. Please check your message.';
-        } else if (response.status >= 500) {
-          errorMessage = 'GitHub server error. Please try again later.';
-        } else {
-          errorMessage = `Failed to submit comment (Error ${response.status})`;
-        }
-        
-        throw new Error(errorMessage);
+        throw new Error(`Failed to submit comment: ${response.status}`);
       }
       
       // Clear the comment input
@@ -262,8 +244,8 @@ const BranchListing = () => {
       
       // Refresh both full comments (if expanded) and summary
       if (expandedDiscussions[prNumber]) {
-        const updatedComments = await fetchAllPRComments(prNumber);
-        setPrComments(prev => ({ ...prev, [prNumber]: updatedComments }));
+        //const updatedComments = await fetchAllPRComments(prNumber);
+        //setPrComments(prev => ({ ...prev, [prNumber]: updatedComments }));
       }
       
       // Refresh the discussion summary
@@ -273,11 +255,6 @@ const BranchListing = () => {
       return true;
     } catch (error) {
       console.error(`Error submitting comment for PR ${prNumber}:`, error);
-      
-      // Set user-friendly error message
-      const errorMessage = error.message || 'An unexpected error occurred while submitting your comment';
-      setCommentErrors(prev => ({ ...prev, [prNumber]: errorMessage }));
-      
       return false;
     } finally {
       setSubmittingComments(prev => ({ ...prev, [prNumber]: false }));
@@ -333,7 +310,6 @@ const BranchListing = () => {
       alert(`Error triggering workflow: ${error.message}`);
     }
   }, [githubToken, branches, pullRequests, loadWorkflowStatuses]);
-
 
 
   // Check for existing authentication on component mount
@@ -1160,28 +1136,14 @@ const BranchListing = () => {
                                 <div className="comment-input-section">
                                   <textarea
                                     value={commentInputs[pr.number] || ''}
-                                    onChange={(e) => {
-                                      setCommentInputs(prev => ({
-                                        ...prev,
-                                        [pr.number]: e.target.value
-                                      }));
-                                      // Clear error when user starts typing
-                                      if (commentErrors[pr.number]) {
-                                        setCommentErrors(prev => ({
-                                          ...prev,
-                                          [pr.number]: null
-                                        }));
-                                      }
-                                    }}
+                                    onChange={(e) => setCommentInputs(prev => ({
+                                      ...prev,
+                                      [pr.number]: e.target.value
+                                    }))}
                                     placeholder="Add a comment..."
                                     className="comment-input"
                                     rows={3}
                                   />
-                                  {commentErrors[pr.number] && (
-                                    <div className="comment-error-message">
-                                      ⚠️ {commentErrors[pr.number]}
-                                    </div>
-                                  )}
                                   <button
                                     onClick={() => submitComment(pr.number, commentInputs[pr.number])}
                                     disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
@@ -1198,31 +1160,6 @@ const BranchListing = () => {
                                 </div>
                               )}
                               
-                              {/* Scrollable Comments Area */}
-                              <div className="discussion-scroll-area">
-                                {prComments[pr.number] && prComments[pr.number].length > 0 ? (
-                                  <div className="comments-list">
-                                    {prComments[pr.number].map((comment) => (
-                                      <div key={comment.id} className="comment-item">
-                                        <div className="comment-header">
-                                          <img 
-                                            src={comment.avatar_url} 
-                                            alt={comment.author} 
-                                            className="comment-avatar"
-                                          />
-                                          <span className="comment-author">{comment.author}</span>
-                                          <span className="comment-date">{comment.created_at}</span>
-                                        </div>
-                                        <div className="comment-body">{comment.body}</div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <div className="no-comments">
-                                    No comments yet. {isAuthenticated ? 'Be the first to comment!' : 'Sign in to be the first to comment!'}
-                                  </div>
-                                )}
-                              </div>
                             </div>
                           )}
                         </div>

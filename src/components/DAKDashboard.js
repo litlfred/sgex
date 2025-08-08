@@ -7,10 +7,10 @@ import branchContextService from '../services/branchContextService';
 import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
+import ForkStatusBar from './ForkStatusBar';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
-import './DAKDashboard.css';
 
 const DAKDashboard = () => {
   return (
@@ -36,7 +36,7 @@ const DAKDashboardContent = () => {
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
+  const [activeTab, setActiveTab] = useState('core'); // 'core' or 'publications'
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -307,13 +307,13 @@ const DAKDashboardContent = () => {
     {
       id: 'core-data-elements',
       name: 'Core Data Elements',
-      description: 'Essential data structures and terminology needed for clinical data capture and exchange',
+      description: 'Essential data structures and terminology needed for clinical data capture and exchange (includes Terminology Services via OCL and Product Master Data via PCMT)',
       icon: '🗃️',
       type: 'L2',
       color: '#ff8c00',
-      fileTypes: ['OCL', 'Concept'],
+      fileTypes: ['OCL', 'Concept', 'PCMT', 'Product'],
       count: issueCounts.total || 89,
-      editor: 'Data element editor with OCL integration'
+      editor: 'Data element editor with OCL and PCMT integration'
     },
     {
       id: 'decision-support',
@@ -349,8 +349,8 @@ const DAKDashboardContent = () => {
       editor: 'Requirements editor with structured templates'
     },
     {
-      id: 'testing',
-      name: 'Testing',
+      id: 'test-scenarios',
+      name: 'Test Scenarios',
       description: 'Feature files and test scenarios for validating the DAK implementation',
       icon: '🧪',
       type: 'L2',
@@ -361,69 +361,7 @@ const DAKDashboardContent = () => {
     }
   ];
 
-  // Additional Structured Knowledge Representations
-  const additionalComponents = [
-    {
-      id: 'pages',
-      name: 'Pages',
-      description: 'Published page content and documentation defined in sushi-config.yaml',
-      icon: '📄',
-      type: 'Content',
-      color: '#8b5cf6',
-      fileTypes: ['Markdown', 'HTML'],
-      count: 0
-    },
-    {
-      id: 'terminology',
-      name: 'Terminology',
-      description: 'Code systems, value sets, and concept maps',
-      icon: '🏷️',
-      type: 'L3',
-      color: '#ff8c00',
-      fileTypes: ['CodeSystem', 'ValueSet'],
-      count: 156
-    },
-    {
-      id: 'profiles',
-      name: 'FHIR Profiles',
-      description: 'FHIR resource profiles and structure definitions',
-      icon: '🔧',
-      type: 'L3',
-      color: '#00bcf2',
-      fileTypes: ['StructureDefinition', 'Profile'],
-      count: 42
-    },
-    {
-      id: 'extensions',
-      name: 'FHIR Extensions',
-      description: 'Custom FHIR extensions and data elements',
-      icon: '🧩',
-      type: 'L3',
-      color: '#498205',
-      fileTypes: ['Extension', 'Element'],
-      count: 18
-    },
-    {
-      id: 'questionnaires',
-      name: 'FHIR Questionnaires',
-      description: 'Structured forms and questionnaires for data collection',
-      icon: '📋',
-      type: 'L3',
-      color: '#881798',
-      fileTypes: ['Questionnaire', 'StructureMap'],
-      count: 24
-    },
-    {
-      id: 'examples',
-      name: 'Test Data & Examples',
-      description: 'Sample data and test cases for validation',
-      icon: '🧪',
-      type: 'L3',
-      color: '#6b69d6',
-      fileTypes: ['Example', 'Bundle'],
-      count: 67
-    }
-  ];
+
 
   const handleComponentClick = (event, component) => {
     const navigationState = {
@@ -457,11 +395,7 @@ const DAKDashboardContent = () => {
       return;
     }
 
-    // For pages, navigate to pages manager (read-only access allowed)
-    if (component.id === 'pages') {
-      handleNavigationClick(event, '/pages', navigate, navigationState);
-      return;
-    }
+
 
     // For health-interventions (WHO Digital Library), allow access in read-only mode
     if (component.id === 'health-interventions') {
@@ -483,19 +417,7 @@ const DAKDashboardContent = () => {
       return;
     }
 
-    // For terminology (also Component 2 Core Data Dictionary from Additional Components), navigate to viewer
-    if (component.id === 'terminology') {
-      const owner = user || repository.owner?.login || repository.full_name.split('/')[0];
-      const repoName = repo || repository.name;
-      const branchName = selectedBranch;
-      
-      const viewerPath = branchName ? 
-        `/core-data-dictionary-viewer/${owner}/${repoName}/${branchName}` :
-        `/core-data-dictionary-viewer/${owner}/${repoName}`;
-        
-      handleNavigationClick(event, viewerPath, navigate, navigationState);
-      return;
-    }
+
 
     // For generic-personas, navigate to actor editor
     if (component.id === 'generic-personas') {
@@ -509,8 +431,8 @@ const DAKDashboardContent = () => {
       return;
     }
 
-    // For testing, navigate to testing viewer
-    if (component.id === 'testing') {
+    // For test-scenarios, navigate to testing viewer
+    if (component.id === 'test-scenarios') {
       const owner = repository.owner?.login || repository.full_name.split('/')[0];
       const repoName = repository.name;
       const path = selectedBranch 
@@ -585,6 +507,13 @@ const DAKDashboardContent = () => {
             </p>
           </div>
 
+          {/* Fork Status Bar - shows forks of sgex repository */}
+          <ForkStatusBar 
+            profile={profile}
+            repository={repository}
+            selectedBranch={selectedBranch}
+          />
+
           {/* DAK Status Box - only show when repository and branch are selected */}
           {repository && selectedBranch && (
             <DAKStatusBox 
@@ -603,13 +532,6 @@ const DAKDashboardContent = () => {
             >
               <span className="tab-icon">⭐</span>
               <span className="tab-text">9 Core Components</span>
-            </button>
-            <button 
-              className={`tab-button-fullwidth ${activeTab === 'additional' ? 'active' : ''}`}
-              onClick={() => setActiveTab('additional')}
-            >
-              <span className="tab-icon">🔧</span>
-              <span className="tab-text">Additional Components</span>
             </button>
             <button
               className={`tab-button-fullwidth ${activeTab === 'publications' ? 'active' : ''}`}
@@ -665,50 +587,7 @@ const DAKDashboardContent = () => {
             </div>
           )}
 
-          {/* Additional Components Section */}
-          {activeTab === 'additional' && (
-            <div className="components-section additional-section active">
-              <div className="section-header">
-                <h3 className="section-title">Additional Components</h3>
-                <p className="section-description">
-                  FHIR R4-specific implementations and technical artifacts that support the core DAK components
-                </p>
-              </div>
 
-              <div className="components-grid additional-components">
-                {additionalComponents.map((component) => (
-                  <div 
-                    key={component.id}
-                    className={`component-card ${component.type.toLowerCase()}`}
-                    onClick={(event) => handleComponentClick(event, component)}
-                    style={{ '--component-color': component.color }}
-                  >
-                    <div className="component-header">
-                      <div className="component-icon" style={{ color: component.color }}>
-                        {component.icon}
-                      </div>
-                    </div>
-                    
-                    <div className="component-content">
-                      <h4>{component.name}</h4>
-                      <p>{component.description}</p>
-                      
-                      <div className="component-meta">
-                        <div className="file-types">
-                          {component.fileTypes.map((type) => (
-                            <span key={type} className="file-type-tag">{type}</span>
-                          ))}
-                        </div>
-                        <div className="file-count">
-                          {component.count} files
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Publications Section */}
           {activeTab === 'publications' && (

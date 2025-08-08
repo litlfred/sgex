@@ -4,7 +4,7 @@ import githubService from '../services/githubService';
 import branchContextService from '../services/branchContextService';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
-import './DAKDashboard.css';
+import ForkStatusBar from './ForkStatusBar';
 
 const DAKDashboardWithFramework = () => {
   return (
@@ -237,6 +237,13 @@ const DAKDashboardContent = () => {
             </p>
           </div>
         </div>
+
+        {/* Fork Status Bar - shows forks of sgex repository */}
+        <ForkStatusBar 
+          profile={profile}
+          repository={repository}
+          selectedBranch={branch}
+        />
 
         {repository && (
           <DAKStatusBox 

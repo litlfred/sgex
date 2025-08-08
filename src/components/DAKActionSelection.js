@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { PageLayout, usePageParams } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
-import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
   return (

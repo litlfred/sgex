@@ -1,0 +1,643 @@
+name: Deploy Feature Branch
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/branch-deployment.yml'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build and deploy (defaults to current branch)'
+        required: false
+        default: ''
+      force_deployment:
+        description: 'Force deployment even if no changes detected'
+        required: false
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      branch:
+        description: 'Branch to build and deploy (defaults to current branch)'
+        required: false
+        type: string
+        default: ''
+      force_deployment:
+        description: 'Force deployment even if no changes detected'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  pull-requests: write
+
+concurrency:
+  group: "branch-deployment-${{ github.event.inputs.branch || github.head_ref || github.ref_name }}"
+  cancel-in-progress: true
+
+jobs:
+  deploy-branch:
+    runs-on: ubuntu-latest
+    outputs:
+      branch_name: ${{ steps.deployment_info.outputs.branch_name }}
+      target_directory: ${{ steps.deployment_info.outputs.target_directory }}
+      branch_url: ${{ steps.deployment_info.outputs.branch_url }}
+      commit_sha: ${{ steps.deployment_info.outputs.commit_sha }}
+      deployment_status: ${{ steps.deployment_info.outputs.deployment_status }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.head_ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Determine branch information
+        id: branch_info
+        shell: bash
+        run: |
+          set -e
+          
+          # Determine the branch being deployed
+          if [[ -n "${{ github.event.inputs.branch }}" ]]; then
+            branch_name="${{ github.event.inputs.branch }}"
+            echo "Using manual input branch: $branch_name"
+          elif [[ -n "${{ github.head_ref }}" ]]; then
+            branch_name="${{ github.head_ref }}"
+            echo "Using pull request branch: $branch_name"
+          else
+            branch_name="${{ github.ref_name }}"
+            echo "Using current branch: $branch_name"
+          fi
+          
+          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
+          echo "Building and deploying branch: $branch_name"
+
+      - name: Configure git user
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate QA Report
+        run: |
+          if [[ -f "scripts/generate-qa-report.js" ]]; then
+            node scripts/generate-qa-report.js
+          else
+            echo "QA report script not found, skipping..."
+          fi
+
+      - name: Generate Issues Analysis
+        run: |
+          if [[ -f "scripts/analyze-github-issues.js" ]]; then
+            node scripts/analyze-github-issues.js
+          else
+            echo "Issues analysis script not found, skipping..."
+          fi
+
+      - name: Build branch-specific React app
+        run: |
+          # Set the correct public URL for the branch deployment
+          branch_name="${{ steps.branch_info.outputs.branch_name }}"
+          if [[ "$branch_name" == "main" ]]; then
+            export PUBLIC_URL="/sgex/main/"
+          else
+            safe_branch_name=$(echo "$branch_name" | tr '/' '-')
+            export PUBLIC_URL="/sgex/${safe_branch_name}/"
+          fi
+          echo "Building with PUBLIC_URL: $PUBLIC_URL"
+          echo "Building with REACT_APP_GITHUB_REF_NAME: $branch_name"
+          
+          # Build the React app
+          npm run build
+        env:
+          CI: false
+          GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
+          REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
+
+      - name: Validate branch directory safety
+        id: validate_branch
+        shell: bash
+        run: |
+          set -e
+          
+          # Get and sanitize branch name
+          branch="${{ steps.branch_info.outputs.branch_name }}"
+          echo "Processing branch: $branch"
+          
+          # Critical validation: reject empty or whitespace-only branch names
+          if [[ -z "$branch" ]] || [[ "$branch" =~ ^[[:space:]]*$ ]]; then
+            echo "ERROR: Branch name is empty or contains only whitespace"
+            exit 1
+          fi
+          
+          # Validate branch name (no dangerous characters)
+          if [[ "$branch" =~ [^a-zA-Z0-9._/-] ]]; then
+            echo "ERROR: Branch name contains unsafe characters: $branch"
+            exit 1
+          fi
+          
+          # Replace slashes with dashes for safe directory names
+          safe_branch_name=$(echo "$branch" | tr '/' '-')
+          echo "Safe branch name: $safe_branch_name"
+          
+          # Critical validation: reject problematic directory names
+          if [[ -z "$safe_branch_name" ]] || [[ "$safe_branch_name" == "." ]] || [[ "$safe_branch_name" == ".." ]]; then
+            echo "ERROR: Branch name resolves to unsafe directory name: '$safe_branch_name'"
+            exit 1
+          fi
+          
+          # Reject names that could conflict with git or system directories
+          if [[ "$safe_branch_name" =~ ^\.(git|github)$ ]]; then
+            echo "ERROR: Branch name conflicts with reserved directory: $safe_branch_name"
+            exit 1
+          fi
+          
+          # Use simplified path structure: main goes to /main/, others to /safe-branch-name/
+          if [[ "$branch" == "main" ]]; then
+            target_subdir="main"
+          else
+            target_subdir="$safe_branch_name"
+          fi
+          
+          # Calculate target directory path
+          repo_root="$(pwd)"
+          target_dir="$repo_root/$target_subdir"
+          
+          echo "Target directory: $target_dir"
+          
+          # Critical safety validation
+          if [[ "$target_dir" != "$repo_root"* ]]; then
+            echo "ERROR: Target directory is outside repository root"
+            exit 1
+          fi
+          
+          if [[ ${#target_dir} -le ${#repo_root} ]]; then
+            echo "ERROR: Target directory path is not longer than repository root"
+            exit 1
+          fi
+          
+          # Additional safety: ensure target is exactly one level deeper
+          expected_path="$repo_root/$target_subdir"
+          if [[ "$target_dir" != "$expected_path" ]]; then
+            echo "ERROR: Target directory does not match expected path"
+            exit 1
+          fi
+          
+          # Critical safety: ensure target subdirectory doesn't resolve to root
+          if [[ "$target_subdir" == "." ]] || [[ -z "$target_subdir" ]]; then
+            echo "ERROR: Target subdirectory would resolve to repository root"
+            echo "This would overwrite the landing page - deployment aborted"
+            exit 1
+          fi
+          
+          echo "✅ Branch directory validation passed"
+          echo "branch_dir=$target_dir" >> "$GITHUB_OUTPUT"
+          echo "branch_name=$branch" >> "$GITHUB_OUTPUT"
+          echo "safe_branch_name=$safe_branch_name" >> "$GITHUB_OUTPUT"
+          echo "target_subdir=$target_subdir" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout gh-pages branch
+        shell: bash
+        run: |
+          set -e
+          
+          # Check if gh-pages branch exists
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            echo "Checking out existing gh-pages branch"
+            git stash -u -m "Stash before gh-pages checkout" || echo "Nothing to stash"
+            git clean -fd -e node_modules
+            git checkout gh-pages
+          else
+            echo "Creating new gh-pages branch"
+            git checkout --orphan gh-pages
+            git rm -rf .
+            echo "# GitHub Pages" > README.md
+            git add README.md
+            git commit -m "Initial gh-pages branch"
+            git push origin gh-pages
+          fi
+
+      - name: Clean old deployment for this branch
+        shell: bash
+        run: |
+          set -e
+          
+          target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
+          
+          echo "Cleaning old deployment for: $target_subdir"
+          
+          # Additional safety: ensure we're only removing the specific branch directory
+          if [[ "$target_subdir" == "." || "$target_subdir" == ".." || -z "$target_subdir" ]]; then
+            echo "ERROR: Invalid target subdirectory: '$target_subdir'"
+            exit 1
+          fi
+          
+          # Use git to safely remove the specific branch directory only
+          if [[ -d "$target_subdir" ]]; then
+            echo "Removing existing deployment: $target_subdir"
+            git rm -rf "$target_subdir" 2>/dev/null || echo "Directory didn't exist in git"
+          else
+            echo "No existing deployment to clean"
+          fi
+
+      - name: Copy new build to branch directory
+        shell: bash
+        run: |
+          set -e
+          
+          target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
+          
+          echo "Copying new build to branch directory: $target_subdir"
+          
+          # Create branch directory and copy build
+          mkdir -p "$target_subdir"
+          cp -a build/. "$target_subdir/"
+          
+          # Verify index.html exists
+          if [[ ! -f "$target_subdir/index.html" ]]; then
+            echo "ERROR: index.html not found in build output"
+            exit 1
+          fi
+          
+          echo "✅ Build copied successfully to $target_subdir"
+
+      - name: Stage and commit changes
+        shell: bash
+        run: |
+          set -e
+          
+          # Critical safety check: ensure we're on gh-pages branch
+          current_branch=$(git branch --show-current)
+          echo "Current branch: $current_branch"
+          
+          if [[ "$current_branch" != "gh-pages" ]]; then
+            echo "ERROR: Not on gh-pages branch! Current branch: $current_branch"
+            exit 1
+          fi
+          
+          echo "Staging changes for commit"
+          
+          # Clean up any build directory that shouldn't be in gh-pages root
+          if [[ -d "build" ]]; then
+            echo "Removing build directory from gh-pages..."
+            rm -rf build
+          fi
+          
+          # Add all changes initially
+          git add -A
+          
+          # Check if there are changes to commit
+          has_changes=false
+          if git diff --cached --quiet; then
+            if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
+              echo "No changes detected, but force deployment requested - will create empty commit"
+              has_changes=true
+            else
+              echo "No changes to commit and force deployment not requested"
+              exit 0
+            fi
+          else
+            echo "Changes detected for commit"
+            has_changes=true
+          fi
+          
+          # Commit and push with simple retry for transient network issues only
+          if [[ "$has_changes" == "true" ]]; then
+            max_retries=3
+            retry_count=0
+            success=false
+            
+            while [[ $retry_count -lt $max_retries ]] && [[ "$success" == "false" ]]; do
+              retry_count=$((retry_count + 1))
+              echo "Deployment attempt $retry_count of $max_retries"
+              
+              # Always fetch latest state and rebase before attempting operations
+              echo "Fetching latest gh-pages state..."
+              git fetch origin gh-pages
+              
+              # Always rebase to ensure we have the latest state
+              echo "Rebasing with remote to incorporate any concurrent changes..."
+              if ! git rebase origin/gh-pages; then
+                echo "Rebase failed, checking if we can resolve automatically..."
+                # Check if the conflict is just in different directories (which should auto-resolve)
+                if git status --porcelain | grep -q "^UU"; then
+                  echo "Found merge conflicts that need manual resolution"
+                  git rebase --abort
+                  echo "Cannot automatically resolve conflicts - this shouldn't happen with separate directories"
+                  exit 1
+                else
+                  echo "Rebase completed with automatic resolution"
+                fi
+              fi
+              
+              # Commit changes
+              if git diff --cached --quiet; then
+                if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
+                  echo "Creating empty commit for force deployment"
+                  git commit --allow-empty -m "🚀 Force deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
+                  
+                  - Force deployment requested by user
+                  - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+                  - Commit: ${{ github.sha }}
+                  - Attempt: $retry_count/$max_retries"
+                else
+                  echo "No changes to commit after sync"
+                  success=true
+                  break
+                fi
+              else
+                echo "Committing changes..."
+                git commit -m "🚀 Deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
+                
+                - Updated branch preview for ${{ steps.branch_info.outputs.branch_name }}
+                - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+                - Commit: ${{ github.sha }}
+                - Attempt: $retry_count/$max_retries"
+              fi
+              
+              # Push to gh-pages
+              echo "Pushing to gh-pages (attempt $retry_count)..."
+              if git push origin gh-pages; then
+                echo "✅ Push successful on attempt $retry_count"
+                success=true
+              else
+                echo "⚠️ Push failed on attempt $retry_count"
+                if [[ $retry_count -lt $max_retries ]]; then
+                  # Brief delay for transient network issues
+                  sleep_time=$((retry_count * 2))
+                  echo "Waiting ${sleep_time} seconds before next attempt..."
+                  sleep $sleep_time
+                fi
+              fi
+            done
+            
+            if [[ "$success" == "false" ]]; then
+              echo "❌ Failed to push after $max_retries attempts"
+              echo "This may indicate a persistent network issue or repository problem"
+              exit 1
+            fi
+          fi
+          
+          echo "✅ Deployment completed successfully"
+
+      - name: Output deployment info
+        id: deployment_info
+        shell: bash
+        run: |
+          target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
+          branch_name="${{ steps.branch_info.outputs.branch_name }}"
+          commit_sha="${{ github.sha }}"
+          branch_url="https://litlfred.github.io/sgex/$target_subdir/"
+          
+          echo "🎉 Branch Deployment Summary:"
+          echo "- Branch: $branch_name"
+          echo "- Target Directory: $target_subdir"
+          echo "- Branch Preview: $branch_url"
+          echo "- Commit: $commit_sha"
+          echo ""
+          echo "ℹ️  Note: Landing page deployment is handled separately"
+          
+          # GitHub Actions outputs
+          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
+          echo "target_directory=$target_subdir" >> $GITHUB_OUTPUT
+          echo "branch_url=$branch_url" >> $GITHUB_OUTPUT
+          echo "commit_sha=$commit_sha" >> $GITHUB_OUTPUT
+          echo "deployment_status=success" >> $GITHUB_OUTPUT
+
+      - name: Output deployment failure info
+        id: deployment_failure_info
+        if: always() && failure()
+        shell: bash
+        run: |
+          branch_name="${{ github.event.inputs.branch || github.head_ref || github.ref_name }}"
+          commit_sha="${{ github.sha }}"
+          
+          echo "🚨 Branch Deployment Failed:"
+          echo "- Branch: $branch_name"
+          echo "- Commit: $commit_sha"
+          echo "- Check build logs for details"
+          
+          # GitHub Actions outputs for failure case
+          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
+          echo "commit_sha=$commit_sha" >> $GITHUB_OUTPUT
+          echo "deployment_status=failure" >> $GITHUB_OUTPUT
+
+      - name: Comment on associated PR (Success)
+        if: always() && steps.deployment_info.outputs.deployment_status == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const branchName = '${{ steps.deployment_info.outputs.branch_name }}';
+              const branchUrl = '${{ steps.deployment_info.outputs.branch_url }}';
+              const commitSha = '${{ steps.deployment_info.outputs.commit_sha }}';
+              const deployedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+              const runId = '${{ github.run_id }}';
+              const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+              const restartUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
+              
+              // Create target names derived from the branch name for new tabs
+              const safeBranchName = branchName.replace(/[^a-zA-Z0-9]/g, '-');
+              const branchTargetName = `sgex-preview-${safeBranchName}`;
+              const mainTargetName = `sgex-main-app`;
+              const mainAppUrl = 'https://litlfred.github.io/sgex/main/';
+              
+              // Find PR associated with this branch
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${branchName}`
+              });
+              
+              if (prs.length === 0) {
+                console.log('No associated pull request found for this branch');
+                return;
+              }
+              
+              const prNumber = prs[0].number;
+              console.log(`Found associated PR #${prNumber} for branch ${branchName}`);
+              
+              const commentBody = '## ✅ Branch Preview Ready!\n\n' +
+                '**Branch:** `' + branchName + '`\n' +
+                '**Status:** 🟢 Successfully Deployed\n' +
+                '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
+                '**Deployed:** ' + deployedAt + '\n\n' +
+                '### 🌐 Preview URLs\n\n' +
+                '<table>\n' +
+                '<tr>\n' +
+                '<td align="center">\n' +
+                '<a href="' + branchUrl + '" target="' + branchTargetName + '"><img src="https://img.shields.io/badge/🌐_BRANCH_PREVIEW-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Branch Preview" /></a><br/>\n' +
+                '<sub><b>Open branch preview</b></sub>\n' +
+                '</td>\n' +
+                '<td align="center">\n' +
+                '<a href="' + mainAppUrl + '" target="' + mainTargetName + '"><img src="https://img.shields.io/badge/🏠_MAIN_APP-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Main App" /></a><br/>\n' +
+                '<sub><b>Open main application</b></sub>\n' +
+                '</td>\n' +
+                '</tr>\n' +
+                '</table>\n\n' +
+                '### 🔄 Deployment Actions\n\n' +
+                '<table>\n' +
+                '<tr>\n' +
+                '<td align="center">\n' +
+                '<a href="' + restartUrl + '?branch=' + encodeURIComponent(branchName) + '"><img src="https://img.shields.io/badge/🚀_REDEPLOY_BRANCH-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Redeploy Branch" /></a><br/>\n' +
+                '<sub><b>Redeploy this branch</b></sub>\n' +
+                '</td>\n' +
+                '<td align="center">\n' +
+                '<a href="' + workflowUrl + '"><img src="https://img.shields.io/badge/📄_BUILD_LOGS-6C757D?style=for-the-badge&logo=github&logoColor=white" alt="Build Logs" /></a><br/>\n' +
+                '<sub><b>View deployment details</b></sub>\n' +
+                '</td>\n' +
+                '</tr>\n' +
+                '</table>\n\n' +
+                '### 📋 Instructions\n' +
+                '**To redeploy:** Click "REDEPLOY BRANCH" above, then click "Run workflow" (branch name will be pre-filled)\n\n' +
+                '---\n' +
+                '💡 *This branch preview was deployed successfully and will remain until the next deployment.*\n\n' +
+                '_Note: This deployment only updates the branch subdirectory and does not affect the landing page._';
+              
+              // Find existing deployment comment
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+              });
+              
+              const existingComment = comments.find(comment => 
+                comment.body.includes('Branch Preview Ready!') || 
+                comment.body.includes('Branch Preview Deployed!') ||
+                comment.body.includes('Deployment Approval Required')
+              );
+              
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: commentBody
+                });
+                console.log(`✅ Updated existing deployment comment on PR #${prNumber}`);
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: commentBody
+                });
+                console.log(`✅ Created new deployment comment on PR #${prNumber}`);
+              }
+              
+            } catch (error) {
+              console.error('Error posting deployment comment:', error);
+            }
+
+      - name: Comment on associated PR (Failure)
+        if: always() && failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const branchName = '${{ github.event.inputs.branch || github.head_ref || github.ref_name }}';
+              const commitSha = '${{ github.sha }}';
+              const failedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+              const runId = '${{ github.run_id }}';
+              const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+              const restartUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
+              
+              // Find PR associated with this branch
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${branchName}`
+              });
+              
+              if (prs.length === 0) {
+                console.log('No associated pull request found for this branch');
+                return;
+              }
+              
+              const prNumber = prs[0].number;
+              console.log(`Found associated PR #${prNumber} for branch ${branchName} (FAILED deployment)`);
+              
+              const commentBody = '## ❌ Branch Preview Failed!\n\n' +
+                '**Branch:** `' + branchName + '`\n' +
+                '**Status:** 🔴 Deployment Failed\n' +
+                '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
+                '**Failed:** ' + failedAt + '\n\n' +
+                '### 🔍 Troubleshooting Actions\n\n' +
+                '<table>\n' +
+                '<tr>\n' +
+                '<td align="center">\n' +
+                '<a href="' + workflowUrl + '"><img src="https://img.shields.io/badge/📄_CHECK_LOGS-DC3545?style=for-the-badge&logo=github&logoColor=white" alt="Check Logs" /></a><br/>\n' +
+                '<sub><b>View error details</b></sub>\n' +
+                '</td>\n' +
+                '<td align="center">\n' +
+                '<a href="' + restartUrl + '?branch=' + encodeURIComponent(branchName) + '"><img src="https://img.shields.io/badge/🔄_RETRY_BUILD-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Retry Build" /></a><br/>\n' +
+                '<sub><b>Restart deployment</b></sub>\n' +
+                '</td>\n' +
+                '</tr>\n' +
+                '</table>\n\n' +
+                '### 💡 Common Issues\n' +
+                '- Build errors in code changes\n' +
+                '- Missing dependencies or npm install issues\n' +
+                '- GitHub Pages deployment limits\n' +
+                '- Network connectivity issues\n\n' +
+                '### 📋 Instructions\n' +
+                '**To retry:** Click "RETRY BUILD" above, then click "Run workflow" (branch name will be pre-filled)\n\n' +
+                '---\n' +
+                '❗ *Please check the build logs above and fix any issues before restarting the deployment.*\n\n' +
+                '_Note: The previous deployment (if any) remains active until this branch is successfully deployed._';
+              
+              // Find existing deployment comment
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+              });
+              
+              const existingComment = comments.find(comment => 
+                comment.body.includes('Branch Preview Ready!') || 
+                comment.body.includes('Branch Preview Deployed!') || 
+                comment.body.includes('Branch Preview Failed!') ||
+                comment.body.includes('Deployment Approval Required')
+              );
+              
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: commentBody
+                });
+                console.log(`✅ Updated existing deployment comment with failure status on PR #${prNumber}`);
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: commentBody
+                });
+                console.log(`✅ Created new failure deployment comment on PR #${prNumber}`);
+              }
+              
+            } catch (error) {
+              console.error('Error posting failure deployment comment:', error);
+            }

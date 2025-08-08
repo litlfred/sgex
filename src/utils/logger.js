@@ -19,14 +19,29 @@ class Logger {
     // Current log level (can be overridden via localStorage)
     this.currentLevel = this.isDevelopment ? this.LEVELS.DEBUG : this.LEVELS.ERROR;
     
-    // Check for custom log level in localStorage
-    const storedLevel = localStorage.getItem('sgex-log-level');
-    if (storedLevel && this.LEVELS[storedLevel.toUpperCase()] !== undefined) {
-      this.currentLevel = this.LEVELS[storedLevel.toUpperCase()];
-    }
+    // Check for custom log level in localStorage (lazily)
+    this._levelChecked = false;
     
     // Component/service prefixes for organized logging
     this.prefixes = new Map();
+  }
+  
+  /**
+   * Lazy check for stored log level
+   * @private
+   */
+  _checkStoredLevel() {
+    if (!this._levelChecked) {
+      try {
+        const storedLevel = localStorage.getItem('sgex-log-level');
+        if (storedLevel && this.LEVELS[storedLevel.toUpperCase()] !== undefined) {
+          this.currentLevel = this.LEVELS[storedLevel.toUpperCase()];
+        }
+      } catch (error) {
+        // localStorage not available or error accessing it
+      }
+      this._levelChecked = true;
+    }
   }
   
   /**
@@ -37,7 +52,11 @@ class Logger {
     const upperLevel = level.toUpperCase();
     if (this.LEVELS[upperLevel] !== undefined) {
       this.currentLevel = this.LEVELS[upperLevel];
-      localStorage.setItem('sgex-log-level', upperLevel);
+      try {
+        localStorage.setItem('sgex-log-level', upperLevel);
+      } catch (error) {
+        // localStorage not available
+      }
     }
   }
   
@@ -80,6 +99,9 @@ class Logger {
    * @private
    */
   _log(level, prefix, ...args) {
+    // Check stored level lazily
+    this._checkStoredLevel();
+    
     if (level <= this.currentLevel) {
       const timestamp = new Date().toISOString();
       const levelName = Object.keys(this.LEVELS)[Object.values(this.LEVELS).indexOf(level)];

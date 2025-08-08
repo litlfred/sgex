@@ -1,0 +1,239 @@
+name: Dependency Security Check
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/dependency-security.yml'
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/dependency-security.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run security audit
+      id: audit
+      run: |
+        echo "Running npm audit..."
+        
+        # Run audit and capture both output and exit code
+        audit_output=$(npm audit 2>&1)
+        audit_exit_code=$?
+        
+        echo "audit_exit_code=$audit_exit_code" >> $GITHUB_OUTPUT
+        
+        # Save audit output to file for comment
+        echo "$audit_output" > audit_results.txt
+        
+        # Also run audit in JSON format for detailed analysis
+        npm audit --json > audit_results.json 2>/dev/null || true
+        
+        echo "Audit completed with exit code: $audit_exit_code"
+        
+        if [ $audit_exit_code -eq 0 ]; then
+          echo "✅ No vulnerabilities found"
+        else
+          echo "❌ Vulnerabilities detected"
+          echo "$audit_output"
+        fi
+
+    - name: Comment PR with audit results
+      if: always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          try {
+            // Read audit results
+            const auditText = fs.readFileSync('audit_results.txt', 'utf8');
+            const auditExitCode = '${{ steps.audit.outputs.audit_exit_code }}';
+            
+            let auditJson = {};
+            try {
+              auditJson = JSON.parse(fs.readFileSync('audit_results.json', 'utf8'));
+            } catch (e) {
+              console.log('Could not parse audit JSON, using text output only');
+            }
+            
+            // Create comment body based on results
+            let commentBody;
+            
+            if (auditExitCode === '0') {
+              commentBody = `## 🔒 Dependency Security Check Results
+              
+              ✅ **No vulnerabilities found!**
+              
+              All dependencies have been scanned and no security vulnerabilities were detected.
+              
+              \`\`\`
+              ${auditText.trim()}
+              \`\`\`
+              
+              ---
+              
+              ### ✅ Security Status: CLEAN
+              Your changes maintain the security posture of the project. Great job! 🎉
+              `;
+            } else {
+              // Parse vulnerability counts if available
+              let vulnSummary = '';
+              if (auditJson.metadata && auditJson.metadata.vulnerabilities) {
+                const vulns = auditJson.metadata.vulnerabilities;
+                const total = vulns.total || 0;
+                const critical = vulns.critical || 0;
+                const high = vulns.high || 0;
+                const moderate = vulns.moderate || 0;
+                const low = vulns.low || 0;
+                
+                vulnSummary = `
+              **Vulnerability Summary:**
+              - 🔴 Critical: ${critical}
+              - 🟠 High: ${high}  
+              - 🟡 Moderate: ${moderate}
+              - 🟢 Low: ${low}
+              - **Total: ${total}**
+              `;
+              }
+              
+              commentBody = `## 🔒 Dependency Security Check Results
+              
+              ❌ **Security vulnerabilities detected!**
+              ${vulnSummary}
+              
+              \`\`\`
+              ${auditText.trim()}
+              \`\`\`
+              
+              ---
+              
+              ### ❌ Security Status: VULNERABILITIES FOUND
+              
+              **Action Required:** Please address these security vulnerabilities before merging.
+              
+              **How to fix:**
+              1. Run \`npm audit fix\` to automatically fix what can be fixed
+              2. For vulnerabilities that require manual intervention, consider:
+                 - Updating to newer versions of affected packages
+                 - Adding overrides in \`package.json\` if updates aren't available
+                 - Evaluating if vulnerable packages can be replaced
+              
+              **Need help?** Check the [npm audit documentation](https://docs.npmjs.com/cli/v8/commands/npm-audit) for more details.
+              `;
+            }
+            
+            // Get pull request number (only for PR events)
+            const prNumber = context.payload.pull_request?.number || context.issue?.number;
+            console.log('Event context:', {
+              eventName: context.eventName,
+              prNumber: prNumber,
+              hasPullRequest: !!context.payload.pull_request,
+              hasIssue: !!context.issue,
+              isPush: context.eventName === 'push'
+            });
+            
+            // Skip commenting for push events (they don't have PRs to comment on)
+            if (context.eventName === 'push') {
+              console.log('Push event detected - skipping PR comment');
+              return;
+            }
+            
+            if (!prNumber) {
+              console.log('No pull request number found, skipping comment');
+              return;
+            }
+            
+            // Find existing security comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const existingComment = comments.find(comment => 
+              comment.body.includes('Dependency Security Check Results')
+            );
+            
+            if (existingComment) {
+              // Update existing comment
+              console.log('Updating existing security comment');
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: commentBody
+              });
+            } else {
+              // Create new comment
+              console.log('Creating new security comment');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+            }
+            
+          } catch (error) {
+            console.error('Error processing audit results:', error);
+            
+            // Get pull request number for error reporting
+            const prNumber = context.payload.pull_request?.number || context.issue?.number;
+            
+            if (prNumber) {
+              try {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: `## ❌ Dependency Security Check Failed
+                  
+                  The security audit encountered an error:
+                  \`\`\`
+                  ${error.message}
+                  \`\`\`
+                  
+                  Please check the action logs for more details.`
+                });
+              } catch (commentError) {
+                console.error('Failed to create error comment:', commentError);
+              }
+            }
+          }
+
+    - name: Fail on vulnerabilities
+      if: steps.audit.outputs.audit_exit_code != '0'
+      run: |
+        echo "❌ Security vulnerabilities found. Failing the check."
+        echo "Please address the vulnerabilities listed above before merging."
+        exit 1
+
+    - name: Success message
+      if: steps.audit.outputs.audit_exit_code == '0'
+      run: |
+        echo "✅ Dependency security check passed. No vulnerabilities found."

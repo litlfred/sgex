@@ -81,6 +81,21 @@
   color: #ffffff;
 }
 
+.workflow-status-badge.waiting {
+  background-color: #f97316;
+  color: #ffffff;
+}
+
+.workflow-status-badge.requested {
+  background-color: #0ea5e9;
+  color: #ffffff;
+}
+
+.workflow-status-badge.action-required {
+  background-color: #ea580c;
+  color: #ffffff;
+}
+
 .workflow-trigger-btn {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;

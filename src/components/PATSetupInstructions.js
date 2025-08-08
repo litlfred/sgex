@@ -1,6 +1,5 @@
 import React from 'react';
 import ContextualHelpMascot from './ContextualHelpMascot';
-import './PATSetupInstructions.css';
 
 const PATSetupInstructions = () => {
   return (

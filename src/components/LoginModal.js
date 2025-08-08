@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import logger from '../utils/logger';
-import './LoginModal.css';
 
 const LoginModal = ({ isOpen, onClose, onAuthSuccess }) => {
   const [username, setUsername] = useState('');

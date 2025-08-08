@@ -5,7 +5,6 @@ import useDAKUrlParams from '../hooks/useDAKUrlParams';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import BPMNPreview from './BPMNPreview';
-import './BusinessProcessSelection.css';
 
 const BusinessProcessSelection = () => {
   const location = useLocation();

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import githubService from '../services/githubService';
-import './BranchSelector.css';
 
 const BranchSelector = ({ 
   repository, 
@@ -27,20 +26,11 @@ const BranchSelector = ({
       }
 
       // Try to restore authentication from stored token
-      const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
-      if (token) {
-        console.log('BranchSelector: Restoring GitHub authentication from stored token');
-        const success = githubService.authenticate(token);
-        if (success) {
-          console.log('BranchSelector: GitHub authentication restored successfully');
-        } else {
-          console.warn('BranchSelector: Failed to restore GitHub authentication');
-          // Clean up invalid tokens
-          sessionStorage.removeItem('github_token');
-          localStorage.removeItem('github_token');
-        }
+      const success = githubService.initializeFromStoredToken();
+      if (success) {
+        console.log('BranchSelector: GitHub authentication restored successfully');
       } else {
-        console.warn('BranchSelector: No stored GitHub token found');
+        console.warn('BranchSelector: No valid stored token found');
       }
 
       setInitializingAuth(false);

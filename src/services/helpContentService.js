@@ -11,7 +11,29 @@ class HelpContentService {
         action: () => {
           // Navigate to documentation viewer in the same window
           const currentPath = window.location.pathname;
-          const basePath = currentPath.includes('/sgex') ? '/sgex' : '';
+          
+          // Check if we're in a feature branch deployment
+          // Feature branch URLs have the pattern: /sgex/branch-name/page-path
+          // Main branch URLs have the pattern: /sgex/page-path
+          let basePath = '';
+          if (currentPath.includes('/sgex')) {
+            const pathParts = currentPath.split('/');
+            const sgexIndex = pathParts.indexOf('sgex');
+            
+            if (sgexIndex !== -1) {
+              // Check if this is a feature branch (has additional path segment after /sgex)
+              if (pathParts.length > sgexIndex + 2 && 
+                  pathParts[sgexIndex + 1] && 
+                  !['dashboard', 'docs', 'select_profile', 'dak-action', 'dak-selection'].includes(pathParts[sgexIndex + 1])) {
+                // Feature branch: /sgex/branch-name
+                basePath = `/${pathParts.slice(1, sgexIndex + 2).join('/')}`;
+              } else {
+                // Main branch: /sgex
+                basePath = `/${pathParts.slice(1, sgexIndex + 1).join('/')}`;
+              }
+            }
+          }
+          
           window.location.href = `${basePath}/docs/overview`;
         },
         content: `
