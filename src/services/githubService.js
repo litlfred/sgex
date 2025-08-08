@@ -1596,6 +1596,39 @@ class GitHubService {
       sessionStorage.removeItem('sgex_branch_context');
     }
   }
+
+  // Get repository forks
+  async getRepositoryForks(owner, repo, options = {}) {
+    const startTime = Date.now();
+    this.logger.debug('Fetching repository forks', { owner, repo, options });
+
+    try {
+      // Create temporary Octokit instance for unauthenticated access if needed
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      this.logger.apiCall('GET', `/repos/${owner}/${repo}/forks`, options);
+      
+      const { data } = await octokit.rest.repos.listForks({
+        owner,
+        repo,
+        sort: 'newest', // Sort by newest first
+        per_page: options.per_page || 100,
+        page: options.page || 1
+      });
+
+      const duration = Date.now() - startTime;
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/forks`, 200, duration, { forkCount: data.length });
+      this.logger.performance('Repository forks fetch', duration);
+
+      return data;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.apiError('GET', `/repos/${owner}/${repo}/forks`, error);
+      this.logger.performance('Repository forks fetch (failed)', duration);
+      console.error(`Failed to fetch forks for ${owner}/${repo}:`, error);
+      throw error;
+    }
+  }
 }
 
 // Create a singleton instance
