@@ -77,6 +77,84 @@
     margin: 0;
 }
 
+/* Action Cards */
+.action-cards {
+    display: flex;
+    gap: 1.5rem;
+    margin: 2rem 0;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.action-card {
+    background: var(--who-card-bg);
+    border: 1px solid var(--who-border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-width: 300px;
+    flex: 1;
+    min-width: 250px;
+}
+
+.action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    border-color: var(--who-blue);
+}
+
+.main-site-card {
+    border-left: 4px solid #28a745;
+}
+
+.login-card {
+    border-left: 4px solid var(--who-blue);
+}
+
+.card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.card-link:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.card-icon {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+}
+
+.login-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.action-card h3 {
+    margin: 1rem 0 0.5rem 0;
+    color: var(--who-text-primary);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.action-card p {
+    margin: 0;
+    color: var(--who-text-secondary);
+    font-size: 0.9rem;
+}
+
 /* Authentication section */
 .auth-section {
     background: var(--who-tertiary-bg);
@@ -751,6 +829,17 @@
         flex-direction: row;
         align-items: flex-start;
         gap: 0.5rem;
+    }
+
+    .action-cards {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .action-card {
+        width: 100%;
+        max-width: 350px;
     }
 
     .main-actions {

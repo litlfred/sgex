@@ -1,8 +1,7 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes } from 'react-router-dom';
 import './i18n'; // Initialize i18n
-import BranchListing from './components/BranchListing';
-import NotFound from './components/NotFound';
+import { generateLazyRoutes } from './utils/lazyRouteUtils';
 import logger from './utils/logger';
 import './App.css';
 
@@ -24,16 +23,17 @@ function App() {
     };
   }, [appLogger, basename]);
 
+  // Generate all routes dynamically using lazy loading
+  const routes = generateLazyRoutes();
+
   return (
     <Router basename={basename}>
       <div className="App">
-          <Routes>
-            <Route path="/" element={<BranchListing />} />
-            <Route path="/branch-listing" element={<BranchListing />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </div>
-      </Router>
+        <Routes>
+          {routes}
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
