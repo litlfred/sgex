@@ -40,6 +40,11 @@ const BranchListingPage = () => {
         }
     };
 
+    const handleLogout = () => {
+        setGithubToken(null);
+        setIsAuthenticated(false);
+        githubService.logout();
+    };
 
 
 
