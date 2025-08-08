@@ -3,6 +3,7 @@ import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
 import secureTokenStorage from './secureTokenStorage';
 import logger from '../utils/logger';
+import { validateGitHubParams, validateFilePath } from '../utils/securityUtils';
 
 class GitHubService {
   constructor() {
@@ -402,13 +403,26 @@ class GitHubService {
 
   // Get repositories for a user or organization (now filters by SMART Guidelines compatibility)
   async getRepositories(owner, type = 'user', isDemo = false) {
+    // Validate owner parameter
+    const validation = validateGitHubParams({ username: owner });
+    if (!validation.isValid) {
+      const error = new Error(`Invalid owner parameter: ${validation.errors.join(', ')}`);
+      this.logger.error('getRepositories: Input validation failed', { 
+        owner, 
+        errors: validation.errors 
+      });
+      throw error;
+    }
+
+    const sanitizedOwner = validation.sanitized.username;
+
     // Handle demo mode - return demo repositories without requiring authentication
-    if (isDemo || owner === 'demo-user') {
-      return this.getDemoRepositories(owner);
+    if (isDemo || sanitizedOwner === 'demo-user') {
+      return this.getDemoRepositories(sanitizedOwner);
     }
     
     // Use the new SMART guidelines filtering method
-    return this.getSmartGuidelinesRepositories(owner, type);
+    return this.getSmartGuidelinesRepositories(sanitizedOwner, type);
   }
 
   // Get demo repositories for demo mode (no authentication required)
@@ -748,8 +762,20 @@ class GitHubService {
 
   // Get repository branches
   async getBranches(owner, repo) {
+    // Validate input parameters
+    const validation = validateGitHubParams({ username: owner, repository: repo });
+    if (!validation.isValid) {
+      const error = new Error(`Invalid parameters: ${validation.errors.join(', ')}`);
+      this.logger.error('getBranches: Input validation failed', { 
+        owner, 
+        repo, 
+        errors: validation.errors 
+      });
+      throw error;
+    }
+
     try {
-      console.log(`githubService.getBranches: Fetching branches for ${owner}/${repo}`);
+      console.log(`githubService.getBranches: Fetching branches for ${validation.sanitized.username}/${validation.sanitized.repository}`);
       console.log('githubService.getBranches: Authentication status:', this.isAuth());
       
       // Use authenticated octokit if available, otherwise create a public instance for public repos
@@ -757,8 +783,8 @@ class GitHubService {
       console.log('githubService.getBranches: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
       
       const { data } = await octokit.rest.repos.listBranches({
-        owner,
-        repo,
+        owner: validation.sanitized.username,
+        repo: validation.sanitized.repository,
         per_page: 100
       });
       
@@ -769,8 +795,8 @@ class GitHubService {
       console.error('githubService.getBranches: Error details:', {
         status: error.status,
         message: error.message,
-        owner,
-        repo
+        owner: validation.sanitized.username,
+        repo: validation.sanitized.repository
       });
       throw error;
     }
@@ -1164,12 +1190,45 @@ class GitHubService {
 
   // Get file content from GitHub repository with timeout handling
   async getFileContent(owner, repo, path, ref = 'main') {
+    // Validate input parameters
+    const validation = validateGitHubParams({ 
+      username: owner, 
+      repository: repo, 
+      branch: ref 
+    });
+    const pathValidation = validateFilePath(path);
+    
+    if (!validation.isValid) {
+      const error = new Error(`Invalid GitHub parameters: ${validation.errors.join(', ')}`);
+      this.logger.error('getFileContent: GitHub parameter validation failed', { 
+        owner, 
+        repo, 
+        ref, 
+        errors: validation.errors 
+      });
+      throw error;
+    }
+    
+    if (!pathValidation.isValid) {
+      const error = new Error(`Invalid file path: ${pathValidation.error}`);
+      this.logger.error('getFileContent: File path validation failed', { 
+        path, 
+        error: pathValidation.error 
+      });
+      throw error;
+    }
+
     const timeoutMs = 15000; // 15 second timeout
     
     try {
-      console.log(`🚀 githubService.getFileContent: Starting request for ${owner}/${repo}/${path} (ref: ${ref})`);
+      console.log(`🚀 githubService.getFileContent: Starting request for ${validation.sanitized.username}/${validation.sanitized.repository}/${pathValidation.sanitizedPath} (ref: ${validation.sanitized.branch})`);
       console.log('🔐 githubService.getFileContent: Authentication status:', this.isAuth());
-      console.log('📋 githubService.getFileContent: Request parameters:', { owner, repo, path, ref });
+      console.log('📋 githubService.getFileContent: Request parameters:', { 
+        owner: validation.sanitized.username, 
+        repo: validation.sanitized.repository, 
+        path: pathValidation.sanitizedPath, 
+        ref: validation.sanitized.branch 
+      });
       
       // Use authenticated octokit if available, otherwise create a public instance for public repos
       const octokit = this.isAuth() ? this.octokit : new Octokit();
@@ -1187,10 +1246,10 @@ class GitHubService {
       // Race the GitHub API call against the timeout
       console.log('🌐 githubService.getFileContent: Creating GitHub API promise...');
       const apiPromise = octokit.rest.repos.getContent({
-        owner,
-        repo,
-        path,
-        ref
+        owner: validation.sanitized.username,
+        repo: validation.sanitized.repository,
+        path: pathValidation.sanitizedPath,
+        ref: validation.sanitized.branch
       });
       
       console.log('📡 githubService.getFileContent: API request initiated, waiting for response...');

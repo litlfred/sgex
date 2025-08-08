@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PageLayout } from './framework';
+import { sanitizeMarkdown } from '../utils/securityUtils';
 
 // Dynamically generate documentation files structure
 const generateDocFiles = () => {
@@ -88,52 +89,6 @@ const DocumentationViewer = () => {
     loadDocumentation();
   }, [docId]);
 
-  const renderMarkdown = (markdown) => {
-    // Simple markdown to HTML conversion for basic formatting
-    let html = markdown;
-
-    // Process tables first (before paragraph processing)
-    html = html.replace(/(\|[^\n]+\|\n\|[-\s|:]+\|\n(?:\|[^\n]+\|\n?)*)/gm, (match) => {
-      const lines = match.trim().split('\n');
-      const headers = lines[0].split('|').slice(1, -1).map(h => h.trim());
-      const rows = lines.slice(2).map(row => row.split('|').slice(1, -1).map(cell => cell.trim()));
-      
-      let tableHtml = '<table class="doc-table">\n<thead>\n<tr>\n';
-      headers.forEach(header => {
-        tableHtml += `<th>${header}</th>\n`;
-      });
-      tableHtml += '</tr>\n</thead>\n<tbody>\n';
-      
-      rows.forEach(row => {
-        tableHtml += '<tr>\n';
-        row.forEach(cell => {
-          tableHtml += `<td>${cell}</td>\n`;
-        });
-        tableHtml += '</tr>\n';
-      });
-      
-      tableHtml += '</tbody>\n</table>\n';
-      return tableHtml;
-    });
-
-    // Apply other markdown formatting
-    return html
-      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-      .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-      .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-      .replace(/\*(.*)\*/gim, '<em>$1</em>')
-      .replace(/!\[([^\]]*)\]\(([^)]*)\)/gim, '<img alt="$1" src="$2" />')
-      .replace(/\[([^\]]*)\]\(([^)]*)\)/gim, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-      .replace(/`([^`]*)`/gim, '<code>$1</code>')
-      .replace(/^- (.*$)/gim, '<li>$1</li>')
-      .replace(/^(\d+)\. (.*$)/gim, '<li>$2</li>')
-      .replace(/\n\n/gim, '</p><p>')
-      .replace(/^\n/gim, '<p>')
-      .replace(/\n$/gim, '</p>');
-  };
-
   if (loading) {
     return (
       <PageLayout pageName="documentation-viewer">
@@ -218,7 +173,7 @@ const DocumentationViewer = () => {
           <article 
             className="doc-article"
             dangerouslySetInnerHTML={{ 
-              __html: renderMarkdown(content)
+              __html: sanitizeMarkdown(content)
             }}
           />
         </div>

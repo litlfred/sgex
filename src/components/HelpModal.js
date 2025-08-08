@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useThemeImage from '../hooks/useThemeImage';
+import { sanitizeMarkdown } from '../utils/securityUtils';
 
 const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   const [showMenu, setShowMenu] = useState(false);
@@ -377,7 +378,7 @@ Best regards,
         
         <div 
           className="slideshow-content"
-          dangerouslySetInnerHTML={{ __html: processedContent }}
+          dangerouslySetInnerHTML={{ __html: sanitizeMarkdown(processedContent, { allowedTags: ['h1', 'h2', 'h3', 'h4', 'p', 'br', 'strong', 'em', 'code', 'pre', 'ul', 'ol', 'li', 'a', 'img', 'button'], maxLength: 50000 }) }}
         />
         
         <div className="slideshow-controls">
@@ -422,7 +423,7 @@ Best regards,
             <div className="mascot-message">
               <img src={mascotImage} alt="SGEX Helper" className="help-mascot" />
               <div className="message-bubble">
-                <div dangerouslySetInnerHTML={{ __html: helpTopic.content }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizeMarkdown(helpTopic.content, { allowedTags: ['h1', 'h2', 'h3', 'h4', 'p', 'br', 'strong', 'em', 'code', 'pre', 'ul', 'ol', 'li', 'a', 'img', 'button'], maxLength: 50000 }) }} />
               </div>
             </div>
           </div>
