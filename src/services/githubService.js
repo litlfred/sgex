@@ -998,8 +998,10 @@ class GitHubService {
   // Recursively fetch BPMN files from a directory and its subdirectories
   async getBpmnFilesRecursive(owner, repo, path, ref = 'main', allFiles = []) {
     try {
+      console.log(`🔎 githubService.getBpmnFilesRecursive: Searching ${owner}/${repo}/${path} (ref: ${ref})`);
       // Use authenticated octokit if available, otherwise create a public instance
       const octokit = this.isAuth() ? this.octokit : new Octokit();
+      console.log(`🔐 githubService.getBpmnFilesRecursive: Using ${this.isAuth() ? 'authenticated' : 'public'} octokit`);
       
       const { data } = await octokit.rest.repos.getContent({
         owner,
@@ -1008,9 +1010,12 @@ class GitHubService {
         ref
       });
 
+      console.log(`📦 githubService.getBpmnFilesRecursive: Received data type: ${Array.isArray(data) ? 'array' : 'single file'}, length: ${Array.isArray(data) ? data.length : 1}`);
+
       // Handle single file response
       if (!Array.isArray(data)) {
         if (data.name.endsWith('.bpmn')) {
+          console.log(`📄 githubService.getBpmnFilesRecursive: Found single BPMN file: ${data.name}`);
           allFiles.push(data);
         }
         return allFiles;
@@ -1019,15 +1024,19 @@ class GitHubService {
       // Handle directory response
       for (const item of data) {
         if (item.type === 'file' && item.name.endsWith('.bpmn')) {
+          console.log(`📄 githubService.getBpmnFilesRecursive: Found BPMN file: ${item.name}`);
           allFiles.push(item);
         } else if (item.type === 'dir') {
+          console.log(`📁 githubService.getBpmnFilesRecursive: Found subdirectory: ${item.name}, recursing...`);
           // Recursively search subdirectories
           await this.getBpmnFilesRecursive(owner, repo, item.path, ref, allFiles);
         }
       }
 
+      console.log(`✅ githubService.getBpmnFilesRecursive: Completed search of ${path}, found ${allFiles.length} total files so far`);
       return allFiles;
     } catch (error) {
+      console.log(`❌ githubService.getBpmnFilesRecursive: Error searching ${path}:`, error.status, error.message);
       // If directory doesn't exist, return empty array (not an error)
       if (error.status === 404) {
         return allFiles;
@@ -1038,6 +1047,7 @@ class GitHubService {
 
   // Get all BPMN files from a repository's business process directories
   async getBpmnFiles(owner, repo, ref = 'main') {
+    console.log(`🔍 githubService.getBpmnFiles: Starting search for ${owner}/${repo} (ref: ${ref})`);
     const allBpmnFiles = [];
     
     // Search for BPMN files in the specified business process directories
@@ -1048,12 +1058,16 @@ class GitHubService {
 
     for (const path of possiblePaths) {
       try {
+        console.log(`📁 githubService.getBpmnFiles: Searching in directory: ${path}`);
         const files = await this.getBpmnFilesRecursive(owner, repo, path, ref);
+        console.log(`✅ githubService.getBpmnFiles: Found ${files.length} BPMN files in ${path}`);
         allBpmnFiles.push(...files);
       } catch (error) {
         // Only log warnings for unexpected errors (not 404s which are expected when directories don't exist)
         if (error.status !== 404) {
-          console.warn(`Could not fetch BPMN files from ${path}:`, error.message);
+          console.warn(`❌ Could not fetch BPMN files from ${path}:`, error.message);
+        } else {
+          console.log(`📂 githubService.getBpmnFiles: Directory ${path} not found (404) - this is expected if the directory doesn't exist`);
         }
         // Continue trying other paths
       }
@@ -1064,6 +1078,8 @@ class GitHubService {
       index === self.findIndex(f => f.path === file.path)
     );
 
+    console.log(`🎯 githubService.getBpmnFiles: Final result - ${uniqueFiles.length} unique BPMN files found`);
+    console.log(`📋 githubService.getBpmnFiles: File list:`, uniqueFiles.map(f => f.name));
     return uniqueFiles;
   }
 
