@@ -78,10 +78,10 @@ export const parseDAKUrl = (pathname) => {
  * - /{component}/:user/:repo/:branch
  * - /{component}/:user/:repo/:branch/*
  * 
- * @param {Object} componentRegistry - Registry mapping React component names to actual imported components
+ * @param {Object} importedComponents - Object containing all imported React components
  * @returns {Array} Array of route objects for React Router
  */
-export const generateDAKRoutes = (componentRegistry) => {
+export const generateDAKRoutes = (importedComponents) => {
   const routes = [];
   
   // Get configuration 
@@ -99,10 +99,13 @@ export const generateDAKRoutes = (componentRegistry) => {
   
   componentNames.forEach(componentName => {
     const reactComponentName = config.getReactComponent(componentName);
-    const ReactComponentClass = componentRegistry[reactComponentName];
+    
+    // Smart component lookup - find the imported component by name
+    const ReactComponentClass = importedComponents[reactComponentName];
     
     if (!ReactComponentClass) {
-      console.warn(`React component ${reactComponentName} not found in registry for DAK component ${componentName}`);
+      console.warn(`React component ${reactComponentName} not found in imported components for DAK component ${componentName}`);
+      console.warn('Available components:', Object.keys(importedComponents));
       return;
     }
     

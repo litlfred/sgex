@@ -37,22 +37,23 @@ function App() {
   // Get basename from PUBLIC_URL or default to /sgex
   const basename = process.env.PUBLIC_URL || '/sgex';
   
-  // Component registry - maps React component names to actual imported components
-  const componentRegistry = {
-    'DAKDashboardWithFramework': DAKDashboardWithFramework,
-    'TestingViewer': TestingViewer,
-    'CoreDataDictionaryViewer': CoreDataDictionaryViewer,
-    'ComponentEditor': ComponentEditor,
-    'ActorEditor': ActorEditor,
-    'BusinessProcessSelection': BusinessProcessSelection,
-    'BPMNEditor': BPMNEditor,
-    'BPMNViewer': BPMNViewer,
-    'BPMNSource': BPMNSource,
-    'DecisionSupportLogicView': DecisionSupportLogicView
+  // Pass all imported components to generateDAKRoutes - it will automatically
+  // match them to the component names defined in routes-config.js
+  const importedComponents = {
+    DAKDashboardWithFramework,
+    TestingViewer,
+    CoreDataDictionaryViewer,
+    ComponentEditor,
+    ActorEditor,
+    BusinessProcessSelection,
+    BPMNEditor,
+    BPMNViewer,
+    BPMNSource,
+    DecisionSupportLogicView
   };
   
   // Generate DAK component routes dynamically from route configuration
-  const dakRoutes = generateDAKRoutes(componentRegistry);
+  const dakRoutes = generateDAKRoutes(importedComponents);
   
   React.useEffect(() => {
     appLogger.componentMount();

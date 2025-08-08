@@ -8,15 +8,16 @@
  * 
  * When adding new DAK components:
  * 1. Add the component mapping to dakComponents below: 'route-name': 'ReactComponentName'
- * 2. Import the React component in App.js and add it to componentRegistry
+ * 2. Import the React component in App.js and add it to importedComponents object
  * 
  * The system will automatically:
  * - Generate all React Router routes (/{component}, /{component}/:user/:repo, etc.)
+ * - Match React component names to imported components automatically
  * - Update 404.html component validation
  * - Work across all deployment scenarios (local, GitHub Pages, standalone)
  * 
  * This ensures both the React app and GitHub Pages SPA routing
- * recognize the component as valid with minimal maintenance.
+ * recognize the component as valid with zero hardcoded maintenance.
  */
 
 // Global configuration object that will be available in both environments
