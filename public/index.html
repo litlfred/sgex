@@ -15,10 +15,7 @@
     
     <!-- Security Headers for Production -->
     <!-- Content Security Policy (CSP) - Prevents code injection attacks -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' 'unsafe-eval' https://litlfred.github.io/sgex https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://github.com https://avatars.githubusercontent.com; connect-src 'self' https://api.github.com https://github.com https://raw.githubusercontent.com https://iris.who.int https://avatars.githubusercontent.com; font-src 'self'; object-src 'none'; media-src 'self'; frame-src 'none'; child-src 'none'; manifest-src 'self';">
-    
-    <!-- X-Frame-Options - Prevents clickjacking attacks -->
-    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://litlfred.github.io https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://github.com https://avatars.githubusercontent.com; connect-src 'self' https://api.github.com https://github.com https://raw.githubusercontent.com https://iris.who.int https://avatars.githubusercontent.com; font-src 'self'; object-src 'none'; media-src 'self'; frame-src 'none'; child-src 'none'; manifest-src 'self';">
     
     <!-- X-Content-Type-Options - Prevents MIME sniffing -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -30,7 +27,7 @@
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=(), midi=(), magnetometer=(), gyroscope=(), accelerometer=(), ambient-light-sensor=(), autoplay=(), display-capture=(), document-domain=(), fullscreen=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), web-share=(), xr-spatial-tracking=()">
     
     <!-- Load SGEX route configuration service -->
-    <script src="%PUBLIC_URL%/routeConfig.js"></script>
+    <script src="./routeConfig.js"></script>
     
     <!-- Single Page Apps for GitHub Pages -->
     <!-- Start single page apps for github pages -->

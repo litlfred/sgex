@@ -31,7 +31,9 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve": "npm run build && cd build && python3 -m http.server 3000",
-    "check-framework-compliance": "node scripts/check-framework-compliance.js"
+    "check-framework-compliance": "node scripts/check-framework-compliance.js",
+    "verify-404": "node scripts/verify-404.js",
+    "build:verify": "npm run build && npm run verify-404"
   },
   "eslintConfig": {
     "extends": [
