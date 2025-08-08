@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import MDEditor from '@uiw/react-md-editor';
 import { PageLayout, useDAKParams } from './framework';
+import { sanitizeHtml } from '../utils/securityUtils';
 import './DecisionSupportLogicView.css';
 
 const DecisionSupportLogicView = () => {
@@ -965,7 +966,7 @@ define "Contraindication Present":
               {selectedDialog.type === 'html' ? (
                 <div 
                   className="html-content"
-                  dangerouslySetInnerHTML={{ __html: selectedDialog.content }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedDialog.content || '') }}
                 />
               ) : (
                 <pre className="source-content">

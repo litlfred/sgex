@@ -2,6 +2,8 @@
  * Utility functions for handling navigation with command-click support
  */
 
+import { validateUrlScheme } from './securityUtils';
+
 /**
  * Detects if a click event should open in a new tab
  * @param {MouseEvent} event - The click event
@@ -17,6 +19,17 @@ export const shouldOpenInNewTab = (event) => {
  * @returns {string} - The full URL
  */
 export const constructFullUrl = (relativePath) => {
+  // Validate the relative path to prevent XSS
+  if (!relativePath || typeof relativePath !== 'string') {
+    return window.location.origin;
+  }
+  
+  // Basic validation - don't allow dangerous protocols
+  if (relativePath.includes('javascript:') || relativePath.includes('data:')) { // eslint-disable-line no-script-url
+    console.warn('Blocked dangerous URL scheme in path:', relativePath);
+    return window.location.origin;
+  }
+  
   const basePath = process.env.PUBLIC_URL || '';
   const baseUrl = window.location.origin;
   
@@ -42,6 +55,20 @@ export const constructFullUrl = (relativePath) => {
  * @param {Object} state - Optional state to pass with navigation
  */
 export const handleNavigationClick = (event, path, navigate, state = null) => {
+  // Validate the path to prevent malicious navigation
+  if (!path || typeof path !== 'string') {
+    console.warn('Invalid navigation path provided');
+    return;
+  }
+  
+  // For external URLs, validate the scheme
+  if (path.includes('://')) {
+    if (!validateUrlScheme(path)) {
+      console.warn('Blocked navigation to potentially dangerous URL:', path);
+      return;
+    }
+  }
+  
   if (shouldOpenInNewTab(event)) {
     // Open in new tab
     const fullUrl = constructFullUrl(path);

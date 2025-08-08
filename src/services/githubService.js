@@ -2,6 +2,7 @@ import { Octokit } from '@octokit/rest';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
 import logger from '../utils/logger';
+import { validateGitHubApiParams } from '../utils/securityUtils';
 
 class GitHubService {
   constructor() {
@@ -199,32 +200,44 @@ class GitHubService {
 
   // Get specific organization data (public data, no auth required)
   async getOrganization(orgLogin) {
+    // Validate input parameters
+    const validatedParams = validateGitHubApiParams({ orgLogin });
+    if (!validatedParams) {
+      throw new Error('Invalid organization login provided');
+    }
+    
     try {
       // Create a temporary Octokit instance for public API calls if we don't have one
       const octokit = this.octokit || new Octokit();
       
       const { data } = await octokit.rest.orgs.get({
-        org: orgLogin
+        org: validatedParams.orgLogin
       });
       return data;
     } catch (error) {
-      console.error(`Failed to fetch organization ${orgLogin}:`, error);
+      console.error(`Failed to fetch organization ${validatedParams.orgLogin}:`, error);
       throw error;
     }
   }
 
   // Get specific user data (public data, no auth required)
   async getUser(username) {
+    // Validate input parameters
+    const validatedParams = validateGitHubApiParams({ username });
+    if (!validatedParams) {
+      throw new Error('Invalid username provided');
+    }
+    
     try {
       // Create a temporary Octokit instance for public API calls if we don't have one
       const octokit = this.octokit || new Octokit();
       
       const { data } = await octokit.rest.users.getByUsername({
-        username
+        username: validatedParams.username
       });
       return data;
     } catch (error) {
-      console.error(`Failed to fetch user ${username}:`, error);
+      console.error(`Failed to fetch user ${validatedParams.username}:`, error);
       throw error;
     }
   }
@@ -604,13 +617,19 @@ class GitHubService {
 
   // Get a specific repository
   async getRepository(owner, repo) {
+    // Validate input parameters
+    const validatedParams = validateGitHubApiParams({ owner, repo });
+    if (!validatedParams) {
+      throw new Error('Invalid repository parameters provided');
+    }
+    
     try {
       // Use authenticated octokit if available, otherwise create a public instance for public repos
       const octokit = this.isAuth() ? this.octokit : new Octokit();
       
       const { data } = await octokit.rest.repos.get({
-        owner,
-        repo,
+        owner: validatedParams.owner,
+        repo: validatedParams.repo,
       });
       return data;
     } catch (error) {
@@ -621,8 +640,14 @@ class GitHubService {
 
   // Get repository branches
   async getBranches(owner, repo) {
+    // Validate input parameters
+    const validatedParams = validateGitHubApiParams({ owner, repo });
+    if (!validatedParams) {
+      throw new Error('Invalid repository parameters provided');
+    }
+    
     try {
-      console.log(`githubService.getBranches: Fetching branches for ${owner}/${repo}`);
+      console.log(`githubService.getBranches: Fetching branches for ${validatedParams.owner}/${validatedParams.repo}`);
       console.log('githubService.getBranches: Authentication status:', this.isAuth());
       
       // Use authenticated octokit if available, otherwise create a public instance for public repos
@@ -630,8 +655,8 @@ class GitHubService {
       console.log('githubService.getBranches: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
       
       const { data } = await octokit.rest.repos.listBranches({
-        owner,
-        repo,
+        owner: validatedParams.owner,
+        repo: validatedParams.repo,
         per_page: 100
       });
       
@@ -642,8 +667,8 @@ class GitHubService {
       console.error('githubService.getBranches: Error details:', {
         status: error.status,
         message: error.message,
-        owner,
-        repo
+        owner: validatedParams.owner,
+        repo: validatedParams.repo
       });
       throw error;
     }
