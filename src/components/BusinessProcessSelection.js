@@ -115,6 +115,17 @@ const BusinessProcessSelection = () => {
         
         const bpmnFiles = await githubService.getBpmnFiles(owner, repoName, ref);
         
+        console.log('📊 BusinessProcessSelection: Received BPMN files:', {
+          count: bpmnFiles.length,
+          files: bpmnFiles.map(f => ({
+            name: f.name,
+            path: f.path,
+            size: f.size,
+            hasDownloadUrl: !!f.download_url,
+            sha: f.sha?.substring(0, 8)
+          }))
+        });
+        
         // If no files found and we're in demo mode, provide fallback files
         if (bpmnFiles.length === 0 && profile?.isDemo) {
           console.log('No BPMN files found in demo mode, providing fallback demo files');

@@ -18,7 +18,7 @@ class ActorDefinitionService {
    */
   async loadSchema() {
     try {
-      const response = await fetch('/schemas/actor-definition.json');
+      const response = await fetch(`${process.env.PUBLIC_URL || ''}/schemas/actor-definition.json`);
       this.actorSchema = await response.json();
     } catch (error) {
       console.warn('Could not load actor definition schema:', error);
