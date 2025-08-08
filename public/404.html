@@ -24,13 +24,30 @@
       // 3. Feature branches: /sgex/branch-name/dashboard/...
       // 4. Standalone deployment: direct routes like /dashboard/...
       
-      var l = window.location;
-      var pathSegments = l.pathname.split('/').filter(Boolean);
+      try {
+        var l = window.location;
+        var pathSegments = l.pathname.split('/').filter(Boolean);
       
       // Get configuration from routeConfig.js
       var config = getSGEXRouteConfig();
       if (!config) {
-        console.error('SGEX route configuration not loaded');
+        console.error('SGEX route configuration not loaded - using fallback redirection');
+        
+        // Fallback redirection when config fails to load
+        // Redirect to the most appropriate fallback based on URL structure
+        var fallbackUrl;
+        var isGitHubPages = l.hostname === 'litlfred.github.io' || l.hostname.endsWith('.github.io');
+        
+        if (isGitHubPages && pathSegments.length >= 1 && pathSegments[0] === 'sgex') {
+          // GitHub Pages deployment - redirect to SGEX root
+          fallbackUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/sgex/';
+        } else {
+          // Standalone deployment - redirect to site root
+          fallbackUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/';
+        }
+        
+        console.log('Fallback redirection to:', fallbackUrl);
+        l.replace(fallbackUrl);
         return;
       }
       
@@ -109,6 +126,27 @@
         });
         
         l.replace(newUrl);
+      }
+
+      } catch (error) {
+        // Emergency fallback if anything goes wrong
+        console.error('404.html redirection failed:', error);
+        
+        // Attempt basic redirection based on hostname
+        var l = window.location;
+        var isGitHubPages = l.hostname.endsWith('.github.io');
+        var fallbackUrl;
+        
+        if (isGitHubPages) {
+          // Try to redirect to /sgex/ for GitHub Pages
+          fallbackUrl = l.protocol + '//' + l.hostname + '/sgex/';
+        } else {
+          // Redirect to root for other deployments
+          fallbackUrl = l.protocol + '//' + l.hostname + '/';
+        }
+        
+        console.log('Emergency fallback redirection to:', fallbackUrl);
+        l.replace(fallbackUrl);
       }
 
     </script>
