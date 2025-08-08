@@ -54,16 +54,6 @@ check_header "public/index.html" "Permissions-Policy" "Permissions Policy"
 
 echo
 
-# Check public/branch-listing.html
-echo "🔍 Checking public/branch-listing.html:"
-check_header "public/branch-listing.html" "Content-Security-Policy" "Content Security Policy"
-check_header "public/branch-listing.html" "X-Frame-Options" "X-Frame-Options"
-check_header "public/branch-listing.html" "X-Content-Type-Options" "X-Content-Type-Options"
-check_header "public/branch-listing.html" "referrer" "Referrer Policy"
-check_header "public/branch-listing.html" "Permissions-Policy" "Permissions Policy"
-
-echo
-
 # Check if build directory exists and verify built files
 if [ -d "build" ]; then
     echo "📦 Checking built files..."
@@ -75,15 +65,6 @@ if [ -d "build" ]; then
     check_header "build/index.html" "X-Content-Type-Options" "X-Content-Type-Options"
     check_header "build/index.html" "referrer" "Referrer Policy"
     check_header "build/index.html" "Permissions-Policy" "Permissions Policy"
-    
-    echo
-    
-    echo "🔍 Checking build/branch-listing.html:"
-    check_header "build/branch-listing.html" "Content-Security-Policy" "Content Security Policy"
-    check_header "build/branch-listing.html" "X-Frame-Options" "X-Frame-Options"
-    check_header "build/branch-listing.html" "X-Content-Type-Options" "X-Content-Type-Options"
-    check_header "build/branch-listing.html" "referrer" "Referrer Policy"
-    check_header "build/branch-listing.html" "Permissions-Policy" "Permissions Policy"
 else
     echo -e "⚠️  ${YELLOW}Build directory not found. Run 'npm run build' to create built files.${NC}"
 fi
@@ -117,7 +98,7 @@ echo "• github.com (GitHub web interface)"
 echo "• avatars.githubusercontent.com (User avatars)"
 echo "• raw.githubusercontent.com (Raw file access)"
 echo "• iris.who.int (WHO Digital Library)"
-echo "• unpkg.com (React CDN for branch-listing.html)"
+echo "• unpkg.com (React CDN resources if needed)"
 echo
 echo "📝 Notes:"
 echo "• Headers are implemented via HTML meta tags due to GitHub Pages limitations"

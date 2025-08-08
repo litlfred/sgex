@@ -57,8 +57,7 @@ This document describes the security headers implementation for SGeX Workbench, 
 ## Implementation Details
 
 ### Files Modified
-- `public/index.html`: Main application HTML template
-- `public/branch-listing.html`: Branch selector page template
+- `public/index.html`: Main application HTML template (contains security headers for the React application)
 - `.github/workflows/landing-page-deployment.yml`: Added CI=false for production builds
 
 ### GitHub Pages Limitations
@@ -88,8 +87,8 @@ The CSP policy allows connections to these external domains:
 2. **WHO Digital Library**:
    - `iris.who.int`: WHO Institutional Repository for Information Sharing
 
-3. **CDN Resources** (branch-listing.html only):
-   - `unpkg.com`: React development builds for the branch listing page
+3. **CDN Resources** (if needed):
+   - `unpkg.com`: External React libraries and development resources
 
 ### Network Connections
 The application makes AJAX requests to:
@@ -132,9 +131,8 @@ curl -s http://localhost:8080/index.html | grep -i "Content-Security-Policy"
 If the application needs to connect to new external domains:
 
 1. Add the domain to the appropriate CSP directive in `public/index.html`
-2. Also update `public/branch-listing.html` if applicable
-3. Test the changes locally
-4. Deploy and verify in production
+2. Test the changes locally  
+3. Deploy and verify in production
 
 ### CSP Violation Monitoring
 Consider implementing CSP violation reporting by adding a `report-uri` directive to monitor potential security issues in production.
