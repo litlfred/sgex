@@ -286,6 +286,12 @@ jobs:
           mkdir -p "$target_subdir"
           cp -a build/. "$target_subdir/"
           
+          # Ensure .nojekyll file exists in root to disable Jekyll processing for entire gh-pages
+          if [[ ! -f ".nojekyll" ]]; then
+            echo "Creating .nojekyll file to disable Jekyll processing"
+            touch .nojekyll
+          fi
+          
           # Verify index.html exists
           if [[ ! -f "$target_subdir/index.html" ]]; then
             echo "ERROR: index.html not found in build output"
@@ -310,10 +316,15 @@ jobs:
           
           echo "Staging changes for commit"
           
-          # Clean up any build directory that shouldn't be in gh-pages root
+          # Clean up any build directory and node_modules that shouldn't be in gh-pages root
           if [[ -d "build" ]]; then
             echo "Removing build directory from gh-pages..."
             rm -rf build
+          fi
+          
+          if [[ -d "node_modules" ]]; then
+            echo "Removing node_modules directory from gh-pages..."
+            rm -rf node_modules
           fi
           
           # Add all changes initially

@@ -186,8 +186,8 @@ jobs:
             -name "README.md" \
           \) -delete
           
-          # Remove only root-level static/docs/schemas directories (preserve branch subdirs)  
-          for dir in static docs schemas build coverage lcov-report src public; do
+          # Remove only root-level static/docs/schemas directories and node_modules (preserve branch subdirs)  
+          for dir in static docs schemas build coverage lcov-report src public node_modules; do
             if [[ -d "$dir" && ! "$dir" =~ ^[^/]*-[^/]*$ ]]; then
               echo "Removing root directory: $dir"
               rm -rf "$dir"
@@ -196,6 +196,12 @@ jobs:
           
           # Copy new landing page build to root
           cp -a /tmp/deployment-build/. .
+          
+          # Ensure .nojekyll file exists to disable Jekyll processing
+          if [[ ! -f ".nojekyll" ]]; then
+            echo "Creating .nojekyll file to disable Jekyll processing"
+            touch .nojekyll
+          fi
           
           echo "Landing page deployed to root, branch directories preserved"
           
