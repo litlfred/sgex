@@ -120,25 +120,30 @@ jobs:
             echo "Issues analysis script not found, skipping..."
           fi
 
-      - name: Build branch-specific React app
+      - name: Determine PUBLIC_URL for branch
+        id: public_url
         run: |
-          # Set the correct public URL for the branch deployment
           branch_name="${{ steps.branch_info.outputs.branch_name }}"
           if [[ "$branch_name" == "main" ]]; then
-            export PUBLIC_URL="/sgex/main/"
+            public_url="/sgex/main/"
           else
-            # For feature branches, use relative paths since they're deployed to subdirectories
-            # GitHub Pages serves them at litlfred.github.io/sgex/branch-name/
-            # so assets should be relative to that directory root
-            export PUBLIC_URL="./"
+            safe_branch_name=$(echo "$branch_name" | tr '/' '-')
+            public_url="/sgex/${safe_branch_name}
           fi
-          echo "Building with PUBLIC_URL: $PUBLIC_URL"
-          echo "Building with REACT_APP_GITHUB_REF_NAME: $branch_name"
+          export PUBLIC_URL="$public_url"
+          echo "public_url=$public_url" >> $GITHUB_OUTPUT
+          echo "Determined PUBLIC_URL: $public_url"
+
+      - name: Build branch-specific React app
+        run: |
+          echo "Building with PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}"
+          echo "Building with REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}"
           
           # Build the React app
           npm run build
         env:
           CI: false
+          PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}
           GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
           REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
 
