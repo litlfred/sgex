@@ -506,7 +506,8 @@ jobs:
               
               const existingComment = comments.find(comment => 
                 comment.body.includes('Branch Preview Ready!') || 
-                comment.body.includes('Branch Preview Deployed!')
+                comment.body.includes('Branch Preview Deployed!') ||
+                comment.body.includes('Deployment Approval Required')
               );
               
               if (existingComment) {
@@ -587,7 +588,8 @@ jobs:
               const existingComment = comments.find(comment => 
                 comment.body.includes('Branch Preview Ready!') || 
                 comment.body.includes('Branch Preview Deployed!') || 
-                comment.body.includes('Branch Preview Failed!')
+                comment.body.includes('Branch Preview Failed!') ||
+                comment.body.includes('Deployment Approval Required')
               );
               
               if (existingComment) {
