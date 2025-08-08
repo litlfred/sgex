@@ -114,41 +114,41 @@ const BranchListing = () => {
   }, [githubToken]);
 
   // Function to fetch all PR comments (for expanded view)
-  const fetchAllPRComments = useCallback(async (prNumber) => {
-    // Allow fetching comments even without authentication for read-only access
+  // const fetchAllPRComments = useCallback(async (prNumber) => {
+  //   // Allow fetching comments even without authentication for read-only access
     
-    try {
-      const headers = {
-        'Accept': 'application/vnd.github.v3+json'
-      };
+  //   try {
+  //     const headers = {
+  //       'Accept': 'application/vnd.github.v3+json'
+  //     };
       
-      // Add authorization header only if token is available
-      if (githubToken) {
-        headers['Authorization'] = `token ${githubToken}`;
-      }
+  //     // Add authorization header only if token is available
+  //     if (githubToken) {
+  //       headers['Authorization'] = `token ${githubToken}`;
+  //     }
       
-      const response = await fetch(
-        `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-        { headers }
-      );
+  //     const response = await fetch(
+  //       `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
+  //       { headers }
+  //     );
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch comments: ${response.status}`);
-      }
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to fetch comments: ${response.status}`);
+  //     }
       
-      const comments = await response.json();
-      return comments.map(comment => ({
-        id: comment.id,
-        author: comment.user.login,
-        body: comment.body,
-        created_at: new Date(comment.created_at).toLocaleDateString(),
-        avatar_url: comment.user.avatar_url
-      }));
-    } catch (error) {
-      console.error(`Error fetching all comments for PR ${prNumber}:`, error);
-      return [];
-    }
-  }, [githubToken]);
+  //     const comments = await response.json();
+  //     return comments.map(comment => ({
+  //       id: comment.id,
+  //       author: comment.user.login,
+  //       body: comment.body,
+  //       created_at: new Date(comment.created_at).toLocaleDateString(),
+  //       avatar_url: comment.user.avatar_url
+  //     }));
+  //   } catch (error) {
+  //     console.error(`Error fetching all comments for PR ${prNumber}:`, error);
+  //     return [];
+  //   }
+  // }, [githubToken]);
 
   // Function to load discussion summaries for visible PRs
   const loadDiscussionSummaries = useCallback(async (prs) => {
