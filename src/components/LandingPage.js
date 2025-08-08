@@ -6,7 +6,6 @@ import repositoryCacheService from '../services/repositoryCacheService';
 import PATLogin from './PATLogin';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
-import './LandingPage.css';
 
 const LandingPage = () => {
   const { t } = useTranslation();

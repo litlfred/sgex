@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PageLayout } from './framework';
-import './DocumentationViewer.css';
 
 // Dynamically generate documentation files structure
 const generateDocFiles = () => {

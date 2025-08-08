@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import githubService from '../services/githubService';
 import CommitsSlider from './CommitsSlider';
 import GitHubActionsIntegration from './GitHubActionsIntegration';
-import './DAKStatusBox.css';
 
 const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) => {
   const [isExpanded, setIsExpanded] = useState(false);

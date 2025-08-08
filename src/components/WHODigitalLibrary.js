@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import whoDigitalLibraryService from '../services/whoDigitalLibraryService';
-import './WHODigitalLibrary.css';
 
 const WHODigitalLibrary = ({ onReferencesChange }) => {
   const [searchQuery, setSearchQuery] = useState('');

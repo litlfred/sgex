@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from './framework';
 import PATLogin from './PATLogin';
 import useThemeImage from '../hooks/useThemeImage';
-import './BranchListingPage.css';
 
 const BranchListingPage = () => {
     const [pullRequests, setPullRequests] = useState([]);

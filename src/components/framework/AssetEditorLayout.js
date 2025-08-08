@@ -3,7 +3,6 @@ import { PageLayout } from './index';
 import SaveButtonsContainer from './SaveButtonsContainer';
 import CommitMessageDialog from './CommitMessageDialog';
 import dataAccessLayer from '../../services/dataAccessLayer';
-import './AssetEditorLayout.css';
 
 /**
  * Enhanced page framework for asset editors

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import githubService from '../services/githubService';
-import './PreviewBadge.css';
 
 /**
  * PreviewBadge component that displays when the app is deployed from a non-main branch

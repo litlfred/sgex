@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes } from 'react-router-dom';
 import './i18n'; // Initialize i18n
 import { generateLazyRoutes } from './utils/lazyRouteUtils';
 import logger from './utils/logger';
-import './App.css';
 
 function App() {
   const appLogger = logger.getLogger('App');

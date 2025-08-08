@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import githubService from '../services/githubService';
-import './CommitDiffModal.css';
 
 const CommitDiffModal = ({ isOpen, onClose, owner, repo, commitSha, commitMessage }) => {
   const [commitData, setCommitData] = useState(null);

@@ -5,7 +5,6 @@ import branchContextService from '../services/branchContextService';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
 import ForkStatusBar from './ForkStatusBar';
-import './DAKDashboard.css';
 
 const DAKDashboardWithFramework = () => {
   return (

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import githubService from '../services/githubService';
-import './BPMNPreview.css';
 
 const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
   const containerRef = useRef(null);

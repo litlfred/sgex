@@ -5,7 +5,6 @@ import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
-import './SelectProfilePage.css';
 
 const SelectProfilePage = () => {
   const { t } = useTranslation();

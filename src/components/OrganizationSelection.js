@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout } from './framework';
-import './OrganizationSelection.css';
 
 const OrganizationSelection = () => {
   const location = useLocation();

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import githubService from '../services/githubService';
-import './BranchSelector.css';
 
 const BranchSelector = ({ 
   repository, 
