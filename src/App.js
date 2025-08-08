@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './i18n'; // Initialize i18n
+import BranchListing from './BranchListing';
 import NotFound from './components/NotFound';
 import logger from './utils/logger';
 import './App.css';
