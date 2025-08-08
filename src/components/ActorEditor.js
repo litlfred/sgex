@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import actorDefinitionService from '../services/actorDefinitionService';
 import { PageLayout, useDAKParams } from './framework';
-import './ActorEditor.css';
 
 const ActorEditor = () => {
   return (

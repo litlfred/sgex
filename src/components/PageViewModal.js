@@ -1,5 +1,4 @@
 import React from 'react';
-import './PageViewModal.css';
 
 const PageViewModal = ({ page, onClose }) => {
   if (!page) return null;

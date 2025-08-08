@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { PageLayout } from './framework';
 import useThemeImage from '../hooks/useThemeImage';
 import BranchListingPage from './BranchListingPage';
-import './BranchDeploymentSelector.css';
 
 const BranchDeploymentSelector = ({ mode = 'deployment-selector' }) => {
   const [deployments, setDeployments] = useState([]);

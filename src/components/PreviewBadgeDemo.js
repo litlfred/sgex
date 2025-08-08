@@ -1,6 +1,5 @@
 import React from 'react';
 import PreviewBadge from '../components/PreviewBadge';
-import './PreviewBadgeDemo.css';
 
 // Mock the environment to simulate a preview branch
 const originalEnv = process.env;

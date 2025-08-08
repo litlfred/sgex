@@ -4,7 +4,6 @@ import { PageLayout, usePageParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import WHODigitalLibrary from './WHODigitalLibrary';
 import useThemeImage from '../hooks/useThemeImage';
-import './ComponentEditor.css';
 
 const ComponentEditor = () => {
   const location = useLocation();

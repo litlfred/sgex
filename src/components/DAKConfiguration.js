@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PageLayout } from './framework';
-import './DAKConfiguration.css';
 
 const DAKConfiguration = () => {
   const location = useLocation();

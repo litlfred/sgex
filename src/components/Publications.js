@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import githubService from '../services/githubService';
 import StagingGround from './StagingGround';
-import './Publications.css';
 
 const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) => {
   const [branches, setBranches] = useState([]);

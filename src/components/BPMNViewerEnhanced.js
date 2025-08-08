@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
-import './BPMNViewerEnhanced.css';
 
 // Sample BPMN content for demo purposes - moved outside component to avoid re-renders
 const sampleBpmnXml = `<?xml version="1.0" encoding="UTF-8"?>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { usePage, PAGE_TYPES } from './PageProvider';
-import './PageBreadcrumbs.css';
 
 /**
  * Unified breadcrumb component for consistent navigation across all pages

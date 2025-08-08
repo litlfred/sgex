@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import userAccessService from '../../services/userAccessService';
-import './AccessBadge.css';
 
 /**
  * Access Badge Component

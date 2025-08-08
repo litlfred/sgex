@@ -1,0 +1,88 @@
+/**
+ * Central CSS Loader for SGEX Workbench
+ * 
+ * This file manages all CSS imports in a consistent dependency order to avoid
+ * mini-css-extract-plugin conflicts during build.
+ * 
+ * Import order:
+ * 1. Base application styles
+ * 2. Framework/infrastructure styles 
+ * 3. Component styles (alphabetical)
+ */
+
+/* ========================================
+   1. BASE STYLES
+   ======================================== */
+
+/* Main application styles */
+@import '../index.css';
+@import '../App.css';
+
+/* ========================================
+   2. FRAMEWORK STYLES
+   ======================================== */
+
+/* Framework components (in dependency order) */
+@import '../components/framework/ErrorHandler.css';
+@import '../components/framework/PageLayout.css';
+@import '../components/framework/PageHeader.css';
+@import '../components/framework/PageContext.css';
+@import '../components/framework/PageBreadcrumbs.css';
+@import '../components/framework/AccessBadge.css';
+@import '../components/framework/AssetEditorLayout.css';
+@import '../components/framework/SaveButtonsContainer.css';
+@import '../components/framework/CommitMessageDialog.css';
+
+/* ========================================
+   3. COMPONENT STYLES (Alphabetical)
+   ======================================== */
+
+@import '../components/ActorEditor.css';
+@import '../components/BPMNEditor.css';
+@import '../components/BPMNPreview.css';
+@import '../components/BPMNSource.css';
+@import '../components/BPMNViewer.css';
+@import '../components/BPMNViewerEnhanced.css';
+@import '../components/BranchDeploymentSelector.css';
+@import '../components/BranchListingPage.css';
+@import '../components/BranchSelector.css';
+@import '../components/BusinessProcessSelection.css';
+@import '../components/CollaborationModal.css';
+@import '../components/CommitDiffModal.css';
+@import '../components/CommitsSlider.css';
+@import '../components/ComponentEditor.css';
+@import '../components/ContextualHelpMascot.css';
+@import '../components/CoreDataDictionaryViewer.css';
+@import '../components/DAKActionSelection.css';
+@import '../components/DAKConfiguration.css';
+@import '../components/DAKDashboard.css';
+@import '../components/DAKSelection.css';
+@import '../components/DAKStatusBox.css';
+@import '../components/DecisionSupportLogicView.css';
+@import '../components/DocumentationViewer.css';
+@import '../components/FeatureFileEditor.css';
+@import '../components/ForkStatusBar.css';
+@import '../components/GitHubActionsIntegration.css';
+@import '../components/HelpButton.css';
+@import '../components/HelpModal.css';
+@import '../components/LandingPage.css';
+@import '../components/LanguageSelector.css';
+@import '../components/LoginModal.css';
+@import '../components/OrganizationSelection.css';
+@import '../components/PATLogin.css';
+@import '../components/PATSetupInstructions.css';
+@import '../components/PageEditModal.css';
+@import '../components/PageViewModal.css';
+@import '../components/PagesManager.css';
+@import '../components/PreviewBadge.css';
+@import '../components/PreviewBadgeDemo.css';
+@import '../components/Publications.css';
+@import '../components/RepositorySelection.css';
+@import '../components/SaveDialog.css';
+@import '../components/SelectProfilePage.css';
+@import '../components/StagingGround.css';
+@import '../components/TestDashboard.css';
+@import '../components/TestingViewer.css';
+@import '../components/WHODigitalLibrary.css';
+@import '../components/WelcomePage.css';
+@import '../components/WorkflowStatus.css';

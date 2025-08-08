@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import './WorkflowStatus.css';
 
 const WorkflowStatus = ({ 
   workflowStatus, 

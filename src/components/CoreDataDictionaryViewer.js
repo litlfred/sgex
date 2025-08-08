@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
-import './CoreDataDictionaryViewer.css';
 
 const CoreDataDictionaryViewer = () => {
   return (

@@ -3,7 +3,6 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { AssetEditorLayout } from './framework';
 import localStorageService from '../services/localStorageService';
-import './FeatureFileEditor.css';
 
 const FeatureFileEditor = ({ 
   file, 

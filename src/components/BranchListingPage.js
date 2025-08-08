@@ -4,7 +4,6 @@ import PATLogin from './PATLogin';
 import githubService from '../services/githubService';
 import secureTokenStorage from '../services/secureTokenStorage';
 import useThemeImage from '../hooks/useThemeImage';
-import './BranchListingPage.css';
 
 const BranchListingPage = () => {
     const [pullRequests, setPullRequests] = useState([]);

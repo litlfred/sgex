@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 import { Octokit } from '@octokit/rest';
 import { AssetEditorLayout, useDAKParams } from './framework';
-import './BPMNEditor.css';
 
 const BPMNEditor = () => {
   const navigate = useNavigate();
