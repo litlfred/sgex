@@ -5,22 +5,18 @@ import githubService from '../services/githubService';
 import './QuestionnaireEditor.css';
 
 // Enhanced Visual Editor Component with LForms integration
-const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
+const LFormsVisualEditor = ({ questionnaire, onChange }) => {
   const [previewMode, setPreviewMode] = useState(false);
-  const [lformsInstance, setLformsInstance] = useState(null);
   
-  // Initialize LForms if available
+  // LForms integration - using fallback editor for now
   useEffect(() => {
     const initializeLForms = async () => {
       try {
-        const LForms = await import('lforms');
-        if (LForms && LForms.Util) {
-          setLformsInstance(LForms);
-          console.log('LForms initialized for visual editor');
-        }
+        // Dynamic import commented out until lforms is properly configured
+        // const LForms = await import('lforms');
+        console.log('LForms initialization skipped - using fallback editor');
       } catch (error) {
         console.log('LForms not available, using fallback editor');
-        // Continue with fallback editor
       }
     };
     
@@ -308,15 +304,12 @@ const QuestionnaireEditorContent = () => {
       try {
         setLformsError(null);
         
-        // Import LForms library dynamically
-        const LForms = await import('lforms');
+        // LForms library loading temporarily disabled
+        // const LForms = await import('lforms');
         
-        if (LForms && LForms.Util) {
-          console.log('LForms library loaded successfully');
-          setLformsLoaded(true);
-        } else {
-          throw new Error('LForms library did not load properly');
-        }
+        // Use built-in editor as fallback for now
+        console.log('Using built-in visual editor');
+        setLformsLoaded(true);
       } catch (error) {
         console.error('Failed to load LForms:', error);
         setLformsError(`Failed to load questionnaire editor: ${error.message}`);
@@ -398,7 +391,7 @@ const QuestionnaireEditorContent = () => {
     };
 
     loadQuestionnaires();
-  }, [hasRequiredData, repository, branch]); // Depend on hasRequiredData instead of individual fields
+  }, [hasRequiredData, repository, branch, pageLoading]); // Include pageLoading since it's used in the effect
 
   // Early return if PageProvider context is not ready
   if (!repository || !branch) {
