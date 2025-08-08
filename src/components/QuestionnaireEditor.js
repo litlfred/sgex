@@ -1,12 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { PageLayout, AssetEditorLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
 import './QuestionnaireEditor.css';
 
-// Simple Visual Editor Component (without LForms dependency for now)
+// Enhanced Visual Editor Component with LForms integration
 const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
   const [previewMode, setPreviewMode] = useState(false);
+  const [lformsInstance, setLformsInstance] = useState(null);
+  
+  // Initialize LForms if available
+  useEffect(() => {
+    const initializeLForms = async () => {
+      try {
+        const LForms = await import('lforms');
+        if (LForms && LForms.Util) {
+          setLformsInstance(LForms);
+          console.log('LForms initialized for visual editor');
+        }
+      } catch (error) {
+        console.log('LForms not available, using fallback editor');
+        // Continue with fallback editor
+      }
+    };
+    
+    initializeLForms();
+  }, []);
   
   const addQuestion = () => {
     const newItem = {
@@ -264,7 +283,7 @@ const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
 };
 
 const QuestionnaireEditorContent = () => {
-  const { repository, branch } = useDAKParams();
+  const { repository, branch, isLoading: pageLoading } = useDAKParams();
   
   // Component state
   const [questionnaires, setQuestionnaires] = useState([]);
@@ -280,20 +299,29 @@ const QuestionnaireEditorContent = () => {
   const [editMode, setEditMode] = useState('visual'); // 'visual' or 'json'
   const [lformsError, setLformsError] = useState(null);
 
+  // Check if we have the necessary context data
+  const hasRequiredData = repository && branch && !pageLoading;
+
   // Load LForms library
   useEffect(() => {
     const loadLForms = async () => {
       try {
         setLformsError(null);
         
-        // For now, enable the visual editor without loading external LForms
-        // TODO: Add proper LForms integration for advanced features
-        console.log('Using built-in visual editor');
-        setLformsLoaded(true);
+        // Import LForms library dynamically
+        const LForms = await import('lforms');
+        
+        if (LForms && LForms.Util) {
+          console.log('LForms library loaded successfully');
+          setLformsLoaded(true);
+        } else {
+          throw new Error('LForms library did not load properly');
+        }
       } catch (error) {
         console.error('Failed to load LForms:', error);
         setLformsError(`Failed to load questionnaire editor: ${error.message}`);
         // Still mark as loaded to enable basic functionality
+        console.log('Using built-in visual editor as fallback');
         setLformsLoaded(true);
       }
     };
@@ -304,9 +332,13 @@ const QuestionnaireEditorContent = () => {
   // Load questionnaires from repository
   useEffect(() => {
     const loadQuestionnaires = async () => {
-      // Don't attempt to load if repository/branch are not available yet
-      if (!repository || !branch) {
-        console.log('QuestionnaireEditor: Repository or branch not available yet, waiting...', { repository: !!repository, branch: !!branch });
+      // Don't attempt to load if PageProvider context is not ready
+      if (!hasRequiredData) {
+        console.log('QuestionnaireEditor: Waiting for PageProvider context...', { 
+          repository: !!repository, 
+          branch: !!branch, 
+          pageLoading 
+        });
         return;
       }
       
@@ -366,7 +398,7 @@ const QuestionnaireEditorContent = () => {
     };
 
     loadQuestionnaires();
-  }, [repository, branch]);
+  }, [hasRequiredData, repository, branch]); // Depend on hasRequiredData instead of individual fields
 
   // Early return if PageProvider context is not ready
   if (!repository || !branch) {
@@ -424,23 +456,62 @@ const QuestionnaireEditorContent = () => {
 
   // Helper functions to extract metadata from FSH content
   const extractFshTitle = (content) => {
-    const titleMatch = content.match(/\*\s*title\s*=\s*"([^"]+)"/);
-    return titleMatch ? titleMatch[1] : null;
+    // Support various FSH title patterns
+    const patterns = [
+      /\*\s*title\s*=\s*"([^"]+)"/,  // * title = "Title"
+      /^\s*Title:\s*"?([^"\n]+)"?/m,  // Title: "Title" or Title: Title
+      /Instance:\s*\w+\s*"([^"]+)"/   // Instance: Name "Title"
+    ];
+    
+    for (const pattern of patterns) {
+      const match = content.match(pattern);
+      if (match) return match[1].trim();
+    }
+    return null;
   };
 
   const extractFshStatus = (content) => {
-    const statusMatch = content.match(/\*\s*status\s*=\s*#(\w+)/);
-    return statusMatch ? statusMatch[1] : null;
+    // Support various FSH status patterns
+    const patterns = [
+      /\*\s*status\s*=\s*#(\w+)/,     // * status = #draft
+      /^\s*Status:\s*#?(\w+)/m        // Status: draft or Status: #draft
+    ];
+    
+    for (const pattern of patterns) {
+      const match = content.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
   };
 
   const extractFshName = (content) => {
-    const nameMatch = content.match(/\*\s*name\s*=\s*"([^"]+)"/);
-    return nameMatch ? nameMatch[1] : null;
+    // Support various FSH name patterns
+    const patterns = [
+      /\*\s*name\s*=\s*"([^"]+)"/,     // * name = "Name"
+      /^\s*Name:\s*"?([^"\n]+)"?/m,    // Name: "Name" or Name: Name
+      /Instance:\s*(\w+)/              // Instance: InstanceName
+    ];
+    
+    for (const pattern of patterns) {
+      const match = content.match(pattern);
+      if (match) return match[1].trim();
+    }
+    return null;
   };
 
   const extractFshDescription = (content) => {
-    const descMatch = content.match(/\*\s*description\s*=\s*"([^"]+)"/);
-    return descMatch ? descMatch[1] : null;
+    // Support various FSH description patterns
+    const patterns = [
+      /\*\s*description\s*=\s*"([^"]+)"/,    // * description = "Description"
+      /^\s*Description:\s*"?([^"\n]+)"?/m,   // Description: "Text" or Description: Text
+      /\/\/\s*(.+)/                          // // Comment line
+    ];
+    
+    for (const pattern of patterns) {
+      const match = content.match(pattern);
+      if (match) return match[1].trim();
+    }
+    return null;
   };
 
   // Create new questionnaire
@@ -544,8 +615,8 @@ const QuestionnaireEditorContent = () => {
   const hasChanges = questionnaireContent && originalContent &&
     JSON.stringify(questionnaireContent, null, 2) !== originalContent;
 
-  // Show loading state when PageProvider is not ready or when we're loading questionnaires
-  if (loading && (!repository || !branch)) {
+  // Show loading state when PageProvider is not ready
+  if (!hasRequiredData) {
     return (
       <AssetEditorLayout pageName="questionnaire-editor">
         <div className="questionnaire-editor-loading">
@@ -556,9 +627,14 @@ const QuestionnaireEditorContent = () => {
     );
   }
 
+  // Show loading state when fetching questionnaires
   if (loading && !editing) {
     return (
-      <AssetEditorLayout pageName="questionnaire-editor">
+      <AssetEditorLayout 
+        pageName="questionnaire-editor"
+        repository={repository}
+        branch={branch}
+      >
         <div className="questionnaire-editor-loading">
           <h2>Loading Questionnaires...</h2>
           <p>Fetching questionnaire files from repository...</p>
@@ -804,10 +880,55 @@ const QuestionnaireEditorContent = () => {
   );
 };
 
+// Error Boundary for QuestionnaireEditor
+class QuestionnaireErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error: error.message };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('QuestionnaireEditor caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <AssetEditorLayout pageName="questionnaire-editor">
+          <div className="error-state">
+            <h2>⚠️ Questionnaire Editor Error</h2>
+            <p>An unexpected error occurred while loading the questionnaire editor.</p>
+            <div className="error-details">
+              <strong>Error:</strong> {this.state.error}
+            </div>
+            <button 
+              onClick={() => {
+                this.setState({ hasError: false, error: null });
+                window.location.reload();
+              }}
+              className="btn-primary"
+            >
+              Reload Editor
+            </button>
+          </div>
+        </AssetEditorLayout>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 const QuestionnaireEditor = () => {
   return (
     <PageLayout pageName="questionnaire-editor">
-      <QuestionnaireEditorContent />
+      <QuestionnaireErrorBoundary>
+        <QuestionnaireEditorContent />
+      </QuestionnaireErrorBoundary>
     </PageLayout>
   );
 };
