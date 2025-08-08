@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8">
     <title>SGEX Workbench</title>
-    <!-- Load SGEX route configuration -->
-    <script src="routes-config.js"></script>
+    <!-- Load SGEX route configuration service -->
+    <script src="routeConfig.js"></script>
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages
       // MIT License
@@ -27,8 +27,8 @@
       var l = window.location;
       var pathSegments = l.pathname.split('/').filter(Boolean);
       
-      // Get configuration from routes-config.js
-      var config = window.SGEX_ROUTES_CONFIG;
+      // Get configuration from routeConfig.js
+      var config = getSGEXRouteConfig();
       if (!config) {
         console.error('SGEX route configuration not loaded');
         return;

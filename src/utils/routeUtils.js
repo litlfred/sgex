@@ -12,12 +12,15 @@ import React from 'react';
  */
 export const extractDAKComponentsFromRoutes = () => {
   // In browser environment, try to get from global config first
-  if (typeof window !== 'undefined' && window.SGEX_ROUTES_CONFIG) {
-    return window.SGEX_ROUTES_CONFIG.getDAKComponentNames();
+  if (typeof window !== 'undefined' && window.getSGEXRouteConfig) {
+    const config = window.getSGEXRouteConfig();
+    if (config) {
+      return config.getDAKComponentNames();
+    }
   }
   
   // Fallback for server-side rendering or if config not loaded
-  // This should match the configuration in public/routes-config.js
+  // This should match the configuration in public/routes-config.json
   console.warn('SGEX route configuration not available, using fallback');
   return [
     'dashboard',                    
@@ -85,8 +88,8 @@ export const generateDAKRoutes = (importedComponents) => {
   const routes = [];
   
   // Get configuration 
-  const config = (typeof window !== 'undefined' && window.SGEX_ROUTES_CONFIG) 
-    ? window.SGEX_ROUTES_CONFIG 
+  const config = (typeof window !== 'undefined' && window.getSGEXRouteConfig) 
+    ? window.getSGEXRouteConfig() 
     : null;
   
   if (!config) {

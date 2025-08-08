@@ -1,0 +1,18 @@
+{
+  "dakComponents": {
+    "dashboard": "DAKDashboardWithFramework",
+    "testing-viewer": "TestingViewer",
+    "core-data-dictionary-viewer": "CoreDataDictionaryViewer",
+    "health-interventions": "ComponentEditor",
+    "actor-editor": "ActorEditor",
+    "business-process-selection": "BusinessProcessSelection",
+    "bpmn-editor": "BPMNEditor",
+    "bpmn-viewer": "BPMNViewer",
+    "bpmn-source": "BPMNSource",
+    "decision-support-logic": "DecisionSupportLogicView"
+  },
+  "deployedBranches": [
+    "main",
+    "deploy"
+  ]
+}
