@@ -1,5 +1,6 @@
 /**
  * Utility functions for extracting route information from React Router routes
+ * This is now a compatibility layer for the new lazy loading system
  */
 import React from 'react';
 
@@ -75,16 +76,15 @@ export const parseDAKUrl = (pathname) => {
 
 /**
  * Generate React Router Route objects for all DAK components
- * This creates the standard route patterns for each DAK component:
- * - /{component}
- * - /{component}/:user/:repo  
- * - /{component}/:user/:repo/:branch
- * - /{component}/:user/:repo/:branch/*
+ * This is now a legacy function kept for compatibility.
+ * The new lazy loading system uses generateLazyRoutes() from lazyRouteUtils.js
  * 
  * @param {Object} importedComponents - Object containing all imported React components
  * @returns {Array} Array of route objects for React Router
  */
 export const generateDAKRoutes = (importedComponents) => {
+  console.warn('generateDAKRoutes() is deprecated. Use generateLazyRoutes() from lazyRouteUtils.js instead.');
+  
   const routes = [];
   
   // Get configuration 
@@ -97,11 +97,12 @@ export const generateDAKRoutes = (importedComponents) => {
     return routes;
   }
   
-  // Generate routes for each DAK component
+  // Generate routes for each DAK component using old system
   const componentNames = config.getDAKComponentNames();
   
   componentNames.forEach(componentName => {
-    const reactComponentName = config.getReactComponent(componentName);
+    const dakComponent = config.dakComponents[componentName];
+    const reactComponentName = dakComponent.component || dakComponent;
     
     // Smart component lookup - find the imported component by name
     const ReactComponentClass = importedComponents[reactComponentName];

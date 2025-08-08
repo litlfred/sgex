@@ -1,0 +1,15 @@
+{
+  "deployType": "deploy",
+  "components": {
+    "NotFound": {
+      "path": "./components/NotFound",
+      "routes": [
+        { "path": "*", "fallback": true }
+      ]
+    }
+  },
+  "deployedBranches": [
+    "main",
+    "deploy"
+  ]
+}
