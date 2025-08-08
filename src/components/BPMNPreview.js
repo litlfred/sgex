@@ -11,7 +11,15 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
 
   useEffect(() => {
     const loadPreview = async () => {
-      if (!file || !repository || !containerRef.current) return;
+      if (!file || !repository || !containerRef.current) {
+        console.log('🚫 BPMNPreview: Missing required props:', {
+          hasFile: !!file,
+          hasRepository: !!repository,
+          hasContainer: !!containerRef.current,
+          fileName: file?.name
+        });
+        return;
+      }
 
       try {
         setLoading(true);
@@ -26,6 +34,16 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
         const repoName = repository.name;
         const ref = selectedBranch || 'main';
         const isDemo = file.path?.includes('demo/') || file.sha?.startsWith('demo-');
+
+        console.log('🎬 BPMNPreview: Starting preview load for file:', {
+          fileName: file.name,
+          filePath: file.path,
+          owner: owner,
+          repoName: repoName,
+          ref: ref,
+          isDemo: isDemo,
+          hasDownloadUrl: !!file.download_url
+        });
 
         let bpmnXml;
 
@@ -82,12 +100,15 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
 </bpmn:definitions>`;
         } else {
           // For real files, try to load the actual BPMN content
+          console.log('📥 BPMNPreview: Attempting to load real BPMN file content...');
           try {
             bpmnXml = await githubService.getFileContent(owner, repoName, file.path, ref);
+            console.log('✅ BPMNPreview: Successfully loaded BPMN content, length:', bpmnXml?.length);
           } catch (fileError) {
-            console.warn('Could not load BPMN file content:', fileError);
+            console.warn('❌ BPMNPreview: Could not load BPMN file content:', fileError.message, fileError.status);
             // Fallback to a generic BPMN diagram if file can't be loaded
             const processName = file.name.replace('.bpmn', '').replace(/[-_]/g, ' ');
+            console.log('🔄 BPMNPreview: Using fallback BPMN diagram for:', processName);
             bpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
@@ -139,30 +160,41 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
           }
         }
 
+        console.log('🔧 BPMNPreview: Creating BPMN viewer...');
         // Create and initialize viewer with clean separation
         const viewer = new BpmnViewer();
         viewerRef.current = viewer;
 
         try {
+          console.log('🔗 BPMNPreview: Attaching viewer to container...');
           // Attach viewer to container first
           await viewer.attachTo(containerRef.current);
           
+          console.log('📊 BPMNPreview: Importing BPMN XML...');
           // Then import XML
           await viewer.importXML(bpmnXml);
           
+          console.log('🎯 BPMNPreview: Fitting to viewport...');
           // Fit to viewport for preview
           const canvas = viewer.get('canvas');
           canvas.zoom('fit-viewport');
 
+          console.log('✅ BPMNPreview: Successfully rendered preview for:', file.name);
           setLoading(false);
         } catch (importError) {
-          console.error('Failed to import BPMN XML:', importError);
+          console.error('❌ BPMNPreview: Failed to import BPMN XML:', importError.message || importError);
           setError('Failed to load preview');
           setLoading(false);
         }
 
       } catch (renderError) {
-        console.error('Failed to render BPMN preview:', renderError);
+        console.error('❌ BPMNPreview: Failed to render BPMN preview:', renderError.message || renderError);
+        console.log('🔍 BPMNPreview: Error details:', {
+          fileName: file.name,
+          filePath: file.path,
+          errorMessage: renderError.message,
+          errorStack: renderError.stack
+        });
         setError('Failed to load preview');
         setLoading(false);
       }
@@ -182,8 +214,15 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
 
     // Only run if we have all required props
     if (file && repository && containerRef.current) {
+      console.log('🚀 BPMNPreview: Starting loadPreview for:', file.name);
       loadPreview();
     } else {
+      console.log('⏭️ BPMNPreview: Skipping loadPreview, missing props:', {
+        hasFile: !!file,
+        hasRepository: !!repository,
+        hasContainer: !!containerRef.current,
+        fileName: file?.name
+      });
       setLoading(false);
     }
 
