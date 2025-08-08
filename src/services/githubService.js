@@ -3,6 +3,7 @@ import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
 import secureTokenStorage from './secureTokenStorage';
 import logger from '../utils/logger';
+import { validateRepositoryName, validateUsername, validateBranchName } from '../utils/securityUtils';
 
 class GitHubService {
   constructor() {
@@ -191,8 +192,25 @@ class GitHubService {
     }
   }
 
+  // Validate GitHub input parameters to prevent injection attacks
+  validateGitHubParams(owner, repo, branch = null) {
+    if (!validateUsername(owner)) {
+      throw new Error(`Invalid owner/username: ${owner}`);
+    }
+    if (!validateRepositoryName(repo)) {
+      throw new Error(`Invalid repository name: ${repo}`);
+    }
+    if (branch && !validateBranchName(branch)) {
+      throw new Error(`Invalid branch name: ${branch}`);
+    }
+    return true;
+  }
+
   // Check if we have write permissions for a specific repository
   async checkRepositoryWritePermissions(owner, repo) {
+    // Validate input parameters
+    this.validateGitHubParams(owner, repo);
+    
     if (!this.isAuth()) {
       this.logger.warn('Cannot check repository write permissions - not authenticated', { owner, repo });
       return false;
@@ -456,6 +474,9 @@ class GitHubService {
 
   // Check if a repository has sushi-config.yaml with smart.who.int.base dependency
   async checkSmartGuidelinesCompatibility(owner, repo, retryCount = 2) {
+    // Validate input parameters
+    this.validateGitHubParams(owner, repo);
+    
     if (!this.isAuth()) {
       return false;
     }
@@ -1119,6 +1140,9 @@ class GitHubService {
 
   // Get file content from GitHub repository with timeout handling
   async getFileContent(owner, repo, path, ref = 'main') {
+    // Validate input parameters
+    this.validateGitHubParams(owner, repo, ref);
+    
     const timeoutMs = 15000; // 15 second timeout
     
     try {
@@ -1552,6 +1576,9 @@ class GitHubService {
 
   // Get directory contents (supports both authenticated and unauthenticated access)
   async getDirectoryContents(owner, repo, path = '', ref = 'main') {
+    // Validate input parameters
+    this.validateGitHubParams(owner, repo, ref);
+    
     try {
       // Create temporary Octokit instance for unauthenticated access if needed
       const octokit = this.isAuth() ? this.octokit : new Octokit();

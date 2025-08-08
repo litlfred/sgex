@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PageLayout } from './framework';
+import { sanitizeHtml } from '../utils/securityUtils';
 
 // Dynamically generate documentation files structure
 const generateDocFiles = () => {
@@ -218,7 +219,7 @@ const DocumentationViewer = () => {
           <article 
             className="doc-article"
             dangerouslySetInnerHTML={{ 
-              __html: renderMarkdown(content)
+              __html: sanitizeHtml(renderMarkdown(content))
             }}
           />
         </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { sanitizeHtml } from '../utils/securityUtils';
 
 const PageViewModal = ({ page, onClose }) => {
   if (!page) return null;
@@ -70,7 +71,7 @@ const PageViewModal = ({ page, onClose }) => {
             </div>
             
             <div className="rendered-content" dangerouslySetInnerHTML={{ 
-              __html: formatMarkdown(markdownContent) 
+              __html: sanitizeHtml(formatMarkdown(markdownContent))
             }} />
             
             <div className="raw-content" style={{ display: 'none' }}>
