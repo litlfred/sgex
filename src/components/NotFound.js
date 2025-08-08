@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PageLayout } from './framework';
 import githubService from '../services/githubService';
+import { parseDAKUrl } from '../utils/routeUtils';
 
 const NotFound = () => {
   const navigate = useNavigate();
@@ -9,46 +10,27 @@ const NotFound = () => {
 
   useEffect(() => {
     const tryParseDAKUrl = () => {
-      const pathname = location.pathname;
-      const pathSegments = pathname.split('/').filter(Boolean);
+      const dakUrlInfo = parseDAKUrl(location.pathname);
       
-      // Valid DAK component routes have at least 3 segments: [component, user, repo]
-      if (pathSegments.length >= 3) {
-        const [component, user, repo, branch, ...assetPath] = pathSegments;
+      if (dakUrlInfo && dakUrlInfo.isValid) {
+        const { component, user, repo, branch, assetPath } = dakUrlInfo;
         
-        // List of known DAK components
-        const validComponents = [
-          'dashboard',
-          'testing-viewer',
-          'core-data-dictionary-viewer', 
-          'health-interventions',
-          'actor-editor',
-          'business-process-selection',
-          'bpmn-editor',
-          'bpmn-viewer',
-          'bpmn-source',
-          'decision-support-logic'
-        ];
+        console.log('NotFound: Attempting to parse potential DAK URL:', {
+          component, user, repo, branch, assetPath
+        });
         
-        // Check if this looks like a valid DAK component URL
-        if (validComponents.includes(component) && user && repo) {
-          console.log('NotFound: Attempting to parse potential DAK URL:', {
-            component, user, repo, branch, assetPath
-          });
-          
-          // Try to navigate to the parsed route
-          let targetPath = `/${component}/${user}/${repo}`;
-          if (branch) {
-            targetPath += `/${branch}`;
-            if (assetPath.length > 0) {
-              targetPath += `/${assetPath.join('/')}`;
-            }
+        // Try to navigate to the parsed route
+        let targetPath = `/${component}/${user}/${repo}`;
+        if (branch) {
+          targetPath += `/${branch}`;
+          if (assetPath.length > 0) {
+            targetPath += `/${assetPath.join('/')}`;
           }
-          
-          console.log('NotFound: Redirecting to parsed DAK route:', targetPath);
-          navigate(targetPath, { replace: true });
-          return true; // Successfully parsed and redirected
         }
+        
+        console.log('NotFound: Redirecting to parsed DAK route:', targetPath);
+        navigate(targetPath, { replace: true });
+        return true; // Successfully parsed and redirected
       }
       
       return false; // Could not parse as DAK URL

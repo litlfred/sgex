@@ -20,52 +20,99 @@
       // 1. Landing page: /sgex/ (from deploy branch)
       // 2. Main branch: /sgex/main/dashboard/... 
       // 3. Feature branches: /sgex/branch-name/dashboard/...
+      // 4. Standalone deployment: direct routes like /dashboard/...
       
       var l = window.location;
       var pathSegments = l.pathname.split('/').filter(Boolean);
       
-      // Default assumption: this is a root deployment (/sgex/)
-      var pathSegmentsToKeep = 1;
+      // For GitHub Pages deployment at https://litlfred.github.io/sgex
+      var isGitHubPages = l.hostname === 'litlfred.github.io' || l.hostname.endsWith('.github.io');
       
-      // Detect deployment type based on URL structure
-      if (pathSegments.length >= 2) {
-        var secondSegment = pathSegments[1];
-        var knownRoutes = ['dashboard', 'asset-viewer', 'component-editor', 'diff', 'visual-editor'];
+      if (isGitHubPages && pathSegments.length >= 1 && pathSegments[0] === 'sgex') {
+        // Handle GitHub Pages SGEX deployment
+        var deployedBranches = ['main', 'deploy']; // Add other deployed branches as needed
         
-        // If second segment is "main" or not a known route, it's a branch deployment
-        if (secondSegment === 'main' || !knownRoutes.includes(secondSegment)) {
-          pathSegmentsToKeep = 2; // Branch deployment: /sgex/main/ or /sgex/branch-name/
+        if (pathSegments.length >= 2) {
+          var potentialBranch = pathSegments[1];
+          
+          // Check if this looks like a branch deployment URL
+          if (deployedBranches.includes(potentialBranch)) {
+            // This is a branch deployment: /sgex/main/* or /sgex/deploy/*
+            var branchSegmentsToKeep = 2; // Keep /sgex/branch-name/
+            var redirectPath = pathSegments.slice(0, branchSegmentsToKeep).join('/') + '/';
+            var routePath = pathSegments.slice(branchSegmentsToKeep).join('/');
+            
+            console.log('GitHub Pages Branch Deployment Routing:', {
+              branch: potentialBranch,
+              originalPath: l.pathname,
+              redirectPath: redirectPath,
+              routePath: routePath
+            });
+          } else {
+            // This might be a direct route like /sgex/dashboard/...
+            // Check if it's a valid DAK component
+            var dakComponents = ['dashboard', 'testing-viewer', 'core-data-dictionary-viewer', 
+                               'health-interventions', 'actor-editor', 'business-process-selection',
+                               'bpmn-editor', 'bpmn-viewer', 'bpmn-source', 'decision-support-logic'];
+            
+            if (dakComponents.includes(potentialBranch)) {
+              // This is a direct DAK route: /sgex/dashboard/...
+              var dakSegmentsToKeep = 1; // Keep /sgex/
+              var redirectPath = pathSegments.slice(0, dakSegmentsToKeep).join('/') + '/';
+              var routePath = pathSegments.slice(dakSegmentsToKeep).join('/');
+              
+              console.log('GitHub Pages DAK Component Routing:', {
+                component: potentialBranch,
+                originalPath: l.pathname,
+                redirectPath: redirectPath,
+                routePath: routePath
+              });
+            } else {
+              // Unknown route, redirect to SGEX root
+              console.log('Unknown route, redirecting to SGEX root:', l.pathname);
+              l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/sgex/');
+              return;
+            }
+          }
+        } else {
+          // Just /sgex/, this is the root - no redirect needed
+          return;
         }
-        // Otherwise, it's a direct route like /sgex/dashboard/, keep 1 segment
+      } else {
+        // Standalone deployment or other hostname
+        // Default assumption: this is a root deployment
+        var pathSegmentsToKeep = 0;
+        var redirectPath = '/';
+        var routePath = pathSegments.join('/');
+        
+        console.log('Standalone Deployment Routing:', {
+          originalPath: l.pathname,
+          redirectPath: redirectPath,
+          routePath: routePath
+        });
       }
       
-      // Perform the SPA redirect
-      var redirectPath = l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/';
-      var routePath = l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/');
-      
-      // Build the new URL with encoded route
-      var newUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-        redirectPath + '?/' + routePath.replace(/&/g, '~and~') +
-        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-        l.hash;
-      
-      // Debug logging for development (remove in production if needed)
-      console.log('SPA Routing Debug:', {
-        originalPath: l.pathname,
-        pathSegments: pathSegments,
-        pathSegmentsToKeep: pathSegmentsToKeep,
-        redirectPath: redirectPath,
-        routePath: routePath,
-        newUrl: newUrl
-      });
-      
-      l.replace(newUrl);
+      // Build the new URL with encoded route if we have routing to do
+      if (routePath) {
+        var newUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+          '/' + redirectPath + '?/' + routePath.replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash;
+        
+        console.log('SPA Routing Redirect:', {
+          from: l.pathname,
+          to: newUrl
+        });
+        
+        l.replace(newUrl);
+      }
 
     </script>
   </head>
   <body>
     <!-- This 404.html handles SPA routing for GitHub Pages -->
     <!-- It needs to be at the root of gh-pages to work properly -->
-    <!-- Feature branch builds include this file but GitHub Pages ignores them -->
+    <!-- Supports both deploy branch and main branch scenarios -->
+    <!-- For standalone deployments, it works without the GitHub Pages specific logic -->
   </body>
 </html>
