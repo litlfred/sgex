@@ -24,10 +24,24 @@ const PageContext = createContext(null);
  */
 export const usePage = () => {
   const context = useContext(PageContext);
-  console.log('usePage: called, context is:', context ? 'available' : 'null');
   if (!context) {
     console.error('usePage: PageContext is null - component not wrapped in PageProvider');
-    throw new Error('usePage must be used within a PageProvider');
+    // Return a default context instead of throwing to make ErrorHandler more resilient
+    return {
+      pageName: 'unknown',
+      user: null,
+      profile: null,
+      repository: null,
+      branch: null,
+      asset: null,
+      type: 'top-level',
+      loading: false,
+      error: null,
+      isAuthenticated: false,
+      navigate: () => {},
+      params: {},
+      location: { pathname: '/' }
+    };
   }
   return context;
 };
@@ -38,9 +52,6 @@ export const usePage = () => {
 const determinePageType = (params) => {
   const { user, repo } = params;
   const asset = params['*']; // Wildcard parameter for asset path
-  
-  console.log('PageProvider: determinePageType called with params:', params);
-  console.log('PageProvider: extracted values:', { user, repo, asset });
   
   if (asset) return PAGE_TYPES.ASSET;
   if (user && repo) return PAGE_TYPES.DAK;
@@ -55,12 +66,6 @@ export const PageProvider = ({ children, pageName }) => {
   const params = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  
-  console.log('PageProvider: initialized with:', {
-    pageName,
-    params,
-    locationPathname: location.pathname
-  });
   
   const [pageState, setPageState] = useState({
     type: determinePageType(params),
@@ -97,14 +102,17 @@ export const PageProvider = ({ children, pageName }) => {
               try {
                 profile = await githubService.getUser(user);
               } catch (err) {
-                // For dashboard pages, redirect instead of throwing error
+                // For dashboard pages, set error state instead of redirecting
                 if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
-                  navigate('/', { 
-                    state: { 
-                      warningMessage: `Could not access the requested DAK. User '${user}' not found or not accessible.` 
-                    }, 
-                    replace: true 
-                  });
+                  setPageState(prev => ({
+                    ...prev,
+                    loading: false,
+                    error: `User '${user}' not found or not accessible. Please check the username and try again.`,
+                    user,
+                    // Still set available URL parameters for context
+                    repository: repo ? { name: repo, owner: { login: user }, html_url: `https://github.com/${user}/${repo}`, isNotFound: true } : null,
+                    branch: params.branch || 'main'
+                  }));
                   return;
                 }
                 throw new Error(`User '${user}' not found or not accessible.`);
@@ -113,14 +121,23 @@ export const PageProvider = ({ children, pageName }) => {
               // Demo mode for DAK validation
               const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
               if (!isValidDAK) {
-                // For dashboard pages, redirect instead of throwing error
+                // For dashboard pages, set error state instead of redirecting
                 if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
-                  navigate('/', { 
-                    state: { 
-                      warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
-                    }, 
-                    replace: true 
-                  });
+                  setPageState(prev => ({
+                    ...prev,
+                    loading: false,
+                    error: `Repository '${user}/${repo}' not found or not accessible. This may be a private repository or the repository doesn't exist.`,
+                    user,
+                    profile: {
+                      login: user,
+                      name: user.charAt(0).toUpperCase() + user.slice(1),
+                      avatar_url: `https://github.com/${user}.png`,
+                      type: 'User',
+                      isDemo: true
+                    },
+                    repository: { name: repo, owner: { login: user }, html_url: `https://github.com/${user}/${repo}`, isNotFound: true },
+                    branch: params.branch || 'main'
+                  }));
                   return;
                 }
                 throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
@@ -142,27 +159,33 @@ export const PageProvider = ({ children, pageName }) => {
                 // Validate it's a DAK repository
                 const isValidDAK = await dakValidationService.validateDAKRepository(user, repo, selectedBranch || repository.default_branch);
                 if (!isValidDAK) {
-                  // For dashboard pages, redirect instead of throwing error
+                  // For dashboard pages, set error state instead of redirecting
                   if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
-                    navigate('/', { 
-                      state: { 
-                        warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' is not a valid DAK repository.` 
-                      }, 
-                      replace: true 
-                    });
+                    setPageState(prev => ({
+                      ...prev,
+                      loading: false,
+                      error: `Repository '${user}/${repo}' is not a valid DAK repository. This repository may not contain WHO SMART Guidelines content.`,
+                      user,
+                      profile,
+                      repository: { ...repository, isInvalidDAK: true },
+                      branch: selectedBranch || repository.default_branch
+                    }));
                     return;
                   }
                   throw new Error(`Repository '${user}/${repo}' is not a valid DAK repository.`);
                 }
               } catch (err) {
-                // For dashboard pages, redirect instead of throwing error
+                // For dashboard pages, set error state instead of redirecting
                 if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
-                  navigate('/', { 
-                    state: { 
-                      warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
-                    }, 
-                    replace: true 
-                  });
+                  setPageState(prev => ({
+                    ...prev,
+                    loading: false,
+                    error: `Repository '${user}/${repo}' not found or not accessible. Please check the repository name and your access permissions.`,
+                    user,
+                    profile,
+                    repository: { name: repo, owner: { login: user }, html_url: `https://github.com/${user}/${repo}`, isNotFound: true },
+                    branch: selectedBranch || 'main'
+                  }));
                   return;
                 }
                 throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
@@ -171,14 +194,23 @@ export const PageProvider = ({ children, pageName }) => {
               // For demo mode, validate the demo repository exists
               const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
               if (!isValidDAK) {
-                // For dashboard pages, redirect instead of throwing error
+                // For dashboard pages, set error state instead of redirecting
                 if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
-                  navigate('/', { 
-                    state: { 
-                      warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
-                    }, 
-                    replace: true 
-                  });
+                  setPageState(prev => ({
+                    ...prev,
+                    loading: false,
+                    error: `Repository '${user}/${repo}' not found or not accessible. This may be a private repository or the repository doesn't exist.`,
+                    user,
+                    profile: {
+                      login: user,
+                      name: user.charAt(0).toUpperCase() + user.slice(1),
+                      avatar_url: `https://github.com/${user}.png`,
+                      type: 'User',
+                      isDemo: true
+                    },
+                    repository: { name: repo, owner: { login: user }, html_url: `https://github.com/${user}/${repo}`, isNotFound: true },
+                    branch: selectedBranch || 'main'
+                  }));
                   return;
                 }
                 throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
@@ -202,14 +234,18 @@ export const PageProvider = ({ children, pageName }) => {
             try {
               await githubService.getFileContent(user, repo, asset, selectedBranch);
             } catch (err) {
-              // For asset pages, redirect instead of throwing error  
+              // For asset pages, set error state instead of redirecting  
               if (pageName === 'asset' || pageName.includes('editor') || pageName.includes('viewer')) {
-                navigate('/', { 
-                  state: { 
-                    warningMessage: `Could not access the requested asset. Asset '${asset}' not found in repository.` 
-                  }, 
-                  replace: true 
-                });
+                setPageState(prev => ({
+                  ...prev,
+                  loading: false,
+                  error: `Asset '${asset}' not found in repository '${user}/${repo}'. The file may have been moved or deleted.`,
+                  user,
+                  profile,
+                  repository,
+                  branch: selectedBranch,
+                  asset
+                }));
                 return;
               }
               throw new Error(`Asset '${asset}' not found in repository.`);
@@ -223,13 +259,13 @@ export const PageProvider = ({ children, pageName }) => {
             try {
               profile = await githubService.getUser(user);
             } catch (err) {
-              // For user pages, redirect instead of throwing error
-              navigate('/', { 
-                state: { 
-                  warningMessage: `Could not access the requested user. User '${user}' not found or not accessible.` 
-                }, 
-                replace: true 
-              });
+              // For user pages, set error state instead of redirecting
+              setPageState(prev => ({
+                ...prev,
+                loading: false,
+                error: `User '${user}' not found or not accessible. Please check the username and try again.`,
+                user
+              }));
               return;
             }
           } else {

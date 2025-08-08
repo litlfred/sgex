@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import HelpModal from './HelpModal';
 import useThemeImage from '../hooks/useThemeImage';
-import './HelpButton.css';
 
 const HelpButton = ({ helpTopic, contextData = {} }) => {
   const [showHelp, setShowHelp] = useState(false);

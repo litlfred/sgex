@@ -4,7 +4,6 @@ import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import PATLogin from './PATLogin';
 import { PageLayout } from './framework';
-import './LandingPage.css';
 
 const LandingPageWithFramework = () => {
   const [user, setUser] = useState(null);

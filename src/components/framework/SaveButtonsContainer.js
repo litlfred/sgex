@@ -1,5 +1,4 @@
 import React from 'react';
-import './SaveButtonsContainer.css';
 
 /**
  * Container for save buttons with independent states

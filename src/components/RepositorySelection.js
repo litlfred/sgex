@@ -3,7 +3,6 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import { PageLayout } from './framework';
-import './RepositorySelection.css';
 
 const RepositorySelection = () => {
   const location = useLocation();

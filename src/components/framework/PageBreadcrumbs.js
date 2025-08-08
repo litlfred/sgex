@@ -1,6 +1,5 @@
 import React from 'react';
 import { usePage, PAGE_TYPES } from './PageProvider';
-import './PageBreadcrumbs.css';
 
 /**
  * Unified breadcrumb component for consistent navigation across all pages
@@ -71,8 +70,8 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
     if (ownerLogin) {
       breadcrumbs.push({
         label: 'DAK Components',
-        path: `/sgex/dashboard/${ownerLogin}/${repository.name}${branchPath}`,
-        onClick: () => navigate(`/sgex/dashboard/${ownerLogin}/${repository.name}${branchPath}`)
+        path: `/dashboard/${ownerLogin}/${repository.name}${branchPath}`,
+        onClick: () => navigate(`/dashboard/${ownerLogin}/${repository.name}${branchPath}`)
       });
     }
   }

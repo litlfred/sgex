@@ -301,34 +301,100 @@ jobs:
             rm -rf build
           fi
           
-          # Add all changes
+          # Add all changes initially
           git add -A
           
           # Check if there are changes to commit
+          has_changes=false
           if git diff --cached --quiet; then
             if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
-              echo "No changes detected, but force deployment requested - creating empty commit"
-              git commit --allow-empty -m "🚀 Force deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
-              
-              - Force deployment requested by user
-              - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-              - Commit: ${{ github.sha }}"
+              echo "No changes detected, but force deployment requested - will create empty commit"
+              has_changes=true
             else
               echo "No changes to commit and force deployment not requested"
               exit 0
             fi
           else
-            echo "Committing changes..."
-            git commit -m "🚀 Deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
-            
-            - Updated branch preview for ${{ steps.branch_info.outputs.branch_name }}
-            - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-            - Commit: ${{ github.sha }}"
+            echo "Changes detected for commit"
+            has_changes=true
           fi
           
-          echo "Pushing to gh-pages..."
-          git fetch origin gh-pages
-          git push origin gh-pages
+          # Commit and push with simple retry for transient network issues only
+          if [[ "$has_changes" == "true" ]]; then
+            max_retries=3
+            retry_count=0
+            success=false
+            
+            while [[ $retry_count -lt $max_retries ]] && [[ "$success" == "false" ]]; do
+              retry_count=$((retry_count + 1))
+              echo "Deployment attempt $retry_count of $max_retries"
+              
+              # Always fetch latest state and rebase before attempting operations
+              echo "Fetching latest gh-pages state..."
+              git fetch origin gh-pages
+              
+              # Always rebase to ensure we have the latest state
+              echo "Rebasing with remote to incorporate any concurrent changes..."
+              if ! git rebase origin/gh-pages; then
+                echo "Rebase failed, checking if we can resolve automatically..."
+                # Check if the conflict is just in different directories (which should auto-resolve)
+                if git status --porcelain | grep -q "^UU"; then
+                  echo "Found merge conflicts that need manual resolution"
+                  git rebase --abort
+                  echo "Cannot automatically resolve conflicts - this shouldn't happen with separate directories"
+                  exit 1
+                else
+                  echo "Rebase completed with automatic resolution"
+                fi
+              fi
+              
+              # Commit changes
+              if git diff --cached --quiet; then
+                if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
+                  echo "Creating empty commit for force deployment"
+                  git commit --allow-empty -m "🚀 Force deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
+                  
+                  - Force deployment requested by user
+                  - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+                  - Commit: ${{ github.sha }}
+                  - Attempt: $retry_count/$max_retries"
+                else
+                  echo "No changes to commit after sync"
+                  success=true
+                  break
+                fi
+              else
+                echo "Committing changes..."
+                git commit -m "🚀 Deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
+                
+                - Updated branch preview for ${{ steps.branch_info.outputs.branch_name }}
+                - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+                - Commit: ${{ github.sha }}
+                - Attempt: $retry_count/$max_retries"
+              fi
+              
+              # Push to gh-pages
+              echo "Pushing to gh-pages (attempt $retry_count)..."
+              if git push origin gh-pages; then
+                echo "✅ Push successful on attempt $retry_count"
+                success=true
+              else
+                echo "⚠️ Push failed on attempt $retry_count"
+                if [[ $retry_count -lt $max_retries ]]; then
+                  # Brief delay for transient network issues
+                  sleep_time=$((retry_count * 2))
+                  echo "Waiting ${sleep_time} seconds before next attempt..."
+                  sleep $sleep_time
+                fi
+              fi
+            done
+            
+            if [[ "$success" == "false" ]]; then
+              echo "❌ Failed to push after $max_retries attempts"
+              echo "This may indicate a persistent network issue or repository problem"
+              exit 1
+            fi
+          fi
           
           echo "✅ Deployment completed successfully"
 
@@ -388,9 +454,11 @@ jobs:
               const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
               const restartUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
               
-              // Create a target name derived from the branch name for the new tab
+              // Create target names derived from the branch name for new tabs
               const safeBranchName = branchName.replace(/[^a-zA-Z0-9]/g, '-');
-              const targetName = `sgex-preview-${safeBranchName}`;
+              const branchTargetName = `sgex-preview-${safeBranchName}`;
+              const mainTargetName = `sgex-main-app`;
+              const mainAppUrl = 'https://litlfred.github.io/sgex/main/';
               
               // Find PR associated with this branch
               const { data: prs } = await github.rest.pulls.list({
@@ -413,17 +481,34 @@ jobs:
                 '**Status:** 🟢 Successfully Deployed\n' +
                 '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
                 '**Deployed:** ' + deployedAt + '\n\n' +
-                '### 🌐 Preview URL\n' +
-                '<a href="' + branchUrl + '" target="' + targetName + '">**➡️ View Branch Preview**</a> ⬅️\n\n' +
-                '### 🔄 Deployment Actions\n' +
-                '**Need to redeploy after updates?** → [**🚀 Click here to redeploy this branch**](' + restartUrl + ') ← \n\n' +
-                '**Instructions for redeployment:**\n' +
-                '1. Click the redeploy link above\n' +
-                '2. Click "Run workflow" button  \n' +
-                '3. Enter branch name: `' + branchName + '`\n' +
-                '4. Click "Run workflow" to confirm\n\n' +
-                '**Other actions:**\n' +
-                '- 📄 [View Build Logs](' + workflowUrl + ') - See deployment details\n\n' +
+                '### 🌐 Preview URLs\n\n' +
+                '<table>\n' +
+                '<tr>\n' +
+                '<td align="center">\n' +
+                '<a href="' + branchUrl + '" target="' + branchTargetName + '"><img src="https://img.shields.io/badge/🌐_BRANCH_PREVIEW-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Branch Preview" /></a><br/>\n' +
+                '<sub><b>Open branch preview</b></sub>\n' +
+                '</td>\n' +
+                '<td align="center">\n' +
+                '<a href="' + mainAppUrl + '" target="' + mainTargetName + '"><img src="https://img.shields.io/badge/🏠_MAIN_APP-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Main App" /></a><br/>\n' +
+                '<sub><b>Open main application</b></sub>\n' +
+                '</td>\n' +
+                '</tr>\n' +
+                '</table>\n\n' +
+                '### 🔄 Deployment Actions\n\n' +
+                '<table>\n' +
+                '<tr>\n' +
+                '<td align="center">\n' +
+                '<a href="' + restartUrl + '?branch=' + encodeURIComponent(branchName) + '"><img src="https://img.shields.io/badge/🚀_REDEPLOY_BRANCH-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Redeploy Branch" /></a><br/>\n' +
+                '<sub><b>Redeploy this branch</b></sub>\n' +
+                '</td>\n' +
+                '<td align="center">\n' +
+                '<a href="' + workflowUrl + '"><img src="https://img.shields.io/badge/📄_BUILD_LOGS-6C757D?style=for-the-badge&logo=github&logoColor=white" alt="Build Logs" /></a><br/>\n' +
+                '<sub><b>View deployment details</b></sub>\n' +
+                '</td>\n' +
+                '</tr>\n' +
+                '</table>\n\n' +
+                '### 📋 Instructions\n' +
+                '**To redeploy:** Click "REDEPLOY BRANCH" above, then click "Run workflow" (branch name will be pre-filled)\n\n' +
                 '---\n' +
                 '💡 *This branch preview was deployed successfully and will remain until the next deployment.*\n\n' +
                 '_Note: This deployment only updates the branch subdirectory and does not affect the landing page._';
@@ -437,7 +522,8 @@ jobs:
               
               const existingComment = comments.find(comment => 
                 comment.body.includes('Branch Preview Ready!') || 
-                comment.body.includes('Branch Preview Deployed!')
+                comment.body.includes('Branch Preview Deployed!') ||
+                comment.body.includes('Deployment Approval Required')
               );
               
               if (existingComment) {
@@ -496,14 +582,26 @@ jobs:
                 '**Status:** 🔴 Deployment Failed\n' +
                 '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
                 '**Failed:** ' + failedAt + '\n\n' +
-                '### 🔍 Troubleshooting\n' +
-                '- 📄 [View Build Logs](' + workflowUrl + ') - Check what went wrong\n' +
-                '- 🔄 [Restart Build](' + restartUrl + ') - Click "Run workflow" and enter branch: `' + branchName + '`\n\n' +
+                '### 🔍 Troubleshooting Actions\n\n' +
+                '<table>\n' +
+                '<tr>\n' +
+                '<td align="center">\n' +
+                '<a href="' + workflowUrl + '"><img src="https://img.shields.io/badge/📄_CHECK_LOGS-DC3545?style=for-the-badge&logo=github&logoColor=white" alt="Check Logs" /></a><br/>\n' +
+                '<sub><b>View error details</b></sub>\n' +
+                '</td>\n' +
+                '<td align="center">\n' +
+                '<a href="' + restartUrl + '?branch=' + encodeURIComponent(branchName) + '"><img src="https://img.shields.io/badge/🔄_RETRY_BUILD-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Retry Build" /></a><br/>\n' +
+                '<sub><b>Restart deployment</b></sub>\n' +
+                '</td>\n' +
+                '</tr>\n' +
+                '</table>\n\n' +
                 '### 💡 Common Issues\n' +
                 '- Build errors in code changes\n' +
                 '- Missing dependencies or npm install issues\n' +
                 '- GitHub Pages deployment limits\n' +
                 '- Network connectivity issues\n\n' +
+                '### 📋 Instructions\n' +
+                '**To retry:** Click "RETRY BUILD" above, then click "Run workflow" (branch name will be pre-filled)\n\n' +
                 '---\n' +
                 '❗ *Please check the build logs above and fix any issues before restarting the deployment.*\n\n' +
                 '_Note: The previous deployment (if any) remains active until this branch is successfully deployed._';
@@ -518,7 +616,8 @@ jobs:
               const existingComment = comments.find(comment => 
                 comment.body.includes('Branch Preview Ready!') || 
                 comment.body.includes('Branch Preview Deployed!') || 
-                comment.body.includes('Branch Preview Failed!')
+                comment.body.includes('Branch Preview Failed!') ||
+                comment.body.includes('Deployment Approval Required')
               );
               
               if (existingComment) {

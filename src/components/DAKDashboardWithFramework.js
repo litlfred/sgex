@@ -4,7 +4,7 @@ import githubService from '../services/githubService';
 import branchContextService from '../services/branchContextService';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
-import './DAKDashboard.css';
+import ForkStatusBar from './ForkStatusBar';
 
 const DAKDashboardWithFramework = () => {
   return (
@@ -32,7 +32,7 @@ const DAKDashboardContent = () => {
 
       try {
         // Check repository permissions
-        const hasPermission = await githubService.checkRepositoryPermissions(repository.owner.login, repository.name);
+        const hasPermission = await githubService.checkRepositoryWritePermissions(repository.owner.login, repository.name);
         setHasWriteAccess(hasPermission);
       } catch (error) {
         console.error('Error checking repository permissions:', error);
@@ -58,7 +58,7 @@ const DAKDashboardContent = () => {
       }
 
       try {
-        const issues = await githubService.getRepositoryIssues(repository.owner.login, repository.name);
+        const issues = await githubService.getIssues(repository.owner.login, repository.name);
         
         // Count issues by label
         const counts = {};
@@ -246,6 +246,13 @@ const DAKDashboardContent = () => {
             </p>
           </div>
         </div>
+
+        {/* Fork Status Bar - shows forks of sgex repository */}
+        <ForkStatusBar 
+          profile={profile}
+          repository={repository}
+          selectedBranch={branch}
+        />
 
         {repository && (
           <DAKStatusBox 

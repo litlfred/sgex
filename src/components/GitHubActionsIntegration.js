@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import githubService from '../services/githubService';
 import CommitDiffModal from './CommitDiffModal';
-import './GitHubActionsIntegration.css';
 
 const GitHubActionsIntegration = ({ repository, selectedBranch, hasWriteAccess, profile }) => {
   const [workflows, setWorkflows] = useState([]);

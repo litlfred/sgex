@@ -168,71 +168,33 @@ class DAKValidationService {
   }
 
   /**
-   * Creates a mock validation for demo mode
+   * Validates DAK repository in demo mode based on basic format
+   * A repository is valid if it has proper org/repo format. In demo mode,
+   * we cannot reliably fetch sushi-config.yaml due to authentication limitations,
+   * so we allow any repository that follows the basic org/repo pattern.
    * @param {string} owner - Repository owner
    * @param {string} repo - Repository name
-   * @returns {boolean} - True for known demo DAK repositories
+   * @returns {boolean} - True if repository has valid org/repo format
    */
   validateDemoDAKRepository(owner, repo) {
-    // List of known valid demo DAK repositories for demo mode
-    const knownDAKRepos = [
-      // Actual WHO DAK repositories
-      'WorldHealthOrganization/smart-immunizations',
-      'WorldHealthOrganization/smart-anc-toolkit', 
-      'WorldHealthOrganization/smart-hiv',
-      'WorldHealthOrganization/smart-tb',
-      'WorldHealthOrganization/smart-base',
-      
-      // Demo repositories for testing
-      'litlfred/smart-guidelines-demo',
-      'litlfred/sgex-demo',
-      'litlfred/smart-pcmt-vaxprequal',
-      'who/smart-guidelines',
-      'who/smart-anc-toolkit',
-      'who/smart-immunizations',
-      
-      // Demo variations
-      'demo-user/smart-guidelines-demo',
-      'demo-user/who-smart-guidelines'
-    ];
+    // Validate basic format: must look like org/repo
+    if (!owner || !repo || owner.includes('/') || repo.includes('/')) {
+      console.log(`Demo mode: Invalid repository format ${owner}/${repo}`);
+      return false;
+    }
+
+    // Basic validation for reasonable org and repo names
+    // Allow alphanumeric characters, hyphens, underscores, and dots
+    const validNamePattern = /^[a-zA-Z0-9._-]+$/;
+    
+    if (!validNamePattern.test(owner) || !validNamePattern.test(repo)) {
+      console.log(`Demo mode: Invalid characters in repository name ${owner}/${repo}`);
+      return false;
+    }
 
     const fullName = `${owner}/${repo}`;
-    
-    // Check against known repositories first
-    const isKnown = knownDAKRepos.some(knownRepo => 
-      knownRepo.toLowerCase() === fullName.toLowerCase()
-    );
-
-    if (isKnown) {
-      console.log(`Demo mode: ${fullName} recognized as valid DAK repository`);
-      return true;
-    }
-    
-    // Check for dynamically generated demo DAK repositories
-    // These follow specific patterns matching the mock repositories in DAKSelection.js
-    const demoDakPatterns = [
-      /^[^/]+\/anc-dak$/i,                    // */anc-dak
-      /^[^/]+\/immunization-dak$/i,           // */immunization-dak  
-      /^[^/]+\/maternal-health-dak$/i,        // */maternal-health-dak
-      /^[^/]+\/(.*-)?health.*-dak$/i,         // */health-related-dak (health-dak, maternal-health-dak, etc.)
-      /^[^/]+\/.*care.*-dak$/i,               // */care-related-dak (anc-dak, care-dak, etc.)
-      /^[^/]+\/.*immunization.*-dak$/i,       // */immunization-related-dak
-      /^[^/]+\/smart-anc-toolkit$/i,          // */smart-anc-toolkit
-      /^[^/]+\/smart-immunizations$/i,        // */smart-immunizations  
-      /^[^/]+\/smart-guidelines$/i,           // */smart-guidelines
-      /^[^/]+\/smart-guidelines-demo$/i,      // */smart-guidelines-demo
-      /^[^/]+\/smart-ips-.*$/i                // */smart-ips-* (covers smart-ips-pilgrimage, etc.)
-    ];
-    
-    const matchesPattern = demoDakPatterns.some(pattern => pattern.test(fullName));
-    
-    if (matchesPattern) {
-      console.log(`Demo mode: ${fullName} recognized as valid DAK repository (pattern match)`);
-      return true;
-    }
-
-    console.log(`Demo mode: ${fullName} not recognized as valid DAK repository`);
-    return false;
+    console.log(`Demo mode: ${fullName} accepted as valid DAK repository (proper org/repo format)`);
+    return true;
   }
 }
 

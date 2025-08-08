@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import githubService from '../services/githubService';
 import dakComplianceService from '../services/dakComplianceService';
 import stagingGroundService from '../services/stagingGroundService';
-import './SaveDialog.css';
 
 const SaveDialog = ({ 
   isOpen, 

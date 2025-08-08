@@ -1,6 +1,7 @@
 import { Octokit } from '@octokit/rest';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
+import secureTokenStorage from './secureTokenStorage';
 import logger from '../utils/logger';
 
 class GitHubService {
@@ -16,24 +17,55 @@ class GitHubService {
   // Initialize with a GitHub token (supports both OAuth and PAT tokens)
   authenticate(token) {
     const startTime = Date.now();
-    this.logger.auth('Starting authentication', { tokenProvided: !!token, tokenLength: token ? token.length : 0 });
+    this.logger.auth('Starting authentication', { 
+      tokenProvided: !!token, 
+      tokenMask: token ? secureTokenStorage.maskToken(token) : 'none'
+    });
     
     try {
+      // Validate token format using SecureTokenStorage
+      const validation = secureTokenStorage.validateTokenFormat(token);
+      if (!validation.isValid) {
+        this.logger.warn('Token validation failed during authentication', { 
+          reason: validation.reason,
+          tokenMask: secureTokenStorage.maskToken(token)
+        });
+        this.isAuthenticated = false;
+        return false;
+      }
+
       this.octokit = new Octokit({
-        auth: token,
+        auth: validation.token,
       });
       this.isAuthenticated = true;
+      this.tokenType = validation.type;
+      
+      // Store token securely
+      const stored = secureTokenStorage.storeToken(validation.token);
+      if (!stored) {
+        this.logger.warn('Failed to store token securely, authentication will not persist');
+      }
       
       const duration = Date.now() - startTime;
-      this.logger.auth('Authentication successful', { duration });
+      this.logger.auth('Authentication successful', { 
+        duration, 
+        tokenType: this.tokenType,
+        tokenMask: secureTokenStorage.maskToken(token),
+        securelyStored: stored
+      });
       this.logger.performance('GitHub authentication', duration);
       
       return true;
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.logger.auth('Authentication failed', { error: error.message, duration });
+      this.logger.auth('Authentication failed', { 
+        error: error.message, 
+        duration,
+        tokenMask: secureTokenStorage.maskToken(token)
+      });
       console.error('Failed to authenticate with GitHub:', error);
       this.isAuthenticated = false;
+      secureTokenStorage.clearToken(); // Clear any partially stored data
       return false;
     }
   }
@@ -55,6 +87,56 @@ class GitHubService {
       this.isAuthenticated = false;
       return false;
     }
+  }
+
+  // Initialize authentication from securely stored token
+  initializeFromStoredToken() {
+    this.logger.auth('Attempting to initialize from stored token');
+    
+    try {
+      // First try to migrate any legacy tokens
+      const migrated = secureTokenStorage.migrateLegacyToken();
+      if (migrated) {
+        this.logger.debug('Successfully migrated legacy token to secure storage');
+      }
+
+      // Retrieve token from secure storage
+      const tokenData = secureTokenStorage.retrieveToken();
+      if (!tokenData) {
+        this.logger.debug('No valid stored token found');
+        return false;
+      }
+
+      // Initialize Octokit with stored token
+      this.octokit = new Octokit({
+        auth: tokenData.token,
+      });
+      this.isAuthenticated = true;
+      this.tokenType = tokenData.type;
+      
+      this.logger.auth('Successfully initialized from stored token', {
+        tokenType: this.tokenType,
+        tokenMask: secureTokenStorage.maskToken(tokenData.token),
+        expires: new Date(tokenData.expires).toISOString()
+      });
+      
+      return true;
+    } catch (error) {
+      this.logger.auth('Failed to initialize from stored token', { error: error.message });
+      this.isAuthenticated = false;
+      secureTokenStorage.clearToken();
+      return false;
+    }
+  }
+
+  // Check if there's a valid stored token
+  hasStoredToken() {
+    return secureTokenStorage.hasValidToken();
+  }
+
+  // Get information about stored token
+  getStoredTokenInfo() {
+    return secureTokenStorage.getTokenInfo();
   }
 
   // Check token permissions and type
@@ -698,87 +780,34 @@ class GitHubService {
 
   // GitHub Actions API methods
   
-  // Get workflows for a repository (detailed version with file parsing)
+  // Get workflows for a repository (using GitHub API to include workflow IDs)
   async getWorkflows(owner, repo) {
     if (!this.isAuth()) {
       throw new Error('Not authenticated with GitHub');
     }
 
     try {
-      // First, try to get the .github/workflows directory
-      const { data } = await this.octokit.rest.repos.getContent({
+      // Use GitHub Actions API to get workflows with their IDs
+      const { data } = await this.octokit.rest.actions.listRepoWorkflows({
         owner,
-        repo,
-        path: '.github/workflows'
+        repo
       });
 
-      // Filter for YAML/YML files
-      const workflowFiles = Array.isArray(data) 
-        ? data.filter(file => file.name.endsWith('.yml') || file.name.endsWith('.yaml'))
-        : [];
-
-      // Fetch workflow details for each file
-      const workflows = await Promise.all(
-        workflowFiles.map(async (file) => {
-          try {
-            // Get file content to parse workflow name
-            const contentResponse = await this.octokit.rest.repos.getContent({
-              owner,
-              repo,
-              path: file.path
-            });
-
-            const content = decodeURIComponent(escape(atob(contentResponse.data.content)));
-            
-            // Parse workflow name from YAML (simple regex approach)
-            const nameMatch = content.match(/^name:\s*(.+)$/m);
-            const workflowName = nameMatch ? nameMatch[1].replace(/['"]/g, '') : file.name.replace(/\.(yml|yaml)$/, '');
-
-            // Parse triggers
-            const onMatch = content.match(/^on:\s*$/m);
-            let triggers = [];
-            if (onMatch) {
-              const pushMatch = content.match(/^\s*push:/m);
-              const prMatch = content.match(/^\s*pull_request:/m);
-              const scheduleMatch = content.match(/^\s*schedule:/m);
-              const workflowDispatchMatch = content.match(/^\s*workflow_dispatch:/m);
-              
-              if (pushMatch) triggers.push('push');
-              if (prMatch) triggers.push('pull_request');
-              if (scheduleMatch) triggers.push('schedule');
-              if (workflowDispatchMatch) triggers.push('manual');
-            }
-
-            return {
-              name: workflowName,
-              filename: file.name,
-              path: file.path,
-              size: file.size,
-              sha: file.sha,
-              url: file.html_url,
-              triggers: triggers.length > 0 ? triggers : ['push'], // default to push if we can't parse
-              lastModified: contentResponse.data.last_modified || 'Unknown'
-            };
-          } catch (error) {
-            console.warn(`Failed to fetch workflow details for ${file.name}:`, error);
-            return {
-              name: file.name.replace(/\.(yml|yaml)$/, ''),
-              filename: file.name,
-              path: file.path,
-              size: file.size,
-              sha: file.sha,
-              url: file.html_url,
-              triggers: ['unknown'],
-              lastModified: 'Unknown'
-            };
-          }
-        })
-      );
-
-      return workflows;
+      return data.workflows.map(workflow => ({
+        id: workflow.id, // This is the crucial missing piece!
+        name: workflow.name,
+        filename: workflow.path.split('/').pop(), // Extract filename from path
+        path: workflow.path,
+        state: workflow.state,
+        created_at: workflow.created_at,
+        updated_at: workflow.updated_at,
+        url: workflow.html_url,
+        triggers: ['unknown'], // GitHub API doesn't provide trigger info directly
+        lastModified: workflow.updated_at
+      }));
     } catch (error) {
       if (error.status === 404) {
-        // No .github/workflows directory exists
+        // No workflows or repository not found
         return [];
       }
       console.error('Failed to fetch workflows:', error);
@@ -1003,8 +1032,10 @@ class GitHubService {
   // Recursively fetch BPMN files from a directory and its subdirectories
   async getBpmnFilesRecursive(owner, repo, path, ref = 'main', allFiles = []) {
     try {
+      console.log(`🔎 githubService.getBpmnFilesRecursive: Searching ${owner}/${repo}/${path} (ref: ${ref})`);
       // Use authenticated octokit if available, otherwise create a public instance
       const octokit = this.isAuth() ? this.octokit : new Octokit();
+      console.log(`🔐 githubService.getBpmnFilesRecursive: Using ${this.isAuth() ? 'authenticated' : 'public'} octokit`);
       
       const { data } = await octokit.rest.repos.getContent({
         owner,
@@ -1013,9 +1044,12 @@ class GitHubService {
         ref
       });
 
+      console.log(`📦 githubService.getBpmnFilesRecursive: Received data type: ${Array.isArray(data) ? 'array' : 'single file'}, length: ${Array.isArray(data) ? data.length : 1}`);
+
       // Handle single file response
       if (!Array.isArray(data)) {
         if (data.name.endsWith('.bpmn')) {
+          console.log(`📄 githubService.getBpmnFilesRecursive: Found single BPMN file: ${data.name}`);
           allFiles.push(data);
         }
         return allFiles;
@@ -1024,15 +1058,19 @@ class GitHubService {
       // Handle directory response
       for (const item of data) {
         if (item.type === 'file' && item.name.endsWith('.bpmn')) {
+          console.log(`📄 githubService.getBpmnFilesRecursive: Found BPMN file: ${item.name}`);
           allFiles.push(item);
         } else if (item.type === 'dir') {
+          console.log(`📁 githubService.getBpmnFilesRecursive: Found subdirectory: ${item.name}, recursing...`);
           // Recursively search subdirectories
           await this.getBpmnFilesRecursive(owner, repo, item.path, ref, allFiles);
         }
       }
 
+      console.log(`✅ githubService.getBpmnFilesRecursive: Completed search of ${path}, found ${allFiles.length} total files so far`);
       return allFiles;
     } catch (error) {
+      console.log(`❌ githubService.getBpmnFilesRecursive: Error searching ${path}:`, error.status, error.message);
       // If directory doesn't exist, return empty array (not an error)
       if (error.status === 404) {
         return allFiles;
@@ -1043,25 +1081,28 @@ class GitHubService {
 
   // Get all BPMN files from a repository's business process directories
   async getBpmnFiles(owner, repo, ref = 'main') {
+    console.log(`🔍 githubService.getBpmnFiles: Starting search for ${owner}/${repo} (ref: ${ref})`);
     const allBpmnFiles = [];
     
-    // Try multiple possible directory names where BPMN files might be stored
+    // Search for BPMN files in the specified business process directories
     const possiblePaths = [
       'input/business-processes',
-      'input/business-process',
-      'public/docs/workflows',
-      'docs/workflows',
-      'workflows',
-      'bpmn',
-      'processes'
+      'input/business-process'
     ];
 
     for (const path of possiblePaths) {
       try {
+        console.log(`📁 githubService.getBpmnFiles: Searching in directory: ${path}`);
         const files = await this.getBpmnFilesRecursive(owner, repo, path, ref);
+        console.log(`✅ githubService.getBpmnFiles: Found ${files.length} BPMN files in ${path}`);
         allBpmnFiles.push(...files);
       } catch (error) {
-        console.warn(`Could not fetch BPMN files from ${path}:`, error.message);
+        // Only log warnings for unexpected errors (not 404s which are expected when directories don't exist)
+        if (error.status !== 404) {
+          console.warn(`❌ Could not fetch BPMN files from ${path}:`, error.message);
+        } else {
+          console.log(`📂 githubService.getBpmnFiles: Directory ${path} not found (404) - this is expected if the directory doesn't exist`);
+        }
         // Continue trying other paths
       }
     }
@@ -1071,6 +1112,8 @@ class GitHubService {
       index === self.findIndex(f => f.path === file.path)
     );
 
+    console.log(`🎯 githubService.getBpmnFiles: Final result - ${uniqueFiles.length} unique BPMN files found`);
+    console.log(`📋 githubService.getBpmnFiles: File list:`, uniqueFiles.map(f => f.name));
     return uniqueFiles;
   }
 
@@ -1329,32 +1372,115 @@ class GitHubService {
     }
   }
 
-  // Get pull request for a specific branch
+  // Get pull request for a specific branch (returns first PR only for backward compatibility)
   async getPullRequestForBranch(owner, repo, branchName) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
+    const prs = await this.getPullRequestsForBranch(owner, repo, branchName);
+    return prs && prs.length > 0 ? prs[0] : null;
+  }
+
+  // Get all pull requests for a specific branch
+  async getPullRequestsForBranch(owner, repo, branchName) {
+    // Use authenticated octokit if available, otherwise create a public instance for public repos
+    const octokit = this.isAuth() ? this.octokit : new Octokit();
 
     const startTime = Date.now();
     this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls`, { state: 'open', head: `${owner}:${branchName}` });
 
     try {
-      const response = await this.octokit.rest.pulls.list({
+      const response = await octokit.rest.pulls.list({
         owner,
         repo,
         state: 'open',
         head: `${owner}:${branchName}`,
-        per_page: 1
+        per_page: 100 // Get up to 100 PRs for a branch
       });
 
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, response.status, Date.now() - startTime);
       
-      // Return the first matching PR or null if none found
-      return response.data.length > 0 ? response.data[0] : null;
+      // Return all matching PRs or empty array if none found
+      return response.data || [];
     } catch (error) {
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, error.status || 'error', Date.now() - startTime);
-      console.error('Failed to fetch pull request for branch:', error);
-      return null; // Return null instead of throwing to allow graceful fallback
+      console.error('Failed to fetch pull requests for branch:', error);
+      return []; // Return empty array instead of throwing to allow graceful fallback
+    }
+  }
+
+  // Get pull request comments
+  async getPullRequestComments(owner, repo, pullNumber) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, {});
+
+    try {
+      const response = await this.octokit.rest.pulls.listReviewComments({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        per_page: 100
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, response.status, Date.now() - startTime);
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch pull request comments:', error);
+      throw error;
+    }
+  }
+
+  // Get pull request issue comments (general comments on the PR conversation)
+  async getPullRequestIssueComments(owner, repo, pullNumber) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, {});
+
+    try {
+      const response = await this.octokit.rest.issues.listComments({
+        owner,
+        repo,
+        issue_number: pullNumber,
+        per_page: 100
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, response.status, Date.now() - startTime);
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch pull request issue comments:', error);
+      throw error;
+    }
+  }
+
+  // Create a comment on a pull request
+  async createPullRequestComment(owner, repo, pullNumber, body) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('POST', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, { body });
+
+    try {
+      const response = await this.octokit.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number: pullNumber,
+        body
+      });
+
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, response.status, Date.now() - startTime);
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to create pull request comment:', error);
+      throw error;
     }
   }
 
@@ -1553,14 +1679,168 @@ class GitHubService {
     return this.getIssues(owner, repo, options);
   }
 
+  // Get repository forks
+  async getForks(owner, repo, options = {}) {
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/forks`, options);
+
+    try {
+      // Use the GitHub API to fetch forks, no authentication required for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const params = {
+        owner,
+        repo,
+        sort: options.sort || 'newest',
+        per_page: options.per_page || 100,
+        page: options.page || 1
+      };
+
+      const { data } = await octokit.rest.repos.listForks(params);
+      
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/forks`, 200, Date.now() - startTime);
+      
+      // Return formatted fork data
+      return data.map(fork => ({
+        id: fork.id,
+        name: fork.name,
+        full_name: fork.full_name,
+        owner: {
+          login: fork.owner.login,
+          avatar_url: fork.owner.avatar_url,
+          html_url: fork.owner.html_url,
+          type: fork.owner.type
+        },
+        description: fork.description,
+        html_url: fork.html_url,
+        clone_url: fork.clone_url,
+        created_at: fork.created_at,
+        updated_at: fork.updated_at,
+        pushed_at: fork.pushed_at,
+        stargazers_count: fork.stargazers_count,
+        forks_count: fork.forks_count,
+        open_issues_count: fork.open_issues_count,
+        default_branch: fork.default_branch,
+        private: fork.private,
+        fork: fork.fork,
+        parent: fork.parent ? {
+          full_name: fork.parent.full_name,
+          html_url: fork.parent.html_url
+        } : null
+      }));
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/forks`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch repository forks:', error);
+      throw error;
+    }
+  }
+
+  // Get pull requests for a specific repository
+  async getPullRequests(owner, repo, options = {}) {
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls`, options);
+
+    try {
+      // Use the GitHub API to fetch pull requests, no authentication required for public repos
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      const params = {
+        owner,
+        repo,
+        state: options.state || 'open',
+        sort: options.sort || 'updated',
+        direction: options.direction || 'desc',
+        per_page: options.per_page || 30,
+        page: options.page || 1
+      };
+
+      // Add optional filters
+      if (options.head) {
+        params.head = options.head;
+      }
+      if (options.base) {
+        params.base = options.base;
+      }
+
+      const { data } = await octokit.rest.pulls.list(params);
+      
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, 200, Date.now() - startTime);
+      
+      // Return formatted pull request data
+      return data.map(pr => ({
+        id: pr.id,
+        number: pr.number,
+        title: pr.title,
+        body: pr.body,
+        state: pr.state,
+        locked: pr.locked,
+        user: {
+          login: pr.user.login,
+          avatar_url: pr.user.avatar_url,
+          html_url: pr.user.html_url,
+          type: pr.user.type
+        },
+        created_at: pr.created_at,
+        updated_at: pr.updated_at,
+        closed_at: pr.closed_at,
+        merged_at: pr.merged_at,
+        html_url: pr.html_url,
+        diff_url: pr.diff_url,
+        patch_url: pr.patch_url,
+        head: {
+          ref: pr.head.ref,
+          sha: pr.head.sha,
+          repo: pr.head.repo ? {
+            name: pr.head.repo.name,
+            full_name: pr.head.repo.full_name,
+            owner: {
+              login: pr.head.repo.owner.login,
+              avatar_url: pr.head.repo.owner.avatar_url
+            },
+            html_url: pr.head.repo.html_url
+          } : null
+        },
+        base: {
+          ref: pr.base.ref,
+          sha: pr.base.sha,
+          repo: {
+            name: pr.base.repo.name,
+            full_name: pr.base.repo.full_name,
+            owner: {
+              login: pr.base.repo.owner.login,
+              avatar_url: pr.base.repo.owner.avatar_url
+            },
+            html_url: pr.base.repo.html_url
+          }
+        },
+        draft: pr.draft,
+        mergeable: pr.mergeable,
+        mergeable_state: pr.mergeable_state,
+        comments: pr.comments,
+        review_comments: pr.review_comments,
+        commits: pr.commits,
+        additions: pr.additions,
+        deletions: pr.deletions,
+        changed_files: pr.changed_files
+      }));
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to fetch pull requests:', error);
+      throw error;
+    }
+  }
+
   // Logout
   logout() {
+    this.logger.auth('Logging out and clearing stored token');
+    
     this.octokit = null;
     this.isAuthenticated = false;
     this.tokenType = null;
     this.permissions = null;
-    localStorage.removeItem('github_token');
-    sessionStorage.removeItem('github_token');
+    
+    // Clear secure token storage
+    secureTokenStorage.clearToken();
     
     // Clear branch context on logout
     try {
@@ -1569,6 +1849,39 @@ class GitHubService {
     } catch (error) {
       // Service might not be available during testing
       sessionStorage.removeItem('sgex_branch_context');
+    }
+  }
+
+  // Get repository forks
+  async getRepositoryForks(owner, repo, options = {}) {
+    const startTime = Date.now();
+    this.logger.debug('Fetching repository forks', { owner, repo, options });
+
+    try {
+      // Create temporary Octokit instance for unauthenticated access if needed
+      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      
+      this.logger.apiCall('GET', `/repos/${owner}/${repo}/forks`, options);
+      
+      const { data } = await octokit.rest.repos.listForks({
+        owner,
+        repo,
+        sort: 'newest', // Sort by newest first
+        per_page: options.per_page || 100,
+        page: options.page || 1
+      });
+
+      const duration = Date.now() - startTime;
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/forks`, 200, duration, { forkCount: data.length });
+      this.logger.performance('Repository forks fetch', duration);
+
+      return data;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.apiError('GET', `/repos/${owner}/${repo}/forks`, error);
+      this.logger.performance('Repository forks fetch (failed)', duration);
+      console.error(`Failed to fetch forks for ${owner}/${repo}:`, error);
+      throw error;
     }
   }
 }

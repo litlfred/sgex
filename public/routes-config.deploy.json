@@ -1,11 +1,22 @@
 {
   "deployType": "deploy",
   "components": {
-    "DashboardRedirect": {
-      "path": "./components/DashboardRedirect",
+    "BranchListingPage": {
+      "path": "./components/BranchListingPage",
       "routes": [
-        { "path": "/", "exact": true }
+        { "path": "/", "exact": true },
+        { "path": "/deploy", "exact": true }
+      ]
+    },
+    "NotFound": {
+      "path": "./components/NotFound",
+      "routes": [
+        { "path": "*", "fallback": true }
       ]
     }
-  }
+  },
+  "deployedBranches": [
+    "main",
+    "deploy"
+  ]
 }

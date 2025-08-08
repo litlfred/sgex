@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { usePage, PAGE_TYPES } from './PageProvider';
 import AccessBadge from './AccessBadge';
 import githubService from '../../services/githubService';
-import './PageContext.css';
 
 /**
  * Page context component that displays profile/repo/branch information and breadcrumbs

@@ -60,9 +60,10 @@ describe('Branch Switching Fix - DAK Validation', () => {
     });
   });
 
-  test('should still reject non-DAK repositories', () => {
+  test('should now accept any properly formatted repository', () => {
+    // With the new validation logic, any properly formatted org/repo is accepted
     const isValid = dakValidationService.validateDemoDAKRepository('user', 'random-repo');
-    expect(isValid).toBe(false);
+    expect(isValid).toBe(true);
   });
 
   test('should be case insensitive for repository matching', () => {

@@ -7,10 +7,10 @@ import branchContextService from '../services/branchContextService';
 import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
+import ForkStatusBar from './ForkStatusBar';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
-import './DAKDashboard.css';
 
 const DAKDashboard = () => {
   return (
@@ -506,6 +506,13 @@ const DAKDashboardContent = () => {
               Components are organized according to the WHO SMART Guidelines framework.
             </p>
           </div>
+
+          {/* Fork Status Bar - shows forks of sgex repository */}
+          <ForkStatusBar 
+            profile={profile}
+            repository={repository}
+            selectedBranch={selectedBranch}
+          />
 
           {/* DAK Status Box - only show when repository and branch are selected */}
           {repository && selectedBranch && (

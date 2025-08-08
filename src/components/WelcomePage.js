@@ -7,7 +7,6 @@ import helpContentService from '../services/helpContentService';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
-import './WelcomePage.css';
 
 const WelcomePage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
