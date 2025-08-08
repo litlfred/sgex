@@ -41,15 +41,6 @@ const BranchListingPage = () => {
     };
 
 
-    // Logout function
-    const handleLogout = () => {
-        setGithubToken(null);
-        setIsAuthenticated(false);
-        githubService.logout(); // Use secure logout method
-        setPrComments({});
-    };
-
-
     // Function to fetch PR comments summary
     const fetchPRCommentsSummary = async (prNumber) => {
         try {
