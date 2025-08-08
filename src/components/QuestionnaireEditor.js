@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { AssetEditorLayout } from './framework';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AssetEditorLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
 import './QuestionnaireEditor.css';
@@ -265,20 +265,8 @@ const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
 };
 
 const QuestionnaireEditor = () => {
-  const { user, repo, branch } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
-  
-  // Get context from location state or URL params - memoized to prevent re-renders
-  const profile = location.state?.profile;
-  const repository = useMemo(() => 
-    location.state?.repository || {
-      name: repo,
-      owner: { login: user },
-      full_name: `${user}/${repo}`
-    }, [location.state?.repository, repo, user]
-  );
-  const selectedBranch = location.state?.selectedBranch || branch || 'main';
+  const { repository, branch } = useDAKParams();
   
   // Component state
   const [questionnaires, setQuestionnaires] = useState([]);
@@ -288,7 +276,6 @@ const QuestionnaireEditor = () => {
   const [editing, setEditing] = useState(false);
   const [questionnaireContent, setQuestionnaireContent] = useState(null);
   const [originalContent, setOriginalContent] = useState(null);
-  const [hasChanges, setHasChanges] = useState(false);
   
   // LForms integration state
   const [lformsLoaded, setLformsLoaded] = useState(false);
@@ -319,7 +306,7 @@ const QuestionnaireEditor = () => {
   // Load questionnaires from repository
   useEffect(() => {
     const loadQuestionnaires = async () => {
-      if (!repository || !selectedBranch) return;
+      if (!repository || !branch) return;
       
       try {
         setLoading(true);
@@ -339,7 +326,7 @@ const QuestionnaireEditor = () => {
               repository.owner.login,
               repository.name,
               pathConfig.path,
-              selectedBranch
+              branch
             );
             
             // Filter for supported file extensions
@@ -376,7 +363,7 @@ const QuestionnaireEditor = () => {
     };
 
     loadQuestionnaires();
-  }, [repository, selectedBranch]);
+  }, [repository, branch]);
 
   // Load questionnaire content
   const loadQuestionnaireContent = async (questionnaire) => {
@@ -386,7 +373,7 @@ const QuestionnaireEditor = () => {
         repository.owner.login,
         repository.name,
         questionnaire.fullPath,
-        selectedBranch
+        branch
       );
       
       let questionnaireData;
@@ -412,7 +399,6 @@ const QuestionnaireEditor = () => {
       setOriginalContent(content);
       setSelectedQuestionnaire(questionnaire);
       setEditing(true);
-      setHasChanges(false);
       
       console.log('Questionnaire loaded:', questionnaireData);
     } catch (error) {
@@ -480,67 +466,75 @@ const QuestionnaireEditor = () => {
       isNew: true
     });
     setEditing(true);
-    setHasChanges(true);
     setEditMode('visual'); // Start with visual editor for new questionnaires
 
     console.log('New questionnaire created:', newQuestionnaire);
   };
 
-  // Save questionnaire
-  const handleSave = async (commitMessage, saveToGitHub = false) => {
-    try {
-      const content = JSON.stringify(questionnaireContent, null, 2);
+  // Handle save operation (called by AssetEditorLayout)
+  const handleSave = (content, saveType) => {
+    console.log(`Questionnaire saved to ${saveType}`);
+    
+    if (saveType === 'github') {
+      // Refresh questionnaires list after GitHub save
+      const loadQuestionnaires = async () => {
+        try {
+          const allQuestionnaires = [];
+          
+          const paths = [
+            { path: 'input/questionnaires', extensions: ['.json'], type: 'JSON' },
+            { path: 'input/fsh/questionnaires', extensions: ['.fsh'], type: 'FSH' }
+          ];
+          
+          for (const pathConfig of paths) {
+            try {
+              const files = await githubService.getDirectoryContents(
+                repository.owner.login,
+                repository.name,
+                pathConfig.path,
+                branch
+              );
+              
+              const questionnaireFiles = files
+                .filter(file => file.type === 'file' && 
+                  pathConfig.extensions.some(ext => file.name.endsWith(ext)))
+                .map(file => {
+                  const extension = pathConfig.extensions.find(ext => file.name.endsWith(ext));
+                  return {
+                    ...file,
+                    displayName: file.name.replace(extension, ''),
+                    fullPath: `${pathConfig.path}/${file.name}`,
+                    fileType: pathConfig.type,
+                    extension: extension
+                  };
+                });
+              
+              allQuestionnaires.push(...questionnaireFiles);
+            } catch (error) {
+              if (error.status !== 404) {
+                console.warn(`Error loading from ${pathConfig.path}:`, error);
+              }
+            }
+          }
+          
+          setQuestionnaires(allQuestionnaires);
+        } catch (error) {
+          console.error('Error refreshing questionnaires:', error);
+        }
+      };
       
-      if (saveToGitHub) {
-        await githubService.updateFile(
-          repository.owner.login,
-          repository.name,
-          selectedQuestionnaire.fullPath,
-          content,
-          commitMessage,
-          selectedQuestionnaire.sha,
-          selectedBranch
-        );
-        setHasChanges(false);
-        setOriginalContent(content);
-        
-        // Refresh questionnaires list
-        const files = await githubService.getDirectoryContents(
-          repository.owner.login,
-          repository.name,
-          'input/questionnaires',
-          selectedBranch
-        );
-        
-        const questionnaireFiles = files
-          .filter(file => file.type === 'file' && file.name.endsWith('.json'))
-          .map(file => ({
-            ...file,
-            displayName: file.name.replace('.json', ''),
-            fullPath: `input/questionnaires/${file.name}`
-          }));
-        
-        setQuestionnaires(questionnaireFiles);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error saving questionnaire:', error);
-      throw error;
+      loadQuestionnaires();
     }
   };
 
   // Navigate back to dashboard
   const handleBackToDashboard = () => {
-    const navigationState = {
-      profile,
-      repository,
-      selectedBranch
-    };
-    navigate(`/dashboard/${repository.owner.login}/${repository.name}/${selectedBranch}`, {
-      state: navigationState
-    });
+    navigate(`/dashboard/${repository.owner.login}/${repository.name}/${branch}`);
   };
+
+  // Check if there are changes in the questionnaire
+  const hasChanges = questionnaireContent && originalContent &&
+    JSON.stringify(questionnaireContent, null, 2) !== originalContent;
 
   if (loading && !editing) {
     return (
@@ -558,7 +552,7 @@ const QuestionnaireEditor = () => {
       pageName="questionnaire-editor"
       file={selectedQuestionnaire}
       repository={repository}
-      branch={selectedBranch}
+      branch={branch}
       content={questionnaireContent ? JSON.stringify(questionnaireContent, null, 2) : null}
       originalContent={originalContent}
       hasChanges={hasChanges}
@@ -574,10 +568,10 @@ const QuestionnaireEditor = () => {
               </button>
               <span className="separator">/</span>
               <span>Questionnaire Editor</span>
-              {selectedBranch && (
+              {branch && (
                 <>
                   <span className="separator">/</span>
-                  <span className="branch">{selectedBranch}</span>
+                  <span className="branch">{branch}</span>
                 </>
               )}
             </div>
@@ -674,8 +668,6 @@ const QuestionnaireEditor = () => {
                     </button>
                   </div>
                 )}
-                
-                {hasChanges && <span className="changes-indicator">• Unsaved changes</span>}
               </div>
 
               {lformsError && (
@@ -735,7 +727,6 @@ const QuestionnaireEditor = () => {
                           questionnaire={questionnaireContent}
                           onChange={(updatedQuestionnaire) => {
                             setQuestionnaireContent(updatedQuestionnaire);
-                            setHasChanges(JSON.stringify(updatedQuestionnaire, null, 2) !== originalContent);
                           }}
                           onError={setLformsError}
                         />
@@ -751,7 +742,6 @@ const QuestionnaireEditor = () => {
                           try {
                             const newContent = JSON.parse(e.target.value);
                             setQuestionnaireContent(newContent);
-                            setHasChanges(e.target.value !== originalContent);
                           } catch (error) {
                             // Invalid JSON, don't update
                             console.warn('Invalid JSON in editor');
@@ -804,7 +794,7 @@ const QuestionnaireEditor = () => {
           pageId="questionnaire-editor"
           contextData={{
             repository: repository.name,
-            branch: selectedBranch,
+            branch: branch,
             hasQuestionnaires: questionnaires.length > 0,
             isEditing: editing
           }}
