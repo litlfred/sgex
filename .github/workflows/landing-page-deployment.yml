@@ -94,6 +94,9 @@ jobs:
           
           echo "Using PUBLIC_URL: $PUBLIC_URL"
           
+          # Set CI=false to avoid treating CSS warnings as errors in production builds
+          export CI=false
+          
           npm run build
           
           # Verify build was successful

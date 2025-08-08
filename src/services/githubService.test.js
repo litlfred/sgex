@@ -498,6 +498,45 @@ describe('GitHubService', () => {
 
       expect(result).toEqual([]);
     });
+
+    it('should work without authentication for public repositories', async () => {
+      // Don't authenticate - ensure we're in unauthenticated state
+      githubService.logout();
+
+      const mockPRs = [
+        { id: 1, number: 123, title: 'Public PR', html_url: 'https://github.com/owner/repo/pull/123' }
+      ];
+
+      // Mock Octokit constructor to return an instance with mocked pull requests API
+      const mockUnauthenticatedOctokit = {
+        rest: {
+          pulls: {
+            list: jest.fn().mockResolvedValue({
+              status: 200,
+              data: mockPRs
+            })
+          }
+        }
+      };
+
+      // Mock the Octokit constructor for unauthenticated instances
+      const originalOctokit = require('@octokit/rest').Octokit;
+      jest.spyOn(require('@octokit/rest'), 'Octokit').mockImplementation(() => mockUnauthenticatedOctokit);
+
+      const result = await githubService.getPullRequestsForBranch('test-owner', 'test-repo', 'public-branch');
+
+      expect(result).toEqual(mockPRs);
+      expect(mockUnauthenticatedOctokit.rest.pulls.list).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        state: 'open',
+        head: 'test-owner:public-branch',
+        per_page: 100
+      });
+
+      // Restore original implementation
+      require('@octokit/rest').Octokit.mockRestore();
+    });
   });
 
   describe('getPullRequestForBranch', () => {
