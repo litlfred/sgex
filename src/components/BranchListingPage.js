@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from './framework';
 import PATLogin from './PATLogin';
+import githubService from '../services/githubService';
+import secureTokenStorage from '../services/secureTokenStorage';
 import useThemeImage from '../hooks/useThemeImage';
 import './BranchListingPage.css';
 
@@ -31,15 +33,18 @@ const BranchListingPage = () => {
 
     // GitHub authentication functions
     const handleAuthSuccess = (token) => {
-        setGithubToken(token);
-        setIsAuthenticated(true);
-        sessionStorage.setItem('github_token', token);
+        // Authenticate using githubService which will handle secure storage
+        const success = githubService.authenticate(token);
+        if (success) {
+            setGithubToken(token);
+            setIsAuthenticated(true);
+        }
     };
 
     const handleLogout = () => {
         setGithubToken(null);
         setIsAuthenticated(false);
-        sessionStorage.removeItem('github_token');
+        githubService.logout(); // Use secure logout method
         setPrComments({});
     };
 
@@ -321,10 +326,16 @@ const BranchListingPage = () => {
 
     // Check for existing authentication on component mount
     useEffect(() => {
-        const token = sessionStorage.getItem('github_token');
-        if (token) {
-            setGithubToken(token);
-            setIsAuthenticated(true);
+        const success = githubService.initializeFromStoredToken();
+        if (success) {
+            const tokenInfo = githubService.getStoredTokenInfo();
+            if (tokenInfo) {
+                const tokenData = secureTokenStorage.retrieveToken();
+                if (tokenData) {
+                    setGithubToken(tokenData.token);
+                    setIsAuthenticated(true);
+                }
+            }
         }
     }, []);
 

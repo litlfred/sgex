@@ -53,11 +53,13 @@ describe('SecureTokenStorage', () => {
       configurable: true
     });
 
-    Object.defineProperty(global, 'screen', {
+    Object.defineProperty(global, 'window', {
       value: {
-        width: 1920,
-        height: 1080,
-        colorDepth: 24
+        screen: {
+          width: 1920,
+          height: 1080,
+          colorDepth: 24
+        }
       },
       writable: true,
       configurable: true
@@ -170,7 +172,8 @@ describe('SecureTokenStorage', () => {
           userAgent: 'DifferentBrowser/2.0',
           language: 'en-US'
         },
-        writable: true
+        writable: true,
+        configurable: true
       });
       
       const fingerprint2 = secureTokenStorage.generateBrowserFingerprint();
@@ -296,7 +299,8 @@ describe('SecureTokenStorage', () => {
           userAgent: 'AttackerBrowser/1.0',
           language: 'en-US'
         },
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       const retrieved = secureTokenStorage.retrieveToken();

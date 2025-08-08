@@ -125,8 +125,7 @@ const SelectProfilePage = () => {
       console.error('Error fetching user data:', error);
       setError('Failed to fetch user data. Please check your connection and try again.');
       setIsAuthenticated(false);
-      sessionStorage.removeItem('github_token');
-      localStorage.removeItem('github_token');
+      githubService.logout(); // Use secure logout method
     } finally {
       setLoading(false);
     }
@@ -135,20 +134,12 @@ const SelectProfilePage = () => {
   // Initial authentication check and redirect if not authenticated
   useEffect(() => {
     const initializeAuth = () => {
-      // Check if user is already authenticated from previous session
-      const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
-      if (token) {
-        const success = githubService.authenticate(token);
-        if (success) {
-          setIsAuthenticated(true);
-        } else {
-          sessionStorage.removeItem('github_token');
-          localStorage.removeItem('github_token');
-          // Redirect to welcome page if not authenticated
-          navigate('/', { replace: true });
-        }
+      // Try to initialize from securely stored token
+      const success = githubService.initializeFromStoredToken();
+      if (success) {
+        setIsAuthenticated(true);
       } else {
-        // Redirect to welcome page if no token
+        // Redirect to welcome page if no valid token
         navigate('/', { replace: true });
       }
     };

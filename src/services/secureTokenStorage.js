@@ -32,8 +32,8 @@ class SecureTokenStorage {
     const fingerprint = [
       navigator.userAgent,
       navigator.language,
-      screen.width + 'x' + screen.height,
-      screen.colorDepth,
+      window.screen.width + 'x' + window.screen.height,
+      window.screen.colorDepth,
       new Date().getTimezoneOffset(),
       canvas.toDataURL()
     ].join('|');
