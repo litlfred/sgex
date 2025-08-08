@@ -47,7 +47,13 @@ This document provides an index and summary of all documentation for the SMART G
    - Quality assurance and governance frameworks
    - External system integration (IRIS, OCL, PCMT)
 
-7. **[Page Framework](page-framework.md)**
+7. **[Branch-Specific PR Workflow](branch-specific-pr-workflow.md)**
+   - Process for creating PRs targeting non-main branches
+   - Automated workflow for branch-specific issue fixes
+   - GitHub Actions integration and permissions setup
+   - Best practices for multi-branch development
+
+8. **[Page Framework](page-framework.md)**
    - Consistent page functionality framework for all pages
    - URL patterns and page types (Top-Level, User, DAK, Asset)
    - Header components and navigation patterns
