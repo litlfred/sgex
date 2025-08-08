@@ -171,7 +171,7 @@ const BranchListing = () => {
     
     if (!isExpanded) {
       // Load all comments when expanding
-      const comments = await fetchAllPRComments(prNumber);
+      //const comments = await fetchAllPRComments(prNumber);
       //setPrComments(prev => ({ ...prev, [prNumber]: comments }));
     }
     
@@ -244,7 +244,7 @@ const BranchListing = () => {
       
       // Refresh both full comments (if expanded) and summary
       if (expandedDiscussions[prNumber]) {
-        const updatedComments = await fetchAllPRComments(prNumber);
+        //const updatedComments = await fetchAllPRComments(prNumber);
         //setPrComments(prev => ({ ...prev, [prNumber]: updatedComments }));
       }
       
