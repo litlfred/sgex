@@ -4,7 +4,6 @@ import githubService from '../../services/githubService';
 import userAccessService from '../../services/userAccessService';
 import bookmarkService from '../../services/bookmarkService';
 import PreviewBadge from '../PreviewBadge';
-import './PageHeader.css';
 
 /**
  * Consistent header component for all pages

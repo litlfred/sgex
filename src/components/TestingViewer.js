@@ -5,7 +5,6 @@ import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
 import FeatureFileEditor from './FeatureFileEditor';
-import './TestingViewer.css';
 
 // Demo feature files data for when in demo mode
 const DEMO_FEATURE_FILES = [

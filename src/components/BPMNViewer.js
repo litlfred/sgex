@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
-import './BPMNViewer.css';
 
 const BPMNViewerComponent = () => {
   const location = useLocation();

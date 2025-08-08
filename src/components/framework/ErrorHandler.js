@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { usePage } from './PageProvider';
 import ContextualHelpMascot from '../ContextualHelpMascot';
 import useThemeImage from '../../hooks/useThemeImage';
-import './ErrorHandler.css';
 
 /**
  * Error handler component with automatic bug reporting functionality

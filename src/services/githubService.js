@@ -1,6 +1,7 @@
 import { Octokit } from '@octokit/rest';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
+import secureTokenStorage from './secureTokenStorage';
 import logger from '../utils/logger';
 
 class GitHubService {
@@ -16,24 +17,55 @@ class GitHubService {
   // Initialize with a GitHub token (supports both OAuth and PAT tokens)
   authenticate(token) {
     const startTime = Date.now();
-    this.logger.auth('Starting authentication', { tokenProvided: !!token, tokenLength: token ? token.length : 0 });
+    this.logger.auth('Starting authentication', { 
+      tokenProvided: !!token, 
+      tokenMask: token ? secureTokenStorage.maskToken(token) : 'none'
+    });
     
     try {
+      // Validate token format using SecureTokenStorage
+      const validation = secureTokenStorage.validateTokenFormat(token);
+      if (!validation.isValid) {
+        this.logger.warn('Token validation failed during authentication', { 
+          reason: validation.reason,
+          tokenMask: secureTokenStorage.maskToken(token)
+        });
+        this.isAuthenticated = false;
+        return false;
+      }
+
       this.octokit = new Octokit({
-        auth: token,
+        auth: validation.token,
       });
       this.isAuthenticated = true;
+      this.tokenType = validation.type;
+      
+      // Store token securely
+      const stored = secureTokenStorage.storeToken(validation.token);
+      if (!stored) {
+        this.logger.warn('Failed to store token securely, authentication will not persist');
+      }
       
       const duration = Date.now() - startTime;
-      this.logger.auth('Authentication successful', { duration });
+      this.logger.auth('Authentication successful', { 
+        duration, 
+        tokenType: this.tokenType,
+        tokenMask: secureTokenStorage.maskToken(token),
+        securelyStored: stored
+      });
       this.logger.performance('GitHub authentication', duration);
       
       return true;
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.logger.auth('Authentication failed', { error: error.message, duration });
+      this.logger.auth('Authentication failed', { 
+        error: error.message, 
+        duration,
+        tokenMask: secureTokenStorage.maskToken(token)
+      });
       console.error('Failed to authenticate with GitHub:', error);
       this.isAuthenticated = false;
+      secureTokenStorage.clearToken(); // Clear any partially stored data
       return false;
     }
   }
@@ -55,6 +87,56 @@ class GitHubService {
       this.isAuthenticated = false;
       return false;
     }
+  }
+
+  // Initialize authentication from securely stored token
+  initializeFromStoredToken() {
+    this.logger.auth('Attempting to initialize from stored token');
+    
+    try {
+      // First try to migrate any legacy tokens
+      const migrated = secureTokenStorage.migrateLegacyToken();
+      if (migrated) {
+        this.logger.debug('Successfully migrated legacy token to secure storage');
+      }
+
+      // Retrieve token from secure storage
+      const tokenData = secureTokenStorage.retrieveToken();
+      if (!tokenData) {
+        this.logger.debug('No valid stored token found');
+        return false;
+      }
+
+      // Initialize Octokit with stored token
+      this.octokit = new Octokit({
+        auth: tokenData.token,
+      });
+      this.isAuthenticated = true;
+      this.tokenType = tokenData.type;
+      
+      this.logger.auth('Successfully initialized from stored token', {
+        tokenType: this.tokenType,
+        tokenMask: secureTokenStorage.maskToken(tokenData.token),
+        expires: new Date(tokenData.expires).toISOString()
+      });
+      
+      return true;
+    } catch (error) {
+      this.logger.auth('Failed to initialize from stored token', { error: error.message });
+      this.isAuthenticated = false;
+      secureTokenStorage.clearToken();
+      return false;
+    }
+  }
+
+  // Check if there's a valid stored token
+  hasStoredToken() {
+    return secureTokenStorage.hasValidToken();
+  }
+
+  // Get information about stored token
+  getStoredTokenInfo() {
+    return secureTokenStorage.getTokenInfo();
   }
 
   // Check token permissions and type
@@ -1586,12 +1668,15 @@ class GitHubService {
 
   // Logout
   logout() {
+    this.logger.auth('Logging out and clearing stored token');
+    
     this.octokit = null;
     this.isAuthenticated = false;
     this.tokenType = null;
     this.permissions = null;
-    localStorage.removeItem('github_token');
-    sessionStorage.removeItem('github_token');
+    
+    // Clear secure token storage
+    secureTokenStorage.clearToken();
     
     // Clear branch context on logout
     try {

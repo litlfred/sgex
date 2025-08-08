@@ -5,7 +5,6 @@ import cacheManagementService from '../services/cacheManagementService';
 import HelpModal from './HelpModal';
 import LanguageSelector from './LanguageSelector';
 import useThemeImage from '../hooks/useThemeImage';
-import './ContextualHelpMascot.css';
 
 const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', contextData = {}, notificationBadge = false }) => {
   const { t, i18n } = useTranslation();

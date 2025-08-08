@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import './CommitMessageDialog.css';
 
 /**
  * Dialog for entering commit message when saving to GitHub
