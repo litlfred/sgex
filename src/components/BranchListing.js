@@ -28,7 +28,6 @@ const BranchListing = () => {
   const [prFilter, setPrFilter] = useState('open'); // 'open', 'closed', 'all'
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [githubToken, setGithubToken] = useState(null);
-  const [prComments, setPrComments] = useState({});
   const [commentInputs, setCommentInputs] = useState({});
   const [submittingComments, setSubmittingComments] = useState({});
   const [expandedDiscussions, setExpandedDiscussions] = useState({});
@@ -173,7 +172,7 @@ const BranchListing = () => {
     if (!isExpanded) {
       // Load all comments when expanding
       const comments = await fetchAllPRComments(prNumber);
-      setPrComments(prev => ({ ...prev, [prNumber]: comments }));
+      //setPrComments(prev => ({ ...prev, [prNumber]: comments }));
     }
     
     setExpandedDiscussions(prev => ({
@@ -246,7 +245,7 @@ const BranchListing = () => {
       // Refresh both full comments (if expanded) and summary
       if (expandedDiscussions[prNumber]) {
         const updatedComments = await fetchAllPRComments(prNumber);
-        setPrComments(prev => ({ ...prev, [prNumber]: updatedComments }));
+        //setPrComments(prev => ({ ...prev, [prNumber]: updatedComments }));
       }
       
       // Refresh the discussion summary
