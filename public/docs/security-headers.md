@@ -8,14 +8,14 @@ This document describes the security headers implementation for SGeX Workbench, 
 
 ### 1. Content Security Policy (CSP)
 ```html
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://github.com https://avatars.githubusercontent.com; connect-src 'self' https://api.github.com https://github.com https://raw.githubusercontent.com https://iris.who.int https://avatars.githubusercontent.com; font-src 'self'; object-src 'none'; media-src 'self'; frame-src 'none'; child-src 'none'; manifest-src 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' 'unsafe-eval' https://litlfred.github.io/sgex https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://github.com https://avatars.githubusercontent.com; connect-src 'self' https://api.github.com https://github.com https://raw.githubusercontent.com https://iris.who.int https://avatars.githubusercontent.com; font-src 'self'; object-src 'none'; media-src 'self'; frame-src 'none'; child-src 'none'; manifest-src 'self';">
 ```
 
 **Purpose**: Prevents code injection attacks by controlling resource loading sources.
 
 **Directives**:
 - `default-src 'self'`: Allow resources from the same origin by default
-- `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com`: Allow scripts from same origin, inline scripts (required for React), eval (required for some React features), and unpkg.com CDN
+- `script-src 'unsafe-inline' 'unsafe-eval' https://litlfred.github.io/sgex https://unpkg.com`: Allow scripts only from the specific SGEX application path, inline scripts (required for React), eval (required for some React features), and unpkg.com CDN
 - `style-src 'self' 'unsafe-inline'`: Allow styles from same origin and inline styles (required for React components)
 - `img-src 'self' data: https://github.com https://avatars.githubusercontent.com`: Allow images from same origin, data URLs, and GitHub
 - `connect-src 'self' https://api.github.com https://github.com https://raw.githubusercontent.com https://iris.who.int https://avatars.githubusercontent.com`: Allow network connections to GitHub APIs and WHO IRIS
