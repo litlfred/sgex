@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
+import secureTokenStorage from '../services/secureTokenStorage';
 import PATLogin from './PATLogin';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
@@ -126,8 +127,7 @@ const LandingPage = () => {
       console.error('Error fetching user data:', error);
       setError('Failed to fetch user data. Please check your connection and try again.');
       setIsAuthenticated(false);
-      sessionStorage.removeItem('github_token');
-      localStorage.removeItem('github_token');
+      githubService.logout(); // Use secure logout method
     } finally {
       setLoading(false);
     }
@@ -136,16 +136,10 @@ const LandingPage = () => {
   // Initial authentication check - runs once on mount
   useEffect(() => {
     const initializeAuth = () => {
-      // Check if user is already authenticated from previous session
-      const token = sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
-      if (token) {
-        const success = githubService.authenticate(token);
-        if (success) {
-          setIsAuthenticated(true);
-        } else {
-          sessionStorage.removeItem('github_token');
-          localStorage.removeItem('github_token');
-        }
+      // Try to initialize from securely stored token
+      const success = githubService.initializeFromStoredToken();
+      if (success) {
+        setIsAuthenticated(true);
       }
     };
 
@@ -169,11 +163,11 @@ const LandingPage = () => {
   }, [isAuthenticated, user, fetchUserData]);
 
   const handleAuthSuccess = (token, octokitInstance) => {
-    // Store token in session storage for this session
-    sessionStorage.setItem('github_token', token);
-    
     // Use the provided Octokit instance directly
     githubService.authenticateWithOctokit(octokitInstance);
+    
+    // Also authenticate with token to ensure secure storage
+    githubService.authenticate(token);
     
     setIsAuthenticated(true);
     setError(null);
