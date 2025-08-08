@@ -10,7 +10,7 @@ class VirtualFileSystem {
   constructor() {
     this.files = new Map();
     this.directories = new Set();
-    this.maxMemoryUsage = 50 * 1024 * 1024; // 50MB limit
+    this.maxMemoryUsage = 20 * 1024 * 1024; // Reduced to 20MB limit
     this.currentMemoryUsage = 0;
   }
 
@@ -222,20 +222,21 @@ class SushiWASMRunner {
         outputFiles.push(...resources);
       }
 
-      return JSON.stringify({
+      // Return object directly instead of JSON string to avoid parsing issues
+      return {
         success: true,
         files: outputFiles,
         errors: errors,
         warnings: warnings
-      });
+      };
 
     } catch (error) {
-      return JSON.stringify({
+      return {
         success: false,
         files: [],
         errors: [error.message],
         warnings: warnings
-      });
+      };
     }
   }
 
@@ -513,7 +514,7 @@ class SushiWASMRunner {
     
     // Check total size of input files
     const totalSize = fshFiles.reduce((sum, file) => sum + (file.content?.length || 0), 0);
-    if (totalSize > 30 * 1024 * 1024) { // 30MB limit
+    if (totalSize > 15 * 1024 * 1024) { // Reduced to 15MB limit
       throw new Error(`Input files too large (${(totalSize / 1024 / 1024).toFixed(1)}MB). Consider processing fewer files at once.`);
     }
 
@@ -530,7 +531,7 @@ class SushiWASMRunner {
         const filePath = file.path || `input/fsh/${file.name}`;
         
         // Skip very large files to prevent crashes
-        if (file.content && file.content.length > 5 * 1024 * 1024) { // 5MB per file
+        if (file.content && file.content.length > 2 * 1024 * 1024) { // Reduced to 2MB per file
           console.warn(`Skipping large file ${file.name} (${(file.content.length / 1024 / 1024).toFixed(1)}MB)`);
           continue;
         }
@@ -546,7 +547,12 @@ class SushiWASMRunner {
         ['/workspace']        // Parameters
       );
 
-      return JSON.parse(result);
+      // Handle both JSON string and object returns
+      if (typeof result === 'string') {
+        return JSON.parse(result);
+      } else {
+        return result; // Already an object
+      }
       
     } catch (error) {
       // Clear memory on error

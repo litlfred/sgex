@@ -286,15 +286,15 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
       
       addLog('ℹ️ Using JavaScript FSH processor with enhanced crash prevention', 'info');
       
-      // Enhanced memory monitoring with hard limits
+      // Enhanced memory monitoring with much stricter limits
       const checkMemoryUsage = () => {
         if (performance.memory && performance.memory.usedJSHeapSize) {
           const memoryMB = (performance.memory.usedJSHeapSize / 1024 / 1024);
-          const memoryLimitMB = 100; // Hard limit: 100MB
-          const memoryWarningMB = 75; // Warning at 75MB
+          const memoryLimitMB = 30; // Much stricter: 30MB hard limit
+          const memoryWarningMB = 20; // Warning at 20MB
           
           if (memoryMB > memoryLimitMB) {
-            throw new Error(`Memory limit exceeded: ${memoryMB.toFixed(1)}MB > ${memoryLimitMB}MB. Please reduce file count or size.`);
+            throw new Error(`Memory limit exceeded: ${memoryMB.toFixed(1)}MB > ${memoryLimitMB}MB. Processing stopped to prevent browser crash.`);
           }
           
           if (memoryMB > memoryWarningMB) {
@@ -309,10 +309,10 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
       const initialMemory = checkMemoryUsage();
       addLog(`💾 Initial memory usage: ${initialMemory.toFixed(1)} MB`, 'info');
       
-      // Implement strict file size limits to prevent crashes
-      const maxFileSize = 2 * 1024 * 1024; // 2MB hard limit per file
-      const maxTotalSize = 10 * 1024 * 1024; // 10MB total size limit
-      const maxFiles = 20; // Maximum 20 files to process
+      // Implement much stricter file size limits to prevent crashes
+      const maxFileSize = 1 * 1024 * 1024; // Reduced to 1MB per file
+      const maxTotalSize = 5 * 1024 * 1024; // Reduced to 5MB total
+      const maxFiles = 5; // Reduced to maximum 5 files to prevent crashes
       
       let totalSize = 0;
       const validFiles = [];
@@ -321,7 +321,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
         const fileSize = file.content ? file.content.length : 0;
         
         if (fileSize > maxFileSize) {
-          addLog(`❌ Skipping ${file.name}: too large (${(fileSize / 1024 / 1024).toFixed(1)}MB > 2MB limit)`, 'error');
+          addLog(`❌ Skipping ${file.name}: too large (${(fileSize / 1024 / 1024).toFixed(1)}MB > 1MB limit)`, 'error');
           continue;
         }
         
@@ -335,7 +335,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
       }
       
       if (files.length > maxFiles) {
-        addLog(`⚠️ Limited to first ${maxFiles} files (${files.length} total) to prevent crashes`, 'warning');
+        addLog(`⚠️ Limited to first ${maxFiles} files (${files.length} total) to prevent browser crashes`, 'warning');
       }
       
       addLog(`📊 Processing ${validFiles.length} files (${(totalSize / 1024 / 1024).toFixed(1)}MB total)`, 'info');
@@ -374,11 +374,11 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
       
       const generatedResources = [];
       let processedCount = 0;
-      const maxResourcesPerFile = 5; // Strict limit: max 5 resources per file
-      const maxTotalResources = 50; // Hard limit: max 50 total resources
+      const maxResourcesPerFile = 3; // Reduced from 5 to 3 resources per file
+      const maxTotalResources = 15; // Reduced from 50 to 15 total resources
       
-      // Process files in smaller chunks to prevent memory buildup
-      const chunkSize = 2; // Process 2 files at a time
+      // Process files one at a time to prevent memory buildup
+      const chunkSize = 1; // Process 1 file at a time for maximum safety
       
       for (let i = 0; i < validFiles.length; i += chunkSize) {
         const chunk = validFiles.slice(i, i + chunkSize);
@@ -389,8 +389,8 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
           // Enhanced memory check before processing each file
           const currentMemory = checkMemoryUsage();
           
-          // Stop if we're approaching memory limits
-          if (currentMemory > 80) { // 80MB threshold
+          // Stop if we're approaching memory limits (much stricter threshold)
+          if (currentMemory > 15) { // Reduced from 80MB to 15MB threshold
             addLog(`⚠️ Stopping processing due to high memory usage (${currentMemory.toFixed(1)}MB)`, 'warning');
             break;
           }
@@ -421,7 +421,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
               
               // Much stricter line processing limit to prevent memory issues
               const lines = content.split('\n');
-              const maxLinesToProcess = 1000; // Reduced from 10k to 1k lines per file
+              const maxLinesToProcess = 500; // Reduced from 1k to 500 lines per file
               
               if (lines.length > maxLinesToProcess) {
                 addLog(`  ⚠️ File is large (${lines.length} lines). Processing first ${maxLinesToProcess} lines only.`, 'warning');
@@ -432,7 +432,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
               let currentDefinition = null;
               let currentType = null;
               let definitionCount = 0;
-              const maxDefinitionsPerFile = 10; // Limit definitions per file
+              const maxDefinitionsPerFile = 5; // Reduced from 10 to 5 definitions per file
               
               for (let i = 0; i < linesToProcess.length && definitionCount < maxDefinitionsPerFile; i++) {
                 const line = linesToProcess[i].trim();
@@ -523,7 +523,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
                     currentDefinition.description = line.substring(12).trim().replace(/['"]/g, '');
                   } else if (line.startsWith('* ')) {
                     // Much stricter rule limit to prevent memory issues
-                    if (currentDefinition.rules.length < 10) {
+                    if (currentDefinition.rules.length < 5) {
                       currentDefinition.rules.push(line.substring(2).trim());
                     }
                   }
@@ -546,7 +546,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
               }
               
               if (definitionCount >= maxDefinitionsPerFile) {
-                addLog(`  ⚠️ Limited to ${maxDefinitionsPerFile} definitions per file to prevent memory issues`, 'warning');
+                addLog(`  ⚠️ Limited to ${maxDefinitionsPerFile} definitions per file to prevent browser crashes`, 'warning');
               }
               
               return definitions;
@@ -570,7 +570,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
           const maxFromThisFile = Math.min(maxResourcesPerFile, remainingResourceSlots);
           
           // Process profiles with strict limits
-          for (const profile of definitions.profiles.slice(0, Math.min(2, maxFromThisFile - resourcesFromThisFile))) {
+          for (const profile of definitions.profiles.slice(0, Math.min(1, maxFromThisFile - resourcesFromThisFile))) {
             if (resourcesFromThisFile >= maxFromThisFile) break;
             
             try {
@@ -596,7 +596,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
               // Limit differential elements to prevent memory issues
               if (profile.rules.length > 0) {
                 structureDefinition.differential = {
-                  element: profile.rules.slice(0, 3).map((rule, index) => ({ // Reduced to 3 elements max
+                  element: profile.rules.slice(0, 2).map((rule, index) => ({ // Reduced to 2 elements max
                     id: `${structureDefinition.type}.${rule.split(' ')[0]}`,
                     path: `${structureDefinition.type}.${rule.split(' ')[0]}`,
                     short: `Rule: ${rule}`
@@ -622,7 +622,7 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
           }
           
           // Process instances with strict limits
-          for (const instance of definitions.instances.slice(0, Math.min(2, maxFromThisFile - resourcesFromThisFile))) {
+          for (const instance of definitions.instances.slice(0, Math.min(1, maxFromThisFile - resourcesFromThisFile))) {
             if (resourcesFromThisFile >= maxFromThisFile) break;
             
             try {
@@ -719,14 +719,14 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
         }
         
         // Yield control for longer periods between chunks to prevent blocking
-        await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay between chunks
+        await new Promise(resolve => setTimeout(resolve, 200)); // Increased to 200ms delay between files
         
-        // Enhanced memory monitoring after each chunk
+        // Enhanced memory monitoring after each file
         const memoryAfterChunk = checkMemoryUsage();
-        addLog(`💾 Memory after chunk: ${memoryAfterChunk.toFixed(1)} MB (processed ${Math.min(i + chunkSize, validFiles.length)}/${validFiles.length})`, 'info');
+        addLog(`💾 Memory after file: ${memoryAfterChunk.toFixed(1)} MB (processed ${Math.min(i + chunkSize, validFiles.length)}/${validFiles.length})`, 'info');
         
-        // Break if memory is getting too high
-        if (memoryAfterChunk > 80) {
+        // Break if memory is getting too high (much lower threshold)
+        if (memoryAfterChunk > 20) {
           addLog(`⚠️ Stopping processing due to high memory usage`, 'warning');
           break;
         }
