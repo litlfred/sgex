@@ -44,6 +44,10 @@
     "questionnaire-editor": {
       "component": "QuestionnaireEditor",
       "path": "./components/QuestionnaireEditor"
+    },
+    "sushi-runner": {
+      "component": "SushiRunner",
+      "path": "./components/SushiRunner"
     }
   },
   "standardComponents": {
