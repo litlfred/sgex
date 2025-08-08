@@ -97,7 +97,7 @@ const generateQAReport = () => {
     
     // Check if it's a timeout error
     if (error.message.includes('timeout')) {
-      console.warn('⏰ Tests timed out - this may indicate hanging tests');
+      console.warn('⏰ Tests timed out - this may indicate hanging tests or infrastructure issues');
       console.warn('💡 Consider increasing timeout or checking for infinite loops in tests');
     }
     
@@ -115,13 +115,15 @@ const generateQAReport = () => {
     }
     
     console.warn('⚠️  Continuing with minimal data for QA report generation...');
+    console.warn('📋 This usually happens when tests fail or timeout in CI environments');
     testResults = {
       numTotalTests: 0,
       numPassedTests: 0,
       numFailedTests: 0,
       numPendingTests: 0,
       testResults: [],
-      skipped: true
+      skipped: true,
+      skipReason: 'Test execution failed or timed out'
     };
   }
 
@@ -387,7 +389,15 @@ const generateHTMLReport = (testResults, coverageData) => {
             ${testsSkipped ? `
             <div style="background: rgba(255, 193, 7, 0.2); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
                 <h3 style="color: #ffc107; margin-top: 0;">⚠️ Tests Skipped</h3>
-                <p>Tests were skipped during QA report generation due to timeout or failures. This is expected in CI environments with failing tests.</p>
+                <p>Tests were skipped during QA report generation due to: ${testResults.skipReason || 'timeout or failures'}.</p>
+                <p><strong>This is expected behavior in CI environments when tests fail or timeout.</strong></p>
+                <p>Common causes:</p>
+                <ul>
+                    <li>🔧 Import/dependency resolution issues</li>
+                    <li>⏰ Test timeouts (especially component tests)</li>
+                    <li>🧪 Logic errors in test assertions</li>
+                    <li>🚦 CI environment resource limitations</li>
+                </ul>
             </div>
             ` : ''}
             <div class="stats-grid">

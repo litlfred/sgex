@@ -245,14 +245,19 @@ describe('ProfileSubscriptionService', () => {
 
   describe('autoAddVisitedProfile', () => {
     it('should add new visited profile', () => {
+      // Ensure we start with a clean state
+      localStorageMock.store = {};
+      
       const visitedProfile = {
         login: 'visiteduser',
         name: 'Visited User',
         type: 'User'
       };
 
+      // Add the visited profile
       profileSubscriptionService.autoAddVisitedProfile(visitedProfile);
 
+      // Get subscriptions and verify the profile was added
       const subscriptions = profileSubscriptionService.getSubscriptions();
       const visited = subscriptions.find(p => p.login === 'visiteduser');
       expect(visited).toBeDefined();
@@ -319,6 +324,7 @@ describe('ProfileSubscriptionService', () => {
 
       const sorted = profileSubscriptionService.getSubscriptionsSorted();
       
+      expect(sorted.length).toBe(3);
       expect(sorted[0].login).toBe('WorldHealthOrganization');
       expect(sorted[1].login).toBe('alpha'); // Alphabetical after WHO
       expect(sorted[2].login).toBe('zebra');
@@ -343,7 +349,7 @@ describe('ProfileSubscriptionService', () => {
 
       const forSelection = profileSubscriptionService.getSubscriptionsForSelection();
       
-      expect(forSelection.length).toBeGreaterThanOrEqual(2);
+      expect(forSelection.length).toBe(2);
       expect(forSelection[0]).toMatchObject({
         login: 'WorldHealthOrganization',
         displayName: 'World Health Organization',
@@ -375,6 +381,9 @@ describe('ProfileSubscriptionService', () => {
 
   describe('importSubscriptions', () => {
     it('should import subscriptions from JSON', () => {
+      // Start with clean state
+      localStorageMock.store = {};
+      
       const importData = [
         { 
           login: 'WorldHealthOrganization', 
@@ -398,6 +407,7 @@ describe('ProfileSubscriptionService', () => {
       expect(subscriptions.find(p => p.login === 'WorldHealthOrganization')).toBeDefined(); // WHO always included
       expect(subscriptions.find(p => p.login === 'imported1')).toBeDefined();
       expect(subscriptions.find(p => p.login === 'imported2')).toBeDefined();
+      expect(subscriptions.length).toBe(3);
     });
 
     it('should merge subscriptions when merge is true', () => {
@@ -425,6 +435,7 @@ describe('ProfileSubscriptionService', () => {
 
       const subscriptions = profileSubscriptionService.getSubscriptions();
       const existingUser = subscriptions.find(p => p.login === 'existing');
+      expect(existingUser).toBeDefined();
       expect(existingUser.isPermanent).toBe(true); // Preserved
       expect(existingUser.name).toBe('Updated Existing'); // Updated
       expect(subscriptions.find(p => p.login === 'new')).toBeDefined();
