@@ -1,33 +1,59 @@
 /**
  * SGEX Route Configuration Service
  * 
- * This service provides access to the route configuration from routes-config.json.
- * It is shared between:
- * 1. App.js for React Router route definitions (via routeUtils.js)
- * 2. 404.html for SPA routing and component validation
+ * This service provides access to the route configuration and supports lazy loading.
+ * It automatically detects the deployment type and loads the appropriate configuration:
+ * - routes-config.json for main site and feature branches
+ * - routes-config.deploy.json for deploy branch  
  * 
- * When adding new DAK components:
- * 1. Add the component mapping to routes-config.json: "route-name": "ReactComponentName"
- * 2. Import the React component in App.js and add it to importedComponents object
+ * Features:
+ * 1. Lazy loading support with React.lazy() compatible paths
+ * 2. Automatic deployment type detection
+ * 3. Shared between App.js and 404.html
+ * 4. Dynamic route generation with zero hardcoded maintenance
  * 
- * The system will automatically:
- * - Generate all React Router routes (/{component}, /{component}/:user/:repo, etc.)
- * - Match React component names to imported components automatically
- * - Update 404.html component validation
- * - Work across all deployment scenarios (local, GitHub Pages, standalone)
+ * When adding new components:
+ * 1. Add component to appropriate config file with path and routes
+ * 2. Components are loaded lazily - no direct imports needed
  * 
- * This ensures both the React app and GitHub Pages SPA routing
- * recognize the component as valid with zero hardcoded maintenance.
+ * The system automatically:
+ * - Loads the correct configuration based on deployment
+ * - Generates all React Router routes dynamically
+ * - Handles lazy loading and suspense boundaries
+ * - Works across all deployment scenarios
  */
 
 // Global configuration object that will be available in both environments
 window.SGEX_ROUTES_CONFIG = null;
 
+// Detect deployment type based on current URL and environment
+function getDeploymentType() {
+  // Check if we're in a simple deployment (deploy branch)
+  if (typeof window !== 'undefined') {
+    var path = window.location.pathname;
+    // If we're at the root with minimal functionality, likely deploy branch
+    if (path === '/' || path === '/sgex/' || path.endsWith('/branch-listing')) {
+      return 'deploy';
+    }
+  }
+  
+  // Default to main deployment type
+  return 'main';
+}
+
+// Get appropriate config file name based on deployment type  
+function getConfigFileName(deployType) {
+  return deployType === 'deploy' ? './routes-config.deploy.json' : './routes-config.json';
+}
+
 // Synchronous configuration loading using XMLHttpRequest for 404.html compatibility
-function loadRouteConfigSync() {
+function loadRouteConfigSync(deployType) {
   try {
+    deployType = deployType || getDeploymentType();
+    var configFile = getConfigFileName(deployType);
+    
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', './routes-config.json', false); // Synchronous request
+    xhr.open('GET', configFile, false); // Synchronous request
     xhr.send();
     
     if (xhr.status === 200) {
@@ -36,15 +62,35 @@ function loadRouteConfigSync() {
       // Create the service object with helper methods
       window.SGEX_ROUTES_CONFIG = {
         /**
-         * DAK component configurations that define both routing and component mapping.
-         * Each entry follows the pattern: /{component}/:user/:repo/:branch?/*?
+         * Deployment type (main or deploy)
          */
-        dakComponents: config.dakComponents,
+        deployType: config.deployType || deployType,
+
+        /**
+         * DAK component configurations with lazy loading paths.
+         * Each entry includes component name and import path for React.lazy()
+         */
+        dakComponents: config.dakComponents || {},
+
+        /**
+         * Standard app component configurations with routes and lazy loading paths
+         */
+        standardComponents: config.standardComponents || {},
+
+        /**
+         * Simple component mapping for deploy branch
+         */
+        components: config.components || {},
+
+        /**
+         * Test routes for framework testing
+         */
+        testRoutes: config.testRoutes || [],
 
         /**
          * Deployed branches for GitHub Pages routing.
          */
-        deployedBranches: config.deployedBranches,
+        deployedBranches: config.deployedBranches || [],
 
         /**
          * Get list of DAK component names
@@ -55,12 +101,72 @@ function loadRouteConfigSync() {
         },
 
         /**
+         * Get all component names (DAK + standard + deploy-specific)
+         * @returns {Array} Array of all valid component names
+         */
+        getAllComponentNames: function() {
+          var dakNames = Object.keys(this.dakComponents);
+          var standardNames = Object.keys(this.standardComponents);
+          var deployNames = Object.keys(this.components);
+          return dakNames.concat(standardNames).concat(deployNames);
+        },
+
+        /**
          * Get React component name for a DAK component
          * @param {string} component - DAK component name
          * @returns {string|null} React component name or null if not found
          */
         getReactComponent: function(component) {
-          return this.dakComponents[component] || null;
+          var dakComp = this.dakComponents[component];
+          return dakComp ? dakComp.component || dakComp : null;
+        },
+
+        /**
+         * Get component import path for lazy loading
+         * @param {string} componentName - Component name
+         * @returns {string|null} Import path or null if not found
+         */
+        getComponentPath: function(componentName) {
+          // Check DAK components
+          for (var dakName in this.dakComponents) {
+            var dakComp = this.dakComponents[dakName];
+            if (dakComp.component === componentName) {
+              return dakComp.path;
+            }
+          }
+          
+          // Check standard components
+          var standardComp = this.standardComponents[componentName];
+          if (standardComp) {
+            return standardComp.path;
+          }
+          
+          // Check deploy components
+          var deployComp = this.components[componentName];
+          if (deployComp) {
+            return deployComp.path;
+          }
+          
+          return null;
+        },
+
+        /**
+         * Get all routes for a component
+         * @param {string} componentName - Component name
+         * @returns {Array} Array of route objects
+         */
+        getComponentRoutes: function(componentName) {
+          var standardComp = this.standardComponents[componentName];
+          if (standardComp && standardComp.routes) {
+            return standardComp.routes;
+          }
+          
+          var deployComp = this.components[componentName];
+          if (deployComp && deployComp.routes) {
+            return deployComp.routes;
+          }
+          
+          return [];
         },
 
         /**
@@ -70,6 +176,15 @@ function loadRouteConfigSync() {
          */
         isValidDAKComponent: function(component) {
           return Object.prototype.hasOwnProperty.call(this.dakComponents, component);
+        },
+
+        /**
+         * Check if a component name is valid (any type)
+         * @param {string} componentName - Component name to validate
+         * @returns {boolean} True if component is valid
+         */
+        isValidComponent: function(componentName) {
+          return this.getAllComponentNames().includes(componentName);
         },
 
         /**
@@ -84,7 +199,7 @@ function loadRouteConfigSync() {
       
       return window.SGEX_ROUTES_CONFIG;
     } else {
-      throw new Error('Failed to load routes-config.json: ' + xhr.status);
+      throw new Error('Failed to load ' + configFile + ': ' + xhr.status);
     }
   } catch (error) {
     console.error('Failed to load SGEX route configuration:', error);
@@ -93,13 +208,16 @@ function loadRouteConfigSync() {
 }
 
 // Asynchronous configuration loading for modern environments
-async function loadRouteConfigAsync() {
+async function loadRouteConfigAsync(deployType) {
   try {
-    const response = await fetch('./routes-config.json');
+    deployType = deployType || getDeploymentType();
+    var configFile = getConfigFileName(deployType);
+    
+    const response = await fetch(configFile);
     if (!response.ok) {
-      throw new Error(`Failed to load routes-config.json: ${response.status}`);
+      throw new Error(`Failed to load ${configFile}: ${response.status}`);
     }
-    return loadRouteConfigSync(); // Use the sync version to create the config object
+    return loadRouteConfigSync(deployType); // Use the sync version to create the config object
   } catch (error) {
     console.error('Failed to load SGEX route configuration:', error);
     return null;
@@ -107,28 +225,30 @@ async function loadRouteConfigAsync() {
 }
 
 // For synchronous access (mainly for 404.html and immediate use)
-function getSGEXRouteConfig() {
+function getSGEXRouteConfig(deployType) {
   if (!window.SGEX_ROUTES_CONFIG) {
     // Try to load synchronously if not already loaded
-    loadRouteConfigSync();
+    loadRouteConfigSync(deployType);
   }
   return window.SGEX_ROUTES_CONFIG;
 }
 
 // Load configuration immediately for browsers
 if (typeof window !== 'undefined') {
+  var deployType = getDeploymentType();
+  
   // Try synchronous load first
-  loadRouteConfigSync();
+  loadRouteConfigSync(deployType);
   
   // If that failed, try async load for development environments
   if (!window.SGEX_ROUTES_CONFIG) {
-    loadRouteConfigAsync().then(config => {
+    loadRouteConfigAsync(deployType).then(config => {
       if (config) {
-        console.log('SGEX route configuration loaded successfully (async)');
+        console.log('SGEX route configuration loaded successfully (async) - ' + deployType);
       }
     });
   } else {
-    console.log('SGEX route configuration loaded successfully (sync)');
+    console.log('SGEX route configuration loaded successfully (sync) - ' + deployType);
   }
 }
 
