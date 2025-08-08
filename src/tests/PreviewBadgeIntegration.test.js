@@ -7,6 +7,7 @@ import githubService from '../services/githubService';
 jest.mock('../services/githubService', () => ({
   isAuth: jest.fn(),
   getPullRequestForBranch: jest.fn(),
+  getPullRequestsForBranch: jest.fn(),
   getPullRequestComments: jest.fn(),
   getPullRequestIssueComments: jest.fn(),
   createPullRequestComment: jest.fn()
@@ -15,6 +16,7 @@ jest.mock('../services/githubService', () => ({
 describe('PreviewBadge Integration Test', () => {
   test('complete workflow: hover, click, interact', async () => {
     const mockPR = {
+      id: 1,
       number: 627,
       title: 'Enhanced Preview Branch Badge with Expandable PR Details, Comments, and Mobile Touch Support',
       state: 'open',
@@ -47,7 +49,7 @@ describe('PreviewBadge Integration Test', () => {
     window.open = jest.fn();
 
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
     githubService.getPullRequestComments.mockResolvedValue([]);
     githubService.getPullRequestIssueComments.mockResolvedValue(mockComments);
 

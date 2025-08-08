@@ -7,6 +7,7 @@ import githubService from '../services/githubService';
 jest.mock('../services/githubService', () => ({
   isAuth: jest.fn(),
   getPullRequestForBranch: jest.fn(),
+  getPullRequestsForBranch: jest.fn(),
   getPullRequestComments: jest.fn(),
   getPullRequestIssueComments: jest.fn(),
   createPullRequestComment: jest.fn()
@@ -26,6 +27,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
 
   test('expands on mouse hover when PR is available', async () => {
     const mockPR = {
+      id: 1,
       number: 123,
       title: 'Test PR Title That Should Be Truncated Because It Is Very Long And Exceeds Fifty Characters',
       state: 'open',
@@ -36,7 +38,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
     };
 
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
     githubService.getPullRequestComments.mockResolvedValue([]);
     githubService.getPullRequestIssueComments.mockResolvedValue([]);
 
@@ -69,6 +71,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
 
   test('collapses on mouse leave when not sticky', async () => {
     const mockPR = {
+      id: 1,
       number: 123,
       title: 'Test PR Title',
       state: 'open',
@@ -79,7 +82,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
     };
 
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
     githubService.getPullRequestComments.mockResolvedValue([]);
     githubService.getPullRequestIssueComments.mockResolvedValue([]);
 
@@ -112,6 +115,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
 
   test('stays expanded after click (sticky behavior)', async () => {
     const mockPR = {
+      id: 1,
       number: 123,
       title: 'Test PR Title',
       state: 'open',
@@ -122,7 +126,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
     };
 
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
     githubService.getPullRequestComments.mockResolvedValue([]);
     githubService.getPullRequestIssueComments.mockResolvedValue([]);
 
@@ -157,6 +161,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
 
   test('collapses when clicking sticky badge', async () => {
     const mockPR = {
+      id: 1,
       number: 123,
       title: 'Test PR Title',
       state: 'open',
@@ -167,7 +172,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
     };
 
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
     githubService.getPullRequestComments.mockResolvedValue([]);
     githubService.getPullRequestIssueComments.mockResolvedValue([]);
 
@@ -211,6 +216,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
 
   test('close button resets sticky state', async () => {
     const mockPR = {
+      id: 1,
       number: 123,
       title: 'Test PR Title',
       state: 'open',
@@ -221,7 +227,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
     };
 
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
     githubService.getPullRequestComments.mockResolvedValue([]);
     githubService.getPullRequestIssueComments.mockResolvedValue([]);
 
@@ -258,6 +264,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
 
   test('GitHub navigation works through footer link', async () => {
     const mockPR = {
+      id: 1,
       number: 123,
       title: 'Test PR Title',
       state: 'open',
@@ -268,7 +275,7 @@ describe('PreviewBadge Hover and Click Behavior', () => {
     };
 
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
     githubService.getPullRequestComments.mockResolvedValue([]);
     githubService.getPullRequestIssueComments.mockResolvedValue([]);
 

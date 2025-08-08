@@ -1453,15 +1453,14 @@ class GitHubService {
 
   // Get pull request comments
   async getPullRequestComments(owner, repo, pullNumber) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
+    // Use authenticated octokit if available, otherwise create a public instance for public repos
+    const octokit = this.isAuth() ? this.octokit : new Octokit();
 
     const startTime = Date.now();
     this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, {});
 
     try {
-      const response = await this.octokit.rest.pulls.listReviewComments({
+      const response = await octokit.rest.pulls.listReviewComments({
         owner,
         repo,
         pull_number: pullNumber,
@@ -1479,15 +1478,14 @@ class GitHubService {
 
   // Get pull request issue comments (general comments on the PR conversation)
   async getPullRequestIssueComments(owner, repo, pullNumber) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
+    // Use authenticated octokit if available, otherwise create a public instance for public repos
+    const octokit = this.isAuth() ? this.octokit : new Octokit();
 
     const startTime = Date.now();
     this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, {});
 
     try {
-      const response = await this.octokit.rest.issues.listComments({
+      const response = await octokit.rest.issues.listComments({
         owner,
         repo,
         issue_number: pullNumber,

@@ -13,6 +13,11 @@ const PreviewBadge = () => {
   const [error, setError] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [expandedComments, setExpandedComments] = useState(new Set());
   const expandedRef = useRef(null);
 
   useEffect(() => {
@@ -129,8 +134,99 @@ const PreviewBadge = () => {
     }
   };
 
-  const handleBadgeClick = (pr) => {
-    if (pr && pr.html_url) {
+  const fetchCommentsForPR = async (owner, repo, prNumber) => {
+    try {
+      setCommentsLoading(true);
+      
+      // Fetch both review comments and issue comments
+      const [reviewComments, issueComments] = await Promise.all([
+        githubService.getPullRequestComments(owner, repo, prNumber).catch(() => []),
+        githubService.getPullRequestIssueComments(owner, repo, prNumber).catch(() => [])
+      ]);
+
+      // Combine and sort comments by date, mark the type
+      const allComments = [
+        ...reviewComments.map(comment => ({ ...comment, type: 'review' })),
+        ...issueComments.map(comment => ({ ...comment, type: 'issue' }))
+      ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      // Return last 5 comments as required
+      return allComments.slice(0, 5);
+    } catch (error) {
+      console.debug('Failed to fetch comments:', error);
+      return [];
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  const handleCommentToggle = (commentId) => {
+    const newExpanded = new Set(expandedComments);
+    if (newExpanded.has(commentId)) {
+      newExpanded.delete(commentId);
+    } else {
+      newExpanded.add(commentId);
+    }
+    setExpandedComments(newExpanded);
+  };
+
+  const handleCommentSubmit = async () => {
+    if (!newComment.trim() || !githubService.isAuth() || submittingComment) return;
+    
+    try {
+      setSubmittingComment(true);
+      const owner = 'litlfred';
+      const repo = 'sgex';
+      
+      if (prInfo && prInfo.length > 0) {
+        const pr = prInfo[0]; // Use first PR for comment submission
+        await githubService.createPullRequestComment(owner, repo, pr.number, newComment.trim());
+        
+        // Refresh comments after successful submission
+        const updatedComments = await fetchCommentsForPR(owner, repo, pr.number);
+        setComments(updatedComments);
+        setNewComment('');
+      }
+    } catch (error) {
+      console.error('Failed to submit comment:', error);
+      // Could add user-visible error handling here
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const truncateComment = (text, maxLength = 200) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const handleBadgeClick = async (pr, event) => {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    
+    if (pr && pr.html_url && !isExpanded) {
+      // If not expanded, expand to show comments instead of immediately opening URL
+      setIsExpanded(true);
+      setIsSticky(true);
+      
+      // Fetch comments for this PR
+      const owner = 'litlfred';
+      const repo = 'sgex';
+      const prComments = await fetchCommentsForPR(owner, repo, pr.number);
+      setComments(prComments);
+    } else if (pr && pr.html_url && isExpanded) {
+      // If already expanded, open the PR URL
       window.open(pr.html_url, '_blank');
     }
   };
@@ -180,22 +276,151 @@ const PreviewBadge = () => {
   return (
     <div className="preview-badge-container" ref={expandedRef}>
       {prInfo && prInfo.length > 0 ? (
-        // Multiple PR badges - each one is clickable and opens the corresponding PR
-        prInfo.map((pr, index) => (
-          <div 
-            key={pr.id}
-            className="preview-badge clickable"
-            onClick={() => handleBadgeClick(pr)}
-            title={`Click to view PR: ${pr.title}`}
-          >
-            <div className="badge-content">
-              <span className="badge-label">PR:</span>
-              <span className="badge-branch">#{pr.number}</span>
-              <span className="badge-separator">|</span>
-              <span className="badge-pr-title">{truncateTitle(pr.title)}</span>
+        // Multiple PR badges - each one can be expanded to show comments
+        <>
+          {prInfo.map((pr, index) => (
+            <div 
+              key={pr.id}
+              className={`preview-badge clickable ${isExpanded ? 'expanded' : ''} ${isSticky ? 'sticky' : ''}`}
+              onClick={(event) => handleBadgeClick(pr, event)}
+              title={isExpanded ? `Click to view PR: ${pr.title}` : `Click to expand for comments: ${pr.title}`}
+            >
+              <div className="badge-content">
+                <span className="badge-label">PR:</span>
+                <span className="badge-branch">#{pr.number}</span>
+                <span className="badge-separator">|</span>
+                <span className="badge-pr-title">{truncateTitle(pr.title)}</span>
+                <span className="badge-expand-icon">{isExpanded ? '▼' : '▶'}</span>
+              </div>
             </div>
-          </div>
-        ))
+          ))}
+          
+          {/* Show expanded panel for PR comments */}
+          {isExpanded && (
+            <div className="preview-badge-expanded">
+              <div className="expanded-header">
+                <div className="pr-info">
+                  <h3>
+                    <a href={prInfo[0].html_url} target="_blank" rel="noopener noreferrer">
+                      #{prInfo[0].number}: {prInfo[0].title}
+                    </a>
+                  </h3>
+                  <div className="pr-meta">
+                    <span className="pr-state" data-state={prInfo[0].state}>{prInfo[0].state}</span>
+                    <span className="pr-author">by {prInfo[0].user.login}</span>
+                  </div>
+                </div>
+                <button 
+                  className="close-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExpanded(false);
+                    setIsSticky(false);
+                  }}
+                  title="Close expanded view"
+                >
+                  ×
+                </button>
+              </div>
+
+              {prInfo[0].body && (
+                <div className="pr-description">
+                  <h4>Description</h4>
+                  <div className="pr-body">{prInfo[0].body}</div>
+                </div>
+              )}
+
+              <div className="comments-section">
+                <h4>Recent Comments ({comments.length}/5)</h4>
+                {commentsLoading ? (
+                  <div className="loading">Loading comments...</div>
+                ) : comments.length === 0 ? (
+                  <div className="no-comments">No comments yet</div>
+                ) : (
+                  <div className="comments-list">
+                    {comments.map((comment) => {
+                      const isExpanded = expandedComments.has(comment.id);
+                      const shouldTruncate = comment.body && comment.body.length > 200;
+                      
+                      return (
+                        <div key={comment.id} className="comment">
+                          <div className="comment-header">
+                            <img 
+                              src={comment.user.avatar_url} 
+                              alt={comment.user.login} 
+                              className="comment-avatar"
+                            />
+                            <span className="comment-author">{comment.user.login}</span>
+                            <span className="comment-date">{formatDate(comment.created_at)}</span>
+                            <span className="comment-type">{comment.type}</span>
+                          </div>
+                          <div className="comment-body">
+                            {shouldTruncate && !isExpanded ? (
+                              <>
+                                <div className="comment-preview">
+                                  {truncateComment(comment.body)}
+                                </div>
+                                <button 
+                                  className="comment-toggle"
+                                  onClick={() => handleCommentToggle(comment.id)}
+                                >
+                                  Show more
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <div className="comment-full">
+                                  {comment.body}
+                                </div>
+                                {shouldTruncate && (
+                                  <button 
+                                    className="comment-toggle"
+                                    onClick={() => handleCommentToggle(comment.id)}
+                                  >
+                                    Show less
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Comment form for authenticated users */}
+                {githubService.isAuth() && (
+                  <div className="comment-form">
+                    <h4>Add Comment</h4>
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Write a comment..."
+                      rows={3}
+                      disabled={submittingComment}
+                    />
+                    <div className="comment-form-actions">
+                      <button
+                        className="submit-comment"
+                        onClick={handleCommentSubmit}
+                        disabled={!newComment.trim() || submittingComment}
+                      >
+                        {submittingComment ? 'Submitting...' : 'Comment'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="expanded-footer">
+                <a href={prInfo[0].html_url} target="_blank" rel="noopener noreferrer" className="github-link">
+                  View PR on GitHub →
+                </a>
+              </div>
+            </div>
+          )}
+        </>
       ) : (
         // Single expandable badge for branch with no PRs
         <div 
