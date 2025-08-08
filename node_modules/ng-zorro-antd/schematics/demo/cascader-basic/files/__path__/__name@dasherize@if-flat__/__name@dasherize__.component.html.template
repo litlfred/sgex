@@ -1,0 +1,4 @@
+
+    <nz-cascader [nzOptions]="nzOptions" [(ngModel)]="values" (ngModelChange)="onChanges($event)"></nz-cascader>
+    <a (click)="changeNzOptions()" class="change-options">Change Options</a>
+  

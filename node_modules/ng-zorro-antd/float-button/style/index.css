@@ -1,0 +1,204 @@
+/* stylelint-disable at-rule-empty-line-before,at-rule-name-space-after,at-rule-no-unknown */
+/* stylelint-disable no-duplicate-selectors */
+.ant-float-btn {
+  position: fixed;
+  z-index: 99;
+  display: block;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  border: none;
+  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  inset-inline-end: 24px;
+  inset-block-end: 48px;
+}
+.ant-float-btn-hidden {
+  display: none;
+}
+.ant-float-btn-pure {
+  position: relative;
+  inset: auto;
+}
+.ant-float-btn:empty {
+  display: none;
+}
+.ant-float-btn-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  transition: all 0.2s;
+}
+.ant-float-btn-body .ant-float-btn-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 2px 4px;
+  overflow: hidden;
+  text-align: center;
+}
+.ant-float-btn-body .ant-float-btn-content .ant-float-btn-icon {
+  width: 18px;
+  margin: auto;
+  font-size: 18px;
+  line-height: 1;
+  text-align: center;
+}
+.ant-float-btn-inner {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: none;
+}
+.ant-float-btn-rtl {
+  direction: rtl;
+}
+.ant-float-btn-circle {
+  height: 40px;
+  border-radius: 50%;
+}
+.ant-float-btn-circle .ant-float-btn-body {
+  border-radius: 50%;
+}
+.ant-float-btn-square {
+  height: auto;
+  min-height: 40px;
+  border-radius: 2px;
+}
+.ant-float-btn-square .ant-float-btn-body {
+  height: auto;
+  border-radius: 2px;
+}
+.ant-float-btn-default {
+  background-color: #fff;
+  transition: background-color 0.2s;
+}
+.ant-float-btn-default .ant-float-btn-body {
+  background-color: #fff;
+  transition: background-color 0.2s;
+}
+.ant-float-btn-default .ant-float-btn-body:hover {
+  color: rgba(0, 0, 0, 0.85);
+  background-color: #f5f5f5;
+}
+.ant-float-btn-default .ant-float-btn-body .ant-float-btn-content .ant-float-btn-icon {
+  color: rgba(0, 0, 0, 0.85);
+}
+.ant-float-btn-default .ant-float-btn-body .ant-float-btn-content .ant-float-btn-description {
+  display: flex;
+  align-items: center;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 12px;
+  line-height: 1.5715;
+}
+.ant-float-btn-default:focus {
+  color: rgba(0, 0, 0, 0.85);
+}
+.ant-float-btn-top {
+  padding: 0 !important;
+}
+.ant-float-btn-group {
+  position: fixed;
+  z-index: 99;
+  display: block;
+  box-sizing: border-box;
+  width: 40px;
+  height: auto;
+  min-height: 40px;
+  margin: 0;
+  padding: 0;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  line-height: 1.5715;
+  list-style: none;
+  border: none;
+  border-radius: 2px;
+  box-shadow: none;
+  inset-inline-end: 24px;
+  inset-block-end: 48px;
+}
+.ant-float-btn-group-wrap {
+  position: relative;
+  z-index: -1;
+  display: block;
+  margin-bottom: 16px;
+}
+.ant-float-btn-group-rtl {
+  direction: rtl;
+}
+.ant-float-btn-group .ant-float-btn {
+  position: static;
+}
+.ant-float-btn-group-circle .ant-float-btn-circle:not(:last-child) {
+  margin-bottom: 16px;
+}
+.ant-float-btn-group-circle .ant-float-btn-body {
+  width: 40px;
+  height: 40px;
+}
+.ant-float-btn-group-square .ant-float-btn-square {
+  padding: 0;
+  border-radius: 0;
+}
+.ant-float-btn-group-square .ant-float-btn-square:first-child {
+  border-start-start-radius: 2px;
+  border-start-end-radius: 2px;
+}
+.ant-float-btn-group-square .ant-float-btn-square:last-child {
+  border-start-start-radius: 2px;
+  border-start-end-radius: 2px;
+}
+.ant-float-btn-group-square .ant-float-btn-square:not(:last-child) {
+  border-bottom: 1px solid #d9d9d9;
+}
+.ant-float-btn-group-square .ant-float-btn-group-wrap {
+  display: block;
+  overflow: hidden;
+  border-radius: 2px;
+  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+}
+.ant-float-btn-group-square .ant-float-btn-group-wrap .ant-float-btn-square {
+  margin-top: 0;
+  padding: 4px;
+  border-radius: 0;
+  box-shadow: none;
+}
+.ant-float-btn-group-square .ant-float-btn-group-wrap .ant-float-btn-square:first-child {
+  border-start-start-radius: 2px;
+  border-start-end-radius: 2px;
+}
+.ant-float-btn-group-square .ant-float-btn-group-wrap .ant-float-btn-square:last-child {
+  border-start-start-radius: 2px;
+  border-start-end-radius: 2px;
+}
+.ant-float-btn-group-square .ant-float-btn-group-wrap .ant-float-btn-square:not(:last-child) {
+  border-bottom: 1px solid #d9d9d9;
+}
+.ant-float-btn-group-square .ant-float-btn-group-wrap .ant-float-btn-square .ant-float-btn-body {
+  width: 32px;
+  height: 32px;
+}
+.ant-float-btn-group-circle-shadow {
+  box-shadow: none;
+}
+.ant-float-btn-group-square-shadow {
+  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+}
+.ant-float-btn-group-square-shadow .ant-float-btn-square {
+  padding: 4px;
+  box-shadow: none;
+}
+.ant-float-btn-group-square-shadow .ant-float-btn-square .ant-float-btn-body {
+  width: 32px;
+  height: 32px;
+}

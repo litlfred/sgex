@@ -1,0 +1,29 @@
+import { NgZone, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { NzResizeHandleMouseDownEvent } from './resize-handle.component';
+import * as i0 from "@angular/core";
+export declare class NzResizableService implements OnDestroy {
+    private ngZone;
+    private document;
+    private listeners;
+    /**
+     * The `OutsideAngular` prefix means that the subject will emit events outside of the Angular zone,
+     * so that becomes a bit more descriptive for those who'll maintain the code in the future:
+     * ```ts
+     * nzResizableService.handleMouseDownOutsideAngular$.subscribe(event => {
+     *   console.log(Zone.current); // <root>
+     *   console.log(NgZone.isInAngularZone()); // false
+     * });
+     * ```
+     */
+    handleMouseDownOutsideAngular$: Subject<NzResizeHandleMouseDownEvent>;
+    documentMouseUpOutsideAngular$: Subject<MouseEvent | TouchEvent | null>;
+    documentMouseMoveOutsideAngular$: Subject<MouseEvent | TouchEvent>;
+    mouseEnteredOutsideAngular$: Subject<boolean>;
+    constructor(ngZone: NgZone);
+    startResizing(event: MouseEvent | TouchEvent): void;
+    private clearListeners;
+    ngOnDestroy(): void;
+    static ɵfac: i0.ɵɵFactoryDeclaration<NzResizableService, never>;
+    static ɵprov: i0.ɵɵInjectableDeclaration<NzResizableService>;
+}

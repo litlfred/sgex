@@ -1,0 +1,5 @@
+import * as i0 from "@angular/core";
+export declare class NzGraphDefsComponent {
+    static ɵfac: i0.ɵɵFactoryDeclaration<NzGraphDefsComponent, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<NzGraphDefsComponent, "svg:defs[nz-graph-defs]", never, {}, {}, never, never, true, never>;
+}

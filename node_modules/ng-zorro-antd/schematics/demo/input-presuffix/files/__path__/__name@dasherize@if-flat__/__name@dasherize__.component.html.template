@@ -1,0 +1,14 @@
+
+    <nz-input-group [nzSuffix]="suffixTemplateInfo" [nzPrefix]="prefixTemplateUser">
+      <input type="text" nz-input placeholder="Enter your username" />
+    </nz-input-group>
+    <ng-template #prefixTemplateUser><nz-icon nzType="user" /></ng-template>
+    <ng-template #suffixTemplateInfo>
+      <nz-icon nz-tooltip nzTooltipTitle="Extra information" nzType="info-circle" />
+    </ng-template>
+    <br />
+    <br />
+    <nz-input-group nzSuffix="RMB" nzPrefix="￥">
+      <input type="text" nz-input />
+    </nz-input-group>
+  

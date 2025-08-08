@@ -1,0 +1,37 @@
+import { ElementRef, OnChanges, QueryList, SimpleChanges } from '@angular/core';
+import { ControlValueAccessor, FormArray, FormBuilder, FormControl } from '@angular/forms';
+import { NzDestroyService } from 'ng-zorro-antd/core/services';
+import { NzSizeLDSType, NzStatus, OnTouchedType } from 'ng-zorro-antd/core/types';
+import * as i0 from "@angular/core";
+export declare class NzInputOtpComponent implements ControlValueAccessor, OnChanges {
+    private readonly formBuilder;
+    private readonly nzDestroyService;
+    otpInputs: QueryList<ElementRef>;
+    nzLength: number;
+    nzSize: NzSizeLDSType;
+    disabled: boolean;
+    nzStatus: NzStatus;
+    nzFormatter: (value: string) => string;
+    nzMask: string | null;
+    protected otpArray: FormArray<FormControl<string>>;
+    private internalValue;
+    private onChangeCallback?;
+    onTouched: OnTouchedType;
+    constructor(formBuilder: FormBuilder, nzDestroyService: NzDestroyService);
+    ngOnChanges(changes: SimpleChanges): void;
+    onInput(index: number, event: Event): void;
+    onFocus(event: FocusEvent): void;
+    onKeyDown(index: number, event: KeyboardEvent): void;
+    writeValue(value: string): void;
+    registerOnChange(fn: (value: string) => void): void;
+    registerOnTouched(fn: () => {}): void;
+    setDisabledState(isDisabled: boolean): void;
+    onPaste(index: number, event: ClipboardEvent): void;
+    private createFormArray;
+    private emitValue;
+    private selectInputBox;
+    static ɵfac: i0.ɵɵFactoryDeclaration<NzInputOtpComponent, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<NzInputOtpComponent, "nz-input-otp", ["nzInputOtp"], { "nzLength": { "alias": "nzLength"; "required": false; }; "nzSize": { "alias": "nzSize"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "nzStatus": { "alias": "nzStatus"; "required": false; }; "nzFormatter": { "alias": "nzFormatter"; "required": false; }; "nzMask": { "alias": "nzMask"; "required": false; }; }, {}, never, never, true, never>;
+    static ngAcceptInputType_nzLength: unknown;
+    static ngAcceptInputType_disabled: unknown;
+}

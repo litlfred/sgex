@@ -1,0 +1,9 @@
+
+    <nz-tabset>
+      @for (tab of tabs; track tab) {
+        <nz-tab [nzTitle]="tab.name" [nzDisabled]="tab.disabled">
+          {{ tab.name }}
+        </nz-tab>
+      }
+    </nz-tabset>
+  

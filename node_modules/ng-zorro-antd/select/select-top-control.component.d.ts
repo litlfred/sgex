@@ -1,0 +1,51 @@
+import { EventEmitter, OnChanges, OnInit, SimpleChanges, TemplateRef } from '@angular/core';
+import { NzNoAnimationDirective } from 'ng-zorro-antd/core/no-animation';
+import { NzSafeAny } from 'ng-zorro-antd/core/types';
+import { NzSelectSearchComponent } from './select-search.component';
+import { NzSelectItemInterface, NzSelectModeType, NzSelectTopControlItemType } from './select.types';
+import * as i0 from "@angular/core";
+export declare class NzSelectTopControlComponent implements OnChanges, OnInit {
+    nzId: string | null;
+    showSearch: boolean;
+    placeHolder: string | TemplateRef<NzSafeAny> | null;
+    open: boolean;
+    maxTagCount: number;
+    autofocus: boolean;
+    disabled: boolean;
+    mode: NzSelectModeType;
+    customTemplate: TemplateRef<{
+        $implicit: NzSelectItemInterface;
+    }> | null;
+    maxTagPlaceholder: TemplateRef<{
+        $implicit: NzSafeAny[];
+    }> | null;
+    removeIcon: TemplateRef<NzSafeAny> | null;
+    listOfTopItem: NzSelectItemInterface[];
+    tokenSeparators: string[];
+    readonly tokenize: EventEmitter<string[]>;
+    readonly inputValueChange: EventEmitter<string>;
+    readonly deleteItem: EventEmitter<NzSelectItemInterface>;
+    nzSelectSearchComponent: NzSelectSearchComponent;
+    listOfSlicedItem: NzSelectTopControlItemType[];
+    isShowPlaceholder: boolean;
+    isShowSingleLabel: boolean;
+    isComposing: boolean;
+    inputValue: string | null;
+    updateTemplateVariable(): void;
+    isComposingChange(isComposing: boolean): void;
+    onInputValueChange(value: string): void;
+    tokenSeparate(inputValue: string, tokenSeparators: string[]): void;
+    clearInputValue(): void;
+    focus(): void;
+    blur(): void;
+    onDeleteItem(item: NzSelectItemInterface): void;
+    private destroyRef;
+    private elementRef;
+    private ngZone;
+    noAnimation: NzNoAnimationDirective | null;
+    ngOnChanges(changes: SimpleChanges): void;
+    ngOnInit(): void;
+    static ɵfac: i0.ɵɵFactoryDeclaration<NzSelectTopControlComponent, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<NzSelectTopControlComponent, "nz-select-top-control", ["nzSelectTopControl"], { "nzId": { "alias": "nzId"; "required": false; }; "showSearch": { "alias": "showSearch"; "required": false; }; "placeHolder": { "alias": "placeHolder"; "required": false; }; "open": { "alias": "open"; "required": false; }; "maxTagCount": { "alias": "maxTagCount"; "required": false; }; "autofocus": { "alias": "autofocus"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; "mode": { "alias": "mode"; "required": false; }; "customTemplate": { "alias": "customTemplate"; "required": false; }; "maxTagPlaceholder": { "alias": "maxTagPlaceholder"; "required": false; }; "removeIcon": { "alias": "removeIcon"; "required": false; }; "listOfTopItem": { "alias": "listOfTopItem"; "required": false; }; "tokenSeparators": { "alias": "tokenSeparators"; "required": false; }; }, { "tokenize": "tokenize"; "inputValueChange": "inputValueChange"; "deleteItem": "deleteItem"; }, never, never, true, never>;
+    static ngAcceptInputType_maxTagCount: unknown;
+}

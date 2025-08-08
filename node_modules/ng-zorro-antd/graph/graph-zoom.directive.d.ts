@@ -1,0 +1,49 @@
+/**
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://github.com/NG-ZORRO/ng-zorro-antd/blob/master/LICENSE
+ */
+import { AfterViewInit, ChangeDetectorRef, ElementRef, EventEmitter, OnDestroy } from '@angular/core';
+import { Selection } from 'd3-selection';
+import { ZoomBehavior } from 'd3-zoom';
+import { NzSafeAny } from 'ng-zorro-antd/core/types';
+import { NzZoomTransform } from './interface';
+import * as i0 from "@angular/core";
+export declare class NzGraphZoomDirective implements OnDestroy, AfterViewInit {
+    private element;
+    private cdr;
+    nzZoom?: number;
+    nzMinZoom: number;
+    nzMaxZoom: number;
+    readonly nzTransformEvent: EventEmitter<NzZoomTransform>;
+    readonly nzZoomChange: EventEmitter<number>;
+    svgSelection: Selection<NzSafeAny, NzSafeAny, NzSafeAny, NzSafeAny>;
+    zoomBehavior: ZoomBehavior<NzSafeAny, NzSafeAny>;
+    svgElement: SVGSVGElement;
+    gZoomElement: SVGGElement;
+    private destroy$;
+    constructor(element: ElementRef, cdr: ChangeDetectorRef);
+    ngAfterViewInit(): void;
+    ngOnDestroy(): void;
+    bind(): void;
+    unbind(): void;
+    fitCenter(duration?: number): void;
+    focus(id: NzSafeAny, duration?: number): void;
+    /**
+     * Handle zoom event
+     *
+     * @param transform
+     */
+    private zoomed;
+    /**
+     * Scale with zoom and duration
+     *
+     * @param duration
+     * @param scale
+     * @private
+     */
+    private reScale;
+    private getRelativePositionInfo;
+    static ɵfac: i0.ɵɵFactoryDeclaration<NzGraphZoomDirective, never>;
+    static ɵdir: i0.ɵɵDirectiveDeclaration<NzGraphZoomDirective, "[nz-graph-zoom]", ["nzGraphZoom"], { "nzZoom": { "alias": "nzZoom"; "required": false; }; "nzMinZoom": { "alias": "nzMinZoom"; "required": false; }; "nzMaxZoom": { "alias": "nzMaxZoom"; "required": false; }; }, { "nzTransformEvent": "nzTransformEvent"; "nzZoomChange": "nzZoomChange"; }, never, never, true, never>;
+    static ngAcceptInputType_nzZoom: unknown;
+}

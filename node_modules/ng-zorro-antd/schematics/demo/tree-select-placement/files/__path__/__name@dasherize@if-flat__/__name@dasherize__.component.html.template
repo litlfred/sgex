@@ -1,0 +1,24 @@
+
+    <nz-radio-group [(ngModel)]="placement">
+      @for (item of list; track item) {
+        <label nz-radio-button [nzValue]="item">{{ item }}</label>
+      }
+    </nz-radio-group>
+    <br />
+    <br />
+    <nz-tree-select
+      style="width: 120px"
+      nzPlaceHolder="Please select"
+      [nzPlacement]="placement"
+      [(ngModel)]="value"
+      [nzMaxTagCount]="3"
+      [nzMaxTagPlaceholder]="omittedPlaceHolder"
+      [nzNodes]="nodes"
+      [nzDropdownStyle]="{ width: '300px' }"
+      [nzDefaultExpandAll]="true"
+      [nzAllowClear]="false"
+      [nzMultiple]="true"
+      (ngModelChange)="onChange($event)"
+    ></nz-tree-select>
+    <ng-template #omittedPlaceHolder let-omittedValues>and {{ omittedValues.length }} more...</ng-template>
+  

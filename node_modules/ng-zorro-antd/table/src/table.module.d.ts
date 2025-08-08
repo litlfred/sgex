@@ -1,0 +1,35 @@
+import * as i0 from "@angular/core";
+import * as i1 from "./table/table.component";
+import * as i2 from "./cell/th-addon.component";
+import * as i3 from "./cell/cell.directive";
+import * as i4 from "./cell/th-measure.directive";
+import * as i5 from "./cell/td-addon.component";
+import * as i6 from "./table/thead.component";
+import * as i7 from "./table/tbody.component";
+import * as i8 from "./table/tr.directive";
+import * as i9 from "./table/tr-expand.directive";
+import * as i10 from "./table/tfoot-summary.component";
+import * as i11 from "./table/table-virtual-scroll.directive";
+import * as i12 from "./cell/cell-fixed.directive";
+import * as i13 from "./cell/custom-column.directive";
+import * as i14 from "./table/table-content.component";
+import * as i15 from "./table/title-footer.component";
+import * as i16 from "./table/table-inner-default.component";
+import * as i17 from "./table/table-inner-scroll.component";
+import * as i18 from "./table/tr-measure.component";
+import * as i19 from "./addon/row-indent.directive";
+import * as i20 from "./addon/row-expand-button.directive";
+import * as i21 from "./styled/word-break.directive";
+import * as i22 from "./styled/align.directive";
+import * as i23 from "./addon/sorters.component";
+import * as i24 from "./addon/filter.component";
+import * as i25 from "./addon/selection.component";
+import * as i26 from "./styled/ellipsis.directive";
+import * as i27 from "./addon/filter-trigger.component";
+import * as i28 from "./table/table-fixed-row.component";
+import * as i29 from "./cell/th-selection.component";
+export declare class NzTableModule {
+    static ɵfac: i0.ɵɵFactoryDeclaration<NzTableModule, never>;
+    static ɵmod: i0.ɵɵNgModuleDeclaration<NzTableModule, never, [typeof i1.NzTableComponent, typeof i2.NzThAddOnComponent, typeof i3.NzTableCellDirective, typeof i4.NzThMeasureDirective, typeof i5.NzTdAddOnComponent, typeof i6.NzTheadComponent, typeof i7.NzTbodyComponent, typeof i8.NzTrDirective, typeof i9.NzTrExpandDirective, typeof i10.NzTfootSummaryComponent, typeof i11.NzTableVirtualScrollDirective, typeof i12.NzCellFixedDirective, typeof i13.NzCustomColumnDirective, typeof i14.NzTableContentComponent, typeof i15.NzTableTitleFooterComponent, typeof i16.NzTableInnerDefaultComponent, typeof i17.NzTableInnerScrollComponent, typeof i18.NzTrMeasureComponent, typeof i19.NzRowIndentDirective, typeof i20.NzRowExpandButtonDirective, typeof i21.NzCellBreakWordDirective, typeof i22.NzCellAlignDirective, typeof i23.NzTableSortersComponent, typeof i24.NzTableFilterComponent, typeof i25.NzTableSelectionComponent, typeof i26.NzCellEllipsisDirective, typeof i27.NzFilterTriggerComponent, typeof i28.NzTableFixedRowComponent, typeof i29.NzThSelectionComponent], [typeof i1.NzTableComponent, typeof i2.NzThAddOnComponent, typeof i3.NzTableCellDirective, typeof i4.NzThMeasureDirective, typeof i5.NzTdAddOnComponent, typeof i6.NzTheadComponent, typeof i7.NzTbodyComponent, typeof i8.NzTrDirective, typeof i11.NzTableVirtualScrollDirective, typeof i12.NzCellFixedDirective, typeof i13.NzCustomColumnDirective, typeof i27.NzFilterTriggerComponent, typeof i9.NzTrExpandDirective, typeof i10.NzTfootSummaryComponent, typeof i21.NzCellBreakWordDirective, typeof i22.NzCellAlignDirective, typeof i26.NzCellEllipsisDirective, typeof i28.NzTableFixedRowComponent, typeof i29.NzThSelectionComponent]>;
+    static ɵinj: i0.ɵɵInjectorDeclaration<NzTableModule>;
+}

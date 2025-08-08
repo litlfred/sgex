@@ -1,0 +1,18 @@
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
+import { NzCascaderModule, NzCascaderOption } from 'ng-zorro-antd/cascader';
+
+@Component({
+  selector: '<%= selector %>',
+  imports: [FormsModule, NzCascaderModule],
+  <% if(inlineTemplate) { %>template: `
+    <nz-cascader [nzOptions]="nzOptions" nzStatus="error"></nz-cascader>
+    <br />
+    <br />
+    <nz-cascader [nzOptions]="nzOptions" nzStatus="warning"></nz-cascader>
+  `<% } else { %>templateUrl: './<%= dasherize(name) %>.component.html'<% } %>
+})
+export class <%= classify(name) %>Component {
+  nzOptions: NzCascaderOption[] = [];
+}

@@ -1,0 +1,35 @@
+import { AfterViewInit, ChangeDetectorRef, ElementRef, EventEmitter, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Color } from '../interfaces/color';
+import { HsbaColorType, TransformOffset } from '../interfaces/type';
+import * as i0 from "@angular/core";
+type EventType = MouseEvent | TouchEvent;
+type EventHandle = (e: EventType) => void;
+export declare class PickerComponent implements OnInit, AfterViewInit, OnChanges {
+    private cdr;
+    containerRef: ElementRef<HTMLDivElement>;
+    transformRef: ElementRef<HTMLDivElement>;
+    color: Color | null;
+    readonly nzOnChange: EventEmitter<Color>;
+    readonly nzOnChangeComplete: EventEmitter<HsbaColorType>;
+    disabled: boolean;
+    offsetValue: TransformOffset;
+    dragRef: boolean;
+    private document;
+    mouseMoveRef: (e: MouseEvent | TouchEvent) => void;
+    mouseUpRef: (e: MouseEvent | TouchEvent) => void;
+    toRgbString(): string;
+    toHsb(): string;
+    constructor(cdr: ChangeDetectorRef);
+    ngOnInit(): void;
+    ngOnChanges(changes: SimpleChanges): void;
+    ngAfterViewInit(): void;
+    dragStartHandle(e: MouseEvent | TouchEvent): void;
+    updateOffset: EventHandle;
+    onDragMove: EventHandle;
+    onDragStop: EventHandle;
+    onDragStart: EventHandle;
+    static ɵfac: i0.ɵɵFactoryDeclaration<PickerComponent, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<PickerComponent, "color-picker", never, { "color": { "alias": "color"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; }, { "nzOnChange": "nzOnChange"; "nzOnChangeComplete": "nzOnChangeComplete"; }, never, never, true, never>;
+    static ngAcceptInputType_disabled: unknown;
+}
+export {};

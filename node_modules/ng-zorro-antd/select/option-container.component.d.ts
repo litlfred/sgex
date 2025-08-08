@@ -1,0 +1,34 @@
+import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { AfterViewInit, EventEmitter, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
+import { NzSafeAny } from 'ng-zorro-antd/core/types';
+import { NzSelectItemInterface, NzSelectModeType } from './select.types';
+import * as i0 from "@angular/core";
+export declare class NzOptionContainerComponent implements OnChanges, AfterViewInit {
+    notFoundContent: string | TemplateRef<NzSafeAny> | undefined;
+    menuItemSelectedIcon: TemplateRef<NzSafeAny> | null;
+    dropdownRender: TemplateRef<NzSafeAny> | null;
+    activatedValue: NzSafeAny | null;
+    listOfSelectedValue: NzSafeAny[];
+    compareWith: (o1: NzSafeAny, o2: NzSafeAny) => boolean;
+    mode: NzSelectModeType;
+    matchWidth: boolean;
+    itemSize: number;
+    maxItemLength: number;
+    isMaxMultipleCountReached: boolean;
+    listOfContainerItem: NzSelectItemInterface[];
+    readonly itemClick: EventEmitter<any>;
+    readonly scrollToBottom: EventEmitter<void>;
+    cdkVirtualScrollViewport: CdkVirtualScrollViewport;
+    private scrolledIndex;
+    private ngZone;
+    private platformId;
+    onItemClick(value: NzSafeAny): void;
+    onItemHover(value: NzSafeAny): void;
+    trackValue(_index: number, option: NzSelectItemInterface): NzSafeAny;
+    onScrolledIndexChange(index: number): void;
+    scrollToActivatedValue(): void;
+    ngOnChanges(changes: SimpleChanges): void;
+    ngAfterViewInit(): void;
+    static ɵfac: i0.ɵɵFactoryDeclaration<NzOptionContainerComponent, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<NzOptionContainerComponent, "nz-option-container", ["nzOptionContainer"], { "notFoundContent": { "alias": "notFoundContent"; "required": false; }; "menuItemSelectedIcon": { "alias": "menuItemSelectedIcon"; "required": false; }; "dropdownRender": { "alias": "dropdownRender"; "required": false; }; "activatedValue": { "alias": "activatedValue"; "required": false; }; "listOfSelectedValue": { "alias": "listOfSelectedValue"; "required": false; }; "compareWith": { "alias": "compareWith"; "required": false; }; "mode": { "alias": "mode"; "required": false; }; "matchWidth": { "alias": "matchWidth"; "required": false; }; "itemSize": { "alias": "itemSize"; "required": false; }; "maxItemLength": { "alias": "maxItemLength"; "required": false; }; "isMaxMultipleCountReached": { "alias": "isMaxMultipleCountReached"; "required": false; }; "listOfContainerItem": { "alias": "listOfContainerItem"; "required": false; }; }, { "itemClick": "itemClick"; "scrollToBottom": "scrollToBottom"; }, never, never, true, never>;
+}

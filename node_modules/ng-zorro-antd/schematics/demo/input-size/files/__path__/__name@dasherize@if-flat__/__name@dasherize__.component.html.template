@@ -1,0 +1,9 @@
+
+    <input nz-input placeholder="large size" nzSize="large" />
+    <br />
+    <br />
+    <input nz-input placeholder="default size" nzSize="default" />
+    <br />
+    <br />
+    <input nz-input placeholder="small size" nzSize="small" />
+  

@@ -1,0 +1,41 @@
+import { ChangeDetectorRef, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
+import { NzTreeNode, NzTreeNodeOptions } from 'ng-zorro-antd/core/tree';
+import * as i0 from "@angular/core";
+export declare class NzTreeNodeTitleComponent implements OnChanges {
+    private cdr;
+    searchValue: string;
+    treeTemplate: TemplateRef<{
+        $implicit: NzTreeNode;
+        origin: NzTreeNodeOptions;
+    }> | null;
+    draggable: boolean;
+    showIcon: boolean;
+    selectMode: boolean;
+    context: NzTreeNode;
+    icon: string;
+    title: string;
+    isLoading: boolean;
+    isSelected: boolean;
+    isDisabled: boolean;
+    isMatched: boolean;
+    isExpanded: boolean;
+    isLeaf: boolean;
+    showIndicator: boolean;
+    dragPosition?: number;
+    get canDraggable(): boolean | null;
+    get matchedValue(): string;
+    get isSwitcherOpen(): boolean;
+    get isSwitcherClose(): boolean;
+    constructor(cdr: ChangeDetectorRef);
+    ngOnChanges(changes: SimpleChanges): void;
+    static ɵfac: i0.ɵɵFactoryDeclaration<NzTreeNodeTitleComponent, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<NzTreeNodeTitleComponent, "nz-tree-node-title", never, { "searchValue": { "alias": "searchValue"; "required": false; }; "treeTemplate": { "alias": "treeTemplate"; "required": false; }; "draggable": { "alias": "draggable"; "required": false; }; "showIcon": { "alias": "showIcon"; "required": false; }; "selectMode": { "alias": "selectMode"; "required": false; }; "context": { "alias": "context"; "required": false; }; "icon": { "alias": "icon"; "required": false; }; "title": { "alias": "title"; "required": false; }; "isLoading": { "alias": "isLoading"; "required": false; }; "isSelected": { "alias": "isSelected"; "required": false; }; "isDisabled": { "alias": "isDisabled"; "required": false; }; "isMatched": { "alias": "isMatched"; "required": false; }; "isExpanded": { "alias": "isExpanded"; "required": false; }; "isLeaf": { "alias": "isLeaf"; "required": false; }; "showIndicator": { "alias": "showIndicator"; "required": false; }; "dragPosition": { "alias": "dragPosition"; "required": false; }; }, {}, never, never, true, never>;
+    static ngAcceptInputType_draggable: unknown;
+    static ngAcceptInputType_showIcon: unknown;
+    static ngAcceptInputType_isLoading: unknown;
+    static ngAcceptInputType_isSelected: unknown;
+    static ngAcceptInputType_isDisabled: unknown;
+    static ngAcceptInputType_isMatched: unknown;
+    static ngAcceptInputType_isExpanded: unknown;
+    static ngAcceptInputType_isLeaf: unknown;
+}

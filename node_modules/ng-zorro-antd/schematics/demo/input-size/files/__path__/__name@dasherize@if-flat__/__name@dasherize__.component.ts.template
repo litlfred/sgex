@@ -1,0 +1,18 @@
+import { Component } from '@angular/core';
+
+import { NzInputModule } from 'ng-zorro-antd/input';
+
+@Component({
+  selector: '<%= selector %>',
+  imports: [NzInputModule],
+  <% if(inlineTemplate) { %>template: `
+    <input nz-input placeholder="large size" nzSize="large" />
+    <br />
+    <br />
+    <input nz-input placeholder="default size" nzSize="default" />
+    <br />
+    <br />
+    <input nz-input placeholder="small size" nzSize="small" />
+  `<% } else { %>templateUrl: './<%= dasherize(name) %>.component.html'<% } %>
+})
+export class <%= classify(name) %>Component {}

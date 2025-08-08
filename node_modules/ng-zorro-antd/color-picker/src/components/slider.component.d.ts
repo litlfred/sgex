@@ -1,0 +1,37 @@
+import { AfterViewInit, ChangeDetectorRef, ElementRef, EventEmitter, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Color } from '../interfaces/color';
+import { HsbaColorType, TransformOffset } from '../interfaces/type';
+import * as i0 from "@angular/core";
+type EventType = MouseEvent | TouchEvent;
+type EventHandle = (e: EventType) => void;
+export declare class SliderComponent implements OnInit, AfterViewInit, OnChanges {
+    private cdr;
+    containerRef: ElementRef<HTMLDivElement>;
+    transformRef: ElementRef<HTMLDivElement>;
+    gradientColors: string[];
+    direction: string;
+    type: HsbaColorType;
+    color: Color | null;
+    value: string | null;
+    disabled: boolean;
+    readonly nzOnChange: EventEmitter<Color>;
+    readonly nzOnChangeComplete: EventEmitter<HsbaColorType>;
+    offsetValue: TransformOffset;
+    dragRef: boolean;
+    mouseMoveRef: (e: MouseEvent | TouchEvent) => void;
+    mouseUpRef: (e: MouseEvent | TouchEvent) => void;
+    private document;
+    constructor(cdr: ChangeDetectorRef);
+    ngOnInit(): void;
+    ngOnChanges(changes: SimpleChanges): void;
+    ngAfterViewInit(): void;
+    dragStartHandle(e: MouseEvent | TouchEvent): void;
+    updateOffset: EventHandle;
+    onDragMove: EventHandle;
+    onDragStop: EventHandle;
+    onDragStart: EventHandle;
+    static ɵfac: i0.ɵɵFactoryDeclaration<SliderComponent, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<SliderComponent, "color-slider", never, { "gradientColors": { "alias": "gradientColors"; "required": false; }; "direction": { "alias": "direction"; "required": false; }; "type": { "alias": "type"; "required": false; }; "color": { "alias": "color"; "required": false; }; "value": { "alias": "value"; "required": false; }; "disabled": { "alias": "disabled"; "required": false; }; }, { "nzOnChange": "nzOnChange"; "nzOnChangeComplete": "nzOnChangeComplete"; }, never, never, true, never>;
+    static ngAcceptInputType_disabled: unknown;
+}
+export {};
