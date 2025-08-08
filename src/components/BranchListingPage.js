@@ -41,6 +41,7 @@ const BranchListingPage = () => {
         }
     };
 
+
     const handleLogout = () => {
         setGithubToken(null);
         setIsAuthenticated(false);
@@ -48,23 +49,27 @@ const BranchListingPage = () => {
         setPrComments({});
     };
 
+
     // Function to fetch PR comments summary
     const fetchPRCommentsSummary = async (prNumber) => {
-        if (!githubToken) return null;
-        
         try {
+            const headers = {
+                'Accept': 'application/vnd.github.v3+json'
+            };
+            
+            // Add auth header if available for better rate limits
+            if (githubToken) {
+                headers['Authorization'] = `token ${githubToken}`;
+            }
+            
             const response = await fetch(
                 `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-                {
-                    headers: {
-                        'Authorization': `token ${githubToken}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                }
+                { headers }
             );
             
             if (!response.ok) {
-                throw new Error(`Failed to fetch comments: ${response.status}`);
+                console.warn(`Failed to fetch comments for PR ${prNumber}: ${response.status}`);
+                return { count: 0, lastComment: null, error: true };
             }
             
             const comments = await response.json();
@@ -82,28 +87,31 @@ const BranchListingPage = () => {
                 }
             };
         } catch (error) {
-            console.error(`Error fetching comment summary for PR ${prNumber}:`, error);
-            return null;
+            console.warn(`Error fetching comment summary for PR ${prNumber}:`, error);
+            return { count: 0, lastComment: null, error: true };
         }
     };
 
     // Function to fetch all PR comments (for expanded view)
     const fetchAllPRComments = async (prNumber) => {
-        if (!githubToken) return [];
-        
         try {
+            const headers = {
+                'Accept': 'application/vnd.github.v3+json'
+            };
+            
+            // Add auth header if available for better rate limits
+            if (githubToken) {
+                headers['Authorization'] = `token ${githubToken}`;
+            }
+            
             const response = await fetch(
                 `https://api.github.com/repos/litlfred/sgex/issues/${prNumber}/comments`,
-                {
-                    headers: {
-                        'Authorization': `token ${githubToken}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                }
+                { headers }
             );
             
             if (!response.ok) {
-                throw new Error(`Failed to fetch comments: ${response.status}`);
+                console.warn(`Failed to fetch comments for PR ${prNumber}: ${response.status}`);
+                return [];
             }
             
             const comments = await response.json();
@@ -115,14 +123,14 @@ const BranchListingPage = () => {
                 avatar_url: comment.user.avatar_url
             }));
         } catch (error) {
-            console.error(`Error fetching all comments for PR ${prNumber}:`, error);
+            console.warn(`Error fetching all comments for PR ${prNumber}:`, error);
             return [];
         }
     };
 
     // Function to load discussion summaries for visible PRs
     const loadDiscussionSummaries = useCallback(async (prs) => {
-        if (!githubToken || prs.length === 0) return;
+        if (prs.length === 0) return;
         
         setLoadingSummaries(true);
         const summaries = {};
@@ -160,7 +168,15 @@ const BranchListingPage = () => {
             return "Loading discussion...";
         }
         
-        if (!summary || summary.count === 0) {
+        if (!summary) {
+            return "No comments yet";
+        }
+        
+        if (summary.error) {
+            return "Unable to load comments";
+        }
+        
+        if (summary.count === 0) {
             return "No comments yet";
         }
         
@@ -374,9 +390,8 @@ const BranchListingPage = () => {
                 
                 setPullRequests(formattedPRs);
                 
-                if (githubToken) {
-                    await loadDiscussionSummaries(formattedPRs.slice(0, ITEMS_PER_PAGE));
-                }
+                // Always try to load discussion summaries
+                await loadDiscussionSummaries(formattedPRs.slice(0, ITEMS_PER_PAGE));
             } catch (err) {
                 console.error('Error fetching data:', err);
                 setError(err.message);
@@ -429,7 +444,8 @@ const BranchListingPage = () => {
         
         const filtered = pullRequests.filter(pr => 
             pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
-            pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
+            pr.author.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
+            pr.branchName.toLowerCase().includes(prSearchTerm.toLowerCase())
         );
         const sorted = sortPRs(filtered, prSortBy, prSortOrder);
         const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
@@ -447,21 +463,23 @@ const BranchListingPage = () => {
 
     // Load comments when pagination changes
     useEffect(() => {
-        if (isAuthenticated && pullRequests.length > 0) {
+        if (pullRequests.length > 0) {
             const filtered = pullRequests.filter(pr => 
                 pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
-                pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
+                pr.author.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
+                pr.branchName.toLowerCase().includes(prSearchTerm.toLowerCase())
             );
             const sorted = sortPRs(filtered, prSortBy, prSortOrder);
             const paginated = sorted.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
             loadDiscussionSummaries(paginated);
         }
-    }, [prPage, prSearchTerm, prSortBy, prSortOrder, pullRequests, isAuthenticated, loadDiscussionSummaries]);
+    }, [prPage, prSearchTerm, prSortBy, prSortOrder, pullRequests, loadDiscussionSummaries]);
 
     // Filter and sort PRs
     const filteredPRs = pullRequests.filter(pr => 
         pr.title.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
-        pr.author.toLowerCase().includes(prSearchTerm.toLowerCase())
+        pr.author.toLowerCase().includes(prSearchTerm.toLowerCase()) ||
+        pr.branchName.toLowerCase().includes(prSearchTerm.toLowerCase())
     );
     const sortedPRs = sortPRs(filteredPRs, prSortBy, prSortOrder);
     const paginatedPRs = sortedPRs.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
@@ -511,50 +529,32 @@ const BranchListingPage = () => {
                             Each branch and PR is automatically deployed to its own preview environment.
                         </p>
                     </div>
-                    
-                    <div className="auth-section">
-                        {!isAuthenticated ? (
-                            <div className="login-section">
-                                <h3>🔐 GitHub Authentication</h3>
-                                <p>Login with your GitHub Personal Access Token to view and add comments to pull requests:</p>
-                                <PATLogin onAuthSuccess={handleAuthSuccess} />
-                            </div>
-                        ) : (
-                            <div className="authenticated-section">
-                                <p>✅ Authenticated - You can now view and add comments to pull requests</p>
-                                <button onClick={handleLogout} className="logout-btn">
-                                    Logout
-                                </button>
-                            </div>
-                        )}
-                    </div>
                 </header>
 
-                <div className="main-actions">
-                    <a 
-                        href="https://github.com/litlfred/sgex/issues/new" 
-                        className="contribute-btn primary"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        🐛 Report a Bug
-                    </a>
-                    <a 
-                        href="./sgex/main/docs/" 
-                        className="contribute-btn secondary"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        📚 Documentation
-                    </a>
-                    <a 
-                        href="https://github.com/litlfred/sgex" 
-                        className="contribute-btn tertiary"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        📦 Source Code
-                    </a>
+                <div className="action-cards">
+                    <div className="action-card main-site-card">
+                        <a 
+                            href="https://litlfred.github.io/sgex/main"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="card-link"
+                        >
+                            <img src={mascotImage} alt="SGEX Mascot" className="card-icon" />
+                            <h3>View Main Site</h3>
+                            <p>Access the main SGEX workbench</p>
+                        </a>
+                    </div>
+                    
+                    {!isAuthenticated && (
+                        <div className="action-card login-card">
+                            <div className="card-content">
+                                <div className="login-icon">🔐</div>
+                                <h3>GitHub Login</h3>
+                                <p>Login to view and add comments</p>
+                                <PATLogin onAuthSuccess={handleAuthSuccess} />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="preview-tabs">
@@ -583,7 +583,7 @@ const BranchListingPage = () => {
                         </div>
                         <input
                             type="text"
-                            placeholder="Search pull requests by title or author..."
+                            placeholder="Search pull requests by title, author, or branch name..."
                             value={prSearchTerm}
                             onChange={(e) => {
                                 setPrSearchTerm(e.target.value);
@@ -648,95 +648,103 @@ const BranchListingPage = () => {
                                             Created: {pr.createdAt} • Updated: {pr.updatedAt}
                                         </p>
                                         
-                                        {isAuthenticated && (
-                                            <div>
-                                                {/* Discussion Summary Status Bar */}
-                                                <div 
-                                                    className="discussion-summary-bar"
-                                                    onClick={() => toggleDiscussion(pr.number)}
-                                                >
-                                                    <div className="discussion-summary-text">
-                                                        <span className="discussion-summary-icon">💬</span>
-                                                        {getDiscussionSummaryText(pr.number)}
-                                                    </div>
-                                                    <span className={`discussion-expand-icon ${expandedDiscussions[pr.number] ? 'expanded' : ''}`}>
-                                                        ▶
-                                                    </span>
-                                                </div>
+                                        {/* Discussion Summary Status Bar - Always show */}
+                                        <div 
+                                            className="discussion-summary-bar"
+                                            onClick={() => toggleDiscussion(pr.number)}
+                                        >
+                                            <div className="discussion-summary-text">
+                                                <span className="discussion-summary-icon">💬</span>
+                                                {getDiscussionSummaryText(pr.number)}
+                                            </div>
+                                            <span className={`discussion-expand-icon ${expandedDiscussions[pr.number] ? 'expanded' : ''}`}>
+                                                ▶
+                                            </span>
+                                        </div>
 
-                                                {/* Expanded Discussion Section */}
-                                                {expandedDiscussions[pr.number] && (
-                                                    <div className="discussion-expanded-section">
-                                                        <div className="discussion-header">
-                                                            <h4 className="discussion-title">Discussion</h4>
-                                                            <div className="discussion-actions">
-                                                                <a 
-                                                                    href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="discussion-action-btn"
-                                                                >
-                                                                    📁 View Files
-                                                                </a>
-                                                                <a 
-                                                                    href={pr.prUrl}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="discussion-action-btn secondary"
-                                                                >
-                                                                    🔗 Full Discussion
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        
-                                                        {/* Comment Input at Top */}
-                                                        <div className="comment-input-section">
-                                                            <textarea
-                                                                value={commentInputs[pr.number] || ''}
-                                                                onChange={(e) => setCommentInputs(prev => ({
-                                                                    ...prev,
-                                                                    [pr.number]: e.target.value
-                                                                }))}
-                                                                placeholder="Add a comment..."
-                                                                className="comment-input"
-                                                                rows={3}
-                                                            />
-                                                            <button
-                                                                onClick={() => submitComment(pr.number, commentInputs[pr.number])}
-                                                                disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
-                                                                className="submit-comment-btn"
-                                                            >
-                                                                {submittingComments[pr.number] ? 'Submitting...' : 'Add Comment'}
-                                                            </button>
-                                                        </div>
-                                                        
-                                                        {/* Scrollable Comments Area */}
-                                                        <div className="discussion-scroll-area">
-                                                            {loadingComments ? (
-                                                                <div className="comments-loading">Loading full discussion...</div>
-                                                            ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
-                                                                <div className="comments-list">
-                                                                    {prComments[pr.number].map((comment) => (
-                                                                        <div key={comment.id} className="comment-item">
-                                                                            <div className="comment-header">
-                                                                                <img 
-                                                                                    src={comment.avatar_url} 
-                                                                                    alt={comment.author} 
-                                                                                    className="comment-avatar"
-                                                                                />
-                                                                                <span className="comment-author">{comment.author}</span>
-                                                                                <span className="comment-date">{comment.created_at}</span>
-                                                                            </div>
-                                                                            <div className="comment-body">{comment.body}</div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            ) : (
-                                                                <div className="no-comments">No comments yet. Be the first to comment!</div>
-                                                            )}
-                                                        </div>
+                                        {/* Expanded Discussion Section */}
+                                        {expandedDiscussions[pr.number] && (
+                                            <div className="discussion-expanded-section">
+                                                <div className="discussion-header">
+                                                    <h4 className="discussion-title">Discussion</h4>
+                                                    <div className="discussion-actions">
+                                                        <a 
+                                                            href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="discussion-action-btn"
+                                                        >
+                                                            📁 View Files
+                                                        </a>
+                                                        <a 
+                                                            href={pr.prUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="discussion-action-btn secondary"
+                                                        >
+                                                            🔗 View PR
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Comment Input at Top - Only for authenticated users */}
+                                                {isAuthenticated && (
+                                                    <div className="comment-input-section">
+                                                        <textarea
+                                                            value={commentInputs[pr.number] || ''}
+                                                            onChange={(e) => setCommentInputs(prev => ({
+                                                                ...prev,
+                                                                [pr.number]: e.target.value
+                                                            }))}
+                                                            placeholder="Add a comment..."
+                                                            className="comment-input"
+                                                            rows={3}
+                                                        />
+                                                        <button
+                                                            onClick={() => submitComment(pr.number, commentInputs[pr.number])}
+                                                            disabled={!commentInputs[pr.number]?.trim() || submittingComments[pr.number]}
+                                                            className="submit-comment-btn"
+                                                        >
+                                                            {submittingComments[pr.number] ? 'Submitting...' : 'Add Comment'}
+                                                        </button>
                                                     </div>
                                                 )}
+                                                
+                                                {/* Scrollable Comments Area - Show for everyone */}
+                                                <div className="discussion-scroll-area">
+                                                    {loadingComments ? (
+                                                        <div className="comments-loading">Loading full discussion...</div>
+                                                    ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
+                                                        <div className="comments-list">
+                                                            {prComments[pr.number].slice(-5).map((comment) => (
+                                                                <div key={comment.id} className="comment-item">
+                                                                    <div className="comment-header">
+                                                                        <img 
+                                                                            src={comment.avatar_url} 
+                                                                            alt={comment.author} 
+                                                                            className="comment-avatar"
+                                                                        />
+                                                                        <span className="comment-author">{comment.author}</span>
+                                                                        <span className="comment-date">{comment.created_at}</span>
+                                                                    </div>
+                                                                    <div className="comment-body">
+                                                                        {comment.body.length > 200 ? 
+                                                                            `${comment.body.substring(0, 200)}...` : 
+                                                                            comment.body
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="no-comments">
+                                                            {!isAuthenticated ? 
+                                                                "No comments yet. Login to add the first comment!" :
+                                                                "No comments yet. Be the first to comment!"
+                                                            }
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
                                         
