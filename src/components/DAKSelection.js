@@ -35,6 +35,10 @@ const DAKSelectionContent = () => {
   const [usingCachedData, setUsingCachedData] = useState(false);
   const [scanningErrors, setScanningErrors] = useState(null);
 
+  // State for handling direct access without action
+  const [defaultAction, setDefaultAction] = useState(null);
+  const effectiveAction = action || defaultAction;
+
   // Validate user parameter and profile consistency
   useEffect(() => {
     // If no user parameter in URL and no profile in state, redirect to landing
@@ -43,14 +47,29 @@ const DAKSelectionContent = () => {
       return;
     }
     
-    // If user parameter exists but no action - redirect to action selection
-    if (userParam && !action) {
+    // If user parameter exists but no action - use default action instead of redirecting
+    if (userParam && !action && !defaultAction) {
+      // For well-known organizations like WHO, default to 'edit' action to allow direct access
+      if (userParam === 'WorldHealthOrganization' || 
+          userParam === 'WHO' || 
+          userParam.toLowerCase().includes('health')) {
+        setDefaultAction('edit');
+        return;
+      }
+      // For other users, redirect to action selection as before
       navigate(`/dak-action/${userParam}`, { replace: true });
       return;
     }
     
-    // If user parameter exists but no profile - redirect to landing
-    if (userParam && !effectiveProfile) {
+    // If user parameter exists but no profile, allow PageProvider to load it
+    // Don't redirect immediately - give the framework time to load the profile
+    if (userParam && !effectiveProfile && profile === undefined) {
+      // Profile is still loading from PageProvider, wait
+      return;
+    }
+    
+    // If user parameter exists but no profile after loading, redirect to landing
+    if (userParam && !effectiveProfile && profile === null) {
       navigate('/');
       return;
     }
@@ -64,12 +83,12 @@ const DAKSelectionContent = () => {
     // If profile exists but no user parameter, redirect to include user in URL
     if (effectiveProfile && !userParam) {
       navigate(`/dak-selection/${effectiveProfile.login}`, { 
-        state: { profile: effectiveProfile, action },
+        state: { profile: effectiveProfile, action: effectiveAction },
         replace: true 
       });
       return;
     }
-  }, [userParam, effectiveProfile, action, navigate]);
+  }, [userParam, effectiveProfile, action, defaultAction, profile, navigate, effectiveAction]);
 
   // Helper function to extract user and repo from repository object
   const getRepositoryPath = (repository) => {
@@ -88,7 +107,7 @@ const DAKSelectionContent = () => {
   };
 
   const getActionConfig = () => {
-    switch (action) {
+    switch (effectiveAction) {
       case 'edit':
         return {
           title: 'Select DAK to Edit',
@@ -283,7 +302,7 @@ const DAKSelectionContent = () => {
       let repos = [];
       let cachedData = null;
       
-      if (action === 'create') {
+      if (effectiveAction === 'create') {
         // For create action, load templates from configuration
         repos = dakTemplates.dakTemplates.map((template, index) => ({
           id: -(index + 1),
@@ -487,7 +506,7 @@ const DAKSelectionContent = () => {
       setLoading(false);
       // Don't automatically stop scanning here for authenticated progressive scans
       // or for demo scanning - let them manage their own scanning state
-      if (!githubService.isAuth() && action === 'create') {
+      if (!githubService.isAuth() && effectiveAction === 'create') {
         // Only auto-stop for create action when not authenticated
         setIsScanning(false);
         setScanProgress(null);
@@ -495,23 +514,23 @@ const DAKSelectionContent = () => {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effectiveProfile, action]);
+  }, [effectiveProfile, effectiveAction]);
 
   useEffect(() => {
     // Only proceed if we have valid profile, action and userParam consistency
-    if (!effectiveProfile || !action || !userParam || effectiveProfile.login !== userParam) {
+    if (!effectiveProfile || !effectiveAction || !userParam || effectiveProfile.login !== userParam) {
       return;
     }
     
     // Always check cache first on initial load
     fetchRepositories(false, false); // forceRescan=false, useCachedData=false (but still check cache first)
-  }, [effectiveProfile, action, userParam, fetchRepositories]);
+  }, [effectiveProfile, effectiveAction, userParam, fetchRepositories]);
 
   const handleRepositorySelect = (repo) => {
     setSelectedRepository(repo);
     
     // For 'edit' action, automatically navigate after selection
-    if (action === 'edit') {
+    if (effectiveAction === 'edit') {
       // Add a small delay for visual feedback before navigation
       setTimeout(() => {
         const repoPath = getRepositoryPath(repo);
@@ -521,7 +540,7 @@ const DAKSelectionContent = () => {
             state: {
               profile: effectiveProfile,
               repository: repo,
-              action
+              action: effectiveAction
             }
           });
         } else {
@@ -531,7 +550,7 @@ const DAKSelectionContent = () => {
             state: {
               profile: effectiveProfile,
               repository: repo,
-              action
+              action: effectiveAction
             }
           });
         }
@@ -547,7 +566,7 @@ const DAKSelectionContent = () => {
 
     const config = getActionConfig();
     
-    if (action === 'edit') {
+    if (effectiveAction === 'edit') {
       // Go directly to dashboard for editing with user/repo parameters
       const repoPath = getRepositoryPath(selectedRepository);
       if (repoPath) {
@@ -556,7 +575,7 @@ const DAKSelectionContent = () => {
           state: {
             profile: effectiveProfile,
             repository: selectedRepository,
-            action: action
+            action: effectiveAction
           }
         });
       } else {
@@ -565,7 +584,7 @@ const DAKSelectionContent = () => {
           state: {
             profile: effectiveProfile,
             repository: selectedRepository,
-            action: action
+            action: effectiveAction
           }
         });
       }
@@ -575,7 +594,7 @@ const DAKSelectionContent = () => {
         state: {
           profile: effectiveProfile,
           sourceRepository: selectedRepository,
-          action: action
+          action: effectiveAction
         }
       });
     }
@@ -602,7 +621,7 @@ const DAKSelectionContent = () => {
     });
   };
 
-  if (!effectiveProfile || !action || !userParam || effectiveProfile.login !== userParam) {
+  if (!effectiveProfile || !effectiveAction || !userParam || effectiveProfile.login !== userParam) {
     return <div className="dak-selection"><div style={{color: 'white', textAlign: 'center', padding: '2rem'}}>Redirecting...</div></div>;
   }
 
@@ -619,14 +638,14 @@ const DAKSelectionContent = () => {
             </div>
           </div>
           <div className="selection-intro">
-            {action === 'create' && (
+            {effectiveAction === 'create' && (
               <div className="template-notice">
                 <span className="notice-icon">ℹ️</span>
                 <span>You'll create a new repository based on the WHO SMART Guidelines template.</span>
               </div>
             )}
             
-            {action !== 'create' && githubService.isAuth() && (
+            {effectiveAction !== 'create' && githubService.isAuth() && (
               <div className="cache-controls">
                 {usingCachedData ? (
                   <div className="cache-info">
@@ -666,7 +685,7 @@ const DAKSelectionContent = () => {
                 )}
               </div>
             )}
-            {action !== 'create' && !githubService.isAuth() && !isScanning && !loading && (
+            {effectiveAction !== 'create' && !githubService.isAuth() && !isScanning && !loading && (
               <div className="demo-controls">
                 <div className="demo-info">
                   <span className="demo-icon">🎭</span>
@@ -814,11 +833,35 @@ const DAKSelectionContent = () => {
             <div className="empty-state">
               <h3>No repositories found</h3>
               <p>
-                {action === 'create' 
+                {effectiveAction === 'create' 
                   ? 'Unable to load the WHO template repository.'
                   : 'No DAK repositories found with SMART Guidelines compatibility.'
                 }
               </p>
+              
+              {/* Special message for WHO organization when not authenticated */}
+              {userParam === 'WorldHealthOrganization' && !githubService.isAuth() && (
+                <div className="who-auth-notice">
+                  <h4>🔐 Authentication Required for WHO Organization</h4>
+                  <p>
+                    To access WHO SMART Guidelines repositories, you need to authenticate with GitHub. 
+                    The WHO organization has many repositories, and unauthenticated access is limited by GitHub's rate limits.
+                  </p>
+                  <div className="auth-instructions">
+                    <p><strong>Expected repositories include:</strong></p>
+                    <ul>
+                      <li>smart-immunizations - WHO SMART Guidelines for Immunizations</li>
+                      <li>smart-trust - WHO SMART Guidelines for Trust and Verification</li>
+                      <li>smart-base - WHO SMART Guidelines Base Implementation Guide</li>
+                      <li>smart-anc - WHO SMART Guidelines for Antenatal Care</li>
+                    </ul>
+                    <p>
+                      <strong>To access these repositories:</strong> Please go back to the home page and authenticate with your GitHub account.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
               {/* Show scanning errors if any occurred */}
               {scanningErrors && (
                 <div className="scanning-errors-summary">
@@ -983,7 +1026,7 @@ const DAKSelectionContent = () => {
                     {config.buttonText}
                   </button>
                 )}
-                {action === 'edit' && (
+                {effectiveAction === 'edit' && (
                   <div className="direct-selection-note">
                     <span className="note-icon">💡</span>
                     <span>Click on a repository above to start editing its components</span>

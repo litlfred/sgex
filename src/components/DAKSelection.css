@@ -1053,3 +1053,58 @@ body.theme-dark .retry-suggestion {
   background: rgba(0, 123, 255, 0.15);
   border-color: rgba(0, 123, 255, 0.3);
 }
+
+/* WHO Authentication Notice */
+.who-auth-notice {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(0, 123, 255, 0.1);
+  border: 1px solid rgba(0, 123, 255, 0.3);
+  border-radius: 8px;
+  border-left: 4px solid var(--who-accent);
+}
+
+.who-auth-notice h4 {
+  color: var(--who-text-primary);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.who-auth-notice p {
+  color: var(--who-text-secondary);
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.auth-instructions {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-instructions ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.auth-instructions li {
+  margin-bottom: 0.5rem;
+  color: var(--who-text-secondary);
+}
+
+/* Dark mode adjustments for WHO auth notice */
+body.theme-dark .who-auth-notice {
+  background: rgba(0, 123, 255, 0.15);
+  border-color: rgba(0, 123, 255, 0.4);
+}
+
+body.theme-dark .auth-instructions {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
