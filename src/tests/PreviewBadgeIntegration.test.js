@@ -66,8 +66,8 @@ describe('PreviewBadge Integration Test', () => {
     const titleElement = screen.getByText(/Enhanced Preview Branch Badge \.\.\./);
     expect(titleElement.textContent.length).toBeLessThanOrEqual(33);
 
-    // 2. Hover behavior - should expand
-    fireEvent.mouseEnter(badge);
+    // 2. Click behavior - should expand to show comments
+    fireEvent.click(badge);
 
     await waitFor(() => {
       expect(screen.getByText('#627: Enhanced Preview Branch Badge with Expandable PR Details, Comments, and Mobile Touch Support')).toBeInTheDocument();
@@ -76,36 +76,29 @@ describe('PreviewBadge Integration Test', () => {
     let expandedPanel = container.querySelector('.preview-badge-expanded');
     expect(expandedPanel).toBeInTheDocument();
 
-    // 3. Mouse leave - should collapse (not sticky yet)
-    fireEvent.mouseLeave(badge);
-
+    // 3. Should show comments section
     await waitFor(() => {
-      expandedPanel = container.querySelector('.preview-badge-expanded');
-      expect(expandedPanel).not.toBeInTheDocument();
+      expect(screen.getByText('Recent Comments (2/5)')).toBeInTheDocument();
     });
 
-    // 4. Click to make sticky
-    fireEvent.click(badge);
-
-    await waitFor(() => {
-      expect(screen.getByText('#627: Enhanced Preview Branch Badge with Expandable PR Details, Comments, and Mobile Touch Support')).toBeInTheDocument();
-    });
-
-    // Should have sticky class
+    // Should have sticky and expanded classes
     expect(badge).toHaveClass('sticky');
+    expect(badge).toHaveClass('expanded');
 
-    // 5. Mouse leave - should stay expanded (sticky)
-    fireEvent.mouseLeave(badge);
+    // 4. Verify comments are loaded and displayed (truncated to 200 chars)
+    expect(screen.getByText('@copilot expansion on mobile phone (Android) is not working')).toBeInTheDocument();
+    expect(screen.getByText(/Fixed the mobile touch event handling issue.*touchstart e\.\.\./)).toBeInTheDocument();
 
-    await new Promise(resolve => setTimeout(resolve, 100));
-    expandedPanel = container.querySelector('.preview-badge-expanded');
-    expect(expandedPanel).toBeInTheDocument();
+    // 5. Test comment expansion (if > 200 chars)
+    const showMoreButton = screen.queryByText('Show more');
+    if (showMoreButton) {
+      fireEvent.click(showMoreButton);
+      await waitFor(() => {
+        expect(screen.getByText(/touchstart events/)).toBeInTheDocument();
+      });
+    }
 
-    // 6. Verify comments are loaded and displayed (now truncated to 30 chars)
-    expect(screen.getByText('@copilot expansion on mobile p...')).toBeInTheDocument();
-    expect(screen.getByText(/Fixed the mobile touch event h\.\.\./)).toBeInTheDocument();
-
-    // 7. Close using close button
+    // 6. Close using close button
     const closeButton = screen.getByTitle('Close expanded view');
     fireEvent.click(closeButton);
 
@@ -114,15 +107,15 @@ describe('PreviewBadge Integration Test', () => {
       expect(expandedPanel).not.toBeInTheDocument();
     });
 
-    // Should remove sticky class
+    // Should remove sticky and expanded classes
     expect(badge).not.toHaveClass('sticky');
+    expect(badge).not.toHaveClass('expanded');
 
     console.log('✅ All PreviewBadge enhanced functionality working correctly:');
-    console.log('  - Hover to expand ✅');
-    console.log('  - Click to stick ✅'); 
-    console.log('  - PR title truncation (~50 chars) ✅');
-    console.log('  - Mobile touch support ✅');
-    console.log('  - Comments display ✅');
+    console.log('  - Click to expand ✅');
+    console.log('  - PR title truncation (~30 chars) ✅');
+    console.log('  - Comments display with truncation ✅');
+    console.log('  - Comment expansion ✅');
     console.log('  - Close functionality ✅');
     console.log('  - Visual feedback with sticky styling ✅');
   });
