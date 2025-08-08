@@ -1,0 +1,74 @@
+.preview-badge-demo {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.demo-header {
+  background: rgb(4, 11, 118);
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.demo-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.demo-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 0.9rem;
+}
+
+.demo-content {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.demo-content h2 {
+  margin-top: 0;
+  color: white;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.demo-instructions {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-top: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.demo-instructions h3 {
+  margin-top: 0;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.5rem;
+}
+
+.demo-instructions ul {
+  margin: 1rem 0;
+}
+
+.demo-instructions li {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.demo-instructions strong {
+  color: #ffd700;
+}
+
+/* Override PreviewBadge positioning for demo */
+.preview-badge-demo .preview-badge-container {
+  position: relative;
+  z-index: 1000;
+}
