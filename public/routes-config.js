@@ -20,24 +20,24 @@
 // Global configuration object that will be available in both environments
 window.SGEX_ROUTES_CONFIG = {
   /**
-   * List of valid DAK component names that follow the pattern:
-   * /{component}/:user/:repo/:branch?/*?
+   * DAK component configurations that define both routing and component mapping.
+   * Each entry follows the pattern: /{component}/:user/:repo/:branch?/*?
    * 
    * These correspond to the DAK components defined in the WHO SMART Guidelines
    * and implemented as React components in the SGEX workbench.
    */
-  dakComponents: [
-    'dashboard',                    
-    'testing-viewer',              
-    'core-data-dictionary-viewer', 
-    'health-interventions',        
-    'actor-editor',               
-    'business-process-selection',  
-    'bpmn-editor',                
-    'bpmn-viewer',                
-    'bpmn-source',                
-    'decision-support-logic'       
-  ],
+  dakComponents: {
+    'dashboard': 'DAKDashboardWithFramework',                    
+    'testing-viewer': 'TestingViewer',              
+    'core-data-dictionary-viewer': 'CoreDataDictionaryViewer', 
+    'health-interventions': 'ComponentEditor',        
+    'actor-editor': 'ActorEditor',               
+    'business-process-selection': 'BusinessProcessSelection',  
+    'bpmn-editor': 'BPMNEditor',                
+    'bpmn-viewer': 'BPMNViewer',                
+    'bpmn-source': 'BPMNSource',                
+    'decision-support-logic': 'DecisionSupportLogicView'       
+  },
 
   /**
    * Deployed branches for GitHub Pages routing.
@@ -49,12 +49,29 @@ window.SGEX_ROUTES_CONFIG = {
   ],
 
   /**
+   * Get list of DAK component names
+   * @returns {Array} Array of valid DAK component names
+   */
+  getDAKComponentNames: function() {
+    return Object.keys(this.dakComponents);
+  },
+
+  /**
+   * Get React component name for a DAK component
+   * @param {string} component - DAK component name
+   * @returns {string|null} React component name or null if not found
+   */
+  getReactComponent: function(component) {
+    return this.dakComponents[component] || null;
+  },
+
+  /**
    * Check if a component name is a valid DAK component
    * @param {string} component - Component name to validate
    * @returns {boolean} True if component is valid
    */
   isValidDAKComponent: function(component) {
-    return this.dakComponents.includes(component);
+    return Object.prototype.hasOwnProperty.call(this.dakComponents, component);
   },
 
   /**

@@ -12,7 +12,7 @@
 export const extractDAKComponentsFromRoutes = () => {
   // In browser environment, try to get from global config first
   if (typeof window !== 'undefined' && window.SGEX_ROUTES_CONFIG) {
-    return window.SGEX_ROUTES_CONFIG.dakComponents;
+    return window.SGEX_ROUTES_CONFIG.getDAKComponentNames();
   }
   
   // Fallback for server-side rendering or if config not loaded
@@ -67,4 +67,68 @@ export const parseDAKUrl = (pathname) => {
   }
   
   return null;
+};
+
+/**
+ * Generate React Router Route objects for all DAK components
+ * This creates the standard route patterns for each DAK component:
+ * - /{component}
+ * - /{component}/:user/:repo  
+ * - /{component}/:user/:repo/:branch
+ * - /{component}/:user/:repo/:branch/*
+ * 
+ * @param {Object} componentMap - Map of component names to React components
+ * @returns {Array} Array of route objects for React Router
+ */
+export const generateDAKRoutes = (componentMap) => {
+  const routes = [];
+  
+  // Get configuration 
+  const config = (typeof window !== 'undefined' && window.SGEX_ROUTES_CONFIG) 
+    ? window.SGEX_ROUTES_CONFIG 
+    : null;
+  
+  if (!config) {
+    console.warn('SGEX route configuration not available for dynamic route generation');
+    return routes;
+  }
+  
+  // Generate routes for each DAK component
+  const componentNames = config.getDAKComponentNames();
+  
+  componentNames.forEach(componentName => {
+    const reactComponentName = config.getReactComponent(componentName);
+    const ReactComponent = componentMap[reactComponentName];
+    
+    if (!ReactComponent) {
+      console.warn(`React component ${reactComponentName} not found for DAK component ${componentName}`);
+      return;
+    }
+    
+    // Generate the standard DAK route patterns
+    routes.push(
+      {
+        path: `/${componentName}`,
+        element: ReactComponent,
+        key: `${componentName}-base`
+      },
+      {
+        path: `/${componentName}/:user/:repo`,
+        element: ReactComponent,
+        key: `${componentName}-user-repo`
+      },
+      {
+        path: `/${componentName}/:user/:repo/:branch`,
+        element: ReactComponent,
+        key: `${componentName}-user-repo-branch`
+      },
+      {
+        path: `/${componentName}/:user/:repo/:branch/*`,
+        element: ReactComponent,
+        key: `${componentName}-user-repo-branch-asset`
+      }
+    );
+  });
+  
+  return routes;
 };

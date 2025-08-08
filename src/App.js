@@ -28,6 +28,7 @@ import DashboardRedirect from './components/DashboardRedirect';
 import TestDocumentationPage from './components/TestDocumentationPage';
 import AssetEditorTest from './components/AssetEditorTest';
 import logger from './utils/logger';
+import { generateDAKRoutes } from './utils/routeUtils';
 import './App.css';
 
 function App() {
@@ -36,22 +37,41 @@ function App() {
   // Get basename from PUBLIC_URL or default to /sgex
   const basename = process.env.PUBLIC_URL || '/sgex';
   
+  // Component mapping for dynamic route generation
+  const componentMap = {
+    'DAKDashboardWithFramework': <DAKDashboardWithFramework />,
+    'TestingViewer': <TestingViewer />,
+    'CoreDataDictionaryViewer': <CoreDataDictionaryViewer />,
+    'ComponentEditor': <ComponentEditor />,
+    'ActorEditor': <ActorEditor />,
+    'BusinessProcessSelection': <BusinessProcessSelection />,
+    'BPMNEditor': <BPMNEditor />,
+    'BPMNViewer': <BPMNViewer />,
+    'BPMNSource': <BPMNSource />,
+    'DecisionSupportLogicView': <DecisionSupportLogicView />
+  };
+  
+  // Generate DAK component routes dynamically
+  const dakRoutes = generateDAKRoutes(componentMap);
+  
   React.useEffect(() => {
     appLogger.componentMount();
     appLogger.info('SGEX Workbench application started', { 
       environment: process.env.NODE_ENV,
-      basename: basename
+      basename: basename,
+      dakRoutesGenerated: dakRoutes.length
     });
     
     return () => {
       appLogger.componentUnmount();
     };
-  }, [appLogger, basename]);
+  }, [appLogger, basename, dakRoutes.length]);
 
   return (
     <Router basename={basename}>
       <div className="App">
           <Routes>
+            {/* Navigation and selection routes */}
             <Route path="/" element={<WelcomePage />} />
             <Route path="/select_profile" element={<SelectProfilePage />} />
             <Route path="/dak-action/:user" element={<DAKActionSelection />} />
@@ -62,56 +82,35 @@ function App() {
             <Route path="/dak-configuration" element={<DAKConfiguration />} />
             <Route path="/repositories" element={<RepositorySelection />} />
             <Route path="/repositories/:user" element={<RepositorySelection />} />
+            
+            {/* Special dashboard routes */}
             <Route path="/dashboard" element={<DashboardRedirect />} />
-            <Route path="/dashboard/:user/:repo" element={<DAKDashboardWithFramework />} />
-            <Route path="/dashboard/:user/:repo/:branch" element={<DAKDashboardWithFramework />} />
             <Route path="/test-dashboard" element={<TestDashboard />} />
-            <Route path="/testing-viewer" element={<TestingViewer />} />
-            <Route path="/testing-viewer/:user/:repo" element={<TestingViewer />} />
-            <Route path="/testing-viewer/:user/:repo/:branch" element={<TestingViewer />} />
-            <Route path="/testing-viewer/:user/:repo/:branch/*" element={<TestingViewer />} />
-            <Route path="/core-data-dictionary-viewer" element={<CoreDataDictionaryViewer />} />
-            <Route path="/core-data-dictionary-viewer/:user/:repo" element={<CoreDataDictionaryViewer />} />
-            <Route path="/core-data-dictionary-viewer/:user/:repo/:branch" element={<CoreDataDictionaryViewer />} />
-            <Route path="/core-data-dictionary-viewer/:user/:repo/:branch/*" element={<CoreDataDictionaryViewer />} />
+            
+            {/* Legacy routes */}
             <Route path="/editor/:componentId" element={<ComponentEditor />} />
             <Route path="/editor-health-interventions" element={<ComponentEditor />} />
-            <Route path="/health-interventions/:user/:repo" element={<ComponentEditor />} />
-            <Route path="/health-interventions/:user/:repo/:branch" element={<ComponentEditor />} />
-            <Route path="/health-interventions/:user/:repo/:branch/*" element={<ComponentEditor />} />
-            <Route path="/actor-editor" element={<ActorEditor />} />
-            <Route path="/actor-editor/:user/:repo" element={<ActorEditor />} />
-            <Route path="/actor-editor/:user/:repo/:branch" element={<ActorEditor />} />
-            <Route path="/actor-editor/:user/:repo/:branch/*" element={<ActorEditor />} />
-            <Route path="/business-process-selection" element={<BusinessProcessSelection />} />
-            <Route path="/business-process-selection/:user/:repo" element={<BusinessProcessSelection />} />
-            <Route path="/business-process-selection/:user/:repo/:branch" element={<BusinessProcessSelection />} />
-            <Route path="/bpmn-editor" element={<BPMNEditor />} />
-            <Route path="/bpmn-editor/:user/:repo" element={<BPMNEditor />} />
-            <Route path="/bpmn-editor/:user/:repo/:branch" element={<BPMNEditor />} />
-            <Route path="/bpmn-editor/:user/:repo/:branch/*" element={<BPMNEditor />} />
-            <Route path="/bpmn-viewer" element={<BPMNViewer />} />
-            <Route path="/bpmn-viewer/:user/:repo" element={<BPMNViewer />} />
-            <Route path="/bpmn-viewer/:user/:repo/:branch" element={<BPMNViewer />} />
-            <Route path="/bpmn-viewer/:user/:repo/:branch/*" element={<BPMNViewer />} />
-            <Route path="/test-bpmn-viewer" element={<BPMNViewerTestComponent />} />
-            <Route path="/bpmn-source" element={<BPMNSource />} />
-            <Route path="/bpmn-source/:user/:repo" element={<BPMNSource />} />
-            <Route path="/bpmn-source/:user/:repo/:branch" element={<BPMNSource />} />
-            <Route path="/bpmn-source/:user/:repo/:branch/*" element={<BPMNSource />} />
-            <Route path="/decision-support-logic" element={<DecisionSupportLogicView />} />
-            <Route path="/decision-support-logic/:user/:repo" element={<DecisionSupportLogicView />} />
-            <Route path="/decision-support-logic/:user/:repo/:branch" element={<DecisionSupportLogicView />} />
-            <Route path="/decision-support-logic/:user/:repo/:branch/*" element={<DecisionSupportLogicView />} />
+            
+            {/* Documentation and utilities */}
             <Route path="/docs/:docId" element={<DocumentationViewer />} />
             <Route path="/pages" element={<PagesManager />} />
             
-            {/* Framework test routes */}
+            {/* Test routes */}
+            <Route path="/test-bpmn-viewer" element={<BPMNViewerTestComponent />} />
             <Route path="/test-framework" element={<LandingPageWithFramework />} />
             <Route path="/test-framework-dashboard/:user/:repo" element={<DAKDashboardWithFramework />} />
             <Route path="/test-framework-dashboard/:user/:repo/:branch" element={<DAKDashboardWithFramework />} />
             <Route path="/test-documentation" element={<TestDocumentationPage />} />
             <Route path="/test-asset-editor" element={<AssetEditorTest />} />
+            
+            {/* Dynamically generated DAK component routes */}
+            {dakRoutes.map((route) => (
+              <Route 
+                key={route.key} 
+                path={route.path} 
+                element={route.element} 
+              />
+            ))}
             
             <Route path="*" element={<NotFound />} />
           </Routes>
