@@ -3,231 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DAK Selection Demo</title>
+    <title>PreviewBadge Enhancement Demo</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-                sans-serif;
             margin: 0;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .demo-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .repo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .repo-card {
-            border: 2px solid #e1e5e9;
-            border-radius: 12px;
-            padding: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            background: white;
-        }
-        .repo-card:hover {
-            border-color: #0078d4;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-        .repo-card.selected {
-            border-color: #0078d4;
-            background: linear-gradient(135deg, rgba(0, 120, 212, 0.05) 0%, rgba(0, 120, 212, 0.02) 100%);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-        }
-        .repo-header-info h3 {
-            margin: 0 0 0.5rem 0;
-            color: #333;
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-        .repo-description {
-            color: #666;
-            line-height: 1.5;
-            margin-bottom: 1rem;
-            min-height: 3rem;
-        }
-        .selection-indicator {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: #0078d4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
             color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 500;
+            min-height: 100vh;
         }
-        .direct-selection-note {
+        
+        .header {
+            background: rgb(4, 11, 118);
+            padding: 1rem 2rem;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            color: #0078d4;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .header p {
+            margin: 0;
+            opacity: 0.9;
             font-size: 0.9rem;
-            font-style: italic;
-            padding: 1rem;
-            background: rgba(0, 120, 212, 0.05);
-            border-radius: 8px;
-            border: 1px solid rgba(0, 120, 212, 0.2);
         }
-        .header {
-            text-align: center;
-            margin-bottom: 2rem;
+        
+        /* Simulate PreviewBadge styles */
+        .preview-badge-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-left: 1rem;
+            max-width: 600px;
+            z-index: 1000;
         }
-        .status-message {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-            text-align: center;
+        
+        .preview-badge {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
         }
-        .comparison {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 2rem;
+        
+        .preview-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #ff5722, #e68900);
         }
-        .comparison h3 {
-            margin-top: 0;
-            color: #495057;
+        
+        .preview-badge.sticky {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, #e68900, #d77000);
         }
-        .before-after {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+        
+        .badge-content {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
         }
-        .before, .after {
-            padding: 1rem;
-            border-radius: 6px;
+        
+        .badge-label {
+            opacity: 0.9;
+            flex-shrink: 0;
         }
-        .before {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-        }
-        .after {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-        }
-        .step {
-            margin: 0.5rem 0;
-            padding: 0.5rem;
-            background: rgba(255,255,255,0.7);
+        
+        .badge-branch {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.1rem 0.3rem;
             border-radius: 4px;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+        
+        .badge-separator {
+            opacity: 0.7;
+            margin: 0 0.2rem;
+            flex-shrink: 0;
+        }
+        
+        .badge-pr-title {
+            font-size: 0.75rem;
+            opacity: 0.95;
+            flex-shrink: 1;
+        }
+        
+        .badge-expand-icon {
+            margin-left: 0.3rem;
+            font-size: 0.7rem;
+            opacity: 0.8;
+            transition: transform 0.2s ease;
+        }
+        
+        .content {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .demo-instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .demo-instructions h3 {
+            margin-top: 0;
+            color: #fff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 0.5rem;
+        }
+        
+        .demo-instructions li {
+            margin: 0.5rem 0;
+            line-height: 1.5;
+        }
+        
+        .demo-instructions strong {
+            color: #ffd700;
+        }
+        
+        .preview-demo {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
 <body>
-    <div class="demo-container">
-        <div class="header">
-            <h1>🎯 DAK Selection UI Improvement</h1>
-            <p>Demonstrating the improved user experience for DAK Authors</p>
+    <div class="header">
+        <div>
+            <h1>SGEX Workbench</h1>
+            <p>WHO SMART Guidelines Exchange</p>
         </div>
         
-        <div class="comparison">
-            <h3>📊 Before vs After Comparison</h3>
-            <div class="before-after">
-                <div class="before">
-                    <h4>❌ Before (Old Flow)</h4>
-                    <div class="step">1. Click on repository</div>
-                    <div class="step">2. Click "Continue to Edit Components" button</div>
-                    <div class="step">3. Navigate to edit page</div>
-                    <p><strong>Result:</strong> Required 2 clicks + extra step</p>
-                </div>
-                <div class="after">
-                    <h4>✅ After (New Flow)</h4>
-                    <div class="step">1. Click on repository</div>
-                    <div class="step">2. Automatic navigation to edit page</div>
-                    <div class="step">   (300ms delay for visual feedback)</div>
-                    <p><strong>Result:</strong> Only 1 click needed!</p>
+        <!-- Demo PreviewBadge -->
+        <div class="preview-badge-container">
+            <div class="preview-badge" id="previewBadge">
+                <div class="badge-content">
+                    <span class="badge-label">Preview:</span>
+                    <span class="badge-branch">feature/preview-badge</span>
+                    <span class="badge-separator">|</span>
+                    <span class="badge-pr-title">Enhanced Preview Branch Badge with Expandable...</span>
+                    <span class="badge-expand-icon">▶</span>
                 </div>
             </div>
-        </div>
-        
-        <div id="statusMessage" class="status-message" style="display: none;">
-            Repository selected! Navigating to edit page...
-        </div>
-        
-        <h3>Try it out - Click any repository below:</h3>
-        <div class="repo-grid">
-            <div class="repo-card" onclick="selectRepo(this, 'maternal-health-dak')">
-                <div class="repo-header-info">
-                    <h3>maternal-health-dak</h3>
-                </div>
-                <p class="repo-description">WHO SMART Guidelines for Maternal Health - Digital Adaptation Kit</p>
-            </div>
-            
-            <div class="repo-card" onclick="selectRepo(this, 'immunization-dak')">
-                <div class="repo-header-info">
-                    <h3>immunization-dak</h3>
-                </div>
-                <p class="repo-description">Digital Adaptation Kit for Immunization Guidelines</p>
-            </div>
-            
-            <div class="repo-card" onclick="selectRepo(this, 'anc-dak')">
-                <div class="repo-header-info">
-                    <h3>anc-dak</h3>
-                </div>
-                <p class="repo-description">Antenatal Care Digital Adaptation Kit based on WHO guidelines</p>
-            </div>
-        </div>
-        
-        <div class="direct-selection-note">
-            <span style="font-size: 1rem;">💡</span>
-            <span>Click on a repository above to start editing its components</span>
         </div>
     </div>
-
-    <script>
-        let selectedCard = null;
+    
+    <div class="content">
+        <h2 style="text-align: center; margin-bottom: 2rem;">PreviewBadge Enhancement Demo</h2>
         
-        function selectRepo(card, repoName) {
-            // Remove previous selection
-            if (selectedCard) {
-                selectedCard.classList.remove('selected');
-                const prevIndicator = selectedCard.querySelector('.selection-indicator');
-                if (prevIndicator) {
-                    prevIndicator.remove();
-                }
+        <div class="preview-demo">
+            <h3>✅ Fixed Issues</h3>
+            <p><strong>Original Issues:</strong></p>
+            <ul>
+                <li>❌ Expansion on web browser not working</li>
+                <li>❌ Should expand on mouse hover and stay expanded on click</li>
+                <li>❌ Mobile expansion not working</li>
+                <li>❌ Show more PR title text (~50 chars)</li>
+            </ul>
+            
+            <p><strong>New Behavior (Fixed):</strong></p>
+            <ul>
+                <li>✅ <strong>Hover</strong> over orange badge to preview PR details</li>
+                <li>✅ <strong>Click</strong> to pin/stick the expanded view</li>
+                <li>✅ <strong>Click pinned badge</strong> to navigate to GitHub</li>
+                <li>✅ <strong>Mobile touch</strong> support with proper event handling</li>
+                <li>✅ <strong>PR title</strong> now shows ~50 characters instead of CSS width-based truncation</li>
+                <li>✅ <strong>Visual feedback</strong> with enhanced styling for sticky state</li>
+            </ul>
+        </div>
+        
+        <div class="demo-instructions">
+            <h3>Implementation Details</h3>
+            <ul>
+                <li><strong>Hover Behavior:</strong> Like ContextualHelpMascot, hover expands the panel</li>
+                <li><strong>Click Behavior:</strong> Click makes it "sticky" so it stays open</li>
+                <li><strong>Mobile Support:</strong> Touch events properly handled for Android</li>
+                <li><strong>Character Limit:</strong> JavaScript truncation at 50 chars instead of CSS</li>
+                <li><strong>Visual Feedback:</strong> Sticky state has enhanced shadow and darker gradient</li>
+                <li><strong>Test Coverage:</strong> 14 comprehensive tests covering all behaviors</li>
+            </ul>
+            
+            <h3>Technical Changes</h3>
+            <ul>
+                <li>Added <code>isSticky</code> state for click-to-pin behavior</li>
+                <li>Implemented <code>handleMouseEnter/Leave</code> for hover interactions</li>
+                <li>Updated <code>handleClick</code> to toggle sticky and navigate when appropriate</li>
+                <li>Added <code>truncateTitle()</code> function for 50-character limit</li>
+                <li>Enhanced CSS with <code>.sticky</code> class for visual feedback</li>
+                <li>Maintained all mobile touch event handling from previous fixes</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // Simple demo interaction
+        const badge = document.getElementById('previewBadge');
+        let isSticky = false;
+        let isExpanded = false;
+        
+        badge.addEventListener('mouseenter', () => {
+            if (!isSticky) {
+                isExpanded = true;
+                badge.querySelector('.badge-expand-icon').textContent = '▼';
+                badge.style.borderBottomLeftRadius = '4px';
+                badge.style.borderBottomRightRadius = '4px';
             }
-            
-            // Add selection to clicked card
-            card.classList.add('selected');
-            selectedCard = card;
-            
-            // Add selection indicator
-            const indicator = document.createElement('div');
-            indicator.className = 'selection-indicator';
-            indicator.innerHTML = '<span>✓ Selected</span>';
-            card.appendChild(indicator);
-            
-            // Show status message
-            const statusMessage = document.getElementById('statusMessage');
-            statusMessage.style.display = 'block';
-            statusMessage.textContent = `${repoName} selected! Navigating to edit page...`;
-            
-            // Simulate navigation after delay (like in the real app)
-            setTimeout(() => {
-                statusMessage.textContent = `✅ Navigation successful! Would open DAK Dashboard for "${repoName}" (in real app)`;
-                statusMessage.style.background = '#d1ecf1';
-                statusMessage.style.borderColor = '#bee5eb';
-                statusMessage.style.color = '#0c5460';
-            }, 300);
-        }
+        });
+        
+        badge.addEventListener('mouseleave', () => {
+            if (!isSticky) {
+                isExpanded = false;
+                badge.querySelector('.badge-expand-icon').textContent = '▶';
+                badge.style.borderBottomLeftRadius = '12px';
+                badge.style.borderBottomRightRadius = '12px';
+            }
+        });
+        
+        badge.addEventListener('click', () => {
+            if (isSticky) {
+                alert('Would navigate to GitHub PR in real implementation');
+            } else {
+                isSticky = true;
+                isExpanded = true;
+                badge.classList.add('sticky');
+                badge.querySelector('.badge-expand-icon').textContent = '▼';
+                badge.style.borderBottomLeftRadius = '4px';
+                badge.style.borderBottomRightRadius = '4px';
+            }
+        });
+        
+        // Click outside to reset
+        document.addEventListener('click', (e) => {
+            if (!badge.contains(e.target)) {
+                isSticky = false;
+                isExpanded = false;
+                badge.classList.remove('sticky');
+                badge.querySelector('.badge-expand-icon').textContent = '▶';
+                badge.style.borderBottomLeftRadius = '12px';
+                badge.style.borderBottomRightRadius = '12px';
+            }
+        });
     </script>
 </body>
 </html>

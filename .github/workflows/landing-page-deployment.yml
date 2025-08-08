@@ -12,6 +12,11 @@ on:
         required: false
         type: boolean
         default: false
+      clean_old_assets:
+        description: 'Aggressively clean old assets from gh-pages'
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -27,7 +32,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       deployment_status: ${{ steps.deployment_info.outputs.deployment_status }}
-      landing_url: ${{ steps.deployment_info.outputs.landing_url }}
+      deployment_url: ${{ steps.deployment_info.outputs.deployment_url }}
+      deployment_type: ${{ steps.deployment_info.outputs.deployment_type }}
       source_branch: ${{ steps.deployment_info.outputs.source_branch }}
       commit_sha: ${{ steps.deployment_info.outputs.commit_sha }}
     
@@ -54,55 +60,116 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
         
-      - name: Prepare branch selector landing page files
-        shell: bash
-        run: |
-          set -e
-          
-          echo "Preparing branch selector landing page files..."
-          
-          # Create a landing page directory to hold the files
-          mkdir -p landing-page
-          
-          # Use the branch selector as the main landing page
-          if [[ ! -f "public/branch-listing.html" ]]; then
-            echo "ERROR: Branch selector not found at public/branch-listing.html"
-            exit 1
-          fi
-          
-          # Copy branch selector as index.html
-          cp public/branch-listing.html landing-page/index.html
-          
-          # Copy essential assets for the branch selector
-          if [[ -d "public" ]]; then
-            # Copy assets that the branch selector references
-            if [[ -f "public/sgex-mascot.png" ]]; then
-              cp public/sgex-mascot.png landing-page/
-            fi
-            if [[ -f "public/favicon.ico" ]]; then
-              cp public/favicon.ico landing-page/
-            fi
-          fi
-          
-          # Verify landing page exists
-          if [[ ! -f "landing-page/index.html" ]]; then
-            echo "ERROR: Landing page preparation failed - index.html not found"
-            exit 1
-          fi
-          
-          echo "✅ Branch selector landing page preparation completed successfully"
-          echo "Landing page contents:"
-          ls -la landing-page/
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
 
-      - name: Deploy to gh-pages root (preserving branch subdirectories)
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -e
+          echo "Installing dependencies..."
+          npm ci
+
+      - name: Build React application
         shell: bash
         run: |
           set -e
           
-          # Save the landing page files
-          echo "Preserving landing page files..."
-          mkdir -p /tmp/landing-build
-          cp -a landing-page/. /tmp/landing-build/
+          source_branch="${{ steps.source_info.outputs.source_branch }}"
+          
+          # Determine correct PUBLIC_URL based on source branch
+          if [[ "$source_branch" == "deploy" ]]; then
+            # Landing page deployment from deploy - deploy to /sgex/
+            export PUBLIC_URL="/sgex/"
+            echo "Building React application for /sgex/ deployment (landing page)..."
+          else
+            # Branch deployment - use branch-specific URL
+            safe_branch_name=$(echo "$source_branch" | tr '/' '-')
+            export PUBLIC_URL="/sgex/${safe_branch_name}/"
+            echo "Building React application for branch deployment: $source_branch -> /sgex/${safe_branch_name}/"
+          fi
+          
+          echo "Using PUBLIC_URL: $PUBLIC_URL"
+          
+          npm run build
+          
+          # Verify build was successful
+          if [[ ! -f "build/index.html" ]]; then
+            echo "ERROR: React build failed - index.html not found in build directory"
+            exit 1
+          fi
+          
+          echo "✅ React application built successfully with PUBLIC_URL: $PUBLIC_URL"
+
+      - name: Prepare deployment files
+        shell: bash
+        run: |
+          set -e
+          
+          source_branch="${{ steps.source_info.outputs.source_branch }}"
+          
+          if [[ "$source_branch" == "deploy" ]]; then
+            echo "Preparing React-based branch selector landing page for /sgex/ deployment..."
+            
+            # Create a landing page directory to hold the files
+            mkdir -p landing-page
+            
+            # Copy the entire React build to landing page directory
+            # This includes the React-based BranchListingPage component
+            cp -r build/* landing-page/
+            
+            # Verify landing page exists
+            if [[ ! -f "landing-page/index.html" ]]; then
+              echo "ERROR: Landing page preparation failed - index.html not found"
+              exit 1
+            fi
+            
+            echo "✅ React-based branch selector landing page preparation completed successfully"
+            echo "Landing page contents:"
+            ls -la landing-page/
+          else
+            echo "Preparing branch deployment for: $source_branch"
+            
+            # For branch deployments, we prepare for branch-specific directory deployment
+            safe_branch_name=$(echo "$source_branch" | tr '/' '-')
+            mkdir -p "branch-build/$safe_branch_name"
+            cp -r build/* "branch-build/$safe_branch_name/"
+            
+            # Verify branch deployment exists
+            if [[ ! -f "branch-build/$safe_branch_name/index.html" ]]; then
+              echo "ERROR: Branch deployment preparation failed - index.html not found"
+              exit 1
+            fi
+            
+            echo "✅ Branch deployment preparation completed successfully for: $safe_branch_name"
+            echo "Branch deployment contents:"
+            ls -la "branch-build/$safe_branch_name/"
+          fi
+
+      - name: Deploy to gh-pages (smart deployment)
+        shell: bash
+        run: |
+          set -e
+          
+          source_branch="${{ steps.source_info.outputs.source_branch }}"
+          
+          # Save the build files
+          echo "Preserving build files..."
+          mkdir -p /tmp/deployment-build
+          
+          if [[ "$source_branch" == "deploy" ]]; then
+            # Landing page deployment - copy to tmp for /sgex/ deployment
+            cp -a landing-page/. /tmp/deployment-build/
+            deployment_type="landing-page"
+          else
+            # Branch deployment - copy branch-specific directory
+            safe_branch_name=$(echo "$source_branch" | tr '/' '-')
+            cp -a branch-build/. /tmp/deployment-build/
+            deployment_type="branch-deployment"
+          fi
           
           # Checkout gh-pages branch
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
@@ -120,48 +187,136 @@ jobs:
             git push origin gh-pages
           fi
           
-          # CRITICAL: Only remove root-level files, NEVER remove directories (to preserve branch builds)
-          echo "Removing only root-level files (preserving all branch directories)..."
-          
-          # List what directories exist for safety verification
-          echo "Existing directories before cleanup:"
-          ls -la */ 2>/dev/null || echo "No directories found"
-          
-          # Remove only specific files that could conflict with landing page
-          rm -f index.html
-          rm -f manifest.json  
-          rm -f asset-manifest.json
-          rm -f service-worker.js
-          rm -f robots.txt
-          rm -f favicon.ico
-          rm -f logo*.png
-          rm -f README.md
-          rm -f package.json
-          rm -f package-lock.json
-          
-          # Remove static directory only if it exists at root (not in branch subdirs)
-          if [[ -d "static" ]]; then
-            echo "Removing root static directory..."
-            rm -rf static
+          if [[ "$deployment_type" == "landing-page" ]]; then
+            echo "Deploying landing page to /sgex/..."
+            
+            # CRITICAL: Only remove root-level files, NEVER remove directories (to preserve branch builds)
+            echo "Removing only root-level files (preserving all branch directories)..."
+            
+            # List what directories exist for safety verification
+            echo "Existing directories before cleanup:"
+            ls -la */ 2>/dev/null || echo "No directories found"
+            
+            # Remove only specific files that could conflict with the React app deployment
+            rm -f index.html
+            rm -f manifest.json  
+            rm -f asset-manifest.json
+            rm -f service-worker.js
+            rm -f robots.txt
+            rm -f favicon.ico
+            rm -f logo*.png
+            rm -f *.png
+            rm -f *.svg
+            rm -f *.html
+            rm -f README.md
+            rm -f package.json
+            rm -f package-lock.json
+            
+            # Remove ALL versioned CSS and JS files to clean up old builds
+            if [[ "${{ github.event.inputs.clean_old_assets || 'true' }}" == "true" ]]; then
+              echo "Cleaning up old versioned assets (clean_old_assets=true)..."
+              rm -f main.*.css
+              rm -f main.*.css.map
+              rm -f main.*.js
+              rm -f main.*.js.LICENSE.txt
+              rm -f main.*.js.map
+              rm -f *.chunk.js
+              rm -f *.chunk.js.map
+              
+              # Also remove other potential leftover files
+              rm -f lcov.info
+              rm -f coverage-final.json
+              rm -f clover.xml
+            else
+              echo "Skipping old asset cleanup (clean_old_assets=false)"
+            fi
+            
+            # Remove static directory only if it exists at root (not in branch subdirs)
+            if [[ -d "static" ]]; then
+              echo "Removing root static directory..."
+              rm -rf static
+            fi
+            
+            # Remove docs directory only if it exists at root (React build may include it)
+            if [[ -d "docs" ]]; then
+              echo "Removing root docs directory..."
+              rm -rf docs
+            fi
+            
+            # Remove schemas directory only if it exists at root (React build may include it)
+            if [[ -d "schemas" ]]; then
+              echo "Removing root schemas directory..."
+              rm -rf schemas
+            fi
+            
+            # Remove development artifacts that shouldn't be deployed
+            if [[ -d "node_modules" ]]; then
+              echo "Removing node_modules directory..."
+              rm -rf node_modules
+            fi
+            
+            if [[ -d "src" ]]; then
+              echo "Removing src directory..."
+              rm -rf src
+            fi
+            
+            if [[ -d "public" ]]; then
+              echo "Removing public directory..."
+              rm -rf public
+            fi
+            
+            # Remove build tools and configs
+            rm -f craco.config.js
+            rm -f .dockerignore
+            rm -f Dockerfile
+            rm -f .env.example
+            
+            # Remove coverage and test artifacts
+            if [[ -d "coverage" ]]; then
+              echo "Removing coverage directory..."
+              rm -rf coverage
+            fi
+            
+            # Remove lcov-report directory if it exists
+            if [[ -d "lcov-report" ]]; then
+              echo "Removing lcov-report directory..."
+              rm -rf lcov-report
+            fi
+            
+            # Deploy React-based branch selector to /sgex/ (preserves branch subdirectories)
+            cp -a /tmp/deployment-build/. .
+            
+            # Verify existing directories are still there
+            echo "Directories after deployment:"
+            ls -la */ 2>/dev/null || echo "No directories found"
+            
+          else
+            echo "Deploying branch to subdirectory..."
+            
+            # Deploy branch-specific build to appropriate subdirectory
+            cp -a /tmp/deployment-build/. .
+            
+            echo "Branch deployment completed to subdirectories"
           fi
-          
-          # Deploy branch selector to root (this will not affect any subdirectories)
-          echo "Deploying branch selector landing page to root..."
-          cp -a /tmp/landing-build/. .
-          
-          # Verify existing directories are still there
-          echo "Directories after deployment:"
-          ls -la */ 2>/dev/null || echo "No directories found"
-          
           # Clean up temporary build
-          rm -rf /tmp/landing-build
+          rm -rf /tmp/deployment-build
           
-          echo "✅ Branch selector landing page deployed to gh-pages root while preserving all branch directories"
+          # Clean up build artifacts that shouldn't be in deployment
+          for dir in build landing-page branch-build; do
+            if [[ -d "$dir" ]]; then
+              echo "Removing temporary $dir directory..."
+              rm -rf "$dir"
+            fi
+          done
+          
+          echo "✅ Deployment completed successfully"
 
       - name: Commit and push changes
         shell: bash
         run: |
           set -e
+          
+          source_branch="${{ steps.source_info.outputs.source_branch }}"
           
           # Verify we're on gh-pages branch
           current_branch=$(git branch --show-current)
@@ -173,14 +328,28 @@ jobs:
           # Stage all changes
           git add -A
           
+          # Determine commit message based on deployment type
+          if [[ "$source_branch" == "deploy" ]]; then
+            deployment_msg="🚀 Deploy React-based branch selector landing page"
+            deployment_details="- Updated with React-based branch selector from $source_branch branch
+            - Landing page deployed to GitHub Pages /sgex/
+            - All branch subdirectories preserved"
+          else
+            safe_branch_name=$(echo "$source_branch" | tr '/' '-')
+            deployment_msg="🚀 Deploy $source_branch branch preview"
+            deployment_details="- Updated branch preview for $source_branch
+            - Deployed to /sgex/$safe_branch_name/ subdirectory
+            - Landing page unaffected"
+          fi
+          
           # Check if there are changes to commit
           if git diff --cached --quiet; then
             if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
               echo "No changes detected, but force deployment requested - creating empty commit"
-              git commit --allow-empty -m "🚀 Force deploy branch selector landing page
+              git commit --allow-empty -m "$deployment_msg
               
               - Force deployment requested by user
-              - Built from ${{ steps.source_info.outputs.source_branch }} branch
+              - Built from $source_branch branch
               - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
               - Commit: ${{ github.sha }}"
             else
@@ -188,41 +357,118 @@ jobs:
               exit 0
             fi
           else
-            echo "Committing landing page deployment..."
+            echo "Committing deployment..."
             
-            git commit -m "🚀 Deploy branch selector landing page
+            git commit -m "$deployment_msg
             
-            - Updated with branch selector from ${{ steps.source_info.outputs.source_branch }} branch
+            $deployment_details
             - Manually triggered deployment
             - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
             - Commit: ${{ github.sha }}"
           fi
           
           echo "Pushing to gh-pages..."
-          git fetch origin gh-pages
-          git push origin gh-pages
           
-          echo "✅ Branch selector landing page deployment completed successfully"
+          # Fetch latest remote state first to avoid conflicts
+          echo "Fetching latest gh-pages state..."
+          git fetch origin gh-pages
+          
+          # Push with retry mechanism to handle concurrent deployments
+          max_retries=3
+          retry_count=0
+          success=false
+          
+          while [[ $retry_count -lt $max_retries ]] && [[ "$success" == "false" ]]; do
+            retry_count=$((retry_count + 1))
+            echo "Push attempt $retry_count of $max_retries"
+            
+            # Always fetch latest state before attempting push
+            git fetch origin gh-pages
+            
+            # Check if we're behind remote
+            local_commit=$(git rev-parse HEAD)
+            remote_commit=$(git rev-parse origin/gh-pages)
+            
+            if [[ "$local_commit" != "$remote_commit" ]]; then
+              echo "Local branch is behind remote, syncing..."
+              
+              # Reset to remote state and re-apply our changes
+              git reset --hard origin/gh-pages
+              
+              # Re-stage changes (they should still be in working directory)
+              git add -A
+              
+              # Re-commit if there are changes
+              if ! git diff --cached --quiet; then
+                echo "Re-committing changes after sync..."
+                git commit -m "🚀 Deploy landing page
+                
+                - Updated landing page (retry $retry_count/$max_retries)
+                - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+                - Commit: ${{ github.sha }}"
+              else
+                echo "No changes to re-commit after sync"
+                success=true
+                break
+              fi
+            fi
+            
+            # Try to push
+            if git push origin gh-pages; then
+              echo "✅ Push successful"
+              success=true
+            else
+              echo "⚠️  Push failed, will retry after delay..."
+              if [[ $retry_count -lt $max_retries ]]; then
+                sleep_time=$((retry_count * 2))
+                echo "Waiting ${sleep_time} seconds before retry..."
+                sleep $sleep_time
+              fi
+            fi
+          done
+          
+          if [[ "$success" == "false" ]]; then
+            echo "❌ Failed to push after $max_retries attempts"
+            exit 1
+          fi
+          
+          echo "✅ Deployment completed successfully"
 
       - name: Output deployment info
         id: deployment_info
         shell: bash
         run: |
-          landing_url="https://litlfred.github.io/sgex/"
           source_branch="${{ steps.source_info.outputs.source_branch }}"
           commit_sha="${{ github.sha }}"
           
-          echo "🚀 Branch Selector Landing Page Deployment Summary:"
-          echo "- Landing Page URL: $landing_url"
-          echo "- Source Branch: $source_branch"
-          echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          echo "- Commit: $commit_sha"
-          echo ""
-          echo "ℹ️  Note: Branch subdirectories are preserved and unaffected"
+          if [[ "$source_branch" == "deploy" ]]; then
+            deployment_url="https://litlfred.github.io/sgex/"
+            deployment_type="landing-page"
+            echo "🚀 Branch Selector Landing Page Deployment Summary:"
+            echo "- Landing Page URL: $deployment_url"
+            echo "- Source Branch: $source_branch"
+            echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            echo "- Commit: $commit_sha"
+            echo ""
+            echo "ℹ️  Note: Branch subdirectories are preserved and unaffected"
+          else
+            safe_branch_name=$(echo "$source_branch" | tr '/' '-')
+            deployment_url="https://litlfred.github.io/sgex/$safe_branch_name/"
+            deployment_type="branch-deployment"
+            echo "🚀 Branch Preview Deployment Summary:"
+            echo "- Branch Preview URL: $deployment_url"
+            echo "- Source Branch: $source_branch"
+            echo "- Target Directory: $safe_branch_name"
+            echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            echo "- Commit: $commit_sha"
+            echo ""
+            echo "ℹ️  Note: Landing page is unaffected"
+          fi
           
           # GitHub Actions outputs
           echo "deployment_status=success" >> $GITHUB_OUTPUT
-          echo "landing_url=$landing_url" >> $GITHUB_OUTPUT
+          echo "deployment_url=$deployment_url" >> $GITHUB_OUTPUT
+          echo "deployment_type=$deployment_type" >> $GITHUB_OUTPUT
           echo "source_branch=$source_branch" >> $GITHUB_OUTPUT
           echo "commit_sha=$commit_sha" >> $GITHUB_OUTPUT
 
@@ -230,18 +476,43 @@ jobs:
         if: always() && steps.deployment_info.outputs.deployment_status == 'success'
         shell: bash
         run: |
-          echo "## 🚀 Branch Selector Landing Page Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Deployment URL:** https://litlfred.github.io/sgex/" >> $GITHUB_STEP_SUMMARY
-          echo "**Source Branch:** ${{ steps.deployment_info.outputs.source_branch }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** \`${{ steps.deployment_info.outputs.commit_sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Deployed:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### ✅ Deployment Status" >> $GITHUB_STEP_SUMMARY
-          echo "- Branch selector landing page successfully deployed to gh-pages root" >> $GITHUB_STEP_SUMMARY
-          echo "- All branch subdirectories preserved" >> $GITHUB_STEP_SUMMARY
-          echo "- No branch deployments affected" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
-          echo "- [View Branch Selector](https://litlfred.github.io/sgex/)" >> $GITHUB_STEP_SUMMARY
-          echo "- [View Main Branch](https://litlfred.github.io/sgex/main/)" >> $GITHUB_STEP_SUMMARY
+          deployment_type="${{ steps.deployment_info.outputs.deployment_type }}"
+          source_branch="${{ steps.deployment_info.outputs.source_branch }}"
+          deployment_url="${{ steps.deployment_info.outputs.deployment_url }}"
+          commit_sha="${{ steps.deployment_info.outputs.commit_sha }}"
+          
+          if [[ "$deployment_type" == "landing-page" ]]; then
+            echo "## 🚀 React-based Branch Selector Landing Page Deployment Summary" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Deployment URL:** $deployment_url" >> $GITHUB_STEP_SUMMARY
+            echo "**Source Branch:** $source_branch" >> $GITHUB_STEP_SUMMARY
+            echo "**Commit:** \`$commit_sha\`" >> $GITHUB_STEP_SUMMARY
+            echo "**Deployed:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### ✅ Deployment Status" >> $GITHUB_STEP_SUMMARY
+            echo "- Branch selector landing page successfully deployed to gh-pages /sgex/" >> $GITHUB_STEP_SUMMARY
+            echo "- All branch subdirectories preserved" >> $GITHUB_STEP_SUMMARY
+            echo "- No branch deployments affected" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+            echo "- [View Branch Selector]($deployment_url)" >> $GITHUB_STEP_SUMMARY
+            echo "- [View Main Branch](https://litlfred.github.io/sgex/main/)" >> $GITHUB_STEP_SUMMARY
+          else
+            safe_branch_name=$(echo "$source_branch" | tr '/' '-')
+            echo "## 🚀 Branch Preview Deployment Summary" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Preview URL:** $deployment_url" >> $GITHUB_STEP_SUMMARY
+            echo "**Source Branch:** $source_branch" >> $GITHUB_STEP_SUMMARY
+            echo "**Target Directory:** $safe_branch_name" >> $GITHUB_STEP_SUMMARY
+            echo "**Commit:** \`$commit_sha\`" >> $GITHUB_STEP_SUMMARY
+            echo "**Deployed:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### ✅ Deployment Status" >> $GITHUB_STEP_SUMMARY
+            echo "- Branch preview successfully deployed to subdirectory" >> $GITHUB_STEP_SUMMARY
+            echo "- Landing page unaffected" >> $GITHUB_STEP_SUMMARY
+            echo "- Assets correctly reference /sgex/$safe_branch_name/ paths" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+            echo "- [View Branch Preview]($deployment_url)" >> $GITHUB_STEP_SUMMARY
+            echo "- [View Branch Selector](https://litlfred.github.io/sgex/)" >> $GITHUB_STEP_SUMMARY
+          fi

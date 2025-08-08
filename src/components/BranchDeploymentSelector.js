@@ -27,7 +27,7 @@ const BranchDeploymentSelector = ({ mode = 'deployment-selector' }) => {
             id: 'main',
             name: 'Main Application',
             branch: 'main',
-            url: '/sgex/',
+            url: './main/',
             description: 'Primary SGEX Workbench application with all features',
             status: 'active',
             lastUpdated: new Date().toISOString(),
@@ -37,7 +37,7 @@ const BranchDeploymentSelector = ({ mode = 'deployment-selector' }) => {
             id: 'feature-branch-1',
             name: 'Feature: Enhanced Editor',
             branch: 'feature/enhanced-editor',
-            url: '/sgex/feature-enhanced-editor/',
+            url: './feature-enhanced-editor/',
             description: 'Testing new enhanced component editor features',
             status: 'active',
             lastUpdated: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
@@ -47,7 +47,7 @@ const BranchDeploymentSelector = ({ mode = 'deployment-selector' }) => {
             id: 'feature-branch-2',
             name: 'Feature: Improved UI',
             branch: 'feature/improved-ui',
-            url: '/sgex/feature-improved-ui/',
+            url: './feature-improved-ui/',
             description: 'Updated user interface with improved accessibility',
             status: 'active',
             lastUpdated: new Date(Date.now() - 172800000).toISOString(), // 2 days ago

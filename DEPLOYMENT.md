@@ -53,16 +53,31 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 
 ## 🔒 Security & Approval Process
 
-Both workflows are manually triggered (`workflow_dispatch`) and require user confirmation:
+### Manual Deployment
+Both main workflows are manually triggered (`workflow_dispatch`) and require user confirmation:
 1. Navigate to Actions tab
 2. Select the appropriate workflow
 3. Click "Run workflow" and confirm parameters
 4. Workflows will execute immediately upon confirmation
 
+### PR Review Deployment
+The `review.yml` workflow automatically triggers when a PR is approved:
+1. When a PR receives an approved review, the workflow runs automatically
+2. It posts a comment with a deployment link for eligible branches
+3. Branches `gh-pages` and `deploy` are excluded from review-triggered deployments
+4. The actual deployment still requires manual confirmation via the deployment link
+
 **Note**: Environment protection was removed to resolve deployment issues while maintaining manual trigger control.
 
-## 📋 Removed Workflows
+## 📋 Workflow Files
 
+### Active Workflows
+- `branch-deployment.yml` - Branch previews deployment (manual trigger + workflow_call)
+- `landing-page-deployment.yml` - Landing page deployment (manual trigger)
+- `review.yml` - PR review-triggered deployment suggestions (automatic on approval)
+- `framework-compliance.yml` - Compliance checks (automatic on PR)
+
+### Removed Workflows
 The following workflows were consolidated and removed:
 - `deploy-branch-selector.yml` - Replaced by `landing-page-deployment.yml`
 - `landing-page-deploy.yml` - Replaced by `landing-page-deployment.yml`
@@ -79,10 +94,17 @@ Both workflows include:
 ## 📝 Usage Examples
 
 ### Deploy a feature branch for preview:
+**Option 1: From an approved PR**
+1. Get your PR approved by a reviewer
+2. The system will automatically post a deployment comment with a direct link
+3. Click the deployment link in the comment
+4. Click "Run workflow" and confirm
+
+**Option 2: Manual deployment**
 1. Go to Actions → "Deploy Feature Branch"
 2. Click "Run workflow"
 3. Enter branch name (or leave empty for current branch)
-4. Wait for approval and deployment
+4. Wait for deployment
 
 ### Update the landing page:
 1. Go to Actions → "Deploy Landing Page"  
