@@ -128,7 +128,7 @@ jobs:
             public_url="/sgex/main/"
           else
             safe_branch_name=$(echo "$branch_name" | tr '/' '-')
-            public_url="/sgex/${safe_branch_name}
+            public_url="/sgex/${safe_branch_name}/"
           fi
           export PUBLIC_URL="$public_url"
           echo "public_url=$public_url" >> $GITHUB_OUTPUT
