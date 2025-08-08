@@ -37,22 +37,22 @@ function App() {
   // Get basename from PUBLIC_URL or default to /sgex
   const basename = process.env.PUBLIC_URL || '/sgex';
   
-  // Component mapping for dynamic route generation
-  const componentMap = {
-    'DAKDashboardWithFramework': <DAKDashboardWithFramework />,
-    'TestingViewer': <TestingViewer />,
-    'CoreDataDictionaryViewer': <CoreDataDictionaryViewer />,
-    'ComponentEditor': <ComponentEditor />,
-    'ActorEditor': <ActorEditor />,
-    'BusinessProcessSelection': <BusinessProcessSelection />,
-    'BPMNEditor': <BPMNEditor />,
-    'BPMNViewer': <BPMNViewer />,
-    'BPMNSource': <BPMNSource />,
-    'DecisionSupportLogicView': <DecisionSupportLogicView />
+  // Component registry - maps React component names to actual imported components
+  const componentRegistry = {
+    'DAKDashboardWithFramework': DAKDashboardWithFramework,
+    'TestingViewer': TestingViewer,
+    'CoreDataDictionaryViewer': CoreDataDictionaryViewer,
+    'ComponentEditor': ComponentEditor,
+    'ActorEditor': ActorEditor,
+    'BusinessProcessSelection': BusinessProcessSelection,
+    'BPMNEditor': BPMNEditor,
+    'BPMNViewer': BPMNViewer,
+    'BPMNSource': BPMNSource,
+    'DecisionSupportLogicView': DecisionSupportLogicView
   };
   
-  // Generate DAK component routes dynamically
-  const dakRoutes = generateDAKRoutes(componentMap);
+  // Generate DAK component routes dynamically from route configuration
+  const dakRoutes = generateDAKRoutes(componentRegistry);
   
   React.useEffect(() => {
     appLogger.componentMount();

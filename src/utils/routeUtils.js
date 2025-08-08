@@ -1,6 +1,7 @@
 /**
  * Utility functions for extracting route information from React Router routes
  */
+import React from 'react';
 
 /**
  * Extract valid DAK component names from the shared route configuration
@@ -77,10 +78,10 @@ export const parseDAKUrl = (pathname) => {
  * - /{component}/:user/:repo/:branch
  * - /{component}/:user/:repo/:branch/*
  * 
- * @param {Object} componentMap - Map of component names to React components
+ * @param {Object} componentRegistry - Registry mapping React component names to actual imported components
  * @returns {Array} Array of route objects for React Router
  */
-export const generateDAKRoutes = (componentMap) => {
+export const generateDAKRoutes = (componentRegistry) => {
   const routes = [];
   
   // Get configuration 
@@ -98,33 +99,36 @@ export const generateDAKRoutes = (componentMap) => {
   
   componentNames.forEach(componentName => {
     const reactComponentName = config.getReactComponent(componentName);
-    const ReactComponent = componentMap[reactComponentName];
+    const ReactComponentClass = componentRegistry[reactComponentName];
     
-    if (!ReactComponent) {
-      console.warn(`React component ${reactComponentName} not found for DAK component ${componentName}`);
+    if (!ReactComponentClass) {
+      console.warn(`React component ${reactComponentName} not found in registry for DAK component ${componentName}`);
       return;
     }
+    
+    // Create React element from the component class
+    const ReactElement = React.createElement(ReactComponentClass);
     
     // Generate the standard DAK route patterns
     routes.push(
       {
         path: `/${componentName}`,
-        element: ReactComponent,
+        element: ReactElement,
         key: `${componentName}-base`
       },
       {
         path: `/${componentName}/:user/:repo`,
-        element: ReactComponent,
+        element: ReactElement,
         key: `${componentName}-user-repo`
       },
       {
         path: `/${componentName}/:user/:repo/:branch`,
-        element: ReactComponent,
+        element: ReactElement,
         key: `${componentName}-user-repo-branch`
       },
       {
         path: `/${componentName}/:user/:repo/:branch/*`,
-        element: ReactComponent,
+        element: ReactElement,
         key: `${componentName}-user-repo-branch-asset`
       }
     );

@@ -7,14 +7,16 @@
  * 2. 404.html for SPA routing and component validation
  * 
  * When adding new DAK components:
- * 1. Add the component to the dakComponents array below
- * 2. Add the corresponding routes to App.js following the patterns:
- *    - /{component}/:user/:repo
- *    - /{component}/:user/:repo/:branch  
- *    - /{component}/:user/:repo/:branch/*
+ * 1. Add the component mapping to dakComponents below: 'route-name': 'ReactComponentName'
+ * 2. Import the React component in App.js and add it to componentRegistry
+ * 
+ * The system will automatically:
+ * - Generate all React Router routes (/{component}, /{component}/:user/:repo, etc.)
+ * - Update 404.html component validation
+ * - Work across all deployment scenarios (local, GitHub Pages, standalone)
  * 
  * This ensures both the React app and GitHub Pages SPA routing
- * recognize the component as valid.
+ * recognize the component as valid with minimal maintenance.
  */
 
 // Global configuration object that will be available in both environments
