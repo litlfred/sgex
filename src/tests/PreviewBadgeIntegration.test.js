@@ -55,14 +55,14 @@ describe('PreviewBadge Integration Test', () => {
 
     // 1. Initial load - should show truncated PR title
     await waitFor(() => {
-      expect(screen.getByText(/Enhanced Preview Branch Badge with Expandable PR/)).toBeInTheDocument();
+      expect(screen.getByText(/Enhanced Preview Branch Badge \.\.\./)).toBeInTheDocument();
     });
 
-    const badge = screen.getByText(/Enhanced Preview Branch Badge with Expandable PR/).closest('.preview-badge');
+    const badge = screen.getByText(/Enhanced Preview Branch Badge \.\.\./).closest('.preview-badge');
     
-    // Verify truncation works (~50 chars)
-    const titleElement = screen.getByText(/Enhanced Preview Branch Badge with Expandable PR/);
-    expect(titleElement.textContent.length).toBeLessThanOrEqual(53);
+    // Verify truncation works (~30 chars)
+    const titleElement = screen.getByText(/Enhanced Preview Branch Badge \.\.\./);
+    expect(titleElement.textContent.length).toBeLessThanOrEqual(33);
 
     // 2. Hover behavior - should expand
     fireEvent.mouseEnter(badge);
@@ -99,9 +99,9 @@ describe('PreviewBadge Integration Test', () => {
     expandedPanel = container.querySelector('.preview-badge-expanded');
     expect(expandedPanel).toBeInTheDocument();
 
-    // 6. Verify comments are loaded and displayed
-    expect(screen.getByText('@copilot expansion on mobile phone (Android) is not working')).toBeInTheDocument();
-    expect(screen.getByText(/Fixed the mobile touch event handling issue/)).toBeInTheDocument();
+    // 6. Verify comments are loaded and displayed (now truncated to 30 chars)
+    expect(screen.getByText('@copilot expansion on mobile p...')).toBeInTheDocument();
+    expect(screen.getByText(/Fixed the mobile touch event h\.\.\./)).toBeInTheDocument();
 
     // 7. Close using close button
     const closeButton = screen.getByTitle('Close expanded view');

@@ -128,10 +128,33 @@ const PreviewBadge = () => {
       const owner = 'litlfred';
       const repo = 'sgex';
 
-      // Get PR for this specific branch
-      const pr = await githubService.getPullRequestForBranch(owner, repo, branchName);
+      // Try multiple branch name variations to find the PR
+      const branchVariations = [
+        branchName, // Original detected name
+        branchName.replace(/-/g, '/'), // Convert all dashes to slashes
+        branchName.replace(/^([^-]+)-/, '$1/'), // Convert first dash to slash (common pattern)
+      ];
+
+      // Remove duplicates
+      const uniqueBranches = [...new Set(branchVariations)];
       
-      return pr;
+      console.debug('Trying to find PR for branch variations:', uniqueBranches);
+
+      // Try each variation until we find a PR
+      for (const variation of uniqueBranches) {
+        try {
+          const pr = await githubService.getPullRequestForBranch(owner, repo, variation);
+          if (pr) {
+            console.debug('Found PR for branch:', variation, pr);
+            return pr;
+          }
+        } catch (error) {
+          console.debug(`No PR found for branch variation "${variation}":`, error.message);
+        }
+      }
+      
+      console.debug('No PR found for any branch variation');
+      return null;
     } catch (error) {
       console.debug('Failed to fetch PR info:', error);
       return null;
@@ -242,12 +265,12 @@ const PreviewBadge = () => {
     });
   };
 
-  const truncateText = (text, maxLength = 100) => {
+  const truncateText = (text, maxLength = 30) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   };
 
-  const truncateTitle = (title, maxLength = 50) => {
+  const truncateTitle = (title, maxLength = 30) => {
     if (title.length <= maxLength) return title;
     return title.substring(0, maxLength) + '...';
   };
@@ -374,7 +397,7 @@ const PreviewBadge = () => {
                       ) : (
                         <div className="comment-preview">
                           {truncateText(comment.body)}
-                          {comment.body.length > 100 && (
+                          {comment.body.length > 30 && (
                             <button 
                               className="comment-toggle"
                               onClick={() => toggleCommentExpansion(comment.id)}

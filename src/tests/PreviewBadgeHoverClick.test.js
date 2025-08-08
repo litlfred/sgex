@@ -44,13 +44,13 @@ describe('PreviewBadge Hover and Click Behavior', () => {
 
     // Wait for initial load
     await waitFor(() => {
-      expect(screen.getByText(/Test PR Title That Should Be Truncated/)).toBeInTheDocument();
+      expect(screen.getByText(/Test PR Title That Should Be T\.\.\./)).toBeInTheDocument();
     });
 
-    // Verify truncated title shows ~50 characters
-    const titleElement = screen.getByText(/Test PR Title That Should Be Truncated/);
-    expect(titleElement.textContent).toMatch(/^Test PR Title That Should Be Truncated Because It \.\.\.$/);
-    expect(titleElement.textContent.length).toBeLessThanOrEqual(53); // 50 + "..."
+    // Verify truncated title shows ~30 characters
+    const titleElement = screen.getByText(/Test PR Title That Should Be T\.\.\./);
+    expect(titleElement.textContent).toMatch(/^Test PR Title That Should Be T\.\.\.$/);
+    expect(titleElement.textContent.length).toBeLessThanOrEqual(33); // 30 + "..."
 
     const badge = titleElement.closest('.preview-badge');
 
