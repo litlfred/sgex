@@ -172,7 +172,8 @@ export function validateBranchName(branchName) {
     /^\//,           // starts with slash
     /\/$/,           // ends with slash
     /\.\./,          // contains double dots
-    /[\x00-\x1f\x7f~^:?*\[\\]/,  // contains control chars or special chars
+    // eslint-disable-next-line no-control-regex
+    /[\x00-\x1f\x7f~^:?*\\]/,  // contains control chars or special chars
     /\.lock$/,       // ends with .lock
     /@{/,           // contains @{
     /\/\./,          // contains slash-dot
@@ -312,7 +313,7 @@ export function createSafeInlineStyle(styles) {
 }
 
 // Default export for convenience
-export default {
+const securityUtils = {
   escapeHtml,
   sanitizeHtml,
   validateRepositoryName,
@@ -324,3 +325,5 @@ export default {
   validateGitHubUrl,
   createSafeInlineStyle
 };
+
+export default securityUtils;
