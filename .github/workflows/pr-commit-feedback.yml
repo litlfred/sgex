@@ -6,7 +6,6 @@ on:
       - main
       - develop
       - gh-pages
-      - deploy
 
 permissions:
   contents: read

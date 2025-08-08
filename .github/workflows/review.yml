@@ -28,7 +28,7 @@ jobs:
             console.log(`Review state: ${context.payload.review.state}`);
             
             // Filter out branches that should not be deployed
-            const excludedBranches = ['gh-pages', 'deploy'];
+            const excludedBranches = ['gh-pages'];
             if (excludedBranches.includes(branchName)) {
               console.log(`Branch ${branchName} is excluded from automatic deployment`);
               core.setOutput('should_deploy', 'false');
