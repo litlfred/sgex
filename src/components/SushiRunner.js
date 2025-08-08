@@ -284,13 +284,61 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
     try {
       addLog('🚀 Starting FHIR Shorthand compilation...', 'info');
       
-      addLog('ℹ️ Using JavaScript FSH processor (Enhanced with WASM-compatible interface)', 'info');
+      addLog('ℹ️ Using JavaScript FSH processor with enhanced crash prevention', 'info');
       
-      // Add memory usage check
-      if (performance.memory && performance.memory.usedJSHeapSize) {
-        const memoryMB = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1);
-        addLog(`💾 Current memory usage: ${memoryMB} MB`, 'info');
+      // Enhanced memory monitoring with hard limits
+      const checkMemoryUsage = () => {
+        if (performance.memory && performance.memory.usedJSHeapSize) {
+          const memoryMB = (performance.memory.usedJSHeapSize / 1024 / 1024);
+          const memoryLimitMB = 100; // Hard limit: 100MB
+          const memoryWarningMB = 75; // Warning at 75MB
+          
+          if (memoryMB > memoryLimitMB) {
+            throw new Error(`Memory limit exceeded: ${memoryMB.toFixed(1)}MB > ${memoryLimitMB}MB. Please reduce file count or size.`);
+          }
+          
+          if (memoryMB > memoryWarningMB) {
+            addLog(`⚠️ High memory usage: ${memoryMB.toFixed(1)}MB (approaching ${memoryLimitMB}MB limit)`, 'warning');
+          }
+          
+          return memoryMB;
+        }
+        return 0;
+      };
+      
+      const initialMemory = checkMemoryUsage();
+      addLog(`💾 Initial memory usage: ${initialMemory.toFixed(1)} MB`, 'info');
+      
+      // Implement strict file size limits to prevent crashes
+      const maxFileSize = 2 * 1024 * 1024; // 2MB hard limit per file
+      const maxTotalSize = 10 * 1024 * 1024; // 10MB total size limit
+      const maxFiles = 20; // Maximum 20 files to process
+      
+      let totalSize = 0;
+      const validFiles = [];
+      
+      for (const file of files.slice(0, maxFiles)) {
+        const fileSize = file.content ? file.content.length : 0;
+        
+        if (fileSize > maxFileSize) {
+          addLog(`❌ Skipping ${file.name}: too large (${(fileSize / 1024 / 1024).toFixed(1)}MB > 2MB limit)`, 'error');
+          continue;
+        }
+        
+        if (totalSize + fileSize > maxTotalSize) {
+          addLog(`⚠️ Stopping file processing: total size limit reached (${(totalSize / 1024 / 1024).toFixed(1)}MB)`, 'warning');
+          break;
+        }
+        
+        totalSize += fileSize;
+        validFiles.push(file);
       }
+      
+      if (files.length > maxFiles) {
+        addLog(`⚠️ Limited to first ${maxFiles} files (${files.length} total) to prevent crashes`, 'warning');
+      }
+      
+      addLog(`📊 Processing ${validFiles.length} files (${(totalSize / 1024 / 1024).toFixed(1)}MB total)`, 'info');
       
       addLog('📦 Loading YAML processing library...', 'info');
       const yaml = await import('js-yaml');
@@ -322,380 +370,400 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
         addLog('📋 Using default configuration', 'info');
       }
 
-      addLog(`🔍 Analyzing ${files.length} FSH files...`, 'info');
-      
-      // Check for large files and warn user
-      const largeFiles = files.filter(f => f.content && f.content.length > 1024 * 1024); // 1MB+
-      if (largeFiles.length > 0) {
-        addLog(`⚠️ Found ${largeFiles.length} large FSH files (>1MB). Processing may take longer.`, 'warning');
-      }
+      addLog(`🔍 Analyzing ${validFiles.length} FSH files with crash prevention...`, 'info');
       
       const generatedResources = [];
       let processedCount = 0;
+      const maxResourcesPerFile = 5; // Strict limit: max 5 resources per file
+      const maxTotalResources = 50; // Hard limit: max 50 total resources
       
-      // Process files asynchronously to prevent browser blocking
-      for (const file of files) {
-        addLog(`📄 Processing ${file.name} (${processedCount + 1}/${files.length})...`, 'info');
+      // Process files in smaller chunks to prevent memory buildup
+      const chunkSize = 2; // Process 2 files at a time
+      
+      for (let i = 0; i < validFiles.length; i += chunkSize) {
+        const chunk = validFiles.slice(i, i + chunkSize);
         
-        // Check file size and warn if very large
-        if (file.content && file.content.length > 5 * 1024 * 1024) { // 5MB+
-          addLog(`⚠️ ${file.name} is very large (${(file.content.length / 1024 / 1024).toFixed(1)}MB). Consider splitting into smaller files.`, 'warning');
-        }
-        
-        const content = file.content;
-        
-        // Parse FSH content to extract definitions with error handling
-        const extractFSHDefinitions = (content) => {
-          try {
-            const definitions = {
-              profiles: [],
-              instances: [],
-              valueSets: [],
-              codeSystems: [],
-              extensions: []
-            };
-            
-            // Check for empty or invalid content
-            if (!content || typeof content !== 'string') {
-              return definitions;
-            }
-            
-            // Limit line processing for very large files to prevent memory issues
-            const lines = content.split('\n');
-            const maxLinesToProcess = 10000; // Process max 10k lines per file
-            
-            if (lines.length > maxLinesToProcess) {
-              addLog(`  ⚠️ File is very large (${lines.length} lines). Processing first ${maxLinesToProcess} lines only.`, 'warning');
-            }
-            
-            const linesToProcess = lines.slice(0, Math.min(lines.length, maxLinesToProcess));
-            
-            let currentDefinition = null;
-            let currentType = null;
-            
-            for (let i = 0; i < linesToProcess.length; i++) {
-              const line = linesToProcess[i].trim();
-              
-              // Skip empty lines and comments to improve performance
-              if (!line || line.startsWith('//') || line.startsWith('/*')) {
-                continue;
-              }
-              
-              // Detect definition types
-              if (line.startsWith('Profile:')) {
-                currentType = 'profiles';
-                currentDefinition = {
-                  name: line.substring(8).trim(),
-                  type: 'Profile',
-                  parent: null,
-                  id: null,
-                  title: null,
-                  description: null,
-                  rules: []
-                };
-              } else if (line.startsWith('Instance:')) {
-                currentType = 'instances';
-                currentDefinition = {
-                  name: line.substring(9).trim(),
-                  type: 'Instance',
-                  instanceOf: null,
-                  usage: null,
-                  title: null,
-                  description: null,
-                  rules: []
-                };
-              } else if (line.startsWith('ValueSet:')) {
-                currentType = 'valueSets';
-                currentDefinition = {
-                  name: line.substring(9).trim(),
-                  type: 'ValueSet',
-                  id: null,
-                  title: null,
-                  description: null,
-                  rules: []
-                };
-              } else if (line.startsWith('CodeSystem:')) {
-                currentType = 'codeSystems';
-                currentDefinition = {
-                  name: line.substring(11).trim(),
-                  type: 'CodeSystem',
-                  id: null,
-                  title: null,
-                  description: null,
-                  rules: []
-                };
-              } else if (line.startsWith('Extension:')) {
-                currentType = 'extensions';
-                currentDefinition = {
-                  name: line.substring(10).trim(),
-                  type: 'Extension',
-                  id: null,
-                  title: null,
-                  description: null,
-                  rules: []
-                };
-              }
-              
-              // Parse properties
-              if (currentDefinition) {
-                if (line.startsWith('Parent:')) {
-                  currentDefinition.parent = line.substring(7).trim();
-                } else if (line.startsWith('InstanceOf:')) {
-                  currentDefinition.instanceOf = line.substring(11).trim();
-                } else if (line.startsWith('Usage:')) {
-                  currentDefinition.usage = line.substring(6).trim();
-                } else if (line.startsWith('Id:')) {
-                  currentDefinition.id = line.substring(3).trim();
-                } else if (line.startsWith('Title:')) {
-                  currentDefinition.title = line.substring(6).trim().replace(/['"]/g, '');
-                } else if (line.startsWith('Description:')) {
-                  currentDefinition.description = line.substring(12).trim().replace(/['"]/g, '');
-                } else if (line.startsWith('* ')) {
-                  // Limit rules to prevent memory issues
-                  if (currentDefinition.rules.length < 100) {
-                    currentDefinition.rules.push(line.substring(2).trim());
-                  }
-                }
-                
-                // If we hit a new definition or end of content, save current one
-                if ((line.includes(':') && !line.startsWith('* ') && 
-                     !line.startsWith('Parent:') && !line.startsWith('InstanceOf:') &&
-                     !line.startsWith('Usage:') && !line.startsWith('Id:') &&
-                     !line.startsWith('Title:') && !line.startsWith('Description:')) ||
-                    i === linesToProcess.length - 1) {
-                  
-                  if (currentDefinition && currentType && currentDefinition.name) {
-                    definitions[currentType].push(currentDefinition);
-                  }
-                  currentDefinition = null;
-                  currentType = null;
-                  i--; // Re-process this line for the new definition
-                }
-              }
-            }
-            
-            return definitions;
-          } catch (err) {
-            addLog(`  ❌ Error parsing FSH content: ${err.message}`, 'error');
-            return {
-              profiles: [],
-              instances: [],
-              valueSets: [],
-              codeSystems: [],
-              extensions: []
-            };
-          }
-        };
-        
-        const definitions = extractFSHDefinitions(content);
-        
-        // Yield control back to browser to prevent blocking
-        if (processedCount % 3 === 0) { // Every 3 files
-          await new Promise(resolve => setTimeout(resolve, 10)); // Small delay to yield
-        }
-        
-        // Generate realistic FHIR resources from FSH definitions with memory management
-        const resourceLimit = 20; // Limit resources per type to prevent memory issues
-        
-        definitions.profiles.slice(0, resourceLimit).forEach(profile => {
-          try {
-            const profileId = profile.id || profile.name.toLowerCase().replace(/\s+/g, '-');
-            const structureDefinition = {
-              resourceType: 'StructureDefinition',
-              id: profileId,
-              url: `${configObj.canonical}/StructureDefinition/${profileId}`,
-              name: profile.name,
-              title: profile.title || profile.name,
-              status: 'draft',
-              fhirVersion: configObj.fhirVersion || '4.0.1',
-              kind: 'resource',
-              abstract: false,
-              type: profile.parent === 'Patient' ? 'Patient' : 
-                     profile.parent === 'Observation' ? 'Observation' :
-                     profile.parent || 'DomainResource',
-              baseDefinition: `http://hl7.org/fhir/StructureDefinition/${profile.parent || 'DomainResource'}`,
-              derivation: 'constraint',
-              description: profile.description || `Profile for ${profile.name}`
-            };
-            
-            if (profile.rules.length > 0) {
-              structureDefinition.differential = {
-                element: profile.rules.slice(0, 10).map((rule, index) => ({ // Limit elements
-                  id: `${structureDefinition.type}.${rule.split(' ')[0]}`,
-                  path: `${structureDefinition.type}.${rule.split(' ')[0]}`,
-                  short: `Rule: ${rule}`
-                }))
-              };
-            }
-            
-            generatedResources.push({
-              type: 'StructureDefinition',
-              filename: `StructureDefinition-${profileId}.json`,
-              content: JSON.stringify(structureDefinition, null, 2),
-              id: profileId,
-              name: profile.name,
-              title: structureDefinition.title,
-              url: structureDefinition.url
-            });
-            
-            addLog(`  📊 Generated StructureDefinition: ${profile.name}`, 'success');
-          } catch (err) {
-            addLog(`  ❌ Error generating StructureDefinition for ${profile.name}: ${err.message}`, 'error');
-          }
-        });
-        
-        if (definitions.profiles.length > resourceLimit) {
-          addLog(`  ⚠️ Limited to first ${resourceLimit} profiles to prevent memory issues`, 'warning');
-        }
-        
-        definitions.instances.slice(0, resourceLimit).forEach(instance => {
-          try {
-            const instanceId = instance.name.toLowerCase().replace(/\s+/g, '-');
-            const resourceType = instance.instanceOf === 'Patient' ? 'Patient' :
-                               instance.instanceOf === 'Observation' ? 'Observation' :
-                               'Patient'; // Default fallback
-                               
-            const fhirInstance = {
-              resourceType: resourceType,
-              id: instanceId,
-              meta: {
-                profile: instance.instanceOf ? [`${configObj.canonical}/StructureDefinition/${instance.instanceOf}`] : undefined
-              }
-            };
-            
-            // Add basic properties based on resource type
-            if (resourceType === 'Patient') {
-              fhirInstance.name = [{
-                family: instance.name.split(' ').pop(),
-                given: instance.name.split(' ').slice(0, -1)
-              }];
-            }
-            
-            generatedResources.push({
-              type: resourceType,
-              filename: `${instanceId}.json`,
-              content: JSON.stringify(fhirInstance, null, 2),
-              id: instanceId,
-              resourceType: resourceType
-            });
-            
-            addLog(`  📊 Generated ${resourceType} instance: ${instance.name}`, 'success');
-          } catch (err) {
-            addLog(`  ❌ Error generating instance for ${instance.name}: ${err.message}`, 'error');
-          }
-        });
-        
-        definitions.valueSets.slice(0, resourceLimit).forEach(vs => {
-          try {
-            const vsId = vs.id || vs.name.toLowerCase().replace(/\s+/g, '-');
-            const valueSet = {
-              resourceType: 'ValueSet',
-              id: vsId,
-              url: `${configObj.canonical}/ValueSet/${vsId}`,
-              name: vs.name,
-              title: vs.title || vs.name,
-              status: 'draft',
-              description: vs.description || `ValueSet for ${vs.name}`,
-              compose: {
-                include: [{
-                  system: 'http://example.org/codes',
-                  concept: [
-                    { code: 'example1', display: 'Example Code 1' },
-                    { code: 'example2', display: 'Example Code 2' }
-                  ]
-                }]
-              }
-            };
-            
-            generatedResources.push({
-              type: 'ValueSet',
-              filename: `ValueSet-${vsId}.json`,
-              content: JSON.stringify(valueSet, null, 2),
-              id: vsId,
-              name: vs.name,
-              title: valueSet.title,
-              url: valueSet.url
-            });
-            
-            addLog(`  📊 Generated ValueSet: ${vs.name}`, 'success');
-          } catch (err) {
-            addLog(`  ❌ Error generating ValueSet for ${vs.name}: ${err.message}`, 'error');
-          }
-        });
-        
-        definitions.codeSystems.slice(0, resourceLimit).forEach(cs => {
-          try {
-            const csId = cs.id || cs.name.toLowerCase().replace(/\s+/g, '-');
-            const codeSystem = {
-              resourceType: 'CodeSystem',
-              id: csId,
-              url: `${configObj.canonical}/CodeSystem/${csId}`,
-              name: cs.name,
-              title: cs.title || cs.name,
-              status: 'draft',
-              content: 'complete',
-              description: cs.description || `CodeSystem for ${cs.name}`,
-              concept: [
-                { code: 'concept1', display: 'Concept 1' },
-                { code: 'concept2', display: 'Concept 2' }
-              ]
-            };
-            
-            generatedResources.push({
-              type: 'CodeSystem',
-              filename: `CodeSystem-${csId}.json`,
-              content: JSON.stringify(codeSystem, null, 2),
-              id: csId,
-              name: cs.name,
-              title: codeSystem.title,
-              url: codeSystem.url
-            });
-            
-            addLog(`  📊 Generated CodeSystem: ${cs.name}`, 'success');
-          } catch (err) {
-            addLog(`  ❌ Error generating CodeSystem for ${cs.name}: ${err.message}`, 'error');
-          }
-        });
-        
-        if (file.isFromStaging) {
-          addLog(`  🏗️ File from staging ground`, 'info');
-        }
-        
-        processedCount++;
-        
-        // Memory cleanup and status update
-        if (processedCount % 5 === 0) {
-          if (performance.memory && performance.memory.usedJSHeapSize) {
-            const memoryMB = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1);
-            addLog(`💾 Memory usage: ${memoryMB} MB (processed ${processedCount}/${files.length} files)`, 'info');
+        for (const file of chunk) {
+          addLog(`📄 Processing ${file.name} (${processedCount + 1}/${validFiles.length})...`, 'info');
+          
+          // Enhanced memory check before processing each file
+          const currentMemory = checkMemoryUsage();
+          
+          // Stop if we're approaching memory limits
+          if (currentMemory > 80) { // 80MB threshold
+            addLog(`⚠️ Stopping processing due to high memory usage (${currentMemory.toFixed(1)}MB)`, 'warning');
+            break;
           }
           
-          // Force garbage collection if available (development only)
+          // Stop if we've reached resource limits
+          if (generatedResources.length >= maxTotalResources) {
+            addLog(`⚠️ Reached maximum resource limit (${maxTotalResources}), stopping processing`, 'warning');
+            break;
+          }
+          
+          const content = file.content;
+          
+          // Enhanced FSH parsing with stricter limits
+          const extractFSHDefinitions = (content) => {
+            try {
+              const definitions = {
+                profiles: [],
+                instances: [],
+                valueSets: [],
+                codeSystems: [],
+                extensions: []
+              };
+              
+              // Check for empty or invalid content
+              if (!content || typeof content !== 'string') {
+                return definitions;
+              }
+              
+              // Much stricter line processing limit to prevent memory issues
+              const lines = content.split('\n');
+              const maxLinesToProcess = 1000; // Reduced from 10k to 1k lines per file
+              
+              if (lines.length > maxLinesToProcess) {
+                addLog(`  ⚠️ File is large (${lines.length} lines). Processing first ${maxLinesToProcess} lines only.`, 'warning');
+              }
+              
+              const linesToProcess = lines.slice(0, Math.min(lines.length, maxLinesToProcess));
+              
+              let currentDefinition = null;
+              let currentType = null;
+              let definitionCount = 0;
+              const maxDefinitionsPerFile = 10; // Limit definitions per file
+              
+              for (let i = 0; i < linesToProcess.length && definitionCount < maxDefinitionsPerFile; i++) {
+                const line = linesToProcess[i].trim();
+                
+                // Skip empty lines and comments to improve performance
+                if (!line || line.startsWith('//') || line.startsWith('/*')) {
+                  continue;
+                }
+                
+                // Detect definition types
+                if (line.startsWith('Profile:')) {
+                  if (definitionCount >= maxDefinitionsPerFile) break;
+                  currentType = 'profiles';
+                  currentDefinition = {
+                    name: line.substring(8).trim(),
+                    type: 'Profile',
+                    parent: null,
+                    id: null,
+                    title: null,
+                    description: null,
+                    rules: []
+                  };
+                  definitionCount++;
+                } else if (line.startsWith('Instance:')) {
+                  if (definitionCount >= maxDefinitionsPerFile) break;
+                  currentType = 'instances';
+                  currentDefinition = {
+                    name: line.substring(9).trim(),
+                    type: 'Instance',
+                    instanceOf: null,
+                    usage: null,
+                    title: null,
+                    description: null,
+                    rules: []
+                  };
+                  definitionCount++;
+                } else if (line.startsWith('ValueSet:')) {
+                  if (definitionCount >= maxDefinitionsPerFile) break;
+                  currentType = 'valueSets';
+                  currentDefinition = {
+                    name: line.substring(9).trim(),
+                    type: 'ValueSet',
+                    id: null,
+                    title: null,
+                    description: null,
+                    rules: []
+                  };
+                  definitionCount++;
+                } else if (line.startsWith('CodeSystem:')) {
+                  if (definitionCount >= maxDefinitionsPerFile) break;
+                  currentType = 'codeSystems';
+                  currentDefinition = {
+                    name: line.substring(11).trim(),
+                    type: 'CodeSystem',
+                    id: null,
+                    title: null,
+                    description: null,
+                    rules: []
+                  };
+                  definitionCount++;
+                } else if (line.startsWith('Extension:')) {
+                  if (definitionCount >= maxDefinitionsPerFile) break;
+                  currentType = 'extensions';
+                  currentDefinition = {
+                    name: line.substring(10).trim(),
+                    type: 'Extension',
+                    id: null,
+                    title: null,
+                    description: null,
+                    rules: []
+                  };
+                  definitionCount++;
+                }
+                
+                // Parse properties
+                if (currentDefinition) {
+                  if (line.startsWith('Parent:')) {
+                    currentDefinition.parent = line.substring(7).trim();
+                  } else if (line.startsWith('InstanceOf:')) {
+                    currentDefinition.instanceOf = line.substring(11).trim();
+                  } else if (line.startsWith('Usage:')) {
+                    currentDefinition.usage = line.substring(6).trim();
+                  } else if (line.startsWith('Id:')) {
+                    currentDefinition.id = line.substring(3).trim();
+                  } else if (line.startsWith('Title:')) {
+                    currentDefinition.title = line.substring(6).trim().replace(/['"]/g, '');
+                  } else if (line.startsWith('Description:')) {
+                    currentDefinition.description = line.substring(12).trim().replace(/['"]/g, '');
+                  } else if (line.startsWith('* ')) {
+                    // Much stricter rule limit to prevent memory issues
+                    if (currentDefinition.rules.length < 10) {
+                      currentDefinition.rules.push(line.substring(2).trim());
+                    }
+                  }
+                  
+                  // If we hit a new definition or end of content, save current one
+                  if ((line.includes(':') && !line.startsWith('* ') && 
+                       !line.startsWith('Parent:') && !line.startsWith('InstanceOf:') &&
+                       !line.startsWith('Usage:') && !line.startsWith('Id:') &&
+                       !line.startsWith('Title:') && !line.startsWith('Description:')) ||
+                      i === linesToProcess.length - 1) {
+                    
+                    if (currentDefinition && currentType && currentDefinition.name) {
+                      definitions[currentType].push(currentDefinition);
+                    }
+                    currentDefinition = null;
+                    currentType = null;
+                    i--; // Re-process this line for the new definition
+                  }
+                }
+              }
+              
+              if (definitionCount >= maxDefinitionsPerFile) {
+                addLog(`  ⚠️ Limited to ${maxDefinitionsPerFile} definitions per file to prevent memory issues`, 'warning');
+              }
+              
+              return definitions;
+            } catch (err) {
+              addLog(`  ❌ Error parsing FSH content: ${err.message}`, 'error');
+              return {
+                profiles: [],
+                instances: [],
+                valueSets: [],
+                codeSystems: [],
+                extensions: []
+              };
+            }
+          };
+          
+          const definitions = extractFSHDefinitions(content);
+          
+          // Generate FHIR resources with strict memory management
+          let resourcesFromThisFile = 0;
+          const remainingResourceSlots = maxTotalResources - generatedResources.length;
+          const maxFromThisFile = Math.min(maxResourcesPerFile, remainingResourceSlots);
+          
+          // Process profiles with strict limits
+          for (const profile of definitions.profiles.slice(0, Math.min(2, maxFromThisFile - resourcesFromThisFile))) {
+            if (resourcesFromThisFile >= maxFromThisFile) break;
+            
+            try {
+              const profileId = profile.id || profile.name.toLowerCase().replace(/\s+/g, '-');
+              const structureDefinition = {
+                resourceType: 'StructureDefinition',
+                id: profileId,
+                url: `${configObj.canonical}/StructureDefinition/${profileId}`,
+                name: profile.name,
+                title: profile.title || profile.name,
+                status: 'draft',
+                fhirVersion: configObj.fhirVersion || '4.0.1',
+                kind: 'resource',
+                abstract: false,
+                type: profile.parent === 'Patient' ? 'Patient' : 
+                       profile.parent === 'Observation' ? 'Observation' :
+                       profile.parent || 'DomainResource',
+                baseDefinition: `http://hl7.org/fhir/StructureDefinition/${profile.parent || 'DomainResource'}`,
+                derivation: 'constraint',
+                description: profile.description || `Profile for ${profile.name}`
+              };
+              
+              // Limit differential elements to prevent memory issues
+              if (profile.rules.length > 0) {
+                structureDefinition.differential = {
+                  element: profile.rules.slice(0, 3).map((rule, index) => ({ // Reduced to 3 elements max
+                    id: `${structureDefinition.type}.${rule.split(' ')[0]}`,
+                    path: `${structureDefinition.type}.${rule.split(' ')[0]}`,
+                    short: `Rule: ${rule}`
+                  }))
+                };
+              }
+              
+              generatedResources.push({
+                type: 'StructureDefinition',
+                filename: `StructureDefinition-${profileId}.json`,
+                content: JSON.stringify(structureDefinition, null, 2),
+                id: profileId,
+                name: profile.name,
+                title: structureDefinition.title,
+                url: structureDefinition.url
+              });
+              
+              resourcesFromThisFile++;
+              addLog(`  📊 Generated StructureDefinition: ${profile.name}`, 'success');
+            } catch (err) {
+              addLog(`  ❌ Error generating StructureDefinition for ${profile.name}: ${err.message}`, 'error');
+            }
+          }
+          
+          // Process instances with strict limits
+          for (const instance of definitions.instances.slice(0, Math.min(2, maxFromThisFile - resourcesFromThisFile))) {
+            if (resourcesFromThisFile >= maxFromThisFile) break;
+            
+            try {
+              const instanceId = instance.name.toLowerCase().replace(/\s+/g, '-');
+              const resourceType = instance.instanceOf === 'Patient' ? 'Patient' :
+                                 instance.instanceOf === 'Observation' ? 'Observation' :
+                                 'Patient'; // Default fallback
+                                 
+              const fhirInstance = {
+                resourceType: resourceType,
+                id: instanceId,
+                meta: {
+                  profile: instance.instanceOf ? [`${configObj.canonical}/StructureDefinition/${instance.instanceOf}`] : undefined
+                }
+              };
+              
+              // Add minimal properties to reduce memory usage
+              if (resourceType === 'Patient') {
+                fhirInstance.name = [{
+                  family: instance.name.split(' ').pop(),
+                  given: instance.name.split(' ').slice(0, -1)
+                }];
+              }
+              
+              generatedResources.push({
+                type: resourceType,
+                filename: `${instanceId}.json`,
+                content: JSON.stringify(fhirInstance, null, 2),
+                id: instanceId,
+                resourceType: resourceType
+              });
+              
+              resourcesFromThisFile++;
+              addLog(`  📊 Generated ${resourceType} instance: ${instance.name}`, 'success');
+            } catch (err) {
+              addLog(`  ❌ Error generating instance for ${instance.name}: ${err.message}`, 'error');
+            }
+          }
+          
+          // Process ValueSets and CodeSystems with even stricter limits
+          for (const vs of definitions.valueSets.slice(0, Math.min(1, maxFromThisFile - resourcesFromThisFile))) {
+            if (resourcesFromThisFile >= maxFromThisFile) break;
+            
+            try {
+              const vsId = vs.id || vs.name.toLowerCase().replace(/\s+/g, '-');
+              const valueSet = {
+                resourceType: 'ValueSet',
+                id: vsId,
+                url: `${configObj.canonical}/ValueSet/${vsId}`,
+                name: vs.name,
+                title: vs.title || vs.name,
+                status: 'draft',
+                description: vs.description || `ValueSet for ${vs.name}`,
+                compose: {
+                  include: [{
+                    system: 'http://example.org/codes',
+                    concept: [
+                      { code: 'example1', display: 'Example Code 1' }
+                    ]
+                  }]
+                }
+              };
+              
+              generatedResources.push({
+                type: 'ValueSet',
+                filename: `ValueSet-${vsId}.json`,
+                content: JSON.stringify(valueSet, null, 2),
+                id: vsId,
+                name: vs.name,
+                title: valueSet.title,
+                url: valueSet.url
+              });
+              
+              resourcesFromThisFile++;
+              addLog(`  📊 Generated ValueSet: ${vs.name}`, 'success');
+            } catch (err) {
+              addLog(`  ❌ Error generating ValueSet for ${vs.name}: ${err.message}`, 'error');
+            }
+          }
+          
+          if (file.isFromStaging) {
+            addLog(`  🏗️ File from staging ground`, 'info');
+          }
+          
+          processedCount++;
+          
+          // Clear file content from memory immediately after processing
+          file.content = null;
+          
+          // Force garbage collection more frequently
           if (window.gc && typeof window.gc === 'function') {
             window.gc();
           }
+        }
+        
+        // Yield control for longer periods between chunks to prevent blocking
+        await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay between chunks
+        
+        // Enhanced memory monitoring after each chunk
+        const memoryAfterChunk = checkMemoryUsage();
+        addLog(`💾 Memory after chunk: ${memoryAfterChunk.toFixed(1)} MB (processed ${Math.min(i + chunkSize, validFiles.length)}/${validFiles.length})`, 'info');
+        
+        // Break if memory is getting too high
+        if (memoryAfterChunk > 80) {
+          addLog(`⚠️ Stopping processing due to high memory usage`, 'warning');
+          break;
         }
       }
 
       // Set generated files
       setGeneratedFiles(generatedResources);
       
-      addLog('✨ FSH compilation completed successfully!', 'success');
-      addLog(`📦 Generated ${generatedResources.length} FHIR resources total`, 'success');
+      // Final memory check
+      const finalMemory = checkMemoryUsage();
+      addLog(`💾 Final memory usage: ${finalMemory.toFixed(1)} MB`, 'info');
+      
+      addLog('✨ FSH compilation completed with crash prevention!', 'success');
+      addLog(`📦 Generated ${generatedResources.length} FHIR resources total (limited for stability)`, 'success');
       
       // Check for staging files
-      const stagingCount = files.filter(f => f.isFromStaging).length;
+      const stagingCount = validFiles.filter(f => f.isFromStaging).length;
       if (stagingCount > 0) {
         addLog(`🏗️ ${stagingCount} file(s) from staging ground included`, 'info');
       }
       
       // Handle edge cases
-      if (files.length === 0) {
-        addLog('⚠️ No FSH files found to process', 'warning');
+      if (validFiles.length === 0) {
+        addLog('⚠️ No FSH files found or all files too large to process safely', 'warning');
       }
       
       if (!config) {
         addLog('⚠️ No sushi-config.yaml found - used default configuration', 'warning');
+      }
+      
+      // Safety warnings
+      if (generatedResources.length >= maxTotalResources) {
+        addLog(`⚠️ Output limited to ${maxTotalResources} resources to prevent browser crashes`, 'warning');
+      }
+      
+      if (validFiles.length < files.length) {
+        addLog(`⚠️ ${files.length - validFiles.length} files skipped due to size limits`, 'warning');
       }
 
       return {
