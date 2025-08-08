@@ -5,7 +5,7 @@
 When this PR is merged or pushed, the new deployment system will automatically activate:
 
 ### 1. **Immediate Deployment**
-- This branch (`copilot-fix-243`) will be deployed to: 
+- This branch (`copilot/fix-243` → `copilot-fix-243`) will be deployed to: 
   - **Branch Preview**: https://litlfred.github.io/sgex/sgex/copilot-fix-243/
   - **Landing Page**: https://litlfred.github.io/sgex/
 
@@ -52,7 +52,7 @@ https://litlfred.github.io/sgex/sgex/BRANCH-NAME/
 | `main` | `main` | `/sgex/main/` |
 | `feature/auth` | `feature-auth` | `/sgex/feature-auth/` |
 | `bugfix/login-fix` | `bugfix-login-fix` | `/sgex/bugfix-login-fix/` |
-| `copilot-fix-243` | `copilot-fix-243` | `/sgex/copilot-fix-243/` |
+| `copilot/fix-243` | `copilot-fix-243` | `/sgex/copilot-fix-243/` |
 
 ### 6. **Monitoring**
 Check deployment status:
