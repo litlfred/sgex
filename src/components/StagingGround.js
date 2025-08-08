@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import stagingGroundService from '../services/stagingGroundService';
 import dakComplianceService from '../services/dakComplianceService';
 import SaveDialog from './SaveDialog';
-import './StagingGround.css';
 
 const StagingGround = ({ repository, selectedBranch, hasWriteAccess, profile, onStagingFilesChange }) => {
   const [stagingGround, setStagingGround] = useState(null);

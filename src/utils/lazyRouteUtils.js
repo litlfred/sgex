@@ -83,6 +83,9 @@ function createLazyComponent(componentName) {
     case 'AssetEditorTest':
       LazyComponent = React.lazy(() => import('../components/AssetEditorTest'));
       break;
+    case 'BranchListingPage':
+      LazyComponent = React.lazy(() => import('../components/BranchListingPage'));
+      break;
     case 'NotFound':
       LazyComponent = React.lazy(() => import('../components/NotFound'));
       break;

@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes } from 'react-router-dom';
 import './i18n'; // Initialize i18n
 import { generateLazyRoutes } from './utils/lazyRouteUtils';
 import logger from './utils/logger';
-import './App.css';
 
 function App() {
   const appLogger = logger.getLogger('App');
@@ -13,7 +12,7 @@ function App() {
   
   React.useEffect(() => {
     appLogger.componentMount();
-    appLogger.info('SGEX Workbench application started', { 
+    appLogger.info('SGEX Branch Listing application started', { 
       environment: process.env.NODE_ENV,
       basename: basename
     });

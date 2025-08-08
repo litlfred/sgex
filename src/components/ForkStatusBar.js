@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { handleNavigationClick } from '../utils/navigationUtils';
-import './ForkStatusBar.css';
 
 const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
   const navigate = useNavigate();

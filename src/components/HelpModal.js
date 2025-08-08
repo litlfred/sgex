@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import useThemeImage from '../hooks/useThemeImage';
-import './HelpModal.css';
 
 const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   const [showMenu, setShowMenu] = useState(false);

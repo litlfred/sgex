@@ -11,7 +11,6 @@ import ForkStatusBar from './ForkStatusBar';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
-import './DAKDashboard.css';
 
 const DAKDashboard = () => {
   return (

@@ -4,7 +4,6 @@ import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import dakTemplates from '../config/dak-templates.json';
 import { PageLayout, usePageParams } from './framework';
-import './DAKSelection.css';
 
 const DAKSelection = () => {
   return (
