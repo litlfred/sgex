@@ -345,7 +345,7 @@ jobs:
             has_changes=true
           fi
           
-          # Commit and push with simple retry for transient network issues only
+          # Fetch and rebase first, then commit and push with retry for transient network issues
           if [[ "$has_changes" == "true" ]]; then
             max_retries=3
             retry_count=0
@@ -355,56 +355,103 @@ jobs:
               retry_count=$((retry_count + 1))
               echo "Deployment attempt $retry_count of $max_retries"
               
-              # Commit changes first (before fetch/rebase to avoid losing staged changes)
-              commit_created=false
-              if git diff --cached --quiet; then
+              # Fetch latest gh-pages state first to minimize race condition window
+              echo "Fetching latest gh-pages state before committing..."
+              git fetch origin gh-pages
+              
+              # Save current staged changes to a temporary commit
+              echo "Creating temporary commit to preserve staged changes..."
+              if git diff --cached --quiet && [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
+                echo "Creating empty commit for force deployment"
+                git commit --allow-empty -m "TEMP: Force deployment staging - attempt $retry_count"
+              else
+                git commit -m "TEMP: Staging changes for rebase - attempt $retry_count"
+              fi
+              
+              # Rebase with remote to incorporate any concurrent changes BEFORE pushing
+              echo "Rebasing with remote to incorporate any concurrent changes..."
+              rebase_success=false
+              if git rebase origin/gh-pages; then
+                echo "✅ Rebase completed successfully"
+                rebase_success=true
+              else
+                echo "⚠️ Rebase failed, checking conflict type..."
+                
+                # Check if we have unmerged paths (conflicts)
+                if git status --porcelain | grep -q "^UU\|^AA\|^DD"; then
+                  echo "Found merge conflicts that need resolution"
+                  
+                  # For generated files like docs/qa-report.html, prefer our version (the new generated version)
+                  conflicted_files=$(git status --porcelain | grep "^UU\|^AA\|^DD" | awk '{print $2}')
+                  echo "Conflicted files: $conflicted_files"
+                  
+                  for file in $conflicted_files; do
+                    if [[ "$file" == "docs/github-issues-analysis.md" || "$file" == "docs/qa-report.html" || "$file" == "public/docs/qa-report.html" ]]; then
+                      echo "Auto-resolving conflict in generated file: $file (using our version)"
+                      git add "$file"  # This accepts our version for these generated files
+                    else
+                      echo "Manual conflict resolution needed for: $file"
+                      git rebase --abort
+                      echo "Cannot automatically resolve conflicts in non-generated files"
+                      git reset --hard HEAD~1  # Remove our temp commit
+                      exit 1
+                    fi
+                  done
+                  
+                  # Continue rebase after resolving conflicts
+                  if git rebase --continue; then
+                    echo "✅ Rebase completed after automatic conflict resolution"
+                    rebase_success=true
+                  else
+                    echo "❌ Rebase failed even after conflict resolution"
+                    git rebase --abort
+                    git reset --hard HEAD~1  # Remove our temp commit
+                    if [[ $retry_count -lt $max_retries ]]; then
+                      sleep_time=$((retry_count * 2))
+                      echo "Waiting ${sleep_time} seconds before next attempt..."
+                      sleep $sleep_time
+                      continue
+                    else
+                      exit 1
+                    fi
+                  fi
+                else
+                  echo "Rebase failed for unknown reason, aborting..."
+                  git rebase --abort
+                  git reset --hard HEAD~1  # Remove our temp commit
+                  if [[ $retry_count -lt $max_retries ]]; then
+                    sleep_time=$((retry_count * 2))
+                    echo "Waiting ${sleep_time} seconds before next attempt..."
+                    sleep $sleep_time
+                    continue
+                  else
+                    exit 1
+                  fi
+                fi
+              fi
+              
+              if [[ "$rebase_success" == "true" ]]; then
+                # Update the commit message to be final (replace the temp message)
                 if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
-                  echo "Creating empty commit for force deployment"
-                  git commit --allow-empty -m "🚀 Force deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
+                  final_message="🚀 Force deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
                   
                   - Force deployment requested by user
                   - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
                   - Commit: ${{ github.sha }}
                   - Attempt: $retry_count/$max_retries"
-                  commit_created=true
                 else
-                  echo "No changes to commit after sync"
-                  success=true
-                  break
-                fi
-              else
-                echo "Committing changes..."
-                git commit -m "🚀 Deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
-                
-                - Updated branch preview for ${{ steps.branch_info.outputs.branch_name }}
-                - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-                - Commit: ${{ github.sha }}
-                - Attempt: $retry_count/$max_retries"
-                commit_created=true
-              fi
-              
-              # Only proceed with fetch/rebase/push if we have changes to push
-              if [[ "$commit_created" == "true" ]]; then
-                # Fetch latest state immediately before push to minimize race condition window
-                echo "Fetching latest gh-pages state immediately before push..."
-                git fetch origin gh-pages
-                
-                # Rebase with remote to incorporate any concurrent changes
-                echo "Rebasing with remote to incorporate any concurrent changes..."
-                if ! git rebase origin/gh-pages; then
-                  echo "Rebase failed, checking if we can resolve automatically..."
-                  # Check if the conflict is just in different directories (which should auto-resolve)
-                  if git status --porcelain | grep -q "^UU"; then
-                    echo "Found merge conflicts that need manual resolution"
-                    git rebase --abort
-                    echo "Cannot automatically resolve conflicts - this shouldn't happen with separate directories"
-                    exit 1
-                  else
-                    echo "Rebase completed with automatic resolution"
-                  fi
+                  final_message="🚀 Deploy ${{ steps.branch_info.outputs.branch_name }} branch preview
+                  
+                  - Updated branch preview for ${{ steps.branch_info.outputs.branch_name }}
+                  - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+                  - Commit: ${{ github.sha }}
+                  - Attempt: $retry_count/$max_retries"
                 fi
                 
-                # Push to gh-pages immediately after rebase
+                # Amend the commit with the final message
+                git commit --amend -m "$final_message"
+                
+                # Push to gh-pages after successful rebase
                 echo "Pushing to gh-pages (attempt $retry_count)..."
                 if git push origin gh-pages; then
                   echo "✅ Push successful on attempt $retry_count"
@@ -412,9 +459,14 @@ jobs:
                 else
                   echo "⚠️ Push failed on attempt $retry_count"
                   if [[ $retry_count -lt $max_retries ]]; then
-                    # Reset to before the commit to retry cleanly
-                    echo "Resetting commit to retry with fresh state..."
-                    git reset --soft HEAD~1
+                    # Reset to before our changes to retry cleanly
+                    echo "Resetting to clean state for retry..."
+                    git reset --hard origin/gh-pages
+                    git clean -fd
+                    
+                    # Re-stage our changes for next attempt
+                    git add -A
+                    
                     # Brief delay for transient network issues
                     sleep_time=$((retry_count * 2))
                     echo "Waiting ${sleep_time} seconds before next attempt..."
