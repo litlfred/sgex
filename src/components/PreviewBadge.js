@@ -204,7 +204,7 @@ const PreviewBadge = () => {
           onClick={handleBadgeToggle}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          title={isSticky ? "Click to collapse" : isExpanded ? "Click to keep expanded" : `Hover to preview, click to pin: ${branchInfo.name}`}
+          title={isSticky ? "Click to collapse" : isExpanded ? "Click to keep expanded" : `🔍 Hover for branch details, click to pin: ${branchInfo.name}`}
         >
           <div className="badge-content">
             <span className="badge-label">Preview:</span>
@@ -241,9 +241,16 @@ const PreviewBadge = () => {
             <h4>Branch Information</h4>
             <div className="pr-body">
               This is a preview deployment from the <code>{branchInfo.name}</code> branch.
-              {!githubService.isAuth() && (
-                <div style={{marginTop: '0.5rem', fontStyle: 'italic', color: '#666'}}>
-                  Sign in to GitHub to view pull request details and comments.
+              <div style={{marginTop: '0.5rem'}}>
+                <strong>Preview URL:</strong> <code>{window.location.origin}{window.location.pathname}</code>
+              </div>
+              {!githubService.isAuth() ? (
+                <div style={{marginTop: '0.5rem', padding: '0.5rem', backgroundColor: '#f0f8ff', border: '1px solid #bee5eb', borderRadius: '4px'}}>
+                  <strong>💡 Tip:</strong> Sign in to GitHub to view pull request details, comments, and contribute to this branch.
+                </div>
+              ) : (
+                <div style={{marginTop: '0.5rem', color: '#28a745'}}>
+                  ✅ Authenticated - You can view full PR details when available.
                 </div>
               )}
             </div>
