@@ -152,7 +152,6 @@
     { "path": "/test-framework-dashboard/:user/:repo/:branch", "component": "DAKDashboardWithFramework" }
   ],
   "deployedBranches": [
-    "main",
-    "deploy"
+    "main"
   ]
 }

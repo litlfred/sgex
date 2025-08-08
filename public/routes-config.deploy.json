@@ -4,8 +4,7 @@
     "BranchListingPage": {
       "path": "./components/BranchListingPage",
       "routes": [
-        { "path": "/", "exact": true },
-        { "path": "/deploy", "exact": true }
+        { "path": "/", "exact": true }
       ]
     },
     "NotFound": {
@@ -16,7 +15,6 @@
     }
   },
   "deployedBranches": [
-    "main",
-    "deploy"
+    "main"
   ]
 }
