@@ -1380,15 +1380,14 @@ class GitHubService {
 
   // Get all pull requests for a specific branch
   async getPullRequestsForBranch(owner, repo, branchName) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
+    // Use authenticated octokit if available, otherwise create a public instance for public repos
+    const octokit = this.isAuth() ? this.octokit : new Octokit();
 
     const startTime = Date.now();
     this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls`, { state: 'open', head: `${owner}:${branchName}` });
 
     try {
-      const response = await this.octokit.rest.pulls.list({
+      const response = await octokit.rest.pulls.list({
         owner,
         repo,
         state: 'open',
