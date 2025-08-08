@@ -481,18 +481,34 @@ jobs:
                 '**Status:** 🟢 Successfully Deployed\n' +
                 '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
                 '**Deployed:** ' + deployedAt + '\n\n' +
-                '### 🌐 Preview URLs\n' +
-                '**Branch Preview:** <a href="' + branchUrl + '" target="' + branchTargetName + '">' + branchUrl + '</a>\n' +
-                '**Main App:** <a href="' + mainAppUrl + '" target="' + mainTargetName + '">' + mainAppUrl + '</a>\n\n' +
-                '### 🔄 Deployment Actions\n' +
-                '**Need to redeploy after updates?** → [**🚀 Click here to redeploy this branch**](' + restartUrl + ') ← \n\n' +
-                '**Instructions for redeployment:**\n' +
-                '1. Click the redeploy link above\n' +
-                '2. Click "Run workflow" button  \n' +
-                '3. Enter branch name: `' + branchName + '`\n' +
-                '4. Click "Run workflow" to confirm\n\n' +
-                '**Other actions:**\n' +
-                '- 📄 [View Build Logs](' + workflowUrl + ') - See deployment details\n\n' +
+                '### 🌐 Preview URLs\n\n' +
+                '<table>\n' +
+                '<tr>\n' +
+                '<td align="center">\n' +
+                '<a href="' + branchUrl + '" target="' + branchTargetName + '"><img src="https://img.shields.io/badge/🌐_BRANCH_PREVIEW-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Branch Preview" /></a><br/>\n' +
+                '<sub><b>Open branch preview</b></sub>\n' +
+                '</td>\n' +
+                '<td align="center">\n' +
+                '<a href="' + mainAppUrl + '" target="' + mainTargetName + '"><img src="https://img.shields.io/badge/🏠_MAIN_APP-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Main App" /></a><br/>\n' +
+                '<sub><b>Open main application</b></sub>\n' +
+                '</td>\n' +
+                '</tr>\n' +
+                '</table>\n\n' +
+                '### 🔄 Deployment Actions\n\n' +
+                '<table>\n' +
+                '<tr>\n' +
+                '<td align="center">\n' +
+                '<a href="' + restartUrl + '?branch=' + encodeURIComponent(branchName) + '"><img src="https://img.shields.io/badge/🚀_REDEPLOY_BRANCH-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Redeploy Branch" /></a><br/>\n' +
+                '<sub><b>Redeploy this branch</b></sub>\n' +
+                '</td>\n' +
+                '<td align="center">\n' +
+                '<a href="' + workflowUrl + '"><img src="https://img.shields.io/badge/📄_BUILD_LOGS-6C757D?style=for-the-badge&logo=github&logoColor=white" alt="Build Logs" /></a><br/>\n' +
+                '<sub><b>View deployment details</b></sub>\n' +
+                '</td>\n' +
+                '</tr>\n' +
+                '</table>\n\n' +
+                '### 📋 Instructions\n' +
+                '**To redeploy:** Click "REDEPLOY BRANCH" above, then click "Run workflow" (branch name will be pre-filled)\n\n' +
                 '---\n' +
                 '💡 *This branch preview was deployed successfully and will remain until the next deployment.*\n\n' +
                 '_Note: This deployment only updates the branch subdirectory and does not affect the landing page._';
@@ -506,7 +522,8 @@ jobs:
               
               const existingComment = comments.find(comment => 
                 comment.body.includes('Branch Preview Ready!') || 
-                comment.body.includes('Branch Preview Deployed!')
+                comment.body.includes('Branch Preview Deployed!') ||
+                comment.body.includes('Deployment Approval Required')
               );
               
               if (existingComment) {
@@ -565,14 +582,26 @@ jobs:
                 '**Status:** 🔴 Deployment Failed\n' +
                 '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
                 '**Failed:** ' + failedAt + '\n\n' +
-                '### 🔍 Troubleshooting\n' +
-                '- 📄 [View Build Logs](' + workflowUrl + ') - Check what went wrong\n' +
-                '- 🔄 [Restart Build](' + restartUrl + ') - Click "Run workflow" and enter branch: `' + branchName + '`\n\n' +
+                '### 🔍 Troubleshooting Actions\n\n' +
+                '<table>\n' +
+                '<tr>\n' +
+                '<td align="center">\n' +
+                '<a href="' + workflowUrl + '"><img src="https://img.shields.io/badge/📄_CHECK_LOGS-DC3545?style=for-the-badge&logo=github&logoColor=white" alt="Check Logs" /></a><br/>\n' +
+                '<sub><b>View error details</b></sub>\n' +
+                '</td>\n' +
+                '<td align="center">\n' +
+                '<a href="' + restartUrl + '?branch=' + encodeURIComponent(branchName) + '"><img src="https://img.shields.io/badge/🔄_RETRY_BUILD-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Retry Build" /></a><br/>\n' +
+                '<sub><b>Restart deployment</b></sub>\n' +
+                '</td>\n' +
+                '</tr>\n' +
+                '</table>\n\n' +
                 '### 💡 Common Issues\n' +
                 '- Build errors in code changes\n' +
                 '- Missing dependencies or npm install issues\n' +
                 '- GitHub Pages deployment limits\n' +
                 '- Network connectivity issues\n\n' +
+                '### 📋 Instructions\n' +
+                '**To retry:** Click "RETRY BUILD" above, then click "Run workflow" (branch name will be pre-filled)\n\n' +
                 '---\n' +
                 '❗ *Please check the build logs above and fix any issues before restarting the deployment.*\n\n' +
                 '_Note: The previous deployment (if any) remains active until this branch is successfully deployed._';
@@ -587,7 +616,8 @@ jobs:
               const existingComment = comments.find(comment => 
                 comment.body.includes('Branch Preview Ready!') || 
                 comment.body.includes('Branch Preview Deployed!') || 
-                comment.body.includes('Branch Preview Failed!')
+                comment.body.includes('Branch Preview Failed!') ||
+                comment.body.includes('Deployment Approval Required')
               );
               
               if (existingComment) {
