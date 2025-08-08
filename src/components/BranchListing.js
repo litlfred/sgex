@@ -350,20 +350,6 @@ const BranchListing = () => {
     }
   }, [githubToken, branches, pullRequests, loadWorkflowStatuses]);
 
-  // Function to load comments for all visible PRs
-  const loadCommentsForPRs = useCallback(async (prs) => {
-    if (!githubToken || prs.length === 0) return;
-    
-    setLoadingComments(true);
-    const comments = {};
-    
-    for (const pr of prs) {
-      comments[pr.number] = await fetchPRComments(pr.number);
-    }
-    
-    setPrComments(comments);
-    setLoadingComments(false);
-  }, [githubToken, fetchPRComments]);
 
   // Check for existing authentication on component mount
   useEffect(() => {
