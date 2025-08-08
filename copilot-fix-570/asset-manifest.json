@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/sgex/copilot-fix-570/static/css/main.09e4fe84.css",
+    "main.js": "/sgex/copilot-fix-570/static/js/main.4dc6c190.js",
+    "static/js/488.3c576ddd.chunk.js": "/sgex/copilot-fix-570/static/js/488.3c576ddd.chunk.js",
+    "index.html": "/sgex/copilot-fix-570/index.html",
+    "main.09e4fe84.css.map": "/sgex/copilot-fix-570/static/css/main.09e4fe84.css.map",
+    "main.4dc6c190.js.map": "/sgex/copilot-fix-570/static/js/main.4dc6c190.js.map",
+    "488.3c576ddd.chunk.js.map": "/sgex/copilot-fix-570/static/js/488.3c576ddd.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.09e4fe84.css",
+    "static/js/main.4dc6c190.js"
+  ]
+}
