@@ -41,6 +41,7 @@ const BranchListingPage = () => {
     };
 
 
+    // Logout function
     const handleLogout = () => {
         setGithubToken(null);
         setIsAuthenticated(false);

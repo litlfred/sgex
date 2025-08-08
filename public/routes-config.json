@@ -40,6 +40,10 @@
     "decision-support-logic": {
       "component": "DecisionSupportLogicView",
       "path": "./components/DecisionSupportLogicView"
+    },
+    "questionnaire-editor": {
+      "component": "QuestionnaireEditor",
+      "path": "./components/QuestionnaireEditor"
     }
   },
   "standardComponents": {
