@@ -112,23 +112,29 @@ jobs:
             echo "Issues analysis script not found, skipping..."
           fi
 
-      - name: Build branch-specific React app
+      - name: Determine PUBLIC_URL for branch
+        id: public_url
         run: |
-          # Set the correct public URL for the branch deployment
           branch_name="${{ steps.branch_info.outputs.branch_name }}"
           if [[ "$branch_name" == "main" ]]; then
-            export PUBLIC_URL="/sgex/main/"
+            public_url="/sgex/main/"
           else
             safe_branch_name=$(echo "$branch_name" | tr '/' '-')
-            export PUBLIC_URL="/sgex/${safe_branch_name}/"
+            public_url="/sgex/${safe_branch_name}/"
           fi
-          echo "Building with PUBLIC_URL: $PUBLIC_URL"
-          echo "Building with REACT_APP_GITHUB_REF_NAME: $branch_name"
+          echo "public_url=$public_url" >> $GITHUB_OUTPUT
+          echo "Determined PUBLIC_URL: $public_url"
+
+      - name: Build branch-specific React app
+        run: |
+          echo "Building with PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}"
+          echo "Building with REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}"
           
           # Build the React app
           npm run build
         env:
           CI: false
+          PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}
           GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
           REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
 
