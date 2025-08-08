@@ -3,32 +3,33 @@
  */
 
 /**
- * Extract valid DAK component names from the route patterns used in the application
- * This function analyzes the route patterns to identify DAK components that follow
- * the pattern: /{component}/:user/:repo/:branch?/*?
+ * Extract valid DAK component names from the shared route configuration
+ * This function reads from the global SGEX route configuration that is shared
+ * between App.js and 404.html to ensure consistency.
  * 
- * These are extracted from App.js routes that have user/repo/branch parameters
  * @returns {Array} Array of valid DAK component names
  */
 export const extractDAKComponentsFromRoutes = () => {
-  // Extract DAK components from the well-known route patterns in App.js
-  // These correspond to routes that follow the pattern: /{component}/:user/:repo/:branch?/*?
-  // 
-  // Looking at App.js, these are the routes with :user/:repo/:branch patterns:
-  const dakComponents = [
-    'dashboard',                    // /dashboard/:user/:repo/:branch
-    'testing-viewer',              // /testing-viewer/:user/:repo/:branch/*
-    'core-data-dictionary-viewer', // /core-data-dictionary-viewer/:user/:repo/:branch/*
-    'health-interventions',        // /health-interventions/:user/:repo/:branch/*
-    'actor-editor',               // /actor-editor/:user/:repo/:branch/*
-    'business-process-selection',  // /business-process-selection/:user/:repo/:branch
-    'bpmn-editor',                // /bpmn-editor/:user/:repo/:branch/*
-    'bpmn-viewer',                // /bpmn-viewer/:user/:repo/:branch/*
-    'bpmn-source',                // /bpmn-source/:user/:repo/:branch/*
-    'decision-support-logic'       // /decision-support-logic/:user/:repo/:branch/*
-  ];
+  // In browser environment, try to get from global config first
+  if (typeof window !== 'undefined' && window.SGEX_ROUTES_CONFIG) {
+    return window.SGEX_ROUTES_CONFIG.dakComponents;
+  }
   
-  return dakComponents;
+  // Fallback for server-side rendering or if config not loaded
+  // This should match the configuration in public/routes-config.js
+  console.warn('SGEX route configuration not available, using fallback');
+  return [
+    'dashboard',                    
+    'testing-viewer',              
+    'core-data-dictionary-viewer', 
+    'health-interventions',        
+    'actor-editor',               
+    'business-process-selection',  
+    'bpmn-editor',                
+    'bpmn-viewer',                
+    'bpmn-source',                
+    'decision-support-logic'       
+  ];
 };
 
 /**

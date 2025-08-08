@@ -3,6 +3,8 @@
   <head>
     <meta charset="utf-8">
     <title>SGEX Workbench</title>
+    <!-- Load SGEX route configuration -->
+    <script src="routes-config.js"></script>
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages
       // MIT License
@@ -25,18 +27,24 @@
       var l = window.location;
       var pathSegments = l.pathname.split('/').filter(Boolean);
       
+      // Get configuration from routes-config.js
+      var config = window.SGEX_ROUTES_CONFIG;
+      if (!config) {
+        console.error('SGEX route configuration not loaded');
+        return;
+      }
+      
       // For GitHub Pages deployment at https://litlfred.github.io/sgex
       var isGitHubPages = l.hostname === 'litlfred.github.io' || l.hostname.endsWith('.github.io');
       
       if (isGitHubPages && pathSegments.length >= 1 && pathSegments[0] === 'sgex') {
         // Handle GitHub Pages SGEX deployment
-        var deployedBranches = ['main', 'deploy']; // Add other deployed branches as needed
         
         if (pathSegments.length >= 2) {
           var potentialBranch = pathSegments[1];
           
-          // Check if this looks like a branch deployment URL
-          if (deployedBranches.includes(potentialBranch)) {
+          // Check if this looks like a branch deployment URL using config
+          if (config.isDeployedBranch(potentialBranch)) {
             // This is a branch deployment: /sgex/main/* or /sgex/deploy/*
             var branchSegmentsToKeep = 2; // Keep /sgex/branch-name/
             var redirectPath = pathSegments.slice(0, branchSegmentsToKeep).join('/') + '/';
@@ -50,12 +58,8 @@
             });
           } else {
             // This might be a direct route like /sgex/dashboard/...
-            // Check if it's a valid DAK component
-            var dakComponents = ['dashboard', 'testing-viewer', 'core-data-dictionary-viewer', 
-                               'health-interventions', 'actor-editor', 'business-process-selection',
-                               'bpmn-editor', 'bpmn-viewer', 'bpmn-source', 'decision-support-logic'];
-            
-            if (dakComponents.includes(potentialBranch)) {
+            // Check if it's a valid DAK component using config
+            if (config.isValidDAKComponent(potentialBranch)) {
               // This is a direct DAK route: /sgex/dashboard/...
               var dakSegmentsToKeep = 1; // Keep /sgex/
               var redirectPath = pathSegments.slice(0, dakSegmentsToKeep).join('/') + '/';
