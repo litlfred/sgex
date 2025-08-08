@@ -368,8 +368,69 @@ jobs:
           fi
           
           echo "Pushing to gh-pages..."
+          
+          # Fetch latest remote state first to avoid conflicts
+          echo "Fetching latest gh-pages state..."
           git fetch origin gh-pages
-          git push origin gh-pages
+          
+          # Push with retry mechanism to handle concurrent deployments
+          max_retries=3
+          retry_count=0
+          success=false
+          
+          while [[ $retry_count -lt $max_retries ]] && [[ "$success" == "false" ]]; do
+            retry_count=$((retry_count + 1))
+            echo "Push attempt $retry_count of $max_retries"
+            
+            # Always fetch latest state before attempting push
+            git fetch origin gh-pages
+            
+            # Check if we're behind remote
+            local_commit=$(git rev-parse HEAD)
+            remote_commit=$(git rev-parse origin/gh-pages)
+            
+            if [[ "$local_commit" != "$remote_commit" ]]; then
+              echo "Local branch is behind remote, syncing..."
+              
+              # Reset to remote state and re-apply our changes
+              git reset --hard origin/gh-pages
+              
+              # Re-stage changes (they should still be in working directory)
+              git add -A
+              
+              # Re-commit if there are changes
+              if ! git diff --cached --quiet; then
+                echo "Re-committing changes after sync..."
+                git commit -m "🚀 Deploy landing page
+                
+                - Updated landing page (retry $retry_count/$max_retries)
+                - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+                - Commit: ${{ github.sha }}"
+              else
+                echo "No changes to re-commit after sync"
+                success=true
+                break
+              fi
+            fi
+            
+            # Try to push
+            if git push origin gh-pages; then
+              echo "✅ Push successful"
+              success=true
+            else
+              echo "⚠️  Push failed, will retry after delay..."
+              if [[ $retry_count -lt $max_retries ]]; then
+                sleep_time=$((retry_count * 2))
+                echo "Waiting ${sleep_time} seconds before retry..."
+                sleep $sleep_time
+              fi
+            fi
+          done
+          
+          if [[ "$success" == "false" ]]; then
+            echo "❌ Failed to push after $max_retries attempts"
+            exit 1
+          fi
           
           echo "✅ Deployment completed successfully"
 

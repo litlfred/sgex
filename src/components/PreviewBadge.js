@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import githubService from '../services/githubService';
 import './PreviewBadge.css';
 
 /**
  * PreviewBadge component that displays when the app is deployed from a non-main branch
  * Shows branch name and links to the associated PR
+ * Can expand to show detailed PR information, comments, and add new comments
  */
 const PreviewBadge = () => {
   const [branchInfo, setBranchInfo] = useState(null);
-  const [prInfo, setPrInfo] = useState(null);
+  const [prInfo, setPrInfo] = useState([]); // Changed to array to support multiple PRs
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isSticky, setIsSticky] = useState(false);
+  const expandedRef = useRef(null);
 
   useEffect(() => {
     const detectBranchAndPR = async () => {
@@ -34,8 +38,8 @@ const PreviewBadge = () => {
 
         // Try to fetch PR information for this branch
         try {
-          const prData = await fetchPRForBranch(currentBranch);
-          if (prData) {
+          const prData = await fetchPRsForBranch(currentBranch);
+          if (prData && prData.length > 0) {
             setPrInfo(prData);
           }
         } catch (prError) {
@@ -53,6 +57,28 @@ const PreviewBadge = () => {
 
     detectBranchAndPR();
   }, []);
+
+  // Handle clicks outside the expanded panel to close it (only if not sticky)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (expandedRef.current && !expandedRef.current.contains(event.target)) {
+        if (isSticky) {
+          setIsSticky(false);
+        }
+        setIsExpanded(false);
+      }
+    };
+
+    if (isExpanded) {
+      // Listen for both mouse and touch events to support mobile devices
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('touchstart', handleClickOutside);
+      };
+    }
+  }, [isExpanded, isSticky]);
 
   const getCurrentBranch = () => {
     // First try environment variable (set during build)
@@ -87,27 +113,63 @@ const PreviewBadge = () => {
     return null;
   };
 
-  const fetchPRForBranch = async (branchName) => {
+  const fetchPRsForBranch = async (branchName) => {
     try {
       // Get current repository context if available
       // For now, we'll use the main repository
       const owner = 'litlfred';
       const repo = 'sgex';
 
-      // Get PR for this specific branch
-      const pr = await githubService.getPullRequestForBranch(owner, repo, branchName);
+      const prs = await githubService.getPullRequestsForBranch(owner, repo, branchName);
       
-      return pr;
+      return prs;
+
     } catch (error) {
       console.debug('Failed to fetch PR info:', error);
-      return null;
+      return [];
     }
   };
 
-  const handleBadgeClick = () => {
-    if (prInfo && prInfo.html_url) {
-      window.open(prInfo.html_url, '_blank');
+  const handleBadgeClick = (pr) => {
+    if (pr && pr.html_url) {
+      window.open(pr.html_url, '_blank');
     }
+  };
+
+  const handleMouseEnter = () => {
+    if (!isSticky && (!prInfo || prInfo.length === 0)) {
+      setIsExpanded(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isSticky && (!prInfo || prInfo.length === 0)) {
+      setIsExpanded(false);
+    }
+  };
+
+  const handleBadgeToggle = (event) => {
+    // Only allow toggle for branch-only badges (no PRs)
+    if (prInfo && prInfo.length > 0) return;
+    
+    // Prevent event from bubbling up
+    event.stopPropagation();
+    event.preventDefault();
+    
+    if (isSticky) {
+      // If already sticky, collapse and remove sticky state
+      setIsSticky(false);
+      setIsExpanded(false);
+    } else {
+      // Make it sticky and ensure it's expanded
+      setIsSticky(true);
+      setIsExpanded(true);
+    }
+  };
+
+  const truncateTitle = (title, maxLength = 30) => {
+    if (title.length <= maxLength) return title;
+    return title.substring(0, maxLength) + '...';
   };
 
   // Don't render anything if loading, error, or not a preview branch
@@ -115,24 +177,85 @@ const PreviewBadge = () => {
     return null;
   }
 
+  // Render multiple badges if there are multiple PRs
   return (
-    <div className="preview-badge-container">
-      <div 
-        className={`preview-badge ${prInfo ? 'clickable' : ''}`}
-        onClick={prInfo ? handleBadgeClick : undefined}
-        title={prInfo ? `Click to view PR: ${prInfo.title}` : `Preview branch: ${branchInfo.name}`}
-      >
-        <div className="badge-content">
-          <span className="badge-label">Preview:</span>
-          <span className="badge-branch">{branchInfo.name}</span>
-          {prInfo && (
-            <>
+    <div className="preview-badge-container" ref={expandedRef}>
+      {prInfo && prInfo.length > 0 ? (
+        // Multiple PR badges - each one is clickable and opens the corresponding PR
+        prInfo.map((pr, index) => (
+          <div 
+            key={pr.id}
+            className="preview-badge clickable"
+            onClick={() => handleBadgeClick(pr)}
+            title={`Click to view PR: ${pr.title}`}
+          >
+            <div className="badge-content">
+              <span className="badge-label">PR:</span>
+              <span className="badge-branch">#{pr.number}</span>
               <span className="badge-separator">|</span>
-              <span className="badge-pr-title">{prInfo.title}</span>
-            </>
-          )}
+              <span className="badge-pr-title">{truncateTitle(pr.title)}</span>
+            </div>
+          </div>
+        ))
+      ) : (
+        // Single expandable badge for branch with no PRs
+        <div 
+          className={`preview-badge clickable ${isExpanded ? 'expanded' : ''} ${isSticky ? 'sticky' : ''}`}
+          onClick={handleBadgeToggle}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          title={isSticky ? "Click to collapse" : isExpanded ? "Click to keep expanded" : `Hover to preview, click to pin: ${branchInfo.name}`}
+        >
+          <div className="badge-content">
+            <span className="badge-label">Preview:</span>
+            <span className="badge-branch">{branchInfo.name}</span>
+            <span className="badge-expand-icon">{isExpanded ? '▼' : '▶'}</span>
+          </div>
         </div>
-      </div>
+      )}
+
+      {isExpanded && (!prInfo || prInfo.length === 0) && (
+        <div className="preview-badge-expanded">
+          <div className="expanded-header">
+            <div className="pr-info">
+              <h3>Preview Branch: {branchInfo.name}</h3>
+              <div className="pr-meta">
+                <span className="pr-state" data-state="unknown">No PR found</span>
+                <span className="pr-author">Branch preview</span>
+              </div>
+            </div>
+            <button 
+              className="close-button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(false);
+                setIsSticky(false);
+              }}
+              title="Close expanded view"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="pr-description">
+            <h4>Branch Information</h4>
+            <div className="pr-body">
+              This is a preview deployment from the <code>{branchInfo.name}</code> branch.
+              {!githubService.isAuth() && (
+                <div style={{marginTop: '0.5rem', fontStyle: 'italic', color: '#666'}}>
+                  Sign in to GitHub to view pull request details and comments.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="expanded-footer">
+            <a href={`https://github.com/litlfred/sgex/tree/${branchInfo.name}`} target="_blank" rel="noopener noreferrer" className="github-link">
+              View Branch on GitHub →
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
