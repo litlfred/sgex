@@ -61,15 +61,9 @@ const SelectProfilePage = () => {
         userData = await githubService.getCurrentUser();
         setUser(userData);
       } else {
-        // For unauthenticated users, set a demo user profile
-        userData = {
-          login: 'anonymous-user',
-          name: 'Anonymous User',
-          avatar_url: 'https://github.com/github.png',
-          type: 'User',
-          isAnonymous: true
-        };
-        setUser(userData);
+        // For unauthenticated users, don't create a user profile
+        userData = null;
+        setUser(null);
       }
       
       // Fetch organizations inline
@@ -253,8 +247,8 @@ const SelectProfilePage = () => {
             
             {/* Horizontal profile grid */}
             <div className="profile-grid-horizontal">
-              {/* Personal Profile - Show for authenticated users or anonymous access */}
-              {(isAuthenticated || user?.isAnonymous) && (
+              {/* Personal Profile - Show only for authenticated users */}
+              {isAuthenticated && user && (
                 <div 
                   className="profile-card"
                   onClick={(event) => handleProfileSelect(event, { type: 'user', ...user })}
@@ -268,14 +262,9 @@ const SelectProfilePage = () => {
                     )}
                   </div>
                   <h3>{user?.name || user?.login}</h3>
-                  <p>{user?.isAnonymous ? 'Anonymous browsing' : 'Personal repositories'}</p>
+                  <p>Personal repositories</p>
                   <div className="profile-badges">
-                    <span className="profile-type">
-                      {user?.isAnonymous ? 'Anonymous' : 'Personal'}
-                    </span>
-                    {user?.isAnonymous && (
-                      <span className="auth-badge">Limited Access</span>
-                    )}
+                    <span className="profile-type">Personal</span>
                   </div>
                 </div>
               )}
