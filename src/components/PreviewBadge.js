@@ -4,11 +4,11 @@ import './PreviewBadge.css';
 
 /**
  * PreviewBadge component that displays when the app is deployed from a non-main branch
- * Shows branch name and links to the associated PR
+ * Shows branch name and links to the associated PR(s)
  */
 const PreviewBadge = () => {
   const [branchInfo, setBranchInfo] = useState(null);
-  const [prInfo, setPrInfo] = useState(null);
+  const [prInfo, setPrInfo] = useState([]); // Changed to array to support multiple PRs
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -34,8 +34,8 @@ const PreviewBadge = () => {
 
         // Try to fetch PR information for this branch
         try {
-          const prData = await fetchPRForBranch(currentBranch);
-          if (prData) {
+          const prData = await fetchPRsForBranch(currentBranch);
+          if (prData && prData.length > 0) {
             setPrInfo(prData);
           }
         } catch (prError) {
@@ -87,26 +87,26 @@ const PreviewBadge = () => {
     return null;
   };
 
-  const fetchPRForBranch = async (branchName) => {
+  const fetchPRsForBranch = async (branchName) => {
     try {
       // Get current repository context if available
       // For now, we'll use the main repository
       const owner = 'litlfred';
       const repo = 'sgex';
 
-      // Get PR for this specific branch
-      const pr = await githubService.getPullRequestForBranch(owner, repo, branchName);
+      // Get all PRs for this specific branch
+      const prs = await githubService.getPullRequestsForBranch(owner, repo, branchName);
       
-      return pr;
+      return prs;
     } catch (error) {
       console.debug('Failed to fetch PR info:', error);
-      return null;
+      return [];
     }
   };
 
-  const handleBadgeClick = () => {
-    if (prInfo && prInfo.html_url) {
-      window.open(prInfo.html_url, '_blank');
+  const handleBadgeClick = (pr) => {
+    if (pr && pr.html_url) {
+      window.open(pr.html_url, '_blank');
     }
   };
 
@@ -115,24 +115,37 @@ const PreviewBadge = () => {
     return null;
   }
 
+  // Render multiple badges if there are multiple PRs
   return (
     <div className="preview-badge-container">
-      <div 
-        className={`preview-badge ${prInfo ? 'clickable' : ''}`}
-        onClick={prInfo ? handleBadgeClick : undefined}
-        title={prInfo ? `Click to view PR: ${prInfo.title}` : `Preview branch: ${branchInfo.name}`}
-      >
-        <div className="badge-content">
-          <span className="badge-label">Preview:</span>
-          <span className="badge-branch">{branchInfo.name}</span>
-          {prInfo && (
-            <>
+      {prInfo && prInfo.length > 0 ? (
+        prInfo.map((pr, index) => (
+          <div 
+            key={pr.id}
+            className="preview-badge clickable"
+            onClick={() => handleBadgeClick(pr)}
+            title={`Click to view PR: ${pr.title}`}
+          >
+            <div className="badge-content">
+              <span className="badge-label">PR:</span>
+              <span className="badge-branch">#{pr.number}</span>
               <span className="badge-separator">|</span>
-              <span className="badge-pr-title">{prInfo.title}</span>
-            </>
-          )}
+              <span className="badge-pr-title">{pr.title}</span>
+            </div>
+          </div>
+        ))
+      ) : (
+        // Show branch badge if no PRs found
+        <div 
+          className="preview-badge"
+          title={`Preview branch: ${branchInfo.name}`}
+        >
+          <div className="badge-content">
+            <span className="badge-label">Preview:</span>
+            <span className="badge-branch">{branchInfo.name}</span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
