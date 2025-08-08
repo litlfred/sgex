@@ -5,11 +5,11 @@
 }
 
 .pat-login-section {
-  background: white;
+  background: var(--who-card-bg, white);
   border-radius: 8px;
   padding: 2rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e1e4e8;
+  border: 1px solid var(--who-border-color, #e1e4e8);
 }
 
 .pat-form {
@@ -26,35 +26,39 @@
 
 .form-group label {
   font-weight: 600;
-  color: #24292e;
+  color: var(--who-text-primary, #24292e);
   font-size: 0.9rem;
 }
 
-.token-input {
+.token-input, .token-name-input {
   padding: 0.75rem;
-  border: 2px solid #e1e4e8;
+  border: 2px solid var(--who-border-color, #e1e4e8);
   border-radius: 6px;
   font-size: 1rem;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-  background-color: #f6f8fa;
+  background-color: var(--who-secondary-bg, #f6f8fa);
+  color: var(--who-text-primary, #24292e);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.token-input:focus {
-  outline: none;
-  border-color: #0366d6;
-  box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
-  background-color: white;
+.token-input {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
-.token-input.error {
+.token-input:focus, .token-name-input:focus {
+  outline: none;
+  border-color: var(--who-blue, #0366d6);
+  box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+  background-color: var(--who-card-bg, white);
+}
+
+.token-input.error, .token-name-input.error {
   border-color: #d1242f;
   box-shadow: 0 0 0 3px rgba(209, 36, 47, 0.1);
 }
 
-.token-input:disabled {
-  background-color: #f1f3f4;
-  color: #6a737d;
+.token-input:disabled, .token-name-input:disabled {
+  background-color: var(--who-hover-bg, #f1f3f4);
+  color: var(--who-text-muted, #6a737d);
   cursor: not-allowed;
 }
 
@@ -63,8 +67,8 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: #24292e;
-  color: white;
+  background: var(--who-navy, #24292e);
+  color: var(--who-text-on-primary, white);
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 6px;
@@ -76,7 +80,7 @@
 }
 
 .github-login-btn:hover:not(:disabled) {
-  background: #1b1f23;
+  background: var(--who-blue-dark, #1b1f23);
   transform: translateY(-1px);
 }
 
@@ -85,7 +89,7 @@
 }
 
 .github-login-btn:disabled {
-  background: #94a3b8;
+  background: var(--who-text-muted, #94a3b8);
   cursor: not-allowed;
   transform: none;
 }
@@ -96,11 +100,11 @@
 }
 
 .error-message {
-  background: #ffeef0;
-  color: #d1242f;
+  background: var(--who-error-bg, #ffeef0);
+  color: var(--who-error-text, #d1242f);
   padding: 0.75rem;
   border-radius: 6px;
-  border: 1px solid #fdaeb7;
+  border: 1px solid var(--who-error-border, #fdaeb7);
   font-size: 0.9rem;
   margin-top: 0.5rem;
   line-height: 1.4;
@@ -108,14 +112,14 @@
 
 .help-section {
   margin-top: 1.5rem;
-  border-top: 1px solid #e1e4e8;
+  border-top: 1px solid var(--who-border-color, #e1e4e8);
   padding-top: 1.5rem;
 }
 
 .help-toggle-btn {
   background: none;
   border: none;
-  color: #0366d6;
+  color: var(--who-blue, #0366d6);
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;
@@ -129,7 +133,7 @@
 }
 
 .help-toggle-btn:hover {
-  color: #0256cc;
+  color: var(--who-blue-dark, #0256cc);
   text-decoration: underline;
 }
 
