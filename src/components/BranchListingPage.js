@@ -36,13 +36,6 @@ const BranchListingPage = () => {
         sessionStorage.setItem('github_token', token);
     };
 
-    const handleLogout = () => {
-        setGithubToken(null);
-        setIsAuthenticated(false);
-        sessionStorage.removeItem('github_token');
-        setPrComments({});
-    };
-
     // Function to fetch PR comments summary
     const fetchPRCommentsSummary = async (prNumber) => {
         try {

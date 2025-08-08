@@ -27,6 +27,7 @@ import DAKDashboardWithFramework from './components/DAKDashboardWithFramework';
 import DashboardRedirect from './components/DashboardRedirect';
 import TestDocumentationPage from './components/TestDocumentationPage';
 import AssetEditorTest from './components/AssetEditorTest';
+import BranchListingPage from './components/BranchListingPage';
 import logger from './utils/logger';
 import './App.css';
 
@@ -53,6 +54,7 @@ function App() {
       <div className="App">
           <Routes>
             <Route path="/" element={<WelcomePage />} />
+            <Route path="/deploy" element={<BranchListingPage />} />
             <Route path="/select_profile" element={<SelectProfilePage />} />
             <Route path="/dak-action/:user" element={<DAKActionSelection />} />
             <Route path="/dak-action" element={<DAKActionSelection />} />
