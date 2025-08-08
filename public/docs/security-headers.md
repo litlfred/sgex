@@ -8,14 +8,14 @@ This document describes the security headers implementation for SGeX Workbench, 
 
 ### 1. Content Security Policy (CSP)
 ```html
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' 'unsafe-eval' https://litlfred.github.io/sgex https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://github.com https://avatars.githubusercontent.com; connect-src 'self' https://api.github.com https://github.com https://raw.githubusercontent.com https://iris.who.int https://avatars.githubusercontent.com; font-src 'self'; object-src 'none'; media-src 'self'; frame-src 'none'; child-src 'none'; manifest-src 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' 'unsafe-eval' https://litlfred.github.io https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://github.com https://avatars.githubusercontent.com; connect-src 'self' https://api.github.com https://github.com https://raw.githubusercontent.com https://iris.who.int https://avatars.githubusercontent.com; font-src 'self'; object-src 'none'; media-src 'self'; frame-src 'none'; child-src 'none'; manifest-src 'self';">
 ```
 
 **Purpose**: Prevents code injection attacks by controlling resource loading sources.
 
 **Directives**:
 - `default-src 'self'`: Allow resources from the same origin by default
-- `script-src 'unsafe-inline' 'unsafe-eval' https://litlfred.github.io/sgex https://unpkg.com`: Allow scripts only from the specific SGEX application path, inline scripts (required for React), eval (required for some React features), and unpkg.com CDN
+- `script-src 'unsafe-inline' 'unsafe-eval' https://litlfred.github.io https://unpkg.com`: Allow scripts from the entire litlfred.github.io domain (including all subpaths for branch deployments), inline scripts (required for React), eval (required for some React features), and unpkg.com CDN
 - `style-src 'self' 'unsafe-inline'`: Allow styles from same origin and inline styles (required for React components)
 - `img-src 'self' data: https://github.com https://avatars.githubusercontent.com`: Allow images from same origin, data URLs, and GitHub
 - `connect-src 'self' https://api.github.com https://github.com https://raw.githubusercontent.com https://iris.who.int https://avatars.githubusercontent.com`: Allow network connections to GitHub APIs and WHO IRIS
@@ -27,11 +27,7 @@ This document describes the security headers implementation for SGeX Workbench, 
 - `manifest-src 'self'`: Allow manifest from same origin only
 
 ### 2. X-Frame-Options
-```html
-<meta http-equiv="X-Frame-Options" content="DENY">
-```
-
-**Purpose**: Prevents clickjacking attacks by denying the page from being embedded in frames.
+**Note**: X-Frame-Options has been removed from meta tags as it should only be set via HTTP headers. GitHub Pages automatically provides clickjacking protection via server-side headers.
 
 ### 3. X-Content-Type-Options
 ```html
@@ -58,7 +54,13 @@ This document describes the security headers implementation for SGeX Workbench, 
 
 ### Files Modified
 - `public/index.html`: Main application HTML template (contains security headers for the React application)
+  - Updated CSP script-src directive to allow scripts from entire domain (fixes branch deployment subpath issue)
+  - Removed X-Frame-Options meta tag (should only be set via HTTP headers)
+- `public/docs/security-headers.md`: Updated documentation to reflect changes
 - `.github/workflows/landing-page-deployment.yml`: Added CI=false for production builds
+
+### Branch Deployment Support
+The CSP has been updated to support branch deployments by allowing scripts from the entire `https://litlfred.github.io` domain rather than just the specific `/sgex` path. This fixes the issue where branch deployments at subpaths like `/sgex/copilot-fix-665/` were blocked by the CSP.
 
 ### GitHub Pages Limitations
 
@@ -67,7 +69,7 @@ GitHub Pages is a static hosting service that doesn't support server-side config
 
 **Meta Tag Support**:
 - ✅ `Content-Security-Policy`: Fully supported via meta tags
-- ✅ `X-Frame-Options`: Supported via meta tags  
+- ❌ `X-Frame-Options`: Not recommended via meta tags (GitHub Pages provides this via HTTP headers)  
 - ✅ `X-Content-Type-Options`: Supported via meta tags
 - ✅ `Referrer-Policy`: Supported via meta tags
 - ✅ `Permissions-Policy`: Supported via meta tags
