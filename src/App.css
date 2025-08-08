@@ -22,9 +22,13 @@ body.theme-light {
   --who-text-primary: #333333;
   --who-text-secondary: #666666;
   --who-text-muted: #999999;
+  --who-text-on-primary: #ffffff;
   --who-border-color: #a0c8e8;
   --who-hover-bg: #e0ebf7;
   --who-selected-bg: rgba(0, 108, 190, 0.1);
+  --who-error-bg: #ffeef0;
+  --who-error-text: #d1242f;
+  --who-error-border: #fdaeb7;
 }
 
 /* Dark theme */
@@ -35,10 +39,14 @@ body.theme-dark {
   --who-text-primary: #ffffff;
   --who-text-secondary: rgba(255, 255, 255, 0.8);
   --who-text-muted: rgba(255, 255, 255, 0.6);
+  --who-text-on-primary: #ffffff;
   --who-border-color: rgba(255, 255, 255, 0.2);
   --who-hover-bg: rgba(255, 255, 255, 0.1);
   --who-bg-light: rgba(255, 255, 255, 0.05);
   --who-selected-bg: rgba(0, 108, 190, 0.3);
+  --who-error-bg: rgba(220, 53, 69, 0.1);
+  --who-error-text: #ff6b7a;
+  --who-error-border: rgba(220, 53, 69, 0.3);
   /* Dropdown specific overrides for better visibility */
   --who-dropdown-bg: #1a2380;
   --who-dropdown-hover-bg: rgba(255, 255, 255, 0.15);

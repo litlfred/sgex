@@ -534,14 +534,16 @@ const BranchListingPage = () => {
                 <div className="action-cards">
                     <div className="action-card main-site-card">
                         <a 
-                            href="https://litlfred.github.io/sgex/main"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href="./main/"
                             className="card-link"
                         >
-                            <img src={mascotImage} alt="SGEX Mascot" className="card-icon" />
-                            <h3>View Main Site</h3>
-                            <p>Access the main SGEX workbench</p>
+                            <div className="card-content">
+                                <img src={mascotImage} alt="SGEX Mascot" className="card-icon" />
+                                <div className="card-text">
+                                    <h3>View Main Site</h3>
+                                    <p>Access the main SGEX workbench</p>
+                                </div>
+                            </div>
                         </a>
                     </div>
                     
@@ -549,20 +551,24 @@ const BranchListingPage = () => {
                         <div className="action-card login-card">
                             <div className="card-content">
                                 <div className="login-icon">🔐</div>
-                                <h3>GitHub Login</h3>
-                                <p>Login to view and add comments</p>
-                                <PATLogin onAuthSuccess={handleAuthSuccess} />
+                                <div className="card-text">
+                                    <h3>GitHub Login</h3>
+                                    <p>Login to view and add comments</p>
+                                    <PATLogin onAuthSuccess={handleAuthSuccess} />
+                                </div>
                             </div>
                         </div>
                     ) : (
                         <div className="action-card logout-card">
                             <div className="card-content">
                                 <div className="login-icon">✅</div>
-                                <h3>Logged In</h3>
-                                <p>You can now view and add comments</p>
-                                <button onClick={handleLogout} className="logout-btn">
-                                    🚪 Logout
-                                </button>
+                                <div className="card-text">
+                                    <h3>Logged In</h3>
+                                    <p>You can now view and add comments</p>
+                                    <button onClick={handleLogout} className="logout-btn">
+                                        🚪 Logout
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
