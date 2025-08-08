@@ -1,0 +1,167 @@
+.sushi-error-boundary {
+  margin: 20px 0;
+  padding: 20px;
+  border: 2px solid #e74c3c;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ffe6e6 0%, #fff5f5 100%);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.1);
+}
+
+.error-content {
+  max-width: 800px;
+}
+
+.error-content h3 {
+  color: #c0392b;
+  margin: 0 0 15px 0;
+  font-size: 1.4em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-content p {
+  color: #2c3e50;
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+.error-content ul {
+  margin: 10px 0;
+  padding-left: 20px;
+  color: #2c3e50;
+}
+
+.error-content li {
+  margin: 5px 0;
+  line-height: 1.4;
+}
+
+.memory-info {
+  margin: 15px 0;
+  padding: 12px;
+  background: rgba(52, 152, 219, 0.1);
+  border-left: 4px solid #3498db;
+  border-radius: 4px;
+}
+
+.memory-info h4 {
+  margin: 0 0 8px 0;
+  color: #2980b9;
+  font-size: 1.1em;
+}
+
+.memory-info p {
+  margin: 0;
+  font-family: monospace;
+  font-size: 0.9em;
+  color: #34495e;
+}
+
+.error-suggestions {
+  margin: 20px 0;
+  padding: 15px;
+  background: rgba(46, 204, 113, 0.1);
+  border-left: 4px solid #27ae60;
+  border-radius: 4px;
+}
+
+.error-suggestions h4 {
+  margin: 0 0 10px 0;
+  color: #27ae60;
+  font-size: 1.1em;
+}
+
+.error-suggestions ul {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.error-actions {
+  margin: 20px 0;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.reset-btn,
+.reload-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reset-btn {
+  background: #3498db;
+  color: white;
+}
+
+.reset-btn:hover {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.reload-btn {
+  background: #e67e22;
+  color: white;
+}
+
+.reload-btn:hover {
+  background: #d35400;
+  transform: translateY(-1px);
+}
+
+.error-details {
+  margin-top: 20px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  background: #f8f9fa;
+}
+
+.error-details summary {
+  padding: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #34495e;
+  border-bottom: 1px solid #ecf0f1;
+  background: #ecf0f1;
+}
+
+.error-details summary:hover {
+  background: #d5dbdb;
+}
+
+.error-stack {
+  padding: 15px;
+}
+
+.error-stack h5 {
+  margin: 15px 0 8px 0;
+  color: #2c3e50;
+  font-size: 1em;
+}
+
+.error-stack h5:first-child {
+  margin-top: 0;
+}
+
+.error-stack pre {
+  background: #2c3e50;
+  color: #ecf0f1;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}

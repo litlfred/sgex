@@ -4,6 +4,7 @@ import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import githubService from '../services/githubService';
 import sushiWasmService from '../services/sushiWasmService';
 import { WasmLoader, performanceMonitor } from '../utils/wasmLoader';
+import SushiErrorBoundary from './SushiErrorBoundary';
 import './SushiRunner.css';
 
 const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] }) => {
@@ -285,6 +286,12 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
       
       addLog('ℹ️ Using JavaScript FSH processor (Enhanced with WASM-compatible interface)', 'info');
       
+      // Add memory usage check
+      if (performance.memory && performance.memory.usedJSHeapSize) {
+        const memoryMB = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1);
+        addLog(`💾 Current memory usage: ${memoryMB} MB`, 'info');
+      }
+      
       addLog('📦 Loading YAML processing library...', 'info');
       const yaml = await import('js-yaml');
       addLog('✅ Libraries loaded successfully', 'success');
@@ -317,269 +324,356 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
 
       addLog(`🔍 Analyzing ${files.length} FSH files...`, 'info');
       
-      const generatedResources = [];
+      // Check for large files and warn user
+      const largeFiles = files.filter(f => f.content && f.content.length > 1024 * 1024); // 1MB+
+      if (largeFiles.length > 0) {
+        addLog(`⚠️ Found ${largeFiles.length} large FSH files (>1MB). Processing may take longer.`, 'warning');
+      }
       
-      // Enhanced FSH parsing and analysis with realistic FHIR generation
+      const generatedResources = [];
+      let processedCount = 0;
+      
+      // Process files asynchronously to prevent browser blocking
       for (const file of files) {
-        addLog(`📄 Processing ${file.name}...`, 'info');
+        addLog(`📄 Processing ${file.name} (${processedCount + 1}/${files.length})...`, 'info');
+        
+        // Check file size and warn if very large
+        if (file.content && file.content.length > 5 * 1024 * 1024) { // 5MB+
+          addLog(`⚠️ ${file.name} is very large (${(file.content.length / 1024 / 1024).toFixed(1)}MB). Consider splitting into smaller files.`, 'warning');
+        }
         
         const content = file.content;
         
-        // Parse FSH content to extract definitions
+        // Parse FSH content to extract definitions with error handling
         const extractFSHDefinitions = (content) => {
-          const definitions = {
-            profiles: [],
-            instances: [],
-            valueSets: [],
-            codeSystems: [],
-            extensions: []
-          };
-          
-          const lines = content.split('\n');
-          let currentDefinition = null;
-          let currentType = null;
-          
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
+          try {
+            const definitions = {
+              profiles: [],
+              instances: [],
+              valueSets: [],
+              codeSystems: [],
+              extensions: []
+            };
             
-            // Detect definition types
-            if (line.startsWith('Profile:')) {
-              currentType = 'profiles';
-              currentDefinition = {
-                name: line.substring(8).trim(),
-                type: 'Profile',
-                parent: null,
-                id: null,
-                title: null,
-                description: null,
-                rules: []
-              };
-            } else if (line.startsWith('Instance:')) {
-              currentType = 'instances';
-              currentDefinition = {
-                name: line.substring(9).trim(),
-                type: 'Instance',
-                instanceOf: null,
-                usage: null,
-                title: null,
-                description: null,
-                rules: []
-              };
-            } else if (line.startsWith('ValueSet:')) {
-              currentType = 'valueSets';
-              currentDefinition = {
-                name: line.substring(9).trim(),
-                type: 'ValueSet',
-                id: null,
-                title: null,
-                description: null,
-                rules: []
-              };
-            } else if (line.startsWith('CodeSystem:')) {
-              currentType = 'codeSystems';
-              currentDefinition = {
-                name: line.substring(11).trim(),
-                type: 'CodeSystem',
-                id: null,
-                title: null,
-                description: null,
-                rules: []
-              };
-            } else if (line.startsWith('Extension:')) {
-              currentType = 'extensions';
-              currentDefinition = {
-                name: line.substring(10).trim(),
-                type: 'Extension',
-                id: null,
-                title: null,
-                description: null,
-                rules: []
-              };
+            // Check for empty or invalid content
+            if (!content || typeof content !== 'string') {
+              return definitions;
             }
             
-            // Parse properties
-            if (currentDefinition) {
-              if (line.startsWith('Parent:')) {
-                currentDefinition.parent = line.substring(7).trim();
-              } else if (line.startsWith('InstanceOf:')) {
-                currentDefinition.instanceOf = line.substring(11).trim();
-              } else if (line.startsWith('Usage:')) {
-                currentDefinition.usage = line.substring(6).trim();
-              } else if (line.startsWith('Id:')) {
-                currentDefinition.id = line.substring(3).trim();
-              } else if (line.startsWith('Title:')) {
-                currentDefinition.title = line.substring(6).trim().replace(/['"]/g, '');
-              } else if (line.startsWith('Description:')) {
-                currentDefinition.description = line.substring(12).trim().replace(/['"]/g, '');
-              } else if (line.startsWith('* ')) {
-                currentDefinition.rules.push(line.substring(2).trim());
+            // Limit line processing for very large files to prevent memory issues
+            const lines = content.split('\n');
+            const maxLinesToProcess = 10000; // Process max 10k lines per file
+            
+            if (lines.length > maxLinesToProcess) {
+              addLog(`  ⚠️ File is very large (${lines.length} lines). Processing first ${maxLinesToProcess} lines only.`, 'warning');
+            }
+            
+            const linesToProcess = lines.slice(0, Math.min(lines.length, maxLinesToProcess));
+            
+            let currentDefinition = null;
+            let currentType = null;
+            
+            for (let i = 0; i < linesToProcess.length; i++) {
+              const line = linesToProcess[i].trim();
+              
+              // Skip empty lines and comments to improve performance
+              if (!line || line.startsWith('//') || line.startsWith('/*')) {
+                continue;
               }
               
-              // If we hit a new definition or end of content, save current one
-              if ((line.includes(':') && !line.startsWith('* ') && 
-                   !line.startsWith('Parent:') && !line.startsWith('InstanceOf:') &&
-                   !line.startsWith('Usage:') && !line.startsWith('Id:') &&
-                   !line.startsWith('Title:') && !line.startsWith('Description:')) ||
-                  i === lines.length - 1) {
-                
-                if (currentDefinition && currentType && currentDefinition.name) {
-                  definitions[currentType].push(currentDefinition);
+              // Detect definition types
+              if (line.startsWith('Profile:')) {
+                currentType = 'profiles';
+                currentDefinition = {
+                  name: line.substring(8).trim(),
+                  type: 'Profile',
+                  parent: null,
+                  id: null,
+                  title: null,
+                  description: null,
+                  rules: []
+                };
+              } else if (line.startsWith('Instance:')) {
+                currentType = 'instances';
+                currentDefinition = {
+                  name: line.substring(9).trim(),
+                  type: 'Instance',
+                  instanceOf: null,
+                  usage: null,
+                  title: null,
+                  description: null,
+                  rules: []
+                };
+              } else if (line.startsWith('ValueSet:')) {
+                currentType = 'valueSets';
+                currentDefinition = {
+                  name: line.substring(9).trim(),
+                  type: 'ValueSet',
+                  id: null,
+                  title: null,
+                  description: null,
+                  rules: []
+                };
+              } else if (line.startsWith('CodeSystem:')) {
+                currentType = 'codeSystems';
+                currentDefinition = {
+                  name: line.substring(11).trim(),
+                  type: 'CodeSystem',
+                  id: null,
+                  title: null,
+                  description: null,
+                  rules: []
+                };
+              } else if (line.startsWith('Extension:')) {
+                currentType = 'extensions';
+                currentDefinition = {
+                  name: line.substring(10).trim(),
+                  type: 'Extension',
+                  id: null,
+                  title: null,
+                  description: null,
+                  rules: []
+                };
+              }
+              
+              // Parse properties
+              if (currentDefinition) {
+                if (line.startsWith('Parent:')) {
+                  currentDefinition.parent = line.substring(7).trim();
+                } else if (line.startsWith('InstanceOf:')) {
+                  currentDefinition.instanceOf = line.substring(11).trim();
+                } else if (line.startsWith('Usage:')) {
+                  currentDefinition.usage = line.substring(6).trim();
+                } else if (line.startsWith('Id:')) {
+                  currentDefinition.id = line.substring(3).trim();
+                } else if (line.startsWith('Title:')) {
+                  currentDefinition.title = line.substring(6).trim().replace(/['"]/g, '');
+                } else if (line.startsWith('Description:')) {
+                  currentDefinition.description = line.substring(12).trim().replace(/['"]/g, '');
+                } else if (line.startsWith('* ')) {
+                  // Limit rules to prevent memory issues
+                  if (currentDefinition.rules.length < 100) {
+                    currentDefinition.rules.push(line.substring(2).trim());
+                  }
                 }
-                currentDefinition = null;
-                currentType = null;
-                i--; // Re-process this line for the new definition
+                
+                // If we hit a new definition or end of content, save current one
+                if ((line.includes(':') && !line.startsWith('* ') && 
+                     !line.startsWith('Parent:') && !line.startsWith('InstanceOf:') &&
+                     !line.startsWith('Usage:') && !line.startsWith('Id:') &&
+                     !line.startsWith('Title:') && !line.startsWith('Description:')) ||
+                    i === linesToProcess.length - 1) {
+                  
+                  if (currentDefinition && currentType && currentDefinition.name) {
+                    definitions[currentType].push(currentDefinition);
+                  }
+                  currentDefinition = null;
+                  currentType = null;
+                  i--; // Re-process this line for the new definition
+                }
               }
             }
+            
+            return definitions;
+          } catch (err) {
+            addLog(`  ❌ Error parsing FSH content: ${err.message}`, 'error');
+            return {
+              profiles: [],
+              instances: [],
+              valueSets: [],
+              codeSystems: [],
+              extensions: []
+            };
           }
-          
-          return definitions;
         };
         
         const definitions = extractFSHDefinitions(content);
         
-        // Generate realistic FHIR resources from FSH definitions
-        definitions.profiles.forEach(profile => {
-          const profileId = profile.id || profile.name.toLowerCase().replace(/\s+/g, '-');
-          const structureDefinition = {
-            resourceType: 'StructureDefinition',
-            id: profileId,
-            url: `${configObj.canonical}/StructureDefinition/${profileId}`,
-            name: profile.name,
-            title: profile.title || profile.name,
-            status: 'draft',
-            fhirVersion: configObj.fhirVersion || '4.0.1',
-            kind: 'resource',
-            abstract: false,
-            type: profile.parent === 'Patient' ? 'Patient' : 
-                   profile.parent === 'Observation' ? 'Observation' :
-                   profile.parent || 'DomainResource',
-            baseDefinition: `http://hl7.org/fhir/StructureDefinition/${profile.parent || 'DomainResource'}`,
-            derivation: 'constraint',
-            description: profile.description || `Profile for ${profile.name}`
-          };
-          
-          if (profile.rules.length > 0) {
-            structureDefinition.differential = {
-              element: profile.rules.map((rule, index) => ({
-                id: `${structureDefinition.type}.${rule.split(' ')[0]}`,
-                path: `${structureDefinition.type}.${rule.split(' ')[0]}`,
-                short: `Rule: ${rule}`
-              }))
+        // Yield control back to browser to prevent blocking
+        if (processedCount % 3 === 0) { // Every 3 files
+          await new Promise(resolve => setTimeout(resolve, 10)); // Small delay to yield
+        }
+        
+        // Generate realistic FHIR resources from FSH definitions with memory management
+        const resourceLimit = 20; // Limit resources per type to prevent memory issues
+        
+        definitions.profiles.slice(0, resourceLimit).forEach(profile => {
+          try {
+            const profileId = profile.id || profile.name.toLowerCase().replace(/\s+/g, '-');
+            const structureDefinition = {
+              resourceType: 'StructureDefinition',
+              id: profileId,
+              url: `${configObj.canonical}/StructureDefinition/${profileId}`,
+              name: profile.name,
+              title: profile.title || profile.name,
+              status: 'draft',
+              fhirVersion: configObj.fhirVersion || '4.0.1',
+              kind: 'resource',
+              abstract: false,
+              type: profile.parent === 'Patient' ? 'Patient' : 
+                     profile.parent === 'Observation' ? 'Observation' :
+                     profile.parent || 'DomainResource',
+              baseDefinition: `http://hl7.org/fhir/StructureDefinition/${profile.parent || 'DomainResource'}`,
+              derivation: 'constraint',
+              description: profile.description || `Profile for ${profile.name}`
             };
-          }
-          
-          generatedResources.push({
-            type: 'StructureDefinition',
-            filename: `StructureDefinition-${profileId}.json`,
-            content: JSON.stringify(structureDefinition, null, 2),
-            id: profileId,
-            name: profile.name,
-            title: structureDefinition.title,
-            url: structureDefinition.url
-          });
-          
-          addLog(`  📊 Generated StructureDefinition: ${profile.name}`, 'success');
-        });
-        
-        definitions.instances.forEach(instance => {
-          const instanceId = instance.name.toLowerCase().replace(/\s+/g, '-');
-          const resourceType = instance.instanceOf === 'Patient' ? 'Patient' :
-                             instance.instanceOf === 'Observation' ? 'Observation' :
-                             'Patient'; // Default fallback
-                             
-          const fhirInstance = {
-            resourceType: resourceType,
-            id: instanceId,
-            meta: {
-              profile: instance.instanceOf ? [`${configObj.canonical}/StructureDefinition/${instance.instanceOf}`] : undefined
+            
+            if (profile.rules.length > 0) {
+              structureDefinition.differential = {
+                element: profile.rules.slice(0, 10).map((rule, index) => ({ // Limit elements
+                  id: `${structureDefinition.type}.${rule.split(' ')[0]}`,
+                  path: `${structureDefinition.type}.${rule.split(' ')[0]}`,
+                  short: `Rule: ${rule}`
+                }))
+              };
             }
-          };
-          
-          // Add basic properties based on resource type
-          if (resourceType === 'Patient') {
-            fhirInstance.name = [{
-              family: instance.name.split(' ').pop(),
-              given: instance.name.split(' ').slice(0, -1)
-            }];
+            
+            generatedResources.push({
+              type: 'StructureDefinition',
+              filename: `StructureDefinition-${profileId}.json`,
+              content: JSON.stringify(structureDefinition, null, 2),
+              id: profileId,
+              name: profile.name,
+              title: structureDefinition.title,
+              url: structureDefinition.url
+            });
+            
+            addLog(`  📊 Generated StructureDefinition: ${profile.name}`, 'success');
+          } catch (err) {
+            addLog(`  ❌ Error generating StructureDefinition for ${profile.name}: ${err.message}`, 'error');
           }
-          
-          generatedResources.push({
-            type: resourceType,
-            filename: `${instanceId}.json`,
-            content: JSON.stringify(fhirInstance, null, 2),
-            id: instanceId,
-            resourceType: resourceType
-          });
-          
-          addLog(`  📊 Generated ${resourceType} instance: ${instance.name}`, 'success');
         });
         
-        definitions.valueSets.forEach(vs => {
-          const vsId = vs.id || vs.name.toLowerCase().replace(/\s+/g, '-');
-          const valueSet = {
-            resourceType: 'ValueSet',
-            id: vsId,
-            url: `${configObj.canonical}/ValueSet/${vsId}`,
-            name: vs.name,
-            title: vs.title || vs.name,
-            status: 'draft',
-            description: vs.description || `ValueSet for ${vs.name}`,
-            compose: {
-              include: [{
-                system: 'http://example.org/codes',
-                concept: [
-                  { code: 'example1', display: 'Example Code 1' },
-                  { code: 'example2', display: 'Example Code 2' }
-                ]
-              }]
+        if (definitions.profiles.length > resourceLimit) {
+          addLog(`  ⚠️ Limited to first ${resourceLimit} profiles to prevent memory issues`, 'warning');
+        }
+        
+        definitions.instances.slice(0, resourceLimit).forEach(instance => {
+          try {
+            const instanceId = instance.name.toLowerCase().replace(/\s+/g, '-');
+            const resourceType = instance.instanceOf === 'Patient' ? 'Patient' :
+                               instance.instanceOf === 'Observation' ? 'Observation' :
+                               'Patient'; // Default fallback
+                               
+            const fhirInstance = {
+              resourceType: resourceType,
+              id: instanceId,
+              meta: {
+                profile: instance.instanceOf ? [`${configObj.canonical}/StructureDefinition/${instance.instanceOf}`] : undefined
+              }
+            };
+            
+            // Add basic properties based on resource type
+            if (resourceType === 'Patient') {
+              fhirInstance.name = [{
+                family: instance.name.split(' ').pop(),
+                given: instance.name.split(' ').slice(0, -1)
+              }];
             }
-          };
-          
-          generatedResources.push({
-            type: 'ValueSet',
-            filename: `ValueSet-${vsId}.json`,
-            content: JSON.stringify(valueSet, null, 2),
-            id: vsId,
-            name: vs.name,
-            title: valueSet.title,
-            url: valueSet.url
-          });
-          
-          addLog(`  📊 Generated ValueSet: ${vs.name}`, 'success');
+            
+            generatedResources.push({
+              type: resourceType,
+              filename: `${instanceId}.json`,
+              content: JSON.stringify(fhirInstance, null, 2),
+              id: instanceId,
+              resourceType: resourceType
+            });
+            
+            addLog(`  📊 Generated ${resourceType} instance: ${instance.name}`, 'success');
+          } catch (err) {
+            addLog(`  ❌ Error generating instance for ${instance.name}: ${err.message}`, 'error');
+          }
         });
         
-        definitions.codeSystems.forEach(cs => {
-          const csId = cs.id || cs.name.toLowerCase().replace(/\s+/g, '-');
-          const codeSystem = {
-            resourceType: 'CodeSystem',
-            id: csId,
-            url: `${configObj.canonical}/CodeSystem/${csId}`,
-            name: cs.name,
-            title: cs.title || cs.name,
-            status: 'draft',
-            content: 'complete',
-            description: cs.description || `CodeSystem for ${cs.name}`,
-            concept: [
-              { code: 'concept1', display: 'Concept 1' },
-              { code: 'concept2', display: 'Concept 2' }
-            ]
-          };
-          
-          generatedResources.push({
-            type: 'CodeSystem',
-            filename: `CodeSystem-${csId}.json`,
-            content: JSON.stringify(codeSystem, null, 2),
-            id: csId,
-            name: cs.name,
-            title: codeSystem.title,
-            url: codeSystem.url
-          });
-          
-          addLog(`  📊 Generated CodeSystem: ${cs.name}`, 'success');
+        definitions.valueSets.slice(0, resourceLimit).forEach(vs => {
+          try {
+            const vsId = vs.id || vs.name.toLowerCase().replace(/\s+/g, '-');
+            const valueSet = {
+              resourceType: 'ValueSet',
+              id: vsId,
+              url: `${configObj.canonical}/ValueSet/${vsId}`,
+              name: vs.name,
+              title: vs.title || vs.name,
+              status: 'draft',
+              description: vs.description || `ValueSet for ${vs.name}`,
+              compose: {
+                include: [{
+                  system: 'http://example.org/codes',
+                  concept: [
+                    { code: 'example1', display: 'Example Code 1' },
+                    { code: 'example2', display: 'Example Code 2' }
+                  ]
+                }]
+              }
+            };
+            
+            generatedResources.push({
+              type: 'ValueSet',
+              filename: `ValueSet-${vsId}.json`,
+              content: JSON.stringify(valueSet, null, 2),
+              id: vsId,
+              name: vs.name,
+              title: valueSet.title,
+              url: valueSet.url
+            });
+            
+            addLog(`  📊 Generated ValueSet: ${vs.name}`, 'success');
+          } catch (err) {
+            addLog(`  ❌ Error generating ValueSet for ${vs.name}: ${err.message}`, 'error');
+          }
+        });
+        
+        definitions.codeSystems.slice(0, resourceLimit).forEach(cs => {
+          try {
+            const csId = cs.id || cs.name.toLowerCase().replace(/\s+/g, '-');
+            const codeSystem = {
+              resourceType: 'CodeSystem',
+              id: csId,
+              url: `${configObj.canonical}/CodeSystem/${csId}`,
+              name: cs.name,
+              title: cs.title || cs.name,
+              status: 'draft',
+              content: 'complete',
+              description: cs.description || `CodeSystem for ${cs.name}`,
+              concept: [
+                { code: 'concept1', display: 'Concept 1' },
+                { code: 'concept2', display: 'Concept 2' }
+              ]
+            };
+            
+            generatedResources.push({
+              type: 'CodeSystem',
+              filename: `CodeSystem-${csId}.json`,
+              content: JSON.stringify(codeSystem, null, 2),
+              id: csId,
+              name: cs.name,
+              title: codeSystem.title,
+              url: codeSystem.url
+            });
+            
+            addLog(`  📊 Generated CodeSystem: ${cs.name}`, 'success');
+          } catch (err) {
+            addLog(`  ❌ Error generating CodeSystem for ${cs.name}: ${err.message}`, 'error');
+          }
         });
         
         if (file.isFromStaging) {
           addLog(`  🏗️ File from staging ground`, 'info');
+        }
+        
+        processedCount++;
+        
+        // Memory cleanup and status update
+        if (processedCount % 5 === 0) {
+          if (performance.memory && performance.memory.usedJSHeapSize) {
+            const memoryMB = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1);
+            addLog(`💾 Memory usage: ${memoryMB} MB (processed ${processedCount}/${files.length} files)`, 'info');
+          }
+          
+          // Force garbage collection if available (development only)
+          if (window.gc && typeof window.gc === 'function') {
+            window.gc();
+          }
         }
       }
 
@@ -1174,149 +1268,151 @@ const SushiRunner = ({ repository, selectedBranch, profile, stagingFiles = [] })
   );
 
   return (
-    <div className="sushi-runner-section">
-      <div 
-        className={`sushi-status-bar ${isExpanded ? 'expanded' : 'collapsed'}`}
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="status-bar-header">
-          <span className="status-icon">🍣</span>
-          <span className="status-title">SUSHI (FHIR Shorthand)</span>
-          <span className="expand-icon">{isExpanded ? '▼' : '▶'}</span>
+    <SushiErrorBoundary>
+      <div className="sushi-runner-section">
+        <div 
+          className={`sushi-status-bar ${isExpanded ? 'expanded' : 'collapsed'}`}
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div className="status-bar-header">
+            <span className="status-icon">🍣</span>
+            <span className="status-title">SUSHI (FHIR Shorthand)</span>
+            <span className="expand-icon">{isExpanded ? '▼' : '▶'}</span>
+          </div>
+          
+          {!isExpanded && (
+            <div className="status-summary">
+              Client-side FHIR Implementation Guide compilation
+            </div>
+          )}
         </div>
-        
-        {!isExpanded && (
-          <div className="status-summary">
-            Client-side FHIR Implementation Guide compilation
-          </div>
-        )}
-      </div>
 
-      {isExpanded && (
-        <div className="sushi-controls">
-          <div className="sushi-description">
-            <p>
-              Run SUSHI (FHIR Shorthand) compilation directly in your browser to generate 
-              FHIR Implementation Guide resources from FSH files.
-            </p>
-          </div>
+        {isExpanded && (
+          <div className="sushi-controls">
+            <div className="sushi-description">
+              <p>
+                Run SUSHI (FHIR Shorthand) compilation directly in your browser to generate 
+                FHIR Implementation Guide resources from FSH files.
+              </p>
+            </div>
 
-          <div className="execution-options">
-            <div className="execution-mode-selector">
-              <h4>⚙️ Execution Mode</h4>
-              <div className="mode-options">
-                <label className="mode-option">
-                  <input 
-                    type="radio" 
-                    name="executionMode" 
-                    value="auto" 
-                    checked={executionMode === 'auto'}
-                    onChange={(e) => setExecutionMode(e.target.value)}
-                  />
-                  <span className="mode-label">
-                    🤖 Auto (WebAssembly when available)
-                    {wasmSupported && wasmInitialized && <span className="wasm-badge">WASM Ready</span>}
-                  </span>
-                </label>
-                
-                {wasmSupported && (
+            <div className="execution-options">
+              <div className="execution-mode-selector">
+                <h4>⚙️ Execution Mode</h4>
+                <div className="mode-options">
                   <label className="mode-option">
                     <input 
                       type="radio" 
                       name="executionMode" 
-                      value="wasm" 
-                      checked={executionMode === 'wasm'}
+                      value="auto" 
+                      checked={executionMode === 'auto'}
                       onChange={(e) => setExecutionMode(e.target.value)}
-                      disabled={!wasmInitialized}
                     />
                     <span className="mode-label">
-                      🚀 WebAssembly (High Performance)
-                      {!wasmInitialized && <span className="loading-badge">Initializing...</span>}
+                      🤖 Auto (WebAssembly when available)
+                      {wasmSupported && wasmInitialized && <span className="wasm-badge">WASM Ready</span>}
                     </span>
                   </label>
-                )}
+                  
+                  {wasmSupported && (
+                    <label className="mode-option">
+                      <input 
+                        type="radio" 
+                        name="executionMode" 
+                        value="wasm" 
+                        checked={executionMode === 'wasm'}
+                        onChange={(e) => setExecutionMode(e.target.value)}
+                        disabled={!wasmInitialized}
+                      />
+                      <span className="mode-label">
+                        🚀 WebAssembly (High Performance)
+                        {!wasmInitialized && <span className="loading-badge">Initializing...</span>}
+                      </span>
+                    </label>
+                  )}
+                  
+                  <label className="mode-option">
+                    <input 
+                      type="radio" 
+                      name="executionMode" 
+                      value="javascript" 
+                      checked={executionMode === 'javascript'}
+                      onChange={(e) => setExecutionMode(e.target.value)}
+                    />
+                    <span className="mode-label">
+                      ⚙️ JavaScript (Fallback)
+                    </span>
+                  </label>
+                </div>
                 
-                <label className="mode-option">
-                  <input 
-                    type="radio" 
-                    name="executionMode" 
-                    value="javascript" 
-                    checked={executionMode === 'javascript'}
-                    onChange={(e) => setExecutionMode(e.target.value)}
-                  />
-                  <span className="mode-label">
-                    ⚙️ JavaScript (Fallback)
-                  </span>
-                </label>
+                {!wasmSupported && (
+                  <div className="wasm-not-supported">
+                    <p>⚠️ WebAssembly is not supported in this browser. JavaScript fallback will be used.</p>
+                  </div>
+                )}
               </div>
-              
-              {!wasmSupported && (
-                <div className="wasm-not-supported">
-                  <p>⚠️ WebAssembly is not supported in this browser. JavaScript fallback will be used.</p>
+
+              <div className="option-group">
+                <h4>📂 Repository Files Only</h4>
+                <p>
+                  Compile using sushi-config.yaml and input/fsh files from the GitHub repository ({selectedBranch} branch).
+                </p>
+                <button
+                  className="run-sushi-btn primary"
+                  onClick={() => handleRunSushi(false)}
+                  disabled={isRunning}
+                >
+                  {isRunning ? '⏳ Running...' : '🚀 Run SUSHI'}
+                </button>
+              </div>
+
+              {stagingFiles.length > 0 && (
+                <div className="option-group">
+                  <h4>🏗️ Repository + Staging Files</h4>
+                  <p>
+                    Compile using repository files, with staging ground files ({stagingFiles.length} files) 
+                    overriding any repository files with the same name.
+                  </p>
+                  <button
+                    className="run-sushi-btn secondary"
+                    onClick={() => handleRunSushi(true)}
+                    disabled={isRunning}
+                  >
+                    {isRunning ? '⏳ Running...' : '🚀 Run SUSHI + Staging'}
+                  </button>
                 </div>
               )}
             </div>
 
-            <div className="option-group">
-              <h4>📂 Repository Files Only</h4>
-              <p>
-                Compile using sushi-config.yaml and input/fsh files from the GitHub repository ({selectedBranch} branch).
-              </p>
-              <button
-                className="run-sushi-btn primary"
-                onClick={() => handleRunSushi(false)}
-                disabled={isRunning}
-              >
-                {isRunning ? '⏳ Running...' : '🚀 Run SUSHI'}
-              </button>
-            </div>
-
-            {stagingFiles.length > 0 && (
-              <div className="option-group">
-                <h4>🏗️ Repository + Staging Files</h4>
-                <p>
-                  Compile using repository files, with staging ground files ({stagingFiles.length} files) 
-                  overriding any repository files with the same name.
-                </p>
-                <button
-                  className="run-sushi-btn secondary"
-                  onClick={() => handleRunSushi(true)}
-                  disabled={isRunning}
-                >
-                  {isRunning ? '⏳ Running...' : '🚀 Run SUSHI + Staging'}
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="sushi-status">
-            <div className="status-item">
-              <span className="label">Execution:</span>
-              <span className="value">
-                {wasmSupported && wasmInitialized ? '🚀 WebAssembly Ready' : '⚙️ JavaScript'}
-              </span>
-            </div>
-            <div className="status-item">
-              <span className="label">Config:</span>
-              <span className="value">{sushiConfig ? '✅ Found' : '❓ Unknown'}</span>
-            </div>
-            <div className="status-item">
-              <span className="label">FSH Files:</span>
-              <span className="value">{fshFiles.length} in repository</span>
-            </div>
-            {stagingFiles.length > 0 && (
+            <div className="sushi-status">
               <div className="status-item">
-                <span className="label">Staging:</span>
-                <span className="value">{stagingFiles.filter(f => f.path && f.path.endsWith('.fsh')).length} FSH files</span>
+                <span className="label">Execution:</span>
+                <span className="value">
+                  {wasmSupported && wasmInitialized ? '🚀 WebAssembly Ready' : '⚙️ JavaScript'}
+                </span>
               </div>
-            )}
+              <div className="status-item">
+                <span className="label">Config:</span>
+                <span className="value">{sushiConfig ? '✅ Found' : '❓ Unknown'}</span>
+              </div>
+              <div className="status-item">
+                <span className="label">FSH Files:</span>
+                <span className="value">{fshFiles.length} in repository</span>
+              </div>
+              {stagingFiles.length > 0 && (
+                <div className="status-item">
+                  <span className="label">Staging:</span>
+                  <span className="value">{stagingFiles.filter(f => f.path && f.path.endsWith('.fsh')).length} FSH files</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {showModal && <LogModal />}
-      {showFileViewer && <FileViewerModal />}
-    </div>
+        {showModal && <LogModal />}
+        {showFileViewer && <FileViewerModal />}
+      </div>
+    </SushiErrorBoundary>
   );
 };
 

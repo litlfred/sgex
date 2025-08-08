@@ -3,17 +3,26 @@
  * 
  * This service manages the loading and execution of SUSHI via WebAssembly.
  * It provides a bridge between the React application and the WASM module.
+ * Optimized for memory efficiency and browser stability.
  */
 
 class VirtualFileSystem {
   constructor() {
     this.files = new Map();
     this.directories = new Set();
+    this.maxMemoryUsage = 50 * 1024 * 1024; // 50MB limit
+    this.currentMemoryUsage = 0;
   }
 
   writeFile(path, content) {
     // Normalize path
     const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+    
+    // Check memory limits
+    const contentSize = new TextEncoder().encode(content).length;
+    if (this.currentMemoryUsage + contentSize > this.maxMemoryUsage) {
+      throw new Error(`Memory limit exceeded. Cannot store file ${normalizedPath} (${(contentSize / 1024 / 1024).toFixed(1)}MB)`);
+    }
     
     // Ensure parent directories exist
     const pathParts = normalizedPath.split('/');
@@ -24,7 +33,16 @@ class VirtualFileSystem {
     
     // Store file content as Uint8Array for WASM compatibility
     const encoder = new TextEncoder();
-    this.files.set(normalizedPath, encoder.encode(content));
+    const data = encoder.encode(content);
+    
+    // Remove old file if exists to update memory usage
+    if (this.files.has(normalizedPath)) {
+      const oldData = this.files.get(normalizedPath);
+      this.currentMemoryUsage -= oldData.length;
+    }
+    
+    this.files.set(normalizedPath, data);
+    this.currentMemoryUsage += data.length;
     
     return true;
   }
@@ -87,6 +105,15 @@ class VirtualFileSystem {
   clear() {
     this.files.clear();
     this.directories.clear();
+    this.currentMemoryUsage = 0;
+  }
+
+  getMemoryUsage() {
+    return {
+      used: this.currentMemoryUsage,
+      limit: this.maxMemoryUsage,
+      percentage: (this.currentMemoryUsage / this.maxMemoryUsage) * 100
+    };
   }
 }
 
@@ -481,31 +508,51 @@ class SushiWASMRunner {
       await this.initialize();
     }
 
-    // Clear previous files
+    // Clear previous files and check memory
     this.fs.clear();
-
-    // Write configuration
-    if (config) {
-      const configYaml = typeof config === 'string' ? config : 
-        (await import('js-yaml')).default.dump(config);
-      this.fs.writeFile('sushi-config.yaml', configYaml);
+    
+    // Check total size of input files
+    const totalSize = fshFiles.reduce((sum, file) => sum + (file.content?.length || 0), 0);
+    if (totalSize > 30 * 1024 * 1024) { // 30MB limit
+      throw new Error(`Input files too large (${(totalSize / 1024 / 1024).toFixed(1)}MB). Consider processing fewer files at once.`);
     }
 
-    // Write FSH files
-    fshFiles.forEach(file => {
-      const filePath = file.path || `input/fsh/${file.name}`;
-      this.fs.writeFile(filePath, file.content);
-    });
+    try {
+      // Write configuration
+      if (config) {
+        const configYaml = typeof config === 'string' ? config : 
+          (await import('js-yaml')).default.dump(config);
+        this.fs.writeFile('sushi-config.yaml', configYaml);
+      }
 
-    // Execute SUSHI via WASM interface
-    const result = this.wasmModule.ccall(
-      'runSushi',           // Function name
-      'string',             // Return type
-      ['string'],           // Parameter types
-      ['/workspace']        // Parameters
-    );
+      // Write FSH files with size validation
+      for (const file of fshFiles) {
+        const filePath = file.path || `input/fsh/${file.name}`;
+        
+        // Skip very large files to prevent crashes
+        if (file.content && file.content.length > 5 * 1024 * 1024) { // 5MB per file
+          console.warn(`Skipping large file ${file.name} (${(file.content.length / 1024 / 1024).toFixed(1)}MB)`);
+          continue;
+        }
+        
+        this.fs.writeFile(filePath, file.content || '');
+      }
 
-    return JSON.parse(result);
+      // Execute SUSHI via WASM interface
+      const result = this.wasmModule.ccall(
+        'runSushi',           // Function name
+        'string',             // Return type
+        ['string'],           // Parameter types
+        ['/workspace']        // Parameters
+      );
+
+      return JSON.parse(result);
+      
+    } catch (error) {
+      // Clear memory on error
+      this.fs.clear();
+      throw error;
+    }
   }
 }
 
