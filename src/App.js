@@ -12,7 +12,7 @@ function App() {
   
   React.useEffect(() => {
     appLogger.componentMount();
-    appLogger.info('SGEX Workbench application started', { 
+    appLogger.info('SGEX Branch Listing application started', { 
       environment: process.env.NODE_ENV,
       basename: basename
     });
