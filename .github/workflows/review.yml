@@ -76,14 +76,24 @@ jobs:
             **Approved:** ${approvedAt}
             **Action:** Click the button below to deploy this branch for preview
             
-            ### Deploy Now
-            To deploy this feature branch for preview, [click here to run the deployment workflow](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml) and:
+            ### 🚀 Deploy Now
             
-            1. Click "Run workflow"
-            2. Enter branch name: \`${branchName}\`
-            3. Confirm deployment
+            <table>
+            <tr>
+            <td align="center">
+            <a href="https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml?branch=${encodeURIComponent(branchName)}"><img src="https://img.shields.io/badge/🚀_DEPLOY_BRANCH-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Deploy Branch" /></a><br/>
+            <sub><b>Click to deploy this branch</b></sub>
+            </td>
+            </tr>
+            </table>
             
-            The preview will be available at: \`https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/\`
+            ### 📋 Instructions
+            1. Click the "DEPLOY BRANCH" button above
+            2. Click "Run workflow" button
+            3. Branch name will be pre-filled: \`${branchName}\`
+            4. Confirm deployment
+            
+            **Preview will be available at:** \`https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/\`
             
             ---
             

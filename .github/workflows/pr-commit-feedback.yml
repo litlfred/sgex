@@ -124,9 +124,9 @@ jobs:
             const workflowRunUrl = '${{ steps.workflow_status.outputs.workflow_run_url }}';
             const createdAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
             
-            // Create approval URL that will take user directly to the approval page
+            // Create direct workflow dispatch URL with pre-filled branch name
             const approvalUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${workflowRunId}`;
-            const workflowRerunUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
+            const workflowDispatchUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml?branch=${encodeURIComponent(branchName)}`;
             
             const commentBody = `## ⏳ Deployment Approval Required
             
@@ -139,15 +139,26 @@ jobs:
             
             ### 🚀 Quick Actions
             
-            **Need to approve deployment?** → [**✅ Click here to approve and run deployment**](${approvalUrl}) ← 
+            <table>
+            <tr>
+            <td align="center">
+            <a href="${approvalUrl}"><img src="https://img.shields.io/badge/✅_APPROVE_&_RUN-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Approve and Run" /></a><br/>
+            <sub><b>Click to approve deployment</b></sub>
+            </td>
+            <td align="center">
+            <a href="${workflowDispatchUrl}"><img src="https://img.shields.io/badge/🔄_REDEPLOY_BRANCH-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Redeploy Branch" /></a><br/>
+            <sub><b>Manual restart deployment</b></sub>
+            </td>
+            </tr>
+            </table>
             
-            **Instructions for approval:**
-            1. Click the approval link above
-            2. Click the "Approve and run" button on the workflow page
-            3. The deployment will start automatically after approval
+            ### 📋 Instructions
+            
+            **To approve:** Click the "APPROVE & RUN" button above, then click "Approve and run" on the workflow page.
+            
+            **To redeploy:** Click the "REDEPLOY BRANCH" button above, then click "Run workflow" and the branch will be pre-filled.
             
             **Alternative actions:**
-            - 🔄 [Manual Redeploy](${workflowRerunUrl}) - Run workflow manually with branch: \`${branchName}\`
             - 📄 [View Workflow Details](${workflowRunUrl}) - See full workflow information
             
             ---
@@ -221,7 +232,7 @@ jobs:
             const mainTargetName = 'sgex-main-app';
             const branchUrl = `https://litlfred.github.io/sgex/${branchName === 'main' ? 'main' : safeBranchName}/`;
             const mainAppUrl = 'https://litlfred.github.io/sgex/main/';
-            const workflowRerunUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
+            const workflowDispatchUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml?branch=${encodeURIComponent(branchName)}`;
             
             let commentBody;
             
@@ -234,20 +245,37 @@ jobs:
               **Deployed:** ${completedAt}
               
               ### 🌐 Preview URLs
-              **Branch Preview:** <a href="${branchUrl}" target="${branchTargetName}">${branchUrl}</a>
-              **Main App:** <a href="${mainAppUrl}" target="${mainTargetName}">${mainAppUrl}</a>
+              
+              <table>
+              <tr>
+              <td align="center">
+              <a href="${branchUrl}" target="${branchTargetName}"><img src="https://img.shields.io/badge/🌐_BRANCH_PREVIEW-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Branch Preview" /></a><br/>
+              <sub><b>Open branch preview</b></sub>
+              </td>
+              <td align="center">
+              <a href="${mainAppUrl}" target="${mainTargetName}"><img src="https://img.shields.io/badge/🏠_MAIN_APP-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Main App" /></a><br/>
+              <sub><b>Open main application</b></sub>
+              </td>
+              </tr>
+              </table>
               
               ### 🔄 Deployment Actions
-              **Need to redeploy after updates?** → [**🚀 Click here to redeploy this branch**](${workflowRerunUrl}) ← 
               
-              **Instructions for redeployment:**
-              1. Click the redeploy link above
-              2. Click "Run workflow" button  
-              3. Enter branch name: \`${branchName}\`
-              4. Click "Run workflow" to confirm
+              <table>
+              <tr>
+              <td align="center">
+              <a href="${workflowDispatchUrl}"><img src="https://img.shields.io/badge/🚀_REDEPLOY_BRANCH-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Redeploy Branch" /></a><br/>
+              <sub><b>Redeploy this branch</b></sub>
+              </td>
+              <td align="center">
+              <a href="${workflowRunUrl}"><img src="https://img.shields.io/badge/📄_BUILD_LOGS-6C757D?style=for-the-badge&logo=github&logoColor=white" alt="Build Logs" /></a><br/>
+              <sub><b>View deployment details</b></sub>
+              </td>
+              </tr>
+              </table>
               
-              **Other actions:**
-              - 📄 [View Build Logs](${workflowRunUrl}) - See deployment details
+              ### 📋 Instructions
+              **To redeploy:** Click "REDEPLOY BRANCH" above, then click "Run workflow" (branch name will be pre-filled)
               
               ---
               💡 *This branch preview was deployed successfully and will remain until the next deployment.*
@@ -261,15 +289,29 @@ jobs:
               **Commit:** \`${commitSha.substring(0, 7)}\`
               **Failed:** ${completedAt}
               
-              ### 🔍 Troubleshooting
-              - 📄 [View Build Logs](${workflowRunUrl}) - Check what went wrong
-              - 🔄 [Restart Build](${workflowRerunUrl}) - Click "Run workflow" and enter branch: \`${branchName}\`
+              ### 🔍 Troubleshooting Actions
+              
+              <table>
+              <tr>
+              <td align="center">
+              <a href="${workflowRunUrl}"><img src="https://img.shields.io/badge/📄_CHECK_LOGS-DC3545?style=for-the-badge&logo=github&logoColor=white" alt="Check Logs" /></a><br/>
+              <sub><b>View error details</b></sub>
+              </td>
+              <td align="center">
+              <a href="${workflowDispatchUrl}"><img src="https://img.shields.io/badge/🔄_RETRY_BUILD-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Retry Build" /></a><br/>
+              <sub><b>Restart deployment</b></sub>
+              </td>
+              </tr>
+              </table>
               
               ### 💡 Common Issues
               - Build errors in code changes
               - Missing dependencies or npm install issues
               - GitHub Pages deployment limits
               - Network connectivity issues
+              
+              ### 📋 Instructions
+              **To retry:** Click "RETRY BUILD" above, then click "Run workflow" (branch name will be pre-filled)
               
               ---
               ❗ *Please check the build logs above and fix any issues before restarting the deployment.*
