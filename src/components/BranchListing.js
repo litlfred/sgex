@@ -1161,33 +1161,6 @@ const BranchListing = () => {
                                 </div>
                               )}
                               
-                              {/* Scrollable Comments Area */}
-                              <div className="discussion-scroll-area">
-                                {loadingComments ? (
-                                  <div className="comments-loading">Loading full discussion...</div>
-                                ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
-                                  <div className="comments-list">
-                                    {prComments[pr.number].map((comment) => (
-                                      <div key={comment.id} className="comment-item">
-                                        <div className="comment-header">
-                                          <img 
-                                            src={comment.avatar_url} 
-                                            alt={comment.author} 
-                                            className="comment-avatar"
-                                          />
-                                          <span className="comment-author">{comment.author}</span>
-                                          <span className="comment-date">{comment.created_at}</span>
-                                        </div>
-                                        <div className="comment-body">{comment.body}</div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <div className="no-comments">
-                                    No comments yet. {isAuthenticated ? 'Be the first to comment!' : 'Sign in to be the first to comment!'}
-                                  </div>
-                                )}
-                              </div>
                             </div>
                           )}
                         </div>
