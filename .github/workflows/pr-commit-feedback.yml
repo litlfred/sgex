@@ -1,0 +1,326 @@
+name: PR Commit Feedback
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - develop
+      - gh-pages
+      - deploy
+  workflow_run:
+    workflows: ["Deploy Feature Branch"]
+    types:
+      - requested
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  check-deployment-status:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Get commit and PR information
+        id: pr_info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber = null;
+            let branchName = null;
+            let commitSha = null;
+            
+            // Handle different trigger types
+            if (context.eventName === 'push') {
+              branchName = context.ref.replace('refs/heads/', '');
+              commitSha = context.sha;
+              
+              // Find PR for this branch
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${branchName}`
+              });
+              
+              if (prs.length > 0) {
+                prNumber = prs[0].number;
+              }
+            } else if (context.eventName === 'workflow_run') {
+              // Get info from workflow_run event
+              const workflowRun = context.payload.workflow_run;
+              branchName = workflowRun.head_branch;
+              commitSha = workflowRun.head_sha;
+              
+              if (workflowRun.pull_requests && workflowRun.pull_requests.length > 0) {
+                prNumber = workflowRun.pull_requests[0].number;
+              }
+            }
+            
+            console.log(`Event: ${context.eventName}, Branch: ${branchName}, PR: ${prNumber}, Commit: ${commitSha}`);
+            
+            core.setOutput('pr_number', prNumber);
+            core.setOutput('branch_name', branchName);
+            core.setOutput('commit_sha', commitSha);
+            
+            return { prNumber, branchName, commitSha };
+
+      - name: Check deployment workflow status
+        id: workflow_status
+        if: steps.pr_info.outputs.pr_number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchName = '${{ steps.pr_info.outputs.branch_name }}';
+            const commitSha = '${{ steps.pr_info.outputs.commit_sha }}';
+            
+            // Find recent workflow runs for the branch deployment workflow
+            const { data: workflowRuns } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'branch-deployment.yml',
+              head_sha: commitSha,
+              per_page: 5
+            });
+            
+            console.log(`Found ${workflowRuns.total_count} workflow runs for commit ${commitSha}`);
+            
+            let latestRun = null;
+            let needsApproval = false;
+            let isCompleted = false;
+            let deploymentStatus = 'unknown';
+            
+            if (workflowRuns.total_count > 0) {
+              latestRun = workflowRuns.workflow_runs[0];
+              
+              console.log(`Latest run: ${latestRun.id}, Status: ${latestRun.status}, Conclusion: ${latestRun.conclusion}`);
+              
+              // Check if workflow needs approval
+              if (latestRun.status === 'queued' && latestRun.conclusion === 'action_required') {
+                needsApproval = true;
+                deploymentStatus = 'approval_required';
+              } else if (latestRun.status === 'completed') {
+                isCompleted = true;
+                if (latestRun.conclusion === 'success') {
+                  deploymentStatus = 'success';
+                } else if (latestRun.conclusion === 'failure') {
+                  deploymentStatus = 'failure';
+                } else {
+                  deploymentStatus = latestRun.conclusion;
+                }
+              } else if (latestRun.status === 'in_progress') {
+                deploymentStatus = 'running';
+              }
+            }
+            
+            core.setOutput('needs_approval', needsApproval.toString());
+            core.setOutput('is_completed', isCompleted.toString());
+            core.setOutput('deployment_status', deploymentStatus);
+            core.setOutput('workflow_run_id', latestRun ? latestRun.id : '');
+            core.setOutput('workflow_run_url', latestRun ? latestRun.html_url : '');
+            
+            return {
+              needsApproval,
+              isCompleted,
+              deploymentStatus,
+              workflowRunId: latestRun ? latestRun.id : null,
+              workflowRunUrl: latestRun ? latestRun.html_url : null
+            };
+
+      - name: Comment on PR for approval needed
+        if: steps.pr_info.outputs.pr_number && steps.workflow_status.outputs.needs_approval == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = '${{ steps.pr_info.outputs.pr_number }}';
+            const branchName = '${{ steps.pr_info.outputs.branch_name }}';
+            const commitSha = '${{ steps.pr_info.outputs.commit_sha }}';
+            const workflowRunId = '${{ steps.workflow_status.outputs.workflow_run_id }}';
+            const workflowRunUrl = '${{ steps.workflow_status.outputs.workflow_run_url }}';
+            const createdAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+            
+            // Create approval URL that will take user directly to the approval page
+            const approvalUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${workflowRunId}`;
+            const workflowRerunUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
+            
+            const commentBody = `## ⏳ Deployment Approval Required
+            
+            A new commit has been pushed and the deployment workflow is awaiting approval.
+            
+            **Branch:** \`${branchName}\`
+            **Commit:** \`${commitSha.substring(0, 7)}\`
+            **Created:** ${createdAt}
+            **Status:** 🟡 Waiting for Approval
+            
+            ### 🚀 Quick Actions
+            
+            **Need to approve deployment?** → [**✅ Click here to approve and run deployment**](${approvalUrl}) ← 
+            
+            **Instructions for approval:**
+            1. Click the approval link above
+            2. Click the "Approve and run" button on the workflow page
+            3. The deployment will start automatically after approval
+            
+            **Alternative actions:**
+            - 🔄 [Manual Redeploy](\${workflowRerunUrl}) - Run workflow manually with branch: \`${branchName}\`
+            - 📄 [View Workflow Details](${workflowRunUrl}) - See full workflow information
+            
+            ---
+            
+            💡 *This notification was created automatically when your commit triggered a deployment workflow that requires approval.*
+            
+            _Note: Once approved, the deployment will proceed and this comment will be updated with deployment results._`;
+            
+            // Find existing approval/deployment comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const existingComment = comments.find(comment => 
+              comment.body.includes('Deployment Approval Required') || 
+              comment.body.includes('Branch Preview Ready!') ||
+              comment.body.includes('Branch Preview Failed!')
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: commentBody
+              });
+              console.log(`✅ Updated existing comment on PR #${prNumber} with approval request`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+              console.log(`✅ Created new approval comment on PR #${prNumber}`);
+            }
+
+      - name: Comment on PR for deployment status update
+        if: steps.pr_info.outputs.pr_number && steps.workflow_status.outputs.is_completed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = '${{ steps.pr_info.outputs.pr_number }}';
+            const branchName = '${{ steps.pr_info.outputs.branch_name }}';
+            const commitSha = '${{ steps.pr_info.outputs.commit_sha }}';
+            const deploymentStatus = '${{ steps.workflow_status.outputs.deployment_status }}';
+            const workflowRunUrl = '${{ steps.workflow_status.outputs.workflow_run_url }}';
+            const completedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+            
+            let statusIcon, statusText, statusColor;
+            
+            if (deploymentStatus === 'success') {
+              statusIcon = '✅';
+              statusText = '🟢 Successfully Deployed';
+              statusColor = 'success';
+            } else if (deploymentStatus === 'failure') {
+              statusIcon = '❌';
+              statusText = '🔴 Deployment Failed';
+              statusColor = 'failure';
+            } else {
+              statusIcon = '⚠️';
+              statusText = `🟡 ${deploymentStatus}`;
+              statusColor = 'warning';
+            }
+            
+            // Calculate deployment URLs
+            const safeBranchName = branchName.replace(/[^a-zA-Z0-9]/g, '-');
+            const branchTargetName = `sgex-preview-${safeBranchName}`;
+            const mainTargetName = 'sgex-main-app';
+            const branchUrl = `https://litlfred.github.io/sgex/${branchName === 'main' ? 'main' : safeBranchName}/`;
+            const mainAppUrl = 'https://litlfred.github.io/sgex/main/';
+            const workflowRerunUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
+            
+            let commentBody;
+            
+            if (deploymentStatus === 'success') {
+              commentBody = `## ${statusIcon} Branch Preview Ready!
+              
+              **Branch:** \`${branchName}\`
+              **Status:** ${statusText}
+              **Commit:** \`${commitSha.substring(0, 7)}\`
+              **Deployed:** ${completedAt}
+              
+              ### 🌐 Preview URLs
+              **Branch Preview:** <a href="${branchUrl}" target="${branchTargetName}">${branchUrl}</a>
+              **Main App:** <a href="${mainAppUrl}" target="${mainTargetName}">${mainAppUrl}</a>
+              
+              ### 🔄 Deployment Actions
+              **Need to redeploy after updates?** → [**🚀 Click here to redeploy this branch**](${workflowRerunUrl}) ← 
+              
+              **Instructions for redeployment:**
+              1. Click the redeploy link above
+              2. Click "Run workflow" button  
+              3. Enter branch name: \`${branchName}\`
+              4. Click "Run workflow" to confirm
+              
+              **Other actions:**
+              - 📄 [View Build Logs](${workflowRunUrl}) - See deployment details
+              
+              ---
+              💡 *This branch preview was deployed successfully and will remain until the next deployment.*
+              
+              _Note: This deployment only updates the branch subdirectory and does not affect the landing page._`;
+            } else {
+              commentBody = `## ${statusIcon} Branch Preview Failed!
+              
+              **Branch:** \`${branchName}\`
+              **Status:** ${statusText}
+              **Commit:** \`${commitSha.substring(0, 7)}\`
+              **Failed:** ${completedAt}
+              
+              ### 🔍 Troubleshooting
+              - 📄 [View Build Logs](${workflowRunUrl}) - Check what went wrong
+              - 🔄 [Restart Build](${workflowRerunUrl}) - Click "Run workflow" and enter branch: \`${branchName}\`
+              
+              ### 💡 Common Issues
+              - Build errors in code changes
+              - Missing dependencies or npm install issues
+              - GitHub Pages deployment limits
+              - Network connectivity issues
+              
+              ---
+              ❗ *Please check the build logs above and fix any issues before restarting the deployment.*
+              
+              _Note: The previous deployment (if any) remains active until this branch is successfully deployed._`;
+            }
+            
+            // Find existing deployment comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const existingComment = comments.find(comment => 
+              comment.body.includes('Deployment Approval Required') ||
+              comment.body.includes('Branch Preview Ready!') || 
+              comment.body.includes('Branch Preview Failed!')
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: commentBody
+              });
+              console.log(`✅ Updated existing comment on PR #${prNumber} with deployment status`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+              console.log(`✅ Created new deployment status comment on PR #${prNumber}`);
+            }
