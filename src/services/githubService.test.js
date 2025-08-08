@@ -443,4 +443,99 @@ describe('GitHubService', () => {
       expect(result).toHaveLength(0);
     });
   });
+
+  describe('getPullRequestsForBranch', () => {
+    beforeEach(() => {
+      mockOctokit.rest.pulls = {
+        list: jest.fn()
+      };
+    });
+
+    it('should fetch all pull requests for a branch', async () => {
+      githubService.authenticate('fake-token');
+
+      const mockPRs = [
+        { id: 1, number: 123, title: 'First PR', html_url: 'https://github.com/owner/repo/pull/123' },
+        { id: 2, number: 124, title: 'Second PR', html_url: 'https://github.com/owner/repo/pull/124' }
+      ];
+
+      mockOctokit.rest.pulls.list.mockResolvedValue({
+        status: 200,
+        data: mockPRs
+      });
+
+      const result = await githubService.getPullRequestsForBranch('test-owner', 'test-repo', 'feature-branch');
+
+      expect(result).toEqual(mockPRs);
+      expect(mockOctokit.rest.pulls.list).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        state: 'open',
+        head: 'test-owner:feature-branch',
+        per_page: 100
+      });
+    });
+
+    it('should return empty array when no PRs found', async () => {
+      githubService.authenticate('fake-token');
+
+      mockOctokit.rest.pulls.list.mockResolvedValue({
+        status: 200,
+        data: []
+      });
+
+      const result = await githubService.getPullRequestsForBranch('test-owner', 'test-repo', 'no-pr-branch');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should return empty array on API error', async () => {
+      githubService.authenticate('fake-token');
+
+      mockOctokit.rest.pulls.list.mockRejectedValue(new Error('API Error'));
+
+      const result = await githubService.getPullRequestsForBranch('test-owner', 'test-repo', 'error-branch');
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getPullRequestForBranch', () => {
+    beforeEach(() => {
+      mockOctokit.rest.pulls = {
+        list: jest.fn()
+      };
+    });
+
+    it('should return first pull request for a branch', async () => {
+      githubService.authenticate('fake-token');
+
+      const mockPRs = [
+        { id: 1, number: 123, title: 'First PR', html_url: 'https://github.com/owner/repo/pull/123' },
+        { id: 2, number: 124, title: 'Second PR', html_url: 'https://github.com/owner/repo/pull/124' }
+      ];
+
+      mockOctokit.rest.pulls.list.mockResolvedValue({
+        status: 200,
+        data: mockPRs
+      });
+
+      const result = await githubService.getPullRequestForBranch('test-owner', 'test-repo', 'feature-branch');
+
+      expect(result).toEqual(mockPRs[0]);
+    });
+
+    it('should return null when no PRs found', async () => {
+      githubService.authenticate('fake-token');
+
+      mockOctokit.rest.pulls.list.mockResolvedValue({
+        status: 200,
+        data: []
+      });
+
+      const result = await githubService.getPullRequestForBranch('test-owner', 'test-repo', 'no-pr-branch');
+
+      expect(result).toBeNull();
+    });
+  });
 });
