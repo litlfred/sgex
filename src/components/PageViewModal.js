@@ -1,4 +1,5 @@
 import React from 'react';
+import { sanitizeMarkdown } from '../utils/securityUtils';
 
 const PageViewModal = ({ page, onClose }) => {
   if (!page) return null;
@@ -11,20 +12,6 @@ const PageViewModal = ({ page, onClose }) => {
 
   // Decode the markdown content
   const markdownContent = page.content ? atob(page.content.content) : '';
-
-  // Simple markdown to HTML conversion for basic formatting
-  const formatMarkdown = (markdown) => {
-    return markdown
-      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-      .replace(/^\* (.*$)/gim, '<li>$1</li>')
-      .replace(/^- (.*$)/gim, '<li>$1</li>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/`(.*?)`/g, '<code>$1</code>')
-      .replace(/\n/g, '<br>');
-  };
 
   return (
     <div className="page-view-modal-overlay" onClick={handleOverlayClick}>
@@ -70,7 +57,7 @@ const PageViewModal = ({ page, onClose }) => {
             </div>
             
             <div className="rendered-content" dangerouslySetInnerHTML={{ 
-              __html: formatMarkdown(markdownContent) 
+              __html: sanitizeMarkdown(markdownContent)
             }} />
             
             <div className="raw-content" style={{ display: 'none' }}>
