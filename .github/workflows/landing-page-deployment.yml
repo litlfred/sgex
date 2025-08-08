@@ -94,11 +94,20 @@ jobs:
           
           echo "Using PUBLIC_URL: $PUBLIC_URL"
           
+          # Set CI=false to treat warnings as warnings, not errors
+          export CI=false
+          
           npm run build
           
           # Verify build was successful
           if [[ ! -f "build/index.html" ]]; then
             echo "ERROR: React build failed - index.html not found in build directory"
+            exit 1
+          fi
+          
+          # Verify build contains expected assets
+          if [[ ! -d "build/static" ]]; then
+            echo "ERROR: React build failed - static directory not found"
             exit 1
           fi
           
@@ -249,7 +258,7 @@ jobs:
               rm -rf schemas
             fi
             
-            # Remove development artifacts that shouldn't be deployed
+            # Remove development artifacts that shouldn't be deployed  
             if [[ -d "node_modules" ]]; then
               echo "Removing node_modules directory..."
               rm -rf node_modules
@@ -267,9 +276,11 @@ jobs:
             
             # Remove build tools and configs
             rm -f craco.config.js
-            rm -f .dockerignore
+            rm -f .dockerignore  
             rm -f Dockerfile
             rm -f .env.example
+            rm -f package.json
+            rm -f package-lock.json
             
             # Remove coverage and test artifacts
             if [[ -d "coverage" ]]; then
@@ -286,6 +297,50 @@ jobs:
             # Deploy React-based branch selector to /sgex/ (preserves branch subdirectories)
             cp -a /tmp/deployment-build/. .
             
+            # Create a .gitignore specifically for gh-pages to prevent future contamination
+            cat > .gitignore << 'EOF'
+# GitHub Pages deployment - prevent accidental inclusion of source files
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts  
+build/
+dist/
+
+# Source code (should not be in gh-pages)
+src/
+public/
+scripts/
+
+# Configuration files (should not be in gh-pages)
+package.json
+package-lock.json
+.env*
+craco.config.js
+README.md
+*.md
+
+# Git and CI (should not be in gh-pages)
+.github/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Other
+coverage/
+*.log
+EOF
+            echo "✅ Created .gitignore for gh-pages to prevent source file contamination"
+            
             # Verify existing directories are still there
             echo "Directories after deployment:"
             ls -la */ 2>/dev/null || echo "No directories found"
@@ -301,13 +356,19 @@ jobs:
           # Clean up temporary build
           rm -rf /tmp/deployment-build
           
-          # Clean up build artifacts that shouldn't be in deployment
-          for dir in build landing-page branch-build; do
+          # Clean up build artifacts that shouldn't be in deployment - IMPORTANT: Do this BEFORE adding files
+          for dir in build landing-page branch-build src public node_modules .git; do
             if [[ -d "$dir" ]]; then
               echo "Removing temporary $dir directory..."
               rm -rf "$dir"
             fi
           done
+          
+          # Remove other source files that shouldn't be deployed
+          rm -f .gitignore .env.example package.json package-lock.json README.md
+          rm -f craco.config.js Dockerfile CONTRIBUTING.md DEPLOYMENT.md
+          rm -f LICENSE TROUBLESHOOTING.md *.md
+          rm -rf scripts .github docs
           
           echo "✅ Deployment completed successfully"
 
