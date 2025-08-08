@@ -60,32 +60,51 @@ const QuestionnaireEditor = () => {
         setLoading(true);
         setError(null);
         
-        // Get all files from input/questionnaires directory
-        const files = await githubService.getDirectoryContents(
-          repository.owner.login,
-          repository.name,
-          'input/questionnaires',
-          selectedBranch
-        );
+        const allQuestionnaires = [];
         
-        // Filter for JSON files
-        const questionnaireFiles = files
-          .filter(file => file.type === 'file' && file.name.endsWith('.json'))
-          .map(file => ({
-            ...file,
-            displayName: file.name.replace('.json', ''),
-            fullPath: `input/questionnaires/${file.name}`
-          }));
+        // Check multiple possible locations for questionnaires
+        const paths = [
+          { path: 'input/questionnaires', extensions: ['.json'], type: 'JSON' },
+          { path: 'input/fsh/questionnaires', extensions: ['.fsh'], type: 'FSH' }
+        ];
         
-        setQuestionnaires(questionnaireFiles);
+        for (const pathConfig of paths) {
+          try {
+            const files = await githubService.getDirectoryContents(
+              repository.owner.login,
+              repository.name,
+              pathConfig.path,
+              selectedBranch
+            );
+            
+            // Filter for supported file extensions
+            const questionnaireFiles = files
+              .filter(file => file.type === 'file' && 
+                pathConfig.extensions.some(ext => file.name.endsWith(ext)))
+              .map(file => {
+                const extension = pathConfig.extensions.find(ext => file.name.endsWith(ext));
+                return {
+                  ...file,
+                  displayName: file.name.replace(extension, ''),
+                  fullPath: `${pathConfig.path}/${file.name}`,
+                  fileType: pathConfig.type,
+                  extension: extension
+                };
+              });
+            
+            allQuestionnaires.push(...questionnaireFiles);
+          } catch (error) {
+            // Directory doesn't exist, continue with other paths
+            if (error.status !== 404) {
+              console.warn(`Error loading from ${pathConfig.path}:`, error);
+            }
+          }
+        }
+        
+        setQuestionnaires(allQuestionnaires);
       } catch (error) {
         console.error('Error loading questionnaires:', error);
-        if (error.status === 404) {
-          // Directory doesn't exist, start with empty array
-          setQuestionnaires([]);
-        } else {
-          setError(`Failed to load questionnaires: ${error.message}`);
-        }
+        setError(`Failed to load questionnaires: ${error.message}`);
       } finally {
         setLoading(false);
       }
@@ -105,15 +124,31 @@ const QuestionnaireEditor = () => {
         selectedBranch
       );
       
-      const questionnaireData = JSON.parse(content);
+      let questionnaireData;
+      
+      if (questionnaire.fileType === 'JSON') {
+        // Parse JSON questionnaire
+        questionnaireData = JSON.parse(content);
+      } else if (questionnaire.fileType === 'FSH') {
+        // For FSH files, create a preview object with metadata
+        questionnaireData = {
+          resourceType: 'Questionnaire',
+          fileType: 'FSH',
+          title: extractFshTitle(content) || questionnaire.displayName,
+          status: extractFshStatus(content) || 'draft',
+          name: extractFshName(content) || questionnaire.displayName,
+          description: extractFshDescription(content) || 'FHIR Shorthand Questionnaire',
+          rawContent: content,
+          isReadOnly: true
+        };
+      }
+      
       setQuestionnaireContent(questionnaireData);
       setOriginalContent(content);
       setSelectedQuestionnaire(questionnaire);
       setEditing(true);
       setHasChanges(false);
       
-      // TODO: Render in LForms when integration is complete
-      // For now, we'll use a basic JSON preview
       console.log('Questionnaire loaded:', questionnaireData);
     } catch (error) {
       console.error('Error loading questionnaire content:', error);
@@ -121,6 +156,27 @@ const QuestionnaireEditor = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper functions to extract metadata from FSH content
+  const extractFshTitle = (content) => {
+    const titleMatch = content.match(/\*\s*title\s*=\s*"([^"]+)"/);
+    return titleMatch ? titleMatch[1] : null;
+  };
+
+  const extractFshStatus = (content) => {
+    const statusMatch = content.match(/\*\s*status\s*=\s*#(\w+)/);
+    return statusMatch ? statusMatch[1] : null;
+  };
+
+  const extractFshName = (content) => {
+    const nameMatch = content.match(/\*\s*name\s*=\s*"([^"]+)"/);
+    return nameMatch ? nameMatch[1] : null;
+  };
+
+  const extractFshDescription = (content) => {
+    const descMatch = content.match(/\*\s*description\s*=\s*"([^"]+)"/);
+    return descMatch ? descMatch[1] : null;
   };
 
   // Create new questionnaire
@@ -289,7 +345,11 @@ const QuestionnaireEditor = () => {
                   <div className="empty-icon">📋</div>
                   <h3>No Questionnaires Found</h3>
                   <p>This repository doesn't have any FHIR Questionnaire files yet.</p>
-                  <p>Questionnaires should be stored in <code>input/questionnaires/*.json</code></p>
+                  <p>Questionnaires can be stored as:</p>
+                  <ul style={{textAlign: 'left', maxWidth: '400px', margin: '0 auto'}}>
+                    <li><code>input/questionnaires/*.json</code> - FHIR JSON format</li>
+                    <li><code>input/fsh/questionnaires/*.fsh</code> - FHIR Shorthand format</li>
+                  </ul>
                   <button 
                     onClick={createNewQuestionnaire}
                     className="btn-primary"
@@ -306,9 +366,12 @@ const QuestionnaireEditor = () => {
                       className="questionnaire-card"
                       onClick={() => loadQuestionnaireContent(questionnaire)}
                     >
-                      <div className="card-icon">📋</div>
+                      <div className="card-icon">
+                        {questionnaire.fileType === 'FSH' ? '📝' : '📋'}
+                      </div>
                       <div className="card-content">
                         <h3>{questionnaire.displayName}</h3>
+                        <p className="card-type">{questionnaire.fileType} Questionnaire</p>
                         <p className="card-path">{questionnaire.fullPath}</p>
                         <p className="card-size">{(questionnaire.size / 1024).toFixed(1)} KB</p>
                       </div>
@@ -341,39 +404,71 @@ const QuestionnaireEditor = () => {
                     <div className="questionnaire-metadata">
                       <p><strong>Title:</strong> {questionnaireContent?.title || 'Untitled'}</p>
                       <p><strong>Status:</strong> {questionnaireContent?.status || 'draft'}</p>
+                      <p><strong>Format:</strong> {questionnaireContent?.fileType || 'JSON'}</p>
                       <p><strong>Date:</strong> {questionnaireContent?.date || 'Not specified'}</p>
-                      <p><strong>Items:</strong> {questionnaireContent?.item?.length || 0} questions</p>
+                      {questionnaireContent?.fileType !== 'FSH' && (
+                        <p><strong>Items:</strong> {questionnaireContent?.item?.length || 0} questions</p>
+                      )}
                     </div>
                   </div>
                   
-                  <div className="questionnaire-json-editor">
-                    <h4>Raw JSON Content</h4>
-                    <textarea
-                      value={JSON.stringify(questionnaireContent, null, 2)}
-                      onChange={(e) => {
-                        try {
-                          const newContent = JSON.parse(e.target.value);
-                          setQuestionnaireContent(newContent);
-                          setHasChanges(e.target.value !== originalContent);
-                        } catch (error) {
-                          // Invalid JSON, don't update
-                          console.warn('Invalid JSON in editor');
-                        }
-                      }}
-                      className="json-editor"
-                      rows={20}
-                    />
+                  <div className="questionnaire-content-editor">
+                    <h4>
+                      {questionnaireContent?.fileType === 'FSH' ? 'FHIR Shorthand Content' : 'Raw JSON Content'}
+                      {questionnaireContent?.isReadOnly && <span className="readonly-badge"> (Read-Only)</span>}
+                    </h4>
+                    
+                    {questionnaireContent?.fileType === 'FSH' ? (
+                      <div className="fsh-editor">
+                        <textarea
+                          value={questionnaireContent?.rawContent || ''}
+                          readOnly={true}
+                          className="fsh-content"
+                          rows={20}
+                        />
+                        <div className="fsh-notice">
+                          <strong>📝 FSH File:</strong> This is a FHIR Shorthand questionnaire. 
+                          Direct editing is not supported yet - please edit the .fsh file directly in your repository.
+                        </div>
+                      </div>
+                    ) : (
+                      <textarea
+                        value={JSON.stringify(questionnaireContent, null, 2)}
+                        onChange={(e) => {
+                          try {
+                            const newContent = JSON.parse(e.target.value);
+                            setQuestionnaireContent(newContent);
+                            setHasChanges(e.target.value !== originalContent);
+                          } catch (error) {
+                            // Invalid JSON, don't update
+                            console.warn('Invalid JSON in editor');
+                          }
+                        }}
+                        className="json-editor"
+                        rows={20}
+                      />
+                    )}
                   </div>
                   
                   <div className="editor-instructions">
                     <h4>Editing Instructions:</h4>
-                    <ul>
-                      <li>Edit the JSON structure above to modify the questionnaire</li>
-                      <li>The preview shows key questionnaire metadata</li>
-                      <li>Changes are automatically detected for saving</li>
-                      <li>Click "Save to Staging" to save changes locally</li>
-                      <li>Click "Commit to GitHub" to publish changes to the repository</li>
-                    </ul>
+                    {questionnaireContent?.fileType === 'FSH' ? (
+                      <ul>
+                        <li>This is a FHIR Shorthand (.fsh) questionnaire file</li>
+                        <li>FSH files define questionnaires using a domain-specific language</li>
+                        <li>To edit this questionnaire, modify the .fsh file directly in your repository</li>
+                        <li>FSH files are compiled into JSON during the build process</li>
+                        <li>Learn more about FHIR Shorthand at <a href="https://build.fhir.org/ig/HL7/fhir-shorthand/" target="_blank" rel="noopener noreferrer">HL7 FHIR Shorthand</a></li>
+                      </ul>
+                    ) : (
+                      <ul>
+                        <li>Edit the JSON structure above to modify the questionnaire</li>
+                        <li>The preview shows key questionnaire metadata</li>
+                        <li>Changes are automatically detected for saving</li>
+                        <li>Click "Save to Staging" to save changes locally</li>
+                        <li>Click "Commit to GitHub" to publish changes to the repository</li>
+                      </ul>
+                    )}
                     <div className="help-tip">
                       <strong>🚧 Note:</strong> LHC-Forms visual editor integration is coming soon for enhanced editing experience
                     </div>
