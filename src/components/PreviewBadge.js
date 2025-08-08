@@ -164,9 +164,9 @@ const PreviewBadge = () => {
   };
 
   const handleMouseEnter = () => {
-    if (!isSticky && prInfo) {
+    if (!isSticky) {
       setIsExpanded(true);
-      if (comments.length === 0) {
+      if (prInfo && comments.length === 0) {
         fetchComments();
       }
     }
@@ -183,12 +183,6 @@ const PreviewBadge = () => {
     event.stopPropagation();
     event.preventDefault();
     
-    if (!prInfo) {
-      // No PR info, just open GitHub repo
-      window.open(`https://github.com/litlfred/sgex/tree/${branchInfo.name}`, '_blank');
-      return;
-    }
-
     if (isSticky) {
       // If already sticky, collapse and remove sticky state
       setIsSticky(false);
@@ -197,7 +191,7 @@ const PreviewBadge = () => {
       // Make it sticky and ensure it's expanded
       setIsSticky(true);
       setIsExpanded(true);
-      if (comments.length === 0) {
+      if (prInfo && comments.length === 0) {
         fetchComments();
       }
     }
@@ -266,11 +260,11 @@ const PreviewBadge = () => {
   return (
     <div className="preview-badge-container" ref={expandedRef}>
       <div 
-        className={`preview-badge ${prInfo ? 'clickable' : ''} ${isExpanded ? 'expanded' : ''} ${isSticky ? 'sticky' : ''}`}
+        className={`preview-badge clickable ${isExpanded ? 'expanded' : ''} ${isSticky ? 'sticky' : ''}`}
         onClick={handleBadgeClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        title={isSticky ? "Click to collapse" : isExpanded ? "Click to keep expanded" : prInfo ? `Hover to preview, click to pin: ${prInfo.title}` : `Preview branch: ${branchInfo.name}`}
+        title={isSticky ? "Click to collapse" : isExpanded ? "Click to keep expanded" : prInfo ? `Hover to preview, click to pin: ${prInfo.title}` : `Hover to preview, click to pin: ${branchInfo.name}`}
       >
         <div className="badge-content">
           <span className="badge-label">Preview:</span>
@@ -281,26 +275,36 @@ const PreviewBadge = () => {
               <span className="badge-pr-title">{truncateTitle(prInfo.title)}</span>
             </>
           )}
-          {prInfo && (
-            <span className="badge-expand-icon">{isExpanded ? '▼' : '▶'}</span>
-          )}
+          <span className="badge-expand-icon">{isExpanded ? '▼' : '▶'}</span>
         </div>
       </div>
 
-      {isExpanded && prInfo && (
+      {isExpanded && (
         <div className="preview-badge-expanded">
           <div className="expanded-header">
             <div className="pr-info">
-              <h3>
-                <a href={prInfo.html_url} target="_blank" rel="noopener noreferrer">
-                  #{prInfo.number}: {prInfo.title}
-                </a>
-              </h3>
-              <div className="pr-meta">
-                <span className="pr-state" data-state={prInfo.state}>{prInfo.state}</span>
-                <span className="pr-author">by {prInfo.user.login}</span>
-                <span className="pr-date">{formatDate(prInfo.created_at)}</span>
-              </div>
+              {prInfo ? (
+                <>
+                  <h3>
+                    <a href={prInfo.html_url} target="_blank" rel="noopener noreferrer">
+                      #{prInfo.number}: {prInfo.title}
+                    </a>
+                  </h3>
+                  <div className="pr-meta">
+                    <span className="pr-state" data-state={prInfo.state}>{prInfo.state}</span>
+                    <span className="pr-author">by {prInfo.user.login}</span>
+                    <span className="pr-date">{formatDate(prInfo.created_at)}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3>Preview Branch: {branchInfo.name}</h3>
+                  <div className="pr-meta">
+                    <span className="pr-state" data-state="unknown">No PR found</span>
+                    <span className="pr-author">Branch preview</span>
+                  </div>
+                </>
+              )}
             </div>
             <button 
               className="close-button"
@@ -315,23 +319,38 @@ const PreviewBadge = () => {
             </button>
           </div>
 
-          {prInfo.body && (
+          {prInfo && prInfo.body && (
             <div className="pr-description">
               <h4>Description</h4>
               <div className="pr-body">{prInfo.body}</div>
             </div>
           )}
 
-          <div className="comments-section">
-            <h4>Comments ({comments.length})</h4>
-            
-            {loadingComments ? (
-              <div className="loading">Loading comments...</div>
-            ) : comments.length > 0 ? (
-              <div className="comments-list">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="comment">
-                    <div className="comment-header">
+          {!prInfo && (
+            <div className="pr-description">
+              <h4>Branch Information</h4>
+              <div className="pr-body">
+                This is a preview deployment from the <code>{branchInfo.name}</code> branch.
+                {!githubService.isAuth() && (
+                  <div style={{marginTop: '0.5rem', fontStyle: 'italic', color: '#666'}}>
+                    Sign in to GitHub to view pull request details and comments.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {prInfo && (
+            <div className="comments-section">
+              <h4>Comments ({comments.length})</h4>
+              
+              {loadingComments ? (
+                <div className="loading">Loading comments...</div>
+              ) : comments.length > 0 ? (
+                <div className="comments-list">
+                  {comments.map((comment) => (
+                    <div key={comment.id} className="comment">
+                      <div className="comment-header">
                       <img 
                         src={comment.user.avatar_url} 
                         alt={comment.user.login}
@@ -395,11 +414,18 @@ const PreviewBadge = () => {
               </form>
             )}
           </div>
+          )}
 
           <div className="expanded-footer">
-            <a href={prInfo.html_url} target="_blank" rel="noopener noreferrer" className="github-link">
-              View on GitHub →
-            </a>
+            {prInfo ? (
+              <a href={prInfo.html_url} target="_blank" rel="noopener noreferrer" className="github-link">
+                View on GitHub →
+              </a>
+            ) : (
+              <a href={`https://github.com/litlfred/sgex/tree/${branchInfo.name}`} target="_blank" rel="noopener noreferrer" className="github-link">
+                View Branch on GitHub →
+              </a>
+            )}
           </div>
         </div>
       )}
