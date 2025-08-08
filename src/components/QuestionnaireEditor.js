@@ -306,9 +306,14 @@ const QuestionnaireEditor = () => {
   // Load questionnaires from repository
   useEffect(() => {
     const loadQuestionnaires = async () => {
-      if (!repository || !branch) return;
+      // Don't attempt to load if repository/branch are not available yet
+      if (!repository || !branch) {
+        console.log('QuestionnaireEditor: Repository or branch not available yet, waiting...', { repository: !!repository, branch: !!branch });
+        return;
+      }
       
       try {
+        console.log('QuestionnaireEditor: Loading questionnaires for', repository.name, 'branch', branch);
         setLoading(true);
         setError(null);
         
@@ -529,12 +534,29 @@ const QuestionnaireEditor = () => {
 
   // Navigate back to dashboard
   const handleBackToDashboard = () => {
-    navigate(`/dashboard/${repository.owner.login}/${repository.name}/${branch}`);
+    if (repository && branch) {
+      navigate(`/dashboard/${repository.owner.login}/${repository.name}/${branch}`);
+    } else {
+      // Fallback to home page if repository context is not available
+      navigate('/');
+    }
   };
 
   // Check if there are changes in the questionnaire
   const hasChanges = questionnaireContent && originalContent &&
     JSON.stringify(questionnaireContent, null, 2) !== originalContent;
+
+  // Show loading state when PageProvider is not ready or when we're loading questionnaires
+  if (loading && (!repository || !branch)) {
+    return (
+      <AssetEditorLayout pageName="questionnaire-editor">
+        <div className="questionnaire-editor-loading">
+          <h2>Initializing Questionnaire Editor...</h2>
+          <p>Loading repository context...</p>
+        </div>
+      </AssetEditorLayout>
+    );
+  }
 
   if (loading && !editing) {
     return (
