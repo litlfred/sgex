@@ -221,6 +221,15 @@ const DAKDashboardContent = () => {
       path: 'test-data',
       level: 'Level 3: Technical Implementation',
       color: '#8b5cf6'
+    },
+    {
+      id: 'questionnaire-editor',
+      title: 'FHIR Questionnaires',
+      description: 'Structured questionnaires and forms for data collection using FHIR standard',
+      icon: '📋',
+      path: 'questionnaire-editor',
+      level: 'Level 3: Technical Implementation',
+      color: '#17a2b8'
     }
   ];
 
