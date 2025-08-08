@@ -60,9 +60,11 @@
         if (pathSegments.length >= 2) {
           var potentialBranch = pathSegments[1];
           
-          // Check if this looks like a branch deployment URL using config
-          if (config.isDeployedBranch(potentialBranch)) {
-            // This is a branch deployment: /sgex/main/* or /sgex/deploy/*
+          // Check if this looks like a branch deployment URL
+          // For feature branches, we can't rely on the deployedBranches list since they're deployed dynamically
+          // Instead, we check if it's NOT a DAK component, then assume it's a branch
+          if (config.isDeployedBranch(potentialBranch) || !config.isValidDAKComponent(potentialBranch)) {
+            // This is likely a branch deployment: /sgex/main/* or /sgex/feature-branch/*
             var branchSegmentsToKeep = 2; // Keep /sgex/branch-name/
             var redirectPath = pathSegments.slice(0, branchSegmentsToKeep).join('/') + '/';
             var routePath = pathSegments.slice(branchSegmentsToKeep).join('/');
