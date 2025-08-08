@@ -544,13 +544,24 @@ const BranchListingPage = () => {
                         </a>
                     </div>
                     
-                    {!isAuthenticated && (
+                    {!isAuthenticated ? (
                         <div className="action-card login-card">
                             <div className="card-content">
                                 <div className="login-icon">🔐</div>
                                 <h3>GitHub Login</h3>
                                 <p>Login to view and add comments</p>
                                 <PATLogin onAuthSuccess={handleAuthSuccess} />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="action-card logout-card">
+                            <div className="card-content">
+                                <div className="login-icon">✅</div>
+                                <h3>Logged In</h3>
+                                <p>You can now view and add comments</p>
+                                <button onClick={handleLogout} className="logout-btn">
+                                    🚪 Logout
+                                </button>
                             </div>
                         </div>
                     )}
