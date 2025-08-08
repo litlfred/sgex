@@ -91,21 +91,19 @@ fi
 echo ""
 echo "Testing root landing page build..."
 
-# Fetch landing page from deploy branch (if available)
-if git show-ref --verify --quiet refs/remotes/origin/deploy; then
-    git checkout origin/deploy -- public/branch-listing.html
-fi
+# Note: Landing page is now handled by React components
+# (formerly public/branch-listing.html, now React-based)
 
 if node scripts/build-multi-branch.js root > /dev/null 2>&1; then
     echo "✅ Root landing page build: Success"
     if [[ -f "build/index.html" ]]; then
         echo "✅ Root build produces index.html"
         
-        # Check if the built HTML contains landing page elements
-        if grep -q "branch-listing" build/index.html; then
-            echo "✅ Root build contains landing page structure"
+        # Check if the built HTML contains React root element
+        if grep -q "id=\"root\"" build/index.html; then
+            echo "✅ Root build contains React application structure"
         else
-            echo "⚠️  Root build may not contain expected landing page structure"
+            echo "⚠️  Root build may not contain expected React structure"
         fi
     else
         echo "❌ Root build missing index.html"
@@ -138,23 +136,23 @@ echo "🧪 Test 4: Component validation"
 echo "------------------------------"
 
 echo "Testing deployment components..."
-if [[ -f "public/branch-listing.html" ]] && [[ -f "public/sgex-mascot.png" ]]; then
-    echo "✅ Landing page assets exist"
+if [[ -f "src/components/BranchListingPage.js" ]] && [[ -f "public/sgex-mascot.png" ]]; then
+    echo "✅ React-based landing page components exist"
     
-    # Check for key elements in landing page
-    if grep -q "GitHub API" public/branch-listing.html; then
+    # Check for key elements in React component
+    if grep -q "GitHub API\|githubService" src/components/BranchListingPage.js; then
         echo "✅ Landing page includes GitHub API integration"
     fi
     
-    if grep -q "branch-card" public/branch-listing.html; then
+    if grep -q "branch.*card\|BranchCard" src/components/BranchListingPage.js; then
         echo "✅ Landing page includes card styling"
     fi
     
-    if grep -q "safeBranchName" public/branch-listing.html; then
+    if grep -q "safeBranchName\|sanitize.*branch" src/components/BranchListingPage.js; then
         echo "✅ Landing page handles safe branch names"
     fi
 else
-    echo "⚠️  Landing page assets may need to be fetched from deploy branch"
+    echo "⚠️  React-based landing page components not found"
 fi
 
 # Test 5: Workflow file validation

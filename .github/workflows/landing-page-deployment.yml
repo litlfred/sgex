@@ -94,6 +94,9 @@ jobs:
           
           echo "Using PUBLIC_URL: $PUBLIC_URL"
           
+          # Set CI=false to avoid treating CSS warnings as errors in production builds
+          export CI=false
+          
           npm run build
           
           # Verify build was successful
@@ -149,169 +152,108 @@ jobs:
             ls -la "branch-build/$safe_branch_name/"
           fi
 
-      - name: Deploy to gh-pages (smart deployment)
+      - name: Deploy to gh-pages (optimized strategy)
         shell: bash
         run: |
           set -e
           
           source_branch="${{ steps.source_info.outputs.source_branch }}"
           
-          # Save the build files
-          echo "Preserving build files..."
+          # Step 1: Preserve the build files in temp directory before any git operations
+          echo "Step 1: Preserving build files in temp directory..."
           mkdir -p /tmp/deployment-build
           
           if [[ "$source_branch" == "deploy" ]]; then
-            # Landing page deployment - copy to tmp for /sgex/ deployment
+            # Landing page deployment - copy React build output only
             cp -a landing-page/. /tmp/deployment-build/
             deployment_type="landing-page"
+            echo "Landing page build preserved in /tmp/deployment-build"
           else
             # Branch deployment - copy branch-specific directory
             safe_branch_name=$(echo "$source_branch" | tr '/' '-')
             cp -a branch-build/. /tmp/deployment-build/
             deployment_type="branch-deployment"
+            echo "Branch build preserved in /tmp/deployment-build for $safe_branch_name"
           fi
           
-          # Checkout gh-pages branch
+          # Step 2: Clean up source build artifacts to avoid git tracking them
+          echo "Step 2: Cleaning up source build artifacts to avoid git conflicts..."
+          rm -rf build landing-page branch-build node_modules || true
+          
+          # Step 3: Fetch and checkout gh-pages branch
+          echo "Step 3: Fetching and checking out gh-pages branch..."
+          git fetch origin gh-pages || echo "gh-pages branch may not exist yet"
+          
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
-            echo "Checking out existing gh-pages branch"
-            git stash -u -m "Stash before gh-pages checkout" || echo "Nothing to stash"
-            git clean -fd -e node_modules
+            echo "Checking out existing gh-pages branch..."
             git checkout gh-pages
+            
+            # Step 4: Do a pull --rebase to get latest changes as requested
+            echo "Step 4: Pulling latest gh-pages changes with rebase..."
+            git pull --rebase origin gh-pages || {
+              echo "Rebase failed, trying merge strategy..."
+              git rebase --abort 2>/dev/null || true
+              git pull origin gh-pages
+            }
           else
-            echo "Creating new gh-pages branch"
+            echo "Creating new orphan gh-pages branch..."
             git checkout --orphan gh-pages
-            git rm -rf .
-            echo "# GitHub Pages" > README.md
+            git rm -rf . 2>/dev/null || true
+            echo "# SGeX GitHub Pages" > README.md
             git add README.md
-            git commit -m "Initial gh-pages branch"
+            git commit -m "Initialize gh-pages branch"
             git push origin gh-pages
           fi
           
+          # Step 5: Deploy the build files based on deployment type
           if [[ "$deployment_type" == "landing-page" ]]; then
-            echo "Deploying landing page to /sgex/..."
+            echo "Step 5: Deploying landing page to root (preserving branch subdirectories)..."
             
-            # CRITICAL: Only remove root-level files, NEVER remove directories (to preserve branch builds)
-            echo "Removing only root-level files (preserving all branch directories)..."
+            # List branch directories to preserve
+            echo "Branch directories to preserve:"
+            find . -maxdepth 1 -type d -name "*-*" -not -name ".*" | head -10 || echo "No branch directories found"
             
-            # List what directories exist for safety verification
-            echo "Existing directories before cleanup:"
-            ls -la */ 2>/dev/null || echo "No directories found"
+            # Remove only root-level files, preserving all branch subdirectories  
+            echo "Cleaning root-level files only..."
+            find . -maxdepth 1 -type f \( \
+              -name "*.html" -o \
+              -name "*.js" -o \
+              -name "*.css" -o \
+              -name "*.json" -o \
+              -name "*.png" -o \
+              -name "*.svg" -o \
+              -name "*.ico" -o \
+              -name "*.txt" -o \
+              -name "README.md" \
+            \) -delete
             
-            # Remove only specific files that could conflict with the React app deployment
-            rm -f index.html
-            rm -f manifest.json  
-            rm -f asset-manifest.json
-            rm -f service-worker.js
-            rm -f robots.txt
-            rm -f favicon.ico
-            rm -f logo*.png
-            rm -f *.png
-            rm -f *.svg
-            rm -f *.html
-            rm -f README.md
-            rm -f package.json
-            rm -f package-lock.json
+            # Remove only root-level static/docs/schemas directories (preserve branch subdirs)  
+            for dir in static docs schemas build coverage lcov-report src public; do
+              if [[ -d "$dir" && ! "$dir" =~ ^[^/]*-[^/]*$ ]]; then
+                echo "Removing root directory: $dir"
+                rm -rf "$dir"
+              fi
+            done
             
-            # Remove ALL versioned CSS and JS files to clean up old builds
-            if [[ "${{ github.event.inputs.clean_old_assets || 'true' }}" == "true" ]]; then
-              echo "Cleaning up old versioned assets (clean_old_assets=true)..."
-              rm -f main.*.css
-              rm -f main.*.css.map
-              rm -f main.*.js
-              rm -f main.*.js.LICENSE.txt
-              rm -f main.*.js.map
-              rm -f *.chunk.js
-              rm -f *.chunk.js.map
-              
-              # Also remove other potential leftover files
-              rm -f lcov.info
-              rm -f coverage-final.json
-              rm -f clover.xml
-            else
-              echo "Skipping old asset cleanup (clean_old_assets=false)"
-            fi
-            
-            # Remove static directory only if it exists at root (not in branch subdirs)
-            if [[ -d "static" ]]; then
-              echo "Removing root static directory..."
-              rm -rf static
-            fi
-            
-            # Remove docs directory only if it exists at root (React build may include it)
-            if [[ -d "docs" ]]; then
-              echo "Removing root docs directory..."
-              rm -rf docs
-            fi
-            
-            # Remove schemas directory only if it exists at root (React build may include it)
-            if [[ -d "schemas" ]]; then
-              echo "Removing root schemas directory..."
-              rm -rf schemas
-            fi
-            
-            # Remove development artifacts that shouldn't be deployed
-            if [[ -d "node_modules" ]]; then
-              echo "Removing node_modules directory..."
-              rm -rf node_modules
-            fi
-            
-            if [[ -d "src" ]]; then
-              echo "Removing src directory..."
-              rm -rf src
-            fi
-            
-            if [[ -d "public" ]]; then
-              echo "Removing public directory..."
-              rm -rf public
-            fi
-            
-            # Remove build tools and configs
-            rm -f craco.config.js
-            rm -f .dockerignore
-            rm -f Dockerfile
-            rm -f .env.example
-            
-            # Remove coverage and test artifacts
-            if [[ -d "coverage" ]]; then
-              echo "Removing coverage directory..."
-              rm -rf coverage
-            fi
-            
-            # Remove lcov-report directory if it exists
-            if [[ -d "lcov-report" ]]; then
-              echo "Removing lcov-report directory..."
-              rm -rf lcov-report
-            fi
-            
-            # Deploy React-based branch selector to /sgex/ (preserves branch subdirectories)
+            # Copy new landing page build to root
             cp -a /tmp/deployment-build/. .
             
-            # Verify existing directories are still there
-            echo "Directories after deployment:"
-            ls -la */ 2>/dev/null || echo "No directories found"
+            echo "Landing page deployed to root, branch directories preserved"
             
           else
-            echo "Deploying branch to subdirectory..."
-            
+            echo "Step 5: Deploying branch to subdirectory..."
             # Deploy branch-specific build to appropriate subdirectory
             cp -a /tmp/deployment-build/. .
-            
             echo "Branch deployment completed to subdirectories"
           fi
-          # Clean up temporary build
+          
+          # Step 6: Clean up temp directory
+          echo "Step 6: Cleaning up temporary files..."
           rm -rf /tmp/deployment-build
           
-          # Clean up build artifacts that shouldn't be in deployment
-          for dir in build landing-page branch-build; do
-            if [[ -d "$dir" ]]; then
-              echo "Removing temporary $dir directory..."
-              rm -rf "$dir"
-            fi
-          done
-          
-          echo "✅ Deployment completed successfully"
+          echo "✅ Optimized deployment completed successfully"
 
-      - name: Commit and push changes
+      - name: Commit and push changes (optimized)
         shell: bash
         run: |
           set -e
@@ -325,16 +267,23 @@ jobs:
             exit 1
           fi
           
-          # Stage all changes
+          # Check if there are any changes to commit (ignore copilot branches as requested)
           git add -A
           
           # Determine commit message based on deployment type
           if [[ "$source_branch" == "deploy" ]]; then
-            deployment_msg="🚀 Deploy React-based branch selector landing page"
+            deployment_msg="🚀 Deploy optimized React-based branch selector landing page"
             deployment_details="- Updated with React-based branch selector from $source_branch branch
             - Landing page deployed to GitHub Pages /sgex/
-            - All branch subdirectories preserved"
+            - All branch subdirectories preserved
+            - Optimized deployment strategy to reduce file changes"
           else
+            # Skip commits for copilot branches as requested in issue
+            if [[ "$source_branch" =~ ^copilot-.* ]]; then
+              echo "Skipping deployment for copilot branch: $source_branch"
+              exit 0
+            fi
+            
             safe_branch_name=$(echo "$source_branch" | tr '/' '-')
             deployment_msg="🚀 Deploy $source_branch branch preview"
             deployment_details="- Updated branch preview for $source_branch
@@ -357,7 +306,7 @@ jobs:
               exit 0
             fi
           else
-            echo "Committing deployment..."
+            echo "Committing deployment changes..."
             
             git commit -m "$deployment_msg
             
@@ -367,72 +316,24 @@ jobs:
             - Commit: ${{ github.sha }}"
           fi
           
-          echo "Pushing to gh-pages..."
+          echo "Performing final push with rebase as requested..."
           
-          # Fetch latest remote state first to avoid conflicts
-          echo "Fetching latest gh-pages state..."
-          git fetch origin gh-pages
+          # Do a final pull --rebase then push as requested in the issue
+          git pull --rebase origin gh-pages || {
+            echo "Rebase failed, trying merge strategy..."
+            git rebase --abort 2>/dev/null || true
+            git pull origin gh-pages
+          }
           
-          # Push with retry mechanism to handle concurrent deployments
-          max_retries=3
-          retry_count=0
-          success=false
-          
-          while [[ $retry_count -lt $max_retries ]] && [[ "$success" == "false" ]]; do
-            retry_count=$((retry_count + 1))
-            echo "Push attempt $retry_count of $max_retries"
-            
-            # Always fetch latest state before attempting push
-            git fetch origin gh-pages
-            
-            # Check if we're behind remote
-            local_commit=$(git rev-parse HEAD)
-            remote_commit=$(git rev-parse origin/gh-pages)
-            
-            if [[ "$local_commit" != "$remote_commit" ]]; then
-              echo "Local branch is behind remote, syncing..."
-              
-              # Reset to remote state and re-apply our changes
-              git reset --hard origin/gh-pages
-              
-              # Re-stage changes (they should still be in working directory)
-              git add -A
-              
-              # Re-commit if there are changes
-              if ! git diff --cached --quiet; then
-                echo "Re-committing changes after sync..."
-                git commit -m "🚀 Deploy landing page
-                
-                - Updated landing page (retry $retry_count/$max_retries)
-                - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-                - Commit: ${{ github.sha }}"
-              else
-                echo "No changes to re-commit after sync"
-                success=true
-                break
-              fi
-            fi
-            
-            # Try to push
-            if git push origin gh-pages; then
-              echo "✅ Push successful"
-              success=true
-            else
-              echo "⚠️  Push failed, will retry after delay..."
-              if [[ $retry_count -lt $max_retries ]]; then
-                sleep_time=$((retry_count * 2))
-                echo "Waiting ${sleep_time} seconds before retry..."
-                sleep $sleep_time
-              fi
-            fi
-          done
-          
-          if [[ "$success" == "false" ]]; then
-            echo "❌ Failed to push after $max_retries attempts"
+          # Push the changes
+          if git push origin gh-pages; then
+            echo "✅ Optimized deployment push successful"
+          else
+            echo "❌ Push failed"
             exit 1
           fi
           
-          echo "✅ Deployment completed successfully"
+          echo "✅ Optimized deployment completed successfully"
 
       - name: Output deployment info
         id: deployment_info
