@@ -457,13 +457,13 @@ class GitHubService {
   // Check if a repository has sushi-config.yaml with smart.who.int.base dependency
   async checkSmartGuidelinesCompatibility(owner, repo, retryCount = 2) {
     if (!this.isAuth()) {
-      return false;
+      return { compatible: false, error: 'Not authenticated' };
     }
 
     // Check cache first to prevent redundant downloads
     const cachedResult = repositoryCompatibilityCache.get(owner, repo);
     if (cachedResult !== null) {
-      return cachedResult;
+      return { compatible: cachedResult, cached: true };
     }
 
     try {
@@ -483,12 +483,12 @@ class GitHubService {
         
         // Cache the result
         repositoryCompatibilityCache.set(owner, repo, isCompatible);
-        return isCompatible;
+        return { compatible: isCompatible };
       }
       
       // Cache negative result
       repositoryCompatibilityCache.set(owner, repo, false);
-      return false;
+      return { compatible: false, reason: 'No sushi-config.yaml file found' };
     } catch (error) {
       // If it's a 404 (file not found), retry once more in case of temporary issues
       if (error.status === 404 && retryCount > 0) {
@@ -500,13 +500,46 @@ class GitHubService {
       }
       
       // For any error (including rate limiting, network errors, or file not found after retries),
-      // strictly return false - no fallback logic
+      // return error information instead of just logging
+      const errorInfo = {
+        compatible: false,
+        error: error.message,
+        errorType: this._categorizeError(error),
+        status: error.status,
+        retryable: this._isRetryableError(error)
+      };
+
       console.warn(`Failed to check ${owner}/${repo} for sushi-config.yaml with smart.who.int.base dependency:`, error.message);
       
       // Cache negative result
       repositoryCompatibilityCache.set(owner, repo, false);
-      return false;
+      return errorInfo;
     }
+  }
+
+  // Helper method to categorize errors
+  _categorizeError(error) {
+    if (error.status === 403) {
+      if (error.message.includes('rate limit')) {
+        return 'rate_limit';
+      }
+      return 'permission_denied';
+    }
+    if (error.status === 404) {
+      return 'not_found';
+    }
+    if (error.status === 401) {
+      return 'authentication_failed';
+    }
+    if (error.code === 'ENOTFOUND' || error.code === 'ECONNRESET') {
+      return 'network_error';
+    }
+    return 'unknown_error';
+  }
+
+  // Helper method to determine if error is retryable
+  _isRetryableError(error) {
+    return ['rate_limit', 'network_error'].includes(this._categorizeError(error));
   }
 
 
@@ -551,8 +584,8 @@ class GitHubService {
       // Check each repository for SMART guidelines compatibility
       const smartGuidelinesRepos = [];
       for (const repo of repositories) {
-        const isCompatible = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
-        if (isCompatible) {
+        const compatibilityResult = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
+        if (compatibilityResult.compatible) {
           smartGuidelinesRepos.push({
             ...repo,
             smart_guidelines_compatible: true
@@ -568,7 +601,7 @@ class GitHubService {
   }
 
   // Get repositories with progressive scanning (for real-time updates)
-  async getSmartGuidelinesRepositoriesProgressive(owner, type = 'user', onRepositoryFound = null, onProgress = null) {
+  async getSmartGuidelinesRepositoriesProgressive(owner, type = 'user', onRepositoryFound = null, onProgress = null, onError = null) {
     if (!this.isAuth()) {
       throw new Error('Not authenticated with GitHub');
     }
@@ -620,14 +653,26 @@ class GitHubService {
         return [];
       }
 
+      // Track scanning errors for reporting
+      const scanningErrors = {
+        rateLimited: [],
+        networkErrors: [],
+        permissionDenied: [],
+        otherErrors: [],
+        totalErrors: 0,
+        totalScanned: 0
+      };
+
       // Process repositories concurrently with rate limiting and enhanced display
       const processor = async (repo, index) => {
         // Add a small delay to make scanning progress visible (similar to demo mode)
         await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
         
-        const isCompatible = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
-        
-        if (isCompatible) {
+        const compatibilityResult = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
+        scanningErrors.totalScanned++;
+
+        // Handle the new return format
+        if (compatibilityResult.compatible) {
           const smartRepo = {
             ...repo,
             smart_guidelines_compatible: true
@@ -639,6 +684,34 @@ class GitHubService {
           }
           
           return smartRepo;
+        } else if (compatibilityResult.error) {
+          // Track the error for reporting
+          scanningErrors.totalErrors++;
+          const errorInfo = {
+            repo: repo.name,
+            error: compatibilityResult.error,
+            errorType: compatibilityResult.errorType,
+            retryable: compatibilityResult.retryable
+          };
+
+          switch (compatibilityResult.errorType) {
+            case 'rate_limit':
+              scanningErrors.rateLimited.push(errorInfo);
+              break;
+            case 'network_error':
+              scanningErrors.networkErrors.push(errorInfo);
+              break;
+            case 'permission_denied':
+              scanningErrors.permissionDenied.push(errorInfo);
+              break;
+            default:
+              scanningErrors.otherErrors.push(errorInfo);
+          }
+
+          // Report error if callback provided
+          if (onError) {
+            onError(errorInfo);
+          }
         }
         
         return null;
@@ -650,13 +723,20 @@ class GitHubService {
         onProgress: (completed, total, repo, result) => {
           // Progress callback for completed items
           if (onProgress) {
-            onProgress({
+            const progressData = {
               current: completed,
               total: total,
               currentRepo: repo.name,
               progress: Math.round((completed / total) * 100),
-              completed: true
-            });
+              completed: true,
+              scanningErrors: scanningErrors.totalErrors > 0 ? {
+                totalErrors: scanningErrors.totalErrors,
+                rateLimitedCount: scanningErrors.rateLimited.length,
+                networkErrorCount: scanningErrors.networkErrors.length,
+                hasRetryableErrors: [...scanningErrors.rateLimited, ...scanningErrors.networkErrors].some(e => e.retryable)
+              } : null
+            };
+            onProgress(progressData);
           }
         },
         onItemStart: (repo, index) => {
@@ -677,7 +757,28 @@ class GitHubService {
       // Filter out null results and collect smart repositories
       const validResults = results.filter(result => result !== null && !result.error);
       
-      return validResults;
+      // Log summary of scanning results
+      if (scanningErrors.totalErrors > 0) {
+        console.warn(`Repository scanning completed with ${scanningErrors.totalErrors} errors out of ${scanningErrors.totalScanned} repositories checked:`);
+        if (scanningErrors.rateLimited.length > 0) {
+          console.warn(`- Rate limited: ${scanningErrors.rateLimited.length} repositories`);
+        }
+        if (scanningErrors.networkErrors.length > 0) {
+          console.warn(`- Network errors: ${scanningErrors.networkErrors.length} repositories`);
+        }
+        if (scanningErrors.permissionDenied.length > 0) {
+          console.warn(`- Permission denied: ${scanningErrors.permissionDenied.length} repositories`);
+        }
+        if (scanningErrors.otherErrors.length > 0) {
+          console.warn(`- Other errors: ${scanningErrors.otherErrors.length} repositories`);
+        }
+      }
+
+      // Return results along with error summary
+      return {
+        repositories: validResults,
+        scanningErrors: scanningErrors.totalErrors > 0 ? scanningErrors : null
+      };
     } catch (error) {
       console.error('Failed to fetch SMART guidelines repositories:', error);
       throw error;

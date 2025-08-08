@@ -33,6 +33,7 @@ const DAKSelectionContent = () => {
   const [scanProgress, setScanProgress] = useState(null);
   const [currentlyScanningRepos, setCurrentlyScanningRepos] = useState(new Set());
   const [usingCachedData, setUsingCachedData] = useState(false);
+  const [scanningErrors, setScanningErrors] = useState(null);
 
   // Validate user parameter and profile consistency
   useEffect(() => {
@@ -276,6 +277,7 @@ const DAKSelectionContent = () => {
     setScanProgress(null);
     setCurrentlyScanningRepos(new Set());
     setUsingCachedData(false);
+    setScanningErrors(null);
     
     try {
       let repos = [];
@@ -366,6 +368,11 @@ const DAKSelectionContent = () => {
                 console.log('📊 Real scanning progress:', progress);
                 setScanProgress(progress);
                 
+                // Update scanning errors if provided
+                if (progress.scanningErrors) {
+                  setScanningErrors(progress.scanningErrors);
+                }
+                
                 // Track repositories currently being scanned with enhanced display timing
                 if (progress.started && !progress.completed) {
                   // Repository is being started - add to currently scanning set
@@ -414,12 +421,27 @@ const DAKSelectionContent = () => {
                     setCurrentlyScanningRepos(new Set());
                   }, 500);
                 }
+              },
+              // onError callback - track individual scanning errors
+              (errorInfo) => {
+                console.warn('Individual repository scan error:', errorInfo);
               }
             );
             
             try {
               // Race between the scanning promise and timeout
-              repos = await Promise.race([scanPromise, timeoutPromise]);
+              const scanResult = await Promise.race([scanPromise, timeoutPromise]);
+              
+              // Handle new return format
+              if (scanResult && typeof scanResult === 'object' && scanResult.repositories) {
+                repos = scanResult.repositories;
+                if (scanResult.scanningErrors) {
+                  setScanningErrors(scanResult.scanningErrors);
+                }
+              } else {
+                // Fallback for old format or unexpected result
+                repos = Array.isArray(scanResult) ? scanResult : [];
+              }
             } catch (timeoutError) {
               console.error('⏰ Scanning timed out:', timeoutError.message);
               // Stop scanning on timeout
@@ -797,9 +819,102 @@ const DAKSelectionContent = () => {
                   : 'No DAK repositories found with SMART Guidelines compatibility.'
                 }
               </p>
+              {/* Show scanning errors if any occurred */}
+              {scanningErrors && (
+                <div className="scanning-errors-summary">
+                  <h4>⚠️ Scanning Issues Detected</h4>
+                  <p>
+                    {scanningErrors.totalErrors} out of {scanningErrors.totalScanned} repositories could not be checked:
+                  </p>
+                  <div className="error-types">
+                    {scanningErrors.rateLimitedCount > 0 && (
+                      <div className="error-type">
+                        <span className="error-icon">🚫</span>
+                        <span>Rate Limited: {scanningErrors.rateLimitedCount} repositories</span>
+                      </div>
+                    )}
+                    {scanningErrors.networkErrorCount > 0 && (
+                      <div className="error-type">
+                        <span className="error-icon">🌐</span>
+                        <span>Network Issues: {scanningErrors.networkErrorCount} repositories</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="retry-suggestion">
+                    <p>
+                      <strong>💡 Suggestion:</strong> These issues are usually temporary. 
+                      <button 
+                        className="retry-link" 
+                        onClick={() => fetchRepositories(true, false)}
+                      >
+                        Try scanning again
+                      </button> in a few minutes to find more repositories.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <>
+              {/* Show scanning errors if any occurred but we still found some repositories */}
+              {scanningErrors && (
+                <div className="scanning-errors">
+                  <div className="error-summary">
+                    <h3>⚠️ Some Repositories Could Not Be Checked</h3>
+                    <p>
+                      {scanningErrors.totalErrors} out of {scanningErrors.totalScanned} repositories could not be checked for SMART Guidelines compatibility:
+                    </p>
+                    <div className="error-breakdown">
+                      {scanningErrors.rateLimitedCount > 0 && (
+                        <div className="error-item rate-limit">
+                          <span className="error-icon">🚫</span>
+                          <div className="error-details">
+                            <strong>Rate Limited:</strong> {scanningErrors.rateLimitedCount} repositories
+                            <p className="error-help">
+                              GitHub API rate limit exceeded. Some repositories couldn't be checked. 
+                              <button 
+                                className="retry-link" 
+                                onClick={() => fetchRepositories(true, false)}
+                              >
+                                Try again in a few minutes
+                              </button>
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {scanningErrors.networkErrorCount > 0 && (
+                        <div className="error-item network">
+                          <span className="error-icon">🌐</span>
+                          <div className="error-details">
+                            <strong>Network Issues:</strong> {scanningErrors.networkErrorCount} repositories
+                            <p className="error-help">
+                              Network connectivity problems prevented checking some repositories.
+                              <button 
+                                className="retry-link" 
+                                onClick={() => fetchRepositories(true, false)}
+                              >
+                                Retry scan
+                              </button>
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {scanningErrors.hasRetryableErrors && (
+                        <div className="retry-suggestion">
+                          <span className="suggestion-icon">💡</span>
+                          <p>
+                            <strong>Suggestion:</strong> These issues are usually temporary. 
+                            Retrying the scan in a few minutes may find more repositories.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="repo-grid">
                 {repositories.map((repo) => (
                   <div 
