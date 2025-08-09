@@ -21,11 +21,15 @@ const PreviewBadge = () => {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [commentSubmissionStatus, setCommentSubmissionStatus] = useState(null); // 'submitting', 'success', 'error'
   const [expandedComments, setExpandedComments] = useState(new Set());
   const [expandedDescription, setExpandedDescription] = useState(false);
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
   const [workflowStatus, setWorkflowStatus] = useState(null);
   const [workflowLoading, setWorkflowLoading] = useState(false);
+  const [newlyAddedCommentId, setNewlyAddedCommentId] = useState(null);
+  const [copilotSessionInfo, setCopilotSessionInfo] = useState(null);
+  const [showCopilotSession, setShowCopilotSession] = useState(false);
   const expandedRef = useRef(null);
 
   useEffect(() => {
@@ -188,6 +192,47 @@ const PreviewBadge = () => {
     }
   };
 
+  const fetchCopilotSessionInfo = async (owner, repo, prNumber) => {
+    try {
+      if (!githubService.isAuth()) {
+        return null;
+      }
+
+      // Check for recent GitHub Copilot activity in PR comments
+      const comments = await githubService.getPullRequestIssueComments(owner, repo, prNumber);
+      
+      // Look for comments from GitHub Copilot or containing copilot session indicators
+      const copilotComments = comments.filter(comment => 
+        comment.user.login === 'copilot' || 
+        comment.user.login.includes('copilot') ||
+        comment.body.includes('@copilot') ||
+        comment.body.includes('copilot session') ||
+        comment.body.includes('GitHub Copilot')
+      );
+
+      if (copilotComments.length > 0) {
+        // Get the most recent copilot activity
+        const latestCopilotComment = copilotComments[0];
+        
+        return {
+          hasActiveCopilot: true,
+          latestActivity: latestCopilotComment.created_at,
+          sessionUrl: `https://github.com/${owner}/${repo}/pull/${prNumber}#issuecomment-${latestCopilotComment.id}`,
+          commentsCount: copilotComments.length,
+          latestComment: latestCopilotComment
+        };
+      }
+
+      return {
+        hasActiveCopilot: false,
+        commentsCount: 0
+      };
+    } catch (error) {
+      console.debug('Failed to fetch copilot session info:', error);
+      return null;
+    }
+  };
+
   const handleTriggerWorkflow = async (branchName) => {
     try {
       if (!githubService.isAuth()) {
@@ -227,22 +272,39 @@ const PreviewBadge = () => {
     
     try {
       setSubmittingComment(true);
+      setCommentSubmissionStatus('submitting');
       const owner = 'litlfred';
       const repo = 'sgex';
       
       if (prInfo && prInfo.length > 0) {
         const pr = prInfo[0]; // Use first PR for comment submission
-        await githubService.createPullRequestComment(owner, repo, pr.number, newComment.trim());
+        const submittedComment = await githubService.createPullRequestComment(owner, repo, pr.number, newComment.trim());
+        
+        // Set success status
+        setCommentSubmissionStatus('success');
         
         // Refresh comments after successful submission
         const updatedComments = await fetchCommentsForPR(owner, repo, pr.number);
         setComments(updatedComments);
+        
+        // Mark the newly added comment for glow effect
+        if (submittedComment && submittedComment.id) {
+          setNewlyAddedCommentId(submittedComment.id);
+          // Remove glow effect after 3 seconds
+          setTimeout(() => setNewlyAddedCommentId(null), 3000);
+        }
+        
         setNewComment('');
         setShowMarkdownEditor(false); // Close markdown editor after successful submission
+        
+        // Clear success status after 3 seconds
+        setTimeout(() => setCommentSubmissionStatus(null), 3000);
       }
     } catch (error) {
       console.error('Failed to submit comment:', error);
-      // Could add user-visible error handling here
+      setCommentSubmissionStatus('error');
+      // Clear error status after 5 seconds
+      setTimeout(() => setCommentSubmissionStatus(null), 5000);
     } finally {
       setSubmittingComment(false);
     }
@@ -289,6 +351,26 @@ const PreviewBadge = () => {
       const repo = 'sgex';
       const prComments = await fetchCommentsForPR(owner, repo, pr.number);
       setComments(prComments);
+      
+      // Check if user is collaborator and auto-add @copilot
+      if (githubService.isAuth()) {
+        try {
+          const hasWriteAccess = await githubService.checkRepositoryWritePermissions(owner, repo);
+          if (hasWriteAccess && !newComment.includes('@copilot')) {
+            setNewComment('@copilot ');
+          }
+        } catch (error) {
+          console.debug('Could not check collaborator status:', error);
+        }
+
+        // Check for copilot session activity
+        try {
+          const copilotInfo = await fetchCopilotSessionInfo(owner, repo, pr.number);
+          setCopilotSessionInfo(copilotInfo);
+        } catch (error) {
+          console.debug('Could not fetch copilot session info:', error);
+        }
+      }
       
       // Fetch workflow status for the current branch
       if (branchInfo?.name) {
@@ -401,6 +483,13 @@ const PreviewBadge = () => {
               {githubService.isAuth() && (
                 <div className="comment-form">
                   <h4>Add Comment</h4>
+                  {commentSubmissionStatus && (
+                    <div className={`comment-status comment-status-${commentSubmissionStatus}`}>
+                      {commentSubmissionStatus === 'submitting' && '⏳ Submitting comment...'}
+                      {commentSubmissionStatus === 'success' && '✅ Comment submitted successfully!'}
+                      {commentSubmissionStatus === 'error' && '❌ Failed to submit comment. Please try again.'}
+                    </div>
+                  )}
                   {!showMarkdownEditor ? (
                     <div className="comment-form-simple">
                       <textarea
@@ -491,6 +580,79 @@ const PreviewBadge = () => {
                 </div>
               )}
 
+              {/* GitHub Copilot Session Section */}
+              {copilotSessionInfo && (
+                <div className="copilot-session-wrapper">
+                  <h4>🤖 GitHub Copilot Activity</h4>
+                  {copilotSessionInfo.hasActiveCopilot ? (
+                    <div className="copilot-session-active">
+                      <div className="copilot-session-info">
+                        <span className="copilot-status">✅ Active Copilot session detected</span>
+                        <span className="copilot-activity">
+                          Last activity: {formatDate(copilotSessionInfo.latestActivity)}
+                        </span>
+                        <span className="copilot-comments-count">
+                          {copilotSessionInfo.commentsCount} copilot comment(s) found
+                        </span>
+                      </div>
+                      <div className="copilot-session-actions">
+                        <a 
+                          href={copilotSessionInfo.sessionUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="copilot-session-link"
+                        >
+                          🔗 View Copilot Session
+                        </a>
+                        <button
+                          className="copilot-session-toggle"
+                          onClick={() => setShowCopilotSession(!showCopilotSession)}
+                        >
+                          {showCopilotSession ? '📝 Hide Session' : '👁️ Watch Session'}
+                        </button>
+                      </div>
+                      {showCopilotSession && copilotSessionInfo.latestComment && (
+                        <div className="copilot-session-modal">
+                          <div className="copilot-session-header">
+                            <strong>Latest Copilot Activity</strong>
+                            <span className="copilot-comment-date">
+                              {formatDate(copilotSessionInfo.latestComment.created_at)}
+                            </span>
+                          </div>
+                          <div className="copilot-session-content">
+                            <div className="copilot-comment-author">
+                              <img 
+                                src={copilotSessionInfo.latestComment.user.avatar_url} 
+                                alt={copilotSessionInfo.latestComment.user.login}
+                                className="copilot-avatar"
+                              />
+                              <a 
+                                href={copilotSessionInfo.latestComment.user.html_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="copilot-username"
+                              >
+                                {copilotSessionInfo.latestComment.user.login}
+                              </a>
+                            </div>
+                            <div className="copilot-comment-body">
+                              {copilotSessionInfo.latestComment.body}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="copilot-session-inactive">
+                      <span className="copilot-status">⚪ No active Copilot session detected</span>
+                      <span className="copilot-hint">
+                        Start a conversation with @copilot to begin a session
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="comments-section">
                 <h4>Recent Comments ({comments.length}/5)</h4>
                 {commentsLoading ? (
@@ -502,16 +664,24 @@ const PreviewBadge = () => {
                     {comments.map((comment) => {
                       const isExpanded = expandedComments.has(comment.id);
                       const shouldTruncate = comment.body && comment.body.length > 200;
+                      const isNewComment = newlyAddedCommentId === comment.id;
                       
                       return (
-                        <div key={comment.id} className="comment">
+                        <div key={comment.id} className={`comment ${isNewComment ? 'comment-new-glow' : ''}`}>
                           <div className="comment-header">
                             <img 
                               src={comment.user.avatar_url} 
                               alt={comment.user.login} 
                               className="comment-avatar"
                             />
-                            <span className="comment-author">{comment.user.login}</span>
+                            <a 
+                              href={comment.user.html_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="comment-author"
+                            >
+                              {comment.user.login}
+                            </a>
                             <span className="comment-date">{formatDate(comment.created_at)}</span>
                             <span className="comment-type">{comment.type}</span>
                           </div>

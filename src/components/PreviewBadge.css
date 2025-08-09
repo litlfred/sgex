@@ -277,6 +277,28 @@
   border: 1px solid #e5e5e5;
   border-radius: 6px;
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.comment-new-glow {
+  animation: comment-glow 3s ease-in-out;
+  border-color: #28a745;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+}
+
+@keyframes comment-glow {
+  0% {
+    border-color: #28a745;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+  }
+  50% {
+    border-color: #20c997;
+    box-shadow: 0 0 0 4px rgba(32, 201, 151, 0.3);
+  }
+  100% {
+    border-color: #e5e5e5;
+    box-shadow: none;
+  }
 }
 
 .comment-header {
@@ -297,7 +319,12 @@
 
 .comment-author {
   font-weight: 600;
-  color: #333;
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.comment-author:hover {
+  text-decoration: underline;
 }
 
 .comment-date {
@@ -367,6 +394,33 @@
   margin: 0 0 0.5rem 0;
   font-size: 0.9rem;
   color: #333;
+}
+
+.comment-status {
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.comment-status-submitting {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+}
+
+.comment-status-success {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.comment-status-error {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
 }
 
 .comment-form textarea {
@@ -488,6 +542,159 @@
 
 .workflow-status-wrapper .workflow-status-details {
   color: #666;
+}
+
+.copilot-session-wrapper {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  background: #f8f9ff;
+}
+
+.copilot-session-wrapper h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.copilot-session-active,
+.copilot-session-inactive {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.copilot-session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.copilot-status {
+  font-weight: 600;
+}
+
+.copilot-activity {
+  color: #666;
+}
+
+.copilot-comments-count {
+  color: #0366d6;
+  font-size: 0.8rem;
+}
+
+.copilot-session-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.copilot-session-link {
+  background: #0366d6;
+  color: white;
+  text-decoration: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: background-color 0.2s ease;
+}
+
+.copilot-session-link:hover {
+  background: #0250a3;
+  text-decoration: none;
+}
+
+.copilot-session-toggle {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.copilot-session-toggle:hover {
+  background: #218838;
+}
+
+.copilot-session-modal {
+  margin-top: 0.75rem;
+  border: 1px solid #d1ecf1;
+  border-radius: 6px;
+  background: white;
+  overflow: hidden;
+}
+
+.copilot-session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: #bee5eb;
+  border-bottom: 1px solid #d1ecf1;
+  font-size: 0.85rem;
+}
+
+.copilot-comment-date {
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.copilot-session-content {
+  padding: 0.75rem;
+}
+
+.copilot-comment-author {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.copilot-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.copilot-username {
+  font-weight: 600;
+  color: #0366d6;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.copilot-username:hover {
+  text-decoration: underline;
+}
+
+.copilot-comment-body {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #333;
+  white-space: pre-wrap;
+  background: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border-left: 3px solid #0366d6;
+}
+
+.copilot-session-inactive .copilot-status {
+  color: #666;
+}
+
+.copilot-hint {
+  color: #666;
+  font-size: 0.8rem;
+  font-style: italic;
 }
 
 .expanded-footer {
