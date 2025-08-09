@@ -10,6 +10,7 @@ const BranchListingPage = () => {
     const { t } = useTranslation();
     // Track authentication status for dependency arrays
     const isAuthenticatedForDeps = githubService.isAuth();
+    
     const [pullRequests, setPullRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
