@@ -18,6 +18,7 @@
     "browserify-zlib": "^0.2.0",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.1",
+    "dompurify": "^3.2.6",
     "events": "^3.3.0",
     "https-browserify": "^1.0.0",
     "i18next": "^25.3.2",
@@ -29,6 +30,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-i18next": "^15.6.1",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.7.1",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.6.1",
@@ -50,20 +52,18 @@
     "serve": "npm run build && cd build && python3 -m http.server 3000",
     "check-framework-compliance": "node scripts/check-framework-compliance.js",
     "verify-404": "node scripts/verify-404.js",
-    "build:verify": "npm run build && npm run verify-404"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "build:verify": "npm run build && npm run verify-404",
+    "lint": "eslint src --ext .js,.jsx",
+    "lint:a11y": "eslint src --ext .js,.jsx --format=compact | grep jsx-a11y || echo 'No accessibility issues found!'",
+    "lint:fix": "eslint src --ext .js,.jsx --fix"
   },
   "jest": {
     "transformIgnorePatterns": [
-      "node_modules/(?!(@octokit|universal-user-agent|before-after-hook|@babel|babel-runtime|@ungap|jsdom|@uiw)/)"
+      "node_modules/(?!(@octokit|universal-user-agent|before-after-hook|@babel|babel-runtime|@ungap|jsdom|@uiw|react-router|react-router-dom)/)"
     ],
     "moduleNameMapper": {
-      "\\.(css|less|scss|sass)$": "identity-obj-proxy"
+      "\\.(css|less|scss|sass)$": "identity-obj-proxy",
+      "^react-router-dom$": "<rootDir>/node_modules/react-router-dom/dist/index.js"
     }
   },
   "browserslist": {
@@ -87,6 +87,7 @@
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "http-proxy-middleware": "^3.0.5",
     "identity-obj-proxy": "^3.0.0",
     "jsdom": "^26.1.0"
