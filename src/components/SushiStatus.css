@@ -1,0 +1,588 @@
+/* SUSHI Status Component Styles */
+
+.sushi-status-collapsed,
+.sushi-status-expanded {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  margin: 16px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.sushi-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  background: #fff;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s;
+}
+
+.sushi-status-header:hover {
+  background: #f8f9fa;
+}
+
+.sushi-status-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.sushi-status-icon {
+  font-size: 18px;
+}
+
+.sushi-status-title {
+  color: #495057;
+  font-size: 16px;
+}
+
+.expand-indicator {
+  color: #6c757d;
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+
+.sushi-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.sushi-runner-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.sushi-runner-btn:hover {
+  background: #0056b3;
+}
+
+.sushi-status-content {
+  padding: 16px;
+}
+
+.sushi-loading,
+.sushi-error {
+  padding: 16px;
+  text-align: center;
+}
+
+.sushi-error {
+  color: #dc3545;
+  background: #f8d7da;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.retry-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.retry-btn:hover {
+  background: #c82333;
+}
+
+.sushi-config-container {
+  background: white;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.source-indicators {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.source-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.source-badge.github {
+  background: #f1f3f4;
+  color: #495057;
+}
+
+.source-badge.staging {
+  background: #e7f3ff;
+  color: #0066cc;
+}
+
+.source-badge.staging.active {
+  background: #d4edda;
+  color: #155724;
+  font-weight: 600;
+}
+
+.validation-messages {
+  margin-bottom: 16px;
+}
+
+.validation-error {
+  color: #dc3545;
+  background: #f8d7da;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.validation-warning {
+  color: #856404;
+  background: #fff3cd;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.config-summary h4 {
+  margin: 0 0 16px 0;
+  color: #495057;
+  font-size: 18px;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 8px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.summary-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.summary-field label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+}
+
+.summary-field span {
+  color: #212529;
+  font-size: 14px;
+  min-height: 20px;
+}
+
+.edit-input {
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 14px;
+  background: white;
+}
+
+.edit-input:focus {
+  border-color: #80bdff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.publisher-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e9ecef;
+}
+
+.publisher-section h5 {
+  margin: 0 0 12px 0;
+  color: #495057;
+  font-size: 16px;
+}
+
+.publisher-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.dependencies-section,
+.pages-section,
+.advanced-section {
+  margin-top: 20px;
+  border-top: 1px solid #e9ecef;
+  padding-top: 16px;
+}
+
+.section-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+
+.section-toggle h4 {
+  margin: 0;
+  color: #495057;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dependencies-content,
+.pages-content,
+.advanced-content {
+  margin-top: 12px;
+  padding-left: 16px;
+}
+
+.dependencies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dependency-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.dep-name {
+  font-weight: 600;
+  color: #495057;
+}
+
+.dep-version {
+  color: #6c757d;
+  font-family: monospace;
+}
+
+.remove-dep-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+.remove-dep-btn:hover {
+  opacity: 0.7;
+}
+
+.add-dep-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.add-dep-btn:hover {
+  background: #218838;
+}
+
+.pages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.page-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.page-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.page-title {
+  color: #6c757d;
+  font-size: 12px;
+}
+
+.page-sources {
+  display: flex;
+  gap: 8px;
+}
+
+.source-link {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  text-decoration: none;
+  color: white;
+}
+
+.source-link.github {
+  background: #6c757d;
+}
+
+.source-link.staging {
+  background: #17a2b8;
+}
+
+.advanced-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-info {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.field-info label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.config-actions {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.save-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.save-btn:hover {
+  background: #218838;
+}
+
+.cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cancel-btn:hover {
+  background: #5a6268;
+}
+
+.edit-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.edit-btn:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.edit-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.view-source-btn {
+  background: #17a2b8;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.view-source-btn:hover {
+  background: #138496;
+}
+
+.github-source-btn {
+  background: #6c757d;
+  color: white;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.github-source-btn:hover {
+  background: #5a6268;
+  color: white;
+  text-decoration: none;
+}
+
+/* Source Modal Styles */
+.source-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.source-modal {
+  background: white;
+  border-radius: 8px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.source-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.source-modal-header h3 {
+  margin: 0;
+  color: #495057;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.source-modal-content {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+  max-height: 60vh;
+}
+
+.source-modal-content pre {
+  margin: 0;
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 4px;
+  overflow: auto;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.source-modal-actions {
+  padding: 16px 20px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  gap: 8px;
+}
+
+.copy-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.copy-btn:hover {
+  background: #0056b3;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .page-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .config-actions {
+    flex-direction: column;
+  }
+  
+  .source-modal {
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .source-modal-content {
+    max-height: 50vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .sushi-status-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  
+  .dependency-item,
+  .page-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}

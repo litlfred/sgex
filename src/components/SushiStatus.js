@@ -1,0 +1,623 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import sushiService from '../services/sushiService';
+import stagingGroundService from '../services/stagingGroundService';
+import { handleNavigationClick } from '../utils/navigationUtils';
+import './SushiStatus.css';
+
+const SushiStatus = ({ profile, repository, selectedBranch, hasWriteAccess }) => {
+  const navigate = useNavigate();
+  const [expanded, setExpanded] = useState(false);
+  const [sushiConfig, setSushiConfig] = useState(null);
+  const [configSources, setConfigSources] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editingConfig, setEditingConfig] = useState(null);
+  const [validation, setValidation] = useState(null);
+  const [pages, setPages] = useState([]);
+  const [showSource, setShowSource] = useState(false);
+  const [sourceContent, setSourceContent] = useState('');
+  const [expandedPages, setExpandedPages] = useState(false);
+  const [expandedDependencies, setExpandedDependencies] = useState(false);
+  const [expandedAdvanced, setExpandedAdvanced] = useState(false);
+
+  const owner = repository.owner?.login || repository.full_name.split('/')[0];
+  const repoName = repository.name;
+
+  // Load SUSHI configuration function
+  const loadSushiConfig = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const configResult = await sushiService.loadSushiConfig(repository, selectedBranch, profile);
+      setSushiConfig(configResult.config);
+      setConfigSources(configResult);
+      setEditingConfig({ ...configResult.config });
+
+      // Validate the config
+      const validationResult = sushiService.validateSushiConfig(configResult.config);
+      setValidation(validationResult);
+
+      // Load pages with sources
+      const pagesWithSources = await sushiService.loadPagesWithSources(
+        repository, 
+        selectedBranch, 
+        profile, 
+        configResult.config
+      );
+      setPages(pagesWithSources);
+
+    } catch (err) {
+      console.error('Error loading SUSHI config:', err);
+      setError(`Failed to load SUSHI configuration: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [repository, selectedBranch, profile]);
+
+  // Load SUSHI configuration when component becomes expanded
+  useEffect(() => {
+    if (expanded && !sushiConfig && repository && selectedBranch) {
+      loadSushiConfig();
+    }
+  }, [expanded, repository, selectedBranch, sushiConfig, loadSushiConfig]);
+
+  const handleSushiRunnerClick = (event) => {
+    const path = selectedBranch 
+      ? `/sushi-runner/${owner}/${repoName}/${selectedBranch}`
+      : `/sushi-runner/${owner}/${repoName}`;
+    
+    const navigationState = {
+      profile,
+      repository,
+      selectedBranch
+    };
+    
+    handleNavigationClick(event, path, navigate, navigationState);
+  };
+
+  const handleEditToggle = () => {
+    if (!hasWriteAccess) {
+      alert('You need write permissions to edit the SUSHI configuration.');
+      return;
+    }
+    
+    if (editMode) {
+      // Cancel edit
+      setEditingConfig({ ...sushiConfig });
+      setEditMode(false);
+    } else {
+      // Start edit
+      setEditMode(true);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      // Validate before saving
+      const validationResult = sushiService.validateSushiConfig(editingConfig);
+      setValidation(validationResult);
+
+      if (validationResult.errors.length > 0) {
+        alert('Please fix validation errors before saving.');
+        return;
+      }
+
+      // Save to staging ground
+      await sushiService.saveSushiConfigToStaging(editingConfig);
+      setSushiConfig({ ...editingConfig });
+      setConfigSources(prev => ({ ...prev, hasStagingVersion: true, isUsingStaging: true }));
+      setEditMode(false);
+      
+      alert('SUSHI configuration saved to staging ground successfully!');
+    } catch (err) {
+      console.error('Error saving SUSHI config:', err);
+      alert(`Failed to save SUSHI configuration: ${err.message}`);
+    }
+  };
+
+  const handleFieldChange = (field, value) => {
+    setEditingConfig(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handlePublisherChange = (field, value) => {
+    setEditingConfig(prev => ({
+      ...prev,
+      publisher: {
+        ...prev.publisher,
+        [field]: value
+      }
+    }));
+  };
+
+  const handleDependencyAdd = () => {
+    const name = prompt('Enter dependency name (e.g., smart.who.int.base):');
+    const version = prompt('Enter version (e.g., 1.0.0):');
+    
+    if (name && version) {
+      setEditingConfig(prev => ({
+        ...prev,
+        dependencies: {
+          ...prev.dependencies,
+          [name]: version
+        }
+      }));
+    }
+  };
+
+  const handleDependencyRemove = (depName) => {
+    if (window.confirm(`Remove dependency ${depName}?`)) {
+      setEditingConfig(prev => {
+        const newDeps = { ...prev.dependencies };
+        delete newDeps[depName];
+        return {
+          ...prev,
+          dependencies: newDeps
+        };
+      });
+    }
+  };
+
+  const viewSource = async (sourceType) => {
+    try {
+      setShowSource(true);
+      if (sourceType === 'staging' && configSources.hasStagingVersion) {
+        // Get staging version from staging ground service
+        const stagingFiles = stagingGroundService.getStagingFiles();
+        const stagingFile = stagingFiles.find(file => file.path === 'sushi-config.yaml');
+        setSourceContent(stagingFile ? stagingFile.content : 'Staging version not found');
+      } else {
+        // Get GitHub version
+        import('js-yaml').then(yaml => {
+          const yamlContent = yaml.dump(sushiConfig, { indent: 2 });
+          setSourceContent(yamlContent);
+        });
+      }
+    } catch (err) {
+      setSourceContent(`Error loading source: ${err.message}`);
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Copied to clipboard!');
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+    });
+  };
+
+  if (!expanded) {
+    return (
+      <div className="sushi-status-collapsed">
+        <div className="sushi-status-header" onClick={() => setExpanded(true)}>
+          <div className="sushi-status-info">
+            <span className="sushi-status-icon">🍣</span>
+            <span className="sushi-status-title">SUSHI Status</span>
+            <span className="expand-indicator">▶</span>
+          </div>
+          <div className="sushi-actions">
+            <button
+              className="sushi-runner-btn"
+              onClick={handleSushiRunnerClick}
+              title="Open SUSHI Runner"
+            >
+              🏃 SUSHI Runner
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="sushi-status-expanded">
+      <div className="sushi-status-header" onClick={() => setExpanded(false)}>
+        <div className="sushi-status-info">
+          <span className="sushi-status-icon">🍣</span>
+          <span className="sushi-status-title">SUSHI Status</span>
+          <span className="expand-indicator">▼</span>
+        </div>
+        <div className="sushi-actions">
+          <button
+            className="sushi-runner-btn"
+            onClick={handleSushiRunnerClick}
+            title="Open SUSHI Runner"
+          >
+            🏃 SUSHI Runner
+          </button>
+        </div>
+      </div>
+
+      <div className="sushi-status-content">
+        {loading && (
+          <div className="sushi-loading">
+            <p>Loading SUSHI configuration...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="sushi-error">
+            <p>{error}</p>
+            <button onClick={loadSushiConfig} className="retry-btn">
+              🔄 Retry
+            </button>
+          </div>
+        )}
+
+        {sushiConfig && (
+          <div className="sushi-config-container">
+            {/* Source Indicators */}
+            <div className="source-indicators">
+              {configSources.hasGithubVersion && (
+                <span className="source-badge github">
+                  📁 GitHub: sushi-config.yaml
+                </span>
+              )}
+              {configSources.hasStagingVersion && (
+                <span className="source-badge staging active">
+                  📝 Staging: sushi-config.yaml (override)
+                </span>
+              )}
+            </div>
+
+            {/* Validation Messages */}
+            {validation && (validation.errors.length > 0 || validation.warnings.length > 0) && (
+              <div className="validation-messages">
+                {validation.errors.map((error, idx) => (
+                  <div key={idx} className="validation-error">
+                    ❌ {error}
+                  </div>
+                ))}
+                {validation.warnings.map((warning, idx) => (
+                  <div key={idx} className="validation-warning">
+                    ⚠️ {warning}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Summary Section */}
+            <div className="config-summary">
+              <h4>Summary</h4>
+              <div className="summary-grid">
+                <div className="summary-field">
+                  <label>ID:</label>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      value={editingConfig.id || ''}
+                      onChange={(e) => handleFieldChange('id', e.target.value)}
+                      className="edit-input"
+                    />
+                  ) : (
+                    <span>{sushiConfig.id}</span>
+                  )}
+                </div>
+
+                <div className="summary-field">
+                  <label>FHIR Version:</label>
+                  {editMode ? (
+                    <select
+                      value={editingConfig.fhirVersion || '4.0.1'}
+                      onChange={(e) => handleFieldChange('fhirVersion', e.target.value)}
+                      className="edit-input"
+                    >
+                      <option value="4.0.1">4.0.1</option>
+                      <option value="4.3.0">4.3.0</option>
+                      <option value="5.0.0">5.0.0</option>
+                    </select>
+                  ) : (
+                    <span>{sushiConfig.fhirVersion || '4.0.1'}</span>
+                  )}
+                </div>
+
+                <div className="summary-field">
+                  <label>Name:</label>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      value={editingConfig.name || ''}
+                      onChange={(e) => handleFieldChange('name', e.target.value)}
+                      className="edit-input"
+                    />
+                  ) : (
+                    <span>{sushiConfig.name}</span>
+                  )}
+                </div>
+
+                <div className="summary-field">
+                  <label>Version:</label>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      value={editingConfig.version || ''}
+                      onChange={(e) => handleFieldChange('version', e.target.value)}
+                      className="edit-input"
+                    />
+                  ) : (
+                    <span>{sushiConfig.version}</span>
+                  )}
+                </div>
+
+                <div className="summary-field full-width">
+                  <label>Title:</label>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      value={editingConfig.title || ''}
+                      onChange={(e) => handleFieldChange('title', e.target.value)}
+                      className="edit-input"
+                    />
+                  ) : (
+                    <span>{sushiConfig.title}</span>
+                  )}
+                </div>
+
+                <div className="summary-field full-width">
+                  <label>Description:</label>
+                  {editMode ? (
+                    <textarea
+                      value={editingConfig.description || ''}
+                      onChange={(e) => handleFieldChange('description', e.target.value)}
+                      className="edit-input"
+                      rows="3"
+                    />
+                  ) : (
+                    <span>{sushiConfig.description}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Publisher Section */}
+              <div className="publisher-section">
+                <h5>Publisher</h5>
+                <div className="publisher-fields">
+                  <div className="summary-field">
+                    <label>Name:</label>
+                    {editMode ? (
+                      <input
+                        type="text"
+                        value={editingConfig.publisher?.name || ''}
+                        onChange={(e) => handlePublisherChange('name', e.target.value)}
+                        className="edit-input"
+                      />
+                    ) : (
+                      <span>{sushiConfig.publisher?.name || 'Not specified'}</span>
+                    )}
+                  </div>
+
+                  <div className="summary-field">
+                    <label>URL:</label>
+                    {editMode ? (
+                      <input
+                        type="url"
+                        value={editingConfig.publisher?.url || ''}
+                        onChange={(e) => handlePublisherChange('url', e.target.value)}
+                        className="edit-input"
+                      />
+                    ) : (
+                      <span>
+                        {sushiConfig.publisher?.url ? (
+                          <a href={sushiConfig.publisher.url} target="_blank" rel="noopener noreferrer">
+                            {sushiConfig.publisher.url}
+                          </a>
+                        ) : (
+                          'Not specified'
+                        )}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="summary-field">
+                    <label>Email:</label>
+                    {editMode ? (
+                      <input
+                        type="email"
+                        value={editingConfig.publisher?.email || ''}
+                        onChange={(e) => handlePublisherChange('email', e.target.value)}
+                        className="edit-input"
+                      />
+                    ) : (
+                      <span>
+                        {sushiConfig.publisher?.email ? (
+                          <a href={`mailto:${sushiConfig.publisher.email}`}>
+                            {sushiConfig.publisher.email}
+                          </a>
+                        ) : (
+                          'Not specified'
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Dependencies Section */}
+            <div className="dependencies-section">
+              <div 
+                className="section-toggle"
+                onClick={() => setExpandedDependencies(!expandedDependencies)}
+              >
+                <h4>Dependencies {expandedDependencies ? '▼' : '▶'}</h4>
+              </div>
+              
+              {expandedDependencies && (
+                <div className="dependencies-content">
+                  {editingConfig.dependencies && Object.keys(editingConfig.dependencies).length > 0 ? (
+                    <div className="dependencies-list">
+                      {Object.entries(editingConfig.dependencies).map(([name, version]) => (
+                        <div key={name} className="dependency-item">
+                          <span className="dep-name">{name}</span>
+                          <span className="dep-version">{version}</span>
+                          {editMode && (
+                            <button 
+                              onClick={() => handleDependencyRemove(name)}
+                              className="remove-dep-btn"
+                              title="Remove dependency"
+                            >
+                              ❌
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>No dependencies defined</p>
+                  )}
+                  
+                  {editMode && (
+                    <button onClick={handleDependencyAdd} className="add-dep-btn">
+                      ➕ Add Dependency
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Pages Section */}
+            <div className="pages-section">
+              <div 
+                className="section-toggle"
+                onClick={() => setExpandedPages(!expandedPages)}
+              >
+                <h4>Pages ({pages.length}) {expandedPages ? '▼' : '▶'}</h4>
+              </div>
+              
+              {expandedPages && (
+                <div className="pages-content">
+                  {pages.length > 0 ? (
+                    <div className="pages-list">
+                      {pages.map((page, idx) => (
+                        <div key={idx} className="page-item">
+                          <div className="page-info">
+                            <strong>{page.key}</strong>
+                            {page.title && <span className="page-title">: {page.title}</span>}
+                          </div>
+                          <div className="page-sources">
+                            {page.sources.github && (
+                              <a 
+                                href={page.sources.github.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="source-link github"
+                              >
+                                📁 GitHub
+                              </a>
+                            )}
+                            {page.sources.staging && (
+                              <span className="source-link staging">
+                                📝 Staging
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>No pages defined</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Advanced Section */}
+            <div className="advanced-section">
+              <div 
+                className="section-toggle"
+                onClick={() => setExpandedAdvanced(!expandedAdvanced)}
+              >
+                <h4>Advanced Configuration {expandedAdvanced ? '▼' : '▶'}</h4>
+              </div>
+              
+              {expandedAdvanced && (
+                <div className="advanced-content">
+                  <p>Additional SUSHI configuration fields can be viewed and edited in the source view.</p>
+                  <div className="advanced-fields">
+                    <div className="field-info">
+                      <label>Canonical URL:</label>
+                      <span>{sushiConfig.canonical || 'Not specified'}</span>
+                    </div>
+                    <div className="field-info">
+                      <label>Status:</label>
+                      <span>{sushiConfig.status || 'Not specified'}</span>
+                    </div>
+                    <div className="field-info">
+                      <label>Copyright Year:</label>
+                      <span>{sushiConfig.copyrightYear || 'Not specified'}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="config-actions">
+              {editMode ? (
+                <>
+                  <button onClick={handleSave} className="save-btn">
+                    💾 Save to Staging
+                  </button>
+                  <button onClick={handleEditToggle} className="cancel-btn">
+                    ❌ Cancel
+                  </button>
+                </>
+              ) : (
+                <button 
+                  onClick={handleEditToggle} 
+                  className="edit-btn"
+                  disabled={!hasWriteAccess}
+                  title={hasWriteAccess ? 'Edit configuration' : 'Write permissions required'}
+                >
+                  ✏️ Edit
+                </button>
+              )}
+              
+              <button onClick={() => viewSource('current')} className="view-source-btn">
+                👁️ View Source
+              </button>
+              
+              {configSources.hasGithubVersion && (
+                <a 
+                  href={`https://github.com/${owner}/${repoName}/blob/${selectedBranch}/sushi-config.yaml`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="github-source-btn"
+                >
+                  🔗 GitHub Source
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Source View Modal */}
+      {showSource && (
+        <div className="source-modal-overlay" onClick={() => setShowSource(false)}>
+          <div className="source-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="source-modal-header">
+              <h3>SUSHI Configuration Source</h3>
+              <button onClick={() => setShowSource(false)} className="modal-close">❌</button>
+            </div>
+            <div className="source-modal-content">
+              <pre><code>{sourceContent}</code></pre>
+            </div>
+            <div className="source-modal-actions">
+              <button onClick={() => copyToClipboard(sourceContent)} className="copy-btn">
+                📋 Copy to Clipboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SushiStatus;

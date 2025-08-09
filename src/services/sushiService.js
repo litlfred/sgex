@@ -14,6 +14,7 @@
 
 import githubService from './githubService';
 import stagingGroundService from './stagingGroundService';
+import yaml from 'js-yaml';
 
 class SushiService {
   constructor() {
@@ -207,28 +208,196 @@ class SushiService {
   }
 
   /**
-   * Load SUSHI configuration from repository
+   * Load SUSHI configuration from repository and staging ground
    */
   async loadSushiConfig(repository, branch, profile) {
     try {
-      const configContent = await githubService.getFileContent(
-        repository.owner.login,
-        repository.name,
-        'sushi-config.yaml',
-        branch,
-        profile.token
-      );
+      let githubConfig = null;
+      let stagingConfig = null;
 
-      // Parse YAML config using js-yaml which is already available
-      const yaml = await import('js-yaml');
-      const config = yaml.load(configContent);
-      
-      this.log('info', `Loaded SUSHI configuration: ${config.id || 'unnamed'}`);
-      return config;
+      // Load from GitHub
+      try {
+        const configContent = await githubService.getFileContent(
+          repository.owner.login,
+          repository.name,
+          'sushi-config.yaml',
+          branch,
+          profile.token
+        );
+        githubConfig = yaml.load(configContent);
+        this.log('info', `Loaded SUSHI configuration from GitHub: ${githubConfig.id || 'unnamed'}`);
+      } catch (error) {
+        this.log('warn', `Could not load sushi-config.yaml from GitHub: ${error.message}`);
+      }
+
+      // Load from staging ground if available
+      try {
+        const stagingFiles = stagingGroundService.getStagingFiles();
+        const stagingConfigFile = stagingFiles.find(file => file.path === 'sushi-config.yaml');
+        if (stagingConfigFile) {
+          stagingConfig = yaml.load(stagingConfigFile.content);
+          this.log('info', `Loaded SUSHI configuration from staging: ${stagingConfig.id || 'unnamed'}`);
+        }
+      } catch (error) {
+        this.log('warn', `Could not load sushi-config.yaml from staging: ${error.message}`);
+      }
+
+      // Return staging config if available, otherwise GitHub config
+      const config = stagingConfig || githubConfig;
+      if (!config) {
+        throw new Error('No sushi-config.yaml found in repository or staging');
+      }
+
+      return {
+        config,
+        hasGithubVersion: !!githubConfig,
+        hasStagingVersion: !!stagingConfig,
+        isUsingStaging: !!stagingConfig
+      };
     } catch (error) {
       this.log('error', `Failed to load sushi-config.yaml: ${error.message}`);
       throw error;
     }
+  }
+
+  /**
+   * Save SUSHI configuration to staging ground
+   */
+  async saveSushiConfigToStaging(config) {
+    try {
+      const yamlContent = yaml.dump(config, {
+        indent: 2,
+        lineWidth: 120,
+        quotingType: '"'
+      });
+
+      stagingGroundService.saveFile('sushi-config.yaml', yamlContent);
+      this.log('info', 'Saved SUSHI configuration to staging ground');
+      return true;
+    } catch (error) {
+      this.log('error', `Failed to save sushi-config.yaml to staging: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Validate SUSHI configuration
+   */
+  validateSushiConfig(config) {
+    const errors = [];
+    const warnings = [];
+
+    // Required fields validation
+    if (!config.id) {
+      errors.push('id field is required');
+    } else if (!/^[a-z0-9]+(\.[a-z0-9]+)*$/.test(config.id)) {
+      errors.push('id must be lowercase alphanumeric with dots only (e.g., who.fhir.anc)');
+    }
+
+    if (!config.name) {
+      errors.push('name field is required');
+    } else if (/\s/.test(config.name)) {
+      errors.push('name should not contain spaces (use PascalCase, e.g., WHOANCGuidelines)');
+    }
+
+    if (!config.version) {
+      errors.push('version field is required');
+    } else if (!/^\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$/.test(config.version)) {
+      errors.push('version must follow semantic versioning (e.g., 1.0.0)');
+    }
+
+    if (!config.fhirVersion) {
+      warnings.push('fhirVersion not specified, defaulting to 4.0.1');
+    } else if (!['4.0.1', '4.3.0', '5.0.0'].includes(config.fhirVersion)) {
+      warnings.push('fhirVersion should be one of: 4.0.1, 4.3.0, 5.0.0');
+    }
+
+    // Publisher validation
+    if (!config.publisher) {
+      warnings.push('publisher information is recommended');
+    } else if (typeof config.publisher === 'object') {
+      if (!config.publisher.name) {
+        warnings.push('publisher.name is recommended');
+      }
+      if (config.publisher.url && !/^https?:\/\//.test(config.publisher.url)) {
+        errors.push('publisher.url must be a valid URL starting with http:// or https://');
+      }
+      if (config.publisher.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.publisher.email)) {
+        errors.push('publisher.email must be a valid email address');
+      }
+    }
+
+    // Dependencies validation - ensure WHO base dependency for DAKs
+    if (!config.dependencies) {
+      warnings.push('dependencies section is recommended for WHO SMART Guidelines DAKs');
+    } else if (!config.dependencies['hl7.fhir.uv.sdc'] && !config.dependencies['smart.who.int.base']) {
+      warnings.push('WHO SMART Guidelines DAKs should include smart.who.int.base dependency');
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings
+    };
+  }
+
+  /**
+   * Get pages from sushi config and link to source files
+   */
+  async loadPagesWithSources(repository, branch, profile, config) {
+    const pages = [];
+    
+    if (config.pages) {
+      for (const [pageKey, pageValue] of Object.entries(config.pages)) {
+        const page = {
+          key: pageKey,
+          ...pageValue,
+          sources: {
+            github: null,
+            staging: null
+          }
+        };
+
+        // Check for source file in input/pagecontent
+        const sourceFileName = `input/pagecontent/${pageKey}.md`;
+        
+        // Check GitHub
+        try {
+          const content = await githubService.getFileContent(
+            repository.owner.login,
+            repository.name,
+            sourceFileName,
+            branch,
+            profile.token
+          );
+          page.sources.github = {
+            path: sourceFileName,
+            url: `https://github.com/${repository.owner.login}/${repository.name}/blob/${branch}/${sourceFileName}`,
+            size: content.length
+          };
+        } catch (error) {
+          // Page source not found in GitHub
+        }
+
+        // Check staging
+        try {
+          const stagingFiles = stagingGroundService.getStagingFiles();
+          const stagingFile = stagingFiles.find(file => file.path === sourceFileName);
+          if (stagingFile) {
+            page.sources.staging = {
+              path: sourceFileName,
+              size: stagingFile.content.length
+            };
+          }
+        } catch (error) {
+          // Page source not found in staging
+        }
+
+        pages.push(page);
+      }
+    }
+
+    return pages;
   }
 
   /**
@@ -242,7 +411,7 @@ class SushiService {
     try {
       // Load FSH files and configuration
       const fshFiles = await this.loadFSHFiles(repository, branch, profile);
-      const config = await this.loadSushiConfig(repository, branch, profile);
+      const configResult = await this.loadSushiConfig(repository, branch, profile);
 
       if (fshFiles.length === 0) {
         this.log('warn', 'No FSH files found to process');
@@ -259,8 +428,13 @@ class SushiService {
 
       this.compilationResults = {
         files: fshFiles,
-        config: config,
-        analysis: analysis
+        config: configResult.config,
+        analysis: analysis,
+        configSources: {
+          hasGithubVersion: configResult.hasGithubVersion,
+          hasStagingVersion: configResult.hasStagingVersion,
+          isUsingStaging: configResult.isUsingStaging
+        }
       };
       
       this.log('info', 'FSH file loading and analysis completed');
@@ -270,7 +444,8 @@ class SushiService {
         success: true,
         result: {
           files: fshFiles,
-          config: config,
+          config: configResult.config,
+          configSources: configResult,
           analysis: analysis,
           message: 'FSH files loaded successfully. Full SUSHI compilation will be available in future releases.'
         },

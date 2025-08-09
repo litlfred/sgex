@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import githubService from '../services/githubService';
 import StagingGround from './StagingGround';
+import SushiStatus from './SushiStatus';
 
 const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) => {
   const [branches, setBranches] = useState([]);
@@ -320,6 +321,14 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
           <p>No publishable branches found (excluding gh-pages).</p>
         </div>
       )}
+
+      {/* SUSHI Status Section */}
+      <SushiStatus
+        profile={profile}
+        repository={repository}
+        selectedBranch={selectedBranch}
+        hasWriteAccess={hasWriteAccess}
+      />
     </div>
   );
 };
