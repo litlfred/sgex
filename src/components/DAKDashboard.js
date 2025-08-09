@@ -258,13 +258,20 @@ const DAKDashboardContent = () => {
 
 
 
+  // Helper function to get mascot card image path
+  const getMascotCardPath = (componentId) => {
+    const publicUrl = process.env.PUBLIC_URL || '';
+    const cardPath = `dashboard/dak_${componentId.replace(/[-]/g, '_')}.png`;
+    return publicUrl ? `${publicUrl}/${cardPath}` : `/${cardPath}`;
+  };
+
   // Define the 9 core DAK components based on WHO SMART Guidelines documentation
   const coreDAKComponents = [
     {
       id: 'health-interventions',
       name: 'Health Interventions and Recommendations',
       description: 'Clinical guidelines and health intervention specifications that define evidence-based care recommendations',
-      icon: '📖',
+      mascotCard: getMascotCardPath('interventions'),
       type: 'L2',
       color: '#0078d4',
       fileTypes: ['IRIS', 'Publication'],
@@ -275,7 +282,7 @@ const DAKDashboardContent = () => {
       id: 'generic-personas',
       name: 'Generic Personas',
       description: 'Standardized user roles and actor definitions that represent different types of healthcare workers and patients',
-      icon: '👥',
+      mascotCard: getMascotCardPath('personas'),
       type: 'L2',
       color: '#107c10',
       fileTypes: ['Actor', 'Role'],
@@ -286,7 +293,7 @@ const DAKDashboardContent = () => {
       id: 'user-scenarios',
       name: 'User Scenarios',
       description: 'Narrative descriptions of how different personas interact with the system in specific healthcare contexts',
-      icon: '📝',
+      mascotCard: getMascotCardPath('user_scenarios'),
       type: 'L2',
       color: '#881798',
       fileTypes: ['Narrative', 'Use Case'],
@@ -297,7 +304,7 @@ const DAKDashboardContent = () => {
       id: 'business-processes',
       name: 'Generic Business Processes and Workflows',
       description: 'BPMN workflows and business process definitions that model clinical workflows and care pathways',
-      icon: '🔄',
+      mascotCard: getMascotCardPath('business_processes'),
       type: 'L2',
       color: '#d13438',
       fileTypes: ['BPMN', 'XML'],
@@ -308,7 +315,7 @@ const DAKDashboardContent = () => {
       id: 'core-data-elements',
       name: 'Core Data Elements',
       description: 'Essential data structures and terminology needed for clinical data capture and exchange (includes Terminology Services via OCL and Product Master Data via PCMT)',
-      icon: '🗃️',
+      mascotCard: getMascotCardPath('core_data_elements'),
       type: 'L2',
       color: '#ff8c00',
       fileTypes: ['OCL', 'Concept', 'PCMT', 'Product'],
@@ -319,7 +326,7 @@ const DAKDashboardContent = () => {
       id: 'decision-support',
       name: 'Decision-Support Logic',
       description: 'DMN decision tables and clinical decision support rules that encode clinical logic',
-      icon: '🎯',
+      mascotCard: getMascotCardPath('decision_support_logic'),
       type: 'L2',
       color: '#00bcf2',
       fileTypes: ['DMN', 'XML'],
@@ -330,7 +337,7 @@ const DAKDashboardContent = () => {
       id: 'program-indicators',
       name: 'Program Indicators',
       description: 'Performance indicators and measurement definitions for monitoring and evaluation',
-      icon: '📊',
+      mascotCard: getMascotCardPath('indicators'),
       type: 'L2',
       color: '#498205',
       fileTypes: ['Measure', 'Logic'],
@@ -341,7 +348,7 @@ const DAKDashboardContent = () => {
       id: 'functional-requirements',
       name: 'Functional and Non-Functional Requirements',
       description: 'System requirements specifications that define capabilities and constraints',
-      icon: '⚙️',
+      mascotCard: getMascotCardPath('requirements'),
       type: 'L2',
       color: '#6b69d6',
       fileTypes: ['Requirements', 'Specification'],
@@ -352,7 +359,7 @@ const DAKDashboardContent = () => {
       id: 'test-scenarios',
       name: 'Test Scenarios',
       description: 'Feature files and test scenarios for validating the DAK implementation',
-      icon: '🧪',
+      mascotCard: getMascotCardPath('testing'),
       type: 'L2',
       color: '#8b5cf6',
       fileTypes: ['Feature', 'Test'],
@@ -568,8 +575,12 @@ const DAKDashboardContent = () => {
                     style={{ '--component-color': component.color }}
                   >
                     <div className="component-header">
-                      <div className="component-icon" style={{ color: component.color }}>
-                        {component.icon}
+                      <div className="component-mascot">
+                        <img 
+                          src={component.mascotCard} 
+                          alt={`${component.name} mascot`}
+                          className="mascot-card-image"
+                        />
                       </div>
                     </div>
                     

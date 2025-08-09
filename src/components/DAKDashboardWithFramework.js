@@ -101,6 +101,13 @@ const DAKDashboardContent = () => {
     }
   };
 
+  // Helper function to get mascot card image path
+  const getMascotCardPath = (componentId) => {
+    const publicUrl = process.env.PUBLIC_URL || '';
+    const cardPath = `dashboard/dak_${componentId.replace(/[-]/g, '_')}.png`;
+    return publicUrl ? `${publicUrl}/${cardPath}` : `/${cardPath}`;
+  };
+
   // Define the 9 core DAK components based on WHO SMART Guidelines documentation
   const dakComponents = [
     // Core Components (Level 2)
@@ -108,7 +115,7 @@ const DAKDashboardContent = () => {
       id: 'health-interventions',
       title: 'Health Interventions and Recommendations',
       description: 'Clinical guidelines and health intervention specifications that define evidence-based care recommendations',
-      icon: '📖',
+      mascotCard: getMascotCardPath('interventions'),
       path: 'health-interventions',
       level: 'Level 2: Core Components',
       color: '#0078d4'
@@ -117,7 +124,7 @@ const DAKDashboardContent = () => {
       id: 'generic-personas',
       title: 'Generic Personas',
       description: 'Standardized user roles and actor definitions that represent different types of healthcare workers and patients',
-      icon: '👥',
+      mascotCard: getMascotCardPath('personas'),
       path: 'actor-editor',
       level: 'Level 2: Core Components',
       color: '#107c10'
@@ -126,7 +133,7 @@ const DAKDashboardContent = () => {
       id: 'user-scenarios',
       title: 'User Scenarios',
       description: 'Narrative descriptions of how different personas interact with the system in specific healthcare contexts',
-      icon: '📝',
+      mascotCard: getMascotCardPath('user_scenarios'),
       path: 'user-scenarios',
       level: 'Level 2: Core Components',
       color: '#881798'
@@ -135,7 +142,7 @@ const DAKDashboardContent = () => {
       id: 'business-processes',
       title: 'Generic Business Processes and Workflows',
       description: 'BPMN workflows and business process definitions that model clinical workflows and care pathways',
-      icon: '🔄',
+      mascotCard: getMascotCardPath('business_processes'),
       path: 'business-process-selection',
       level: 'Level 2: Core Components',
       color: '#d13438'
@@ -144,7 +151,7 @@ const DAKDashboardContent = () => {
       id: 'core-data-elements',
       title: 'Core Data Elements',
       description: 'Essential data structures and terminology needed for clinical data capture and exchange',
-      icon: '🗃️',
+      mascotCard: getMascotCardPath('core_data_elements'),
       path: 'core-data-dictionary-viewer',
       level: 'Level 2: Core Components',
       color: '#ff8c00'
@@ -153,7 +160,7 @@ const DAKDashboardContent = () => {
       id: 'decision-support',
       title: 'Decision-Support Logic',
       description: 'DMN decision tables and clinical decision support rules that encode clinical logic',
-      icon: '🎯',
+      mascotCard: getMascotCardPath('decision_support_logic'),
       path: 'decision-support-logic',
       level: 'Level 2: Core Components',
       color: '#00bcf2'
@@ -162,7 +169,7 @@ const DAKDashboardContent = () => {
       id: 'program-indicators',
       title: 'Program Indicators',
       description: 'Performance indicators and measurement definitions for monitoring and evaluation',
-      icon: '📊',
+      mascotCard: getMascotCardPath('indicators'),
       path: 'program-indicators',
       level: 'Level 2: Core Components',
       color: '#498205'
@@ -171,7 +178,7 @@ const DAKDashboardContent = () => {
       id: 'functional-requirements',
       title: 'Functional and Non-Functional Requirements',
       description: 'System requirements specifications that define capabilities and constraints',
-      icon: '⚙️',
+      mascotCard: getMascotCardPath('requirements'),
       path: 'functional-requirements',
       level: 'Level 2: Core Components',
       color: '#6b69d6'
@@ -180,7 +187,7 @@ const DAKDashboardContent = () => {
       id: 'testing',
       title: 'Testing',
       description: 'Feature files and test scenarios for validating the DAK implementation',
-      icon: '🧪',
+      mascotCard: getMascotCardPath('testing'),
       path: 'testing-viewer',
       level: 'Level 2: Core Components',
       color: '#8b5cf6'
@@ -296,7 +303,13 @@ const DAKDashboardContent = () => {
                   className="component-card"
                   onClick={() => handleComponentNavigate(component.path)}
                 >
-                  <div className="component-icon">{component.icon}</div>
+                  <div className="component-mascot">
+                    <img 
+                      src={component.mascotCard} 
+                      alt={`${component.title} mascot`}
+                      className="mascot-card-image"
+                    />
+                  </div>
                   <h3>{component.title}</h3>
                   <p>{component.description}</p>
                   {issueCounts[component.id] > 0 && (
@@ -317,7 +330,17 @@ const DAKDashboardContent = () => {
                   className="component-card"
                   onClick={() => handleComponentNavigate(component.path)}
                 >
-                  <div className="component-icon">{component.icon}</div>
+                  {component.mascotCard ? (
+                    <div className="component-mascot">
+                      <img 
+                        src={component.mascotCard} 
+                        alt={`${component.title} mascot`}
+                        className="mascot-card-image"
+                      />
+                    </div>
+                  ) : (
+                    <div className="component-icon">{component.icon}</div>
+                  )}
                   <h3>{component.title}</h3>
                   <p>{component.description}</p>
                   {issueCounts[component.id] > 0 && (

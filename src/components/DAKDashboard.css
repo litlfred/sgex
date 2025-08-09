@@ -483,6 +483,26 @@ body.theme-light .dak-dashboard {
   line-height: 1;
 }
 
+.component-mascot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+}
+
+.mascot-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.component-card:hover .mascot-card-image {
+  transform: scale(1.05);
+}
+
 
 
 .component-content h3,
