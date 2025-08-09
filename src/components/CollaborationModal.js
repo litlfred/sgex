@@ -79,14 +79,15 @@ const CollaborationModal = ({ onClose }) => {
           </p>
           <div className="get-started-actions">
             <h4>Ready to contribute?</h4>
-            <a 
-              href="https://litlfred.github.io/sgex/" 
-              target="_blank" 
-              rel="noopener noreferrer"
+            <button 
               className="action-link primary"
+              onClick={() => {
+                // Navigate to current site instead of external URL
+                window.location.href = window.location.origin + '/sgex/';
+              }}
             >
-              Visit our Landing Page
-            </a>
+              View Main Site
+            </button>
             <p className="or-text">or</p>
             <button 
               className="action-link secondary"

@@ -27,18 +27,24 @@ body.theme-light .welcome-page-content {
 
 .welcome-intro {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 3rem;
-  text-align: center;
+  text-align: left;
+  min-height: 400px;
 }
 
 .welcome-mascot {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .welcome-mascot img {
-  width: 200px;
-  height: 200px;
+  width: auto;
+  height: 100%;
+  max-height: 400px;
+  max-width: 300px;
   object-fit: contain;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
 }
@@ -159,14 +165,10 @@ body.theme-light .welcome-page-content {
   justify-content: center;
   align-items: center;
   flex: 1;
-  min-height: 280px;
 }
 
 .card-icon img {
-  width: 100%;
-  height: 100%;
-  max-width: 280px;
-  max-height: 280px;
+  min-height: 12em;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
