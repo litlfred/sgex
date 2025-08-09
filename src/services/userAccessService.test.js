@@ -3,6 +3,9 @@
  */
 import userAccessService, { USER_TYPES, ACCESS_LEVELS } from './userAccessService';
 
+import githubService from './githubService';
+import dakValidationService from './dakValidationService';
+
 // Mock dependencies
 jest.mock('./githubService', () => ({
   isAuth: jest.fn(),
@@ -15,9 +18,6 @@ jest.mock('./dakValidationService', () => ({
   validateDemoDAKRepository: jest.fn(),
   validateDAKRepository: jest.fn()
 }));
-
-import githubService from './githubService';
-import dakValidationService from './dakValidationService';
 
 describe('UserAccessService', () => {
   beforeEach(() => {

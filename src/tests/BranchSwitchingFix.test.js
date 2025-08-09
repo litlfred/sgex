@@ -1,5 +1,7 @@
 import dakValidationService from '../services/dakValidationService';
 
+import githubService from '../services/githubService';
+
 // Mock the GitHub service
 jest.mock('../services/githubService', () => ({
   isAuth: jest.fn(),
@@ -12,8 +14,6 @@ jest.mock('../services/githubService', () => ({
     }
   }
 }));
-
-import githubService from '../services/githubService';
 
 describe('Branch Switching Fix - DAK Validation', () => {
   beforeEach(() => {

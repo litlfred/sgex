@@ -63,9 +63,7 @@ describe('DAKSelection Direct Navigation', () => {
     }, { timeout: 10000 });
 
     // Find and click on a repository card
-    const repoCard = await waitFor(() => 
-      screen.getByText('maternal-health-dak')
-    );
+    const repoCard = await screen.findByText('maternal-health-dak');
     
     // Click on the repository card
     fireEvent.click(repoCard.closest('.repo-card'));
@@ -107,9 +105,7 @@ describe('DAKSelection Direct Navigation', () => {
     }, { timeout: 10000 });
 
     // Find and click on a repository card
-    const repoCard = await waitFor(() => 
-      screen.getByText('maternal-health-dak')
-    );
+    const repoCard = await screen.findByText('maternal-health-dak');
     
     // Click on the repository card
     fireEvent.click(repoCard.closest('.repo-card'));

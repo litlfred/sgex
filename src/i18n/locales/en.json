@@ -43,7 +43,44 @@
     "coreDataElements": "Core Data Elements",
     "decisionSupportLogic": "Decision-Support Logic",
     "programIndicators": "Program Indicators",
-    "requirements": "Functional and Non-Functional Requirements"
+    "requirements": "Functional and Non-Functional Requirements",
+    "faq": {
+      "loading": "Loading FAQ answer...",
+      "error_title": "Error",
+      "retry": "Retry",
+      "no_data": "No data available",
+      "structured_data": "Structured Data",
+      "metadata": "Metadata",
+      "name": {
+        "title": "DAK Name",
+        "no_data": "No DAK name data available",
+        "not_found": "No DAK name found in configuration",
+        "name_label": "Name",
+        "id_label": "ID",
+        "title_label": "Title",
+        "version_label": "Version"
+      },
+      "version": {
+        "title": "DAK Version",
+        "no_data": "No DAK version data available",
+        "not_found": "No DAK version found in configuration",
+        "version_label": "Version",
+        "status_label": "Status",
+        "release_date_label": "Release Date"
+      },
+      "workflows": {
+        "title": "Business Process Workflows",
+        "no_data": "No workflow data available",
+        "scanned_files": "Scanned files",
+        "total_workflows": "Total workflows",
+        "total_processes": "Total processes",
+        "total_subprocesses": "Total subprocesses",
+        "total_tasks": "Total tasks",
+        "workflows_found": "Workflows Found",
+        "processes": "Processes",
+        "subprocesses": "Subprocesses"
+      }
+    }
   },
   "repository": {
     "select": "Select Repository",
