@@ -1,0 +1,354 @@
+/* FAQ Answer Component Styles */
+
+.faq-answer {
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  background: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.5;
+}
+
+.faq-answer.loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #6b7280;
+  background: #f8fafc;
+}
+
+.faq-answer.error {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.faq-answer.success {
+  border-color: #059669;
+  background: #f0fdf4;
+}
+
+.faq-answer.warning {
+  border-color: #d97706;
+  background: #fffbeb;
+}
+
+.faq-answer.empty {
+  border-color: #9ca3af;
+  background: #f9fafb;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Loading spinner */
+.faq-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: faq-spin 1s linear infinite;
+}
+
+@keyframes faq-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Narrative content */
+.faq-narrative h4 {
+  margin: 0 0 12px 0;
+  color: #1f2937;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.faq-narrative p {
+  margin: 8px 0;
+  color: #374151;
+}
+
+.faq-narrative ul,
+.faq-narrative ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.faq-narrative li {
+  margin: 4px 0;
+  color: #374151;
+}
+
+.faq-narrative strong {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.faq-narrative code {
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.875rem;
+}
+
+.faq-narrative pre {
+  background: #f3f4f6;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.875rem;
+}
+
+.faq-narrative .highlight {
+  background: #fef3c7;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.faq-narrative .status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.faq-narrative .status.active { background: #dcfce7; color: #166534; }
+.faq-narrative .status.draft { background: #fef3c7; color: #92400e; }
+.faq-narrative .status.trial-use { background: #dbeafe; color: #1e40af; }
+
+/* Messages */
+.faq-messages {
+  margin-top: 16px;
+}
+
+.faq-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 6px 0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.faq-message.faq-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.faq-message.faq-warning {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fed7aa;
+}
+
+.faq-message-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Structured data and metadata */
+.faq-structured-data,
+.faq-metadata {
+  margin-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 12px;
+}
+
+.faq-structured-data summary,
+.faq-metadata summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.faq-structured-data pre,
+.faq-metadata pre {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px;
+  overflow-x: auto;
+  font-size: 0.75rem;
+  color: #475569;
+}
+
+/* Error page elements */
+.faq-error-message {
+  color: #dc2626 !important;
+  font-weight: 500;
+}
+
+.faq-retry-button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background-color 0.2s;
+}
+
+.faq-retry-button:hover {
+  background: #2563eb;
+}
+
+.faq-retry-button:active {
+  background: #1d4ed8;
+}
+
+/* Workflow-specific styles */
+.workflow-summary {
+  margin: 12px 0;
+}
+
+.workflow-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 8px 0;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-label {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #1f2937;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.workflows-list {
+  margin-top: 16px;
+}
+
+.workflow-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 8px 0;
+  background: #fafafa;
+}
+
+.workflow-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.workflow-header strong {
+  color: #1f2937;
+}
+
+.file-name {
+  color: #6b7280;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+.workflow-processes,
+.workflow-subprocesses {
+  margin: 8px 0;
+}
+
+.workflow-processes ul,
+.workflow-subprocesses ul {
+  margin: 4px 0 0 16px;
+}
+
+.workflow-processes li,
+.workflow-subprocesses li {
+  margin: 2px 0;
+  font-size: 0.875rem;
+}
+
+.executable-badge {
+  background: #dcfce7;
+  color: #166534;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  margin-left: 8px;
+}
+
+/* Version-specific styles */
+.version-metadata {
+  margin: 12px 0;
+}
+
+.version-info {
+  margin-bottom: 8px;
+}
+
+.version-number {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 1.1rem;
+}
+
+.semantic-version {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.version-status,
+.release-date {
+  margin: 6px 0;
+  font-size: 0.875rem;
+}
+
+/* DAK metadata styles */
+.dak-metadata {
+  margin: 12px 0;
+}
+
+.dak-name,
+.dak-id,
+.dak-title,
+.dak-version {
+  margin: 6px 0;
+  font-size: 0.875rem;
+}
+
+.dak-name .highlight {
+  font-size: 1.1rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .faq-answer {
+    padding: 12px;
+    margin: 8px 0;
+  }
+  
+  .workflow-stats {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .workflow-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
