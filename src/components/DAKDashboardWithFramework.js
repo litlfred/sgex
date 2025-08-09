@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PageLayout, useDAKParams } from './framework';
 import githubService from '../services/githubService';
 import branchContextService from '../services/branchContextService';
@@ -15,6 +16,7 @@ const DAKDashboardWithFramework = () => {
 };
 
 const DAKDashboardContent = () => {
+  const { t } = useTranslation();
   const { profile, repository, branch, navigate } = useDAKParams();
   
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
@@ -143,136 +145,136 @@ const DAKDashboardContent = () => {
     // Core Components (Level 2)
     {
       id: 'health-interventions',
-      title: 'Health Interventions and Recommendations',
-      description: 'Clinical guidelines and health intervention specifications that define evidence-based care recommendations',
+      title: t('dak.component.healthInterventions.name'),
+      description: t('dak.component.healthInterventions.description'),
       mascotCard: getMascotCardPath('interventions'),
       path: 'health-interventions',
-      level: 'Level 2: Core Components',
+      level: t('dak.level.core'),
       color: '#0078d4'
     },
     {
       id: 'generic-personas',
-      title: 'Generic Personas',
-      description: 'Standardized user roles and actor definitions that represent different types of healthcare workers and patients',
+      title: t('dak.component.genericPersonas.name'),
+      description: t('dak.component.genericPersonas.description'),
       mascotCard: getMascotCardPath('personas'),
       path: 'actor-editor',
-      level: 'Level 2: Core Components',
+      level: t('dak.level.core'),
       color: '#107c10'
     },
     {
       id: 'user-scenarios',
-      title: 'User Scenarios',
-      description: 'Narrative descriptions of how different personas interact with the system in specific healthcare contexts',
+      title: t('dak.component.userScenarios.name'),
+      description: t('dak.component.userScenarios.description'),
       mascotCard: getMascotCardPath('user_scenarios'),
       path: 'user-scenarios',
-      level: 'Level 2: Core Components',
+      level: t('dak.level.core'),
       color: '#881798'
     },
     {
       id: 'business-processes',
-      title: 'Generic Business Processes and Workflows',
-      description: 'BPMN workflows and business process definitions that model clinical workflows and care pathways',
+      title: t('dak.component.businessProcesses.name'),
+      description: t('dak.component.businessProcesses.description'),
       mascotCard: getMascotCardPath('business_processes'),
       path: 'business-process-selection',
-      level: 'Level 2: Core Components',
+      level: t('dak.level.core'),
       color: '#d13438'
     },
     {
       id: 'core-data-elements',
-      title: 'Core Data Elements',
-      description: 'Essential data structures and terminology needed for clinical data capture and exchange',
+      title: t('dak.component.coreDataElements.name'),
+      description: t('dak.component.coreDataElements.description'),
       mascotCard: getMascotCardPath('core_data_elements'),
       path: 'core-data-dictionary-viewer',
-      level: 'Level 2: Core Components',
+      level: t('dak.level.core'),
       color: '#ff8c00'
     },
     {
       id: 'decision-support',
-      title: 'Decision-Support Logic',
-      description: 'DMN decision tables and clinical decision support rules that encode clinical logic',
+      title: t('dak.component.decisionSupportLogic.name'),
+      description: t('dak.component.decisionSupportLogic.description'),
       mascotCard: getMascotCardPath('decision_support_logic'),
       path: 'decision-support-logic',
-      level: 'Level 2: Core Components',
+      level: t('dak.level.core'),
       color: '#00bcf2'
     },
     {
       id: 'program-indicators',
-      title: 'Program Indicators',
-      description: 'Performance indicators and measurement definitions for monitoring and evaluation',
+      title: t('dak.component.programIndicators.name'),
+      description: t('dak.component.programIndicators.description'),
       mascotCard: getMascotCardPath('indicators'),
       path: 'program-indicators',
-      level: 'Level 2: Core Components',
+      level: t('dak.level.core'),
       color: '#498205'
     },
     {
       id: 'functional-requirements',
-      title: 'Functional and Non-Functional Requirements',
-      description: 'System requirements specifications that define capabilities and constraints',
+      title: t('dak.component.requirements.name'),
+      description: t('dak.component.requirements.description'),
       mascotCard: getMascotCardPath('requirements'),
       path: 'functional-requirements',
-      level: 'Level 2: Core Components',
+      level: t('dak.level.core'),
       color: '#6b69d6'
     },
     {
       id: 'testing',
-      title: 'Testing',
-      description: 'Feature files and test scenarios for validating the DAK implementation',
+      title: t('dak.component.testing.name'),
+      description: t('dak.component.testing.description'),
       mascotCard: getMascotCardPath('testing'),
       path: 'testing-viewer',
-      level: 'Level 2: Core Components',
+      level: t('dak.level.core'),
       color: '#8b5cf6'
     },
     // Additional Components (Level 3)
     {
       id: 'terminology',
-      title: 'Terminology',
-      description: 'Code systems, value sets, and concept maps',
+      title: t('dak.component.terminology.name'),
+      description: t('dak.component.terminology.description'),
       icon: '🏷️',
       path: 'terminology',
-      level: 'Level 3: Technical Implementation',
+      level: t('dak.level.technical'),
       color: '#ff8c00'
     },
     {
       id: 'profiles',
-      title: 'FHIR Profiles',
-      description: 'FHIR resource profiles and constraints',
+      title: t('dak.component.profiles.name'),
+      description: t('dak.component.profiles.description'),
       icon: '🔧',
       path: 'profiles',
-      level: 'Level 3: Technical Implementation',
+      level: t('dak.level.technical'),
       color: '#00bcf2'
     },
     {
       id: 'extensions',
-      title: 'FHIR Extensions',
-      description: 'Custom FHIR extensions and modifications',
+      title: t('dak.component.extensions.name'),
+      description: t('dak.component.extensions.description'),
       icon: '🧩',
       path: 'extensions',
-      level: 'Level 3: Technical Implementation',
+      level: t('dak.level.technical'),
       color: '#498205'
     },
     {
       id: 'test-data',
-      title: 'Test Data & Examples',
-      description: 'Sample data and testing resources',
+      title: t('dak.component.testData.name'),
+      description: t('dak.component.testData.description'),
       icon: '🧪',
       path: 'test-data',
-      level: 'Level 3: Technical Implementation',
+      level: t('dak.level.technical'),
       color: '#8b5cf6'
     },
     {
       id: 'questionnaire-editor',
-      title: 'FHIR Questionnaires',
-      description: 'Structured questionnaires and forms for data collection using FHIR standard',
+      title: t('dak.component.questionnaireEditor.name'),
+      description: t('dak.component.questionnaireEditor.description'),
       icon: '📋',
       path: 'questionnaire-editor',
-      level: 'Level 3: Technical Implementation',
+      level: t('dak.level.technical'),
       color: '#17a2b8'
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [themeVersion]); // Re-compute when theme changes
+  ], [themeVersion, t]); // Re-compute when theme changes or translations change
 
-  const coreComponents = dakComponents.filter(comp => comp.level.includes('Level 2: Core Components'));
-  const additionalComponents = dakComponents.filter(comp => comp.level.includes('Level 3: Technical Implementation'));
+  const coreComponents = dakComponents.filter(comp => comp.level.includes(t('dak.level.core')));
+  const additionalComponents = dakComponents.filter(comp => comp.level.includes(t('dak.level.technical')));
 
   return (
     <div className="dak-dashboard">

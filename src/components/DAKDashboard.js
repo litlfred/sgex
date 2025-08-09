@@ -300,105 +300,105 @@ const DAKDashboardContent = () => {
   const coreDAKComponents = React.useMemo(() => [
     {
       id: 'health-interventions',
-      name: 'Health Interventions and Recommendations',
-      description: 'Clinical guidelines and health intervention specifications that define evidence-based care recommendations',
+      name: t('dak.component.healthInterventions.name'),
+      description: t('dak.component.healthInterventions.description'),
       mascotCard: getMascotCardPath('interventions'),
       type: 'L2',
       color: '#0078d4',
-      fileTypes: ['IRIS', 'Publication'],
+      fileTypes: t('dak.fileTypes.healthInterventions'),
       count: 5,
-      editor: 'Publication reference manager with IRIS integration'
+      editor: t('dak.editor.healthInterventions')
     },
     {
       id: 'generic-personas',
-      name: 'Generic Personas',
-      description: 'Standardized user roles and actor definitions that represent different types of healthcare workers and patients',
+      name: t('dak.component.genericPersonas.name'),
+      description: t('dak.component.genericPersonas.description'),
       mascotCard: getMascotCardPath('personas'),
       type: 'L2',
       color: '#107c10',
-      fileTypes: ['Actor', 'Role'],
+      fileTypes: t('dak.fileTypes.genericPersonas'),
       count: 8,
-      editor: 'Persona definition editor with role-based access specifications'
+      editor: t('dak.editor.genericPersonas')
     },
     {
       id: 'user-scenarios',
-      name: 'User Scenarios',
-      description: 'Narrative descriptions of how different personas interact with the system in specific healthcare contexts',
+      name: t('dak.component.userScenarios.name'),
+      description: t('dak.component.userScenarios.description'),
       mascotCard: getMascotCardPath('user_scenarios'),
       type: 'L2',
       color: '#881798',
-      fileTypes: ['Narrative', 'Use Case'],
+      fileTypes: t('dak.fileTypes.userScenarios'),
       count: 12,
-      editor: 'Scenario editor with workflow visualization'
+      editor: t('dak.editor.userScenarios')
     },
     {
       id: 'business-processes',
-      name: 'Generic Business Processes and Workflows',
-      description: 'BPMN workflows and business process definitions that model clinical workflows and care pathways',
+      name: t('dak.component.businessProcesses.name'),
+      description: t('dak.component.businessProcesses.description'),
       mascotCard: getMascotCardPath('business_processes'),
       type: 'L2',
       color: '#d13438',
-      fileTypes: ['BPMN', 'XML'],
+      fileTypes: t('dak.fileTypes.businessProcesses'),
       count: 15,
-      editor: 'Graphical BPMN editor with SVG visualization'
+      editor: t('dak.editor.businessProcesses')
     },
     {
       id: 'core-data-elements',
-      name: 'Core Data Elements',
-      description: 'Essential data structures and terminology needed for clinical data capture and exchange (includes Terminology Services via OCL and Product Master Data via PCMT)',
+      name: t('dak.component.coreDataElements.name'),
+      description: t('dak.component.coreDataElements.description'),
       mascotCard: getMascotCardPath('core_data_elements'),
       type: 'L2',
       color: '#ff8c00',
-      fileTypes: ['OCL', 'Concept', 'PCMT', 'Product'],
+      fileTypes: t('dak.fileTypes.coreDataElements'),
       count: issueCounts?.total || 89,
-      editor: 'Data element editor with OCL and PCMT integration'
+      editor: t('dak.editor.coreDataElements')
     },
     {
       id: 'decision-support',
-      name: 'Decision-Support Logic',
-      description: 'DMN decision tables and clinical decision support rules that encode clinical logic',
+      name: t('dak.component.decisionSupportLogic.name'),
+      description: t('dak.component.decisionSupportLogic.description'),
       mascotCard: getMascotCardPath('decision_support_logic'),
       type: 'L2',
       color: '#00bcf2',
-      fileTypes: ['DMN', 'XML'],
+      fileTypes: t('dak.fileTypes.decisionSupportLogic'),
       count: 24,
-      editor: 'DMN decision table editor with validation'
+      editor: t('dak.editor.decisionSupportLogic')
     },
     {
       id: 'program-indicators',
-      name: 'Program Indicators',
-      description: 'Performance indicators and measurement definitions for monitoring and evaluation',
+      name: t('dak.component.programIndicators.name'),
+      description: t('dak.component.programIndicators.description'),
       mascotCard: getMascotCardPath('indicators'),
       type: 'L2',
       color: '#498205',
-      fileTypes: ['Measure', 'Logic'],
+      fileTypes: t('dak.fileTypes.programIndicators'),
       count: 18,
-      editor: 'Indicator definition editor with measurement logic'
+      editor: t('dak.editor.programIndicators')
     },
     {
       id: 'functional-requirements',
-      name: 'Functional and Non-Functional Requirements',
-      description: 'System requirements specifications that define capabilities and constraints',
+      name: t('dak.component.requirements.name'),
+      description: t('dak.component.requirements.description'),
       mascotCard: getMascotCardPath('requirements'),
       type: 'L2',
       color: '#6b69d6',
-      fileTypes: ['Requirements', 'Specification'],
+      fileTypes: t('dak.fileTypes.requirements'),
       count: 32,
-      editor: 'Requirements editor with structured templates'
+      editor: t('dak.editor.requirements')
     },
     {
       id: 'test-scenarios',
-      name: 'Test Scenarios',
-      description: 'Feature files and test scenarios for validating the DAK implementation',
+      name: t('dak.component.testScenarios.name'),
+      description: t('dak.component.testScenarios.description'),
       mascotCard: getMascotCardPath('testing'),
       type: 'L2',
       color: '#8b5cf6',
-      fileTypes: ['Feature', 'Test'],
+      fileTypes: t('dak.fileTypes.testing'),
       count: 0,
-      editor: 'Testing viewer with feature file browser'
+      editor: t('dak.editor.testing')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [themeVersion, issueCounts?.total]); // Re-compute when theme changes or issue counts change
+  ], [themeVersion, issueCounts?.total, t]); // Re-compute when theme changes, issue counts change, or translations change
 
 
 
@@ -652,8 +652,8 @@ const DAKDashboardContent = () => {
                   onClick={(event) => {
                     const component = {
                       id: 'questionnaire-editor',
-                      name: 'FHIR Questionnaires',
-                      description: 'Structured questionnaires and forms for data collection using FHIR standard'
+                      name: t('dak.component.questionnaireEditor.name'),
+                      description: t('dak.component.questionnaireEditor.description')
                     };
                     const owner = repository.owner?.login || repository.full_name.split('/')[0];
                     const repoName = repository.name;
@@ -679,8 +679,8 @@ const DAKDashboardContent = () => {
                   </div>
                   
                   <div className="component-content">
-                    <h4>FHIR Questionnaires</h4>
-                    <p>Structured questionnaires and forms for data collection using FHIR Questionnaire standard</p>
+                    <h4>{t('dak.component.questionnaireEditor.name')}</h4>
+                    <p>{t('dak.component.questionnaireEditor.description')}</p>
                     
                     <div className="component-meta">
                       <div className="file-types">

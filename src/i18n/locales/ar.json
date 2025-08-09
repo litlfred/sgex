@@ -36,14 +36,94 @@
     "lastModified": "آخر تعديل",
     "branch": "الفرع",
     "repository": "المستودع",
-    "healthInterventions": "التدخلات الصحية والتوصيات",
-    "genericPersonas": "الشخصيات العامة",
-    "userScenarios": "سيناريوهات المستخدم",
-    "businessProcesses": "العمليات التجارية العامة وتدفقات العمل",
-    "coreDataElements": "عناصر البيانات الأساسية",
-    "decisionSupportLogic": "منطق دعم القرار",
-    "programIndicators": "مؤشرات البرنامج",
-    "requirements": "المتطلبات الوظيفية وغير الوظيفية"
+    "component": {
+      "healthInterventions": {
+        "name": "التدخلات الصحية والتوصيات",
+        "description": "التوجيهات السريرية ومواصفات التدخلات الصحية التي تحدد توصيات الرعاية القائمة على الأدلة"
+      },
+      "genericPersonas": {
+        "name": "الشخصيات العامة",
+        "description": "أدوار المستخدمين المعيارية وتعريفات الجهات الفاعلة التي تمثل أنواع مختلفة من العاملين في مجال الرعاية الصحية والمرضى"
+      },
+      "userScenarios": {
+        "name": "سيناريوهات المستخدم",
+        "description": "الأوصاف السردية لكيفية تفاعل الشخصيات المختلفة مع النظام في سياقات الرعاية الصحية المحددة"
+      },
+      "businessProcesses": {
+        "name": "العمليات التجارية العامة وتدفقات العمل",
+        "description": "تدفقات عمل BPMN وتعريفات العمليات التجارية التي تنمذج تدفقات العمل السريرية ومسارات الرعاية"
+      },
+      "coreDataElements": {
+        "name": "عناصر البيانات الأساسية",
+        "description": "هياكل البيانات الأساسية والمصطلحات اللازمة لالتقاط البيانات السريرية وتبادلها"
+      },
+      "decisionSupportLogic": {
+        "name": "منطق دعم القرار",
+        "description": "جداول قرار DMN وقواعد دعم القرار السريري التي ترمز المنطق السريري"
+      },
+      "programIndicators": {
+        "name": "مؤشرات البرنامج",
+        "description": "مؤشرات الأداء وتعريفات القياس للمراقبة والتقييم"
+      },
+      "requirements": {
+        "name": "المتطلبات الوظيفية وغير الوظيفية",
+        "description": "مواصفات متطلبات النظام التي تحدد القدرات والقيود"
+      },
+      "testing": {
+        "name": "الاختبار",
+        "description": "ملفات الميزات وسيناريوهات الاختبار للتحقق من تنفيذ DAK"
+      },
+      "testScenarios": {
+        "name": "سيناريوهات الاختبار",
+        "description": "ملفات الميزات وسيناريوهات الاختبار للتحقق من تنفيذ DAK"
+      },
+      "terminology": {
+        "name": "المصطلحات",
+        "description": "أنظمة الرموز ومجموعات القيم وخرائط المفاهيم"
+      },
+      "profiles": {
+        "name": "ملفات تعريف FHIR",
+        "description": "ملفات تعريف موارد FHIR والقيود"
+      },
+      "extensions": {
+        "name": "امتدادات FHIR",
+        "description": "امتدادات FHIR المخصصة والتعديلات"
+      },
+      "testData": {
+        "name": "بيانات الاختبار والأمثلة",
+        "description": "بيانات العينة وموارد الاختبار"
+      },
+      "questionnaireEditor": {
+        "name": "استبيانات FHIR",
+        "description": "الاستبيانات المنظمة والنماذج لجمع البيانات باستخدام معيار FHIR"
+      }
+    },
+    "level": {
+      "core": "المستوى 2: المكونات الأساسية",
+      "technical": "المستوى 3: التنفيذ التقني"
+    },
+    "editor": {
+      "healthInterventions": "مدير مراجع المنشورات مع تكامل IRIS",
+      "genericPersonas": "محرر تعريف الشخصية مع مواصفات الوصول القائمة على الأدوار",
+      "userScenarios": "محرر السيناريو مع تصور تدفق العمل",
+      "businessProcesses": "محرر BPMN الرسومي مع تصور SVG",
+      "coreDataElements": "محرر عناصر البيانات مع تكامل OCL و PCMT",
+      "decisionSupportLogic": "محرر جدول قرار DMN مع التحقق",
+      "programIndicators": "محرر تعريف المؤشر مع منطق القياس",
+      "requirements": "محرر المتطلبات مع القوالب المنظمة",
+      "testing": "عارض الاختبار مع متصفح ملف الميزة"
+    },
+    "fileTypes": {
+      "healthInterventions": ["IRIS", "منشور"],
+      "genericPersonas": ["ممثل", "دور"],
+      "userScenarios": ["سردي", "حالة استخدام"],
+      "businessProcesses": ["BPMN", "XML"],
+      "coreDataElements": ["OCL", "مفهوم", "PCMT", "منتج"],
+      "decisionSupportLogic": ["DMN", "XML"],
+      "programIndicators": ["قياس", "منطق"],
+      "requirements": ["متطلبات", "مواصفة"],
+      "testing": ["ميزة", "اختبار"]
+    }
   },
   "repository": {
     "select": "اختيار المستودع",

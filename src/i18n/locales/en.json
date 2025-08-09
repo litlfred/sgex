@@ -36,14 +36,94 @@
     "lastModified": "Last Modified",
     "branch": "Branch",
     "repository": "Repository",
-    "healthInterventions": "Health Interventions and Recommendations",
-    "genericPersonas": "Generic Personas",
-    "userScenarios": "User Scenarios",
-    "businessProcesses": "Generic Business Processes and Workflows",
-    "coreDataElements": "Core Data Elements",
-    "decisionSupportLogic": "Decision-Support Logic",
-    "programIndicators": "Program Indicators",
-    "requirements": "Functional and Non-Functional Requirements"
+    "component": {
+      "healthInterventions": {
+        "name": "Health Interventions and Recommendations",
+        "description": "Clinical guidelines and health intervention specifications that define evidence-based care recommendations"
+      },
+      "genericPersonas": {
+        "name": "Generic Personas",
+        "description": "Standardized user roles and actor definitions that represent different types of healthcare workers and patients"
+      },
+      "userScenarios": {
+        "name": "User Scenarios",
+        "description": "Narrative descriptions of how different personas interact with the system in specific healthcare contexts"
+      },
+      "businessProcesses": {
+        "name": "Generic Business Processes and Workflows",
+        "description": "BPMN workflows and business process definitions that model clinical workflows and care pathways"
+      },
+      "coreDataElements": {
+        "name": "Core Data Elements",
+        "description": "Essential data structures and terminology needed for clinical data capture and exchange (includes Terminology Services via OCL and Product Master Data via PCMT)"
+      },
+      "decisionSupportLogic": {
+        "name": "Decision-Support Logic",
+        "description": "DMN decision tables and clinical decision support rules that encode clinical logic"
+      },
+      "programIndicators": {
+        "name": "Program Indicators",
+        "description": "Performance indicators and measurement definitions for monitoring and evaluation"
+      },
+      "requirements": {
+        "name": "Functional and Non-Functional Requirements",
+        "description": "System requirements specifications that define capabilities and constraints"
+      },
+      "testing": {
+        "name": "Testing",
+        "description": "Feature files and test scenarios for validating the DAK implementation"
+      },
+      "testScenarios": {
+        "name": "Test Scenarios",
+        "description": "Feature files and test scenarios for validating the DAK implementation"
+      },
+      "terminology": {
+        "name": "Terminology",
+        "description": "Code systems, value sets, and concept maps"
+      },
+      "profiles": {
+        "name": "FHIR Profiles",
+        "description": "FHIR resource profiles and constraints"
+      },
+      "extensions": {
+        "name": "FHIR Extensions",
+        "description": "Custom FHIR extensions and modifications"
+      },
+      "testData": {
+        "name": "Test Data & Examples",
+        "description": "Sample data and testing resources"
+      },
+      "questionnaireEditor": {
+        "name": "FHIR Questionnaires",
+        "description": "Structured questionnaires and forms for data collection using FHIR standard"
+      }
+    },
+    "level": {
+      "core": "Level 2: Core Components",
+      "technical": "Level 3: Technical Implementation"
+    },
+    "editor": {
+      "healthInterventions": "Publication reference manager with IRIS integration",
+      "genericPersonas": "Persona definition editor with role-based access specifications",
+      "userScenarios": "Scenario editor with workflow visualization",
+      "businessProcesses": "Graphical BPMN editor with SVG visualization",
+      "coreDataElements": "Data element editor with OCL and PCMT integration",
+      "decisionSupportLogic": "DMN decision table editor with validation",
+      "programIndicators": "Indicator definition editor with measurement logic",
+      "requirements": "Requirements editor with structured templates",
+      "testing": "Testing viewer with feature file browser"
+    },
+    "fileTypes": {
+      "healthInterventions": ["IRIS", "Publication"],
+      "genericPersonas": ["Actor", "Role"],
+      "userScenarios": ["Narrative", "Use Case"],
+      "businessProcesses": ["BPMN", "XML"],
+      "coreDataElements": ["OCL", "Concept", "PCMT", "Product"],
+      "decisionSupportLogic": ["DMN", "XML"],
+      "programIndicators": ["Measure", "Logic"],
+      "requirements": ["Requirements", "Specification"],
+      "testing": ["Feature", "Test"]
+    }
   },
   "repository": {
     "select": "Select Repository",
