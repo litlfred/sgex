@@ -446,10 +446,20 @@ const ActorEditorContent = () => {
 
       {/* FSH Preview Modal */}
       {showPreview && (
-        <div className="modal-overlay" onClick={() => setShowPreview(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onClick={() => setShowPreview(false)}
+          role="presentation"
+        >
+          <div 
+            className="modal-content" 
+            onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-labelledby="fsh-preview-title"
+            aria-modal="true"
+          >
             <div className="modal-header">
-              <h3>FSH Preview</h3>
+              <h3 id="fsh-preview-title">FSH Preview</h3>
               <button 
                 onClick={() => setShowPreview(false)}
                 className="close-btn"
@@ -579,8 +589,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Code</label>
+              <label htmlFor={`role-code-${index}`}>Code</label>
               <input
+                id={`role-code-${index}`}
                 type="text"
                 value={role.code}
                 onChange={(e) => onNestedFieldChange('roles', index, 'code', e.target.value)}
@@ -588,8 +599,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
               />
             </div>
             <div className="form-group">
-              <label>Display Name</label>
+              <label htmlFor={`role-display-${index}`}>Display Name</label>
               <input
+                id={`role-display-${index}`}
                 type="text"
                 value={role.display}
                 onChange={(e) => onNestedFieldChange('roles', index, 'display', e.target.value)}
@@ -598,8 +610,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
             </div>
           </div>
           <div className="form-group">
-            <label>Code System</label>
+            <label htmlFor={`role-system-${index}`}>Code System</label>
             <input
+              id={`role-system-${index}`}
               type="text"
               value={role.system || ''}
               onChange={(e) => onNestedFieldChange('roles', index, 'system', e.target.value)}
@@ -636,8 +649,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Code</label>
+              <label htmlFor={`qualification-code-${index}`}>Code</label>
               <input
+                id={`qualification-code-${index}`}
                 type="text"
                 value={qual.code}
                 onChange={(e) => onNestedFieldChange('qualifications', index, 'code', e.target.value)}
@@ -645,8 +659,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
               />
             </div>
             <div className="form-group">
-              <label>Display Name</label>
+              <label htmlFor={`qualification-display-${index}`}>Display Name</label>
               <input
+                id={`qualification-display-${index}`}
                 type="text"
                 value={qual.display}
                 onChange={(e) => onNestedFieldChange('qualifications', index, 'display', e.target.value)}
@@ -655,8 +670,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
             </div>
           </div>
           <div className="form-group">
-            <label>Issuing Organization</label>
+            <label htmlFor={`qualification-issuer-${index}`}>Issuing Organization</label>
             <input
+              id={`qualification-issuer-${index}`}
               type="text"
               value={qual.issuer || ''}
               onChange={(e) => onNestedFieldChange('qualifications', index, 'issuer', e.target.value)}
@@ -693,8 +709,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Code</label>
+              <label htmlFor={`specialty-code-${index}`}>Code</label>
               <input
+                id={`specialty-code-${index}`}
                 type="text"
                 value={specialty.code}
                 onChange={(e) => onNestedFieldChange('specialties', index, 'code', e.target.value)}
@@ -702,8 +719,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
               />
             </div>
             <div className="form-group">
-              <label>Display Name</label>
+              <label htmlFor={`specialty-display-${index}`}>Display Name</label>
               <input
+                id={`specialty-display-${index}`}
                 type="text"
                 value={specialty.display}
                 onChange={(e) => onNestedFieldChange('specialties', index, 'display', e.target.value)}
@@ -712,8 +730,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
             </div>
           </div>
           <div className="form-group">
-            <label>Code System</label>
+            <label htmlFor={`specialty-system-${index}`}>Code System</label>
             <input
+              id={`specialty-system-${index}`}
               type="text"
               value={specialty.system || ''}
               onChange={(e) => onNestedFieldChange('specialties', index, 'system', e.target.value)}
@@ -735,8 +754,9 @@ const ContextTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChang
       <h4>Typical Location</h4>
       <div className="form-row">
         <div className="form-group">
-          <label>Location Type</label>
+          <label htmlFor="location-type">Location Type</label>
           <select
+            id="location-type"
             value={actorDefinition.location?.type || ''}
             onChange={(e) => onFieldChange('location', { ...actorDefinition.location, type: e.target.value })}
           >
@@ -748,8 +768,9 @@ const ContextTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChang
           </select>
         </div>
         <div className="form-group">
-          <label>Description</label>
+          <label htmlFor="location-description">Description</label>
           <input
+            id="location-description"
             type="text"
             value={actorDefinition.location?.description || ''}
             onChange={(e) => onFieldChange('location', { ...actorDefinition.location, description: e.target.value })}

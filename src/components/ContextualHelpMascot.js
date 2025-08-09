@@ -8,6 +8,7 @@ import HelpModal from './HelpModal';
 import TrackedItemsViewer from './TrackedItemsViewer';
 import LanguageSelector from './LanguageSelector';
 import useThemeImage from '../hooks/useThemeImage';
+import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', contextData = {}, notificationBadge = false }) => {
   const { t, i18n } = useTranslation();
@@ -211,7 +212,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
         >
           <img 
             src={mascotImage} 
-            alt="SGEX Helper" 
+            alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} 
             className="mascot-icon"
           />
           

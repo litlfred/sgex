@@ -244,6 +244,61 @@ class GitHubService {
     return this.checkRepositoryWritePermissions(owner, repo);
   }
 
+  // Check if the token has permission to create comments on issues/PRs
+  async checkCommentPermissions(owner, repo) {
+    if (!this.isAuth()) {
+      this.logger.warn('Cannot check comment permissions - not authenticated', { owner, repo });
+      return false;
+    }
+
+    const startTime = Date.now();
+    this.logger.debug('Checking comment permissions for repository', { owner, repo });
+
+    try {
+      // Try to access the issues endpoint, which is required for commenting on PRs
+      // This is a safe read operation that will fail gracefully if no permission
+      this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues`, { per_page: 1 });
+      
+      await this.octokit.rest.issues.listForRepo({
+        owner,
+        repo,
+        per_page: 1,
+        state: 'all'
+      });
+      
+      const duration = Date.now() - startTime;
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues`, 200, duration);
+      
+      // If we can read issues, we likely can comment on them
+      // But this is just a heuristic - the actual test is when we try to comment
+      this.logger.debug('Issues endpoint accessible - comment permissions likely available', { owner, repo });
+      return true;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.apiError('GET', `/repos/${owner}/${repo}/issues`, error);
+      this.logger.performance('Comment permission check (failed)', duration);
+      
+      // Check if it's a permissions error
+      if (error.status === 403 || error.status === 401) {
+        this.logger.warn('Token does not have permission to access issues/comments', { 
+          owner, 
+          repo, 
+          error: error.message,
+          status: error.status 
+        });
+        return false;
+      }
+      
+      // For other errors, assume we have permission and let the actual comment attempt handle it
+      this.logger.warn('Could not determine comment permissions, assuming available', { 
+        owner, 
+        repo, 
+        error: error.message 
+      });
+      return true;
+    }
+  }
+
   // Check if authenticated
   isAuth() {
     return this.isAuthenticated && this.octokit !== null;
@@ -1452,20 +1507,20 @@ class GitHubService {
   }
 
   // Get pull request comments
-  async getPullRequestComments(owner, repo, pullNumber) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
+  async getPullRequestComments(owner, repo, pullNumber, page = 1, per_page = 100) {
+    // Use authenticated octokit if available, otherwise create a public instance for public repos
+    const octokit = this.isAuth() ? this.octokit : new Octokit();
 
     const startTime = Date.now();
-    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, {});
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, { page, per_page });
 
     try {
-      const response = await this.octokit.rest.pulls.listReviewComments({
+      const response = await octokit.rest.pulls.listReviewComments({
         owner,
         repo,
         pull_number: pullNumber,
-        per_page: 100
+        page,
+        per_page
       });
 
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, response.status, Date.now() - startTime);
@@ -1478,20 +1533,20 @@ class GitHubService {
   }
 
   // Get pull request issue comments (general comments on the PR conversation)
-  async getPullRequestIssueComments(owner, repo, pullNumber) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
+  async getPullRequestIssueComments(owner, repo, pullNumber, page = 1, per_page = 100) {
+    // Use authenticated octokit if available, otherwise create a public instance for public repos
+    const octokit = this.isAuth() ? this.octokit : new Octokit();
 
     const startTime = Date.now();
-    this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, {});
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, { page, per_page });
 
     try {
-      const response = await this.octokit.rest.issues.listComments({
+      const response = await octokit.rest.issues.listComments({
         owner,
         repo,
         issue_number: pullNumber,
-        per_page: 100
+        page,
+        per_page
       });
 
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, response.status, Date.now() - startTime);
