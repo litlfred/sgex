@@ -224,6 +224,14 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
 
   return (
     <div className="publications-section">
+      {/* SUSHI Status Section - moved to top */}
+      <SushiStatus
+        profile={profile}
+        repository={repository}
+        selectedBranch={selectedBranch}
+        hasWriteAccess={hasWriteAccess}
+      />
+
       {/* Staging Ground Section */}
       <StagingGround
         repository={repository}
@@ -321,14 +329,6 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
           <p>No publishable branches found (excluding gh-pages).</p>
         </div>
       )}
-
-      {/* SUSHI Status Section */}
-      <SushiStatus
-        profile={profile}
-        repository={repository}
-        selectedBranch={selectedBranch}
-        hasWriteAccess={hasWriteAccess}
-      />
     </div>
   );
 };

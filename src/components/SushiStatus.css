@@ -2,11 +2,20 @@
 
 .sushi-status-collapsed,
 .sushi-status-expanded {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 8px;
   margin: 16px 0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Dark mode support */
+body.theme-dark .sushi-status-collapsed,
+body.theme-dark .sushi-status-expanded {
+  background: var(--who-card-bg);
+  border-color: var(--who-border-color);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .sushi-status-header {
@@ -15,14 +24,14 @@
   align-items: center;
   padding: 12px 16px;
   cursor: pointer;
-  background: #fff;
+  background: var(--who-primary-bg);
   border-radius: 8px 8px 0 0;
-  border-bottom: 1px solid #e9ecef;
-  transition: background-color 0.2s;
+  border-bottom: 1px solid var(--who-border-color);
+  transition: background-color 0.2s ease;
 }
 
 .sushi-status-header:hover {
-  background: #f8f9fa;
+  background: var(--who-hover-bg);
 }
 
 .sushi-status-info {
@@ -37,12 +46,12 @@
 }
 
 .sushi-status-title {
-  color: #495057;
+  color: var(--who-text-primary);
   font-size: 16px;
 }
 
 .expand-indicator {
-  color: #6c757d;
+  color: var(--who-text-secondary);
   font-size: 12px;
   transition: transform 0.2s;
 }
@@ -63,8 +72,13 @@
   transition: background-color 0.2s;
 }
 
-.sushi-runner-btn:hover {
+.sushi-runner-btn:hover:not(:disabled) {
   background: #0056b3;
+}
+
+.sushi-runner-btn:disabled {
+  background: var(--who-text-muted);
+  cursor: not-allowed;
 }
 
 .sushi-status-content {
@@ -79,7 +93,7 @@
 
 .sushi-error {
   color: #dc3545;
-  background: #f8d7da;
+  background: var(--who-bg-light, #f8d7da);
   border-radius: 4px;
   margin-bottom: 16px;
 }
@@ -99,10 +113,10 @@
 }
 
 .sushi-config-container {
-  background: white;
+  background: var(--who-card-bg);
   padding: 16px;
   border-radius: 6px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--who-border-color);
 }
 
 .source-indicators {
@@ -159,9 +173,9 @@
 
 .config-summary h4 {
   margin: 0 0 16px 0;
-  color: #495057;
+  color: var(--who-text-primary);
   font-size: 18px;
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid var(--who-border-color);
   padding-bottom: 8px;
 }
 
@@ -184,22 +198,23 @@
 
 .summary-field label {
   font-weight: 600;
-  color: #495057;
+  color: var(--who-text-primary);
   font-size: 14px;
 }
 
 .summary-field span {
-  color: #212529;
+  color: var(--who-text-primary);
   font-size: 14px;
   min-height: 20px;
 }
 
 .edit-input {
-  border: 1px solid #ced4da;
+  border: 1px solid var(--who-border-color);
   border-radius: 4px;
   padding: 6px 8px;
   font-size: 14px;
-  background: white;
+  background: var(--who-card-bg);
+  color: var(--who-text-primary);
 }
 
 .edit-input:focus {
@@ -211,12 +226,12 @@
 .publisher-section {
   margin-top: 20px;
   padding-top: 16px;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--who-border-color);
 }
 
 .publisher-section h5 {
   margin: 0 0 12px 0;
-  color: #495057;
+  color: var(--who-text-primary);
   font-size: 16px;
 }
 
@@ -230,7 +245,7 @@
 .pages-section,
 .advanced-section {
   margin-top: 20px;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--who-border-color);
   padding-top: 16px;
 }
 
@@ -241,7 +256,7 @@
 
 .section-toggle h4 {
   margin: 0;
-  color: #495057;
+  color: var(--who-text-primary);
   font-size: 16px;
   display: flex;
   align-items: center;
@@ -585,4 +600,303 @@
     align-items: flex-start;
     gap: 4px;
   }
+}
+
+/* SUSHI Runner Integration Styles */
+.logs-section,
+.resources-section {
+  margin-top: 20px;
+  border-top: 1px solid var(--who-border-color);
+  padding-top: 16px;
+}
+
+.logs-content,
+.resources-content {
+  margin-top: 12px;
+  padding-left: 16px;
+}
+
+.logs-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.log-filter,
+.log-search {
+  padding: 6px 8px;
+  border: 1px solid var(--who-border-color);
+  border-radius: 4px;
+  background: var(--who-card-bg);
+  color: var(--who-text-primary);
+  font-size: 14px;
+}
+
+.log-filter {
+  min-width: 150px;
+}
+
+.log-search {
+  min-width: 200px;
+  flex: 1;
+}
+
+.copy-logs-button {
+  background: #17a2b8;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.copy-logs-button:hover {
+  background: #138496;
+}
+
+.logs-container {
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
+  border-radius: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.no-logs,
+.no-resources {
+  padding: 16px;
+  text-align: center;
+  color: var(--who-text-secondary);
+  font-style: italic;
+}
+
+.log-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--who-border-color);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 13px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.log-entry:hover {
+  background: var(--who-hover-bg);
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+}
+
+.log-timestamp {
+  color: var(--who-text-secondary);
+  font-size: 11px;
+  min-width: 80px;
+}
+
+.log-level {
+  font-weight: 600;
+  min-width: 50px;
+  text-align: center;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+}
+
+.level-error {
+  background: #dc3545;
+  color: white;
+}
+
+.level-warn {
+  background: #ffc107;
+  color: #212529;
+}
+
+.level-info {
+  background: #17a2b8;
+  color: white;
+}
+
+.level-debug {
+  background: var(--who-text-secondary);
+  color: white;
+}
+
+.log-message {
+  flex: 1;
+  color: var(--who-text-primary);
+}
+
+.log-location {
+  color: var(--who-text-muted);
+  font-size: 11px;
+}
+
+/* Results and Resources */
+.results-summary {
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  border: 1px solid var(--who-border-color);
+}
+
+.results-summary.success {
+  background: rgba(40, 167, 69, 0.1);
+  border-color: #28a745;
+}
+
+.results-summary.error {
+  background: rgba(220, 53, 69, 0.1);
+  border-color: #dc3545;
+}
+
+.results-summary h5 {
+  margin: 0 0 8px 0;
+  color: var(--who-text-primary);
+}
+
+.results-summary p {
+  margin: 4px 0;
+  color: var(--who-text-primary);
+}
+
+.error-message {
+  color: #dc3545 !important;
+}
+
+.compilation-stats {
+  margin-top: 8px;
+}
+
+.compilation-stats pre {
+  background: var(--who-bg-light, rgba(0,0,0,0.05));
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  overflow-x: auto;
+  color: var(--who-text-primary);
+}
+
+.processed-files {
+  margin-top: 16px;
+}
+
+.processed-files h5 {
+  margin: 0 0 12px 0;
+  color: var(--who-text-primary);
+}
+
+.files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-item {
+  border: 1px solid var(--who-border-color);
+  border-radius: 4px;
+  background: var(--who-card-bg);
+}
+
+.file-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.file-header:hover {
+  background: var(--who-hover-bg);
+}
+
+.file-path {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  color: var(--who-text-primary);
+}
+
+.file-source {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: white;
+}
+
+.source-github {
+  background: #6c757d;
+}
+
+.source-staging {
+  background: #17a2b8;
+}
+
+.expand-icon {
+  color: var(--who-text-secondary);
+  font-size: 12px;
+}
+
+.file-content {
+  border-top: 1px solid var(--who-border-color);
+  background: var(--who-bg-light, rgba(0,0,0,0.02));
+}
+
+.file-content pre {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--who-text-primary);
+}
+
+.fhir-output {
+  margin-top: 16px;
+}
+
+.fhir-output h5 {
+  margin: 0 0 12px 0;
+  color: var(--who-text-primary);
+}
+
+.fhir-resources pre {
+  background: var(--who-bg-light, rgba(0,0,0,0.05));
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--who-text-primary);
+  border: 1px solid var(--who-border-color);
+}
+
+/* Dark mode specific overrides */
+body.theme-dark .log-filter,
+body.theme-dark .log-search {
+  background: var(--who-dropdown-bg);
+  color: var(--who-text-primary);
+  border-color: var(--who-border-color);
+}
+
+body.theme-dark .log-filter:focus,
+body.theme-dark .log-search:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+body.theme-dark .compilation-stats pre,
+body.theme-dark .file-content pre,
+body.theme-dark .fhir-resources pre {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--who-text-primary);
 }

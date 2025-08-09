@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import sushiService from '../services/sushiService';
 import stagingGroundService from '../services/stagingGroundService';
-import { handleNavigationClick } from '../utils/navigationUtils';
 import './SushiStatus.css';
 
 const SushiStatus = ({ profile, repository, selectedBranch, hasWriteAccess }) => {
-  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const [sushiConfig, setSushiConfig] = useState(null);
   const [configSources, setConfigSources] = useState(null);
@@ -21,9 +18,31 @@ const SushiStatus = ({ profile, repository, selectedBranch, hasWriteAccess }) =>
   const [expandedPages, setExpandedPages] = useState(false);
   const [expandedDependencies, setExpandedDependencies] = useState(false);
   const [expandedAdvanced, setExpandedAdvanced] = useState(false);
+  
+  // SUSHI Runner integration state
+  const [expandedLogs, setExpandedLogs] = useState(false);
+  const [expandedResources, setExpandedResources] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [runnerResults, setRunnerResults] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [logFilter, setLogFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [expandedFiles, setExpandedFiles] = useState(new Set());
 
   const owner = repository.owner?.login || repository.full_name.split('/')[0];
   const repoName = repository.name;
+
+  // Listen to SUSHI service updates for runner integration
+  useEffect(() => {
+    const unsubscribe = sushiService.addListener((update) => {
+      setLogs(update.logs || []);
+      if (update.results) {
+        setRunnerResults(update.results);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
 
   // Load SUSHI configuration function
   const loadSushiConfig = useCallback(async () => {
@@ -64,18 +83,36 @@ const SushiStatus = ({ profile, repository, selectedBranch, hasWriteAccess }) =>
     }
   }, [expanded, repository, selectedBranch, sushiConfig, loadSushiConfig]);
 
-  const handleSushiRunnerClick = (event) => {
-    const path = selectedBranch 
-      ? `/sushi-runner/${owner}/${repoName}/${selectedBranch}`
-      : `/sushi-runner/${owner}/${repoName}`;
-    
-    const navigationState = {
-      profile,
-      repository,
-      selectedBranch
-    };
-    
-    handleNavigationClick(event, path, navigate, navigationState);
+  const handleSushiRunnerClick = async () => {
+    if (!repository || !selectedBranch || !profile) {
+      alert('Missing required parameters for SUSHI runner');
+      return;
+    }
+
+    setIsRunning(true);
+    setRunnerResults(null);
+    setLogs([]);
+    setExpandedLogs(true); // Auto-expand logs when running
+
+    try {
+      const result = await sushiService.runSUSHI(repository, selectedBranch, profile, {
+        logLevel: 'info'
+      });
+      
+      setRunnerResults(result);
+      if (result.files && result.files.length > 0) {
+        setExpandedResources(true); // Auto-expand resources if files found
+      }
+    } catch (error) {
+      console.error('SUSHI runner error:', error);
+      setRunnerResults({
+        success: false,
+        error: error.message,
+        logs: sushiService.getLogs()
+      });
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   const handleEditToggle = () => {
@@ -191,6 +228,51 @@ const SushiStatus = ({ profile, repository, selectedBranch, hasWriteAccess }) =>
     });
   };
 
+  // SUSHI Runner helper functions
+  const copyLogsToClipboard = () => {
+    const logText = sushiService.exportLogsAsText();
+    navigator.clipboard.writeText(logText).then(() => {
+      alert('Logs copied to clipboard');
+    }).catch(err => {
+      console.error('Failed to copy logs:', err);
+    });
+  };
+
+  const copyLogEntry = (log) => {
+    const logText = `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}${log.location ? ` (${log.location})` : ''}`;
+    navigator.clipboard.writeText(logText).then(() => {
+      // Visual feedback could be added here
+    }).catch(err => {
+      console.error('Failed to copy log entry:', err);
+    });
+  };
+
+  const toggleFileExpansion = (fileName) => {
+    const newExpanded = new Set(expandedFiles);
+    if (newExpanded.has(fileName)) {
+      newExpanded.delete(fileName);
+    } else {
+      newExpanded.add(fileName);
+    }
+    setExpandedFiles(newExpanded);
+  };
+
+  // Filter logs based on selected filter and search term
+  const filteredLogs = logs.filter(log => {
+    const levelMatch = logFilter === 'all' || log.level === logFilter;
+    const searchMatch = searchTerm === '' || 
+      log.message.toLowerCase().includes(searchTerm.toLowerCase());
+    return levelMatch && searchMatch;
+  });
+
+  // Get log level counts for badges
+  const logCounts = {
+    error: logs.filter(l => l.level === 'error').length,
+    warn: logs.filter(l => l.level === 'warn').length,
+    info: logs.filter(l => l.level === 'info').length,
+    debug: logs.filter(l => l.level === 'debug').length
+  };
+
   if (!expanded) {
     return (
       <div className="sushi-status-collapsed">
@@ -204,9 +286,10 @@ const SushiStatus = ({ profile, repository, selectedBranch, hasWriteAccess }) =>
             <button
               className="sushi-runner-btn"
               onClick={handleSushiRunnerClick}
-              title="Open SUSHI Runner"
+              disabled={isRunning}
+              title="Load & Analyze FSH Files"
             >
-              🏃 SUSHI Runner
+              {isRunning ? '🔄 Loading...' : '🏃 Load FSH Files'}
             </button>
           </div>
         </div>
@@ -226,9 +309,10 @@ const SushiStatus = ({ profile, repository, selectedBranch, hasWriteAccess }) =>
           <button
             className="sushi-runner-btn"
             onClick={handleSushiRunnerClick}
-            title="Open SUSHI Runner"
+            disabled={isRunning}
+            title="Load & Analyze FSH Files"
           >
-            🏃 SUSHI Runner
+            {isRunning ? '🔄 Loading...' : '🏃 Load FSH Files'}
           </button>
         </div>
       </div>
@@ -552,6 +636,155 @@ const SushiStatus = ({ profile, repository, selectedBranch, hasWriteAccess }) =>
                       <span>{sushiConfig.copyrightYear || 'Not specified'}</span>
                     </div>
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* SUSHI Logs Section */}
+            <div className="logs-section">
+              <div 
+                className="section-toggle"
+                onClick={() => setExpandedLogs(!expandedLogs)}
+              >
+                <h4>SUSHI Processing Logs {expandedLogs ? '▼' : '▶'}</h4>
+              </div>
+              
+              {expandedLogs && (
+                <div className="logs-content">
+                  <div className="logs-controls">
+                    <select 
+                      value={logFilter} 
+                      onChange={(e) => setLogFilter(e.target.value)}
+                      className="log-filter"
+                    >
+                      <option value="all">All Logs ({logs.length})</option>
+                      <option value="error">Errors ({logCounts.error})</option>
+                      <option value="warn">Warnings ({logCounts.warn})</option>
+                      <option value="info">Info ({logCounts.info})</option>
+                      <option value="debug">Debug ({logCounts.debug})</option>
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Search logs..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="log-search"
+                    />
+                    <button onClick={copyLogsToClipboard} className="copy-logs-button">
+                      📋 Copy All
+                    </button>
+                  </div>
+
+                  <div className="logs-container">
+                    {filteredLogs.length === 0 ? (
+                      <p className="no-logs">
+                        {logs.length === 0 ? 'No logs available. Click "Load FSH Files" to generate logs.' : 'No logs match current filter.'}
+                      </p>
+                    ) : (
+                      filteredLogs.map((log, index) => (
+                        <div 
+                          key={index} 
+                          className={`log-entry log-${log.level}`}
+                          onClick={() => copyLogEntry(log)}
+                          title="Click to copy to clipboard"
+                        >
+                          <span className="log-timestamp">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                          <span className={`log-level level-${log.level}`}>{log.level.toUpperCase()}</span>
+                          <span className="log-message">{log.message}</span>
+                          {log.location && (
+                            <span className="log-location">({log.location})</span>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* FHIR Resources Section */}
+            <div className="resources-section">
+              <div 
+                className="section-toggle"
+                onClick={() => setExpandedResources(!expandedResources)}
+              >
+                <h4>Generated FHIR Resources {expandedResources ? '▼' : '▶'}</h4>
+              </div>
+              
+              {expandedResources && (
+                <div className="resources-content">
+                  {runnerResults && runnerResults.success !== false ? (
+                    <>
+                      {/* Analysis Results Summary */}
+                      {runnerResults && (
+                        <div className={`results-summary ${runnerResults.success ? 'success' : 'error'}`}>
+                          <h5>Analysis Results</h5>
+                          <p>
+                            Status: <strong>{runnerResults.success !== false ? 'Success' : 'Failed'}</strong>
+                          </p>
+                          {runnerResults.files && (
+                            <p>FSH Files Processed: {runnerResults.files.length}</p>
+                          )}
+                          {runnerResults.error && (
+                            <p className="error-message">Error: {runnerResults.error}</p>
+                          )}
+                          {runnerResults.stats && (
+                            <div className="compilation-stats">
+                              <p>Analysis Statistics:</p>
+                              <pre>{JSON.stringify(runnerResults.stats, null, 2)}</pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Processed Files */}
+                      {runnerResults && runnerResults.files && (
+                        <div className="processed-files">
+                          <h5>Processed FSH Files ({runnerResults.files.length})</h5>
+                          <div className="files-list">
+                            {runnerResults.files.map((file, index) => (
+                              <div key={index} className="file-item">
+                                <div 
+                                  className="file-header" 
+                                  onClick={() => toggleFileExpansion(file.path)}
+                                >
+                                  <span className="file-path">{file.path}</span>
+                                  <span className={`file-source source-${file.source}`}>
+                                    {file.source}
+                                  </span>
+                                  <span className="expand-icon">
+                                    {expandedFiles.has(file.path) ? '▼' : '▶'}
+                                  </span>
+                                </div>
+                                {expandedFiles.has(file.path) && (
+                                  <div className="file-content">
+                                    <pre>{file.content}</pre>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Analysis Output */}
+                      {runnerResults && runnerResults.result && (
+                        <div className="fhir-output">
+                          <h5>FSH Analysis Results</h5>
+                          <div className="fhir-resources">
+                            <pre>{JSON.stringify(runnerResults.result, null, 2)}</pre>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="no-resources">
+                      {runnerResults && runnerResults.error ? 
+                        `Error: ${runnerResults.error}` : 
+                        'No FHIR resources available. Click "Load FSH Files" to analyze and generate resources.'
+                      }
+                    </p>
+                  )}
                 </div>
               )}
             </div>
