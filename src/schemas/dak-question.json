@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://litlfred.github.io/sgex/schemas/dak-selection-form.json",
-  "title": "DAK Selection Form",
-  "description": "Minimal schema for selecting a DAK repository - only repository URL required",
+  "$id": "https://litlfred.github.io/sgex/schemas/dak-question.json",
+  "title": "DAK Question Form",
+  "description": "Minimal schema for DAK questions requiring only repository identification",
   "type": "object",
   "properties": {
     "repositoryUrl": {
@@ -15,26 +15,6 @@
         "https://github.com/who/smart-immunizations",
         "litlfred/anc-dak"
       ]
-    },
-    "selectedProfile": {
-      "type": "object",
-      "title": "Selected User/Organization",
-      "description": "Optional GitHub user or organization info",
-      "properties": {
-        "login": {
-          "type": "string",
-          "title": "Username/Organization",
-          "description": "GitHub username or organization name",
-          "minLength": 1
-        },
-        "type": {
-          "type": "string",
-          "enum": ["User", "Organization"],
-          "title": "Profile Type"
-        }
-      },
-      "required": ["login", "type"],
-      "additionalProperties": false
     },
     "locale": {
       "type": "string",
@@ -50,13 +30,6 @@
     "repositoryUrl": {
       "ui:help": "Enter the GitHub repository URL or path (e.g., 'user/repo')",
       "ui:placeholder": "user/repository-name"
-    },
-    "selectedProfile": {
-      "ui:field": "ProfileSelectionField",
-      "ui:options": {
-        "showAvatar": true,
-        "allowOrganizations": true
-      }
     },
     "locale": {
       "ui:help": "Optional: Select your preferred language"

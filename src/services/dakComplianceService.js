@@ -8,9 +8,10 @@
 import yaml from 'js-yaml';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import schemaService from './schemaService';
 
-// Import schema as a module
-const sushiConfigSchema = require('../schemas/sushi-config.json');
+// Import schema via schema service for consistency
+const sushiConfigSchema = schemaService.getSchema('sushi-config-original');
 
 class DAKComplianceService {
   constructor() {
