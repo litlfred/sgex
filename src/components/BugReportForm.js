@@ -122,9 +122,10 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
             setSubmitResult({
               success: true,
               fallbackUrl: url,
-              manual: true
+              manual: true,
+              urlOpened: true
             });
-            setSubmitted(true);
+            // Don't set submitted to true here - we're just opening a URL
           }
         } catch (openError) {
           setSubmitResult({
@@ -300,6 +301,38 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
     );
   }
 
+  if (submitResult?.urlOpened) {
+    return (
+      <div className="bug-report-form">
+        <div className="form-header">
+          <h3>Issue Form Opened</h3>
+          <button 
+            className="close-btn"
+            onClick={onClose}
+            aria-label="Close bug report form"
+          >
+            ×
+          </button>
+        </div>
+        <div className="success-message">
+          <div>
+            <p>✅ Your issue form has been opened in a new tab.</p>
+            <p>Please complete and submit the form in the GitHub tab to create your issue.</p>
+            <p>If the tab didn't open, you can access it here:</p>
+            <a 
+              href={submitResult.fallbackUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="issue-link"
+            >
+              Open Issue Form
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (submitted && submitResult?.success) {
     return (
       <div className="bug-report-form">
@@ -361,19 +394,22 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
       {error && (
         <div className="error-message">
           <p>⚠️ {error}</p>
-          {submitResult?.fallbackUrl && (
-            <div>
-              <p>You can still submit your issue manually:</p>
-              <a 
-                href={submitResult.fallbackUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="fallback-link"
-              >
-                Open GitHub Issue Form
-              </a>
-            </div>
-          )}
+        </div>
+      )}
+
+      {submitResult?.error && submitResult.error.type === 'popup_blocked' && (
+        <div className="error-message">
+          <p>⚠️ Pop-up blocked. Please allow pop-ups or use the link below:</p>
+          <div>
+            <a 
+              href={submitResult.fallbackUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="fallback-link"
+            >
+              Open GitHub Issue Form
+            </a>
+          </div>
         </div>
       )}
 
@@ -432,7 +468,7 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
             className="submit-btn primary"
             disabled={submitting || !selectedTemplate}
           >
-            {submitting ? 'Submitting...' : 
+            {submitting ? 'Opening...' : 
              githubService.isAuthenticated ? 'Submit Issue' : 'Open in GitHub'}
           </button>
           
@@ -444,7 +480,7 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
             Cancel
           </button>
           
-          {selectedTemplate && (
+          {selectedTemplate && !submitResult?.urlOpened && (
             <a
               href={generateFallbackUrl()}
               target="_blank"

@@ -449,8 +449,8 @@ body.theme-light .help-modal-overlay.bug-report-overlay {
 
 /* Fallback help section styles */
 .help-fallback {
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 8px;
   padding: 16px;
   margin: 20px 0;
@@ -458,7 +458,7 @@ body.theme-light .help-modal-overlay.bug-report-overlay {
 }
 
 .help-fallback strong {
-  color: #495057;
+  color: var(--who-text-primary);
   display: block;
   margin-bottom: 8px;
 }
@@ -470,10 +470,11 @@ body.theme-light .help-modal-overlay.bug-report-overlay {
 
 .help-fallback li {
   margin: 4px 0;
+  color: var(--who-text-primary);
 }
 
 .help-fallback a {
-  color: #0066cc;
+  color: var(--who-blue);
   text-decoration: none;
 }
 

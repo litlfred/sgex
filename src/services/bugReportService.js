@@ -404,15 +404,32 @@ class BugReportService {
       params.set('title', title);
     }
     
-    // Generate body for URL (GitHub has URL length limits, so keep it minimal)
-    const body = this.generateIssueBody(template, formData, includeConsole, consoleOutput);
-    if (body) {
-      // URL encode and truncate if too long
-      const maxBodyLength = 2000; // Conservative limit for URL
-      const truncatedBody = body.length > maxBodyLength ? 
-        body.substring(0, maxBodyLength) + '\n\n... (content truncated, please add remaining details)' : 
-        body;
-      params.set('body', truncatedBody);
+    // For template-based issues, populate individual fields instead of body
+    if (template.filename && template.body) {
+      // Add form field values as individual parameters
+      for (const field of template.body) {
+        if (field.id && formData[field.id]) {
+          params.set(field.id, formData[field.id]);
+        }
+      }
+      
+      // Add console output as a separate field if included
+      if (includeConsole && consoleOutput) {
+        const truncatedOutput = this._truncateConsoleOutput(consoleOutput);
+        const consoleField = 'console-output';
+        params.set(consoleField, `\`\`\`\n${truncatedOutput}\n\`\`\``);
+      }
+    } else {
+      // Fallback to body parameter for non-template issues
+      const body = this.generateIssueBody(template, formData, includeConsole, consoleOutput);
+      if (body) {
+        // URL encode and truncate if too long
+        const maxBodyLength = 2000; // Conservative limit for URL
+        const truncatedBody = body.length > maxBodyLength ? 
+          body.substring(0, maxBodyLength) + '\n\n... (content truncated, please add remaining details)' : 
+          body;
+        params.set('body', truncatedBody);
+      }
     }
     
     return `https://github.com/${owner}/${repo}/issues/new?${params.toString()}`;
