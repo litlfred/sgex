@@ -148,9 +148,31 @@ const generateQAReport = () => {
     coverageData = { total: { lines: { pct: 0 }, functions: { pct: 0 }, branches: { pct: 0 }, statements: { pct: 0 } } };
   }
 
+  // Run compliance checks
+  console.log('🔍 Running compliance checks...');
+  let complianceResults = {};
+  try {
+    // Framework compliance
+    const FrameworkComplianceChecker = require('./check-framework-compliance.js');
+    const frameworkChecker = new FrameworkComplianceChecker();
+    await frameworkChecker.check();
+    complianceResults.framework = frameworkChecker.results;
+    
+    // GitHub service compliance
+    const GitHubServiceComplianceChecker = require('./check-github-service-compliance.js');
+    const githubChecker = new GitHubServiceComplianceChecker();
+    await githubChecker.check();
+    complianceResults.githubService = githubChecker.getDetailedResults();
+    
+    console.log('✅ Compliance checks completed');
+  } catch (error) {
+    console.warn('⚠️  Compliance checks failed:', error.message);
+    complianceResults = { error: error.message };
+  }
+
   // Generate HTML report
   console.log('📄 Generating HTML QA report...');
-  const htmlReport = generateHTMLReport(testResults, coverageData);
+  const htmlReport = generateHTMLReport(testResults, coverageData, complianceResults);
 
   // Ensure both docs and public/docs directories exist
   console.log('📁 Creating output directories...');
@@ -180,7 +202,133 @@ const generateQAReport = () => {
   return reportPath;
 };
 
-const generateHTMLReport = (testResults, coverageData) => {
+const generateComplianceSection = (complianceResults) => {
+  if (!complianceResults || complianceResults.error) {
+    return `
+        <div class="card">
+            <h2>🔍 Compliance Analysis</h2>
+            <div style="background: rgba(255, 193, 7, 0.2); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px; padding: 15px;">
+                <h3 style="color: #ffc107; margin-top: 0;">⚠️ Compliance Check Unavailable</h3>
+                <p>Compliance analysis could not be performed: ${complianceResults?.error || 'Unknown error'}</p>
+            </div>
+        </div>`;
+  }
+
+  const framework = complianceResults.framework || {};
+  const githubService = complianceResults.githubService || {};
+
+  // Calculate overall compliance
+  const frameworkCompliance = framework.compliant ? framework.compliant.length : 0;
+  const frameworkTotal = (framework.compliant?.length || 0) + (framework.partiallyCompliant?.length || 0) + (framework.nonCompliant?.length || 0);
+  const frameworkPercentage = frameworkTotal > 0 ? Math.round((frameworkCompliance / frameworkTotal) * 100) : 0;
+
+  const githubCompliance = githubService.summary?.compliantFiles || 0;
+  const githubTotal = githubService.summary?.totalFiles || 0;
+  const githubPercentage = githubService.summary?.compliancePercentage || 0;
+
+  const overallCompliance = frameworkTotal + githubTotal > 0 ? 
+    Math.round(((frameworkCompliance + githubCompliance) / (frameworkTotal + githubTotal)) * 100) : 0;
+
+  return `
+        <div class="card">
+            <h2>🔍 Compliance Analysis</h2>
+            <p>Automated compliance checking ensures code quality and adherence to SGEX standards.</p>
+            
+            <!-- Overall Compliance -->
+            <div style="background: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0;">📊 Overall Compliance: ${overallCompliance}%</h3>
+                <div class="progress-bar" style="height: 12px; margin-bottom: 10px;">
+                    <div class="progress-fill" style="width: ${overallCompliance}%; background: ${overallCompliance >= 90 ? '#28a745' : overallCompliance >= 70 ? '#ffc107' : '#dc3545'}"></div>
+                </div>
+                <p style="margin: 0; opacity: 0.9;">Combined compliance across all quality standards</p>
+            </div>
+
+            <div class="stats-grid">
+                <!-- Framework Compliance -->
+                <div class="stat-item">
+                    <div class="stat-value">${frameworkPercentage}%</div>
+                    <div class="stat-label">Page Framework</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${frameworkPercentage}%"></div>
+                    </div>
+                    <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 5px;">
+                        ${frameworkCompliance}/${frameworkTotal} components
+                    </div>
+                </div>
+
+                <!-- GitHub Service Compliance -->
+                <div class="stat-item">
+                    <div class="stat-value">${githubPercentage}%</div>
+                    <div class="stat-label">GitHub Service</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${githubPercentage}%"></div>
+                    </div>
+                    <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 5px;">
+                        ${githubCompliance}/${githubTotal} files
+                    </div>
+                </div>
+            </div>
+
+            <!-- GitHub Service Compliance Details -->
+            ${githubService.summary ? `
+            <div style="margin-top: 25px;">
+                <h3>🔐 GitHub Service Compliance Details</h3>
+                <p style="margin-bottom: 15px;">Ensures consistent authentication, rate limiting, and error handling across all GitHub API operations.</p>
+                
+                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+                    <div class="stat-item">
+                        <div class="stat-value status-passed">${githubService.summary.compliantFiles}</div>
+                        <div class="stat-label">✅ Compliant</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value status-failed">${githubService.summary.nonCompliantFiles}</div>
+                        <div class="stat-label">❌ Non-compliant</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${githubService.summary.warningFiles}</div>
+                        <div class="stat-label">⚠️ Warnings</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${githubService.summary.errorFiles}</div>
+                        <div class="stat-label">🚨 Errors</div>
+                    </div>
+                </div>
+
+                ${githubService.nonCompliant && githubService.nonCompliant.length > 0 ? `
+                <div style="background: rgba(220, 53, 69, 0.2); border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px;">
+                    <h4 style="color: #dc3545; margin-top: 0;">❌ Non-compliant Files:</h4>
+                    <ul style="margin-bottom: 0;">
+                        ${githubService.nonCompliant.map(file => `
+                            <li><strong>${file.file}</strong> (Score: ${file.score}/${file.maxScore})
+                                <ul>
+                                    ${file.violations.map(v => `<li>Line ${v.line}: ${v.message}</li>`).join('')}
+                                </ul>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+                ` : `
+                <div style="background: rgba(40, 167, 69, 0.2); border: 1px solid rgba(40, 167, 69, 0.3); border-radius: 8px; padding: 15px; margin-top: 15px;">
+                    <h4 style="color: #28a745; margin-top: 0;">✅ All files comply with GitHub service standards!</h4>
+                    <p style="margin: 0;">No direct GitHub API calls detected. All components properly use githubService for consistent authentication and error handling.</p>
+                </div>
+                `}
+
+                <div style="margin-top: 15px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+                    <h4 style="margin-top: 0;">🎯 GitHub Service Compliance Rules:</h4>
+                    <ul style="margin-bottom: 0; font-size: 0.9rem;">
+                        <li><strong>No Direct API Calls:</strong> Components must use githubService methods instead of direct fetch() to api.github.com</li>
+                        <li><strong>Proper Authentication:</strong> Use githubService.isAuth() instead of manual token checks</li>
+                        <li><strong>Consistent Error Handling:</strong> Leverage githubService's built-in retry logic and error management</li>
+                        <li><strong>Rate Limit Management:</strong> githubService automatically handles GitHub API rate limiting</li>
+                    </ul>
+                </div>
+            </div>
+            ` : ''}
+        </div>`;
+};
+
+const generateHTMLReport = (testResults, coverageData, complianceResults = {}) => {
   const timestamp = new Date().toISOString();
   const total = coverageData.total || { lines: { pct: 0 }, functions: { pct: 0 }, branches: { pct: 0 }, statements: { pct: 0 } };
   
@@ -481,6 +629,9 @@ const generateHTMLReport = (testResults, coverageData) => {
                 </tbody>
             </table>
         </div>
+
+        <!-- Compliance Summary -->
+        ${generateComplianceSection(complianceResults)}
 
         <!-- Recommendations -->
         <div class="card">
