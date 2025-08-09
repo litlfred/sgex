@@ -1180,12 +1180,40 @@
     color: #d1d5db;
   }
   
+  /* PR Description section dark mode */
+  .pr-description {
+    background: #1f2937;
+    border-bottom-color: #374151;
+  }
+  
   .pr-description h4,
   .comments-section h4,
   .comment-form h4,
   .workflow-status-wrapper h4,
   .copilot-session-wrapper h4 {
     color: #f9fafb;
+  }
+  
+  .pr-body {
+    color: #e5e7eb;
+  }
+  
+  /* Comment header dark mode - no white background */
+  .comment-header {
+    background: #374151; /* Solid dark background instead of white */
+    border-bottom-color: #4b5563;
+  }
+  
+  /* Comment form dark mode - no white background */
+  .comment-form {
+    background: #1f2937; /* Solid dark background instead of white */
+    border-bottom-color: #374151;
+  }
+  
+  /* Copilot session wrapper dark mode - no white background */
+  .copilot-session-wrapper {
+    background: #1e293b; /* Solid dark background instead of white/light blue */
+    border-bottom-color: #374151;
   }
   
   .comment {
@@ -1206,8 +1234,13 @@
     color: #9ca3af;
   }
   
+  /* Enhanced markdown content readability in dark mode */
   .markdown-content {
-    color: #f3f4f6;
+    color: #f3f4f6 !important;
+  }
+  
+  .pr-body .markdown-content {
+    color: #e5e7eb !important;
   }
   
   .markdown-content h1,
@@ -1216,7 +1249,20 @@
   .markdown-content h4,
   .markdown-content h5,
   .markdown-content h6 {
-    color: #f9fafb;
+    color: #f9fafb !important;
+  }
+  
+  .pr-body .markdown-content h1,
+  .pr-body .markdown-content h2,
+  .pr-body .markdown-content h3,
+  .pr-body .markdown-content h4,
+  .pr-body .markdown-content h5,
+  .pr-body .markdown-content h6 {
+    color: #f9fafb !important;
+  }
+  
+  .markdown-content p {
+    color: inherit;
   }
   
   .markdown-content code {
@@ -1230,9 +1276,22 @@
     border: 1px solid #374151;
   }
   
+  .markdown-content pre code {
+    color: #e5e7eb;
+  }
+  
   .markdown-content blockquote {
     border-left-color: #374151;
     background: #1f2937;
+    color: #d1d5db;
+  }
+  
+  .markdown-content a {
+    color: #60a5fa;
+  }
+  
+  .markdown-content a:hover {
+    color: #93c5fd;
   }
   
   .comment-form textarea {
