@@ -3,7 +3,7 @@
  * Renders FAQ question results with internationalization support
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import faqExecutionEngine from '../engine/FAQExecutionEngine.js';
 import DOMPurify from 'dompurify';
@@ -22,11 +22,7 @@ const FAQAnswer = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    executeQuestion();
-  }, [questionId, parameters, githubService, assetFiles]);
-
-  const executeQuestion = async () => {
+  const executeQuestion = useCallback(async () => {
     if (!questionId || !githubService) {
       return;
     }
@@ -55,7 +51,11 @@ const FAQAnswer = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [questionId, parameters, githubService, assetFiles, i18n.language]);
+
+  useEffect(() => {
+    executeQuestion();
+  }, [executeQuestion]);
 
   const sanitizeHTML = (html) => {
     return DOMPurify.sanitize(html, {

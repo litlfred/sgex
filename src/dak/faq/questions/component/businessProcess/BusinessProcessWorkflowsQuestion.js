@@ -5,8 +5,16 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { QuestionDefinition, QuestionResult, CacheHint, QuestionLevel, ParameterDefinition } from '../../types/QuestionDefinition.js';
-import { DOMParser } from 'xmldom';
+import { QuestionDefinition, QuestionResult, CacheHint, QuestionLevel, ParameterDefinition } from '../../../types/QuestionDefinition.js';
+
+// Use browser DOMParser when available
+const getDOMParser = () => {
+  if (typeof DOMParser !== 'undefined') {
+    return DOMParser;
+  } else {
+    throw new Error('DOMParser not available (browser environment required for BPMN parsing)');
+  }
+};
 
 // Question metadata
 export const metadata = new QuestionDefinition({
@@ -133,7 +141,8 @@ export async function execute(input) {
  */
 async function parseBpmnWorkflow(bpmnContent, fileName, includeSubprocesses) {
   try {
-    const parser = new DOMParser();
+    const DOMParserClass = getDOMParser();
+    const parser = new DOMParserClass();
     const doc = parser.parseFromString(bpmnContent, 'text/xml');
     
     // Check for parsing errors

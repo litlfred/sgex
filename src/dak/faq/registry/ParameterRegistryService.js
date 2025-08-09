@@ -178,6 +178,8 @@ class ParameterRegistryService {
           return `Expected object, got ${actualType}`;
         }
         break;
+      default:
+        return `Unknown type: ${expectedType}`;
     }
 
     return null;

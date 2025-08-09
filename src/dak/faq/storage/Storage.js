@@ -64,7 +64,7 @@ export class GitHubStorage extends Storage {
     if (typeof repository === 'string') {
       // Handle GitHub URLs
       if (repository.includes('github.com')) {
-        const match = repository.match(/github\.com\/([^\/]+)\/([^\/\?#]+)/);
+        const match = repository.match(/github\.com\/([^/]+)\/([^/?#]+)/);
         if (match) {
           return { owner: match[1], repo: match[2].replace(/\.git$/, '') };
         }
@@ -156,76 +156,49 @@ export class GitHubStorage extends Storage {
 }
 
 /**
- * Local file system storage implementation
- * For MCP server and local development
+ * Mock storage implementation for browser testing
+ * Can be used when no real storage is available
  */
-export class LocalStorage extends Storage {
-  constructor(rootPath) {
+export class MockStorage extends Storage {
+  constructor(mockFiles = {}) {
     super();
-    this.rootPath = rootPath;
+    this.mockFiles = mockFiles;
   }
 
   async readFile(path) {
-    const fs = require('fs').promises;
-    const fullPath = require('path').join(this.rootPath, path);
-    
-    // Security check: ensure path is within root directory
-    if (!require('path').resolve(fullPath).startsWith(require('path').resolve(this.rootPath))) {
-      throw new Error('Path traversal not allowed');
+    if (this.mockFiles[path]) {
+      return Buffer.from(this.mockFiles[path], 'utf-8');
     }
-    
-    try {
-      return await fs.readFile(fullPath);
-    } catch (error) {
-      throw new Error(`Failed to read file ${path}: ${error.message}`);
-    }
+    throw new Error(`File not found: ${path}`);
   }
 
   async fileExists(path) {
-    const fs = require('fs').promises;
-    const fullPath = require('path').join(this.rootPath, path);
-    
-    try {
-      await fs.access(fullPath);
-      return true;
-    } catch (error) {
-      return false;
-    }
+    return this.mockFiles.hasOwnProperty(path);
   }
 
   async listFiles(pattern, options = {}) {
-    const glob = require('glob');
-    const fullPattern = require('path').join(this.rootPath, pattern);
+    const files = Object.keys(this.mockFiles);
     
-    return new Promise((resolve, reject) => {
-      glob(fullPattern, options, (err, files) => {
-        if (err) {
-          reject(new Error(`Failed to list files: ${err.message}`));
-        } else {
-          // Return relative paths
-          const relativePaths = files.map(file => 
-            require('path').relative(this.rootPath, file)
-          );
-          resolve(relativePaths);
-        }
-      });
-    });
+    if (pattern.includes('*') || pattern.includes('?')) {
+      const regexPattern = pattern
+        .replace(/\./g, '\\.')
+        .replace(/\*/g, '.*')
+        .replace(/\?/g, '.');
+      const regex = new RegExp(`^${regexPattern}$`);
+      return files.filter(file => regex.test(file));
+    } else {
+      return files.filter(file => file.startsWith(pattern));
+    }
   }
 
   async getFileInfo(path) {
-    const fs = require('fs').promises;
-    const fullPath = require('path').join(this.rootPath, path);
-    
-    try {
-      const stats = await fs.stat(fullPath);
+    if (this.mockFiles[path]) {
       return {
-        size: stats.size,
-        modified: stats.mtime,
-        created: stats.birthtime,
-        path: path
+        size: Buffer.from(this.mockFiles[path], 'utf-8').length,
+        path: path,
+        type: 'file'
       };
-    } catch (error) {
-      throw new Error(`Failed to get file info for ${path}: ${error.message}`);
     }
+    throw new Error(`File not found: ${path}`);
   }
 }
