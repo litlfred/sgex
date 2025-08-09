@@ -206,8 +206,8 @@
   padding: 0;
   line-height: 1;
   border-radius: 4px;
-  width: 24px;
-  height: 24px;
+  width: var(--icon-size-default);
+  height: var(--icon-size-default);
   display: flex;
   align-items: center;
   justify-content: center;

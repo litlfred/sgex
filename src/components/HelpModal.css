@@ -55,7 +55,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 24px;
+  width: var(--icon-size-default);
   height: 20px;
   transition: background-color 0.2s;
 }

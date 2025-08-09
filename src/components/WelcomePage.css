@@ -168,7 +168,7 @@ body.theme-light .welcome-page-content {
 }
 
 .card-icon img {
-  min-height: 12em;
+  min-height: var(--card-size-default);
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
