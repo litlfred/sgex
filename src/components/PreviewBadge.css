@@ -141,8 +141,9 @@
   max-height: 80vh;
   overflow-y: auto;
   z-index: 1001;
-  min-width: 400px;
-  max-width: 600px;
+  min-width: 800px;
+  max-width: 1000px;
+  width: 800px;
 }
 
 .expanded-header {
@@ -340,9 +341,26 @@
   color: #0250a3;
 }
 
+.description-toggle {
+  background: none;
+  border: none;
+  color: #0366d6;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  padding: 0;
+  text-decoration: underline;
+  display: block;
+}
+
+.description-toggle:hover {
+  color: #0250a3;
+}
+
 .comment-form {
-  border-top: 1px solid #eee;
-  padding-top: 1rem;
+  border-bottom: 1px solid #eee;
+  padding: 1rem;
+  background: #f8f9fa;
 }
 
 .comment-form h4 {
@@ -434,8 +452,9 @@
   }
 
   .preview-badge-expanded {
-    min-width: 300px;
+    min-width: 600px;
     max-width: 90vw;
+    width: auto;
   }
 
   .expanded-header {
@@ -466,8 +485,9 @@
   }
 
   .preview-badge-expanded {
-    min-width: 280px;
+    min-width: 400px;
     max-width: 95vw;
+    width: auto;
     left: -50px; /* Offset to prevent overflow on small screens */
   }
 

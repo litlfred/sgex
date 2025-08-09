@@ -18,6 +18,7 @@ const PreviewBadge = () => {
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [expandedComments, setExpandedComments] = useState(new Set());
+  const [expandedDescription, setExpandedDescription] = useState(false);
   const expandedRef = useRef(null);
 
   useEffect(() => {
@@ -195,6 +196,17 @@ const PreviewBadge = () => {
     }
   };
 
+  const truncateDescription = (text, maxLines = 6) => {
+    if (!text) return '';
+    const lines = text.split('\n');
+    if (lines.length <= maxLines) return text;
+    return lines.slice(0, maxLines).join('\n') + '...';
+  };
+
+  const handleDescriptionToggle = () => {
+    setExpandedDescription(!expandedDescription);
+  };
+
   const truncateComment = (text, maxLength = 200) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
@@ -323,10 +335,43 @@ const PreviewBadge = () => {
                 </button>
               </div>
 
+              {/* Comment form for authenticated users - MOVED TO TOP */}
+              {githubService.isAuth() && (
+                <div className="comment-form">
+                  <h4>Add Comment</h4>
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Write a comment..."
+                    rows={3}
+                    disabled={submittingComment}
+                  />
+                  <div className="comment-form-actions">
+                    <button
+                      className="submit-comment"
+                      onClick={handleCommentSubmit}
+                      disabled={!newComment.trim() || submittingComment}
+                    >
+                      {submittingComment ? 'Submitting...' : 'Comment'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {prInfo[0].body && (
                 <div className="pr-description">
                   <h4>Description</h4>
-                  <div className="pr-body">{prInfo[0].body}</div>
+                  <div className="pr-body">
+                    {expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body)}
+                    {prInfo[0].body.split('\n').length > 6 && (
+                      <button 
+                        className="description-toggle"
+                        onClick={handleDescriptionToggle}
+                      >
+                        {expandedDescription ? 'Show less' : 'Show more'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -386,29 +431,6 @@ const PreviewBadge = () => {
                         </div>
                       );
                     })}
-                  </div>
-                )}
-
-                {/* Comment form for authenticated users */}
-                {githubService.isAuth() && (
-                  <div className="comment-form">
-                    <h4>Add Comment</h4>
-                    <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Write a comment..."
-                      rows={3}
-                      disabled={submittingComment}
-                    />
-                    <div className="comment-form-actions">
-                      <button
-                        className="submit-comment"
-                        onClick={handleCommentSubmit}
-                        disabled={!newComment.trim() || submittingComment}
-                      >
-                        {submittingComment ? 'Submitting...' : 'Comment'}
-                      </button>
-                    </div>
                   </div>
                 )}
               </div>
