@@ -341,7 +341,6 @@ const DAKDashboardContent = () => {
                       className="mascot-card-image"
                     />
                   </div>
-                  <h3>{component.title}</h3>
                   <p>{component.description}</p>
                   {issueCounts[component.id] > 0 && (
                     <div className="issue-badge">

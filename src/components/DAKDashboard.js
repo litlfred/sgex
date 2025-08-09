@@ -616,7 +616,6 @@ const DAKDashboardContent = () => {
                     </div>
                     
                     <div className="component-content">
-                      <h4>{component.name}</h4>
                       <p>{component.description}</p>
                       
                       <div className="component-meta">
