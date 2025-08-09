@@ -856,7 +856,11 @@ const PreviewBadge = () => {
                 <div className="pr-description">
                   <h4>Description</h4>
                   <div className="pr-body">
-                    {expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body)}
+                    <div className="markdown-content">
+                      <ReactMarkdown>
+                        {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
+                      </ReactMarkdown>
+                    </div>
                     {prInfo[0].body.split('\n').length > 6 && (
                       <button 
                         className="description-toggle"
