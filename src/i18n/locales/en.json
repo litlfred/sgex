@@ -140,5 +140,36 @@
     "status": "Status",
     "activity": "Recent Activity",
     "errorLoading": "Error Loading Dashboard"
+  },
+  "altText": {
+    "mascot": {
+      "helper": "SGEX Helper",
+      "icon": "SGEX Icon",
+      "examining": "SGEX Mascot examining",
+      "celebrating": "SGEX Mascot celebrating",
+      "coding": "Robotic SGEX Mascot",
+      "community": "SGEX Mascot"
+    },
+    "avatar": {
+      "user": "{{name}} avatar",
+      "organization": "{{name}} organization avatar",
+      "personal": "Personal profile",
+      "profile": "Profile avatar"
+    },
+    "icon": {
+      "sgex": "SGEX Icon",
+      "bugReport": "Bug Report",
+      "security": "Security Lock",
+      "action": "{{title}}"
+    },
+    "image": {
+      "authoring": "Authoring Interface",
+      "collaboration": "Collaboration Features",
+      "workflow": "Workflow Diagram"
+    },
+    "logo": {
+      "sgex": "SGEX Logo",
+      "who": "WHO Logo"
+    }
   }
 }
