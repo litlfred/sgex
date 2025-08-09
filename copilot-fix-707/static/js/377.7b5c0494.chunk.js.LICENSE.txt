@@ -1,0 +1,13 @@
+/*! js-yaml 4.1.0 https://github.com/nodeca/js-yaml @license MIT */
+
+/**! 
+ * @uiw/copy-to-clipboard v1.0.17 
+ * Copy to clipboard. 
+ * 
+ * Copyright (c) 2024 Kenny Wang 
+ * https://github.com/uiwjs/copy-to-clipboard.git 
+ * 
+ * @website: https://uiwjs.github.io/copy-to-clipboard
+ 
+ * Licensed under the MIT license 
+ */
