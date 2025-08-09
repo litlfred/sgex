@@ -168,7 +168,8 @@ body.theme-light .welcome-page-content {
 }
 
 .card-icon img {
-  min-height: var(--card-size-default);
+  max-height: 8em;
+  max-width: 8em;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
@@ -477,8 +478,8 @@ body.theme-light .welcome-page-content {
   }
   
   .card-icon img {
-    max-width: 200px;
-    max-height: 200px;
+    max-width: 6em;
+    max-height: 6em;
   }
 }
 
@@ -503,8 +504,8 @@ body.theme-light .welcome-page-content {
   }
   
   .card-icon img {
-    max-width: 160px;
-    max-height: 160px;
+    max-width: 5em;
+    max-height: 5em;
   }
   
   .card-icon .icon-symbol {
