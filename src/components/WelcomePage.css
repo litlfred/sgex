@@ -500,12 +500,12 @@ body.theme-light .welcome-page-content {
   }
   
   .card-icon {
-    min-height: 160px;
+    min-height: var(--icon-size-default);
   }
   
   .card-icon img {
-    max-width: 11.25em;
-    max-height: 11.25em;
+    max-width: var(--icon-size-default);
+    max-height: var(--icon-size-default);
   }
   
   .card-icon .icon-symbol {
