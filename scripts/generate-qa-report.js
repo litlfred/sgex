@@ -13,7 +13,7 @@ const { execSync } = require('child_process');
  * to prevent infinite loops when the generated files would trigger another workflow run.
  */
 
-const generateQAReport = () => {
+const generateQAReport = async () => {
   console.log('🔍 Generating QA Report for SGEX Workbench...');
 
   // Run tests with coverage
@@ -659,7 +659,10 @@ const generateHTMLReport = (testResults, coverageData, complianceResults = {}) =
 };
 
 if (require.main === module) {
-  generateQAReport();
+  generateQAReport().catch(error => {
+    console.error('❌ QA Report generation failed:', error);
+    process.exit(1);
+  });
 }
 
 module.exports = { generateQAReport };
