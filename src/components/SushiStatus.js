@@ -275,7 +275,7 @@ const SushiStatus = ({ profile, repository, selectedBranch, hasWriteAccess }) =>
 
   if (!expanded) {
     return (
-      <div className="sushi-status-collapsed">
+      <div className="sushi-status-collapsed" style={{ border: '2px solid red', minHeight: '60px' }}>
         <div className="sushi-status-header" onClick={() => setExpanded(true)}>
           <div className="sushi-status-info">
             <span className="sushi-status-icon">🍣</span>
