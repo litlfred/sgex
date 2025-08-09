@@ -167,9 +167,11 @@ describe('GitHub Service Compliance', () => {
           expect(component.hasDirectApiCall).toBe(false);
         }
         
-        // If component has GitHub functionality and API calls, it should use githubService
-        const hasApiCallsPattern = /fetch\s*\(|axios\.|XMLHttpRequest/.test(component.content);
-        if (hasApiCallsPattern && component.content.includes('github')) {
+        // If component has GitHub API calls (not raw file downloads), it should use githubService
+        const hasGitHubApiCallsPattern = /fetch\s*\(\s*['"`]https:\/\/api\.github\.com|fetch\s*\(\s*['"`].*api\.github\.com/.test(component.content);
+        const hasGenericApiCallPattern = /axios\.get\s*\(\s*['"`]https:\/\/api\.github\.com|XMLHttpRequest.*api\.github\.com/.test(component.content);
+        
+        if (hasGitHubApiCallsPattern || hasGenericApiCallPattern) {
           expect(component.hasGitHubServiceImport).toBe(true);
         }
       });
