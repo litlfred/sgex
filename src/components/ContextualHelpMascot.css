@@ -63,8 +63,8 @@
   color: var(--who-blue, #006cbe);
   border: 2px solid var(--who-blue, #006cbe);
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: var(--icon-size-default);
+  height: var(--icon-size-default);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -287,8 +287,8 @@
   color: #ffffff;
   border: none;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: var(--icon-size-default);
+  height: var(--icon-size-default);
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
