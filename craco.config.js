@@ -19,6 +19,43 @@ const paths = require('react-scripts/config/paths');
 const getHttpsConfig = require('react-scripts/config/getHttpsConfig');
 
 module.exports = {
+  webpack: {
+    configure: (webpackConfig, { env, paths }) => {
+      // Add polyfills for SUSHI dependencies
+      webpackConfig.resolve.fallback = {
+        ...webpackConfig.resolve.fallback,
+        "fs": false,
+        "path": require.resolve("path-browserify"),
+        "stream": require.resolve("stream-browserify"),
+        "crypto": require.resolve("crypto-browserify"),
+        "buffer": require.resolve("buffer"),
+        "process": require.resolve("process/browser"),
+        "zlib": require.resolve("browserify-zlib"),
+        "http": require.resolve("stream-http"),
+        "https": require.resolve("https-browserify"),
+        "url": require.resolve("url"),
+        "os": require.resolve("os-browserify/browser"),
+        "util": require.resolve("util"),
+        "assert": require.resolve("assert"),
+        "events": require.resolve("events"),
+        "timers": require.resolve("timers-browserify"),
+        "string_decoder": require.resolve("string_decoder"),
+        "vm": require.resolve("vm-browserify")
+      };
+
+      // Add buffer and process plugins
+      const webpack = require('webpack');
+      webpackConfig.plugins = [
+        ...webpackConfig.plugins,
+        new webpack.ProvidePlugin({
+          Buffer: ['buffer', 'Buffer'],
+          process: 'process/browser',
+        })
+      ];
+
+      return webpackConfig;
+    }
+  },
   devServer: (devServerConfig, { env, paths, proxy, allowedHost }) => {
     // Override the deprecated onBeforeSetupMiddleware and onAfterSetupMiddleware
     // with the new setupMiddlewares API for webpack-dev-server 5.x compatibility
