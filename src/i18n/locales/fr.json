@@ -36,14 +36,94 @@
     "lastModified": "Dernière Modification",
     "branch": "Branche",
     "repository": "Dépôt",
-    "healthInterventions": "Interventions Sanitaires et Recommandations",
-    "genericPersonas": "Personas Génériques",
-    "userScenarios": "Scénarios Utilisateur",
-    "businessProcesses": "Processus Métier Génériques et Flux de Travail",
-    "coreDataElements": "Éléments de Données Essentiels",
-    "decisionSupportLogic": "Logique d'Aide à la Décision",
-    "programIndicators": "Indicateurs de Programme",
-    "requirements": "Exigences Fonctionnelles et Non Fonctionnelles"
+    "component": {
+      "healthInterventions": {
+        "name": "Interventions Sanitaires et Recommandations",
+        "description": "Directives cliniques et spécifications d'interventions sanitaires qui définissent des recommandations de soins fondées sur des preuves"
+      },
+      "genericPersonas": {
+        "name": "Personas Génériques",
+        "description": "Rôles d'utilisateurs standardisés et définitions d'acteurs qui représentent différents types de professionnels de santé et de patients"
+      },
+      "userScenarios": {
+        "name": "Scénarios Utilisateur",
+        "description": "Descriptions narratives de la façon dont différents personas interagissent avec le système dans des contextes de soins spécifiques"
+      },
+      "businessProcesses": {
+        "name": "Processus Métier Génériques et Flux de Travail",
+        "description": "Flux de travail BPMN et définitions de processus métier qui modélisent les flux de travail cliniques et les parcours de soins"
+      },
+      "coreDataElements": {
+        "name": "Éléments de Données Essentiels",
+        "description": "Structures de données essentielles et terminologie nécessaires pour la capture et l'échange de données cliniques (inclut les Services de Terminologie via OCL et les Données Maîtres de Produits via PCMT)"
+      },
+      "decisionSupportLogic": {
+        "name": "Logique d'Aide à la Décision",
+        "description": "Tables de décision DMN et règles d'aide à la décision clinique qui encodent la logique clinique"
+      },
+      "programIndicators": {
+        "name": "Indicateurs de Programme",
+        "description": "Indicateurs de performance et définitions de mesures pour le suivi et l'évaluation"
+      },
+      "requirements": {
+        "name": "Exigences Fonctionnelles et Non Fonctionnelles",
+        "description": "Spécifications d'exigences système qui définissent les capacités et les contraintes"
+      },
+      "testing": {
+        "name": "Tests",
+        "description": "Fichiers de fonctionnalités et scénarios de test pour valider l'implémentation du DAK"
+      },
+      "testScenarios": {
+        "name": "Scénarios de Test",
+        "description": "Fichiers de fonctionnalités et scénarios de test pour valider l'implémentation du DAK"
+      },
+      "terminology": {
+        "name": "Terminologie",
+        "description": "Systèmes de codes, ensembles de valeurs et cartes de concepts"
+      },
+      "profiles": {
+        "name": "Profils FHIR",
+        "description": "Profils de ressources FHIR et contraintes"
+      },
+      "extensions": {
+        "name": "Extensions FHIR",
+        "description": "Extensions FHIR personnalisées et modifications"
+      },
+      "testData": {
+        "name": "Données de Test et Exemples",
+        "description": "Données d'échantillon et ressources de test"
+      },
+      "questionnaireEditor": {
+        "name": "Questionnaires FHIR",
+        "description": "Questionnaires structurés et formulaires pour la collecte de données utilisant le standard FHIR"
+      }
+    },
+    "level": {
+      "core": "Niveau 2 : Composants Essentiels",
+      "technical": "Niveau 3 : Implémentation Technique"
+    },
+    "editor": {
+      "healthInterventions": "Gestionnaire de références de publication avec intégration IRIS",
+      "genericPersonas": "Éditeur de définition de persona avec spécifications d'accès basées sur les rôles",
+      "userScenarios": "Éditeur de scénarios avec visualisation de flux de travail",
+      "businessProcesses": "Éditeur BPMN graphique avec visualisation SVG",
+      "coreDataElements": "Éditeur d'éléments de données avec intégration OCL et PCMT",
+      "decisionSupportLogic": "Éditeur de table de décision DMN avec validation",
+      "programIndicators": "Éditeur de définition d'indicateurs avec logique de mesure",
+      "requirements": "Éditeur d'exigences avec modèles structurés",
+      "testing": "Visualiseur de tests avec navigateur de fichiers de fonctionnalités"
+    },
+    "fileTypes": {
+      "healthInterventions": ["IRIS", "Publication"],
+      "genericPersonas": ["Acteur", "Rôle"],
+      "userScenarios": ["Narratif", "Cas d'Usage"],
+      "businessProcesses": ["BPMN", "XML"],
+      "coreDataElements": ["OCL", "Concept", "PCMT", "Produit"],
+      "decisionSupportLogic": ["DMN", "XML"],
+      "programIndicators": ["Mesure", "Logique"],
+      "requirements": ["Exigences", "Spécification"],
+      "testing": ["Fonctionnalité", "Test"]
+    }
   },
   "repository": {
     "select": "Sélectionner un Dépôt",

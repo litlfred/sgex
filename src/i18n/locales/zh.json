@@ -36,14 +36,94 @@
     "lastModified": "最后修改",
     "branch": "分支",
     "repository": "存储库",
-    "healthInterventions": "健康干预措施和建议",
-    "genericPersonas": "通用角色",
-    "userScenarios": "用户场景",
-    "businessProcesses": "通用业务流程和工作流",
-    "coreDataElements": "核心数据元素",
-    "decisionSupportLogic": "决策支持逻辑",
-    "programIndicators": "程序指标",
-    "requirements": "功能和非功能需求"
+    "component": {
+      "healthInterventions": {
+        "name": "健康干预措施和建议",
+        "description": "定义基于证据的护理建议的临床指南和健康干预规范"
+      },
+      "genericPersonas": {
+        "name": "通用角色",
+        "description": "代表不同类型医护人员和患者的标准化用户角色和参与者定义"
+      },
+      "userScenarios": {
+        "name": "用户场景",
+        "description": "描述不同角色如何在特定医疗保健环境中与系统交互的叙述性描述"
+      },
+      "businessProcesses": {
+        "name": "通用业务流程和工作流",
+        "description": "建模临床工作流程和护理路径的BPMN工作流程和业务流程定义"
+      },
+      "coreDataElements": {
+        "name": "核心数据元素",
+        "description": "临床数据捕获和交换所需的基本数据结构和术语"
+      },
+      "decisionSupportLogic": {
+        "name": "决策支持逻辑",
+        "description": "编码临床逻辑的DMN决策表和临床决策支持规则"
+      },
+      "programIndicators": {
+        "name": "程序指标",
+        "description": "用于监测和评估的绩效指标和测量定义"
+      },
+      "requirements": {
+        "name": "功能和非功能需求",
+        "description": "定义能力和约束的系统需求规范"
+      },
+      "testing": {
+        "name": "测试",
+        "description": "用于验证DAK实施的功能文件和测试场景"
+      },
+      "testScenarios": {
+        "name": "测试场景",
+        "description": "用于验证DAK实施的功能文件和测试场景"
+      },
+      "terminology": {
+        "name": "术语",
+        "description": "代码系统、值集和概念映射"
+      },
+      "profiles": {
+        "name": "FHIR配置文件",
+        "description": "FHIR资源配置文件和约束"
+      },
+      "extensions": {
+        "name": "FHIR扩展",
+        "description": "自定义FHIR扩展和修改"
+      },
+      "testData": {
+        "name": "测试数据和示例",
+        "description": "样本数据和测试资源"
+      },
+      "questionnaireEditor": {
+        "name": "FHIR问卷",
+        "description": "使用FHIR标准进行数据收集的结构化问卷和表单"
+      }
+    },
+    "level": {
+      "core": "第2级：核心组件",
+      "technical": "第3级：技术实施"
+    },
+    "editor": {
+      "healthInterventions": "带IRIS集成的出版物参考管理器",
+      "genericPersonas": "带基于角色访问规范的角色定义编辑器",
+      "userScenarios": "带工作流可视化的场景编辑器",
+      "businessProcesses": "带SVG可视化的图形BPMN编辑器",
+      "coreDataElements": "带OCL和PCMT集成的数据元素编辑器",
+      "decisionSupportLogic": "带验证的DMN决策表编辑器",
+      "programIndicators": "带测量逻辑的指标定义编辑器",
+      "requirements": "带结构化模板的需求编辑器",
+      "testing": "带功能文件浏览器的测试查看器"
+    },
+    "fileTypes": {
+      "healthInterventions": ["IRIS", "出版物"],
+      "genericPersonas": ["参与者", "角色"],
+      "userScenarios": ["叙述", "用例"],
+      "businessProcesses": ["BPMN", "XML"],
+      "coreDataElements": ["OCL", "概念", "PCMT", "产品"],
+      "decisionSupportLogic": ["DMN", "XML"],
+      "programIndicators": ["测量", "逻辑"],
+      "requirements": ["需求", "规范"],
+      "testing": ["功能", "测试"]
+    }
   },
   "repository": {
     "select": "选择存储库",

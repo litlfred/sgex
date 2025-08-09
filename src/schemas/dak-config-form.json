@@ -2,38 +2,24 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://litlfred.github.io/sgex/schemas/dak-config-form.json",
   "title": "DAK Configuration Form",
-  "description": "Schema for configuring basic DAK parameters in sushi-config.yaml when creating a new DAK",
+  "description": "Minimal schema for basic DAK configuration - only essential fields required",
   "type": "object",
   "properties": {
-    "templateRepository": {
-      "type": "object", 
-      "title": "Template Repository",
-      "description": "The WHO SMART Guidelines template repository being used as base",
-      "properties": {
-        "name": {
-          "type": "string",
-          "const": "smart-ig-empty",
-          "title": "Template Name"
-        },
-        "full_name": {
-          "type": "string",
-          "const": "WorldHealthOrganization/smart-ig-empty",
-          "title": "Full Template Name"
-        },
-        "html_url": {
-          "type": "string",
-          "const": "https://github.com/WorldHealthOrganization/smart-ig-empty",
-          "format": "uri",
-          "title": "Template URL"
-        }
-      },
-      "required": ["name", "full_name", "html_url"],
-      "additionalProperties": false
+    "repositoryUrl": {
+      "type": "string",
+      "title": "Target Repository",
+      "description": "GitHub repository URL or path where DAK will be created/configured",
+      "pattern": "^(https://github\\.com/)?[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+/?$",
+      "examples": [
+        "who/smart-immunizations",
+        "https://github.com/who/smart-immunizations",
+        "litlfred/my-new-dak"
+      ]
     },
     "sushiConfig": {
       "type": "object",
-      "title": "FHIR Implementation Guide Configuration",
-      "description": "Core parameters for the sushi-config.yaml file",
+      "title": "Basic FHIR Implementation Guide Configuration",
+      "description": "Essential parameters for the sushi-config.yaml file",
       "properties": {
         "id": {
           "type": "string",
@@ -43,15 +29,6 @@
           "minLength": 3,
           "maxLength": 64,
           "examples": ["who.smart.maternal-health", "my-org.dak.immunization"]
-        },
-        "name": {
-          "type": "string", 
-          "title": "Implementation Guide Name",
-          "description": "Technical name for the IG (PascalCase, no spaces)",
-          "pattern": "^[A-Z][A-Za-z0-9]*$",
-          "minLength": 3,
-          "maxLength": 100,
-          "examples": ["WHOSmartMaternalHealth", "MyOrgDAKImmunization"]
         },
         "title": {
           "type": "string",
@@ -68,171 +45,30 @@
           "minLength": 20,
           "maxLength": 1000,
           "examples": ["This implementation guide provides digital adaptation kit components for maternal health guidelines including decision support logic, forms, and indicators."]
-        },
-        "version": {
-          "type": "string",
-          "title": "Version",
-          "description": "Initial version number",
-          "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9]+)?$",
-          "default": "0.1.0",
-          "examples": ["0.1.0", "1.0.0", "0.1.0-alpha"]
-        },
-        "status": {
-          "type": "string",
-          "title": "Publication Status",
-          "enum": ["draft", "active", "retired", "unknown"],
-          "default": "draft",
-          "description": "The current status of the implementation guide"
-        },
-        "experimental": {
-          "type": "boolean",
-          "title": "Experimental",
-          "description": "Whether this is an experimental implementation guide",
-          "default": true
-        },
-        "publisher": {
-          "type": "string",
-          "title": "Publisher",
-          "description": "Organization or individual responsible for publishing",
-          "maxLength": 200,
-          "examples": ["World Health Organization", "My Healthcare Organization"]
-        },
-        "contact": {
-          "type": "array",
-          "title": "Contact Information",
-          "description": "Contact details for the DAK authors",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "title": "Contact Name",
-                "maxLength": 100
-              },
-              "telecom": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "system": {
-                      "type": "string",
-                      "enum": ["phone", "fax", "email", "pager", "url", "sms", "other"]
-                    },
-                    "value": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["system", "value"]
-                }
-              }
-            },
-            "required": ["name"]
-          },
-          "maxItems": 5
-        },
-        "jurisdiction": {
-          "type": "array",
-          "title": "Jurisdiction",
-          "description": "Geographic or organizational jurisdiction for the DAK",
-          "items": {
-            "type": "object",
-            "properties": {
-              "coding": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "system": {
-                      "type": "string",
-                      "format": "uri"
-                    },
-                    "code": {
-                      "type": "string"
-                    },
-                    "display": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["system", "code"]
-                }
-              }
-            }
-          },
-          "default": [
-            {
-              "coding": [
-                {
-                  "system": "http://unstats.un.org/unsd/methods/m49/m49.htm",
-                  "code": "001",
-                  "display": "World"
-                }
-              ]
-            }
-          ]
         }
       },
-      "required": ["id", "name", "title", "description", "version", "status", "publisher"],
+      "required": ["id", "title", "description"],
       "additionalProperties": false
     },
-    "repositorySettings": {
-      "type": "object",
-      "title": "Repository Settings",
-      "description": "Settings for the new GitHub repository",
-      "properties": {
-        "name": {
-          "type": "string",
-          "title": "Repository Name",
-          "description": "GitHub repository name (lowercase, hyphens allowed)",
-          "pattern": "^[a-z0-9][a-z0-9\\-]*[a-z0-9]$",
-          "minLength": 3,
-          "maxLength": 100
-        },
-        "description": {
-          "type": "string",
-          "title": "Repository Description",
-          "description": "Short description for the GitHub repository",
-          "maxLength": 300
-        },
-        "private": {
-          "type": "boolean",
-          "title": "Private Repository",
-          "description": "Whether the repository should be private",
-          "default": false
-        },
-        "topics": {
-          "type": "array",
-          "title": "Repository Topics",
-          "description": "Topics to help categorize the repository",
-          "items": {
-            "type": "string",
-            "pattern": "^[a-z0-9\\-]+$",
-            "maxLength": 35
-          },
-          "default": ["who", "smart-guidelines", "dak", "fhir", "implementation-guide"],
-          "maxItems": 20
-        }
-      },
-      "required": ["name", "description"],
-      "additionalProperties": false
+    "locale": {
+      "type": "string",
+      "title": "Language/Locale",
+      "description": "Optional language/locale preference",
+      "enum": ["en", "fr", "es", "ar", "zh", "ru"],
+      "default": "en"
     }
   },
-  "required": ["templateRepository", "sushiConfig", "repositorySettings"],
+  "required": ["repositoryUrl", "sushiConfig"],
   "additionalProperties": false,
   "uiSchema": {
-    "templateRepository": {
-      "ui:field": "TemplateInfoField",
-      "ui:options": {
-        "readOnly": true,
-        "showDescription": true
-      }
+    "repositoryUrl": {
+      "ui:help": "Enter the GitHub repository URL or path where the DAK will be created/configured",
+      "ui:placeholder": "user/repository-name"
     },
     "sushiConfig": {
-      "ui:order": ["id", "name", "title", "description", "version", "status", "experimental", "publisher", "contact", "jurisdiction"],
+      "ui:order": ["id", "title", "description"],
       "id": {
         "ui:help": "Must be lowercase with dots or hyphens. Example: who.smart.maternal-health"
-      },
-      "name": {
-        "ui:help": "PascalCase technical name. Example: WHOSmartMaternalHealth"
       },
       "title": {
         "ui:widget": "textarea",
@@ -245,38 +81,10 @@
         "ui:options": {
           "rows": 4
         }
-      },
-      "contact": {
-        "ui:field": "ContactListField",
-        "ui:options": {
-          "addable": true,
-          "removable": true
-        }
-      },
-      "jurisdiction": {
-        "ui:field": "JurisdictionField",
-        "ui:options": {
-          "defaultToWorld": true
-        }
       }
     },
-    "repositorySettings": {
-      "name": {
-        "ui:help": "Repository name must be lowercase with hyphens. Will be used as the GitHub repository URL."
-      },
-      "description": {
-        "ui:widget": "textarea",
-        "ui:options": {
-          "rows": 2
-        }
-      },
-      "topics": {
-        "ui:field": "TopicsField",
-        "ui:options": {
-          "allowCustom": true,
-          "suggestions": ["who", "smart-guidelines", "dak", "fhir", "implementation-guide", "health", "clinical", "maternal-health", "immunization", "anc"]
-        }
-      }
+    "locale": {
+      "ui:help": "Optional: Select your preferred language"
     }
   }
 }

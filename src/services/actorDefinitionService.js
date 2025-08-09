@@ -6,6 +6,7 @@
  */
 
 import stagingGroundService from './stagingGroundService';
+import schemaService from './schemaService';
 
 class ActorDefinitionService {
   constructor() {
@@ -14,12 +15,17 @@ class ActorDefinitionService {
   }
 
   /**
-   * Load the actor definition JSON schema
+   * Load the actor definition JSON schema via schema service
    */
   async loadSchema() {
     try {
-      const response = await fetch(`${process.env.PUBLIC_URL || ''}/schemas/actor-definition.json`);
-      this.actorSchema = await response.json();
+      // Use schema service for consistent access
+      this.actorSchema = schemaService.getSchema('actor-definition-original');
+      if (!this.actorSchema) {
+        console.warn('Actor definition schema not found in schema service, falling back to fetch');
+        const response = await fetch(`${process.env.PUBLIC_URL || ''}/schemas/actor-definition.json`);
+        this.actorSchema = await response.json();
+      }
     } catch (error) {
       console.warn('Could not load actor definition schema:', error);
     }
