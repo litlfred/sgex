@@ -4,20 +4,7 @@ import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache'
 import secureTokenStorage from './secureTokenStorage';
 import logger from '../utils/logger';
 
-// Known WHO SMART Guidelines DAK repositories that may be SAML-protected
-const KNOWN_WHO_DAK_REPOSITORIES = [
-  'smart-base',
-  'smart-immunizations', 
-  'smart-anc',
-  'smart-trust',
-  'smart-icvp',
-  'smart-dak-empty',
-  'smart-hiv',
-  'smart-tb',
-  'smart-malaria',
-  'smart-guidelines-starter',
-  'smart-family-planning'
-];
+
 
 class GitHubService {
   constructor() {
@@ -557,20 +544,46 @@ class GitHubService {
         return this.checkSmartGuidelinesCompatibility(owner, repo, retryCount - 1);
       }
       
-      // Special handling for WHO organization SAML-protected repositories
-      if (error.status === 403 && owner === 'WorldHealthOrganization' && 
-          error.message.includes('SAML enforcement') && 
-          KNOWN_WHO_DAK_REPOSITORIES.includes(repo)) {
+      // Special handling for SAML-protected repositories - fallback to public API
+      if (error.status === 403 && error.message.includes('SAML enforcement') && this.octokit) {
+        console.log(`SAML-protected repository ${owner}/${repo}, trying public API fallback`);
         
-        console.log(`Known WHO DAK repository ${owner}/${repo} is SAML-protected but compatible`);
-        
-        // Cache as compatible since we know it's a WHO DAK
-        repositoryCompatibilityCache.set(owner, repo, true);
-        return { 
-          compatible: true, 
-          reason: 'Known WHO SMART Guidelines DAK (SAML-protected)',
-          requiresAuthentication: true
-        };
+        try {
+          // Try with public API (unauthenticated)
+          const publicOctokit = new Octokit();
+          const { data } = await publicOctokit.rest.repos.getContent({
+            owner,
+            repo,
+            path: 'sushi-config.yaml',
+          });
+
+          if (data.type === 'file' && data.content) {
+            // Decode base64 content (browser-compatible)
+            const content = decodeURIComponent(escape(atob(data.content)));
+            
+            // Check if the content contains smart.who.int.base in dependencies
+            const isCompatible = content.includes('smart.who.int.base');
+            
+            if (isCompatible) {
+              console.log(`Repository ${owner}/${repo} is compatible via public API despite SAML protection`);
+              
+              // Cache the result
+              repositoryCompatibilityCache.set(owner, repo, true);
+              return { 
+                compatible: true, 
+                reason: 'SMART Guidelines DAK (SAML-protected, verified via public API)',
+                requiresAuthentication: true
+              };
+            } else {
+              // Cache negative result
+              repositoryCompatibilityCache.set(owner, repo, false);
+              return { compatible: false, reason: 'No smart.who.int.base dependency found (via public API)' };
+            }
+          }
+        } catch (publicApiError) {
+          console.warn(`Public API fallback also failed for ${owner}/${repo}:`, publicApiError.message);
+          // Continue to normal error handling
+        }
       }
       
       // For any other error (including rate limiting, network errors, or file not found after retries),
