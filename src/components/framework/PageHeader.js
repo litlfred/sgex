@@ -106,10 +106,15 @@ const PageHeader = () => {
     <header className="page-header">
       {/* Left side - Logo and context */}
       <div className="page-header-left">
-        <div className="sgex-logo" onClick={handleHomeNavigation}>
+        <button 
+          className="sgex-logo" 
+          onClick={handleHomeNavigation}
+          onKeyDown={(e) => e.key === 'Enter' || e.key === ' ' ? handleHomeNavigation() : null}
+          style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer' }}
+        >
           <h1>SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
+        </button>
         
         {/* Preview badge for non-main branches */}
         <PreviewBadge />
@@ -120,11 +125,16 @@ const PageHeader = () => {
         {/* User info and controls */}
         {(isAuthenticated || profile?.isDemo) && authenticatedUser ? (
           <div className="user-controls">
-            <div className="user-info" onClick={() => setShowUserDropdown(!showUserDropdown)}>
+            <button 
+              className="user-info" 
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setShowUserDropdown(!showUserDropdown)}
+              style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            >
               <img src={authenticatedUser.avatar_url} alt="User avatar" className="user-avatar" />
               <span className="user-name">{authenticatedUser.name || authenticatedUser.login}</span>
               <span className="dropdown-arrow">▼</span>
-            </div>
+            </button>
             {showUserDropdown && (
               <div className="user-dropdown">
                 <button className="dropdown-item" onClick={handleGitHubUser}>
@@ -153,10 +163,14 @@ const PageHeader = () => {
                 
                 {/* Bookmarks submenu */}
                 <div className="bookmarks-section">
-                  <div className="dropdown-item bookmarks-header" onClick={() => setShowBookmarkDropdown(!showBookmarkDropdown)}>
+                  <button 
+                    className="dropdown-item bookmarks-header" 
+                    onClick={() => setShowBookmarkDropdown(!showBookmarkDropdown)}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setShowBookmarkDropdown(!showBookmarkDropdown)}
+                  >
                     📖 Bookmarks
                     <span className="dropdown-arrow">{showBookmarkDropdown ? '▲' : '▼'}</span>
-                  </div>
+                  </button>
                   
                   {showBookmarkDropdown && (
                     <div className="bookmarks-dropdown">

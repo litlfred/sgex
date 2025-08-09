@@ -602,8 +602,8 @@
   background: #dc3545;
   color: white;
   border: none;
-  width: 24px;
-  height: 24px;
+  width: var(--icon-size-default);
+  height: var(--icon-size-default);
   border-radius: 50%;
   cursor: pointer;
   font-size: 0.75rem;

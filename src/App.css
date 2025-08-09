@@ -12,6 +12,28 @@
   --who-light-blue: #c0dcf2;
   --who-light-blue-light: #e0ebf7;
   --who-light-blue-dark: #a0c8e8;
+  
+  /* Button/Card Sizing Standards */
+  --card-size-default: 18em;
+  --icon-size-default: 24px;
+}
+
+/* Standardized icon-cards class for consistent card sizing */
+.icon-cards {
+  min-height: var(--card-size-default);
+}
+
+.icon-cards img {
+  min-height: var(--card-size-default);
+  object-fit: contain;
+}
+
+.icon-cards .icon,
+.icon-cards .card-icon {
+  min-height: var(--card-size-default);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Light theme (default) */
