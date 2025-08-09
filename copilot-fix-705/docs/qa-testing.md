@@ -38,11 +38,109 @@ Detailed breakdown of each test file showing:
 - Number of individual tests per file
 - Pass/fail status for each test file
 
+### 🔍 Compliance Analysis
+Automated compliance checking ensures adherence to SGEX coding standards:
+- **Page Framework Compliance**: Validates proper use of the page framework across all components
+- **GitHub Service Compliance**: Ensures consistent GitHub API usage through githubService
+- **Authentication Standards**: Verifies proper authentication handling and token management
+- **API Integration**: Checks for direct API calls and enforces service layer usage
+
 ### 💡 Quality Recommendations
 Automated recommendations for improving code quality based on:
 - Coverage thresholds
 - Test reliability metrics
 - WHO SMART Guidelines compliance standards
+
+## GitHub Service Compliance Testing
+
+### Overview
+The SGEX Workbench includes specialized compliance testing to ensure all components properly use the `githubService` for GitHub API operations instead of making direct API calls. This ensures consistent authentication, rate limiting, and error handling across the application.
+
+### GitHub Service Compliance Rules
+
+#### 1. No Direct GitHub API Calls
+- **Rule**: Components must not make direct `fetch()` calls to `api.github.com`
+- **Purpose**: Prevents inconsistent authentication and rate limit violations
+- **Instead Use**: `githubService.getBranches()`, `githubService.getPullRequests()`, etc.
+
+#### 2. Proper Authentication Handling  
+- **Rule**: Use `githubService.isAuth()` instead of manual token checks
+- **Purpose**: Centralized authentication state management
+- **Instead of**: `localStorage.getItem('githubToken')` checks
+
+#### 3. Consistent Error Handling
+- **Rule**: Leverage githubService's built-in retry logic and error management
+- **Purpose**: Graceful handling of GitHub API rate limits and network issues
+- **Benefit**: Automatic retry logic and user-friendly error messages
+
+#### 4. Rate Limit Management
+- **Rule**: All GitHub operations must go through githubService
+- **Purpose**: Automatic rate limit detection and backoff
+- **Benefit**: Prevents 403 Forbidden errors and improves reliability
+
+### Compliance Testing Process
+
+#### Automated Detection
+The compliance checker automatically scans all component files for:
+- Direct `fetch()` calls to GitHub API endpoints
+- Manual authentication token handling
+- Hardcoded GitHub API URLs
+- Missing githubService imports where needed
+
+#### Test Integration
+GitHub service compliance tests run as part of the main test suite:
+```bash
+npm test -- githubServiceCompliance.test.js
+```
+
+#### QA Report Integration
+Compliance results appear in the QA report with:
+- Overall compliance percentage
+- Detailed breakdown by file
+- Specific violations with line numbers
+- Recommendations for fixes
+
+### Components Fixed in Issue #705
+
+The following components were updated to use githubService:
+- **BranchListingPage.js**: Replaced direct PR and comment API calls
+- **BranchListing.js**: Replaced direct branch/PR fetching and authentication
+
+### Best Practices for Developers
+
+#### When Adding GitHub Functionality
+1. **Import githubService**: `import githubService from '../services/githubService';`
+2. **Use Service Methods**: Replace direct API calls with service methods
+3. **Handle Authentication**: Use `githubService.isAuth()` for auth checks
+4. **Error Handling**: Rely on service-level error handling and user feedback
+
+#### Service Method Examples
+```javascript
+// ✅ Correct - Using githubService
+const branches = await githubService.getBranches(user, repo);
+const prs = await githubService.getPullRequests(user, repo);
+const isAuthenticated = githubService.isAuth();
+
+// ❌ Incorrect - Direct API calls
+const response = await fetch('https://api.github.com/repos/user/repo/branches');
+const token = localStorage.getItem('githubToken');
+```
+
+### Monitoring and Maintenance
+
+#### Continuous Compliance
+- Compliance tests run on every push and PR
+- QA reports show compliance trends over time
+- Pre-commit hooks can prevent non-compliant code
+
+#### Issue Prevention
+- New components automatically checked for compliance
+- Template components use githubService by default
+- Code review guidelines emphasize service layer usage
+
+---
+
+*GitHub Service Compliance ensures reliable, consistent, and secure GitHub API integration across the SGEX Workbench.*
 
 ## Testing Philosophy
 
