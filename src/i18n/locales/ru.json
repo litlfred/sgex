@@ -140,5 +140,36 @@
     "status": "Статус",
     "activity": "Недавняя активность",
     "errorLoading": "Ошибка загрузки панели управления"
+  },
+  "altText": {
+    "mascot": {
+      "helper": "Помощник SGEX",
+      "icon": "Иконка SGEX",
+      "examining": "Талисман SGEX исследует",
+      "celebrating": "Талисман SGEX празднует",
+      "coding": "Робот-талисман SGEX",
+      "community": "Талисман SGEX"
+    },
+    "avatar": {
+      "user": "Аватар {{name}}",
+      "organization": "Аватар организации {{name}}",
+      "personal": "Личный профиль",
+      "profile": "Аватар профиля"
+    },
+    "icon": {
+      "sgex": "Иконка SGEX",
+      "bugReport": "Отчет об ошибке",
+      "security": "Замок безопасности",
+      "action": "{{title}}"
+    },
+    "image": {
+      "authoring": "Интерфейс авторинга",
+      "collaboration": "Функции сотрудничества",
+      "workflow": "Диаграмма рабочего процесса"
+    },
+    "logo": {
+      "sgex": "Логотип SGEX",
+      "who": "Логотип ВОЗ"
+    }
   }
 }
