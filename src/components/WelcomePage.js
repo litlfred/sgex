@@ -201,12 +201,16 @@ const WelcomePage = () => {
         <div className="welcome-cards">
           <div className="card-grid">
             {/* Authoring Card - Always show */}
-            <div className="action-card authoring-card" onClick={handleAuthoringClick}>
+            <button 
+              className="action-card authoring-card" 
+              onClick={handleAuthoringClick}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleAuthoringClick()}
+            >
               <div className="card-icon">
                 <img src={authoringImage} alt="Authoring" />
               </div>
               <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
-            </div>
+            </button>
 
             {/* PAT Login + Demo Card (Middle) - Only show when not authenticated */}
             {!isAuthenticated && (
@@ -269,12 +273,16 @@ const WelcomePage = () => {
             )}
 
             {/* Collaboration Card */}
-            <div className="action-card collaboration-card" onClick={handleCollaborationOpen}>
+            <button 
+              className="action-card collaboration-card" 
+              onClick={handleCollaborationOpen}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleCollaborationOpen()}
+            >
               <div className="card-icon">
                 <img src={collaborationImage} alt="Collaboration" />
               </div>
               <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
-            </div>
+            </button>
           </div>
         </div>
 
