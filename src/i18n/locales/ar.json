@@ -140,5 +140,36 @@
     "status": "الحالة",
     "activity": "النشاط الحديث",
     "errorLoading": "خطأ في تحميل لوحة التحكم"
+  },
+  "altText": {
+    "mascot": {
+      "helper": "مساعد SGEX",
+      "icon": "أيقونة SGEX",
+      "examining": "تميمة SGEX تفحص",
+      "celebrating": "تميمة SGEX تحتفل",
+      "coding": "تميمة SGEX الآلية",
+      "community": "تميمة SGEX"
+    },
+    "avatar": {
+      "user": "صورة {{name}}",
+      "organization": "صورة منظمة {{name}}",
+      "personal": "الملف الشخصي",
+      "profile": "صورة الملف الشخصي"
+    },
+    "icon": {
+      "sgex": "أيقونة SGEX",
+      "bugReport": "تقرير خطأ",
+      "security": "قفل الأمان",
+      "action": "{{title}}"
+    },
+    "image": {
+      "authoring": "واجهة التأليف",
+      "collaboration": "ميزات التعاون",
+      "workflow": "مخطط العمل"
+    },
+    "logo": {
+      "sgex": "شعار SGEX",
+      "who": "شعار منظمة الصحة العالمية"
+    }
   }
 }

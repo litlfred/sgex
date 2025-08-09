@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import useThemeImage from '../hooks/useThemeImage';
+import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
+  const { t } = useTranslation();
   const [showMenu, setShowMenu] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -420,7 +423,7 @@ Best regards,
         content: helpTopic.type === 'slideshow' ? renderSlideshow() : (
           <div className="help-content">
             <div className="mascot-message">
-              <img src={mascotImage} alt="SGEX Helper" className="help-mascot" />
+              <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} className="help-mascot" />
               <div className="message-bubble">
                 <div dangerouslySetInnerHTML={{ __html: helpTopic.content }} />
               </div>
@@ -439,7 +442,7 @@ Best regards,
           content: (
             <div className="help-content">
               <div className="mascot-message">
-                <img src={mascotImage} alt="SGEX Helper" className="help-mascot" />
+                <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} className="help-mascot" />
                 <div className="message-bubble">
                   <p>SGEX Workbench uses GitHub Personal Access Tokens for secure authentication!</p>
                   <p><strong>How it works:</strong></p>
@@ -462,7 +465,7 @@ Best regards,
           content: (
             <div className="help-content">
               <div className="mascot-message">
-                <img src={mascotImage} alt="SGEX Helper" className="help-mascot" />
+                <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} className="help-mascot" />
                 <div className="message-bubble">
                   <p>Hi! I'm here to help you with the SGEX Workbench.</p>
                   <p>Use the menu in the top right to get additional support options.</p>
@@ -508,7 +511,7 @@ Best regards,
               </button>
               
               <button onClick={handleBugReport} className="menu-item">
-                <img src="/sgex/bug-report-icon.svg" alt="Bug" className="menu-icon" />
+                <img src="/sgex/bug-report-icon.svg" alt={getAltText(t, ALT_TEXT_KEYS.ICON_BUG_REPORT, 'Bug Report')} className="menu-icon" />
                 File Bug Report
               </button>
               
