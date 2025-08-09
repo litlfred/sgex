@@ -7,6 +7,7 @@ import githubService from '../services/githubService';
 jest.mock('../services/githubService', () => ({
   isAuth: jest.fn(),
   getPullRequestForBranch: jest.fn(),
+  getPullRequestsForBranch: jest.fn(),
   getPullRequestComments: jest.fn(),
   getPullRequestIssueComments: jest.fn(),
   createPullRequestComment: jest.fn()
@@ -26,6 +27,7 @@ describe('PreviewBadge Mobile Touch Events', () => {
 
   test('handles touch events to close expanded panel on mobile', async () => {
     const mockPR = {
+      id: 1,
       number: 123,
       title: 'Test PR Title',
       state: 'open',
@@ -36,7 +38,7 @@ describe('PreviewBadge Mobile Touch Events', () => {
     };
 
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
     githubService.getPullRequestComments.mockResolvedValue([]);
     githubService.getPullRequestIssueComments.mockResolvedValue([]);
 
@@ -72,6 +74,7 @@ describe('PreviewBadge Mobile Touch Events', () => {
 
   test('touch events on badge trigger expansion properly', async () => {
     const mockPR = {
+      id: 1,
       number: 123,
       title: 'Test PR Title',
       state: 'open',
@@ -82,7 +85,7 @@ describe('PreviewBadge Mobile Touch Events', () => {
     };
 
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
     githubService.getPullRequestComments.mockResolvedValue([]);
     githubService.getPullRequestIssueComments.mockResolvedValue([]);
 

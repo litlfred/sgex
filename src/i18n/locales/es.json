@@ -140,5 +140,36 @@
     "status": "Estado",
     "activity": "Actividad Reciente",
     "errorLoading": "Error al Cargar el Panel de Control"
+  },
+  "altText": {
+    "mascot": {
+      "helper": "Asistente SGEX",
+      "icon": "Icono SGEX",
+      "examining": "Mascota SGEX examinando",
+      "celebrating": "Mascota SGEX celebrando",
+      "coding": "Mascota SGEX robótica",
+      "community": "Mascota SGEX"
+    },
+    "avatar": {
+      "user": "Avatar de {{name}}",
+      "organization": "Avatar de organización {{name}}",
+      "personal": "Perfil personal",
+      "profile": "Avatar de perfil"
+    },
+    "icon": {
+      "sgex": "Icono SGEX",
+      "bugReport": "Reporte de Error",
+      "security": "Candado de Seguridad",
+      "action": "{{title}}"
+    },
+    "image": {
+      "authoring": "Interfaz de Autoría",
+      "collaboration": "Características de Colaboración",
+      "workflow": "Diagrama de Flujo"
+    },
+    "logo": {
+      "sgex": "Logo SGEX",
+      "who": "Logo OMS"
+    }
   }
 }

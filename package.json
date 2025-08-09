@@ -14,12 +14,14 @@
     "ajv-formats": "^3.0.1",
     "bpmn-js": "^18.6.2",
     "bpmn-moddle": "^9.0.2",
+    "dompurify": "^3.2.6",
     "i18next": "^25.3.2",
     "i18next-browser-languagedetector": "^8.2.0",
     "js-yaml": "^4.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-i18next": "^15.6.1",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.7.1",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.6.1",
@@ -33,14 +35,12 @@
     "serve": "npm run build && cd build && python3 -m http.server 3000",
     "check-framework-compliance": "node scripts/check-framework-compliance.js",
     "verify-404": "node scripts/verify-404.js",
-    "build:verify": "npm run build && npm run verify-404"
+    "build:verify": "npm run build && npm run verify-404",
+    "lint": "eslint src --ext .js,.jsx",
+    "lint:a11y": "eslint src --ext .js,.jsx --format=compact | grep jsx-a11y || echo 'No accessibility issues found!'",
+    "lint:fix": "eslint src --ext .js,.jsx --fix"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
+
   "jest": {
     "transformIgnorePatterns": [
       "node_modules/(?!(@octokit|universal-user-agent|before-after-hook|@babel|babel-runtime|@ungap|jsdom|@uiw|react-router|react-router-dom)/)"
@@ -71,6 +71,7 @@
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "http-proxy-middleware": "^3.0.5",
     "identity-obj-proxy": "^3.0.0",
     "jsdom": "^26.1.0"

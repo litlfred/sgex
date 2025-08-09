@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import CollaborationModal from './CollaborationModal';
 import HelpModal from './HelpModal';
@@ -7,8 +8,10 @@ import helpContentService from '../services/helpContentService';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
+import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const WelcomePage = () => {
+  const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showCollaborationModal, setShowCollaborationModal] = useState(false);
   const [showPATHelp, setShowPATHelp] = useState(false);
@@ -186,7 +189,7 @@ const WelcomePage = () => {
         <div className="welcome-hero">
           <div className="welcome-intro">
             <div className="welcome-mascot">
-              <img src={mascotImage} alt="SGEX Workbench Helper" />
+              <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Workbench Helper')} />
             </div>
             <div className="welcome-text">
               <h1>SGEX Workbench</h1>
@@ -201,12 +204,16 @@ const WelcomePage = () => {
         <div className="welcome-cards">
           <div className="card-grid">
             {/* Authoring Card - Always show */}
-            <div className="action-card authoring-card" onClick={handleAuthoringClick}>
+            <button 
+              className="action-card authoring-card" 
+              onClick={handleAuthoringClick}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleAuthoringClick()}
+            >
               <div className="card-icon">
-                <img src={authoringImage} alt="Authoring" />
+                <img src={authoringImage} alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_AUTHORING, 'Authoring')} />
               </div>
               <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
-            </div>
+            </button>
 
             {/* PAT Login + Demo Card (Middle) - Only show when not authenticated */}
             {!isAuthenticated && (
@@ -269,12 +276,16 @@ const WelcomePage = () => {
             )}
 
             {/* Collaboration Card */}
-            <div className="action-card collaboration-card" onClick={handleCollaborationOpen}>
+            <button 
+              className="action-card collaboration-card" 
+              onClick={handleCollaborationOpen}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleCollaborationOpen()}
+            >
               <div className="card-icon">
-                <img src={collaborationImage} alt="Collaboration" />
+                <img src={collaborationImage} alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_COLLABORATION, 'Collaboration')} />
               </div>
               <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
-            </div>
+            </button>
           </div>
         </div>
 
