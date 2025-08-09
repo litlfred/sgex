@@ -137,7 +137,7 @@ describe('GitHubService', () => {
 
       const result = await githubService.checkSmartGuidelinesCompatibility('litlfred', 'smart-trust-phw');
 
-      expect(result).toBe(true);
+      expect(result.compatible).toBe(true);
     });
 
     it('should return false for repo without smart.who.int.base dependency', async () => {
@@ -155,7 +155,7 @@ describe('GitHubService', () => {
 
       const result = await githubService.checkSmartGuidelinesCompatibility('litlfred', 'regular-repo');
 
-      expect(result).toBe(false);
+      expect(result.compatible).toBe(false);
     });
 
     it('should return false when sushi-config.yaml does not exist', async () => {
@@ -165,7 +165,7 @@ describe('GitHubService', () => {
 
       const result = await githubService.checkSmartGuidelinesCompatibility('litlfred', 'no-config-repo');
 
-      expect(result).toBe(false);
+      expect(result.compatible).toBe(false);
     });
 
     it('should return false when there is a network error', async () => {
@@ -175,7 +175,7 @@ describe('GitHubService', () => {
 
       const result = await githubService.checkSmartGuidelinesCompatibility('litlfred', 'network-error-repo');
 
-      expect(result).toBe(false);
+      expect(result.compatible).toBe(false);
     });
 
     it('should return false when rate limited (no fallback)', async () => {
@@ -190,7 +190,7 @@ describe('GitHubService', () => {
       const result = await githubService.checkSmartGuidelinesCompatibility('litlfred', 'rate-limited-repo');
 
       // With strict filtering, rate limiting should result in false
-      expect(result).toBe(false);
+      expect(result.compatible).toBe(false);
     });
 
     it('should retry on 404 errors', async () => {
@@ -211,8 +211,39 @@ describe('GitHubService', () => {
 
       const result = await githubService.checkSmartGuidelinesCompatibility('litlfred', 'retry-repo');
 
-      expect(result).toBe(true);
+      expect(result.compatible).toBe(true);
       expect(mockOctokit.rest.repos.getContent).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle WHO SAML-protected repositories', async () => {
+      githubService.authenticate('fake-token');
+
+      // Mock SAML enforcement error for smart-trust
+      mockOctokit.rest.repos.getContent.mockRejectedValue({
+        status: 403,
+        message: 'Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.'
+      });
+
+      const result = await githubService.checkSmartGuidelinesCompatibility('WorldHealthOrganization', 'smart-trust');
+
+      expect(result.compatible).toBe(true);
+      expect(result.requiresAuthentication).toBe(true);
+      expect(result.reason).toBe('Known WHO SMART Guidelines DAK (SAML-protected)');
+    });
+
+    it('should not treat non-WHO SAML errors as compatible', async () => {
+      githubService.authenticate('fake-token');
+
+      // Mock SAML enforcement error for non-WHO organization
+      mockOctokit.rest.repos.getContent.mockRejectedValue({
+        status: 403,
+        message: 'Resource protected by organization SAML enforcement. You must grant your Personal Access token access to this organization.'
+      });
+
+      const result = await githubService.checkSmartGuidelinesCompatibility('OtherOrg', 'some-repo');
+
+      expect(result.compatible).toBe(false);
+      expect(result.errorType).toBe('permission_denied');
     });
   });
 

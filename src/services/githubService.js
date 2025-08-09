@@ -4,6 +4,21 @@ import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache'
 import secureTokenStorage from './secureTokenStorage';
 import logger from '../utils/logger';
 
+// Known WHO SMART Guidelines DAK repositories that may be SAML-protected
+const KNOWN_WHO_DAK_REPOSITORIES = [
+  'smart-base',
+  'smart-immunizations', 
+  'smart-anc',
+  'smart-trust',
+  'smart-icvp',
+  'smart-dak-empty',
+  'smart-hiv',
+  'smart-tb',
+  'smart-malaria',
+  'smart-guidelines-starter',
+  'smart-family-planning'
+];
+
 class GitHubService {
   constructor() {
     this.octokit = null;
@@ -542,7 +557,23 @@ class GitHubService {
         return this.checkSmartGuidelinesCompatibility(owner, repo, retryCount - 1);
       }
       
-      // For any error (including rate limiting, network errors, or file not found after retries),
+      // Special handling for WHO organization SAML-protected repositories
+      if (error.status === 403 && owner === 'WorldHealthOrganization' && 
+          error.message.includes('SAML enforcement') && 
+          KNOWN_WHO_DAK_REPOSITORIES.includes(repo)) {
+        
+        console.log(`Known WHO DAK repository ${owner}/${repo} is SAML-protected but compatible`);
+        
+        // Cache as compatible since we know it's a WHO DAK
+        repositoryCompatibilityCache.set(owner, repo, true);
+        return { 
+          compatible: true, 
+          reason: 'Known WHO SMART Guidelines DAK (SAML-protected)',
+          requiresAuthentication: true
+        };
+      }
+      
+      // For any other error (including rate limiting, network errors, or file not found after retries),
       // return error information instead of just logging
       const errorInfo = {
         compatible: false,
