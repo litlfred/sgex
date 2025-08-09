@@ -5,9 +5,42 @@
 
 import path from 'path';
 import fs from 'fs/promises';
-import { LocalStorage } from '../../../../src/dak/faq/storage/Storage.js';
+import { FAQQuestion, ExecuteRequest, ExecuteResponse, CatalogFilters } from '../../types.js';
+
+interface FAQQuestionRegistry {
+  metadata: FAQQuestion;
+  execute: (input: FAQExecutionInput) => Promise<FAQExecutionResult>;
+}
+
+interface FAQExecutionInput {
+  storage: StorageInterface;
+  locale?: string;
+  [key: string]: any;
+}
+
+interface FAQExecutionResult {
+  structured: Record<string, any>;
+  narrative: string;
+  errors: string[];
+  warnings: string[];
+  meta: Record<string, any>;
+}
+
+interface StorageInterface {
+  readFile(filePath: string): Promise<Buffer>;
+  fileExists(filePath: string): Promise<boolean>;
+  listFiles(pattern: string, options?: Record<string, any>): Promise<string[]>;
+}
+
+interface FAQExecutionContext {
+  repositoryPath?: string;
+  [key: string]: any;
+}
 
 export class FAQExecutionEngineLocal {
+  private questionRegistry: Map<string, FAQQuestionRegistry>;
+  private initialized: boolean;
+
   constructor() {
     this.questionRegistry = new Map();
     this.initialized = false;
@@ -16,7 +49,7 @@ export class FAQExecutionEngineLocal {
   /**
    * Initialize the engine with available questions
    */
-  async initialize() {
+  async initialize(): Promise<void> {
     if (this.initialized) return;
 
     try {
@@ -24,7 +57,7 @@ export class FAQExecutionEngineLocal {
       // This is a simplified version that would need to be expanded
       await this.loadQuestions();
       this.initialized = true;
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to initialize local FAQ engine: ${error.message}`);
     }
   }
@@ -32,7 +65,7 @@ export class FAQExecutionEngineLocal {
   /**
    * Load question modules (simplified for demo)
    */
-  async loadQuestions() {
+  private async loadQuestions(): Promise<void> {
     // For the MCP server, we would need to either:
     // 1. Copy the question modules to the MCP server directory
     // 2. Create a build process that bundles them
@@ -45,7 +78,7 @@ export class FAQExecutionEngineLocal {
   /**
    * Register mock questions for demonstration
    */
-  registerMockQuestions() {
+  private registerMockQuestions(): void {
     // DAK Name Question
     this.questionRegistry.set('dak-name', {
       metadata: {
@@ -54,10 +87,9 @@ export class FAQExecutionEngineLocal {
         title: 'DAK Name',
         description: 'Extracts the name of the DAK from sushi-config.yaml',
         parameters: [],
-        tags: ['dak', 'metadata', 'name'],
-        version: '1.0.0'
+        tags: ['dak', 'metadata', 'name']
       },
-      execute: async (input) => {
+      execute: async (input: FAQExecutionInput): Promise<FAQExecutionResult> => {
         const { storage, locale = 'en_US' } = input;
         
         try {
@@ -74,7 +106,7 @@ export class FAQExecutionEngineLocal {
 
           const content = await storage.readFile('sushi-config.yaml');
           const yaml = await import('js-yaml');
-          const config = yaml.load(content.toString('utf-8'));
+          const config = yaml.load(content.toString('utf-8')) as any;
           
           const name = config?.name || config?.title || config?.id || null;
           
@@ -99,7 +131,7 @@ export class FAQExecutionEngineLocal {
               }
             }
           };
-        } catch (error) {
+        } catch (error: any) {
           return {
             structured: { name: null },
             narrative: `<h4>DAK Name</h4><p class="error">Error reading configuration: ${error.message}</p>`,
@@ -119,10 +151,9 @@ export class FAQExecutionEngineLocal {
         title: 'DAK Version',
         description: 'Extracts the version of the DAK from sushi-config.yaml',
         parameters: [],
-        tags: ['dak', 'metadata', 'version'],
-        version: '1.0.0'
+        tags: ['dak', 'metadata', 'version']
       },
-      execute: async (input) => {
+      execute: async (input: FAQExecutionInput): Promise<FAQExecutionResult> => {
         const { storage, locale = 'en_US' } = input;
         
         try {
@@ -139,7 +170,7 @@ export class FAQExecutionEngineLocal {
 
           const content = await storage.readFile('sushi-config.yaml');
           const yaml = await import('js-yaml');
-          const config = yaml.load(content.toString('utf-8'));
+          const config = yaml.load(content.toString('utf-8')) as any;
           
           const version = config?.version || null;
           const status = config?.status || null;
@@ -166,7 +197,7 @@ export class FAQExecutionEngineLocal {
               }
             }
           };
-        } catch (error) {
+        } catch (error: any) {
           return {
             structured: { version: null },
             narrative: `<h4>DAK Version</h4><p class="error">Error reading configuration: ${error.message}</p>`,
@@ -182,7 +213,7 @@ export class FAQExecutionEngineLocal {
   /**
    * Get catalog of available questions
    */
-  getCatalog(filters = {}) {
+  getCatalog(filters: CatalogFilters = {}): FAQQuestion[] {
     if (!this.initialized) {
       throw new Error('FAQ engine not initialized');
     }
@@ -196,8 +227,16 @@ export class FAQExecutionEngineLocal {
 
     if (filters.tags && Array.isArray(filters.tags)) {
       questions = questions.filter(q => 
-        filters.tags.some(tag => q.tags.includes(tag))
+        filters.tags!.some(tag => q.tags.includes(tag))
       );
+    }
+
+    if (filters.componentType) {
+      questions = questions.filter(q => q.componentType === filters.componentType);
+    }
+
+    if (filters.assetType) {
+      questions = questions.filter(q => q.assetType === filters.assetType);
     }
 
     return questions;
@@ -206,12 +245,12 @@ export class FAQExecutionEngineLocal {
   /**
    * Execute batch of questions
    */
-  async executeBatch(requests, context = {}) {
+  async executeBatch(requests: ExecuteRequest[], context: FAQExecutionContext = {}): Promise<ExecuteResponse[]> {
     if (!this.initialized) {
       await this.initialize();
     }
 
-    const results = [];
+    const results: ExecuteResponse[] = [];
 
     for (const request of requests) {
       try {
@@ -219,20 +258,25 @@ export class FAQExecutionEngineLocal {
         results.push({
           questionId: request.questionId,
           success: true,
-          result
+          result,
+          timestamp: new Date().toISOString()
         });
-      } catch (error) {
+      } catch (error: any) {
         results.push({
           questionId: request.questionId,
           success: false,
-          error: error.message,
+          error: {
+            message: error.message,
+            code: 'EXECUTION_ERROR'
+          },
           result: {
             structured: {},
             narrative: `<h4>Error</h4><p class="error">${error.message}</p>`,
             errors: [error.message],
             warnings: [],
             meta: {}
-          }
+          },
+          timestamp: new Date().toISOString()
         });
       }
     }
@@ -243,7 +287,7 @@ export class FAQExecutionEngineLocal {
   /**
    * Execute single question
    */
-  async executeQuestion(request, context = {}) {
+  private async executeQuestion(request: ExecuteRequest, context: FAQExecutionContext = {}): Promise<FAQExecutionResult> {
     const { questionId, parameters = {} } = request;
 
     const question = this.questionRegistry.get(questionId);
@@ -256,7 +300,7 @@ export class FAQExecutionEngineLocal {
     const storage = new LocalStorageImpl(repositoryPath);
 
     // Execute question
-    const input = {
+    const input: FAQExecutionInput = {
       ...parameters,
       storage,
       locale: parameters.locale || 'en_US'
@@ -269,12 +313,14 @@ export class FAQExecutionEngineLocal {
 /**
  * Local storage implementation for MCP server
  */
-class LocalStorageImpl {
-  constructor(rootPath) {
+class LocalStorageImpl implements StorageInterface {
+  private rootPath: string;
+
+  constructor(rootPath: string) {
     this.rootPath = path.resolve(rootPath);
   }
 
-  async readFile(filePath) {
+  async readFile(filePath: string): Promise<Buffer> {
     const fullPath = path.join(this.rootPath, filePath);
     
     // Security check
@@ -285,7 +331,7 @@ class LocalStorageImpl {
     return await fs.readFile(fullPath);
   }
 
-  async fileExists(filePath) {
+  async fileExists(filePath: string): Promise<boolean> {
     try {
       const fullPath = path.join(this.rootPath, filePath);
       
@@ -301,7 +347,7 @@ class LocalStorageImpl {
     }
   }
 
-  async listFiles(pattern, options = {}) {
+  async listFiles(pattern: string, options: Record<string, any> = {}): Promise<string[]> {
     // Simple implementation - would need glob for full pattern support
     const fullPath = path.join(this.rootPath, pattern.replace('*', ''));
     

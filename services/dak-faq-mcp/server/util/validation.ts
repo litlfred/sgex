@@ -2,13 +2,13 @@
  * Request validation utilities for MCP server
  */
 
+import { ValidationResult, ExecuteRequestBody } from '../../types.js';
+
 /**
  * Validate execute request format
- * @param {Object} body - Request body
- * @returns {Object} - Validation result
  */
-export function validateExecuteRequest(body) {
-  const errors = [];
+export function validateExecuteRequest(body: any): ValidationResult {
+  const errors: string[] = [];
 
   if (!body || typeof body !== 'object') {
     errors.push('Request body must be an object');
@@ -60,16 +60,14 @@ export function validateExecuteRequest(body) {
   return {
     isValid: errors.length === 0,
     errors,
-    data: errors.length === 0 ? body : null
+    data: errors.length === 0 ? body as ExecuteRequestBody : undefined
   };
 }
 
 /**
  * Validate question ID format
- * @param {string} questionId - Question identifier
- * @returns {boolean} - Whether ID is valid
  */
-export function isValidQuestionId(questionId) {
+export function isValidQuestionId(questionId: string): boolean {
   if (!questionId || typeof questionId !== 'string') {
     return false;
   }
@@ -81,10 +79,8 @@ export function isValidQuestionId(questionId) {
 
 /**
  * Validate locale format
- * @param {string} locale - Locale string
- * @returns {boolean} - Whether locale is valid
  */
-export function isValidLocale(locale) {
+export function isValidLocale(locale: string): boolean {
   if (!locale || typeof locale !== 'string') {
     return false;
   }
@@ -96,10 +92,8 @@ export function isValidLocale(locale) {
 
 /**
  * Validate repository path
- * @param {string} path - Repository path
- * @returns {boolean} - Whether path is valid and secure
  */
-export function isValidRepositoryPath(path) {
+export function isValidRepositoryPath(path: string): boolean {
   if (!path || typeof path !== 'string') {
     return false;
   }

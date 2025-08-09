@@ -3,17 +3,26 @@
  * Provides metadata about available FAQ questions
  */
 
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { FAQExecutionEngineLocal } from '../util/FAQExecutionEngineLocal.js';
+import { CatalogResponse, ErrorResponse, OpenAPISchema, FAQQuestion } from '../../types.js';
 
 const router = express.Router();
 const faqEngine = new FAQExecutionEngineLocal();
+
+interface CatalogQueryParams {
+  level?: string;
+  tags?: string;
+  componentType?: string;
+  assetType?: string;
+  format?: string;
+}
 
 /**
  * GET /faq/questions/catalog
  * Get catalog of available FAQ questions
  */
-router.get('/catalog', async (req, res) => {
+router.get('/catalog', async (req: Request<{}, CatalogResponse | ErrorResponse | OpenAPISchema, {}, CatalogQueryParams>, res: Response<CatalogResponse | ErrorResponse | OpenAPISchema>) => {
   try {
     // Parse query parameters for filtering
     const {
@@ -28,7 +37,7 @@ router.get('/catalog', async (req, res) => {
     const parsedTags = tags ? tags.split(',').map(tag => tag.trim()) : undefined;
 
     // Build filters object
-    const filters = {};
+    const filters: any = {};
     if (level) filters.level = level;
     if (parsedTags) filters.tags = parsedTags;
     if (componentType) filters.componentType = componentType;
@@ -41,7 +50,7 @@ router.get('/catalog', async (req, res) => {
     const catalog = faqEngine.getCatalog(filters);
 
     // Add metadata
-    const response = {
+    const response: CatalogResponse = {
       success: true,
       timestamp: new Date().toISOString(),
       filters,
@@ -58,26 +67,26 @@ router.get('/catalog', async (req, res) => {
       res.json(response);
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Catalog route error:', error);
     
-    res.status(500).json({
+    const errorResponse: ErrorResponse = {
       error: {
         message: error.message || 'Failed to get FAQ catalog',
         code: 'CATALOG_ERROR',
         timestamp: new Date().toISOString()
       }
-    });
+    };
+
+    res.status(500).json(errorResponse);
   }
 });
 
 /**
  * Generate OpenAPI schema for FAQ questions
- * @param {Array} questions - Array of question metadata
- * @returns {Object} - OpenAPI schema
  */
-function generateOpenAPISchema(questions) {
-  const schema = {
+function generateOpenAPISchema(questions: FAQQuestion[]): OpenAPISchema {
+  const schema: OpenAPISchema = {
     openapi: '3.0.0',
     info: {
       title: 'DAK FAQ Questions API',

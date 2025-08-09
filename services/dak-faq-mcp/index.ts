@@ -3,18 +3,19 @@
  * Local-only server providing FAQ functionality for DAK repositories
  */
 
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { executeRoute } from './server/routes/execute.js';
 import { catalogRoute } from './server/routes/catalog.js';
+import { HealthResponse, ErrorResponse } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = parseInt(process.env.PORT || '3001', 10);
 const HOST = '127.0.0.1'; // Local only for security
 
 // Middleware
@@ -27,13 +28,14 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
+app.get('/health', (req: Request, res: Response<HealthResponse>) => {
+  const response: HealthResponse = {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     description: 'DAK FAQ MCP Server - Local Only'
-  });
+  };
+  res.json(response);
 });
 
 // FAQ routes
@@ -41,7 +43,7 @@ app.use('/faq/questions', executeRoute);
 app.use('/faq/questions', catalogRoute);
 
 // Root endpoint with API information
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res: Response) => {
   res.json({
     name: 'DAK FAQ MCP Server',
     version: '1.0.0',
@@ -60,21 +62,23 @@ app.get('/', (req, res) => {
 });
 
 // Error handling middleware
-app.use((error, req, res, next) => {
+app.use((error: any, req: Request, res: Response<ErrorResponse>, next: NextFunction) => {
   console.error('Server error:', error);
   
-  res.status(error.status || 500).json({
+  const errorResponse: ErrorResponse = {
     error: {
       message: error.message || 'Internal server error',
       code: error.code || 'INTERNAL_ERROR',
       timestamp: new Date().toISOString()
     }
-  });
+  };
+
+  res.status(error.status || 500).json(errorResponse);
 });
 
 // 404 handler
-app.use((req, res) => {
-  res.status(404).json({
+app.use((req: Request, res: Response<ErrorResponse>) => {
+  const errorResponse: ErrorResponse = {
     error: {
       message: 'Endpoint not found',
       code: 'NOT_FOUND',
@@ -82,7 +86,9 @@ app.use((req, res) => {
       method: req.method,
       timestamp: new Date().toISOString()
     }
-  });
+  };
+
+  res.status(404).json(errorResponse);
 });
 
 // Start server
