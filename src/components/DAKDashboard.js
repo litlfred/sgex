@@ -40,6 +40,7 @@ const DAKDashboardContent = () => {
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [themeVersion, setThemeVersion] = useState(0); // Force re-render on theme change
 
   // Fetch data from URL parameters if not available in location.state
   useEffect(() => {
@@ -256,17 +257,46 @@ const DAKDashboardContent = () => {
     };
   }, [showUserMenu]);
 
+  // Watch for theme changes to update mascot card paths
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          // Force re-render to update mascot card paths
+          setThemeVersion(prev => prev + 1);
+        }
+      });
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
 
-  // Helper function to get mascot card image path
+
+  // Helper function to get theme-aware mascot card image path
   const getMascotCardPath = (componentId) => {
+    const isDarkMode = document.body.classList.contains('theme-dark');
     const publicUrl = process.env.PUBLIC_URL || '';
-    const cardPath = `dashboard/dak_${componentId.replace(/[-]/g, '_')}.png`;
+    
+    const baseCardName = `dak_${componentId.replace(/[-]/g, '_')}.png`;
+    const cardPath = isDarkMode 
+      ? `dashboard/${baseCardName.replace('.png', '_grey_tabby.png')}`
+      : `dashboard/${baseCardName}`;
+    
     return publicUrl ? `${publicUrl}/${cardPath}` : `/${cardPath}`;
   };
 
   // Define the 9 core DAK components based on WHO SMART Guidelines documentation
-  const coreDAKComponents = [
+  // This needs to be recalculated when theme changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const coreDAKComponents = React.useMemo(() => [
     {
       id: 'health-interventions',
       name: 'Health Interventions and Recommendations',
@@ -319,7 +349,7 @@ const DAKDashboardContent = () => {
       type: 'L2',
       color: '#ff8c00',
       fileTypes: ['OCL', 'Concept', 'PCMT', 'Product'],
-      count: issueCounts.total || 89,
+      count: issueCounts?.total || 89,
       editor: 'Data element editor with OCL and PCMT integration'
     },
     {
@@ -366,7 +396,8 @@ const DAKDashboardContent = () => {
       count: 0,
       editor: 'Testing viewer with feature file browser'
     }
-  ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [themeVersion, issueCounts?.total]); // Re-compute when theme changes or issue counts change
 
 
 

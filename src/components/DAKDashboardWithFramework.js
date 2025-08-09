@@ -21,6 +21,7 @@ const DAKDashboardContent = () => {
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
   const [issueCounts, setIssueCounts] = useState({});
+  const [themeVersion, setThemeVersion] = useState(0); // Force re-render on theme change
 
   // Check write permissions
   useEffect(() => {
@@ -77,6 +78,27 @@ const DAKDashboardContent = () => {
     fetchIssueCounts();
   }, [repository]);
 
+  // Watch for theme changes to update mascot card paths
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          // Force re-render to update mascot card paths
+          setThemeVersion(prev => prev + 1);
+        }
+      });
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   const handleComponentNavigate = (componentPath) => {
     if (profile && repository) {
       navigate(`/${componentPath}/${profile.login}/${repository.name}/${branch}`, {
@@ -101,15 +123,23 @@ const DAKDashboardContent = () => {
     }
   };
 
-  // Helper function to get mascot card image path
+  // Helper function to get theme-aware mascot card image path
   const getMascotCardPath = (componentId) => {
+    const isDarkMode = document.body.classList.contains('theme-dark');
     const publicUrl = process.env.PUBLIC_URL || '';
-    const cardPath = `dashboard/dak_${componentId.replace(/[-]/g, '_')}.png`;
+    
+    const baseCardName = `dak_${componentId.replace(/[-]/g, '_')}.png`;
+    const cardPath = isDarkMode 
+      ? `dashboard/${baseCardName.replace('.png', '_grey_tabby.png')}`
+      : `dashboard/${baseCardName}`;
+    
     return publicUrl ? `${publicUrl}/${cardPath}` : `/${cardPath}`;
   };
 
   // Define the 9 core DAK components based on WHO SMART Guidelines documentation
-  const dakComponents = [
+  // This needs to be recalculated when theme changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const dakComponents = React.useMemo(() => [
     // Core Components (Level 2)
     {
       id: 'health-interventions',
@@ -238,7 +268,8 @@ const DAKDashboardContent = () => {
       level: 'Level 3: Technical Implementation',
       color: '#17a2b8'
     }
-  ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [themeVersion]); // Re-compute when theme changes
 
   const coreComponents = dakComponents.filter(comp => comp.level.includes('Level 2: Core Components'));
   const additionalComponents = dakComponents.filter(comp => comp.level.includes('Level 3: Technical Implementation'));
