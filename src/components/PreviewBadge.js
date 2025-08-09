@@ -6,6 +6,7 @@ import MDEditor from '@uiw/react-md-editor';
 import ReactMarkdown from 'react-markdown';
 import DOMPurify from 'dompurify';
 import './WorkflowStatus.css';
+import './PreviewBadge.css';
 
 /**
  * PreviewBadge component that displays when the app is deployed from a non-main branch
@@ -32,7 +33,14 @@ const PreviewBadge = () => {
   const [newlyAddedCommentId, setNewlyAddedCommentId] = useState(null);
   const [copilotSessionInfo, setCopilotSessionInfo] = useState(null);
   const [showCopilotSession, setShowCopilotSession] = useState(false);
+  const [canComment, setCanComment] = useState(true);
+  const [canTriggerWorkflows, setCanTriggerWorkflows] = useState(false);
+  const [canApproveWorkflows, setCanApproveWorkflows] = useState(false);
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [allComments, setAllComments] = useState([]);
+  const [hasMoreComments, setHasMoreComments] = useState(false);
   const expandedRef = useRef(null);
+  const commentRefreshIntervalRef = useRef(null);
 
   useEffect(() => {
     const detectBranchAndPR = async () => {
@@ -98,6 +106,24 @@ const PreviewBadge = () => {
     }
   }, [isExpanded, isSticky]);
 
+  // Cleanup auto-refresh interval when component unmounts or expanded state changes
+  useEffect(() => {
+    return () => {
+      if (commentRefreshIntervalRef.current) {
+        clearInterval(commentRefreshIntervalRef.current);
+        commentRefreshIntervalRef.current = null;
+      }
+    };
+  }, []);
+
+  // Clear auto-refresh when not expanded
+  useEffect(() => {
+    if (!isExpanded && commentRefreshIntervalRef.current) {
+      clearInterval(commentRefreshIntervalRef.current);
+      commentRefreshIntervalRef.current = null;
+    }
+  }, [isExpanded]);
+
   const getCurrentBranch = () => {
     // First try environment variable (set during build)
     if (process.env.REACT_APP_GITHUB_REF_NAME) {
@@ -148,24 +174,41 @@ const PreviewBadge = () => {
     }
   };
 
-  const fetchCommentsForPR = async (owner, repo, prNumber) => {
+  const fetchCommentsForPR = async (owner, repo, prNumber, page = 1, append = false) => {
     try {
       setCommentsLoading(true);
       
-      // Fetch both review comments and issue comments
+      const perPage = 30; // GitHub default per page
+      
+      // Fetch both review comments and issue comments with pagination
       const [reviewComments, issueComments] = await Promise.all([
-        githubService.getPullRequestComments(owner, repo, prNumber).catch(() => []),
-        githubService.getPullRequestIssueComments(owner, repo, prNumber).catch(() => [])
+        githubService.getPullRequestComments(owner, repo, prNumber, page, perPage).catch(() => []),
+        githubService.getPullRequestIssueComments(owner, repo, prNumber, page, perPage).catch(() => [])
       ]);
 
       // Combine and sort comments by date, mark the type
-      const allComments = [
+      const newComments = [
         ...reviewComments.map(comment => ({ ...comment, type: 'review' })),
         ...issueComments.map(comment => ({ ...comment, type: 'issue' }))
       ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-      // Return last 5 comments as required
-      return allComments.slice(0, 5);
+      if (append) {
+        // Append to existing comments (for load more)
+        const existingIds = new Set(allComments.map(c => c.id));
+        const uniqueNewComments = newComments.filter(c => !existingIds.has(c.id));
+        const updatedAllComments = [...allComments, ...uniqueNewComments];
+        setAllComments(updatedAllComments);
+        setComments(updatedAllComments.slice(0, Math.min(5, updatedAllComments.length)));
+      } else {
+        // Replace comments (for initial load or refresh)
+        setAllComments(newComments);
+        setComments(newComments.slice(0, Math.min(5, newComments.length)));
+      }
+      
+      // Check if there are more comments to load
+      setHasMoreComments(newComments.length === perPage);
+      
+      return newComments;
     } catch (error) {
       console.debug('Failed to fetch comments:', error);
       return [];
@@ -273,10 +316,31 @@ const PreviewBadge = () => {
         // Get the most recent copilot activity
         const latestCopilotComment = copilotComments[0];
         
+        // Try to find an agent session URL in the comments or generate one
+        let agentSessionUrl = null;
+        
+        // Look for agent session URLs in comments
+        const sessionUrlPattern = /https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+\/agent-sessions\/[a-f0-9-]+/gi;
+        for (const comment of copilotComments) {
+          const match = comment.body.match(sessionUrlPattern);
+          if (match) {
+            agentSessionUrl = match[0];
+            break;
+          }
+        }
+        
+        // If no explicit agent session URL found, construct the likely URL
+        if (!agentSessionUrl) {
+          // Generate a plausible agent session URL based on the PR structure
+          // This is a best-effort approach since we don't have direct access to session IDs
+          agentSessionUrl = `https://github.com/${owner}/${repo}/pull/${prNumber}/agent-sessions`;
+        }
+        
         return {
           hasActiveCopilot: true,
           latestActivity: latestCopilotComment.created_at,
-          sessionUrl: `https://github.com/${owner}/${repo}/pull/${prNumber}#issuecomment-${latestCopilotComment.id}`,
+          sessionUrl: agentSessionUrl,
+          commentUrl: `https://github.com/${owner}/${repo}/pull/${prNumber}#issuecomment-${latestCopilotComment.id}`,
           commentsCount: copilotComments.length,
           latestComment: latestCopilotComment
         };
@@ -316,6 +380,104 @@ const PreviewBadge = () => {
     }
   };
 
+  const handleApproveWorkflow = async (runId) => {
+    try {
+      if (!githubService.isAuth()) {
+        console.warn('Authentication required to approve workflows');
+        return false;
+      }
+
+      // Ensure GitHub Actions service has the current token
+      githubActionsService.setToken(githubService.token);
+      
+      const success = await githubActionsService.approveWorkflowRun(runId);
+      if (success) {
+        // Refresh workflow status after approval
+        setTimeout(() => {
+          if (branchInfo?.name) {
+            fetchWorkflowStatus(branchInfo.name);
+          }
+        }, 2000); // Wait 2 seconds before fetching status
+      }
+      return success;
+    } catch (error) {
+      console.error('Failed to approve workflow:', error);
+      return false;
+    }
+  };
+
+  const checkPermissions = async (owner, repo) => {
+    if (!githubService.isAuth()) {
+      setCanComment(false);
+      setCanTriggerWorkflows(false);
+      setCanApproveWorkflows(false);
+      return;
+    }
+
+    try {
+      // Check comment permissions
+      const commentPermissions = await githubService.checkCommentPermissions(owner, repo);
+      setCanComment(commentPermissions);
+
+      // Set up GitHub Actions service token
+      githubActionsService.setToken(githubService.token);
+
+      // Check workflow permissions
+      const [triggerPermissions, approvalPermissions] = await Promise.all([
+        githubActionsService.checkWorkflowTriggerPermissions(),
+        githubActionsService.checkWorkflowApprovalPermissions()
+      ]);
+
+      setCanTriggerWorkflows(triggerPermissions);
+      setCanApproveWorkflows(approvalPermissions);
+    } catch (error) {
+      console.debug('Error checking permissions:', error);
+      setCanComment(false);
+      setCanTriggerWorkflows(false);
+      setCanApproveWorkflows(false);
+    }
+  };
+
+  const setupCommentAutoRefresh = (owner, repo, prNumber) => {
+    // Clear any existing interval
+    if (commentRefreshIntervalRef.current) {
+      clearInterval(commentRefreshIntervalRef.current);
+    }
+
+    // Set up new interval to refresh comments every minute
+    commentRefreshIntervalRef.current = setInterval(async () => {
+      try {
+        const latestComments = await fetchCommentsForPR(owner, repo, prNumber, 1, false);
+        
+        // Check if there are new comments compared to what we have
+        if (latestComments.length > 0 && comments.length > 0) {
+          const latestId = latestComments[0].id;
+          const currentLatestId = comments[0].id;
+          
+          if (latestId !== currentLatestId) {
+            console.debug('New comments detected, refreshing...');
+            // Don't reset the page, just refresh the current view
+          }
+        }
+      } catch (error) {
+        console.debug('Failed to auto-refresh comments:', error);
+      }
+    }, 60000); // 60 seconds
+  };
+
+  const loadMoreComments = async () => {
+    if (!prInfo || prInfo.length === 0 || commentsLoading || !hasMoreComments) return;
+    
+    const owner = 'litlfred';
+    const repo = 'sgex';
+    const pr = prInfo[0];
+    
+    const nextPage = commentsPage + 1;
+    setCommentsPage(nextPage);
+    
+    await fetchCommentsForPR(owner, repo, pr.number, nextPage, true);
+  };
+
   const handleCommentToggle = (commentId) => {
     const newExpanded = new Set(expandedComments);
     if (newExpanded.has(commentId)) {
@@ -327,7 +489,7 @@ const PreviewBadge = () => {
   };
 
   const handleCommentSubmit = async () => {
-    if (!newComment.trim() || !githubService.isAuth() || submittingComment) return;
+    if (!newComment.trim() || !githubService.isAuth() || submittingComment || !canComment) return;
     
     try {
       setSubmittingComment(true);
@@ -340,7 +502,8 @@ const PreviewBadge = () => {
         authenticated: githubService.isAuth(),
         hasToken: !!githubService.token,
         commentLength: newComment.trim().length,
-        prInfo: prInfo?.length || 0
+        prInfo: prInfo?.length || 0,
+        canComment
       });
       
       if (prInfo && prInfo.length > 0) {
@@ -355,8 +518,7 @@ const PreviewBadge = () => {
           setCommentSubmissionStatus('success');
           
           // Refresh comments after successful submission
-          const updatedComments = await fetchCommentsForPR(owner, repo, pr.number);
-          setComments(updatedComments);
+          await fetchCommentsForPR(owner, repo, pr.number, 1, false);
           
           // Mark the newly added comment for glow effect
           if (submittedComment && submittedComment.id) {
@@ -382,8 +544,10 @@ const PreviewBadge = () => {
           let errorMessage = 'Failed to submit comment. ';
           if (submitError.message.includes('401')) {
             errorMessage += 'Authentication failed - please check your token.';
-          } else if (submitError.message.includes('403')) {
-            errorMessage += 'Permission denied - token may not have write access.';
+          } else if (submitError.message.includes('403') || submitError.message.includes('Resource not accessible by personal access token')) {
+            errorMessage += 'Your personal access token does not have permission to create comments. Please use a token with "repo" or "public_repo" scope.';
+            // Disable comment form for this session since we know the token doesn't have permissions
+            setCanComment(false);
           } else if (submitError.message.includes('404')) {
             errorMessage += 'Pull request not found.';
           } else if (submitError.message.includes('422')) {
@@ -458,11 +622,13 @@ const PreviewBadge = () => {
       // Fetch comments for this PR
       const owner = 'litlfred';
       const repo = 'sgex';
-      const prComments = await fetchCommentsForPR(owner, repo, pr.number);
-      setComments(prComments);
+      await fetchCommentsForPR(owner, repo, pr.number, 1, false);
+      
+      // Check permissions
+      await checkPermissions(owner, repo);
       
       // Check if user is collaborator and auto-add @copilot
-      if (githubService.isAuth()) {
+      if (githubService.isAuth() && canComment) {
         try {
           const hasWriteAccess = await githubService.checkRepositoryWritePermissions(owner, repo);
           if (hasWriteAccess && !newComment.includes('@copilot')) {
@@ -471,8 +637,10 @@ const PreviewBadge = () => {
         } catch (error) {
           console.debug('Could not check collaborator status:', error);
         }
+      }
 
-        // Check for copilot session activity
+      // Check for copilot session activity
+      if (githubService.isAuth()) {
         try {
           const copilotInfo = await fetchCopilotSessionInfo(owner, repo, pr.number);
           setCopilotSessionInfo(copilotInfo);
@@ -485,6 +653,9 @@ const PreviewBadge = () => {
       if (branchInfo?.name) {
         await fetchWorkflowStatus(branchInfo.name);
       }
+
+      // Set up auto-refresh for comments
+      setupCommentAutoRefresh(owner, repo, pr.number);
     } else if (pr && pr.html_url && isExpanded) {
       // If already expanded, open the PR URL
       window.open(pr.html_url, '_blank');
@@ -572,7 +743,16 @@ const PreviewBadge = () => {
                   </h3>
                   <div className="pr-meta">
                     <span className="pr-state" data-state={prInfo[0].state}>{prInfo[0].state}</span>
-                    <span className="pr-author">by {prInfo[0].user.login}</span>
+                    <span className="pr-author">
+                      by <a 
+                        href={prInfo[0].user.html_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="pr-author-link"
+                      >
+                        {prInfo[0].user.login}
+                      </a>
+                    </span>
                   </div>
                 </div>
                 <button 
@@ -592,6 +772,12 @@ const PreviewBadge = () => {
               {githubService.isAuth() && (
                 <div className="comment-form">
                   <h4>Add Comment</h4>
+                  {!canComment && (
+                    <div className="comment-disabled-notice">
+                      <strong>💡 Comments disabled:</strong> Your personal access token does not have permission to create comments. 
+                      Please use a token with "repo" or "public_repo" scope to enable commenting.
+                    </div>
+                  )}
                   {commentSubmissionStatus && (
                     <div className={`comment-status comment-status-${typeof commentSubmissionStatus === 'string' ? commentSubmissionStatus : commentSubmissionStatus.type}`}>
                       {typeof commentSubmissionStatus === 'string' ? (
@@ -611,22 +797,22 @@ const PreviewBadge = () => {
                       <textarea
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
-                        placeholder="Write a comment... (Click 'Advanced Editor' for markdown preview)"
+                        placeholder={canComment ? "Write a comment... (Click 'Advanced Editor' for markdown preview)" : "Comment form disabled - token permissions required"}
                         rows={3}
-                        disabled={submittingComment}
+                        disabled={submittingComment || !canComment}
                       />
                       <div className="comment-form-actions">
                         <button
                           className="advanced-editor-btn"
                           onClick={() => setShowMarkdownEditor(true)}
-                          disabled={submittingComment}
+                          disabled={submittingComment || !canComment}
                         >
                           📝 Advanced Editor
                         </button>
                         <button
                           className="submit-comment"
                           onClick={handleCommentSubmit}
-                          disabled={!newComment.trim() || submittingComment}
+                          disabled={!newComment.trim() || submittingComment || !canComment}
                         >
                           {submittingComment ? 'Submitting...' : 'Comment'}
                         </button>
@@ -642,21 +828,21 @@ const PreviewBadge = () => {
                           height={300}
                           visibleDragBar={false}
                           data-color-mode="light"
-                          hideToolbar={submittingComment}
+                          hideToolbar={submittingComment || !canComment}
                         />
                       </div>
                       <div className="comment-form-actions">
                         <button
                           className="btn-secondary"
                           onClick={() => setShowMarkdownEditor(false)}
-                          disabled={submittingComment}
+                          disabled={submittingComment || !canComment}
                         >
                           Simple Editor
                         </button>
                         <button
                           className="submit-comment"
                           onClick={handleCommentSubmit}
-                          disabled={!newComment.trim() || submittingComment}
+                          disabled={!newComment.trim() || submittingComment || !canComment}
                         >
                           {submittingComment ? 'Submitting...' : 'Comment'}
                         </button>
@@ -690,7 +876,10 @@ const PreviewBadge = () => {
                     workflowStatus={workflowStatus}
                     branchName={branchInfo.name}
                     onTriggerWorkflow={handleTriggerWorkflow}
+                    onApproveWorkflow={handleApproveWorkflow}
                     isAuthenticated={githubService.isAuth()}
+                    canTriggerWorkflows={canTriggerWorkflows}
+                    canApproveWorkflows={canApproveWorkflows}
                     isLoading={workflowLoading}
                   />
                 </div>
@@ -718,8 +907,18 @@ const PreviewBadge = () => {
                           rel="noopener noreferrer"
                           className="copilot-session-link"
                         >
-                          🔗 View Copilot Session
+                          🔗 View Agent Session
                         </a>
+                        {copilotSessionInfo.commentUrl && (
+                          <a 
+                            href={copilotSessionInfo.commentUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="copilot-comment-link"
+                          >
+                            💬 Latest Comment
+                          </a>
+                        )}
                         <button
                           className="copilot-session-toggle"
                           onClick={() => setShowCopilotSession(!showCopilotSession)}
@@ -772,90 +971,105 @@ const PreviewBadge = () => {
               )}
 
               <div className="comments-section">
-                <h4>Recent Comments ({comments.length}/5)</h4>
+                <h4>Recent Comments ({allComments.length > 0 ? `${comments.length}/${allComments.length}` : '0'})</h4>
                 {commentsLoading ? (
                   <div className="loading">Loading comments...</div>
                 ) : comments.length === 0 ? (
                   <div className="no-comments">No comments yet</div>
                 ) : (
-                  <div className="comments-list">
-                    {comments.map((comment) => {
-                      const isExpanded = expandedComments.has(comment.id);
-                      const shouldTruncate = comment.body && comment.body.length > 200;
-                      const isNewComment = newlyAddedCommentId === comment.id;
-                      const viewers = getCommentViewers(comment, comments);
-                      
-                      return (
-                        <div key={comment.id} className={`comment ${isNewComment ? 'comment-new-glow' : ''}`}>
-                          <div className="comment-header">
-                            <img 
-                              src={comment.user.avatar_url} 
-                              alt={comment.user.login} 
-                              className="comment-avatar"
-                            />
-                            <a 
-                              href={comment.user.html_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="comment-author"
-                            >
-                              {comment.user.login}
-                            </a>
-                            <span className="comment-date">{formatDate(comment.created_at)}</span>
-                            <span className="comment-type">{comment.type}</span>
-                            
-                            {/* Comment Viewer Badges */}
-                            {viewers.length > 0 && (
-                              <div className="comment-viewers">
-                                {viewers.map((viewer, index) => (
-                                  <span 
-                                    key={index}
-                                    className={`viewer-badge ${viewer.toLowerCase().includes('copilot') ? 'viewer-badge-copilot' : 'viewer-badge-user'}`}
-                                    title={`${viewer} is looking at this comment`}
-                                  >
-                                    {viewer.toLowerCase().includes('copilot') ? '👁️' : '👀'} {viewer}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          <div className="comment-body">
-                            {shouldTruncate && !isExpanded ? (
-                              <>
-                                <div className="comment-preview">
-                                  <div className="markdown-content">
-                                    <ReactMarkdown>{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
-                                  </div>
+                  <>
+                    <div className="comments-list">
+                      {comments.map((comment) => {
+                        const isExpanded = expandedComments.has(comment.id);
+                        const shouldTruncate = comment.body && comment.body.length > 200;
+                        const isNewComment = newlyAddedCommentId === comment.id;
+                        const viewers = getCommentViewers(comment, comments);
+                        
+                        return (
+                          <div key={comment.id} className={`comment ${isNewComment ? 'comment-new-glow' : ''}`}>
+                            <div className="comment-header">
+                              <img 
+                                src={comment.user.avatar_url} 
+                                alt={comment.user.login} 
+                                className="comment-avatar"
+                              />
+                              <a 
+                                href={comment.user.html_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="comment-author"
+                              >
+                                {comment.user.login}
+                              </a>
+                              <span className="comment-date">{formatDate(comment.created_at)}</span>
+                              <span className="comment-type">{comment.type}</span>
+                              
+                              {/* Comment Viewer Badges */}
+                              {viewers.length > 0 && (
+                                <div className="comment-viewers">
+                                  {viewers.map((viewer, index) => (
+                                    <span 
+                                      key={index}
+                                      className={`viewer-badge ${viewer.toLowerCase().includes('copilot') ? 'viewer-badge-copilot' : 'viewer-badge-user'}`}
+                                      title={`${viewer} is looking at this comment`}
+                                    >
+                                      {viewer.toLowerCase().includes('copilot') ? '👁️' : '👀'} {viewer}
+                                    </span>
+                                  ))}
                                 </div>
-                                <button 
-                                  className="comment-toggle"
-                                  onClick={() => handleCommentToggle(comment.id)}
-                                >
-                                  Show more
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <div className="comment-full">
-                                  <div className="markdown-content">
-                                    <ReactMarkdown>{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
+                              )}
+                            </div>
+                            <div className="comment-body">
+                              {shouldTruncate && !isExpanded ? (
+                                <>
+                                  <div className="comment-preview">
+                                    <div className="markdown-content">
+                                      <ReactMarkdown>{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
+                                    </div>
                                   </div>
-                                </div>
-                                {shouldTruncate && (
                                   <button 
                                     className="comment-toggle"
                                     onClick={() => handleCommentToggle(comment.id)}
                                   >
-                                    Show less
+                                    Show more
                                   </button>
-                                )}
-                              </>
-                            )}
+                                </>
+                              ) : (
+                                <>
+                                  <div className="comment-full">
+                                    <div className="markdown-content">
+                                      <ReactMarkdown>{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
+                                    </div>
+                                  </div>
+                                  {shouldTruncate && (
+                                    <button 
+                                      className="comment-toggle"
+                                      onClick={() => handleCommentToggle(comment.id)}
+                                    >
+                                      Show less
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Load More Comments Button */}
+                    {allComments.length > comments.length && (
+                      <div className="comments-load-more">
+                        <button
+                          className="load-more-btn"
+                          onClick={loadMoreComments}
+                          disabled={commentsLoading}
+                        >
+                          {commentsLoading ? 'Loading...' : `Load More Comments (${allComments.length - comments.length} remaining)`}
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -932,7 +1146,10 @@ const PreviewBadge = () => {
               workflowStatus={workflowStatus}
               branchName={branchInfo.name}
               onTriggerWorkflow={handleTriggerWorkflow}
+              onApproveWorkflow={handleApproveWorkflow}
               isAuthenticated={githubService.isAuth()}
+              canTriggerWorkflows={canTriggerWorkflows}
+              canApproveWorkflows={canApproveWorkflows}
               isLoading={workflowLoading}
             />
           </div>

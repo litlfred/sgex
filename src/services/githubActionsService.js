@@ -362,6 +362,103 @@ class GitHubActionsService {
   }
 
   /**
+   * Check if the current token has permission to trigger workflows
+   * @returns {Promise<boolean>} Whether user can trigger workflows
+   */
+  async checkWorkflowTriggerPermissions() {
+    try {
+      if (!this.token) {
+        return false;
+      }
+
+      // Try to get the list of workflows - this requires actions read permission at minimum
+      const response = await fetch(
+        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows`,
+        {
+          headers: this.getHeaders()
+        }
+      );
+
+      if (!response.ok) {
+        return false;
+      }
+
+      // If we can read workflows, we likely can trigger them if we have write access
+      // But the actual permission check happens when we try to trigger
+      return true;
+    } catch (error) {
+      console.debug('Cannot check workflow trigger permissions:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if the current token has permission to approve workflow runs
+   * @returns {Promise<boolean>} Whether user can approve workflow runs
+   */
+  async checkWorkflowApprovalPermissions() {
+    try {
+      if (!this.token) {
+        return false;
+      }
+
+      // Check if we can access pending workflow runs that require approval
+      // This is a heuristic - actual approval permissions are checked when attempting to approve
+      const response = await fetch(
+        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/runs?status=waiting`,
+        {
+          headers: this.getHeaders()
+        }
+      );
+
+      return response.ok;
+    } catch (error) {
+      console.debug('Cannot check workflow approval permissions:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Approve a workflow run that requires approval
+   * @param {number} runId - The workflow run ID to approve
+   * @returns {Promise<boolean>} Success status
+   */
+  async approveWorkflowRun(runId) {
+    try {
+      if (!this.token) {
+        throw new Error('Authentication required to approve workflow runs');
+      }
+
+      console.debug(`Approving workflow run: ${runId}`);
+
+      const response = await fetch(
+        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/runs/${runId}/approve`,
+        {
+          method: 'POST',
+          headers: this.getHeaders()
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Workflow approval failed:`, {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          runId
+        });
+        throw new Error(`Failed to approve workflow run: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      console.debug(`Successfully approved workflow run ${runId}`);
+      return true;
+    } catch (error) {
+      console.error(`Error approving workflow run ${runId}:`, error);
+      return false;
+    }
+  }
+
+  /**
    * Check if the service is authenticated
    * @returns {boolean} Authentication status
    */
