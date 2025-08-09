@@ -36,7 +36,7 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
       setSelectedTemplate(bugTemplate);
       setIncludeConsole(bugTemplate.type === 'bug');
     }
-  }, [templates]); // Only depend on templates
+  }, [templates, selectedTemplate]); // Added selectedTemplate back to dependencies
 
   const loadTemplates = async () => {
     try {
@@ -47,7 +47,7 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
       console.error('Failed to load templates:', err);
       setError('Failed to load bug report templates. Using defaults.');
       // Use default templates as fallback
-      setTemplates(bugReportService._getDefaultTemplates());
+      setTemplates(bugReportService.getDefaultTemplates());
     } finally {
       setLoading(false);
     }

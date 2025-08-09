@@ -101,6 +101,11 @@ class BugReportService {
     return 'general';
   }
 
+  // Get default templates as fallback (public method)
+  getDefaultTemplates() {
+    return this._getDefaultTemplates();
+  }
+
   // Get default templates as fallback
   _getDefaultTemplates() {
     return [
