@@ -400,6 +400,120 @@
   white-space: pre-wrap;
 }
 
+/* Markdown content styling for comments */
+.comment-preview .markdown-content,
+.comment-full .markdown-content,
+.copilot-comment-body .markdown-content {
+  line-height: 1.5;
+}
+
+.comment-preview .markdown-content h1,
+.comment-full .markdown-content h1,
+.copilot-comment-body .markdown-content h1 {
+  font-size: 1.1rem;
+  margin: 0.5rem 0 0.25rem 0;
+  color: #333;
+}
+
+.comment-preview .markdown-content h2,
+.comment-full .markdown-content h2,
+.copilot-comment-body .markdown-content h2 {
+  font-size: 1rem;
+  margin: 0.4rem 0 0.2rem 0;
+  color: #333;
+}
+
+.comment-preview .markdown-content h3,
+.comment-full .markdown-content h3,
+.copilot-comment-body .markdown-content h3 {
+  font-size: 0.9rem;
+  margin: 0.3rem 0 0.15rem 0;
+  color: #333;
+}
+
+.comment-preview .markdown-content p,
+.comment-full .markdown-content p,
+.copilot-comment-body .markdown-content p {
+  margin: 0.25rem 0;
+}
+
+.comment-preview .markdown-content ul,
+.comment-full .markdown-content ul,
+.copilot-comment-body .markdown-content ul,
+.comment-preview .markdown-content ol,
+.comment-full .markdown-content ol,
+.copilot-comment-body .markdown-content ol {
+  margin: 0.25rem 0;
+  padding-left: 1.5rem;
+}
+
+.comment-preview .markdown-content li,
+.comment-full .markdown-content li,
+.copilot-comment-body .markdown-content li {
+  margin: 0.1rem 0;
+}
+
+.comment-preview .markdown-content code,
+.comment-full .markdown-content code,
+.copilot-comment-body .markdown-content code {
+  background: #f6f8fa;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.8rem;
+}
+
+.comment-preview .markdown-content pre,
+.comment-full .markdown-content pre,
+.copilot-comment-body .markdown-content pre {
+  background: #f6f8fa;
+  padding: 0.5rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 0.25rem 0;
+}
+
+.comment-preview .markdown-content pre code,
+.comment-full .markdown-content pre code,
+.copilot-comment-body .markdown-content pre code {
+  background: none;
+  padding: 0;
+}
+
+.comment-preview .markdown-content blockquote,
+.comment-full .markdown-content blockquote,
+.copilot-comment-body .markdown-content blockquote {
+  border-left: 3px solid #d0d7de;
+  padding-left: 0.75rem;
+  margin: 0.25rem 0;
+  color: #656d76;
+}
+
+.comment-preview .markdown-content a,
+.comment-full .markdown-content a,
+.copilot-comment-body .markdown-content a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.comment-preview .markdown-content a:hover,
+.comment-full .markdown-content a:hover,
+.copilot-comment-body .markdown-content a:hover {
+  text-decoration: underline;
+}
+
+.comment-preview .markdown-content strong,
+.comment-full .markdown-content strong,
+.copilot-comment-body .markdown-content strong {
+  font-weight: 600;
+}
+
+.comment-preview .markdown-content em,
+.comment-full .markdown-content em,
+.copilot-comment-body .markdown-content em {
+  font-style: italic;
+}
+
 .comment-toggle {
   background: none;
   border: none;

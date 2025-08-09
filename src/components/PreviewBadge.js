@@ -3,6 +3,8 @@ import githubService from '../services/githubService';
 import githubActionsService from '../services/githubActionsService';
 import WorkflowStatus from './WorkflowStatus';
 import MDEditor from '@uiw/react-md-editor';
+import ReactMarkdown from 'react-markdown';
+import DOMPurify from 'dompurify';
 import './WorkflowStatus.css';
 
 /**
@@ -419,6 +421,15 @@ const PreviewBadge = () => {
     setExpandedDescription(!expandedDescription);
   };
 
+  const sanitizeAndRenderMarkdown = (content) => {
+    if (!content) return '';
+    
+    // Sanitize the markdown content to prevent XSS attacks
+    const sanitizedContent = DOMPurify.sanitize(content);
+    
+    return sanitizedContent;
+  };
+
   const truncateComment = (text, maxLength = 200) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
@@ -741,7 +752,9 @@ const PreviewBadge = () => {
                               </a>
                             </div>
                             <div className="copilot-comment-body">
-                              {copilotSessionInfo.latestComment.body}
+                              <div className="markdown-content">
+                                <ReactMarkdown>{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -810,7 +823,9 @@ const PreviewBadge = () => {
                             {shouldTruncate && !isExpanded ? (
                               <>
                                 <div className="comment-preview">
-                                  {truncateComment(comment.body)}
+                                  <div className="markdown-content">
+                                    <ReactMarkdown>{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
+                                  </div>
                                 </div>
                                 <button 
                                   className="comment-toggle"
@@ -822,7 +837,9 @@ const PreviewBadge = () => {
                             ) : (
                               <>
                                 <div className="comment-full">
-                                  {comment.body}
+                                  <div className="markdown-content">
+                                    <ReactMarkdown>{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
+                                  </div>
                                 </div>
                                 {shouldTruncate && (
                                   <button 
