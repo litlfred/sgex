@@ -7,6 +7,7 @@ import githubService from '../services/githubService';
 jest.mock('../services/githubService', () => ({
   isAuth: jest.fn(),
   getPullRequestForBranch: jest.fn(),
+  getPullRequestsForBranch: jest.fn(),
   getPullRequestComments: jest.fn(),
   getPullRequestIssueComments: jest.fn(),
   createPullRequestComment: jest.fn()
@@ -33,7 +34,7 @@ describe('PreviewBadge Enhanced Functionality', () => {
 
   test('displays branch name when no PR is found', async () => {
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(null);
+    githubService.getPullRequestsForBranch.mockResolvedValue([]);
 
     render(<PreviewBadge />);
 
@@ -44,6 +45,7 @@ describe('PreviewBadge Enhanced Functionality', () => {
 
   test('displays PR information when PR is found', async () => {
     const mockPR = {
+      id: 1,
       number: 123,
       title: 'Test PR Title',
       state: 'open',
@@ -54,7 +56,7 @@ describe('PreviewBadge Enhanced Functionality', () => {
     };
 
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
 
     render(<PreviewBadge />);
 
@@ -65,6 +67,7 @@ describe('PreviewBadge Enhanced Functionality', () => {
 
   test('expands and shows PR details when clicked', async () => {
     const mockPR = {
+      id: 1,
       number: 123,
       title: 'Test PR Title',
       state: 'open',
@@ -85,7 +88,7 @@ describe('PreviewBadge Enhanced Functionality', () => {
     ];
 
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
     githubService.getPullRequestComments.mockResolvedValue([]);
     githubService.getPullRequestIssueComments.mockResolvedValue(mockComments);
 
@@ -110,6 +113,7 @@ describe('PreviewBadge Enhanced Functionality', () => {
 
   test('shows comment form when user can comment', async () => {
     const mockPR = {
+      id: 1,
       number: 123,
       title: 'Test PR Title',
       state: 'open',
@@ -120,7 +124,7 @@ describe('PreviewBadge Enhanced Functionality', () => {
     };
 
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
     githubService.getPullRequestComments.mockResolvedValue([]);
     githubService.getPullRequestIssueComments.mockResolvedValue([]);
 
@@ -143,6 +147,7 @@ describe('PreviewBadge Enhanced Functionality', () => {
 
   test('submits new comment successfully', async () => {
     const mockPR = {
+      id: 1,
       number: 123,
       title: 'Test PR Title',
       state: 'open',
@@ -160,7 +165,7 @@ describe('PreviewBadge Enhanced Functionality', () => {
     };
 
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(mockPR);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
     githubService.getPullRequestComments.mockResolvedValue([]);
     githubService.getPullRequestIssueComments.mockResolvedValue([]);
     githubService.createPullRequestComment.mockResolvedValue(mockNewComment);
@@ -201,7 +206,7 @@ describe('PreviewBadge Enhanced Functionality', () => {
     process.env.REACT_APP_GITHUB_REF_NAME = 'feature/test-branch';
     
     githubService.isAuth.mockReturnValue(true);
-    githubService.getPullRequestForBranch.mockResolvedValue(null);
+    githubService.getPullRequestsForBranch.mockResolvedValue([]);
 
     render(<PreviewBadge />);
 
