@@ -1,13 +1,16 @@
 /* SUSHI Status Component Styles */
 
+/* Fallback styling if CSS variables are not available */
 .sushi-status-collapsed,
 .sushi-status-expanded {
-  background: var(--who-card-bg);
-  border: 1px solid var(--who-border-color);
+  background: var(--who-card-bg, #ffffff);
+  border: 1px solid var(--who-border-color, #a0c8e8);
   border-radius: 8px;
   margin: 16px 0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   transition: background-color 0.3s ease, border-color 0.3s ease;
+  /* Ensure minimum visibility */
+  min-height: 60px;
 }
 
 /* Dark mode support */
@@ -24,14 +27,14 @@ body.theme-dark .sushi-status-expanded {
   align-items: center;
   padding: 12px 16px;
   cursor: pointer;
-  background: var(--who-primary-bg);
+  background: var(--who-primary-bg, #ffffff);
   border-radius: 8px 8px 0 0;
-  border-bottom: 1px solid var(--who-border-color);
+  border-bottom: 1px solid var(--who-border-color, #a0c8e8);
   transition: background-color 0.2s ease;
 }
 
 .sushi-status-header:hover {
-  background: var(--who-hover-bg);
+  background: var(--who-hover-bg, #e0ebf7);
 }
 
 .sushi-status-info {
@@ -46,12 +49,12 @@ body.theme-dark .sushi-status-expanded {
 }
 
 .sushi-status-title {
-  color: var(--who-text-primary);
+  color: var(--who-text-primary, #333333);
   font-size: 16px;
 }
 
 .expand-indicator {
-  color: var(--who-text-secondary);
+  color: var(--who-text-secondary, #666666);
   font-size: 12px;
   transition: transform 0.2s;
 }
@@ -77,7 +80,7 @@ body.theme-dark .sushi-status-expanded {
 }
 
 .sushi-runner-btn:disabled {
-  background: var(--who-text-muted);
+  background: var(--who-text-muted, #999999);
   cursor: not-allowed;
 }
 
@@ -113,10 +116,10 @@ body.theme-dark .sushi-status-expanded {
 }
 
 .sushi-config-container {
-  background: var(--who-card-bg);
+  background: var(--who-card-bg, #ffffff);
   padding: 16px;
   border-radius: 6px;
-  border: 1px solid var(--who-border-color);
+  border: 1px solid var(--who-border-color, #a0c8e8);
 }
 
 .source-indicators {
