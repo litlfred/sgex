@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import githubService from '../services/githubService';
+import githubActionsService from '../services/githubActionsService';
+import WorkflowStatus from './WorkflowStatus';
+import MDEditor from '@uiw/react-md-editor';
+import './WorkflowStatus.css';
 
 /**
  * PreviewBadge component that displays when the app is deployed from a non-main branch
@@ -19,6 +23,9 @@ const PreviewBadge = () => {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [expandedComments, setExpandedComments] = useState(new Set());
   const [expandedDescription, setExpandedDescription] = useState(false);
+  const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
+  const [workflowStatus, setWorkflowStatus] = useState(null);
+  const [workflowLoading, setWorkflowLoading] = useState(false);
   const expandedRef = useRef(null);
 
   useEffect(() => {
@@ -161,6 +168,50 @@ const PreviewBadge = () => {
     }
   };
 
+  const fetchWorkflowStatus = async (branchName) => {
+    try {
+      setWorkflowLoading(true);
+      
+      // Initialize GitHub Actions service with current token if available
+      if (githubService.isAuth() && githubService.token) {
+        githubActionsService.setToken(githubService.token);
+      }
+      
+      const status = await githubActionsService.getLatestWorkflowRun(branchName);
+      const parsedStatus = githubActionsService.parseWorkflowStatus(status);
+      setWorkflowStatus(parsedStatus);
+    } catch (error) {
+      console.debug('Failed to fetch workflow status:', error);
+      setWorkflowStatus(null);
+    } finally {
+      setWorkflowLoading(false);
+    }
+  };
+
+  const handleTriggerWorkflow = async (branchName) => {
+    try {
+      if (!githubService.isAuth()) {
+        console.warn('Authentication required to trigger workflows');
+        return false;
+      }
+
+      // Ensure GitHub Actions service has the current token
+      githubActionsService.setToken(githubService.token);
+      
+      const success = await githubActionsService.triggerWorkflow(branchName);
+      if (success) {
+        // Refresh workflow status after triggering
+        setTimeout(() => {
+          fetchWorkflowStatus(branchName);
+        }, 2000); // Wait 2 seconds before fetching status
+      }
+      return success;
+    } catch (error) {
+      console.error('Failed to trigger workflow:', error);
+      return false;
+    }
+  };
+
   const handleCommentToggle = (commentId) => {
     const newExpanded = new Set(expandedComments);
     if (newExpanded.has(commentId)) {
@@ -187,6 +238,7 @@ const PreviewBadge = () => {
         const updatedComments = await fetchCommentsForPR(owner, repo, pr.number);
         setComments(updatedComments);
         setNewComment('');
+        setShowMarkdownEditor(false); // Close markdown editor after successful submission
       }
     } catch (error) {
       console.error('Failed to submit comment:', error);
@@ -237,6 +289,11 @@ const PreviewBadge = () => {
       const repo = 'sgex';
       const prComments = await fetchCommentsForPR(owner, repo, pr.number);
       setComments(prComments);
+      
+      // Fetch workflow status for the current branch
+      if (branchInfo?.name) {
+        await fetchWorkflowStatus(branchInfo.name);
+      }
     } else if (pr && pr.html_url && isExpanded) {
       // If already expanded, open the PR URL
       window.open(pr.html_url, '_blank');
@@ -255,7 +312,7 @@ const PreviewBadge = () => {
     }
   };
 
-  const handleBadgeToggle = (event) => {
+  const handleBadgeToggle = async (event) => {
     // Only allow toggle for branch-only badges (no PRs)
     if (prInfo && prInfo.length > 0) return;
     
@@ -271,6 +328,11 @@ const PreviewBadge = () => {
       // Make it sticky and ensure it's expanded
       setIsSticky(true);
       setIsExpanded(true);
+      
+      // Fetch workflow status for the current branch
+      if (branchInfo?.name) {
+        await fetchWorkflowStatus(branchInfo.name);
+      }
     }
   };
 
@@ -339,22 +401,63 @@ const PreviewBadge = () => {
               {githubService.isAuth() && (
                 <div className="comment-form">
                   <h4>Add Comment</h4>
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Write a comment..."
-                    rows={3}
-                    disabled={submittingComment}
-                  />
-                  <div className="comment-form-actions">
-                    <button
-                      className="submit-comment"
-                      onClick={handleCommentSubmit}
-                      disabled={!newComment.trim() || submittingComment}
-                    >
-                      {submittingComment ? 'Submitting...' : 'Comment'}
-                    </button>
-                  </div>
+                  {!showMarkdownEditor ? (
+                    <div className="comment-form-simple">
+                      <textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Write a comment... (Click 'Advanced Editor' for markdown preview)"
+                        rows={3}
+                        disabled={submittingComment}
+                      />
+                      <div className="comment-form-actions">
+                        <button
+                          className="advanced-editor-btn"
+                          onClick={() => setShowMarkdownEditor(true)}
+                          disabled={submittingComment}
+                        >
+                          📝 Advanced Editor
+                        </button>
+                        <button
+                          className="submit-comment"
+                          onClick={handleCommentSubmit}
+                          disabled={!newComment.trim() || submittingComment}
+                        >
+                          {submittingComment ? 'Submitting...' : 'Comment'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="comment-form-advanced">
+                      <div className="markdown-editor-container">
+                        <MDEditor
+                          value={newComment}
+                          onChange={(val) => setNewComment(val || '')}
+                          preview="edit"
+                          height={300}
+                          visibleDragBar={false}
+                          data-color-mode="light"
+                          hideToolbar={submittingComment}
+                        />
+                      </div>
+                      <div className="comment-form-actions">
+                        <button
+                          className="btn-secondary"
+                          onClick={() => setShowMarkdownEditor(false)}
+                          disabled={submittingComment}
+                        >
+                          Simple Editor
+                        </button>
+                        <button
+                          className="submit-comment"
+                          onClick={handleCommentSubmit}
+                          disabled={!newComment.trim() || submittingComment}
+                        >
+                          {submittingComment ? 'Submitting...' : 'Comment'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -372,6 +475,19 @@ const PreviewBadge = () => {
                       </button>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* Workflow Status Section */}
+              {branchInfo?.name && (
+                <div className="workflow-status-wrapper">
+                  <WorkflowStatus
+                    workflowStatus={workflowStatus}
+                    branchName={branchInfo.name}
+                    onTriggerWorkflow={handleTriggerWorkflow}
+                    isAuthenticated={githubService.isAuth()}
+                    isLoading={workflowLoading}
+                  />
                 </div>
               )}
 
@@ -500,6 +616,17 @@ const PreviewBadge = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Workflow Status Section for branch-only badges */}
+          <div className="workflow-status-wrapper">
+            <WorkflowStatus
+              workflowStatus={workflowStatus}
+              branchName={branchInfo.name}
+              onTriggerWorkflow={handleTriggerWorkflow}
+              isAuthenticated={githubService.isAuth()}
+              isLoading={workflowLoading}
+            />
           </div>
 
           <div className="expanded-footer">
