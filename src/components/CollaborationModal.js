@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import useThemeImage from '../hooks/useThemeImage';
+import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const CollaborationModal = ({ onClose }) => {
+  const { t } = useTranslation();
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Theme-aware collaboration image
@@ -72,7 +75,7 @@ const CollaborationModal = ({ onClose }) => {
       content: (
         <div className="slide-content">
           <div className="collaboration-image">
-            <img src={collaborationImage} alt="Collaboration in SGEX" />
+            <img src={collaborationImage} alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_COLLABORATION, 'Collaboration in SGEX')} />
           </div>
           <p>
             Every contribution helps improve digital health tools for healthcare workers worldwide. Whether you're reporting a bug, testing a feature, or sharing feedback, you're part of building the future of digital health tooling.
