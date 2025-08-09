@@ -309,6 +309,53 @@
   background: #f8f9fa;
   border-bottom: 1px solid #e5e5e5;
   font-size: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.comment-viewers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-left: auto;
+  align-items: center;
+}
+
+.viewer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.viewer-badge-copilot {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 1px 3px rgba(40, 167, 69, 0.3);
+}
+
+.viewer-badge-copilot:hover {
+  background: linear-gradient(135deg, #218838, #1ea87a);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(40, 167, 69, 0.4);
+}
+
+.viewer-badge-user {
+  background: linear-gradient(135deg, #fd7e14, #f39c12);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 1px 3px rgba(253, 126, 20, 0.3);
+}
+
+.viewer-badge-user:hover {
+  background: linear-gradient(135deg, #e8590c, #d68910);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(253, 126, 20, 0.4);
 }
 
 .comment-avatar {
@@ -787,6 +834,18 @@
   .comment-header {
     flex-wrap: wrap;
     gap: 0.25rem;
+  }
+
+  .comment-viewers {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0.25rem;
+    justify-content: flex-start;
+  }
+
+  .viewer-badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.3rem;
   }
 
   .comment-type {

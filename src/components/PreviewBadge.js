@@ -172,6 +172,63 @@ const PreviewBadge = () => {
     }
   };
 
+  const getCommentViewers = (comment, allComments) => {
+    const viewers = new Set();
+    
+    // Extract mentions from the comment body
+    const mentionMatches = comment.body.match(/@(\w+)/g);
+    if (mentionMatches) {
+      mentionMatches.forEach(mention => {
+        const username = mention.substring(1); // Remove @
+        viewers.add(username);
+      });
+    }
+    
+    // Check if any subsequent comments reference this comment or author
+    const laterComments = allComments.filter(c => 
+      new Date(c.created_at) > new Date(comment.created_at)
+    );
+    
+    laterComments.forEach(laterComment => {
+      // Check if later comment mentions this comment's author
+      if (laterComment.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`)) {
+        viewers.add(laterComment.user.login);
+      }
+      
+      // Check if later comment references this comment content (partial match)
+      const commentWords = comment.body.toLowerCase().split(' ').filter(word => word.length > 3);
+      if (commentWords.length > 0) {
+        const hasReferenceWords = commentWords.some(word => 
+          laterComment.body.toLowerCase().includes(word) && 
+          laterComment.user.login !== comment.user.login
+        );
+        if (hasReferenceWords) {
+          viewers.add(laterComment.user.login);
+        }
+      }
+    });
+    
+    // Add copilot if mentioned anywhere in the thread related to this comment
+    if (comment.body.toLowerCase().includes('copilot') || 
+        comment.user.login.toLowerCase().includes('copilot')) {
+      viewers.add('copilot');
+    }
+    
+    // Check if copilot has engaged in later comments
+    const copilotEngaged = laterComments.some(c => 
+      c.user.login.toLowerCase().includes('copilot') ||
+      c.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`)
+    );
+    if (copilotEngaged) {
+      viewers.add('copilot');
+    }
+    
+    // Remove the comment author from viewers (don't show badge for self)
+    viewers.delete(comment.user.login);
+    
+    return Array.from(viewers);
+  };
+
   const fetchWorkflowStatus = async (branchName) => {
     try {
       setWorkflowLoading(true);
@@ -665,6 +722,7 @@ const PreviewBadge = () => {
                       const isExpanded = expandedComments.has(comment.id);
                       const shouldTruncate = comment.body && comment.body.length > 200;
                       const isNewComment = newlyAddedCommentId === comment.id;
+                      const viewers = getCommentViewers(comment, comments);
                       
                       return (
                         <div key={comment.id} className={`comment ${isNewComment ? 'comment-new-glow' : ''}`}>
@@ -684,6 +742,21 @@ const PreviewBadge = () => {
                             </a>
                             <span className="comment-date">{formatDate(comment.created_at)}</span>
                             <span className="comment-type">{comment.type}</span>
+                            
+                            {/* Comment Viewer Badges */}
+                            {viewers.length > 0 && (
+                              <div className="comment-viewers">
+                                {viewers.map((viewer, index) => (
+                                  <span 
+                                    key={index}
+                                    className={`viewer-badge ${viewer.toLowerCase().includes('copilot') ? 'viewer-badge-copilot' : 'viewer-badge-user'}`}
+                                    title={`${viewer} is looking at this comment`}
+                                  >
+                                    {viewer.toLowerCase().includes('copilot') ? '👁️' : '👀'} {viewer}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <div className="comment-body">
                             {shouldTruncate && !isExpanded ? (
