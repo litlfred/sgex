@@ -482,12 +482,25 @@ const DAKSelectionContent = () => {
             const sortedRepos = repos.sort((a, b) => a.name.localeCompare(b.name));
             setRepositories(sortedRepos);
           } else {
-            // Fallback to mock repositories with enhanced scanning demonstration
-            await simulateEnhancedScanning();
-            repos = getMockRepositories();
-            // Sort mock repositories alphabetically
-            repos.sort((a, b) => a.name.localeCompare(b.name));
-            setRepositories(repos);
+            // Use public GitHub API when not authenticated
+            console.log('🔍 Not authenticated, using public GitHub API...');
+            try {
+              repos = await githubService.getSmartGuidelinesRepositories(
+                effectiveProfile.login, 
+                effectiveProfile.type === 'org' ? 'org' : 'user'
+              );
+              // Sort repositories alphabetically
+              repos.sort((a, b) => a.name.localeCompare(b.name));
+              setRepositories(repos);
+            } catch (publicApiError) {
+              console.warn('Public API failed, falling back to demo data:', publicApiError);
+              // Only fall back to mock data if public API fails
+              await simulateEnhancedScanning();
+              repos = getMockRepositories();
+              // Sort mock repositories alphabetically
+              repos.sort((a, b) => a.name.localeCompare(b.name));
+              setRepositories(repos);
+            }
           }
         }
       }

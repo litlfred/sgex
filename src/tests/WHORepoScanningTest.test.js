@@ -122,12 +122,31 @@ dependencies:
   });
 
   describe('when not authenticated', () => {
-    test('should throw error for WHO repository scanning', async () => {
+    test('should use public API for WHO repository scanning', async () => {
       expect(githubService.isAuth()).toBe(false);
       
-      await expect(
-        githubService.getSmartGuidelinesRepositoriesProgressive('WorldHealthOrganization', 'org')
-      ).rejects.toThrow('Not authenticated with GitHub');
+      // Mock the public API call
+      const mockGetPublicRepositories = jest.spyOn(githubService, 'getPublicRepositories');
+      mockGetPublicRepositories.mockResolvedValue(mockWHORepositories);
+      
+      // Mock sushi-config.yaml responses for public repositories  
+      const mockCheckCompatibility = jest.spyOn(githubService, 'checkSmartGuidelinesCompatibility');
+      mockCheckCompatibility.mockImplementation((owner, repo) => {
+        if (repo === 'smart-immunizations' || repo === 'smart-base' || repo === 'smart-anc') {
+          return Promise.resolve({ compatible: true });
+        } else {
+          return Promise.resolve({ compatible: false, reason: 'No sushi-config.yaml file found' });
+        }
+      });
+      
+      const result = await githubService.getSmartGuidelinesRepositories('WorldHealthOrganization', 'org');
+      
+      expect(mockGetPublicRepositories).toHaveBeenCalledWith('WorldHealthOrganization', 'org');
+      expect(result).toHaveLength(3); // Should find 3 SMART Guidelines repositories
+      expect(result.map(r => r.name)).toEqual(expect.arrayContaining(['smart-immunizations', 'smart-base', 'smart-anc']));
+      
+      mockGetPublicRepositories.mockRestore();
+      mockCheckCompatibility.mockRestore();
     });
   });
 

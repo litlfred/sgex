@@ -500,10 +500,6 @@ class GitHubService {
   // Check if a repository has sushi-config.yaml with smart.who.int.base dependency
   async checkSmartGuidelinesCompatibility(owner, repo, retryCount = 2) {
 
-    if (!this.isAuth()) {
-      return { compatible: false, error: 'Not authenticated' };
-    }
-
     // Check cache first to prevent redundant downloads
     const cachedResult = repositoryCompatibilityCache.get(owner, repo);
     if (cachedResult !== null) {
@@ -652,39 +648,40 @@ class GitHubService {
 
   // Get repositories with progressive scanning (for real-time updates)
   async getSmartGuidelinesRepositoriesProgressive(owner, type = 'user', onRepositoryFound = null, onProgress = null, onError = null) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
     try {
       let repositories = [];
       let page = 1;
       let hasMorePages = true;
 
-      // Fetch all repositories using pagination
-      while (hasMorePages) {
-        let response;
-        if (type === 'user') {
-          response = await this.octokit.rest.repos.listForUser({
-            username: owner,
-            sort: 'updated',
-            per_page: 100,
-            page: page,
-          });
-        } else {
-          response = await this.octokit.rest.repos.listForOrg({
-            org: owner,
-            sort: 'updated',
-            per_page: 100,
-            page: page,
-          });
-        }
+      if (this.isAuth()) {
+        // Fetch all repositories using pagination when authenticated
+        while (hasMorePages) {
+          let response;
+          if (type === 'user') {
+            response = await this.octokit.rest.repos.listForUser({
+              username: owner,
+              sort: 'updated',
+              per_page: 100,
+              page: page,
+            });
+          } else {
+            response = await this.octokit.rest.repos.listForOrg({
+              org: owner,
+              sort: 'updated',
+              per_page: 100,
+              page: page,
+            });
+          }
 
-        repositories = repositories.concat(response.data);
-        
-        // Check if there are more pages
-        hasMorePages = response.data.length === 100;
-        page++;
+          repositories = repositories.concat(response.data);
+          
+          // Check if there are more pages
+          hasMorePages = response.data.length === 100;
+          page++;
+        }
+      } else {
+        // Use public API for unauthenticated access (only public repositories)
+        repositories = await this.getPublicRepositories(owner, type);
       }
 
       // Handle case where user has no repositories
