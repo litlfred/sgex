@@ -457,7 +457,7 @@ Best regards,
   // Show bug report form if requested
   if (showBugReportForm) {
     return (
-      <div className="help-modal-overlay" onClick={handleOverlayClick}>
+      <div className="help-modal-overlay bug-report-overlay" onClick={handleOverlayClick}>
         <BugReportForm 
           onClose={() => {
             setShowBugReportForm(false);

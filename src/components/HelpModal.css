@@ -432,6 +432,21 @@
   }
 }
 
+/* Bug report modal overlay - less transparent for better visibility */
+.help-modal-overlay.bug-report-overlay {
+  background-color: rgba(0, 0, 0, 0.85);
+}
+
+/* Dark mode adjustments for bug report overlay */
+body.theme-dark .help-modal-overlay.bug-report-overlay {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Light mode specific adjustments for bug report overlay */
+body.theme-light .help-modal-overlay.bug-report-overlay {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
 /* Fallback help section styles */
 .help-fallback {
   background: #f8f9fa;
