@@ -565,3 +565,24 @@
     transform: scale(1);
   }
 }
+
+/* Help Topic Notification Badge */
+.help-topic-notification-badge {
+  background: var(--who-primary, #0078d4);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: auto;
+  min-width: 16px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.help-topic-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

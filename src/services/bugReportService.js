@@ -1,4 +1,5 @@
 import githubService from './githubService';
+import issueTrackingService from './issueTrackingService';
 import jsYaml from 'js-yaml';
 
 class BugReportService {
@@ -355,6 +356,19 @@ class BugReportService {
         template.labels || [],
         [] // assignees
       );
+      
+      // If issue was created successfully and user is authenticated, track it
+      if (result.success && result.issue && githubService.isAuth()) {
+        try {
+          await issueTrackingService.addTrackedIssue({
+            ...result.issue,
+            repository: `${owner}/${repo}`
+          });
+        } catch (trackingError) {
+          console.warn('Failed to track created issue:', trackingError);
+          // Don't fail the submission if tracking fails
+        }
+      }
       
       return result;
     } catch (error) {
