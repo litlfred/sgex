@@ -41,6 +41,7 @@ const PreviewBadge = () => {
   const [hasMoreComments, setHasMoreComments] = useState(false);
   const expandedRef = useRef(null);
   const commentRefreshIntervalRef = useRef(null);
+  const workflowRefreshIntervalRef = useRef(null);
 
   useEffect(() => {
     const detectBranchAndPR = async () => {
@@ -113,14 +114,24 @@ const PreviewBadge = () => {
         clearInterval(commentRefreshIntervalRef.current);
         commentRefreshIntervalRef.current = null;
       }
+      if (workflowRefreshIntervalRef.current) {
+        clearInterval(workflowRefreshIntervalRef.current);
+        workflowRefreshIntervalRef.current = null;
+      }
     };
   }, []);
 
   // Clear auto-refresh when not expanded
   useEffect(() => {
-    if (!isExpanded && commentRefreshIntervalRef.current) {
-      clearInterval(commentRefreshIntervalRef.current);
-      commentRefreshIntervalRef.current = null;
+    if (!isExpanded) {
+      if (commentRefreshIntervalRef.current) {
+        clearInterval(commentRefreshIntervalRef.current);
+        commentRefreshIntervalRef.current = null;
+      }
+      if (workflowRefreshIntervalRef.current) {
+        clearInterval(workflowRefreshIntervalRef.current);
+        workflowRefreshIntervalRef.current = null;
+      }
     }
   }, [isExpanded]);
 
@@ -465,6 +476,28 @@ const PreviewBadge = () => {
     }, 60000); // 60 seconds
   };
 
+  const setupWorkflowAutoRefresh = (branchName) => {
+    // Clear any existing interval
+    if (workflowRefreshIntervalRef.current) {
+      clearInterval(workflowRefreshIntervalRef.current);
+    }
+
+    // Set up new interval to refresh workflow status every 30 seconds
+    workflowRefreshIntervalRef.current = setInterval(async () => {
+      try {
+        const previousStatus = workflowStatus?.status;
+        await fetchWorkflowStatus(branchName);
+        
+        // Log status changes for debugging
+        if (workflowStatus?.status && workflowStatus.status !== previousStatus) {
+          console.debug(`Workflow status changed from ${previousStatus} to ${workflowStatus.status}`);
+        }
+      } catch (error) {
+        console.debug('Failed to auto-refresh workflow status:', error);
+      }
+    }, 30000); // 30 seconds for more dynamic updates
+  };
+
   const loadMoreComments = async () => {
     if (!prInfo || prInfo.length === 0 || commentsLoading || !hasMoreComments) return;
     
@@ -652,6 +685,8 @@ const PreviewBadge = () => {
       // Fetch workflow status for the current branch
       if (branchInfo?.name) {
         await fetchWorkflowStatus(branchInfo.name);
+        // Set up auto-refresh for workflow status
+        setupWorkflowAutoRefresh(branchInfo.name);
       }
 
       // Set up auto-refresh for comments
@@ -694,6 +729,8 @@ const PreviewBadge = () => {
       // Fetch workflow status for the current branch
       if (branchInfo?.name) {
         await fetchWorkflowStatus(branchInfo.name);
+        // Set up auto-refresh for workflow status
+        setupWorkflowAutoRefresh(branchInfo.name);
       }
     }
   };
