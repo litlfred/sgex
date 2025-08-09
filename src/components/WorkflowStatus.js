@@ -4,19 +4,34 @@ const WorkflowStatus = ({
   workflowStatus, 
   branchName, 
   onTriggerWorkflow, 
+  onApproveWorkflow,
   isAuthenticated, 
+  canTriggerWorkflows = false,
+  canApproveWorkflows = false,
   isLoading = false 
 }) => {
   const [isTriggering, setIsTriggering] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
 
   const handleTriggerWorkflow = async () => {
-    if (!isAuthenticated || isTriggering || !onTriggerWorkflow) return;
+    if (!isAuthenticated || isTriggering || !onTriggerWorkflow || !canTriggerWorkflows) return;
     
     setIsTriggering(true);
     try {
       await onTriggerWorkflow(branchName);
     } finally {
       setIsTriggering(false);
+    }
+  };
+
+  const handleApproveWorkflow = async () => {
+    if (!isAuthenticated || isApproving || !onApproveWorkflow || !canApproveWorkflows || !workflowStatus?.runId) return;
+    
+    setIsApproving(true);
+    try {
+      await onApproveWorkflow(workflowStatus.runId);
+    } finally {
+      setIsApproving(false);
     }
   };
 
@@ -85,7 +100,7 @@ const WorkflowStatus = ({
         </div>
         
         <div className="workflow-actions">
-          {isAuthenticated && (
+          {isAuthenticated && canTriggerWorkflows && (
             <button
               onClick={handleTriggerWorkflow}
               disabled={isTriggering}
@@ -100,7 +115,22 @@ const WorkflowStatus = ({
             </button>
           )}
           
-          {workflowStatus.url && (
+          {isAuthenticated && canApproveWorkflows && workflowStatus?.status === 'waiting' && (
+            <button
+              onClick={handleApproveWorkflow}
+              disabled={isApproving}
+              className="workflow-approve-btn"
+              title={`Approve workflow run for ${branchName}`}
+            >
+              {isApproving ? (
+                <>⏳ Approving...</>
+              ) : (
+                <>✅ Approve Run</>
+              )}
+            </button>
+          )}
+          
+          {workflowStatus?.url && (
             <a
               href={workflowStatus.url}
               target="_blank"
