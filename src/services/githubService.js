@@ -1875,6 +1875,74 @@ class GitHubService {
     }
   }
 
+  // Create an issue (requires authentication)
+  async createIssue(owner, repo, title, body, labels = [], assignees = []) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to create issues');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('POST', `/repos/${owner}/${repo}/issues`, { title, bodyLength: body?.length, labels, assignees });
+
+    try {
+      const params = {
+        owner,
+        repo,
+        title,
+        body
+      };
+
+      // Add optional parameters if provided
+      if (labels.length > 0) {
+        params.labels = labels;
+      }
+      
+      if (assignees.length > 0) {
+        params.assignees = assignees;
+      }
+
+      const response = await this.octokit.rest.issues.create(params);
+      
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, response.status, Date.now() - startTime);
+      
+      return {
+        success: true,
+        issue: {
+          id: response.data.id,
+          number: response.data.number,
+          title: response.data.title,
+          body: response.data.body,
+          html_url: response.data.html_url,
+          state: response.data.state,
+          created_at: response.data.created_at,
+          user: {
+            login: response.data.user.login,
+            avatar_url: response.data.user.avatar_url
+          },
+          labels: response.data.labels.map(label => ({
+            name: label.name,
+            color: label.color
+          }))
+        }
+      };
+    } catch (error) {
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to create issue:', error);
+      
+      // Return structured error response
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          status: error.status,
+          type: error.status === 403 ? 'permission_denied' : 
+                error.status === 422 ? 'validation_error' : 
+                error.status === 404 ? 'repository_not_found' : 'unknown_error'
+        }
+      };
+    }
+  }
+
   // Logout
   logout() {
     this.logger.auth('Logging out and clearing stored token');

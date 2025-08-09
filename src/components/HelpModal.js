@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import useThemeImage from '../hooks/useThemeImage';
+import BugReportForm from './BugReportForm';
 
 const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [showBugReportForm, setShowBugReportForm] = useState(false);
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -30,14 +32,17 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
 
     window.helpModalInstance = {
       openSgexIssue: (issueType) => {
+        // For bug reports, show the new integrated form
+        if (issueType === 'bug') {
+          setShowBugReportForm(true);
+          return;
+        }
+        
+        // For other issue types, continue with existing behavior
         const baseUrl = `https://github.com/litlfred/sgex/issues/new`;
         let params = {};
 
         switch (issueType) {
-          case 'bug':
-            params.template = 'bug_report.yml';
-            params.labels = 'bug';
-            break;
           case 'feature':
             params.template = 'feature_request.yml';
             params.labels = 'enhancement';
@@ -273,35 +278,8 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
   };
 
   const handleBugReport = () => {
-    // Use the new SGEX issue reporting system
-    if (window.helpModalInstance?.openSgexIssue) {
-      window.helpModalInstance.openSgexIssue('bug');
-    } else {
-      // Fallback to direct URL
-      const params = new URLSearchParams({
-        template: 'bug_report.yml',
-        labels: 'bug',
-        sgex_page: contextData.pageId || 'unknown',
-        sgex_current_url: window.location.href
-      });
-      
-      if (contextData.selectedDak?.name) {
-        params.set('sgex_selected_dak', contextData.selectedDak.name);
-      }
-      
-      const url = `https://github.com/litlfred/sgex/issues/new?${params.toString()}`;
-      
-      // Try to open with error handling
-      try {
-        const newWindow = window.open(url, '_blank');
-        if (!newWindow || newWindow.closed) {
-          window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, 'bug');
-        }
-      } catch (error) {
-        console.warn('Failed to open GitHub issue:', error);
-        window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, 'bug');
-      }
-    }
+    // Show the new integrated bug report form
+    setShowBugReportForm(true);
   };
 
   const handleDAKFeedback = () => {
@@ -475,6 +453,22 @@ Best regards,
   };
 
   const { title, content } = getHelpContent();
+
+  // Show bug report form if requested
+  if (showBugReportForm) {
+    return (
+      <div className="help-modal-overlay" onClick={handleOverlayClick}>
+        <BugReportForm 
+          onClose={() => {
+            setShowBugReportForm(false);
+            // Close the main modal after successful submission or cancel
+            onClose();
+          }}
+          contextData={contextData}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="help-modal-overlay" onClick={handleOverlayClick}>
