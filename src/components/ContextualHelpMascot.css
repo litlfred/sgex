@@ -277,6 +277,8 @@
 /* Bubble Content */
 .bubble-content {
   position: relative;
+  background: var(--who-card-bg);
+  color: var(--who-text-primary);
 }
 
 .close-bubble-btn {

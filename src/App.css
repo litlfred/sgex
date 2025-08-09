@@ -177,6 +177,8 @@ a:focus-visible {
 
 .bug-report-form .report-form {
   padding: 20px;
+  background: var(--who-card-bg);
+  color: var(--who-text-primary);
 }
 
 .bug-report-form .form-field {
