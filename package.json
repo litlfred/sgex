@@ -33,14 +33,12 @@
     "serve": "npm run build && cd build && python3 -m http.server 3000",
     "check-framework-compliance": "node scripts/check-framework-compliance.js",
     "verify-404": "node scripts/verify-404.js",
-    "build:verify": "npm run build && npm run verify-404"
+    "build:verify": "npm run build && npm run verify-404",
+    "lint": "eslint src --ext .js,.jsx",
+    "lint:a11y": "eslint src --ext .js,.jsx --format=compact | grep jsx-a11y || echo 'No accessibility issues found!'",
+    "lint:fix": "eslint src --ext .js,.jsx --fix"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
+
   "jest": {
     "transformIgnorePatterns": [
       "node_modules/(?!(@octokit|universal-user-agent|before-after-hook|@babel|babel-runtime|@ungap|jsdom|@uiw|react-router|react-router-dom)/)"
@@ -71,6 +69,7 @@
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "http-proxy-middleware": "^3.0.5",
     "identity-obj-proxy": "^3.0.0",
     "jsdom": "^26.1.0"
