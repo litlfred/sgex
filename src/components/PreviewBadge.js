@@ -333,34 +333,75 @@ const PreviewBadge = () => {
       const owner = 'litlfred';
       const repo = 'sgex';
       
+      // Add detailed logging for debugging
+      console.debug('Submitting comment:', {
+        authenticated: githubService.isAuth(),
+        hasToken: !!githubService.token,
+        commentLength: newComment.trim().length,
+        prInfo: prInfo?.length || 0
+      });
+      
       if (prInfo && prInfo.length > 0) {
         const pr = prInfo[0]; // Use first PR for comment submission
-        const submittedComment = await githubService.createPullRequestComment(owner, repo, pr.number, newComment.trim());
+        console.debug('Submitting to PR:', pr.number);
         
-        // Set success status
-        setCommentSubmissionStatus('success');
-        
-        // Refresh comments after successful submission
-        const updatedComments = await fetchCommentsForPR(owner, repo, pr.number);
-        setComments(updatedComments);
-        
-        // Mark the newly added comment for glow effect
-        if (submittedComment && submittedComment.id) {
-          setNewlyAddedCommentId(submittedComment.id);
-          // Remove glow effect after 3 seconds
-          setTimeout(() => setNewlyAddedCommentId(null), 3000);
+        try {
+          const submittedComment = await githubService.createPullRequestComment(owner, repo, pr.number, newComment.trim());
+          console.debug('Comment submitted successfully:', submittedComment);
+          
+          // Set success status
+          setCommentSubmissionStatus('success');
+          
+          // Refresh comments after successful submission
+          const updatedComments = await fetchCommentsForPR(owner, repo, pr.number);
+          setComments(updatedComments);
+          
+          // Mark the newly added comment for glow effect
+          if (submittedComment && submittedComment.id) {
+            setNewlyAddedCommentId(submittedComment.id);
+            // Remove glow effect after 3 seconds
+            setTimeout(() => setNewlyAddedCommentId(null), 3000);
+          }
+          
+          setNewComment('');
+          setShowMarkdownEditor(false); // Close markdown editor after successful submission
+          
+          // Clear success status after 3 seconds
+          setTimeout(() => setCommentSubmissionStatus(null), 3000);
+        } catch (submitError) {
+          console.error('GitHub API comment submission error:', {
+            error: submitError,
+            message: submitError.message,
+            status: submitError.status,
+            response: submitError.response
+          });
+          
+          // More specific error messages based on the error type
+          let errorMessage = 'Failed to submit comment. ';
+          if (submitError.message.includes('401')) {
+            errorMessage += 'Authentication failed - please check your token.';
+          } else if (submitError.message.includes('403')) {
+            errorMessage += 'Permission denied - token may not have write access.';
+          } else if (submitError.message.includes('404')) {
+            errorMessage += 'Pull request not found.';
+          } else if (submitError.message.includes('422')) {
+            errorMessage += 'Invalid comment format.';
+          } else {
+            errorMessage += 'Please try again.';
+          }
+          
+          setCommentSubmissionStatus({ type: 'error', message: errorMessage });
+          // Clear error status after 7 seconds for longer messages
+          setTimeout(() => setCommentSubmissionStatus(null), 7000);
         }
-        
-        setNewComment('');
-        setShowMarkdownEditor(false); // Close markdown editor after successful submission
-        
-        // Clear success status after 3 seconds
-        setTimeout(() => setCommentSubmissionStatus(null), 3000);
+      } else {
+        console.warn('No PR info available for comment submission');
+        setCommentSubmissionStatus({ type: 'error', message: 'No pull request found to comment on.' });
+        setTimeout(() => setCommentSubmissionStatus(null), 5000);
       }
     } catch (error) {
-      console.error('Failed to submit comment:', error);
-      setCommentSubmissionStatus('error');
-      // Clear error status after 5 seconds
+      console.error('Unexpected error during comment submission:', error);
+      setCommentSubmissionStatus({ type: 'error', message: 'Unexpected error occurred. Please try again.' });
       setTimeout(() => setCommentSubmissionStatus(null), 5000);
     } finally {
       setSubmittingComment(false);
@@ -541,10 +582,17 @@ const PreviewBadge = () => {
                 <div className="comment-form">
                   <h4>Add Comment</h4>
                   {commentSubmissionStatus && (
-                    <div className={`comment-status comment-status-${commentSubmissionStatus}`}>
-                      {commentSubmissionStatus === 'submitting' && '⏳ Submitting comment...'}
-                      {commentSubmissionStatus === 'success' && '✅ Comment submitted successfully!'}
-                      {commentSubmissionStatus === 'error' && '❌ Failed to submit comment. Please try again.'}
+                    <div className={`comment-status comment-status-${typeof commentSubmissionStatus === 'string' ? commentSubmissionStatus : commentSubmissionStatus.type}`}>
+                      {typeof commentSubmissionStatus === 'string' ? (
+                        <>
+                          {commentSubmissionStatus === 'submitting' && '⏳ Submitting comment...'}
+                          {commentSubmissionStatus === 'success' && '✅ Comment submitted successfully!'}
+                        </>
+                      ) : (
+                        <>
+                          {commentSubmissionStatus.type === 'error' && `❌ ${commentSubmissionStatus.message}`}
+                        </>
+                      )}
                     </div>
                   )}
                   {!showMarkdownEditor ? (

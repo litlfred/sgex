@@ -54,11 +54,19 @@ class GitHubActionsService {
       }
 
       const data = await response.json();
+      console.debug('Available workflows:', data.workflows.map(w => ({ name: w.name, path: w.path })));
+      
+      // Look for the actual deployment workflows used in this repository
       const workflow = data.workflows.find(w => 
+        w.path.includes('branch-deployment.yml') || 
+        w.name.includes('Deploy Feature Branch') ||
+        w.path.includes('landing-page-deployment.yml') ||
+        w.name.includes('Deploy Landing Page') ||
         w.path.includes(this.workflowFileName) || 
         w.name.includes('Multi-Branch GitHub Pages Deployment')
       );
 
+      console.debug('Selected workflow:', workflow ? { name: workflow.name, path: workflow.path, id: workflow.id } : 'None found');
       return workflow ? workflow.id : null;
     } catch (error) {
       console.error('Error fetching workflow ID:', error);
@@ -73,24 +81,70 @@ class GitHubActionsService {
    */
   async getLatestWorkflowRun(branch) {
     try {
-      const workflowId = await this.getWorkflowId();
-      if (!workflowId) {
-        return null;
-      }
-
+      console.debug(`Looking for workflow runs for branch: ${branch}`);
+      
+      // For main branch, look for landing page deployment workflow
+      // For other branches, look for branch deployment workflow
+      const isMainBranch = branch === 'main';
+      const workflowName = isMainBranch ? 'Deploy Landing Page' : 'Deploy Feature Branch';
+      
       const response = await fetch(
-        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows/${workflowId}/runs?branch=${encodeURIComponent(branch)}&per_page=1`,
+        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows`,
         {
           headers: this.getHeaders()
         }
       );
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch workflow runs: ${response.status}`);
+        throw new Error(`Failed to fetch workflows: ${response.status}`);
       }
 
       const data = await response.json();
-      return data.workflow_runs.length > 0 ? data.workflow_runs[0] : null;
+      console.debug('Available workflows:', data.workflows.map(w => ({ name: w.name, path: w.path })));
+      
+      // Find the appropriate workflow for this branch
+      let workflow;
+      if (isMainBranch) {
+        workflow = data.workflows.find(w => 
+          w.name.includes('Deploy Landing Page') ||
+          w.path.includes('landing-page-deployment.yml')
+        );
+      } else {
+        workflow = data.workflows.find(w => 
+          w.name.includes('Deploy Feature Branch') ||
+          w.path.includes('branch-deployment.yml')
+        );
+      }
+
+      if (!workflow) {
+        console.debug(`No ${workflowName} workflow found for branch ${branch}`);
+        return null;
+      }
+
+      console.debug(`Using workflow: ${workflow.name} (ID: ${workflow.id}) for branch ${branch}`);
+
+      // Get the latest run for this workflow and branch
+      const runsResponse = await fetch(
+        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows/${workflow.id}/runs?branch=${encodeURIComponent(branch)}&per_page=5`,
+        {
+          headers: this.getHeaders()
+        }
+      );
+
+      if (!runsResponse.ok) {
+        throw new Error(`Failed to fetch workflow runs: ${runsResponse.status}`);
+      }
+
+      const runsData = await runsResponse.json();
+      console.debug(`Found ${runsData.workflow_runs.length} workflow runs for branch ${branch}`);
+      
+      if (runsData.workflow_runs.length > 0) {
+        const latestRun = runsData.workflow_runs[0];
+        console.debug(`Latest run: ${latestRun.status}/${latestRun.conclusion} at ${latestRun.created_at}`);
+        return latestRun;
+      }
+
+      return null;
     } catch (error) {
       console.error(`Error fetching latest workflow run for branch ${branch}:`, error);
       return null;
@@ -209,34 +263,72 @@ class GitHubActionsService {
         throw new Error('Authentication required to trigger workflows');
       }
 
-      const workflowId = await this.getWorkflowId();
-      if (!workflowId) {
-        throw new Error('Workflow not found');
-      }
-
+      console.debug(`Triggering workflow for branch: ${branch}`);
+      
+      // For main branch, trigger landing page deployment workflow
+      // For other branches, trigger branch deployment workflow
+      const isMainBranch = branch === 'main';
+      
       const response = await fetch(
-        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows/${workflowId}/dispatches`,
+        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows`,
         {
-          method: 'POST',
-          headers: this.getHeaders(),
-          body: JSON.stringify({
-            ref: branch
-          })
+          headers: this.getHeaders()
         }
       );
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Workflow trigger failed:`, {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText,
-          branch,
-          workflowId
-        });
-        throw new Error(`Failed to trigger workflow: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(`Failed to fetch workflows: ${response.status}`);
       }
 
+      const data = await response.json();
+      
+      // Find the appropriate workflow for this branch
+      let workflow;
+      if (isMainBranch) {
+        workflow = data.workflows.find(w => 
+          w.name.includes('Deploy Landing Page') ||
+          w.path.includes('landing-page-deployment.yml')
+        );
+      } else {
+        workflow = data.workflows.find(w => 
+          w.name.includes('Deploy Feature Branch') ||
+          w.path.includes('branch-deployment.yml')
+        );
+      }
+
+      if (!workflow) {
+        throw new Error(`No deployment workflow found for branch ${branch}`);
+      }
+
+      console.debug(`Triggering workflow: ${workflow.name} (ID: ${workflow.id}) for branch ${branch}`);
+
+      const triggerResponse = await fetch(
+        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows/${workflow.id}/dispatches`,
+        {
+          method: 'POST',
+          headers: this.getHeaders(),
+          body: JSON.stringify({
+            ref: branch,
+            inputs: {
+              branch: branch
+            }
+          })
+        }
+      );
+
+      if (!triggerResponse.ok) {
+        const errorText = await triggerResponse.text();
+        console.error(`Workflow trigger failed:`, {
+          status: triggerResponse.status,
+          statusText: triggerResponse.statusText,
+          error: errorText,
+          branch,
+          workflowId: workflow.id
+        });
+        throw new Error(`Failed to trigger workflow: ${triggerResponse.status} ${triggerResponse.statusText} - ${errorText}`);
+      }
+
+      console.debug(`Successfully triggered workflow for branch ${branch}`);
       return true;
     } catch (error) {
       console.error(`Error triggering workflow for branch ${branch}:`, error);
