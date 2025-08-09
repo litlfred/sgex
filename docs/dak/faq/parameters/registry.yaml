@@ -94,6 +94,54 @@ asset:
       default: true
       description: "Whether to validate BPMN syntax"
 
+  dmn:
+    assetFile:
+      type: string
+      required: true
+      description: "Relative path to the DMN file"
+      validation:
+        pattern: "^[^/].*\\.dmn$"
+    
+    includeRuleDetails:
+      type: boolean
+      required: false
+      default: false
+      description: "Whether to include detailed rule information"
+
+  dataElement:
+    assetFile:
+      type: string
+      required: true
+      description: "Relative path to the data element file"
+      validation:
+        pattern: "^[^/].*\\.(json|yaml|yml|xml)$"
+    
+    checkTerminologyBinding:
+      type: boolean
+      required: false
+      default: true
+      description: "Whether to check terminology binding strength"
+
+  indicator:
+    assetFile:
+      type: string
+      required: true
+      description: "Relative path to the indicator definition file"
+      validation:
+        pattern: "^[^/].*\\.(json|yaml|yml|xml)$"
+    
+    includeFormula:
+      type: boolean
+      required: false
+      default: true
+      description: "Whether to include calculation formulas"
+    
+    analyzeComplexity:
+      type: boolean
+      required: false
+      default: true
+      description: "Whether to analyze calculation complexity"
+
 # Global parameter defaults
 defaults:
   repository:
