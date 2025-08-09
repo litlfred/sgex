@@ -141,10 +141,12 @@ const BranchDeploymentSelector = ({ mode = 'deployment-selector' }) => {
 
         <div className="deployments-grid">
           {deployments.map((deployment) => (
-            <div 
+            <button 
               key={deployment.id}
               className={`deployment-card ${deployment.type}`}
               onClick={() => handleDeploymentSelect(deployment)}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleDeploymentSelect(deployment)}
+              style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}
             >
               <div className="deployment-card-header">
                 <div className="deployment-status">
@@ -176,7 +178,7 @@ const BranchDeploymentSelector = ({ mode = 'deployment-selector' }) => {
                   Launch Deployment →
                 </button>
               </div>
-            </div>
+            </button>
           ))}
         </div>
 

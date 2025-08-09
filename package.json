@@ -57,6 +57,7 @@
     "lint:a11y": "eslint src --ext .js,.jsx --format=compact | grep jsx-a11y || echo 'No accessibility issues found!'",
     "lint:fix": "eslint src --ext .js,.jsx --fix"
   },
+
   "jest": {
     "transformIgnorePatterns": [
       "node_modules/(?!(@octokit|universal-user-agent|before-after-hook|@babel|babel-runtime|@ungap|jsdom|@uiw|react-router|react-router-dom)/)"

@@ -174,7 +174,14 @@ sgex/
 - `npm start` - Runs the app in development mode
 - `npm test` - Launches the test runner in interactive watch mode
 - `npm run build` - Builds the app for production
+- `npm run lint` - Runs ESLint on all source files
+- `npm run lint:a11y` - Shows only accessibility (jsx-a11y) warnings
+- `npm run lint:fix` - Automatically fixes linting issues where possible
 - `npm run eject` - **Note: This is a one-way operation. Don't do this unless you know what you're doing!**
+
+### Accessibility Linting
+
+The project uses `eslint-plugin-jsx-a11y` to enforce accessibility best practices. See [docs/accessibility-linting.md](docs/accessibility-linting.md) for detailed information about accessibility rules and how to fix common issues.
 
 ### Troubleshooting
 

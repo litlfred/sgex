@@ -63,8 +63,8 @@
   color: var(--who-blue, #006cbe);
   border: 2px solid var(--who-blue, #006cbe);
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: var(--icon-size-default);
+  height: var(--icon-size-default);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -97,8 +97,8 @@
   top: -8px;
   right: -8px;
   background: #dc3545;
-  color: white;
-  border: 2px solid white;
+  color: var(--who-text-on-primary, white);
+  border: 2px solid var(--who-card-bg, white);
   border-radius: 50%;
   width: 20px;
   height: 20px;
@@ -127,7 +127,7 @@
 /* Help Thought Bubble */
 .help-thought-bubble {
   position: absolute;
-  background: #ffffff; /* Solid white for light mode */
+  background: var(--who-card-bg, #ffffff); /* Use CSS variable */
   border: 4px solid var(--who-blue, #006cbe);
   border-radius: 20px;
   padding: 20px;
@@ -138,12 +138,7 @@
   z-index: 1001;
 }
 
-/* Dark mode thought bubble - solid color for readability */
-body.theme-dark .help-thought-bubble {
-  background: #1a2380; /* WHO Navy Light - solid color for readability */
-}
 
-/* Fade out animation for thought bubble */
 .help-thought-bubble.fading-out {
   animation: bubbleFadeOut 0.69s ease-out forwards;
 }
@@ -185,48 +180,38 @@ body.theme-dark .help-thought-bubble {
   position: absolute;
   width: 23px;
   height: 23px;
-  background: #ffffff; /* Solid white for light mode */
+  background: var(--who-card-bg, #ffffff); /* Use CSS variable */
   border: 3px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   z-index: 1002;
 }
 
-/* Dark mode bubble tail */
-body.theme-dark .bubble-tail {
-  background: #1a2380; /* WHO Navy Light - solid color for readability */
-}
 
 .bubble-tail::before {
   content: '';
   position: absolute;
   width: 20px;
   height: 20px;
-  background: #ffffff; /* Solid white for light mode */
+  background: var(--who-card-bg, #ffffff); /* Use CSS variable */
   border: 4px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   z-index: 1003;
 }
 
-/* Dark mode bubble tail before pseudo-element */
-body.theme-dark .bubble-tail::before {
-  background: #1a2380; /* WHO Navy Light - solid color for readability */
-}
+
 
 .bubble-tail::after {
   content: '';
   position: absolute;
   width: 15px;
   height: 15px;
-  background: #ffffff; /* Solid white for light mode */
+  background: var(--who-card-bg, #ffffff); /* Use CSS variable */
   border: 4px solid var(--who-blue, #006cbe);
   border-radius: 50%;
   z-index: 1004;
 }
 
-/* Dark mode bubble tail after pseudo-element */
-body.theme-dark .bubble-tail::after {
-  background: #1a2380; /* WHO Navy Light - solid color for readability */
-}
+
 
 /* Position tail based on mascot position */
 .contextual-help-mascot.bottom-right .bubble-tail {
@@ -292,6 +277,8 @@ body.theme-dark .bubble-tail::after {
 /* Bubble Content */
 .bubble-content {
   position: relative;
+  background: var(--who-card-bg);
+  color: var(--who-text-primary);
 }
 
 .close-bubble-btn {
@@ -302,8 +289,8 @@ body.theme-dark .bubble-tail::after {
   color: #ffffff;
   border: none;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: var(--icon-size-default);
+  height: var(--icon-size-default);
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
@@ -579,4 +566,25 @@ body.theme-dark .bubble-tail::after {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+/* Help Topic Notification Badge */
+.help-topic-notification-badge {
+  background: var(--who-primary, #0078d4);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: auto;
+  min-width: 16px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.help-topic-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
