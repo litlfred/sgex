@@ -30,6 +30,11 @@ const DAKFAQDemo = () => {
       id: 'dak-version',
       title: 'What is the version of this DAK?',
       description: 'Extracts the DAK version from sushi-config.yaml'
+    },
+    {
+      id: 'decision-table-inputs',
+      title: 'What are the inputs required for this decision table?',
+      description: 'Analyzes DMN files and extracts input requirements for decision tables'
     }
   ];
 
@@ -129,12 +134,30 @@ const DAKFAQDemo = () => {
             <h3>{question.title}</h3>
             <p className="question-description">{question.description}</p>
             
-            <FAQAnswer
-              questionId={question.id}
-              parameters={repositoryContext}
-              githubService={githubService}
-              showRawData={true}
-            />
+            {question.id === 'decision-table-inputs' ? (
+              // Special handling for asset-level DMN question
+              <div className="dmn-demo">
+                <p><em>This is an asset-level question that analyzes individual DMN files. 
+                In a real DAK repository, this would scan DMN files in directories like input/cql/ or input/dmn/.</em></p>
+                <FAQAnswer
+                  questionId={question.id}
+                  parameters={{
+                    ...repositoryContext,
+                    assetFile: 'input/cql/IMMZ.D2.DT.BCG.dmn' // Example DMN file path
+                  }}
+                  githubService={githubService}
+                  showRawData={true}
+                />
+              </div>
+            ) : (
+              // Regular DAK/component-level questions
+              <FAQAnswer
+                questionId={question.id}
+                parameters={repositoryContext}
+                githubService={githubService}
+                showRawData={true}
+              />
+            )}
           </div>
         ))}
       </div>

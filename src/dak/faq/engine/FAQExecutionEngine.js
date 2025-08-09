@@ -46,6 +46,11 @@ class FAQExecutionEngine {
       {
         id: 'business-process-workflows',
         module: () => import('../questions/component/businessProcess/BusinessProcessWorkflowsQuestion.js')
+      },
+      // Asset-level questions
+      {
+        id: 'decision-table-inputs',
+        module: () => import('../questions/asset/decisionSupportLogic/DecisionTableInputsQuestion.js')
       }
     ];
 
