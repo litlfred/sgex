@@ -193,13 +193,34 @@ function generateStandardRoutes(componentName, componentConfig) {
  * @returns {Array} Array of all Route elements
  */
 export function generateLazyRoutes() {
-  const config = window.getSGEXRouteConfig();
+  let config = null;
+  
+  // Try to get the configuration from window object
+  if (typeof window !== 'undefined' && typeof window.getSGEXRouteConfig === 'function') {
+    config = window.getSGEXRouteConfig();
+  } else if (typeof window !== 'undefined' && window.SGEX_ROUTES_CONFIG) {
+    config = window.SGEX_ROUTES_CONFIG;
+  }
+  
+  // If config is still not available, try to load it synchronously
+  if (!config && typeof window !== 'undefined' && typeof window.loadSGEXRouteConfig === 'function') {
+    try {
+      config = window.loadSGEXRouteConfig();
+    } catch (error) {
+      console.warn('Failed to load SGEX route configuration:', error);
+    }
+  }
   
   if (!config) {
     console.warn('SGEX route configuration not loaded, falling back to minimal routes');
+    // Create a more functional fallback for unrecognized routes
+    const WelcomeComponent = createLazyComponent('WelcomePage');
+    const NotFoundComponent = createLazyComponent('NotFound');
+    
     return [
-      <Route key="fallback-home" path="/" element={<div>Loading...</div>} />,
-      <Route key="fallback-404" path="*" element={<div>Page not found</div>} />
+      <Route key="fallback-home" path="/" element={<WelcomeComponent />} />,
+      <Route key="fallback-welcome" path="/welcome" element={<WelcomeComponent />} />,
+      <Route key="fallback-404" path="*" element={<NotFoundComponent />} />
     ];
   }
 
@@ -248,7 +269,15 @@ export function generateLazyRoutes() {
  * @returns {Array} Array of valid DAK component names
  */
 export function getValidDAKComponents() {
-  const config = window.getSGEXRouteConfig();
+  let config = null;
+  
+  // Try to get the configuration from window object
+  if (typeof window !== 'undefined' && typeof window.getSGEXRouteConfig === 'function') {
+    config = window.getSGEXRouteConfig();
+  } else if (typeof window !== 'undefined' && window.SGEX_ROUTES_CONFIG) {
+    config = window.SGEX_ROUTES_CONFIG;
+  }
+  
   return config ? config.getDAKComponentNames() : [];
 }
 
@@ -258,7 +287,15 @@ export function getValidDAKComponents() {
  * @returns {boolean} True if component is valid
  */
 export function isValidComponent(componentName) {
-  const config = window.getSGEXRouteConfig();
+  let config = null;
+  
+  // Try to get the configuration from window object
+  if (typeof window !== 'undefined' && typeof window.getSGEXRouteConfig === 'function') {
+    config = window.getSGEXRouteConfig();
+  } else if (typeof window !== 'undefined' && window.SGEX_ROUTES_CONFIG) {
+    config = window.SGEX_ROUTES_CONFIG;
+  }
+  
   return config ? config.isValidComponent(componentName) : false;
 }
 
