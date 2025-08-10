@@ -231,19 +231,6 @@ body.theme-light .dak-action-selection {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
-.action-title-section {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.action-title-section h3 {
-  margin: 0;
-  color: var(--who-text-primary);
-  font-size: 1.3rem;
-  font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
 .action-header-content h3 {
   margin: 0;
   color: var(--who-text-primary);
@@ -322,14 +309,6 @@ body.theme-light .dak-action-selection {
     max-height: 120px;
   }
 
-  .action-title-section {
-    margin-bottom: 0.75rem;
-  }
-
-  .action-title-section h3 {
-    font-size: 1.1rem;
-  }
-
   .action-description {
     margin-bottom: 1rem;
   }
@@ -379,10 +358,6 @@ body.theme-light .dak-action-selection {
   .action-icon img {
     max-width: 100px;
     max-height: 100px;
-  }
-
-  .action-title-section h3 {
-    font-size: 1rem;
   }
 
   .action-description p {

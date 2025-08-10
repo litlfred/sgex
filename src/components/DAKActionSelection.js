@@ -88,25 +88,12 @@ const DAKActionSelectionContent = () => {
               key={action.id}
               className={`action-card`}
               onClick={(event) => handleActionSelect(event, action.id)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  handleActionSelect(event, action.id);
-                }
-              }}
-              role="button"
-              tabIndex={0}
               style={{ '--action-color': action.color }}
-              aria-label={`${action.title}: ${action.description}`}
             >
               <div className="action-icon" style={{ color: action.color }}>
                 <img src={action.icon} alt={getAltText(t, ALT_TEXT_KEYS.ICON_ACTION, action.title, { title: action.title })} />
               </div>
               
-              <div className="action-title-section">
-                <h3>{action.title}</h3>
-              </div>
-
               <div className="action-description">
                 <p>{action.description}</p>
               </div>
