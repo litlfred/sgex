@@ -486,16 +486,16 @@ body.theme-light .help-modal-overlay.bug-report-overlay {
 
 /* Dark mode specific overrides for better help modal visibility */
 body.theme-dark .help-menu-dropdown {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--who-dropdown-bg, #1a2380);
   border: 1px solid var(--who-light-blue, #c0dcf2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
 body.theme-dark .menu-item {
-  color: #333333;
+  color: var(--who-text-primary, #ffffff);
 }
 
 body.theme-dark .menu-item:hover {
-  background-color: rgba(0, 108, 190, 0.1);
-  color: var(--who-blue, #006cbe);
+  background-color: var(--who-dropdown-hover-bg, rgba(255, 255, 255, 0.15));
+  color: var(--who-light-blue, #c0dcf2);
 }
