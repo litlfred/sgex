@@ -483,3 +483,19 @@ body.theme-light .help-modal-overlay.bug-report-overlay {
 .help-fallback a:hover {
   text-decoration: underline;
 }
+
+/* Dark mode specific overrides for better help modal visibility */
+body.theme-dark .help-menu-dropdown {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--who-light-blue, #c0dcf2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+body.theme-dark .menu-item {
+  color: #333333;
+}
+
+body.theme-dark .menu-item:hover {
+  background-color: rgba(0, 108, 190, 0.1);
+  color: var(--who-blue, #006cbe);
+}

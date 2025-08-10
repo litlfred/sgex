@@ -588,3 +588,75 @@
   align-items: center;
   gap: 8px;
 }
+
+/* Dark mode specific overrides for better help menu visibility */
+body.theme-dark .help-thought-bubble {
+  background: rgba(255, 255, 255, 0.95);
+  color: #333333;
+  border-color: var(--who-light-blue, #c0dcf2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+body.theme-dark .bubble-content {
+  background: rgba(255, 255, 255, 0.95);
+  color: #333333;
+}
+
+body.theme-dark .bubble-tail {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .bubble-tail::before {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .bubble-tail::after {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .help-text {
+  color: #333333;
+}
+
+body.theme-dark .help-text h4 {
+  color: var(--who-blue, #006cbe);
+}
+
+body.theme-dark .help-topic-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color: #333333;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.theme-dark .help-topic-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--who-blue, #006cbe);
+  border-color: var(--who-blue, #006cbe);
+}
+
+body.theme-dark .help-theme-toggle-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color: #333333;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.theme-dark .help-theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--who-blue, #006cbe);
+  border-color: var(--who-blue, #006cbe);
+}
+
+body.theme-dark .help-cache-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color: #333333;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.theme-dark .help-cache-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--who-blue, #006cbe);
+  border-color: var(--who-blue, #006cbe);
+}
