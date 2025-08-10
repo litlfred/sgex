@@ -231,6 +231,19 @@ body.theme-light .dak-action-selection {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
+.action-title-section {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.action-title-section h3 {
+  margin: 0;
+  color: var(--who-text-primary);
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
 .action-header-content h3 {
   margin: 0;
   color: var(--who-text-primary);
@@ -282,40 +295,102 @@ body.theme-light .dak-action-selection {
   }
 
   .actions-grid {
-    flex-wrap: wrap;
     flex-direction: column;
     overflow-x: visible;
-    gap: 1.5rem;
+    gap: 1rem;
+    /* Ensure cards are visible by setting a max height and enabling scroll */
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
   }
 
   .action-card {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-width: auto;
     max-width: 100%;
-    padding: 1.5rem;
+    padding: 1rem;
+    /* Reduce height to fit more cards on screen */
+    min-height: auto;
   }
 
   .action-icon {
-    min-height: 200px;
+    min-height: 120px;
+    margin-bottom: 0.75rem;
   }
 
   .action-icon img {
-    max-width: 200px;
-    max-height: 200px;
+    max-width: 120px;
+    max-height: 120px;
+  }
+
+  .action-title-section {
+    margin-bottom: 0.75rem;
+  }
+
+  .action-title-section h3 {
+    font-size: 1.1rem;
+  }
+
+  .action-description {
+    margin-bottom: 1rem;
+  }
+
+  .action-description p {
+    font-size: 0.85rem;
+    line-height: 1.4;
   }
 
   .workflow-steps {
     flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .step {
+    padding: 0.15rem 0.5rem;
+    font-size: 0.7rem;
   }
 }
 
 @media (max-width: 480px) {
+  .action-content {
+    padding: 0.75rem;
+  }
+
+  .action-main {
+    padding: 1.5rem;
+  }
+
+  .action-title h1 {
+    font-size: 1.8rem;
+  }
+
+  .action-subtitle {
+    font-size: 1rem;
+  }
+
+  .action-card {
+    padding: 0.75rem;
+  }
+
   .action-icon {
-    min-height: 160px;
+    min-height: 100px;
+    margin-bottom: 0.5rem;
   }
 
   .action-icon img {
-    max-width: 160px;
-    max-height: 160px;
+    max-width: 100px;
+    max-height: 100px;
+  }
+
+  .action-title-section h3 {
+    font-size: 1rem;
+  }
+
+  .action-description p {
+    font-size: 0.8rem;
+  }
+
+  .step {
+    padding: 0.1rem 0.4rem;
+    font-size: 0.65rem;
   }
 }
