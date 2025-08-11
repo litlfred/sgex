@@ -5,7 +5,6 @@
  * Designed to work in multiple environments: React client-side, command-line, and IDE integration.
  */
 
-import yaml from 'js-yaml';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 
@@ -362,7 +361,9 @@ class DAKComplianceService {
       // Parse YAML content
       let parsedConfig;
       try {
-        parsedConfig = yaml.load(content);
+        // Lazy load js-yaml to improve initial page responsiveness
+        const yaml = await import('js-yaml');
+        parsedConfig = yaml.default.load(content);
       } catch (yamlError) {
         return {
           message: `Invalid YAML syntax: ${yamlError.message}`,

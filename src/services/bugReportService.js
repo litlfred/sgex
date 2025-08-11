@@ -1,6 +1,5 @@
 import githubService from './githubService';
 import issueTrackingService from './issueTrackingService';
-import jsYaml from 'js-yaml';
 
 class BugReportService {
   constructor() {
@@ -47,7 +46,7 @@ class BugReportService {
       for (const file of yamlFiles) {
         try {
           const fileContent = await githubService.getFileContent(owner, repo, file.path);
-          const template = this._parseIssueTemplate(fileContent, file.name);
+          const template = await this._parseIssueTemplate(fileContent, file.name);
           if (template) {
             templates.push(template);
           }
@@ -64,9 +63,11 @@ class BugReportService {
   }
 
   // Parse a YAML issue template
-  _parseIssueTemplate(yamlContent, filename) {
+  async _parseIssueTemplate(yamlContent, filename) {
     try {
-      const template = jsYaml.load(yamlContent);
+      // Lazy load js-yaml to improve initial page responsiveness
+      const jsYaml = await import('js-yaml');
+      const template = jsYaml.default.load(yamlContent);
       
       if (!template || !template.name || !template.body) {
         console.warn(`Invalid template structure in ${filename}`);

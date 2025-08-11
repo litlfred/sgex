@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
+import { createLazyBpmnViewer } from '../utils/lazyImports';
 
 const BPMNViewerComponent = () => {
   return (
@@ -257,7 +257,7 @@ const BPMNViewerContent = () => {
 
   // Initialize BPMN viewer - simplified to avoid race conditions
   useEffect(() => {
-    const initializeViewer = () => {
+    const initializeViewer = async () => {
       console.log('🛠️ BPMNViewer: initializeViewer called with:', {
         hasContainer: !!containerRef.current,
         hasViewer: !!viewerRef.current,
@@ -280,7 +280,8 @@ const BPMNViewerContent = () => {
             innerHTML: containerRef.current.innerHTML.length
           });
           
-          viewerRef.current = new BpmnViewer({
+          // Lazy load BPMN.js viewer to improve initial page responsiveness
+          viewerRef.current = await createLazyBpmnViewer({
             container: containerRef.current
           });
           console.log('✅ BPMNViewer: BPMN viewer initialized successfully');
@@ -302,11 +303,12 @@ const BPMNViewerContent = () => {
             cleanupContainer();
             
             // Wait a bit and try again
-            setTimeout(() => {
+            setTimeout(async () => {
               if (containerRef.current && !viewerRef.current) {
                 try {
                   console.log('🔄 BPMNViewer: Retrying viewer creation after cleanup...');
-                  viewerRef.current = new BpmnViewer({
+                  // Lazy load BPMN.js viewer to improve initial page responsiveness
+                  viewerRef.current = await createLazyBpmnViewer({
                     container: containerRef.current
                   });
                   console.log('✅ BPMNViewer: BPMN viewer initialized successfully on retry');

@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import BpmnModeler from 'bpmn-js/lib/Modeler';
-import { Octokit } from '@octokit/rest';
 import { AssetEditorLayout, useDAKParams } from './framework';
+import { createLazyBpmnModeler, createLazyOctokit } from '../utils/lazyImports';
 
 const BPMNEditor = () => {
   const navigate = useNavigate();
@@ -20,10 +19,11 @@ const BPMNEditor = () => {
   // Initialize BPMN modeler
   useEffect(() => {
     // Initialize modeler when container is available and file is selected
-    const initializeModeler = () => {
+    const initializeModeler = async () => {
       if (containerRef.current && !modelerRef.current && selectedFile) {
         try {
-          modelerRef.current = new BpmnModeler({
+          // Lazy load BPMN.js modeler to improve initial page responsiveness
+          modelerRef.current = await createLazyBpmnModeler({
             container: containerRef.current
           });
           console.log('BPMN modeler initialized successfully');
@@ -69,7 +69,8 @@ const BPMNEditor = () => {
         // Use GitHub API if profile has token, otherwise use mock data
         if (profile.token) {
           try {
-            const octokit = new Octokit({ auth: profile.token });
+            // Lazy load Octokit to improve initial page responsiveness
+            const octokit = await createLazyOctokit({ auth: profile.token });
             const { data } = await octokit.rest.repos.getContent({
               owner: repository.owner?.login || repository.full_name.split('/')[0],
               repo: repository.name,
@@ -172,7 +173,8 @@ const BPMNEditor = () => {
 
       // Use GitHub API if profile has token
       if (profile.token && repository) {
-        const octokit = new Octokit({ auth: profile.token });
+        // Lazy load Octokit to improve initial page responsiveness
+        const octokit = await createLazyOctokit({ auth: profile.token });
         
         // Get current file to get SHA for update
         let currentSha = selectedFile.sha;
@@ -225,7 +227,8 @@ const BPMNEditor = () => {
         try {
           // Initialize modeler if not already done
           if (!modelerRef.current && containerRef.current) {
-            modelerRef.current = new BpmnModeler({
+            // Lazy load BPMN.js modeler to improve initial page responsiveness
+            modelerRef.current = await createLazyBpmnModeler({
               container: containerRef.current
             });
             console.log('BPMN modeler initialized for file loading');

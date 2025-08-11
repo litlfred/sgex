@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import githubService from '../services/githubService';
 
 const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
@@ -188,7 +187,8 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
         console.log('🔧 BPMNPreview: Creating BPMN viewer...');
         console.log('🔍 BPMNPreview: About to create viewer with BPMN content length:', bpmnXml?.length);
         
-        // Create and initialize viewer with clean separation
+        // Create and initialize viewer with clean separation - lazy load BPMN.js
+        const { default: BpmnViewer } = await import('bpmn-js/lib/NavigatedViewer');
         const viewer = new BpmnViewer();
         viewerRef.current = viewer;
         

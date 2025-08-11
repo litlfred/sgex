@@ -1,4 +1,3 @@
-import yaml from 'js-yaml';
 import githubService from './githubService';
 
 /**
@@ -37,7 +36,9 @@ class DAKValidationService {
       }
 
       // Parse the YAML content
-      const config = yaml.load(sushiConfigContent);
+      // Lazy load js-yaml to improve initial page responsiveness
+      const yamlModule = await import('js-yaml');
+      const config = yamlModule.default.load(sushiConfigContent);
       
       if (!config || typeof config !== 'object') {
         // If YAML is invalid but repository exists, still allow it
