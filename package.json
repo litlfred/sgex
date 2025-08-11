@@ -26,6 +26,7 @@
     "react-router-dom": "^7.7.1",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.6.1",
+    "rehype-raw": "^7.0.0",
     "web-vitals": "^5.1.0"
   },
   "scripts": {
@@ -41,7 +42,6 @@
     "lint:a11y": "eslint src --ext .js,.jsx --format=compact | grep jsx-a11y || echo 'No accessibility issues found!'",
     "lint:fix": "eslint src --ext .js,.jsx --fix"
   },
-
   "jest": {
     "transformIgnorePatterns": [
       "node_modules/(?!(@octokit|universal-user-agent|before-after-hook|@babel|babel-runtime|@ungap|jsdom|@uiw|react-router|react-router-dom)/)"

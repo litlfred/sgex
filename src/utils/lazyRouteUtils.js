@@ -462,6 +462,23 @@ export async function lazyLoadDOMPurify() {
 }
 
 /**
+ * Lazy load rehype-raw for HTML table rendering in markdown
+ * @returns {Promise<rehypeRaw>} rehypeRaw plugin
+ */
+export async function lazyLoadRehypeRaw() {
+  const cacheKey = 'rehype-raw';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const rehypeRawModule = await import('rehype-raw');
+  const rehypeRaw = rehypeRawModule.default;
+  moduleCache.set(cacheKey, rehypeRaw);
+  return rehypeRaw;
+}
+
+/**
  * Create a lazy-loaded Octokit instance
  * @param {Object} options - Octokit configuration options
  * @returns {Promise<Octokit>} Configured Octokit instance
@@ -532,6 +549,7 @@ const LazyUtils = {
   lazyLoadAjv,
   lazyLoadAjvFormats,
   lazyLoadDOMPurify,
+  lazyLoadRehypeRaw,
   createLazyOctokit,
   createLazyBpmnModeler,
   createLazyBpmnViewer,

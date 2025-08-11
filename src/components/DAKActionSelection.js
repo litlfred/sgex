@@ -5,6 +5,7 @@ import { PageLayout, usePageParams } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
+import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
   return (

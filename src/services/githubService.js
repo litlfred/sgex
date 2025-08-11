@@ -1734,6 +1734,90 @@ class GitHubService {
     }
   }
 
+  // Merge a pull request
+  async mergePullRequest(owner, repo, pullNumber, options = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('PUT', `/repos/${owner}/${repo}/pulls/${pullNumber}/merge`, options);
+
+    try {
+      const mergeOptions = {
+        owner,
+        repo,
+        pull_number: pullNumber,
+        commit_title: options.commit_title,
+        commit_message: options.commit_message,
+        merge_method: options.merge_method || 'merge', // 'merge', 'squash', or 'rebase'
+        ...options
+      };
+
+      const response = await this.octokit.rest.pulls.merge(mergeOptions);
+
+      this.logger.apiResponse('PUT', `/repos/${owner}/${repo}/pulls/${pullNumber}/merge`, response.status, Date.now() - startTime);
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('PUT', `/repos/${owner}/${repo}/pulls/${pullNumber}/merge`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to merge pull request:', error);
+      throw error;
+    }
+  }
+
+  // Check if the current user can merge a specific pull request
+  async checkPullRequestMergePermissions(owner, repo, pullNumber) {
+    if (!this.isAuth()) {
+      this.logger.warn('Cannot check PR merge permissions - not authenticated', { owner, repo, pullNumber });
+      return false;
+    }
+
+    try {
+      const startTime = Date.now();
+      this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}`, {});
+
+      // Get the pull request details to check mergeable state and permissions
+      const response = await this.octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number: pullNumber
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}`, response.status, Date.now() - startTime);
+      
+      const pr = response.data;
+      
+      // Check if PR is in a mergeable state
+      if (pr.state !== 'open') {
+        this.logger.debug('PR not mergeable - not open', { owner, repo, pullNumber, state: pr.state });
+        return false;
+      }
+
+      if (pr.draft) {
+        this.logger.debug('PR not mergeable - is draft', { owner, repo, pullNumber });
+        return false;
+      }
+
+      // Check if the user has write permissions to the repository
+      const hasWriteAccess = await this.checkRepositoryWritePermissions(owner, repo);
+      if (!hasWriteAccess) {
+        this.logger.debug('PR not mergeable - no write access', { owner, repo, pullNumber });
+        return false;
+      }
+
+      // Additional checks could include:
+      // - Required status checks
+      // - Required reviews
+      // - Admin enforcement
+      // For now, we'll rely on the GitHub API to provide proper error messages when merge is attempted
+
+      return true;
+    } catch (error) {
+      this.logger.warn('Error checking PR merge permissions', { owner, repo, pullNumber, error: error.message });
+      return false;
+    }
+  }
+
   // Get open issues count
   async getOpenIssuesCount(owner, repo) {
     if (!this.isAuth()) {
