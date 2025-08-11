@@ -1,36 +1,12 @@
 /**
  * Local FAQ Execution Engine for MCP Server
- * Extends the base engine for local file system operations
+ * Uses modular question loading system with i18n support
  */
 
 import path from 'path';
 import fs from 'fs/promises';
-import { FAQQuestion, ExecuteRequest, ExecuteResponse, CatalogFilters } from '../../types.js';
-
-interface FAQQuestionRegistry {
-  metadata: FAQQuestion;
-  execute: (input: FAQExecutionInput) => Promise<FAQExecutionResult>;
-}
-
-interface FAQExecutionInput {
-  storage: StorageInterface;
-  locale?: string;
-  [key: string]: any;
-}
-
-interface FAQExecutionResult {
-  structured: Record<string, any>;
-  narrative: string;
-  errors: string[];
-  warnings: string[];
-  meta: Record<string, any>;
-}
-
-interface StorageInterface {
-  readFile(filePath: string): Promise<Buffer>;
-  fileExists(filePath: string): Promise<boolean>;
-  listFiles(pattern: string, options?: Record<string, any>): Promise<string[]>;
-}
+import { FAQQuestion, ExecuteRequest, ExecuteResponse, CatalogFilters, FAQExecutionInput, FAQExecutionResult, StorageInterface } from '../../types.js';
+import { QuestionLoader } from './QuestionLoader.js';
 
 interface FAQExecutionContext {
   repositoryPath?: string;
@@ -38,11 +14,11 @@ interface FAQExecutionContext {
 }
 
 export class FAQExecutionEngineLocal {
-  private questionRegistry: Map<string, FAQQuestionRegistry>;
+  private questionLoader: QuestionLoader;
   private initialized: boolean;
 
   constructor() {
-    this.questionRegistry = new Map();
+    this.questionLoader = new QuestionLoader();
     this.initialized = false;
   }
 
@@ -53,161 +29,11 @@ export class FAQExecutionEngineLocal {
     if (this.initialized) return;
 
     try {
-      // In MCP server, we need to dynamically import questions
-      // This is a simplified version that would need to be expanded
-      await this.loadQuestions();
+      await this.questionLoader.loadAllQuestions();
       this.initialized = true;
     } catch (error: any) {
       throw new Error(`Failed to initialize local FAQ engine: ${error.message}`);
     }
-  }
-
-  /**
-   * Load question modules (simplified for demo)
-   */
-  private async loadQuestions(): Promise<void> {
-    // For the MCP server, we would need to either:
-    // 1. Copy the question modules to the MCP server directory
-    // 2. Create a build process that bundles them
-    // 3. Or implement a different loading mechanism
-    
-    // For now, we'll register mock questions that demonstrate the structure
-    this.registerMockQuestions();
-  }
-
-  /**
-   * Register mock questions for demonstration
-   */
-  private registerMockQuestions(): void {
-    // DAK Name Question
-    this.questionRegistry.set('dak-name', {
-      metadata: {
-        id: 'dak-name',
-        level: 'dak',
-        title: 'DAK Name',
-        description: 'Extracts the name of the DAK from sushi-config.yaml',
-        parameters: [],
-        tags: ['dak', 'metadata', 'name']
-      },
-      execute: async (input: FAQExecutionInput): Promise<FAQExecutionResult> => {
-        const { storage, locale = 'en_US' } = input;
-        
-        try {
-          const exists = await storage.fileExists('sushi-config.yaml');
-          if (!exists) {
-            return {
-              structured: { name: null },
-              narrative: `<h4>DAK Name</h4><p class="error">The sushi-config.yaml file was not found.</p>`,
-              errors: ['sushi-config.yaml file not found'],
-              warnings: [],
-              meta: {}
-            };
-          }
-
-          const content = await storage.readFile('sushi-config.yaml');
-          const yaml = await import('js-yaml');
-          const config = yaml.load(content.toString('utf-8')) as any;
-          
-          const name = config?.name || config?.title || config?.id || null;
-          
-          return {
-            structured: { 
-              name,
-              id: config?.id,
-              title: config?.title,
-              version: config?.version 
-            },
-            narrative: name 
-              ? `<h4>DAK Name</h4><p>The name of this DAK is <strong>${name}</strong>.</p>`
-              : `<h4>DAK Name</h4><p>No name found in sushi-config.yaml.</p>`,
-            errors: [],
-            warnings: name ? [] : ['No name field found in sushi-config.yaml'],
-            meta: {
-              cacheHint: {
-                scope: 'repository',
-                key: 'dak-name',
-                ttl: 3600,
-                dependencies: ['sushi-config.yaml']
-              }
-            }
-          };
-        } catch (error: any) {
-          return {
-            structured: { name: null },
-            narrative: `<h4>DAK Name</h4><p class="error">Error reading configuration: ${error.message}</p>`,
-            errors: [error.message],
-            warnings: [],
-            meta: {}
-          };
-        }
-      }
-    });
-
-    // DAK Version Question  
-    this.questionRegistry.set('dak-version', {
-      metadata: {
-        id: 'dak-version',
-        level: 'dak',
-        title: 'DAK Version',
-        description: 'Extracts the version of the DAK from sushi-config.yaml',
-        parameters: [],
-        tags: ['dak', 'metadata', 'version']
-      },
-      execute: async (input: FAQExecutionInput): Promise<FAQExecutionResult> => {
-        const { storage, locale = 'en_US' } = input;
-        
-        try {
-          const exists = await storage.fileExists('sushi-config.yaml');
-          if (!exists) {
-            return {
-              structured: { version: null },
-              narrative: `<h4>DAK Version</h4><p class="error">The sushi-config.yaml file was not found.</p>`,
-              errors: ['sushi-config.yaml file not found'],
-              warnings: [],
-              meta: {}
-            };
-          }
-
-          const content = await storage.readFile('sushi-config.yaml');
-          const yaml = await import('js-yaml');
-          const config = yaml.load(content.toString('utf-8')) as any;
-          
-          const version = config?.version || null;
-          const status = config?.status || null;
-          
-          return {
-            structured: { 
-              version,
-              status,
-              releaseDate: config?.releaseDate || config?.date,
-              name: config?.name,
-              id: config?.id
-            },
-            narrative: version 
-              ? `<h4>DAK Version</h4><p>This DAK is version <strong>${version}</strong>.</p>${status ? `<p>Status: ${status}</p>` : ''}`
-              : `<h4>DAK Version</h4><p>No version found in sushi-config.yaml.</p>`,
-            errors: [],
-            warnings: version ? [] : ['No version field found in sushi-config.yaml'],
-            meta: {
-              cacheHint: {
-                scope: 'repository',
-                key: 'dak-version',
-                ttl: 3600,
-                dependencies: ['sushi-config.yaml']
-              }
-            }
-          };
-        } catch (error: any) {
-          return {
-            structured: { version: null },
-            narrative: `<h4>DAK Version</h4><p class="error">Error reading configuration: ${error.message}</p>`,
-            errors: [error.message],
-            warnings: [],
-            meta: {}
-          };
-        }
-      }
-    });
   }
 
   /**
@@ -218,7 +44,7 @@ export class FAQExecutionEngineLocal {
       throw new Error('FAQ engine not initialized');
     }
 
-    let questions = Array.from(this.questionRegistry.values()).map(q => q.metadata);
+    let questions = this.questionLoader.getAllQuestions().map(q => q.definition);
 
     // Apply filters
     if (filters.level) {
@@ -290,7 +116,7 @@ export class FAQExecutionEngineLocal {
   private async executeQuestion(request: ExecuteRequest, context: FAQExecutionContext = {}): Promise<FAQExecutionResult> {
     const { questionId, parameters = {} } = request;
 
-    const question = this.questionRegistry.get(questionId);
+    const question = this.questionLoader.getQuestion(questionId);
     if (!question) {
       throw new Error(`Question not found: ${questionId}`);
     }
@@ -299,14 +125,62 @@ export class FAQExecutionEngineLocal {
     const repositoryPath = context.repositoryPath || process.cwd();
     const storage = new LocalStorageImpl(repositoryPath);
 
+    // Create a simple translation function (for MCP server, we'll use English defaults)
+    const t = (key: string, options: any = {}) => {
+      // Simple fallback translation - in a full implementation, this would load actual translations
+      const translations: Record<string, string> = {
+        'dak.faq.name.title': 'DAK Name',
+        'dak.faq.name.description': 'Extracts the name of the DAK from sushi-config.yaml',
+        'dak.faq.name.config_not_found': 'The sushi-config.yaml file was not found',
+        'dak.faq.name.found': `The name of this DAK is **${options.name}**`,
+        'dak.faq.name.not_found': 'No DAK name found in configuration',
+        'dak.faq.name.no_name_field': 'No name field found in sushi-config.yaml',
+        'dak.faq.name.read_error': `Error reading configuration: ${options.error}`,
+        'dak.faq.version.title': 'DAK Version',
+        'dak.faq.version.description': 'Extracts the version of the DAK from sushi-config.yaml',
+        'dak.faq.version.config_not_found': 'The sushi-config.yaml file was not found',
+        'dak.faq.version.found': `This DAK is version **${options.version}**`,
+        'dak.faq.version.status': `Status: ${options.status}`,
+        'dak.faq.version.not_found': 'No DAK version found in configuration',
+        'dak.faq.version.no_version_field': 'No version field found in sushi-config.yaml',
+        'dak.faq.version.read_error': `Error reading configuration: ${options.error}`,
+        'dak.faq.decision_table_inputs.title': 'Decision Table Inputs',
+        'dak.faq.decision_table_inputs.description': 'Analyzes DMN files to extract decision table input requirements',
+        'dak.faq.decision_table_inputs.no_asset_file': 'No asset file specified',
+        'dak.faq.decision_table_inputs.file_not_found': `DMN file not found: ${options.file}`,
+        'dak.faq.decision_table_inputs.parse_error': 'Error parsing DMN XML file',
+        'dak.faq.decision_table_inputs.analysis_error': `Error analyzing DMN file: ${options.error}`,
+        'dak.faq.decision_table_inputs.no_tables': 'No decision tables found in this DMN file',
+        'dak.faq.decision_table_inputs.found_tables': `Found ${options.count} decision table(s)`,
+        'dak.faq.decision_table_inputs.hit_policy': 'Hit Policy',
+        'dak.faq.decision_table_inputs.inputs': 'Inputs',
+        'dak.faq.decision_table_inputs.outputs': 'Outputs',
+        'dak.faq.decision_table_inputs.no_inputs': 'No inputs found in decision tables'
+      };
+      
+      return translations[key] || key;
+    };
+
     // Execute question
     const input: FAQExecutionInput = {
       ...parameters,
       storage,
-      locale: parameters.locale || 'en_US'
+      locale: parameters.locale || 'en',
+      t
     };
 
-    return await question.execute(input);
+    return await question.executor(input);
+  }
+
+  /**
+   * Get question schemas for API documentation
+   */
+  getQuestionSchemas(): Record<string, any> {
+    if (!this.initialized) {
+      throw new Error('FAQ engine not initialized');
+    }
+    
+    return this.questionLoader.getQuestionSchemas();
   }
 }
 

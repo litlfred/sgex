@@ -9,6 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { executeRoute } from './server/routes/execute.js';
 import { catalogRoute } from './server/routes/catalog.js';
+import { schemaRoute } from './server/routes/schema.js';
 import { HealthResponse, ErrorResponse } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -41,6 +42,7 @@ app.get('/health', (req: Request, res: Response<HealthResponse>) => {
 // FAQ routes
 app.use('/faq/questions', executeRoute);
 app.use('/faq/questions', catalogRoute);
+app.use('/faq', schemaRoute);
 
 // Root endpoint with API information
 app.get('/', (req: Request, res: Response) => {
@@ -51,7 +53,11 @@ app.get('/', (req: Request, res: Response) => {
     endpoints: {
       'GET /health': 'Health check',
       'GET /faq/questions/catalog': 'List available FAQ questions',
-      'POST /faq/questions/execute': 'Execute FAQ questions in batch'
+      'POST /faq/questions/execute': 'Execute FAQ questions in batch',
+      'GET /faq/schemas': 'Get all question schemas',
+      'GET /faq/schemas/:questionId': 'Get schema for specific question',
+      'GET /faq/openapi': 'Get OpenAPI schema for all questions',
+      'POST /faq/validate': 'Validate question parameters'
     },
     security: {
       binding: 'localhost only (127.0.0.1)',

@@ -11,6 +11,11 @@ export interface FAQQuestion {
   tags: string[];
   componentType?: string;
   assetType?: string;
+  version?: string;
+  schema?: {
+    input: any;
+    output: any;
+  };
 }
 
 export interface FAQParameter {
@@ -107,4 +112,51 @@ export interface OpenAPISchema {
   components: {
     schemas: Record<string, any>;
   };
+}
+
+// New interfaces for the modular question system
+export interface FAQExecutionInput {
+  storage: StorageInterface;
+  locale?: string;
+  t: (key: string, options?: any) => string; // Translation function
+  [key: string]: any;
+}
+
+export interface FAQExecutionResult {
+  structured: Record<string, any>;
+  narrative: string;
+  errors: string[];
+  warnings: string[];
+  meta: Record<string, any>;
+}
+
+export interface FAQExecutor {
+  (input: FAQExecutionInput): Promise<FAQExecutionResult>;
+}
+
+export interface StorageInterface {
+  readFile(filePath: string): Promise<Buffer>;
+  fileExists(filePath: string): Promise<boolean>;
+  listFiles(pattern: string, options?: Record<string, any>): Promise<string[]>;
+}
+
+export interface QuestionDefinition {
+  id: string;
+  level: 'dak' | 'component' | 'asset';
+  title: string;
+  description: string;
+  parameters: FAQParameter[];
+  tags: string[];
+  componentType?: string;
+  assetType?: string;
+  version?: string;
+  schema?: {
+    input: any;
+    output: any;
+  };
+}
+
+export interface QuestionModule {
+  definition: QuestionDefinition;
+  executor: FAQExecutor;
 }
