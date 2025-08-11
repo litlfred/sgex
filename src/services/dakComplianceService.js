@@ -5,9 +5,7 @@
  * Designed to work in multiple environments: React client-side, command-line, and IDE integration.
  */
 
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
-import { lazyLoadYaml } from '../utils/lazyRouteUtils';
+import { lazyLoadAjv, lazyLoadAjvFormats, lazyLoadYaml } from '../utils/lazyRouteUtils';
 
 // Import schema as a module
 const sushiConfigSchema = require('../schemas/sushi-config.json');
@@ -22,7 +20,10 @@ class DAKComplianceService {
   /**
    * Initialize AJV schema validator for sushi-config.yaml
    */
-  initializeSchemaValidator() {
+  async initializeSchemaValidator() {
+    const Ajv = await lazyLoadAjv();
+    const addFormats = await lazyLoadAjvFormats();
+    
     this.ajv = new Ajv({ allErrors: true, verbose: true });
     addFormats(this.ajv);
     this.sushiConfigValidator = this.ajv.compile(sushiConfigSchema);

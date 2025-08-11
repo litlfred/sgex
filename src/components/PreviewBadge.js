@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import githubService from '../services/githubService';
 import githubActionsService from '../services/githubActionsService';
 import WorkflowStatus from './WorkflowStatus';
-import ReactMarkdown from 'react-markdown';
-import DOMPurify from 'dompurify';
+import { lazyLoadReactMarkdown, lazyLoadDOMPurify } from '../utils/lazyRouteUtils';
 import './WorkflowStatus.css';
 import './PreviewBadge.css';
 
@@ -34,6 +33,26 @@ const PreviewBadge = () => {
   const [workflowLoading, setWorkflowLoading] = useState(false);
   const [newlyAddedCommentId, setNewlyAddedCommentId] = useState(null);
   const [copilotSessionInfo, setCopilotSessionInfo] = useState(null);
+  const [ReactMarkdown, setReactMarkdown] = useState(null);
+  const [DOMPurify, setDOMPurify] = useState(null);
+
+  // Lazy load markdown and sanitization components
+  useEffect(() => {
+    const loadMarkdownComponents = async () => {
+      try {
+        const [markdown, domPurify] = await Promise.all([
+          lazyLoadReactMarkdown(),
+          lazyLoadDOMPurify()
+        ]);
+        setReactMarkdown(() => markdown);
+        setDOMPurify(domPurify);
+      } catch (error) {
+        console.error('Failed to load markdown components:', error);
+      }
+    };
+
+    loadMarkdownComponents();
+  }, []);
   const [showCopilotSession, setShowCopilotSession] = useState(false);
   const [canComment, setCanComment] = useState(true);
   const [canTriggerWorkflows, setCanTriggerWorkflows] = useState(false);
@@ -621,7 +640,7 @@ const PreviewBadge = () => {
   };
 
   const sanitizeAndRenderMarkdown = (content) => {
-    if (!content) return '';
+    if (!content || !DOMPurify) return content || '';
     
     // Sanitize the markdown content to prevent XSS attacks
     const sanitizedContent = DOMPurify.sanitize(content);
@@ -898,9 +917,15 @@ const PreviewBadge = () => {
                   <h4>Description</h4>
                   <div className="pr-body">
                     <div className="markdown-content">
-                      <ReactMarkdown>
-                        {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
-                      </ReactMarkdown>
+                      {ReactMarkdown ? (
+                        <ReactMarkdown>
+                          {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
+                        </ReactMarkdown>
+                      ) : (
+                        <div style={{ whiteSpace: 'pre-wrap' }}>
+                          {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
+                        </div>
+                      )}
                     </div>
                     {prInfo[0].body.split('\n').length > 6 && (
                       <button 
@@ -997,7 +1022,13 @@ const PreviewBadge = () => {
                             </div>
                             <div className="copilot-comment-body">
                               <div className="markdown-content">
-                                <ReactMarkdown>{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                                {ReactMarkdown ? (
+                                  <ReactMarkdown>{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                                ) : (
+                                  <div style={{ whiteSpace: 'pre-wrap' }}>
+                                    {sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1069,7 +1100,13 @@ const PreviewBadge = () => {
                                 <>
                                   <div className="comment-preview">
                                     <div className="markdown-content">
-                                      <ReactMarkdown>{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
+                                      {ReactMarkdown ? (
+                                        <ReactMarkdown>{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
+                                      ) : (
+                                        <div style={{ whiteSpace: 'pre-wrap' }}>
+                                          {sanitizeAndRenderMarkdown(truncateComment(comment.body))}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                   <button 
@@ -1083,7 +1120,13 @@ const PreviewBadge = () => {
                                 <>
                                   <div className="comment-full">
                                     <div className="markdown-content">
-                                      <ReactMarkdown>{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
+                                      {ReactMarkdown ? (
+                                        <ReactMarkdown>{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
+                                      ) : (
+                                        <div style={{ whiteSpace: 'pre-wrap' }}>
+                                          {sanitizeAndRenderMarkdown(comment.body)}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                   {shouldTruncate && (

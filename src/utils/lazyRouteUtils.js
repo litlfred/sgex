@@ -362,6 +362,106 @@ export async function lazyLoadMDEditor() {
 }
 
 /**
+ * Lazy load react-syntax-highlighter for code syntax highlighting
+ * @returns {Promise<SyntaxHighlighter>} Prism SyntaxHighlighter
+ */
+export async function lazyLoadSyntaxHighlighter() {
+  const cacheKey = 'syntax-highlighter';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const { Prism } = await import('react-syntax-highlighter');
+  moduleCache.set(cacheKey, Prism);
+  return Prism;
+}
+
+/**
+ * Lazy load syntax highlighter styles
+ * @returns {Promise<Object>} oneLight style theme
+ */
+export async function lazyLoadSyntaxHighlighterStyles() {
+  const cacheKey = 'syntax-highlighter-styles';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const { oneLight } = await import('react-syntax-highlighter/dist/esm/styles/prism');
+  moduleCache.set(cacheKey, oneLight);
+  return oneLight;
+}
+
+/**
+ * Lazy load ReactMarkdown for markdown rendering
+ * @returns {Promise<ReactMarkdown>} ReactMarkdown component
+ */
+export async function lazyLoadReactMarkdown() {
+  const cacheKey = 'react-markdown';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const ReactMarkdown = await import('react-markdown');
+  const component = ReactMarkdown.default;
+  moduleCache.set(cacheKey, component);
+  return component;
+}
+
+/**
+ * Lazy load AJV for JSON schema validation
+ * @returns {Promise<Ajv>} AJV constructor
+ */
+export async function lazyLoadAjv() {
+  const cacheKey = 'ajv';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const AjvModule = await import('ajv');
+  const Ajv = AjvModule.default;
+  moduleCache.set(cacheKey, Ajv);
+  return Ajv;
+}
+
+/**
+ * Lazy load AJV formats for additional validation formats
+ * @returns {Promise<Function>} addFormats function
+ */
+export async function lazyLoadAjvFormats() {
+  const cacheKey = 'ajv-formats';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const addFormatsModule = await import('ajv-formats');
+  const addFormats = addFormatsModule.default;
+  moduleCache.set(cacheKey, addFormats);
+  return addFormats;
+}
+
+/**
+ * Lazy load DOMPurify for HTML sanitization
+ * @returns {Promise<DOMPurify>} DOMPurify instance
+ */
+export async function lazyLoadDOMPurify() {
+  const cacheKey = 'dompurify';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const DOMPurifyModule = await import('dompurify');
+  const DOMPurify = DOMPurifyModule.default;
+  moduleCache.set(cacheKey, DOMPurify);
+  return DOMPurify;
+}
+
+/**
  * Create a lazy-loaded Octokit instance
  * @param {Object} options - Octokit configuration options
  * @returns {Promise<Octokit>} Configured Octokit instance
@@ -392,6 +492,19 @@ export async function createLazyBpmnViewer(options = {}) {
 }
 
 /**
+ * Create a lazy-loaded AJV instance with formats
+ * @param {Object} options - AJV configuration options
+ * @returns {Promise<Ajv>} Configured AJV instance with formats added
+ */
+export async function createLazyAjv(options = {}) {
+  const Ajv = await lazyLoadAjv();
+  const addFormats = await lazyLoadAjvFormats();
+  const ajv = new Ajv(options);
+  addFormats(ajv);
+  return ajv;
+}
+
+/**
  * Clear the module cache (useful for testing)
  */
 export function clearLazyImportCache() {
@@ -413,9 +526,16 @@ const LazyUtils = {
   lazyLoadBpmnViewer,
   lazyLoadYaml,
   lazyLoadMDEditor,
+  lazyLoadSyntaxHighlighter,
+  lazyLoadSyntaxHighlighterStyles,
+  lazyLoadReactMarkdown,
+  lazyLoadAjv,
+  lazyLoadAjvFormats,
+  lazyLoadDOMPurify,
   createLazyOctokit,
   createLazyBpmnModeler,
   createLazyBpmnViewer,
+  createLazyAjv,
   clearLazyImportCache
 };
 
