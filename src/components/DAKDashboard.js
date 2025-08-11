@@ -6,6 +6,7 @@ import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
 import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
+import DAKComponentCard from './DAKComponentCard';
 import Publications from './Publications';
 import ForkStatusBar from './ForkStatusBar';
 import { PageLayout } from './framework';
@@ -263,9 +264,10 @@ const DAKDashboardContent = () => {
   const coreDAKComponents = [
     {
       id: 'health-interventions',
-      name: 'Health Interventions and Recommendations',
+      name: t('dak.healthInterventions'),
       description: 'Clinical guidelines and health intervention specifications that define evidence-based care recommendations',
       icon: '📖',
+      cardImage: 'dashboard/dak_interventions.png',
       type: 'L2',
       color: '#0078d4',
       fileTypes: ['IRIS', 'Publication'],
@@ -274,9 +276,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'generic-personas',
-      name: 'Generic Personas',
+      name: t('dak.genericPersonas'),
       description: 'Standardized user roles and actor definitions that represent different types of healthcare workers and patients',
       icon: '👥',
+      cardImage: 'dashboard/dak_personas.png',
       type: 'L2',
       color: '#107c10',
       fileTypes: ['Actor', 'Role'],
@@ -285,9 +288,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'user-scenarios',
-      name: 'User Scenarios',
+      name: t('dak.userScenarios'),
       description: 'Narrative descriptions of how different personas interact with the system in specific healthcare contexts',
       icon: '📝',
+      cardImage: 'dashboard/dak_user_scenarios.png',
       type: 'L2',
       color: '#881798',
       fileTypes: ['Narrative', 'Use Case'],
@@ -296,9 +300,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'business-processes',
-      name: 'Generic Business Processes and Workflows',
+      name: t('dak.businessProcesses'),
       description: 'BPMN workflows and business process definitions that model clinical workflows and care pathways',
       icon: '🔄',
+      cardImage: 'dashboard/dak_business_processes.png',
       type: 'L2',
       color: '#d13438',
       fileTypes: ['BPMN', 'XML'],
@@ -307,9 +312,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'core-data-elements',
-      name: 'Core Data Elements',
+      name: t('dak.coreDataElements'),
       description: 'Essential data structures and terminology needed for clinical data capture and exchange (includes Terminology Services via OCL and Product Master Data via PCMT)',
       icon: '🗃️',
+      cardImage: 'dashboard/dak_core_data_elements.png',
       type: 'L2',
       color: '#ff8c00',
       fileTypes: ['OCL', 'Concept', 'PCMT', 'Product'],
@@ -318,9 +324,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'decision-support',
-      name: 'Decision-Support Logic',
+      name: t('dak.decisionSupportLogic'),
       description: 'DMN decision tables and clinical decision support rules that encode clinical logic',
       icon: '🎯',
+      cardImage: 'dashboard/dak_decision_support_logic.png',
       type: 'L2',
       color: '#00bcf2',
       fileTypes: ['DMN', 'XML'],
@@ -329,9 +336,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'program-indicators',
-      name: 'Program Indicators',
+      name: t('dak.programIndicators'),
       description: 'Performance indicators and measurement definitions for monitoring and evaluation',
       icon: '📊',
+      cardImage: 'dashboard/dak_indicators.png',
       type: 'L2',
       color: '#498205',
       fileTypes: ['Measure', 'Logic'],
@@ -340,9 +348,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'functional-requirements',
-      name: 'Functional and Non-Functional Requirements',
+      name: t('dak.requirements'),
       description: 'System requirements specifications that define capabilities and constraints',
       icon: '⚙️',
+      cardImage: 'dashboard/dak_requirements.png',
       type: 'L2',
       color: '#6b69d6',
       fileTypes: ['Requirements', 'Specification'],
@@ -351,9 +360,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'test-scenarios',
-      name: 'Test Scenarios',
+      name: t('dak.testScenarios') || 'Test Scenarios',
       description: 'Feature files and test scenarios for validating the DAK implementation',
       icon: '🧪',
+      cardImage: 'dashboard/dak_testing.png',
       type: 'L2',
       color: '#8b5cf6',
       fileTypes: ['Feature', 'Test'],
@@ -562,34 +572,12 @@ const DAKDashboardContent = () => {
 
               <div className="components-grid core-components">
                 {coreDAKComponents.map((component) => (
-                  <div 
+                  <DAKComponentCard
                     key={component.id}
-                    className={`component-card ${component.type.toLowerCase()}`}
-                    onClick={(event) => handleComponentClick(event, component)}
-                    style={{ '--component-color': component.color }}
-                  >
-                    <div className="component-header">
-                      <div className="component-icon" style={{ color: component.color }}>
-                        {component.icon}
-                      </div>
-                    </div>
-                    
-                    <div className="component-content">
-                      <h4>{component.name}</h4>
-                      <p>{component.description}</p>
-                      
-                      <div className="component-meta">
-                        <div className="file-types">
-                          {component.fileTypes.map((type) => (
-                            <span key={type} className="file-type-tag">{type}</span>
-                          ))}
-                        </div>
-                        <div className="file-count">
-                          {component.count} files
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                    component={component}
+                    onClick={handleComponentClick}
+                    className="large-card"
+                  />
                 ))}
               </div>
             </div>

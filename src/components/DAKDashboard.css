@@ -426,8 +426,11 @@ body.theme-light .dak-dashboard {
 .components-grid.core-components {
   /* 3x3 grid for 9 core components */
   grid-template-columns: repeat(3, 1fr);
-  max-width: 1200px;
+  grid-template-rows: repeat(3, 1fr);
+  max-width: 1400px;
   margin: 0 auto 2rem auto;
+  gap: 2rem;
+  min-height: 900px;
 }
 
 .components-grid.additional-components {
@@ -581,10 +584,12 @@ body.theme-light .dak-dashboard {
   font-size: 1rem;
 }
 
-/* Tablet responsive design */
+/* Override 3x3 grid on tablet for core components */
 @media (max-width: 1024px) and (min-width: 769px) {
   .components-grid.core-components {
     grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+    max-width: 800px;
   }
 }
 
@@ -639,6 +644,7 @@ body.theme-light .dak-dashboard {
   /* Override 3x3 grid on mobile for core components */
   .components-grid.core-components {
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
     max-width: none;
   }
   
