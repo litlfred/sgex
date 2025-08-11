@@ -451,6 +451,107 @@ body.theme-light .dak-dashboard {
   overflow: hidden;
 }
 
+.component-card:focus {
+  outline: 2px solid var(--component-color);
+  outline-offset: 2px;
+}
+
+.component-card.large-card {
+  min-height: 280px;
+  padding: 0;
+}
+
+.component-card.large-card .component-image-container {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  position: relative;
+  border-radius: 16px 16px 0 0;
+}
+
+.component-card.large-card .component-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.component-card.large-card:hover .component-card-image {
+  transform: scale(1.05);
+}
+
+.component-card.large-card .component-content {
+  padding: 1rem;
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.95);
+  min-height: 100px;
+}
+
+/* Dark mode adjustments for card content background */
+body.theme-dark .component-card.large-card .component-content {
+  background: rgba(10, 20, 40, 0.95);
+  color: white;
+}
+
+.component-card.large-card .component-content h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--component-color);
+  line-height: 1.3;
+}
+
+body.theme-dark .component-card.large-card .component-content h4 {
+  color: white;
+}
+
+.component-card.large-card .component-content p {
+  margin: 0 0 1rem 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #666;
+}
+
+body.theme-dark .component-card.large-card .component-content p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Accessibility: visually hidden but available to screen readers */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.component-card.image-loaded .component-content h4,
+.component-card.image-loaded .component-content p:first-of-type {
+  /* Hide title and description when image loads successfully */
+  display: none;
+}
+
+/* Show meta information when image loads */
+.component-card.image-loaded .component-meta {
+  margin-top: 0;
+}
+
+/* Fallback icon styles when image fails */
+.component-card .component-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 180px;
+  font-size: 4rem;
+  background: linear-gradient(135deg, var(--component-color) 0%, rgba(255,255,255,0.1) 100%);
+}
+
 .component-card::before {
   content: '';
   position: absolute;

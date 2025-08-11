@@ -6,7 +6,6 @@ import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
 import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
-import DAKComponentCard from './DAKComponentCard';
 import Publications from './Publications';
 import ForkStatusBar from './ForkStatusBar';
 import { PageLayout } from './framework';
@@ -42,6 +41,79 @@ const DAKDashboardContent = () => {
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Component Card component defined within the dashboard
+  const ComponentCard = ({ component, cardImagePath, handleComponentClick, t }) => {
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [imageError, setImageError] = useState(false);
+
+    const handleImageLoad = () => {
+      setImageLoaded(true);
+      setImageError(false);
+    };
+
+    const handleImageError = () => {
+      setImageError(true);
+      setImageLoaded(false);
+    };
+
+    return (
+      <div 
+        className={`component-card ${component.type.toLowerCase()} large-card ${imageLoaded ? 'image-loaded' : ''}`}
+        onClick={(event) => handleComponentClick(event, component)}
+        style={{ '--component-color': component.color }}
+        tabIndex={0}
+        role="button"
+        aria-label={`${component.name} - ${component.description}`}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleComponentClick(event, component);
+          }
+        }}
+      >
+        <div className="component-header">
+          <div className="component-image-container">
+            <img 
+              src={cardImagePath}
+              alt={getAltText(t, ALT_TEXT_KEYS.ICON_DAK_COMPONENT, component.name, { name: component.name })}
+              className="component-card-image"
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              style={{ display: imageError ? 'none' : 'block' }}
+            />
+            {/* Fallback icon when image fails to load */}
+            {imageError && (
+              <div className="component-icon" style={{ color: component.color }}>
+                {component.icon}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="component-content">
+          {/* Only show title text if image failed to load or as screen reader backup */}
+          <h4 className={imageLoaded && !imageError ? 'visually-hidden' : ''}>
+            {component.name}
+          </h4>
+          <p className={imageLoaded && !imageError ? 'visually-hidden' : ''}>
+            {component.description}
+          </p>
+          
+          <div className="component-meta">
+            <div className="file-types">
+              {component.fileTypes.map((type) => (
+                <span key={type} className="file-type-tag">{type}</span>
+              ))}
+            </div>
+            <div className="file-count">
+              {component.count} files
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Fetch data from URL parameters if not available in location.state
   useEffect(() => {
@@ -571,14 +643,19 @@ const DAKDashboardContent = () => {
               </div>
 
               <div className="components-grid core-components">
-                {coreDAKComponents.map((component) => (
-                  <DAKComponentCard
-                    key={component.id}
-                    component={component}
-                    onClick={handleComponentClick}
-                    className="large-card"
-                  />
-                ))}
+                {coreDAKComponents.map((component) => {
+                  const cardImagePath = useThemeImage(component.cardImage);
+
+                  return (
+                    <ComponentCard
+                      key={component.id}
+                      component={component}
+                      cardImagePath={cardImagePath}
+                      handleComponentClick={handleComponentClick}
+                      t={t}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
