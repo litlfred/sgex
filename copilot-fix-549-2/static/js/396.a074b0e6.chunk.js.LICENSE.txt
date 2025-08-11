@@ -1,0 +1,13 @@
+/*! @license DOMPurify 3.2.6 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.2.6/LICENSE */
+
+/**! 
+ * @uiw/copy-to-clipboard v1.0.17 
+ * Copy to clipboard. 
+ * 
+ * Copyright (c) 2024 Kenny Wang 
+ * https://github.com/uiwjs/copy-to-clipboard.git 
+ * 
+ * @website: https://uiwjs.github.io/copy-to-clipboard
+ 
+ * Licensed under the MIT license 
+ */
