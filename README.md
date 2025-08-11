@@ -94,6 +94,33 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
    ```bash
    npm test
    ```
+
+4. **Verify 404.html for GitHub Pages**
+   ```bash
+   npm run verify-404
+   ```
+   This ensures the 404.html file is properly configured for GitHub Pages SPA routing.
+
+## GitHub Pages Deployment
+
+SGEX Workbench includes a comprehensive 404.html file that enables proper Single Page Application (SPA) routing on GitHub Pages. The 404.html file:
+
+- ✅ Handles direct URL navigation (e.g., `/sgex/dashboard/user/repo`)
+- ✅ Supports multiple deployment scenarios (main branch, feature branches, standalone)
+- ✅ Automatically redirects to the correct React Router routes
+- ✅ Preserves query parameters and hash fragments
+- ✅ Meets GitHub Pages requirements (>512 bytes for IE compatibility)
+
+### Verification
+
+To verify the 404.html configuration:
+```bash
+npm run build:verify  # Build and verify in one command
+# OR
+npm run verify-404    # Verify existing build
+```
+
+For detailed implementation information, see [docs/404-implementation.md](docs/404-implementation.md).
 ### Docker
 
 1. **Build the docker image**
@@ -147,7 +174,14 @@ sgex/
 - `npm start` - Runs the app in development mode
 - `npm test` - Launches the test runner in interactive watch mode
 - `npm run build` - Builds the app for production
+- `npm run lint` - Runs ESLint on all source files
+- `npm run lint:a11y` - Shows only accessibility (jsx-a11y) warnings
+- `npm run lint:fix` - Automatically fixes linting issues where possible
 - `npm run eject` - **Note: This is a one-way operation. Don't do this unless you know what you're doing!**
+
+### Accessibility Linting
+
+The project uses `eslint-plugin-jsx-a11y` to enforce accessibility best practices. See [docs/accessibility-linting.md](docs/accessibility-linting.md) for detailed information about accessibility rules and how to fix common issues.
 
 ### Troubleshooting
 

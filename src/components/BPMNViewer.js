@@ -5,6 +5,14 @@ import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
 
 const BPMNViewerComponent = () => {
+  return (
+    <PageLayout pageName="bpmn-viewer">
+      <BPMNViewerContent />
+    </PageLayout>
+  );
+};
+
+const BPMNViewerContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const viewerRef = useRef(null);
@@ -474,7 +482,6 @@ const BPMNViewerComponent = () => {
   }
 
   return (
-    <PageLayout pageName="bpmn-viewer">
       <div className={`bpmn-viewer ${enhancedFullwidth ? 'enhanced-fullwidth' : ''} ${autoHide ? 'auto-hide' : ''}`}>
       <div className="viewer-content">
 
@@ -597,7 +604,6 @@ const BPMNViewerComponent = () => {
         </div>
       </div>
       </div>
-    </PageLayout>
   );
 };
 

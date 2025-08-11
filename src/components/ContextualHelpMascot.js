@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import helpContentService from '../services/helpContentService';
 import cacheManagementService from '../services/cacheManagementService';
+import issueTrackingService from '../services/issueTrackingService';
+import githubService from '../services/githubService';
 import HelpModal from './HelpModal';
+import TrackedItemsViewer from './TrackedItemsViewer';
 import LanguageSelector from './LanguageSelector';
 import useThemeImage from '../hooks/useThemeImage';
+import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', contextData = {}, notificationBadge = false }) => {
   const { t, i18n } = useTranslation();
@@ -14,6 +18,9 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [cacheClearing, setCacheClearing] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
+  const [showTrackedItems, setShowTrackedItems] = useState(false);
+  const [trackedItemsCount, setTrackedItemsCount] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -53,12 +60,75 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
     document.documentElement.lang = currentLang;
   }, [i18n.language]);
 
+  // Monitor authentication state and tracked items count
+  useEffect(() => {
+    const updateAuthAndTrackedCount = async () => {
+      const authenticated = githubService.isAuth();
+      setIsAuthenticated(authenticated);
+      
+      if (authenticated) {
+        try {
+          const counts = await issueTrackingService.getTrackedCounts();
+          setTrackedItemsCount(counts.total);
+        } catch (error) {
+          console.warn('Failed to get tracked items count:', error);
+          setTrackedItemsCount(0);
+        }
+      } else {
+        setTrackedItemsCount(0);
+      }
+    };
+
+    // Update immediately
+    updateAuthAndTrackedCount();
+
+    // Set up periodic updates every 30 seconds when authenticated
+    const interval = setInterval(updateAuthAndTrackedCount, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Start background sync when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      issueTrackingService.startBackgroundSync();
+    } else {
+      issueTrackingService.stopBackgroundSync();
+    }
+
+    return () => {
+      issueTrackingService.stopBackgroundSync();
+    };
+  }, [isAuthenticated]);
+
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
   };
 
   // Get help topics for the page
   const helpTopics = pageId ? helpContentService.getHelpTopicsForPage(pageId, contextData) : [];
+
+  // Enhanced help topics with tracked items functionality
+  const enhancedHelpTopics = [
+    ...helpTopics,
+    // Add tracked items topic when authenticated and there are tracked items
+    ...(isAuthenticated && trackedItemsCount > 0 ? [{
+      id: 'tracked-items',
+      title: `Tracked Items (${trackedItemsCount})`,
+      badge: '/sgex/cat-paw-icon.svg',
+      type: 'action',
+      action: () => setShowTrackedItems(true),
+      notificationBadge: trackedItemsCount
+    }] : []),
+    // Add tracked items topic when authenticated even if no tracked items (so users know it exists)
+    ...(isAuthenticated && trackedItemsCount === 0 ? [{
+      id: 'tracked-items-empty',
+      title: 'Tracked Items',
+      badge: '/sgex/cat-paw-icon.svg', 
+      type: 'action',
+      action: () => setShowTrackedItems(true)
+    }] : [])
+  ];
 
   const handleMouseEnter = () => {
     if (!helpSticky) {
@@ -142,19 +212,19 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
         >
           <img 
             src={mascotImage} 
-            alt="SGEX Helper" 
+            alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} 
             className="mascot-icon"
           />
           
-          {/* Notification badge for important help messages */}
-          {notificationBadge && (
+          {/* Notification badge for tracked items or important help messages */}
+          {(notificationBadge || (isAuthenticated && trackedItemsCount > 0)) && (
             <div className="notification-badge">
-              !
+              {isAuthenticated && trackedItemsCount > 0 ? trackedItemsCount : '!'}
             </div>
           )}
           
-          {/* Question mark thought bubble - always show since we always have topics now */}
-          {!notificationBadge && (
+          {/* Question mark thought bubble - show when no notification badge */}
+          {!notificationBadge && !(isAuthenticated && trackedItemsCount > 0) && (
             <div className={`question-bubble ${showHelp ? 'help-open' : ''}`}>
               ?
             </div>
@@ -174,10 +244,10 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                 </button>
               )}
               <div className="help-text">
-                {helpTopics.length > 0 ? (
+                {enhancedHelpTopics.length > 0 ? (
                   <div className="help-topics-list">
                     <h4>{t('help.title')}</h4>
-                    {helpTopics.map((topic) => (
+                    {enhancedHelpTopics.map((topic) => (
                       <button
                         key={topic.id}
                         className="help-topic-btn"
@@ -191,6 +261,11 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                           />
                         )}
                         <span className="help-topic-title">{topic.title}</span>
+                        {topic.notificationBadge && (
+                          <span className="help-topic-notification-badge">
+                            {topic.notificationBadge}
+                          </span>
+                        )}
                       </button>
                     ))}
                     
@@ -281,6 +356,13 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
           helpTopic={selectedHelpTopic}
           contextData={contextData}
           onClose={handleCloseModal}
+        />
+      )}
+
+      {/* Tracked Items Viewer Modal */}
+      {showTrackedItems && (
+        <TrackedItemsViewer
+          onClose={() => setShowTrackedItems(false)}
         />
       )}
     </>

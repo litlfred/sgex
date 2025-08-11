@@ -24,7 +24,6 @@ const PageContext = createContext(null);
  */
 export const usePage = () => {
   const context = useContext(PageContext);
-  console.log('usePage: called, context is:', context ? 'available' : 'null');
   if (!context) {
     console.error('usePage: PageContext is null - component not wrapped in PageProvider');
     // Return a default context instead of throwing to make ErrorHandler more resilient
@@ -54,9 +53,6 @@ const determinePageType = (params) => {
   const { user, repo } = params;
   const asset = params['*']; // Wildcard parameter for asset path
   
-  console.log('PageProvider: determinePageType called with params:', params);
-  console.log('PageProvider: extracted values:', { user, repo, asset });
-  
   if (asset) return PAGE_TYPES.ASSET;
   if (user && repo) return PAGE_TYPES.DAK;
   if (user) return PAGE_TYPES.USER;
@@ -70,12 +66,6 @@ export const PageProvider = ({ children, pageName }) => {
   const params = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  
-  console.log('PageProvider: initialized with:', {
-    pageName,
-    params,
-    locationPathname: location.pathname
-  });
   
   const [pageState, setPageState] = useState({
     type: determinePageType(params),

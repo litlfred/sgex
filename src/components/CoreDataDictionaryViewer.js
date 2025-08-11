@@ -5,7 +5,6 @@ import { PageLayout, useDAKParams } from './framework';
 import FSHFileViewer from './FSHFileViewer';
 import FSHFileEditor from './FSHFileEditor';
 
-
 const CoreDataDictionaryViewer = () => {
   return (
     <PageLayout pageName="core-data-dictionary-viewer">

@@ -232,7 +232,7 @@ const PageContext = ({ customBreadcrumbs }) => {
                           value={branchSearchTerm}
                           onChange={(e) => setBranchSearchTerm(e.target.value)}
                           className="branch-search-input"
-                          autoFocus
+                          autoFocus={false}
                         />
                       </div>
                       <div className="branch-list">

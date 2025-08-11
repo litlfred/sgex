@@ -32,7 +32,7 @@ const DAKDashboardContent = () => {
 
       try {
         // Check repository permissions
-        const hasPermission = await githubService.checkRepositoryPermissions(repository.owner.login, repository.name);
+        const hasPermission = await githubService.checkRepositoryWritePermissions(repository.owner.login, repository.name);
         setHasWriteAccess(hasPermission);
       } catch (error) {
         console.error('Error checking repository permissions:', error);
@@ -58,7 +58,7 @@ const DAKDashboardContent = () => {
       }
 
       try {
-        const issues = await githubService.getRepositoryIssues(repository.owner.login, repository.name);
+        const issues = await githubService.getIssues(repository.owner.login, repository.name);
         
         // Count issues by label
         const counts = {};
@@ -221,6 +221,15 @@ const DAKDashboardContent = () => {
       path: 'test-data',
       level: 'Level 3: Technical Implementation',
       color: '#8b5cf6'
+    },
+    {
+      id: 'questionnaire-editor',
+      title: 'FHIR Questionnaires',
+      description: 'Structured questionnaires and forms for data collection using FHIR standard',
+      icon: '📋',
+      path: 'questionnaire-editor',
+      level: 'Level 3: Technical Implementation',
+      color: '#17a2b8'
     }
   ];
 

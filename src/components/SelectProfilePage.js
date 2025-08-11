@@ -51,17 +51,25 @@ const SelectProfilePage = () => {
     setError(null);
     
     try {
-      // Check token permissions first
-      await githubService.checkTokenPermissions();
+      let userData = null;
       
-      // Fetch user data using GitHub service
-      const userData = await githubService.getCurrentUser();
-      setUser(userData);
+      if (isAuthenticated) {
+        // Check token permissions first for authenticated users
+        await githubService.checkTokenPermissions();
+        
+        // Fetch user data using GitHub service
+        userData = await githubService.getCurrentUser();
+        setUser(userData);
+      } else {
+        // For unauthenticated users, don't create a user profile
+        userData = null;
+        setUser(null);
+      }
       
       // Fetch organizations inline
       let orgsData = [];
       
-      if (githubService.isAuth()) {
+      if (isAuthenticated) {
         try {
           orgsData = await githubService.getUserOrganizations();
         } catch (error) {
@@ -70,7 +78,7 @@ const SelectProfilePage = () => {
         }
       }
       
-      // Always ensure WHO organization is included
+      // Always ensure WHO organization is included (using public API)
       try {
         const whoOrganization = await githubService.getWHOOrganization();
         
@@ -117,20 +125,28 @@ const SelectProfilePage = () => {
       
       setOrganizations(orgsData);
       
-      // Load cached DAK counts (if available)
-      loadCachedDakCounts(userData, orgsData);
+      // Load cached DAK counts (if available and authenticated)
+      if (isAuthenticated) {
+        loadCachedDakCounts(userData, orgsData);
+      }
       
     } catch (error) {
       console.error('Error fetching user data:', error);
-      setError('Failed to fetch user data. Please check your connection and try again.');
-      setIsAuthenticated(false);
-      githubService.logout(); // Use secure logout method
+      
+      if (isAuthenticated) {
+        setError('Failed to fetch user data. Please check your connection and try again.');
+        setIsAuthenticated(false);
+        githubService.logout(); // Use secure logout method
+      } else {
+        // For unauthenticated users, show limited error message
+        setError('Unable to fetch additional data. Some features may be limited.');
+      }
     } finally {
       setLoading(false);
     }
-  }, [loadCachedDakCounts]);
+  }, [loadCachedDakCounts, isAuthenticated]);
 
-  // Initial authentication check and redirect if not authenticated
+  // Initial authentication check - don't redirect if not authenticated
   useEffect(() => {
     const initializeAuth = () => {
       // Try to initialize from securely stored token
@@ -138,13 +154,13 @@ const SelectProfilePage = () => {
       if (success) {
         setIsAuthenticated(true);
       } else {
-        // Redirect to welcome page if no valid token
-        navigate('/', { replace: true });
+        // Don't redirect - allow unauthenticated access
+        setIsAuthenticated(false);
       }
     };
 
     initializeAuth();
-  }, [navigate]);
+  }, []);
 
   // Handle warning message from navigation state
   useEffect(() => {
@@ -155,12 +171,13 @@ const SelectProfilePage = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
-  // Fetch user data when authentication state changes
+  // Fetch user data when component mounts or authentication state changes
   useEffect(() => {
-    if (isAuthenticated && !user) {
+    // Always fetch data regardless of authentication state
+    if (!user) {
       fetchUserData();
     }
-  }, [isAuthenticated, user, fetchUserData]);
+  }, [user, fetchUserData]);
 
   const handleProfileSelect = (event, profile) => {
     const navigationState = { profile };
@@ -171,9 +188,16 @@ const SelectProfilePage = () => {
     setWarningMessage(null);
   };
 
-  // Don't render anything if not authenticated (will redirect)
-  if (!isAuthenticated) {
-    return null;
+  // Don't render anything if still loading initial state
+  if (loading && !user) {
+    return (
+      <PageLayout pageName="select-profile">
+        <div className="loading-section">
+          <div className="spinner"></div>
+          <p>Loading profile data...</p>
+        </div>
+      </PageLayout>
+    );
   }
 
   return (
@@ -197,6 +221,18 @@ const SelectProfilePage = () => {
           </div>
         )}
         
+        {/* Authentication Status Indicator */}
+        {!isAuthenticated && (
+          <div className="auth-status-message">
+            <div className="auth-status-content">
+              <span className="auth-status-icon">🔓</span>
+              <span className="auth-status-text">
+                You are browsing in unauthenticated mode. Some features like saving to GitHub will be disabled, but you can still explore and use local staging.
+              </span>
+            </div>
+          </div>
+        )}
+        
         {loading ? (
           <div className="loading-section">
             <div className="spinner"></div>
@@ -211,25 +247,27 @@ const SelectProfilePage = () => {
             
             {/* Horizontal profile grid */}
             <div className="profile-grid-horizontal">
-              {/* Personal Profile */}
-              <div 
-                className="profile-card"
-                onClick={(event) => handleProfileSelect(event, { type: 'user', ...user })}
-              >
-                <div className="profile-card-header">
-                  <img src={user?.avatar_url} alt="Personal profile" />
-                  {dakCounts[`user-${user?.login}`] > 0 && (
-                    <div className="dak-count-badge">
-                      {dakCounts[`user-${user?.login}`]}
-                    </div>
-                  )}
+              {/* Personal Profile - Show only for authenticated users */}
+              {isAuthenticated && user && (
+                <div 
+                  className="profile-card"
+                  onClick={(event) => handleProfileSelect(event, { type: 'user', ...user })}
+                >
+                  <div className="profile-card-header">
+                    <img src={user?.avatar_url} alt="Personal profile" />
+                    {dakCounts[`user-${user?.login}`] > 0 && (
+                      <div className="dak-count-badge">
+                        {dakCounts[`user-${user?.login}`]}
+                      </div>
+                    )}
+                  </div>
+                  <h3>{user?.name || user?.login}</h3>
+                  <p>Personal repositories</p>
+                  <div className="profile-badges">
+                    <span className="profile-type">Personal</span>
+                  </div>
                 </div>
-                <h3>{user?.name || user?.login}</h3>
-                <p>Personal repositories</p>
-                <div className="profile-badges">
-                  <span className="profile-type">Personal</span>
-                </div>
-              </div>
+              )}
               
               {/* Organization Profiles */}
               {organizations.map((org) => (
