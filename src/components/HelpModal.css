@@ -504,3 +504,16 @@ body.theme-dark .menu-item:hover {
   background-color: var(--who-dropdown-hover-bg, rgba(255, 255, 255, 0.15));
   color: var(--who-light-blue, #c0dcf2);
 }
+
+/* Dark mode specific styles for bug report buttons */
+body.theme-dark .bug-type-btn {
+  background: var(--who-hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--who-text-primary, #ffffff);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .bug-type-btn:hover {
+  background: var(--who-blue);
+  color: var(--who-text-on-primary, #ffffff);
+  border-color: var(--who-light-blue, #c0dcf2);
+}

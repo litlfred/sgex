@@ -240,7 +240,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
             border: none;
             font-size: 24px;
             cursor: pointer;
-            color: #666;
+            color: var(--who-text-secondary, #666);
           ">×</button>
           <h3 style="margin-top: 0; color: #333;">${fallback.title}</h3>
           <div style="color: #555; line-height: 1.5;">${fallback.message}</div>
