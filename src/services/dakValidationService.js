@@ -1,4 +1,5 @@
 import githubService from './githubService';
+import { lazyLoadYaml } from '../utils/lazyImports';
 
 /**
  * Service for validating WHO SMART Guidelines Digital Adaptation Kit repositories
@@ -37,8 +38,8 @@ class DAKValidationService {
 
       // Parse the YAML content
       // Lazy load js-yaml to improve initial page responsiveness
-      const yamlModule = await import('js-yaml');
-      const config = yamlModule.default.load(sushiConfigContent);
+      const yaml = await lazyLoadYaml();
+      const config = yaml.load(sushiConfigContent);
       
       if (!config || typeof config !== 'object') {
         // If YAML is invalid but repository exists, still allow it

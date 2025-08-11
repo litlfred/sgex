@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { createLazyBpmnViewer } from '../utils/lazyImports';
 
 // Sample BPMN content for demo purposes - moved outside component to avoid re-renders
 const sampleBpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -238,8 +239,7 @@ const BPMNViewerEnhanced = () => {
         await new Promise(resolve => setTimeout(resolve, 100));
 
         // Lazy load BPMN.js viewer to improve initial page responsiveness
-        const { default: BpmnViewer } = await import('bpmn-js/lib/NavigatedViewer');
-        viewerRef.current = new BpmnViewer({
+        viewerRef.current = await createLazyBpmnViewer({
           container: containerRef.current
         });
 

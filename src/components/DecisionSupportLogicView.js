@@ -1,18 +1,16 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
+import { lazyLoadMDEditor } from '../utils/lazyImports';
 
-// Lazy load MDEditor to improve initial page responsiveness
-const MDEditor = lazy(() => import('@uiw/react-md-editor'));
-
-// Lazy markdown component
+// Lazy markdown component using the utility
 const LazyMarkdown = ({ source }) => {
   const [MarkdownComponent, setMarkdownComponent] = useState(null);
   
   useEffect(() => {
-    import('@uiw/react-md-editor').then(module => {
-      setMarkdownComponent(() => module.default.Markdown);
+    lazyLoadMDEditor().then(MDEditorModule => {
+      setMarkdownComponent(() => MDEditorModule.Markdown);
     });
   }, []);
   

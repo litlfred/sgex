@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import githubService from '../services/githubService';
 import githubActionsService from '../services/githubActionsService';
 import WorkflowStatus from './WorkflowStatus';
-import MDEditor from '@uiw/react-md-editor';
 import ReactMarkdown from 'react-markdown';
 import DOMPurify from 'dompurify';
 import './WorkflowStatus.css';
 import './PreviewBadge.css';
+
+// Lazy load MDEditor to improve initial page responsiveness
+const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
 /**
  * PreviewBadge component that displays when the app is deployed from a non-main branch
@@ -858,15 +860,17 @@ const PreviewBadge = () => {
                   ) : (
                     <div className="comment-form-advanced">
                       <div className="markdown-editor-container">
-                        <MDEditor
-                          value={newComment}
-                          onChange={(val) => setNewComment(val || '')}
-                          preview="edit"
-                          height={300}
-                          visibleDragBar={false}
-                          data-color-mode="light"
-                          hideToolbar={submittingComment || !canComment}
-                        />
+                        <Suspense fallback={<div className="loading-spinner">Loading editor...</div>}>
+                          <MDEditor
+                            value={newComment}
+                            onChange={(val) => setNewComment(val || '')}
+                            preview="edit"
+                            height={300}
+                            visibleDragBar={false}
+                            data-color-mode="light"
+                            hideToolbar={submittingComment || !canComment}
+                          />
+                        </Suspense>
                       </div>
                       <div className="comment-form-actions">
                         <button

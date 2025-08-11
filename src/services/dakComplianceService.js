@@ -7,6 +7,7 @@
 
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import { lazyLoadYaml } from '../utils/lazyImports';
 
 // Import schema as a module
 const sushiConfigSchema = require('../schemas/sushi-config.json');
@@ -362,8 +363,8 @@ class DAKComplianceService {
       let parsedConfig;
       try {
         // Lazy load js-yaml to improve initial page responsiveness
-        const yaml = await import('js-yaml');
-        parsedConfig = yaml.default.load(content);
+        const yaml = await lazyLoadYaml();
+        parsedConfig = yaml.load(content);
       } catch (yamlError) {
         return {
           message: `Invalid YAML syntax: ${yamlError.message}`,

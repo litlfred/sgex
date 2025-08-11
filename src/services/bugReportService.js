@@ -1,5 +1,6 @@
 import githubService from './githubService';
 import issueTrackingService from './issueTrackingService';
+import { lazyLoadYaml } from '../utils/lazyImports';
 
 class BugReportService {
   constructor() {
@@ -66,8 +67,8 @@ class BugReportService {
   async _parseIssueTemplate(yamlContent, filename) {
     try {
       // Lazy load js-yaml to improve initial page responsiveness
-      const jsYaml = await import('js-yaml');
-      const template = jsYaml.default.load(yamlContent);
+      const yaml = await lazyLoadYaml();
+      const template = yaml.load(yamlContent);
       
       if (!template || !template.name || !template.body) {
         console.warn(`Invalid template structure in ${filename}`);
