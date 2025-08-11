@@ -124,6 +124,9 @@ function createLazyComponent(componentName) {
     case 'QuestionnaireEditor':
       LazyComponent = React.lazy(() => import('../components/QuestionnaireEditor'));
       break;
+    case 'SushiRunner':
+      LazyComponent = React.lazy(() => import('../components/SushiRunner'));
+      break;
     
     default:
       console.warn(`Unknown component ${componentName}, using fallback`);
