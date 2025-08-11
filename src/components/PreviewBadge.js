@@ -36,6 +36,8 @@ const PreviewBadge = () => {
   const [canComment, setCanComment] = useState(true);
   const [canTriggerWorkflows, setCanTriggerWorkflows] = useState(false);
   const [canApproveWorkflows, setCanApproveWorkflows] = useState(false);
+  const [canMergePR, setCanMergePR] = useState(false);
+  const [isMergingPR, setIsMergingPR] = useState(false);
   const [commentsPage, setCommentsPage] = useState(1);
   const [allComments, setAllComments] = useState([]);
   const [hasMoreComments, setHasMoreComments] = useState(false);
@@ -417,11 +419,53 @@ const PreviewBadge = () => {
     }
   };
 
+  const handleMergePR = async (owner, repo, prNumber) => {
+    if (!githubService.isAuth() || isMergingPR || !canMergePR) {
+      return false;
+    }
+
+    setIsMergingPR(true);
+    try {
+      // Get the PR details to create a meaningful merge commit message
+      const prData = prInfo.find(pr => pr.number === prNumber);
+      const commitTitle = `Merge PR #${prNumber}: ${prData?.title || 'Pull Request'}`;
+      const commitMessage = `Merges pull request #${prNumber}\n\n${prData?.body || ''}`.trim();
+
+      const result = await githubService.mergePullRequest(owner, repo, prNumber, {
+        commit_title: commitTitle,
+        commit_message: commitMessage,
+        merge_method: 'merge' // Use merge commit method
+      });
+
+      console.debug('PR merged successfully:', result);
+      
+      // Refresh the PR info to reflect the merged status
+      setTimeout(async () => {
+        try {
+          const refreshedPRs = await fetchPRsForBranch(branchInfo?.name);
+          if (refreshedPRs && refreshedPRs.length > 0) {
+            setPrInfo(refreshedPRs);
+          }
+        } catch (error) {
+          console.debug('Could not refresh PR status after merge:', error);
+        }
+      }, 2000);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to merge PR:', error);
+      return false;
+    } finally {
+      setIsMergingPR(false);
+    }
+  };
+
   const checkPermissions = async (owner, repo) => {
     if (!githubService.isAuth()) {
       setCanComment(false);
       setCanTriggerWorkflows(false);
       setCanApproveWorkflows(false);
+      setCanMergePR(false);
       return;
     }
 
@@ -441,11 +485,20 @@ const PreviewBadge = () => {
 
       setCanTriggerWorkflows(triggerPermissions);
       setCanApproveWorkflows(approvalPermissions);
+
+      // Check merge permissions for the first PR if available
+      if (prInfo && prInfo.length > 0) {
+        const mergePermissions = await githubService.checkPullRequestMergePermissions(owner, repo, prInfo[0].number);
+        setCanMergePR(mergePermissions);
+      } else {
+        setCanMergePR(false);
+      }
     } catch (error) {
       console.debug('Error checking permissions:', error);
       setCanComment(false);
       setCanTriggerWorkflows(false);
       setCanApproveWorkflows(false);
+      setCanMergePR(false);
     }
   };
 
@@ -923,6 +976,46 @@ const PreviewBadge = () => {
                     canApproveWorkflows={canApproveWorkflows}
                     isLoading={workflowLoading}
                   />
+                </div>
+              )}
+
+              {/* PR Actions Section */}
+              {prInfo && prInfo.length > 0 && prInfo[0].state === 'open' && (
+                <div className="pr-actions-wrapper">
+                  <h4>🔀 Pull Request Actions</h4>
+                  <div className="pr-actions-container">
+                    <div className="pr-actions-info">
+                      <span className="pr-actions-status">
+                        PR #{prInfo[0].number} is ready for actions
+                      </span>
+                    </div>
+                    <div className="pr-actions-buttons">
+                      {githubService.isAuth() && canMergePR && (
+                        <button
+                          onClick={() => handleMergePR('litlfred', 'sgex', prInfo[0].number)}
+                          disabled={isMergingPR}
+                          className="pr-merge-btn"
+                          title={`Merge PR #${prInfo[0].number}`}
+                        >
+                          {isMergingPR ? (
+                            <>⏳ Merging...</>
+                          ) : (
+                            <>🔀 Merge PR</>
+                          )}
+                        </button>
+                      )}
+                      {!githubService.isAuth() && (
+                        <span className="pr-actions-note">
+                          🔒 Sign in to access PR actions
+                        </span>
+                      )}
+                      {githubService.isAuth() && !canMergePR && (
+                        <span className="pr-actions-note">
+                          ⚠️ You don't have permission to merge this PR
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
