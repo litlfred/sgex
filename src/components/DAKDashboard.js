@@ -11,6 +11,8 @@ import ForkStatusBar from './ForkStatusBar';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
+import FAQAnswer from '../dak/faq/components/FAQAnswer.js';
+import faqExecutionEngine from '../dak/faq/engine/FAQExecutionEngine.js';
 
 const DAKDashboard = () => {
   return (
@@ -36,10 +38,13 @@ const DAKDashboardContent = () => {
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('core'); // 'core' or 'publications'
+  const [activeTab, setActiveTab] = useState('core'); // 'core', 'publications', 'other', or 'faq'
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [faqQuestions, setFaqQuestions] = useState([]);
+  const [faqLoading, setFaqLoading] = useState(false);
+  const [faqError, setFaqError] = useState(null);
 
   // Fetch data from URL parameters if not available in location.state
   useEffect(() => {
@@ -220,6 +225,26 @@ const DAKDashboardContent = () => {
       loadIssueCounts();
     }
   }, [repository, loading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Initialize FAQ engine when component mounts
+  useEffect(() => {
+    initializeFAQEngine();
+  }, []);
+
+  const initializeFAQEngine = async () => {
+    try {
+      setFaqLoading(true);
+      await faqExecutionEngine.initialize();
+      const catalog = faqExecutionEngine.getCatalog();
+      setFaqQuestions(catalog);
+      setFaqError(null);
+    } catch (err) {
+      console.error('Failed to initialize FAQ engine:', err);
+      setFaqError(err.message);
+    } finally {
+      setFaqLoading(false);
+    }
+  };
 
   // Check write permissions on mount
   useEffect(() => {
@@ -547,6 +572,13 @@ const DAKDashboardContent = () => {
               <span className="tab-icon">🔧</span>
               <span className="tab-text">Other DAK Components</span>
             </button>
+            <button
+              className={`tab-button-fullwidth ${activeTab === 'faq' ? 'active' : ''}`}
+              onClick={() => setActiveTab('faq')}
+            >
+              <span className="tab-icon">❓</span>
+              <span className="tab-text">DAK FAQ</span>
+            </button>
           </div>
 
           {/* 9 Core DAK Components Section */}
@@ -664,6 +696,126 @@ const DAKDashboardContent = () => {
                 selectedBranch={selectedBranch}
                 hasWriteAccess={hasWriteAccess}
               />
+            </div>
+          )}
+
+          {/* DAK FAQ Section */}
+          {activeTab === 'faq' && (
+            <div className="components-section faq-section active">
+              <div className="section-header">
+                <h3 className="section-title">DAK FAQ System</h3>
+                <p className="section-description">
+                  Ask questions about this DAK and get automated answers based on repository analysis
+                </p>
+              </div>
+
+              {faqLoading && (
+                <div className="faq-loading">
+                  <div className="loading-spinner"></div>
+                  <p>Initializing FAQ system...</p>
+                </div>
+              )}
+
+              {faqError && (
+                <div className="faq-error">
+                  <h4>FAQ System Error</h4>
+                  <p>{faqError}</p>
+                  <button onClick={initializeFAQEngine} className="btn-secondary">
+                    Retry
+                  </button>
+                </div>
+              )}
+
+              {!faqLoading && !faqError && (
+                <div className="faq-content">
+                  {/* Sample Questions */}
+                  <div className="faq-questions">
+                    <h4>Example Questions</h4>
+                    <p>Here are some example questions you can ask about this DAK:</p>
+                    
+                    <div className="faq-question-grid">
+                      <div className="faq-question-section">
+                        <h5>What is the name of this DAK?</h5>
+                        <p className="question-description">Extracts the DAK name from sushi-config.yaml</p>
+                        <FAQAnswer
+                          questionId="dak-name"
+                          parameters={{
+                            repository: `${user}/${repo}`,
+                            branch: selectedBranch || 'main'
+                          }}
+                          githubService={githubService}
+                          showRawData={false}
+                        />
+                      </div>
+
+                      <div className="faq-question-section">
+                        <h5>What is the version of this DAK?</h5>
+                        <p className="question-description">Extracts the DAK version from sushi-config.yaml</p>
+                        <FAQAnswer
+                          questionId="dak-version"
+                          parameters={{
+                            repository: `${user}/${repo}`,
+                            branch: selectedBranch || 'main'
+                          }}
+                          githubService={githubService}
+                          showRawData={false}
+                        />
+                      </div>
+
+                      <div className="faq-question-section">
+                        <h5>What DMN decision tables are available?</h5>
+                        <p className="question-description">Analyzes DMN files for decision table inputs and structure</p>
+                        <FAQAnswer
+                          questionId="decision-table-inputs"
+                          parameters={{
+                            repository: `${user}/${repo}`,
+                            branch: selectedBranch || 'main',
+                            assetFile: 'input/cql/IMMZ.D2.DT.BCG.dmn'
+                          }}
+                          githubService={githubService}
+                          showRawData={false}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Question Catalog */}
+                  <div className="faq-catalog">
+                    <h4>Available Questions ({faqQuestions.length})</h4>
+                    <p>All questions available in the FAQ system:</p>
+                    
+                    <div className="catalog-grid">
+                      {faqQuestions.map(question => (
+                        <div key={question.id} className="catalog-item">
+                          <h5>{question.title}</h5>
+                          <p>{question.description}</p>
+                          <div className="catalog-meta">
+                            <span className="level">{question.level}</span>
+                            <span className="version">v{question.version || '1.0'}</span>
+                          </div>
+                          <div className="tags">
+                            {question.tags && question.tags.map(tag => (
+                              <span key={tag} className="tag">{tag}</span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* MCP Server Info */}
+                  <div className="mcp-info">
+                    <h4>MCP Server API</h4>
+                    <p>
+                      The FAQ system can also be accessed programmatically via the MCP server API:
+                    </p>
+                    <ul>
+                      <li><code>GET http://127.0.0.1:3001/faq/questions/catalog</code> - Get question catalog</li>
+                      <li><code>POST http://127.0.0.1:3001/faq/questions/execute</code> - Execute questions</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
