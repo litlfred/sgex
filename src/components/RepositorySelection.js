@@ -24,13 +24,13 @@ const RepositorySelection = () => {
             const fetchedProfile = await githubService.getUser(user);
             setProfile(fetchedProfile);
           } else {
-            // Create a demo profile for unauthenticated users
+            // Create a profile for unauthenticated users (accessing public repositories)
             setProfile({
               login: user,
               name: user.charAt(0).toUpperCase() + user.slice(1),
               avatar_url: `https://github.com/${user}.png`,
-              type: 'User',
-              isDemo: true
+              type: 'User'
+              // Note: isDemo is NOT set - unauthenticated users should access real public repos
             });
           }
         } catch (error) {
