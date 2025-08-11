@@ -25,5 +25,19 @@ module.exports = {
     'jsx-a11y/tabindex-no-positive': 'warn',
     'jsx-a11y/interactive-supports-focus': 'warn',
     'jsx-a11y/no-noninteractive-tabindex': 'warn'
-  }
+  },
+  overrides: [
+    {
+      files: ['**/*.ts', '**/*.tsx'],
+      extends: [
+        'react-app',
+        'react-app/jest',
+        'plugin:jsx-a11y/recommended'
+      ],
+      rules: {
+        // TypeScript-specific rules can be added here
+        // For now, inherit from react-app config which includes @typescript-eslint rules
+      }
+    }
+  ]
 };
