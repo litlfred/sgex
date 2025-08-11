@@ -7,7 +7,7 @@
 
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { lazyLoadYaml } from '../utils/lazyImports';
+import { lazyLoadYaml } from '../utils/lazyRouteUtils';
 
 // Import schema as a module
 const sushiConfigSchema = require('../schemas/sushi-config.json');

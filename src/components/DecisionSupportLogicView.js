@@ -2,7 +2,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
-import { lazyLoadMDEditor } from '../utils/lazyImports';
+import { lazyLoadMDEditor } from '../utils/lazyRouteUtils';
 
 // Lazy markdown component using the utility
 const LazyMarkdown = ({ source }) => {

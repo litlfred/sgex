@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import githubService from '../services/githubService';
-import { createLazyBpmnViewer } from '../utils/lazyImports';
+import { createLazyBpmnViewer } from '../utils/lazyRouteUtils';
 
 const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
   const containerRef = useRef(null);

@@ -1,6 +1,6 @@
 import githubService from './githubService';
 import issueTrackingService from './issueTrackingService';
-import { lazyLoadYaml } from '../utils/lazyImports';
+import { lazyLoadYaml } from '../utils/lazyRouteUtils';
 
 class BugReportService {
   constructor() {

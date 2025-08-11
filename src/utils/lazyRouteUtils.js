@@ -2,25 +2,36 @@ import React, { Suspense } from 'react';
 import { Route } from 'react-router-dom';
 
 /**
- * SGEX Lazy Route Generation Utility
+ * SGEX Unified Lazy Loading Utility
  * 
- * This utility generates React Router routes dynamically using lazy loading
- * based on the route configuration loaded from JSON files.
+ * This utility provides comprehensive lazy loading capabilities for both
+ * React components (routes) and heavy JavaScript libraries to optimize
+ * initial page load performance.
  * 
  * Features:
- * 1. Lazy loading of all components using React.lazy()
- * 2. Automatic Suspense boundaries with loading fallbacks
- * 3. Dynamic route generation from configuration
- * 4. Support for different deployment types (main vs deploy)
- * 5. DAK component pattern generation (/{component}/:user/:repo/:branch/*)
+ * 1. Route-level lazy loading of React components using React.lazy()
+ * 2. Library-level lazy loading of heavy dependencies (BPMN.js, Octokit, etc.)
+ * 3. Automatic Suspense boundaries with loading fallbacks
+ * 4. Dynamic route generation from configuration
+ * 5. Support for different deployment types (main vs deploy)
+ * 6. DAK component pattern generation (/{component}/:user/:repo/:branch/*)
+ * 7. Module caching to prevent repeated imports
  * 
  * Usage:
+ *   // Route lazy loading
  *   const routes = generateLazyRoutes();
  *   return <Routes>{routes}</Routes>
+ *   
+ *   // Library lazy loading
+ *   const Octokit = await lazyLoadOctokit();
+ *   const modeler = await createLazyBpmnModeler();
  */
 
 // Cache for lazy-loaded components to avoid re-creating them
 const lazyComponentCache = new Map();
+
+// Cache for lazy-loaded modules to avoid repeated imports
+const moduleCache = new Map();
 
 /**
  * Create a lazy-loaded component with Suspense boundary
@@ -262,13 +273,150 @@ export function isValidComponent(componentName) {
   return config ? config.isValidComponent(componentName) : false;
 }
 
+// ============================================================================
+// LIBRARY LAZY LOADING FUNCTIONS
+// ============================================================================
+
 /**
- * Utility functions for lazy route generation
+ * Lazy load Octokit for GitHub API operations
+ * @returns {Promise<Octokit>} Octokit constructor
  */
-const LazyRouteUtils = {
+export async function lazyLoadOctokit() {
+  const cacheKey = 'octokit';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const { Octokit } = await import('@octokit/rest');
+  moduleCache.set(cacheKey, Octokit);
+  return Octokit;
+}
+
+/**
+ * Lazy load BPMN.js Modeler for BPMN editing
+ * @returns {Promise<BpmnModeler>} BpmnModeler constructor
+ */
+export async function lazyLoadBpmnModeler() {
+  const cacheKey = 'bpmn-modeler';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const BpmnModeler = await import('bpmn-js/lib/Modeler');
+  const modeler = BpmnModeler.default;
+  moduleCache.set(cacheKey, modeler);
+  return modeler;
+}
+
+/**
+ * Lazy load BPMN.js Viewer for BPMN viewing
+ * @returns {Promise<BpmnViewer>} BpmnViewer constructor
+ */
+export async function lazyLoadBpmnViewer() {
+  const cacheKey = 'bpmn-viewer';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const BpmnViewer = await import('bpmn-js/lib/NavigatedViewer');
+  const viewer = BpmnViewer.default;
+  moduleCache.set(cacheKey, viewer);
+  return viewer;
+}
+
+/**
+ * Lazy load js-yaml for YAML parsing
+ * @returns {Promise<yaml>} js-yaml module
+ */
+export async function lazyLoadYaml() {
+  const cacheKey = 'js-yaml';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const yaml = await import('js-yaml');
+  const yamlModule = yaml.default;
+  moduleCache.set(cacheKey, yamlModule);
+  return yamlModule;
+}
+
+/**
+ * Lazy load MDEditor for markdown editing
+ * @returns {Promise<MDEditor>} MDEditor component
+ */
+export async function lazyLoadMDEditor() {
+  const cacheKey = 'md-editor';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const MDEditor = await import('@uiw/react-md-editor');
+  const editor = MDEditor.default;
+  moduleCache.set(cacheKey, editor);
+  return editor;
+}
+
+/**
+ * Create a lazy-loaded Octokit instance
+ * @param {Object} options - Octokit configuration options
+ * @returns {Promise<Octokit>} Configured Octokit instance
+ */
+export async function createLazyOctokit(options = {}) {
+  const Octokit = await lazyLoadOctokit();
+  return new Octokit(options);
+}
+
+/**
+ * Create a lazy-loaded BPMN Modeler instance
+ * @param {Object} options - BpmnModeler configuration options
+ * @returns {Promise<BpmnModeler>} Configured BpmnModeler instance
+ */
+export async function createLazyBpmnModeler(options = {}) {
+  const BpmnModeler = await lazyLoadBpmnModeler();
+  return new BpmnModeler(options);
+}
+
+/**
+ * Create a lazy-loaded BPMN Viewer instance
+ * @param {Object} options - BpmnViewer configuration options
+ * @returns {Promise<BpmnViewer>} Configured BpmnViewer instance
+ */
+export async function createLazyBpmnViewer(options = {}) {
+  const BpmnViewer = await lazyLoadBpmnViewer();
+  return new BpmnViewer(options);
+}
+
+/**
+ * Clear the module cache (useful for testing)
+ */
+export function clearLazyImportCache() {
+  moduleCache.clear();
+}
+
+/**
+ * Unified lazy loading utilities for routes and libraries
+ */
+const LazyUtils = {
+  // Route lazy loading functions
   generateLazyRoutes,
   getValidDAKComponents,
-  isValidComponent
+  isValidComponent,
+  
+  // Library lazy loading functions
+  lazyLoadOctokit,
+  lazyLoadBpmnModeler,
+  lazyLoadBpmnViewer,
+  lazyLoadYaml,
+  lazyLoadMDEditor,
+  createLazyOctokit,
+  createLazyBpmnModeler,
+  createLazyBpmnViewer,
+  clearLazyImportCache
 };
 
-export default LazyRouteUtils;
+export default LazyUtils;

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
-import { createLazyBpmnViewer } from '../utils/lazyImports';
+import { createLazyBpmnViewer } from '../utils/lazyRouteUtils';
 
 const BPMNViewerComponent = () => {
   return (

@@ -1,5 +1,5 @@
 import githubService from './githubService';
-import { lazyLoadYaml } from '../utils/lazyImports';
+import { lazyLoadYaml } from '../utils/lazyRouteUtils';
 
 /**
  * Service for validating WHO SMART Guidelines Digital Adaptation Kit repositories
