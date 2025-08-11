@@ -1,6 +1,6 @@
 .core-data-dictionary-viewer {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: linear-gradient(135deg, var(--who-secondary-bg, #c0dcf2) 0%, var(--who-primary-bg, #ffffff) 100%);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -13,18 +13,18 @@
 .loading-content {
   text-align: center;
   padding: 2rem;
-  background: white;
+  background: var(--who-card-bg, white);
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .loading-content h2 {
-  color: #2c3e50;
+  color: var(--who-text-primary, #2c3e50);
   margin-bottom: 0.5rem;
 }
 
 .loading-content p {
-  color: #7f8c8d;
+  color: var(--who-text-secondary, #7f8c8d);
 }
 
 .viewer-header {
@@ -99,33 +99,33 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #6c757d;
+  color: var(--who-text-secondary, #6c757d);
 }
 
 .breadcrumb-link {
   background: none;
   border: none;
-  color: #0078d4;
+  color: var(--who-blue, #0078d4);
   cursor: pointer;
   text-decoration: underline;
   font: inherit;
 }
 
 .breadcrumb-link:hover {
-  color: #106ebe;
+  color: var(--who-blue-dark, #106ebe);
 }
 
 .breadcrumb-separator {
-  color: #adb5bd;
+  color: var(--who-text-muted, #adb5bd);
 }
 
 .breadcrumb-current {
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--who-text-primary, #2c3e50);
 }
 
 .component-intro {
-  background: white;
+  background: var(--who-card-bg, white);
   padding: 2rem;
   border-radius: 12px;
   margin-bottom: 2rem;
@@ -141,13 +141,13 @@
 }
 
 .intro-content h2 {
-  color: #2c3e50;
+  color: var(--who-text-primary, #2c3e50);
   margin: 0 0 1rem 0;
   font-size: 1.8rem;
 }
 
 .intro-content p {
-  color: #6c757d;
+  color: var(--who-text-secondary, #6c757d);
   line-height: 1.6;
   margin-bottom: 1rem;
 }
@@ -167,7 +167,7 @@
 }
 
 .documentation-section {
-  background: white;
+  background: var(--who-card-bg, white);
   border-radius: 12px;
   padding: 1rem 2rem;
   margin-bottom: 2rem;
@@ -178,7 +178,7 @@
 .documentation-link {
   display: inline-block;
   padding: 0.5rem 1rem;
-  background: #0078d4;
+  background: var(--who-blue, #0078d4);
   color: white;
   text-decoration: none;
   border-radius: 6px;
@@ -187,7 +187,7 @@
 }
 
 .documentation-link:hover {
-  background: #106ebe;
+  background: var(--who-blue-dark, #106ebe);
   color: white;
 }
 
@@ -207,7 +207,7 @@
 }
 
 .section {
-  background: white;
+  background: var(--who-card-bg, white);
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
@@ -215,15 +215,15 @@
 }
 
 .section h3 {
-  color: #2c3e50;
+  color: var(--who-text-primary, #2c3e50);
   margin: 0 0 0.5rem 0;
   font-size: 1.4rem;
-  border-bottom: 2px solid #0078d4;
+  border-bottom: 2px solid var(--who-blue, #0078d4);
   padding-bottom: 0.5rem;
 }
 
 .section p {
-  color: #6c757d;
+  color: var(--who-text-secondary, #6c757d);
   margin-bottom: 1.5rem;
 }
 
@@ -319,16 +319,16 @@
 }
 
 .action-btn.primary {
-  background: #0078d4;
+  background: var(--who-blue, #0078d4);
   color: white;
 }
 
 .action-btn.primary:hover {
-  background: #106ebe;
+  background: var(--who-blue-dark, #106ebe);
 }
 
 .action-btn.secondary {
-  background: #6c757d;
+  background: var(--who-text-secondary, #6c757d);
   color: white;
 }
 
@@ -339,13 +339,13 @@
 .branch-publication {
   margin-bottom: 2rem;
   padding: 1rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--who-border-color, #e2e8f0);
   border-radius: 8px;
-  background: #fafafa;
+  background: var(--who-bg-light, #fafafa);
 }
 
 .branch-publication h4 {
-  color: #2c3e50;
+  color: var(--who-text-primary, #2c3e50);
   margin: 0 0 1rem 0;
 }
 
@@ -419,7 +419,7 @@
 }
 
 .subsection h4 {
-  color: #2c3e50;
+  color: var(--who-text-primary, #2c3e50);
   margin: 0 0 1rem 0;
   font-size: 1.1rem;
 }
@@ -446,7 +446,7 @@
 }
 
 .no-publication-note {
-  color: #6c757d;
+  color: var(--who-text-secondary, #6c757d);
   font-style: italic;
 }
 
@@ -458,8 +458,8 @@
 
 .placeholder-link {
   padding: 0.5rem 1rem;
-  background: #e9ecef;
-  color: #6c757d;
+  background: var(--who-bg-light, #e9ecef);
+  color: var(--who-text-secondary, #6c757d);
   border-radius: 6px;
   font-size: 0.9rem;
 }
@@ -469,14 +469,14 @@
 .dak-published-section {
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--who-bg-light, #f8f9fa);
   border-radius: 8px;
-  border-left: 4px solid #0078d4;
+  border-left: 4px solid var(--who-blue, #0078d4);
 }
 
 .dak-source-section h5,
 .dak-published-section h5 {
-  color: #2c3e50;
+  color: var(--who-text-primary, #2c3e50);
   margin: 0 0 0.75rem 0;
   font-size: 1rem;
   font-weight: 600;
