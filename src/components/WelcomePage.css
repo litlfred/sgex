@@ -462,15 +462,21 @@ body.theme-light .welcome-page-content {
   }
   
   .card-grid {
+    flex-direction: column;
+    overflow-x: visible;
+    overflow-y: auto;
+    max-height: calc(100vh - 300px);
     padding: 0 1rem;
     gap: 1.5rem;
   }
   
   .action-card {
+    flex: 0 0 auto;
+    min-width: auto;
+    width: auto;
+    max-width: 100%;
     padding: 2rem;
     min-height: 400px;
-    min-width: 280px;
-    width: 280px;
   }
   
   .card-icon {
@@ -495,8 +501,8 @@ body.theme-light .welcome-page-content {
   .action-card {
     padding: 1.5rem;
     min-height: 320px;
-    min-width: 250px;
-    width: 250px;
+    min-width: auto;
+    width: auto;
   }
   
   .card-icon {
