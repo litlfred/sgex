@@ -4,6 +4,8 @@ import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache'
 import secureTokenStorage from './secureTokenStorage';
 import logger from '../utils/logger';
 
+
+
 class GitHubService {
   constructor() {
     this.octokit = null;
@@ -554,10 +556,11 @@ class GitHubService {
 
   // Check if a repository has sushi-config.yaml with smart.who.int.base dependency
   async checkSmartGuidelinesCompatibility(owner, repo, retryCount = 2) {
+
     // Check cache first to prevent redundant downloads
     const cachedResult = repositoryCompatibilityCache.get(owner, repo);
     if (cachedResult !== null) {
-      return cachedResult;
+      return { compatible: cachedResult, cached: true };
     }
 
     try {
@@ -580,12 +583,12 @@ class GitHubService {
         
         // Cache the result
         repositoryCompatibilityCache.set(owner, repo, isCompatible);
-        return isCompatible;
+        return { compatible: isCompatible };
       }
       
       // Cache negative result
       repositoryCompatibilityCache.set(owner, repo, false);
-      return false;
+      return { compatible: false, reason: 'No sushi-config.yaml file found' };
     } catch (error) {
       // If it's a 404 (file not found), retry once more in case of temporary issues
       if (error.status === 404 && retryCount > 0) {
@@ -596,14 +599,89 @@ class GitHubService {
         return this.checkSmartGuidelinesCompatibility(owner, repo, retryCount - 1);
       }
       
-      // For any error (including rate limiting, network errors, or file not found after retries),
-      // strictly return false - no fallback logic
+      // Special handling for SAML-protected repositories - fallback to public API
+      if (error.status === 403 && error.message.includes('SAML enforcement') && this.octokit) {
+        console.log(`SAML-protected repository ${owner}/${repo}, trying public API fallback`);
+        
+        try {
+          // Try with public API (unauthenticated)
+          const publicOctokit = new Octokit();
+          const { data } = await publicOctokit.rest.repos.getContent({
+            owner,
+            repo,
+            path: 'sushi-config.yaml',
+          });
+
+          if (data.type === 'file' && data.content) {
+            // Decode base64 content (browser-compatible)
+            const content = decodeURIComponent(escape(atob(data.content)));
+            
+            // Check if the content contains smart.who.int.base in dependencies
+            const isCompatible = content.includes('smart.who.int.base');
+            
+            if (isCompatible) {
+              console.log(`Repository ${owner}/${repo} is compatible via public API despite SAML protection`);
+              
+              // Cache the result
+              repositoryCompatibilityCache.set(owner, repo, true);
+              return { 
+                compatible: true, 
+                reason: 'SMART Guidelines DAK (SAML-protected, verified via public API)',
+                requiresAuthentication: true
+              };
+            } else {
+              // Cache negative result
+              repositoryCompatibilityCache.set(owner, repo, false);
+              return { compatible: false, reason: 'No smart.who.int.base dependency found (via public API)' };
+            }
+          }
+        } catch (publicApiError) {
+          console.warn(`Public API fallback also failed for ${owner}/${repo}:`, publicApiError.message);
+          // Continue to normal error handling
+        }
+      }
+      
+      // For any other error (including rate limiting, network errors, or file not found after retries),
+      // return error information instead of just logging
+      const errorInfo = {
+        compatible: false,
+        error: error.message,
+        errorType: this._categorizeError(error),
+        status: error.status,
+        retryable: this._isRetryableError(error)
+      };
+
       console.warn(`Failed to check ${owner}/${repo} for sushi-config.yaml with smart.who.int.base dependency:`, error.message);
       
       // Cache negative result
       repositoryCompatibilityCache.set(owner, repo, false);
-      return false;
+      return errorInfo;
     }
+  }
+
+  // Helper method to categorize errors
+  _categorizeError(error) {
+    if (error.status === 403) {
+      if (error.message.includes('rate limit')) {
+        return 'rate_limit';
+      }
+      return 'permission_denied';
+    }
+    if (error.status === 404) {
+      return 'not_found';
+    }
+    if (error.status === 401) {
+      return 'authentication_failed';
+    }
+    if (error.code === 'ENOTFOUND' || error.code === 'ECONNRESET') {
+      return 'network_error';
+    }
+    return 'unknown_error';
+  }
+
+  // Helper method to determine if error is retryable
+  _isRetryableError(error) {
+    return ['rate_limit', 'network_error'].includes(this._categorizeError(error));
   }
 
 
@@ -651,8 +729,8 @@ class GitHubService {
       // Check each repository for SMART guidelines compatibility
       const smartGuidelinesRepos = [];
       for (const repo of repositories) {
-        const isCompatible = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
-        if (isCompatible) {
+        const compatibilityResult = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
+        if (compatibilityResult.compatible) {
           smartGuidelinesRepos.push({
             ...repo,
             smart_guidelines_compatible: true
@@ -668,40 +746,41 @@ class GitHubService {
   }
 
   // Get repositories with progressive scanning (for real-time updates)
-  async getSmartGuidelinesRepositoriesProgressive(owner, type = 'user', onRepositoryFound = null, onProgress = null) {
-    if (!this.isAuth()) {
-      throw new Error('Not authenticated with GitHub');
-    }
-
+  async getSmartGuidelinesRepositoriesProgressive(owner, type = 'user', onRepositoryFound = null, onProgress = null, onError = null) {
     try {
       let repositories = [];
       let page = 1;
       let hasMorePages = true;
 
-      // Fetch all repositories using pagination
-      while (hasMorePages) {
-        let response;
-        if (type === 'user') {
-          response = await this.octokit.rest.repos.listForUser({
-            username: owner,
-            sort: 'updated',
-            per_page: 100,
-            page: page,
-          });
-        } else {
-          response = await this.octokit.rest.repos.listForOrg({
-            org: owner,
-            sort: 'updated',
-            per_page: 100,
-            page: page,
-          });
-        }
+      if (this.isAuth()) {
+        // Fetch all repositories using pagination when authenticated
+        while (hasMorePages) {
+          let response;
+          if (type === 'user') {
+            response = await this.octokit.rest.repos.listForUser({
+              username: owner,
+              sort: 'updated',
+              per_page: 100,
+              page: page,
+            });
+          } else {
+            response = await this.octokit.rest.repos.listForOrg({
+              org: owner,
+              sort: 'updated',
+              per_page: 100,
+              page: page,
+            });
+          }
 
-        repositories = repositories.concat(response.data);
-        
-        // Check if there are more pages
-        hasMorePages = response.data.length === 100;
-        page++;
+          repositories = repositories.concat(response.data);
+          
+          // Check if there are more pages
+          hasMorePages = response.data.length === 100;
+          page++;
+        }
+      } else {
+        // Use public API for unauthenticated access (only public repositories)
+        repositories = await this.getPublicRepositories(owner, type);
       }
 
       // Handle case where user has no repositories
@@ -720,14 +799,26 @@ class GitHubService {
         return [];
       }
 
+      // Track scanning errors for reporting
+      const scanningErrors = {
+        rateLimited: [],
+        networkErrors: [],
+        permissionDenied: [],
+        otherErrors: [],
+        totalErrors: 0,
+        totalScanned: 0
+      };
+
       // Process repositories concurrently with rate limiting and enhanced display
       const processor = async (repo, index) => {
         // Add a small delay to make scanning progress visible (similar to demo mode)
         await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
         
-        const isCompatible = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
-        
-        if (isCompatible) {
+        const compatibilityResult = await this.checkSmartGuidelinesCompatibility(repo.owner.login, repo.name);
+        scanningErrors.totalScanned++;
+
+        // Handle the new return format
+        if (compatibilityResult.compatible) {
           const smartRepo = {
             ...repo,
             smart_guidelines_compatible: true
@@ -739,6 +830,34 @@ class GitHubService {
           }
           
           return smartRepo;
+        } else if (compatibilityResult.error) {
+          // Track the error for reporting
+          scanningErrors.totalErrors++;
+          const errorInfo = {
+            repo: repo.name,
+            error: compatibilityResult.error,
+            errorType: compatibilityResult.errorType,
+            retryable: compatibilityResult.retryable
+          };
+
+          switch (compatibilityResult.errorType) {
+            case 'rate_limit':
+              scanningErrors.rateLimited.push(errorInfo);
+              break;
+            case 'network_error':
+              scanningErrors.networkErrors.push(errorInfo);
+              break;
+            case 'permission_denied':
+              scanningErrors.permissionDenied.push(errorInfo);
+              break;
+            default:
+              scanningErrors.otherErrors.push(errorInfo);
+          }
+
+          // Report error if callback provided
+          if (onError) {
+            onError(errorInfo);
+          }
         }
         
         return null;
@@ -750,13 +869,20 @@ class GitHubService {
         onProgress: (completed, total, repo, result) => {
           // Progress callback for completed items
           if (onProgress) {
-            onProgress({
+            const progressData = {
               current: completed,
               total: total,
               currentRepo: repo.name,
               progress: Math.round((completed / total) * 100),
-              completed: true
-            });
+              completed: true,
+              scanningErrors: scanningErrors.totalErrors > 0 ? {
+                totalErrors: scanningErrors.totalErrors,
+                rateLimitedCount: scanningErrors.rateLimited.length,
+                networkErrorCount: scanningErrors.networkErrors.length,
+                hasRetryableErrors: [...scanningErrors.rateLimited, ...scanningErrors.networkErrors].some(e => e.retryable)
+              } : null
+            };
+            onProgress(progressData);
           }
         },
         onItemStart: (repo, index) => {
@@ -777,7 +903,28 @@ class GitHubService {
       // Filter out null results and collect smart repositories
       const validResults = results.filter(result => result !== null && !result.error);
       
-      return validResults;
+      // Log summary of scanning results
+      if (scanningErrors.totalErrors > 0) {
+        console.warn(`Repository scanning completed with ${scanningErrors.totalErrors} errors out of ${scanningErrors.totalScanned} repositories checked:`);
+        if (scanningErrors.rateLimited.length > 0) {
+          console.warn(`- Rate limited: ${scanningErrors.rateLimited.length} repositories`);
+        }
+        if (scanningErrors.networkErrors.length > 0) {
+          console.warn(`- Network errors: ${scanningErrors.networkErrors.length} repositories`);
+        }
+        if (scanningErrors.permissionDenied.length > 0) {
+          console.warn(`- Permission denied: ${scanningErrors.permissionDenied.length} repositories`);
+        }
+        if (scanningErrors.otherErrors.length > 0) {
+          console.warn(`- Other errors: ${scanningErrors.otherErrors.length} repositories`);
+        }
+      }
+
+      // Return results along with error summary
+      return {
+        repositories: validResults,
+        scanningErrors: scanningErrors.totalErrors > 0 ? scanningErrors : null
+      };
     } catch (error) {
       console.error('Failed to fetch SMART guidelines repositories:', error);
       throw error;
@@ -1926,6 +2073,217 @@ class GitHubService {
     } catch (error) {
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, error.status || 'error', Date.now() - startTime);
       console.error('Failed to fetch pull requests:', error);
+      throw error;
+    }
+  }
+
+  // Create an issue (requires authentication)
+  async createIssue(owner, repo, title, body, labels = [], assignees = []) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to create issues');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('POST', `/repos/${owner}/${repo}/issues`, { title, bodyLength: body?.length, labels, assignees });
+
+    try {
+      const params = {
+        owner,
+        repo,
+        title,
+        body
+      };
+
+      // Add optional parameters if provided
+      if (labels.length > 0) {
+        params.labels = labels;
+      }
+      
+      if (assignees.length > 0) {
+        params.assignees = assignees;
+      }
+
+      const response = await this.octokit.rest.issues.create(params);
+      
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, response.status, Date.now() - startTime);
+      
+      return {
+        success: true,
+        issue: {
+          id: response.data.id,
+          number: response.data.number,
+          title: response.data.title,
+          body: response.data.body,
+          html_url: response.data.html_url,
+          state: response.data.state,
+          created_at: response.data.created_at,
+          user: {
+            login: response.data.user.login,
+            avatar_url: response.data.user.avatar_url
+          },
+          labels: response.data.labels.map(label => ({
+            name: label.name,
+            color: label.color
+          }))
+        }
+      };
+    } catch (error) {
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to create issue:', error);
+      
+      // Return structured error response
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          status: error.status,
+          type: error.status === 403 ? 'permission_denied' : 
+                error.status === 422 ? 'validation_error' : 
+                error.status === 404 ? 'repository_not_found' : 'unknown_error'
+        }
+      };
+    }
+  }
+
+  // Get a specific issue
+  async getIssue(owner, repo, issueNumber) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to get issue details');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues/${issueNumber}`);
+
+    try {
+      const response = await this.octokit.rest.issues.get({
+        owner,
+        repo,
+        issue_number: issueNumber
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${issueNumber}`, response.status, Date.now() - startTime);
+
+      return {
+        id: response.data.id,
+        number: response.data.number,
+        title: response.data.title,
+        body: response.data.body,
+        html_url: response.data.html_url,
+        state: response.data.state,
+        created_at: response.data.created_at,
+        updated_at: response.data.updated_at,
+        closed_at: response.data.closed_at,
+        user: {
+          login: response.data.user.login,
+          avatar_url: response.data.user.avatar_url
+        },
+        labels: response.data.labels.map(label => ({
+          name: label.name,
+          color: label.color
+        }))
+      };
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${issueNumber}`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to get issue:', error);
+      throw error;
+    }
+  }
+
+  // Get a specific pull request
+  async getPullRequest(owner, repo, pullNumber) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to get pull request details');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}`);
+
+    try {
+      const response = await this.octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number: pullNumber
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}`, response.status, Date.now() - startTime);
+
+      return {
+        id: response.data.id,
+        number: response.data.number,
+        title: response.data.title,
+        body: response.data.body,
+        html_url: response.data.html_url,
+        state: response.data.state,
+        created_at: response.data.created_at,
+        updated_at: response.data.updated_at,
+        closed_at: response.data.closed_at,
+        merged_at: response.data.merged_at,
+        user: {
+          login: response.data.user.login,
+          avatar_url: response.data.user.avatar_url
+        },
+        head: {
+          ref: response.data.head.ref,
+          sha: response.data.head.sha
+        },
+        base: {
+          ref: response.data.base.ref,
+          sha: response.data.base.sha
+        }
+      };
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to get pull request:', error);
+      throw error;
+    }
+  }
+
+  // Search pull requests using GitHub search API
+  async searchPullRequests(query, options = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to search pull requests');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', '/search/issues', { query, type: 'pr' });
+
+    try {
+      const response = await this.octokit.rest.search.issuesAndPullRequests({
+        q: query,
+        sort: options.sort || 'created',
+        order: options.order || 'desc',
+        per_page: options.per_page || 30,
+        page: options.page || 1
+      });
+
+      this.logger.apiResponse('GET', '/search/issues', response.status, Date.now() - startTime);
+
+      return {
+        total_count: response.data.total_count,
+        incomplete_results: response.data.incomplete_results,
+        items: response.data.items.map(item => ({
+          id: item.id,
+          number: item.number,
+          title: item.title,
+          body: item.body,
+          html_url: item.html_url,
+          state: item.state,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          closed_at: item.closed_at,
+          user: {
+            login: item.user.login,
+            avatar_url: item.user.avatar_url
+          },
+          repository: item.repository_url ? {
+            name: item.repository_url.split('/').slice(-1)[0],
+            full_name: item.repository_url.split('/').slice(-2).join('/')
+          } : null
+        }))
+      };
+    } catch (error) {
+      this.logger.apiResponse('GET', '/search/issues', error.status || 'error', Date.now() - startTime);
+      console.error('Failed to search pull requests:', error);
       throw error;
     }
   }

@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PageLayout } from './framework';
 import PATLogin from './PATLogin';
 import githubService from '../services/githubService';
 import useThemeImage from '../hooks/useThemeImage';
+import { ALT_TEXT_KEYS, getAltText, getAvatarAltText } from '../utils/imageAltTextHelper';
 
 const BranchListingPage = () => {
+    const { t } = useTranslation();
     // Track authentication status for dependency arrays
     const isAuthenticatedForDeps = githubService.isAuth();
     
@@ -498,7 +501,7 @@ const BranchListingPage = () => {
             <PageLayout pageName="branch-listing-loading" showBreadcrumbs={false}>
                 <div className="branch-listing-content">
                     <div className="branch-listing-header">
-                        <h1><img src={mascotImage} alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
+                        <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
                         <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
                         <div className="loading">Loading previews...</div>
                     </div>
@@ -512,7 +515,7 @@ const BranchListingPage = () => {
             <PageLayout pageName="branch-listing-error" showBreadcrumbs={false}>
                 <div className="branch-listing-content">
                     <div className="branch-listing-header">
-                        <h1><img src={mascotImage} alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
+                        <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
                         <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
                         <div className="error">
                             <p>Failed to load previews: {error}</p>
@@ -528,7 +531,7 @@ const BranchListingPage = () => {
         <PageLayout pageName="branch-listing" showBreadcrumbs={false}>
             <div className="branch-listing-content">
                 <header className="branch-listing-header">
-                    <h1><img src={mascotImage} alt="SGEX Icon" className="sgex-icon" /> SGEX</h1>
+                    <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
                     <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
                     
                     <div className="prominent-info">
@@ -546,7 +549,7 @@ const BranchListingPage = () => {
                             className="card-link"
                         >
                             <div className="card-content">
-                                <img src={mascotImage} alt="SGEX Mascot" className="card-icon" />
+                                <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Mascot')} className="card-icon" />
                                 <div className="card-text">
                                     <h3>View Main Site</h3>
                                     <p>Access the main SGEX workbench</p>
@@ -746,7 +749,7 @@ const BranchListingPage = () => {
                                                                     <div className="comment-header">
                                                                         <img 
                                                                             src={comment.avatar_url} 
-                                                                            alt={comment.author} 
+                                                                            alt={getAvatarAltText(t, { name: comment.author }, 'user')} 
                                                                             className="comment-avatar"
                                                                         />
                                                                         <span className="comment-author">{comment.author}</span>

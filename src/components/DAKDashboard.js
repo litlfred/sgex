@@ -13,6 +13,7 @@ import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
 import FAQAnswer from '../dak/faq/components/FAQAnswer.js';
 import faqExecutionEngine from '../dak/faq/engine/FAQExecutionEngine.js';
+import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const DAKDashboard = () => {
   return (
@@ -836,7 +837,7 @@ const DAKDashboardContent = () => {
             </div>
             <div className="dialog-content">
               <div className="dialog-mascot">
-                <img src={mascotImage} alt="SGEX Helper" className="dialog-mascot-img" />
+                <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} className="dialog-mascot-img" />
                 <div className="mascot-message">
                   <p>You need edit permissions to modify DAK components!</p>
                   <p>Your current token only provides read access to this repository.</p>
