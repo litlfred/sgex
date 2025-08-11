@@ -4,6 +4,7 @@ import githubActionsService from '../services/githubActionsService';
 import WorkflowStatus from './WorkflowStatus';
 import MDEditor from '@uiw/react-md-editor';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import DOMPurify from 'dompurify';
 import './WorkflowStatus.css';
 import './PreviewBadge.css';
@@ -674,8 +675,26 @@ const PreviewBadge = () => {
   const sanitizeAndRenderMarkdown = (content) => {
     if (!content) return '';
     
-    // Sanitize the markdown content to prevent XSS attacks
-    const sanitizedContent = DOMPurify.sanitize(content);
+    // Configure DOMPurify to allow HTML table elements while maintaining security
+    const sanitizedContent = DOMPurify.sanitize(content, {
+      ALLOWED_TAGS: [
+        // Standard markdown elements
+        'p', 'br', 'strong', 'b', 'em', 'i', 'code', 'pre', 'blockquote',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img',
+        'hr', 'del', 'ins', 'mark', 'small', 'sub', 'sup',
+        // HTML table elements
+        'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
+        // Divs and spans for table styling
+        'div', 'span'
+      ],
+      ALLOWED_ATTR: [
+        'href', 'src', 'alt', 'title', 'class', 'id', 'style',
+        'align', 'colspan', 'rowspan', 'width', 'height',
+        'target', 'rel'
+      ],
+      KEEP_CONTENT: true,
+      ALLOW_DATA_ATTR: false
+    });
     
     return sanitizedContent;
   };
@@ -947,7 +966,7 @@ const PreviewBadge = () => {
                   <h4>Description</h4>
                   <div className="pr-body">
                     <div className="markdown-content">
-                      <ReactMarkdown>
+                      <ReactMarkdown rehypePlugins={[rehypeRaw]}>
                         {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
                       </ReactMarkdown>
                     </div>
@@ -1086,7 +1105,7 @@ const PreviewBadge = () => {
                             </div>
                             <div className="copilot-comment-body">
                               <div className="markdown-content">
-                                <ReactMarkdown>{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                                <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
                               </div>
                             </div>
                           </div>
@@ -1158,7 +1177,7 @@ const PreviewBadge = () => {
                                 <>
                                   <div className="comment-preview">
                                     <div className="markdown-content">
-                                      <ReactMarkdown>{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
+                                      <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
                                     </div>
                                   </div>
                                   <button 
@@ -1172,7 +1191,7 @@ const PreviewBadge = () => {
                                 <>
                                   <div className="comment-full">
                                     <div className="markdown-content">
-                                      <ReactMarkdown>{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
+                                      <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
                                     </div>
                                   </div>
                                   {shouldTruncate && (
