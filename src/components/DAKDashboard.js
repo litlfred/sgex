@@ -43,9 +43,12 @@ const DAKDashboardContent = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   // Component Card component defined within the dashboard
-  const ComponentCard = ({ component, cardImagePath, handleComponentClick, t }) => {
+  const ComponentCard = ({ component, handleComponentClick, t }) => {
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
+    
+    // Use the theme-aware image hook here instead of in the map function
+    const cardImagePath = useThemeImage(component.cardImage);
 
     const handleImageLoad = () => {
       setImageLoaded(true);
@@ -644,13 +647,10 @@ const DAKDashboardContent = () => {
 
               <div className="components-grid core-components">
                 {coreDAKComponents.map((component) => {
-                  const cardImagePath = useThemeImage(component.cardImage);
-
                   return (
                     <ComponentCard
                       key={component.id}
                       component={component}
-                      cardImagePath={cardImagePath}
                       handleComponentClick={handleComponentClick}
                       t={t}
                     />
