@@ -517,3 +517,47 @@ body.theme-dark .bug-type-btn:hover {
   color: var(--who-text-on-primary, #ffffff);
   border-color: var(--who-light-blue, #c0dcf2);
 }
+
+/* Dark mode specific styles for help fallback */
+body.theme-dark .help-fallback {
+  background: var(--who-dropdown-bg, #1a2380);
+  border-color: var(--who-light-blue, #c0dcf2);
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .help-fallback strong {
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .help-fallback li {
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .help-fallback a {
+  color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .help-fallback a:hover {
+  color: var(--who-text-primary, #ffffff);
+}
+
+/* Dark mode styles for slideshow help tips */
+body.theme-dark .slideshow-content .help-tip {
+  background: transparent;
+  border-left-color: var(--who-light-blue, #c0dcf2);
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .slideshow-content .help-tip strong {
+  color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .slideshow-content .help-warning {
+  background: var(--who-dropdown-bg, rgba(255, 152, 0, 0.1));
+  border-left-color: var(--who-warning, #ff9800);
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .slideshow-content .help-warning strong {
+  color: var(--who-warning, #ff9800);
+}
