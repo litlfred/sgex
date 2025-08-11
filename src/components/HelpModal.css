@@ -485,6 +485,11 @@ body.theme-light .help-modal-overlay.bug-report-overlay {
 }
 
 /* Dark mode specific overrides for better help modal visibility */
+body.theme-dark .help-modal-content {
+  background: var(--who-dropdown-bg, #1a2380);
+  color: var(--who-text-primary, #ffffff);
+}
+
 body.theme-dark .help-menu-dropdown {
   background: var(--who-dropdown-bg, #1a2380);
   border: 1px solid var(--who-light-blue, #c0dcf2);

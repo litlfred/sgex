@@ -625,6 +625,11 @@ body.theme-dark .help-text h4 {
   color: var(--who-light-blue, #c0dcf2);
 }
 
+body.theme-dark .help-text .tip {
+  background: transparent;
+  border-left-color: var(--who-light-blue, #c0dcf2);
+}
+
 body.theme-dark .help-topic-btn {
   background: var(--who-hover-bg, rgba(255, 255, 255, 0.1));
   color: var(--who-text-primary, #ffffff);
