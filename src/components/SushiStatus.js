@@ -29,6 +29,95 @@ const SushiStatus = ({ profile, repository, selectedBranch, hasWriteAccess }) =>
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedFiles, setExpandedFiles] = useState(new Set());
 
+  // Enhanced log message rendering with file links
+  const renderLogMessage = useCallback((log) => {
+    if (!log.message) return '';
+    
+    // Use the SUSHI service to parse the log message
+    const parsedMessage = sushiService.parseLogMessage(log.message, repository, selectedBranch);
+    
+    if (!parsedMessage.hasLinks) {
+      return log.message;
+    }
+    
+    // Render message parts with links
+    return (
+      <span>
+        {parsedMessage.parts.map((part, index) => {
+          if (part.type === 'text') {
+            return <span key={index}>{part.content}</span>;
+          } else if (part.type === 'link') {
+            return renderFileLink(part.content, part.linkInfo, `${log.id}-${index}`);
+          }
+          return null;
+        })}
+      </span>
+    );
+  }, [repository, selectedBranch]);
+
+  // Render file links based on link info
+  const renderFileLink = useCallback((fileName, linkInfo, key) => {
+    if (linkInfo.type === 'github' && linkInfo.url) {
+      return (
+        <a 
+          key={key}
+          href={linkInfo.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="file-link github-link"
+          title={linkInfo.title}
+          onClick={(e) => e.stopPropagation()} // Prevent log copying when clicking link
+        >
+          {linkInfo.icon} {fileName}
+        </a>
+      );
+    } else if (linkInfo.type === 'staging') {
+      return (
+        <span 
+          key={key}
+          className="file-link staging-link"
+          title={linkInfo.title}
+        >
+          {linkInfo.icon} {fileName}
+        </span>
+      );
+    } else if (linkInfo.type === 'dak') {
+      return (
+        <span 
+          key={key}
+          className="file-link dak-link"
+          title={linkInfo.title}
+        >
+          {linkInfo.icon} {fileName}
+        </span>
+      );
+    } else if (linkInfo.type === 'config') {
+      return (
+        <a 
+          key={key}
+          href={linkInfo.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="file-link config-link"
+          title={linkInfo.title}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {linkInfo.icon} {fileName}
+        </a>
+      );
+    } else {
+      return (
+        <span 
+          key={key}
+          className="file-link generic-link"
+          title={linkInfo.title}
+        >
+          {linkInfo.icon} {fileName}
+        </span>
+      );
+    }
+  }, []);
+
   const owner = repository.owner?.login || repository.full_name.split('/')[0];
   const repoName = repository.name;
 
@@ -683,14 +772,14 @@ const SushiStatus = ({ profile, repository, selectedBranch, hasWriteAccess }) =>
                     ) : (
                       filteredLogs.map((log, index) => (
                         <div 
-                          key={index} 
+                          key={log.id || index} 
                           className={`log-entry log-${log.level}`}
                           onClick={() => copyLogEntry(log)}
                           title="Click to copy to clipboard"
                         >
                           <span className="log-timestamp">{new Date(log.timestamp).toLocaleTimeString()}</span>
                           <span className={`log-level level-${log.level}`}>{log.level.toUpperCase()}</span>
-                          <span className="log-message">{log.message}</span>
+                          <span className="log-message">{renderLogMessage(log)}</span>
                           {log.location && (
                             <span className="log-location">({log.location})</span>
                           )}

@@ -29,24 +29,24 @@ class SushiService {
    * GitHub files are loaded first, then overridden by staging ground files
    */
   async loadFSHFiles(repository, branch, profile) {
-    this.log('info', `Loading FSH files from ${repository.full_name}/${branch}`);
+    this.log('info', `Loading FSH files from ${repository.full_name}/${branch}`, null, repository, branch);
     
     try {
       // Step 1: Load all FSH files from GitHub repository
       const githubFiles = await this.loadGitHubFSHFiles(repository, branch, profile);
-      this.log('info', `Loaded ${githubFiles.length} FSH files from GitHub`);
+      this.log('info', `Loaded ${githubFiles.length} FSH files from GitHub`, null, repository, branch);
       
       // Step 2: Load staging ground files and override GitHub files
       const stagingFiles = await this.loadStagingGroundFSHFiles();
-      this.log('info', `Loaded ${stagingFiles.length} FSH files from staging ground`);
+      this.log('info', `Loaded ${stagingFiles.length} FSH files from staging ground`, null, repository, branch);
       
       // Step 3: Merge files - staging ground overrides GitHub
-      const mergedFiles = this.mergeFSHFiles(githubFiles, stagingFiles);
-      this.log('info', `Total FSH files after merge: ${mergedFiles.length}`);
+      const mergedFiles = this.mergeFSHFiles(githubFiles, stagingFiles, repository, branch);
+      this.log('info', `Total FSH files after merge: ${mergedFiles.length}`, null, repository, branch);
       
       return mergedFiles;
     } catch (error) {
-      this.log('error', `Failed to load FSH files: ${error.message}`);
+      this.log('error', `Failed to load FSH files: ${error.message}`, null, repository, branch);
       throw error;
     }
   }
@@ -92,12 +92,15 @@ class SushiService {
                   profile.token
                 );
                 
+                this.log('info', `Found FSH file: ${file.path}`, null, repository, { name: repository.name, owner: repository.owner });
+                
                 fshFiles.push({
                   path: file.path,
                   name: file.name,
                   content: content,
                   source: 'github',
-                  size: file.size
+                  size: file.size,
+                  githubUrl: `https://github.com/${repository.owner.login}/${repository.name}/blob/${branch}/${file.path}`
                 });
               }
             }
@@ -129,12 +132,15 @@ class SushiService {
                 profile.token
               );
               
+              this.log('info', `Found FSH file: ${file.path}`, null, repository, { name: repository.name, owner: repository.owner });
+              
               fshFiles.push({
                 path: file.path,
                 name: file.name,
                 content: content,
                 source: 'github',
-                size: file.size
+                size: file.size,
+                githubUrl: `https://github.com/${repository.owner.login}/${repository.name}/blob/${branch}/${file.path}`
               });
             }
           }
@@ -163,6 +169,7 @@ class SushiService {
       if (stagingGround && stagingGround.files) {
         for (const file of stagingGround.files) {
           if (file.path.endsWith('.fsh')) {
+            this.log('info', `Found staging FSH file: ${file.path}`, null, null, null);
             fshFiles.push({
               path: file.path,
               name: file.path.split('/').pop(),
@@ -186,7 +193,7 @@ class SushiService {
    * Merge GitHub and staging ground FSH files
    * Staging ground files override GitHub files with the same path
    */
-  mergeFSHFiles(githubFiles, stagingFiles) {
+  mergeFSHFiles(githubFiles, stagingFiles, repository, branch) {
     const mergedFiles = [...githubFiles];
     
     // Override GitHub files with staging ground files
@@ -196,11 +203,11 @@ class SushiService {
       if (existingIndex >= 0) {
         // Override existing file
         mergedFiles[existingIndex] = stagingFile;
-        this.log('debug', `Overriding ${stagingFile.path} with staging ground version`);
+        this.log('debug', `Overriding ${stagingFile.path} with staging ground version`, null, repository, branch);
       } else {
         // Add new file from staging ground
         mergedFiles.push(stagingFile);
-        this.log('debug', `Adding new file ${stagingFile.path} from staging ground`);
+        this.log('debug', `Adding new file ${stagingFile.path} from staging ground`, null, repository, branch);
       }
     }
 
@@ -405,7 +412,7 @@ class SushiService {
    * This loads and validates FSH files without full SUSHI compilation
    */
   async runSUSHI(repository, branch, profile, options = {}) {
-    this.log('info', 'Starting FSH file loading and analysis...');
+    this.log('info', 'Starting FSH file loading and analysis...', null, repository, branch);
     this.clearLogs();
 
     try {
@@ -414,7 +421,7 @@ class SushiService {
       const configResult = await this.loadSushiConfig(repository, branch, profile);
 
       if (fshFiles.length === 0) {
-        this.log('warn', 'No FSH files found to process');
+        this.log('warn', 'No FSH files found to process', null, repository, branch);
         return {
           success: false,
           message: 'No FSH files found to process',
@@ -424,12 +431,14 @@ class SushiService {
       }
 
       // Analyze FSH files
-      const analysis = this.analyzeFSHFiles(fshFiles);
+      const analysis = this.analyzeFSHFiles(fshFiles, repository, branch);
 
       this.compilationResults = {
         files: fshFiles,
         config: configResult.config,
         analysis: analysis,
+        repository: repository,
+        branch: branch,
         configSources: {
           hasGithubVersion: configResult.hasGithubVersion,
           hasStagingVersion: configResult.hasStagingVersion,
@@ -437,7 +446,7 @@ class SushiService {
         }
       };
       
-      this.log('info', 'FSH file loading and analysis completed');
+      this.log('info', 'FSH file loading and analysis completed', null, repository, branch);
       this.notifyListeners();
 
       return {
@@ -455,7 +464,7 @@ class SushiService {
       };
 
     } catch (error) {
-      this.log('error', `FSH processing failed: ${error.message}`);
+      this.log('error', `FSH processing failed: ${error.message}`, null, repository, branch);
       this.notifyListeners();
       
       return {
@@ -469,7 +478,7 @@ class SushiService {
   /**
    * Analyze FSH files to provide useful information
    */
-  analyzeFSHFiles(fshFiles) {
+  analyzeFSHFiles(fshFiles, repository, branch) {
     const analysis = {
       totalFiles: fshFiles.length,
       githubFiles: fshFiles.filter(f => f.source === 'github').length,
@@ -489,6 +498,9 @@ class SushiService {
       const content = file.content;
       analysis.totalLines += content.split('\n').length;
 
+      // Log file processing
+      this.log('debug', `Analyzing file: ${file.path} (${file.source})`, null, repository, branch);
+
       // Basic FSH construct detection
       if (content.includes('Profile:')) analysis.profiles++;
       if (content.includes('Extension:')) analysis.extensions++;
@@ -499,6 +511,7 @@ class SushiService {
       // Track overrides
       if (file.source === 'staging') {
         analysis.overrides.push(file.path);
+        this.log('info', `File ${file.path} overridden by staging ground version`, null, repository, branch);
       }
 
       // File type analysis
@@ -539,18 +552,188 @@ class SushiService {
   }
 
   /**
-   * Add a log entry
+   * Add a log entry with enhanced file linking
    */
-  log(level, message, location = null) {
+  log(level, message, location = null, repository = null, branch = null) {
     const logEntry = {
+      id: Date.now() + Math.random(), // Unique ID for log entry
       level: level,
       message: message,
       location: location,
+      repository: repository,
+      branch: branch,
       timestamp: new Date().toISOString()
     };
     
     this.logs.push(logEntry);
     console[level] && console[level](`[SUSHI] ${message}`);
+  }
+
+  /**
+   * Parse log message to identify file references and create appropriate links
+   */
+  parseLogMessage(message, repository, branch) {
+    if (!message || typeof message !== 'string') {
+      return message;
+    }
+
+    // Enhanced regex to find valid file paths - must be preceded by whitespace or start of line
+    // and must be a complete path (not part of a longer word)
+    const filePathRegex = /(?:^|\s)((?:input\/fsh\/[a-zA-Z0-9_/-]*\/)?[a-zA-Z0-9_.-]+\.(?:fsh|yaml|yml|json))(?=\s|$|[.,!])/g;
+    const matches = [...message.matchAll(filePathRegex)];
+    
+    if (matches.length === 0) {
+      return { text: message, hasLinks: false };
+    }
+    
+    let lastIndex = 0;
+    const parts = [];
+    
+    matches.forEach((match) => {
+      const fullMatch = match[0];
+      const filePath = match[1];
+      const matchIndex = match.index;
+      
+      // Add text before the match
+      if (matchIndex > lastIndex) {
+        parts.push({
+          type: 'text',
+          content: message.substring(lastIndex, matchIndex)
+        });
+      }
+      
+      // Add the leading whitespace if present
+      const leadingWhitespace = fullMatch.substring(0, fullMatch.indexOf(filePath));
+      if (leadingWhitespace) {
+        parts.push({
+          type: 'text',
+          content: leadingWhitespace
+        });
+      }
+      
+      // Determine link type based on file location and availability
+      const linkInfo = this.getFileLinkInfo(filePath, repository, branch);
+      
+      parts.push({
+        type: 'link',
+        content: filePath,
+        linkInfo: linkInfo
+      });
+      
+      lastIndex = matchIndex + fullMatch.length;
+    });
+    
+    // Add remaining text
+    if (lastIndex < message.length) {
+      parts.push({
+        type: 'text',
+        content: message.substring(lastIndex)
+      });
+    }
+    
+    return { parts: parts, hasLinks: true };
+  }
+
+  /**
+   * Get file link information for a given file path
+   */
+  getFileLinkInfo(filePath, repository, branch) {
+    // Check if file exists in our known file lists
+    const results = this.compilationResults;
+    
+    if (results && results.files) {
+      const knownFile = results.files.find(f => f.path === filePath || f.path.endsWith(`/${filePath}`));
+      
+      if (knownFile) {
+        if (knownFile.source === 'staging') {
+          return {
+            type: 'staging',
+            title: 'File from Staging Ground',
+            icon: '📝',
+            path: filePath,
+            source: 'staging'
+          };
+        } else if (knownFile.source === 'github') {
+          const owner = repository?.owner?.login || repository?.full_name?.split('/')[0];
+          const repoName = repository?.name || repository?.full_name?.split('/')[1];
+          
+          return {
+            type: 'github',
+            title: 'Open in GitHub',
+            icon: '🔗',
+            path: filePath,
+            source: 'github',
+            url: `https://github.com/${owner}/${repoName}/blob/${branch}/${filePath}`
+          };
+        }
+      }
+    }
+    
+    // Check for specific file types and provide DAK component links
+    if (filePath.startsWith('input/fsh/')) {
+      const pathParts = filePath.split('/');
+      if (pathParts.length > 2) {
+        const subDir = pathParts[2];
+        const componentInfo = this.getDakComponentInfo(subDir);
+        
+        return {
+          type: 'dak',
+          title: `View in DAK ${componentInfo.component}`,
+          icon: componentInfo.icon,
+          path: filePath,
+          source: 'dak',
+          component: componentInfo.component
+        };
+      }
+    }
+    
+    // Special handling for sushi-config.yaml
+    if (filePath === 'sushi-config.yaml' && repository && branch) {
+      const owner = repository?.owner?.login || repository?.full_name?.split('/')[0];
+      const repoName = repository?.name || repository?.full_name?.split('/')[1];
+      
+      return {
+        type: 'config',
+        title: 'SUSHI Configuration File',
+        icon: '⚙️',
+        path: filePath,
+        source: 'github',
+        url: `https://github.com/${owner}/${repoName}/blob/${branch}/${filePath}`
+      };
+    }
+    
+    // Default to a generic file mention
+    return {
+      type: 'file',
+      title: 'File Reference',
+      icon: '📄',
+      path: filePath,
+      source: 'unknown'
+    };
+  }
+
+  /**
+   * Get DAK component information based on directory structure
+   */
+  getDakComponentInfo(subDir) {
+    switch (subDir) {
+      case 'profiles':
+        return { component: 'Profiles', icon: '👤' };
+      case 'examples':
+        return { component: 'Examples', icon: '📋' };
+      case 'valuesets':
+        return { component: 'ValueSets', icon: '📊' };
+      case 'codesystems':
+        return { component: 'CodeSystems', icon: '🔢' };
+      case 'extensions':
+        return { component: 'Extensions', icon: '🔧' };
+      case 'rules':
+        return { component: 'Rules', icon: '📏' };
+      case 'aliases':
+        return { component: 'Aliases', icon: '🔗' };
+      default:
+        return { component: 'FSH Files', icon: '📄' };
+    }
   }
 
   /**

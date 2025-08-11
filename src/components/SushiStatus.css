@@ -903,3 +903,108 @@ body.theme-dark .fhir-resources pre {
   background: rgba(255, 255, 255, 0.05);
   color: var(--who-text-primary);
 }
+
+/* Enhanced File Link Styles */
+.file-link {
+  display: inline;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  margin: 0 2px;
+}
+
+.file-link.github-link {
+  color: #0366d6;
+  background: rgba(3, 102, 214, 0.1);
+  border: 1px solid rgba(3, 102, 214, 0.2);
+}
+
+.file-link.github-link:hover {
+  background: rgba(3, 102, 214, 0.2);
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(3, 102, 214, 0.3);
+}
+
+.file-link.staging-link {
+  color: #28a745;
+  background: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.file-link.staging-link:hover {
+  background: rgba(40, 167, 69, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.file-link.dak-link {
+  color: #6f42c1;
+  background: rgba(111, 66, 193, 0.1);
+  border: 1px solid rgba(111, 66, 193, 0.2);
+}
+
+.file-link.dak-link:hover {
+  background: rgba(111, 66, 193, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(111, 66, 193, 0.3);
+}
+
+.file-link.config-link {
+  color: #17a2b8;
+  background: rgba(23, 162, 184, 0.1);
+  border: 1px solid rgba(23, 162, 184, 0.2);
+}
+
+.file-link.config-link:hover {
+  background: rgba(23, 162, 184, 0.2);
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(23, 162, 184, 0.3);
+}
+
+.file-link.generic-link {
+  color: #495057;
+  background: rgba(73, 80, 87, 0.1);
+  border: 1px solid rgba(73, 80, 87, 0.2);
+}
+
+.file-link.generic-link:hover {
+  background: rgba(73, 80, 87, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(73, 80, 87, 0.3);
+}
+
+/* Dark mode file link styles */
+body.theme-dark .file-link.github-link {
+  color: #58a6ff;
+  background: rgba(88, 166, 255, 0.1);
+  border-color: rgba(88, 166, 255, 0.2);
+}
+
+body.theme-dark .file-link.staging-link {
+  color: #56d364;
+  background: rgba(86, 211, 100, 0.1);
+  border-color: rgba(86, 211, 100, 0.2);
+}
+
+body.theme-dark .file-link.dak-link {
+  color: #a5a5ff;
+  background: rgba(165, 165, 255, 0.1);
+  border-color: rgba(165, 165, 255, 0.2);
+}
+
+body.theme-dark .file-link.config-link {
+  color: #39c5cf;
+  background: rgba(57, 197, 207, 0.1);
+  border-color: rgba(57, 197, 207, 0.2);
+}
+
+body.theme-dark .file-link.generic-link {
+  color: #c9d1d9;
+  background: rgba(201, 209, 217, 0.1);
+  border-color: rgba(201, 209, 217, 0.2);
+}
