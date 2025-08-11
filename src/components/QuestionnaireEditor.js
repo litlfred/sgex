@@ -144,8 +144,9 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
             <h5>Questionnaire Details</h5>
             <div className="metadata-grid">
               <div className="field-group">
-                <label>Title:</label>
+                <label htmlFor="questionnaire-title">Title:</label>
                 <input
+                  id="questionnaire-title"
                   type="text"
                   value={questionnaire.title || ''}
                   onChange={(e) => updateMetadata('title', e.target.value)}
@@ -153,8 +154,9 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
                 />
               </div>
               <div className="field-group">
-                <label>Name:</label>
+                <label htmlFor="questionnaire-name">Name:</label>
                 <input
+                  id="questionnaire-name"
                   type="text"
                   value={questionnaire.name || ''}
                   onChange={(e) => updateMetadata('name', e.target.value)}
@@ -162,8 +164,9 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
                 />
               </div>
               <div className="field-group">
-                <label>Status:</label>
+                <label htmlFor="questionnaire-status">Status:</label>
                 <select
+                  id="questionnaire-status"
                   value={questionnaire.status || 'draft'}
                   onChange={(e) => updateMetadata('status', e.target.value)}
                 >
@@ -173,8 +176,9 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
                 </select>
               </div>
               <div className="field-group">
-                <label>Publisher:</label>
+                <label htmlFor="questionnaire-publisher">Publisher:</label>
                 <input
+                  id="questionnaire-publisher"
                   type="text"
                   value={questionnaire.publisher || ''}
                   onChange={(e) => updateMetadata('publisher', e.target.value)}
@@ -183,8 +187,9 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
               </div>
             </div>
             <div className="field-group">
-              <label>Description:</label>
+              <label htmlFor="questionnaire-description">Description:</label>
               <textarea
+                id="questionnaire-description"
                 value={questionnaire.description || ''}
                 onChange={(e) => updateMetadata('description', e.target.value)}
                 placeholder="Enter questionnaire description"
@@ -216,8 +221,9 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
                 
                 <div className="question-fields">
                   <div className="field-group">
-                    <label>Question Text:</label>
+                    <label htmlFor={`question-text-${index}`}>Question Text:</label>
                     <input
+                      id={`question-text-${index}`}
                       type="text"
                       value={item.text || ''}
                       onChange={(e) => updateQuestion(index, 'text', e.target.value)}
@@ -226,8 +232,9 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
                   </div>
                   
                   <div className="field-group">
-                    <label>Link ID:</label>
+                    <label htmlFor={`question-linkid-${index}`}>Link ID:</label>
                     <input
+                      id={`question-linkid-${index}`}
                       type="text"
                       value={item.linkId || ''}
                       onChange={(e) => updateQuestion(index, 'linkId', e.target.value)}
@@ -236,8 +243,9 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
                   </div>
                   
                   <div className="field-group">
-                    <label>Question Type:</label>
+                    <label htmlFor={`question-type-${index}`}>Question Type:</label>
                     <select
+                      id={`question-type-${index}`}
                       value={item.type || 'string'}
                       onChange={(e) => updateQuestion(index, 'type', e.target.value)}
                     >

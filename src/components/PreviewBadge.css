@@ -141,8 +141,9 @@
   max-height: 80vh;
   overflow-y: auto;
   z-index: 1001;
-  min-width: 400px;
-  max-width: 600px;
+  min-width: 800px;
+  max-width: 1000px;
+  width: 800px;
 }
 
 .expanded-header {
@@ -206,8 +207,8 @@
   padding: 0;
   line-height: 1;
   border-radius: 4px;
-  width: 24px;
-  height: 24px;
+  width: var(--icon-size-default);
+  height: var(--icon-size-default);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -238,6 +239,85 @@
   color: #666;
   line-height: 1.4;
   white-space: pre-wrap;
+}
+
+/* Markdown content styling for PR description */
+.pr-body .markdown-content {
+  font-size: inherit;
+  color: inherit;
+  line-height: inherit;
+}
+
+.pr-body .markdown-content h1,
+.pr-body .markdown-content h2,
+.pr-body .markdown-content h3,
+.pr-body .markdown-content h4,
+.pr-body .markdown-content h5,
+.pr-body .markdown-content h6 {
+  margin: 0.5rem 0 0.25rem 0;
+  color: #333;
+}
+
+.pr-body .markdown-content p {
+  margin: 0.25rem 0;
+}
+
+.pr-body .markdown-content ul,
+.pr-body .markdown-content ol {
+  margin: 0.25rem 0;
+  padding-left: 1.5rem;
+}
+
+.pr-body .markdown-content li {
+  margin: 0.125rem 0;
+}
+
+.pr-body .markdown-content code {
+  background: #f4f4f4;
+  padding: 0.125rem 0.25rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  color: #d73a49;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.pr-body .markdown-content pre {
+  background: #f6f8fa;
+  padding: 0.5rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+  border: 1px solid #e1e4e8;
+}
+
+.pr-body .markdown-content pre code {
+  background: none;
+  padding: 0;
+  color: #333;
+}
+
+.pr-body .markdown-content blockquote {
+  border-left: 4px solid #dfe2e5;
+  padding-left: 0.75rem;
+  margin: 0.5rem 0;
+  color: #6a737d;
+}
+
+.pr-body .markdown-content a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.pr-body .markdown-content a:hover {
+  text-decoration: underline;
+}
+
+.pr-body .markdown-content strong {
+  font-weight: 600;
+}
+
+.pr-body .markdown-content em {
+  font-style: italic;
 }
 
 .comments-section {
@@ -276,6 +356,28 @@
   border: 1px solid #e5e5e5;
   border-radius: 6px;
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.comment-new-glow {
+  animation: comment-glow 3s ease-in-out;
+  border-color: #28a745;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+}
+
+@keyframes comment-glow {
+  0% {
+    border-color: #28a745;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+  }
+  50% {
+    border-color: #20c997;
+    box-shadow: 0 0 0 4px rgba(32, 201, 151, 0.3);
+  }
+  100% {
+    border-color: #e5e5e5;
+    box-shadow: none;
+  }
 }
 
 .comment-header {
@@ -286,6 +388,53 @@
   background: #f8f9fa;
   border-bottom: 1px solid #e5e5e5;
   font-size: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.comment-viewers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-left: auto;
+  align-items: center;
+}
+
+.viewer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.viewer-badge-copilot {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 1px 3px rgba(40, 167, 69, 0.3);
+}
+
+.viewer-badge-copilot:hover {
+  background: linear-gradient(135deg, #218838, #1ea87a);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(40, 167, 69, 0.4);
+}
+
+.viewer-badge-user {
+  background: linear-gradient(135deg, #fd7e14, #f39c12);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 1px 3px rgba(253, 126, 20, 0.3);
+}
+
+.viewer-badge-user:hover {
+  background: linear-gradient(135deg, #e8590c, #d68910);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(253, 126, 20, 0.4);
 }
 
 .comment-avatar {
@@ -296,7 +445,12 @@
 
 .comment-author {
   font-weight: 600;
-  color: #333;
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.comment-author:hover {
+  text-decoration: underline;
 }
 
 .comment-date {
@@ -325,6 +479,120 @@
   white-space: pre-wrap;
 }
 
+/* Markdown content styling for comments */
+.comment-preview .markdown-content,
+.comment-full .markdown-content,
+.copilot-comment-body .markdown-content {
+  line-height: 1.5;
+}
+
+.comment-preview .markdown-content h1,
+.comment-full .markdown-content h1,
+.copilot-comment-body .markdown-content h1 {
+  font-size: 1.1rem;
+  margin: 0.5rem 0 0.25rem 0;
+  color: #333;
+}
+
+.comment-preview .markdown-content h2,
+.comment-full .markdown-content h2,
+.copilot-comment-body .markdown-content h2 {
+  font-size: 1rem;
+  margin: 0.4rem 0 0.2rem 0;
+  color: #333;
+}
+
+.comment-preview .markdown-content h3,
+.comment-full .markdown-content h3,
+.copilot-comment-body .markdown-content h3 {
+  font-size: 0.9rem;
+  margin: 0.3rem 0 0.15rem 0;
+  color: #333;
+}
+
+.comment-preview .markdown-content p,
+.comment-full .markdown-content p,
+.copilot-comment-body .markdown-content p {
+  margin: 0.25rem 0;
+}
+
+.comment-preview .markdown-content ul,
+.comment-full .markdown-content ul,
+.copilot-comment-body .markdown-content ul,
+.comment-preview .markdown-content ol,
+.comment-full .markdown-content ol,
+.copilot-comment-body .markdown-content ol {
+  margin: 0.25rem 0;
+  padding-left: 1.5rem;
+}
+
+.comment-preview .markdown-content li,
+.comment-full .markdown-content li,
+.copilot-comment-body .markdown-content li {
+  margin: 0.1rem 0;
+}
+
+.comment-preview .markdown-content code,
+.comment-full .markdown-content code,
+.copilot-comment-body .markdown-content code {
+  background: #f6f8fa;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.8rem;
+}
+
+.comment-preview .markdown-content pre,
+.comment-full .markdown-content pre,
+.copilot-comment-body .markdown-content pre {
+  background: #f6f8fa;
+  padding: 0.5rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 0.25rem 0;
+}
+
+.comment-preview .markdown-content pre code,
+.comment-full .markdown-content pre code,
+.copilot-comment-body .markdown-content pre code {
+  background: none;
+  padding: 0;
+}
+
+.comment-preview .markdown-content blockquote,
+.comment-full .markdown-content blockquote,
+.copilot-comment-body .markdown-content blockquote {
+  border-left: 3px solid #d0d7de;
+  padding-left: 0.75rem;
+  margin: 0.25rem 0;
+  color: #656d76;
+}
+
+.comment-preview .markdown-content a,
+.comment-full .markdown-content a,
+.copilot-comment-body .markdown-content a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.comment-preview .markdown-content a:hover,
+.comment-full .markdown-content a:hover,
+.copilot-comment-body .markdown-content a:hover {
+  text-decoration: underline;
+}
+
+.comment-preview .markdown-content strong,
+.comment-full .markdown-content strong,
+.copilot-comment-body .markdown-content strong {
+  font-weight: 600;
+}
+
+.comment-preview .markdown-content em,
+.comment-full .markdown-content em,
+.copilot-comment-body .markdown-content em {
+  font-style: italic;
+}
+
 .comment-toggle {
   background: none;
   border: none;
@@ -340,15 +608,59 @@
   color: #0250a3;
 }
 
+.description-toggle {
+  background: none;
+  border: none;
+  color: #0366d6;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  padding: 0;
+  text-decoration: underline;
+  display: block;
+}
+
+.description-toggle:hover {
+  color: #0250a3;
+}
+
 .comment-form {
-  border-top: 1px solid #eee;
-  padding-top: 1rem;
+  border-bottom: 1px solid #eee;
+  padding: 1rem;
+  background: #f8f9fa;
 }
 
 .comment-form h4 {
   margin: 0 0 0.5rem 0;
   font-size: 0.9rem;
   color: #333;
+}
+
+.comment-status {
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.comment-status-submitting {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+}
+
+.comment-status-success {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.comment-status-error {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
 }
 
 .comment-form textarea {
@@ -393,6 +705,238 @@
   cursor: not-allowed;
 }
 
+.advanced-editor-btn {
+  background: #0366d6;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-right: 0.5rem;
+}
+
+.advanced-editor-btn:hover:not(:disabled) {
+  background: #0250a3;
+}
+
+.advanced-editor-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-right: 0.5rem;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #5a6268;
+}
+
+.btn-secondary:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+}
+
+.comment-form-advanced {
+  margin-top: 0.5rem;
+}
+
+.markdown-editor-container {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-editor-container .w-md-editor {
+  background: white;
+}
+
+.markdown-editor-container .w-md-editor-text-input,
+.markdown-editor-container .w-md-editor-text-textarea {
+  font-size: 0.85rem !important;
+  line-height: 1.4 !important;
+}
+
+.workflow-status-wrapper {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.workflow-status-wrapper .workflow-status-section {
+  margin: 0;
+  border-top: 1px solid #eee;
+  padding-top: 0;
+}
+
+.workflow-status-wrapper .workflow-status-title {
+  color: #333;
+}
+
+.workflow-status-wrapper .workflow-status-details {
+  color: #666;
+}
+
+.copilot-session-wrapper {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  background: #f8f9ff;
+}
+
+.copilot-session-wrapper h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.copilot-session-active,
+.copilot-session-inactive {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.copilot-session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.copilot-status {
+  font-weight: 600;
+}
+
+.copilot-activity {
+  color: #666;
+}
+
+.copilot-comments-count {
+  color: #0366d6;
+  font-size: 0.8rem;
+}
+
+.copilot-session-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.copilot-session-link {
+  background: #0366d6;
+  color: white;
+  text-decoration: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: background-color 0.2s ease;
+}
+
+.copilot-session-link:hover {
+  background: #0250a3;
+  text-decoration: none;
+}
+
+.copilot-session-toggle {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.copilot-session-toggle:hover {
+  background: #218838;
+}
+
+.copilot-session-modal {
+  margin-top: 0.75rem;
+  border: 1px solid #d1ecf1;
+  border-radius: 6px;
+  background: white;
+  overflow: hidden;
+}
+
+.copilot-session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: #bee5eb;
+  border-bottom: 1px solid #d1ecf1;
+  font-size: 0.85rem;
+}
+
+.copilot-comment-date {
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.copilot-session-content {
+  padding: 0.75rem;
+}
+
+.copilot-comment-author {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.copilot-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.copilot-username {
+  font-weight: 600;
+  color: #0366d6;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.copilot-username:hover {
+  text-decoration: underline;
+}
+
+.copilot-comment-body {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #333;
+  white-space: pre-wrap;
+  background: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border-left: 3px solid #0366d6;
+}
+
+.copilot-session-inactive .copilot-status {
+  color: #666;
+}
+
+.copilot-hint {
+  color: #666;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
 .expanded-footer {
   padding: 0.75rem 1rem;
   border-top: 1px solid #eee;
@@ -434,8 +978,11 @@
   }
 
   .preview-badge-expanded {
-    min-width: 300px;
-    max-width: 90vw;
+    min-width: 95vw;
+    max-width: 95vw;
+    width: 95vw;
+    left: -50vw;
+    margin-left: 50vw;
   }
 
   .expanded-header {
@@ -448,6 +995,10 @@
   }
 
   .comments-section {
+    padding: 0.75rem;
+  }
+
+  .workflow-status-wrapper {
     padding: 0.75rem;
   }
 }
@@ -466,9 +1017,11 @@
   }
 
   .preview-badge-expanded {
-    min-width: 280px;
-    max-width: 95vw;
-    left: -50px; /* Offset to prevent overflow on small screens */
+    min-width: 98vw;
+    max-width: 98vw;
+    width: 98vw;
+    left: -50vw;
+    margin-left: 50vw;
   }
 
   .comment-header {
@@ -476,7 +1029,290 @@
     gap: 0.25rem;
   }
 
+  .comment-viewers {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0.25rem;
+    justify-content: flex-start;
+  }
+
+  .viewer-badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.3rem;
+  }
+
   .comment-type {
     margin-left: 0;
+  }
+
+  .comment-form-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .comment-form-actions button {
+    width: 100%;
+  }
+}
+
+/* Comment form disabled state */
+.comment-disabled-notice {
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  color: #92400e;
+}
+
+/* Dark mode support for comment disabled notice */
+@media (prefers-color-scheme: dark) {
+  .comment-disabled-notice {
+    background-color: #451a03;
+    border-color: #92400e;
+    color: #fbbf24;
+  }
+}
+
+/* PR author link styling */
+.pr-author-link {
+  color: #60a5fa;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.pr-author-link:hover {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
+/* Dark mode support for PR author link */
+@media (prefers-color-scheme: dark) {
+  .pr-author-link {
+    color: #3b82f6;
+  }
+  
+  .pr-author-link:hover {
+    color: #60a5fa;
+  }
+}
+
+/* Copilot session link styling */
+.copilot-comment-link {
+  color: #10b981;
+  text-decoration: none;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-right: 0.5rem;
+}
+
+.copilot-comment-link:hover {
+  color: #34d399;
+  text-decoration: underline;
+}
+
+/* Dark mode support for copilot session links */
+@media (prefers-color-scheme: dark) {
+  .copilot-comment-link {
+    color: #059669;
+  }
+  
+  .copilot-comment-link:hover {
+    color: #10b981;
+  }
+}
+
+/* Load more comments button */
+.comments-load-more {
+  text-align: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.load-more-btn {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.load-more-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  transform: translateY(-1px);
+}
+
+.load-more-btn:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Dark mode support for expanded PR status */
+@media (prefers-color-scheme: dark) {
+  .preview-badge-expanded {
+    background: #1f2937; /* Solid dark background instead of transparent */
+    border-color: #374151;
+  }
+  
+  .expanded-header {
+    background: #111827; /* Solid dark header background */
+    border-bottom-color: #374151;
+  }
+  
+  .pr-info h3 a {
+    color: #60a5fa;
+  }
+  
+  .pr-info h3 a:hover {
+    color: #93c5fd;
+  }
+  
+  .pr-meta {
+    color: #d1d5db;
+  }
+  
+  /* PR Description section dark mode */
+  .pr-description {
+    background: #1f2937;
+    border-bottom-color: #374151;
+  }
+  
+  .pr-description h4,
+  .comments-section h4,
+  .comment-form h4,
+  .workflow-status-wrapper h4,
+  .copilot-session-wrapper h4 {
+    color: #f9fafb;
+  }
+  
+  .pr-body {
+    color: #e5e7eb;
+  }
+  
+  /* Comment header dark mode - no white background */
+  .comment-header {
+    background: #374151; /* Solid dark background instead of white */
+    border-bottom-color: #4b5563;
+  }
+  
+  /* Comment form dark mode - no white background */
+  .comment-form {
+    background: #1f2937; /* Solid dark background instead of white */
+    border-bottom-color: #374151;
+  }
+  
+  /* Copilot session wrapper dark mode - no white background */
+  .copilot-session-wrapper {
+    background: #1e293b; /* Solid dark background instead of white/light blue */
+    border-bottom-color: #374151;
+  }
+  
+  .comment {
+    background: #374151; /* Solid dark comment background */
+    border-color: #4b5563;
+  }
+  
+  .comment-author {
+    color: #60a5fa;
+  }
+  
+  .comment-author:hover {
+    color: #93c5fd;
+  }
+  
+  .comment-date,
+  .comment-type {
+    color: #9ca3af;
+  }
+  
+  /* Enhanced markdown content readability in dark mode */
+  .markdown-content {
+    color: #f3f4f6 !important;
+  }
+  
+  .pr-body .markdown-content {
+    color: #e5e7eb !important;
+  }
+  
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3,
+  .markdown-content h4,
+  .markdown-content h5,
+  .markdown-content h6 {
+    color: #f9fafb !important;
+  }
+  
+  .pr-body .markdown-content h1,
+  .pr-body .markdown-content h2,
+  .pr-body .markdown-content h3,
+  .pr-body .markdown-content h4,
+  .pr-body .markdown-content h5,
+  .pr-body .markdown-content h6 {
+    color: #f9fafb !important;
+  }
+  
+  .markdown-content p {
+    color: inherit;
+  }
+  
+  .markdown-content code {
+    background: #1f2937;
+    color: #fbbf24;
+    border: 1px solid #374151;
+  }
+  
+  .markdown-content pre {
+    background: #1f2937;
+    border: 1px solid #374151;
+  }
+  
+  .markdown-content pre code {
+    color: #e5e7eb;
+  }
+  
+  .markdown-content blockquote {
+    border-left-color: #374151;
+    background: #1f2937;
+    color: #d1d5db;
+  }
+  
+  .markdown-content a {
+    color: #60a5fa;
+  }
+  
+  .markdown-content a:hover {
+    color: #93c5fd;
+  }
+  
+  .comment-form textarea {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f3f4f6;
+  }
+  
+  .comment-form textarea:focus {
+    border-color: #3b82f6;
+  }
+  
+  .comment-form textarea::placeholder {
+    color: #9ca3af;
+  }
+  
+  .load-more-btn {
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
+  }
+  
+  .load-more-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1e3a8a, #1e40af);
   }
 }

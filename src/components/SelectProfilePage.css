@@ -92,8 +92,8 @@ body.theme-light .select-profile-content {
   background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
   color: white;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: var(--icon-size-default);
+  height: var(--icon-size-default);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -1,8 +1,10 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageLayout, usePageParams } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
+import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const DAKActionSelection = () => {
   return (
@@ -13,6 +15,7 @@ const DAKActionSelection = () => {
 };
 
 const DAKActionSelectionContent = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = usePageParams();
@@ -87,7 +90,7 @@ const DAKActionSelectionContent = () => {
               style={{ '--action-color': action.color }}
             >
               <div className="action-icon" style={{ color: action.color }}>
-                <img src={action.icon} alt={action.title} />
+                <img src={action.icon} alt={getAltText(t, ALT_TEXT_KEYS.ICON_ACTION, action.title, { title: action.title })} />
               </div>
               
               <div className="action-description">

@@ -13,7 +13,7 @@
 }
 
 .help-modal {
-  background: white;
+  background: var(--who-card-bg);
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   max-width: 800px;
@@ -24,8 +24,8 @@
 }
 
 .help-modal-header {
-  background: linear-gradient(135deg, #0066cc, #004499);
-  color: white;
+  background: linear-gradient(135deg, var(--who-blue), var(--who-blue-dark));
+  color: var(--who-text-on-primary);
   padding: 20px;
   display: flex;
   align-items: center;
@@ -55,7 +55,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 24px;
+  width: var(--icon-size-default);
   height: 20px;
   transition: background-color 0.2s;
 }
@@ -68,7 +68,7 @@
   display: block;
   width: 16px;
   height: 2px;
-  background-color: white;
+  background-color: var(--who-text-on-primary);
   margin: 1px 0;
   transition: all 0.2s;
 }
@@ -76,7 +76,7 @@
 .close-btn {
   background: none;
   border: none;
-  color: white;
+  color: var(--who-text-on-primary);
   font-size: 24px;
   cursor: pointer;
   padding: 4px 8px;
@@ -93,7 +93,7 @@
   position: absolute;
   top: 100%;
   right: 50px;
-  background: white;
+  background: var(--who-card-bg);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   overflow: hidden;
@@ -108,7 +108,7 @@
   padding: 12px 16px;
   border: none;
   background: none;
-  color: #333;
+  color: var(--who-text-primary);
   font-size: 14px;
   cursor: pointer;
   width: 100%;
@@ -117,7 +117,7 @@
 }
 
 .menu-item:hover {
-  background-color: #f5f5f5;
+  background-color: var(--who-hover-bg);
 }
 
 .menu-icon {
@@ -133,6 +133,8 @@
   padding: 0;
   max-height: calc(80vh - 80px);
   overflow-y: auto;
+  background: var(--who-card-bg);
+  color: var(--who-text-primary);
 }
 
 .help-content {
@@ -153,8 +155,8 @@
 }
 
 .message-bubble {
-  background: #f8f9fa;
-  border: 2px solid #0066cc;
+  background: var(--who-card-bg);
+  border: 2px solid var(--who-blue);
   border-radius: 20px;
   padding: 20px;
   position: relative;
@@ -170,7 +172,7 @@
   height: 0;
   border-style: solid;
   border-width: 10px 12px 10px 0;
-  border-color: transparent #0066cc transparent transparent;
+  border-color: transparent var(--who-blue) transparent transparent;
 }
 
 .message-bubble::after {
@@ -182,12 +184,12 @@
   height: 0;
   border-style: solid;
   border-width: 8px 10px 8px 0;
-  border-color: transparent #f8f9fa transparent transparent;
+  border-color: transparent var(--who-card-bg) transparent transparent;
 }
 
 .message-bubble p {
   margin: 0 0 12px 0;
-  color: #333;
+  color: var(--who-text-primary);
   line-height: 1.5;
 }
 
@@ -280,14 +282,14 @@
 
 .slideshow-header h3 {
   margin: 0;
-  color: #0066cc;
+  color: var(--who-blue);
   font-size: 1.4em;
   font-weight: 600;
 }
 
 .slide-counter {
-  background: #f0f6ff;
-  color: #0066cc;
+  background: var(--who-selected-bg);
+  color: var(--who-blue);
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 14px;
@@ -298,11 +300,11 @@
   margin-bottom: 32px;
   font-size: 16px;
   line-height: 1.6;
-  color: #333;
+  color: var(--who-text-primary);
 }
 
 .slideshow-content h4 {
-  color: #0066cc;
+  color: var(--who-blue);
   margin: 20px 0 12px 0;
   font-size: 1.1em;
 }
@@ -317,16 +319,16 @@
 }
 
 .slideshow-content .help-tip {
-  background: #e3f2fd;
-  border-left: 4px solid #0066cc;
+  background: var(--who-selected-bg);
+  border-left: 4px solid var(--who-blue);
   padding: 16px;
   margin: 20px 0;
   border-radius: 4px;
 }
 
 .slideshow-content .help-warning {
-  background: #fff3e0;
-  border-left: 4px solid #ff9800;
+  background: var(--who-warning-bg, #fff3e0);
+  border-left: 4px solid var(--who-warning, #ff9800);
   padding: 16px;
   margin: 20px 0;
   border-radius: 4px;
@@ -334,7 +336,7 @@
 
 .slideshow-content .help-tip strong,
 .slideshow-content .help-warning strong {
-  color: #0066cc;
+  color: var(--who-blue);
 }
 
 .slideshow-controls {
@@ -345,8 +347,8 @@
 }
 
 .slide-nav-btn {
-  background: #0066cc;
-  color: white;
+  background: var(--who-blue);
+  color: var(--who-text-on-primary);
   border: none;
   padding: 12px 24px;
   border-radius: 6px;
@@ -358,11 +360,11 @@
 }
 
 .slide-nav-btn:hover:not(:disabled) {
-  background: #0052a3;
+  background: var(--who-blue-dark);
 }
 
 .slide-nav-btn:disabled {
-  background: #ccc;
+  background: var(--who-border-color);
   cursor: not-allowed;
 }
 
@@ -376,18 +378,18 @@
   height: 12px;
   border-radius: 50%;
   border: none;
-  background: #ddd;
+  background: var(--who-border-color);
   cursor: pointer;
   transition: background-color 0.2s ease;
   padding: 0;
 }
 
 .slide-dot:hover {
-  background: #bbb;
+  background: var(--who-text-secondary);
 }
 
 .slide-dot.active {
-  background: #0066cc;
+  background: var(--who-blue);
 }
 
 /* Bug report button styles */
@@ -399,11 +401,11 @@
 }
 
 .bug-type-btn {
-  background: white;
-  border: 2px solid #0066cc;
+  background: var(--who-card-bg);
+  border: 2px solid var(--who-blue);
   border-radius: 8px;
   padding: 16px;
-  color: #0066cc;
+  color: var(--who-blue);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -415,8 +417,8 @@
 }
 
 .bug-type-btn:hover {
-  background: #0066cc;
-  color: white;
+  background: var(--who-blue);
+  color: var(--who-text-on-primary);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
 }
@@ -432,10 +434,25 @@
   }
 }
 
+/* Bug report modal overlay - less transparent for better visibility */
+.help-modal-overlay.bug-report-overlay {
+  background-color: rgba(0, 0, 0, 0.85);
+}
+
+/* Dark mode adjustments for bug report overlay */
+body.theme-dark .help-modal-overlay.bug-report-overlay {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Light mode specific adjustments for bug report overlay */
+body.theme-light .help-modal-overlay.bug-report-overlay {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
 /* Fallback help section styles */
 .help-fallback {
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 8px;
   padding: 16px;
   margin: 20px 0;
@@ -443,7 +460,7 @@
 }
 
 .help-fallback strong {
-  color: #495057;
+  color: var(--who-text-primary);
   display: block;
   margin-bottom: 8px;
 }
@@ -455,10 +472,11 @@
 
 .help-fallback li {
   margin: 4px 0;
+  color: var(--who-text-primary);
 }
 
 .help-fallback a {
-  color: #0066cc;
+  color: var(--who-blue);
   text-decoration: none;
 }
 

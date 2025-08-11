@@ -140,5 +140,36 @@
     "status": "状态",
     "activity": "最近活动",
     "errorLoading": "加载仪表板时出错"
+  },
+  "altText": {
+    "mascot": {
+      "helper": "SGEX 助手",
+      "icon": "SGEX 图标",
+      "examining": "SGEX 吉祥物检查中",
+      "celebrating": "SGEX 吉祥物庆祝",
+      "coding": "机器人 SGEX 吉祥物",
+      "community": "SGEX 吉祥物"
+    },
+    "avatar": {
+      "user": "{{name}} 头像",
+      "organization": "{{name}} 组织头像",
+      "personal": "个人资料",
+      "profile": "用户头像"
+    },
+    "icon": {
+      "sgex": "SGEX 图标",
+      "bugReport": "错误报告",
+      "security": "安全锁",
+      "action": "{{title}}"
+    },
+    "image": {
+      "authoring": "创作界面",
+      "collaboration": "协作功能",
+      "workflow": "工作流程图"
+    },
+    "logo": {
+      "sgex": "SGEX 标志",
+      "who": "世界卫生组织标志"
+    }
   }
 }
