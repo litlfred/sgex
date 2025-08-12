@@ -1,0 +1,24 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "T": {
+            "type": "object"
+        }
+    },
+    "properties": {
+        "data": {
+            "$ref": "#/definitions/T"
+        },
+        "error": {
+            "type": "string"
+        },
+        "loading": {
+            "type": "boolean"
+        }
+    },
+    "required": [
+        "loading"
+    ],
+    "type": "object"
+}
+

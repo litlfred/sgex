@@ -31,7 +31,7 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "react-scripts build",
+    "build": "npm run generate-schemas && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve": "npm run build && cd build && python3 -m http.server 3000",
@@ -41,7 +41,9 @@
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
     "lint:a11y": "eslint src --ext .js,.jsx,.ts,.tsx --format=compact | grep jsx-a11y || echo 'No accessibility issues found!'",
     "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "generate-schemas": "node scripts/generate-schemas.js",
+    "generate-schemas:dev": "npm run generate-schemas && echo 'Schemas generated for development'"
   },
   "jest": {
     "transformIgnorePatterns": [
@@ -82,6 +84,8 @@
     "http-proxy-middleware": "^3.0.5",
     "identity-obj-proxy": "^3.0.0",
     "jsdom": "^26.1.0",
-    "typescript": "^5.9.2"
+    "ts-json-schema-generator": "^2.4.0",
+    "typescript": "^5.9.2",
+    "typescript-json-schema": "^0.65.1"
   }
 }

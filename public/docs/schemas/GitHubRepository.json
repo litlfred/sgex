@@ -1,0 +1,60 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "properties": {
+        "created_at": {
+            "type": "string"
+        },
+        "default_branch": {
+            "type": "string"
+        },
+        "description": {
+            "type": "string"
+        },
+        "full_name": {
+            "type": "string"
+        },
+        "id": {
+            "type": "number"
+        },
+        "name": {
+            "type": "string"
+        },
+        "owner": {
+            "properties": {
+                "login": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "login",
+                "type"
+            ],
+            "type": "object"
+        },
+        "private": {
+            "type": "boolean"
+        },
+        "pushed_at": {
+            "type": "string"
+        },
+        "updated_at": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "created_at",
+        "default_branch",
+        "full_name",
+        "id",
+        "name",
+        "owner",
+        "private",
+        "pushed_at",
+        "updated_at"
+    ],
+    "type": "object"
+}
+

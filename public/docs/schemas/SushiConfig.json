@@ -1,0 +1,48 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "Record<string,any>": {
+            "type": "object"
+        },
+        "Record<string,string>": {
+            "type": "object"
+        }
+    },
+    "properties": {
+        "canonical": {
+            "type": "string"
+        },
+        "dependencies": {
+            "$ref": "#/definitions/Record<string,string>"
+        },
+        "description": {
+            "type": "string"
+        },
+        "fhirVersion": {
+            "type": "string"
+        },
+        "id": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string"
+        },
+        "parameters": {
+            "$ref": "#/definitions/Record<string,any>"
+        },
+        "status": {
+            "type": "string"
+        },
+        "title": {
+            "type": "string"
+        },
+        "version": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "id"
+    ],
+    "type": "object"
+}
+

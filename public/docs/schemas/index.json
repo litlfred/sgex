@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SGEX TypeScript Schemas Index",
+  "description": "Generated JSON schemas from TypeScript interfaces for runtime validation",
+  "version": "1.0.0",
+  "generated": "2025-08-12T04:15:43.510Z",
+  "schemas": [
+    {
+      "name": "GitHubRepository",
+      "file": "GitHubRepository.json",
+      "url": "./schemas/GitHubRepository.json",
+      "generator": "typescript-json-schema",
+      "description": "JSON schema for GitHubRepository TypeScript interface"
+    },
+    {
+      "name": "GitHubBranch",
+      "file": "GitHubBranch.json",
+      "url": "./schemas/GitHubBranch.json",
+      "generator": "typescript-json-schema",
+      "description": "JSON schema for GitHubBranch TypeScript interface"
+    },
+    {
+      "name": "GitHubUser",
+      "file": "GitHubUser.json",
+      "url": "./schemas/GitHubUser.json",
+      "generator": "typescript-json-schema",
+      "description": "JSON schema for GitHubUser TypeScript interface"
+    },
+    {
+      "name": "DAKComponent",
+      "file": "DAKComponent.json",
+      "url": "./schemas/DAKComponent.json",
+      "generator": "typescript-json-schema",
+      "description": "JSON schema for DAKComponent TypeScript interface"
+    },
+    {
+      "name": "SushiConfig",
+      "file": "SushiConfig.json",
+      "url": "./schemas/SushiConfig.json",
+      "generator": "typescript-json-schema",
+      "description": "JSON schema for SushiConfig TypeScript interface"
+    },
+    {
+      "name": "AppContext",
+      "file": "AppContext.json",
+      "url": "./schemas/AppContext.json",
+      "generator": "typescript-json-schema",
+      "description": "JSON schema for AppContext TypeScript interface"
+    },
+    {
+      "name": "RouteParams",
+      "file": "RouteParams.json",
+      "url": "./schemas/RouteParams.json",
+      "generator": "typescript-json-schema",
+      "description": "JSON schema for RouteParams TypeScript interface"
+    },
+    {
+      "name": "BaseComponentProps",
+      "file": "BaseComponentProps.json",
+      "url": "./schemas/BaseComponentProps.json",
+      "generator": "typescript-json-schema",
+      "description": "JSON schema for BaseComponentProps TypeScript interface"
+    },
+    {
+      "name": "ApiResponse",
+      "file": "ApiResponse.json",
+      "url": "./schemas/ApiResponse.json",
+      "generator": "typescript-json-schema",
+      "description": "JSON schema for ApiResponse TypeScript interface"
+    },
+    {
+      "name": "ThemeConfig",
+      "file": "ThemeConfig.json",
+      "url": "./schemas/ThemeConfig.json",
+      "generator": "typescript-json-schema",
+      "description": "JSON schema for ThemeConfig TypeScript interface"
+    }
+  ]
+}

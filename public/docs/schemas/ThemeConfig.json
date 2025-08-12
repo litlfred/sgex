@@ -1,0 +1,38 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "Theme": {
+            "enum": [
+                "dark",
+                "light"
+            ],
+            "type": "string"
+        }
+    },
+    "properties": {
+        "images": {
+            "properties": {
+                "logo": {
+                    "type": "string"
+                },
+                "mascot": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "logo",
+                "mascot"
+            ],
+            "type": "object"
+        },
+        "theme": {
+            "$ref": "#/definitions/Theme"
+        }
+    },
+    "required": [
+        "images",
+        "theme"
+    ],
+    "type": "object"
+}
+

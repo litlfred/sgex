@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "properties": {
+        "commit": {
+            "properties": {
+                "sha": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "sha",
+                "url"
+            ],
+            "type": "object"
+        },
+        "name": {
+            "type": "string"
+        },
+        "protected": {
+            "type": "boolean"
+        }
+    },
+    "required": [
+        "commit",
+        "name",
+        "protected"
+    ],
+    "type": "object"
+}
+

@@ -84,9 +84,15 @@ The SGEX Workbench implements a comprehensive "Manage a DAK" workflow as defined
 - GitHub Personal Access Token authentication
 
 **Development Tools:**
-- TypeScript (recommended) - Type safety
-- ESLint - Code quality
-- Prettier - Code formatting
+- **TypeScript 5.9.2** - Type safety and enhanced development experience
+- **AJV** - JSON Schema validation for runtime type safety
+- **ESLint** - Code quality with TypeScript support
+- **Prettier** - Code formatting (optional)
+
+**Type Safety & Validation:**
+- **JSON Schema Generation**: Automatic generation from TypeScript interfaces
+- **Runtime Validation**: Type-safe API response validation using generated schemas
+- **Development Safety**: Compile-time error detection and IDE support
 
 ### 3.3 Application Structure
 
@@ -100,16 +106,47 @@ src/
 ├── services/            # Business logic and API services
 │   ├── github/          # GitHub API integration
 │   ├── auth/            # Authentication services
+│   ├── validationService.ts # Runtime type validation
 │   └── storage/         # Local storage utilities
 ├── schemas/             # JSON Schemas for forms
+├── types/               # TypeScript type definitions
+│   └── common.ts        # Core application types
+├── utils/               # Utility functions (migrating to TypeScript)
 ├── styles/              # CSS and styling
 ├── hooks/               # React custom hooks
-├── utils/               # Utility functions
-├── locales/             # Internationalization files
-└── types/               # TypeScript type definitions
+└── locales/             # Internationalization files
+
+public/docs/schemas/     # Generated JSON schemas (deployed)
+├── index.json          # Schema catalog
+├── GitHubRepository.json
+├── DAKComponent.json
+└── ...                 # All TypeScript interface schemas
 ```
 
-### 3.4 User Interface Design
+### 3.4 TypeScript Migration Architecture
+
+**Migration Strategy:**
+- **Phased Approach**: Gradual migration maintaining full JavaScript compatibility
+- **Infrastructure First**: Type definitions, build tools, and validation framework
+- **Services Next**: API services and utilities with high reuse
+- **Components Last**: UI components with leaf-first approach
+
+**Type Safety Layers:**
+1. **Compile-time**: TypeScript compiler catches type errors during development
+2. **Runtime**: JSON Schema validation ensures API data conforms to TypeScript types
+3. **Development**: Enhanced IDE support with autocomplete and refactoring
+
+**Schema Generation Pipeline:**
+```mermaid
+flowchart LR
+    A[TypeScript Interfaces] --> B[typescript-json-schema]
+    B --> C[JSON Schemas]
+    C --> D[Runtime Validation]
+    C --> E[API Documentation]
+    E --> F[Deployed Schemas]
+```
+
+### 3.5 User Interface Design
 
 **Branding Requirements:**
 - WHO SMART Guidelines color palette

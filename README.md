@@ -101,6 +101,33 @@ The SGEX Workbench is a browser-based, static web application for collaborative 
    ```
    This ensures the 404.html file is properly configured for GitHub Pages SPA routing.
 
+### TypeScript Migration
+
+SGEX is undergoing a phased migration from JavaScript to TypeScript for improved type safety and developer experience:
+
+**Current Implementation:**
+- ✅ TypeScript infrastructure and build integration
+- ✅ Core type definitions (`src/types/common.ts`)
+- ✅ Utilities and services migration
+- ✅ JSON schema generation from TypeScript interfaces  
+- ✅ Runtime validation framework with AJV
+
+**Migration Benefits:**
+- **Type Safety**: Compile-time error detection and prevention
+- **Enhanced IDE Support**: Autocomplete, IntelliSense, and refactoring tools
+- **Self-Documenting Code**: Type annotations serve as living documentation
+- **Runtime Validation**: JSON schemas generated from types enable safe API data handling
+
+**Development Commands:**
+```bash
+npm run type-check          # TypeScript compilation check
+npm run generate-schemas    # Generate JSON schemas from TypeScript types
+npm run lint               # ESLint for both JavaScript and TypeScript
+npm test                   # Run test suite with mixed JS/TS support
+```
+
+For detailed migration strategy, see [TYPESCRIPT_MIGRATION_ROADMAP.md](TYPESCRIPT_MIGRATION_ROADMAP.md).
+
 ## GitHub Pages Deployment
 
 SGEX Workbench includes a comprehensive 404.html file that enables proper Single Page Application (SPA) routing on GitHub Pages. The 404.html file:

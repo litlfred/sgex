@@ -83,10 +83,34 @@ The following workflows were consolidated and removed:
 - `landing-page-deploy.yml` - Replaced by `landing-page-deployment.yml`
 - `pages.yml` - Replaced by `branch-deployment.yml`
 
+## 🔧 TypeScript & Schema Generation
+
+The deployment process now includes automatic JSON schema generation from TypeScript interfaces:
+
+### Schema Generation Process
+- **Build Integration**: `npm run build` automatically generates schemas via `npm run generate-schemas`
+- **Output Location**: Schemas are generated in `public/docs/schemas/` 
+- **Available Schemas**: All TypeScript interfaces from `src/types/common.ts`
+- **Runtime Validation**: Generated schemas enable runtime type validation using AJV
+
+### Generated Schema Files
+- `public/docs/schemas/index.json` - Schema catalog and metadata
+- Individual schema files for each TypeScript interface:
+  - `GitHubRepository.json`, `GitHubUser.json`, `DAKComponent.json`, etc.
+
+### Development Commands
+```bash
+npm run generate-schemas      # Generate schemas only
+npm run generate-schemas:dev  # Generate with development feedback
+npm run type-check           # TypeScript compilation check
+```
+
 ## 🧪 Testing & Validation
 
 Both workflows include:
-- Build validation
+- Build validation with TypeScript compilation
+- JSON schema generation and validation
+- Runtime validation framework testing
 - Path safety checks
 - Commit verification
 - Rollback capabilities
