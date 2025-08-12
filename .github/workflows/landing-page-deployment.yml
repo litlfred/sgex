@@ -80,7 +80,18 @@ jobs:
           # Set CI=false to avoid treating CSS warnings as errors in production builds
           export CI=false
           
+          # OAuth configuration (optional)
+          if [[ -n "$REACT_APP_GITHUB_OAUTH_CLIENT_ID" ]]; then
+            echo "✅ OAuth Client ID configured - OAuth authentication will be available"
+          else
+            echo "ℹ️  OAuth Client ID not set - application will use PAT authentication only"
+          fi
+          
           npm run build
+        env:
+          CI: false
+          PUBLIC_URL: "/sgex/"
+          REACT_APP_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.GITHUB_OAUTH_CLIENT_ID }}
           
           # Verify build was successful
           if [[ ! -f "build/index.html" ]]; then
