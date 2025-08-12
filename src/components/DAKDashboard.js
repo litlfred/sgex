@@ -7,6 +7,7 @@ import branchContextService from '../services/branchContextService';
 import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
+import ValidationPanel from './ValidationPanel';
 import ForkStatusBar from './ForkStatusBar';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
@@ -667,6 +668,17 @@ const DAKDashboardContent = () => {
               />
             </div>
           )}
+          
+          {/* DAK Validation Panel */}
+          <ValidationPanel
+            repository={repository}
+            profile={profile}
+            selectedBranch={selectedBranch}
+            onValidationComplete={(results) => {
+              console.log('Validation completed:', results);
+              // Could integrate with notifications or status updates here
+            }}
+          />
         </div>
       </div>
 

@@ -171,5 +171,115 @@
       "sgex": "SGEX Logo",
       "who": "WHO Logo"
     }
+  },
+  "validation": {
+    "framework": {
+      "title": "DAK Validation Framework",
+      "description": "Comprehensive validation for DAK components",
+      "runAll": "Run All Validations",
+      "runSelected": "Run Selected Validations",
+      "results": "Validation Results",
+      "summary": "Validation Summary",
+      "canSave": "Can Save",
+      "cannotSave": "Cannot Save - Fix Errors First",
+      "noIssues": "No Issues Found",
+      "errorCount": "{{count}} Error",
+      "errorCount_plural": "{{count}} Errors",
+      "warningCount": "{{count}} Warning",
+      "warningCount_plural": "{{count}} Warnings",
+      "infoCount": "{{count}} Info",
+      "infoCount_plural": "{{count}} Info"
+    },
+    "components": {
+      "dakStructure": "DAK Structure",
+      "businessProcesses": "Business Processes",
+      "decisionSupportLogic": "Decision Support Logic",
+      "coreDataElements": "Core Data Elements",
+      "indicators": "Program Indicators",
+      "publications": "Publications",
+      "requirements": "Requirements",
+      "testScenarios": "Test Scenarios",
+      "personas": "Generic Personas",
+      "userScenarios": "User Scenarios",
+      "fileStructure": "File Structure"
+    },
+    "dak": {
+      "sushiBase": {
+        "description": "DAK IG SHALL have smart.who.int.base as a dependency",
+        "message": "Missing required smart.who.int.base dependency",
+        "suggestion": "Add \"smart.who.int.base: current\" to dependencies section"
+      }
+    },
+    "bpmn": {
+      "businessRuleTaskId": {
+        "description": "BPMN business rule tasks SHALL have an @id attribute",
+        "message": "Business rule task at line {{line}} is missing required @id attribute",
+        "suggestion": "Add an @id attribute to the businessRuleTask element"
+      },
+      "wellFormed": {
+        "description": "BPMN files must be well-formed XML",
+        "message": "BPMN XML parsing error: {{error}}",
+        "suggestion": "Fix XML syntax errors in BPMN file"
+      },
+      "namespace": {
+        "description": "BPMN files must use correct BPMN 2.0 namespace",
+        "message": "BPMN file missing correct BPMN 2.0 namespace declaration",
+        "suggestion": "Add xmlns:bpmn=\"http://www.omg.org/spec/BPMN/20100524/MODEL\" to root element"
+      }
+    },
+    "dmn": {
+      "decisionLabelId": {
+        "description": "DMN decisions SHALL have @label and @id attributes",
+        "message": "Decision at line {{line}} is missing {{attributes}}",
+        "suggestion": "Add both @id and @label attributes to the decision element"
+      },
+      "bpmnCrossReference": {
+        "description": "DMN decision @id should be referenced by a BPMN businessRuleTask",
+        "message": "Decision \"{{id}}\" is not referenced by any BPMN businessRuleTask",
+        "suggestion": "Create a businessRuleTask with id=\"{{id}}\" in a BPMN diagram"
+      },
+      "wellFormed": {
+        "description": "DMN files must be well-formed XML",
+        "message": "DMN XML parsing error: {{error}}",
+        "suggestion": "Fix XML syntax errors in DMN file"
+      },
+      "namespace": {
+        "description": "DMN files must use correct DMN 1.3 namespace",
+        "message": "DMN file missing correct DMN 1.3 namespace declaration",
+        "suggestion": "Add xmlns:dmn=\"https://www.omg.org/spec/DMN/20191111/MODEL/\" to root element"
+      }
+    },
+    "xml": {
+      "wellFormed": {
+        "description": "XML files must be well-formed",
+        "message": "XML parsing error at line {{line}}, column {{column}}: {{error}}",
+        "suggestion": "Fix XML syntax errors such as unclosed tags, invalid characters, or malformed attributes"
+      }
+    },
+    "json": {
+      "valid": {
+        "description": "JSON files must be valid JSON",
+        "message": "JSON syntax error at line {{line}}, column {{column}}: {{error}}",
+        "suggestion": "Fix JSON syntax errors such as missing commas, quotes, or brackets"
+      }
+    },
+    "file": {
+      "namingConventions": {
+        "description": "Files should follow naming conventions",
+        "message": "Filename convention issues: {{issues}}",
+        "suggestion": "Use lowercase letters, numbers, hyphens, and underscores. Avoid spaces and special characters.",
+        "recommendedName": "Recommended filename: {{name}}"
+      },
+      "sizeLimit": {
+        "description": "Files should be under reasonable size limits",
+        "message": "File size ({{size}}) exceeds recommended limit",
+        "suggestion": "Consider breaking large files into smaller components"
+      }
+    },
+    "levels": {
+      "error": "Error",
+      "warning": "Warning", 
+      "info": "Info"
+    }
   }
 }
