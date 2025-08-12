@@ -4,14 +4,6 @@ import actorDefinitionService from '../services/actorDefinitionService';
 import { PageLayout, useDAKParams } from './framework';
 
 const ActorEditor = () => {
-  return (
-    <PageLayout pageName="actor-editor">
-      <ActorEditorContent />
-    </PageLayout>
-  );
-};
-
-const ActorEditorContent = () => {
   const navigate = useNavigate();
   const { profile, repository, branch } = useDAKParams();
   
@@ -236,36 +228,23 @@ const ActorEditorContent = () => {
     }
   }, [profile, repository, navigate]);
 
-  if (!profile || !repository) {
-    return (
-      <PageLayout pageName="actor-editor">
-        <div className="actor-editor">
+  return (
+    <PageLayout pageName="actor-editor">
+      <div className="actor-editor">
+        {!profile || !repository ? (
           <div className="redirecting-state">
             <h2>Redirecting...</h2>
             <p>Missing required context. Redirecting to home page...</p>
           </div>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  if (loading) {
-    return (
-      <PageLayout pageName="actor-editor">
-        <div className="actor-editor loading-state">
-          <div className="loading-content">
-            <h2>Loading Actor Editor...</h2>
-            <p>Initializing editor and loading data...</p>
+        ) : loading ? (
+          <div className="loading-state">
+            <div className="loading-content">
+              <h2>Loading Actor Editor...</h2>
+              <p>Initializing editor and loading data...</p>
+            </div>
           </div>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  return (
-    <PageLayout pageName="actor-editor">
-      <div className="actor-editor">
-        <div className="editor-content">
+        ) : (
+          <div className="editor-content">
 
         <div className="editor-toolbar">
           <div className="toolbar-left">
@@ -483,7 +462,7 @@ const ActorEditorContent = () => {
             </div>
           </div>
         </div>
-      )}
+        )}
 
       </div>
     </PageLayout>

@@ -139,14 +139,6 @@ const DEMO_FEATURE_FILES = [
 ];
 
 const TestingViewer = () => {
-  return (
-    <PageLayout pageName="testing-viewer">
-      <TestingViewerContent />
-    </PageLayout>
-  );
-};
-
-const TestingViewerContent = () => {
   const navigate = useNavigate();
   const { profile, repository, branch } = useDAKParams();
 

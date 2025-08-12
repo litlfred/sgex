@@ -291,33 +291,13 @@ const LandingPageWithFramework = () => {
                   to learn more about SGEX Workbench and DAK components.
                 </p>
               </div>
-            </div>
-          </div>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  return (
-    <PageLayout pageName="landing" showHeader={false}>
-      <div className="landing-page">
-        <div className="landing-header">
-          <div className="who-branding">
-            <h1 className="clickable-title">SGEX Workbench</h1>
-            <p className="subtitle">WHO SMART Guidelines Exchange</p>
-          </div>
-          <div className="user-info">
-            <img src={user?.avatar_url} alt="User avatar" className="user-avatar" />
-            <span>{user?.name || user?.login}</span>
-            <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
-            <button onClick={handleLogout} className="logout-btn">Logout</button>
-          </div>
-        </div>
-        
-        <div className="landing-content">
-          {warningMessage && (
-            <div className="warning-message">
-              <div className="warning-content">
+              )}
+            </>
+          ) : (
+            <>
+              {warningMessage && (
+                <div className="warning-message">
+                  <div className="warning-content">
                 <span className="warning-icon">⚠️</span>
                 <span className="warning-text">{warningMessage}</span>
                 <button 
@@ -391,6 +371,9 @@ const LandingPageWithFramework = () => {
                 ))}
               </div>
             </div>
+          )}
+              </div>
+            </>
           )}
         </div>
       </div>
