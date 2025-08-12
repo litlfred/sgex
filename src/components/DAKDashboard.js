@@ -12,7 +12,7 @@ import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
 import FAQAnswer from '../dak/faq/components/FAQAnswer.js';
-import enhancedFAQExecutionEngine from '../dak/faq/engine/EnhancedFAQExecutionEngine.ts';
+import faqExecutionEngine from '../dak/faq/engine/FAQExecutionEngine.js';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const DAKDashboard = () => {
@@ -312,28 +312,17 @@ const DAKDashboardContent = () => {
     try {
       setFaqLoading(true);
       
-      // Health check the enhanced FAQ system
-      const healthCheck = await enhancedFAQExecutionEngine.healthCheck();
-      if (!healthCheck.healthy) {
-        throw new Error(healthCheck.message);
-      }
+      // Initialize the client-side FAQ execution engine
+      await faqExecutionEngine.initialize();
 
-      // Get available questions from the enhanced engine
-      const questions = await enhancedFAQExecutionEngine.getAvailableQuestions();
+      // Get available questions from the client-side engine
+      const questions = faqExecutionEngine.getCatalog();
       setFaqQuestions(questions);
       setFaqError(null);
 
-      // Execute sample DAK questions if we have repository context
-      if (repository?.full_name) {
-        const sampleResults = await enhancedFAQExecutionEngine.executeSampleDAKQuestions(
-          repository.full_name,
-          selectedBranch || 'main',
-          'en'
-        );
-        console.log('Sample FAQ results:', sampleResults);
-      }
+      console.log(`FAQ system initialized with ${questions.length} questions`);
     } catch (err) {
-      console.error('Failed to initialize enhanced FAQ engine:', err);
+      console.error('Failed to initialize FAQ engine:', err);
       setFaqError(err.message);
     } finally {
       setFaqLoading(false);
