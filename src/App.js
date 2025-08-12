@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes } from 'react-router-dom';
 import './i18n'; // Initialize i18n
 import { generateLazyRoutes } from './utils/lazyRouteUtils';
+import { initializeTheme } from './utils/themeManager';
 import logger from './utils/logger';
 
 function App() {
@@ -16,6 +17,10 @@ function App() {
       environment: process.env.NODE_ENV,
       basename: basename
     });
+    
+    // Initialize theme before any components render
+    const appliedTheme = initializeTheme();
+    appLogger.info('Theme initialized', { theme: appliedTheme });
     
     return () => {
       appLogger.componentUnmount();
