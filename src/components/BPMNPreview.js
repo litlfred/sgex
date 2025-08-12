@@ -249,6 +249,18 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
           
           console.log(`✅ BPMNPreview: Successfully fitted to viewport in ${zoomTime}ms`);
 
+          // Force immediate visibility for preview
+          setTimeout(() => {
+            if (containerRef.current) {
+              const svgElement = containerRef.current.querySelector('svg');
+              if (svgElement) {
+                svgElement.style.opacity = '1';
+                svgElement.style.visibility = 'visible';
+                console.log('🎨 BPMNPreview: Forced SVG visibility');
+              }
+            }
+          }, 50);
+
           // Final validation - check if diagram was actually rendered
           const viewbox = canvas.viewbox();
           console.log('🔍 BPMNPreview: Final viewport details:', {
