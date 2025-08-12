@@ -40,7 +40,10 @@
     "build:verify": "npm run build && npm run verify-404",
     "lint": "eslint src --ext .js,.jsx",
     "lint:a11y": "eslint src --ext .js,.jsx --format=compact | grep jsx-a11y || echo 'No accessibility issues found!'",
-    "lint:fix": "eslint src --ext .js,.jsx --fix"
+    "lint:fix": "eslint src --ext .js,.jsx --fix",
+    "compliance:profile": "node src/tests/compliance/profileCreationCompliance.js",
+    "compliance:all": "npm run compliance:profile",
+    "test:compliance": "npm test -- --testPathPattern=compliance"
   },
   "jest": {
     "transformIgnorePatterns": [

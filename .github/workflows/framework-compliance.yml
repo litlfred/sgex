@@ -6,8 +6,11 @@ on:
     paths:
       - 'src/components/**/*.js'
       - 'src/components/**/*.jsx'
+      - 'src/hooks/**/*.js'
+      - 'src/services/**/*.js'
       - 'src/App.js'
       - 'scripts/check-framework-compliance.js'
+      - 'src/tests/compliance/**/*.js'
 
 permissions:
   contents: read
@@ -33,6 +36,9 @@ jobs:
     - name: Run Framework Compliance Check
       run: npm run check-framework-compliance
 
+    - name: Run Profile Creation Compliance Check
+      run: npm run compliance:profile
+
     - name: Comment PR with compliance results
       if: always()
       uses: actions/github-script@v7
@@ -41,28 +47,49 @@ jobs:
           const { execSync } = require('child_process');
           
           try {
-            // Run compliance check and capture output
-            const output = execSync('npm run check-framework-compliance', { 
+            // Run framework compliance check and capture output
+            const frameworkOutput = execSync('npm run check-framework-compliance', { 
               encoding: 'utf8',
               cwd: process.cwd()
             });
             
+            // Run profile creation compliance check and capture output
+            let profileOutput = '';
+            let profileStatus = 'PASSED';
+            try {
+              profileOutput = execSync('npm run compliance:profile', { 
+                encoding: 'utf8',
+                cwd: process.cwd()
+              });
+            } catch (error) {
+              profileOutput = error.stdout || error.stderr || error.message;
+              profileStatus = 'FAILED';
+            }
+            
             // Create comment body
             const commentBody = `## 🔍 Page Framework Compliance Check Results
             
-            ${output}
+            ### Framework Structure Compliance
+            ${frameworkOutput}
+            
+            ### Profile Creation Compliance
+            Status: ${profileStatus === 'PASSED' ? '✅ PASSED' : '❌ FAILED'}
+            
+            ${profileOutput}
             
             ---
             
             ### Next Steps
-            ${output.includes('NON-COMPLIANT') ? 
-              '❌ **Action Required**: Fix non-compliant pages before merging.' :
-              output.includes('PARTIAL') ?
+            ${frameworkOutput.includes('NON-COMPLIANT') || profileStatus === 'FAILED' ? 
+              '❌ **Action Required**: Fix compliance violations before merging.' :
+              frameworkOutput.includes('PARTIAL') ?
                 '⚠️ **Recommended**: Consider addressing partial compliance issues.' :
-                '✅ **All Good**: All pages are framework compliant!'
+                '✅ **All Good**: All framework compliance checks passed!'
             }
             
-            For migration guidance, see [Page Framework Documentation](../docs/page-framework.md).
+            For guidance, see:
+            - [Page Framework Documentation](../docs/page-framework.md)  
+            - [Profile Creation Compliance Requirements](../docs/page-framework.md#profile-creation-compliance-requirements)
             `;
             
             // Get pull request number - handle both PR and issue contexts
@@ -141,13 +168,19 @@ jobs:
 
     - name: Fail on non-compliance
       run: |
-        # Re-run compliance check to get exit code
-        npm run check-framework-compliance
-        exit_code=$?
+        # Re-run framework compliance check to get exit code
+        framework_exit_code=0
+        npm run check-framework-compliance || framework_exit_code=$?
         
-        if [ $exit_code -ne 0 ]; then
-          echo "❌ Framework compliance check failed. Please fix non-compliant pages."
+        # Re-run profile compliance check to get exit code
+        profile_exit_code=0
+        npm run compliance:profile || profile_exit_code=$?
+        
+        if [ $framework_exit_code -ne 0 ] || [ $profile_exit_code -ne 0 ]; then
+          echo "❌ Compliance checks failed. Please fix violations before merging."
+          echo "Framework compliance: $([ $framework_exit_code -eq 0 ] && echo "PASSED" || echo "FAILED")"
+          echo "Profile compliance: $([ $profile_exit_code -eq 0 ] && echo "PASSED" || echo "FAILED")"
           exit 1
         else
-          echo "✅ Framework compliance check passed."
+          echo "✅ All compliance checks passed."
         fi
