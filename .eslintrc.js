@@ -7,6 +7,23 @@ module.exports = {
   plugins: [
     'jsx-a11y'
   ],
+  overrides: [
+    {
+      files: ['*.ts', '*.tsx'],
+      parser: '@typescript-eslint/parser',
+      plugins: ['@typescript-eslint'],
+      extends: [
+        'react-app',
+        'react-app/jest',
+        'plugin:jsx-a11y/recommended'
+      ],
+      rules: {
+        // TypeScript-specific rules
+        '@typescript-eslint/no-unused-vars': 'warn',
+        '@typescript-eslint/no-explicit-any': 'warn'
+      }
+    }
+  ],
   rules: {
     // Enable additional jsx-a11y rules for better accessibility
     'jsx-a11y/click-events-have-key-events': 'warn',
