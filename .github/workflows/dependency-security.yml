@@ -179,6 +179,7 @@ jobs:
                 **Need help?** Check the [npm audit documentation](https://docs.npmjs.com/cli/v8/commands/npm-audit) for more details.
                 `;
               }
+            }
             
             // Get pull request number (only for PR events)
             const prNumber = context.payload.pull_request?.number || context.issue?.number;
