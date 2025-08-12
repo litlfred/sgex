@@ -15,16 +15,12 @@ module.exports = {
       extends: [
         'react-app',
         'react-app/jest',
-        'plugin:jsx-a11y/recommended',
-        '@typescript-eslint/recommended'
+        'plugin:jsx-a11y/recommended'
       ],
       rules: {
         // TypeScript-specific rules
         '@typescript-eslint/no-unused-vars': 'warn',
-        '@typescript-eslint/no-explicit-any': 'warn',
-        '@typescript-eslint/explicit-function-return-type': 'off',
-        '@typescript-eslint/explicit-module-boundary-types': 'off',
-        '@typescript-eslint/no-non-null-assertion': 'warn'
+        '@typescript-eslint/no-explicit-any': 'warn'
       }
     }
   ],
