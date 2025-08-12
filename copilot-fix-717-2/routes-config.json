@@ -2,8 +2,8 @@
   "deployType": "main",
   "dakComponents": {
     "dashboard": {
-      "component": "DAKDashboardWithFramework",
-      "path": "./components/DAKDashboardWithFramework"
+      "component": "DAKDashboard",
+      "path": "./components/DAKDashboard"
     },
     "testing-viewer": {
       "component": "TestingViewer", 
