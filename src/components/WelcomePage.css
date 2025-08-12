@@ -168,10 +168,10 @@ body.theme-light .welcome-page-content {
 }
 
 .card-icon img {
-  max-height: var(--icon-size-default);
-  max-width: var(--icon-size-default);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
+  max-height: var(--card-size-default);
+  max-width: var(--card-size-default);
   object-fit: contain;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .card-icon .icon-symbol {
@@ -491,8 +491,9 @@ body.theme-light .welcome-page-content {
   }
   
   .card-icon img {
-    max-width: 13.5em;
-    max-height: 13.5em;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
+    max-height: var(--card-size-default);
+    max-width: var(--card-size-default);
   }
 }
 
@@ -524,8 +525,9 @@ body.theme-light .welcome-page-content {
   }
   
   .card-icon img {
-    max-width: var(--icon-size-default);
-    max-height: var(--icon-size-default);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
+    max-height: var(--card-size-default);
+    max-width: var(--card-size-default);
   }
   
   .card-icon .icon-symbol {
