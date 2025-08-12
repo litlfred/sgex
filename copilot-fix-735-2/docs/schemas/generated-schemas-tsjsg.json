@@ -23,6 +23,7 @@
           "enum": [
             "classic",
             "fine-grained",
+            "oauth",
             null
           ],
           "type": [
@@ -566,6 +567,82 @@
       ],
       "type": "object"
     },
+    "GitHubPermissions": {
+      "additionalProperties": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "properties": {
+        "contents": {
+          "enum": [
+            "read",
+            "write",
+            null
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "metadata": {
+          "enum": [
+            "read",
+            null
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pullRequests": {
+          "enum": [
+            "read",
+            "write",
+            null
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "contents",
+        "metadata",
+        "pullRequests"
+      ],
+      "type": "object"
+    },
+    "GitHubRateLimit": {
+      "additionalProperties": false,
+      "properties": {
+        "limit": {
+          "type": "number"
+        },
+        "remaining": {
+          "type": "number"
+        },
+        "reset": {
+          "type": "number"
+        },
+        "resource": {
+          "type": "string"
+        },
+        "used": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "limit",
+        "remaining",
+        "reset",
+        "used",
+        "resource"
+      ],
+      "type": "object"
+    },
     "GitHubRepository": {
       "additionalProperties": false,
       "properties": {
@@ -1072,6 +1149,330 @@
       ],
       "type": "object"
     },
+    "LogLevel": {
+      "enum": [
+        "ERROR",
+        "WARN",
+        "INFO",
+        "DEBUG"
+      ],
+      "type": "string"
+    },
+    "Logger": {
+      "additionalProperties": false,
+      "properties": {
+        "apiCall": {
+          "$comment": "(method: string, url: string, data?: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "data": {},
+                "method": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "method",
+                "url"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "apiError": {
+          "$comment": "(method: string, url: string, error: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "error": {},
+                "method": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "method",
+                "url",
+                "error"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "apiResponse": {
+          "$comment": "(method: string, url: string, status: number, responseTime: number) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "method": {
+                  "type": "string"
+                },
+                "responseTime": {
+                  "type": "number"
+                },
+                "status": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "method",
+                "url",
+                "status",
+                "responseTime"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "auth": {
+          "$comment": "(event: string, details?: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "details": {},
+                "event": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "event"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "cache": {
+          "$comment": "(operation: string, key: string, details?: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "details": {},
+                "key": {
+                  "type": "string"
+                },
+                "operation": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "operation",
+                "key"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "componentMount": {
+          "$comment": "(props?: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "props": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "componentUnmount": {
+          "$comment": "() => void"
+        },
+        "debug": {
+          "$comment": "(...args: any[]) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "args": {
+                  "items": {},
+                  "type": "array"
+                }
+              },
+              "required": [
+                "args"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "error": {
+          "$comment": "(...args: any[]) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "args": {
+                  "items": {},
+                  "type": "array"
+                }
+              },
+              "required": [
+                "args"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "info": {
+          "$comment": "(...args: any[]) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "args": {
+                  "items": {},
+                  "type": "array"
+                }
+              },
+              "required": [
+                "args"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "navigation": {
+          "$comment": "(from: string, to: string) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "to": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "from",
+                "to"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "performance": {
+          "$comment": "(operation: string, duration: number) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "duration": {
+                  "type": "number"
+                },
+                "operation": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "operation",
+                "duration"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "stateChange": {
+          "$comment": "(oldState: any, newState: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "newState": {},
+                "oldState": {}
+              },
+              "required": [
+                "oldState",
+                "newState"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "userAction": {
+          "$comment": "(action: string, details?: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "action": {
+                  "type": "string"
+                },
+                "details": {}
+              },
+              "required": [
+                "action"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "warn": {
+          "$comment": "(...args: any[]) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "args": {
+                  "items": {},
+                  "type": "array"
+                }
+              },
+              "required": [
+                "args"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "error",
+        "warn",
+        "info",
+        "debug",
+        "apiCall",
+        "apiResponse",
+        "apiError",
+        "componentMount",
+        "componentUnmount",
+        "stateChange",
+        "userAction",
+        "performance",
+        "auth",
+        "navigation",
+        "cache"
+      ],
+      "type": "object"
+    },
     "ProfileSubscription": {
       "additionalProperties": false,
       "properties": {
@@ -1131,6 +1532,37 @@
         "exportedAt",
         "userLogin",
         "subscriptions"
+      ],
+      "type": "object"
+    },
+    "RepositoryCacheData": {
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "repositories": {
+          "items": {
+            "$ref": "#/definitions/GitHubRepository"
+          },
+          "type": "array"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "enum": [
+            "user",
+            "org"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "repositories",
+        "timestamp",
+        "owner",
+        "type"
       ],
       "type": "object"
     },
@@ -1269,6 +1701,35 @@
       },
       "type": "object"
     },
+    "TokenFormatValidation": {
+      "additionalProperties": false,
+      "properties": {
+        "isValid": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "classic",
+            "fine-grained",
+            "oauth",
+            "legacy",
+            "invalid"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "isValid",
+        "type"
+      ],
+      "type": "object"
+    },
     "TokenValidationResult": {
       "additionalProperties": false,
       "properties": {
@@ -1304,7 +1765,8 @@
         "tokenType": {
           "enum": [
             "classic",
-            "fine-grained"
+            "fine-grained",
+            "oauth"
           ],
           "type": "string"
         },

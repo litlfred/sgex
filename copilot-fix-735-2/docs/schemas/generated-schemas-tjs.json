@@ -3,7 +3,7 @@
     "definitions": {
         "AsyncResult": {
             "properties": {
-                "__@toStringTag@9625": {
+                "__@toStringTag@9748": {
                     "type": "string"
                 }
             },
@@ -31,7 +31,8 @@
                         {
                             "enum": [
                                 "classic",
-                                "fine-grained"
+                                "fine-grained",
+                                "oauth"
                             ],
                             "type": "string"
                         },
@@ -50,7 +51,7 @@
         "CacheEntry": {
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/T"
+                    "$ref": "#/definitions/T_1"
                 },
                 "key": {
                     "type": "string"
@@ -63,6 +64,27 @@
                 },
                 "ttl": {
                     "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "CacheResult": {
+            "properties": {
+                "age": {
+                    "type": "number"
+                },
+                "data": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/T_2"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "isHit": {
+                    "type": "boolean"
                 }
             },
             "type": "object"
@@ -429,6 +451,23 @@
             },
             "type": "object"
         },
+        "GitHubApiResponse": {
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/T"
+                },
+                "headers": {
+                    "$ref": "#/definitions/Record<string,string>"
+                },
+                "status": {
+                    "type": "number"
+                },
+                "url": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
         "GitHubBranch": {
             "properties": {
                 "commit": {
@@ -472,6 +511,76 @@
                 },
                 "protection_url": {
                     "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "GitHubPermissions": {
+            "additionalProperties": {
+                "type": [
+                    "null",
+                    "string"
+                ]
+            },
+            "properties": {
+                "contents": {
+                    "anyOf": [
+                        {
+                            "enum": [
+                                "read",
+                                "write"
+                            ],
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "metadata": {
+                    "anyOf": [
+                        {
+                            "const": "read",
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "pullRequests": {
+                    "anyOf": [
+                        {
+                            "enum": [
+                                "read",
+                                "write"
+                            ],
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "GitHubRateLimit": {
+            "properties": {
+                "limit": {
+                    "type": "number"
+                },
+                "remaining": {
+                    "type": "number"
+                },
+                "reset": {
+                    "type": "number"
+                },
+                "resource": {
+                    "type": "string"
+                },
+                "used": {
+                    "type": "number"
                 }
             },
             "type": "object"
@@ -878,6 +987,65 @@
             },
             "type": "object"
         },
+        "LogLevel": {
+            "enum": [
+                "DEBUG",
+                "ERROR",
+                "INFO",
+                "WARN"
+            ],
+            "type": "string"
+        },
+        "Logger": {
+            "properties": {
+                "apiCall": {
+                    "type": "object"
+                },
+                "apiError": {
+                    "type": "object"
+                },
+                "apiResponse": {
+                    "type": "object"
+                },
+                "auth": {
+                    "type": "object"
+                },
+                "cache": {
+                    "type": "object"
+                },
+                "componentMount": {
+                    "type": "object"
+                },
+                "componentUnmount": {
+                    "type": "object"
+                },
+                "debug": {
+                    "type": "object"
+                },
+                "error": {
+                    "type": "object"
+                },
+                "info": {
+                    "type": "object"
+                },
+                "navigation": {
+                    "type": "object"
+                },
+                "performance": {
+                    "type": "object"
+                },
+                "stateChange": {
+                    "type": "object"
+                },
+                "userAction": {
+                    "type": "object"
+                },
+                "warn": {
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
         "PaginatedResponse": {
             "properties": {
                 "data": {
@@ -887,7 +1055,7 @@
                         },
                         "items": {
                             "items": {
-                                "$ref": "#/definitions/T_3"
+                                "$ref": "#/definitions/T_5"
                             },
                             "type": "array"
                         },
@@ -967,6 +1135,30 @@
         "Record<string,string>": {
             "type": "object"
         },
+        "RepositoryCacheData": {
+            "properties": {
+                "owner": {
+                    "type": "string"
+                },
+                "repositories": {
+                    "items": {
+                        "$ref": "#/definitions/GitHubRepository"
+                    },
+                    "type": "array"
+                },
+                "timestamp": {
+                    "type": "number"
+                },
+                "type": {
+                    "enum": [
+                        "org",
+                        "user"
+                    ],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
         "RuntimeValidationConfig": {
             "properties": {
                 "coerceTypes": {
@@ -987,7 +1179,7 @@
         "ServiceResponse": {
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/T_2"
+                    "$ref": "#/definitions/T_4"
                 },
                 "error": {
                     "type": "string"
@@ -1116,6 +1308,36 @@
         "T_3": {
             "type": "object"
         },
+        "T_4": {
+            "type": "object"
+        },
+        "T_5": {
+            "type": "object"
+        },
+        "TokenFormatValidation": {
+            "properties": {
+                "isValid": {
+                    "type": "boolean"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "type": {
+                    "enum": [
+                        "classic",
+                        "fine-grained",
+                        "invalid",
+                        "legacy",
+                        "oauth"
+                    ],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
         "TokenValidationResult": {
             "properties": {
                 "isValid": {
@@ -1144,7 +1366,8 @@
                 "tokenType": {
                     "enum": [
                         "classic",
-                        "fine-grained"
+                        "fine-grained",
+                        "oauth"
                     ],
                     "type": "string"
                 },
@@ -1158,7 +1381,7 @@
         "ValidatedData": {
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/T_1"
+                    "$ref": "#/definitions/T_3"
                 },
                 "errors": {
                     "items": {
