@@ -508,11 +508,20 @@ const DAKSelectionContent = () => {
               } else {
                 console.log('🔍 Loading WHO known repositories...');
                 
-                // First try public GitHub API with rate limiting
+                // First try public GitHub API with rate limiting protection
                 try {
+                  // Check if we should skip API calls to avoid rate limiting
+                  const shouldSkipApiCalls = await githubService.shouldSkipApiCalls();
+                  
+                  if (shouldSkipApiCalls) {
+                    console.log('🚫 Skipping public API call due to rate limit protection, using fallback data');
+                    throw new Error('Rate limit protection - using fallback data');
+                  }
+                  
                   const publicRepos = await githubService.getSmartGuidelinesRepositories(
                     'WorldHealthOrganization', 
-                    'org'
+                    'org',
+                    true // Skip compatibility checks for unauthenticated WHO access to avoid rate limiting
                   );
                   
                   if (publicRepos && publicRepos.length > 0) {
@@ -561,9 +570,13 @@ const DAKSelectionContent = () => {
               // Use public GitHub API for other organizations/users when not authenticated
               console.log('🔍 Not authenticated, using public GitHub API...');
               try {
+                // Check if we should skip API calls to avoid rate limiting
+                const shouldSkipApiCalls = await githubService.shouldSkipApiCalls();
+                
                 repos = await githubService.getSmartGuidelinesRepositories(
                   effectiveProfile.login, 
-                  effectiveProfile.type === 'org' ? 'org' : 'user'
+                  effectiveProfile.type === 'org' ? 'org' : 'user',
+                  shouldSkipApiCalls // Skip compatibility checks if rate limited
                 );
                 // Sort repositories alphabetically
                 repos.sort((a, b) => a.name.localeCompare(b.name));
