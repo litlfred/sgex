@@ -35,6 +35,7 @@ const DAKSelectionContent = () => {
   const [currentlyScanningRepos, setCurrentlyScanningRepos] = useState(new Set());
   const [usingCachedData, setUsingCachedData] = useState(false);
   const [scanningErrors, setScanningErrors] = useState(null);
+  const [usingFallbackWhoRepositories, setUsingFallbackWhoRepositories] = useState(false);
 
   // State for handling direct access without action
   const [defaultAction, setDefaultAction] = useState(null);
@@ -298,6 +299,7 @@ const DAKSelectionContent = () => {
     setCurrentlyScanningRepos(new Set());
     setUsingCachedData(false);
     setScanningErrors(null);
+    setUsingFallbackWhoRepositories(false);
     
     try {
       let repos = [];
@@ -529,6 +531,9 @@ const DAKSelectionContent = () => {
                   }
                 } catch (publicApiError) {
                   console.warn('Public API failed for WHO, using known repositories:', publicApiError);
+                  
+                  // Set flag to indicate we're using fallback data
+                  setUsingFallbackWhoRepositories(true);
                   
                   // Fallback to known WHO repositories from config
                   repos = whoRepositories.whoKnownRepositories.map(repo => ({
@@ -818,6 +823,26 @@ const DAKSelectionContent = () => {
               </>
             )}
           </div>
+
+          {/* Warning message when using fallback WHO repositories */}
+          {usingFallbackWhoRepositories && effectiveProfile.login === 'WorldHealthOrganization' && (
+            <div className="fallback-warning">
+              <div className="warning-content">
+                <span className="warning-icon">⚠️</span>
+                <div className="warning-text">
+                  <strong>Connection Issue:</strong> There was a problem connecting to GitHub to fetch live repository data. 
+                  Using known WHO SMART Guidelines repositories as fallback. 
+                  <button 
+                    onClick={handleRescan} 
+                    className="retry-link"
+                    disabled={isScanning}
+                  >
+                    {isScanning ? 'Retrying...' : 'Try again'}
+                  </button> to get the most up-to-date information.
+                </div>
+              </div>
+            </div>
+          )}
 
           {loading ? (
             <div className="loading">
