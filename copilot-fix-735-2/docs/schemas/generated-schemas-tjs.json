@@ -3,7 +3,7 @@
     "definitions": {
         "AsyncResult": {
             "properties": {
-                "__@toStringTag@9748": {
+                "__@toStringTag@9772": {
                     "type": "string"
                 }
             },
@@ -42,8 +42,7 @@
                     ]
                 },
                 "user": {
-                    "$ref": "#/definitions/GitHubUser",
-                    "description": "Core SGEX Workbench Type Definitions\n\nThis file contains the main type definitions for the SGEX Workbench application.\nThese types are used throughout the application for type safety and will be used\nto generate JSON schemas for runtime validation."
+                    "$ref": "#/definitions/GitHubUser"
                 }
             },
             "type": "object"
@@ -418,6 +417,32 @@
                 },
                 "watchers_count": {
                     "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "DAKUrlInfo": {
+            "properties": {
+                "assetPath": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "branch": {
+                    "type": "string"
+                },
+                "component": {
+                    "type": "string"
+                },
+                "isValid": {
+                    "type": "boolean"
+                },
+                "repo": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
                 }
             },
             "type": "object"
@@ -886,7 +911,6 @@
             "type": "object"
         },
         "GitHubUser": {
-            "description": "Core SGEX Workbench Type Definitions\n\nThis file contains the main type definitions for the SGEX Workbench application.\nThese types are used throughout the application for type safety and will be used\nto generate JSON schemas for runtime validation.",
             "properties": {
                 "avatar_url": {
                     "type": "string"
@@ -987,6 +1011,35 @@
             },
             "type": "object"
         },
+        "Iterable<React.ReactNode>": {
+            "type": "object"
+        },
+        "Language": {
+            "description": "Language and Translation Types",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "englishName": {
+                    "type": "string"
+                },
+                "flag": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "LanguageSelectorProps": {
+            "properties": {
+                "className": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
         "LogLevel": {
             "enum": [
                 "DEBUG",
@@ -1042,6 +1095,41 @@
                 },
                 "warn": {
                     "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "NavigationState": {
+            "properties": {
+                "branch": {
+                    "type": "string"
+                },
+                "component": {
+                    "type": "string"
+                },
+                "repo": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                },
+                "warningMessage": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "PageLayoutProps": {
+            "description": "Page and Navigation Types",
+            "properties": {
+                "children": {
+                    "$ref": "#/definitions/React.ReactNode"
+                },
+                "className": {
+                    "type": "string"
+                },
+                "pageName": {
+                    "type": "string"
                 }
             },
             "type": "object"
@@ -1128,6 +1216,90 @@
                 },
                 "version": {
                     "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "Promise<AwaitedReactNode>": {
+            "properties": {
+                "__@toStringTag@9772": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "React.ReactElement<unknown,string|React.JSXElementConstructor<any>>": {
+            "description": "Represents a JSX element.\n\nWhere {@link ReactNode} represents everything that can be rendered, `ReactElement`\nonly represents JSX.",
+            "properties": {
+                "key": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "props": {
+                    "description": "The type of the props object"
+                },
+                "type": {
+                    "description": "The type of the component or tag",
+                    "type": [
+                        "string",
+                        "object"
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "React.ReactNode": {
+            "anyOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {},
+                    "type": "number"
+                },
+                {
+                    "$ref": "#/definitions/React.ReactElement<unknown,string|React.JSXElementConstructor<any>>"
+                },
+                {
+                    "$ref": "#/definitions/Iterable<React.ReactNode>"
+                },
+                {
+                    "$ref": "#/definitions/React.ReactPortal"
+                },
+                {
+                    "$ref": "#/definitions/Promise<AwaitedReactNode>"
+                },
+                {
+                    "type": [
+                        "null",
+                        "string",
+                        "number",
+                        "boolean"
+                    ]
+                }
+            ],
+            "description": "Represents all of the things React can render.\n\nWhere {@link ReactElement} only represents JSX, `ReactNode` represents everything that can be rendered."
+        },
+        "React.ReactPortal": {
+            "properties": {
+                "children": {
+                    "$ref": "#/definitions/React.ReactNode"
+                },
+                "key": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "props": {
+                    "description": "The type of the props object"
+                },
+                "type": {
+                    "description": "The type of the component or tag",
+                    "type": [
+                        "string",
+                        "object"
+                    ]
                 }
             },
             "type": "object"
@@ -1372,8 +1544,7 @@
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/GitHubUser",
-                    "description": "Core SGEX Workbench Type Definitions\n\nThis file contains the main type definitions for the SGEX Workbench application.\nThese types are used throughout the application for type safety and will be used\nto generate JSON schemas for runtime validation."
+                    "$ref": "#/definitions/GitHubUser"
                 }
             },
             "type": "object"
