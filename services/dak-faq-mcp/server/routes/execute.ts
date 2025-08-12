@@ -6,7 +6,7 @@
 import express, { Request, Response } from 'express';
 import { validateExecuteRequest } from '../util/validation.js';
 import { FAQExecutionEngineLocal } from '../util/FAQExecutionEngineLocal.js';
-import { ExecuteRequestBody, BatchExecuteResponse, ErrorResponse } from '../../types.js';
+import { ExecuteRequestBody, BatchExecuteResponse, ErrorResponse, SingleExecuteRequest, ExecuteResponse, ExecuteRequest } from '../../types.js';
 
 const router = express.Router();
 const faqEngine = new FAQExecutionEngineLocal();
@@ -59,6 +59,94 @@ router.post('/execute', async (req: Request<{}, BatchExecuteResponse | ErrorResp
     const errorResponse: ErrorResponse = {
       error: {
         message: error.message || 'Failed to execute FAQ questions',
+        code: 'EXECUTION_ERROR',
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    res.status(500).json(errorResponse);
+  }
+});
+
+/**
+ * POST /faq/execute/:questionId
+ * Execute a specific FAQ question by ID
+ */
+router.post('/:questionId', async (req: Request<{ questionId: string }, ExecuteResponse | ErrorResponse, SingleExecuteRequest>, res: Response<ExecuteResponse | ErrorResponse>): Promise<Response<ExecuteResponse | ErrorResponse> | void> => {
+  try {
+    const { questionId } = req.params;
+    const { parameters = {}, assetFiles, context = {} } = req.body;
+
+    // Create execution request
+    const executeRequest: ExecuteRequest = {
+      questionId,
+      parameters,
+      assetFiles
+    };
+
+    // Initialize FAQ engine if needed
+    await faqEngine.initialize();
+
+    // Execute single question
+    const result = await faqEngine.executeSingle(executeRequest, context);
+
+    res.json(result);
+
+  } catch (error: any) {
+    console.error('Single execute route error:', error);
+    
+    const errorResponse: ErrorResponse = {
+      error: {
+        message: error.message || 'Failed to execute FAQ question',
+        code: 'EXECUTION_ERROR',
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    res.status(500).json(errorResponse);
+  }
+});
+
+/**
+ * POST /faq/execute
+ * Execute a single FAQ question (alternative endpoint)
+ */
+router.post('/', async (req: Request<{}, ExecuteResponse | ErrorResponse, ExecuteRequest & { context?: any }>, res: Response<ExecuteResponse | ErrorResponse>): Promise<Response<ExecuteResponse | ErrorResponse> | void> => {
+  try {
+    const { questionId, parameters = {}, assetFiles, context = {} } = req.body;
+
+    if (!questionId) {
+      const errorResponse: ErrorResponse = {
+        error: {
+          message: 'Missing required field: questionId',
+          code: 'VALIDATION_ERROR',
+          timestamp: new Date().toISOString()
+        }
+      };
+      return res.status(400).json(errorResponse);
+    }
+
+    // Create execution request
+    const executeRequest: ExecuteRequest = {
+      questionId,
+      parameters,
+      assetFiles
+    };
+
+    // Initialize FAQ engine if needed
+    await faqEngine.initialize();
+
+    // Execute single question
+    const result = await faqEngine.executeSingle(executeRequest, context);
+
+    res.json(result);
+
+  } catch (error: any) {
+    console.error('Single execute route error:', error);
+    
+    const errorResponse: ErrorResponse = {
+      error: {
+        message: error.message || 'Failed to execute FAQ question',
         code: 'EXECUTION_ERROR',
         timestamp: new Date().toISOString()
       }

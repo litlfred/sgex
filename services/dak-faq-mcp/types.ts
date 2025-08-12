@@ -40,6 +40,15 @@ export interface ExecuteRequestBody {
   };
 }
 
+export interface SingleExecuteRequest {
+  parameters?: Record<string, any>;
+  assetFiles?: string[];
+  context?: {
+    repositoryPath?: string;
+    [key: string]: any;
+  };
+}
+
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];

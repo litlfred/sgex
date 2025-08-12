@@ -42,6 +42,7 @@ app.get('/health', (req: Request, res: Response<HealthResponse>) => {
 // FAQ routes
 app.use('/faq/questions', executeRoute);
 app.use('/faq/questions', catalogRoute);
+app.use('/faq/execute', executeRoute);  // Add single execution routes
 app.use('/faq', schemaRoute);
 
 // Root endpoint with API information
@@ -54,6 +55,8 @@ app.get('/', (req: Request, res: Response) => {
       'GET /health': 'Health check',
       'GET /faq/questions/catalog': 'List available FAQ questions',
       'POST /faq/questions/execute': 'Execute FAQ questions in batch',
+      'POST /faq/execute/:questionId': 'Execute a specific FAQ question by ID',
+      'POST /faq/execute': 'Execute a single FAQ question (alternative endpoint)',
       'GET /faq/schemas': 'Get all question schemas',
       'GET /faq/schemas/:questionId': 'Get schema for specific question',
       'GET /faq/openapi': 'Get OpenAPI schema for all questions',

@@ -111,7 +111,43 @@ export class FAQExecutionEngineLocal {
   }
 
   /**
-   * Execute single question
+   * Execute single question (public API)
+   */
+  async executeSingle(request: ExecuteRequest, context: FAQExecutionContext = {}): Promise<ExecuteResponse> {
+    if (!this.initialized) {
+      await this.initialize();
+    }
+
+    try {
+      const result = await this.executeQuestion(request, context);
+      return {
+        questionId: request.questionId,
+        success: true,
+        result,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error: any) {
+      return {
+        questionId: request.questionId,
+        success: false,
+        error: {
+          message: error.message,
+          code: 'EXECUTION_ERROR'
+        },
+        result: {
+          structured: {},
+          narrative: `<h4>Error</h4><p class="error">${error.message}</p>`,
+          errors: [error.message],
+          warnings: [],
+          meta: {}
+        },
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
+
+  /**
+   * Execute single question (internal)
    */
   private async executeQuestion(request: ExecuteRequest, context: FAQExecutionContext = {}): Promise<FAQExecutionResult> {
     const { questionId, parameters = {} } = request;
