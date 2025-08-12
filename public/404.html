@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>SGEX Workbench</title>
     <!-- Load SGEX route configuration service -->
-    <script src="routeConfig.js"></script>
+    <script src="./routeConfig.js"></script>
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages
       // MIT License
@@ -29,6 +29,35 @@
         var pathSegments = l.pathname.split('/').filter(Boolean);
         
         // Get configuration from routeConfig.js
+        if (typeof getSGEXRouteConfig === 'undefined') {
+          console.error('SGEX route configuration service not loaded - routeConfig.js failed to load');
+          console.error('This may be due to a deployment issue or network problem');
+          console.error('Attempting to load routeConfig.js dynamically...');
+          
+          // Try to load the script dynamically as a fallback
+          try {
+            var script = document.createElement('script');
+            script.src = './routeConfig.js';
+            script.onload = function() {
+              console.log('Successfully loaded routeConfig.js dynamically');
+              // Re-run the routing logic after the script loads
+              if (typeof getSGEXRouteConfig !== 'undefined') {
+                setTimeout(function() {
+                  location.reload();
+                }, 100);
+              }
+            };
+            script.onerror = function() {
+              console.error('Failed to load routeConfig.js even dynamically');
+              console.error('Deployment may be incomplete or corrupted');
+            };
+            document.head.appendChild(script);
+          } catch (error) {
+            console.error('Failed to dynamically load routeConfig.js:', error);
+          }
+          return;
+        }
+        
         var config = getSGEXRouteConfig();
         if (!config) {
           console.error('SGEX route configuration not loaded');
