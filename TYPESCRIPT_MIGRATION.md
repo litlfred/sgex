@@ -4,6 +4,8 @@
 
 This document outlines the phased TypeScript migration strategy for the SGEX Workbench React application. The migration follows an incremental approach to minimize disruption while gradually improving type safety and code quality.
 
+<!-- Build retry test: 2025-01-12 -->
+
 ## Migration Strategy
 
 ### Phase 1: Foundation & Setup ✅ COMPLETED
