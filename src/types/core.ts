@@ -244,7 +244,7 @@ export interface AuthenticationState {
   isAuthenticated: boolean;
   token?: string;
   user?: GitHubUser;
-  tokenType: 'classic' | 'fine-grained' | null;
+  tokenType: 'classic' | 'fine-grained' | 'oauth' | null;
   scopes?: string[];
   lastValidated?: string;
 }
@@ -253,12 +253,41 @@ export interface TokenValidationResult {
   isValid: boolean;
   user?: GitHubUser;
   scopes?: string[];
-  tokenType: 'classic' | 'fine-grained';
+  tokenType: 'classic' | 'fine-grained' | 'oauth';
   rateLimit?: {
     limit: number;
     remaining: number;
     reset: number;
   };
+}
+
+export interface GitHubPermissions {
+  contents: 'read' | 'write' | null;
+  metadata: 'read' | null;
+  pullRequests: 'read' | 'write' | null;
+  [key: string]: string | null;
+}
+
+export interface GitHubRateLimit {
+  limit: number;
+  remaining: number;
+  reset: number;
+  used: number;
+  resource: string;
+}
+
+export interface GitHubApiResponse<T> {
+  data: T;
+  status: number;
+  headers: Record<string, string>;
+  url: string;
+}
+
+export interface TokenFormatValidation {
+  isValid: boolean;
+  type: 'classic' | 'fine-grained' | 'oauth' | 'legacy' | 'invalid';
+  token?: string;
+  reason?: string;
 }
 
 // ====================
@@ -281,6 +310,19 @@ export interface CacheStatistics {
   hitRate: number;
   oldestEntry?: string;
   newestEntry?: string;
+}
+
+export interface RepositoryCacheData {
+  repositories: GitHubRepository[];
+  timestamp: number;
+  owner: string;
+  type: 'user' | 'org';
+}
+
+export interface CacheResult<T> {
+  data: T | null;
+  isHit: boolean;
+  age?: number;
 }
 
 // ====================
@@ -330,6 +372,38 @@ export interface ValidatedData<T> {
   isValid: boolean;
   errors: ValidationError[];
   warnings: ValidationWarning[];
+}
+
+// ====================
+// Logging Types
+// ====================
+
+export type LogLevel = 'ERROR' | 'WARN' | 'INFO' | 'DEBUG';
+
+export interface Logger {
+  error: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  info: (...args: any[]) => void;
+  debug: (...args: any[]) => void;
+  
+  // Specialized logging methods
+  apiCall: (method: string, url: string, data?: any) => void;
+  apiResponse: (method: string, url: string, status: number, responseTime: number) => void;
+  apiError: (method: string, url: string, error: any) => void;
+  
+  componentMount: (props?: any) => void;
+  componentUnmount: () => void;
+  stateChange: (oldState: any, newState: any) => void;
+  
+  userAction: (action: string, details?: any) => void;
+  
+  performance: (operation: string, duration: number) => void;
+  
+  auth: (event: string, details?: any) => void;
+  
+  navigation: (from: string, to: string) => void;
+  
+  cache: (operation: string, key: string, details?: any) => void;
 }
 
 // ====================
