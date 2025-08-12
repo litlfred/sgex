@@ -10,14 +10,24 @@ describe('TypeScript DAK Validation Framework', () => {
   test('should have registered TypeScript validations', () => {
     const allValidations = dakValidationRegistry.getAllValidations();
     
-    expect(allValidations.length).toBeGreaterThan(0);
+    expect(allValidations.length).toBe(7); // Updated to expect 7 validations
     
     // Check that our TypeScript validations are registered
-    const dakSushiValidation = dakValidationRegistry.getValidation('dak-sushi-base');
-    const jsonValidValidation = dakValidationRegistry.getValidation('json-valid');
+    const expectedValidations = [
+      'dak-sushi-base',
+      'json-valid',
+      'bpmn-business-rule-task-id',
+      'dmn-decision-label-id',
+      'xml-well-formed',
+      'file-naming-conventions',
+      'dmn-bpmn-cross-reference'
+    ];
     
-    expect(dakSushiValidation).toBeDefined();
-    expect(jsonValidValidation).toBeDefined();
+    expectedValidations.forEach(validationId => {
+      const validation = dakValidationRegistry.getValidation(validationId);
+      expect(validation).toBeDefined();
+      expect(validation.id).toBe(validationId);
+    });
   });
 
   test('should validate DAK SUSHI base dependency', async () => {
@@ -34,10 +44,11 @@ dependencies:
 
     const result = await validation.validate('sushi-config.yaml', invalidConfig, {});
     
-    console.log('SUSHI validation result:', result);
     expect(result).not.toBeNull();
     expect(result.message).toContain('smart.who.int.base');
     expect(result.level).toBe('error');
+    expect(result.validationId).toBe('dak-sushi-base');
+    expect(result.component).toBe('dak-structure');
   });
 
   test('should validate JSON syntax', async () => {
@@ -70,6 +81,47 @@ dependencies:
     const result = await validation.validate('test.json', validJson, {});
     
     expect(result).toBeNull(); // No validation errors
+  });
+
+  test('should validate XML well-formedness', async () => {
+    const validation = dakValidationRegistry.getValidation('xml-well-formed');
+    expect(validation).toBeDefined();
+
+    // Test invalid XML
+    const invalidXml = `<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <unclosed-tag>
+</root>`;
+
+    const result = await validation.validate('test.xml', invalidXml, {});
+    
+    expect(result).not.toBeNull();
+    expect(result.message).toContain('XML parsing error');
+    expect(result.level).toBe('error');
+    expect(result.validationId).toBe('xml-well-formed');
+  });
+
+  test('should validate file naming conventions', async () => {
+    const validation = dakValidationRegistry.getValidation('file-naming-conventions');
+    expect(validation).toBeDefined();
+
+    // Test file with spaces (invalid characters check comes first)
+    const result = await validation.validate('file with spaces.txt', 'content', {});
+    
+    expect(result).not.toBeNull();
+    expect(result.message).toContain('invalid characters');
+    expect(result.level).toBe('error');
+    expect(result.validationId).toBe('file-naming-conventions');
+  });
+
+  test('should get component summary', () => {
+    const summary = dakValidationRegistry.getComponentSummary();
+    
+    expect(summary).toBeDefined();
+    expect(summary['dak-structure']).toBeDefined();
+    expect(summary['dak-structure'].validationCount).toBeGreaterThan(0);
+    expect(summary['business-processes']).toBeDefined();
+    expect(summary['file-structure']).toBeDefined();
   });
 
   test('should format validation results correctly', () => {
