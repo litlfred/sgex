@@ -463,7 +463,7 @@ class GitHubService {
   // Rate limiting management methods
   async checkRateLimit() {
     try {
-      const octokit = this.octokit || new Octokit();
+      const octokit = this.octokit || await this.createOctokitInstance();
       const { data } = await octokit.rest.rateLimit.get();
       return {
         core: {
