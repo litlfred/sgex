@@ -221,6 +221,26 @@ const BPMNViewerContent = () => {
             element.style.opacity = '1';
             element.style.visibility = 'visible';
             element.style.display = element.tagName.toLowerCase() === 'svg' ? 'block' : '';
+            
+            // Force remove bold styling from text elements
+            if (element.tagName.toLowerCase() === 'text' || element.tagName.toLowerCase() === 'tspan') {
+              element.style.fontWeight = 'normal';
+              element.style.fontStyle = 'normal';
+              element.style.fontVariant = 'normal';
+              // Remove any inline font-weight attributes
+              element.removeAttribute('font-weight');
+              element.removeAttribute('style');
+            }
+            
+            // Force proper fill colors for paths and shapes
+            if (['path', 'rect', 'circle', 'ellipse', 'polygon'].includes(element.tagName.toLowerCase())) {
+              // Don't override text color fills
+              if (!element.closest('text')) {
+                element.style.fill = 'var(--who-card-bg)';
+                element.style.stroke = 'var(--who-text-secondary)';
+                element.style.strokeWidth = '1.5px';
+              }
+            }
           });
           
           // Also force the container itself to be visible
@@ -228,7 +248,7 @@ const BPMNViewerContent = () => {
           container.style.visibility = 'visible';
           container.style.display = 'block';
           
-          console.log('🎨 BPMNViewer: Forced comprehensive SVG visibility');
+          console.log('🎨 BPMNViewer: Forced comprehensive SVG visibility and styling');
         }
       };
       
@@ -238,6 +258,33 @@ const BPMNViewerContent = () => {
       // Also apply after a short delay to catch any delayed rendering
       setTimeout(forceVisibility, 50);
       setTimeout(forceVisibility, 200);
+      setTimeout(forceVisibility, 500);
+      
+      // Set up a MutationObserver to watch for dynamic changes and fix them
+      const observer = new MutationObserver((mutations) => {
+        let needsUpdate = false;
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList' || mutation.type === 'attributes') {
+            needsUpdate = true;
+          }
+        });
+        if (needsUpdate) {
+          setTimeout(forceVisibility, 10);
+        }
+      });
+      
+      // Observe changes to the container
+      if (containerRef.current) {
+        observer.observe(containerRef.current, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['style', 'fill', 'stroke', 'font-weight']
+        });
+        
+        // Store observer for cleanup
+        containerRef.current._bpmnObserver = observer;
+      }
       
       setLoadingStep('complete');
       setLoading(false);
@@ -396,6 +443,12 @@ const BPMNViewerContent = () => {
           console.warn('Warning cleaning up BPMN viewer:', error);
         }
         viewerRef.current = null;
+      }
+      
+      // Clean up mutation observer
+      if (containerRef.current && containerRef.current._bpmnObserver) {
+        containerRef.current._bpmnObserver.disconnect();
+        delete containerRef.current._bpmnObserver;
       }
     };
   }, [currentSelectedFile, loadBpmnContent, cleanupContainer]);

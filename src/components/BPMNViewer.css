@@ -656,17 +656,27 @@ body.theme-dark {
 }
 
 /* Text elements - CRITICAL FIX for text visibility and styling */
+/* Use maximum specificity to override any inline styles */
 .bpmn-container svg text,
 .bpmn-container svg .djs-element text,
 .bpmn-container svg text tspan,
 .bpmn-container svg g text,
-.bpmn-container svg * text {
+.bpmn-container svg * text,
+.bpmn-container .djs-container svg text,
+.bpmn-container .djs-container text,
+.bpmn-container svg text[style],
+.bpmn-container svg text[font-weight],
+.bpmn-container svg tspan[style],
+.bpmn-container svg tspan[font-weight] {
   fill: var(--bpmn-text-color) !important;
   color: var(--bpmn-text-color) !important;
   font-weight: normal !important;
   font-style: normal !important;
   font-size: 12px !important;
   font-family: 'Arial', sans-serif !important;
+  /* Force remove any bold styling with highest priority */
+  font-weight: 400 !important;
+  font-variant: normal !important;
 }
 
 /* Ensure text is visible and not bold in light mode */
@@ -674,11 +684,19 @@ body.theme-light .bpmn-container svg text,
 body.theme-light .bpmn-container svg .djs-element text,
 body.theme-light .bpmn-container svg text tspan,
 body.theme-light .bpmn-container svg g text,
-body.theme-light .bpmn-container svg * text {
+body.theme-light .bpmn-container svg * text,
+body.theme-light .bpmn-container .djs-container svg text,
+body.theme-light .bpmn-container .djs-container text,
+body.theme-light .bpmn-container svg text[style],
+body.theme-light .bpmn-container svg text[font-weight],
+body.theme-light .bpmn-container svg tspan[style],
+body.theme-light .bpmn-container svg tspan[font-weight] {
   fill: #333333 !important;
   color: #333333 !important;
   font-weight: normal !important;
   font-style: normal !important;
+  font-weight: 400 !important;
+  font-variant: normal !important;
 }
 
 /* Ensure text is visible and not bold in dark mode */
@@ -686,11 +704,19 @@ body.theme-dark .bpmn-container svg text,
 body.theme-dark .bpmn-container svg .djs-element text,
 body.theme-dark .bpmn-container svg text tspan,
 body.theme-dark .bpmn-container svg g text,
-body.theme-dark .bpmn-container svg * text {
+body.theme-dark .bpmn-container svg * text,
+body.theme-dark .bpmn-container .djs-container svg text,
+body.theme-dark .bpmn-container .djs-container text,
+body.theme-dark .bpmn-container svg text[style],
+body.theme-dark .bpmn-container svg text[font-weight],
+body.theme-dark .bpmn-container svg tspan[style],
+body.theme-dark .bpmn-container svg tspan[font-weight] {
   fill: #ffffff !important;
   color: #ffffff !important;
   font-weight: normal !important;
   font-style: normal !important;
+  font-weight: 400 !important;
+  font-variant: normal !important;
 }
 
 /* Target all SVG elements with highest specificity */
@@ -723,7 +749,10 @@ body.theme-dark .bpmn-container svg *[stroke="black"] {
 .bpmn-container svg rect[style*="fill:"],
 .bpmn-container svg circle[style*="fill:"],
 .bpmn-container svg polygon[style*="fill:"],
-.bpmn-container svg path[style*="fill:"] {
+.bpmn-container svg path[style*="fill:"],
+.bpmn-container svg ellipse[style*="fill:"],
+.bpmn-container svg *[fill],
+.bpmn-container svg *[style*="fill"] {
   fill: var(--who-card-bg) !important;
 }
 
@@ -731,8 +760,12 @@ body.theme-dark .bpmn-container svg *[stroke="black"] {
 .bpmn-container svg rect[style*="stroke:"],
 .bpmn-container svg circle[style*="stroke:"],
 .bpmn-container svg polygon[style*="stroke:"],
-.bpmn-container svg path[style*="stroke:"] {
+.bpmn-container svg path[style*="stroke:"],
+.bpmn-container svg ellipse[style*="stroke:"],
+.bpmn-container svg *[stroke],
+.bpmn-container svg *[style*="stroke"] {
   stroke: var(--who-text-secondary) !important;
+  stroke-width: 1.5px !important;
 }
 
 /* Theme-specific stroke colors for better visibility */
@@ -838,15 +871,32 @@ body.theme-dark .bpmn-container svg marker path {
 .bpmn-container svg *[fill*="white"],
 .bpmn-container svg *[fill*="#fff"],
 .bpmn-container svg *[fill*="#FFF"],
-.bpmn-container svg *[fill="rgb(255, 255, 255)"] {
+.bpmn-container svg *[fill="rgb(255, 255, 255)"],
+.bpmn-container svg *[fill="none"] {
   fill: var(--who-card-bg) !important;
 }
 
 .bpmn-container svg *[stroke*="white"],
 .bpmn-container svg *[stroke*="#fff"], 
 .bpmn-container svg *[stroke*="#FFF"],
-.bpmn-container svg *[stroke="rgb(255, 255, 255)"] {
+.bpmn-container svg *[stroke="rgb(255, 255, 255)"],
+.bpmn-container svg *[stroke="none"] {
   stroke: var(--bpmn-stroke-color) !important;
+}
+
+/* Force remove bold from any text with inline styles */
+.bpmn-container svg text[font-weight="bold"],
+.bpmn-container svg text[font-weight="600"],
+.bpmn-container svg text[font-weight="700"],
+.bpmn-container svg text[font-weight="800"],
+.bpmn-container svg text[font-weight="900"],
+.bpmn-container svg tspan[font-weight="bold"],
+.bpmn-container svg tspan[font-weight="600"],
+.bpmn-container svg tspan[font-weight="700"],
+.bpmn-container svg tspan[font-weight="800"],
+.bpmn-container svg tspan[font-weight="900"] {
+  font-weight: normal !important;
+  font-weight: 400 !important;
 }
 
 /* Ensure immediate visibility on load */
