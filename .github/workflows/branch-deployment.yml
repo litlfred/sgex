@@ -102,23 +102,13 @@ jobs:
           cache: 'npm'
           
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
-      - name: Generate QA Report
+      - name: Skip QA Generation for Branch Deployment
         run: |
-          if [[ -f "scripts/generate-qa-report.js" ]]; then
-            node scripts/generate-qa-report.js
-          else
-            echo "QA report script not found, skipping..."
-          fi
-
-      - name: Generate Issues Analysis
-        run: |
-          if [[ -f "scripts/analyze-github-issues.js" ]]; then
-            node scripts/analyze-github-issues.js
-          else
-            echo "Issues analysis script not found, skipping..."
-          fi
+          echo "ℹ️  Skipping QA report and issues analysis generation for branch deployment"
+          echo "These reports are generated during main branch CI/CD and are not needed for preview deployments"
+          echo "This prevents merge conflicts when multiple branches deploy simultaneously to gh-pages"
 
       - name: Determine PUBLIC_URL for branch
         id: public_url
@@ -143,6 +133,8 @@ jobs:
           npm run build
         env:
           CI: false
+          ESLINT_NO_DEV_ERRORS: true
+          GENERATE_SOURCEMAP: false
           PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}
           GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
           REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}

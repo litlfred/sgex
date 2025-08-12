@@ -65,7 +65,7 @@ jobs:
         run: |
           set -e
           echo "Installing dependencies..."
-          npm ci
+          npm ci --legacy-peer-deps
 
       - name: Build React application for landing page
         shell: bash

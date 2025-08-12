@@ -195,17 +195,21 @@ class ComplianceChecker {
       suggestions: []
     };
 
-    // Check 1: Uses PageLayout
-    const hasPageLayout = content.includes('PageLayout') && 
+    // Check 1: Uses PageLayout (directly or through AssetEditorLayout)
+    const hasPageLayout = (content.includes('PageLayout') && 
                          (content.includes('import { PageLayout }') || 
                           content.includes('import PageLayout') ||
-                          content.includes('from \'./framework\''));
+                          content.includes('from \'./framework\''))) ||
+                         (content.includes('AssetEditorLayout') &&
+                          (content.includes('import { AssetEditorLayout }') ||
+                           content.includes('from \'./framework\'')));
     compliance.checks.pageLayout = hasPageLayout;
     if (hasPageLayout) compliance.score++;
     else compliance.issues.push('Missing PageLayout wrapper');
 
-    // Check 2: Has pageName prop
-    const hasPageName = /<PageLayout[^>]+pageName=["']([^"']+)["']/.test(content);
+    // Check 2: Has pageName prop (PageLayout or AssetEditorLayout)
+    const hasPageName = /<PageLayout[^>]+pageName=["']([^"']+)["']/.test(content) ||
+                       /<AssetEditorLayout[^>]+pageName=["']([^"']+)["']/.test(content);
     compliance.checks.pageName = hasPageName;
     if (hasPageName) compliance.score++;
     else if (hasPageLayout) compliance.issues.push('PageLayout missing pageName prop');
@@ -247,14 +251,16 @@ class ComplianceChecker {
 
     // Check 6: No duplicate PageLayout wrappers (NEW CHECK)
     const pageLayoutMatches = (content.match(/<PageLayout/g) || []).length;
-    const isNested = pageLayoutMatches > 1;
+    const assetEditorLayoutMatches = (content.match(/<AssetEditorLayout/g) || []).length;
+    const totalLayoutMatches = pageLayoutMatches + assetEditorLayoutMatches;
+    const isNested = totalLayoutMatches > 1;
     compliance.checks.noDuplicateLayout = !isNested;
     if (!isNested) compliance.score++;
-    else compliance.issues.push(`Found ${pageLayoutMatches} PageLayout components - should only have one`);
+    else compliance.issues.push(`Found ${totalLayoutMatches} layout components - should only have one`);
 
     // Generate suggestions
     if (!hasPageLayout) {
-      compliance.suggestions.push('Wrap component with PageLayout from ./framework');
+      compliance.suggestions.push('Wrap component with PageLayout or AssetEditorLayout from ./framework');
     }
     if (hasPageLayout && !hasPageName) {
       compliance.suggestions.push('Add unique pageName prop to PageLayout');

@@ -122,17 +122,12 @@ const RepositorySelection = () => {
     });
   };
 
-  if (!profile) {
-    return (
-      <PageLayout pageName="repository-selection">
-        <div>Redirecting...</div>
-      </PageLayout>
-    );
-  }
-
   return (
     <PageLayout pageName="repository-selection">
-      <div className="repo-content">
+      {!profile ? (
+        <div>Redirecting...</div>
+      ) : (
+        <div className="repo-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
@@ -215,7 +210,8 @@ const RepositorySelection = () => {
           )}
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </PageLayout>
   );
 };
