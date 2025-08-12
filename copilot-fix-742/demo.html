@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PreviewBadge Enhancement Demo</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: rgb(4, 11, 118);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        /* Simulate PreviewBadge styles */
+        .preview-badge-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-left: 1rem;
+            max-width: 600px;
+            z-index: 1000;
+        }
+        
+        .preview-badge {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .preview-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #ff5722, #e68900);
+        }
+        
+        .preview-badge.sticky {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, #e68900, #d77000);
+        }
+        
+        .badge-content {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .badge-label {
+            opacity: 0.9;
+            flex-shrink: 0;
+        }
+        
+        .badge-branch {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+        
+        .badge-separator {
+            opacity: 0.7;
+            margin: 0 0.2rem;
+            flex-shrink: 0;
+        }
+        
+        .badge-pr-title {
+            font-size: 0.75rem;
+            opacity: 0.95;
+            flex-shrink: 1;
+        }
+        
+        .badge-expand-icon {
+            margin-left: 0.3rem;
+            font-size: 0.7rem;
+            opacity: 0.8;
+            transition: transform 0.2s ease;
+        }
+        
+        .content {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .demo-instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .demo-instructions h3 {
+            margin-top: 0;
+            color: #fff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 0.5rem;
+        }
+        
+        .demo-instructions li {
+            margin: 0.5rem 0;
+            line-height: 1.5;
+        }
+        
+        .demo-instructions strong {
+            color: #ffd700;
+        }
+        
+        .preview-demo {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>SGEX Workbench</h1>
+            <p>WHO SMART Guidelines Exchange</p>
+        </div>
+        
+        <!-- Demo PreviewBadge -->
+        <div class="preview-badge-container">
+            <div class="preview-badge" id="previewBadge">
+                <div class="badge-content">
+                    <span class="badge-label">Preview:</span>
+                    <span class="badge-branch">feature/preview-badge</span>
+                    <span class="badge-separator">|</span>
+                    <span class="badge-pr-title">Enhanced Preview Branch Badge with Expandable...</span>
+                    <span class="badge-expand-icon">▶</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="content">
+        <h2 style="text-align: center; margin-bottom: 2rem;">PreviewBadge Enhancement Demo</h2>
+        
+        <div class="preview-demo">
+            <h3>✅ Fixed Issues</h3>
+            <p><strong>Original Issues:</strong></p>
+            <ul>
+                <li>❌ Expansion on web browser not working</li>
+                <li>❌ Should expand on mouse hover and stay expanded on click</li>
+                <li>❌ Mobile expansion not working</li>
+                <li>❌ Show more PR title text (~50 chars)</li>
+            </ul>
+            
+            <p><strong>New Behavior (Fixed):</strong></p>
+            <ul>
+                <li>✅ <strong>Hover</strong> over orange badge to preview PR details</li>
+                <li>✅ <strong>Click</strong> to pin/stick the expanded view</li>
+                <li>✅ <strong>Click pinned badge</strong> to navigate to GitHub</li>
+                <li>✅ <strong>Mobile touch</strong> support with proper event handling</li>
+                <li>✅ <strong>PR title</strong> now shows ~50 characters instead of CSS width-based truncation</li>
+                <li>✅ <strong>Visual feedback</strong> with enhanced styling for sticky state</li>
+            </ul>
+        </div>
+        
+        <div class="demo-instructions">
+            <h3>Implementation Details</h3>
+            <ul>
+                <li><strong>Hover Behavior:</strong> Like ContextualHelpMascot, hover expands the panel</li>
+                <li><strong>Click Behavior:</strong> Click makes it "sticky" so it stays open</li>
+                <li><strong>Mobile Support:</strong> Touch events properly handled for Android</li>
+                <li><strong>Character Limit:</strong> JavaScript truncation at 50 chars instead of CSS</li>
+                <li><strong>Visual Feedback:</strong> Sticky state has enhanced shadow and darker gradient</li>
+                <li><strong>Test Coverage:</strong> 14 comprehensive tests covering all behaviors</li>
+            </ul>
+            
+            <h3>Technical Changes</h3>
+            <ul>
+                <li>Added <code>isSticky</code> state for click-to-pin behavior</li>
+                <li>Implemented <code>handleMouseEnter/Leave</code> for hover interactions</li>
+                <li>Updated <code>handleClick</code> to toggle sticky and navigate when appropriate</li>
+                <li>Added <code>truncateTitle()</code> function for 50-character limit</li>
+                <li>Enhanced CSS with <code>.sticky</code> class for visual feedback</li>
+                <li>Maintained all mobile touch event handling from previous fixes</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // Simple demo interaction
+        const badge = document.getElementById('previewBadge');
+        let isSticky = false;
+        let isExpanded = false;
+        
+        badge.addEventListener('mouseenter', () => {
+            if (!isSticky) {
+                isExpanded = true;
+                badge.querySelector('.badge-expand-icon').textContent = '▼';
+                badge.style.borderBottomLeftRadius = '4px';
+                badge.style.borderBottomRightRadius = '4px';
+            }
+        });
+        
+        badge.addEventListener('mouseleave', () => {
+            if (!isSticky) {
+                isExpanded = false;
+                badge.querySelector('.badge-expand-icon').textContent = '▶';
+                badge.style.borderBottomLeftRadius = '12px';
+                badge.style.borderBottomRightRadius = '12px';
+            }
+        });
+        
+        badge.addEventListener('click', () => {
+            if (isSticky) {
+                alert('Would navigate to GitHub PR in real implementation');
+            } else {
+                isSticky = true;
+                isExpanded = true;
+                badge.classList.add('sticky');
+                badge.querySelector('.badge-expand-icon').textContent = '▼';
+                badge.style.borderBottomLeftRadius = '4px';
+                badge.style.borderBottomRightRadius = '4px';
+            }
+        });
+        
+        // Click outside to reset
+        document.addEventListener('click', (e) => {
+            if (!badge.contains(e.target)) {
+                isSticky = false;
+                isExpanded = false;
+                badge.classList.remove('sticky');
+                badge.querySelector('.badge-expand-icon').textContent = '▶';
+                badge.style.borderBottomLeftRadius = '12px';
+                badge.style.borderBottomRightRadius = '12px';
+            }
+        });
+    </script>
+</body>
+</html>
