@@ -10,11 +10,11 @@ GitHub secret support for OAuth Client ID is **already implemented** in both dep
 
 ### 1. Landing Page Deployment (`.github/workflows/landing-page-deployment.yml`)
 - **Line 84-88**: OAuth configuration check and logging
-- **Line 94**: Environment variable: `REACT_APP_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.GITHUB_OAUTH_CLIENT_ID }}`
+- **Line 94**: Environment variable: `REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.SGEX_GITHUB_OAUTH_CLIENT_ID }}`
 
 ### 2. Branch Deployment (`.github/workflows/branch-deployment.yml`)  
 - **Line 142-147**: OAuth configuration check and logging
-- **Line 156**: Environment variable: `REACT_APP_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.GITHUB_OAUTH_CLIENT_ID }}`
+- **Line 156**: Environment variable: `REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.SGEX_GITHUB_OAUTH_CLIENT_ID }}`
 
 ## 🔧 Setup Instructions
 
@@ -35,7 +35,7 @@ GitHub secret support for OAuth Client ID is **already implemented** in both dep
 
 1. Go to your repository Settings → Secrets and variables → Actions
 2. Click "New repository secret"
-3. Name: `GITHUB_OAUTH_CLIENT_ID`
+3. Name: `SGEX_GITHUB_OAUTH_CLIENT_ID`
 4. Value: Paste your OAuth app Client ID
 5. Click "Add secret"
 

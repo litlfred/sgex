@@ -29,7 +29,7 @@ class OAuthDeviceFlowService {
     this.verificationUri = 'https://github.com/login/device';
     
     // OAuth client configuration
-    this.clientId = process.env.REACT_APP_GITHUB_OAUTH_CLIENT_ID || '';
+    this.clientId = process.env.REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID || '';
     
     // Device flow state
     this.deviceCode = null;
@@ -72,7 +72,7 @@ class OAuthDeviceFlowService {
     this.logger.debug('Requesting device code from GitHub');
     
     if (!this.clientId) {
-      throw new Error('OAuth client ID not configured. Please set REACT_APP_GITHUB_OAUTH_CLIENT_ID environment variable.');
+      throw new Error('OAuth client ID not configured. Please set REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID environment variable.');
     }
 
     const requestBody = new URLSearchParams({

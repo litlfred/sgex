@@ -44,7 +44,7 @@ All requirements from issue #761 have been successfully implemented:
 - OAuth tokens stored securely using existing `secureTokenStorage.js`
 - Seamless integration with existing GitHub service
 - Fallback to PAT authentication when OAuth not configured
-- Configuration via `REACT_APP_GITHUB_OAUTH_CLIENT_ID` environment variable
+- Configuration via `REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID` environment variable
 
 ## 🌐 CORS Compliance Verification
 
@@ -116,7 +116,7 @@ src/components/LandingPage.css               - OAuth button styling
 
 ### OAuth Setup
 1. Create GitHub OAuth App at https://github.com/settings/applications/new
-2. Set `REACT_APP_GITHUB_OAUTH_CLIENT_ID=your_client_id` environment variable
+2. Set `REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID=your_client_id` environment variable
 3. Deploy with OAuth support enabled
 
 ### Fallback Behavior

@@ -28,7 +28,7 @@ This guide explains how to configure GitHub OAuth Device Flow for SGEX Workbench
 2. Navigate to **Settings** → **Secrets and variables** → **Actions**
 3. Click **New repository secret**
 4. Set:
-   - **Name**: `GITHUB_OAUTH_CLIENT_ID`
+   - **Name**: `SGEX_GITHUB_OAUTH_CLIENT_ID`
    - **Secret**: Paste your OAuth Client ID from Step 1
 5. Click **Add secret**
 
@@ -47,7 +47,7 @@ The deployment workflows need to be updated to include the OAuth Client ID durin
   env:
     CI: false
     PUBLIC_URL: "/sgex/"
-    REACT_APP_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.GITHUB_OAUTH_CLIENT_ID }}
+    REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.SGEX_GITHUB_OAUTH_CLIENT_ID }}
 ```
 
 #### For Branch Deployment (`branch-deployment.yml`)
@@ -62,7 +62,7 @@ The deployment workflows need to be updated to include the OAuth Client ID durin
     PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}
     GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
     REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
-    REACT_APP_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.GITHUB_OAUTH_CLIENT_ID }}
+    REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.SGEX_GITHUB_OAUTH_CLIENT_ID }}
 ```
 
 ### Step 4: Deploy and Verify
@@ -139,7 +139,7 @@ The deployment workflows need to be updated to include the OAuth Client ID durin
 
 | Variable | Description | Example | Required |
 |----------|-------------|---------|----------|
-| `REACT_APP_GITHUB_OAUTH_CLIENT_ID` | GitHub OAuth App Client ID | `Ov23liAbcd1234567890` | Optional but recommended |
+| `REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID` | GitHub OAuth App Client ID | `Ov23liAbcd1234567890` | Optional but recommended |
 
 ### Existing Build Variables
 
@@ -194,6 +194,6 @@ If OAuth is not configured:
 
 ## Conclusion
 
-Setting `REACT_APP_GITHUB_OAUTH_CLIENT_ID` for GitHub Pages deployment is **secure and recommended**. OAuth Client IDs are designed to be public, and the Device Flow provides robust security without requiring secret management in frontend applications.
+Setting `REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID` for GitHub Pages deployment is **secure and recommended**. OAuth Client IDs are designed to be public, and the Device Flow provides robust security without requiring secret management in frontend applications.
 
 The benefits (better user experience, higher rate limits, standard authentication flow) significantly outweigh the minimal risks associated with exposing the Client ID.

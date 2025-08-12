@@ -30,7 +30,7 @@ SGEX Workbench now supports GitHub OAuth Device Flow authentication, providing a
 2. Set the environment variable:
    ```bash
    # For development (.env.local file)
-   REACT_APP_GITHUB_OAUTH_CLIENT_ID=your_client_id_here
+   REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID=your_client_id_here
    
    # For production (GitHub Pages deployment)
    # Set in your deployment workflow or repository secrets
@@ -45,7 +45,7 @@ For GitHub Pages deployment, ensure the OAuth client ID is available at build ti
 - name: Build
   run: npm run build
   env:
-    REACT_APP_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+    REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.SGEX_GITHUB_OAUTH_CLIENT_ID }}
 ```
 
 ## OAuth Device Flow Process
@@ -80,7 +80,7 @@ All GitHub OAuth endpoints natively support CORS, enabling direct browser-to-Git
 
 ## Fallback Support
 
-If OAuth is not configured (`REACT_APP_GITHUB_OAUTH_CLIENT_ID` not set):
+If OAuth is not configured (`REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID` not set):
 - Only Personal Access Token authentication is available
 - Users see the standard PAT login interface
 - Full backwards compatibility maintained
@@ -103,7 +103,7 @@ If OAuth is not configured (`REACT_APP_GITHUB_OAUTH_CLIENT_ID` not set):
 ### Common Issues
 
 **OAuth not appearing**:
-- Verify `REACT_APP_GITHUB_OAUTH_CLIENT_ID` is set
+- Verify `REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID` is set
 - Check browser console for configuration errors
 
 **Authorization fails**:

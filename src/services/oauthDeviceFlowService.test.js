@@ -11,14 +11,14 @@ describe('OAuthDeviceFlowService', () => {
     jest.clearAllMocks();
     
     // Set a test client ID
-    process.env.REACT_APP_GITHUB_OAUTH_CLIENT_ID = 'test_client_id_12345';
+    process.env.REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID = 'test_client_id_12345';
     
     // Create a new service instance for each test
     service = new OAuthDeviceFlowService();
   });
 
   afterEach(() => {
-    delete process.env.REACT_APP_GITHUB_OAUTH_CLIENT_ID;
+    delete process.env.REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID;
     if (service) {
       service.reset();
     }
@@ -34,7 +34,7 @@ describe('OAuthDeviceFlowService', () => {
     });
 
     it('should return not configured when client ID is missing', () => {
-      delete process.env.REACT_APP_GITHUB_OAUTH_CLIENT_ID;
+      delete process.env.REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID;
       
       // Create new instance to pick up env change
       const newService = new OAuthDeviceFlowService();
@@ -89,7 +89,7 @@ describe('OAuthDeviceFlowService', () => {
     });
 
     it('should throw error when client ID is not configured', async () => {
-      delete process.env.REACT_APP_GITHUB_OAUTH_CLIENT_ID;
+      delete process.env.REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID;
       
       // Create new instance to pick up env change
       const newService = new OAuthDeviceFlowService();
