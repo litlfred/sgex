@@ -455,22 +455,6 @@ Best regards,
 
   const { title, content } = getHelpContent();
 
-  // Show bug report form if requested
-  if (showBugReportForm) {
-    return (
-      <div className="help-modal-overlay bug-report-overlay" onClick={handleOverlayClick}>
-        <BugReportForm 
-          onClose={() => {
-            setShowBugReportForm(false);
-            // Close the main modal after successful submission or cancel
-            onClose();
-          }}
-          contextData={contextData}
-        />
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="help-modal-overlay" onClick={handleOverlayClick}>

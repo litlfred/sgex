@@ -44,6 +44,7 @@ const DAKDashboard = () => {
         onProfileChange={setProfile}
         onRepositoryChange={setRepository}
         onSelectedBranchChange={setSelectedBranch}
+        mascotImage={mascotImage}
       />
     </PageLayout>
   );
@@ -55,7 +56,8 @@ const DAKDashboardContent = ({
   initialSelectedBranch = null,
   onProfileChange = () => {},
   onRepositoryChange = () => {},
-  onSelectedBranchChange = () => {}
+  onSelectedBranchChange = () => {},
+  mascotImage
 }) => {
   const { t } = useTranslation();
   const location = useLocation();
