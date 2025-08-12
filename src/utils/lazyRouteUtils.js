@@ -102,6 +102,9 @@ function createLazyComponent(componentName) {
       break;
     
     // DAK Components
+    case 'DAKDashboard':
+      LazyComponent = React.lazy(() => import('../components/DAKDashboard'));
+      break;
     case 'DAKDashboardWithFramework':
       LazyComponent = React.lazy(() => import('../components/DAKDashboardWithFramework'));
       break;
