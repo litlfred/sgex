@@ -814,6 +814,7 @@ const BranchListingPage = () => {
                             </button>
                         </div>
                     )}
+                    </div>
                     </>
                 )}
             </div>
