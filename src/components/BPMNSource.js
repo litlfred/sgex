@@ -285,7 +285,6 @@ const BPMNSource = () => {
               </div>
             </div>
           </div>
-        </div>
         )}
       </div>
     </PageLayout>
