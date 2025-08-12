@@ -1,0 +1,1248 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "AsyncResult": {
+            "properties": {
+                "__@toStringTag@10434": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "AuthenticationState": {
+            "properties": {
+                "isAuthenticated": {
+                    "type": "boolean"
+                },
+                "lastValidated": {
+                    "type": "string"
+                },
+                "scopes": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "tokenType": {
+                    "anyOf": [
+                        {
+                            "enum": [
+                                "classic",
+                                "fine-grained"
+                            ],
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "user": {
+                    "$ref": "#/definitions/GitHubUser",
+                    "description": "Core SGEX Workbench Type Definitions\n\nThis file contains the main type definitions for the SGEX Workbench application.\nThese types are used throughout the application for type safety and will be used\nto generate JSON schemas for runtime validation."
+                }
+            },
+            "type": "object"
+        },
+        "CacheEntry": {
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/T"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "number"
+                },
+                "timestamp": {
+                    "type": "number"
+                },
+                "ttl": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "CacheStatistics": {
+            "properties": {
+                "hitCount": {
+                    "type": "number"
+                },
+                "hitRate": {
+                    "type": "number"
+                },
+                "missCount": {
+                    "type": "number"
+                },
+                "newestEntry": {
+                    "type": "string"
+                },
+                "oldestEntry": {
+                    "type": "string"
+                },
+                "totalEntries": {
+                    "type": "number"
+                },
+                "totalSize": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "DAKRepository": {
+            "properties": {
+                "allow_auto_merge": {
+                    "type": "boolean"
+                },
+                "allow_merge_commit": {
+                    "type": "boolean"
+                },
+                "allow_rebase_merge": {
+                    "type": "boolean"
+                },
+                "allow_squash_merge": {
+                    "type": "boolean"
+                },
+                "archive_url": {
+                    "type": "string"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "assignees_url": {
+                    "type": "string"
+                },
+                "blobs_url": {
+                    "type": "string"
+                },
+                "branches_url": {
+                    "type": "string"
+                },
+                "clone_url": {
+                    "type": "string"
+                },
+                "collaborators_url": {
+                    "type": "string"
+                },
+                "comments_url": {
+                    "type": "string"
+                },
+                "commits_url": {
+                    "type": "string"
+                },
+                "compare_url": {
+                    "type": "string"
+                },
+                "contents_url": {
+                    "type": "string"
+                },
+                "contributors_url": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "default_branch": {
+                    "type": "string"
+                },
+                "delete_branch_on_merge": {
+                    "type": "boolean"
+                },
+                "deployments_url": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "disabled": {
+                    "type": "boolean"
+                },
+                "downloads_url": {
+                    "type": "string"
+                },
+                "events_url": {
+                    "type": "string"
+                },
+                "fork": {
+                    "type": "boolean"
+                },
+                "forks": {
+                    "type": "number"
+                },
+                "forks_count": {
+                    "type": "number"
+                },
+                "forks_url": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "git_commits_url": {
+                    "type": "string"
+                },
+                "git_refs_url": {
+                    "type": "string"
+                },
+                "git_tags_url": {
+                    "type": "string"
+                },
+                "git_url": {
+                    "type": "string"
+                },
+                "has_downloads": {
+                    "type": "boolean"
+                },
+                "has_issues": {
+                    "type": "boolean"
+                },
+                "has_pages": {
+                    "type": "boolean"
+                },
+                "has_projects": {
+                    "type": "boolean"
+                },
+                "has_wiki": {
+                    "type": "boolean"
+                },
+                "homepage": {
+                    "type": "string"
+                },
+                "hooks_url": {
+                    "type": "string"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "number"
+                },
+                "isDak": {
+                    "const": true,
+                    "type": "boolean"
+                },
+                "is_template": {
+                    "type": "boolean"
+                },
+                "issue_comment_url": {
+                    "type": "string"
+                },
+                "issue_events_url": {
+                    "type": "string"
+                },
+                "issues_url": {
+                    "type": "string"
+                },
+                "keys_url": {
+                    "type": "string"
+                },
+                "labels_url": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "languages_url": {
+                    "type": "string"
+                },
+                "license": {
+                    "properties": {
+                        "key": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "node_id": {
+                            "type": "string"
+                        },
+                        "spdx_id": {
+                            "type": "string"
+                        },
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "merges_url": {
+                    "type": "string"
+                },
+                "milestones_url": {
+                    "type": "string"
+                },
+                "mirror_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network_count": {
+                    "type": "number"
+                },
+                "node_id": {
+                    "type": "string"
+                },
+                "notifications_url": {
+                    "type": "string"
+                },
+                "open_issues": {
+                    "type": "number"
+                },
+                "open_issues_count": {
+                    "type": "number"
+                },
+                "owner": {
+                    "$ref": "#/definitions/GitHubUser"
+                },
+                "permissions": {
+                    "properties": {
+                        "admin": {
+                            "type": "boolean"
+                        },
+                        "maintain": {
+                            "type": "boolean"
+                        },
+                        "pull": {
+                            "type": "boolean"
+                        },
+                        "push": {
+                            "type": "boolean"
+                        },
+                        "triage": {
+                            "type": "boolean"
+                        }
+                    },
+                    "type": "object"
+                },
+                "private": {
+                    "type": "boolean"
+                },
+                "pulls_url": {
+                    "type": "string"
+                },
+                "pushed_at": {
+                    "type": "string"
+                },
+                "releases_url": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "number"
+                },
+                "ssh_url": {
+                    "type": "string"
+                },
+                "stargazers_count": {
+                    "type": "number"
+                },
+                "stargazers_url": {
+                    "type": "string"
+                },
+                "statuses_url": {
+                    "type": "string"
+                },
+                "subscribers_count": {
+                    "type": "number"
+                },
+                "subscribers_url": {
+                    "type": "string"
+                },
+                "subscription_url": {
+                    "type": "string"
+                },
+                "sushiConfig": {
+                    "$ref": "#/definitions/SushiConfig"
+                },
+                "svn_url": {
+                    "type": "string"
+                },
+                "tags_url": {
+                    "type": "string"
+                },
+                "teams_url": {
+                    "type": "string"
+                },
+                "temp_clone_token": {
+                    "type": "string"
+                },
+                "template_repository": {
+                    "$ref": "#/definitions/GitHubRepository"
+                },
+                "topics": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "trees_url": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                },
+                "watchers": {
+                    "type": "number"
+                },
+                "watchers_count": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "DAKValidationResult": {
+            "properties": {
+                "errors": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "hasSushiConfig": {
+                    "type": "boolean"
+                },
+                "hasWhoBaseDependency": {
+                    "type": "boolean"
+                },
+                "isValid": {
+                    "type": "boolean"
+                },
+                "sushiConfig": {
+                    "$ref": "#/definitions/SushiConfig"
+                },
+                "warnings": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "GitHubBranch": {
+            "properties": {
+                "commit": {
+                    "properties": {
+                        "sha": {
+                            "type": "string"
+                        },
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "protected": {
+                    "type": "boolean"
+                },
+                "protection": {
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "required_status_checks": {
+                            "properties": {
+                                "contexts": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                },
+                                "enforcement_level": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "type": "object"
+                },
+                "protection_url": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "GitHubRepository": {
+            "properties": {
+                "allow_auto_merge": {
+                    "type": "boolean"
+                },
+                "allow_merge_commit": {
+                    "type": "boolean"
+                },
+                "allow_rebase_merge": {
+                    "type": "boolean"
+                },
+                "allow_squash_merge": {
+                    "type": "boolean"
+                },
+                "archive_url": {
+                    "type": "string"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "assignees_url": {
+                    "type": "string"
+                },
+                "blobs_url": {
+                    "type": "string"
+                },
+                "branches_url": {
+                    "type": "string"
+                },
+                "clone_url": {
+                    "type": "string"
+                },
+                "collaborators_url": {
+                    "type": "string"
+                },
+                "comments_url": {
+                    "type": "string"
+                },
+                "commits_url": {
+                    "type": "string"
+                },
+                "compare_url": {
+                    "type": "string"
+                },
+                "contents_url": {
+                    "type": "string"
+                },
+                "contributors_url": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "default_branch": {
+                    "type": "string"
+                },
+                "delete_branch_on_merge": {
+                    "type": "boolean"
+                },
+                "deployments_url": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "disabled": {
+                    "type": "boolean"
+                },
+                "downloads_url": {
+                    "type": "string"
+                },
+                "events_url": {
+                    "type": "string"
+                },
+                "fork": {
+                    "type": "boolean"
+                },
+                "forks": {
+                    "type": "number"
+                },
+                "forks_count": {
+                    "type": "number"
+                },
+                "forks_url": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "git_commits_url": {
+                    "type": "string"
+                },
+                "git_refs_url": {
+                    "type": "string"
+                },
+                "git_tags_url": {
+                    "type": "string"
+                },
+                "git_url": {
+                    "type": "string"
+                },
+                "has_downloads": {
+                    "type": "boolean"
+                },
+                "has_issues": {
+                    "type": "boolean"
+                },
+                "has_pages": {
+                    "type": "boolean"
+                },
+                "has_projects": {
+                    "type": "boolean"
+                },
+                "has_wiki": {
+                    "type": "boolean"
+                },
+                "homepage": {
+                    "type": "string"
+                },
+                "hooks_url": {
+                    "type": "string"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "number"
+                },
+                "is_template": {
+                    "type": "boolean"
+                },
+                "issue_comment_url": {
+                    "type": "string"
+                },
+                "issue_events_url": {
+                    "type": "string"
+                },
+                "issues_url": {
+                    "type": "string"
+                },
+                "keys_url": {
+                    "type": "string"
+                },
+                "labels_url": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "languages_url": {
+                    "type": "string"
+                },
+                "license": {
+                    "properties": {
+                        "key": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "node_id": {
+                            "type": "string"
+                        },
+                        "spdx_id": {
+                            "type": "string"
+                        },
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "merges_url": {
+                    "type": "string"
+                },
+                "milestones_url": {
+                    "type": "string"
+                },
+                "mirror_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network_count": {
+                    "type": "number"
+                },
+                "node_id": {
+                    "type": "string"
+                },
+                "notifications_url": {
+                    "type": "string"
+                },
+                "open_issues": {
+                    "type": "number"
+                },
+                "open_issues_count": {
+                    "type": "number"
+                },
+                "owner": {
+                    "$ref": "#/definitions/GitHubUser"
+                },
+                "permissions": {
+                    "properties": {
+                        "admin": {
+                            "type": "boolean"
+                        },
+                        "maintain": {
+                            "type": "boolean"
+                        },
+                        "pull": {
+                            "type": "boolean"
+                        },
+                        "push": {
+                            "type": "boolean"
+                        },
+                        "triage": {
+                            "type": "boolean"
+                        }
+                    },
+                    "type": "object"
+                },
+                "private": {
+                    "type": "boolean"
+                },
+                "pulls_url": {
+                    "type": "string"
+                },
+                "pushed_at": {
+                    "type": "string"
+                },
+                "releases_url": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "number"
+                },
+                "ssh_url": {
+                    "type": "string"
+                },
+                "stargazers_count": {
+                    "type": "number"
+                },
+                "stargazers_url": {
+                    "type": "string"
+                },
+                "statuses_url": {
+                    "type": "string"
+                },
+                "subscribers_count": {
+                    "type": "number"
+                },
+                "subscribers_url": {
+                    "type": "string"
+                },
+                "subscription_url": {
+                    "type": "string"
+                },
+                "svn_url": {
+                    "type": "string"
+                },
+                "tags_url": {
+                    "type": "string"
+                },
+                "teams_url": {
+                    "type": "string"
+                },
+                "temp_clone_token": {
+                    "type": "string"
+                },
+                "template_repository": {
+                    "$ref": "#/definitions/GitHubRepository"
+                },
+                "topics": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "trees_url": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                },
+                "watchers": {
+                    "type": "number"
+                },
+                "watchers_count": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "GitHubUser": {
+            "description": "Core SGEX Workbench Type Definitions\n\nThis file contains the main type definitions for the SGEX Workbench application.\nThese types are used throughout the application for type safety and will be used\nto generate JSON schemas for runtime validation.",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "blog": {
+                    "type": "string"
+                },
+                "company": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "events_url": {
+                    "type": "string"
+                },
+                "followers": {
+                    "type": "number"
+                },
+                "followers_url": {
+                    "type": "string"
+                },
+                "following": {
+                    "type": "number"
+                },
+                "following_url": {
+                    "type": "string"
+                },
+                "gists_url": {
+                    "type": "string"
+                },
+                "gravatar_id": {
+                    "type": "string"
+                },
+                "hireable": {
+                    "type": "boolean"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "number"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "node_id": {
+                    "type": "string"
+                },
+                "organizations_url": {
+                    "type": "string"
+                },
+                "public_gists": {
+                    "type": "number"
+                },
+                "public_repos": {
+                    "type": "number"
+                },
+                "received_events_url": {
+                    "type": "string"
+                },
+                "repos_url": {
+                    "type": "string"
+                },
+                "site_admin": {
+                    "type": "boolean"
+                },
+                "starred_url": {
+                    "type": "string"
+                },
+                "subscriptions_url": {
+                    "type": "string"
+                },
+                "twitter_username": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "PaginatedResponse": {
+            "properties": {
+                "data": {
+                    "properties": {
+                        "hasMore": {
+                            "type": "boolean"
+                        },
+                        "items": {
+                            "items": {
+                                "$ref": "#/definitions/T_3"
+                            },
+                            "type": "array"
+                        },
+                        "page": {
+                            "type": "number"
+                        },
+                        "pageSize": {
+                            "type": "number"
+                        },
+                        "totalCount": {
+                            "type": "number"
+                        }
+                    },
+                    "type": "object"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "statusCode": {
+                    "type": "number"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "ProfileSubscription": {
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "isPermanent": {
+                    "type": "boolean"
+                },
+                "lastUsed": {
+                    "type": "string"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "repositoryCount": {
+                    "type": "number"
+                },
+                "subscribedAt": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "ProfileSubscriptionExport": {
+            "properties": {
+                "exportedAt": {
+                    "type": "string"
+                },
+                "subscriptions": {
+                    "items": {
+                        "$ref": "#/definitions/ProfileSubscription"
+                    },
+                    "type": "array"
+                },
+                "userLogin": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "Record<string,string>": {
+            "type": "object"
+        },
+        "RuntimeValidationConfig": {
+            "properties": {
+                "coerceTypes": {
+                    "type": "boolean"
+                },
+                "removeAdditional": {
+                    "type": "boolean"
+                },
+                "strict": {
+                    "type": "boolean"
+                },
+                "throwOnError": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "ServiceResponse": {
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/T_2"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "statusCode": {
+                    "type": "number"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "SushiConfig": {
+            "properties": {
+                "FSHOnly": {
+                    "type": "boolean"
+                },
+                "applyExtensionMetadataToRoot": {
+                    "type": "boolean"
+                },
+                "canonical": {
+                    "type": "string"
+                },
+                "contact": {
+                    "items": {
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "telecom": {
+                                "items": {
+                                    "properties": {
+                                        "system": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "type": "array"
+                },
+                "copyrightYear": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "dependencies": {
+                    "$ref": "#/definitions/Record<string,string>"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "fhirVersion": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "license": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "items": {
+                        "properties": {
+                            "code": {
+                                "type": "string"
+                            },
+                            "value": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "type": "array"
+                },
+                "publisher": {
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "releaseLabel": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "T": {
+            "type": "object"
+        },
+        "T_1": {
+            "type": "object"
+        },
+        "T_2": {
+            "type": "object"
+        },
+        "T_3": {
+            "type": "object"
+        },
+        "TokenValidationResult": {
+            "properties": {
+                "isValid": {
+                    "type": "boolean"
+                },
+                "rateLimit": {
+                    "properties": {
+                        "limit": {
+                            "type": "number"
+                        },
+                        "remaining": {
+                            "type": "number"
+                        },
+                        "reset": {
+                            "type": "number"
+                        }
+                    },
+                    "type": "object"
+                },
+                "scopes": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "tokenType": {
+                    "enum": [
+                        "classic",
+                        "fine-grained"
+                    ],
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/GitHubUser",
+                    "description": "Core SGEX Workbench Type Definitions\n\nThis file contains the main type definitions for the SGEX Workbench application.\nThese types are used throughout the application for type safety and will be used\nto generate JSON schemas for runtime validation."
+                }
+            },
+            "type": "object"
+        },
+        "ValidatedData": {
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/T_1"
+                },
+                "errors": {
+                    "items": {
+                        "$ref": "#/definitions/ValidationError"
+                    },
+                    "type": "array"
+                },
+                "isValid": {
+                    "type": "boolean"
+                },
+                "warnings": {
+                    "items": {
+                        "$ref": "#/definitions/ValidationWarning"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "ValidationError": {
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "value": {}
+            },
+            "type": "object"
+        },
+        "ValidationResult": {
+            "properties": {
+                "errors": {
+                    "items": {
+                        "$ref": "#/definitions/ValidationError"
+                    },
+                    "type": "array"
+                },
+                "isValid": {
+                    "type": "boolean"
+                },
+                "warnings": {
+                    "items": {
+                        "$ref": "#/definitions/ValidationWarning"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "ValidationRule": {
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "schema": {},
+                "validator": {
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "ValidationWarning": {
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "value": {}
+            },
+            "type": "object"
+        }
+    }
+}
+
