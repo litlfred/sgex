@@ -201,6 +201,47 @@ body.theme-light .landing-page {
   text-decoration: underline;
 }
 
+.auth-section {
+  margin: 2rem 0;
+}
+
+/* Authentication method selector */
+.auth-method-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+  justify-content: center;
+}
+
+.auth-method-btn {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid var(--who-border-color);
+  background: white;
+  color: var(--who-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 160px;
+}
+
+.auth-method-btn:hover {
+  border-color: var(--who-blue);
+  color: var(--who-blue);
+  background: rgba(3, 102, 214, 0.05);
+}
+
+.auth-method-btn.active {
+  border-color: var(--who-blue);
+  background: var(--who-blue);
+  color: white;
+}
+
+.auth-content {
+  margin-top: 1rem;
+}
+
 .github-login-btn {
   background: #24292f;
   color: white;

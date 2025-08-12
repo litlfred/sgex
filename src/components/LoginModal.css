@@ -228,6 +228,41 @@
   text-decoration: underline;
 }
 
+/* Authentication method tabs */
+.auth-method-tabs {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--who-border-color);
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--who-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.auth-tab:hover {
+  color: var(--who-text-primary);
+  background: rgba(3, 102, 214, 0.05);
+}
+
+.auth-tab.active {
+  color: var(--who-blue);
+  border-bottom-color: var(--who-blue);
+  background: rgba(3, 102, 214, 0.1);
+}
+
+.auth-content {
+  /* Content container for each auth method */
+}
+
 @keyframes modalSlideIn {
   from {
     opacity: 0;
