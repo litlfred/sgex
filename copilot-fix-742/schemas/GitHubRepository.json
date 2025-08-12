@@ -1,0 +1,143 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "number",
+      "title": "id"
+    },
+    "node_id": {
+      "type": "string",
+      "title": "node_id"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "full_name": {
+      "type": "string",
+      "title": "full_name"
+    },
+    "private": {
+      "type": "boolean",
+      "title": "private"
+    },
+    "owner": {
+      "$ref": "#/definitions/GitHubUser",
+      "title": "owner"
+    },
+    "html_url": {
+      "type": "string",
+      "title": "html_url"
+    },
+    "description": {
+      "type": "string",
+      "title": "description"
+    },
+    "fork": {
+      "type": "boolean",
+      "title": "fork"
+    },
+    "url": {
+      "type": "string",
+      "title": "url"
+    },
+    "default_branch": {
+      "type": "string",
+      "title": "default_branch"
+    },
+    "created_at": {
+      "type": "string",
+      "title": "created_at"
+    },
+    "updated_at": {
+      "type": "string",
+      "title": "updated_at"
+    }
+  },
+  "defaultProperties": [],
+  "required": [
+    "created_at",
+    "default_branch",
+    "fork",
+    "full_name",
+    "html_url",
+    "id",
+    "name",
+    "node_id",
+    "owner",
+    "private",
+    "updated_at",
+    "url"
+  ],
+  "definitions": {
+    "GitHubUser": {
+      "description": "Core DAK Validation Type Definitions\n\nTypeScript types for the DAK validation framework",
+      "title": "GitHubUser",
+      "type": "object",
+      "properties": {
+        "login": {
+          "type": "string",
+          "title": "login"
+        },
+        "id": {
+          "type": "number",
+          "title": "id"
+        },
+        "node_id": {
+          "type": "string",
+          "title": "node_id"
+        },
+        "avatar_url": {
+          "type": "string",
+          "title": "avatar_url"
+        },
+        "url": {
+          "type": "string",
+          "title": "url"
+        },
+        "html_url": {
+          "type": "string",
+          "title": "html_url"
+        },
+        "type": {
+          "type": "string",
+          "title": "type"
+        },
+        "site_admin": {
+          "type": "boolean",
+          "title": "site_admin"
+        },
+        "name": {
+          "type": "string",
+          "title": "name"
+        },
+        "email": {
+          "type": "string",
+          "title": "email"
+        },
+        "created_at": {
+          "type": "string",
+          "title": "created_at"
+        },
+        "updated_at": {
+          "type": "string",
+          "title": "updated_at"
+        }
+      },
+      "defaultProperties": [],
+      "required": [
+        "avatar_url",
+        "created_at",
+        "html_url",
+        "id",
+        "login",
+        "node_id",
+        "site_admin",
+        "type",
+        "updated_at",
+        "url"
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
