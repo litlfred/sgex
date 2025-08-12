@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/sgex/main/static/css/main.f69e8166.css",
-    "main.js": "/sgex/main/static/js/main.8b6d775e.js",
+    "main.css": "/sgex/main/static/css/main.35de7b29.css",
+    "main.js": "/sgex/main/static/js/main.a8bce380.js",
     "static/js/996.02ec4415.chunk.js": "/sgex/main/static/js/996.02ec4415.chunk.js",
     "static/js/175.f7daa131.chunk.js": "/sgex/main/static/js/175.f7daa131.chunk.js",
     "static/css/991.7e56b065.chunk.css": "/sgex/main/static/css/991.7e56b065.chunk.css",
@@ -50,11 +50,11 @@
     "static/js/13.3c4a8414.chunk.js": "/sgex/main/static/js/13.3c4a8414.chunk.js",
     "static/js/185.fb256c42.chunk.js": "/sgex/main/static/js/185.fb256c42.chunk.js",
     "static/css/148.c2014974.chunk.css": "/sgex/main/static/css/148.c2014974.chunk.css",
-    "static/js/148.70f257e7.chunk.js": "/sgex/main/static/js/148.70f257e7.chunk.js",
+    "static/js/148.857aad17.chunk.js": "/sgex/main/static/js/148.857aad17.chunk.js",
     "static/js/757.ad6ff723.chunk.js": "/sgex/main/static/js/757.ad6ff723.chunk.js",
     "index.html": "/sgex/main/index.html",
-    "main.f69e8166.css.map": "/sgex/main/static/css/main.f69e8166.css.map",
-    "main.8b6d775e.js.map": "/sgex/main/static/js/main.8b6d775e.js.map",
+    "main.35de7b29.css.map": "/sgex/main/static/css/main.35de7b29.css.map",
+    "main.a8bce380.js.map": "/sgex/main/static/js/main.a8bce380.js.map",
     "996.02ec4415.chunk.js.map": "/sgex/main/static/js/996.02ec4415.chunk.js.map",
     "175.f7daa131.chunk.js.map": "/sgex/main/static/js/175.f7daa131.chunk.js.map",
     "991.7e56b065.chunk.css.map": "/sgex/main/static/css/991.7e56b065.chunk.css.map",
@@ -102,11 +102,11 @@
     "13.3c4a8414.chunk.js.map": "/sgex/main/static/js/13.3c4a8414.chunk.js.map",
     "185.fb256c42.chunk.js.map": "/sgex/main/static/js/185.fb256c42.chunk.js.map",
     "148.c2014974.chunk.css.map": "/sgex/main/static/css/148.c2014974.chunk.css.map",
-    "148.70f257e7.chunk.js.map": "/sgex/main/static/js/148.70f257e7.chunk.js.map",
+    "148.857aad17.chunk.js.map": "/sgex/main/static/js/148.857aad17.chunk.js.map",
     "757.ad6ff723.chunk.js.map": "/sgex/main/static/js/757.ad6ff723.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.f69e8166.css",
-    "static/js/main.8b6d775e.js"
+    "static/css/main.35de7b29.css",
+    "static/js/main.a8bce380.js"
   ]
 }
