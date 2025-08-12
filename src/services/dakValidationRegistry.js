@@ -6,13 +6,13 @@
  */
 
 // Import all validation definitions
-import dakSushiBase from './validations/dak-sushi-base.js';
-import bpmnBusinessRuleTaskId from './validations/bpmn-business-rule-task-id.js';
-import dmnDecisionLabelId from './validations/dmn-decision-label-id.js';
-import dmnBpmnCrossReference from './validations/dmn-bpmn-cross-reference.js';
-import xmlWellFormed from './validations/xml-well-formed.js';
-import jsonValid from './validations/json-valid.js';
-import fileNamingConventions from './validations/file-naming-conventions.js';
+import dakSushiBase from './validations/dak-sushi-base.ts';
+import bpmnBusinessRuleTaskId from './validations/bpmn-business-rule-task-id.ts';
+import dmnDecisionLabelId from './validations/dmn-decision-label-id.ts';
+import dmnBpmnCrossReference from './validations/dmn-bpmn-cross-reference.ts';
+import xmlWellFormed from './validations/xml-well-formed.ts';
+import jsonValid from './validations/json-valid.ts';
+import fileNamingConventions from './validations/file-naming-conventions.ts';
 
 /**
  * DAK component categories for grouping validations
