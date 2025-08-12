@@ -211,18 +211,33 @@ const BPMNViewerContent = () => {
         console.warn('⚠️ BPMNViewer: Could not center diagram:', centerError);
       }
       
-      // Force immediate visibility
-      setTimeout(() => {
+      // Force immediate and comprehensive visibility
+      const forceVisibility = () => {
         const container = containerRef.current;
         if (container) {
-          const svgElement = container.querySelector('svg');
-          if (svgElement) {
-            svgElement.style.opacity = '1';
-            svgElement.style.visibility = 'visible';
-            console.log('🎨 BPMNViewer: Forced SVG visibility');
-          }
+          // Force visibility on all SVG elements and their children
+          const svgElements = container.querySelectorAll('svg, svg *');
+          svgElements.forEach(element => {
+            element.style.opacity = '1';
+            element.style.visibility = 'visible';
+            element.style.display = element.tagName.toLowerCase() === 'svg' ? 'block' : '';
+          });
+          
+          // Also force the container itself to be visible
+          container.style.opacity = '1';
+          container.style.visibility = 'visible';
+          container.style.display = 'block';
+          
+          console.log('🎨 BPMNViewer: Forced comprehensive SVG visibility');
         }
-      }, 100);
+      };
+      
+      // Apply immediately
+      forceVisibility();
+      
+      // Also apply after a short delay to catch any delayed rendering
+      setTimeout(forceVisibility, 50);
+      setTimeout(forceVisibility, 200);
       
       setLoadingStep('complete');
       setLoading(false);

@@ -655,31 +655,42 @@ body.theme-dark {
   background: var(--bpmn-preview-bg) !important;
 }
 
-/* Text elements - CRITICAL FIX for text visibility */
+/* Text elements - CRITICAL FIX for text visibility and styling */
 .bpmn-container svg text,
 .bpmn-container svg .djs-element text,
-.bpmn-container svg text tspan {
+.bpmn-container svg text tspan,
+.bpmn-container svg g text,
+.bpmn-container svg * text {
   fill: var(--bpmn-text-color) !important;
   color: var(--bpmn-text-color) !important;
   font-weight: normal !important;
+  font-style: normal !important;
   font-size: 12px !important;
   font-family: 'Arial', sans-serif !important;
 }
 
-/* Ensure text is visible in light mode */
+/* Ensure text is visible and not bold in light mode */
 body.theme-light .bpmn-container svg text,
 body.theme-light .bpmn-container svg .djs-element text,
-body.theme-light .bpmn-container svg text tspan {
+body.theme-light .bpmn-container svg text tspan,
+body.theme-light .bpmn-container svg g text,
+body.theme-light .bpmn-container svg * text {
   fill: #333333 !important;
   color: #333333 !important;
+  font-weight: normal !important;
+  font-style: normal !important;
 }
 
-/* Ensure text is visible in dark mode */
+/* Ensure text is visible and not bold in dark mode */
 body.theme-dark .bpmn-container svg text,
 body.theme-dark .bpmn-container svg .djs-element text,
-body.theme-dark .bpmn-container svg text tspan {
+body.theme-dark .bpmn-container svg text tspan,
+body.theme-dark .bpmn-container svg g text,
+body.theme-dark .bpmn-container svg * text {
   fill: #ffffff !important;
   color: #ffffff !important;
+  font-weight: normal !important;
+  font-style: normal !important;
 }
 
 /* Target all SVG elements with highest specificity */
@@ -840,6 +851,12 @@ body.theme-dark .bpmn-container svg marker path {
 
 /* Ensure immediate visibility on load */
 .bpmn-container svg {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+.bpmn-container svg * {
   opacity: 1 !important;
   visibility: visible !important;
 }
