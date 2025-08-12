@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
+import oauthDeviceFlowService from '../services/oauthDeviceFlowService';
 import CollaborationModal from './CollaborationModal';
 import HelpModal from './HelpModal';
+import OAuthLogin from './OAuthLogin';
 import helpContentService from '../services/helpContentService';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
@@ -20,6 +22,7 @@ const WelcomePage = () => {
   const [patToken, setPatToken] = useState('');
   const [patError, setPATError] = useState('');
   const [patLoading, setPATLoading] = useState(false);
+  const [authMethod, setAuthMethod] = useState('oauth'); // 'oauth' or 'pat'
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -165,6 +168,25 @@ const WelcomePage = () => {
     if (patError) setPATError(''); // Clear error when user starts typing
   };
 
+  // Handle OAuth authentication success
+  const handleOAuthSuccess = (authData) => {
+    // OAuth authentication successful - use token to authenticate
+    import('@octokit/rest').then(({ Octokit }) => {
+      const octokit = new Octokit({ auth: authData.token });
+      githubService.authenticateWithOctokit(octokit);
+      githubService.authenticate(authData.token);
+      setIsAuthenticated(true);
+      
+      // Navigate to authoring interface
+      handleAuthoringClick();
+    });
+  };
+
+  // Handle OAuth authentication cancellation
+  const handleOAuthCancel = () => {
+    // OAuth cancelled - stay on current page
+  };
+
   return (
     <PageLayout pageName="welcome" showBreadcrumbs={false}>
       <div className="welcome-page-content">
@@ -215,52 +237,82 @@ const WelcomePage = () => {
               <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
             </button>
 
-            {/* PAT Login + Demo Card (Middle) - Only show when not authenticated */}
+            {/* Authentication + Demo Card (Middle) - Only show when not authenticated */}
             {!isAuthenticated && (
-              <div className="action-card pat-demo-card">
-                {/* PAT Login Section */}
-                <div className="pat-section">
-                  <h4>Quick PAT Login</h4>
-                  <form onSubmit={handlePATSubmit} className="pat-form">
-                    <div className="form-group">
-                      <input
-                        type="text"
-                        value={tokenName}
-                        onChange={handleTokenNameChange}
-                        placeholder="Token name"
-                        className="token-name-input"
-                        disabled={patLoading}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <input
-                        type="password"
-                        value={patToken}
-                        onChange={handlePATTokenChange}
-                        placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                        className={`token-input ${patError ? 'error' : ''}`}
-                        disabled={patLoading}
-                      />
-                    </div>
-                    <button 
-                      type="submit" 
-                      className="pat-login-btn" 
-                      disabled={patLoading || !patToken.trim()}
-                    >
-                      {patLoading ? 'Signing In...' : '🔑 Sign In'}
-                    </button>
-                  </form>
-                  {patError && <div className="pat-error">{patError}</div>}
-                  <div className="pat-help-link">
-                    <button 
-                      type="button"
-                      className="pat-help-btn" 
-                      onClick={() => setShowPATHelp(true)}
-                    >
-                      📖 Help creating a PAT
-                    </button>
-                  </div>
+              <div className="action-card auth-demo-card">
+                {/* Authentication Method Selection */}
+                <div className="auth-method-selector">
+                  <button
+                    className={`auth-method-btn ${authMethod === 'oauth' ? 'active' : ''}`}
+                    onClick={() => setAuthMethod('oauth')}
+                    type="button"
+                  >
+                    🔐 OAuth (Recommended)
+                  </button>
+                  <button
+                    className={`auth-method-btn ${authMethod === 'pat' ? 'active' : ''}`}
+                    onClick={() => setAuthMethod('pat')}
+                    type="button"
+                  >
+                    🔑 Personal Access Token
+                  </button>
                 </div>
+
+                {/* OAuth Authentication */}
+                {authMethod === 'oauth' && (
+                  <div className="oauth-section">
+                    <OAuthLogin 
+                      onAuthSuccess={handleOAuthSuccess}
+                      onAuthCancel={handleOAuthCancel}
+                    />
+                  </div>
+                )}
+
+                {/* PAT Authentication */}
+                {authMethod === 'pat' && (
+                  <div className="pat-section">
+                    <h4>Quick PAT Login</h4>
+                    <form onSubmit={handlePATSubmit} className="pat-form">
+                      <div className="form-group">
+                        <input
+                          type="text"
+                          value={tokenName}
+                          onChange={handleTokenNameChange}
+                          placeholder="Token name"
+                          className="token-name-input"
+                          disabled={patLoading}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <input
+                          type="password"
+                          value={patToken}
+                          onChange={handlePATTokenChange}
+                          placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                          className={`token-input ${patError ? 'error' : ''}`}
+                          disabled={patLoading}
+                        />
+                      </div>
+                      <button 
+                        type="submit" 
+                        className="pat-login-btn" 
+                        disabled={patLoading || !patToken.trim()}
+                      >
+                        {patLoading ? 'Signing In...' : '🔑 Sign In'}
+                      </button>
+                    </form>
+                    {patError && <div className="pat-error">{patError}</div>}
+                    <div className="pat-help-link">
+                      <button 
+                        type="button"
+                        className="pat-help-btn" 
+                        onClick={() => setShowPATHelp(true)}
+                      >
+                        📖 Help creating a PAT
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Demo Section */}
                 <div className="demo-section">

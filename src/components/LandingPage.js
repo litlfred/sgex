@@ -146,9 +146,8 @@ const LandingPage = () => {
       
       // Check OAuth configuration and set default auth method
       const config = oauthDeviceFlowService.checkConfiguration();
-      if (!config.isConfigured) {
-        setAuthMethod('pat'); // Fall back to PAT if OAuth not configured
-      }
+      // OAuth is the default authentication method for the best user experience
+      setAuthMethod('oauth');
     };
 
     initializeAuth();
@@ -251,15 +250,13 @@ const LandingPage = () => {
             <div className="auth-section">
               {/* Authentication method selection */}
               <div className="auth-method-selector">
-                {oauthDeviceFlowService.checkConfiguration().isConfigured && (
-                  <button
-                    className={`auth-method-btn ${authMethod === 'oauth' ? 'active' : ''}`}
-                    onClick={() => setAuthMethod('oauth')}
-                    type="button"
-                  >
-                    🔐 OAuth (Recommended)
-                  </button>
-                )}
+                <button
+                  className={`auth-method-btn ${authMethod === 'oauth' ? 'active' : ''}`}
+                  onClick={() => setAuthMethod('oauth')}
+                  type="button"
+                >
+                  🔐 OAuth (Recommended)
+                </button>
                 <button
                   className={`auth-method-btn ${authMethod === 'pat' ? 'active' : ''}`}
                   onClick={() => setAuthMethod('pat')}

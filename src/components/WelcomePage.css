@@ -551,3 +551,63 @@ body.theme-light .welcome-page-content {
     padding: 1rem 0;
   }
 }
+
+/* Authentication Method Selector Styles */
+.auth-method-selector {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid var(--who-border);
+  position: relative;
+  z-index: 10;
+}
+
+.auth-method-btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: var(--who-secondary-bg);
+  color: var(--who-text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 0.9rem;
+  position: relative;
+  z-index: 11;
+  pointer-events: auto;
+}
+
+.auth-method-btn:hover {
+  background: var(--who-hover-bg);
+  color: var(--who-text-primary);
+}
+
+.auth-method-btn.active {
+  background: var(--who-blue);
+  color: white;
+  font-weight: 600;
+}
+
+.auth-method-btn:first-child {
+  border-right: 1px solid var(--who-border);
+}
+
+/* OAuth Section Styles */
+.oauth-section {
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 5;
+}
+
+/* Update the card class name and fix pointer events */
+.auth-demo-card {
+  /* Inherit existing pat-demo-card styles */
+  position: relative;
+  z-index: 1;
+}
+
+.auth-demo-card > * {
+  position: relative;
+  z-index: 2;
+}

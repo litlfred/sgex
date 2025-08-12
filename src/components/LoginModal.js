@@ -17,11 +17,9 @@ const LoginModal = ({ isOpen, onClose, onAuthSuccess }) => {
       hasOnAuthSuccess: !!onAuthSuccess 
     });
     
-    // Check OAuth configuration on mount and set default method
+    // Check OAuth configuration on mount
     const config = oauthDeviceFlowService.checkConfiguration();
-    if (!config.isConfigured) {
-      setAuthMethod('pat'); // Fall back to PAT if OAuth not configured
-    }
+    // OAuth is the default authentication method for the best user experience
     
     return () => componentLogger.componentUnmount();
   }, [componentLogger, isOpen, onAuthSuccess]);
@@ -147,15 +145,13 @@ const LoginModal = ({ isOpen, onClose, onAuthSuccess }) => {
         <div className="login-modal-content">
           {/* Authentication method tabs */}
           <div className="auth-method-tabs">
-            {oauthDeviceFlowService.checkConfiguration().isConfigured && (
-              <button
-                className={`auth-tab ${authMethod === 'oauth' ? 'active' : ''}`}
-                onClick={() => setAuthMethod('oauth')}
-                type="button"
-              >
-                🔐 OAuth (Recommended)
-              </button>
-            )}
+            <button
+              className={`auth-tab ${authMethod === 'oauth' ? 'active' : ''}`}
+              onClick={() => setAuthMethod('oauth')}
+              type="button"
+            >
+              🔐 OAuth (Recommended)
+            </button>
             <button
               className={`auth-tab ${authMethod === 'pat' ? 'active' : ''}`}
               onClick={() => setAuthMethod('pat')}
