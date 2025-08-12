@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { lazyLoadSyntaxHighlighter, lazyLoadSyntaxHighlighterStyles } from '../utils/lazyRouteUtils';
 import { AssetEditorLayout } from './framework';
 import localStorageService from '../services/localStorageService';
 
@@ -17,6 +16,26 @@ const FeatureFileEditor = ({
   const [content, setContent] = useState(initialContent);
   const [isEditing, setIsEditing] = useState(false);
   const [savedLocally, setSavedLocally] = useState(false);
+  const [SyntaxHighlighter, setSyntaxHighlighter] = useState(null);
+  const [syntaxStyle, setSyntaxStyle] = useState(null);
+
+  // Lazy load syntax highlighter components
+  useEffect(() => {
+    const loadSyntaxHighlighter = async () => {
+      try {
+        const [highlighter, style] = await Promise.all([
+          lazyLoadSyntaxHighlighter(),
+          lazyLoadSyntaxHighlighterStyles()
+        ]);
+        setSyntaxHighlighter(() => highlighter);
+        setSyntaxStyle(style);
+      } catch (error) {
+        console.error('Failed to load syntax highlighter:', error);
+      }
+    };
+
+    loadSyntaxHighlighter();
+  }, []);
 
   useEffect(() => {
     setContent(initialContent);
@@ -159,18 +178,26 @@ const FeatureFileEditor = ({
                 />
                 <div className="editor-preview">
                   <h4>Preview:</h4>
-                  <SyntaxHighlighter
-                    language="gherkin"
-                    style={oneLight}
-                    customStyle={{
-                      margin: 0,
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                      lineHeight: '1.5'
-                    }}
-                  >
-                    {content || '# Feature content will appear here...'}
-                  </SyntaxHighlighter>
+                  {SyntaxHighlighter && syntaxStyle ? (
+                    <SyntaxHighlighter
+                      language="gherkin"
+                      style={syntaxStyle}
+                      customStyle={{
+                        margin: 0,
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        lineHeight: '1.5'
+                      }}
+                    >
+                      {content || '# Feature content will appear here...'}
+                    </SyntaxHighlighter>
+                  ) : (
+                    <div className="syntax-highlighter-loading">
+                      <pre style={{ margin: 0, padding: '8px', background: '#f8f9fa', borderRadius: '4px' }}>
+                        {content || '# Feature content will appear here...'}
+                      </pre>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -257,19 +284,33 @@ const FeatureFileEditor = ({
 
             <div className="feature-editor-content">
               <div className="feature-viewer">
-                <SyntaxHighlighter
-                  language="gherkin"
-                  style={oneLight}
-                  customStyle={{
-                    margin: 0,
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                    lineHeight: '1.5',
-                    minHeight: '400px'
-                  }}
-                >
-                  {content}
-                </SyntaxHighlighter>
+                {SyntaxHighlighter && syntaxStyle ? (
+                  <SyntaxHighlighter
+                    language="gherkin"
+                    style={syntaxStyle}
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: '4px',
+                      fontSize: '14px',
+                      lineHeight: '1.5',
+                      minHeight: '400px'
+                    }}
+                  >
+                    {content}
+                  </SyntaxHighlighter>
+                ) : (
+                  <div className="syntax-highlighter-loading">
+                    <pre style={{ 
+                      margin: 0, 
+                      padding: '8px', 
+                      background: '#f8f9fa', 
+                      borderRadius: '4px',
+                      minHeight: '400px' 
+                    }}>
+                      {content}
+                    </pre>
+                  </div>
+                )}
               </div>
             </div>
 

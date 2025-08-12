@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import MDEditor from '@uiw/react-md-editor';
+import React, { useState, Suspense, lazy } from 'react';
 import stagingGroundService from '../services/stagingGroundService';
+
+// Lazy load MDEditor to improve initial page responsiveness
+const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
 const PageEditModal = ({ page, onClose, onSave }) => {
   const [content, setContent] = useState(page?.content ? atob(page.content.content) : '');
@@ -76,15 +78,17 @@ const PageEditModal = ({ page, onClose, onSave }) => {
           </div>
           
           <div className="md-editor-container">
-            <MDEditor
-              value={content}
-              onChange={(val) => setContent(val || '')}
-              preview="edit"
-              height={500}
-              visibleDragBar={false}
-              data-color-mode="light"
-              hideToolbar={isSaving}
-            />
+            <Suspense fallback={<div className="loading-spinner">Loading editor...</div>}>
+              <MDEditor
+                value={content}
+                onChange={(val) => setContent(val || '')}
+                preview="edit"
+                height={500}
+                visibleDragBar={false}
+                data-color-mode="light"
+                hideToolbar={isSaving}
+              />
+            </Suspense>
           </div>
         </div>
       </div>

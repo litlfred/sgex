@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
+import { lazyLoadBpmnViewer } from '../utils/lazyRouteUtils';
 import githubService from '../services/githubService';
 
 const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
@@ -75,6 +75,9 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
 
+        // Lazy load BPMN viewer to reduce initial bundle size
+        const BpmnViewer = await lazyLoadBpmnViewer();
+        
         // Create and initialize viewer with timeout
         const viewer = new BpmnViewer({
           container: containerRef.current,

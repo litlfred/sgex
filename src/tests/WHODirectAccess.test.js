@@ -7,6 +7,8 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
+import DAKSelection from '../components/DAKSelection';
+
 // Mock the framework dependencies
 jest.mock('../services/githubService');
 jest.mock('../services/repositoryCacheService');
@@ -57,8 +59,6 @@ jest.mock('../components/framework', () => ({
     }
   })
 }));
-
-import DAKSelection from '../components/DAKSelection';
 
 describe('WHO Direct Access Functionality', () => {
   beforeEach(() => {

@@ -1,4 +1,4 @@
-import { Octokit } from '@octokit/rest';
+import { lazyLoadOctokit } from '../utils/lazyRouteUtils';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
 import secureTokenStorage from './secureTokenStorage';
@@ -16,8 +16,14 @@ class GitHubService {
     this.logger.debug('GitHubService instance created');
   }
 
+  // Helper method to create Octokit instance with lazy loading
+  async createOctokitInstance(auth = null) {
+    const Octokit = await lazyLoadOctokit();
+    return new Octokit(auth ? { auth } : {});
+  }
+
   // Initialize with a GitHub token (supports both OAuth and PAT tokens)
-  authenticate(token) {
+  async authenticate(token) {
     const startTime = Date.now();
     this.logger.auth('Starting authentication', { 
       tokenProvided: !!token, 
@@ -36,9 +42,8 @@ class GitHubService {
         return false;
       }
 
-      this.octokit = new Octokit({
-        auth: validation.token,
-      });
+      // Lazy load Octokit to reduce initial bundle size
+      this.octokit = await this.createOctokitInstance(validation.token);
       this.isAuthenticated = true;
       this.tokenType = validation.type;
       
@@ -92,7 +97,7 @@ class GitHubService {
   }
 
   // Initialize authentication from securely stored token
-  initializeFromStoredToken() {
+  async initializeFromStoredToken() {
     this.logger.auth('Attempting to initialize from stored token');
     
     try {
@@ -109,10 +114,8 @@ class GitHubService {
         return false;
       }
 
-      // Initialize Octokit with stored token
-      this.octokit = new Octokit({
-        auth: tokenData.token,
-      });
+      // Initialize Octokit with stored token using lazy loading
+      this.octokit = await this.createOctokitInstance(tokenData.token);
       this.isAuthenticated = true;
       this.tokenType = tokenData.type;
       
@@ -340,7 +343,7 @@ class GitHubService {
   async getOrganization(orgLogin) {
     try {
       // Create a temporary Octokit instance for public API calls if we don't have one
-      const octokit = this.octokit || new Octokit();
+      const octokit = this.octokit || await this.createOctokitInstance();
       
       const { data } = await octokit.rest.orgs.get({
         org: orgLogin
@@ -356,7 +359,7 @@ class GitHubService {
   async getUser(username) {
     try {
       // Create a temporary Octokit instance for public API calls if we don't have one
-      const octokit = this.octokit || new Octokit();
+      const octokit = this.octokit || await this.createOctokitInstance();
       
       const { data } = await octokit.rest.users.getByUsername({
         username
@@ -372,7 +375,7 @@ class GitHubService {
   async getPublicRepositories(owner, type = 'user') {
     try {
       // Create a temporary Octokit instance for public API calls if we don't have one
-      const octokit = this.octokit || new Octokit();
+      const octokit = this.octokit || await this.createOctokitInstance();
       
       let repositories = [];
       let page = 1;
@@ -647,7 +650,7 @@ class GitHubService {
 
     try {
       // Use authenticated or public API depending on authentication state
-      const octokit = this.octokit || new Octokit();
+      const octokit = this.octokit || await this.createOctokitInstance();
       
       // Try to get sushi-config.yaml from the repository root
       const { data } = await octokit.rest.repos.getContent({
@@ -687,7 +690,7 @@ class GitHubService {
         
         try {
           // Try with public API (unauthenticated)
-          const publicOctokit = new Octokit();
+          const publicOctokit = await this.createOctokitInstance();
           const { data } = await publicOctokit.rest.repos.getContent({
             owner,
             repo,
@@ -1026,7 +1029,7 @@ class GitHubService {
   async getRepository(owner, repo) {
     try {
       // Use authenticated octokit if available, otherwise create a public instance for public repos
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const { data } = await octokit.rest.repos.get({
         owner,
@@ -1046,7 +1049,7 @@ class GitHubService {
       console.log('githubService.getBranches: Authentication status:', this.isAuth());
       
       // Use authenticated octokit if available, otherwise create a public instance for public repos
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       console.log('githubService.getBranches: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
       
       const { data } = await octokit.rest.repos.listBranches({
@@ -1102,7 +1105,7 @@ class GitHubService {
   async getBranch(owner, repo, branch) {
     try {
       // Use authenticated octokit if available, otherwise create a public instance for public repos
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const { data } = await octokit.rest.repos.getBranch({
         owner,
@@ -1372,7 +1375,7 @@ class GitHubService {
     try {
       console.log(`🔎 githubService.getBpmnFilesRecursive: Searching ${owner}/${repo}/${path} (ref: ${ref})`);
       // Use authenticated octokit if available, otherwise create a public instance
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       console.log(`🔐 githubService.getBpmnFilesRecursive: Using ${this.isAuth() ? 'authenticated' : 'public'} octokit`);
       
       const { data } = await octokit.rest.repos.getContent({
@@ -1465,7 +1468,7 @@ class GitHubService {
       console.log('📋 githubService.getFileContent: Request parameters:', { owner, repo, path, ref });
       
       // Use authenticated octokit if available, otherwise create a public instance for public repos
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       console.log('🔧 githubService.getFileContent: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
       
       // Create a promise that rejects after timeout
@@ -1719,7 +1722,7 @@ class GitHubService {
   // Get all pull requests for a specific branch
   async getPullRequestsForBranch(owner, repo, branchName) {
     // Use authenticated octokit if available, otherwise create a public instance for public repos
-    const octokit = this.isAuth() ? this.octokit : new Octokit();
+    const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
 
     const startTime = Date.now();
     this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls`, { state: 'open', head: `${owner}:${branchName}` });
@@ -1747,7 +1750,7 @@ class GitHubService {
   // Get pull request comments
   async getPullRequestComments(owner, repo, pullNumber, page = 1, per_page = 100) {
     // Use authenticated octokit if available, otherwise create a public instance for public repos
-    const octokit = this.isAuth() ? this.octokit : new Octokit();
+    const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
 
     const startTime = Date.now();
     this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, { page, per_page });
@@ -1773,7 +1776,7 @@ class GitHubService {
   // Get pull request issue comments (general comments on the PR conversation)
   async getPullRequestIssueComments(owner, repo, pullNumber, page = 1, per_page = 100) {
     // Use authenticated octokit if available, otherwise create a public instance for public repos
-    const octokit = this.isAuth() ? this.octokit : new Octokit();
+    const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
 
     const startTime = Date.now();
     this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, { page, per_page });
@@ -1976,7 +1979,7 @@ class GitHubService {
   async getDirectoryContents(owner, repo, path = '', ref = 'main') {
     try {
       // Create temporary Octokit instance for unauthenticated access if needed
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const { data } = await octokit.rest.repos.getContent({
         owner,
@@ -2037,7 +2040,7 @@ class GitHubService {
   async getCommits(owner, repo, options = {}) {
     try {
       // Create temporary Octokit instance for unauthenticated access if needed
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const params = {
         owner,
@@ -2070,7 +2073,7 @@ class GitHubService {
   async getIssues(owner, repo, options = {}) {
     try {
       // Create temporary Octokit instance for unauthenticated access if needed
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const params = {
         owner,
@@ -2108,7 +2111,7 @@ class GitHubService {
 
     try {
       // Use the GitHub API to fetch forks, no authentication required for public repos
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const params = {
         owner,
@@ -2164,7 +2167,7 @@ class GitHubService {
 
     try {
       // Use the GitHub API to fetch pull requests, no authentication required for public repos
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const params = {
         owner,
@@ -2492,7 +2495,7 @@ class GitHubService {
 
     try {
       // Create temporary Octokit instance for unauthenticated access if needed
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       this.logger.apiCall('GET', `/repos/${owner}/${repo}/forks`, options);
       
