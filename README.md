@@ -173,11 +173,43 @@ sgex/
 
 - `npm start` - Runs the app in development mode
 - `npm test` - Launches the test runner in interactive watch mode
-- `npm run build` - Builds the app for production
-- `npm run lint` - Runs ESLint on all source files
+- `npm run build` - Builds the app for production (includes TypeScript type checking and schema generation)
+- `npm run type-check` - Runs TypeScript type checking without compilation
+- `npm run type-check:watch` - Runs TypeScript type checking in watch mode
+- `npm run generate-schemas` - Generates JSON schemas from TypeScript types
+- `npm run lint` - Runs ESLint on all source files (supports JavaScript and TypeScript)
 - `npm run lint:a11y` - Shows only accessibility (jsx-a11y) warnings
 - `npm run lint:fix` - Automatically fixes linting issues where possible
-- `npm run eject` - **Note: This is a one-way operation. Don't do this unless you know what you're doing!**
+- `npm run eject` - **Note: This is a one-way operation. Don't do this unless you're sure!**
+
+### TypeScript Migration
+
+SGEX Workbench is currently undergoing a phased migration to TypeScript for improved type safety, better IDE support, and enhanced developer experience. The migration includes:
+
+- **Runtime Validation**: AJV + TypeScript integration for JSON data validation
+- **Schema Generation**: Automated JSON schema generation from TypeScript types
+- **Type Safety**: Gradual adoption of TypeScript across the codebase
+- **Documentation**: Generated type documentation and schemas
+
+For detailed information about the TypeScript migration, see [TYPESCRIPT_MIGRATION.md](TYPESCRIPT_MIGRATION.md).
+
+#### Current TypeScript Features
+
+- **Core Types**: Comprehensive type definitions for GitHub API, DAK structures, and application state
+- **Runtime Validation**: Type-safe JSON validation using generated schemas
+- **Schema Publishing**: Automated schema generation and publishing to `public/docs/schemas/`
+- **Development Tools**: TypeScript-aware linting, type checking, and IDE support
+
+#### Using TypeScript Features
+
+```typescript
+// Import types for better development experience
+import { GitHubUser, DAKRepository } from './types/core';
+import { validateAndCast } from './services/runtimeValidationService';
+
+// Type-safe data validation
+const user = validateAndCast<GitHubUser>('GitHubUser', userData);
+```
 
 ### Accessibility Linting
 

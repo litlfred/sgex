@@ -698,6 +698,12 @@ const PreviewBadge = () => {
   const sanitizeAndRenderMarkdown = (content) => {
     if (!content || !DOMPurify) return content || '';
     
+    // Check if DOMPurify has the sanitize method
+    if (typeof DOMPurify.sanitize !== 'function') {
+      console.warn('DOMPurify.sanitize is not available, returning unsanitized content');
+      return content;
+    }
+    
     // Configure DOMPurify to allow HTML table elements while maintaining security
     const sanitizedContent = DOMPurify.sanitize(content, {
       ALLOWED_TAGS: [

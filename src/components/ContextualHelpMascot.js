@@ -8,6 +8,7 @@ import HelpModal from './HelpModal';
 import TrackedItemsViewer from './TrackedItemsViewer';
 import LanguageSelector from './LanguageSelector';
 import useThemeImage from '../hooks/useThemeImage';
+import { getSavedTheme, toggleTheme } from '../utils/themeManager';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', contextData = {}, notificationBadge = false }) => {
@@ -15,7 +16,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [showHelp, setShowHelp] = useState(false);
   const [helpSticky, setHelpSticky] = useState(false);
   const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(getSavedTheme() === 'dark');
   const [cacheClearing, setCacheClearing] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
   const [showTrackedItems, setShowTrackedItems] = useState(false);
@@ -25,32 +26,11 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
 
-  // Load theme preference from localStorage on mount
+  // Sync local state with actual theme on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('sgex-theme');
-    if (savedTheme) {
-      setIsDarkMode(savedTheme === 'dark');
-    } else {
-      // Check if user explicitly prefers light mode
-      let prefersLight = false;
-      try {
-        if (window.matchMedia) {
-          prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-        }
-      } catch (e) {
-        // Fallback for test environments
-        prefersLight = false;
-      }
-      // Default to dark mode unless user explicitly prefers light
-      setIsDarkMode(!prefersLight);
-    }
+    const currentTheme = getSavedTheme();
+    setIsDarkMode(currentTheme === 'dark');
   }, []);
-
-  // Update body class when theme changes
-  useEffect(() => {
-    document.body.className = isDarkMode ? 'theme-dark' : 'theme-light';
-    localStorage.setItem('sgex-theme', isDarkMode ? 'dark' : 'light');
-  }, [isDarkMode]);
 
   // Update document direction for RTL languages
   useEffect(() => {
@@ -101,8 +81,9 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
     };
   }, [isAuthenticated]);
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
+  const handleToggleTheme = () => {
+    const newTheme = toggleTheme();
+    setIsDarkMode(newTheme === 'dark');
   };
 
   // Get help topics for the page
@@ -277,7 +258,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                     <div className="help-menu-divider"></div>
                     <button 
                       className={`help-theme-toggle-btn ${isDarkMode ? 'dark' : 'light'}`}
-                      onClick={toggleTheme}
+                      onClick={handleToggleTheme}
                       aria-label={t('theme.toggle')}
                       title={t('theme.toggle')}
                     >
@@ -315,7 +296,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                     <div className="help-menu-divider"></div>
                     <button 
                       className={`help-theme-toggle-btn ${isDarkMode ? 'dark' : 'light'}`}
-                      onClick={toggleTheme}
+                      onClick={handleToggleTheme}
                       aria-label={t('theme.toggle')}
                       title={t('theme.toggle')}
                     >
