@@ -43,7 +43,8 @@
     "coreDataElements": "Core Data Elements",
     "decisionSupportLogic": "Decision-Support Logic",
     "programIndicators": "Program Indicators",
-    "requirements": "Functional and Non-Functional Requirements"
+    "requirements": "Functional and Non-Functional Requirements",
+    "testScenarios": "Test Scenarios"
   },
   "repository": {
     "select": "Select Repository",
@@ -160,7 +161,8 @@
       "sgex": "SGEX Icon",
       "bugReport": "Bug Report",
       "security": "Security Lock",
-      "action": "{{title}}"
+      "action": "{{title}}",
+      "dakComponent": "{{name}} DAK Component"
     },
     "image": {
       "authoring": "Authoring Interface",

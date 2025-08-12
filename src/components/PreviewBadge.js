@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import githubService from '../services/githubService';
 import githubActionsService from '../services/githubActionsService';
 import WorkflowStatus from './WorkflowStatus';
-import MDEditor from '@uiw/react-md-editor';
-import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
-import DOMPurify from 'dompurify';
+import { lazyLoadReactMarkdown, lazyLoadDOMPurify, lazyLoadRehypeRaw } from '../utils/lazyRouteUtils';
 import './WorkflowStatus.css';
 import './PreviewBadge.css';
+
+// Lazy load MDEditor to improve initial page responsiveness
+const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
 /**
  * PreviewBadge component that displays when the app is deployed from a non-main branch
@@ -33,6 +33,29 @@ const PreviewBadge = () => {
   const [workflowLoading, setWorkflowLoading] = useState(false);
   const [newlyAddedCommentId, setNewlyAddedCommentId] = useState(null);
   const [copilotSessionInfo, setCopilotSessionInfo] = useState(null);
+  const [ReactMarkdown, setReactMarkdown] = useState(null);
+  const [DOMPurify, setDOMPurify] = useState(null);
+  const [rehypeRaw, setRehypeRaw] = useState(null);
+
+  // Lazy load markdown and sanitization components
+  useEffect(() => {
+    const loadMarkdownComponents = async () => {
+      try {
+        const [markdown, domPurify, rehypeRawPlugin] = await Promise.all([
+          lazyLoadReactMarkdown(),
+          lazyLoadDOMPurify(),
+          lazyLoadRehypeRaw()
+        ]);
+        setReactMarkdown(() => markdown);
+        setDOMPurify(domPurify);
+        setRehypeRaw(() => rehypeRawPlugin);
+      } catch (error) {
+        console.error('Failed to load markdown components:', error);
+      }
+    };
+
+    loadMarkdownComponents();
+  }, []);
   const [showCopilotSession, setShowCopilotSession] = useState(false);
   const [canComment, setCanComment] = useState(true);
   const [canTriggerWorkflows, setCanTriggerWorkflows] = useState(false);
@@ -673,7 +696,7 @@ const PreviewBadge = () => {
   };
 
   const sanitizeAndRenderMarkdown = (content) => {
-    if (!content) return '';
+    if (!content || !DOMPurify) return content || '';
     
     // Configure DOMPurify to allow HTML table elements while maintaining security
     const sanitizedContent = DOMPurify.sanitize(content, {
@@ -930,15 +953,17 @@ const PreviewBadge = () => {
                   ) : (
                     <div className="comment-form-advanced">
                       <div className="markdown-editor-container">
-                        <MDEditor
-                          value={newComment}
-                          onChange={(val) => setNewComment(val || '')}
-                          preview="edit"
-                          height={300}
-                          visibleDragBar={false}
-                          data-color-mode="light"
-                          hideToolbar={submittingComment || !canComment}
-                        />
+                        <Suspense fallback={<div className="loading-spinner">Loading editor...</div>}>
+                          <MDEditor
+                            value={newComment}
+                            onChange={(val) => setNewComment(val || '')}
+                            preview="edit"
+                            height={300}
+                            visibleDragBar={false}
+                            data-color-mode="light"
+                            hideToolbar={submittingComment || !canComment}
+                          />
+                        </Suspense>
                       </div>
                       <div className="comment-form-actions">
                         <button
@@ -966,9 +991,15 @@ const PreviewBadge = () => {
                   <h4>Description</h4>
                   <div className="pr-body">
                     <div className="markdown-content">
-                      <ReactMarkdown rehypePlugins={[rehypeRaw]}>
-                        {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
-                      </ReactMarkdown>
+                      {ReactMarkdown && rehypeRaw ? (
+                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                          {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
+                        </ReactMarkdown>
+                      ) : (
+                        <div style={{ whiteSpace: 'pre-wrap' }}>
+                          {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
+                        </div>
+                      )}
                     </div>
                     {prInfo[0].body.split('\n').length > 6 && (
                       <button 
@@ -1105,7 +1136,13 @@ const PreviewBadge = () => {
                             </div>
                             <div className="copilot-comment-body">
                               <div className="markdown-content">
-                                <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                                {ReactMarkdown && rehypeRaw ? (
+                                  <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                                ) : (
+                                  <div style={{ whiteSpace: 'pre-wrap' }}>
+                                    {sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1177,7 +1214,13 @@ const PreviewBadge = () => {
                                 <>
                                   <div className="comment-preview">
                                     <div className="markdown-content">
-                                      <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
+                                      {ReactMarkdown && rehypeRaw ? (
+                                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
+                                      ) : (
+                                        <div style={{ whiteSpace: 'pre-wrap' }}>
+                                          {sanitizeAndRenderMarkdown(truncateComment(comment.body))}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                   <button 
@@ -1191,7 +1234,13 @@ const PreviewBadge = () => {
                                 <>
                                   <div className="comment-full">
                                     <div className="markdown-content">
-                                      <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
+                                      {ReactMarkdown && rehypeRaw ? (
+                                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
+                                      ) : (
+                                        <div style={{ whiteSpace: 'pre-wrap' }}>
+                                          {sanitizeAndRenderMarkdown(comment.body)}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                   {shouldTruncate && (

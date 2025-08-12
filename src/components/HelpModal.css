@@ -483,3 +483,81 @@ body.theme-light .help-modal-overlay.bug-report-overlay {
 .help-fallback a:hover {
   text-decoration: underline;
 }
+
+/* Dark mode specific overrides for better help modal visibility */
+body.theme-dark .help-modal-content {
+  background: var(--who-dropdown-bg, #1a2380);
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .help-menu-dropdown {
+  background: var(--who-dropdown-bg, #1a2380);
+  border: 1px solid var(--who-light-blue, #c0dcf2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+body.theme-dark .menu-item {
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .menu-item:hover {
+  background-color: var(--who-dropdown-hover-bg, rgba(255, 255, 255, 0.15));
+  color: var(--who-light-blue, #c0dcf2);
+}
+
+/* Dark mode specific styles for bug report buttons */
+body.theme-dark .bug-type-btn {
+  background: var(--who-hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--who-text-primary, #ffffff);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .bug-type-btn:hover {
+  background: var(--who-blue);
+  color: var(--who-text-on-primary, #ffffff);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+/* Dark mode specific styles for help fallback */
+body.theme-dark .help-fallback {
+  background: var(--who-dropdown-bg, #1a2380);
+  border-color: var(--who-light-blue, #c0dcf2);
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .help-fallback strong {
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .help-fallback li {
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .help-fallback a {
+  color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .help-fallback a:hover {
+  color: var(--who-text-primary, #ffffff);
+}
+
+/* Dark mode styles for slideshow help tips */
+body.theme-dark .slideshow-content .help-tip {
+  background: transparent;
+  border-left-color: var(--who-light-blue, #c0dcf2);
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .slideshow-content .help-tip strong {
+  color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .slideshow-content .help-warning {
+  background: var(--who-dropdown-bg, rgba(255, 152, 0, 0.1));
+  border-left-color: var(--who-warning, #ff9800);
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .slideshow-content .help-warning strong {
+  color: var(--who-warning, #ff9800);
+}

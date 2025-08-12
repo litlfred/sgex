@@ -233,6 +233,111 @@ jobs:
           - All branch subdirectories preserved
           - Using deploy route configuration for simplified landing page"
           
+          # Function to clean git state
+          clean_git_state() {
+            echo "🧹 Cleaning git state..."
+            # Abort any ongoing rebase or merge
+            git rebase --abort 2>/dev/null || true
+            git merge --abort 2>/dev/null || true
+            # Reset to clean state while preserving staged changes
+            git reset --mixed HEAD 2>/dev/null || true
+            # Re-stage our changes
+            git add -A
+            echo "✅ Git state cleaned"
+          }
+          
+          # Function to perform robust pull with rebase
+          robust_pull_rebase() {
+            echo "🔄 Performing robust pull with rebase..."
+            
+            # Fetch latest changes
+            if ! git fetch origin gh-pages; then
+              echo "❌ Failed to fetch from origin"
+              return 1
+            fi
+            
+            # Check if we're behind remote
+            local_commit=$(git rev-parse HEAD)
+            remote_commit=$(git rev-parse origin/gh-pages)
+            
+            if [[ "$local_commit" == "$remote_commit" ]]; then
+              echo "✅ Already up to date with remote"
+              return 0
+            fi
+            
+            echo "📊 Local: $local_commit"
+            echo "📊 Remote: $remote_commit"
+            
+            # Perform rebase with conflict handling
+            if git pull --rebase origin gh-pages; then
+              echo "✅ Pull rebase successful"
+              return 0
+            else
+              echo "⚠️ Pull rebase conflicts detected, analyzing..."
+              
+              # Check for conflicts
+              if git status --porcelain | grep -q "^UU\|^AA\|^DD"; then
+                echo "🔍 Found unresolved conflicts:"
+                git status --porcelain | grep "^UU\|^AA\|^DD" || true
+                
+                # For landing page deployments, try to auto-resolve by accepting our version
+                # since landing page updates the root while branches use subdirectories
+                echo "🔧 Attempting automatic conflict resolution..."
+                
+                # Get list of conflicted files
+                conflicted_files=$(git diff --name-only --diff-filter=U 2>/dev/null || true)
+                
+                if [[ -n "$conflicted_files" ]]; then
+                  echo "📝 Conflicted files:"
+                  echo "$conflicted_files"
+                  
+                  # For landing page conflicts, use our version (--ours)
+                  echo "🔧 Resolving conflicts by accepting our changes..."
+                  git checkout --ours . 2>/dev/null || true
+                  git add -A
+                  
+                  # Continue rebase
+                  if git rebase --continue; then
+                    echo "✅ Automatic conflict resolution successful"
+                    return 0
+                  else
+                    echo "❌ Failed to continue rebase after conflict resolution"
+                    git rebase --abort
+                    return 1
+                  fi
+                else
+                  echo "❌ No conflicted files found but rebase failed"
+                  git rebase --abort
+                  return 1
+                fi
+              else
+                echo "❌ Pull rebase failed but no conflicts detected"
+                git rebase --abort
+                return 1
+              fi
+            fi
+          }
+          
+          # Function to perform robust push
+          robust_push() {
+            echo "🚀 Performing robust push..."
+            
+            # Try push with lease for safety
+            if git push --force-with-lease origin gh-pages; then
+              echo "✅ Push successful with lease protection"
+              return 0
+            else
+              echo "⚠️ Force-with-lease push failed, trying regular push..."
+              if git push origin gh-pages; then
+                echo "✅ Regular push successful"
+                return 0
+              else
+                echo "❌ Push failed"
+                return 1
+              fi
+            fi
+          }
+          
           # Check if there are changes to commit
           if git diff --cached --quiet; then
             if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
@@ -258,20 +363,69 @@ jobs:
             - Commit: ${{ github.sha }}"
           fi
           
-          echo "Performing final push with rebase as requested..."
+          # Enhanced push with robust git operations and retry logic
+          max_retries=3
+          retry_count=0
+          success=false
           
-          # Do a final pull --rebase then push as requested in the issue
-          git pull --rebase origin gh-pages || {
-            echo "Rebase failed, trying merge strategy..."
-            git rebase --abort 2>/dev/null || true
-            git pull origin gh-pages
-          }
+          while [[ $retry_count -lt $max_retries ]] && [[ "$success" == "false" ]]; do
+            retry_count=$((retry_count + 1))
+            echo "🔄 Push attempt $retry_count of $max_retries"
+            
+            # Clean git state if this is a retry
+            if [[ $retry_count -gt 1 ]]; then
+              clean_git_state
+              # Re-commit our changes
+              git commit -m "$deployment_msg
+              
+              $deployment_details
+              - Retry deployment attempt $retry_count
+              - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+              - Commit: ${{ github.sha }}"
+            fi
+            
+            # Perform robust pull with rebase
+            if robust_pull_rebase; then
+              echo "✅ Successfully synced with remote"
+              
+              # Perform robust push
+              if robust_push; then
+                echo "✅ Landing page deployment push successful on attempt $retry_count"
+                success=true
+              else
+                echo "⚠️ Push failed on attempt $retry_count"
+                if [[ $retry_count -lt $max_retries ]]; then
+                  # Brief delay before retry
+                  sleep_time=$((retry_count * 2))
+                  echo "💤 Waiting ${sleep_time} seconds before next attempt..."
+                  sleep $sleep_time
+                fi
+              fi
+            else
+              echo "⚠️ Failed to sync with remote on attempt $retry_count"
+              if [[ $retry_count -lt $max_retries ]]; then
+                # Brief delay before retry
+                sleep_time=$((retry_count * 2))
+                echo "💤 Waiting ${sleep_time} seconds before next attempt..."
+                sleep $sleep_time
+              fi
+            fi
+          done
           
-          # Push the changes
-          if git push origin gh-pages; then
-            echo "✅ Landing page deployment push successful"
-          else
-            echo "❌ Push failed"
+          if [[ "$success" == "false" ]]; then
+            echo "❌ Failed to deploy landing page after $max_retries attempts"
+            echo "This may indicate:"
+            echo "  - Persistent network issues"
+            echo "  - Repository access problems"
+            echo "  - Concurrent deployment conflicts"
+            echo "  - Git repository corruption"
+            echo ""
+            echo "🔍 Final git status:"
+            git status --porcelain || true
+            echo ""
+            echo "📊 Remote status:"
+            git fetch origin gh-pages 2>/dev/null || true
+            git log --oneline -5 origin/gh-pages 2>/dev/null || true
             exit 1
           fi
           
