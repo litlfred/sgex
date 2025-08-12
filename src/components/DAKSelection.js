@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import dakTemplates from '../config/dak-templates.json';
+import whoRepositories from '../config/who-repositories.json';
 import { PageLayout, usePageParams } from './framework';
 
 const DAKSelection = () => {
@@ -482,24 +483,95 @@ const DAKSelectionContent = () => {
             const sortedRepos = repos.sort((a, b) => a.name.localeCompare(b.name));
             setRepositories(sortedRepos);
           } else {
-            // Use public GitHub API when not authenticated
-            console.log('🔍 Not authenticated, using public GitHub API...');
-            try {
-              repos = await githubService.getSmartGuidelinesRepositories(
-                effectiveProfile.login, 
-                effectiveProfile.type === 'org' ? 'org' : 'user'
-              );
+            // Handle unauthenticated access - special handling for WHO organization
+            if (effectiveProfile.login === 'WorldHealthOrganization') {
+              console.log('🏥 WHO organization unauthenticated access - using known repositories');
+              
+              // Check for cached WHO data first (even for unauthenticated users)
+              let whoKnownRepos = null;
+              try {
+                whoKnownRepos = repositoryCacheService.getCachedRepositories(
+                  'WorldHealthOrganization', 
+                  'org', 
+                  'who-known-repos' // special cache key for WHO known repos
+                );
+              } catch (cacheError) {
+                console.warn('Error accessing WHO repository cache:', cacheError);
+              }
+
+              if (whoKnownRepos && !forceRescan) {
+                console.log('💾 Using cached WHO known repositories');
+                repos = whoKnownRepos.repositories;
+                setUsingCachedData(true);
+              } else {
+                console.log('🔍 Loading WHO known repositories...');
+                
+                // First try public GitHub API with rate limiting
+                try {
+                  const publicRepos = await githubService.getSmartGuidelinesRepositories(
+                    'WorldHealthOrganization', 
+                    'org'
+                  );
+                  
+                  if (publicRepos && publicRepos.length > 0) {
+                    console.log(`✅ Found ${publicRepos.length} WHO repositories via public API`);
+                    repos = publicRepos;
+                    
+                    // Cache the public API results
+                    repositoryCacheService.setCachedRepositories(
+                      'WorldHealthOrganization', 
+                      'org', 
+                      repos,
+                      'who-known-repos'
+                    );
+                  } else {
+                    throw new Error('No repositories found via public API');
+                  }
+                } catch (publicApiError) {
+                  console.warn('Public API failed for WHO, using known repositories:', publicApiError);
+                  
+                  // Fallback to known WHO repositories from config
+                  repos = whoRepositories.whoKnownRepositories.map(repo => ({
+                    ...repo,
+                    smart_guidelines_compatible: true
+                  }));
+                  
+                  // Cache the known repositories for future use
+                  repositoryCacheService.setCachedRepositories(
+                    'WorldHealthOrganization', 
+                    'org', 
+                    repos,
+                    'who-known-repos'
+                  );
+                  
+                  console.log(`📚 Using ${repos.length} known WHO SMART Guidelines repositories`);
+                }
+              }
+              
               // Sort repositories alphabetically
               repos.sort((a, b) => a.name.localeCompare(b.name));
               setRepositories(repos);
-            } catch (publicApiError) {
-              console.warn('Public API failed, falling back to demo data:', publicApiError);
-              // Only fall back to mock data if public API fails
-              await simulateEnhancedScanning();
-              repos = getMockRepositories();
-              // Sort mock repositories alphabetically
-              repos.sort((a, b) => a.name.localeCompare(b.name));
-              setRepositories(repos);
+              
+            } else {
+              // Use public GitHub API for other organizations/users when not authenticated
+              console.log('🔍 Not authenticated, using public GitHub API...');
+              try {
+                repos = await githubService.getSmartGuidelinesRepositories(
+                  effectiveProfile.login, 
+                  effectiveProfile.type === 'org' ? 'org' : 'user'
+                );
+                // Sort repositories alphabetically
+                repos.sort((a, b) => a.name.localeCompare(b.name));
+                setRepositories(repos);
+              } catch (publicApiError) {
+                console.warn('Public API failed, falling back to demo data:', publicApiError);
+                // Only fall back to mock data if public API fails AND it's not WHO
+                await simulateEnhancedScanning();
+                repos = getMockRepositories();
+                // Sort mock repositories alphabetically
+                repos.sort((a, b) => a.name.localeCompare(b.name));
+                setRepositories(repos);
+              }
             }
           }
         }
@@ -698,20 +770,52 @@ const DAKSelectionContent = () => {
                 )}
               </div>
             )}
-            {effectiveAction !== 'create' && !githubService.isAuth() && !isScanning && !loading && (
-              <div className="demo-controls">
-                <div className="demo-info">
-                  <span className="demo-icon">🎭</span>
-                  <span>Not authenticated. </span>
-                  <button 
-                    onClick={handleDemoScanning} 
-                    className="demo-scan-btn"
-                    disabled={isScanning}
-                  >
-                    ✨ Demo Enhanced Scanning Display
-                  </button>
-                </div>
-              </div>
+            {effectiveAction !== 'create' && !githubService.isAuth() && (
+              <>
+                {usingCachedData && effectiveProfile.login === 'WorldHealthOrganization' && (
+                  <div className="cache-info">
+                    <span className="cache-icon">💾</span>
+                    <span>Using cached WHO repositories. </span>
+                    <button 
+                      onClick={handleRescan} 
+                      className="rescan-link"
+                      disabled={isScanning}
+                    >
+                      {isScanning ? 'Refreshing...' : 'Refresh'}
+                    </button>
+                  </div>
+                )}
+                {!isScanning && !loading && !usingCachedData && effectiveProfile.login === 'WorldHealthOrganization' && (
+                  <div className="who-scan-controls">
+                    <div className="who-info">
+                      <span className="who-icon">🏥</span>
+                      <span>WHO organization public access. </span>
+                      <button 
+                        onClick={handleRescan} 
+                        className="rescan-btn"
+                        disabled={isScanning}
+                      >
+                        🔄 Refresh WHO Repositories
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {!isScanning && !loading && effectiveProfile.login !== 'WorldHealthOrganization' && (
+                  <div className="demo-controls">
+                    <div className="demo-info">
+                      <span className="demo-icon">🎭</span>
+                      <span>Not authenticated. </span>
+                      <button 
+                        onClick={handleDemoScanning} 
+                        className="demo-scan-btn"
+                        disabled={isScanning}
+                      >
+                        ✨ Demo Enhanced Scanning Display
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
