@@ -1,0 +1,313 @@
+{
+  "type": "object",
+  "properties": {
+    "sushiConfig": {
+      "$ref": "#/definitions/SushiConfig",
+      "title": "sushiConfig"
+    },
+    "isDak": {
+      "type": "boolean",
+      "const": true,
+      "title": "isDak"
+    },
+    "id": {
+      "type": "number",
+      "title": "id"
+    },
+    "node_id": {
+      "type": "string",
+      "title": "node_id"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "full_name": {
+      "type": "string",
+      "title": "full_name"
+    },
+    "private": {
+      "type": "boolean",
+      "title": "private"
+    },
+    "owner": {
+      "$ref": "#/definitions/GitHubUser",
+      "title": "owner"
+    },
+    "html_url": {
+      "type": "string",
+      "title": "html_url"
+    },
+    "description": {
+      "type": "string",
+      "title": "description"
+    },
+    "fork": {
+      "type": "boolean",
+      "title": "fork"
+    },
+    "url": {
+      "type": "string",
+      "title": "url"
+    },
+    "default_branch": {
+      "type": "string",
+      "title": "default_branch"
+    },
+    "created_at": {
+      "type": "string",
+      "title": "created_at"
+    },
+    "updated_at": {
+      "type": "string",
+      "title": "updated_at"
+    }
+  },
+  "defaultProperties": [],
+  "required": [
+    "created_at",
+    "default_branch",
+    "fork",
+    "full_name",
+    "html_url",
+    "id",
+    "isDak",
+    "name",
+    "node_id",
+    "owner",
+    "private",
+    "sushiConfig",
+    "updated_at",
+    "url"
+  ],
+  "definitions": {
+    "SushiConfig": {
+      "title": "SushiConfig",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "id"
+        },
+        "canonical": {
+          "type": "string",
+          "title": "canonical"
+        },
+        "version": {
+          "type": "string",
+          "title": "version"
+        },
+        "name": {
+          "type": "string",
+          "title": "name"
+        },
+        "title": {
+          "type": "string",
+          "title": "title"
+        },
+        "description": {
+          "type": "string",
+          "title": "description"
+        },
+        "status": {
+          "type": "string",
+          "title": "status"
+        },
+        "license": {
+          "type": "string",
+          "title": "license"
+        },
+        "date": {
+          "type": "string",
+          "title": "date"
+        },
+        "publisher": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "title": "name"
+            },
+            "url": {
+              "type": "string",
+              "title": "url"
+            }
+          },
+          "defaultProperties": [],
+          "title": "publisher"
+        },
+        "contact": {
+          "$ref": "#/definitions/Array",
+          "title": "contact"
+        },
+        "dependencies": {
+          "$ref": "#/definitions/Record",
+          "title": "dependencies"
+        },
+        "fhirVersion": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "fhirVersion"
+        },
+        "FSHOnly": {
+          "type": "boolean",
+          "title": "FSHOnly"
+        },
+        "applyExtensionMetadataToRoot": {
+          "type": "boolean",
+          "title": "applyExtensionMetadataToRoot"
+        },
+        "parameters": {
+          "$ref": "#/definitions/Array_2",
+          "title": "parameters"
+        },
+        "copyrightYear": {
+          "type": "string",
+          "title": "copyrightYear"
+        },
+        "releaseLabel": {
+          "type": "string",
+          "title": "releaseLabel"
+        }
+      },
+      "defaultProperties": []
+    },
+    "Array": {
+      "title": "Array",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "name"
+          },
+          "telecom": {
+            "$ref": "#/definitions/Array_1",
+            "title": "telecom"
+          }
+        },
+        "defaultProperties": []
+      }
+    },
+    "Array_1": {
+      "title": "Array_1",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "string",
+            "title": "system"
+          },
+          "value": {
+            "type": "string",
+            "title": "value"
+          }
+        },
+        "defaultProperties": []
+      }
+    },
+    "Record": {
+      "title": "Record",
+      "$ref": "#/definitions/Record_1"
+    },
+    "__type": {
+      "title": "__type",
+      "type": "object",
+      "defaultProperties": []
+    },
+    "Record_1": {
+      "$ref": "#/definitions/__type"
+    },
+    "Array_2": {
+      "title": "Array_2",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "code"
+          },
+          "value": {
+            "type": "string",
+            "title": "value"
+          }
+        },
+        "defaultProperties": []
+      }
+    },
+    "GitHubUser": {
+      "description": "Core DAK Validation Type Definitions\n\nTypeScript types for the DAK validation framework",
+      "title": "GitHubUser",
+      "type": "object",
+      "properties": {
+        "login": {
+          "type": "string",
+          "title": "login"
+        },
+        "id": {
+          "type": "number",
+          "title": "id"
+        },
+        "node_id": {
+          "type": "string",
+          "title": "node_id"
+        },
+        "avatar_url": {
+          "type": "string",
+          "title": "avatar_url"
+        },
+        "url": {
+          "type": "string",
+          "title": "url"
+        },
+        "html_url": {
+          "type": "string",
+          "title": "html_url"
+        },
+        "type": {
+          "type": "string",
+          "title": "type"
+        },
+        "site_admin": {
+          "type": "boolean",
+          "title": "site_admin"
+        },
+        "name": {
+          "type": "string",
+          "title": "name"
+        },
+        "email": {
+          "type": "string",
+          "title": "email"
+        },
+        "created_at": {
+          "type": "string",
+          "title": "created_at"
+        },
+        "updated_at": {
+          "type": "string",
+          "title": "updated_at"
+        }
+      },
+      "defaultProperties": [],
+      "required": [
+        "avatar_url",
+        "created_at",
+        "html_url",
+        "id",
+        "login",
+        "node_id",
+        "site_admin",
+        "type",
+        "updated_at",
+        "url"
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

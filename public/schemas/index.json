@@ -1,0 +1,26 @@
+{
+  "schemas": [
+    "DAKFile",
+    "DAKRepository",
+    "DAKValidationResult",
+    "FormattedValidationResults",
+    "GitHubRepository",
+    "GitHubUser",
+    "SushiConfig",
+    "ValidationContext",
+    "ValidationSummary",
+    "actor-definition"
+  ],
+  "generated": "2025-08-12T14:50:15.091Z",
+  "types": [
+    "GitHubUser",
+    "GitHubRepository",
+    "DAKValidationResult",
+    "ValidationContext",
+    "FormattedValidationResults",
+    "ValidationSummary",
+    "DAKFile",
+    "SushiConfig",
+    "DAKRepository"
+  ]
+}

@@ -32,6 +32,8 @@
   "scripts": {
     "start": "craco start",
     "build": "react-scripts build",
+    "generate-schemas": "node scripts/generate-schemas.js",
+    "build:with-schemas": "npm run generate-schemas && npm run build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve": "npm run build && cd build && python3 -m http.server 3000",
@@ -80,6 +82,7 @@
     "http-proxy-middleware": "^3.0.5",
     "identity-obj-proxy": "^3.0.0",
     "jsdom": "^26.1.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "typescript-json-schema": "^0.65.1"
   }
 }

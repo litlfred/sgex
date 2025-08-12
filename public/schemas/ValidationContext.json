@@ -1,0 +1,67 @@
+{
+  "type": "object",
+  "additionalProperties": {},
+  "properties": {
+    "owner": {
+      "type": "string",
+      "title": "owner"
+    },
+    "repo": {
+      "type": "string",
+      "title": "repo"
+    },
+    "branch": {
+      "type": "string",
+      "title": "branch"
+    },
+    "dakFiles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/DAKFile"
+      },
+      "title": "dakFiles"
+    },
+    "githubService": {
+      "title": "githubService"
+    },
+    "component": {
+      "type": "string",
+      "title": "component"
+    },
+    "stagingGround": {
+      "type": "boolean",
+      "title": "stagingGround"
+    }
+  },
+  "defaultProperties": [],
+  "definitions": {
+    "DAKFile": {
+      "title": "DAKFile",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "title": "path"
+        },
+        "content": {
+          "type": "string",
+          "title": "content"
+        },
+        "size": {
+          "type": "number",
+          "title": "size"
+        },
+        "sha": {
+          "type": "string",
+          "title": "sha"
+        }
+      },
+      "defaultProperties": [],
+      "required": [
+        "content",
+        "path"
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

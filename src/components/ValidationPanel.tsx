@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import enhancedDAKValidationService from '../services/enhancedDAKValidationService';
 import dakValidationRegistry, { DAK_COMPONENTS, VALIDATION_LEVELS } from '../services/dakValidationRegistry';
+import runtimeValidationService from '../services/runtimeValidationService';
 import { 
   FormattedValidationResults, 
   DAKValidationResult, 
@@ -71,6 +72,14 @@ const ValidationPanel: React.FC<ValidationPanelProps> = ({
       const repo = repository.name;
       const branch = selectedBranch || repository.default_branch || 'main';
 
+      // Validate repository data with runtime validation
+      if (runtimeValidationService.hasType('GitHubRepository')) {
+        const repoValidation = runtimeValidationService.validate('GitHubRepository', repository);
+        if (!repoValidation.isValid) {
+          console.warn('Repository data validation warnings:', repoValidation.warnings);
+        }
+      }
+
       let results: FormattedValidationResults;
       
       if (component === 'all') {
@@ -83,6 +92,16 @@ const ValidationPanel: React.FC<ValidationPanelProps> = ({
           getComponentForFile(file.path) === component
         );
         results = await enhancedDAKValidationService.validateComponent(component, componentFiles);
+      }
+
+      // Validate each result with runtime validation if available
+      if (runtimeValidationService.hasType('DAKValidationResult')) {
+        Object.values(results.byComponent).flat().forEach(result => {
+          const validation = runtimeValidationService.validate('DAKValidationResult', result);
+          if (!validation.isValid) {
+            console.warn('Validation result type safety warning:', validation.errors);
+          }
+        });
       }
 
       setValidationResults(results);

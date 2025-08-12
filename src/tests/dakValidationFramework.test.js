@@ -3,7 +3,7 @@
  */
 
 import dakValidationRegistry from '../services/dakValidationRegistry';
-import enhancedDAKValidationService from '../services/enhancedDAKValidationService';
+import enhancedDAKValidationService from '../services/enhancedDAKValidationService.ts';
 
 describe('DAK Validation Framework', () => {
   
