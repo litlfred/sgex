@@ -153,23 +153,16 @@ const BPMNSource = () => {
     }
   }, [profile, repository, selectedFile, navigate]);
 
-  if (!profile || !repository || !selectedFile) {
-    return (
-      <PageLayout pageName="bpmn-source">
-        <div className="bpmn-source">
+  return (
+    <PageLayout pageName="bpmn-source">
+      <div className="bpmn-source">
+        {!profile || !repository || !selectedFile ? (
           <div className="redirecting-state">
             <h2>Redirecting...</h2>
             <p>Missing required context. Redirecting to home page...</p>
           </div>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  return (
-    <PageLayout pageName="bpmn-source">
-      <div className="bpmn-source">
-        <div className="source-content">
+        ) : (
+          <div className="source-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
@@ -292,9 +285,9 @@ const BPMNSource = () => {
               </div>
             </div>
           </div>
+          </div>
         </div>
-      </div>
-      
+        )}
       </div>
     </PageLayout>
   );
