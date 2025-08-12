@@ -292,6 +292,7 @@ const SelectProfilePage = () => {
             </div>
           </div>
         )}
+        </div>
       )}
     </PageLayout>
   );

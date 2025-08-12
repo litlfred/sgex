@@ -453,6 +453,7 @@ const OrganizationSelection = () => {
             )}
           </div>
         </div>
+        </div>
       )}
     </PageLayout>
   );

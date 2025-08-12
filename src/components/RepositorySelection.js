@@ -210,6 +210,7 @@ const RepositorySelection = () => {
           )}
           </div>
         </div>
+        </div>
       )}
     </PageLayout>
   );

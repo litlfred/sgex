@@ -391,16 +391,23 @@ const PagesManager = () => {
     }
   }, [profile, repository, navigate]);
 
-  return (
-    <PageLayout pageName="pages-manager">
-      <div className="pages-manager">
-        {!profile || !repository ? (
+  if (!profile || !repository) {
+    return (
+      <PageLayout pageName="pages-manager">
+        <div className="pages-manager">
           <div className="redirecting-state">
             <h2>Redirecting...</h2>
             <p>Missing required context. Redirecting to home page...</p>
           </div>
-        ) : (
-          <div className="pages-content">
+        </div>
+      </PageLayout>
+    );
+  }
+
+  return (
+    <PageLayout pageName="pages-manager">
+      <div className="pages-manager">
+        <div className="pages-content">
 
         {/* Staging Ground Status */}
         <DAKStatusBox
@@ -571,7 +578,6 @@ const PagesManager = () => {
           onSave={handleSavePage}
         />
       )}
-        )}
       </div>
     </PageLayout>
   );
