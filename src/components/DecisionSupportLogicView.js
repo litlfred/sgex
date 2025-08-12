@@ -681,7 +681,7 @@ define "Contraindication Present":
   }
 
   return (
-    <PageLayout pageName="decision-support-logic">
+    <>
       <div className={`decision-support-view ${enhancedFullwidth ? 'enhanced-fullwidth' : ''} ${autoHide ? 'auto-hide' : ''}`}>
       <div className="view-content">
 
@@ -1065,7 +1065,7 @@ define "Contraindication Present":
         </div>
       )}
       </div>
-    </PageLayout>
+    </>
   );
 };
 
