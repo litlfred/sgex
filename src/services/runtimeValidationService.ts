@@ -1,17 +1,20 @@
 /**
  * Runtime Validation Service
  * 
- * Provides runtime validation capabilities for TypeScript types using AJV
- * Integrates with the TypeScript type system to provide compile-time and runtime validation
+ * This service provides runtime validation of JSON data against TypeScript-generated
+ * JSON schemas using AJV. It serves as a bridge between TypeScript compile-time
+ * type checking and runtime data validation, with enhanced support for SGEX 
+ * domain-specific validation including GitHub, FHIR, and DAK data.
  */
 
-import Ajv, { ValidateFunction, ErrorObject } from 'ajv';
+import Ajv, { JSONSchemaType, ValidateFunction, ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
 import { 
+  ValidationResult, 
   ValidationError, 
   ValidationWarning, 
-  ValidatedData, 
   RuntimeValidationConfig,
+  ValidatedData,
   AsyncResult
 } from '../types/core';
 
@@ -26,32 +29,33 @@ export interface ValidationContext {
   throwOnError?: boolean;
 }
 
-class RuntimeValidationService {
+export class RuntimeValidationService {
   private ajv: Ajv;
-  private schemas: SchemaRegistry = {};
+  private schemas: Map<string, any> = new Map();
   private validators: Map<string, ValidateFunction> = new Map();
   private config: RuntimeValidationConfig;
 
   constructor(config: Partial<RuntimeValidationConfig> = {}) {
     this.config = {
-      strict: config.strict ?? true,
+      strict: config.strict ?? false,
       throwOnError: config.throwOnError ?? false,
-      coerceTypes: config.coerceTypes ?? false,
-      removeAdditional: config.removeAdditional ?? false
+      coerceTypes: config.coerceTypes ?? true,
+      removeAdditional: config.removeAdditional ?? true
     };
 
     this.ajv = new Ajv({
-      allErrors: true,
       strict: this.config.strict,
       coerceTypes: this.config.coerceTypes,
       removeAdditional: this.config.removeAdditional,
+      allErrors: true,
+      verbose: true,
       loadSchema: this.loadSchema.bind(this)
     });
 
-    // Add standard formats
+    // Add format support (date, time, email, etc.)
     addFormats(this.ajv);
-    
-    // Add custom formats for SGEX domain
+
+    // Add custom formats for SGEX-specific validation
     this.addCustomFormats();
   }
 
@@ -88,13 +92,25 @@ class RuntimeValidationService {
       type: 'string',
       validate: (data: string) => data === 'smart.who.int.base'
     });
+
+    // Branch name format
+    this.ajv.addFormat('git-branch', {
+      type: 'string',
+      validate: (data: string) => !/[\s~^:?*\[\]\\]/.test(data) && !data.startsWith('-') && !data.endsWith('.')
+    });
+
+    // Semantic version format
+    this.ajv.addFormat('semver', {
+      type: 'string',
+      validate: (data: string) => /^\d+\.\d+\.\d+(-[a-zA-Z0-9-]+)?(\+[a-zA-Z0-9-]+)?$/.test(data)
+    });
   }
 
   /**
    * Register a JSON schema for a TypeScript type
    */
   public registerSchema(typeName: string, schema: object): void {
-    this.schemas[typeName] = schema;
+    this.schemas.set(typeName, schema);
     const validator = this.ajv.compile(schema);
     this.validators.set(typeName, validator);
   }
@@ -103,45 +119,33 @@ class RuntimeValidationService {
    * Load schema asynchronously (for $ref resolution)
    */
   private async loadSchema(uri: string): Promise<object | boolean> {
-    // Extract type name from URI
-    const typeName = uri.split('/').pop() || uri;
+    // Handle local schema references
+    if (uri.startsWith('#/')) {
+      return false; // Let AJV handle internal references
+    }
     
-    if (this.schemas[typeName]) {
-      return this.schemas[typeName];
-    }
-
-    // Try to load from generated schemas if available
-    try {
-      const response = await fetch(`/sgex/schemas/${typeName}.json`);
-      if (response.ok) {
-        const schema = await response.json();
-        this.registerSchema(typeName, schema);
-        return schema;
-      }
-    } catch (error) {
-      console.warn(`Failed to load schema for ${typeName}:`, error);
-    }
-
+    // Handle external schema loading if needed in the future
+    console.warn(`External schema loading not implemented for: ${uri}`);
     return false;
   }
 
   /**
-   * Validate data against a registered TypeScript type
+   * Validate data against a registered TypeScript type schema
    */
-  public validate<T>(typeName: string, data: unknown, context?: ValidationContext): ValidatedData<T> {
+  public validate<T>(typeName: string, data: unknown): ValidatedData<T> {
     const validator = this.validators.get(typeName);
-    
     if (!validator) {
       const error: ValidationError = {
         code: 'SCHEMA_NOT_FOUND',
-        message: `Schema for type '${typeName}' not found`,
-        path: typeName
+        message: `No schema registered for type: ${typeName}`,
+        path: '',
+        value: typeName
       };
-
-      if (context?.throwOnError ?? this.config.throwOnError) {
+      
+      if (this.config.throwOnError) {
         throw new Error(error.message);
       }
-
+      
       return {
         data: data as T,
         isValid: false,
@@ -155,204 +159,193 @@ class RuntimeValidationService {
     const warnings: ValidationWarning[] = [];
 
     if (!isValid && validator.errors) {
-      for (const ajvError of validator.errors) {
-        const error: ValidationError = {
-          code: ajvError.keyword || 'VALIDATION_ERROR',
-          message: this.formatErrorMessage(ajvError),
-          path: ajvError.instancePath,
-          value: ajvError.data
+      for (const error of validator.errors) {
+        const validationError: ValidationError = {
+          code: error.keyword?.toUpperCase() || 'VALIDATION_ERROR',
+          message: error.message || 'Validation failed',
+          path: error.instancePath || error.schemaPath || '',
+          value: error.data
         };
-
-        // Categorize as warning for certain non-critical validations
-        if (this.isWarningError(ajvError)) {
+        
+        // Classify certain errors as warnings instead
+        if (this.isWarningError(error)) {
           warnings.push({
-            code: error.code,
-            message: error.message,
-            path: error.path,
-            value: error.value
+            code: validationError.code,
+            message: validationError.message,
+            path: validationError.path,
+            value: validationError.value
           });
         } else {
-          errors.push(error);
+          errors.push(validationError);
         }
       }
     }
 
-    const hasErrors = errors.length > 0;
-
-    if (hasErrors && (context?.throwOnError ?? this.config.throwOnError)) {
-      throw new Error(`Validation failed for ${typeName}: ${errors[0].message}`);
+    if (!isValid && errors.length > 0 && this.config.throwOnError) {
+      throw new Error(`Validation failed: ${errors[0].message}`);
     }
 
     return {
       data: data as T,
-      isValid: !hasErrors,
+      isValid: isValid && errors.length === 0,
       errors,
       warnings
     };
   }
 
   /**
-   * Validate and cast data to TypeScript type with runtime checking
+   * Determine if an AJV error should be treated as a warning
    */
-  public validateAndCast<T>(typeName: string, data: unknown, context?: ValidationContext): T {
-    const result = this.validate<T>(typeName, data, context);
-    
-    if (!result.isValid) {
-      throw new Error(`Type validation failed for ${typeName}: ${result.errors[0]?.message}`);
+  private isWarningError(error: ErrorObject): boolean {
+    // Treat additional properties as warnings in non-strict mode
+    if (!this.config.strict && error.keyword === 'additionalProperties') {
+      return true;
     }
-
-    return result.data;
+    
+    // Treat format errors as warnings for some formats
+    if (error.keyword === 'format') {
+      const formatName = error.schema;
+      return ['date-time', 'email', 'uri'].includes(formatName);
+    }
+    
+    return false;
   }
 
   /**
-   * Validate multiple objects of the same type efficiently
+   * Validate DAK configuration data
    */
-  public validateBatch<T>(
-    typeName: string, 
-    dataArray: unknown[], 
-    context?: ValidationContext
-  ): ValidatedData<T>[] {
-    return dataArray.map(data => this.validate<T>(typeName, data, context));
-  }
-
-  /**
-   * Async validation for complex workflows
-   */
-  public async validateAsync<T>(
-    typeName: string, 
-    data: unknown, 
-    context?: ValidationContext
-  ): Promise<AsyncResult<T>> {
+  public async validateDAKConfig(data: unknown): Promise<AsyncResult<any>> {
     try {
-      const result = this.validate<T>(typeName, data, context);
+      const result = this.validate('SushiConfig', data);
       return {
         success: result.isValid,
         data: result.isValid ? result.data : undefined,
-        error: result.errors[0]?.message,
+        error: result.errors.length > 0 ? result.errors[0].message : undefined,
         errors: result.errors.map(e => e.message)
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
         success: false,
-        error: error.message,
-        errors: [error.message]
+        error: error instanceof Error ? error.message : 'Validation failed',
+        errors: [error instanceof Error ? error.message : 'Validation failed']
       };
     }
   }
 
   /**
-   * Get all registered schema names
+   * Validate GitHub repository data
    */
-  public getRegisteredTypes(): string[] {
-    return Array.from(this.validators.keys());
-  }
-
-  /**
-   * Check if a type is registered
-   */
-  public hasType(typeName: string): boolean {
-    return this.validators.has(typeName);
-  }
-
-  /**
-   * Format AJV error message for better readability
-   */
-  private formatErrorMessage(error: ErrorObject): string {
-    const path = error.instancePath || 'root';
-    const property = error.instancePath ? error.instancePath.split('/').pop() : 'data';
-    
-    switch (error.keyword) {
-      case 'required':
-        return `Missing required property: ${error.params?.missingProperty}`;
-      case 'type':
-        return `Expected ${error.params?.type} but received ${typeof error.data} at ${path}`;
-      case 'format':
-        return `Invalid ${error.params?.format} format for ${property}: "${error.data}"`;
-      case 'minLength':
-        return `${property} must be at least ${error.params?.limit} characters long`;
-      case 'maxLength':
-        return `${property} must not exceed ${error.params?.limit} characters`;
-      case 'pattern':
-        return `${property} does not match required pattern`;
-      case 'enum':
-        return `${property} must be one of: ${error.params?.allowedValues?.join(', ')}`;
-      default:
-        return error.message || `Validation error: ${error.keyword}`;
+  public async validateGitHubRepository(data: unknown): Promise<AsyncResult<any>> {
+    try {
+      const result = this.validate('GitHubRepository', data);
+      return {
+        success: result.isValid,
+        data: result.isValid ? result.data : undefined,
+        error: result.errors.length > 0 ? result.errors[0].message : undefined,
+        errors: result.errors.map(e => e.message)
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Validation failed',
+        errors: [error instanceof Error ? error.message : 'Validation failed']
+      };
     }
   }
 
   /**
-   * Determine if an error should be treated as a warning
+   * Validate user authentication data
    */
-  private isWarningError(error: ErrorObject): boolean {
-    // Treat certain validation failures as warnings rather than errors
-    const warningKeywords = ['format', 'pattern'];
-    const warningPaths = ['/description', '/title', '/name'];
-    
-    return warningKeywords.includes(error.keyword) || 
-           warningPaths.some(path => error.instancePath?.startsWith(path));
+  public async validateAuthenticationState(data: unknown): Promise<AsyncResult<any>> {
+    try {
+      const result = this.validate('AuthenticationState', data);
+      return {
+        success: result.isValid,
+        data: result.isValid ? result.data : undefined,
+        error: result.errors.length > 0 ? result.errors[0].message : undefined,
+        errors: result.errors.map(e => e.message)
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Validation failed',
+        errors: [error instanceof Error ? error.message : 'Validation failed']
+      };
+    }
+  }
+
+  /**
+   * Batch validate multiple data items
+   */
+  public validateBatch<T>(typeName: string, dataItems: unknown[]): ValidatedData<T>[] {
+    return dataItems.map(data => this.validate<T>(typeName, data));
+  }
+
+  /**
+   * Get validation statistics
+   */
+  public getValidationStats(): {
+    registeredSchemas: number;
+    compiledValidators: number;
+    configuration: RuntimeValidationConfig;
+  } {
+    return {
+      registeredSchemas: this.schemas.size,
+      compiledValidators: this.validators.size,
+      configuration: { ...this.config }
+    };
+  }
+
+  /**
+   * Load schemas from generated schema files
+   */
+  public async loadGeneratedSchemas(): Promise<void> {
+    try {
+      // In a real implementation, this would load from the generated schema files
+      // For now, we'll register some basic schemas manually
+      
+      // Basic GitHub User schema
+      this.registerSchema('GitHubUser', {
+        type: 'object',
+        required: ['login', 'id', 'avatar_url'],
+        properties: {
+          login: { type: 'string', format: 'github-username' },
+          id: { type: 'number' },
+          avatar_url: { type: 'string', format: 'uri' },
+          name: { type: ['string', 'null'] },
+          email: { type: ['string', 'null'], format: 'email' }
+        }
+      });
+
+      // Basic SushiConfig schema
+      this.registerSchema('SushiConfig', {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'dak-id' },
+          version: { type: 'string', format: 'semver' },
+          dependencies: {
+            type: 'object',
+            properties: {
+              'smart.who.int.base': { type: 'string' }
+            }
+          }
+        }
+      });
+
+    } catch (error) {
+      console.warn('Failed to load generated schemas:', error);
+    }
+  }
+
+  /**
+   * Clear all registered schemas and validators
+   */
+  public clearSchemas(): void {
+    this.schemas.clear();
+    this.validators.clear();
   }
 }
 
-// Create singleton instance with default configuration
-const runtimeValidationService = new RuntimeValidationService({
-  strict: false, // Allow additional properties for flexibility
-  coerceTypes: true, // Auto-convert compatible types
-  removeAdditional: false, // Preserve extra properties
-  throwOnError: false // Return validation results instead of throwing
-});
-
-// Register core types that are commonly used
-const registerCoreTypes = async () => {
-  try {
-    // Register GitHub API types
-    const githubUserSchema = {
-      type: 'object',
-      required: ['login', 'id', 'node_id', 'avatar_url', 'url', 'html_url', 'type', 'site_admin'],
-      properties: {
-        login: { type: 'string', format: 'github-username' },
-        id: { type: 'number' },
-        node_id: { type: 'string' },
-        avatar_url: { type: 'string', format: 'uri' },
-        url: { type: 'string', format: 'uri' },
-        html_url: { type: 'string', format: 'uri' },
-        type: { type: 'string' },
-        site_admin: { type: 'boolean' },
-        name: { type: 'string' },
-        email: { type: 'string', format: 'email' },
-        created_at: { type: 'string', format: 'date-time' },
-        updated_at: { type: 'string', format: 'date-time' }
-      }
-    };
-
-    runtimeValidationService.registerSchema('GitHubUser', githubUserSchema);
-
-    // Register DAK validation types
-    const dakValidationResultSchema = {
-      type: 'object',
-      required: ['validationId', 'component', 'level', 'description', 'filePath'],
-      properties: {
-        validationId: { type: 'string' },
-        component: { type: 'string' },
-        level: { type: 'string', enum: ['error', 'warning', 'info'] },
-        description: { type: 'string' },
-        filePath: { type: 'string' },
-        message: { type: 'string' },
-        line: { type: 'number' },
-        column: { type: 'number' },
-        suggestion: { type: 'string' }
-      }
-    };
-
-    runtimeValidationService.registerSchema('DAKValidationResult', dakValidationResultSchema);
-
-  } catch (error) {
-    console.warn('Failed to register core schemas:', error);
-  }
-};
-
-// Initialize core types registration
-registerCoreTypes();
-
+// Export singleton instance
+export const runtimeValidationService = new RuntimeValidationService();
 export default runtimeValidationService;
-export { RuntimeValidationService };

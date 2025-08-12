@@ -459,7 +459,19 @@ export async function lazyLoadDOMPurify() {
   }
   
   const DOMPurifyModule = await import('dompurify');
-  const DOMPurify = DOMPurifyModule.default;
+  let DOMPurify = DOMPurifyModule.default;
+  
+  // In browser environment, DOMPurify might need to be initialized with window
+  if (typeof window !== 'undefined' && typeof DOMPurify === 'function') {
+    // Some versions of DOMPurify export a factory function that needs the window object
+    try {
+      DOMPurify = DOMPurify(window);
+    } catch (error) {
+      // If it fails, DOMPurify might already be the correct object
+      console.debug('DOMPurify initialization note:', error.message);
+    }
+  }
+  
   moduleCache.set(cacheKey, DOMPurify);
   return DOMPurify;
 }

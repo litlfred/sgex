@@ -3,9 +3,10 @@
     "target": "es5",
     "lib": [
       "dom",
-      "dom.iterable", 
+      "dom.iterable",
       "esnext"
     ],
+    "types": ["jest", "node"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -21,9 +22,9 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "declaration": false,
-    "declarationMap": false,
-    "sourceMap": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "baseUrl": "src",
     "paths": {
       "@/*": ["*"],
