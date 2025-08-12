@@ -75,6 +75,87 @@
       ],
       "type": "object"
     },
+    "ComponentSummary": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "errorCount": {
+            "type": "number"
+          },
+          "id": {
+            "type": "string"
+          },
+          "infoCount": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "validationCount": {
+            "type": "number"
+          },
+          "warningCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "description",
+          "errorCount",
+          "id",
+          "infoCount",
+          "name",
+          "validationCount",
+          "warningCount"
+        ],
+        "type": "object"
+      },
+      "type": "object"
+    },
+    "DAKComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ],
+      "type": "object"
+    },
+    "DAKFile": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "sha": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "path",
+        "content"
+      ],
+      "type": "object"
+    },
     "DAKRepository": {
       "additionalProperties": false,
       "properties": {
@@ -496,6 +577,46 @@
     "DAKValidationResult": {
       "additionalProperties": false,
       "properties": {
+        "column": {
+          "type": "number"
+        },
+        "component": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "filePath": {
+          "type": "string"
+        },
+        "level": {
+          "$ref": "#/definitions/ValidationLevel"
+        },
+        "line": {
+          "type": "number"
+        },
+        "message": {
+          "type": "string"
+        },
+        "suggestion": {
+          "type": "string"
+        },
+        "validationId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "validationId",
+        "component",
+        "level",
+        "description",
+        "filePath"
+      ],
+      "type": "object"
+    },
+    "DAKValidationServiceResult": {
+      "additionalProperties": false,
+      "properties": {
         "errors": {
           "items": {
             "type": "string"
@@ -527,6 +648,79 @@
         "hasWhoBaseDependency",
         "errors",
         "warnings"
+      ],
+      "type": "object"
+    },
+    "FormattedValidationResults": {
+      "additionalProperties": false,
+      "properties": {
+        "byComponent": {
+          "additionalProperties": {
+            "items": {
+              "$ref": "#/definitions/DAKValidationResult"
+            },
+            "type": "array"
+          },
+          "type": "object"
+        },
+        "byFile": {
+          "additionalProperties": {
+            "items": {
+              "$ref": "#/definitions/DAKValidationResult"
+            },
+            "type": "array"
+          },
+          "type": "object"
+        },
+        "canSave": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": false,
+          "properties": {
+            "branch": {
+              "type": "string"
+            },
+            "canUpload": {
+              "type": "boolean"
+            },
+            "filesValidated": {
+              "type": "number"
+            },
+            "owner": {
+              "type": "string"
+            },
+            "repo": {
+              "type": "string"
+            },
+            "stagingGround": {
+              "type": "boolean"
+            },
+            "validatedAt": {
+              "type": "string"
+            },
+            "validationFrameworkVersion": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "summary": {
+          "$ref": "#/definitions/ValidationSummary"
+        },
+        "total": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "summary",
+        "byComponent",
+        "byFile",
+        "canSave",
+        "total"
       ],
       "type": "object"
     },
@@ -595,6 +789,60 @@
         "name",
         "commit",
         "protected"
+      ],
+      "type": "object"
+    },
+    "GitHubFileResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "download_url": {
+          "type": "string"
+        },
+        "encoding": {
+          "const": "base64",
+          "type": "string"
+        },
+        "git_url": {
+          "type": "string"
+        },
+        "html_url": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "sha": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number"
+        },
+        "type": {
+          "const": "file",
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "path",
+        "sha",
+        "size",
+        "url",
+        "html_url",
+        "git_url",
+        "download_url",
+        "type",
+        "content",
+        "encoding"
       ],
       "type": "object"
     },
@@ -2083,6 +2331,116 @@
       ],
       "type": "object"
     },
+    "ValidationContext": {
+      "properties": {
+        "branch": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        },
+        "dakFiles": {
+          "items": {
+            "$ref": "#/definitions/DAKFile"
+          },
+          "type": "array"
+        },
+        "githubService": {},
+        "owner": {
+          "type": "string"
+        },
+        "repo": {
+          "type": "string"
+        },
+        "stagingGround": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ValidationDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "component": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "descriptionKey": {
+          "type": "string"
+        },
+        "fileTypes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "findLineNumber": {
+          "$comment": "(content: string, searchTerm: string) => number | null",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "searchTerm": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content",
+                "searchTerm"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "id": {
+          "type": "string"
+        },
+        "level": {
+          "$ref": "#/definitions/ValidationLevel"
+        },
+        "validate": {
+          "$comment": "(filePath: string, content: string, context: ValidationContext) => Promise<DAKValidationResult | null>",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "context": {
+                  "$ref": "#/definitions/ValidationContext"
+                },
+                "filePath": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "filePath",
+                "content",
+                "context"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "component",
+        "level",
+        "fileTypes",
+        "description",
+        "validate"
+      ],
+      "type": "object"
+    },
     "ValidationError": {
       "additionalProperties": false,
       "properties": {
@@ -2102,6 +2460,90 @@
         "message"
       ],
       "type": "object"
+    },
+    "ValidationHistory": {
+      "additionalProperties": false,
+      "properties": {
+        "entries": {
+          "items": {
+            "$ref": "#/definitions/ValidationHistoryEntry"
+          },
+          "type": "array"
+        },
+        "maxEntries": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "entries",
+        "maxEntries"
+      ],
+      "type": "object"
+    },
+    "ValidationHistoryEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "branch": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": false,
+          "properties": {
+            "canUpload": {
+              "type": "boolean"
+            },
+            "filesValidated": {
+              "type": "number"
+            },
+            "stagingGround": {
+              "type": "boolean"
+            },
+            "validationFrameworkVersion": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "filesValidated",
+            "validationFrameworkVersion",
+            "stagingGround",
+            "canUpload"
+          ],
+          "type": "object"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "repo": {
+          "type": "string"
+        },
+        "summary": {
+          "$ref": "#/definitions/ValidationSummary"
+        },
+        "timestamp": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "owner",
+        "repo",
+        "branch",
+        "timestamp",
+        "summary",
+        "metadata"
+      ],
+      "type": "object"
+    },
+    "ValidationLevel": {
+      "enum": [
+        "error",
+        "warning",
+        "info"
+      ],
+      "type": "string"
     },
     "ValidationResult": {
       "additionalProperties": false,
@@ -2126,6 +2568,26 @@
         "isValid",
         "errors",
         "warnings"
+      ],
+      "type": "object"
+    },
+    "ValidationSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "type": "number"
+        },
+        "info": {
+          "type": "number"
+        },
+        "warning": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "error",
+        "warning",
+        "info"
       ],
       "type": "object"
     },

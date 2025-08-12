@@ -344,7 +344,20 @@ const ValidationPanel: React.FC<ValidationPanelProps> = ({
 
   return (
     <div className="validation-panel">
-      <div className="validation-panel-header" onClick={() => setIsExpanded(!isExpanded)}>
+      <div 
+        className="validation-panel-header" 
+        onClick={() => setIsExpanded(!isExpanded)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsExpanded(!isExpanded);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+        aria-label={isExpanded ? 'Collapse validation panel' : 'Expand validation panel'}
+      >
         <h2 className="validation-panel-title">
           DAK Validation 
           {validationResults && (

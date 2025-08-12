@@ -295,6 +295,24 @@ class GitHubService {
 
   // TODO: Continue with repository methods, DAK validation, etc.
   // This is Part 1 of the GitHub Service migration - authentication and user management
+  
+  /**
+   * Temporary stub for getDirectoryContents - to be implemented in Phase 5
+   */
+  async getDirectoryContents(owner: string, repo: string, path: string, branch: string): Promise<any[]> {
+    // Temporary implementation - will be replaced with proper Octokit calls
+    this.logger.warn('getDirectoryContents stub called - not yet implemented');
+    return [];
+  }
+  
+  /**
+   * Temporary stub for getFileContent - to be implemented in Phase 5
+   */
+  async getFileContent(owner: string, repo: string, path: string, branch: string): Promise<string | null> {
+    // Temporary implementation - will be replaced with proper Octokit calls
+    this.logger.warn('getFileContent stub called - not yet implemented');
+    return null;
+  }
 }
 
 // Export singleton instance to maintain backward compatibility

@@ -204,7 +204,7 @@ export class RuntimeValidationService {
     
     // Treat format errors as warnings for some formats
     if (error.keyword === 'format') {
-      const formatName = error.schema;
+      const formatName = error.schema as string;
       return ['date-time', 'email', 'uri'].includes(formatName);
     }
     
@@ -279,6 +279,13 @@ export class RuntimeValidationService {
    */
   public validateBatch<T>(typeName: string, dataItems: unknown[]): ValidatedData<T>[] {
     return dataItems.map(data => this.validate<T>(typeName, data));
+  }
+
+  /**
+   * Check if a schema is registered for a given type
+   */
+  public hasType(typeName: string): boolean {
+    return this.validators.has(typeName);
   }
 
   /**

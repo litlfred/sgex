@@ -324,7 +324,7 @@ class EnhancedDAKValidationService {
    */
   async getDAKFiles(owner: string, repo: string, branch: string = 'main'): Promise<DAKFile[]> {
     try {
-      if (!githubService.isAuth()) {
+      if (!githubService.authenticated) {
         throw new Error('GitHub authentication required');
       }
 

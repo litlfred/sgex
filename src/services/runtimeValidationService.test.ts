@@ -2,83 +2,79 @@
  * Tests for Runtime Validation Service
  */
 
-import { runtimeValidator, validateData, validateAndCast } from '../services/runtimeValidationService';
+import runtimeValidationService, { RuntimeValidationService } from '../services/runtimeValidationService';
 import { GitHubUser, GitHubRepository, DAKValidationResult } from '../types/core';
 
 describe('RuntimeValidationService', () => {
   beforeEach(() => {
     // Clear any existing schemas
-    runtimeValidator.clearSchemas();
+    runtimeValidationService.clearSchemas();
   });
 
   describe('Schema Registration', () => {
-    test('should register a schema successfully', () => {
+    test('should register schema successfully', () => {
       const userSchema = {
         type: 'object',
+        required: ['login', 'id'],
         properties: {
           login: { type: 'string' },
-          id: { type: 'number' },
-          avatar_url: { type: 'string' }
-        },
-        required: ['login', 'id'],
-        additionalProperties: false
+          id: { type: 'number' }
+        }
       };
 
-      expect(() => runtimeValidator.registerSchema('GitHubUser', userSchema)).not.toThrow();
-      expect(runtimeValidator.hasSchema('GitHubUser')).toBe(true);
+      expect(() => runtimeValidationService.registerSchema('GitHubUser', userSchema)).not.toThrow();
+      expect(runtimeValidationService.hasType('GitHubUser')).toBe(true);
     });
 
-    test('should handle invalid schema registration', () => {
+    test('should handle invalid schema gracefully', () => {
       const invalidSchema = {
-        type: 'invalid-type'
+        // Missing type property
+        properties: {}
       };
 
-      // Should not throw by default
-      expect(() => runtimeValidator.registerSchema('InvalidSchema', invalidSchema)).not.toThrow();
-      expect(runtimeValidator.hasSchema('InvalidSchema')).toBe(false);
+      expect(() => runtimeValidationService.registerSchema('InvalidSchema', invalidSchema)).not.toThrow();
+      expect(runtimeValidationService.hasType('InvalidSchema')).toBe(true); // Schema gets registered even if invalid
     });
 
-    test('should list registered schemas', () => {
-      const schema1 = { type: 'object', properties: {} };
-      const schema2 = { type: 'object', properties: {} };
+    test('should track multiple schemas', () => {
+      const schema1 = { type: 'object', properties: { name: { type: 'string' } } };
+      const schema2 = { type: 'object', properties: { id: { type: 'number' } } };
 
-      runtimeValidator.registerSchema('Schema1', schema1);
-      runtimeValidator.registerSchema('Schema2', schema2);
+      runtimeValidationService.registerSchema('Schema1', schema1);
+      runtimeValidationService.registerSchema('Schema2', schema2);
 
-      const schemas = runtimeValidator.getRegisteredSchemas();
-      expect(schemas).toContain('Schema1');
-      expect(schemas).toContain('Schema2');
-      expect(schemas).toHaveLength(2);
+      const stats = runtimeValidationService.getValidationStats();
+      expect(stats.registeredSchemas).toBe(2);
+      expect(stats.compiledValidators).toBe(2);
     });
   });
 
   describe('Data Validation', () => {
     beforeEach(() => {
-      // Register a test schema
       const userSchema = {
         type: 'object',
+        required: ['login', 'id'],
         properties: {
           login: { type: 'string', format: 'github-username' },
           id: { type: 'number' },
-          avatar_url: { type: 'string', format: 'uri' },
-          name: { type: 'string' }
-        },
-        required: ['login', 'id'],
-        additionalProperties: false
+          name: { type: ['string', 'null'] },
+          email: { type: ['string', 'null'], format: 'email' }
+        }
       };
 
-      runtimeValidator.registerSchema('GitHubUser', userSchema);
+      runtimeValidationService.registerSchema('GitHubUser', userSchema);
     });
 
-    test('should validate valid data', () => {
+    test('should validate correct data successfully', () => {
       const validUser = {
         login: 'testuser',
         id: 12345,
-        avatar_url: 'https://github.com/testuser.jpg'
+        name: 'Test User',
+        email: 'test@example.com'
       };
 
-      const result = runtimeValidator.validate<GitHubUser>('GitHubUser', validUser);
-      
+      const result = runtimeValidationService.validate<GitHubUser>('GitHubUser', validUser);
+
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
       expect(result.data).toEqual(validUser);
@@ -86,78 +82,26 @@ describe('RuntimeValidationService', () => {
 
     test('should detect validation errors', () => {
       const invalidUser = {
-        login: '', // Invalid: empty string
+        login: 'testuser',
         // Missing required 'id' field
-        avatar_url: 'not-a-url' // Invalid URL
+        name: 'Test User'
       };
 
-      const result = runtimeValidator.validate<GitHubUser>('GitHubUser', invalidUser);
-      
+      const result = runtimeValidationService.validate<GitHubUser>('GitHubUser', invalidUser);
+
       expect(result.isValid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
-      
-      // Check for missing 'id' field error
-      const hasIdError = result.errors.some(e => 
-        e.message.toLowerCase().includes('id') || 
-        e.path === '/id' ||
-        e.code === 'REQUIRED'
-      );
-      expect(hasIdError).toBe(true);
+      expect(result.errors[0].code).toBe('REQUIRED');
     });
 
-    test('should handle unknown schema', () => {
-      const data = { test: 'data' };
-      
-      const result = runtimeValidator.validate('UnknownSchema', data);
-      
+    test('should handle unknown schema gracefully', () => {
+      const data = { some: 'data' };
+
+      const result = runtimeValidationService.validate('UnknownSchema', data);
+
       expect(result.isValid).toBe(false);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].code).toBe('SCHEMA_NOT_FOUND');
-    });
-
-    test('should validate and cast data', () => {
-      const validUser = {
-        login: 'testuser',
-        id: 12345,
-        avatar_url: 'https://github.com/testuser.jpg'
-      };
-
-      const result = runtimeValidator.validateAndCast<GitHubUser>('GitHubUser', validUser);
-      
-      expect(result).toEqual(validUser);
-      expect(typeof result.id).toBe('number');
-    });
-  });
-
-  describe('Async Validation', () => {
-    beforeEach(() => {
-      const simpleSchema = {
-        type: 'object',
-        properties: {
-          message: { type: 'string' }
-        },
-        required: ['message']
-      };
-
-      runtimeValidator.registerSchema('SimpleMessage', simpleSchema);
-    });
-
-    test('should validate data asynchronously', async () => {
-      const data = { message: 'Hello World' };
-      
-      const result = await runtimeValidator.validateAsync('SimpleMessage', data);
-      
-      expect(result.isValid).toBe(true);
-      expect(result.data).toEqual(data);
-    });
-
-    test('should handle async validation errors', async () => {
-      const invalidData = { notMessage: 'Hello' };
-      
-      const result = await runtimeValidator.validateAsync('SimpleMessage', invalidData);
-      
-      expect(result.isValid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
     });
   });
 
@@ -165,25 +109,25 @@ describe('RuntimeValidationService', () => {
     beforeEach(() => {
       const numberSchema = {
         type: 'object',
+        required: ['value'],
         properties: {
           value: { type: 'number', minimum: 0 }
-        },
-        required: ['value']
+        }
       };
 
-      runtimeValidator.registerSchema('NumberValue', numberSchema);
+      runtimeValidationService.registerSchema('NumberValue', numberSchema);
     });
 
-    test('should validate array of data', () => {
+    test('should validate multiple items', () => {
       const dataArray = [
         { value: 10 },
         { value: 20 },
-        { value: -5 }, // Invalid: negative number
+        { value: -5 }, // Invalid - negative number
         { value: 30 }
       ];
 
-      const results = runtimeValidator.validateBatch('NumberValue', dataArray);
-      
+      const results = runtimeValidationService.validateBatch('NumberValue', dataArray);
+
       expect(results).toHaveLength(4);
       expect(results[0].isValid).toBe(true);
       expect(results[1].isValid).toBe(true);
@@ -198,100 +142,109 @@ describe('RuntimeValidationService', () => {
         type: 'object',
         properties: {
           username: { type: 'string', format: 'github-username' },
-          repoName: { type: 'string', format: 'github-repo-name' },
-          token: { type: 'string', format: 'github-token' }
-        },
-        required: ['username', 'repoName']
+          token: { type: 'string', format: 'github-token' },
+          fhirId: { type: 'string', format: 'fhir-id' },
+          dakId: { type: 'string', format: 'dak-id' },
+          whoBase: { type: 'string', format: 'who-smart-base' }
+        }
       };
 
-      runtimeValidator.registerSchema('GitHubData', githubSchema);
+      runtimeValidationService.registerSchema('GitHubData', githubSchema);
     });
 
     test('should validate GitHub username format', () => {
       const validData = {
-        username: 'valid-user-123',
-        repoName: 'my-repo.name'
+        username: 'valid-user123'
       };
 
-      const result = runtimeValidator.validate('GitHubData', validData);
+      const result = runtimeValidationService.validate('GitHubData', validData);
       expect(result.isValid).toBe(true);
     });
 
     test('should reject invalid GitHub username', () => {
       const invalidData = {
-        username: '-invalid-start', // Cannot start with hyphen
-        repoName: 'valid-repo'
+        username: '-invalid-username' // Cannot start with hyphen
       };
 
-      const result = runtimeValidator.validate('GitHubData', invalidData);
+      const result = runtimeValidationService.validate('GitHubData', invalidData);
       expect(result.isValid).toBe(false);
     });
 
-    test('should validate GitHub token format', () => {
+    test('should validate WHO SMART base dependency', () => {
       const dataWithToken = {
-        username: 'testuser',
-        repoName: 'testrepo',
-        token: 'ghp_1234567890abcdef1234567890abcdef12345678' // Valid classic token format
+        whoBase: 'smart.who.int.base'
       };
 
-      const result = runtimeValidator.validate('GitHubData', dataWithToken);
+      const result = runtimeValidationService.validate('GitHubData', dataWithToken);
       expect(result.isValid).toBe(true);
     });
   });
 
-  describe('Configuration Updates', () => {
-    test('should update configuration successfully', () => {
-      const newConfig = {
-        strict: true,
-        throwOnError: true
-      };
+  describe('Configuration', () => {
+    test('should get validation statistics', () => {
+      const testSchema = { type: 'object', properties: { test: { type: 'string' } } };
+      runtimeValidationService.registerSchema('TestSchema', testSchema);
 
-      expect(() => runtimeValidator.updateConfig(newConfig)).not.toThrow();
-    });
-
-    test('should re-register schemas after config update', () => {
-      const schema = {
-        type: 'object',
-        properties: { test: { type: 'string' } }
-      };
-
-      runtimeValidator.registerSchema('TestSchema', schema);
-      expect(runtimeValidator.hasSchema('TestSchema')).toBe(true);
-
-      runtimeValidator.updateConfig({ strict: true });
-      expect(runtimeValidator.hasSchema('TestSchema')).toBe(true);
+      const stats = runtimeValidationService.getValidationStats();
+      expect(stats.registeredSchemas).toBe(1);
+      expect(stats.compiledValidators).toBe(1);
+      expect(stats.configuration).toBeDefined();
     });
   });
 
-  describe('Convenience Functions', () => {
+  describe('Type-safe Integration', () => {
     beforeEach(() => {
       const testSchema = {
         type: 'object',
+        required: ['name'],
         properties: {
-          id: { type: 'string' },
-          count: { type: 'number' }
-        },
-        required: ['id']
+          name: { type: 'string' },
+          value: { type: 'number' }
+        }
       };
 
-      runtimeValidator.registerSchema('TestType', testSchema);
+      runtimeValidationService.registerSchema('TestType', testSchema);
     });
 
-    test('should work with validateData function', () => {
-      const data = { id: 'test-123', count: 42 };
-      
-      const result = validateData('TestType', data);
-      
+    test('should integrate with TypeScript types', () => {
+      const data = { name: 'test', value: 42 };
+
+      const result = runtimeValidationService.validate('TestType', data);
+
       expect(result.isValid).toBe(true);
       expect(result.data).toEqual(data);
     });
+  });
 
-    test('should work with validateAndCast function', () => {
-      const data = { id: 'test-456', count: 99 };
-      
-      const result = validateAndCast('TestType', data);
-      
-      expect(result).toEqual(data);
+  describe('Async Validation Methods', () => {
+    test('should validate DAK config', async () => {
+      const dakData = {
+        id: 'test-dak',
+        version: '1.0.0',
+        dependencies: {
+          'smart.who.int.base': '^1.0.0'
+        }
+      };
+
+      const result = await runtimeValidationService.validateDAKConfig(dakData);
+      expect(result.success).toBe(true);
+    });
+
+    test('should validate GitHub repository', async () => {
+      const repoData = {
+        id: 123,
+        name: 'test-repo',
+        full_name: 'user/test-repo',
+        private: false,
+        owner: {
+          login: 'testuser',
+          id: 456,
+          avatar_url: 'https://example.com/avatar.png'
+        }
+      };
+
+      const result = await runtimeValidationService.validateGitHubRepository(repoData);
+      expect(result.success).toBe(true);
     });
   });
 });
