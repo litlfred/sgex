@@ -1,8 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import MDEditor from '@uiw/react-md-editor';
 import { PageLayout, useDAKParams } from './framework';
+import { lazyLoadMDEditor } from '../utils/lazyRouteUtils';
+
+// Lazy markdown component using the utility
+const LazyMarkdown = ({ source }) => {
+  const [MarkdownComponent, setMarkdownComponent] = useState(null);
+  
+  useEffect(() => {
+    lazyLoadMDEditor().then(MDEditorModule => {
+      setMarkdownComponent(() => MDEditorModule.Markdown);
+    });
+  }, []);
+  
+  if (!MarkdownComponent) {
+    return <div>Loading markdown...</div>;
+  }
+  
+  return <MarkdownComponent source={source} />;
+};
 
 const DecisionSupportLogicView = () => {
   return (
@@ -776,7 +793,9 @@ define "Contraindication Present":
                         <td>
                           {variable.Definition && (
                             <div className="definition-content">
-                              <MDEditor.Markdown source={variable.Definition} />
+                              <Suspense fallback={<div>Loading...</div>}>
+                                <LazyMarkdown source={variable.Definition} />
+                              </Suspense>
                             </div>
                           )}
                         </td>

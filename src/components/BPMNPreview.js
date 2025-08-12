@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import githubService from '../services/githubService';
+import { createLazyBpmnViewer } from '../utils/lazyRouteUtils';
 
 const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
   const containerRef = useRef(null);
@@ -188,8 +188,8 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
         console.log('🔧 BPMNPreview: Creating BPMN viewer...');
         console.log('🔍 BPMNPreview: About to create viewer with BPMN content length:', bpmnXml?.length);
         
-        // Create and initialize viewer with clean separation
-        const viewer = new BpmnViewer();
+        // Create and initialize viewer with clean separation - lazy load BPMN.js
+        const viewer = await createLazyBpmnViewer();
         viewerRef.current = viewer;
         
         console.log('✅ BPMNPreview: BPMN viewer instance created successfully');
