@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import OAuthLogin from './OAuthLogin';
-import oauthDeviceFlowService from '../services/oauthDeviceFlowService';
 import logger from '../utils/logger';
 
 const LoginModal = ({ isOpen, onClose, onAuthSuccess }) => {
@@ -8,7 +6,6 @@ const LoginModal = ({ isOpen, onClose, onAuthSuccess }) => {
   const [token, setToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [authMethod, setAuthMethod] = useState('oauth'); // 'oauth' or 'pat'
   const componentLogger = logger.getLogger('LoginModal');
 
   React.useEffect(() => {
@@ -16,39 +13,8 @@ const LoginModal = ({ isOpen, onClose, onAuthSuccess }) => {
       isOpen,
       hasOnAuthSuccess: !!onAuthSuccess 
     });
-    
-    // Check OAuth configuration on mount
-    const config = oauthDeviceFlowService.checkConfiguration();
-    // OAuth is the default authentication method for the best user experience
-    
     return () => componentLogger.componentUnmount();
   }, [componentLogger, isOpen, onAuthSuccess]);
-
-  // Handle OAuth authentication success
-  const handleOAuthSuccess = (authData) => {
-    componentLogger.auth('OAuth authentication successful', {
-      tokenType: authData.tokenType,
-      authMethod: authData.authMethod
-    });
-    
-    // Call the parent success callback
-    if (onAuthSuccess) {
-      // For OAuth, we need to create an Octokit instance for compatibility
-      import('@octokit/rest').then(({ Octokit }) => {
-        const octokit = new Octokit({ auth: authData.token });
-        onAuthSuccess(authData.token, octokit, '', authData.authMethod);
-      });
-    }
-    onClose();
-  };
-
-  // Handle OAuth authentication cancellation
-  const handleOAuthCancel = () => {
-    componentLogger.userAction('OAuth authentication cancelled');
-    // Don't close modal, just switch back to method selection or stay on OAuth
-  };
-
-  // Handle PAT authentication submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     componentLogger.userAction('PAT login attempt', { 
@@ -143,125 +109,92 @@ const LoginModal = ({ isOpen, onClose, onAuthSuccess }) => {
         </div>
         
         <div className="login-modal-content">
-          {/* Authentication method tabs */}
-          <div className="auth-method-tabs">
-            <button
-              className={`auth-tab ${authMethod === 'oauth' ? 'active' : ''}`}
-              onClick={() => setAuthMethod('oauth')}
-              type="button"
-            >
-              🔐 OAuth (Recommended)
-            </button>
-            <button
-              className={`auth-tab ${authMethod === 'pat' ? 'active' : ''}`}
-              onClick={() => setAuthMethod('pat')}
-              type="button"
-            >
-              🔑 Personal Access Token
-            </button>
-          </div>
-
-          {/* OAuth Authentication */}
-          {authMethod === 'oauth' && (
-            <div className="auth-content">
-              <OAuthLogin 
-                onAuthSuccess={handleOAuthSuccess}
-                onAuthCancel={handleOAuthCancel}
+          <p className="login-description">
+            SGEX Workbench uses GitHub Personal Access Tokens for secure authentication 
+            without requiring any backend server setup.
+          </p>
+          
+          <form onSubmit={handleSubmit} className="login-form">
+            <div className="form-group">
+              <label htmlFor="username">
+                Username/Token Name <span className="optional">(optional)</span>
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={handleUsernameChange}
+                placeholder="e.g., john-doe or work-token"
+                className="username-input"
+                disabled={loading}
+                autoComplete="username"
               />
+              <small className="help-text">
+                Helps identify this token in your password manager
+              </small>
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="pat-token">GitHub Personal Access Token *</label>
+              <input
+                id="pat-token"
+                type="password"
+                value={token}
+                onChange={handleTokenChange}
+                placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                className={`token-input ${error ? 'error' : ''}`}
+                disabled={loading}
+                autoComplete="current-password"
+              />
+              <small className="help-text">
+                Token needs 'repo' and 'read:org' scopes
+              </small>
+            </div>
+            
+            <div className="form-actions">
+              <button 
+                type="button"
+                className="cancel-btn" 
+                onClick={onClose}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              
+              <button 
+                type="submit" 
+                className="login-btn" 
+                disabled={loading || !token.trim()}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner"></span>
+                    Signing In...
+                  </>
+                ) : (
+                  <>
+                    <span className="github-icon">🔑</span>
+                    Sign In
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+          
+          {error && (
+            <div className="error-message">
+              {error}
             </div>
           )}
-
-          {/* PAT Authentication */}
-          {authMethod === 'pat' && (
-            <div className="auth-content">
-              <p className="login-description">
-                SGEX Workbench uses GitHub Personal Access Tokens for secure authentication 
-                without requiring any backend server setup.
-              </p>
-              
-              <form onSubmit={handleSubmit} className="login-form">
-                <div className="form-group">
-                  <label htmlFor="username">
-                    Username/Token Name <span className="optional">(optional)</span>
-                  </label>
-                  <input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={handleUsernameChange}
-                    placeholder="e.g., john-doe or work-token"
-                    className="username-input"
-                    disabled={loading}
-                    autoComplete="username"
-                  />
-                  <small className="help-text">
-                    Helps identify this token in your password manager
-                  </small>
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="pat-token">GitHub Personal Access Token *</label>
-                  <input
-                    id="pat-token"
-                    type="password"
-                    value={token}
-                    onChange={handleTokenChange}
-                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                    className={`token-input ${error ? 'error' : ''}`}
-                    disabled={loading}
-                    autoComplete="current-password"
-                  />
-                  <small className="help-text">
-                    Token needs 'repo' and 'read:org' scopes
-                  </small>
-                </div>
-                
-                <div className="form-actions">
-                  <button 
-                    type="button"
-                    className="cancel-btn" 
-                    onClick={onClose}
-                    disabled={loading}
-                  >
-                    Cancel
-                  </button>
-                  
-                  <button 
-                    type="submit" 
-                    className="login-btn" 
-                    disabled={loading || !token.trim()}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="spinner"></span>
-                        Signing In...
-                      </>
-                    ) : (
-                      <>
-                        <span className="github-icon">🔑</span>
-                        Sign In
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-              
-              {error && (
-                <div className="error-message">
-                  {error}
-                </div>
-              )}
-              
-              <div className="help-section">
-                <h4>Need a Personal Access Token?</h4>
-                <p>
-                  Visit <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer">
-                    GitHub Settings → Developer settings → Personal access tokens
-                  </a> to create one.
-                </p>
-              </div>
-            </div>
-          )}
+          
+          <div className="help-section">
+            <h4>Need a Personal Access Token?</h4>
+            <p>
+              Visit <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer">
+                GitHub Settings → Developer settings → Personal access tokens
+              </a> to create one.
+            </p>
+          </div>
         </div>
       </div>
     </div>

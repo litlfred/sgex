@@ -4,9 +4,7 @@ import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import secureTokenStorage from '../services/secureTokenStorage';
-import oauthDeviceFlowService from '../services/oauthDeviceFlowService';
 import PATLogin from './PATLogin';
-import OAuthLogin from './OAuthLogin';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 
@@ -19,7 +17,6 @@ const LandingPage = () => {
   const [error, setError] = useState(null);
   const [dakCounts, setDakCounts] = useState({});
   const [warningMessage, setWarningMessage] = useState(null);
-  const [authMethod, setAuthMethod] = useState('oauth'); // 'oauth' or 'pat'
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -143,11 +140,6 @@ const LandingPage = () => {
       if (success) {
         setIsAuthenticated(true);
       }
-      
-      // Check OAuth configuration and set default auth method
-      const config = oauthDeviceFlowService.checkConfiguration();
-      // OAuth is the default authentication method for the best user experience
-      setAuthMethod('oauth');
     };
 
     initializeAuth();
@@ -179,19 +171,6 @@ const LandingPage = () => {
     setIsAuthenticated(true);
     setError(null);
     fetchUserData();
-  };
-
-  const handleOAuthSuccess = (authData) => {
-    // OAuth authentication successful - use token to authenticate
-    import('@octokit/rest').then(({ Octokit }) => {
-      const octokit = new Octokit({ auth: authData.token });
-      handleAuthSuccess(authData.token, octokit);
-    });
-  };
-
-  const handleOAuthCancel = () => {
-    // OAuth cancelled - reset error state
-    setError(null);
   };
 
   const handleProfileSelect = (event, profile) => {
@@ -248,43 +227,10 @@ const LandingPage = () => {
             </p>
             
             <div className="auth-section">
-              {/* Authentication method selection */}
-              <div className="auth-method-selector">
-                <button
-                  className={`auth-method-btn ${authMethod === 'oauth' ? 'active' : ''}`}
-                  onClick={() => setAuthMethod('oauth')}
-                  type="button"
-                >
-                  🔐 OAuth (Recommended)
-                </button>
-                <button
-                  className={`auth-method-btn ${authMethod === 'pat' ? 'active' : ''}`}
-                  onClick={() => setAuthMethod('pat')}
-                  type="button"
-                >
-                  🔑 Personal Access Token
-                </button>
-              </div>
-
-              {/* OAuth Authentication */}
-              {authMethod === 'oauth' && (
-                <div className="auth-content">
-                  <OAuthLogin 
-                    onAuthSuccess={handleOAuthSuccess}
-                    onAuthCancel={handleOAuthCancel}
-                  />
-                </div>
-              )}
-
-              {/* PAT Authentication */}
-              {authMethod === 'pat' && (
-                <div className="auth-content">
-                  <p>{t('auth.signInWithPAT')}:</p>
-                  <PATLogin 
-                    onAuthSuccess={handleAuthSuccess}
-                  />
-                </div>
-              )}
+              <p>{t('auth.signInWithPAT')}:</p>
+              <PATLogin 
+                onAuthSuccess={handleAuthSuccess}
+              />
               
               {error && (
                 <div className="error-message">

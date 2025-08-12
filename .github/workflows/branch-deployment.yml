@@ -139,13 +139,6 @@ jobs:
           echo "Building with PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}"
           echo "Building with REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}"
           
-          # OAuth configuration (optional)
-          if [[ -n "$REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID" ]]; then
-            echo "✅ OAuth Client ID configured - OAuth authentication will be available"
-          else
-            echo "ℹ️  OAuth Client ID not set - application will use PAT authentication only"
-          fi
-          
           # Build the React app
           npm run build
         env:
@@ -153,7 +146,6 @@ jobs:
           PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}
           GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
           REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
-          REACT_APP_SGEX_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.SGEX_GITHUB_OAUTH_CLIENT_ID }}
 
       - name: Validate branch directory safety
         id: validate_branch
