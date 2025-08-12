@@ -8,6 +8,9 @@ on:
       - 'src/components/**/*.jsx'
       - 'src/App.js'
       - 'scripts/check-framework-compliance.js'
+  pull_request_review:
+    types: [submitted]
+    branches: [ main, develop ]
 
 permissions:
   contents: read

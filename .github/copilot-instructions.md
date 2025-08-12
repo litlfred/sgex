@@ -46,6 +46,143 @@ To create PRs against non-main branches, the copilot agent needs:
 - **Pull Requests**: Read and Write access to create PRs against any branch
 - **Actions**: Read access to view workflow status (if applicable)
 
+## PR Conversation Update Guidelines
+
+When updating a PR during copilot conversations, follow these specific formatting and content requirements to ensure consistency and clarity:
+
+### Title Management
+- **Preserve Original Intent**: Maintain the original issue title as much as possible, making improvements only for spelling, grammar, and clarity
+- **Status Tags**: Use status tags at the beginning of the title:
+  - `[WIP]` - Work in Progress (while analysis/implementation is ongoing)
+  - `[REVIEW]` - Ready for review by collaborators
+  - `[BLOCKED]` - Waiting for input or dependencies
+- **Issue Reference**: Always include the issue number in the title format: `[STATUS] Original Issue Title - Fix #123`
+
+### PR Description Structure
+
+Follow this exact order and structure for PR descriptions:
+
+#### 1. Issue References (Top)
+```markdown
+## Issues Addressed
+Fixes #123
+Related to #456
+Addresses feedback from #789
+```
+
+#### 2. Description Content (Middle)
+- Brief summary of changes made
+- Implementation approach and rationale
+- Any important technical decisions or considerations
+
+#### 3. Screenshots (If Available)
+```markdown
+## Screenshots
+![Description of change](screenshot-url)
+*Caption explaining what the screenshot shows*
+```
+
+#### 4. Build Progress Buttons (Bottom of Initial Description)
+```markdown
+## Build & Preview
+[![Build Status](build-status-badge-url)](build-logs-url)
+[![Preview](preview-badge-url)](preview-deployment-url)
+
+**Build Logs**: [Latest Build Logs](most-recent-build-logs-url)
+**Preview Deployment**: [Latest Preview](most-recent-preview-url)
+```
+
+#### 5. Participants & Mentions (Very Bottom)
+```markdown
+---
+**Participants**: @original-issue-author @pr-commenter1 @pr-commenter2 @any-other-participants
+
+*This PR addresses the concerns raised by the participants above. Please review when ready.*
+```
+
+### Link Management
+- **Always Use Most Recent**: Ensure all build logs, copilot conversation session links, and preview URLs point to the most recent instances
+- **Update on Each Session**: When adding conversation updates, replace old links with current ones
+- **Archive Old Links**: Keep a history section if multiple build attempts were made
+
+### Conversation Updates Format
+
+For each copilot session update, add a new section:
+
+```markdown
+## Session Update - [Date/Time]
+
+### Changes Made
+- Brief bullet points of what was changed
+- Files modified and why
+- Any new features or fixes implemented
+
+### Build Status
+- ✅ Build successful / ❌ Build failed
+- 🔗 [Latest Build Logs](url)
+- 🚀 [Preview Deployment](url)
+
+### Next Steps
+- What remains to be done
+- Any questions for collaborators
+- Requests for feedback or input
+
+---
+```
+
+### Participant Tracking
+- **Automatic Detection**: Track all users who comment on the issue or PR
+- **Include Original Author**: Always mention the original issue submitter
+- **Update List**: Add new participants as they join the conversation
+- **Use Proper Mentions**: Format as `@username` for proper GitHub notifications
+
+### Screenshot Management
+- **Latest Screenshots**: Always show the most recent screenshots of UI changes
+- **Comparative Views**: Include before/after shots when relevant
+- **Clear Captions**: Explain what each screenshot demonstrates
+- **Embed in Description**: Include screenshots directly in the PR description, not just comments
+
+### Quality Checklist for PR Updates
+Before publishing a PR update, verify:
+- [ ] Title preserves original intent with minimal changes
+- [ ] Appropriate status tag is used ([WIP], [REVIEW], etc.)
+- [ ] Issues are referenced at the top
+- [ ] Build progress buttons are at the bottom with most recent links
+- [ ] All participants are mentioned at the very bottom
+- [ ] Screenshots are current and properly captioned
+- [ ] Links point to most recent instances
+- [ ] Session updates follow the specified format
+
+### Example Complete PR Description
+
+```markdown
+## Issues Addressed
+Fixes #745
+
+## Description
+Enhanced the PR copilot conversation update guidelines to improve consistency and tracking of PR conversations. Added specific formatting requirements for titles, descriptions, build progress tracking, and participant mentions.
+
+## Implementation
+- Updated `.github/copilot-instructions.md` with comprehensive PR formatting guidelines
+- Added structured templates for PR descriptions and session updates
+- Included requirements for participant tracking and link management
+
+## Screenshots
+![Updated copilot instructions](screenshot-url)
+*Screenshot showing the new PR conversation update guidelines section*
+
+## Build & Preview
+[![Build Status](build-badge)](build-url)
+[![Preview](preview-badge)](preview-url)
+
+**Build Logs**: [Latest Build Logs](build-logs-url)
+**Preview Deployment**: [Latest Preview](preview-url)
+
+---
+**Participants**: @issue-author @collaborator1 @collaborator2
+
+*This PR addresses the PR conversation update improvements requested. Please review when ready.*
+```
 
 ## Project Overview
 
