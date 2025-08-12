@@ -3,7 +3,7 @@
     "definitions": {
         "AsyncResult": {
             "properties": {
-                "__@toStringTag@9625": {
+                "__@toStringTag@9772": {
                     "type": "string"
                 }
             },
@@ -31,7 +31,8 @@
                         {
                             "enum": [
                                 "classic",
-                                "fine-grained"
+                                "fine-grained",
+                                "oauth"
                             ],
                             "type": "string"
                         },
@@ -41,8 +42,7 @@
                     ]
                 },
                 "user": {
-                    "$ref": "#/definitions/GitHubUser",
-                    "description": "Core SGEX Workbench Type Definitions\n\nThis file contains the main type definitions for the SGEX Workbench application.\nThese types are used throughout the application for type safety and will be used\nto generate JSON schemas for runtime validation."
+                    "$ref": "#/definitions/GitHubUser"
                 }
             },
             "type": "object"
@@ -50,7 +50,7 @@
         "CacheEntry": {
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/T"
+                    "$ref": "#/definitions/T_1"
                 },
                 "key": {
                     "type": "string"
@@ -63,6 +63,27 @@
                 },
                 "ttl": {
                     "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "CacheResult": {
+            "properties": {
+                "age": {
+                    "type": "number"
+                },
+                "data": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/T_2"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "isHit": {
+                    "type": "boolean"
                 }
             },
             "type": "object"
@@ -400,6 +421,32 @@
             },
             "type": "object"
         },
+        "DAKUrlInfo": {
+            "properties": {
+                "assetPath": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "branch": {
+                    "type": "string"
+                },
+                "component": {
+                    "type": "string"
+                },
+                "isValid": {
+                    "type": "boolean"
+                },
+                "repo": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
         "DAKValidationResult": {
             "properties": {
                 "errors": {
@@ -425,6 +472,23 @@
                         "type": "string"
                     },
                     "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "GitHubApiResponse": {
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/T"
+                },
+                "headers": {
+                    "$ref": "#/definitions/Record<string,string>"
+                },
+                "status": {
+                    "type": "number"
+                },
+                "url": {
+                    "type": "string"
                 }
             },
             "type": "object"
@@ -472,6 +536,76 @@
                 },
                 "protection_url": {
                     "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "GitHubPermissions": {
+            "additionalProperties": {
+                "type": [
+                    "null",
+                    "string"
+                ]
+            },
+            "properties": {
+                "contents": {
+                    "anyOf": [
+                        {
+                            "enum": [
+                                "read",
+                                "write"
+                            ],
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "metadata": {
+                    "anyOf": [
+                        {
+                            "const": "read",
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "pullRequests": {
+                    "anyOf": [
+                        {
+                            "enum": [
+                                "read",
+                                "write"
+                            ],
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "GitHubRateLimit": {
+            "properties": {
+                "limit": {
+                    "type": "number"
+                },
+                "remaining": {
+                    "type": "number"
+                },
+                "reset": {
+                    "type": "number"
+                },
+                "resource": {
+                    "type": "string"
+                },
+                "used": {
+                    "type": "number"
                 }
             },
             "type": "object"
@@ -777,7 +911,6 @@
             "type": "object"
         },
         "GitHubUser": {
-            "description": "Core SGEX Workbench Type Definitions\n\nThis file contains the main type definitions for the SGEX Workbench application.\nThese types are used throughout the application for type safety and will be used\nto generate JSON schemas for runtime validation.",
             "properties": {
                 "avatar_url": {
                     "type": "string"
@@ -878,6 +1011,129 @@
             },
             "type": "object"
         },
+        "Iterable<React.ReactNode>": {
+            "type": "object"
+        },
+        "Language": {
+            "description": "Language and Translation Types",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "englishName": {
+                    "type": "string"
+                },
+                "flag": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "LanguageSelectorProps": {
+            "properties": {
+                "className": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "LogLevel": {
+            "enum": [
+                "DEBUG",
+                "ERROR",
+                "INFO",
+                "WARN"
+            ],
+            "type": "string"
+        },
+        "Logger": {
+            "properties": {
+                "apiCall": {
+                    "type": "object"
+                },
+                "apiError": {
+                    "type": "object"
+                },
+                "apiResponse": {
+                    "type": "object"
+                },
+                "auth": {
+                    "type": "object"
+                },
+                "cache": {
+                    "type": "object"
+                },
+                "componentMount": {
+                    "type": "object"
+                },
+                "componentUnmount": {
+                    "type": "object"
+                },
+                "debug": {
+                    "type": "object"
+                },
+                "error": {
+                    "type": "object"
+                },
+                "info": {
+                    "type": "object"
+                },
+                "navigation": {
+                    "type": "object"
+                },
+                "performance": {
+                    "type": "object"
+                },
+                "stateChange": {
+                    "type": "object"
+                },
+                "userAction": {
+                    "type": "object"
+                },
+                "warn": {
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "NavigationState": {
+            "properties": {
+                "branch": {
+                    "type": "string"
+                },
+                "component": {
+                    "type": "string"
+                },
+                "repo": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                },
+                "warningMessage": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "PageLayoutProps": {
+            "description": "Page and Navigation Types",
+            "properties": {
+                "children": {
+                    "$ref": "#/definitions/React.ReactNode"
+                },
+                "className": {
+                    "type": "string"
+                },
+                "pageName": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
         "PaginatedResponse": {
             "properties": {
                 "data": {
@@ -887,7 +1143,7 @@
                         },
                         "items": {
                             "items": {
-                                "$ref": "#/definitions/T_3"
+                                "$ref": "#/definitions/T_5"
                             },
                             "type": "array"
                         },
@@ -964,7 +1220,115 @@
             },
             "type": "object"
         },
+        "Promise<AwaitedReactNode>": {
+            "properties": {
+                "__@toStringTag@9772": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "React.ReactElement<unknown,string|React.JSXElementConstructor<any>>": {
+            "description": "Represents a JSX element.\n\nWhere {@link ReactNode} represents everything that can be rendered, `ReactElement`\nonly represents JSX.",
+            "properties": {
+                "key": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "props": {
+                    "description": "The type of the props object"
+                },
+                "type": {
+                    "description": "The type of the component or tag",
+                    "type": [
+                        "string",
+                        "object"
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "React.ReactNode": {
+            "anyOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {},
+                    "type": "number"
+                },
+                {
+                    "$ref": "#/definitions/React.ReactElement<unknown,string|React.JSXElementConstructor<any>>"
+                },
+                {
+                    "$ref": "#/definitions/Iterable<React.ReactNode>"
+                },
+                {
+                    "$ref": "#/definitions/React.ReactPortal"
+                },
+                {
+                    "$ref": "#/definitions/Promise<AwaitedReactNode>"
+                },
+                {
+                    "type": [
+                        "null",
+                        "string",
+                        "number",
+                        "boolean"
+                    ]
+                }
+            ],
+            "description": "Represents all of the things React can render.\n\nWhere {@link ReactElement} only represents JSX, `ReactNode` represents everything that can be rendered."
+        },
+        "React.ReactPortal": {
+            "properties": {
+                "children": {
+                    "$ref": "#/definitions/React.ReactNode"
+                },
+                "key": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "props": {
+                    "description": "The type of the props object"
+                },
+                "type": {
+                    "description": "The type of the component or tag",
+                    "type": [
+                        "string",
+                        "object"
+                    ]
+                }
+            },
+            "type": "object"
+        },
         "Record<string,string>": {
+            "type": "object"
+        },
+        "RepositoryCacheData": {
+            "properties": {
+                "owner": {
+                    "type": "string"
+                },
+                "repositories": {
+                    "items": {
+                        "$ref": "#/definitions/GitHubRepository"
+                    },
+                    "type": "array"
+                },
+                "timestamp": {
+                    "type": "number"
+                },
+                "type": {
+                    "enum": [
+                        "org",
+                        "user"
+                    ],
+                    "type": "string"
+                }
+            },
             "type": "object"
         },
         "RuntimeValidationConfig": {
@@ -987,7 +1351,7 @@
         "ServiceResponse": {
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/T_2"
+                    "$ref": "#/definitions/T_4"
                 },
                 "error": {
                     "type": "string"
@@ -1116,6 +1480,36 @@
         "T_3": {
             "type": "object"
         },
+        "T_4": {
+            "type": "object"
+        },
+        "T_5": {
+            "type": "object"
+        },
+        "TokenFormatValidation": {
+            "properties": {
+                "isValid": {
+                    "type": "boolean"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "type": {
+                    "enum": [
+                        "classic",
+                        "fine-grained",
+                        "invalid",
+                        "legacy",
+                        "oauth"
+                    ],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
         "TokenValidationResult": {
             "properties": {
                 "isValid": {
@@ -1144,13 +1538,13 @@
                 "tokenType": {
                     "enum": [
                         "classic",
-                        "fine-grained"
+                        "fine-grained",
+                        "oauth"
                     ],
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/GitHubUser",
-                    "description": "Core SGEX Workbench Type Definitions\n\nThis file contains the main type definitions for the SGEX Workbench application.\nThese types are used throughout the application for type safety and will be used\nto generate JSON schemas for runtime validation."
+                    "$ref": "#/definitions/GitHubUser"
                 }
             },
             "type": "object"
@@ -1158,7 +1552,7 @@
         "ValidatedData": {
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/T_1"
+                    "$ref": "#/definitions/T_3"
                 },
                 "errors": {
                     "items": {

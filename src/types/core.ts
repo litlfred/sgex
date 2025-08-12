@@ -6,6 +6,50 @@
  * to generate JSON schemas for runtime validation.
  */
 
+// ============================================================================
+// UI COMPONENT TYPES  
+// ============================================================================
+
+/**
+ * Language and Translation Types
+ */
+export interface Language {
+  code: string;
+  name: string;
+  englishName?: string;
+  flag: string;
+}
+
+export interface LanguageSelectorProps {
+  className?: string;
+}
+
+/**
+ * Page and Navigation Types
+ */
+export interface PageLayoutProps {
+  pageName: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+export interface NavigationState {
+  user?: string;
+  repo?: string;
+  branch?: string;
+  component?: string;
+  warningMessage?: string;
+}
+
+export interface DAKUrlInfo {
+  isValid: boolean;
+  component?: string;
+  user?: string;
+  repo?: string;
+  branch?: string;
+  assetPath: string[];
+}
+
 // ====================
 // GitHub API Types
 // ====================
