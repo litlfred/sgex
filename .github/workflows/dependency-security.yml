@@ -33,7 +33,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm ci --legacy-peer-deps
 
     - name: Run security audit
       id: audit
@@ -70,9 +70,18 @@ jobs:
           const path = require('path');
           
           try {
-            // Read audit results
-            const auditText = fs.readFileSync('audit_results.txt', 'utf8');
-            const auditExitCode = '${{ steps.audit.outputs.audit_exit_code }}';
+            // Check if audit results files exist first
+            let auditText = '';
+            let auditExitCode = '${{ steps.audit.outputs.audit_exit_code }}';
+            
+            // Try to read audit results, handle missing files gracefully
+            try {
+              auditText = fs.readFileSync('audit_results.txt', 'utf8');
+            } catch (e) {
+              console.log('audit_results.txt not found, likely due to npm ci failure');
+              auditText = 'Security audit could not be completed due to dependency installation failure.';
+              auditExitCode = '1'; // Mark as failed if we can't read results
+            }
             
             let auditJson = {};
             try {
@@ -121,31 +130,55 @@ jobs:
               `;
               }
               
-              commentBody = `## 🔒 Dependency Security Check Results
-              
-              ❌ **Security vulnerabilities detected!**
-              ${vulnSummary}
-              
-              \`\`\`
-              ${auditText.trim()}
-              \`\`\`
-              
-              ---
-              
-              ### ❌ Security Status: VULNERABILITIES FOUND
-              
-              **Action Required:** Please address these security vulnerabilities before merging.
-              
-              **How to fix:**
-              1. Run \`npm audit fix\` to automatically fix what can be fixed
-              2. For vulnerabilities that require manual intervention, consider:
-                 - Updating to newer versions of affected packages
-                 - Adding overrides in \`package.json\` if updates aren't available
-                 - Evaluating if vulnerable packages can be replaced
-              
-              **Need help?** Check the [npm audit documentation](https://docs.npmjs.com/cli/v8/commands/npm-audit) for more details.
-              `;
-            }
+              // Check if this is a dependency installation failure
+              if (auditText.includes('dependency installation failure')) {
+                commentBody = `## ❌ Dependency Security Check Failed
+                
+                **Installation Error:** Unable to install dependencies due to version conflicts.
+                
+                \`\`\`
+                ${auditText.trim()}
+                \`\`\`
+                
+                ---
+                
+                ### ❌ Security Status: CHECK FAILED
+                
+                **Action Required:** Please resolve dependency conflicts before security audit can run.
+                
+                **How to fix:**
+                1. The workflow will be updated to use \`--legacy-peer-deps\` flag
+                2. If issues persist, check for TypeScript version conflicts in package.json
+                3. Consider updating peer dependencies to compatible versions
+                
+                **Need help?** Check the [npm dependency resolution documentation](https://docs.npmjs.com/cli/v8/configuring-npm/package-json#peerdependencies) for more details.
+                `;
+              } else {
+                commentBody = `## 🔒 Dependency Security Check Results
+                
+                ❌ **Security vulnerabilities detected!**
+                ${vulnSummary}
+                
+                \`\`\`
+                ${auditText.trim()}
+                \`\`\`
+                
+                ---
+                
+                ### ❌ Security Status: VULNERABILITIES FOUND
+                
+                **Action Required:** Please address these security vulnerabilities before merging.
+                
+                **How to fix:**
+                1. Run \`npm audit fix\` to automatically fix what can be fixed
+                2. For vulnerabilities that require manual intervention, consider:
+                   - Updating to newer versions of affected packages
+                   - Adding overrides in \`package.json\` if updates aren't available
+                   - Evaluating if vulnerable packages can be replaced
+                
+                **Need help?** Check the [npm audit documentation](https://docs.npmjs.com/cli/v8/commands/npm-audit) for more details.
+                `;
+              }
             
             // Get pull request number (only for PR events)
             const prNumber = context.payload.pull_request?.number || context.issue?.number;
