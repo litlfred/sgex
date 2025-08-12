@@ -1,0 +1,2615 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "AuthenticationState": {
+      "additionalProperties": false,
+      "properties": {
+        "isAuthenticated": {
+          "type": "boolean"
+        },
+        "lastValidated": {
+          "type": "string"
+        },
+        "scopes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "token": {
+          "type": "string"
+        },
+        "tokenType": {
+          "enum": [
+            "classic",
+            "fine-grained",
+            "oauth",
+            null
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "$ref": "#/definitions/GitHubUser"
+        }
+      },
+      "required": [
+        "isAuthenticated",
+        "tokenType"
+      ],
+      "type": "object"
+    },
+    "CacheStatistics": {
+      "additionalProperties": false,
+      "properties": {
+        "hitCount": {
+          "type": "number"
+        },
+        "hitRate": {
+          "type": "number"
+        },
+        "missCount": {
+          "type": "number"
+        },
+        "newestEntry": {
+          "type": "string"
+        },
+        "oldestEntry": {
+          "type": "string"
+        },
+        "totalEntries": {
+          "type": "number"
+        },
+        "totalSize": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "totalEntries",
+        "totalSize",
+        "hitCount",
+        "missCount",
+        "hitRate"
+      ],
+      "type": "object"
+    },
+    "ComponentSummary": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "errorCount": {
+            "type": "number"
+          },
+          "id": {
+            "type": "string"
+          },
+          "infoCount": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "validationCount": {
+            "type": "number"
+          },
+          "warningCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "description",
+          "errorCount",
+          "id",
+          "infoCount",
+          "name",
+          "validationCount",
+          "warningCount"
+        ],
+        "type": "object"
+      },
+      "type": "object"
+    },
+    "DAKComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ],
+      "type": "object"
+    },
+    "DAKFile": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "sha": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "path",
+        "content"
+      ],
+      "type": "object"
+    },
+    "DAKRepository": {
+      "additionalProperties": false,
+      "properties": {
+        "allow_auto_merge": {
+          "type": "boolean"
+        },
+        "allow_merge_commit": {
+          "type": "boolean"
+        },
+        "allow_rebase_merge": {
+          "type": "boolean"
+        },
+        "allow_squash_merge": {
+          "type": "boolean"
+        },
+        "archive_url": {
+          "type": "string"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "assignees_url": {
+          "type": "string"
+        },
+        "blobs_url": {
+          "type": "string"
+        },
+        "branches_url": {
+          "type": "string"
+        },
+        "clone_url": {
+          "type": "string"
+        },
+        "collaborators_url": {
+          "type": "string"
+        },
+        "comments_url": {
+          "type": "string"
+        },
+        "commits_url": {
+          "type": "string"
+        },
+        "compare_url": {
+          "type": "string"
+        },
+        "contents_url": {
+          "type": "string"
+        },
+        "contributors_url": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "default_branch": {
+          "type": "string"
+        },
+        "delete_branch_on_merge": {
+          "type": "boolean"
+        },
+        "deployments_url": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "downloads_url": {
+          "type": "string"
+        },
+        "events_url": {
+          "type": "string"
+        },
+        "fork": {
+          "type": "boolean"
+        },
+        "forks": {
+          "type": "number"
+        },
+        "forks_count": {
+          "type": "number"
+        },
+        "forks_url": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "git_commits_url": {
+          "type": "string"
+        },
+        "git_refs_url": {
+          "type": "string"
+        },
+        "git_tags_url": {
+          "type": "string"
+        },
+        "git_url": {
+          "type": "string"
+        },
+        "has_downloads": {
+          "type": "boolean"
+        },
+        "has_issues": {
+          "type": "boolean"
+        },
+        "has_pages": {
+          "type": "boolean"
+        },
+        "has_projects": {
+          "type": "boolean"
+        },
+        "has_wiki": {
+          "type": "boolean"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "hooks_url": {
+          "type": "string"
+        },
+        "html_url": {
+          "type": "string"
+        },
+        "id": {
+          "type": "number"
+        },
+        "isDak": {
+          "const": true,
+          "type": "boolean"
+        },
+        "is_template": {
+          "type": "boolean"
+        },
+        "issue_comment_url": {
+          "type": "string"
+        },
+        "issue_events_url": {
+          "type": "string"
+        },
+        "issues_url": {
+          "type": "string"
+        },
+        "keys_url": {
+          "type": "string"
+        },
+        "labels_url": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "languages_url": {
+          "type": "string"
+        },
+        "license": {
+          "additionalProperties": false,
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "node_id": {
+              "type": "string"
+            },
+            "spdx_id": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "key",
+            "name"
+          ],
+          "type": "object"
+        },
+        "merges_url": {
+          "type": "string"
+        },
+        "milestones_url": {
+          "type": "string"
+        },
+        "mirror_url": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "network_count": {
+          "type": "number"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "notifications_url": {
+          "type": "string"
+        },
+        "open_issues": {
+          "type": "number"
+        },
+        "open_issues_count": {
+          "type": "number"
+        },
+        "owner": {
+          "$ref": "#/definitions/GitHubUser"
+        },
+        "permissions": {
+          "additionalProperties": false,
+          "properties": {
+            "admin": {
+              "type": "boolean"
+            },
+            "maintain": {
+              "type": "boolean"
+            },
+            "pull": {
+              "type": "boolean"
+            },
+            "push": {
+              "type": "boolean"
+            },
+            "triage": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "admin",
+            "push",
+            "pull"
+          ],
+          "type": "object"
+        },
+        "private": {
+          "type": "boolean"
+        },
+        "pulls_url": {
+          "type": "string"
+        },
+        "pushed_at": {
+          "type": "string"
+        },
+        "releases_url": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number"
+        },
+        "ssh_url": {
+          "type": "string"
+        },
+        "stargazers_count": {
+          "type": "number"
+        },
+        "stargazers_url": {
+          "type": "string"
+        },
+        "statuses_url": {
+          "type": "string"
+        },
+        "subscribers_count": {
+          "type": "number"
+        },
+        "subscribers_url": {
+          "type": "string"
+        },
+        "subscription_url": {
+          "type": "string"
+        },
+        "sushiConfig": {
+          "$ref": "#/definitions/SushiConfig"
+        },
+        "svn_url": {
+          "type": "string"
+        },
+        "tags_url": {
+          "type": "string"
+        },
+        "teams_url": {
+          "type": "string"
+        },
+        "temp_clone_token": {
+          "type": "string"
+        },
+        "template_repository": {
+          "$ref": "#/definitions/GitHubRepository"
+        },
+        "topics": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "trees_url": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string"
+        },
+        "watchers": {
+          "type": "number"
+        },
+        "watchers_count": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "archive_url",
+        "archived",
+        "assignees_url",
+        "blobs_url",
+        "branches_url",
+        "clone_url",
+        "collaborators_url",
+        "comments_url",
+        "commits_url",
+        "compare_url",
+        "contents_url",
+        "contributors_url",
+        "created_at",
+        "default_branch",
+        "deployments_url",
+        "disabled",
+        "downloads_url",
+        "events_url",
+        "fork",
+        "forks_count",
+        "forks_url",
+        "full_name",
+        "git_commits_url",
+        "git_refs_url",
+        "git_tags_url",
+        "git_url",
+        "has_downloads",
+        "has_issues",
+        "has_pages",
+        "has_projects",
+        "has_wiki",
+        "hooks_url",
+        "html_url",
+        "id",
+        "isDak",
+        "issue_comment_url",
+        "issue_events_url",
+        "issues_url",
+        "keys_url",
+        "labels_url",
+        "languages_url",
+        "merges_url",
+        "milestones_url",
+        "name",
+        "node_id",
+        "notifications_url",
+        "open_issues_count",
+        "owner",
+        "private",
+        "pulls_url",
+        "releases_url",
+        "size",
+        "ssh_url",
+        "stargazers_count",
+        "stargazers_url",
+        "statuses_url",
+        "subscribers_url",
+        "subscription_url",
+        "sushiConfig",
+        "svn_url",
+        "tags_url",
+        "teams_url",
+        "trees_url",
+        "updated_at",
+        "url",
+        "watchers_count"
+      ],
+      "type": "object"
+    },
+    "DAKUrlInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "assetPath": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        },
+        "isValid": {
+          "type": "boolean"
+        },
+        "repo": {
+          "type": "string"
+        },
+        "user": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "isValid",
+        "assetPath"
+      ],
+      "type": "object"
+    },
+    "DAKValidationResult": {
+      "additionalProperties": false,
+      "properties": {
+        "column": {
+          "type": "number"
+        },
+        "component": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "filePath": {
+          "type": "string"
+        },
+        "level": {
+          "$ref": "#/definitions/ValidationLevel"
+        },
+        "line": {
+          "type": "number"
+        },
+        "message": {
+          "type": "string"
+        },
+        "suggestion": {
+          "type": "string"
+        },
+        "validationId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "validationId",
+        "component",
+        "level",
+        "description",
+        "filePath"
+      ],
+      "type": "object"
+    },
+    "DAKValidationServiceResult": {
+      "additionalProperties": false,
+      "properties": {
+        "errors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "hasSushiConfig": {
+          "type": "boolean"
+        },
+        "hasWhoBaseDependency": {
+          "type": "boolean"
+        },
+        "isValid": {
+          "type": "boolean"
+        },
+        "sushiConfig": {
+          "$ref": "#/definitions/SushiConfig"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "isValid",
+        "hasSushiConfig",
+        "hasWhoBaseDependency",
+        "errors",
+        "warnings"
+      ],
+      "type": "object"
+    },
+    "FormattedValidationResults": {
+      "additionalProperties": false,
+      "properties": {
+        "byComponent": {
+          "additionalProperties": {
+            "items": {
+              "$ref": "#/definitions/DAKValidationResult"
+            },
+            "type": "array"
+          },
+          "type": "object"
+        },
+        "byFile": {
+          "additionalProperties": {
+            "items": {
+              "$ref": "#/definitions/DAKValidationResult"
+            },
+            "type": "array"
+          },
+          "type": "object"
+        },
+        "canSave": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": false,
+          "properties": {
+            "branch": {
+              "type": "string"
+            },
+            "canUpload": {
+              "type": "boolean"
+            },
+            "filesValidated": {
+              "type": "number"
+            },
+            "owner": {
+              "type": "string"
+            },
+            "repo": {
+              "type": "string"
+            },
+            "stagingGround": {
+              "type": "boolean"
+            },
+            "validatedAt": {
+              "type": "string"
+            },
+            "validationFrameworkVersion": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "summary": {
+          "$ref": "#/definitions/ValidationSummary"
+        },
+        "total": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "summary",
+        "byComponent",
+        "byFile",
+        "canSave",
+        "total"
+      ],
+      "type": "object"
+    },
+    "GitHubBranch": {
+      "additionalProperties": false,
+      "properties": {
+        "commit": {
+          "additionalProperties": false,
+          "properties": {
+            "sha": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "sha",
+            "url"
+          ],
+          "type": "object"
+        },
+        "name": {
+          "type": "string"
+        },
+        "protected": {
+          "type": "boolean"
+        },
+        "protection": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "required_status_checks": {
+              "additionalProperties": false,
+              "properties": {
+                "contexts": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "enforcement_level": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "enforcement_level",
+                "contexts"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "enabled",
+            "required_status_checks"
+          ],
+          "type": "object"
+        },
+        "protection_url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "commit",
+        "protected"
+      ],
+      "type": "object"
+    },
+    "GitHubFileResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "download_url": {
+          "type": "string"
+        },
+        "encoding": {
+          "const": "base64",
+          "type": "string"
+        },
+        "git_url": {
+          "type": "string"
+        },
+        "html_url": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "sha": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number"
+        },
+        "type": {
+          "const": "file",
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "path",
+        "sha",
+        "size",
+        "url",
+        "html_url",
+        "git_url",
+        "download_url",
+        "type",
+        "content",
+        "encoding"
+      ],
+      "type": "object"
+    },
+    "GitHubPermissions": {
+      "additionalProperties": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "properties": {
+        "contents": {
+          "enum": [
+            "read",
+            "write",
+            null
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "metadata": {
+          "enum": [
+            "read",
+            null
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pullRequests": {
+          "enum": [
+            "read",
+            "write",
+            null
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "contents",
+        "metadata",
+        "pullRequests"
+      ],
+      "type": "object"
+    },
+    "GitHubRateLimit": {
+      "additionalProperties": false,
+      "properties": {
+        "limit": {
+          "type": "number"
+        },
+        "remaining": {
+          "type": "number"
+        },
+        "reset": {
+          "type": "number"
+        },
+        "resource": {
+          "type": "string"
+        },
+        "used": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "limit",
+        "remaining",
+        "reset",
+        "used",
+        "resource"
+      ],
+      "type": "object"
+    },
+    "GitHubRepository": {
+      "additionalProperties": false,
+      "properties": {
+        "allow_auto_merge": {
+          "type": "boolean"
+        },
+        "allow_merge_commit": {
+          "type": "boolean"
+        },
+        "allow_rebase_merge": {
+          "type": "boolean"
+        },
+        "allow_squash_merge": {
+          "type": "boolean"
+        },
+        "archive_url": {
+          "type": "string"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "assignees_url": {
+          "type": "string"
+        },
+        "blobs_url": {
+          "type": "string"
+        },
+        "branches_url": {
+          "type": "string"
+        },
+        "clone_url": {
+          "type": "string"
+        },
+        "collaborators_url": {
+          "type": "string"
+        },
+        "comments_url": {
+          "type": "string"
+        },
+        "commits_url": {
+          "type": "string"
+        },
+        "compare_url": {
+          "type": "string"
+        },
+        "contents_url": {
+          "type": "string"
+        },
+        "contributors_url": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "default_branch": {
+          "type": "string"
+        },
+        "delete_branch_on_merge": {
+          "type": "boolean"
+        },
+        "deployments_url": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "downloads_url": {
+          "type": "string"
+        },
+        "events_url": {
+          "type": "string"
+        },
+        "fork": {
+          "type": "boolean"
+        },
+        "forks": {
+          "type": "number"
+        },
+        "forks_count": {
+          "type": "number"
+        },
+        "forks_url": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "git_commits_url": {
+          "type": "string"
+        },
+        "git_refs_url": {
+          "type": "string"
+        },
+        "git_tags_url": {
+          "type": "string"
+        },
+        "git_url": {
+          "type": "string"
+        },
+        "has_downloads": {
+          "type": "boolean"
+        },
+        "has_issues": {
+          "type": "boolean"
+        },
+        "has_pages": {
+          "type": "boolean"
+        },
+        "has_projects": {
+          "type": "boolean"
+        },
+        "has_wiki": {
+          "type": "boolean"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "hooks_url": {
+          "type": "string"
+        },
+        "html_url": {
+          "type": "string"
+        },
+        "id": {
+          "type": "number"
+        },
+        "is_template": {
+          "type": "boolean"
+        },
+        "issue_comment_url": {
+          "type": "string"
+        },
+        "issue_events_url": {
+          "type": "string"
+        },
+        "issues_url": {
+          "type": "string"
+        },
+        "keys_url": {
+          "type": "string"
+        },
+        "labels_url": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "languages_url": {
+          "type": "string"
+        },
+        "license": {
+          "additionalProperties": false,
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "node_id": {
+              "type": "string"
+            },
+            "spdx_id": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "key",
+            "name"
+          ],
+          "type": "object"
+        },
+        "merges_url": {
+          "type": "string"
+        },
+        "milestones_url": {
+          "type": "string"
+        },
+        "mirror_url": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "network_count": {
+          "type": "number"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "notifications_url": {
+          "type": "string"
+        },
+        "open_issues": {
+          "type": "number"
+        },
+        "open_issues_count": {
+          "type": "number"
+        },
+        "owner": {
+          "$ref": "#/definitions/GitHubUser"
+        },
+        "permissions": {
+          "additionalProperties": false,
+          "properties": {
+            "admin": {
+              "type": "boolean"
+            },
+            "maintain": {
+              "type": "boolean"
+            },
+            "pull": {
+              "type": "boolean"
+            },
+            "push": {
+              "type": "boolean"
+            },
+            "triage": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "admin",
+            "push",
+            "pull"
+          ],
+          "type": "object"
+        },
+        "private": {
+          "type": "boolean"
+        },
+        "pulls_url": {
+          "type": "string"
+        },
+        "pushed_at": {
+          "type": "string"
+        },
+        "releases_url": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number"
+        },
+        "ssh_url": {
+          "type": "string"
+        },
+        "stargazers_count": {
+          "type": "number"
+        },
+        "stargazers_url": {
+          "type": "string"
+        },
+        "statuses_url": {
+          "type": "string"
+        },
+        "subscribers_count": {
+          "type": "number"
+        },
+        "subscribers_url": {
+          "type": "string"
+        },
+        "subscription_url": {
+          "type": "string"
+        },
+        "svn_url": {
+          "type": "string"
+        },
+        "tags_url": {
+          "type": "string"
+        },
+        "teams_url": {
+          "type": "string"
+        },
+        "temp_clone_token": {
+          "type": "string"
+        },
+        "template_repository": {
+          "$ref": "#/definitions/GitHubRepository"
+        },
+        "topics": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "trees_url": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string"
+        },
+        "watchers": {
+          "type": "number"
+        },
+        "watchers_count": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "node_id",
+        "name",
+        "full_name",
+        "private",
+        "owner",
+        "html_url",
+        "fork",
+        "url",
+        "archive_url",
+        "assignees_url",
+        "blobs_url",
+        "branches_url",
+        "collaborators_url",
+        "comments_url",
+        "commits_url",
+        "compare_url",
+        "contents_url",
+        "contributors_url",
+        "deployments_url",
+        "downloads_url",
+        "events_url",
+        "forks_url",
+        "git_commits_url",
+        "git_refs_url",
+        "git_tags_url",
+        "git_url",
+        "issue_comment_url",
+        "issue_events_url",
+        "issues_url",
+        "keys_url",
+        "labels_url",
+        "languages_url",
+        "merges_url",
+        "milestones_url",
+        "notifications_url",
+        "pulls_url",
+        "releases_url",
+        "ssh_url",
+        "stargazers_url",
+        "statuses_url",
+        "subscribers_url",
+        "subscription_url",
+        "tags_url",
+        "teams_url",
+        "trees_url",
+        "clone_url",
+        "hooks_url",
+        "svn_url",
+        "forks_count",
+        "stargazers_count",
+        "watchers_count",
+        "size",
+        "default_branch",
+        "open_issues_count",
+        "has_issues",
+        "has_projects",
+        "has_wiki",
+        "has_pages",
+        "has_downloads",
+        "archived",
+        "disabled",
+        "created_at",
+        "updated_at"
+      ],
+      "type": "object"
+    },
+    "GitHubUser": {
+      "additionalProperties": false,
+      "properties": {
+        "avatar_url": {
+          "type": "string"
+        },
+        "bio": {
+          "type": "string"
+        },
+        "blog": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "events_url": {
+          "type": "string"
+        },
+        "followers": {
+          "type": "number"
+        },
+        "followers_url": {
+          "type": "string"
+        },
+        "following": {
+          "type": "number"
+        },
+        "following_url": {
+          "type": "string"
+        },
+        "gists_url": {
+          "type": "string"
+        },
+        "gravatar_id": {
+          "type": "string"
+        },
+        "hireable": {
+          "type": "boolean"
+        },
+        "html_url": {
+          "type": "string"
+        },
+        "id": {
+          "type": "number"
+        },
+        "location": {
+          "type": "string"
+        },
+        "login": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "organizations_url": {
+          "type": "string"
+        },
+        "public_gists": {
+          "type": "number"
+        },
+        "public_repos": {
+          "type": "number"
+        },
+        "received_events_url": {
+          "type": "string"
+        },
+        "repos_url": {
+          "type": "string"
+        },
+        "site_admin": {
+          "type": "boolean"
+        },
+        "starred_url": {
+          "type": "string"
+        },
+        "subscriptions_url": {
+          "type": "string"
+        },
+        "twitter_username": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "login",
+        "id",
+        "node_id",
+        "avatar_url",
+        "url",
+        "html_url",
+        "followers_url",
+        "following_url",
+        "gists_url",
+        "starred_url",
+        "subscriptions_url",
+        "organizations_url",
+        "repos_url",
+        "events_url",
+        "received_events_url",
+        "type",
+        "site_admin",
+        "public_repos",
+        "public_gists",
+        "followers",
+        "following",
+        "created_at",
+        "updated_at"
+      ],
+      "type": "object"
+    },
+    "Language": {
+      "additionalProperties": false,
+      "description": "Language and Translation Types",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "englishName": {
+          "type": "string"
+        },
+        "flag": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "name",
+        "flag"
+      ],
+      "type": "object"
+    },
+    "LanguageSelectorProps": {
+      "additionalProperties": false,
+      "properties": {
+        "className": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "LogLevel": {
+      "enum": [
+        "ERROR",
+        "WARN",
+        "INFO",
+        "DEBUG"
+      ],
+      "type": "string"
+    },
+    "Logger": {
+      "additionalProperties": false,
+      "properties": {
+        "apiCall": {
+          "$comment": "(method: string, url: string, data?: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "data": {},
+                "method": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "method",
+                "url"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "apiError": {
+          "$comment": "(method: string, url: string, error: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "error": {},
+                "method": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "method",
+                "url",
+                "error"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "apiResponse": {
+          "$comment": "(method: string, url: string, status: number, responseTime: number) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "method": {
+                  "type": "string"
+                },
+                "responseTime": {
+                  "type": "number"
+                },
+                "status": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "method",
+                "url",
+                "status",
+                "responseTime"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "auth": {
+          "$comment": "(event: string, details?: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "details": {},
+                "event": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "event"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "cache": {
+          "$comment": "(operation: string, key: string, details?: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "details": {},
+                "key": {
+                  "type": "string"
+                },
+                "operation": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "operation",
+                "key"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "componentMount": {
+          "$comment": "(props?: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "props": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "componentUnmount": {
+          "$comment": "() => void"
+        },
+        "debug": {
+          "$comment": "(...args: any[]) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "args": {
+                  "items": {},
+                  "type": "array"
+                }
+              },
+              "required": [
+                "args"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "error": {
+          "$comment": "(...args: any[]) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "args": {
+                  "items": {},
+                  "type": "array"
+                }
+              },
+              "required": [
+                "args"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "info": {
+          "$comment": "(...args: any[]) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "args": {
+                  "items": {},
+                  "type": "array"
+                }
+              },
+              "required": [
+                "args"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "navigation": {
+          "$comment": "(from: string, to: string) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "to": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "from",
+                "to"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "performance": {
+          "$comment": "(operation: string, duration: number) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "duration": {
+                  "type": "number"
+                },
+                "operation": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "operation",
+                "duration"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "stateChange": {
+          "$comment": "(oldState: any, newState: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "newState": {},
+                "oldState": {}
+              },
+              "required": [
+                "oldState",
+                "newState"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "userAction": {
+          "$comment": "(action: string, details?: any) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "action": {
+                  "type": "string"
+                },
+                "details": {}
+              },
+              "required": [
+                "action"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "warn": {
+          "$comment": "(...args: any[]) => void",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "args": {
+                  "items": {},
+                  "type": "array"
+                }
+              },
+              "required": [
+                "args"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "error",
+        "warn",
+        "info",
+        "debug",
+        "apiCall",
+        "apiResponse",
+        "apiError",
+        "componentMount",
+        "componentUnmount",
+        "stateChange",
+        "userAction",
+        "performance",
+        "auth",
+        "navigation",
+        "cache"
+      ],
+      "type": "object"
+    },
+    "NavigationState": {
+      "additionalProperties": false,
+      "properties": {
+        "branch": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        },
+        "repo": {
+          "type": "string"
+        },
+        "user": {
+          "type": "string"
+        },
+        "warningMessage": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "PageLayoutProps": {
+      "additionalProperties": false,
+      "description": "Page and Navigation Types",
+      "properties": {
+        "children": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/React.ReactElement"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "additionalProperties": false,
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/React.ReactPortal"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "className": {
+          "type": "string"
+        },
+        "pageName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "pageName"
+      ],
+      "type": "object"
+    },
+    "ProfileSubscription": {
+      "additionalProperties": false,
+      "properties": {
+        "avatar_url": {
+          "type": "string"
+        },
+        "html_url": {
+          "type": "string"
+        },
+        "isPermanent": {
+          "type": "boolean"
+        },
+        "lastUsed": {
+          "type": "string"
+        },
+        "login": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "repositoryCount": {
+          "type": "number"
+        },
+        "subscribedAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "login",
+        "isPermanent",
+        "subscribedAt"
+      ],
+      "type": "object"
+    },
+    "ProfileSubscriptionExport": {
+      "additionalProperties": false,
+      "properties": {
+        "exportedAt": {
+          "type": "string"
+        },
+        "subscriptions": {
+          "items": {
+            "$ref": "#/definitions/ProfileSubscription"
+          },
+          "type": "array"
+        },
+        "userLogin": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "exportedAt",
+        "userLogin",
+        "subscriptions"
+      ],
+      "type": "object"
+    },
+    "React.JSXElementConstructor<any>": {
+      "anyOf": [
+        {
+          "$comment": "(\n            props: P) => ReactNode | Promise<ReactNode>",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "props": {}
+              },
+              "required": [
+                "props"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "$comment": "new (props: P, context: any) => Component<any, any>",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "context": {},
+                "props": {}
+              },
+              "required": [
+                "props",
+                "context"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Represents any user-defined component, either as a function or a class.\n\nSimilar to  {@link  ComponentType } , but without extra properties like  {@link  FunctionComponent.defaultProps defaultProps  } ."
+    },
+    "React.ReactElement": {
+      "additionalProperties": false,
+      "description": "Represents a JSX element.\n\nWhere  {@link  ReactNode }  represents everything that can be rendered, `ReactElement` only represents JSX.",
+      "properties": {
+        "key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "props": {},
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/React.JSXElementConstructor%3Cany%3E"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "props",
+        "key"
+      ],
+      "type": "object"
+    },
+    "React.ReactNode": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/React.ReactElement"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "additionalProperties": false,
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/React.ReactPortal"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "not": {}
+        },
+        {
+          "$ref": "#/definitions/React.ReactElement"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "additionalProperties": false,
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/React.ReactPortal"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "not": {}
+        }
+      ],
+      "description": "Represents all of the things React can render.\n\nWhere  {@link  ReactElement }  only represents JSX, `ReactNode` represents everything that can be rendered."
+    },
+    "React.ReactPortal": {
+      "additionalProperties": false,
+      "properties": {
+        "children": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/React.ReactElement"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "additionalProperties": false,
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/React.ReactPortal"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "props": {},
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/React.JSXElementConstructor%3Cany%3E"
+            }
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "props",
+        "type"
+      ],
+      "type": "object"
+    },
+    "RepositoryCacheData": {
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "repositories": {
+          "items": {
+            "$ref": "#/definitions/GitHubRepository"
+          },
+          "type": "array"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "enum": [
+            "user",
+            "org"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "repositories",
+        "timestamp",
+        "owner",
+        "type"
+      ],
+      "type": "object"
+    },
+    "RuntimeValidationConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "coerceTypes": {
+          "type": "boolean"
+        },
+        "removeAdditional": {
+          "type": "boolean"
+        },
+        "strict": {
+          "type": "boolean"
+        },
+        "throwOnError": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "strict",
+        "throwOnError",
+        "coerceTypes",
+        "removeAdditional"
+      ],
+      "type": "object"
+    },
+    "SushiConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "FSHOnly": {
+          "type": "boolean"
+        },
+        "applyExtensionMetadataToRoot": {
+          "type": "boolean"
+        },
+        "canonical": {
+          "type": "string"
+        },
+        "contact": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "telecom": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "system": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "copyrightYear": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "dependencies": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "description": {
+          "type": "string"
+        },
+        "fhirVersion": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parameters": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "publisher": {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "releaseLabel": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "TokenFormatValidation": {
+      "additionalProperties": false,
+      "properties": {
+        "isValid": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "classic",
+            "fine-grained",
+            "oauth",
+            "legacy",
+            "invalid"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "isValid",
+        "type"
+      ],
+      "type": "object"
+    },
+    "TokenValidationResult": {
+      "additionalProperties": false,
+      "properties": {
+        "isValid": {
+          "type": "boolean"
+        },
+        "rateLimit": {
+          "additionalProperties": false,
+          "properties": {
+            "limit": {
+              "type": "number"
+            },
+            "remaining": {
+              "type": "number"
+            },
+            "reset": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "limit",
+            "remaining",
+            "reset"
+          ],
+          "type": "object"
+        },
+        "scopes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tokenType": {
+          "enum": [
+            "classic",
+            "fine-grained",
+            "oauth"
+          ],
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/GitHubUser"
+        }
+      },
+      "required": [
+        "isValid",
+        "tokenType"
+      ],
+      "type": "object"
+    },
+    "ValidationContext": {
+      "properties": {
+        "branch": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        },
+        "dakFiles": {
+          "items": {
+            "$ref": "#/definitions/DAKFile"
+          },
+          "type": "array"
+        },
+        "githubService": {},
+        "owner": {
+          "type": "string"
+        },
+        "repo": {
+          "type": "string"
+        },
+        "stagingGround": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ValidationDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "component": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "descriptionKey": {
+          "type": "string"
+        },
+        "fileTypes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "findLineNumber": {
+          "$comment": "(content: string, searchTerm: string) => number | null",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "searchTerm": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content",
+                "searchTerm"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "id": {
+          "type": "string"
+        },
+        "level": {
+          "$ref": "#/definitions/ValidationLevel"
+        },
+        "validate": {
+          "$comment": "(filePath: string, content: string, context: ValidationContext) => Promise<DAKValidationResult | null>",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "context": {
+                  "$ref": "#/definitions/ValidationContext"
+                },
+                "filePath": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "filePath",
+                "content",
+                "context"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "component",
+        "level",
+        "fileTypes",
+        "description",
+        "validate"
+      ],
+      "type": "object"
+    },
+    "ValidationError": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "value": {}
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    },
+    "ValidationHistory": {
+      "additionalProperties": false,
+      "properties": {
+        "entries": {
+          "items": {
+            "$ref": "#/definitions/ValidationHistoryEntry"
+          },
+          "type": "array"
+        },
+        "maxEntries": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "entries",
+        "maxEntries"
+      ],
+      "type": "object"
+    },
+    "ValidationHistoryEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "branch": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": false,
+          "properties": {
+            "canUpload": {
+              "type": "boolean"
+            },
+            "filesValidated": {
+              "type": "number"
+            },
+            "stagingGround": {
+              "type": "boolean"
+            },
+            "validationFrameworkVersion": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "filesValidated",
+            "validationFrameworkVersion",
+            "stagingGround",
+            "canUpload"
+          ],
+          "type": "object"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "repo": {
+          "type": "string"
+        },
+        "summary": {
+          "$ref": "#/definitions/ValidationSummary"
+        },
+        "timestamp": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "owner",
+        "repo",
+        "branch",
+        "timestamp",
+        "summary",
+        "metadata"
+      ],
+      "type": "object"
+    },
+    "ValidationLevel": {
+      "enum": [
+        "error",
+        "warning",
+        "info"
+      ],
+      "type": "string"
+    },
+    "ValidationResult": {
+      "additionalProperties": false,
+      "properties": {
+        "errors": {
+          "items": {
+            "$ref": "#/definitions/ValidationError"
+          },
+          "type": "array"
+        },
+        "isValid": {
+          "type": "boolean"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/definitions/ValidationWarning"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "isValid",
+        "errors",
+        "warnings"
+      ],
+      "type": "object"
+    },
+    "ValidationSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "type": "number"
+        },
+        "info": {
+          "type": "number"
+        },
+        "warning": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "error",
+        "warning",
+        "info"
+      ],
+      "type": "object"
+    },
+    "ValidationWarning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "value": {}
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    }
+  }
+}

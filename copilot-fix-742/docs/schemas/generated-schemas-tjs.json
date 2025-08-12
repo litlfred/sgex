@@ -1,0 +1,1918 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "AsyncResult": {
+            "properties": {
+                "__@toStringTag@9873": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "AuthenticationState": {
+            "properties": {
+                "isAuthenticated": {
+                    "type": "boolean"
+                },
+                "lastValidated": {
+                    "type": "string"
+                },
+                "scopes": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "tokenType": {
+                    "enum": [
+                        "classic",
+                        "fine-grained",
+                        "oauth"
+                    ],
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/GitHubUser"
+                }
+            },
+            "type": "object"
+        },
+        "CacheEntry": {
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/T_1"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "number"
+                },
+                "timestamp": {
+                    "type": "number"
+                },
+                "ttl": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "CacheResult": {
+            "properties": {
+                "age": {
+                    "type": "number"
+                },
+                "data": {
+                    "$ref": "#/definitions/T_2"
+                },
+                "isHit": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "CacheStatistics": {
+            "properties": {
+                "hitCount": {
+                    "type": "number"
+                },
+                "hitRate": {
+                    "type": "number"
+                },
+                "missCount": {
+                    "type": "number"
+                },
+                "newestEntry": {
+                    "type": "string"
+                },
+                "oldestEntry": {
+                    "type": "string"
+                },
+                "totalEntries": {
+                    "type": "number"
+                },
+                "totalSize": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "ComponentSummary": {
+            "additionalProperties": {
+                "allOf": [
+                    {
+                        "$ref": "#/definitions/DAKComponent"
+                    },
+                    {
+                        "properties": {
+                            "errorCount": {
+                                "type": "number"
+                            },
+                            "infoCount": {
+                                "type": "number"
+                            },
+                            "validationCount": {
+                                "type": "number"
+                            },
+                            "warningCount": {
+                                "type": "number"
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
+            "type": "object"
+        },
+        "DAKComponent": {
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "DAKFile": {
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "sha": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "DAKRepository": {
+            "properties": {
+                "allow_auto_merge": {
+                    "type": "boolean"
+                },
+                "allow_merge_commit": {
+                    "type": "boolean"
+                },
+                "allow_rebase_merge": {
+                    "type": "boolean"
+                },
+                "allow_squash_merge": {
+                    "type": "boolean"
+                },
+                "archive_url": {
+                    "type": "string"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "assignees_url": {
+                    "type": "string"
+                },
+                "blobs_url": {
+                    "type": "string"
+                },
+                "branches_url": {
+                    "type": "string"
+                },
+                "clone_url": {
+                    "type": "string"
+                },
+                "collaborators_url": {
+                    "type": "string"
+                },
+                "comments_url": {
+                    "type": "string"
+                },
+                "commits_url": {
+                    "type": "string"
+                },
+                "compare_url": {
+                    "type": "string"
+                },
+                "contents_url": {
+                    "type": "string"
+                },
+                "contributors_url": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "default_branch": {
+                    "type": "string"
+                },
+                "delete_branch_on_merge": {
+                    "type": "boolean"
+                },
+                "deployments_url": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "disabled": {
+                    "type": "boolean"
+                },
+                "downloads_url": {
+                    "type": "string"
+                },
+                "events_url": {
+                    "type": "string"
+                },
+                "fork": {
+                    "type": "boolean"
+                },
+                "forks": {
+                    "type": "number"
+                },
+                "forks_count": {
+                    "type": "number"
+                },
+                "forks_url": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "git_commits_url": {
+                    "type": "string"
+                },
+                "git_refs_url": {
+                    "type": "string"
+                },
+                "git_tags_url": {
+                    "type": "string"
+                },
+                "git_url": {
+                    "type": "string"
+                },
+                "has_downloads": {
+                    "type": "boolean"
+                },
+                "has_issues": {
+                    "type": "boolean"
+                },
+                "has_pages": {
+                    "type": "boolean"
+                },
+                "has_projects": {
+                    "type": "boolean"
+                },
+                "has_wiki": {
+                    "type": "boolean"
+                },
+                "homepage": {
+                    "type": "string"
+                },
+                "hooks_url": {
+                    "type": "string"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "number"
+                },
+                "isDak": {
+                    "const": true,
+                    "type": "boolean"
+                },
+                "is_template": {
+                    "type": "boolean"
+                },
+                "issue_comment_url": {
+                    "type": "string"
+                },
+                "issue_events_url": {
+                    "type": "string"
+                },
+                "issues_url": {
+                    "type": "string"
+                },
+                "keys_url": {
+                    "type": "string"
+                },
+                "labels_url": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "languages_url": {
+                    "type": "string"
+                },
+                "license": {
+                    "properties": {
+                        "key": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "node_id": {
+                            "type": "string"
+                        },
+                        "spdx_id": {
+                            "type": "string"
+                        },
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "merges_url": {
+                    "type": "string"
+                },
+                "milestones_url": {
+                    "type": "string"
+                },
+                "mirror_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network_count": {
+                    "type": "number"
+                },
+                "node_id": {
+                    "type": "string"
+                },
+                "notifications_url": {
+                    "type": "string"
+                },
+                "open_issues": {
+                    "type": "number"
+                },
+                "open_issues_count": {
+                    "type": "number"
+                },
+                "owner": {
+                    "$ref": "#/definitions/GitHubUser"
+                },
+                "permissions": {
+                    "properties": {
+                        "admin": {
+                            "type": "boolean"
+                        },
+                        "maintain": {
+                            "type": "boolean"
+                        },
+                        "pull": {
+                            "type": "boolean"
+                        },
+                        "push": {
+                            "type": "boolean"
+                        },
+                        "triage": {
+                            "type": "boolean"
+                        }
+                    },
+                    "type": "object"
+                },
+                "private": {
+                    "type": "boolean"
+                },
+                "pulls_url": {
+                    "type": "string"
+                },
+                "pushed_at": {
+                    "type": "string"
+                },
+                "releases_url": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "number"
+                },
+                "ssh_url": {
+                    "type": "string"
+                },
+                "stargazers_count": {
+                    "type": "number"
+                },
+                "stargazers_url": {
+                    "type": "string"
+                },
+                "statuses_url": {
+                    "type": "string"
+                },
+                "subscribers_count": {
+                    "type": "number"
+                },
+                "subscribers_url": {
+                    "type": "string"
+                },
+                "subscription_url": {
+                    "type": "string"
+                },
+                "sushiConfig": {
+                    "$ref": "#/definitions/SushiConfig"
+                },
+                "svn_url": {
+                    "type": "string"
+                },
+                "tags_url": {
+                    "type": "string"
+                },
+                "teams_url": {
+                    "type": "string"
+                },
+                "temp_clone_token": {
+                    "type": "string"
+                },
+                "template_repository": {
+                    "$ref": "#/definitions/GitHubRepository"
+                },
+                "topics": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "trees_url": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                },
+                "watchers": {
+                    "type": "number"
+                },
+                "watchers_count": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "DAKUrlInfo": {
+            "properties": {
+                "assetPath": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "branch": {
+                    "type": "string"
+                },
+                "component": {
+                    "type": "string"
+                },
+                "isValid": {
+                    "type": "boolean"
+                },
+                "repo": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "DAKValidationResult": {
+            "properties": {
+                "column": {
+                    "type": "number"
+                },
+                "component": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "filePath": {
+                    "type": "string"
+                },
+                "level": {
+                    "$ref": "#/definitions/ValidationLevel"
+                },
+                "line": {
+                    "type": "number"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "suggestion": {
+                    "type": "string"
+                },
+                "validationId": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "DAKValidationServiceResult": {
+            "properties": {
+                "errors": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "hasSushiConfig": {
+                    "type": "boolean"
+                },
+                "hasWhoBaseDependency": {
+                    "type": "boolean"
+                },
+                "isValid": {
+                    "type": "boolean"
+                },
+                "sushiConfig": {
+                    "$ref": "#/definitions/SushiConfig"
+                },
+                "warnings": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "FormattedValidationResults": {
+            "properties": {
+                "byComponent": {
+                    "$ref": "#/definitions/Record<string,DAKValidationResult[]>"
+                },
+                "byFile": {
+                    "$ref": "#/definitions/Record<string,DAKValidationResult[]>"
+                },
+                "canSave": {
+                    "type": "boolean"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "properties": {
+                        "branch": {
+                            "type": "string"
+                        },
+                        "canUpload": {
+                            "type": "boolean"
+                        },
+                        "filesValidated": {
+                            "type": "number"
+                        },
+                        "owner": {
+                            "type": "string"
+                        },
+                        "repo": {
+                            "type": "string"
+                        },
+                        "stagingGround": {
+                            "type": "boolean"
+                        },
+                        "validatedAt": {
+                            "type": "string"
+                        },
+                        "validationFrameworkVersion": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "summary": {
+                    "$ref": "#/definitions/ValidationSummary"
+                },
+                "total": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "GitHubApiResponse": {
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/T"
+                },
+                "headers": {
+                    "$ref": "#/definitions/Record<string,string>"
+                },
+                "status": {
+                    "type": "number"
+                },
+                "url": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "GitHubBranch": {
+            "properties": {
+                "commit": {
+                    "properties": {
+                        "sha": {
+                            "type": "string"
+                        },
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "protected": {
+                    "type": "boolean"
+                },
+                "protection": {
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "required_status_checks": {
+                            "properties": {
+                                "contexts": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                },
+                                "enforcement_level": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "type": "object"
+                },
+                "protection_url": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "GitHubFileResponse": {
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "download_url": {
+                    "type": "string"
+                },
+                "encoding": {
+                    "const": "base64",
+                    "type": "string"
+                },
+                "git_url": {
+                    "type": "string"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "sha": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "number"
+                },
+                "type": {
+                    "const": "file",
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "GitHubPermissions": {
+            "additionalProperties": {
+                "type": "string"
+            },
+            "properties": {
+                "contents": {
+                    "enum": [
+                        "read",
+                        "write"
+                    ],
+                    "type": "string"
+                },
+                "metadata": {
+                    "const": "read",
+                    "type": "string"
+                },
+                "pullRequests": {
+                    "enum": [
+                        "read",
+                        "write"
+                    ],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "GitHubRateLimit": {
+            "properties": {
+                "limit": {
+                    "type": "number"
+                },
+                "remaining": {
+                    "type": "number"
+                },
+                "reset": {
+                    "type": "number"
+                },
+                "resource": {
+                    "type": "string"
+                },
+                "used": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "GitHubRepository": {
+            "properties": {
+                "allow_auto_merge": {
+                    "type": "boolean"
+                },
+                "allow_merge_commit": {
+                    "type": "boolean"
+                },
+                "allow_rebase_merge": {
+                    "type": "boolean"
+                },
+                "allow_squash_merge": {
+                    "type": "boolean"
+                },
+                "archive_url": {
+                    "type": "string"
+                },
+                "archived": {
+                    "type": "boolean"
+                },
+                "assignees_url": {
+                    "type": "string"
+                },
+                "blobs_url": {
+                    "type": "string"
+                },
+                "branches_url": {
+                    "type": "string"
+                },
+                "clone_url": {
+                    "type": "string"
+                },
+                "collaborators_url": {
+                    "type": "string"
+                },
+                "comments_url": {
+                    "type": "string"
+                },
+                "commits_url": {
+                    "type": "string"
+                },
+                "compare_url": {
+                    "type": "string"
+                },
+                "contents_url": {
+                    "type": "string"
+                },
+                "contributors_url": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "default_branch": {
+                    "type": "string"
+                },
+                "delete_branch_on_merge": {
+                    "type": "boolean"
+                },
+                "deployments_url": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "disabled": {
+                    "type": "boolean"
+                },
+                "downloads_url": {
+                    "type": "string"
+                },
+                "events_url": {
+                    "type": "string"
+                },
+                "fork": {
+                    "type": "boolean"
+                },
+                "forks": {
+                    "type": "number"
+                },
+                "forks_count": {
+                    "type": "number"
+                },
+                "forks_url": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "git_commits_url": {
+                    "type": "string"
+                },
+                "git_refs_url": {
+                    "type": "string"
+                },
+                "git_tags_url": {
+                    "type": "string"
+                },
+                "git_url": {
+                    "type": "string"
+                },
+                "has_downloads": {
+                    "type": "boolean"
+                },
+                "has_issues": {
+                    "type": "boolean"
+                },
+                "has_pages": {
+                    "type": "boolean"
+                },
+                "has_projects": {
+                    "type": "boolean"
+                },
+                "has_wiki": {
+                    "type": "boolean"
+                },
+                "homepage": {
+                    "type": "string"
+                },
+                "hooks_url": {
+                    "type": "string"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "number"
+                },
+                "is_template": {
+                    "type": "boolean"
+                },
+                "issue_comment_url": {
+                    "type": "string"
+                },
+                "issue_events_url": {
+                    "type": "string"
+                },
+                "issues_url": {
+                    "type": "string"
+                },
+                "keys_url": {
+                    "type": "string"
+                },
+                "labels_url": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "languages_url": {
+                    "type": "string"
+                },
+                "license": {
+                    "properties": {
+                        "key": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "node_id": {
+                            "type": "string"
+                        },
+                        "spdx_id": {
+                            "type": "string"
+                        },
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "merges_url": {
+                    "type": "string"
+                },
+                "milestones_url": {
+                    "type": "string"
+                },
+                "mirror_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network_count": {
+                    "type": "number"
+                },
+                "node_id": {
+                    "type": "string"
+                },
+                "notifications_url": {
+                    "type": "string"
+                },
+                "open_issues": {
+                    "type": "number"
+                },
+                "open_issues_count": {
+                    "type": "number"
+                },
+                "owner": {
+                    "$ref": "#/definitions/GitHubUser"
+                },
+                "permissions": {
+                    "properties": {
+                        "admin": {
+                            "type": "boolean"
+                        },
+                        "maintain": {
+                            "type": "boolean"
+                        },
+                        "pull": {
+                            "type": "boolean"
+                        },
+                        "push": {
+                            "type": "boolean"
+                        },
+                        "triage": {
+                            "type": "boolean"
+                        }
+                    },
+                    "type": "object"
+                },
+                "private": {
+                    "type": "boolean"
+                },
+                "pulls_url": {
+                    "type": "string"
+                },
+                "pushed_at": {
+                    "type": "string"
+                },
+                "releases_url": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "number"
+                },
+                "ssh_url": {
+                    "type": "string"
+                },
+                "stargazers_count": {
+                    "type": "number"
+                },
+                "stargazers_url": {
+                    "type": "string"
+                },
+                "statuses_url": {
+                    "type": "string"
+                },
+                "subscribers_count": {
+                    "type": "number"
+                },
+                "subscribers_url": {
+                    "type": "string"
+                },
+                "subscription_url": {
+                    "type": "string"
+                },
+                "svn_url": {
+                    "type": "string"
+                },
+                "tags_url": {
+                    "type": "string"
+                },
+                "teams_url": {
+                    "type": "string"
+                },
+                "temp_clone_token": {
+                    "type": "string"
+                },
+                "template_repository": {
+                    "$ref": "#/definitions/GitHubRepository"
+                },
+                "topics": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "trees_url": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                },
+                "watchers": {
+                    "type": "number"
+                },
+                "watchers_count": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "GitHubUser": {
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "blog": {
+                    "type": "string"
+                },
+                "company": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "events_url": {
+                    "type": "string"
+                },
+                "followers": {
+                    "type": "number"
+                },
+                "followers_url": {
+                    "type": "string"
+                },
+                "following": {
+                    "type": "number"
+                },
+                "following_url": {
+                    "type": "string"
+                },
+                "gists_url": {
+                    "type": "string"
+                },
+                "gravatar_id": {
+                    "type": "string"
+                },
+                "hireable": {
+                    "type": "boolean"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "number"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "node_id": {
+                    "type": "string"
+                },
+                "organizations_url": {
+                    "type": "string"
+                },
+                "public_gists": {
+                    "type": "number"
+                },
+                "public_repos": {
+                    "type": "number"
+                },
+                "received_events_url": {
+                    "type": "string"
+                },
+                "repos_url": {
+                    "type": "string"
+                },
+                "site_admin": {
+                    "type": "boolean"
+                },
+                "starred_url": {
+                    "type": "string"
+                },
+                "subscriptions_url": {
+                    "type": "string"
+                },
+                "twitter_username": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "Iterable<React.ReactNode>": {
+            "type": "object"
+        },
+        "Language": {
+            "description": "Language and Translation Types",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "englishName": {
+                    "type": "string"
+                },
+                "flag": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "LanguageSelectorProps": {
+            "properties": {
+                "className": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "LogLevel": {
+            "enum": [
+                "DEBUG",
+                "ERROR",
+                "INFO",
+                "WARN"
+            ],
+            "type": "string"
+        },
+        "Logger": {
+            "properties": {
+                "apiCall": {
+                    "type": "object"
+                },
+                "apiError": {
+                    "type": "object"
+                },
+                "apiResponse": {
+                    "type": "object"
+                },
+                "auth": {
+                    "type": "object"
+                },
+                "cache": {
+                    "type": "object"
+                },
+                "componentMount": {
+                    "type": "object"
+                },
+                "componentUnmount": {
+                    "type": "object"
+                },
+                "debug": {
+                    "type": "object"
+                },
+                "error": {
+                    "type": "object"
+                },
+                "info": {
+                    "type": "object"
+                },
+                "navigation": {
+                    "type": "object"
+                },
+                "performance": {
+                    "type": "object"
+                },
+                "stateChange": {
+                    "type": "object"
+                },
+                "userAction": {
+                    "type": "object"
+                },
+                "warn": {
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "NavigationState": {
+            "properties": {
+                "branch": {
+                    "type": "string"
+                },
+                "component": {
+                    "type": "string"
+                },
+                "repo": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                },
+                "warningMessage": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "PageLayoutProps": {
+            "description": "Page and Navigation Types",
+            "properties": {
+                "children": {
+                    "$ref": "#/definitions/React.ReactNode"
+                },
+                "className": {
+                    "type": "string"
+                },
+                "pageName": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "PaginatedResponse": {
+            "properties": {
+                "data": {
+                    "properties": {
+                        "hasMore": {
+                            "type": "boolean"
+                        },
+                        "items": {
+                            "items": {
+                                "$ref": "#/definitions/T_5"
+                            },
+                            "type": "array"
+                        },
+                        "page": {
+                            "type": "number"
+                        },
+                        "pageSize": {
+                            "type": "number"
+                        },
+                        "totalCount": {
+                            "type": "number"
+                        }
+                    },
+                    "type": "object"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "statusCode": {
+                    "type": "number"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "ProfileSubscription": {
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "isPermanent": {
+                    "type": "boolean"
+                },
+                "lastUsed": {
+                    "type": "string"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "repositoryCount": {
+                    "type": "number"
+                },
+                "subscribedAt": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "ProfileSubscriptionExport": {
+            "properties": {
+                "exportedAt": {
+                    "type": "string"
+                },
+                "subscriptions": {
+                    "items": {
+                        "$ref": "#/definitions/ProfileSubscription"
+                    },
+                    "type": "array"
+                },
+                "userLogin": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "Promise<AwaitedReactNode>": {
+            "properties": {
+                "__@toStringTag@9873": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "React.ReactElement<unknown,string|React.JSXElementConstructor<any>>": {
+            "description": "Represents a JSX element.\n\nWhere {@link ReactNode} represents everything that can be rendered, `ReactElement`\nonly represents JSX.",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "props": {
+                    "description": "The type of the props object"
+                },
+                "type": {
+                    "description": "The type of the component or tag",
+                    "type": [
+                        "string",
+                        "object"
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "React.ReactNode": {
+            "anyOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {},
+                    "type": "number"
+                },
+                {
+                    "$ref": "#/definitions/React.ReactElement<unknown,string|React.JSXElementConstructor<any>>"
+                },
+                {
+                    "$ref": "#/definitions/Iterable<React.ReactNode>"
+                },
+                {
+                    "$ref": "#/definitions/React.ReactPortal"
+                },
+                {
+                    "$ref": "#/definitions/Promise<AwaitedReactNode>"
+                },
+                {
+                    "type": [
+                        "string",
+                        "number",
+                        "boolean"
+                    ]
+                }
+            ],
+            "description": "Represents all of the things React can render.\n\nWhere {@link ReactElement} only represents JSX, `ReactNode` represents everything that can be rendered."
+        },
+        "React.ReactPortal": {
+            "properties": {
+                "children": {
+                    "$ref": "#/definitions/React.ReactNode"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "props": {
+                    "description": "The type of the props object"
+                },
+                "type": {
+                    "description": "The type of the component or tag",
+                    "type": [
+                        "string",
+                        "object"
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "Record<string,DAKValidationResult[]>": {
+            "type": "object"
+        },
+        "Record<string,string>": {
+            "type": "object"
+        },
+        "RepositoryCacheData": {
+            "properties": {
+                "owner": {
+                    "type": "string"
+                },
+                "repositories": {
+                    "items": {
+                        "$ref": "#/definitions/GitHubRepository"
+                    },
+                    "type": "array"
+                },
+                "timestamp": {
+                    "type": "number"
+                },
+                "type": {
+                    "enum": [
+                        "org",
+                        "user"
+                    ],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "RuntimeValidationConfig": {
+            "properties": {
+                "coerceTypes": {
+                    "type": "boolean"
+                },
+                "removeAdditional": {
+                    "type": "boolean"
+                },
+                "strict": {
+                    "type": "boolean"
+                },
+                "throwOnError": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "ServiceResponse": {
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/T_4"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "statusCode": {
+                    "type": "number"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "SushiConfig": {
+            "properties": {
+                "FSHOnly": {
+                    "type": "boolean"
+                },
+                "applyExtensionMetadataToRoot": {
+                    "type": "boolean"
+                },
+                "canonical": {
+                    "type": "string"
+                },
+                "contact": {
+                    "items": {
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "telecom": {
+                                "items": {
+                                    "properties": {
+                                        "system": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "type": "array"
+                },
+                "copyrightYear": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "dependencies": {
+                    "$ref": "#/definitions/Record<string,string>"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "fhirVersion": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "license": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "items": {
+                        "properties": {
+                            "code": {
+                                "type": "string"
+                            },
+                            "value": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "type": "array"
+                },
+                "publisher": {
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "releaseLabel": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "T": {
+            "type": "object"
+        },
+        "T_1": {
+            "type": "object"
+        },
+        "T_2": {
+            "type": "object"
+        },
+        "T_3": {
+            "type": "object"
+        },
+        "T_4": {
+            "type": "object"
+        },
+        "T_5": {
+            "type": "object"
+        },
+        "TokenFormatValidation": {
+            "properties": {
+                "isValid": {
+                    "type": "boolean"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "type": {
+                    "enum": [
+                        "classic",
+                        "fine-grained",
+                        "invalid",
+                        "legacy",
+                        "oauth"
+                    ],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "TokenValidationResult": {
+            "properties": {
+                "isValid": {
+                    "type": "boolean"
+                },
+                "rateLimit": {
+                    "properties": {
+                        "limit": {
+                            "type": "number"
+                        },
+                        "remaining": {
+                            "type": "number"
+                        },
+                        "reset": {
+                            "type": "number"
+                        }
+                    },
+                    "type": "object"
+                },
+                "scopes": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "tokenType": {
+                    "enum": [
+                        "classic",
+                        "fine-grained",
+                        "oauth"
+                    ],
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/GitHubUser"
+                }
+            },
+            "type": "object"
+        },
+        "ValidatedData": {
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/T_3"
+                },
+                "errors": {
+                    "items": {
+                        "$ref": "#/definitions/ValidationError"
+                    },
+                    "type": "array"
+                },
+                "isValid": {
+                    "type": "boolean"
+                },
+                "warnings": {
+                    "items": {
+                        "$ref": "#/definitions/ValidationWarning"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "ValidationContext": {
+            "additionalProperties": {},
+            "properties": {
+                "branch": {
+                    "type": "string"
+                },
+                "component": {
+                    "type": "string"
+                },
+                "dakFiles": {
+                    "items": {
+                        "$ref": "#/definitions/DAKFile"
+                    },
+                    "type": "array"
+                },
+                "githubService": {},
+                "owner": {
+                    "type": "string"
+                },
+                "repo": {
+                    "type": "string"
+                },
+                "stagingGround": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "ValidationDefinition": {
+            "properties": {
+                "component": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "descriptionKey": {
+                    "type": "string"
+                },
+                "fileTypes": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "findLineNumber": {
+                    "type": "object"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "level": {
+                    "$ref": "#/definitions/ValidationLevel"
+                },
+                "validate": {
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "ValidationError": {
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "value": {}
+            },
+            "type": "object"
+        },
+        "ValidationHistory": {
+            "properties": {
+                "entries": {
+                    "items": {
+                        "$ref": "#/definitions/ValidationHistoryEntry"
+                    },
+                    "type": "array"
+                },
+                "maxEntries": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "ValidationHistoryEntry": {
+            "properties": {
+                "branch": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "properties": {
+                        "canUpload": {
+                            "type": "boolean"
+                        },
+                        "filesValidated": {
+                            "type": "number"
+                        },
+                        "stagingGround": {
+                            "type": "boolean"
+                        },
+                        "validationFrameworkVersion": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "repo": {
+                    "type": "string"
+                },
+                "summary": {
+                    "$ref": "#/definitions/ValidationSummary"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "ValidationLevel": {
+            "enum": [
+                "error",
+                "info",
+                "warning"
+            ],
+            "type": "string"
+        },
+        "ValidationResult": {
+            "properties": {
+                "errors": {
+                    "items": {
+                        "$ref": "#/definitions/ValidationError"
+                    },
+                    "type": "array"
+                },
+                "isValid": {
+                    "type": "boolean"
+                },
+                "warnings": {
+                    "items": {
+                        "$ref": "#/definitions/ValidationWarning"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "ValidationRule": {
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "schema": {},
+                "validator": {
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "ValidationSummary": {
+            "properties": {
+                "error": {
+                    "type": "number"
+                },
+                "info": {
+                    "type": "number"
+                },
+                "warning": {
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "ValidationWarning": {
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "value": {}
+            },
+            "type": "object"
+        }
+    }
+}
+
