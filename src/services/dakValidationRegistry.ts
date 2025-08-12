@@ -18,13 +18,13 @@ import {
 } from '../types/core';
 
 // Import validation definitions
-import dakSushiBase from './validations/dak-sushi-base.ts';
-import jsonValid from './validations/json-valid.ts';
-import bpmnBusinessRuleTaskId from './validations/bpmn-business-rule-task-id.ts';
-import dmnDecisionLabelId from './validations/dmn-decision-label-id.ts';
-import xmlWellFormed from './validations/xml-well-formed.ts';
-import fileNamingConventions from './validations/file-naming-conventions.ts';
-import dmnBpmnCrossReference from './validations/dmn-bpmn-cross-reference.ts';
+import dakSushiBase from './validations/dak-sushi-base';
+import jsonValid from './validations/json-valid';
+import bpmnBusinessRuleTaskId from './validations/bpmn-business-rule-task-id';
+import dmnDecisionLabelId from './validations/dmn-decision-label-id';
+import xmlWellFormed from './validations/xml-well-formed';
+import fileNamingConventions from './validations/file-naming-conventions';
+import dmnBpmnCrossReference from './validations/dmn-bpmn-cross-reference';
 // Note: Other validations will be migrated incrementally
 
 /**

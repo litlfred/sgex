@@ -328,46 +328,54 @@ class EnhancedDAKValidationService {
         throw new Error('GitHub authentication required');
       }
 
-      // Get repository tree
-      const tree = await githubService.getRepositoryTree(owner, repo, branch);
-      
-      if (!tree || !tree.tree) {
-        throw new Error('Could not retrieve repository tree');
-      }
-
-      // Filter for relevant files and get their contents
-      const relevantFiles = tree.tree.filter((item: any) => 
-        item.type === 'blob' && this.isRelevantFile(item.path)
-      );
-
+      // Get repository contents recursively
       const files: DAKFile[] = [];
+      await this.getDAKFilesRecursive(owner, repo, '', branch, files);
       
-      // Get file contents (limit to reasonable number to avoid rate limits)
-      const maxFiles = 100;
-      const filesToProcess = relevantFiles.slice(0, maxFiles);
-      
-      for (const file of filesToProcess) {
-        try {
-          const content = await githubService.getFileContent(owner, repo, file.path, branch);
-          
-          if (content) {
-            files.push({
-              path: file.path,
-              content: content,
-              size: file.size,
-              sha: file.sha
-            });
-          }
-        } catch (error: any) {
-          console.warn(`Could not get content for ${file.path}:`, error.message);
-        }
-      }
-
       return files;
 
     } catch (error: any) {
       console.error('Error getting DAK files:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Get DAK files recursively from directory
+   */
+  private async getDAKFilesRecursive(
+    owner: string, 
+    repo: string, 
+    path: string, 
+    branch: string, 
+    files: DAKFile[]
+  ): Promise<void> {
+    try {
+      const contents = await githubService.getDirectoryContents(owner, repo, path, branch);
+      
+      for (const item of contents) {
+        if (item.type === 'file' && this.isRelevantFile(item.path || item.name)) {
+          try {
+            const content = await githubService.getFileContent(owner, repo, item.path || item.name, branch);
+            
+            if (content) {
+              files.push({
+                path: item.path || item.name,
+                content: content,
+                size: item.size,
+                sha: item.sha
+              });
+            }
+          } catch (error: any) {
+            console.warn(`Could not get content for ${item.path || item.name}:`, error.message);
+          }
+        } else if (item.type === 'dir') {
+          // Recursively get files from subdirectory
+          await this.getDAKFilesRecursive(owner, repo, item.path || item.name, branch, files);
+        }
+      }
+    } catch (error: any) {
+      console.warn(`Could not get directory contents for ${path}:`, error.message);
     }
   }
 
