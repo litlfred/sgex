@@ -391,3 +391,21 @@ export class GitHubService {
 ```
 
 This runtime validation system ensures data integrity throughout the SGEX Workbench while providing excellent TypeScript integration and developer experience.
+
+## Additional Documentation
+
+For comprehensive coverage of advanced topics, see these detailed guides:
+
+### 📚 [Runtime Validation Integration Patterns](./runtime-validation-integration.md)
+Complete guide for integrating the RuntimeValidationService with existing services, migration strategies, and performance optimization for large-scale validation.
+
+### 🎯 [Custom Format Documentation](./custom-formats-documentation.md)
+Comprehensive reference for all available custom validation formats, dynamic format discovery, testing patterns, and how to add domain-specific formats.
+
+### ⚙️ [Schema Generation Configuration](./schema-generation-configuration.md)
+Detailed configuration options for TypeScript-to-JSON schema generation tools, handling complex types, circular references, and optimization strategies.
+
+### 🚀 [Build Process Integration](./build-process-integration.md)
+Complete CI/CD integration guide covering GitHub Actions workflows, deployment pipeline integration, error handling, and performance monitoring.
+
+These guides provide the depth and detail needed for production deployment and advanced use cases of the TypeScript validation system.
