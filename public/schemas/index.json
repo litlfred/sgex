@@ -11,7 +11,7 @@
     "ValidationSummary",
     "actor-definition"
   ],
-  "generated": "2025-08-12T14:50:15.091Z",
+  "generated": "2025-08-12T15:39:29.460Z",
   "types": [
     "GitHubUser",
     "GitHubRepository",

@@ -74,7 +74,7 @@ class RuntimeValidationService {
     // FHIR ID format
     this.ajv.addFormat('fhir-id', {
       type: 'string', 
-      validate: (data: string) => /^[A-Za-z0-9\-\.]{1,64}$/.test(data)
+      validate: (data: string) => /^[A-Za-z0-9-.]{1,64}$/.test(data)
     });
 
     // DAK ID format

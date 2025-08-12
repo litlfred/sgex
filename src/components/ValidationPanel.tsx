@@ -172,7 +172,7 @@ const ValidationPanel: React.FC<ValidationPanelProps> = ({
     if (repository && profile && !isValidating) {
       runValidation('all');
     }
-  }, [repository?.name, repository?.owner?.login, selectedBranch]);
+  }, [repository?.name, repository?.owner?.login, selectedBranch, isValidating, profile, runValidation]);
 
   // Get total issues count for summary
   const getTotalIssues = (): number => {

@@ -19,7 +19,7 @@ const findElementLineNumber = (content: string, element: string, index: number):
   let foundCount = 0;
   
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes('businessRuleTask')) {
+    if (lines[i].includes(element)) {
       if (foundCount === index) {
         return i + 1;
       }

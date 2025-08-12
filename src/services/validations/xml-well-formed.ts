@@ -10,8 +10,8 @@ import { ValidationDefinition, ValidationContext, DAKValidationResult } from '..
 function isXMLContent(content: string): boolean {
   const trimmedContent = content.trim();
   return trimmedContent.startsWith('<?xml') || 
-         trimmedContent.startsWith('<') && 
-         (trimmedContent.includes('xmlns') || trimmedContent.includes('<?xml'));
+         (trimmedContent.startsWith('<') && 
+         (trimmedContent.includes('xmlns') || trimmedContent.includes('<?xml')));
 }
 
 const xmlWellFormed: ValidationDefinition = {
