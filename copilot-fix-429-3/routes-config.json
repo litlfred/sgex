@@ -2,8 +2,8 @@
   "deployType": "main",
   "dakComponents": {
     "dashboard": {
-      "component": "DAKDashboardWithFramework",
-      "path": "./components/DAKDashboardWithFramework"
+      "component": "DAKDashboard",
+      "path": "./components/DAKDashboard"
     },
     "testing-viewer": {
       "component": "TestingViewer", 
@@ -40,6 +40,10 @@
     "decision-support-logic": {
       "component": "DecisionSupportLogicView",
       "path": "./components/DecisionSupportLogicView"
+    },
+    "questionnaire-editor": {
+      "component": "QuestionnaireEditor",
+      "path": "./components/QuestionnaireEditor"
     }
   },
   "standardComponents": {
@@ -148,7 +152,6 @@
     { "path": "/test-framework-dashboard/:user/:repo/:branch", "component": "DAKDashboardWithFramework" }
   ],
   "deployedBranches": [
-    "main",
-    "deploy"
+    "main"
   ]
 }
