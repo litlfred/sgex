@@ -211,21 +211,29 @@ const LandingPageWithFramework = () => {
     setWarningMessage(null);
   };
 
-  if (!isAuthenticated) {
-    return (
-      <PageLayout pageName="landing" showHeader={false}>
-        <div className="landing-page">
-          <div className="landing-header">
-            <div className="who-branding">
-              <h1 className="clickable-title">SGEX Workbench</h1>
-              <p className="subtitle">WHO SMART Guidelines Exchange</p>
-            </div>
+  return (
+    <PageLayout pageName="landing" showHeader={false}>
+      <div className="landing-page">
+        <div className="landing-header">
+          <div className="who-branding">
+            <h1 className="clickable-title">SGEX Workbench</h1>
+            <p className="subtitle">WHO SMART Guidelines Exchange</p>
+          </div>
+          {!isAuthenticated ? (
             <div className="header-nav">
               <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
             </div>
-          </div>
-          
-          <div className="landing-content">
+          ) : (
+            <div className="user-info">
+              <img src={user?.avatar_url} alt="User avatar" className="user-avatar" />
+              <span>{user?.name || user?.login}</span>
+              <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+              <button onClick={handleLogout} className="logout-btn">Logout</button>
+            </div>
+          )}
+        </div>
+        
+        <div className="landing-content">
             {warningMessage && (
               <div className="warning-message">
                 <div className="warning-content">

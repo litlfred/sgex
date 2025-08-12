@@ -293,14 +293,6 @@ const OrganizationSelection = () => {
     });
   };
 
-  if (!profile || !sourceRepository || !action) {
-    return (
-      <PageLayout pageName="organization-selection">
-        <div>Redirecting...</div>
-      </PageLayout>
-    );
-  }
-
   const config = getActionConfig();
   
   // Create combined list of options
@@ -324,7 +316,10 @@ const OrganizationSelection = () => {
 
   return (
     <PageLayout pageName="organization-selection">
-      <div className="org-content">
+      {!profile || !sourceRepository || !action ? (
+        <div>Redirecting...</div>
+      ) : (
+        <div className="org-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
@@ -458,7 +453,7 @@ const OrganizationSelection = () => {
             )}
           </div>
         </div>
-      </div>
+      )}
     </PageLayout>
   );
 };

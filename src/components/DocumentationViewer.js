@@ -134,26 +134,16 @@ const DocumentationViewer = () => {
       .replace(/\n$/gim, '</p>');
   };
 
-  if (loading) {
-    return (
-      <PageLayout pageName="documentation-viewer">
-        <div className="documentation-viewer">
-          <div className="doc-content">
+  return (
+    <PageLayout pageName="documentation-viewer">
+      <div className="documentation-viewer">
+        <div className="doc-content">
+          {loading ? (
             <div className="loading">
               <div className="spinner"></div>
               <p>Loading documentation...</p>
             </div>
-          </div>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <PageLayout pageName="documentation-viewer">
-        <div className="documentation-viewer">
-          <div className="doc-content">
+          ) : error ? (
             <div className="error-state">
               <h2>Error</h2>
               <p>{error}</p>
@@ -161,17 +151,9 @@ const DocumentationViewer = () => {
                 Try Again
               </button>
             </div>
-          </div>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  return (
-    <PageLayout pageName="documentation-viewer">
-      <div className="documentation-viewer">
-        <div className="doc-content">
-        <div className="doc-sidebar">
+          ) : (
+            <>
+              <div className="doc-sidebar">
           <h3>Documentation</h3>
           <nav className="doc-menu">
             {(() => {
@@ -215,15 +197,15 @@ const DocumentationViewer = () => {
         </div>
 
         <div className="doc-main">
-          <article 
-            className="doc-article"
-            dangerouslySetInnerHTML={{ 
-              __html: renderMarkdown(content)
-            }}
-          />
+              <article 
+                className="doc-article"
+                dangerouslySetInnerHTML={{ 
+                  __html: renderMarkdown(content)
+                }}
+              />
+            </>
+          )}
         </div>
-      </div>
-      
       </div>
     </PageLayout>
   );
