@@ -294,7 +294,7 @@ export async function generateSchemasFromCLI(): Promise<void> {
     
   } catch (error) {
     console.error('Schema generation failed:', error);
-    process.exit(1);
+    (process as any).exit(1);
   }
 }
 
@@ -305,6 +305,6 @@ export const defaultSchemaGenerator = new SchemaGenerator({
 });
 
 // Run CLI if this file is executed directly
-if (require.main === module) {
+if (typeof require !== 'undefined' && (require as any).main === (module as any)) {
   generateSchemasFromCLI();
 }

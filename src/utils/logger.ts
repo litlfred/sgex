@@ -59,7 +59,7 @@ class Logger {
 
   constructor(config: LoggerConfig = {}) {
     // Check if we're in development mode
-    this.isDevelopment = config.isDevelopment ?? process.env.NODE_ENV === 'development';
+    this.isDevelopment = config.isDevelopment ?? (process.env as any).NODE_ENV === 'development';
     
     // Current log level (can be overridden via localStorage)
     this.currentLevel = this.isDevelopment ? this.LEVELS.DEBUG : this.LEVELS.ERROR;
