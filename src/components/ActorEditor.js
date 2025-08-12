@@ -420,16 +420,15 @@ const ActorEditor = () => {
               </>
             )}
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* FSH Preview Modal */}
-      {showPreview && (
-        <div 
-          className="modal-overlay" 
-          onClick={() => setShowPreview(false)}
-          role="presentation"
-        >
+        {/* FSH Preview Modal */}
+        {showPreview && (
+          <div 
+            className="modal-overlay" 
+            onClick={() => setShowPreview(false)}
+            role="presentation"
+          >
           <div 
             className="modal-content" 
             onClick={e => e.stopPropagation()}
@@ -460,10 +459,8 @@ const ActorEditor = () => {
                 📋 Copy to Clipboard
               </button>
             </div>
-          </div>
         </div>
         )}
-
       </div>
     </PageLayout>
   );
