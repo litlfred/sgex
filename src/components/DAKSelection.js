@@ -777,10 +777,18 @@ const DAKSelectionContent = () => {
                 <p>Found repositories will appear below as they are discovered:</p>
                 <div className="repo-grid">
                   {repositories.map((repo) => (
-                    <div 
+                    <button 
                       key={repo.id}
                       className={`repo-card ${selectedRepository?.id === repo.id ? 'selected' : ''} scanning-found`}
                       onClick={() => handleRepositorySelect(repo)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleRepositorySelect(repo);
+                        }
+                      }}
+                      aria-label={`Select ${repo.name} repository: ${repo.description || 'No description available'}`}
+                      aria-pressed={selectedRepository?.id === repo.id}
                     >
                       <div className="repo-header-info">
                         <h3>{repo.name} <span className="new-badge">✨ Found</span></h3>
@@ -829,7 +837,7 @@ const DAKSelectionContent = () => {
                           <span>✓ Selected</span>
                         </div>
                       )}
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -973,10 +981,18 @@ const DAKSelectionContent = () => {
               
               <div className="repo-grid">
                 {repositories.map((repo) => (
-                  <div 
+                  <button 
                     key={repo.id}
                     className={`repo-card ${selectedRepository?.id === repo.id ? 'selected' : ''}`}
                     onClick={() => handleRepositorySelect(repo)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleRepositorySelect(repo);
+                      }
+                    }}
+                    aria-label={`Select ${repo.name} repository: ${repo.description || 'No description available'}`}
+                    aria-pressed={selectedRepository?.id === repo.id}
                   >
                     <div className="repo-header-info">
                       <h3>{repo.name}</h3>
@@ -1025,7 +1041,7 @@ const DAKSelectionContent = () => {
                         <span>✓ Selected</span>
                       </div>
                     )}
-                  </div>
+                  </button>
                 ))}
               </div>
 

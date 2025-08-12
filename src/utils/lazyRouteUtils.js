@@ -207,13 +207,26 @@ function generateStandardRoutes(componentName, componentConfig) {
  * @returns {Array} Array of all Route elements
  */
 export function generateLazyRoutes() {
-  const config = window.getSGEXRouteConfig();
+  let config = null;
+  
+  // Try to get the configuration
+  if (typeof window !== 'undefined' && window.getSGEXRouteConfig) {
+    config = window.getSGEXRouteConfig();
+  }
   
   if (!config) {
-    console.warn('SGEX route configuration not loaded, falling back to minimal routes');
+    console.warn('SGEX route configuration not loaded, falling back to hardcoded routes for development');
+    
+    // Create fallback routes for development and testing
+    const DAKSelectionComponent = createLazyComponent('DAKSelection');
+    const WelcomePageComponent = createLazyComponent('WelcomePage');
+    const NotFoundComponent = createLazyComponent('NotFound');
+    
     return [
-      <Route key="fallback-home" path="/" element={<div>Loading...</div>} />,
-      <Route key="fallback-404" path="*" element={<div>Page not found</div>} />
+      <Route key="fallback-home" path="/" element={<WelcomePageComponent />} />,
+      <Route key="fallback-dak-selection" path="/dak-selection" element={<DAKSelectionComponent />} />,
+      <Route key="fallback-dak-selection-user" path="/dak-selection/:user" element={<DAKSelectionComponent />} />,
+      <Route key="fallback-404" path="*" element={<NotFoundComponent />} />
     ];
   }
 

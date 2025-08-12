@@ -185,6 +185,19 @@ body.theme-light .dak-selection {
   position: relative;
   background: var(--who-card-bg);
   backdrop-filter: blur(10px);
+  
+  /* Reset button styling */
+  display: block;
+  text-align: left;
+  font-family: inherit;
+  font-size: inherit;
+  
+  /* Ensure minimum touch target size for mobile accessibility */
+  min-height: 44px;
+  
+  /* Improve touch interaction */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .dak-selection .repo-card:hover {
@@ -192,6 +205,20 @@ body.theme-light .dak-selection {
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   transform: translateY(-2px);
   background: var(--who-hover-bg);
+}
+
+/* Add focus styles for keyboard accessibility */
+.dak-selection .repo-card:focus {
+  outline: 2px solid var(--who-blue);
+  outline-offset: 2px;
+  border-color: var(--who-blue);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Active state for touch feedback */
+.dak-selection .repo-card:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
 }
 
 .dak-selection .repo-card.selected {
@@ -878,6 +905,15 @@ body.theme-dark .rescan-btn:hover:not(:disabled) {
 
   .repo-card {
     padding: 1rem;
+    /* Ensure adequate touch target size on mobile */
+    min-height: 120px;
+  }
+  
+  /* Enhance touch interaction on mobile */
+  .dak-selection .repo-card:active {
+    background: var(--who-selected-bg);
+    transform: scale(0.98);
+    transition: all 0.1s ease;
   }
 
   .repo-stats {
