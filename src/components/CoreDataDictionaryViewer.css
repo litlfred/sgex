@@ -15,7 +15,7 @@
   padding: 2rem;
   background: var(--who-card-bg, white);
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px var(--who-shadow-light, rgba(0, 0, 0, 0.1));
 }
 
 .loading-content h2 {
@@ -35,7 +35,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--who-shadow-light, rgba(0, 0, 0, 0.1));
 }
 
 .who-branding h1 {
@@ -45,7 +45,7 @@
   cursor: pointer;
   transition: color 0.2s;
   font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 2px 4px var(--who-shadow-heavy, rgba(0, 0, 0, 0.3));
 }
 
 .who-branding h1:hover {
@@ -129,7 +129,7 @@
   padding: 2rem;
   border-radius: 12px;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--who-shadow-light, rgba(0, 0, 0, 0.1));
   display: flex;
   align-items: flex-start;
   gap: 1.5rem;
@@ -172,7 +172,7 @@
   border-radius: 12px;
   padding: 1rem 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--who-shadow-light, rgba(0, 0, 0, 0.1));
   text-align: center;
 }
 
@@ -212,7 +212,7 @@
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--who-shadow-light, rgba(0, 0, 0, 0.1));
 }
 
 .section h3 {
@@ -547,7 +547,7 @@
   background: var(--who-card-bg, white);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--who-shadow-light, rgba(0, 0, 0, 0.1));
   max-height: 500px;
   overflow-y: auto;
 }
@@ -604,7 +604,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--who-overlay-bg, rgba(0, 0, 0, 0.7));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -620,7 +620,7 @@
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 25px var(--who-shadow-medium, rgba(0, 0, 0, 0.2));
 }
 
 .modal-header {
