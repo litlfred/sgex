@@ -92,6 +92,7 @@ export const ALT_TEXT_KEYS = {
   ICON_BUG_REPORT: 'altText.icon.bugReport',
   ICON_SECURITY: 'altText.icon.security',
   ICON_ACTION: 'altText.icon.action',
+  ICON_DAK_COMPONENT: 'altText.icon.dakComponent',
   
   // Feature/workflow images
   IMAGE_AUTHORING: 'altText.image.authoring',

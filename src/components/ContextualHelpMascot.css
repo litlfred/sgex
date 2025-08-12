@@ -588,3 +588,84 @@
   align-items: center;
   gap: 8px;
 }
+
+/* Dark mode specific overrides for better help menu visibility */
+body.theme-dark .help-thought-bubble {
+  background: var(--who-dropdown-bg, #1a2380);
+  color: var(--who-text-primary, #ffffff);
+  border-color: var(--who-light-blue, #c0dcf2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+body.theme-dark .bubble-content {
+  background: var(--who-dropdown-bg, #1a2380);
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .bubble-tail {
+  background: var(--who-dropdown-bg, #1a2380);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .bubble-tail::before {
+  background: var(--who-dropdown-bg, #1a2380);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .bubble-tail::after {
+  background: var(--who-dropdown-bg, #1a2380);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .help-text {
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .help-text h4 {
+  color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .help-text .tip {
+  background: transparent;
+  border-left-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .help-text .tip strong {
+  color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .help-topic-btn {
+  background: var(--who-hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--who-text-primary, #ffffff);
+  border-color: var(--who-border-color, rgba(255, 255, 255, 0.2));
+}
+
+body.theme-dark .help-topic-btn:hover {
+  background: var(--who-dropdown-hover-bg, rgba(255, 255, 255, 0.15));
+  color: var(--who-light-blue, #c0dcf2);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .help-theme-toggle-btn {
+  background: var(--who-hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--who-text-primary, #ffffff);
+  border-color: var(--who-border-color, rgba(255, 255, 255, 0.2));
+}
+
+body.theme-dark .help-theme-toggle-btn:hover {
+  background: var(--who-dropdown-hover-bg, rgba(255, 255, 255, 0.15));
+  color: var(--who-light-blue, #c0dcf2);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .help-cache-btn {
+  background: var(--who-hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--who-text-primary, #ffffff);
+  border-color: var(--who-border-color, rgba(255, 255, 255, 0.2));
+}
+
+body.theme-dark .help-cache-btn:hover:not(:disabled) {
+  background: var(--who-dropdown-hover-bg, rgba(255, 255, 255, 0.15));
+  color: var(--who-light-blue, #c0dcf2);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
