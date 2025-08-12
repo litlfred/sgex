@@ -86,10 +86,57 @@ The following workflows were consolidated and removed:
 ## 🧪 Testing & Validation
 
 Both workflows include:
-- Build validation
+- Build validation with TypeScript type checking
+- JSON schema generation and validation
 - Path safety checks
 - Commit verification
 - Rollback capabilities
+
+### TypeScript Integration
+
+The deployment process now includes TypeScript-specific steps:
+
+#### Type Checking
+All deployments perform TypeScript type checking before building:
+```yaml
+- name: Type Check
+  run: npm run type-check
+```
+
+#### Schema Generation
+JSON schemas are automatically generated from TypeScript types during the build process:
+```yaml
+- name: Generate Schemas
+  run: npm run generate-schemas
+```
+
+This ensures that:
+- Type definitions are validated before deployment
+- JSON schemas are always up-to-date with TypeScript types
+- Runtime validation schemas are available in the deployed application
+
+#### Build Process
+The updated build process includes:
+1. Install dependencies
+2. TypeScript type checking
+3. JSON schema generation from TypeScript types
+4. React application build
+5. Deployment artifact creation
+
+Generated schemas are published to `public/docs/schemas/` and include:
+- `generated-schemas-tjs.json` - Schemas from typescript-json-schema
+- `generated-schemas-tsjsg.json` - Schemas from ts-json-schema-generator
+- Individual type schemas for runtime validation
+
+### Build Failure Handling
+
+If TypeScript type checking fails:
+- The deployment stops immediately
+- Error messages show specific type errors
+- No artifacts are deployed
+- The team is notified of type issues
+
+This ensures that only type-safe code reaches production environments.
 
 ## 📝 Usage Examples
 

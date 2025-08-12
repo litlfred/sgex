@@ -507,7 +507,13 @@ const DAKDashboardContent = () => {
 
     // For health-interventions (WHO Digital Library), allow access in read-only mode
     if (component.id === 'health-interventions') {
-      handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/health-interventions/${owner}/${repoName}/${selectedBranch}`
+        : `/health-interventions/${owner}/${repoName}`;
+      
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
@@ -559,8 +565,14 @@ const DAKDashboardContent = () => {
       return;
     }
 
-    // Navigate to generic component editor for other components
-    handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
+    // Navigate to component-specific routes for other components
+    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+    const repoName = repository.name;
+    const path = selectedBranch 
+      ? `/${component.id}/${owner}/${repoName}/${selectedBranch}`
+      : `/${component.id}/${owner}/${repoName}`;
+    
+    handleNavigationClick(event, path, navigate, navigationState);
   };
 
 
