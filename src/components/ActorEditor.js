@@ -420,6 +420,8 @@ const ActorEditor = () => {
               </>
             )}
           </div>
+        </div>
+      </div>
         )}
 
         {/* FSH Preview Modal */}
@@ -429,37 +431,38 @@ const ActorEditor = () => {
             onClick={() => setShowPreview(false)}
             role="presentation"
           >
-          <div 
-            className="modal-content" 
-            onClick={e => e.stopPropagation()}
-            role="dialog"
-            aria-labelledby="fsh-preview-title"
-            aria-modal="true"
-          >
-            <div className="modal-header">
-              <h3 id="fsh-preview-title">FSH Preview</h3>
-              <button 
-                onClick={() => setShowPreview(false)}
-                className="close-btn"
-              >
-                ✕
-              </button>
+            <div 
+              className="modal-content" 
+              onClick={e => e.stopPropagation()}
+              role="dialog"
+              aria-labelledby="fsh-preview-title"
+              aria-modal="true"
+            >
+              <div className="modal-header">
+                <h3 id="fsh-preview-title">FSH Preview</h3>
+                <button 
+                  onClick={() => setShowPreview(false)}
+                  className="close-btn"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="modal-body">
+                <pre className="fsh-preview">{fshPreview}</pre>
+              </div>
+              <div className="modal-footer">
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(fshPreview);
+                    alert('FSH copied to clipboard!');
+                  }}
+                  className="copy-btn"
+                >
+                  📋 Copy to Clipboard
+                </button>
+              </div>
             </div>
-            <div className="modal-body">
-              <pre className="fsh-preview">{fshPreview}</pre>
-            </div>
-            <div className="modal-footer">
-              <button 
-                onClick={() => {
-                  navigator.clipboard.writeText(fshPreview);
-                  alert('FSH copied to clipboard!');
-                }}
-                className="copy-btn"
-              >
-                📋 Copy to Clipboard
-              </button>
-            </div>
-        </div>
+          </div>
         )}
       </div>
     </PageLayout>
