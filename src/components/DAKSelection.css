@@ -91,8 +91,8 @@ body.theme-light .dak-selection {
 }
 
 .documentation-info {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--who-selected-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   padding: 1rem;
   margin-top: 1.5rem;
@@ -105,7 +105,7 @@ body.theme-light .dak-selection {
 .documentation-info p {
   margin: 0;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--who-text-secondary);
 }
 
 .documentation-info .doc-link {
@@ -358,9 +358,9 @@ body.theme-light .dak-selection {
   font-size: 0.9rem;
   font-style: italic;
   padding: 1rem;
-  background: rgba(0, 120, 212, 0.05);
+  background: var(--who-selected-bg);
   border-radius: 8px;
-  border: 1px solid rgba(0, 120, 212, 0.2);
+  border: 1px solid var(--who-border-color);
 }
 
 .direct-selection-note .note-icon {
@@ -377,8 +377,8 @@ body.theme-light .dak-selection {
 }
 
 .cache-info {
-  background: rgba(0, 120, 212, 0.1);
-  border: 1px solid rgba(0, 120, 212, 0.3);
+  background: var(--who-selected-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   padding: 0.75rem 1rem;
   display: flex;
@@ -402,8 +402,18 @@ body.theme-light .dak-selection {
   font-size: inherit;
 }
 
+/* Improve visibility in dark mode */
+body.theme-dark .rescan-link {
+  color: var(--who-blue-light);
+}
+
 .rescan-link:hover:not(:disabled) {
   color: var(--who-blue-light);
+}
+
+/* Better hover color for dark mode */
+body.theme-dark .rescan-link:hover:not(:disabled) {
+  color: #90caf9;
 }
 
 .rescan-link:disabled {
@@ -425,9 +435,23 @@ body.theme-light .dak-selection {
   backdrop-filter: blur(10px);
 }
 
+/* Improve visibility in dark mode */
+body.theme-dark .rescan-btn {
+  background: rgba(0, 120, 212, 0.5);
+  border: 1px solid rgba(0, 120, 212, 0.8);
+  color: #ffffff;
+}
+
 .rescan-btn:hover:not(:disabled) {
   background: rgba(0, 120, 212, 0.5);
   border-color: rgba(0, 120, 212, 0.7);
+}
+
+/* Better hover effect for dark mode */
+body.theme-dark .rescan-btn:hover:not(:disabled) {
+  background: rgba(0, 120, 212, 0.7);
+  border-color: rgba(0, 120, 212, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.3);
 }
 
 .rescan-btn:disabled {
@@ -477,14 +501,14 @@ body.theme-light .dak-selection {
 }
 
 .demo-info {
-  background: rgba(0, 120, 212, 0.1);
-  border: 1px solid rgba(0, 120, 212, 0.3);
+  background: var(--who-selected-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: white;
+  color: var(--who-text-primary);
   font-size: 0.9rem;
   backdrop-filter: blur(10px);
 }
@@ -876,4 +900,211 @@ body.theme-light .dak-selection {
     flex-direction: column;
     gap: 0.5rem;
   }
+}
+
+/* Scanning Errors Display */
+.scanning-errors {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.scanning-errors-summary {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 6px;
+}
+
+.error-summary h3,
+.scanning-errors-summary h4 {
+  color: var(--who-text-primary);
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.error-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.error-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+
+.error-item.rate-limit {
+  background: rgba(220, 53, 69, 0.1);
+  border-color: rgba(220, 53, 69, 0.3);
+}
+
+.error-item.network {
+  background: rgba(255, 193, 7, 0.1);
+  border-color: rgba(255, 193, 7, 0.3);
+}
+
+.error-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.error-details {
+  flex: 1;
+}
+
+.error-details strong {
+  color: var(--who-text-primary);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.error-help {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+  color: var(--who-text-secondary);
+  line-height: 1.4;
+}
+
+.error-types {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.error-type {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--who-text-secondary);
+}
+
+.retry-suggestion {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(0, 123, 255, 0.1);
+  border: 1px solid rgba(0, 123, 255, 0.2);
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.suggestion-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.retry-link {
+  background: none;
+  border: none;
+  color: var(--who-accent);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+  padding: 0;
+  margin: 0 0.25rem;
+  font-weight: 500;
+}
+
+.retry-link:hover {
+  color: var(--who-accent-hover);
+  text-decoration: none;
+}
+
+.retry-link:focus {
+  outline: 2px solid var(--who-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Dark mode adjustments for error displays */
+body.theme-dark .scanning-errors,
+body.theme-dark .scanning-errors-summary {
+  background: rgba(255, 193, 7, 0.15);
+  border-color: rgba(255, 193, 7, 0.4);
+}
+
+body.theme-dark .error-item.rate-limit {
+  background: rgba(220, 53, 69, 0.15);
+  border-color: rgba(220, 53, 69, 0.4);
+}
+
+body.theme-dark .error-item.network {
+  background: rgba(255, 193, 7, 0.15);
+  border-color: rgba(255, 193, 7, 0.4);
+}
+
+body.theme-dark .retry-suggestion {
+  background: rgba(0, 123, 255, 0.15);
+  border-color: rgba(0, 123, 255, 0.3);
+}
+
+/* WHO Authentication Notice */
+.who-auth-notice {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(0, 123, 255, 0.1);
+  border: 1px solid rgba(0, 123, 255, 0.3);
+  border-radius: 8px;
+  border-left: 4px solid var(--who-accent);
+}
+
+.who-auth-notice h4 {
+  color: var(--who-text-primary);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.who-auth-notice p {
+  color: var(--who-text-secondary);
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.auth-instructions {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-instructions ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.auth-instructions li {
+  margin-bottom: 0.5rem;
+  color: var(--who-text-secondary);
+}
+
+/* Dark mode adjustments for WHO auth notice */
+body.theme-dark .who-auth-notice {
+  background: rgba(0, 123, 255, 0.15);
+  border-color: rgba(0, 123, 255, 0.4);
+}
+
+body.theme-dark .auth-instructions {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
 }

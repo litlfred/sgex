@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { usePage, PAGE_TYPES } from './PageProvider';
-import BranchSelector from '../BranchSelector';
-import AccessBadge from './AccessBadge';
+import { usePage } from './PageProvider';
 import githubService from '../../services/githubService';
 import userAccessService from '../../services/userAccessService';
 import bookmarkService from '../../services/bookmarkService';
-import './PageHeader.css';
+import PreviewBadge from '../PreviewBadge';
 
 /**
  * Consistent header component for all pages
  */
 const PageHeader = () => {
   const { 
-    type, 
     pageName, 
     profile, 
     repository, 
@@ -60,12 +57,6 @@ const PageHeader = () => {
     navigate('/');
   };
 
-  const handleGitHubRepo = () => {
-    if (repository?.html_url) {
-      window.open(repository.html_url, '_blank');
-    }
-  };
-
   const handleGitHubUser = () => {
     // Always navigate to the authenticated user's GitHub profile, not the DAK owner's
     if (authenticatedUser?.html_url) {
@@ -108,8 +99,6 @@ const PageHeader = () => {
     return bookmarkService.getBookmarksGroupedByPage();
   };
 
-  const shouldShowGitHubRepo = type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET;
-  const shouldShowBranchSelector = type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET;
   const currentBookmark = getCurrentPageBookmark();
   const bookmarksGrouped = getBookmarksGrouped();
 
@@ -117,63 +106,35 @@ const PageHeader = () => {
     <header className="page-header">
       {/* Left side - Logo and context */}
       <div className="page-header-left">
-        <div className="sgex-logo" onClick={handleHomeNavigation}>
+        <button 
+          className="sgex-logo" 
+          onClick={handleHomeNavigation}
+          onKeyDown={(e) => e.key === 'Enter' || e.key === ' ' ? handleHomeNavigation() : null}
+          style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer' }}
+        >
           <h1>SGEX Workbench</h1>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-
+        </button>
+        
+        {/* Preview badge for non-main branches */}
+        <PreviewBadge />
       </div>
 
       {/* Right side - Navigation and user controls */}
       <div className="page-header-right">
-        {/* Access badge for DAK and Asset pages */}
-        {(type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && repository && (
-          <AccessBadge 
-            owner={repository.owner?.login || profile?.login}
-            repo={repository.name}
-            branch={branch}
-            className="header-access-badge"
-          />
-        )}
-        
-        {/* GitHub repository button (DAK and Asset pages) */}
-        {shouldShowGitHubRepo && repository && (
-          <button className="header-btn github-repo-btn" onClick={handleGitHubRepo}>
-            <svg className="github-icon" viewBox="0 0 16 16" width="16" height="16">
-              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-            </svg>
-            Repository
-          </button>
-        )}
-        
-        {/* Branch selector (DAK and Asset pages) */}
-        {shouldShowBranchSelector && repository && (
-          <div className="header-branch-selector">
-            <BranchSelector
-              repository={repository}
-              selectedBranch={branch}
-              onBranchChange={(newBranch) => {
-                // Update URL with new branch
-                const currentPath = window.location.pathname;
-                const pathParts = currentPath.split('/');
-                if (pathParts.length >= 5) {
-                  pathParts[5] = newBranch; // Replace branch part
-                  navigate(pathParts.join('/'));
-                }
-              }}
-              className="header-branch-selector-component"
-            />
-          </div>
-        )}
-        
         {/* User info and controls */}
         {(isAuthenticated || profile?.isDemo) && authenticatedUser ? (
           <div className="user-controls">
-            <div className="user-info" onClick={() => setShowUserDropdown(!showUserDropdown)}>
+            <button 
+              className="user-info" 
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setShowUserDropdown(!showUserDropdown)}
+              style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            >
               <img src={authenticatedUser.avatar_url} alt="User avatar" className="user-avatar" />
               <span className="user-name">{authenticatedUser.name || authenticatedUser.login}</span>
               <span className="dropdown-arrow">▼</span>
-            </div>
+            </button>
             {showUserDropdown && (
               <div className="user-dropdown">
                 <button className="dropdown-item" onClick={handleGitHubUser}>
@@ -202,10 +163,14 @@ const PageHeader = () => {
                 
                 {/* Bookmarks submenu */}
                 <div className="bookmarks-section">
-                  <div className="dropdown-item bookmarks-header" onClick={() => setShowBookmarkDropdown(!showBookmarkDropdown)}>
+                  <button 
+                    className="dropdown-item bookmarks-header" 
+                    onClick={() => setShowBookmarkDropdown(!showBookmarkDropdown)}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setShowBookmarkDropdown(!showBookmarkDropdown)}
+                  >
                     📖 Bookmarks
                     <span className="dropdown-arrow">{showBookmarkDropdown ? '▲' : '▼'}</span>
-                  </div>
+                  </button>
                   
                   {showBookmarkDropdown && (
                     <div className="bookmarks-dropdown">

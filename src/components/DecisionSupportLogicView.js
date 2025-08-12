@@ -1,20 +1,37 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import MDEditor from '@uiw/react-md-editor';
-import { PageLayout } from './framework';
-import './DecisionSupportLogicView.css';
+import { PageLayout, useDAKParams } from './framework';
+import { lazyLoadMDEditor } from '../utils/lazyRouteUtils';
+
+// Lazy markdown component using the utility
+const LazyMarkdown = ({ source }) => {
+  const [MarkdownComponent, setMarkdownComponent] = useState(null);
+  
+  useEffect(() => {
+    lazyLoadMDEditor().then(MDEditorModule => {
+      setMarkdownComponent(() => MDEditorModule.Markdown);
+    });
+  }, []);
+  
+  if (!MarkdownComponent) {
+    return <div>Loading markdown...</div>;
+  }
+  
+  return <MarkdownComponent source={source} />;
+};
 
 const DecisionSupportLogicView = () => {
-  const location = useLocation();
+  return (
+    <PageLayout pageName="decision-support-logic">
+      <DecisionSupportLogicViewContent />
+    </PageLayout>
+  );
+};
+
+const DecisionSupportLogicViewContent = () => {
   const navigate = useNavigate();
-  const params = useParams();
-  const { user, repo, branch } = params || {};
-  
-  // State from location or URL params
-  const [profile, setProfile] = useState(location.state?.profile || null);
-  const [repository, setRepository] = useState(location.state?.repository || null);
-  const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
+  const { profile, repository, branch: selectedBranch } = useDAKParams();
   
   // Component state
   const [loading, setLoading] = useState(true);
@@ -30,49 +47,6 @@ const DecisionSupportLogicView = () => {
   const [activeSection, setActiveSection] = useState('variables'); // 'variables' or 'tables'
   const [enhancedFullwidth, setEnhancedFullwidth] = useState(false);
   const [autoHide, setAutoHide] = useState(false);
-
-  // Initialize repository data if not available
-  const initializeData = useCallback(async () => {
-    // Only initialize if we have URL params but missing data
-    if (!profile && !repository && user && repo) {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Create profile for public repository access (not demo mode)
-        // This allows access to real repositories without authentication
-        const publicProfile = {
-          login: user,
-          name: user.charAt(0).toUpperCase() + user.slice(1),
-          avatar_url: `https://github.com/${user}.png`,
-          type: 'User',
-          isDemo: false  // This is public access to a real repository
-        };
-
-        const publicRepository = {
-          name: repo,
-          full_name: `${user}/${repo}`,
-          owner: { login: user },
-          default_branch: branch || 'main',
-          html_url: `https://github.com/${user}/${repo}`,
-          isDemo: false  // This is a real repository
-        };
-
-        setProfile(publicProfile);
-        setRepository(publicRepository);
-        setSelectedBranch(branch || 'main');
-      } catch (err) {
-        console.error('Error initializing data:', err);
-        setError('Failed to load data. Please check the URL or try again.');
-      }
-    }
-    setLoading(false);
-  }, [user, repo, branch, profile, repository]);
-
-  useEffect(() => {
-    initializeData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initializeData]);
 
   // Load DAK decision support data
   useEffect(() => {
@@ -707,7 +681,7 @@ define "Contraindication Present":
   }
 
   return (
-    <PageLayout pageName="decision-support-logic">
+    <>
       <div className={`decision-support-view ${enhancedFullwidth ? 'enhanced-fullwidth' : ''} ${autoHide ? 'auto-hide' : ''}`}>
       <div className="view-content">
 
@@ -819,7 +793,9 @@ define "Contraindication Present":
                         <td>
                           {variable.Definition && (
                             <div className="definition-content">
-                              <MDEditor.Markdown source={variable.Definition} />
+                              <Suspense fallback={<div>Loading...</div>}>
+                                <LazyMarkdown source={variable.Definition} />
+                              </Suspense>
                             </div>
                           )}
                         </td>
@@ -1089,7 +1065,7 @@ define "Contraindication Present":
         </div>
       )}
       </div>
-    </PageLayout>
+    </>
   );
 };
 

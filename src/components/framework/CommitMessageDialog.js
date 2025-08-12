@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import './CommitMessageDialog.css';
 
 /**
  * Dialog for entering commit message when saving to GitHub
@@ -61,10 +60,20 @@ const CommitMessageDialog = ({
   if (!isOpen) return null;
 
   return (
-    <div className="commit-dialog-overlay" onClick={handleOverlayClick}>
-      <div className="commit-dialog" onKeyDown={handleKeyDown}>
+    <div 
+      className="commit-dialog-overlay" 
+      onClick={handleOverlayClick}
+      role="presentation"
+    >
+      <div 
+        className="commit-dialog" 
+        onKeyDown={handleKeyDown}
+        role="dialog"
+        aria-labelledby="commit-dialog-title"
+        aria-modal="true"
+      >
         <div className="commit-dialog-header">
-          <h3>Commit Changes to GitHub</h3>
+          <h3 id="commit-dialog-title">Commit Changes to GitHub</h3>
           <button 
             className="close-button"
             onClick={onCancel}

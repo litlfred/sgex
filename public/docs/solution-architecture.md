@@ -118,7 +118,7 @@ src/
 - Consistent terminology from WHO documentation
 
 **Home Page Layout:**
-- Dashboard/grid layout featuring 8 DAK components
+- Dashboard/grid layout featuring 9 DAK components
 - Each component as navigable card/tile
 - Visual distinction between Level 2 and Level 3 content
 - Clear component identification with WHO-provided icons
@@ -137,6 +137,12 @@ src/
 - Custom WHO-branded renderers for specialized controls
 - Consistent validation and error handling
 
+**TypeScript Integration:**
+- JSON Schemas automatically generated from TypeScript type definitions
+- Runtime validation using AJV with TypeScript-generated schemas
+- Type-safe form data handling throughout the application
+- Compile-time type checking for schema consistency
+
 **Workflow Schemas:**
 - [`dak-action-form.json`](../src/schemas/dak-action-form.json) - DAK action selection (edit/fork/create)
 - [`dak-selection-form.json`](../src/schemas/dak-selection-form.json) - Repository selection with SMART Guidelines filtering
@@ -144,21 +150,69 @@ src/
 - [`dak-config-form.json`](../src/schemas/dak-config-form.json) - DAK configuration and sushi-config.yaml parameters
 
 **Implementation Pattern:**
-```javascript
-// Example JSON Forms integration
+```typescript
+// Example JSON Forms integration with TypeScript
 import { JsonForms } from '@jsonforms/react';
 import { materialRenderers } from '@jsonforms/material-renderers';
+import { validateAndCast } from '../services/runtimeValidationService';
+import { DAKConfigData } from '../types/core';
 
-const DAKComponentForm = ({ schema, uischema, data, onChange }) => (
-  <JsonForms
-    schema={schema}
-    uischema={uischema}
-    data={data}
-    renderers={[...materialRenderers, ...whoCustomRenderers]}
-    onChange={onChange}
-  />
-);
+interface DAKComponentFormProps {
+  schema: any;
+  uischema: any;
+  data: DAKConfigData;
+  onChange: (data: DAKConfigData) => void;
+}
+
+const DAKComponentForm: React.FC<DAKComponentFormProps> = ({ 
+  schema, 
+  uischema, 
+  data, 
+  onChange 
+}) => {
+  const handleChange = ({ data: newData }: { data: any }) => {
+    // Validate data against TypeScript types
+    const validatedData = validateAndCast<DAKConfigData>('DAKConfigData', newData);
+    onChange(validatedData);
+  };
+
+  return (
+    <JsonForms
+      schema={schema}
+      uischema={uischema}
+      data={data}
+      renderers={[...materialRenderers, ...whoCustomRenderers]}
+      onChange={handleChange}
+    />
+  );
+};
 ```
+
+### 3.6 TypeScript Architecture
+
+**Migration Strategy:**
+- Phased migration from JavaScript to TypeScript
+- Incremental type adoption with gradual strictness
+- Automated JSON schema generation from TypeScript types
+- Runtime validation bridge between compile-time and runtime safety
+
+**Type System:**
+- Comprehensive type definitions in `src/types/core.ts`
+- GitHub API types for repository and user data
+- DAK-specific types for SMART Guidelines structures
+- Validation framework types for runtime safety
+
+**Runtime Validation:**
+- AJV-based JSON schema validation
+- Custom validation formats for GitHub and DAK data
+- Type-safe casting with runtime verification
+- Batch validation for performance optimization
+
+**Schema Generation:**
+- Automated generation during build process
+- Published schemas in `public/docs/schemas/`
+- Developer documentation from type definitions
+- CI/CD integration for schema validation
 
 ## 4. GitHub Services Integration
 

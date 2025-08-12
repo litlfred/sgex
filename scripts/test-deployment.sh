@@ -69,6 +69,14 @@ echo "-------------------------"
 
 echo "Testing branch-specific build..."
 export GITHUB_REF_NAME="test-branch"
+
+# Fetch build script from deploy branch (if available)
+if git show-ref --verify --quiet refs/remotes/origin/deploy; then
+    echo "Fetching build script from deploy branch..."
+    git fetch origin deploy
+    git checkout origin/deploy -- scripts/build-multi-branch.js
+fi
+
 if node scripts/build-multi-branch.js branch > /dev/null 2>&1; then
     echo "✅ Branch-specific build: Success"
     if [[ -f "build/index.html" ]]; then
@@ -82,16 +90,20 @@ fi
 
 echo ""
 echo "Testing root landing page build..."
+
+# Note: Landing page is now handled by React components
+# (formerly public/branch-listing.html, now React-based)
+
 if node scripts/build-multi-branch.js root > /dev/null 2>&1; then
     echo "✅ Root landing page build: Success"
     if [[ -f "build/index.html" ]]; then
         echo "✅ Root build produces index.html"
         
-        # Check if the built HTML contains landing page elements
-        if grep -q "branch-listing" build/index.html; then
-            echo "✅ Root build contains landing page structure"
+        # Check if the built HTML contains React root element
+        if grep -q "id=\"root\"" build/index.html; then
+            echo "✅ Root build contains React application structure"
         else
-            echo "⚠️  Root build may not contain expected landing page structure"
+            echo "⚠️  Root build may not contain expected React structure"
         fi
     else
         echo "❌ Root build missing index.html"
@@ -123,24 +135,24 @@ echo ""
 echo "🧪 Test 4: Component validation"
 echo "------------------------------"
 
-echo "Testing BranchListing component..."
-if [[ -f "src/components/BranchListing.js" ]] && [[ -f "src/components/BranchListing.css" ]]; then
-    echo "✅ BranchListing component files exist"
+echo "Testing deployment components..."
+if [[ -f "src/components/BranchListingPage.js" ]] && [[ -f "public/sgex-mascot.png" ]]; then
+    echo "✅ React-based landing page components exist"
     
-    # Check for key elements in component
-    if grep -q "GitHub API" src/components/BranchListing.js; then
-        echo "✅ Component includes GitHub API integration"
+    # Check for key elements in React component
+    if grep -q "GitHub API\|githubService" src/components/BranchListingPage.js; then
+        echo "✅ Landing page includes GitHub API integration"
     fi
     
-    if grep -q "branch-card" src/components/BranchListing.css; then
-        echo "✅ Component includes card styling"
+    if grep -q "branch.*card\|BranchCard" src/components/BranchListingPage.js; then
+        echo "✅ Landing page includes card styling"
     fi
     
-    if grep -q "safeName" src/components/BranchListing.js; then
-        echo "✅ Component handles safe branch names"
+    if grep -q "safeBranchName\|sanitize.*branch" src/components/BranchListingPage.js; then
+        echo "✅ Landing page handles safe branch names"
     fi
 else
-    echo "❌ BranchListing component files missing"
+    echo "⚠️  React-based landing page components not found"
 fi
 
 # Test 5: Workflow file validation
@@ -153,8 +165,8 @@ if [[ -f ".github/workflows/pages.yml" ]]; then
     echo "✅ Workflow file exists"
     
     # Check for key safety features
-    if grep -q "readlink -f" .github/workflows/pages.yml; then
-        echo "✅ Workflow includes readlink validation"
+    if grep -q "Safety validation failed" .github/workflows/pages.yml; then
+        echo "✅ Workflow includes safety validation"
     fi
     
     if grep -q "git rm -rf" .github/workflows/pages.yml; then
@@ -167,6 +179,10 @@ if [[ -f ".github/workflows/pages.yml" ]]; then
     
     if grep -q "safe_branch_name" .github/workflows/pages.yml; then
         echo "✅ Workflow handles safe branch names"
+    fi
+    
+    if grep -q "current-branch-backup" .github/workflows/pages.yml; then
+        echo "✅ Workflow includes branch directory backup protection"
     fi
 else
     echo "❌ Workflow file missing"

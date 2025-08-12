@@ -1,0 +1,305 @@
+/**
+ * GitHub Service - TypeScript Implementation
+ * Provides comprehensive GitHub API integration for SGEX Workbench
+ */
+
+import type {
+  GitHubUser,
+  GitHubRepository,
+  AuthenticationState,
+  TokenValidationResult,
+  TokenFormatValidation,
+  GitHubPermissions,
+  GitHubRateLimit,
+  GitHubApiResponse,
+  DAKRepository,
+  DAKValidationResult,
+  SushiConfig,
+  Logger as LoggerType,
+  AsyncResult,
+  ServiceResponse
+} from '../types/core';
+
+import { lazyLoadOctokit } from '../utils/lazyRouteUtils';
+import { processConcurrently } from '../utils/concurrency';
+import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
+import secureTokenStorage from './secureTokenStorage';
+import logger from '../utils/logger';
+
+// Type for Octokit instance (dynamic import)
+type OctokitInstance = any;
+
+class GitHubService {
+  private octokit: OctokitInstance | null = null;
+  private isAuthenticated: boolean = false;
+  private permissions: GitHubPermissions | null = null;
+  private tokenType: 'classic' | 'fine-grained' | 'oauth' | null = null;
+  private readonly logger: LoggerType;
+
+  constructor() {
+    this.logger = logger.getLogger('GitHubService');
+    this.logger.debug('GitHubService instance created');
+  }
+
+  /**
+   * Helper method to create Octokit instance with lazy loading
+   */
+  private async createOctokitInstance(auth: string | null = null): Promise<OctokitInstance> {
+    const Octokit = await lazyLoadOctokit();
+    return new Octokit(auth ? { auth } : {});
+  }
+
+  /**
+   * Initialize with a GitHub token (supports both OAuth and PAT tokens)
+   */
+  async authenticate(token: string): Promise<boolean> {
+    const startTime = Date.now();
+    this.logger.auth('Starting authentication', {
+      tokenProvided: !!token,
+      tokenMask: token ? secureTokenStorage.maskToken(token) : 'none'
+    });
+
+    try {
+      // Validate token format using SecureTokenStorage
+      const validation: TokenFormatValidation = secureTokenStorage.validateTokenFormat(token);
+      if (!validation.isValid) {
+        this.logger.warn('Token validation failed during authentication', {
+          reason: validation.reason,
+          tokenMask: secureTokenStorage.maskToken(token)
+        });
+        this.isAuthenticated = false;
+        return false;
+      }
+
+      // Lazy load Octokit to reduce initial bundle size
+      this.octokit = await this.createOctokitInstance(validation.token!);
+      this.isAuthenticated = true;
+      this.tokenType = validation.type as 'classic' | 'fine-grained';
+
+      // Store token securely
+      const stored = secureTokenStorage.storeToken(validation.token!);
+      if (!stored) {
+        this.logger.warn('Failed to store token securely, authentication will not persist');
+      }
+
+      const duration = Date.now() - startTime;
+      this.logger.auth('Authentication successful', {
+        duration,
+        tokenType: this.tokenType,
+        tokenMask: secureTokenStorage.maskToken(token),
+        securelyStored: stored
+      });
+      this.logger.performance('GitHub authentication', duration);
+
+      return true;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.auth('Authentication failed', {
+        error: error instanceof Error ? error.message : String(error),
+        duration,
+        tokenMask: secureTokenStorage.maskToken(token)
+      });
+      console.error('Failed to authenticate with GitHub:', error);
+      this.isAuthenticated = false;
+      secureTokenStorage.clearToken(); // Clear any partially stored data
+      return false;
+    }
+  }
+
+  /**
+   * Initialize with an existing Octokit instance (for OAuth flow)
+   */
+  authenticateWithOctokit(octokitInstance: OctokitInstance): boolean {
+    this.logger.auth('Starting OAuth authentication with Octokit instance');
+
+    try {
+      this.octokit = octokitInstance;
+      this.isAuthenticated = true;
+      this.tokenType = 'oauth';
+
+      this.logger.auth('OAuth authentication successful', { tokenType: this.tokenType });
+      return true;
+    } catch (error) {
+      this.logger.auth('OAuth authentication failed', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+      console.error('Failed to authenticate with Octokit instance:', error);
+      this.isAuthenticated = false;
+      return false;
+    }
+  }
+
+  /**
+   * Initialize authentication from securely stored token
+   */
+  async initializeFromStoredToken(): Promise<boolean> {
+    this.logger.auth('Attempting to initialize from stored token');
+
+    try {
+      const storedToken = secureTokenStorage.retrieveToken();
+      if (!storedToken) {
+        this.logger.auth('No stored token found');
+        return false;
+      }
+
+      const success = await this.authenticate(storedToken);
+      if (success) {
+        this.logger.auth('Successfully initialized from stored token');
+      } else {
+        this.logger.auth('Failed to initialize from stored token, clearing stored data');
+        secureTokenStorage.clearToken();
+      }
+
+      return success;
+    } catch (error) {
+      this.logger.auth('Error during stored token initialization', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+      secureTokenStorage.clearToken();
+      return false;
+    }
+  }
+
+  /**
+   * Get current authentication state
+   */
+  getAuthenticationState(): AuthenticationState {
+    return {
+      isAuthenticated: this.isAuthenticated,
+      tokenType: this.tokenType,
+      token: this.isAuthenticated ? secureTokenStorage.retrieveToken() || undefined : undefined,
+      scopes: [], // Will be populated when we fetch user info
+      lastValidated: this.isAuthenticated ? new Date().toISOString() : undefined
+    };
+  }
+
+  /**
+   * Validate current token and get user information
+   */
+  async validateToken(): Promise<TokenValidationResult> {
+    if (!this.isAuthenticated || !this.octokit) {
+      return {
+        isValid: false,
+        tokenType: 'classic'
+      };
+    }
+
+    const startTime = Date.now();
+    this.logger.auth('Validating token');
+
+    try {
+      // Get current user information
+      const userResponse = await this.octokit.rest.users.getAuthenticated();
+      const user: GitHubUser = userResponse.data;
+
+      // Get rate limit information to determine token type
+      const rateLimitResponse = await this.octokit.rest.rateLimit.get();
+      const rateLimit = rateLimitResponse.data;
+
+      // Determine token type based on rate limit structure
+      this.tokenType = rateLimit.resources.core ? 'classic' : 'fine-grained';
+
+      const duration = Date.now() - startTime;
+      this.logger.auth('Token validation successful', {
+        user: user.login,
+        tokenType: this.tokenType,
+        duration,
+        rateLimit: {
+          limit: rateLimit.resources.core?.limit || rateLimit.rate?.limit,
+          remaining: rateLimit.resources.core?.remaining || rateLimit.rate?.remaining,
+          reset: rateLimit.resources.core?.reset || rateLimit.rate?.reset
+        }
+      });
+      this.logger.performance('GitHub token validation', duration);
+
+      return {
+        isValid: true,
+        user,
+        tokenType: this.tokenType,
+        rateLimit: {
+          limit: rateLimit.resources.core?.limit || rateLimit.rate?.limit || 0,
+          remaining: rateLimit.resources.core?.remaining || rateLimit.rate?.remaining || 0,
+          reset: rateLimit.resources.core?.reset || rateLimit.rate?.reset || 0
+        }
+      };
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.auth('Token validation failed', {
+        error: error instanceof Error ? error.message : String(error),
+        duration
+      });
+
+      // Clear authentication on validation failure
+      this.isAuthenticated = false;
+      this.octokit = null;
+      secureTokenStorage.clearToken();
+
+      return {
+        isValid: false,
+        tokenType: this.tokenType || 'classic'
+      };
+    }
+  }
+
+  /**
+   * Get current user information
+   */
+  async getCurrentUser(): Promise<ServiceResponse<GitHubUser>> {
+    if (!this.isAuthenticated || !this.octokit) {
+      return {
+        success: false,
+        error: 'Not authenticated'
+      };
+    }
+
+    try {
+      const response = await this.octokit.rest.users.getAuthenticated();
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      this.logger.apiError('GET', '/user', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get current user'
+      };
+    }
+  }
+
+  /**
+   * Check if service is authenticated
+   */
+  get authenticated(): boolean {
+    return this.isAuthenticated;
+  }
+
+  /**
+   * Get token type
+   */
+  get getTokenType(): 'classic' | 'fine-grained' | 'oauth' | null {
+    return this.tokenType;
+  }
+
+  /**
+   * Sign out and clear authentication
+   */
+  signOut(): void {
+    this.logger.auth('Signing out');
+    this.isAuthenticated = false;
+    this.octokit = null;
+    this.permissions = null;
+    this.tokenType = null;
+    secureTokenStorage.clearToken();
+  }
+
+  // TODO: Continue with repository methods, DAK validation, etc.
+  // This is Part 1 of the GitHub Service migration - authentication and user management
+}
+
+// Export singleton instance to maintain backward compatibility
+const githubService = new GitHubService();
+export default githubService;
+
+// Also export the class for testing and advanced usage
+export { GitHubService };

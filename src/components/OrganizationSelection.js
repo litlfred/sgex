@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout } from './framework';
-import './OrganizationSelection.css';
 
 const OrganizationSelection = () => {
   const location = useLocation();
@@ -294,14 +293,6 @@ const OrganizationSelection = () => {
     });
   };
 
-  if (!profile || !sourceRepository || !action) {
-    return (
-      <PageLayout pageName="organization-selection">
-        <div>Redirecting...</div>
-      </PageLayout>
-    );
-  }
-
   const config = getActionConfig();
   
   // Create combined list of options
@@ -325,7 +316,10 @@ const OrganizationSelection = () => {
 
   return (
     <PageLayout pageName="organization-selection">
-      <div className="org-content">
+      {!profile || !sourceRepository || !action ? (
+        <div>Redirecting...</div>
+      ) : (
+        <div className="org-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
@@ -459,7 +453,8 @@ const OrganizationSelection = () => {
             )}
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </PageLayout>
   );
 };

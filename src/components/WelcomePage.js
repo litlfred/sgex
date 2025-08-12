@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import CollaborationModal from './CollaborationModal';
+import HelpModal from './HelpModal';
+import helpContentService from '../services/helpContentService';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
-import './WelcomePage.css';
+import useThemeImage from '../hooks/useThemeImage';
+import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const WelcomePage = () => {
+  const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showCollaborationModal, setShowCollaborationModal] = useState(false);
+  const [showPATHelp, setShowPATHelp] = useState(false);
   const [warningMessage, setWarningMessage] = useState(null);
   const [tokenName, setTokenName] = useState('');
   const [patToken, setPatToken] = useState('');
@@ -17,6 +23,11 @@ const WelcomePage = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Theme-aware image paths
+  const mascotImage = useThemeImage('sgex-mascot.png');
+  const authoringImage = useThemeImage('authoring.png');
+  const collaborationImage = useThemeImage('collaboration.png');
 
   // Initial authentication check - runs once on mount
   useEffect(() => {
@@ -178,7 +189,7 @@ const WelcomePage = () => {
         <div className="welcome-hero">
           <div className="welcome-intro">
             <div className="welcome-mascot">
-              <img src="/sgex-mascot.png" alt="SGEX Workbench Helper" />
+              <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Workbench Helper')} />
             </div>
             <div className="welcome-text">
               <h1>SGEX Workbench</h1>
@@ -192,13 +203,17 @@ const WelcomePage = () => {
 
         <div className="welcome-cards">
           <div className="card-grid">
-            {/* Collaboration Card */}
-            <div className="action-card collaboration-card" onClick={handleCollaborationOpen}>
+            {/* Authoring Card - Always show */}
+            <button 
+              className="action-card authoring-card" 
+              onClick={handleAuthoringClick}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleAuthoringClick()}
+            >
               <div className="card-icon">
-                <img src="/collaboration.png" alt="Collaboration" />
+                <img src={authoringImage} alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_AUTHORING, 'Authoring')} />
               </div>
-              <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
-            </div>
+              <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
+            </button>
 
             {/* PAT Login + Demo Card (Middle) - Only show when not authenticated */}
             {!isAuthenticated && (
@@ -236,6 +251,15 @@ const WelcomePage = () => {
                     </button>
                   </form>
                   {patError && <div className="pat-error">{patError}</div>}
+                  <div className="pat-help-link">
+                    <button 
+                      type="button"
+                      className="pat-help-btn" 
+                      onClick={() => setShowPATHelp(true)}
+                    >
+                      📖 Help creating a PAT
+                    </button>
+                  </div>
                 </div>
 
                 {/* Demo Section */}
@@ -251,19 +275,32 @@ const WelcomePage = () => {
               </div>
             )}
 
-            {/* Authoring Card - Always show */}
-            <div className="action-card authoring-card" onClick={handleAuthoringClick}>
+            {/* Collaboration Card */}
+            <button 
+              className="action-card collaboration-card" 
+              onClick={handleCollaborationOpen}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleCollaborationOpen()}
+            >
               <div className="card-icon">
-                <img src="/authoring.png" alt="Authoring" />
+                <img src={collaborationImage} alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_COLLABORATION, 'Collaboration')} />
               </div>
-              <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
-            </div>
+              <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
+            </button>
           </div>
         </div>
 
         {/* Collaboration Modal */}
         {showCollaborationModal && (
           <CollaborationModal onClose={handleCollaborationClose} />
+        )}
+
+        {/* PAT Help Modal */}
+        {showPATHelp && (
+          <HelpModal
+            helpTopic={helpContentService.getHelpTopic('github-pat-setup')}
+            contextData={{ pageId: 'welcome' }}
+            onClose={() => setShowPATHelp(false)}
+          />
         )}
       </div>
     </PageLayout>

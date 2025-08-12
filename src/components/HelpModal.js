@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import useThemeImage from '../hooks/useThemeImage';
 import IssueCreationModal from './IssueCreationModal';
 import githubService from '../services/githubService';
+import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 import './HelpModal.css';
 
 const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
+  const { t } = useTranslation();
   const [showMenu, setShowMenu] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showIssueCreationModal, setShowIssueCreationModal] = useState(false);
   const [issueCreationType, setIssueCreationType] = useState('bug');
   const [issueRepository, setIssueRepository] = useState(null);
+
+  // Theme-aware mascot image
+  const mascotImage = useThemeImage('sgex-mascot.png');
 
   // Set up global reference for inline onclick handlers
   useEffect(() => {
@@ -131,7 +138,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
 
         const fallbackModal = document.createElement('div');
         fallbackModal.style.cssText = `
-          background: white;
+          background: var(--who-card-bg, white);
           border-radius: 8px;
           padding: 20px;
           max-width: 500px;
@@ -150,10 +157,10 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
             border: none;
             font-size: 24px;
             cursor: pointer;
-            color: #666;
+            color: var(--who-text-secondary, #666);
           ">×</button>
-          <h3 style="margin-top: 0; color: #333;">${fallback.title}</h3>
-          <div style="color: #555; line-height: 1.5;">${fallback.message}</div>
+          <h3 style="margin-top: 0; color: var(--who-text-primary, #333);">${fallback.title}</h3>
+          <div style="color: var(--who-text-primary, #555); line-height: 1.5;">${fallback.message}</div>
         `;
 
         fallbackOverlay.appendChild(fallbackModal);
@@ -392,7 +399,7 @@ Best regards,
         content: helpTopic.type === 'slideshow' ? renderSlideshow() : (
           <div className="help-content">
             <div className="mascot-message">
-              <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="help-mascot" />
+              <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} className="help-mascot" />
               <div className="message-bubble">
                 <div dangerouslySetInnerHTML={{ __html: helpTopic.content }} />
               </div>
@@ -411,7 +418,7 @@ Best regards,
           content: (
             <div className="help-content">
               <div className="mascot-message">
-                <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="help-mascot" />
+                <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} className="help-mascot" />
                 <div className="message-bubble">
                   <p>SGEX Workbench uses GitHub Personal Access Tokens for secure authentication!</p>
                   <p><strong>How it works:</strong></p>
@@ -434,7 +441,7 @@ Best regards,
           content: (
             <div className="help-content">
               <div className="mascot-message">
-                <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="help-mascot" />
+                <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} className="help-mascot" />
                 <div className="message-bubble">
                   <p>Hi! I'm here to help you with the SGEX Workbench.</p>
                   <p>Use the menu in the top right to get additional support options.</p>
@@ -447,6 +454,22 @@ Best regards,
   };
 
   const { title, content } = getHelpContent();
+
+  // Show bug report form if requested
+  if (showBugReportForm) {
+    return (
+      <div className="help-modal-overlay bug-report-overlay" onClick={handleOverlayClick}>
+        <BugReportForm 
+          onClose={() => {
+            setShowBugReportForm(false);
+            // Close the main modal after successful submission or cancel
+            onClose();
+          }}
+          contextData={contextData}
+        />
+      </div>
+    );
+  }
 
   return (
     <>

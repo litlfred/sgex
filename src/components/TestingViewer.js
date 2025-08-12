@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { useNavigate } from 'react-router-dom';
+import { lazyLoadSyntaxHighlighter, lazyLoadSyntaxHighlighterStyles } from '../utils/lazyRouteUtils';
 import githubService from '../services/githubService';
-import { PageLayout } from './framework';
+import { PageLayout, useDAKParams } from './framework';
 import FeatureFileEditor from './FeatureFileEditor';
-import './TestingViewer.css';
 
 // Demo feature files data for when in demo mode
 const DEMO_FEATURE_FILES = [
@@ -141,9 +139,8 @@ const DEMO_FEATURE_FILES = [
 ];
 
 const TestingViewer = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const { profile, repository, selectedBranch } = location.state || {};
+  const { profile, repository, branch } = useDAKParams();
 
   const [featureFiles, setFeatureFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -154,6 +151,26 @@ const TestingViewer = () => {
   const [showEditor, setShowEditor] = useState(false);
   const [editorFile, setEditorFile] = useState(null);
   const [editorContent, setEditorContent] = useState('');
+  const [SyntaxHighlighter, setSyntaxHighlighter] = useState(null);
+  const [syntaxStyle, setSyntaxStyle] = useState(null);
+
+  // Lazy load syntax highlighter components
+  useEffect(() => {
+    const loadSyntaxHighlighter = async () => {
+      try {
+        const [highlighter, style] = await Promise.all([
+          lazyLoadSyntaxHighlighter(),
+          lazyLoadSyntaxHighlighterStyles()
+        ]);
+        setSyntaxHighlighter(() => highlighter);
+        setSyntaxStyle(style);
+      } catch (error) {
+        console.error('Failed to load syntax highlighter:', error);
+      }
+    };
+
+    loadSyntaxHighlighter();
+  }, []);
 
   useEffect(() => {
     const fetchFeatureFiles = async () => {
@@ -213,7 +230,7 @@ const TestingViewer = () => {
           owner,
           repoName,
           'input/testing',
-          selectedBranch || repository.default_branch || 'main'
+          branch || repository.default_branch || 'main'
         );
 
         // Filter for .feature files
@@ -240,7 +257,7 @@ const TestingViewer = () => {
     };
 
     fetchFeatureFiles();
-  }, [profile, repository, selectedBranch]);
+  }, [profile, repository, branch]);
 
   const handleViewFile = async (file) => {
     try {
@@ -329,9 +346,7 @@ const TestingViewer = () => {
   };
 
   const handleBack = () => {
-    navigate('/dashboard', { 
-      state: { profile, repository, selectedBranch } 
-    });
+    navigate(`/dashboard/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
   };
 
   const renderModal = () => {
@@ -350,19 +365,35 @@ const TestingViewer = () => {
             </button>
           </div>
           <div className="testing-modal-content">
-            <SyntaxHighlighter
-              language="gherkin"
-              style={oneLight}
-              customStyle={{
-                margin: 0,
-                borderRadius: '4px',
-                fontSize: '14px',
-                lineHeight: '1.5',
-                minHeight: '400px'
-              }}
-            >
-              {fileContent}
-            </SyntaxHighlighter>
+            {SyntaxHighlighter && syntaxStyle ? (
+              <SyntaxHighlighter
+                language="gherkin"
+                style={syntaxStyle}
+                customStyle={{
+                  margin: 0,
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  lineHeight: '1.5',
+                  minHeight: '400px'
+                }}
+              >
+                {fileContent}
+              </SyntaxHighlighter>
+            ) : (
+              <div className="syntax-highlighter-loading">
+                <pre style={{ 
+                  margin: 0, 
+                  padding: '8px', 
+                  background: '#f8f9fa', 
+                  borderRadius: '4px',
+                  minHeight: '400px',
+                  fontSize: '14px',
+                  lineHeight: '1.5'
+                }}>
+                  {fileContent}
+                </pre>
+              </div>
+            )}
           </div>
           <div className="testing-modal-footer">
             <a 
@@ -463,7 +494,7 @@ const TestingViewer = () => {
         <FeatureFileEditor
           file={editorFile}
           repository={repository}
-          selectedBranch={selectedBranch}
+          selectedBranch={branch}
           isOpen={showEditor}
           onClose={() => setShowEditor(false)}
           onSave={handleSaveFile}

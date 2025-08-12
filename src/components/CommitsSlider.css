@@ -13,7 +13,7 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
-  color: #333;
+  color: var(--who-text-primary);
 }
 
 .slider-controls {
@@ -24,22 +24,22 @@
 .slider-control {
   width: 32px;
   height: 32px;
-  border: 1px solid #ddd;
-  background: white;
+  border: 1px solid var(--who-border-color);
+  background: var(--who-card-bg);
   border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 16px;
-  color: #666;
+  color: var(--who-text-secondary);
   transition: all 0.2s ease;
 }
 
 .slider-control:hover:not(:disabled) {
-  background: #f5f5f5;
-  border-color: #ccc;
-  color: #333;
+  background: var(--who-hover-bg);
+  border-color: var(--who-border-color);
+  color: var(--who-text-primary);
 }
 
 .slider-control:disabled {
@@ -66,18 +66,18 @@
 }
 
 .commits-slider::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: var(--who-border-color);
   border-radius: 3px;
 }
 
 .commits-slider::-webkit-scrollbar-thumb:hover {
-  background: #999;
+  background: var(--who-text-secondary);
 }
 
 .commit-card {
   flex: 0 0 280px;
-  background: white;
-  border: 1px solid #e1e4e8;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -111,7 +111,7 @@
 .commit-author {
   font-weight: 600;
   font-size: 0.875rem;
-  color: #333;
+  color: var(--who-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -119,14 +119,14 @@
 
 .commit-date {
   font-size: 0.75rem;
-  color: #666;
+  color: var(--who-text-secondary);
   margin-top: 2px;
 }
 
 .commit-message {
   font-size: 0.875rem;
   line-height: 1.4;
-  color: #333;
+  color: var(--who-text-primary);
   margin-bottom: 0.75rem;
   min-height: 2.8rem; /* Ensure consistent height */
   display: -webkit-box;
@@ -140,7 +140,7 @@
   justify-content: space-between;
   align-items: center;
   padding-top: 0.5rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--who-border-color);
 }
 
 .commit-sha {
@@ -148,22 +148,29 @@
 }
 
 .commit-sha code {
-  background: #f6f8fa;
-  color: #0366d6;
+  background: var(--who-selected-bg);
+  color: var(--who-blue);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'Monaco', 'Consolas', monospace;
 }
 
+/* Dark mode support for commit SHA */
+body.theme-dark .commit-sha code {
+  background: rgba(255, 255, 255, 0.2);
+  color: #4dabf7;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
 .commit-link {
-  color: #666;
+  color: var(--who-text-secondary);
   text-decoration: none;
   font-size: 14px;
   transition: color 0.2s ease;
 }
 
 .commit-link:hover {
-  color: #0366d6;
+  color: var(--who-blue);
 }
 
 .load-more-container {
@@ -175,12 +182,12 @@
 
 .load-more-btn {
   padding: 0.75rem 1rem;
-  background: #f6f8fa;
-  border: 1px solid #d1d5da;
+  background: var(--who-selected-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.875rem;
-  color: #333;
+  color: var(--who-text-primary);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -188,8 +195,8 @@
 }
 
 .load-more-btn:hover:not(:disabled) {
-  background: #e1e4e8;
-  border-color: #c6cbd1;
+  background: var(--who-hover-bg);
+  border-color: var(--who-border-color);
 }
 
 .load-more-btn:disabled {
@@ -203,7 +210,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  color: #666;
+  color: var(--who-text-secondary);
   font-size: 0.875rem;
 }
 

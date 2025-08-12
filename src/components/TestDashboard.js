@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageLayout } from './framework';
-import './TestDashboard.css';
 
 const TestDashboard = () => {
   const navigate = useNavigate();

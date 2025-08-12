@@ -4,7 +4,7 @@ import githubService from '../services/githubService';
 import useDAKUrlParams from '../hooks/useDAKUrlParams';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
-import './BusinessProcessSelection.css';
+import BPMNPreview from './BPMNPreview';
 
 const BusinessProcessSelection = () => {
   const location = useLocation();
@@ -115,9 +115,49 @@ const BusinessProcessSelection = () => {
         
         const bpmnFiles = await githubService.getBpmnFiles(owner, repoName, ref);
         
-        console.log(`Found ${bpmnFiles.length} BPMN files:`, bpmnFiles.map(f => f.path));
+        console.log('📊 BusinessProcessSelection: Received BPMN files:', {
+          count: bpmnFiles.length,
+          files: bpmnFiles.map(f => ({
+            name: f.name,
+            path: f.path,
+            size: f.size,
+            hasDownloadUrl: !!f.download_url,
+            sha: f.sha?.substring(0, 8)
+          }))
+        });
         
-        setBpmnFiles(bpmnFiles);
+        // If no files found and we're in demo mode, provide fallback files
+        if (bpmnFiles.length === 0 && profile?.isDemo) {
+          console.log('No BPMN files found in demo mode, providing fallback demo files');
+          const demoFiles = [
+            {
+              name: 'patient-registration.bpmn',
+              path: 'demo/business-processes/patient-registration.bpmn',
+              sha: 'demo-sha-1',
+              size: 2048,
+              download_url: '#',
+              html_url: '#'
+            },
+            {
+              name: 'vaccination-workflow.bpmn',
+              path: 'demo/business-processes/vaccination-workflow.bpmn',
+              sha: 'demo-sha-2',
+              size: 3072,
+              download_url: '#'
+            },
+            {
+              name: 'appointment-scheduling.bpmn',
+              path: 'demo/business-processes/appointment-scheduling.bpmn',
+              sha: 'demo-sha-3',
+              size: 1536,
+              download_url: '#'
+            }
+          ];
+          setBpmnFiles(demoFiles);
+        } else {
+          setBpmnFiles(bpmnFiles);
+        }
+        
         setLoading(false);
       } catch (apiError) {
         console.error('Failed to fetch BPMN files from repository:', apiError);
@@ -128,7 +168,7 @@ const BusinessProcessSelection = () => {
           const demoFiles = [
             {
               name: 'patient-registration.bpmn',
-              path: 'input/business-processes/patient-registration.bpmn',
+              path: 'demo/business-processes/patient-registration.bpmn',
               sha: 'demo-sha-1',
               size: 2048,
               download_url: '#',
@@ -136,14 +176,14 @@ const BusinessProcessSelection = () => {
             },
             {
               name: 'vaccination-workflow.bpmn',
-              path: 'input/business-processes/vaccination-workflow.bpmn',
+              path: 'demo/business-processes/vaccination-workflow.bpmn',
               sha: 'demo-sha-2',
               size: 3072,
               download_url: '#'
             },
             {
               name: 'appointment-scheduling.bpmn',
-              path: 'input/business-processes/appointment-scheduling.bpmn',
+              path: 'demo/business-processes/appointment-scheduling.bpmn',
               sha: 'demo-sha-3',
               size: 1536,
               download_url: '#'
@@ -180,9 +220,8 @@ const BusinessProcessSelection = () => {
 
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const repoName = repository.name;
-    const path = selectedBranch 
-      ? `/bpmn-editor/${owner}/${repoName}/${selectedBranch}`
-      : `/bpmn-editor/${owner}/${repoName}`;
+    const branch = selectedBranch || 'main';
+    const path = `/bpmn-editor/${owner}/${repoName}/${branch}/${file.path}`;
 
     const navigationState = {
       profile,
@@ -199,9 +238,8 @@ const BusinessProcessSelection = () => {
   const handleView = (event, file) => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const repoName = repository.name;
-    const path = selectedBranch 
-      ? `/bpmn-viewer/${owner}/${repoName}/${selectedBranch}`
-      : `/bpmn-viewer/${owner}/${repoName}`;
+    const branch = selectedBranch || 'main';
+    const path = `/bpmn-viewer/${owner}/${repoName}/${branch}/${file.path}`;
 
     const navigationState = {
       profile,
@@ -218,9 +256,8 @@ const BusinessProcessSelection = () => {
   const handleViewSource = (event, file) => {
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const repoName = repository.name;
-    const path = selectedBranch 
-      ? `/bpmn-source/${owner}/${repoName}/${selectedBranch}`
-      : `/bpmn-source/${owner}/${repoName}`;
+    const branch = selectedBranch || 'main';
+    const path = `/bpmn-source/${owner}/${repoName}/${branch}/${file.path}`;
 
     const navigationState = {
       profile,
@@ -272,26 +309,6 @@ const BusinessProcessSelection = () => {
     <PageLayout pageName="business-process-selection">
       <div className="business-process-selection">
       <div className="selection-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
-            Select Repository
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button 
-            onClick={() => navigate(`/dashboard/${repository.owner?.login || repository.full_name.split('/')[0]}/${repository.name}${selectedBranch ? `/${selectedBranch}` : ''}`, { 
-              state: { profile, repository, selectedBranch } 
-            })} 
-            className="breadcrumb-link"
-          >
-            DAK Components
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Business Processes</span>
-        </div>
 
         <div className="selection-main">
           <div className="selection-intro">
@@ -321,12 +338,21 @@ const BusinessProcessSelection = () => {
             <div className="files-grid">
               {bpmnFiles.map((file) => (
                 <div key={file.sha} className="file-card">
+                  <BPMNPreview 
+                    file={file} 
+                    repository={repository} 
+                    selectedBranch={selectedBranch}
+                    profile={profile}
+                  />
+                  
                   <div className="file-header">
                     <div className="file-icon">🔄</div>
                     <div className="file-details">
                       <h3 className="file-name">{file.name}</h3>
-                      <p className="file-path">{file.path}</p>
-                      <p className="file-size">{(file.size / 1024).toFixed(1)} KB</p>
+                      <div className="file-info-compact">
+                        <span className="file-path">{file.path}</span>
+                        <span className="file-size">{(file.size / 1024).toFixed(1)} KB</span>
+                      </div>
                     </div>
                   </div>
 
@@ -356,12 +382,6 @@ const BusinessProcessSelection = () => {
                       📄 Source
                     </button>
                   </div>
-
-                  {!hasWriteAccess && (
-                    <div className="permission-notice">
-                      <p>🔒 Read-only access - editing requires write permissions</p>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

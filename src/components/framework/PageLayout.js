@@ -4,7 +4,6 @@ import PageHeader from './PageHeader';
 import PageContext from './PageContext';
 import ErrorHandler from './ErrorHandler';
 import ContextualHelpMascot from '../ContextualHelpMascot';
-import './PageLayout.css';
 
 /**
  * Error boundary wrapper for catching React errors

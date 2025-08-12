@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import { PageLayout, usePageParams } from './framework';
-import './CoreDataDictionaryViewer.css';
+import { PageLayout, useDAKParams } from './framework';
 
 const CoreDataDictionaryViewer = () => {
   return (
@@ -13,15 +12,12 @@ const CoreDataDictionaryViewer = () => {
 };
 
 const CoreDataDictionaryViewerContent = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const { params } = usePageParams();
+  const { profile, repository, branch } = useDAKParams();
   
-  // Get data from URL params or location state (for backward compatibility)
-  const { profile, repository, component, selectedBranch } = location.state || {};
-  const user = params?.user;
-  const repo = params?.repo;
-  const branch = params?.branch;
+  // Get data from URL params
+  const user = profile?.login;
+  const repo = repository?.name;
   
   const [fshFiles, setFshFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +87,7 @@ const CoreDataDictionaryViewerContent = () => {
         state: { 
           profile, 
           repository, 
-          selectedBranch 
+          branch 
         } 
       });
     }
@@ -102,7 +98,7 @@ const CoreDataDictionaryViewerContent = () => {
     const fetchFshFiles = async () => {
       // Support both URL params and state-based data
       const currentRepository = repository;
-      const currentBranch = branch || selectedBranch;
+      const currentBranch = branch;
       const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
       const currentRepo = repo || repository?.name;
       
@@ -235,7 +231,7 @@ const CoreDataDictionaryViewerContent = () => {
     };
 
     fetchFshFiles();
-  }, [repository, selectedBranch, user, repo, branch, getBaseUrl, parseDakFshConcepts]);
+  }, [repository, branch, user, repo, getBaseUrl, parseDakFshConcepts]);
 
   // Fetch file content for modal display
   const handleViewSource = async (file) => {
@@ -246,7 +242,7 @@ const CoreDataDictionaryViewerContent = () => {
 
       const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
       const currentRepo = repo || repository?.name;
-      const currentBranch = branch || selectedBranch;
+      const currentBranch = branch;
       
       const content = await githubService.getFileContent(
         currentUser,
@@ -268,7 +264,7 @@ const CoreDataDictionaryViewerContent = () => {
     setFileContent('');
   };
 
-  if ((!profile || !repository || !component) && !user && !repo) {
+  if (!profile || !repository) {
     navigate('/');
     return <div>Redirecting...</div>;
   }
@@ -310,7 +306,7 @@ const CoreDataDictionaryViewerContent = () => {
             Select Profile
           </button>
           <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
+          <button onClick={() => navigate(`/dak-selection/${profile.login}`, { state: { profile } })} className="breadcrumb-link">
             Select Repository
           </button>
           <span className="breadcrumb-separator">›</span>
@@ -323,8 +319,8 @@ const CoreDataDictionaryViewerContent = () => {
 
         <div className="viewer-main">
           <div className="component-intro">
-            <div className="component-icon" style={{ color: component?.color || '#0078d4' }}>
-              {component?.icon || '📊'}
+            <div className="component-icon" style={{ color: '#0078d4' }}>
+              📊
             </div>
             <div className="intro-content">
               <h2>Core Data Dictionary Viewer</h2>
@@ -332,9 +328,9 @@ const CoreDataDictionaryViewerContent = () => {
                 View canonical representations of Component 2 Core Data Dictionary including FHIR CodeSystems, 
                 ValueSets, and ConceptMaps stored in FSH format.
               </p>
-              {(branch || selectedBranch) && (
+              {branch && (
                 <div className="branch-info">
-                  <strong>Branch:</strong> <code>{branch || selectedBranch}</code>
+                  <strong>Branch:</strong> <code>{branch}</code>
                 </div>
               )}
             </div>
@@ -404,7 +400,7 @@ const CoreDataDictionaryViewerContent = () => {
                     ) : hasPublishedDak ? (
                       <div className="dictionary-links">
                         <a 
-                          href={`${getBaseUrl(branch || selectedBranch)}/CodeSystem-DAK.html`}
+                          href={`${getBaseUrl(branch)}/CodeSystem-DAK.html`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="dictionary-link primary"

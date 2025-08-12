@@ -14,7 +14,7 @@
 }
 
 .save-dialog {
-  background: white;
+  background: var(--who-card-bg);
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   width: 90%;
@@ -26,8 +26,8 @@
 }
 
 .dialog-header {
-  background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
+  background: var(--who-hover-bg);
+  border-bottom: 1px solid var(--who-border-color);
   padding: 20px 24px;
   display: flex;
   justify-content: space-between;
@@ -36,7 +36,7 @@
 
 .dialog-header h3 {
   margin: 0;
-  color: #333;
+  color: var(--who-text-primary);
   font-size: 1.4em;
   font-weight: 600;
 }
@@ -45,7 +45,7 @@
   background: none;
   border: none;
   font-size: 24px;
-  color: #666;
+  color: var(--who-text-secondary);
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 4px;
@@ -53,8 +53,8 @@
 }
 
 .dialog-close:hover {
-  background: #e9ecef;
-  color: #333;
+  background: var(--who-hover-bg);
+  color: var(--who-text-primary);
 }
 
 .dialog-close:disabled {
@@ -75,14 +75,14 @@
 
 .save-summary h4 {
   margin: 0 0 12px 0;
-  color: #333;
+  color: var(--who-text-primary);
   font-size: 1.1em;
   font-weight: 600;
 }
 
 .files-list {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background: var(--who-hover-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 8px;
   padding: 12px;
   max-height: 200px;
@@ -94,7 +94,7 @@
   align-items: center;
   gap: 8px;
   padding: 6px 0;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--who-border-color);
 }
 
 .file-item:last-child {
@@ -109,13 +109,13 @@
   flex: 1;
   font-family: 'Courier New', monospace;
   font-size: 13px;
-  color: #333;
+  color: var(--who-text-primary);
 }
 
 .file-size {
   font-size: 12px;
-  color: #666;
-  background: #e9ecef;
+  color: var(--who-text-secondary);
+  background: var(--who-hover-bg);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -149,13 +149,13 @@
 /* Validation Section */
 .validation-section {
   margin-bottom: 24px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--who-border-color);
   border-radius: 8px;
   overflow: hidden;
 }
 
 .validation-summary {
-  background: #f8f9fa;
+  background: var(--who-hover-bg);
   padding: 16px;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -181,7 +181,7 @@
 
 .validation-header h4 {
   margin: 0;
-  color: #333;
+  color: var(--who-text-primary);
   font-size: 1.1em;
   font-weight: 600;
 }
@@ -222,7 +222,7 @@
 
 .expand-icon {
   font-size: 12px;
-  color: #666;
+  color: var(--who-text-secondary);
   transition: transform 0.2s ease;
 }
 
@@ -232,8 +232,8 @@
 
 /* Validation Details */
 .validation-details {
-  border-top: 1px solid #e9ecef;
-  background: white;
+  border-top: 1px solid var(--who-border-color);
+  background: var(--who-card-bg);
 }
 
 .file-validation {
@@ -368,7 +368,7 @@
 
 .commit-message-section h4 {
   margin: 0;
-  color: #333;
+  color: var(--who-text-primary);
   font-size: 1.1em;
   font-weight: 600;
 }
@@ -376,13 +376,15 @@
 .commit-message-input {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ced4da;
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   font-family: inherit;
   font-size: 14px;
   resize: vertical;
   min-height: 80px;
   transition: border-color 0.2s ease;
+  background: var(--who-card-bg);
+  color: var(--who-text-primary);
 }
 
 .commit-message-input:focus {
@@ -392,8 +394,8 @@
 }
 
 .commit-message-input:disabled {
-  background: #f8f9fa;
-  color: #6c757d;
+  background: var(--who-hover-bg);
+  color: var(--who-text-muted);
 }
 
 .commit-tips {
@@ -403,7 +405,7 @@
 .commit-tips p {
   margin: 0;
   font-size: 12px;
-  color: #666;
+  color: var(--who-text-secondary);
 }
 
 /* Error Section */
@@ -429,8 +431,8 @@
 
 /* Repository Info */
 .repo-info {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background: var(--who-hover-bg);
+  border: 1px solid var(--who-border-color);
   border-radius: 6px;
   padding: 16px;
   margin-bottom: 24px;
@@ -449,14 +451,14 @@
 
 .info-label {
   font-weight: 600;
-  color: #495057;
+  color: var(--who-text-secondary);
   font-size: 13px;
 }
 
 .info-value {
   font-family: 'Courier New', monospace;
   font-size: 13px;
-  color: #333;
+  color: var(--who-text-primary);
 }
 
 .info-value.write {
@@ -469,8 +471,8 @@
 
 /* Dialog Actions */
 .dialog-actions {
-  background: #f8f9fa;
-  border-top: 1px solid #e9ecef;
+  background: var(--who-hover-bg);
+  border-top: 1px solid var(--who-border-color);
   padding: 20px 24px;
   display: flex;
   justify-content: flex-end;

@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import actorDefinitionService from '../services/actorDefinitionService';
-import { PageLayout } from './framework';
-import './ActorEditor.css';
+import { PageLayout, useDAKParams } from './framework';
 
 const ActorEditor = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const { profile, repository, editActorId } = location.state || {};
+  const { profile, repository, branch } = useDAKParams();
+  
+  // For now, we'll set editActorId to null since it's not in URL params
+  // This could be enhanced later to support URL-based actor editing
+  const editActorId = null;
 
   // State management
   const [actorDefinition, setActorDefinition] = useState(null);
@@ -148,13 +150,7 @@ const ActorEditor = () => {
         
         // Update the URL to reflect we're now editing this actor
         if (!editActorId) {
-          navigate(`/actor-editor`, {
-            state: {
-              ...location.state,
-              editActorId: actorDefinition.id
-            },
-            replace: true
-          });
+          navigate(`/actor-editor/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
         }
       } else {
         setErrors({ general: result.error });
@@ -203,13 +199,7 @@ const ActorEditor = () => {
       setShowActorList(false);
       
       // Update URL
-      navigate(`/actor-editor`, {
-        state: {
-          ...location.state,
-          editActorId: actorId
-        },
-        replace: true
-      });
+      navigate(`/actor-editor/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
     }
   };
 
@@ -223,13 +213,7 @@ const ActorEditor = () => {
         // If we're currently editing this actor, create a new one
         if (editActorId === actorId) {
           setActorDefinition(actorDefinitionService.createEmptyActorDefinition());
-          navigate(`/actor-editor`, {
-            state: {
-              ...location.state,
-              editActorId: null
-            },
-            replace: true
-          });
+          navigate(`/actor-editor/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
         }
       }
     }
@@ -244,36 +228,23 @@ const ActorEditor = () => {
     }
   }, [profile, repository, navigate]);
 
-  if (!profile || !repository) {
-    return (
-      <PageLayout pageName="actor-editor">
-        <div className="actor-editor">
+  return (
+    <PageLayout pageName="actor-editor">
+      <div className="actor-editor">
+        {!profile || !repository ? (
           <div className="redirecting-state">
             <h2>Redirecting...</h2>
             <p>Missing required context. Redirecting to home page...</p>
           </div>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  if (loading) {
-    return (
-      <PageLayout pageName="actor-editor">
-        <div className="actor-editor loading-state">
-          <div className="loading-content">
-            <h2>Loading Actor Editor...</h2>
-            <p>Initializing editor and loading data...</p>
+        ) : loading ? (
+          <div className="loading-state">
+            <div className="loading-content">
+              <h2>Loading Actor Editor...</h2>
+              <p>Initializing editor and loading data...</p>
+            </div>
           </div>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  return (
-    <PageLayout pageName="actor-editor">
-      <div className="actor-editor">
-        <div className="editor-content">
+        ) : (
+          <div className="editor-content">
 
         <div className="editor-toolbar">
           <div className="toolbar-left">
@@ -451,38 +422,48 @@ const ActorEditor = () => {
           </div>
         </div>
       </div>
+        )}
 
-      {/* FSH Preview Modal */}
-      {showPreview && (
-        <div className="modal-overlay" onClick={() => setShowPreview(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>FSH Preview</h3>
-              <button 
-                onClick={() => setShowPreview(false)}
-                className="close-btn"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="modal-body">
-              <pre className="fsh-preview">{fshPreview}</pre>
-            </div>
-            <div className="modal-footer">
-              <button 
-                onClick={() => {
-                  navigator.clipboard.writeText(fshPreview);
-                  alert('FSH copied to clipboard!');
-                }}
-                className="copy-btn"
-              >
-                📋 Copy to Clipboard
-              </button>
+        {/* FSH Preview Modal */}
+        {showPreview && (
+          <div 
+            className="modal-overlay" 
+            onClick={() => setShowPreview(false)}
+            role="presentation"
+          >
+            <div 
+              className="modal-content" 
+              onClick={e => e.stopPropagation()}
+              role="dialog"
+              aria-labelledby="fsh-preview-title"
+              aria-modal="true"
+            >
+              <div className="modal-header">
+                <h3 id="fsh-preview-title">FSH Preview</h3>
+                <button 
+                  onClick={() => setShowPreview(false)}
+                  className="close-btn"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="modal-body">
+                <pre className="fsh-preview">{fshPreview}</pre>
+              </div>
+              <div className="modal-footer">
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(fshPreview);
+                    alert('FSH copied to clipboard!');
+                  }}
+                  className="copy-btn"
+                >
+                  📋 Copy to Clipboard
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
+        )}
       </div>
     </PageLayout>
   );
@@ -587,8 +568,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Code</label>
+              <label htmlFor={`role-code-${index}`}>Code</label>
               <input
+                id={`role-code-${index}`}
                 type="text"
                 value={role.code}
                 onChange={(e) => onNestedFieldChange('roles', index, 'code', e.target.value)}
@@ -596,8 +578,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
               />
             </div>
             <div className="form-group">
-              <label>Display Name</label>
+              <label htmlFor={`role-display-${index}`}>Display Name</label>
               <input
+                id={`role-display-${index}`}
                 type="text"
                 value={role.display}
                 onChange={(e) => onNestedFieldChange('roles', index, 'display', e.target.value)}
@@ -606,8 +589,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
             </div>
           </div>
           <div className="form-group">
-            <label>Code System</label>
+            <label htmlFor={`role-system-${index}`}>Code System</label>
             <input
+              id={`role-system-${index}`}
               type="text"
               value={role.system || ''}
               onChange={(e) => onNestedFieldChange('roles', index, 'system', e.target.value)}
@@ -644,8 +628,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Code</label>
+              <label htmlFor={`qualification-code-${index}`}>Code</label>
               <input
+                id={`qualification-code-${index}`}
                 type="text"
                 value={qual.code}
                 onChange={(e) => onNestedFieldChange('qualifications', index, 'code', e.target.value)}
@@ -653,8 +638,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
               />
             </div>
             <div className="form-group">
-              <label>Display Name</label>
+              <label htmlFor={`qualification-display-${index}`}>Display Name</label>
               <input
+                id={`qualification-display-${index}`}
                 type="text"
                 value={qual.display}
                 onChange={(e) => onNestedFieldChange('qualifications', index, 'display', e.target.value)}
@@ -663,8 +649,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
             </div>
           </div>
           <div className="form-group">
-            <label>Issuing Organization</label>
+            <label htmlFor={`qualification-issuer-${index}`}>Issuing Organization</label>
             <input
+              id={`qualification-issuer-${index}`}
               type="text"
               value={qual.issuer || ''}
               onChange={(e) => onNestedFieldChange('qualifications', index, 'issuer', e.target.value)}
@@ -701,8 +688,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Code</label>
+              <label htmlFor={`specialty-code-${index}`}>Code</label>
               <input
+                id={`specialty-code-${index}`}
                 type="text"
                 value={specialty.code}
                 onChange={(e) => onNestedFieldChange('specialties', index, 'code', e.target.value)}
@@ -710,8 +698,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
               />
             </div>
             <div className="form-group">
-              <label>Display Name</label>
+              <label htmlFor={`specialty-display-${index}`}>Display Name</label>
               <input
+                id={`specialty-display-${index}`}
                 type="text"
                 value={specialty.display}
                 onChange={(e) => onNestedFieldChange('specialties', index, 'display', e.target.value)}
@@ -720,8 +709,9 @@ const RolesTab = ({ actorDefinition, errors, onNestedFieldChange, onAddItem, onR
             </div>
           </div>
           <div className="form-group">
-            <label>Code System</label>
+            <label htmlFor={`specialty-system-${index}`}>Code System</label>
             <input
+              id={`specialty-system-${index}`}
               type="text"
               value={specialty.system || ''}
               onChange={(e) => onNestedFieldChange('specialties', index, 'system', e.target.value)}
@@ -743,8 +733,9 @@ const ContextTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChang
       <h4>Typical Location</h4>
       <div className="form-row">
         <div className="form-group">
-          <label>Location Type</label>
+          <label htmlFor="location-type">Location Type</label>
           <select
+            id="location-type"
             value={actorDefinition.location?.type || ''}
             onChange={(e) => onFieldChange('location', { ...actorDefinition.location, type: e.target.value })}
           >
@@ -756,8 +747,9 @@ const ContextTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChang
           </select>
         </div>
         <div className="form-group">
-          <label>Description</label>
+          <label htmlFor="location-description">Description</label>
           <input
+            id="location-description"
             type="text"
             value={actorDefinition.location?.description || ''}
             onChange={(e) => onFieldChange('location', { ...actorDefinition.location, description: e.target.value })}

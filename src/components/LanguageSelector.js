@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import './LanguageSelector.css';
 
 // Default UN languages
 const UN_LANGUAGES = [

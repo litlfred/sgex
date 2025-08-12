@@ -1,18 +1,51 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import { PageLayout } from './framework';
-import './RepositorySelection.css';
 
 const RepositorySelection = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useParams();
   const [repositories, setRepositories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  const profile = location.state?.profile;
+  // Get profile from location state or fetch from GitHub using user param
+  const [profile, setProfile] = useState(location.state?.profile);
+
+  // Fetch profile if we have user param but no profile in state
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user && !profile) {
+        try {
+          if (githubService.isAuth()) {
+            const fetchedProfile = await githubService.getUser(user);
+            setProfile(fetchedProfile);
+          } else {
+            // Create a demo profile for unauthenticated users
+            setProfile({
+              login: user,
+              name: user.charAt(0).toUpperCase() + user.slice(1),
+              avatar_url: `https://github.com/${user}.png`,
+              type: 'User',
+              isDemo: true
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          navigate('/', {
+            state: {
+              warningMessage: `User '${user}' not found or not accessible.`
+            }
+          });
+        }
+      }
+    };
+
+    fetchProfile();
+  }, [user, profile, navigate]);
 
   const fetchRepositories = useCallback(async (forceRefresh = false) => {
     setLoading(true);
@@ -41,7 +74,7 @@ const RepositorySelection = () => {
       
       // No cached data or forced refresh - fetch from GitHub
       console.log(`Fetching fresh repositories for ${profile.login} (${profileType})`);
-      const repos = await githubService.getRepositories(profile.login, profileType);
+      const repos = await githubService.getRepositories(profile.login, profileType, profile.isDemo);
       
       // Cache the fetched repositories
       try {
@@ -60,16 +93,20 @@ const RepositorySelection = () => {
   }, [profile]);
 
   useEffect(() => {
-    if (!profile) {
+    // Don't redirect if we're waiting for profile to be loaded from user param
+    if (!profile && !user) {
       navigate('/');
       return;
     }
     
-    fetchRepositories();
-  }, [profile, navigate, fetchRepositories]);
+    // Only fetch repositories if we have a profile
+    if (profile) {
+      fetchRepositories();
+    }
+  }, [profile, user, navigate, fetchRepositories]);
 
   const handleRepositorySelect = (repo) => {
-    navigate('/dashboard', { 
+    navigate(`/dashboard/${repo.owner.login}/${repo.name}`, { 
       state: { 
         profile, 
         repository: repo 
@@ -85,17 +122,12 @@ const RepositorySelection = () => {
     });
   };
 
-  if (!profile) {
-    return (
-      <PageLayout pageName="repository-selection">
-        <div>Redirecting...</div>
-      </PageLayout>
-    );
-  }
-
   return (
     <PageLayout pageName="repository-selection">
-      <div className="repo-content">
+      {!profile ? (
+        <div>Redirecting...</div>
+      ) : (
+        <div className="repo-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
@@ -178,7 +210,8 @@ const RepositorySelection = () => {
           )}
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </PageLayout>
   );
 };

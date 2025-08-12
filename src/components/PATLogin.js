@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useTranslation } from 'react-i18next';
 import logger from "../utils/logger";
-import "./PATLogin.css";
 
 const PATLogin = ({ onAuthSuccess }) => {
   const { t } = useTranslation();
   const [token, setToken] = useState("");
+  const [tokenName, setTokenName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const componentLogger = logger.getLogger('PATLogin');
@@ -77,10 +77,29 @@ const PATLogin = ({ onAuthSuccess }) => {
     if (error) setError(""); // Clear error when user starts typing
   };
 
+  const handleTokenNameChange = (e) => {
+    setTokenName(e.target.value);
+    if (error) setError(""); // Clear error when user starts typing
+  };
+
   return (
     <div className="pat-login">
       <div className="pat-login-section">
         <form onSubmit={handleSubmit} className="pat-form">
+          <div className="form-group">
+            <label htmlFor="token-name">Token Name (optional):</label>
+            <input
+              id="token-name"
+              type="text"
+              value={tokenName}
+              onChange={handleTokenNameChange}
+              placeholder="e.g., SGEX Access Token"
+              className="token-name-input"
+              disabled={loading}
+              autoComplete="username"
+            />
+          </div>
+          
           <div className="form-group">
             <label htmlFor="pat-token">{t('auth.setupToken')}:</label>
             <input
@@ -91,7 +110,7 @@ const PATLogin = ({ onAuthSuccess }) => {
               placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
               className={`token-input ${error ? 'error' : ''}`}
               disabled={loading}
-              autoComplete="off"
+              autoComplete="current-password"
             />
           </div>
           

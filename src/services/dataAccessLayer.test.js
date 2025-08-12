@@ -3,6 +3,10 @@
  */
 import dataAccessLayer, { SAVE_TARGETS, OPERATION_RESULTS } from './dataAccessLayer';
 
+import userAccessService from './userAccessService';
+import stagingGroundService from './stagingGroundService';
+import githubService from './githubService';
+
 // Mock dependencies
 jest.mock('./userAccessService', () => ({
   initialize: jest.fn(),
@@ -28,10 +32,6 @@ jest.mock('./githubService', () => ({
   getFileContent: jest.fn(),
   updateFileContent: jest.fn()
 }));
-
-import userAccessService from './userAccessService';
-import stagingGroundService from './stagingGroundService';
-import githubService from './githubService';
 
 describe('DataAccessLayer', () => {
   const mockRepository = {

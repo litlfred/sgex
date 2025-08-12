@@ -189,6 +189,8 @@ body.theme-light .dak-action-selection {
   backdrop-filter: blur(10px);
   flex: 0 0 350px;
   min-width: 350px;
+  display: flex;
+  flex-direction: column;
 }
 
 .action-card:hover {
@@ -212,14 +214,21 @@ body.theme-light .dak-action-selection {
 }
 
 .action-icon {
-  font-size: 2rem;
-  width: 60px;
-  height: 60px;
   display: flex;
-  align-items: center;
   justify-content: center;
-  background: var(--who-selected-bg);
-  border-radius: 12px;
+  align-items: flex-start;
+  flex: 1;
+  min-height: 280px;
+  margin-bottom: 1rem;
+}
+
+.action-icon img {
+  width: 100%;
+  height: 100%;
+  max-width: 280px;
+  max-height: 280px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .action-header-content h3 {
@@ -231,29 +240,32 @@ body.theme-light .dak-action-selection {
 }
 
 .action-description {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
 .action-description p {
   color: var(--who-text-secondary);
-  line-height: 1.6;
+  line-height: 1.5;
   margin: 0;
+  font-size: 0.9rem;
 }
 
 .workflow-steps {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.5rem;
 }
 
 .step {
   background: var(--who-hover-bg);
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
   color: var(--who-text-secondary);
   border: 1px solid var(--who-border-color);
+  text-align: center;
 }
 
 /* Responsive Design */
@@ -270,15 +282,90 @@ body.theme-light .dak-action-selection {
   }
 
   .actions-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+    flex-direction: column;
+    overflow-x: visible;
+    gap: 1rem;
+    /* Ensure cards are visible by setting a max height and enabling scroll */
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
   }
 
   .action-card {
-    padding: 1.5rem;
+    flex: 0 0 auto;
+    min-width: auto;
+    max-width: 100%;
+    padding: 1rem;
+    /* Reduce height to fit more cards on screen */
+    min-height: auto;
+  }
+
+  .action-icon {
+    min-height: 120px;
+    margin-bottom: 0.75rem;
+  }
+
+  .action-icon img {
+    max-width: 120px;
+    max-height: 120px;
+  }
+
+  .action-description {
+    margin-bottom: 1rem;
+  }
+
+  .action-description p {
+    font-size: 0.85rem;
+    line-height: 1.4;
   }
 
   .workflow-steps {
     flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .step {
+    padding: 0.15rem 0.5rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .action-content {
+    padding: 0.75rem;
+  }
+
+  .action-main {
+    padding: 1.5rem;
+  }
+
+  .action-title h1 {
+    font-size: 1.8rem;
+  }
+
+  .action-subtitle {
+    font-size: 1rem;
+  }
+
+  .action-card {
+    padding: 0.75rem;
+  }
+
+  .action-icon {
+    min-height: 100px;
+    margin-bottom: 0.5rem;
+  }
+
+  .action-icon img {
+    max-width: 100px;
+    max-height: 100px;
+  }
+
+  .action-description p {
+    font-size: 0.8rem;
+  }
+
+  .step {
+    padding: 0.1rem 0.4rem;
+    font-size: 0.65rem;
   }
 }

@@ -8,13 +8,18 @@ import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
 import DiscussionsStatusBar from './DiscussionsStatusBar';
 import Publications from './Publications';
+import ForkStatusBar from './ForkStatusBar';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
-import './DAKDashboard.css';
+import useThemeImage from '../hooks/useThemeImage';
+import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const DAKDashboard = () => {
   const location = useLocation();
   const { user, repo, branch } = useParams();
+  
+  // Theme-aware mascot image for dialog
+  const mascotImage = useThemeImage('sgex-mascot.png');
   
   // Try to get data from location.state first, then from URL params
   const [profile, setProfile] = useState(location.state?.profile || null);
@@ -81,6 +86,82 @@ const DAKDashboardContent = ({
   useEffect(() => {
     onSelectedBranchChange(selectedBranch);
   }, [selectedBranch, onSelectedBranchChange]);
+
+  // Component Card component defined within the dashboard
+  const ComponentCard = ({ component, handleComponentClick, t }) => {
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [imageError, setImageError] = useState(false);
+    
+    // Use the theme-aware image hook here instead of in the map function
+    const cardImagePath = useThemeImage(component.cardImage);
+
+    const handleImageLoad = () => {
+      setImageLoaded(true);
+      setImageError(false);
+    };
+
+    const handleImageError = () => {
+      setImageError(true);
+      setImageLoaded(false);
+    };
+
+    return (
+      <div 
+        className={`component-card ${component.type.toLowerCase()} large-card ${imageLoaded ? 'image-loaded' : ''}`}
+        onClick={(event) => handleComponentClick(event, component)}
+        style={{ '--component-color': component.color }}
+        tabIndex={0}
+        role="button"
+        aria-label={`${component.name} - ${component.description}`}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleComponentClick(event, component);
+          }
+        }}
+      >
+        <div className="component-header">
+          <div className="component-image-container">
+            <img 
+              src={cardImagePath}
+              alt={getAltText(t, ALT_TEXT_KEYS.ICON_DAK_COMPONENT, component.name, { name: component.name })}
+              className="component-card-image"
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              style={{ display: imageError ? 'none' : 'block' }}
+            />
+            {/* Fallback icon when image fails to load */}
+            {imageError && (
+              <div className="component-icon" style={{ color: component.color }}>
+                {component.icon}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="component-content">
+          {/* Only show title text if image failed to load or as screen reader backup */}
+          <h4 className={imageLoaded && !imageError ? 'visually-hidden' : ''}>
+            {component.name}
+          </h4>
+          <p className={imageLoaded && !imageError ? 'visually-hidden' : ''}>
+            {component.description}
+          </p>
+          
+          <div className="component-meta">
+            <div className="file-types">
+              {component.fileTypes.map((type) => (
+                <span key={type} className="file-type-tag">{type}</span>
+              ))}
+            </div>
+            <div className="file-count">
+              {component.count} files
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Fetch data from URL parameters if not available in location.state
   useEffect(() => {
@@ -303,9 +384,10 @@ const DAKDashboardContent = ({
   const coreDAKComponents = [
     {
       id: 'health-interventions',
-      name: 'Health Interventions and Recommendations',
+      name: t('dak.healthInterventions'),
       description: 'Clinical guidelines and health intervention specifications that define evidence-based care recommendations',
       icon: '📖',
+      cardImage: 'dashboard/dak_interventions.png',
       type: 'L2',
       color: '#0078d4',
       fileTypes: ['IRIS', 'Publication'],
@@ -314,9 +396,10 @@ const DAKDashboardContent = ({
     },
     {
       id: 'generic-personas',
-      name: 'Generic Personas',
+      name: t('dak.genericPersonas'),
       description: 'Standardized user roles and actor definitions that represent different types of healthcare workers and patients',
       icon: '👥',
+      cardImage: 'dashboard/dak_personas.png',
       type: 'L2',
       color: '#107c10',
       fileTypes: ['Actor', 'Role'],
@@ -325,9 +408,10 @@ const DAKDashboardContent = ({
     },
     {
       id: 'user-scenarios',
-      name: 'User Scenarios',
+      name: t('dak.userScenarios'),
       description: 'Narrative descriptions of how different personas interact with the system in specific healthcare contexts',
       icon: '📝',
+      cardImage: 'dashboard/dak_user_scenarios.png',
       type: 'L2',
       color: '#881798',
       fileTypes: ['Narrative', 'Use Case'],
@@ -336,9 +420,10 @@ const DAKDashboardContent = ({
     },
     {
       id: 'business-processes',
-      name: 'Generic Business Processes and Workflows',
+      name: t('dak.businessProcesses'),
       description: 'BPMN workflows and business process definitions that model clinical workflows and care pathways',
       icon: '🔄',
+      cardImage: 'dashboard/dak_business_processes.png',
       type: 'L2',
       color: '#d13438',
       fileTypes: ['BPMN', 'XML'],
@@ -347,20 +432,22 @@ const DAKDashboardContent = ({
     },
     {
       id: 'core-data-elements',
-      name: 'Core Data Elements',
-      description: 'Essential data structures and terminology needed for clinical data capture and exchange',
+      name: t('dak.coreDataElements'),
+      description: 'Essential data structures and terminology needed for clinical data capture and exchange (includes Terminology Services via OCL and Product Master Data via PCMT)',
       icon: '🗃️',
+      cardImage: 'dashboard/dak_core_data_elements.png',
       type: 'L2',
       color: '#ff8c00',
-      fileTypes: ['OCL', 'Concept'],
+      fileTypes: ['OCL', 'Concept', 'PCMT', 'Product'],
       count: issueCounts.total || 89,
-      editor: 'Data element editor with OCL integration'
+      editor: 'Data element editor with OCL and PCMT integration'
     },
     {
       id: 'decision-support',
-      name: 'Decision-Support Logic',
+      name: t('dak.decisionSupportLogic'),
       description: 'DMN decision tables and clinical decision support rules that encode clinical logic',
       icon: '🎯',
+      cardImage: 'dashboard/dak_decision_support_logic.png',
       type: 'L2',
       color: '#00bcf2',
       fileTypes: ['DMN', 'XML'],
@@ -369,9 +456,10 @@ const DAKDashboardContent = ({
     },
     {
       id: 'program-indicators',
-      name: 'Program Indicators',
+      name: t('dak.programIndicators'),
       description: 'Performance indicators and measurement definitions for monitoring and evaluation',
       icon: '📊',
+      cardImage: 'dashboard/dak_indicators.png',
       type: 'L2',
       color: '#498205',
       fileTypes: ['Measure', 'Logic'],
@@ -380,9 +468,10 @@ const DAKDashboardContent = ({
     },
     {
       id: 'functional-requirements',
-      name: 'Functional and Non-Functional Requirements',
+      name: t('dak.requirements'),
       description: 'System requirements specifications that define capabilities and constraints',
       icon: '⚙️',
+      cardImage: 'dashboard/dak_requirements.png',
       type: 'L2',
       color: '#6b69d6',
       fileTypes: ['Requirements', 'Specification'],
@@ -390,10 +479,11 @@ const DAKDashboardContent = ({
       editor: 'Requirements editor with structured templates'
     },
     {
-      id: 'testing',
-      name: 'Testing',
+      id: 'test-scenarios',
+      name: t('dak.testScenarios') || 'Test Scenarios',
       description: 'Feature files and test scenarios for validating the DAK implementation',
       icon: '🧪',
+      cardImage: 'dashboard/dak_testing.png',
       type: 'L2',
       color: '#8b5cf6',
       fileTypes: ['Feature', 'Test'],
@@ -402,69 +492,7 @@ const DAKDashboardContent = ({
     }
   ];
 
-  // Additional Structured Knowledge Representations
-  const additionalComponents = [
-    {
-      id: 'pages',
-      name: 'Pages',
-      description: 'Published page content and documentation defined in sushi-config.yaml',
-      icon: '📄',
-      type: 'Content',
-      color: '#8b5cf6',
-      fileTypes: ['Markdown', 'HTML'],
-      count: 0
-    },
-    {
-      id: 'terminology',
-      name: 'Terminology',
-      description: 'Code systems, value sets, and concept maps',
-      icon: '🏷️',
-      type: 'L3',
-      color: '#ff8c00',
-      fileTypes: ['CodeSystem', 'ValueSet'],
-      count: 156
-    },
-    {
-      id: 'profiles',
-      name: 'FHIR Profiles',
-      description: 'FHIR resource profiles and structure definitions',
-      icon: '🔧',
-      type: 'L3',
-      color: '#00bcf2',
-      fileTypes: ['StructureDefinition', 'Profile'],
-      count: 42
-    },
-    {
-      id: 'extensions',
-      name: 'FHIR Extensions',
-      description: 'Custom FHIR extensions and data elements',
-      icon: '🧩',
-      type: 'L3',
-      color: '#498205',
-      fileTypes: ['Extension', 'Element'],
-      count: 18
-    },
-    {
-      id: 'questionnaires',
-      name: 'FHIR Questionnaires',
-      description: 'Structured forms and questionnaires for data collection',
-      icon: '📋',
-      type: 'L3',
-      color: '#881798',
-      fileTypes: ['Questionnaire', 'StructureMap'],
-      count: 24
-    },
-    {
-      id: 'examples',
-      name: 'Test Data & Examples',
-      description: 'Sample data and test cases for validation',
-      icon: '🧪',
-      type: 'L3',
-      color: '#6b69d6',
-      fileTypes: ['Example', 'Bundle'],
-      count: 67
-    }
-  ];
+
 
   const handleComponentClick = (event, component) => {
     const navigationState = {
@@ -498,15 +526,17 @@ const DAKDashboardContent = ({
       return;
     }
 
-    // For pages, navigate to pages manager (read-only access allowed)
-    if (component.id === 'pages') {
-      handleNavigationClick(event, '/pages', navigate, navigationState);
-      return;
-    }
+
 
     // For health-interventions (WHO Digital Library), allow access in read-only mode
     if (component.id === 'health-interventions') {
-      handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/health-interventions/${owner}/${repoName}/${selectedBranch}`
+        : `/health-interventions/${owner}/${repoName}`;
+      
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
@@ -524,19 +554,7 @@ const DAKDashboardContent = ({
       return;
     }
 
-    // For terminology (also Component 2 Core Data Dictionary from Additional Components), navigate to viewer
-    if (component.id === 'terminology') {
-      const owner = user || repository.owner?.login || repository.full_name.split('/')[0];
-      const repoName = repo || repository.name;
-      const branchName = selectedBranch;
-      
-      const viewerPath = branchName ? 
-        `/core-data-dictionary-viewer/${owner}/${repoName}/${branchName}` :
-        `/core-data-dictionary-viewer/${owner}/${repoName}`;
-        
-      handleNavigationClick(event, viewerPath, navigate, navigationState);
-      return;
-    }
+
 
     // For generic-personas, navigate to actor editor
     if (component.id === 'generic-personas') {
@@ -550,8 +568,8 @@ const DAKDashboardContent = ({
       return;
     }
 
-    // For testing, navigate to testing viewer
-    if (component.id === 'testing') {
+    // For test-scenarios, navigate to testing viewer
+    if (component.id === 'test-scenarios') {
       const owner = repository.owner?.login || repository.full_name.split('/')[0];
       const repoName = repository.name;
       const path = selectedBranch 
@@ -570,8 +588,14 @@ const DAKDashboardContent = ({
       return;
     }
 
-    // Navigate to generic component editor for other components
-    handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
+    // Navigate to component-specific routes for other components
+    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+    const repoName = repository.name;
+    const path = selectedBranch 
+      ? `/${component.id}/${owner}/${repoName}/${selectedBranch}`
+      : `/${component.id}/${owner}/${repoName}`;
+    
+    handleNavigationClick(event, path, navigate, navigationState);
   };
 
 
@@ -626,6 +650,13 @@ const DAKDashboardContent = ({
             </p>
           </div>
 
+          {/* Fork Status Bar - shows forks of sgex repository */}
+          <ForkStatusBar 
+            profile={profile}
+            repository={repository}
+            selectedBranch={selectedBranch}
+          />
+
           {/* DAK Status Box - only show when repository and branch are selected */}
           {repository && selectedBranch && (
             <DAKStatusBox 
@@ -646,28 +677,28 @@ const DAKDashboardContent = ({
             </div>
           )}
 
-          {/* Tab Navigation */}
-          <div className="tab-navigation">
+          {/* Tab Navigation - Full Width Toggle Buttons */}
+          <div className="tab-navigation-fullwidth">
             <button 
-              className={`tab-button ${activeTab === 'core' ? 'active' : ''}`}
+              className={`tab-button-fullwidth ${activeTab === 'core' ? 'active' : ''}`}
               onClick={() => setActiveTab('core')}
             >
               <span className="tab-icon">⭐</span>
               <span className="tab-text">9 Core Components</span>
             </button>
-            <button 
-              className={`tab-button ${activeTab === 'additional' ? 'active' : ''}`}
-              onClick={() => setActiveTab('additional')}
-            >
-              <span className="tab-icon">🔧</span>
-              <span className="tab-text">Additional Components</span>
-            </button>
             <button
-              className={`tab-button ${activeTab === 'publications' ? 'active' : ''}`}
+              className={`tab-button-fullwidth ${activeTab === 'publications' ? 'active' : ''}`}
               onClick={() => setActiveTab('publications')}
             >
               <span className="tab-icon">📚</span>
               <span className="tab-text">Publications</span>
+            </button>
+            <button
+              className={`tab-button-fullwidth ${activeTab === 'other' ? 'active' : ''}`}
+              onClick={() => setActiveTab('other')}
+            >
+              <span className="tab-icon">🔧</span>
+              <span className="tab-text">Other DAK Components</span>
             </button>
           </div>
 
@@ -682,81 +713,77 @@ const DAKDashboardContent = ({
               </div>
 
               <div className="components-grid core-components">
-                {coreDAKComponents.map((component) => (
-                  <div 
-                    key={component.id}
-                    className={`component-card ${component.type.toLowerCase()}`}
-                    onClick={(event) => handleComponentClick(event, component)}
-                    style={{ '--component-color': component.color }}
-                  >
-                    <div className="component-header">
-                      <div className="component-icon" style={{ color: component.color }}>
-                        {component.icon}
-                      </div>
-                    </div>
-                    
-                    <div className="component-content">
-                      <h4>{component.name}</h4>
-                      <p>{component.description}</p>
-                      
-                      <div className="component-meta">
-                        <div className="file-types">
-                          {component.fileTypes.map((type) => (
-                            <span key={type} className="file-type-tag">{type}</span>
-                          ))}
-                        </div>
-                        <div className="file-count">
-                          {component.count} files
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                {coreDAKComponents.map((component) => {
+                  return (
+                    <ComponentCard
+                      key={component.id}
+                      component={component}
+                      handleComponentClick={handleComponentClick}
+                      t={t}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* Additional Components Section */}
-          {activeTab === 'additional' && (
-            <div className="components-section additional-section active">
+          {/* Other DAK Components Section */}
+          {activeTab === 'other' && (
+            <div className="components-section other-components active">
               <div className="section-header">
-                <h3 className="section-title">Additional Components</h3>
+                <h3 className="section-title">Other DAK Components</h3>
                 <p className="section-description">
-                  FHIR R4-specific implementations and technical artifacts that support the core DAK components
+                  Additional specialized components for advanced DAK functionality and implementation
                 </p>
               </div>
 
-              <div className="components-grid additional-components">
-                {additionalComponents.map((component) => (
-                  <div 
-                    key={component.id}
-                    className={`component-card ${component.type.toLowerCase()}`}
-                    onClick={(event) => handleComponentClick(event, component)}
-                    style={{ '--component-color': component.color }}
-                  >
-                    <div className="component-header">
-                      <div className="component-icon" style={{ color: component.color }}>
-                        {component.icon}
-                      </div>
-                    </div>
+              <div className="components-grid other-components">
+                <div 
+                  className="component-card l3"
+                  onClick={(event) => {
+                    const component = {
+                      id: 'questionnaire-editor',
+                      name: 'FHIR Questionnaires',
+                      description: 'Structured questionnaires and forms for data collection using FHIR standard'
+                    };
+                    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+                    const repoName = repository.name;
+                    const path = selectedBranch 
+                      ? `/questionnaire-editor/${owner}/${repoName}/${selectedBranch}`
+                      : `/questionnaire-editor/${owner}/${repoName}`;
                     
-                    <div className="component-content">
-                      <h4>{component.name}</h4>
-                      <p>{component.description}</p>
-                      
-                      <div className="component-meta">
-                        <div className="file-types">
-                          {component.fileTypes.map((type) => (
-                            <span key={type} className="file-type-tag">{type}</span>
-                          ))}
-                        </div>
-                        <div className="file-count">
-                          {component.count} files
-                        </div>
+                    const navigationState = {
+                      profile,
+                      repository,
+                      component,
+                      selectedBranch
+                    };
+                    
+                    handleNavigationClick(event, path, navigate, navigationState);
+                  }}
+                  style={{ '--component-color': '#17a2b8' }}
+                >
+                  <div className="component-header">
+                    <div className="component-icon" style={{ color: '#17a2b8' }}>
+                      📋
+                    </div>
+                  </div>
+                  
+                  <div className="component-content">
+                    <h4>FHIR Questionnaires</h4>
+                    <p>Structured questionnaires and forms for data collection using FHIR Questionnaire standard</p>
+                    
+                    <div className="component-meta">
+                      <div className="file-types">
+                        <span className="file-type-tag">JSON</span>
+                        <span className="file-type-tag">FHIR</span>
+                      </div>
+                      <div className="file-count">
+                        questionnaires/
                       </div>
                     </div>
                   </div>
-                ))}
+                </div>
               </div>
             </div>
           )}
@@ -790,7 +817,7 @@ const DAKDashboardContent = ({
             </div>
             <div className="dialog-content">
               <div className="dialog-mascot">
-                <img src="/sgex/sgex-mascot.png" alt="SGEX Helper" className="dialog-mascot-img" />
+                <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} className="dialog-mascot-img" />
                 <div className="mascot-message">
                   <p>You need edit permissions to modify DAK components!</p>
                   <p>Your current token only provides read access to this repository.</p>

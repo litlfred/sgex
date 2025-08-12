@@ -1,6 +1,5 @@
 import React from 'react';
 import { usePage, PAGE_TYPES } from './PageProvider';
-import './PageBreadcrumbs.css';
 
 /**
  * Unified breadcrumb component for consistent navigation across all pages
@@ -59,8 +58,8 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
   if ((type === PAGE_TYPES.USER || type === PAGE_TYPES.DAK || type === PAGE_TYPES.ASSET) && profile) {
     breadcrumbs.push({
       label: 'Select Repository',
-      path: `/sgex/repositories/${profile.login}`,
-      onClick: () => navigate(`/sgex/repositories/${profile.login}`)
+      path: `/dak-selection/${profile.login}`,
+      onClick: () => navigate(`/dak-selection/${profile.login}`)
     });
   }
 
@@ -71,8 +70,8 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
     if (ownerLogin) {
       breadcrumbs.push({
         label: 'DAK Components',
-        path: `/sgex/dashboard/${ownerLogin}/${repository.name}${branchPath}`,
-        onClick: () => navigate(`/sgex/dashboard/${ownerLogin}/${repository.name}${branchPath}`)
+        path: `/dashboard/${ownerLogin}/${repository.name}${branchPath}`,
+        onClick: () => navigate(`/dashboard/${ownerLogin}/${repository.name}${branchPath}`)
       });
     }
   }

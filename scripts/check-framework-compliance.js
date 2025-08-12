@@ -21,7 +21,8 @@ const COMPLIANCE_RULES = {
   PAGE_NAME: 'All PageLayout components must have a unique pageName prop',
   FRAMEWORK_HOOKS: 'Use framework hooks instead of direct useParams()',
   NO_MANUAL_HELP: 'No direct ContextualHelpMascot imports in page components',
-  NO_CUSTOM_HEADERS: 'Let PageLayout handle headers instead of custom implementations'
+  NO_CUSTOM_HEADERS: 'Let PageLayout handle headers instead of custom implementations',
+  NO_DUPLICATE_LAYOUT: 'Components must not have multiple nested PageLayout wrappers'
 };
 
 // Utility components that don't need full framework compliance
@@ -79,21 +80,76 @@ class ComplianceChecker {
   }
 
   /**
-   * Extract route components from App.js
+   * Extract route components from App.js and lazyRouteUtils.js
    */
   async getRouteComponents() {
-    const appContent = fs.readFileSync(APP_JS, 'utf8');
     const components = [];
 
-    // Find all Route elements and extract component names
-    const routeRegex = /<Route[^>]+element=\{<([A-Za-z0-9_]+)/g;
-    let match;
+    // Method 1: Extract from lazyRouteUtils.js (primary method)
+    try {
+      const lazyRouteUtilsPath = path.join(SRC_DIR, 'utils', 'lazyRouteUtils.js');
+      if (fs.existsSync(lazyRouteUtilsPath)) {
+        const lazyContent = fs.readFileSync(lazyRouteUtilsPath, 'utf8');
+        
+        // Find component names in switch statement
+        const switchMatches = lazyContent.match(/case\s+'([^']+)':\s*LazyComponent\s*=\s*React\.lazy\(\(\)\s*=>\s*import\('([^']+)'\)\);/g);
+        if (switchMatches) {
+          switchMatches.forEach(match => {
+            const componentMatch = match.match(/case\s+'([^']+)'/);
+            if (componentMatch && !UTILITY_COMPONENTS.includes(`${componentMatch[1]}.js`)) {
+              components.push(componentMatch[1]);
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('Could not parse lazyRouteUtils.js:', error.message);
+    }
 
-    while ((match = routeRegex.exec(appContent)) !== null) {
-      const componentName = match[1].trim();
-      // Skip if it's a utility component we don't expect to be framework-compliant
-      if (!UTILITY_COMPONENTS.includes(`${componentName}.js`)) {
-        components.push(componentName);
+    // Method 2: Extract from App.js as fallback
+    if (components.length === 0) {
+      try {
+        const appContent = fs.readFileSync(APP_JS, 'utf8');
+        
+        // Find all Route elements and extract component names
+        const routeRegex = /<Route[^>]+element=\{<([A-Za-z0-9_]+)/g;
+        let match;
+
+        while ((match = routeRegex.exec(appContent)) !== null) {
+          const componentName = match[1].trim();
+          // Skip if it's a utility component we don't expect to be framework-compliant
+          if (!UTILITY_COMPONENTS.includes(`${componentName}.js`)) {
+            components.push(componentName);
+          }
+        }
+      } catch (error) {
+        console.warn('Could not parse App.js:', error.message);
+      }
+    }
+
+    // Method 3: Scan components directory for React components
+    if (components.length === 0) {
+      console.log('Falling back to directory scan...');
+      try {
+        const componentFiles = fs.readdirSync(COMPONENTS_DIR)
+          .filter(file => file.endsWith('.js') && !file.endsWith('.test.js'))
+          .filter(file => !UTILITY_COMPONENTS.includes(file))
+          .filter(file => !FRAMEWORK_COMPONENTS.includes(file))
+          .map(file => file.replace('.js', ''));
+        
+        // Filter to components that likely are page components (contain JSX and PageLayout or return statements)
+        for (const componentName of componentFiles) {
+          const componentPath = path.join(COMPONENTS_DIR, `${componentName}.js`);
+          const content = fs.readFileSync(componentPath, 'utf8');
+          
+          // Check if it looks like a page component
+          if (content.includes('return') && 
+              (content.includes('PageLayout') || content.includes('<div') || content.includes('function') || content.includes('const'))) {
+            components.push(componentName);
+          }
+        }
+      } catch (error) {
+        console.warn('Could not scan components directory:', error.message);
       }
     }
 
@@ -133,23 +189,27 @@ class ComplianceChecker {
     const compliance = {
       name: componentName,
       score: 0,
-      maxScore: 5,
+      maxScore: 6, // Increased from 5 to 6 for new duplicate layout check
       checks: {},
       issues: [],
       suggestions: []
     };
 
-    // Check 1: Uses PageLayout
-    const hasPageLayout = content.includes('PageLayout') && 
+    // Check 1: Uses PageLayout (directly or through AssetEditorLayout)
+    const hasPageLayout = (content.includes('PageLayout') && 
                          (content.includes('import { PageLayout }') || 
                           content.includes('import PageLayout') ||
-                          content.includes('from \'./framework\''));
+                          content.includes('from \'./framework\''))) ||
+                         (content.includes('AssetEditorLayout') &&
+                          (content.includes('import { AssetEditorLayout }') ||
+                           content.includes('from \'./framework\'')));
     compliance.checks.pageLayout = hasPageLayout;
     if (hasPageLayout) compliance.score++;
     else compliance.issues.push('Missing PageLayout wrapper');
 
-    // Check 2: Has pageName prop
-    const hasPageName = /<PageLayout[^>]+pageName=["']([^"']+)["']/.test(content);
+    // Check 2: Has pageName prop (PageLayout or AssetEditorLayout)
+    const hasPageName = /<PageLayout[^>]+pageName=["']([^"']+)["']/.test(content) ||
+                       /<AssetEditorLayout[^>]+pageName=["']([^"']+)["']/.test(content);
     compliance.checks.pageName = hasPageName;
     if (hasPageName) compliance.score++;
     else if (hasPageLayout) compliance.issues.push('PageLayout missing pageName prop');
@@ -189,9 +249,18 @@ class ComplianceChecker {
     if (!hasCustomHeader) compliance.score++;
     else compliance.issues.push('May have custom header implementation');
 
+    // Check 6: No duplicate PageLayout wrappers (NEW CHECK)
+    const pageLayoutMatches = (content.match(/<PageLayout/g) || []).length;
+    const assetEditorLayoutMatches = (content.match(/<AssetEditorLayout/g) || []).length;
+    const totalLayoutMatches = pageLayoutMatches + assetEditorLayoutMatches;
+    const isNested = totalLayoutMatches > 1;
+    compliance.checks.noDuplicateLayout = !isNested;
+    if (!isNested) compliance.score++;
+    else compliance.issues.push(`Found ${totalLayoutMatches} layout components - should only have one`);
+
     // Generate suggestions
     if (!hasPageLayout) {
-      compliance.suggestions.push('Wrap component with PageLayout from ./framework');
+      compliance.suggestions.push('Wrap component with PageLayout or AssetEditorLayout from ./framework');
     }
     if (hasPageLayout && !hasPageName) {
       compliance.suggestions.push('Add unique pageName prop to PageLayout');
@@ -201,6 +270,9 @@ class ComplianceChecker {
     }
     if (hasManualHelpMascot) {
       compliance.suggestions.push('Remove ContextualHelpMascot import (PageLayout provides it)');
+    }
+    if (isNested) {
+      compliance.suggestions.push('Remove nested PageLayout components - only use one per page');
     }
 
     return compliance;

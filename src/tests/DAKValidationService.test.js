@@ -1,18 +1,19 @@
 import dakValidationService from '../services/dakValidationService';
 
+import githubService from '../services/githubService';
+
 // Mock the GitHub service
 jest.mock('../services/githubService', () => ({
   isAuth: jest.fn(),
   octokit: {
     rest: {
       repos: {
+        get: jest.fn(),
         getContent: jest.fn()
       }
     }
   }
 }));
-
-import githubService from '../services/githubService';
 
 describe('DAK Validation Service', () => {
   beforeEach(() => {
@@ -31,6 +32,12 @@ dependencies:
 `;
 
       githubService.isAuth.mockReturnValue(true);
+      
+      // Mock repository existence check
+      githubService.octokit.rest.repos.get.mockResolvedValue({
+        data: { name: 'smart-immunizations', full_name: 'WorldHealthOrganization/smart-immunizations' }
+      });
+      
       githubService.octokit.rest.repos.getContent.mockResolvedValue({
         data: {
           type: 'file',
@@ -53,6 +60,10 @@ dependencies:
 `;
 
       githubService.isAuth.mockReturnValue(true);
+      
+      // Mock repository does not exist (404)
+      githubService.octokit.rest.repos.get.mockRejectedValue({ status: 404 });
+      
       githubService.octokit.rest.repos.getContent.mockResolvedValue({
         data: {
           type: 'file',
@@ -66,6 +77,10 @@ dependencies:
 
     test('returns false for repository without sushi-config.yaml', async () => {
       githubService.isAuth.mockReturnValue(true);
+      
+      // Mock repository does not exist (404)
+      githubService.octokit.rest.repos.get.mockRejectedValue({ status: 404 });
+      
       githubService.octokit.rest.repos.getContent.mockRejectedValue({ status: 404 });
 
       const result = await dakValidationService.validateDAKRepository('user', 'no-config-repo');
@@ -83,6 +98,10 @@ dependencies:
       const invalidYaml = 'invalid: yaml: content: [unclosed';
 
       githubService.isAuth.mockReturnValue(true);
+      
+      // Mock repository does not exist (404) 
+      githubService.octokit.rest.repos.get.mockRejectedValue({ status: 404 });
+      
       githubService.octokit.rest.repos.getContent.mockResolvedValue({
         data: {
           type: 'file',
@@ -96,26 +115,42 @@ dependencies:
   });
 
   describe('validateDemoDAKRepository', () => {
-    test('returns true for known WHO DAK repositories', () => {
+    test('returns true for valid org/repo format - WHO repositories', () => {
       expect(dakValidationService.validateDemoDAKRepository('WorldHealthOrganization', 'smart-immunizations')).toBe(true);
       expect(dakValidationService.validateDemoDAKRepository('WorldHealthOrganization', 'smart-anc-toolkit')).toBe(true);
       expect(dakValidationService.validateDemoDAKRepository('WorldHealthOrganization', 'smart-base')).toBe(true);
     });
 
-    test('returns true for known demo repositories', () => {
+    test('returns true for valid org/repo format - any repositories', () => {
       expect(dakValidationService.validateDemoDAKRepository('litlfred', 'smart-guidelines-demo')).toBe(true);
       expect(dakValidationService.validateDemoDAKRepository('litlfred', 'sgex-demo')).toBe(true);
+      expect(dakValidationService.validateDemoDAKRepository('litlfred', 'smart-trust-phw')).toBe(true);
+      expect(dakValidationService.validateDemoDAKRepository('litlfred', 'smart-trust-gdhcnv')).toBe(true);
+      expect(dakValidationService.validateDemoDAKRepository('user', 'random-repo')).toBe(true);
+      expect(dakValidationService.validateDemoDAKRepository('someone', 'not-a-dak')).toBe(true);
+      expect(dakValidationService.validateDemoDAKRepository('any-org', 'any-repo')).toBe(true);
     });
 
-    test('returns false for invalid repositories', () => {
-      expect(dakValidationService.validateDemoDAKRepository('litlfred', 'smart-trust-gdhcnv')).toBe(false);
-      expect(dakValidationService.validateDemoDAKRepository('user', 'random-repo')).toBe(false);
-      expect(dakValidationService.validateDemoDAKRepository('someone', 'not-a-dak')).toBe(false);
+    test('returns false for invalid repository format', () => {
+      // Missing owner or repo
+      expect(dakValidationService.validateDemoDAKRepository('', 'repo')).toBe(false);
+      expect(dakValidationService.validateDemoDAKRepository('owner', '')).toBe(false);
+      expect(dakValidationService.validateDemoDAKRepository(null, 'repo')).toBe(false);
+      expect(dakValidationService.validateDemoDAKRepository('owner', null)).toBe(false);
+      
+      // Invalid characters in owner/repo names
+      expect(dakValidationService.validateDemoDAKRepository('owner/with/slash', 'repo')).toBe(false);
+      expect(dakValidationService.validateDemoDAKRepository('owner', 'repo/with/slash')).toBe(false);
+      expect(dakValidationService.validateDemoDAKRepository('owner with spaces', 'repo')).toBe(false);
+      expect(dakValidationService.validateDemoDAKRepository('owner', 'repo with spaces')).toBe(false);
     });
 
-    test('is case insensitive', () => {
-      expect(dakValidationService.validateDemoDAKRepository('worldhealthorganization', 'smart-immunizations')).toBe(true);
-      expect(dakValidationService.validateDemoDAKRepository('LITLFRED', 'SMART-GUIDELINES-DEMO')).toBe(true);
+    test('accepts valid characters in repository names', () => {
+      expect(dakValidationService.validateDemoDAKRepository('my-org', 'my-repo')).toBe(true);
+      expect(dakValidationService.validateDemoDAKRepository('my_org', 'my_repo')).toBe(true);
+      expect(dakValidationService.validateDemoDAKRepository('my.org', 'my.repo')).toBe(true);
+      expect(dakValidationService.validateDemoDAKRepository('org123', 'repo456')).toBe(true);
+      expect(dakValidationService.validateDemoDAKRepository('UPPER', 'CASE')).toBe(true);
     });
   });
 });

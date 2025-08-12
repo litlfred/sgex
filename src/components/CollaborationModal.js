@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import './CollaborationModal.css';
+import { useTranslation } from 'react-i18next';
+import useThemeImage from '../hooks/useThemeImage';
+import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const CollaborationModal = ({ onClose }) => {
+  const { t } = useTranslation();
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Theme-aware collaboration image
+  const collaborationImage = useThemeImage('collaboration.png');
 
   const slides = [
     {
@@ -69,21 +75,22 @@ const CollaborationModal = ({ onClose }) => {
       content: (
         <div className="slide-content">
           <div className="collaboration-image">
-            <img src="/collaboration.png" alt="Collaboration in SGEX" />
+            <img src={collaborationImage} alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_COLLABORATION, 'Collaboration in SGEX')} />
           </div>
           <p>
             Every contribution helps improve digital health tools for healthcare workers worldwide. Whether you're reporting a bug, testing a feature, or sharing feedback, you're part of building the future of digital health tooling.
           </p>
           <div className="get-started-actions">
             <h4>Ready to contribute?</h4>
-            <a 
-              href="https://litlfred.github.io/sgex/" 
-              target="_blank" 
-              rel="noopener noreferrer"
+            <button 
               className="action-link primary"
+              onClick={() => {
+                // Navigate to current site instead of external URL
+                window.location.href = window.location.origin + '/sgex/';
+              }}
             >
-              Visit our Landing Page
-            </a>
+              View Main Site
+            </button>
             <p className="or-text">or</p>
             <button 
               className="action-link secondary"
@@ -91,6 +98,19 @@ const CollaborationModal = ({ onClose }) => {
             >
               Use the help mascot on any page to quickly report issues
             </button>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "How to Pronounce",
+      content: (
+        <div className="slide-content">
+          <div className="pronunciation-image">
+            <img 
+              src="https://github.com/user-attachments/assets/ac49bc04-a463-476e-8f2c-56a89e4035eb" 
+              alt="How to Pronounce SGeX" 
+            />
           </div>
         </div>
       )

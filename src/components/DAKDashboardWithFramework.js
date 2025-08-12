@@ -4,7 +4,7 @@ import githubService from '../services/githubService';
 import branchContextService from '../services/branchContextService';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
-import './DAKDashboard.css';
+import ForkStatusBar from './ForkStatusBar';
 
 const DAKDashboardWithFramework = () => {
   return (
@@ -18,7 +18,6 @@ const DAKDashboardContent = () => {
   const { profile, repository, branch, navigate } = useDAKParams();
   
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
-  const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
   const [issueCounts, setIssueCounts] = useState({});
@@ -28,19 +27,16 @@ const DAKDashboardContent = () => {
     const checkWritePermissions = async () => {
       if (!repository || !githubService.isAuth()) {
         setHasWriteAccess(false);
-        setCheckingPermissions(false);
         return;
       }
 
       try {
         // Check repository permissions
-        const hasPermission = await githubService.checkRepositoryPermissions(repository.owner.login, repository.name);
+        const hasPermission = await githubService.checkRepositoryWritePermissions(repository.owner.login, repository.name);
         setHasWriteAccess(hasPermission);
       } catch (error) {
         console.error('Error checking repository permissions:', error);
         setHasWriteAccess(false);
-      } finally {
-        setCheckingPermissions(false);
       }
     };
 
@@ -62,7 +58,7 @@ const DAKDashboardContent = () => {
       }
 
       try {
-        const issues = await githubService.getRepositoryIssues(repository.owner.login, repository.name);
+        const issues = await githubService.getIssues(repository.owner.login, repository.name);
         
         // Count issues by label
         const counts = {};
@@ -225,6 +221,15 @@ const DAKDashboardContent = () => {
       path: 'test-data',
       level: 'Level 3: Technical Implementation',
       color: '#8b5cf6'
+    },
+    {
+      id: 'questionnaire-editor',
+      title: 'FHIR Questionnaires',
+      description: 'Structured questionnaires and forms for data collection using FHIR standard',
+      icon: '📋',
+      path: 'questionnaire-editor',
+      level: 'Level 3: Technical Implementation',
+      color: '#17a2b8'
     }
   ];
 
@@ -240,21 +245,14 @@ const DAKDashboardContent = () => {
               Digital Adaptation Kit for {profile?.name || profile?.login}
             </p>
           </div>
-          
-          {checkingPermissions ? (
-            <div className="permissions-check">
-              <span>Checking permissions...</span>
-            </div>
-          ) : (
-            <div className="permissions-status">
-              {hasWriteAccess ? (
-                <span className="write-access">✅ Write Access</span>
-              ) : (
-                <span className="read-access">👁️ Read Only</span>
-              )}
-            </div>
-          )}
         </div>
+
+        {/* Fork Status Bar - shows forks of sgex repository */}
+        <ForkStatusBar 
+          profile={profile}
+          repository={repository}
+          selectedBranch={branch}
+        />
 
         {repository && (
           <DAKStatusBox 
@@ -265,24 +263,27 @@ const DAKDashboardContent = () => {
           />
         )}
 
-        <div className="dashboard-tabs">
+        <div className="tab-navigation">
           <button 
             className={`tab-button ${activeTab === 'core' ? 'active' : ''}`}
             onClick={() => setActiveTab('core')}
           >
-            9 Core Components
+            <span className="tab-icon">⭐</span>
+            <span className="tab-text">9 Core Components</span>
           </button>
           <button 
             className={`tab-button ${activeTab === 'additional' ? 'active' : ''}`}
             onClick={() => setActiveTab('additional')}
           >
-            Additional Components ({additionalComponents.length})
+            <span className="tab-icon">🔧</span>
+            <span className="tab-text">Additional Components ({additionalComponents.length})</span>
           </button>
           <button 
             className={`tab-button ${activeTab === 'publications' ? 'active' : ''}`}
             onClick={() => setActiveTab('publications')}
           >
-            Publications
+            <span className="tab-icon">📚</span>
+            <span className="tab-text">Publications</span>
           </button>
         </div>
 

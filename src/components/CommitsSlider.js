@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import githubService from '../services/githubService';
-import './CommitsSlider.css';
 
 const CommitsSlider = ({ repository, selectedBranch }) => {
   const [commits, setCommits] = useState([]);
@@ -107,7 +106,6 @@ const CommitsSlider = ({ repository, selectedBranch }) => {
   return (
     <div className="commits-slider-container">
       <div className="slider-header">
-        <h4>📈 Recent Commits</h4>
         <div className="slider-controls">
           <button 
             className="slider-control left" 

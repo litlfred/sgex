@@ -1,0 +1,480 @@
+name: Deploy Landing Page from Main
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/landing-page-deployment.yml'
+  workflow_dispatch:
+    inputs:
+      force_deployment:
+        description: 'Force deployment even if no changes detected'
+        required: false
+        type: boolean
+        default: false
+      clean_old_assets:
+        description: 'Aggressively clean old assets from gh-pages'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "landing-page-deployment"
+  cancel-in-progress: false
+
+jobs:
+  deploy-landing-page:
+    runs-on: ubuntu-latest
+    outputs:
+      deployment_status: ${{ steps.deployment_info.outputs.deployment_status }}
+      deployment_url: ${{ steps.deployment_info.outputs.deployment_url }}
+      deployment_type: ${{ steps.deployment_info.outputs.deployment_type }}
+      source_branch: ${{ steps.deployment_info.outputs.source_branch }}
+      commit_sha: ${{ steps.deployment_info.outputs.commit_sha }}
+    
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure git user
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -e
+          echo "Installing dependencies..."
+          npm ci --legacy-peer-deps
+
+      - name: Build React application for landing page
+        shell: bash
+        run: |
+          set -e
+          
+          # Always build for landing page deployment from main branch
+          export PUBLIC_URL="/sgex/"
+          echo "Building React application for landing page deployment from main branch..."
+          echo "Using PUBLIC_URL: $PUBLIC_URL"
+          
+          # Set CI=false to avoid treating CSS warnings as errors in production builds
+          export CI=false
+          
+          npm run build
+          
+          # Verify build was successful
+          if [[ ! -f "build/index.html" ]]; then
+            echo "ERROR: React build failed - index.html not found in build directory"
+            exit 1
+          fi
+          
+          echo "✅ React application built successfully with PUBLIC_URL: $PUBLIC_URL"
+
+      - name: Prepare deployment files for landing page
+        shell: bash
+        run: |
+          set -e
+          
+          echo "Preparing landing page deployment from main branch..."
+          
+          # Create a landing page directory to hold the files
+          mkdir -p landing-page
+          
+          # Copy the entire React build to landing page directory
+          cp -r build/* landing-page/
+          
+          # Replace routes-config.json with routes-config.deploy.json for landing page functionality
+          echo "Configuring landing page to use deploy route configuration..."
+          if [[ -f "public/routes-config.deploy.json" ]]; then
+            cp "public/routes-config.deploy.json" "landing-page/routes-config.json"
+            echo "✅ Landing page configured with deploy route configuration"
+          else
+            echo "⚠️ Warning: routes-config.deploy.json not found, using default configuration"
+          fi
+          
+          # Verify landing page exists
+          if [[ ! -f "landing-page/index.html" ]]; then
+            echo "ERROR: Landing page preparation failed - index.html not found"
+            exit 1
+          fi
+          
+          echo "✅ Landing page preparation completed successfully"
+          echo "Landing page contents:"
+          ls -la landing-page/
+
+      - name: Deploy to gh-pages (landing page from main)
+        shell: bash
+        run: |
+          set -e
+          
+          # Step 1: Preserve the build files in temp directory before any git operations
+          echo "Step 1: Preserving landing page build files in temp directory..."
+          mkdir -p /tmp/deployment-build
+          
+          # Landing page deployment - copy React build output only
+          cp -a landing-page/. /tmp/deployment-build/
+          deployment_type="landing-page"
+          echo "Landing page build preserved in /tmp/deployment-build"
+          
+          # Step 2: Clean up source build artifacts to avoid git tracking them
+          echo "Step 2: Cleaning up source build artifacts to avoid git conflicts..."
+          rm -rf build landing-page node_modules || true
+          
+          # Step 3: Fetch and checkout gh-pages branch
+          echo "Step 3: Fetching and checking out gh-pages branch..."
+          git fetch origin gh-pages || echo "gh-pages branch may not exist yet"
+          
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            echo "Checking out existing gh-pages branch..."
+            git checkout gh-pages
+            
+            # Step 4: Do a pull --rebase to get latest changes as requested
+            echo "Step 4: Pulling latest gh-pages changes with rebase..."
+            git pull --rebase origin gh-pages || {
+              echo "Rebase failed, trying merge strategy..."
+              git rebase --abort 2>/dev/null || true
+              git pull origin gh-pages
+            }
+          else
+            echo "Creating new orphan gh-pages branch..."
+            git checkout --orphan gh-pages
+            git rm -rf . 2>/dev/null || true
+            echo "# SGeX GitHub Pages" > README.md
+            git add README.md
+            git commit -m "Initialize gh-pages branch"
+            git push origin gh-pages
+          fi
+          
+          # Step 5: Deploy landing page to root (preserving branch subdirectories)
+          echo "Step 5: Deploying landing page to root (preserving branch subdirectories)..."
+          
+          # List branch directories to preserve
+          echo "Branch directories to preserve:"
+          find . -maxdepth 1 -type d -name "*-*" -not -name ".*" | head -10 || echo "No branch directories found"
+          
+          # Remove only root-level files, preserving all branch subdirectories  
+          echo "Cleaning root-level files only..."
+          find . -maxdepth 1 -type f \( \
+            -name "*.html" -o \
+            -name "*.js" -o \
+            -name "*.css" -o \
+            -name "*.json" -o \
+            -name "*.png" -o \
+            -name "*.svg" -o \
+            -name "*.ico" -o \
+            -name "*.txt" -o \
+            -name "README.md" \
+          \) -delete
+          
+          # Remove only root-level static/docs/schemas directories and node_modules (preserve branch subdirs)  
+          for dir in static docs schemas build coverage lcov-report src public node_modules; do
+            if [[ -d "$dir" && ! "$dir" =~ ^[^/]*-[^/]*$ ]]; then
+              echo "Removing root directory: $dir"
+              rm -rf "$dir"
+            fi
+          done
+          
+          # Copy new landing page build to root
+          cp -a /tmp/deployment-build/. .
+          
+          # Ensure .nojekyll file exists to disable Jekyll processing
+          if [[ ! -f ".nojekyll" ]]; then
+            echo "Creating .nojekyll file to disable Jekyll processing"
+            touch .nojekyll
+          fi
+          
+          echo "Landing page deployed to root, branch directories preserved"
+          
+          # Step 6: Clean up temp directory
+          echo "Step 6: Cleaning up temporary files..."
+          rm -rf /tmp/deployment-build
+          
+          echo "✅ Landing page deployment completed successfully"
+
+      - name: Commit and push changes (landing page from main)
+        shell: bash
+        run: |
+          set -e
+          
+          # Verify we're on gh-pages branch
+          current_branch=$(git branch --show-current)
+          if [[ "$current_branch" != "gh-pages" ]]; then
+            echo "ERROR: Not on gh-pages branch! Current branch: $current_branch"
+            exit 1
+          fi
+          
+          # Check if there are any changes to commit
+          git add -A
+          
+          # Determine commit message for landing page deployment from main
+          deployment_msg="🚀 Deploy landing page from main branch"
+          deployment_details="- Updated landing page with React-based branch selector from main branch
+          - Landing page deployed to GitHub Pages /sgex/
+          - All branch subdirectories preserved
+          - Using deploy route configuration for simplified landing page"
+          
+          # Function to clean git state
+          clean_git_state() {
+            echo "🧹 Cleaning git state..."
+            # Abort any ongoing rebase or merge
+            git rebase --abort 2>/dev/null || true
+            git merge --abort 2>/dev/null || true
+            # Reset to clean state while preserving staged changes
+            git reset --mixed HEAD 2>/dev/null || true
+            # Re-stage our changes
+            git add -A
+            echo "✅ Git state cleaned"
+          }
+          
+          # Function to perform robust pull with rebase
+          robust_pull_rebase() {
+            echo "🔄 Performing robust pull with rebase..."
+            
+            # Fetch latest changes
+            if ! git fetch origin gh-pages; then
+              echo "❌ Failed to fetch from origin"
+              return 1
+            fi
+            
+            # Check if we're behind remote
+            local_commit=$(git rev-parse HEAD)
+            remote_commit=$(git rev-parse origin/gh-pages)
+            
+            if [[ "$local_commit" == "$remote_commit" ]]; then
+              echo "✅ Already up to date with remote"
+              return 0
+            fi
+            
+            echo "📊 Local: $local_commit"
+            echo "📊 Remote: $remote_commit"
+            
+            # Perform rebase with conflict handling
+            if git pull --rebase origin gh-pages; then
+              echo "✅ Pull rebase successful"
+              return 0
+            else
+              echo "⚠️ Pull rebase conflicts detected, analyzing..."
+              
+              # Check for conflicts
+              if git status --porcelain | grep -q "^UU\|^AA\|^DD"; then
+                echo "🔍 Found unresolved conflicts:"
+                git status --porcelain | grep "^UU\|^AA\|^DD" || true
+                
+                # For landing page deployments, try to auto-resolve by accepting our version
+                # since landing page updates the root while branches use subdirectories
+                echo "🔧 Attempting automatic conflict resolution..."
+                
+                # Get list of conflicted files
+                conflicted_files=$(git diff --name-only --diff-filter=U 2>/dev/null || true)
+                
+                if [[ -n "$conflicted_files" ]]; then
+                  echo "📝 Conflicted files:"
+                  echo "$conflicted_files"
+                  
+                  # For landing page conflicts, use our version (--ours)
+                  echo "🔧 Resolving conflicts by accepting our changes..."
+                  git checkout --ours . 2>/dev/null || true
+                  git add -A
+                  
+                  # Continue rebase
+                  if git rebase --continue; then
+                    echo "✅ Automatic conflict resolution successful"
+                    return 0
+                  else
+                    echo "❌ Failed to continue rebase after conflict resolution"
+                    git rebase --abort
+                    return 1
+                  fi
+                else
+                  echo "❌ No conflicted files found but rebase failed"
+                  git rebase --abort
+                  return 1
+                fi
+              else
+                echo "❌ Pull rebase failed but no conflicts detected"
+                git rebase --abort
+                return 1
+              fi
+            fi
+          }
+          
+          # Function to perform robust push
+          robust_push() {
+            echo "🚀 Performing robust push..."
+            
+            # Try push with lease for safety
+            if git push --force-with-lease origin gh-pages; then
+              echo "✅ Push successful with lease protection"
+              return 0
+            else
+              echo "⚠️ Force-with-lease push failed, trying regular push..."
+              if git push origin gh-pages; then
+                echo "✅ Regular push successful"
+                return 0
+              else
+                echo "❌ Push failed"
+                return 1
+              fi
+            fi
+          }
+          
+          # Check if there are changes to commit
+          if git diff --cached --quiet; then
+            if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
+              echo "No changes detected, but force deployment requested - creating empty commit"
+              git commit --allow-empty -m "$deployment_msg
+              
+              - Force deployment requested by user
+              - Built from main branch
+              - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+              - Commit: ${{ github.sha }}"
+            else
+              echo "No changes to commit and force deployment not requested"
+              exit 0
+            fi
+          else
+            echo "Committing deployment changes..."
+            
+            git commit -m "$deployment_msg
+            
+            $deployment_details
+            - Manually triggered deployment
+            - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+            - Commit: ${{ github.sha }}"
+          fi
+          
+          # Enhanced push with robust git operations and retry logic
+          max_retries=3
+          retry_count=0
+          success=false
+          
+          while [[ $retry_count -lt $max_retries ]] && [[ "$success" == "false" ]]; do
+            retry_count=$((retry_count + 1))
+            echo "🔄 Push attempt $retry_count of $max_retries"
+            
+            # Clean git state if this is a retry
+            if [[ $retry_count -gt 1 ]]; then
+              clean_git_state
+              # Re-commit our changes
+              git commit -m "$deployment_msg
+              
+              $deployment_details
+              - Retry deployment attempt $retry_count
+              - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+              - Commit: ${{ github.sha }}"
+            fi
+            
+            # Perform robust pull with rebase
+            if robust_pull_rebase; then
+              echo "✅ Successfully synced with remote"
+              
+              # Perform robust push
+              if robust_push; then
+                echo "✅ Landing page deployment push successful on attempt $retry_count"
+                success=true
+              else
+                echo "⚠️ Push failed on attempt $retry_count"
+                if [[ $retry_count -lt $max_retries ]]; then
+                  # Brief delay before retry
+                  sleep_time=$((retry_count * 2))
+                  echo "💤 Waiting ${sleep_time} seconds before next attempt..."
+                  sleep $sleep_time
+                fi
+              fi
+            else
+              echo "⚠️ Failed to sync with remote on attempt $retry_count"
+              if [[ $retry_count -lt $max_retries ]]; then
+                # Brief delay before retry
+                sleep_time=$((retry_count * 2))
+                echo "💤 Waiting ${sleep_time} seconds before next attempt..."
+                sleep $sleep_time
+              fi
+            fi
+          done
+          
+          if [[ "$success" == "false" ]]; then
+            echo "❌ Failed to deploy landing page after $max_retries attempts"
+            echo "This may indicate:"
+            echo "  - Persistent network issues"
+            echo "  - Repository access problems"
+            echo "  - Concurrent deployment conflicts"
+            echo "  - Git repository corruption"
+            echo ""
+            echo "🔍 Final git status:"
+            git status --porcelain || true
+            echo ""
+            echo "📊 Remote status:"
+            git fetch origin gh-pages 2>/dev/null || true
+            git log --oneline -5 origin/gh-pages 2>/dev/null || true
+            exit 1
+          fi
+          
+          echo "✅ Landing page deployment completed successfully"
+
+      - name: Output deployment info
+        id: deployment_info
+        shell: bash
+        run: |
+          commit_sha="${{ github.sha }}"
+          deployment_url="https://litlfred.github.io/sgex/"
+          deployment_type="landing-page"
+          
+          echo "🚀 Landing Page Deployment Summary:"
+          echo "- Landing Page URL: $deployment_url"
+          echo "- Source Branch: main"
+          echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "- Commit: $commit_sha"
+          echo ""
+          echo "ℹ️  Note: Branch subdirectories are preserved and unaffected"
+          
+          # GitHub Actions outputs
+          echo "deployment_status=success" >> $GITHUB_OUTPUT
+          echo "deployment_url=$deployment_url" >> $GITHUB_OUTPUT
+          echo "deployment_type=$deployment_type" >> $GITHUB_OUTPUT
+          echo "source_branch=main" >> $GITHUB_OUTPUT
+          echo "commit_sha=$commit_sha" >> $GITHUB_OUTPUT
+
+      - name: Create deployment summary
+        if: always() && steps.deployment_info.outputs.deployment_status == 'success'
+        shell: bash
+        run: |
+          deployment_type="${{ steps.deployment_info.outputs.deployment_type }}"
+          deployment_url="${{ steps.deployment_info.outputs.deployment_url }}"
+          commit_sha="${{ steps.deployment_info.outputs.commit_sha }}"
+          
+          echo "## 🚀 Landing Page Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment URL:** $deployment_url" >> $GITHUB_STEP_SUMMARY
+          echo "**Source Branch:** main" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`$commit_sha\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Landing page successfully deployed to gh-pages root from main branch" >> $GITHUB_STEP_SUMMARY
+          echo "- All branch subdirectories preserved" >> $GITHUB_STEP_SUMMARY
+          echo "- No branch deployments affected" >> $GITHUB_STEP_SUMMARY
+          echo "- Landing page uses simplified deploy route configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [View Landing Page]($deployment_url)" >> $GITHUB_STEP_SUMMARY
+          echo "- [View Main Branch Application](https://litlfred.github.io/sgex/main/)" >> $GITHUB_STEP_SUMMARY

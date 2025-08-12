@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout } from './framework';
-import './BPMNSource.css';
 
 const BPMNSource = () => {
   const location = useLocation();
@@ -154,29 +153,22 @@ const BPMNSource = () => {
     }
   }, [profile, repository, selectedFile, navigate]);
 
-  if (!profile || !repository || !selectedFile) {
-    return (
-      <PageLayout pageName="bpmn-source">
-        <div className="bpmn-source">
+  return (
+    <PageLayout pageName="bpmn-source">
+      <div className="bpmn-source">
+        {!profile || !repository || !selectedFile ? (
           <div className="redirecting-state">
             <h2>Redirecting...</h2>
             <p>Missing required context. Redirecting to home page...</p>
           </div>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  return (
-    <PageLayout pageName="bpmn-source">
-      <div className="bpmn-source">
-        <div className="source-content">
+        ) : (
+          <div className="source-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
           </button>
           <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
+          <button onClick={() => navigate(`/dak-selection/${profile.login}`, { state: { profile } })} className="breadcrumb-link">
             Select Repository
           </button>
           <span className="breadcrumb-separator">›</span>
@@ -293,9 +285,9 @@ const BPMNSource = () => {
               </div>
             </div>
           </div>
+          </div>
         </div>
-      </div>
-      
+        )}
       </div>
     </PageLayout>
   );

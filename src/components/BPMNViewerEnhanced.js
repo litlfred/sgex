@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
-import './BPMNViewerEnhanced.css';
+import { createLazyBpmnViewer } from '../utils/lazyRouteUtils';
 
 // Sample BPMN content for demo purposes - moved outside component to avoid re-renders
 const sampleBpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -130,7 +129,7 @@ const BPMNViewerEnhanced = () => {
   const containerRef = useRef(null);
   const [containerReady, setContainerReady] = useState(false);
   
-  const { profile, repository, component, selectedFile } = location.state || {};
+  const { profile, repository, component, selectedFile, branch } = location.state || {};
   
   console.log('BPMNViewerEnhanced - location.state:', location.state);
   console.log('BPMNViewerEnhanced - selectedFile:', selectedFile);
@@ -239,7 +238,8 @@ const BPMNViewerEnhanced = () => {
         // Add a small delay to ensure DOM is fully ready
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        viewerRef.current = new BpmnViewer({
+        // Lazy load BPMN.js viewer to improve initial page responsiveness
+        viewerRef.current = await createLazyBpmnViewer({
           container: containerRef.current
         });
 
@@ -383,8 +383,8 @@ const BPMNViewerEnhanced = () => {
 
     const owner = repository.owner?.login || repository.full_name.split('/')[0];
     const repoName = repository.name;
-    const path = selectedBranch 
-      ? `/bpmn-editor/${owner}/${repoName}/${selectedBranch}`
+    const path = branch 
+      ? `/bpmn-editor/${owner}/${repoName}/${branch}`
       : `/bpmn-editor/${owner}/${repoName}`;
 
     navigate(path, {
@@ -457,7 +457,7 @@ const BPMNViewerEnhanced = () => {
             Select Profile
           </button>
           <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate('/repositories', { state: { profile } })} className="breadcrumb-link">
+          <button onClick={() => navigate(`/dak-selection/${profile.login}`, { state: { profile } })} className="breadcrumb-link">
             Select Repository
           </button>
           <span className="breadcrumb-separator">›</span>

@@ -1,17 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import BpmnModeler from 'bpmn-js/lib/Modeler';
-import { Octokit } from '@octokit/rest';
-import { AssetEditorLayout } from './framework';
-import './BPMNEditor.css';
+import { useNavigate } from 'react-router-dom';
+import { AssetEditorLayout, useDAKParams } from './framework';
+import { createLazyBpmnModeler, createLazyOctokit } from '../utils/lazyRouteUtils';
 
 const BPMNEditor = () => {
-  const location = useLocation();
   const navigate = useNavigate();
+  const { profile, repository, branch } = useDAKParams();
   const modelerRef = useRef(null);
   const containerRef = useRef(null);
-  
-  const { profile, repository, component } = location.state || {};
   
   const [bpmnFiles, setBpmnFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -23,10 +19,11 @@ const BPMNEditor = () => {
   // Initialize BPMN modeler
   useEffect(() => {
     // Initialize modeler when container is available and file is selected
-    const initializeModeler = () => {
+    const initializeModeler = async () => {
       if (containerRef.current && !modelerRef.current && selectedFile) {
         try {
-          modelerRef.current = new BpmnModeler({
+          // Lazy load BPMN.js modeler to improve initial page responsiveness
+          modelerRef.current = await createLazyBpmnModeler({
             container: containerRef.current
           });
           console.log('BPMN modeler initialized successfully');
@@ -72,7 +69,8 @@ const BPMNEditor = () => {
         // Use GitHub API if profile has token, otherwise use mock data
         if (profile.token) {
           try {
-            const octokit = new Octokit({ auth: profile.token });
+            // Lazy load Octokit to improve initial page responsiveness
+            const octokit = await createLazyOctokit({ auth: profile.token });
             const { data } = await octokit.rest.repos.getContent({
               owner: repository.owner?.login || repository.full_name.split('/')[0],
               repo: repository.name,
@@ -175,7 +173,8 @@ const BPMNEditor = () => {
 
       // Use GitHub API if profile has token
       if (profile.token && repository) {
-        const octokit = new Octokit({ auth: profile.token });
+        // Lazy load Octokit to improve initial page responsiveness
+        const octokit = await createLazyOctokit({ auth: profile.token });
         
         // Get current file to get SHA for update
         let currentSha = selectedFile.sha;
@@ -228,7 +227,8 @@ const BPMNEditor = () => {
         try {
           // Initialize modeler if not already done
           if (!modelerRef.current && containerRef.current) {
-            modelerRef.current = new BpmnModeler({
+            // Lazy load BPMN.js modeler to improve initial page responsiveness
+            modelerRef.current = await createLazyBpmnModeler({
               container: containerRef.current
             });
             console.log('BPMN modeler initialized for file loading');
@@ -320,7 +320,7 @@ const BPMNEditor = () => {
     }
   };
 
-  if (!profile || !repository || !component) {
+  if (!profile || !repository) {
     navigate('/');
     return <div>Redirecting...</div>;
   }
@@ -333,7 +333,7 @@ const BPMNEditor = () => {
       pageName="bpmn-editor"
       file={selectedFile}
       repository={repository}
-      branch="main" // You might want to get this from props or state
+      branch={branch || 'main'}
       content={currentXmlContent}
       originalContent={originalXmlContent}
       hasChanges={hasChanges}

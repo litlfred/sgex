@@ -3,22 +3,22 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { PageLayout, usePageParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import WHODigitalLibrary from './WHODigitalLibrary';
-import './ComponentEditor.css';
+import useThemeImage from '../hooks/useThemeImage';
 
 const ComponentEditor = () => {
   const location = useLocation();
   
-  // Handle health-interventions routes with PageLayout framework
-  if (location.pathname.includes('/health-interventions/')) {
-    return (
-      <PageLayout pageName="health-interventions">
-        <HealthInterventionsEditor />
-      </PageLayout>
-    );
-  }
+  const isHealthInterventions = location.pathname.includes('/health-interventions/');
   
-  // For other routes, use existing logic
-  return <ComponentEditorContent />;
+  return (
+    <PageLayout pageName="component-editor">
+      {isHealthInterventions ? (
+        <HealthInterventionsEditor />
+      ) : (
+        <ComponentEditorContent />
+      )}
+    </PageLayout>
+  );
 };
 
 const HealthInterventionsEditor = () => {
@@ -26,6 +26,9 @@ const HealthInterventionsEditor = () => {
   const navigate = useNavigate();
   const { params } = usePageParams();
   const [selectedReferences, setSelectedReferences] = useState([]);
+  
+  // Theme-aware mascot image for fallback avatar
+  const mascotImage = useThemeImage('sgex-mascot.png');
   
   // Get data from URL params or location state
   const { profile, repository } = location.state || {};
@@ -52,7 +55,7 @@ const HealthInterventionsEditor = () => {
         </div>
         <div className="context-info">
           <img 
-            src={profile?.avatar_url || user ? `https://github.com/${user}.png` : '/sgex/sgex-mascot.png'} 
+            src={profile?.avatar_url || user ? `https://github.com/${user}.png` : mascotImage} 
             alt="Profile" 
             className="context-avatar" 
           />
@@ -90,6 +93,9 @@ const ComponentEditorContent = () => {
   const { params } = usePageParams();
   const [selectedReferences, setSelectedReferences] = useState([]);
   
+  // Theme-aware mascot image for fallback avatar
+  const mascotImage = useThemeImage('sgex-mascot.png');
+  
   const { profile, repository, component } = location.state || {};
 
   // Determine component from route or state
@@ -115,7 +121,7 @@ const ComponentEditorContent = () => {
     if (currentComponent?.id === 'health-interventions') {
       // Allow access to health-interventions editor without full context
       // Use placeholder data for now
-      const placeholderProfile = { login: 'demo-user', avatar_url: '/sgex/sgex-mascot.png', name: 'Demo User' };
+      const placeholderProfile = { login: 'demo-user', avatar_url: mascotImage, name: 'Demo User' };
       const placeholderRepo = { name: 'demo-repository' };
       
       return (
@@ -159,8 +165,7 @@ const ComponentEditorContent = () => {
   }
 
   return (
-    <PageLayout pageName="component-editor">
-      <div className="component-editor">
+    <div className="component-editor">
       <div className="editor-content">
 
         <div className="editor-main">
@@ -204,8 +209,7 @@ const ComponentEditorContent = () => {
           </div>
         </div>
       </div>
-      </div>
-    </PageLayout>
+    </div>
   );
 };
 

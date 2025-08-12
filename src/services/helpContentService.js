@@ -11,7 +11,29 @@ class HelpContentService {
         action: () => {
           // Navigate to documentation viewer in the same window
           const currentPath = window.location.pathname;
-          const basePath = currentPath.includes('/sgex') ? '/sgex' : '';
+          
+          // Check if we're in a feature branch deployment
+          // Feature branch URLs have the pattern: /sgex/branch-name/page-path
+          // Main branch URLs have the pattern: /sgex/page-path
+          let basePath = '';
+          if (currentPath.includes('/sgex')) {
+            const pathParts = currentPath.split('/');
+            const sgexIndex = pathParts.indexOf('sgex');
+            
+            if (sgexIndex !== -1) {
+              // Check if this is a feature branch (has additional path segment after /sgex)
+              if (pathParts.length > sgexIndex + 2 && 
+                  pathParts[sgexIndex + 1] && 
+                  !['dashboard', 'docs', 'select_profile', 'dak-action', 'dak-selection'].includes(pathParts[sgexIndex + 1])) {
+                // Feature branch: /sgex/branch-name
+                basePath = `/${pathParts.slice(1, sgexIndex + 2).join('/')}`;
+              } else {
+                // Main branch: /sgex
+                basePath = `/${pathParts.slice(1, sgexIndex + 1).join('/')}`;
+              }
+            }
+          }
+          
           window.location.href = `${basePath}/docs/overview`;
         },
         content: `
@@ -324,6 +346,116 @@ class HelpContentService {
           ]
         }
       ],
+      'questionnaire-editor': [
+        {
+          id: 'using-questionnaire-editor',
+          title: 'Using the FHIR Questionnaire Editor',
+          badge: '/sgex/cat-paw-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'FHIR Questionnaire Overview',
+              content: `
+                <p>The FHIR Questionnaire editor helps you create and modify structured data collection forms:</p>
+                <ul>
+                  <li><strong>Visual Editor:</strong> Uses LHC-Forms for intuitive questionnaire design</li>
+                  <li><strong>FHIR Compliant:</strong> Generates standard FHIR R4 Questionnaire resources</li>
+                  <li><strong>Multilingual:</strong> Support for multiple languages and translations</li>
+                  <li><strong>Preview Mode:</strong> Test questionnaires as they would appear to users</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>📋 File Location:</strong> Questionnaires are stored in <code>input/questionnaires/*.json</code>
+                </div>
+              `
+            },
+            {
+              title: 'Creating New Questionnaires',
+              content: `
+                <p>To create a new FHIR Questionnaire:</p>
+                <ol>
+                  <li>Click "Create New Questionnaire" on the main screen</li>
+                  <li>A template questionnaire will be loaded in the editor</li>
+                  <li>Modify the questionnaire structure using the visual interface</li>
+                  <li>Add questions, sections, and response options</li>
+                  <li>Set validation rules and conditional logic</li>
+                </ol>
+                <div class="help-warning">
+                  <strong>⚠️ Remember:</strong> Save your work regularly using "Save to Staging" or "Commit to GitHub"
+                </div>
+              `
+            },
+            {
+              title: 'Editing Existing Questionnaires',
+              content: `
+                <p>To modify existing questionnaires:</p>
+                <ol>
+                  <li>Select a questionnaire from the list</li>
+                  <li>The questionnaire will load in the LHC-Forms editor</li>
+                  <li>Make your changes using the visual interface</li>
+                  <li>Preview the form to test user experience</li>
+                  <li>Save changes when satisfied</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>💡 Tip:</strong> Use the staging framework to test changes before committing to GitHub
+                </div>
+              `
+            },
+            {
+              title: 'Internationalization Support',
+              content: `
+                <p>The questionnaire editor supports multiple languages:</p>
+                <ul>
+                  <li><strong>Language Selection:</strong> Use the language dropdown to switch between languages</li>
+                  <li><strong>Translations:</strong> Add translations for all text fields</li>
+                  <li><strong>FHIR Extensions:</strong> Uses standard FHIR translation extensions</li>
+                  <li><strong>Preview:</strong> Test questionnaires in different languages</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🌍 Best Practice:</strong> Always provide translations for your target implementation languages
+                </div>
+              `
+            }
+          ]
+        },
+        {
+          id: 'questionnaire-management',
+          title: 'Managing Questionnaire Assets',
+          badge: '/sgex/cat-paw-file-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'File Organization',
+              content: `
+                <p>FHIR Questionnaires are organized as follows:</p>
+                <ul>
+                  <li><strong>Location:</strong> <code>input/questionnaires/</code> directory</li>
+                  <li><strong>Format:</strong> JSON files following FHIR R4 Questionnaire schema</li>
+                  <li><strong>Naming:</strong> Use descriptive names like <code>patient-registration.json</code></li>
+                  <li><strong>Validation:</strong> All files are validated against FHIR schema</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>📁 Convention:</strong> Use kebab-case filenames for consistency
+                </div>
+              `
+            },
+            {
+              title: 'Version Control Integration',
+              content: `
+                <p>The questionnaire editor integrates with GitHub for version control:</p>
+                <ul>
+                  <li><strong>Staging:</strong> Save changes locally before committing</li>
+                  <li><strong>Commits:</strong> Create meaningful commit messages</li>
+                  <li><strong>Branches:</strong> Work on different branches for features</li>
+                  <li><strong>History:</strong> Track changes and revert if needed</li>
+                </ul>
+                <div class="help-warning">
+                  <strong>⚠️ Important:</strong> Always test questionnaires before committing to main branch
+                </div>
+              `
+            }
+          ]
+        }
+      ],
       'component-editor': [
         {
           id: 'component-editor-overview',
@@ -401,6 +533,76 @@ class HelpContentService {
                   <li>Longer expiration options</li>
                   <li>Works with all GitHub integrations</li>
                 </ul>
+              `
+            }
+          ]
+        }
+      ],
+      'welcome': [
+        {
+          id: 'github-pat-setup',
+          title: 'How to Create a GitHub Personal Access Token',
+          badge: '/sgex/cat-paw-lock-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Step 1: Go to GitHub Settings',
+              content: `
+                <p>Navigate to your GitHub account settings:</p>
+                <ol>
+                  <li>Click your profile picture in the top right</li>
+                  <li>Select "Settings" from the dropdown</li>
+                  <li>Go to "Developer settings" → "Personal access tokens"</li>
+                  <li>Choose "Fine-grained tokens" (recommended) or "Tokens (classic)"</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>💡 Tip:</strong> Fine-grained tokens provide better security with repository-specific access.
+                </div>
+              `
+            },
+            {
+              title: 'Step 2: Generate New Token',
+              content: `
+                <p>Create your new token:</p>
+                <ol>
+                  <li>Click "Generate new token"</li>
+                  <li>Give it a descriptive name like "SGEX Workbench"</li>
+                  <li>Set expiration (90 days recommended)</li>
+                  <li>Select repository access (specific repos or all)</li>
+                </ol>
+                <div class="help-warning">
+                  <strong>⚠️ Important:</strong> You'll only see the token once, so copy it immediately!
+                </div>
+              `
+            },
+            {
+              title: 'Step 3: Set Required Permissions',
+              content: `
+                <p>For <strong>fine-grained tokens</strong>, enable:</p>
+                <ul>
+                  <li><strong>Contents:</strong> Read and Write</li>
+                  <li><strong>Metadata:</strong> Read</li>
+                  <li><strong>Pull requests:</strong> Read and Write</li>
+                </ul>
+                <p>For <strong>classic tokens</strong>, select:</p>
+                <ul>
+                  <li><strong>repo</strong> - Full control of private repositories</li>
+                  <li><strong>read:org</strong> - Read org and team membership</li>
+                </ul>
+              `
+            },
+            {
+              title: 'Step 4: Use Your Token',
+              content: `
+                <p>Now you can authenticate with SGEX:</p>
+                <ol>
+                  <li>Copy your newly generated token</li>
+                  <li>Paste it into the login form</li>
+                  <li>Click "Sign in with Personal Access Token"</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>🔒 Security:</strong> Your token is stored securely in your browser and never shared with servers.
+                </div>
               `
             }
           ]

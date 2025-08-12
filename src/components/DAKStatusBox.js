@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import githubService from '../services/githubService';
 import CommitsSlider from './CommitsSlider';
 import GitHubActionsIntegration from './GitHubActionsIntegration';
-import './DAKStatusBox.css';
 
 const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -187,8 +186,9 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
                 <h4>⚙️ GitHub Actions</h4>
                 <GitHubActionsIntegration
                   repository={repository}
-                  branch={branch}
+                  selectedBranch={branch}
                   hasWriteAccess={hasWriteAccess}
+                  profile={profile}
                 />
               </div>
             </>

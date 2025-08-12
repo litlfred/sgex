@@ -1,22 +1,18 @@
 import React, { useState } from 'react';
 import { usePage } from './PageProvider';
 import ContextualHelpMascot from '../ContextualHelpMascot';
-import './ErrorHandler.css';
+import useThemeImage from '../../hooks/useThemeImage';
 
 /**
  * Error handler component with automatic bug reporting functionality
  */
 const ErrorHandler = ({ error, onRetry }) => {
-  // Try to get page context, but provide defaults if not available
-  let pageName = 'unknown';
-  try {
-    const pageContext = usePage();
-    pageName = pageContext.pageName;
-  } catch (e) {
-    // usePage hook not available, use default
-    console.warn('ErrorHandler used outside of PageProvider context');
-  }
+  const pageContext = usePage();
+  const pageName = pageContext.pageName;
   const [bugReportSent, setBugReportSent] = useState(false);
+
+  // Theme-aware mascot image
+  const mascotImage = useThemeImage('sgex-mascot.png');
   const [userExplanation, setUserExplanation] = useState('');
 
   const generateBugReportUrl = () => {
@@ -76,6 +72,84 @@ The page should load without errors and function normally.
     window.location.href = '/sgex/';
   };
 
+  // Enhanced error message generation for DAK-specific errors
+  const getErrorDisplayInfo = () => {
+    const lowercaseError = error.toLowerCase();
+    
+    // Extract user/repo from URL or page context
+    const user = pageContext?.user;
+    const repo = pageContext?.repository?.name;
+    
+    if (lowercaseError.includes('not found') || lowercaseError.includes('not accessible')) {
+      if (lowercaseError.includes('user')) {
+        return {
+          title: 'User Not Found',
+          message: `The user ${user ? `'${user}'` : 'in the URL'} could not be found on GitHub.`,
+          suggestions: [
+            'Check the spelling of the username',
+            'Verify the user account exists on GitHub',
+            'Try searching for the user on GitHub.com'
+          ],
+          icon: '👤'
+        };
+      } else if (lowercaseError.includes('repository')) {
+        return {
+          title: 'Repository Not Found',
+          message: `The repository ${user && repo ? `'${user}/${repo}'` : 'in the URL'} could not be accessed.`,
+          suggestions: [
+            'Check the spelling of the repository name',
+            'Verify the repository exists and is public',
+            'If it\'s a private repository, make sure you have access',
+            'Try visiting the repository directly on GitHub.com'
+          ],
+          icon: '📁'
+        };
+      }
+    }
+    
+    if (lowercaseError.includes('not a valid dak') || lowercaseError.includes('invalid dak')) {
+      return {
+        title: 'Not a DAK Repository',
+        message: `The repository ${user && repo ? `'${user}/${repo}'` : 'in the URL'} doesn't appear to contain WHO SMART Guidelines content.`,
+        suggestions: [
+          'Verify this is a WHO SMART Guidelines Digital Adaptation Kit',
+          'Check if the repository has a sushi-config.yaml file',
+          'Look for smart.who.int.base dependencies in the configuration',
+          'Try browsing other DAK repositories for examples'
+        ],
+        icon: '📋'
+      };
+    }
+    
+    if (lowercaseError.includes('asset') && lowercaseError.includes('not found')) {
+      return {
+        title: 'File Not Found',
+        message: `The requested file could not be found in the repository.`,
+        suggestions: [
+          'Check if the file path is correct',
+          'Verify the file exists in the current branch',
+          'The file may have been moved or deleted',
+          'Try browsing the repository to find the correct path'
+        ],
+        icon: '📄'
+      };
+    }
+    
+    // Default error info
+    return {
+      title: 'Something Went Wrong',
+      message: error,
+      suggestions: [
+        'Try refreshing the page',
+        'Check your internet connection',
+        'The service may be temporarily unavailable'
+      ],
+      icon: '⚠️'
+    };
+  };
+
+  const errorInfo = getErrorDisplayInfo();
+
   return (
     <div className="error-handler">
       <div className="error-content">
@@ -85,7 +159,7 @@ The page should load without errors and function normally.
               <div className="error-help-content">
                 <div className="error-mascot-large">
                   <img 
-                    src="/sgex/sgex-mascot.png" 
+                    src={mascotImage} 
                     alt="SGEX Helper" 
                     className="large-mascot-icon"
                   />
@@ -103,8 +177,19 @@ The page should load without errors and function normally.
         </div>
         
         <div className="error-details">
-          <h2>Oops! Something went wrong</h2>
-          <p className="error-message">{error}</p>
+          <h2>{errorInfo.icon} {errorInfo.title}</h2>
+          <p className="error-message">{errorInfo.message}</p>
+          
+          {errorInfo.suggestions && (
+            <div className="error-suggestions">
+              <h3>💡 Suggestions:</h3>
+              <ul>
+                {errorInfo.suggestions.map((suggestion, index) => (
+                  <li key={index}>{suggestion}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           
           <div className="error-actions">
             <button className="error-btn primary" onClick={handleRetry}>
