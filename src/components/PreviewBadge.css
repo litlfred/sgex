@@ -467,6 +467,64 @@
   margin-left: auto;
 }
 
+/* Timeline event styles */
+.comment-timeline {
+  background: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.comment-type-timeline {
+  background: #007bff;
+  color: white;
+}
+
+.comment-timeline-body {
+  padding: 0.5rem 0.75rem;
+}
+
+.timeline-content {
+  font-size: 0.85rem;
+  color: #495057;
+  font-style: italic;
+}
+
+/* Comments section header with controls */
+.comments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.comments-header h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.comments-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-updates-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.status-updates-toggle input[type="checkbox"] {
+  margin: 0;
+}
+
+.checkbox-label {
+  user-select: none;
+}
+
 .comment-body {
   padding: 0.75rem;
 }

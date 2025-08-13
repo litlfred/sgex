@@ -66,6 +66,7 @@ const PreviewBadge = () => {
   const [allComments, setAllComments] = useState([]);
   const [hasMoreComments, setHasMoreComments] = useState(false);
   const [displayedCommentsCount, setDisplayedCommentsCount] = useState(5);
+  const [showStatusUpdates, setShowStatusUpdates] = useState(true);
   const expandedRef = useRef(null);
   const commentRefreshIntervalRef = useRef(null);
   const workflowRefreshIntervalRef = useRef(null);
@@ -222,9 +223,10 @@ const PreviewBadge = () => {
       const perPage = 30; // GitHub default per page
       
       // Fetch both review comments and issue comments with pagination
-      const [reviewComments, issueComments] = await Promise.all([
+      const [reviewComments, issueComments, timelineEvents] = await Promise.all([
         githubService.getPullRequestComments(owner, repo, prNumber, page, perPage).catch(() => []),
-        githubService.getPullRequestIssueComments(owner, repo, prNumber, page, perPage).catch(() => [])
+        githubService.getPullRequestIssueComments(owner, repo, prNumber, page, perPage).catch(() => []),
+        showStatusUpdates ? githubService.getPullRequestTimeline(owner, repo, prNumber, page, perPage).catch(() => []) : Promise.resolve([])
       ]);
 
       // Combine and sort comments by date, mark the type
@@ -233,11 +235,27 @@ const PreviewBadge = () => {
         ...issueComments.map(comment => ({ ...comment, type: 'issue' }))
       ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
+      // Process timeline events for status updates
+      const relevantTimelineEvents = timelineEvents
+        .filter(event => ['committed', 'reviewed', 'merged', 'closed', 'reopened', 'labeled', 'unlabeled', 'head_ref_force_pushed', 'ready_for_review', 'convert_to_draft'].includes(event.event))
+        .map(event => ({
+          ...event,
+          type: 'timeline',
+          created_at: event.created_at || event.submitted_at,
+          user: event.actor || event.author || { login: 'github', avatar_url: 'https://github.com/github.png' },
+          body: formatTimelineEvent(event)
+        }));
+
       if (append) {
         // Append to existing comments (for load more)
         const existingIds = new Set(allComments.map(c => c.id));
         const uniqueNewComments = newComments.filter(c => !existingIds.has(c.id));
-        const updatedAllComments = [...allComments, ...uniqueNewComments];
+        const uniqueNewEvents = relevantTimelineEvents.filter(e => !existingIds.has(e.id));
+        
+        const allNewItems = [...uniqueNewComments, ...uniqueNewEvents]
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        const updatedAllComments = [...allComments, ...allNewItems];
         setAllComments(updatedAllComments);
         
         // When loading more, increase the displayed count to show the new comments
@@ -246,10 +264,13 @@ const PreviewBadge = () => {
         setComments(updatedAllComments.slice(0, newDisplayCount));
       } else {
         // Replace comments (for initial load or refresh)
-        setAllComments(newComments);
-        const initialDisplayCount = Math.min(5, newComments.length);
+        const allItems = [...newComments, ...relevantTimelineEvents]
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        setAllComments(allItems);
+        const initialDisplayCount = Math.min(5, allItems.length);
         setDisplayedCommentsCount(initialDisplayCount);
-        setComments(newComments.slice(0, initialDisplayCount));
+        setComments(allItems.slice(0, initialDisplayCount));
       }
       
       // Check if there are more comments to load
@@ -261,6 +282,36 @@ const PreviewBadge = () => {
       return [];
     } finally {
       setCommentsLoading(false);
+    }
+  };
+
+  // Format timeline events into readable status updates
+  const formatTimelineEvent = (event) => {
+    switch (event.event) {
+      case 'committed':
+        return `📦 Pushed ${event.sha ? event.sha.substring(0, 7) : 'commit'}: ${event.message || 'No commit message'}`;
+      case 'reviewed':
+        const reviewState = event.state?.toLowerCase();
+        const reviewIcon = reviewState === 'approved' ? '✅' : reviewState === 'changes_requested' ? '❌' : '💬';
+        return `${reviewIcon} ${reviewState === 'approved' ? 'Approved' : reviewState === 'changes_requested' ? 'Requested changes' : 'Reviewed'} this pull request`;
+      case 'merged':
+        return `🔀 Merged this pull request`;
+      case 'closed':
+        return `❌ Closed this pull request`;
+      case 'reopened':
+        return `🔄 Reopened this pull request`;
+      case 'labeled':
+        return `🏷️ Added label: ${event.label?.name || 'unknown'}`;
+      case 'unlabeled':
+        return `🏷️ Removed label: ${event.label?.name || 'unknown'}`;
+      case 'head_ref_force_pushed':
+        return `🔄 Force-pushed to ${event.ref || 'branch'}`;
+      case 'ready_for_review':
+        return `✅ Marked as ready for review`;
+      case 'convert_to_draft':
+        return `📝 Converted to draft`;
+      default:
+        return `📋 ${event.event.replace(/_/g, ' ')}`;
     }
   };
 
@@ -1203,7 +1254,25 @@ const PreviewBadge = () => {
               )}
 
               <div className="comments-section">
-                <h4>Recent Comments ({allComments.length > 0 ? `${displayedCommentsCount}/${allComments.length}` : '0'})</h4>
+                <div className="comments-header">
+                  <h4>Recent Comments & Updates ({allComments.length > 0 ? `${displayedCommentsCount}/${allComments.length}` : '0'})</h4>
+                  <div className="comments-controls">
+                    <label className="status-updates-toggle">
+                      <input 
+                        type="checkbox" 
+                        checked={showStatusUpdates}
+                        onChange={(e) => {
+                          setShowStatusUpdates(e.target.checked);
+                          // Refresh comments when toggling status updates
+                          if (prInfo && prInfo.length > 0) {
+                            fetchCommentsForPR('litlfred', 'sgex', prInfo[0].number, 1, false);
+                          }
+                        }}
+                      />
+                      <span className="checkbox-label">📋 Show status updates</span>
+                    </label>
+                  </div>
+                </div>
                 {commentsLoading ? (
                   <div className="loading">Loading comments...</div>
                 ) : comments.length === 0 ? (
@@ -1218,7 +1287,7 @@ const PreviewBadge = () => {
                         const viewers = getCommentViewers(comment, comments);
                         
                         return (
-                          <div key={comment.id} className={`comment ${isNewComment ? 'comment-new-glow' : ''}`}>
+                          <div key={comment.id} className={`comment ${comment.type === 'timeline' ? 'comment-timeline' : ''} ${isNewComment ? 'comment-new-glow' : ''}`}>
                             <div className="comment-header">
                               <img 
                                 src={comment.user.avatar_url} 
@@ -1234,10 +1303,12 @@ const PreviewBadge = () => {
                                 {comment.user.login}
                               </a>
                               <span className="comment-date">{formatDate(comment.created_at)}</span>
-                              <span className="comment-type">{comment.type}</span>
+                              <span className={`comment-type ${comment.type === 'timeline' ? 'comment-type-timeline' : ''}`}>
+                                {comment.type === 'timeline' ? 'status' : comment.type}
+                              </span>
                               
-                              {/* Comment Viewer Badges */}
-                              {viewers.length > 0 && (
+                              {/* Comment Viewer Badges - only for regular comments */}
+                              {comment.type !== 'timeline' && viewers.length > 0 && (
                                 <div className="comment-viewers">
                                   {viewers.map((viewer, index) => (
                                     <span 
@@ -1252,7 +1323,14 @@ const PreviewBadge = () => {
                               )}
                             </div>
                             <div className="comment-body">
-                              {shouldTruncate && !isExpanded ? (
+                              {comment.type === 'timeline' ? (
+                                // Timeline events are always short, don't truncate
+                                <div className="comment-timeline-body">
+                                  <div className="timeline-content">
+                                    {comment.body}
+                                  </div>
+                                </div>
+                              ) : shouldTruncate && !isExpanded ? (
                                 <>
                                   <div className="comment-preview">
                                     <div className="markdown-content">

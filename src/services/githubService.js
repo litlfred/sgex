@@ -1840,6 +1840,32 @@ class GitHubService {
     }
   }
 
+  // Get pull request timeline events (status updates, reviews, etc.)
+  async getPullRequestTimeline(owner, repo, pullNumber, page = 1, per_page = 100) {
+    // Use authenticated octokit if available, otherwise create a public instance for public repos
+    const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/timeline`, { page, per_page });
+
+    try {
+      const response = await octokit.rest.issues.listEventsForTimeline({
+        owner,
+        repo,
+        issue_number: pullNumber,
+        page,
+        per_page
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/timeline`, response.status, Date.now() - startTime);
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/timeline`, error.status || 'error', Date.now() - startTime);
+      console.debug('Failed to fetch pull request timeline:', error);
+      return []; // Return empty array for graceful fallback
+    }
+  }
+
   // Merge a pull request
   async mergePullRequest(owner, repo, pullNumber, options = {}) {
     if (!this.isAuth()) {
