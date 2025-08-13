@@ -9,8 +9,9 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 📄 **Workflow File**: [`.github/workflows/branch-deployment.yml`](.github/workflows/branch-deployment.yml)
 
 ### Triggers
-- **Manual only** (`workflow_dispatch`)
-- Requires approval via GitHub environment protection
+- **Manual trigger** (`workflow_dispatch`) - Primary method for controlled deployments
+- **Automatic trigger** - On push to feature branches (excludes main, gh-pages, deploy)
+- **Workflow call** - Can be triggered by other workflows
 
 ### Inputs
 - `branch`: Branch to deploy (defaults to current branch)
@@ -28,7 +29,7 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 - Extensive path validation to prevent directory traversal
 - Cannot deploy to repository root
 - Validates branch names for safety
-- Requires manual approval
+- Automatic deployment for feature branches, manual control for special branches
 
 ## 🏠 Landing Page Deployment (`landing-page-deployment.yml`)
 
@@ -37,12 +38,11 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 📄 **Workflow File**: [`.github/workflows/landing-page-deployment.yml`](.github/workflows/landing-page-deployment.yml)
 
 ### Triggers
-- **Manual only** (`workflow_dispatch`)
-- Requires approval via GitHub environment protection
+- **Manual only** (`workflow_dispatch`) - Prevents accidental overwrites of production landing page
 
 ### Inputs
-- `source_branch`: Branch to deploy from (defaults to `main`)
 - `force_deployment`: Force deployment even if no changes detected
+- `clean_old_assets`: Aggressively clean old assets from gh-pages
 
 ### Behavior
 - Deploys to `https://litlfred.github.io/sgex/`
@@ -53,25 +53,30 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 ### Safety Features
 - Only removes specific root-level files
 - Never removes directories (preserves all branch deployments)
-- Requires manual approval
+- Manual trigger only prevents accidental production updates
 
-## 🔒 Security & Approval Process
+## 🔒 Manual & Automatic Deployment
 
-### Manual Deployment
-Both main workflows are manually triggered (`workflow_dispatch`) and require user confirmation:
-1. Navigate to Actions tab
-2. Select the appropriate workflow
-3. Click "Run workflow" and confirm parameters
-4. Workflows will execute immediately upon confirmation
+### Manual Deployment Access
+Both workflows can be manually triggered from the GitHub Actions UI:
 
-### PR Review Deployment
-The `review.yml` workflow automatically triggers when a PR is approved:
-1. When a PR receives an approved review, the workflow runs automatically
-2. It posts a comment with a deployment link for eligible branches
-3. Branches `gh-pages` and `deploy` are excluded from review-triggered deployments
-4. The actual deployment still requires manual confirmation via the deployment link
+1. **Access Workflows**: Go to the repository's "Actions" tab
+2. **Select Workflow**: Choose "Deploy Feature Branch" or "Deploy Landing Page from Main"
+3. **Run Workflow**: Click "Run workflow" and configure parameters
+4. **Monitor Progress**: View real-time logs and deployment status
 
-**Note**: Environment protection was removed to resolve deployment issues while maintaining manual trigger control.
+### Automatic Deployment (Feature Branches)
+The branch deployment workflow automatically triggers when:
+- Commits are pushed to feature branches (excludes main, gh-pages, deploy)
+- Copilot commits changes to pull requests
+- Code changes are made to relevant paths (src/, public/, package files)
+
+### PR Integration
+When commits are pushed to PRs, the system provides:
+- Real-time deployment status updates in PR comments
+- Direct links to manual workflow triggers with pre-filled parameters
+- Build progress monitoring and log access
+- Quick action buttons for redeployment and troubleshooting
 
 ## 📋 Workflow Files
 
