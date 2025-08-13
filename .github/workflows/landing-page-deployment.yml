@@ -139,7 +139,7 @@ jobs:
           echo "Landing page contents:"
           ls -la landing-page/
 
-      - name: Deploy to gh-pages (landing page from main)
+      - name: Deploy to gh-pages (landing page)
         shell: bash
         run: |
           set -e
@@ -228,7 +228,7 @@ jobs:
           
           echo "✅ Landing page deployment completed successfully"
 
-      - name: Commit and push changes (landing page from main)
+      - name: Commit and push changes (landing page)
         shell: bash
         run: |
           set -e
