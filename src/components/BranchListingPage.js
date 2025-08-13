@@ -508,7 +508,7 @@ const BranchListingPage = () => {
                         <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
                         <div className="loading">Loading previews...</div>
                     </div>
-                ) : error ? (
+                ) : error && pullRequests.length === 0 ? (
                     <>
                         <header className="branch-listing-header">
                             <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
