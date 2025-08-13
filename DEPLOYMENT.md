@@ -6,6 +6,8 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 
 **Purpose**: Deploy feature branches to subdirectories for preview purposes.
 
+📄 **Workflow File**: [`.github/workflows/branch-deployment.yml`](.github/workflows/branch-deployment.yml)
+
 ### Triggers
 - **Manual only** (`workflow_dispatch`)
 - Requires approval via GitHub environment protection
@@ -31,6 +33,8 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 ## 🏠 Landing Page Deployment (`landing-page-deployment.yml`)
 
 **Purpose**: Deploy the main application to the root of GitHub Pages.
+
+📄 **Workflow File**: [`.github/workflows/landing-page-deployment.yml`](.github/workflows/landing-page-deployment.yml)
 
 ### Triggers
 - **Manual only** (`workflow_dispatch`)
@@ -167,3 +171,22 @@ This ensures that only type-safe code reaches production environments.
 - **Preserves work**: No deployment affects other deployments
 - **Simple interface**: Easy-to-use workflow inputs
 - **Comprehensive feedback**: PR comments and deployment summaries
+
+## 🔧 Supporting Workflows
+
+The following additional workflows provide build quality, security, and feedback automation:
+
+### PR Quality & Feedback Workflows
+- **PR Commit Feedback**: [`.github/workflows/pr-commit-feedback.yml`](.github/workflows/pr-commit-feedback.yml) - Provides real-time feedback on PR commits and deployment status
+- **Review Deployment**: [`.github/workflows/review.yml`](.github/workflows/review.yml) - Automates deployment options when PRs are approved
+
+### Code Quality & Compliance Workflows  
+- **Framework Compliance Check**: [`.github/workflows/framework-compliance.yml`](.github/workflows/framework-compliance.yml) - Validates page framework standards and TypeScript compliance
+- **Dependency Security Check**: [`.github/workflows/dependency-security.yml`](.github/workflows/dependency-security.yml) - Scans for security vulnerabilities in dependencies
+
+### Workflow Configuration Details
+All workflows include:
+- ✅ **Explicit fail-fast settings** on critical build steps (`continue-on-error: false`)
+- 🚫 **Branch filtering** to exclude `gh-pages` and `deploy` branches
+- 🔄 **Consistent triggers** on both `push` and `pull_request` events where appropriate
+- 💬 **PR feedback** with detailed status updates and action buttons
