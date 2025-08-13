@@ -128,8 +128,9 @@ const DAKDashboardContent = () => {
 
           // Check if githubService is authenticated (allow demo mode to proceed without auth)
           if (!githubService.isAuth()) {
-            // In demo mode, use the DAK validation service for demo repositories
-            if (window.location.pathname.includes('/dashboard/')) {
+            // Check if this is actual demo mode (demo-user) vs unauthenticated access to real repos
+            if (user === 'demo-user') {
+              // This is actual demo mode - use demo validation and set isDemo flag
               const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
               
               if (!isValidDAK) {
@@ -164,7 +165,28 @@ const DAKDashboardContent = () => {
               setLoading(false);
               return;
             } else {
-              setError(t('auth.authRequired'));
+              // This is unauthenticated access to real public repositories
+              // Create profile without isDemo flag for public repository access
+              const publicProfile = {
+                login: user,
+                name: user.charAt(0).toUpperCase() + user.slice(1),
+                avatar_url: `https://github.com/${user}.png`,
+                type: 'User'
+                // Note: isDemo is NOT set - unauthenticated users should access real public repos
+              };
+
+              const publicRepository = {
+                name: repo,
+                full_name: `${user}/${repo}`,
+                owner: { login: user },
+                default_branch: branch || 'main',
+                html_url: `https://github.com/${user}/${repo}`
+                // Note: isDemo is NOT set - unauthenticated users should access real public repos
+              };
+
+              setProfile(publicProfile);
+              setRepository(publicRepository);
+              setSelectedBranch(branch || 'main');
               setLoading(false);
               return;
             }

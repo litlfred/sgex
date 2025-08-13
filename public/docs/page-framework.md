@@ -413,6 +413,79 @@ When creating new pages, developers **MUST**:
 5. **Follow URL patterns**: Use the established URL patterns for consistency
 6. **Test User Types**: Verify functionality across all user types and permission levels
 7. **Provide Clear Feedback**: Show appropriate messages for access restrictions
+8. **Correct Profile Creation**: Follow the profile creation compliance requirements
+
+### Profile Creation Compliance Requirements
+
+When creating user profiles in components, developers **MUST** follow these rules:
+
+#### ✅ CORRECT Profile Creation Patterns:
+
+1. **Demo Users Only**: Set `isDemo: true` ONLY for explicit demo mode (`user === 'demo-user'`)
+   ```javascript
+   // CORRECT: Only for demo-user
+   if (user === 'demo-user') {
+     setProfile({
+       login: user,
+       name: 'Demo User',
+       avatar_url: `https://github.com/${user}.png`,
+       type: 'User',
+       isDemo: true  // ✅ CORRECT - only for demo-user
+     });
+   }
+   ```
+
+2. **Unauthenticated Users**: Create profiles WITHOUT `isDemo` flag for real user access
+   ```javascript
+   // CORRECT: Unauthenticated access to real public repositories
+   if (!githubService.isAuth() && user !== 'demo-user') {
+     setProfile({
+       login: user,
+       name: user.charAt(0).toUpperCase() + user.slice(1),
+       avatar_url: `https://github.com/${user}.png`,
+       type: 'User'
+       // ✅ CORRECT - NO isDemo flag for real public repositories
+     });
+   }
+   ```
+
+3. **Authenticated Users**: Never set `isDemo` flag
+   ```javascript
+   // CORRECT: Authenticated users get real profile data
+   const profile = await githubService.getUser(user);
+   // ✅ CORRECT - GitHub API returns real profile without isDemo
+   setProfile(profile);
+   ```
+
+#### ❌ INCORRECT Profile Creation Patterns:
+
+```javascript
+// ❌ WRONG: Setting isDemo for all unauthenticated users
+if (!githubService.isAuth()) {
+  setProfile({
+    login: user,
+    isDemo: true  // ❌ WRONG - unauthenticated ≠ demo
+  });
+}
+
+// ❌ WRONG: Setting isDemo based on authentication alone
+setProfile({
+  login: user,
+  isDemo: !githubService.isAuth()  // ❌ WRONG - conflates concepts
+});
+
+// ❌ WRONG: Setting isDemo for authenticated users
+const profile = await githubService.getUser(user);
+profile.isDemo = true;  // ❌ WRONG - authenticated users are never demo
+setProfile(profile);
+```
+
+#### Profile Creation Compliance Rules:
+
+1. **Only `demo-user` gets `isDemo: true`**: The `isDemo` flag should ONLY be set when `user === 'demo-user'`
+2. **Unauthenticated ≠ Demo**: Unauthenticated users accessing real repositories should NOT have `isDemo` flag
+3. **Authentication State Independence**: The `isDemo` flag is independent of authentication status
+4. **Real Repository Access**: Unauthenticated users should access real public repositories, not demo content
 
 ### User Type Testing Checklist
 

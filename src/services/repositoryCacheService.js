@@ -18,8 +18,9 @@ class RepositoryCacheService {
   /**
    * Generate cache key for a user/organization
    */
-  getCacheKey(owner, type = 'user') {
-    return `${this.CACHE_KEY_PREFIX}${type}_${owner}`;
+  getCacheKey(owner, type = 'user', suffix = '') {
+    const baseCacheKey = `${this.CACHE_KEY_PREFIX}${type}_${owner}`;
+    return suffix ? `${baseCacheKey}_${suffix}` : baseCacheKey;
   }
 
   /**
@@ -36,9 +37,9 @@ class RepositoryCacheService {
    * Get cached repositories for a user/organization
    * Returns null if cache doesn't exist or is stale
    */
-  getCachedRepositories(owner, type = 'user') {
+  getCachedRepositories(owner, type = 'user', suffix = '') {
     try {
-      const cacheKey = this.getCacheKey(owner, type);
+      const cacheKey = this.getCacheKey(owner, type, suffix);
       this.logger.cache('get', cacheKey);
       
       const cachedData = localStorage.getItem(cacheKey);
@@ -70,7 +71,7 @@ class RepositoryCacheService {
         type: parsed.type
       };
     } catch (error) {
-      const cacheKey = this.getCacheKey(owner, type);
+      const cacheKey = this.getCacheKey(owner, type, suffix);
       this.logger.error('Error reading repository cache', { cacheKey, error: error.message });
       console.warn('Error reading repository cache:', error);
       return null;
@@ -80,9 +81,9 @@ class RepositoryCacheService {
   /**
    * Cache repositories for a user/organization
    */
-  setCachedRepositories(owner, type = 'user', repositories) {
+  setCachedRepositories(owner, type = 'user', repositories, suffix = '') {
     try {
-      const cacheKey = this.getCacheKey(owner, type);
+      const cacheKey = this.getCacheKey(owner, type, suffix);
       const cacheData = {
         repositories,
         timestamp: Date.now(),
@@ -99,7 +100,7 @@ class RepositoryCacheService {
       localStorage.setItem(cacheKey, JSON.stringify(cacheData));
       return true;
     } catch (error) {
-      const cacheKey = this.getCacheKey(owner, type);
+      const cacheKey = this.getCacheKey(owner, type, suffix);
       this.logger.error('Error caching repositories', { cacheKey, error: error.message });
       console.warn('Error caching repositories:', error);
       return false;
@@ -144,8 +145,8 @@ class RepositoryCacheService {
   /**
    * Get cache info for debugging
    */
-  getCacheInfo(owner, type = 'user') {
-    const cached = this.getCachedRepositories(owner, type);
+  getCacheInfo(owner, type = 'user', suffix = '') {
+    const cached = this.getCachedRepositories(owner, type, suffix);
     if (!cached) {
       return { exists: false, stale: true };
     }
