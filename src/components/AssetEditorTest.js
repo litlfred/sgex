@@ -38,7 +38,6 @@ const AssetEditorTest = () => {
       content={content}
       originalContent={originalContent}
       hasChanges={hasChanges}
-      isDemo={true}
       onSave={handleSave}
       saveButtonsPosition="top"
     >

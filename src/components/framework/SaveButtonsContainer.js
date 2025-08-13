@@ -19,7 +19,6 @@ const SaveButtonsContainer = ({
   onSaveGitHub,
   
   // Configuration
-  isDemo = false,
   showLocalButton = true,
   showGitHubButton = true,
   buttonSize = 'medium', // 'small', 'medium', 'large'
@@ -96,19 +95,11 @@ const SaveButtonsContainer = ({
       )}
 
       {/* GitHub unavailable indicator */}
-      {showGitHubButton && !canSaveToGitHub && !isDemo && (
+      {showGitHubButton && !canSaveToGitHub && (
         <div className="github-unavailable">
           <span className="unavailable-icon">🔒</span>
           <span className="unavailable-text">GitHub save unavailable</span>
           <small>Login required for GitHub access</small>
-        </div>
-      )}
-
-      {/* Demo mode indicator */}
-      {isDemo && (
-        <div className="demo-mode-indicator">
-          <span className="demo-icon">🧪</span>
-          <span className="demo-text">Demo Mode - Local save only</span>
         </div>
       )}
 
