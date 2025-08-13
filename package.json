@@ -31,7 +31,7 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
+    "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve": "npm run build && cd build && python3 -m http.server 3000",
@@ -46,7 +46,7 @@
     "generate-schemas": "npm run generate-schemas:typescript-json-schema && npm run generate-schemas:ts-json-schema-generator",
     "generate-schemas:typescript-json-schema": "typescript-json-schema tsconfig.json \"*\" --out public/docs/schemas/generated-schemas-tjs.json --include src/types/**/*.ts",
     "generate-schemas:ts-json-schema-generator": "ts-json-schema-generator --path src/types/**/*.ts --type \"*\" --out public/docs/schemas/generated-schemas-tsjsg.json",
-    "prebuild": "echo 'Skipping schema generation for now'",
+    "prebuild": "npm run type-check && npm run generate-schemas",
     "compliance:profile": "node src/tests/compliance/profileCreationCompliance.js",
     "compliance:all": "npm run compliance:profile",
     "test:compliance": "npm test -- --testPathPattern=compliance"
