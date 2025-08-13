@@ -94,24 +94,26 @@
               waitForRouteConfig(maxAttempts, currentAttempt + 1);
             }, 100);
           } else {
-            // Give up after max attempts
-            console.error('SGEX route configuration service not loaded after waiting');
-            console.error('This may be due to a deployment issue or network problem');
-            console.error('URL:', window.location.href);
-            console.error('Expected routeConfig.js to define getSGEXRouteConfig function');
+            // Give up after max attempts and fallback to basic routing
+            console.warn('SGEX route configuration not available - falling back to basic routing');
+            console.warn('This may be due to a deployment issue or network problem');
+            console.warn('URL:', window.location.href);
+            handleGitHubPagesDeployment();
             return;
           }
         }
         
         function continueRouting() {
           if (typeof getSGEXRouteConfig === 'undefined') {
-            console.error('getSGEXRouteConfig still not available');
+            console.warn('getSGEXRouteConfig still not available - using fallback');
+            handleGitHubPagesDeployment();
             return;
           }
         
         var config = getSGEXRouteConfig();
         if (!config) {
-          console.error('SGEX route configuration not loaded');
+          console.warn('SGEX route configuration not loaded - using fallback');
+          handleGitHubPagesDeployment();
           return;
         }
         
@@ -183,6 +185,38 @@
           });
           
           l.replace(newUrl);
+        }
+        
+        // Fallback routing function when route config is not available
+        function handleGitHubPagesDeployment() {
+          var l = window.location;
+          var pathSegments = l.pathname.split('/').filter(Boolean);
+          
+          // Basic GitHub Pages routing without route config
+          var isGitHubPages = l.hostname === 'litlfred.github.io' || l.hostname.endsWith('.github.io');
+          
+          if (isGitHubPages && pathSegments.length >= 1 && pathSegments[0] === 'sgex') {
+            if (pathSegments.length >= 2) {
+              // Assume the second segment is either a branch or component
+              // For branch deployments, redirect to the branch root and let the app handle routing
+              var redirectPath = '/sgex/' + pathSegments[1] + '/';
+              var routePath = pathSegments.slice(2).join('/');
+              
+              if (routePath) {
+                var newUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+                  redirectPath + '?/' + routePath.replace(/&/g, '~and~') +
+                  (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+                  l.hash;
+                
+                console.log('Fallback SPA Routing:', {
+                  from: l.pathname,
+                  to: newUrl
+                });
+                
+                l.replace(newUrl);
+              }
+            }
+          }
         }
       }
       
