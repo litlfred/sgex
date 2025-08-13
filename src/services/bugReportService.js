@@ -238,7 +238,7 @@ class BugReportService {
   }
 
   // Generate issue body from form data and template
-  generateIssueBody(template, formData, includeConsole = false, consoleOutput = '') {
+  generateIssueBody(template, formData, includeConsole = false, consoleOutput = '', contextData = {}, screenshotBlob = null) {
     let body = '';
     
     // Process template body fields
@@ -255,14 +255,19 @@ class BugReportService {
       }
     }
     
+    // Add screenshot reference if provided
+    if (screenshotBlob) {
+      body += `## Screenshot\n\n*A screenshot has been captured and will be attached to this issue.*\n\n`;
+    }
+    
     // Add console output if requested
     if (includeConsole && consoleOutput) {
       const truncatedOutput = this._truncateConsoleOutput(consoleOutput);
       body += `## Console Output\n\n\`\`\`\n${truncatedOutput}\n\`\`\`\n\n`;
     }
     
-    // Add environment information
-    body += this._generateEnvironmentInfo();
+    // Add enhanced environment and context information
+    body += this._generateContextualInfo(contextData);
     
     return body.trim();
   }
@@ -281,8 +286,9 @@ class BugReportService {
     return `${truncated}\n\n... (output truncated to ${maxLength} characters)`;
   }
 
-  // Generate environment information
-  _generateEnvironmentInfo() {
+  // Generate comprehensive context information including environment and user context
+  _generateContextualInfo(contextData = {}) {
+    // Capture basic environment info
     const env = {
       userAgent: navigator.userAgent,
       url: window.location.href,
@@ -294,10 +300,198 @@ class BugReportService {
       screen: {
         width: window.screen.width,
         height: window.screen.height
-      }
+      },
+      language: navigator.language,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    };
+
+    // Capture SGEX-specific context
+    const sgexContext = this._extractSGEXContext(contextData);
+
+    // Combine all context information
+    const fullContext = {
+      environment: env,
+      sgexContext: sgexContext
     };
     
-    return `## Environment\n\n\`\`\`json\n${JSON.stringify(env, null, 2)}\n\`\`\``;
+    return `## Environment & Context\n\n\`\`\`json\n${JSON.stringify(fullContext, null, 2)}\n\`\`\``;
+  }
+
+  // Extract SGEX-specific contextual information
+  _extractSGEXContext(contextData = {}) {
+    const context = {
+      page: {
+        id: contextData.pageId || this._detectCurrentPage(),
+        url: window.location.href,
+        pathname: window.location.pathname
+      },
+      authentication: {
+        isAuthenticated: this._isUserAuthenticated(),
+        authMode: this._getAuthenticationMode()
+      }
+    };
+
+    // Add repository context if available
+    if (contextData.repository) {
+      context.repository = {
+        name: contextData.repository.name || contextData.repository,
+        owner: contextData.repository.owner || contextData.repository.split('/')[0],
+        branch: contextData.branch || 'unknown'
+      };
+    }
+
+    // Add DAK context if available
+    if (contextData.selectedDak) {
+      context.dak = {
+        name: contextData.selectedDak.name,
+        description: contextData.selectedDak.description,
+        compliance: contextData.selectedDak.compliance
+      };
+    }
+
+    // Add component context if available
+    if (contextData.component) {
+      context.component = {
+        type: contextData.component,
+        isEditing: contextData.isEditing || false
+      };
+    }
+
+    // Add user profile context if available
+    if (contextData.profile) {
+      context.profile = {
+        login: contextData.profile.login,
+        type: contextData.profile.type
+      };
+    }
+
+    // Add any other relevant context
+    if (contextData.hasQuestionnaires !== undefined) {
+      context.features = context.features || {};
+      context.features.hasQuestionnaires = contextData.hasQuestionnaires;
+    }
+
+    if (contextData.selectedReferencesCount !== undefined) {
+      context.features = context.features || {};
+      context.features.selectedReferencesCount = contextData.selectedReferencesCount;
+    }
+
+    return context;
+  }
+
+  // Detect current page from URL if pageId not provided
+  _detectCurrentPage() {
+    const path = window.location.pathname;
+    const pathSegments = path.split('/').filter(Boolean);
+    
+    if (pathSegments.length > 0) {
+      return pathSegments[pathSegments.length - 1] || 'unknown';
+    }
+    
+    return 'root';
+  }
+
+  // Check if user is authenticated (avoiding circular import)
+  _isUserAuthenticated() {
+    try {
+      // Check for common authentication indicators
+      const hasToken = localStorage.getItem('github_token') || 
+                      sessionStorage.getItem('github_token') ||
+                      window.githubToken;
+      return !!hasToken;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // Determine authentication mode
+  _getAuthenticationMode() {
+    if (this._isUserAuthenticated()) {
+      return 'authenticated';
+    } else if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+      return 'local_development';
+    } else {
+      return 'demo_mode';
+    }
+  }
+
+  // Take a screenshot of the current page
+  async takeScreenshot() {
+    try {
+      // Check if the browser supports the Screen Capture API
+      if ('getDisplayMedia' in navigator.mediaDevices) {
+        return await this._takeScreenshotWithScreenCapture();
+      } else if ('html2canvas' in window) {
+        // Fallback to html2canvas if available
+        return await this._takeScreenshotWithHtml2Canvas();
+      } else {
+        // If no screenshot capabilities available, return null
+        console.warn('Screenshot functionality not available in this browser');
+        return null;
+      }
+    } catch (error) {
+      console.warn('Failed to take screenshot:', error);
+      return null;
+    }
+  }
+
+  // Take screenshot using Screen Capture API (requires user permission)
+  async _takeScreenshotWithScreenCapture() {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { mediaSource: 'screen' }
+      });
+      
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.play();
+      
+      return new Promise((resolve, reject) => {
+        video.onloadedmetadata = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0);
+          
+          // Stop the stream
+          stream.getTracks().forEach(track => track.stop());
+          
+          // Convert to blob
+          canvas.toBlob(resolve, 'image/png');
+        };
+        
+        video.onerror = reject;
+      });
+    } catch (error) {
+      console.warn('Screen capture failed:', error);
+      return null;
+    }
+  }
+
+  // Fallback screenshot using html2canvas (if loaded)
+  async _takeScreenshotWithHtml2Canvas() {
+    try {
+      if (typeof html2canvas !== 'function') {
+        console.warn('html2canvas not available');
+        return null;
+      }
+      
+      const canvas = await html2canvas(document.body, {
+        height: window.innerHeight,
+        width: window.innerWidth,
+        scrollX: 0,
+        scrollY: 0
+      });
+      
+      return new Promise(resolve => {
+        canvas.toBlob(resolve, 'image/png');
+      });
+    } catch (error) {
+      console.warn('html2canvas screenshot failed:', error);
+      return null;
+    }
   }
 
   // Capture console output
@@ -340,14 +534,14 @@ class BugReportService {
   }
 
   // Submit issue via GitHub API
-  async submitIssue(owner, repo, template, formData, includeConsole = false, consoleOutput = '') {
+  async submitIssue(owner, repo, template, formData, includeConsole = false, consoleOutput = '', contextData = {}, screenshotBlob = null) {
     try {
       // Generate title
       const titlePrefix = template.title || '';
       const title = titlePrefix + (formData.title || 'Issue submitted via SGEX');
       
       // Generate body
-      const body = this.generateIssueBody(template, formData, includeConsole, consoleOutput);
+      const body = this.generateIssueBody(template, formData, includeConsole, consoleOutput, contextData, screenshotBlob);
       
       // Submit issue
       const result = await githubService.createIssue(
@@ -372,6 +566,14 @@ class BugReportService {
         }
       }
       
+      // TODO: If screenshot is provided and issue was created successfully,
+      // we would need to upload the screenshot as an attachment
+      // This requires additional GitHub API calls for file uploads
+      if (screenshotBlob && result.success && result.issue) {
+        console.log('Screenshot captured but attachment upload not yet implemented');
+        // Future enhancement: Upload screenshot to GitHub issue
+      }
+      
       return result;
     } catch (error) {
       console.error('Failed to submit issue:', error);
@@ -386,7 +588,7 @@ class BugReportService {
   }
 
   // Generate pre-populated GitHub issue URL
-  generateIssueUrl(owner, repo, template, formData, includeConsole = false, consoleOutput = '') {
+  generateIssueUrl(owner, repo, template, formData, includeConsole = false, consoleOutput = '', contextData = {}, screenshotBlob = null) {
     const params = new URLSearchParams();
     
     // Set template
@@ -421,9 +623,18 @@ class BugReportService {
         const consoleField = 'console-output';
         params.set(consoleField, `\`\`\`\n${truncatedOutput}\n\`\`\``);
       }
+      
+      // Add contextual information as a separate field
+      const contextInfo = this._generateContextualInfo(contextData);
+      params.set('context-info', contextInfo);
+      
+      // Add note about screenshot if provided
+      if (screenshotBlob) {
+        params.set('screenshot-note', 'A screenshot was captured and will be manually attached to this issue.');
+      }
     } else {
       // Fallback to body parameter for non-template issues
-      const body = this.generateIssueBody(template, formData, includeConsole, consoleOutput);
+      const body = this.generateIssueBody(template, formData, includeConsole, consoleOutput, contextData, screenshotBlob);
       if (body) {
         // URL encode and truncate if too long
         const maxBodyLength = 2000; // Conservative limit for URL
