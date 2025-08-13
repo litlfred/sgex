@@ -60,6 +60,18 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
         setIssueCreationType(issueType);
         setIssueRepository(null); // Use default SGEX repo
         setShowIssueCreationModal(true);
+          case 'feature':
+            params.template = 'feature_request.yml';
+            params.labels = 'enhancement';
+            break;
+          case 'question':
+            params.template = 'question.yml';
+            params.labels = 'question';
+            break;
+          case 'documentation':
+            params.template = 'documentation.yml';
+            params.labels = 'documentation';
+            break;
       },
 
       openDakIssue: (issueType) => {
@@ -75,6 +87,25 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
           const githubUrl = generateGitHubUrl(issueType === 'content' ? 'dak-content' : issueType, repository);
           window.open(githubUrl, '_blank');
           return;
+            break;
+          case 'improvement':
+            params.template = 'dak_feature_request.yml';
+            params.labels = 'enhancement,dak-improvement';
+            break;
+          case 'content':
+            params.template = 'dak_content_error.yml';
+            params.labels = 'content-issue,clinical-content';
+            break;
+          case 'question':
+            params.template = 'dak_question.yml';
+            params.labels = 'question,dak-question';
+            break;
+          case 'blank':
+            // No template specified - this will allow users to create a blank issue
+            params.labels = 'blank-issue,dak-feedback';
+            break;
+          default:
+            params.labels = 'dak-feedback';
         }
 
         // Always use the issue creation modal for authenticated users
@@ -477,6 +508,31 @@ Best regards,
                 aria-label="Close help"
               >
                 ×
+              </button>
+            </div>
+            
+            {showMenu && (
+              <div className="help-menu-dropdown">
+                <button onClick={handleDocumentation} className="menu-item">
+                  <span className="menu-icon">📖</span>
+                  Documentation
+                </button>
+                
+                <button onClick={handleBugReport} className="menu-item">
+                  <img src="/sgex/bug-report-icon.svg" alt={getAltText(t, ALT_TEXT_KEYS.ICON_BUG_REPORT, 'Bug Report')} className="menu-icon" />
+                  File Bug Report
+                </button>
+                
+                {contextData.repository && (
+                  <button onClick={handleDAKFeedback} className="menu-item">
+                    <span className="menu-icon">📝</span>
+                    Provide DAK Feedback
+                  </button>
+                )}
+                
+                <button onClick={handleEmailSupport} className="menu-item">
+                  <span className="menu-icon">📧</span>
+                  Email Support
               </button>
             </div>
             

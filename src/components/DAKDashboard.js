@@ -64,6 +64,9 @@ const DAKDashboardContent = ({
   const navigate = useNavigate();
   const { user, repo, branch } = useParams();
   
+  // Theme-aware mascot image for dialog
+  const mascotImage = useThemeImage('sgex-mascot.png');
+  
   // Try to get data from props first, then from location.state
   const [profile, setProfile] = useState(initialProfile || location.state?.profile || null);
   const [repository, setRepository] = useState(initialRepository || location.state?.repository || null);
@@ -71,7 +74,7 @@ const DAKDashboardContent = ({
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('core'); // 'core', 'additional', or 'publications'
+  const [activeTab, setActiveTab] = useState('core'); // 'core', 'publications', or 'other'
   const [selectedBranch, setSelectedBranch] = useState(initialSelectedBranch || location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -88,7 +91,6 @@ const DAKDashboardContent = ({
   useEffect(() => {
     onSelectedBranchChange(selectedBranch);
   }, [selectedBranch, onSelectedBranchChange]);
-
   // Component Card component defined within the dashboard
   const ComponentCard = ({ component, handleComponentClick, t }) => {
     const [imageLoaded, setImageLoaded] = useState(false);
