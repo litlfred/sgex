@@ -1,7 +1,7 @@
-name: DAK Content Error
-description: Report problems with clinical content, logic, or accuracy in this Digital Adaptation Kit (DAK)
-title: "[DAK Content Error]: "
-labels: ["content-issue", "clinical-content"]
+name: DAK Content Feedback
+description: Provide feedback on clinical content, logic, or accuracy in this Digital Adaptation Kit (DAK) for content authors
+title: "[DAK Content Feedback]: "
+labels: ["authoring"]
 body:
   - type: markdown
     attributes:

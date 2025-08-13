@@ -97,12 +97,12 @@ class HelpContentService {
               <h4>What type of feedback do you have?</h4>
               <div class="bug-report-options">
                 <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('content')">
-                  📝 Report DAK Content Error - Problems with clinical content or logic
+                  📝 DAK Content Feedback - Provide feedback on clinical content or logic
                 </button>
                 <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('bug')">
-                  🐛 DAK Bug - Issue with this specific DAK content
+                  🐛 DAK Bug - Report issue with this specific DAK content
                 </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('improvement')">
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('feature')">
                   📈 DAK Improvement - Suggest enhancements to this DAK
                 </button>
                 <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('question')">
@@ -849,8 +849,13 @@ class HelpContentService {
       this.universalTopics.bugReport
     ];
     
-    // Add DAK feedback if we have DAK context
-    if (contextData.selectedDak || contextData.repository) {
+    // Add DAK feedback only if we have DAK context (DAK or Asset page)
+    if (contextData.selectedDak || contextData.repository || 
+        contextData.pageId === 'dak-dashboard' || 
+        contextData.pageId === 'dak-selection' ||
+        contextData.pageId === 'component-editor' ||
+        contextData.pageId?.includes('dak') || 
+        contextData.pageId?.includes('asset')) {
       topics.push(this.universalTopics.dakFeedback);
     }
     

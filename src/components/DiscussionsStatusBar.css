@@ -1,0 +1,375 @@
+/* Discussions Status Bar Styles */
+.discussions-status-bar {
+  background: var(--bg-color, #ffffff);
+  border: 1px solid var(--border-color, #e1e5e9);
+  border-radius: 8px;
+  margin: 16px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.discussions-status-bar:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Status Bar Header */
+.status-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.status-bar-header:hover {
+  background-color: var(--bg-hover, #f8f9fa);
+}
+
+.status-bar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-color, #333333);
+}
+
+.status-icon {
+  font-size: 18px;
+}
+
+.status-text {
+  font-size: 16px;
+}
+
+.notification-badge {
+  background: #d73a49;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.status-bar-controls {
+  display: flex;
+  align-items: center;
+}
+
+.expand-icon {
+  color: var(--text-secondary, #666666);
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+/* Status Bar Content */
+.status-bar-content {
+  border-top: 1px solid var(--border-color, #e1e5e9);
+  padding: 20px;
+}
+
+/* Filter Controls */
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-light, #f1f3f4);
+}
+
+.state-filter {
+  display: flex;
+  gap: 4px;
+  border: 1px solid var(--border-color, #e1e5e9);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.filter-toggle {
+  background: var(--bg-color, #ffffff);
+  border: none;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-color, #333333);
+}
+
+.filter-toggle:hover {
+  background: var(--bg-hover, #f8f9fa);
+}
+
+.filter-toggle.active {
+  background: var(--primary-color, #0078d4);
+  color: white;
+}
+
+.label-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.label-badge {
+  background: var(--bg-light, #f8f9fa);
+  border: 1px solid var(--border-color, #e1e5e9);
+  color: var(--text-color, #333333);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.label-badge:hover {
+  background: var(--bg-hover, #e9ecef);
+}
+
+.label-badge.selected {
+  background: var(--primary-color, #0078d4);
+  color: white;
+  border-color: var(--primary-color, #0078d4);
+}
+
+.label-badge.disabled {
+  opacity: 0.6;
+}
+
+.new-issue-btn {
+  background: var(--success-color, #28a745);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.new-issue-btn:hover {
+  background: var(--success-dark, #218838);
+  transform: translateY(-1px);
+}
+
+/* Issues List */
+.issues-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.loading-state,
+.error-state,
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-secondary, #666666);
+  font-style: italic;
+}
+
+.error-state {
+  gap: 8px;
+  color: var(--error-color, #d73a49);
+}
+
+.error-icon {
+  font-size: 18px;
+}
+
+.retry-btn {
+  background: var(--primary-color, #0078d4);
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.retry-btn:hover {
+  background: var(--primary-dark, #106ebe);
+}
+
+/* Issue Cards */
+.issue-card {
+  background: var(--bg-color, #ffffff);
+  border: 1px solid var(--border-light, #f1f3f4);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.issue-card:hover {
+  border-color: var(--border-color, #e1e5e9);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.issue-card:last-child {
+  margin-bottom: 0;
+}
+
+.issue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.issue-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.issue-state {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.issue-title-text {
+  font-weight: 600;
+  color: var(--text-color, #333333);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.issue-number {
+  color: var(--text-secondary, #666666);
+  font-size: 14px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.issue-summary {
+  color: var(--text-secondary, #666666);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  word-break: break-word;
+}
+
+.issue-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.issue-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.issue-label-badge {
+  background: #f1f3f4;
+  color: #333333;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.issue-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-secondary, #666666);
+}
+
+.issue-author {
+  font-weight: 500;
+}
+
+.issue-date {
+  opacity: 0.8;
+}
+
+.issue-comments {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Dark Mode Support */
+.theme-dark .discussions-status-bar {
+  --bg-color: #1a1a1a;
+  --bg-hover: #2a2a2a;
+  --bg-light: #2a2a2a;
+  --text-color: #ffffff;
+  --text-secondary: #aaaaaa;
+  --border-color: #333333;
+  --border-light: #2a2a2a;
+  --primary-color: #0078d4;
+  --primary-dark: #106ebe;
+  --success-color: #28a745;
+  --success-dark: #218838;
+  --error-color: #f85149;
+}
+
+.theme-dark .issue-label-badge {
+  background: #333333;
+  color: #ffffff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .new-issue-btn {
+    margin-left: 0;
+    align-self: stretch;
+  }
+  
+  .issue-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  
+  .issue-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .issue-info {
+    flex-wrap: wrap;
+  }
+}
+
+/* Accessibility */
+.discussions-status-bar [role="button"],
+.discussions-status-bar button {
+  outline: none;
+}
+
+.discussions-status-bar [role="button"]:focus,
+.discussions-status-bar button:focus {
+  outline: 2px solid var(--primary-color, #0078d4);
+  outline-offset: 2px;
+}
+
+.discussions-status-bar [role="button"]:focus:not(:focus-visible),
+.discussions-status-bar button:focus:not(:focus-visible) {
+  outline: none;
+}

@@ -2117,45 +2117,59 @@ class GitHubService {
         owner,
         repo,
         sort: options.sort || 'newest',
-        per_page: options.per_page || 100,
+        per_page: Math.min(options.per_page || 30, 100),
         page: options.page || 1
       };
 
       const { data } = await octokit.rest.repos.listForks(params);
       
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/forks`, 200, Date.now() - startTime);
-      
-      // Return formatted fork data
-      return data.map(fork => ({
-        id: fork.id,
-        name: fork.name,
-        full_name: fork.full_name,
-        owner: {
-          login: fork.owner.login,
-          avatar_url: fork.owner.avatar_url,
-          html_url: fork.owner.html_url,
-          type: fork.owner.type
-        },
-        description: fork.description,
-        html_url: fork.html_url,
-        clone_url: fork.clone_url,
-        created_at: fork.created_at,
-        updated_at: fork.updated_at,
-        pushed_at: fork.pushed_at,
-        stargazers_count: fork.stargazers_count,
-        forks_count: fork.forks_count,
-        open_issues_count: fork.open_issues_count,
-        default_branch: fork.default_branch,
-        private: fork.private,
-        fork: fork.fork,
-        parent: fork.parent ? {
-          full_name: fork.parent.full_name,
-          html_url: fork.parent.html_url
-        } : null
-      }));
+      return data;
     } catch (error) {
-      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/forks`, error.status || 'error', Date.now() - startTime);
-      console.error('Failed to fetch repository forks:', error);
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/forks`, error.status || 500, Date.now() - startTime);
+      console.error('Failed to fetch forks:', error);
+      throw error;
+    }
+  }
+
+  // Create a new issue
+  async createIssue(owner, repo, issueData) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to create issues');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('POST', `/repos/${owner}/${repo}/issues`, issueData);
+
+    try {
+      const response = await this.octokit.rest.issues.create({
+        owner,
+        repo,
+        title: issueData.title,
+        body: issueData.body,
+        labels: issueData.labels || [],
+        assignees: issueData.assignees || [],
+        milestone: issueData.milestone
+      });
+
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, response.status, Date.now() - startTime);
+      this.logger.info('Issue created successfully', { 
+        issueNumber: response.data.number,
+        title: issueData.title,
+        owner,
+        repo
+      });
+
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, error.status || 'error', Date.now() - startTime);
+      this.logger.error('Failed to create issue', { 
+        error: error.message,
+        owner,
+        repo,
+        title: issueData.title
+      });
+      console.error('Failed to create issue:', error);
       throw error;
     }
   }
@@ -2251,217 +2265,6 @@ class GitHubService {
     } catch (error) {
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, error.status || 'error', Date.now() - startTime);
       console.error('Failed to fetch pull requests:', error);
-      throw error;
-    }
-  }
-
-  // Create an issue (requires authentication)
-  async createIssue(owner, repo, title, body, labels = [], assignees = []) {
-    if (!this.isAuth()) {
-      throw new Error('Authentication required to create issues');
-    }
-
-    const startTime = Date.now();
-    this.logger.apiCall('POST', `/repos/${owner}/${repo}/issues`, { title, bodyLength: body?.length, labels, assignees });
-
-    try {
-      const params = {
-        owner,
-        repo,
-        title,
-        body
-      };
-
-      // Add optional parameters if provided
-      if (labels.length > 0) {
-        params.labels = labels;
-      }
-      
-      if (assignees.length > 0) {
-        params.assignees = assignees;
-      }
-
-      const response = await this.octokit.rest.issues.create(params);
-      
-      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, response.status, Date.now() - startTime);
-      
-      return {
-        success: true,
-        issue: {
-          id: response.data.id,
-          number: response.data.number,
-          title: response.data.title,
-          body: response.data.body,
-          html_url: response.data.html_url,
-          state: response.data.state,
-          created_at: response.data.created_at,
-          user: {
-            login: response.data.user.login,
-            avatar_url: response.data.user.avatar_url
-          },
-          labels: response.data.labels.map(label => ({
-            name: label.name,
-            color: label.color
-          }))
-        }
-      };
-    } catch (error) {
-      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, error.status || 'error', Date.now() - startTime);
-      console.error('Failed to create issue:', error);
-      
-      // Return structured error response
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          status: error.status,
-          type: error.status === 403 ? 'permission_denied' : 
-                error.status === 422 ? 'validation_error' : 
-                error.status === 404 ? 'repository_not_found' : 'unknown_error'
-        }
-      };
-    }
-  }
-
-  // Get a specific issue
-  async getIssue(owner, repo, issueNumber) {
-    if (!this.isAuth()) {
-      throw new Error('Authentication required to get issue details');
-    }
-
-    const startTime = Date.now();
-    this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues/${issueNumber}`);
-
-    try {
-      const response = await this.octokit.rest.issues.get({
-        owner,
-        repo,
-        issue_number: issueNumber
-      });
-
-      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${issueNumber}`, response.status, Date.now() - startTime);
-
-      return {
-        id: response.data.id,
-        number: response.data.number,
-        title: response.data.title,
-        body: response.data.body,
-        html_url: response.data.html_url,
-        state: response.data.state,
-        created_at: response.data.created_at,
-        updated_at: response.data.updated_at,
-        closed_at: response.data.closed_at,
-        user: {
-          login: response.data.user.login,
-          avatar_url: response.data.user.avatar_url
-        },
-        labels: response.data.labels.map(label => ({
-          name: label.name,
-          color: label.color
-        }))
-      };
-    } catch (error) {
-      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${issueNumber}`, error.status || 'error', Date.now() - startTime);
-      console.error('Failed to get issue:', error);
-      throw error;
-    }
-  }
-
-  // Get a specific pull request
-  async getPullRequest(owner, repo, pullNumber) {
-    if (!this.isAuth()) {
-      throw new Error('Authentication required to get pull request details');
-    }
-
-    const startTime = Date.now();
-    this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}`);
-
-    try {
-      const response = await this.octokit.rest.pulls.get({
-        owner,
-        repo,
-        pull_number: pullNumber
-      });
-
-      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}`, response.status, Date.now() - startTime);
-
-      return {
-        id: response.data.id,
-        number: response.data.number,
-        title: response.data.title,
-        body: response.data.body,
-        html_url: response.data.html_url,
-        state: response.data.state,
-        created_at: response.data.created_at,
-        updated_at: response.data.updated_at,
-        closed_at: response.data.closed_at,
-        merged_at: response.data.merged_at,
-        user: {
-          login: response.data.user.login,
-          avatar_url: response.data.user.avatar_url
-        },
-        head: {
-          ref: response.data.head.ref,
-          sha: response.data.head.sha
-        },
-        base: {
-          ref: response.data.base.ref,
-          sha: response.data.base.sha
-        }
-      };
-    } catch (error) {
-      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}`, error.status || 'error', Date.now() - startTime);
-      console.error('Failed to get pull request:', error);
-      throw error;
-    }
-  }
-
-  // Search pull requests using GitHub search API
-  async searchPullRequests(query, options = {}) {
-    if (!this.isAuth()) {
-      throw new Error('Authentication required to search pull requests');
-    }
-
-    const startTime = Date.now();
-    this.logger.apiCall('GET', '/search/issues', { query, type: 'pr' });
-
-    try {
-      const response = await this.octokit.rest.search.issuesAndPullRequests({
-        q: query,
-        sort: options.sort || 'created',
-        order: options.order || 'desc',
-        per_page: options.per_page || 30,
-        page: options.page || 1
-      });
-
-      this.logger.apiResponse('GET', '/search/issues', response.status, Date.now() - startTime);
-
-      return {
-        total_count: response.data.total_count,
-        incomplete_results: response.data.incomplete_results,
-        items: response.data.items.map(item => ({
-          id: item.id,
-          number: item.number,
-          title: item.title,
-          body: item.body,
-          html_url: item.html_url,
-          state: item.state,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-          closed_at: item.closed_at,
-          user: {
-            login: item.user.login,
-            avatar_url: item.user.avatar_url
-          },
-          repository: item.repository_url ? {
-            name: item.repository_url.split('/').slice(-1)[0],
-            full_name: item.repository_url.split('/').slice(-2).join('/')
-          } : null
-        }))
-      };
-    } catch (error) {
-      this.logger.apiResponse('GET', '/search/issues', error.status || 'error', Date.now() - startTime);
-      console.error('Failed to search pull requests:', error);
       throw error;
     }
   }

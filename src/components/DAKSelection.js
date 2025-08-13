@@ -7,14 +7,26 @@ import whoRepositories from '../config/who-repositories.json';
 import { PageLayout, usePageParams } from './framework';
 
 const DAKSelection = () => {
+  const [selectedRepository, setSelectedRepository] = useState(null);
+  
+  // Prepare context data for help system
+  const contextData = {
+    pageId: 'dak-selection',
+    selectedDak: selectedRepository,
+    repository: selectedRepository
+  };
+
   return (
-    <PageLayout pageName="dak-selection" showHeader={true}>
-      <DAKSelectionContent />
+    <PageLayout pageName="dak-selection" showHeader={true} contextData={contextData}>
+      <DAKSelectionContent 
+        selectedRepository={selectedRepository}
+        setSelectedRepository={setSelectedRepository}
+      />
     </PageLayout>
   );
 };
 
-const DAKSelectionContent = () => {
+const DAKSelectionContent = ({ selectedRepository, setSelectedRepository }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { params, profile } = usePageParams();
@@ -27,7 +39,6 @@ const DAKSelectionContent = () => {
   const { action } = location.state || {};
   
   const [repositories, setRepositories] = useState([]);
-  const [selectedRepository, setSelectedRepository] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isScanning, setIsScanning] = useState(false);

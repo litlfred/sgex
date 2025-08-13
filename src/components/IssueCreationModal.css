@@ -1,0 +1,325 @@
+/* Issue Creation Modal Styles */
+.issue-creation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.issue-creation-modal {
+  background: var(--bg-color, #ffffff);
+  border-radius: 8px;
+  max-width: 600px;
+  max-height: 90vh;
+  width: 90%;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Modal Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color, #e1e5e9);
+  background: var(--bg-light, #f8f9fa);
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--text-color, #333333);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-secondary, #666666);
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: var(--bg-hover, #e9ecef);
+  color: var(--text-color, #333333);
+}
+
+/* Modal Body */
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--text-color, #333333);
+  font-size: 14px;
+}
+
+.required {
+  color: #d73a49;
+  margin-left: 2px;
+}
+
+.field-description {
+  font-size: 12px;
+  color: var(--text-secondary, #666666);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+/* Input with prefix */
+.input-with-prefix {
+  display: flex;
+  border: 1px solid var(--border-color, #e1e5e9);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg-color, #ffffff);
+}
+
+.title-prefix {
+  background: var(--bg-light, #f8f9fa);
+  color: var(--text-secondary, #666666);
+  padding: 10px 12px;
+  font-size: 14px;
+  border-right: 1px solid var(--border-color, #e1e5e9);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-prefix input {
+  flex: 1;
+  border: none;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  background: transparent;
+  color: var(--text-color, #333333);
+}
+
+/* Standard inputs */
+input[type="text"],
+textarea,
+select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color, #e1e5e9);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text-color, #333333);
+  background: var(--bg-color, #ffffff);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary-color, #0078d4);
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1);
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+select {
+  cursor: pointer;
+}
+
+/* Error Message */
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #ffeaea;
+  border: 1px solid #ffcdd2;
+  border-radius: 6px;
+  color: #d32f2f;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.error-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light, #f1f3f4);
+  margin-top: 20px;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  min-width: 100px;
+}
+
+.btn-primary {
+  background: var(--primary-color, #0078d4);
+  color: white;
+  border-color: var(--primary-color, #0078d4);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-dark, #106ebe);
+  border-color: var(--primary-dark, #106ebe);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: var(--bg-color, #ffffff);
+  color: var(--text-color, #333333);
+  border-color: var(--border-color, #e1e5e9);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover, #f8f9fa);
+  border-color: var(--border-hover, #c1c8cd);
+}
+
+/* Dark Mode Support */
+.theme-dark .issue-creation-modal {
+  --bg-color: #1a1a1a;
+  --bg-light: #2a2a2a;
+  --bg-hover: #3a3a3a;
+  --text-color: #ffffff;
+  --text-secondary: #aaaaaa;
+  --border-color: #333333;
+  --border-light: #2a2a2a;
+  --border-hover: #444444;
+  --primary-color: #0078d4;
+  --primary-dark: #106ebe;
+}
+
+.theme-dark .error-message {
+  background: #2d1a1a;
+  border-color: #4a2a2a;
+  color: #ff6b6b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .issue-creation-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+  
+  .modal-header,
+  .modal-body {
+    padding: 16px;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+  }
+  
+  .input-with-prefix {
+    flex-direction: column;
+  }
+  
+  .title-prefix {
+    border-right: none;
+    border-bottom: 1px solid var(--border-color, #e1e5e9);
+  }
+}
+
+/* Loading state */
+.btn-primary:disabled {
+  position: relative;
+}
+
+.btn-primary:disabled::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Focus management */
+.issue-creation-modal input:focus,
+.issue-creation-modal textarea:focus,
+.issue-creation-modal select:focus,
+.issue-creation-modal button:focus {
+  outline: 2px solid var(--primary-color, #0078d4);
+  outline-offset: 2px;
+}
+
+.issue-creation-modal input:focus:not(:focus-visible),
+.issue-creation-modal textarea:focus:not(:focus-visible),
+.issue-creation-modal select:focus:not(:focus-visible),
+.issue-creation-modal button:focus:not(:focus-visible) {
+  outline: none;
+}

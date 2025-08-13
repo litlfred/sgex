@@ -1412,3 +1412,23 @@ body.theme-dark .component-card.large-card .component-content p {
 .clear-cache-dialog .btn-secondary:hover {
   background: #e1e4e8;
 }
+
+/* Discussions Status Container */
+.discussions-status-container {
+  margin: 16px 0;
+  padding: 0;
+  z-index: 1;
+  position: relative;
+}
+
+/* Ensure discussions status bar is visible in DAK dashboard */
+.dak-dashboard .discussions-status-container {
+  background: transparent;
+  min-height: auto;
+}
+
+.dak-dashboard .discussions-status-bar {
+  /* Ensure it's visible above other elements */
+  position: relative;
+  z-index: 2;
+}
