@@ -1,0 +1,568 @@
+/* Enhanced Tutorial Modal Styles */
+
+.enhanced-tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.enhanced-tutorial-modal {
+  background: var(--who-card-bg);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 900px;
+  max-height: 90vh;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header */
+.tutorial-modal-header {
+  background: linear-gradient(135deg, var(--who-blue), var(--who-blue-dark));
+  color: var(--who-text-on-primary);
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.tutorial-title-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1;
+}
+
+.tutorial-badge {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  filter: brightness(0) invert(1); /* Make badges white on blue background */
+}
+
+.tutorial-title-info h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.5em;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.tutorial-description {
+  margin: 0;
+  font-size: 0.9em;
+  opacity: 0.9;
+  line-height: 1.4;
+}
+
+.tutorial-close-btn {
+  background: none;
+  border: none;
+  color: var(--who-text-on-primary);
+  font-size: 28px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  line-height: 1;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.tutorial-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: scale(1.1);
+}
+
+/* Content */
+.tutorial-modal-content {
+  max-height: calc(90vh - 120px);
+  overflow-y: auto;
+  background: var(--who-card-bg);
+}
+
+.enhanced-tutorial-step {
+  padding: 32px;
+  color: var(--who-text-primary);
+}
+
+.tutorial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--who-border-color);
+}
+
+.tutorial-header h3 {
+  margin: 0;
+  color: var(--who-blue);
+  font-size: 1.4em;
+  font-weight: 600;
+  flex: 1;
+}
+
+.step-counter {
+  background: var(--who-selected-bg);
+  color: var(--who-blue);
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.current-step {
+  font-size: 1.1em;
+}
+
+.step-separator {
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+/* Step Content */
+.tutorial-content {
+  margin-bottom: 32px;
+}
+
+.step-content {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--who-text-primary);
+}
+
+.step-content h4 {
+  color: var(--who-blue);
+  margin: 24px 0 16px 0;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.step-content ul, .step-content ol {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.step-content li {
+  margin: 8px 0;
+}
+
+.step-content .help-tip {
+  background: var(--who-selected-bg);
+  border-left: 4px solid var(--who-blue);
+  padding: 16px;
+  margin: 24px 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.step-content .help-warning {
+  background: var(--who-warning-bg, #fff3e0);
+  border-left: 4px solid var(--who-warning, #ff9800);
+  padding: 16px;
+  margin: 24px 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.step-content .help-tip strong,
+.step-content .help-warning strong {
+  color: var(--who-blue);
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Tutorial Choices */
+.tutorial-choices {
+  margin: 32px 0;
+  padding: 24px;
+  background: var(--who-hover-bg, rgba(0, 102, 204, 0.05));
+  border-radius: 12px;
+  border: 2px solid var(--who-selected-bg);
+}
+
+.choices-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.choice-btn {
+  background: var(--who-card-bg);
+  border: 2px solid var(--who-blue);
+  border-radius: 12px;
+  padding: 20px;
+  color: var(--who-blue);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.choice-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.choice-btn:hover::before {
+  left: 100%;
+}
+
+.choice-btn:hover {
+  background: var(--who-blue);
+  color: var(--who-text-on-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 102, 204, 0.3);
+}
+
+.choice-btn:active {
+  transform: translateY(0);
+}
+
+.choice-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.choice-description {
+  display: block;
+  font-size: 14px;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+/* Navigation Controls */
+.tutorial-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding-top: 24px;
+  border-top: 2px solid var(--who-border-color);
+}
+
+.nav-btn {
+  background: var(--who-blue);
+  color: var(--who-text-on-primary);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: var(--who-blue-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.nav-btn:disabled {
+  background: var(--who-border-color);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.nav-btn-prev .nav-icon {
+  order: -1;
+}
+
+.nav-btn-next .nav-icon {
+  order: 1;
+}
+
+/* Step Indicators */
+.step-indicators {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.step-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--who-border-color);
+  background: var(--who-card-bg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  padding: 0;
+}
+
+.step-dot:hover {
+  border-color: var(--who-blue);
+  transform: scale(1.2);
+}
+
+.step-dot.completed {
+  background: var(--who-success, #4caf50);
+  border-color: var(--who-success, #4caf50);
+}
+
+.step-dot.completed::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.step-dot.active {
+  background: var(--who-blue);
+  border-color: var(--who-blue);
+  transform: scale(1.3);
+  box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.2);
+}
+
+/* Loading and Error States */
+.tutorial-loading,
+.tutorial-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.loading-mascot,
+.error-mascot {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 24px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.tutorial-error h3 {
+  color: var(--who-text-primary);
+  margin: 0 0 16px 0;
+  font-size: 1.3em;
+}
+
+.tutorial-error p {
+  color: var(--who-text-secondary);
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.error-close-btn {
+  background: var(--who-blue);
+  color: var(--who-text-on-primary);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.error-close-btn:hover {
+  background: var(--who-blue-dark);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .enhanced-tutorial-overlay {
+    padding: 10px;
+  }
+  
+  .enhanced-tutorial-modal {
+    max-height: 95vh;
+    border-radius: 12px;
+  }
+  
+  .tutorial-modal-header {
+    padding: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .tutorial-title-section {
+    width: 100%;
+  }
+  
+  .tutorial-close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+  }
+  
+  .enhanced-tutorial-step {
+    padding: 20px;
+  }
+  
+  .tutorial-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .tutorial-header h3 {
+    font-size: 1.2em;
+  }
+  
+  .step-content {
+    font-size: 15px;
+  }
+  
+  .tutorial-controls {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .step-indicators {
+    order: -1;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .nav-btn {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .choices-container {
+    gap: 12px;
+  }
+  
+  .choice-btn {
+    padding: 16px;
+    font-size: 15px;
+  }
+  
+  .choice-label {
+    margin-bottom: 6px;
+  }
+  
+  .choice-description {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tutorial-modal-header {
+    padding: 16px;
+  }
+  
+  .enhanced-tutorial-step {
+    padding: 16px;
+  }
+  
+  .step-content {
+    font-size: 14px;
+  }
+  
+  .step-indicators {
+    gap: 8px;
+  }
+  
+  .step-dot {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .step-dot.completed::after {
+    font-size: 8px;
+  }
+}
+
+/* Dark Mode Adjustments */
+body.theme-dark .enhanced-tutorial-modal {
+  background: var(--who-dropdown-bg, #1a2380);
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .enhanced-tutorial-step {
+  background: var(--who-dropdown-bg, #1a2380);
+}
+
+body.theme-dark .tutorial-choices {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .choice-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--who-light-blue, #c0dcf2);
+  color: var(--who-text-primary, #ffffff);
+}
+
+body.theme-dark .choice-btn:hover {
+  background: var(--who-blue);
+  color: var(--who-text-on-primary, #ffffff);
+}
+
+body.theme-dark .step-content .help-tip {
+  background: rgba(255, 255, 255, 0.05);
+  border-left-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .step-content .help-tip strong {
+  color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .step-dot {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .step-dot.active {
+  background: var(--who-blue);
+  border-color: var(--who-light-blue, #c0dcf2);
+}

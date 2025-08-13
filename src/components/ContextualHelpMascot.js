@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import helpContentService from '../services/helpContentService';
+import tutorialService from '../services/tutorialService';
 import cacheManagementService from '../services/cacheManagementService';
 import issueTrackingService from '../services/issueTrackingService';
 import githubService from '../services/githubService';
@@ -134,6 +135,14 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   };
 
   const handleHelpTopicClick = (topic) => {
+    // Check if this is an enhanced tutorial
+    if (topic.tutorialId) {
+      setSelectedHelpTopic({ ...topic, type: 'enhanced-tutorial' });
+      setShowHelp(false);
+      setHelpSticky(false);
+      return;
+    }
+    
     // If it's an action type, execute the action immediately
     if (topic.type === 'action' && topic.action) {
       topic.action();
@@ -335,6 +344,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
       {selectedHelpTopic && (
         <HelpModal
           helpTopic={selectedHelpTopic}
+          tutorialId={selectedHelpTopic.type === 'enhanced-tutorial' ? selectedHelpTopic.tutorialId : null}
           contextData={contextData}
           onClose={handleCloseModal}
         />
