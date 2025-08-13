@@ -223,12 +223,15 @@ class GitHubService {
       const duration = Date.now() - startTime;
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/collaborators/${username}/permission`, 200, duration);
       
-      const hasWriteAccess = ['write', 'admin'].includes(data.permission);
+      // GitHub permission levels: read, triage, write, maintain, admin
+      // Users with write, maintain, or admin permissions can merge PRs
+      const hasWriteAccess = ['write', 'maintain', 'admin'].includes(data.permission);
       this.logger.debug('Repository write permissions checked', { 
         owner, 
         repo, 
         permission: data.permission, 
-        hasWriteAccess 
+        hasWriteAccess,
+        supportedLevels: ['write', 'maintain', 'admin']
       });
       
       return hasWriteAccess;
@@ -237,9 +240,21 @@ class GitHubService {
       this.logger.apiError('GET', `/repos/${owner}/${repo}/collaborators/*/permission`, error);
       this.logger.performance('Repository write permission check (failed)', duration);
       
-      // If we can't check permissions, assume we don't have write access
-      console.warn('Could not check repository write permissions:', error);
-      this.logger.warn('Assuming no write access due to permission check failure', { owner, repo, error: error.message });
+      // Better error logging to help debug permission issues
+      console.warn(`Could not check repository write permissions for ${owner}/${repo}:`, {
+        error: error.message,
+        status: error.status,
+        statusText: error.response?.statusText,
+        headers: error.response?.headers
+      });
+      
+      this.logger.warn('Assuming no write access due to permission check failure', { 
+        owner, 
+        repo, 
+        error: error.message,
+        status: error.status,
+        userGuidance: 'Check if your Personal Access Token has the required scopes: repo (classic) or Contents+Pull requests (fine-grained)'
+      });
       return false;
     }
   }

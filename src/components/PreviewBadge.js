@@ -478,6 +478,22 @@ const PreviewBadge = () => {
       return true;
     } catch (error) {
       console.error('Failed to merge PR:', error);
+      
+      // Provide user-friendly error messages based on common failure reasons
+      let userMessage = 'Failed to merge PR';
+      if (error.status === 403) {
+        userMessage = 'Permission denied: Your Personal Access Token may not have sufficient permissions to merge PRs';
+      } else if (error.status === 404) {
+        userMessage = 'PR not found or repository access denied';
+      } else if (error.status === 405) {
+        userMessage = 'Merge not allowed: Check branch protection rules or PR requirements';
+      } else if (error.status === 409) {
+        userMessage = 'Merge conflict: PR cannot be automatically merged';
+      }
+      
+      // You could show this message to the user in a toast/notification
+      console.warn('User guidance:', userMessage);
+      
       return false;
     } finally {
       setIsMergingPR(false);
