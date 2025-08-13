@@ -391,11 +391,18 @@
   font-size: 0.85rem;
   color: var(--who-text-muted, #888);
   line-height: 1.4;
-  background: var(--who-bg-light, #f0f0f0);
+  background: var(--who-hover-bg, #f0f0f0);
   padding: 1rem;
   border-radius: 6px;
   border-left: 3px solid var(--who-border-color, #ccc);
   text-align: left;
+}
+
+/* Dark mode support for help-text */
+body.theme-dark .help-text {
+  color: var(--who-text-muted);
+  background: var(--who-hover-bg);
+  border-left-color: var(--who-border-color);
 }
 
 .diagram-info {
