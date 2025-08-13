@@ -187,7 +187,22 @@
             return window.getSGEXRouteConfig();
           }
           
-          console.warn('SGEX route configuration not available - falling back to basic routing');
+          // Enhanced logging to show which file was attempted and why it failed
+          var deploymentType = 'main'; // default
+          if (l.pathname === '/' || l.pathname === '/sgex/' || l.pathname.endsWith('/branch-listing')) {
+            deploymentType = 'deploy';
+          }
+          
+          var configFileName = deploymentType === 'deploy' ? './routes-config.deploy.json' : './routes-config.json';
+          var attemptedUrl = l.protocol + '//' + l.host + l.pathname.replace(/[^/]*$/, '') + configFileName;
+          
+          console.warn('SGEX route configuration not available - falling back to basic routing', {
+            attemptedConfigFile: configFileName,
+            attemptedUrl: attemptedUrl,
+            deploymentType: deploymentType,
+            currentPath: l.pathname,
+            reason: 'window.getSGEXRouteConfig function not available or routeConfig.js failed to load'
+          });
           return null;
         }
 
