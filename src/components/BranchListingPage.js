@@ -496,24 +496,16 @@ const BranchListingPage = () => {
     const paginatedPRs = sortedPRs.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
     const totalPRPages = Math.ceil(sortedPRs.length / ITEMS_PER_PAGE);
 
-    if (loading) {
-        return (
-            <PageLayout pageName="branch-listing-loading" showBreadcrumbs={false}>
-                <div className="branch-listing-content">
+    return (
+        <PageLayout pageName="branch-listing" showBreadcrumbs={false}>
+            <div className="branch-listing-content">
+                {loading ? (
                     <div className="branch-listing-header">
                         <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
                         <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
                         <div className="loading">Loading previews...</div>
                     </div>
-                </div>
-            </PageLayout>
-        );
-    }
-
-    if (error) {
-        return (
-            <PageLayout pageName="branch-listing-error" showBreadcrumbs={false}>
-                <div className="branch-listing-content">
+                ) : error ? (
                     <div className="branch-listing-header">
                         <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
                         <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
@@ -522,15 +514,9 @@ const BranchListingPage = () => {
                             <p>Please try refreshing the page or check back later.</p>
                         </div>
                     </div>
-                </div>
-            </PageLayout>
-        );
-    }
-
-    return (
-        <PageLayout pageName="branch-listing" showBreadcrumbs={false}>
-            <div className="branch-listing-content">
-                <header className="branch-listing-header">
+                ) : (
+                    <>
+                        <header className="branch-listing-header">
                     <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
                     <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
                     
@@ -828,7 +814,9 @@ const BranchListingPage = () => {
                             </button>
                         </div>
                     )}
-                </div>
+                    </div>
+                    </>
+                )}
             </div>
         </PageLayout>
     );

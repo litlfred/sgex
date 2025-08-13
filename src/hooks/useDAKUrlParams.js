@@ -62,49 +62,86 @@ const useDAKUrlParams = () => {
 
           // Check if githubService is authenticated (allow demo mode to proceed without auth)
           if (!githubService.isAuth()) {
-            console.log('🚫 useDAKUrlParams: Not authenticated, entering demo mode');
-            // In demo mode, use the DAK validation service for demo repositories
-            const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
+            console.log('🚫 useDAKUrlParams: Not authenticated, checking if demo mode or public access');
             
-            if (!isValidDAK) {
-              console.log('❌ useDAKUrlParams: Demo DAK validation failed, redirecting home');
-              navigate('/', { 
-                state: { 
-                  warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
-                } 
+            // Check if this is actual demo mode (demo-user) vs unauthenticated access to real repos  
+            if (user === 'demo-user') {
+              // This is actual demo mode - use demo validation and set isDemo flag
+              console.log('🎭 useDAKUrlParams: Demo mode detected, creating demo data');
+              const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
+              
+              if (!isValidDAK) {
+                console.log('❌ useDAKUrlParams: Demo DAK validation failed, redirecting home');
+                navigate('/', { 
+                  state: { 
+                    warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
+                  } 
+                });
+                return;
+              }
+
+              const demoProfile = {
+                login: user,
+                name: user.charAt(0).toUpperCase() + user.slice(1),
+                avatar_url: `https://github.com/${user}.png`,
+                type: 'User',
+                isDemo: true
+              };
+
+              const demoRepository = {
+                name: repo,
+                full_name: `${user}/${repo}`,
+                owner: { login: user },
+                default_branch: branch || 'main',
+                html_url: `https://github.com/${user}/${repo}`,
+                isDemo: true
+              };
+
+              console.log('📋 useDAKUrlParams: Setting demo state:', {
+                profile: demoProfile,
+                repository: demoRepository,
+                selectedBranch: branch || 'main'
               });
+
+              setProfile(demoProfile);
+              setRepository(demoRepository);
+              setSelectedBranch(branch || 'main');
+              setLoading(false);
+              return;
+            } else {
+              // This is unauthenticated access to real public repositories
+              // Create profile without isDemo flag for public repository access
+              console.log('👀 useDAKUrlParams: Unauthenticated public access, creating public profile');
+              
+              const publicProfile = {
+                login: user,
+                name: user.charAt(0).toUpperCase() + user.slice(1),
+                avatar_url: `https://github.com/${user}.png`,
+                type: 'User'
+                // Note: isDemo is NOT set - unauthenticated users should access real public repos
+              };
+
+              const publicRepository = {
+                name: repo,
+                full_name: `${user}/${repo}`,
+                owner: { login: user },
+                default_branch: branch || 'main',
+                html_url: `https://github.com/${user}/${repo}`
+                // Note: isDemo is NOT set - unauthenticated users should access real public repos
+              };
+
+              console.log('📋 useDAKUrlParams: Setting public access state:', {
+                profile: publicProfile,
+                repository: publicRepository,
+                selectedBranch: branch || 'main'
+              });
+
+              setProfile(publicProfile);
+              setRepository(publicRepository);
+              setSelectedBranch(branch || 'main');
+              setLoading(false);
               return;
             }
-
-            console.log('✅ useDAKUrlParams: Demo DAK validation passed, creating demo data');
-            const demoProfile = {
-              login: user,
-              name: user.charAt(0).toUpperCase() + user.slice(1),
-              avatar_url: `https://github.com/${user}.png`,
-              type: 'User',
-              isDemo: true
-            };
-
-            const demoRepository = {
-              name: repo,
-              full_name: `${user}/${repo}`,
-              owner: { login: user },
-              default_branch: branch || 'main',
-              html_url: `https://github.com/${user}/${repo}`,
-              isDemo: true
-            };
-
-            console.log('📋 useDAKUrlParams: Setting demo state:', {
-              profile: demoProfile,
-              repository: demoRepository,
-              selectedBranch: branch || 'main'
-            });
-
-            setProfile(demoProfile);
-            setRepository(demoRepository);
-            setSelectedBranch(branch || 'main');
-            setLoading(false);
-            return;
           }
 
           console.log('🔐 useDAKUrlParams: Authenticated, fetching real repository data');

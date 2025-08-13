@@ -24,13 +24,13 @@ const RepositorySelection = () => {
             const fetchedProfile = await githubService.getUser(user);
             setProfile(fetchedProfile);
           } else {
-            // Create a demo profile for unauthenticated users
+            // Create a profile for unauthenticated users (accessing public repositories)
             setProfile({
               login: user,
               name: user.charAt(0).toUpperCase() + user.slice(1),
               avatar_url: `https://github.com/${user}.png`,
-              type: 'User',
-              isDemo: true
+              type: 'User'
+              // Note: isDemo is NOT set - unauthenticated users should access real public repos
             });
           }
         } catch (error) {
@@ -122,17 +122,12 @@ const RepositorySelection = () => {
     });
   };
 
-  if (!profile) {
-    return (
-      <PageLayout pageName="repository-selection">
-        <div>Redirecting...</div>
-      </PageLayout>
-    );
-  }
-
   return (
     <PageLayout pageName="repository-selection">
-      <div className="repo-content">
+      {!profile ? (
+        <div>Redirecting...</div>
+      ) : (
+        <div className="repo-content">
         <div className="breadcrumb">
           <button onClick={() => navigate('/')} className="breadcrumb-link">
             Select Profile
@@ -215,7 +210,8 @@ const RepositorySelection = () => {
           )}
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </PageLayout>
   );
 };

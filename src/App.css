@@ -51,6 +51,11 @@ body.theme-light {
   --who-error-bg: #ffeef0;
   --who-error-text: #d1242f;
   --who-error-border: #fdaeb7;
+  /* Shadow variables for light theme */
+  --who-shadow-light: rgba(0, 0, 0, 0.1);
+  --who-shadow-medium: rgba(0, 0, 0, 0.2);
+  --who-shadow-heavy: rgba(0, 0, 0, 0.3);
+  --who-overlay-bg: rgba(0, 0, 0, 0.7);
 }
 
 /* Dark theme */
@@ -72,6 +77,11 @@ body.theme-dark {
   /* Dropdown specific overrides for better visibility */
   --who-dropdown-bg: #1a2380;
   --who-dropdown-hover-bg: rgba(255, 255, 255, 0.15);
+  /* Shadow variables for dark theme - using dark navy instead of black */
+  --who-shadow-light: rgba(4, 11, 118, 0.2);
+  --who-shadow-medium: rgba(4, 11, 118, 0.4);
+  --who-shadow-heavy: rgba(4, 11, 118, 0.6);
+  --who-overlay-bg: rgba(4, 11, 118, 0.8);
 }
 
 /* Lazy Loading Spinner */

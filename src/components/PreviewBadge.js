@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import githubService from '../services/githubService';
 import githubActionsService from '../services/githubActionsService';
 import WorkflowStatus from './WorkflowStatus';
-import MDEditor from '@uiw/react-md-editor';
-import ReactMarkdown from 'react-markdown';
-import DOMPurify from 'dompurify';
+import { lazyLoadReactMarkdown, lazyLoadDOMPurify, lazyLoadRehypeRaw } from '../utils/lazyRouteUtils';
 import './WorkflowStatus.css';
 import './PreviewBadge.css';
+
+// Lazy load MDEditor to improve initial page responsiveness
+const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
 /**
  * PreviewBadge component that displays when the app is deployed from a non-main branch
@@ -32,10 +33,35 @@ const PreviewBadge = () => {
   const [workflowLoading, setWorkflowLoading] = useState(false);
   const [newlyAddedCommentId, setNewlyAddedCommentId] = useState(null);
   const [copilotSessionInfo, setCopilotSessionInfo] = useState(null);
+  const [ReactMarkdown, setReactMarkdown] = useState(null);
+  const [DOMPurify, setDOMPurify] = useState(null);
+  const [rehypeRaw, setRehypeRaw] = useState(null);
+
+  // Lazy load markdown and sanitization components
+  useEffect(() => {
+    const loadMarkdownComponents = async () => {
+      try {
+        const [markdown, domPurify, rehypeRawPlugin] = await Promise.all([
+          lazyLoadReactMarkdown(),
+          lazyLoadDOMPurify(),
+          lazyLoadRehypeRaw()
+        ]);
+        setReactMarkdown(() => markdown);
+        setDOMPurify(domPurify);
+        setRehypeRaw(() => rehypeRawPlugin);
+      } catch (error) {
+        console.error('Failed to load markdown components:', error);
+      }
+    };
+
+    loadMarkdownComponents();
+  }, []);
   const [showCopilotSession, setShowCopilotSession] = useState(false);
   const [canComment, setCanComment] = useState(true);
   const [canTriggerWorkflows, setCanTriggerWorkflows] = useState(false);
   const [canApproveWorkflows, setCanApproveWorkflows] = useState(false);
+  const [canMergePR, setCanMergePR] = useState(false);
+  const [isMergingPR, setIsMergingPR] = useState(false);
   const [commentsPage, setCommentsPage] = useState(1);
   const [allComments, setAllComments] = useState([]);
   const [hasMoreComments, setHasMoreComments] = useState(false);
@@ -417,11 +443,53 @@ const PreviewBadge = () => {
     }
   };
 
+  const handleMergePR = async (owner, repo, prNumber) => {
+    if (!githubService.isAuth() || isMergingPR || !canMergePR) {
+      return false;
+    }
+
+    setIsMergingPR(true);
+    try {
+      // Get the PR details to create a meaningful merge commit message
+      const prData = prInfo.find(pr => pr.number === prNumber);
+      const commitTitle = `Merge PR #${prNumber}: ${prData?.title || 'Pull Request'}`;
+      const commitMessage = `Merges pull request #${prNumber}\n\n${prData?.body || ''}`.trim();
+
+      const result = await githubService.mergePullRequest(owner, repo, prNumber, {
+        commit_title: commitTitle,
+        commit_message: commitMessage,
+        merge_method: 'merge' // Use merge commit method
+      });
+
+      console.debug('PR merged successfully:', result);
+      
+      // Refresh the PR info to reflect the merged status
+      setTimeout(async () => {
+        try {
+          const refreshedPRs = await fetchPRsForBranch(branchInfo?.name);
+          if (refreshedPRs && refreshedPRs.length > 0) {
+            setPrInfo(refreshedPRs);
+          }
+        } catch (error) {
+          console.debug('Could not refresh PR status after merge:', error);
+        }
+      }, 2000);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to merge PR:', error);
+      return false;
+    } finally {
+      setIsMergingPR(false);
+    }
+  };
+
   const checkPermissions = async (owner, repo) => {
     if (!githubService.isAuth()) {
       setCanComment(false);
       setCanTriggerWorkflows(false);
       setCanApproveWorkflows(false);
+      setCanMergePR(false);
       return;
     }
 
@@ -441,11 +509,20 @@ const PreviewBadge = () => {
 
       setCanTriggerWorkflows(triggerPermissions);
       setCanApproveWorkflows(approvalPermissions);
+
+      // Check merge permissions for the first PR if available
+      if (prInfo && prInfo.length > 0) {
+        const mergePermissions = await githubService.checkPullRequestMergePermissions(owner, repo, prInfo[0].number);
+        setCanMergePR(mergePermissions);
+      } else {
+        setCanMergePR(false);
+      }
     } catch (error) {
       console.debug('Error checking permissions:', error);
       setCanComment(false);
       setCanTriggerWorkflows(false);
       setCanApproveWorkflows(false);
+      setCanMergePR(false);
     }
   };
 
@@ -619,10 +696,34 @@ const PreviewBadge = () => {
   };
 
   const sanitizeAndRenderMarkdown = (content) => {
-    if (!content) return '';
+    if (!content || !DOMPurify) return content || '';
     
-    // Sanitize the markdown content to prevent XSS attacks
-    const sanitizedContent = DOMPurify.sanitize(content);
+    // Check if DOMPurify has the sanitize method
+    if (typeof DOMPurify.sanitize !== 'function') {
+      console.warn('DOMPurify.sanitize is not available, returning unsanitized content');
+      return content;
+    }
+    
+    // Configure DOMPurify to allow HTML table elements while maintaining security
+    const sanitizedContent = DOMPurify.sanitize(content, {
+      ALLOWED_TAGS: [
+        // Standard markdown elements
+        'p', 'br', 'strong', 'b', 'em', 'i', 'code', 'pre', 'blockquote',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img',
+        'hr', 'del', 'ins', 'mark', 'small', 'sub', 'sup',
+        // HTML table elements
+        'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
+        // Divs and spans for table styling
+        'div', 'span'
+      ],
+      ALLOWED_ATTR: [
+        'href', 'src', 'alt', 'title', 'class', 'id', 'style',
+        'align', 'colspan', 'rowspan', 'width', 'height',
+        'target', 'rel'
+      ],
+      KEEP_CONTENT: true,
+      ALLOW_DATA_ATTR: false
+    });
     
     return sanitizedContent;
   };
@@ -858,15 +959,17 @@ const PreviewBadge = () => {
                   ) : (
                     <div className="comment-form-advanced">
                       <div className="markdown-editor-container">
-                        <MDEditor
-                          value={newComment}
-                          onChange={(val) => setNewComment(val || '')}
-                          preview="edit"
-                          height={300}
-                          visibleDragBar={false}
-                          data-color-mode="light"
-                          hideToolbar={submittingComment || !canComment}
-                        />
+                        <Suspense fallback={<div className="loading-spinner">Loading editor...</div>}>
+                          <MDEditor
+                            value={newComment}
+                            onChange={(val) => setNewComment(val || '')}
+                            preview="edit"
+                            height={300}
+                            visibleDragBar={false}
+                            data-color-mode="light"
+                            hideToolbar={submittingComment || !canComment}
+                          />
+                        </Suspense>
                       </div>
                       <div className="comment-form-actions">
                         <button
@@ -894,9 +997,15 @@ const PreviewBadge = () => {
                   <h4>Description</h4>
                   <div className="pr-body">
                     <div className="markdown-content">
-                      <ReactMarkdown>
-                        {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
-                      </ReactMarkdown>
+                      {ReactMarkdown && rehypeRaw ? (
+                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                          {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
+                        </ReactMarkdown>
+                      ) : (
+                        <div style={{ whiteSpace: 'pre-wrap' }}>
+                          {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
+                        </div>
+                      )}
                     </div>
                     {prInfo[0].body.split('\n').length > 6 && (
                       <button 
@@ -923,6 +1032,46 @@ const PreviewBadge = () => {
                     canApproveWorkflows={canApproveWorkflows}
                     isLoading={workflowLoading}
                   />
+                </div>
+              )}
+
+              {/* PR Actions Section */}
+              {prInfo && prInfo.length > 0 && prInfo[0].state === 'open' && (
+                <div className="pr-actions-wrapper">
+                  <h4>🔀 Pull Request Actions</h4>
+                  <div className="pr-actions-container">
+                    <div className="pr-actions-info">
+                      <span className="pr-actions-status">
+                        PR #{prInfo[0].number} is ready for actions
+                      </span>
+                    </div>
+                    <div className="pr-actions-buttons">
+                      {githubService.isAuth() && canMergePR && (
+                        <button
+                          onClick={() => handleMergePR('litlfred', 'sgex', prInfo[0].number)}
+                          disabled={isMergingPR}
+                          className="pr-merge-btn"
+                          title={`Merge PR #${prInfo[0].number}`}
+                        >
+                          {isMergingPR ? (
+                            <>⏳ Merging...</>
+                          ) : (
+                            <>🔀 Merge PR</>
+                          )}
+                        </button>
+                      )}
+                      {!githubService.isAuth() && (
+                        <span className="pr-actions-note">
+                          🔒 Sign in to access PR actions
+                        </span>
+                      )}
+                      {githubService.isAuth() && !canMergePR && (
+                        <span className="pr-actions-note">
+                          ⚠️ You don't have permission to merge this PR
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -993,7 +1142,13 @@ const PreviewBadge = () => {
                             </div>
                             <div className="copilot-comment-body">
                               <div className="markdown-content">
-                                <ReactMarkdown>{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                                {ReactMarkdown && rehypeRaw ? (
+                                  <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                                ) : (
+                                  <div style={{ whiteSpace: 'pre-wrap' }}>
+                                    {sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1065,7 +1220,13 @@ const PreviewBadge = () => {
                                 <>
                                   <div className="comment-preview">
                                     <div className="markdown-content">
-                                      <ReactMarkdown>{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
+                                      {ReactMarkdown && rehypeRaw ? (
+                                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
+                                      ) : (
+                                        <div style={{ whiteSpace: 'pre-wrap' }}>
+                                          {sanitizeAndRenderMarkdown(truncateComment(comment.body))}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                   <button 
@@ -1079,7 +1240,13 @@ const PreviewBadge = () => {
                                 <>
                                   <div className="comment-full">
                                     <div className="markdown-content">
-                                      <ReactMarkdown>{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
+                                      {ReactMarkdown && rehypeRaw ? (
+                                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
+                                      ) : (
+                                        <div style={{ whiteSpace: 'pre-wrap' }}>
+                                          {sanitizeAndRenderMarkdown(comment.body)}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                   {shouldTruncate && (
