@@ -65,6 +65,7 @@ const PreviewBadge = () => {
   const [commentsPage, setCommentsPage] = useState(1);
   const [allComments, setAllComments] = useState([]);
   const [hasMoreComments, setHasMoreComments] = useState(false);
+  const [displayedCommentsCount, setDisplayedCommentsCount] = useState(5);
   const expandedRef = useRef(null);
   const commentRefreshIntervalRef = useRef(null);
   const workflowRefreshIntervalRef = useRef(null);
@@ -158,6 +159,9 @@ const PreviewBadge = () => {
         clearInterval(workflowRefreshIntervalRef.current);
         workflowRefreshIntervalRef.current = null;
       }
+      // Reset comment pagination when collapsed
+      setCommentsPage(1);
+      setDisplayedCommentsCount(5);
     }
   }, [isExpanded]);
 
@@ -235,11 +239,17 @@ const PreviewBadge = () => {
         const uniqueNewComments = newComments.filter(c => !existingIds.has(c.id));
         const updatedAllComments = [...allComments, ...uniqueNewComments];
         setAllComments(updatedAllComments);
-        setComments(updatedAllComments.slice(0, Math.min(5, updatedAllComments.length)));
+        
+        // When loading more, increase the displayed count to show the new comments
+        const newDisplayCount = Math.min(updatedAllComments.length, displayedCommentsCount + perPage);
+        setDisplayedCommentsCount(newDisplayCount);
+        setComments(updatedAllComments.slice(0, newDisplayCount));
       } else {
         // Replace comments (for initial load or refresh)
         setAllComments(newComments);
-        setComments(newComments.slice(0, Math.min(5, newComments.length)));
+        const initialDisplayCount = Math.min(5, newComments.length);
+        setDisplayedCommentsCount(initialDisplayCount);
+        setComments(newComments.slice(0, initialDisplayCount));
       }
       
       // Check if there are more comments to load
@@ -592,16 +602,26 @@ const PreviewBadge = () => {
   };
 
   const loadMoreComments = async () => {
-    if (!prInfo || prInfo.length === 0 || commentsLoading || !hasMoreComments) return;
+    if (!prInfo || prInfo.length === 0 || commentsLoading) return;
     
     const owner = 'litlfred';
     const repo = 'sgex';
     const pr = prInfo[0];
     
-    const nextPage = commentsPage + 1;
-    setCommentsPage(nextPage);
+    // If we have more comments already loaded, just show more of them
+    if (displayedCommentsCount < allComments.length) {
+      const newDisplayCount = Math.min(allComments.length, displayedCommentsCount + 5);
+      setDisplayedCommentsCount(newDisplayCount);
+      setComments(allComments.slice(0, newDisplayCount));
+      return;
+    }
     
-    await fetchCommentsForPR(owner, repo, pr.number, nextPage, true);
+    // If we've shown all loaded comments and there might be more on the server, fetch more
+    if (hasMoreComments) {
+      const nextPage = commentsPage + 1;
+      setCommentsPage(nextPage);
+      await fetchCommentsForPR(owner, repo, pr.number, nextPage, true);
+    }
   };
 
   const handleCommentToggle = (commentId) => {
@@ -1183,7 +1203,7 @@ const PreviewBadge = () => {
               )}
 
               <div className="comments-section">
-                <h4>Recent Comments ({allComments.length > 0 ? `${comments.length}/${allComments.length}` : '0'})</h4>
+                <h4>Recent Comments ({allComments.length > 0 ? `${displayedCommentsCount}/${allComments.length}` : '0'})</h4>
                 {commentsLoading ? (
                   <div className="loading">Loading comments...</div>
                 ) : comments.length === 0 ? (
@@ -1282,14 +1302,18 @@ const PreviewBadge = () => {
                     </div>
                     
                     {/* Load More Comments Button */}
-                    {allComments.length > comments.length && (
+                    {(allComments.length > displayedCommentsCount || hasMoreComments) && (
                       <div className="comments-load-more">
                         <button
                           className="load-more-btn"
                           onClick={loadMoreComments}
                           disabled={commentsLoading}
                         >
-                          {commentsLoading ? 'Loading...' : `Load More Comments (${allComments.length - comments.length} remaining)`}
+                          {commentsLoading ? 'Loading...' : 
+                            allComments.length > displayedCommentsCount ? 
+                              `Show More Comments (${allComments.length - displayedCommentsCount} already loaded)` :
+                              'Load More Comments...'
+                          }
                         </button>
                       </div>
                     )}
