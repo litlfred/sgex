@@ -207,13 +207,18 @@ function generateStandardRoutes(componentName, componentConfig) {
  * @returns {Array} Array of all Route elements
  */
 export function generateLazyRoutes() {
-  const config = window.getSGEXRouteConfig();
+  const config = (typeof window !== 'undefined' && window.getSGEXRouteConfig) 
+    ? window.getSGEXRouteConfig() 
+    : null;
   
   if (!config) {
-    console.warn('SGEX route configuration not loaded, falling back to minimal routes');
+    console.warn('SGEX route configuration not loaded, using minimal fallback routes');
+    // Minimal fallback routes for development
     return [
-      <Route key="fallback-home" path="/" element={<div>Loading...</div>} />,
-      <Route key="fallback-404" path="*" element={<div>Page not found</div>} />
+      <Route key="docs" path="/docs" element={<>{React.createElement(createLazyComponent('DocumentationViewer'))}</>} />,
+      <Route key="docs-id" path="/docs/:docId" element={<>{React.createElement(createLazyComponent('DocumentationViewer'))}</>} />,
+      <Route key="fallback-home" path="/" element={<>{React.createElement(createLazyComponent('WelcomePage'))}</>} />,
+      <Route key="fallback-404" path="*" element={<>{React.createElement(createLazyComponent('NotFound'))}</>} />
     ];
   }
 

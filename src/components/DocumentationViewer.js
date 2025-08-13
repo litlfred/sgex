@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { PageLayout } from './framework';
 import bookmarkService from '../services/bookmarkService';
 
-// Dynamically generate documentation files structure with subdirectories
+// Enhanced documentation files structure with better subdirectory support
 const generateDocFiles = () => {
   const files = {
     // Root documentation files
@@ -12,110 +12,206 @@ const generateDocFiles = () => {
       file: 'README.md', 
       title: 'Documentation Overview', 
       category: 'root',
-      path: 'README.md'
+      path: 'README.md',
+      breadcrumbs: ['Documentation']
     },
     'bpmn-integration': { 
       file: 'bpmn-integration.md', 
       title: 'BPMN Integration', 
       category: 'root',
-      path: 'bpmn-integration.md'
+      path: 'bpmn-integration.md',
+      breadcrumbs: ['Documentation']
     },
     'dak-components': { 
       file: 'dak-components.md', 
       title: 'DAK Components', 
       category: 'root',
-      path: 'dak-components.md'
+      path: 'dak-components.md',
+      breadcrumbs: ['Documentation']
     },
     'decision-table-editor': { 
       file: 'decision-table-editor.md', 
       title: 'Decision Table Editor', 
       category: 'root',
-      path: 'decision-table-editor.md'
+      path: 'decision-table-editor.md',
+      breadcrumbs: ['Documentation']
     },
     'framework-developer-guide': { 
       file: 'framework-developer-guide.md', 
       title: 'Framework Developer Guide', 
       category: 'root',
-      path: 'framework-developer-guide.md'
+      path: 'framework-developer-guide.md',
+      breadcrumbs: ['Documentation']
     },
     'page-framework': { 
       file: 'page-framework.md', 
       title: 'Page Framework', 
       category: 'root',
-      path: 'page-framework.md'
+      path: 'page-framework.md',
+      breadcrumbs: ['Documentation']
     },
     'page-inventory': { 
       file: 'page-inventory.md', 
       title: 'Page Inventory', 
       category: 'root',
-      path: 'page-inventory.md'
+      path: 'page-inventory.md',
+      breadcrumbs: ['Documentation']
     },
     'project-plan': { 
       file: 'project-plan.md', 
       title: 'Project Plan', 
       category: 'root',
-      path: 'project-plan.md'
+      path: 'project-plan.md',
+      breadcrumbs: ['Documentation']
     },
     'qa-testing': { 
       file: 'qa-testing.md', 
       title: 'QA Testing', 
       category: 'root',
-      path: 'qa-testing.md'
+      path: 'qa-testing.md',
+      breadcrumbs: ['Documentation']
     },
     'requirements': { 
       file: 'requirements.md', 
       title: 'Requirements', 
       category: 'root',
-      path: 'requirements.md'
+      path: 'requirements.md',
+      breadcrumbs: ['Documentation']
     },
     'solution-architecture': { 
       file: 'solution-architecture.md', 
       title: 'Solution Architecture', 
       category: 'root',
-      path: 'solution-architecture.md'
+      path: 'solution-architecture.md',
+      breadcrumbs: ['Documentation']
     },
     'ui-styling-requirements': { 
       file: 'UI_STYLING_REQUIREMENTS.md', 
       title: 'UI Styling Requirements', 
       category: 'root',
-      path: 'UI_STYLING_REQUIREMENTS.md'
+      path: 'UI_STYLING_REQUIREMENTS.md',
+      breadcrumbs: ['Documentation']
     },
     'who-cors-workaround': { 
       file: 'WHO_CORS_WORKAROUND.md', 
       title: 'WHO CORS Workaround', 
       category: 'root',
-      path: 'WHO_CORS_WORKAROUND.md'
+      path: 'WHO_CORS_WORKAROUND.md',
+      breadcrumbs: ['Documentation']
     },
     
     // Workflows subdirectory
+    'workflows': {
+      title: 'Workflows',
+      category: 'workflows',
+      isDirectory: true,
+      breadcrumbs: ['Documentation', 'Workflows']
+    },
     'workflows-overview': { 
       file: 'workflows/README.md', 
       title: 'Workflows Overview', 
       category: 'workflows',
-      path: 'workflows/README.md'
+      path: 'workflows/README.md',
+      breadcrumbs: ['Documentation', 'Workflows']
     },
     
-    // JSON Schemas
+    // JSON Schemas directory and files  
+    'schemas': {
+      title: 'JSON Schemas',
+      category: 'schemas',
+      isDirectory: true,
+      breadcrumbs: ['Documentation', 'Schemas']
+    },
     'schemas-overview': {
       file: 'schemas/README.md',
-      title: 'JSON Schemas Overview',
+      title: 'Schemas Overview',
       category: 'schemas',
       path: 'schemas/README.md',
-      isVirtual: true
+      isVirtual: true,
+      breadcrumbs: ['Documentation', 'Schemas']
     },
     'generated-schemas-tjs': {
       file: 'schemas/generated-schemas-tjs.json',
-      title: 'Generated Schemas (TypeScript JSON Schema)',
+      title: 'TypeScript JSON Schema',
       category: 'schemas',
       path: 'schemas/generated-schemas-tjs.json',
-      isJson: true
+      isJson: true,
+      breadcrumbs: ['Documentation', 'Schemas']
     },
     'generated-schemas-tsjsg': {
       file: 'schemas/generated-schemas-tsjsg.json',
-      title: 'Generated Schemas (TS JSON Schema Generator)',
+      title: 'TS JSON Schema Generator',
       category: 'schemas',
       path: 'schemas/generated-schemas-tsjsg.json',
-      isJson: true
+      isJson: true,
+      breadcrumbs: ['Documentation', 'Schemas']
+    },
+    
+    // Source schemas from src/schemas
+    'actor-definition-schema': {
+      title: 'Actor Definition Schema',
+      category: 'schemas', 
+      path: 'schemas/actor-definition.json',
+      isSourceSchema: true,
+      breadcrumbs: ['Documentation', 'Schemas']
+    },
+    'dak-action-form-schema': {
+      title: 'DAK Action Form Schema',
+      category: 'schemas',
+      path: 'schemas/dak-action-form.json', 
+      isSourceSchema: true,
+      breadcrumbs: ['Documentation', 'Schemas']
+    },
+    'dak-config-form-schema': {
+      title: 'DAK Configuration Form Schema',
+      category: 'schemas',
+      path: 'schemas/dak-config-form.json',
+      isSourceSchema: true,
+      breadcrumbs: ['Documentation', 'Schemas']
+    },
+    'dak-selection-form-schema': {
+      title: 'DAK Selection Form Schema', 
+      category: 'schemas',
+      path: 'schemas/dak-selection-form.json',
+      isSourceSchema: true,
+      breadcrumbs: ['Documentation', 'Schemas']
+    },
+    'organization-selection-form-schema': {
+      title: 'Organization Selection Form Schema',
+      category: 'schemas',
+      path: 'schemas/organization-selection-form.json',
+      isSourceSchema: true,
+      breadcrumbs: ['Documentation', 'Schemas']
+    },
+    'sushi-config-schema': {
+      title: 'SUSHI Configuration Schema',
+      category: 'schemas',
+      path: 'schemas/sushi-config.json',
+      isSourceSchema: true,
+      breadcrumbs: ['Documentation', 'Schemas']
+    },
+    
+    // Additional documentation files that might exist
+    'asset-management': {
+      file: 'asset-management.md',
+      title: 'Asset Management',
+      category: 'root',
+      path: 'asset-management.md',
+      breadcrumbs: ['Documentation']
+    },
+    'bookmark-system': {
+      file: 'bookmark-system.md',
+      title: 'Bookmark System',
+      category: 'root',
+      path: 'bookmark-system.md',
+      breadcrumbs: ['Documentation']
+    },
+    'compliance-framework': {
+      file: 'compliance-framework.md',
+      title: 'Compliance Framework',
+      category: 'root',
+      path: 'compliance-framework.md',
+      breadcrumbs: ['Documentation']
     }
   };
 
@@ -136,31 +232,43 @@ const DocumentationViewer = () => {
 
   // Generate breadcrumbs for documentation navigation
   const generateDocBreadcrumbs = () => {
-    const breadcrumbs = [
-      { label: t('navigation.documentation'), path: '/docs', onClick: () => navigate('/docs') }
-    ];
+    if (!docId || docId === 'overview') {
+      return [{ label: t('navigation.documentation'), current: true }];
+    }
 
-    if (docId && docId !== 'overview') {
-      const docInfo = docFiles[docId];
-      if (docInfo) {
-        const pathParts = docInfo.path.split('/');
-        let currentBreadcrumbPath = '/docs';
-        
-        // Add category breadcrumbs for subdirectories
-        if (pathParts.length > 1) {
-          for (let i = 0; i < pathParts.length - 1; i++) {
-            const part = pathParts[i];
-            currentBreadcrumbPath += `/${part}`;
-            breadcrumbs.push({
-              label: part.charAt(0).toUpperCase() + part.slice(1),
-              path: currentBreadcrumbPath,
-              onClick: () => navigate(`/docs/${part}`)
-            });
-          }
-        }
-        
-        breadcrumbs.push({ label: docInfo.title, current: true });
+    const docInfo = docFiles[docId];
+    if (!docInfo || !docInfo.breadcrumbs) {
+      return [{ label: t('navigation.documentation'), current: true }];
+    }
+
+    const breadcrumbs = [];
+    
+    // Build breadcrumbs from the predefined breadcrumb array
+    docInfo.breadcrumbs.forEach((crumbLabel, index) => {
+      if (index === 0) {
+        // First breadcrumb is always Documentation root
+        breadcrumbs.push({
+          label: t('navigation.documentation'),
+          path: '/docs',
+          onClick: () => navigate('/docs')
+        });
+      } else {
+        // Build path for intermediate breadcrumbs
+        const path = `/docs/${crumbLabel.toLowerCase()}`;
+        breadcrumbs.push({
+          label: t(`documentation.categories.${crumbLabel.toLowerCase()}`, crumbLabel),
+          path: path,
+          onClick: () => navigate(path)
+        });
       }
+    });
+
+    // Add current page as final breadcrumb
+    if (breadcrumbs.length === 0 || breadcrumbs[breadcrumbs.length - 1].label !== docInfo.title) {
+      breadcrumbs.push({
+        label: docInfo.title,
+        current: true
+      });
     }
 
     return breadcrumbs;
@@ -201,23 +309,58 @@ This section contains the JSON schemas used throughout the SGEX Workbench system
 ## Available Schemas
 
 ### Generated Schemas
-- **TypeScript JSON Schema**: Generated using typescript-json-schema tool
-- **TS JSON Schema Generator**: Generated using ts-json-schema-generator tool
+These schemas are automatically generated from TypeScript types during the build process:
+
+- **[TypeScript JSON Schema](./generated-schemas-tjs)**: Generated using typescript-json-schema tool
+- **[TS JSON Schema Generator](./generated-schemas-tsjsg)**: Generated using ts-json-schema-generator tool
 
 ### Source Schemas
 The source schemas are located in \`/src/schemas/\` and include:
-- Actor Definition Schema
-- DAK Action Form Schema  
-- DAK Configuration Schema
-- DAK Selection Form Schema
-- Organization Selection Form Schema
-- SUSHI Configuration Schema
 
-These schemas define the data structures and validation rules used throughout the application for forms, APIs, and data validation.
+- **Actor Definition Schema**: Defines the structure for WHO SMART Guidelines actors and personas
+- **DAK Action Form Schema**: Schema for DAK action selection forms
+- **DAK Configuration Schema**: Configuration schema for Digital Adaptation Kits
+- **DAK Selection Form Schema**: Schema for DAK repository selection forms
+- **Organization Selection Form Schema**: Schema for GitHub organization selection
+- **SUSHI Configuration Schema**: Schema for FHIR Implementation Guide SUSHI configuration
+
+## Schema Usage
+
+These schemas define the data structures and validation rules used throughout the application for:
+
+- **Form Validation**: Ensuring user input meets required format and constraints
+- **API Contracts**: Defining data exchange formats with external services
+- **Data Modeling**: Establishing consistent data structures across components
+- **Runtime Validation**: Validating data integrity during application execution
+
+## Schema Development
+
+Schemas are developed using JSON Schema Draft 7 specification and follow WHO SMART Guidelines naming conventions and data modeling best practices.
+
+For more information about schema development, see the [Framework Developer Guide](../framework-developer-guide).
 `;
           setContent(schemaOverview);
           setLoading(false);
           return;
+        }
+
+        // Handle source schema files from /src/schemas
+        if (docInfo.isSourceSchema) {
+          try {
+            // Source schemas are served from /src/schemas but need to be imported
+            const schemaPath = docInfo.path.replace('schemas/', '');
+            const response = await import(`../schemas/${schemaPath}`);
+            const schemaData = response.default || response;
+            const formattedJson = JSON.stringify(schemaData, null, 2);
+            setContent(`# ${docInfo.title}\n\n\`\`\`json\n${formattedJson}\n\`\`\``);
+            setLoading(false);
+            return;
+          } catch (sourceSchemaError) {
+            console.error('Error loading source schema:', sourceSchemaError);
+            setContent(`# ${docInfo.title}\n\nThis schema file is part of the source code and defines the data structure for ${docInfo.title.toLowerCase()}.\n\nThe schema can be found at: \`/src/schemas/${docInfo.path.replace('schemas/', '')}\``);
+            setLoading(false);
+            return;
+          }
         }
 
         // Handle JSON schema files
@@ -419,12 +562,29 @@ These schemas define the data structures and validation rules used throughout th
                           {t(`documentation.categories.${category}`, category.charAt(0).toUpperCase() + category.slice(1))}
                         </div>
                       )}
-                      {items.map(({ key, title }) => (
+                      {items.map(({ key, title, isDirectory }) => (
                         <button
                           key={key}
-                          className={`doc-menu-item ${docId === key ? 'active' : ''} ${category !== 'root' ? 'doc-menu-item-nested' : ''}`}
-                          onClick={() => navigate(`/docs/${key}`)}
+                          className={`doc-menu-item ${docId === key ? 'active' : ''} ${category !== 'root' ? 'doc-menu-item-nested' : ''} ${isDirectory ? 'doc-menu-directory' : ''}`}
+                          onClick={() => {
+                            if (isDirectory) {
+                              // For directories, navigate to the first file in that directory or a default overview
+                              const overviewKey = `${key}-overview`;
+                              if (docFiles[overviewKey]) {
+                                navigate(`/docs/${overviewKey}`);
+                              } else {
+                                // Find first file in this category
+                                const firstFile = items.find(item => !item.isDirectory);
+                                if (firstFile) {
+                                  navigate(`/docs/${firstFile.key}`);
+                                }
+                              }
+                            } else {
+                              navigate(`/docs/${key}`);
+                            }
+                          }}
                         >
+                          {isDirectory && <span className="directory-icon">📁 </span>}
                           {title}
                         </button>
                       ))}

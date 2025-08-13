@@ -142,6 +142,15 @@
   font-size: 0.85rem;
 }
 
+.doc-menu-directory {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.directory-icon {
+  margin-right: 0.5rem;
+}
+
 .doc-menu-item:hover {
   background: var(--color-bg-tertiary);
   color: var(--color-text-primary);
@@ -296,7 +305,7 @@
 }
 
 /* Theme-specific styles */
-[data-theme="light"] .documentation-viewer {
+body.theme-light .documentation-viewer {
   --color-bg-primary: #ffffff;
   --color-bg-secondary: #f8f9fa;
   --color-bg-tertiary: #e9ecef;
@@ -311,7 +320,7 @@
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-[data-theme="dark"] .documentation-viewer {
+body.theme-dark .documentation-viewer {
   --color-bg-primary: #1a1a1a;
   --color-bg-secondary: #2d2d2d;
   --color-bg-tertiary: #404040;
@@ -324,6 +333,22 @@
   --color-accent-primary: #90caf9;
   --color-accent-emphasis: #bbdefb;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Default theme variables (fallback) */
+.documentation-viewer {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8f9fa;
+  --color-bg-tertiary: #e9ecef;
+  --color-bg-accent: #e3f2fd;
+  --color-text-primary: #212529;
+  --color-text-secondary: #6c757d;
+  --color-border-default: #dee2e6;
+  --color-border-muted: #e9ecef;
+  --color-border-emphasis: #adb5bd;
+  --color-accent-primary: #0078d4;
+  --color-accent-emphasis: #005a9e;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 /* Responsive design */
