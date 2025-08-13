@@ -1294,6 +1294,50 @@
     color: #93c5fd;
   }
   
+  /* Comment-specific markdown content dark mode overrides */
+  .comment-preview .markdown-content code,
+  .comment-full .markdown-content code,
+  .copilot-comment-body .markdown-content code {
+    background: #1f2937;
+    color: #fbbf24;
+    border: 1px solid #374151;
+  }
+  
+  .comment-preview .markdown-content pre,
+  .comment-full .markdown-content pre,
+  .copilot-comment-body .markdown-content pre {
+    background: #1f2937;
+    border: 1px solid #374151;
+  }
+  
+  .comment-preview .markdown-content pre code,
+  .comment-full .markdown-content pre code,
+  .copilot-comment-body .markdown-content pre code {
+    background: none;
+    color: #e5e7eb;
+    border: none;
+  }
+  
+  .comment-preview .markdown-content blockquote,
+  .comment-full .markdown-content blockquote,
+  .copilot-comment-body .markdown-content blockquote {
+    border-left-color: #374151;
+    background: #1f2937;
+    color: #d1d5db;
+  }
+  
+  .comment-preview .markdown-content a,
+  .comment-full .markdown-content a,
+  .copilot-comment-body .markdown-content a {
+    color: #60a5fa;
+  }
+  
+  .comment-preview .markdown-content a:hover,
+  .comment-full .markdown-content a:hover,
+  .copilot-comment-body .markdown-content a:hover {
+    color: #93c5fd;
+  }
+  
   .comment-form textarea {
     background: #374151;
     border-color: #4b5563;
