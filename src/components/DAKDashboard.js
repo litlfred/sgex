@@ -95,11 +95,10 @@ const DAKDashboardContent = () => {
         </div>
         
         <div className="component-content">
-          {/* Only show title text if image failed to load or as screen reader backup */}
-          <h4 className={imageLoaded && !imageError ? 'visually-hidden' : ''}>
+          <h4>
             {component.name}
           </h4>
-          <p className={imageLoaded && !imageError ? 'visually-hidden' : ''}>
+          <p>
             {component.description}
           </p>
           

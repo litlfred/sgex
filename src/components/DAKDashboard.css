@@ -466,8 +466,6 @@ body.theme-light .dak-dashboard {
 }
 
 .component-card.large-card .component-image-container {
-  width: 80px;
-  height: 80px;
   overflow: hidden;
   position: relative;
   border-radius: 12px;
@@ -475,8 +473,8 @@ body.theme-light .dak-dashboard {
 }
 
 .component-card.large-card .component-card-image {
-  width: 100%;
-  height: 100%;
+  max-width: var(--card-icon-size);
+  max-height: var(--card-icon-size);
   object-fit: cover;
   transition: transform 0.3s ease;
 }
@@ -804,6 +802,20 @@ body.theme-dark .component-card.large-card .component-content p {
 
   .tab-button-fullwidth .tab-text {
     font-size: 1rem;
+  }
+
+  /* DAK Component Card Mobile Responsive */
+  .component-card.large-card .component-card-image {
+    max-width: calc(var(--card-icon-size) * 0.6);
+    max-height: calc(var(--card-icon-size) * 0.6);
+  }
+}
+
+/* Very small screens - further reduce DAK component card images */
+@media (max-width: 480px) {
+  .component-card.large-card .component-card-image {
+    max-width: calc(var(--card-icon-size) * 0.5);
+    max-height: calc(var(--card-icon-size) * 0.5);
   }
 }
 
