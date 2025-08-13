@@ -1,0 +1,465 @@
+name: Code Quality Checks
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src/components/**/*.js'
+      - 'src/components/**/*.jsx'
+      - 'src/hooks/**/*.js'
+      - 'src/services/**/*.js'
+      - 'src/App.js'
+      - 'scripts/check-framework-compliance.js'
+      - 'src/tests/compliance/**/*.js'
+      - '.github/workflows/code-quality.yml'
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src/components/**/*.js'
+      - 'src/components/**/*.jsx'
+      - 'src/hooks/**/*.js'
+      - 'src/services/**/*.js'
+      - 'src/App.js'
+      - 'scripts/check-framework-compliance.js'
+      - 'src/tests/compliance/**/*.js'
+      - '.github/workflows/code-quality.yml'
+  pull_request_review:
+    types: [submitted]
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  security-audit:
+    name: Dependency Security Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci --legacy-peer-deps
+      continue-on-error: false
+
+    - name: Run security audit
+      id: audit
+      continue-on-error: false
+      run: |
+        echo "Running npm audit..."
+        
+        # Run audit and capture both output and exit code
+        audit_output=$(npm audit 2>&1)
+        audit_exit_code=$?
+        
+        echo "audit_exit_code=$audit_exit_code" >> $GITHUB_OUTPUT
+        
+        # Save audit output to file for comment
+        echo "$audit_output" > audit_results.txt
+        
+        # Also run audit in JSON format for detailed analysis
+        npm audit --json > audit_results.json 2>/dev/null || true
+        
+        echo "Audit completed with exit code: $audit_exit_code"
+        
+        if [ $audit_exit_code -eq 0 ]; then
+          echo "✅ No vulnerabilities found"
+        else
+          echo "❌ Vulnerabilities detected"
+          echo "$audit_output"
+        fi
+
+    - name: Comment PR with audit results
+      if: always() && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          try {
+            // Check if audit results files exist first
+            let auditText = '';
+            let auditExitCode = '${{ steps.audit.outputs.audit_exit_code }}';
+            
+            // Try to read audit results, handle missing files gracefully
+            try {
+              auditText = fs.readFileSync('audit_results.txt', 'utf8');
+            } catch (e) {
+              console.log('audit_results.txt not found, likely due to npm ci failure');
+              auditText = 'Security audit could not be completed due to dependency installation failure.';
+              auditExitCode = '1'; // Mark as failed if we can't read results
+            }
+            
+            let auditJson = {};
+            try {
+              auditJson = JSON.parse(fs.readFileSync('audit_results.json', 'utf8'));
+            } catch (e) {
+              console.log('Could not parse audit JSON, using text output only');
+            }
+            
+            // Create comment body based on results
+            let commentBody;
+            
+            if (auditExitCode === '0') {
+              commentBody = `## 🔒 Dependency Security Check Results
+              
+              ✅ **No vulnerabilities found!**
+              
+              All dependencies have been scanned and no security vulnerabilities were detected.
+              
+              \`\`\`
+              ${auditText.trim()}
+              \`\`\`
+              
+              ---
+              
+              ### ✅ Security Status: CLEAN
+              Your changes maintain the security posture of the project. Great job! 🎉
+              `;
+            } else {
+              // Parse vulnerability counts if available
+              let vulnSummary = '';
+              if (auditJson.metadata && auditJson.metadata.vulnerabilities) {
+                const vulns = auditJson.metadata.vulnerabilities;
+                const total = vulns.total || 0;
+                const critical = vulns.critical || 0;
+                const high = vulns.high || 0;
+                const moderate = vulns.moderate || 0;
+                const low = vulns.low || 0;
+                
+                vulnSummary = `
+              **Vulnerability Summary:**
+              - 🔴 Critical: ${critical}
+              - 🟠 High: ${high}  
+              - 🟡 Moderate: ${moderate}
+              - 🟢 Low: ${low}
+              - **Total: ${total}**
+              `;
+              }
+              
+              // Check if this is a dependency installation failure
+              if (auditText.includes('dependency installation failure')) {
+                commentBody = `## ❌ Dependency Security Check Failed
+                
+                **Installation Error:** Unable to install dependencies due to version conflicts.
+                
+                \`\`\`
+                ${auditText.trim()}
+                \`\`\`
+                
+                ---
+                
+                ### ❌ Security Status: CHECK FAILED
+                
+                **Action Required:** Please resolve dependency conflicts before security audit can run.
+                
+                **How to fix:**
+                1. The workflow will be updated to use \`--legacy-peer-deps\` flag
+                2. If issues persist, check for TypeScript version conflicts in package.json
+                3. Consider updating peer dependencies to compatible versions
+                
+                **Need help?** Check the [npm dependency resolution documentation](https://docs.npmjs.com/cli/v8/configuring-npm/package-json#peerdependencies) for more details.
+                `;
+              } else {
+                commentBody = `## 🔒 Dependency Security Check Results
+                
+                ❌ **Security vulnerabilities detected!**
+                ${vulnSummary}
+                
+                \`\`\`
+                ${auditText.trim()}
+                \`\`\`
+                
+                ---
+                
+                ### ❌ Security Status: VULNERABILITIES FOUND
+                
+                **Action Required:** Please address these security vulnerabilities before merging.
+                
+                **How to fix:**
+                1. Run \`npm audit fix\` to automatically fix what can be fixed
+                2. For vulnerabilities that require manual intervention, consider:
+                   - Updating to newer versions of affected packages
+                   - Adding overrides in \`package.json\` if updates aren't available
+                   - Evaluating if vulnerable packages can be replaced
+                
+                **Need help?** Check the [npm audit documentation](https://docs.npmjs.com/cli/v8/commands/npm-audit) for more details.
+                `;
+              }
+            }
+            
+            // Get pull request number
+            const prNumber = context.payload.pull_request?.number;
+            
+            if (!prNumber) {
+              console.log('No pull request number found, skipping comment');
+              return;
+            }
+            
+            // Find existing security comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const existingComment = comments.find(comment => 
+              comment.body.includes('Dependency Security Check Results')
+            );
+            
+            if (existingComment) {
+              // Update existing comment
+              console.log('Updating existing security comment');
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: commentBody
+              });
+            } else {
+              // Create new comment
+              console.log('Creating new security comment');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+            }
+            
+          } catch (error) {
+            console.error('Error processing audit results:', error);
+            
+            // Get pull request number for error reporting
+            const prNumber = context.payload.pull_request?.number;
+            
+            if (prNumber) {
+              try {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: `## ❌ Dependency Security Check Failed
+                  
+                  The security audit encountered an error:
+                  \`\`\`
+                  ${error.message}
+                  \`\`\`
+                  
+                  Please check the action logs for more details.`
+                });
+              } catch (commentError) {
+                console.error('Failed to create error comment:', commentError);
+              }
+            }
+          }
+
+    - name: Fail on vulnerabilities
+      if: steps.audit.outputs.audit_exit_code != '0'
+      run: |
+        echo "❌ Security vulnerabilities found. Failing the check."
+        echo "Please address the vulnerabilities listed above before merging."
+        exit 1
+
+  framework-compliance:
+    name: Framework Compliance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci --legacy-peer-deps
+      continue-on-error: false
+
+    - name: Run Framework Compliance Check
+      run: npm run check-framework-compliance
+      continue-on-error: false
+
+    - name: Run Profile Creation Compliance Check
+      run: npm run compliance:profile
+      continue-on-error: false
+
+    - name: Comment PR with compliance results
+      if: always() && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          
+          try {
+            // Run framework compliance check and capture output
+            const frameworkOutput = execSync('npm run check-framework-compliance', { 
+              encoding: 'utf8',
+              cwd: process.cwd()
+            });
+            
+            // Run profile creation compliance check and capture output
+            let profileOutput = '';
+            let profileStatus = 'PASSED';
+            try {
+              profileOutput = execSync('npm run compliance:profile', { 
+                encoding: 'utf8',
+                cwd: process.cwd()
+              });
+            } catch (error) {
+              profileOutput = error.stdout || error.stderr || error.message;
+              profileStatus = 'FAILED';
+            }
+            
+            // Create comment body
+            const commentBody = `## 🔍 Page Framework Compliance Check Results
+            
+            ### Framework Structure Compliance
+            ${frameworkOutput}
+            
+            ### Profile Creation Compliance
+            Status: ${profileStatus === 'PASSED' ? '✅ PASSED' : '❌ FAILED'}
+            
+            ${profileOutput}
+            
+            ---
+            
+            ### Next Steps
+            ${frameworkOutput.includes('NON-COMPLIANT') || profileStatus === 'FAILED' ? 
+              '❌ **Action Required**: Fix compliance violations before merging.' :
+              frameworkOutput.includes('PARTIAL') ?
+                '⚠️ **Recommended**: Consider addressing partial compliance issues.' :
+                '✅ **All Good**: All framework compliance checks passed!'
+            }
+            
+            For guidance, see:
+            - [Page Framework Documentation](../docs/page-framework.md)  
+            - [Profile Creation Compliance Requirements](../docs/page-framework.md#profile-creation-compliance-requirements)
+            `;
+            
+            // Get pull request number
+            const prNumber = context.payload.pull_request?.number;
+            
+            if (!prNumber) {
+              console.log('No pull request number found, skipping comment');
+              return;
+            }
+            
+            // Find existing compliance comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const existingComment = comments.find(comment => 
+              comment.body.includes('Page Framework Compliance Check Results')
+            );
+            
+            if (existingComment) {
+              // Update existing comment
+              console.log('Updating existing compliance comment');
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: commentBody
+              });
+            } else {
+              // Create new comment
+              console.log('Creating new compliance comment');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+            }
+            
+          } catch (error) {
+            console.error('Error running compliance check:', error);
+            
+            // Get pull request number for error reporting
+            const prNumber = context.payload.pull_request?.number;
+            
+            if (prNumber) {
+              try {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: `## ❌ Page Framework Compliance Check Failed
+                  
+                  The compliance check encountered an error:
+                  \`\`\`
+                  ${error.message}
+                  \`\`\`
+                  
+                  Please check the action logs for more details.`
+                });
+              } catch (commentError) {
+                console.error('Failed to create error comment:', commentError);
+              }
+            }
+            
+            // Don't exit with error code here - let the next step handle compliance failures
+          }
+
+    - name: Fail on non-compliance
+      run: |
+        # Re-run framework compliance check to get exit code
+        framework_exit_code=0
+        npm run check-framework-compliance || framework_exit_code=$?
+        
+        # Re-run profile compliance check to get exit code
+        profile_exit_code=0
+        npm run compliance:profile || profile_exit_code=$?
+        
+        if [ $framework_exit_code -ne 0 ] || [ $profile_exit_code -ne 0 ]; then
+          echo "❌ Compliance checks failed. Please fix violations before merging."
+          echo "Framework compliance: $([ $framework_exit_code -eq 0 ] && echo "PASSED" || echo "FAILED")"
+          echo "Profile compliance: $([ $profile_exit_code -eq 0 ] && echo "PASSED" || echo "FAILED")"
+          exit 1
+        else
+          echo "✅ All compliance checks passed."
+        fi
+
+  success-summary:
+    name: Code Quality Summary
+    runs-on: ubuntu-latest
+    needs: [security-audit, framework-compliance]
+    if: always()
+    
+    steps:
+    - name: Create summary
+      run: |
+        echo "## 🎯 Code Quality Check Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Results:" >> $GITHUB_STEP_SUMMARY
+        echo "- **Security Audit:** ${{ needs.security-audit.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Framework Compliance:** ${{ needs.framework-compliance.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ needs.security-audit.result }}" == "success" && "${{ needs.framework-compliance.result }}" == "success" ]]; then
+          echo "### ✅ All checks passed!" >> $GITHUB_STEP_SUMMARY
+          echo "Your code meets our quality standards." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ❌ Some checks failed" >> $GITHUB_STEP_SUMMARY
+          echo "Please review the failed checks and address any issues." >> $GITHUB_STEP_SUMMARY
+        fi
