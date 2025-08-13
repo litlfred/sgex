@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import useThemeImage from '../hooks/useThemeImage';
 import { extractAltTextFromFilename } from '../utils/imageAltTextHelper';
 
@@ -26,7 +26,7 @@ const ResponsiveImage = ({
   const autoAlt = alt || extractAltTextFromFilename(src);
   
   // Function to attempt loading mobile version
-  const tryMobileVersion = () => {
+  const tryMobileVersion = useCallback(() => {
     if (hasAttemptedMobile) return;
     
     const isMobile = forceMobile || (!forceDesktop && window.innerWidth <= 768);
@@ -58,7 +58,7 @@ const ResponsiveImage = ({
     };
     testImg.src = mobilePath;
     setHasAttemptedMobile(true);
-  };
+  }, [hasAttemptedMobile, forceMobile, forceDesktop, src, themeImagePath]);
 
   // Update image source based on screen size and theme
   useEffect(() => {
@@ -72,7 +72,7 @@ const ResponsiveImage = ({
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [src, themeImagePath, forceMobile, forceDesktop]);
+  }, [src, themeImagePath, forceMobile, forceDesktop, tryMobileVersion]);
 
   useEffect(() => {
     // Listen for window resize events
@@ -94,7 +94,7 @@ const ResponsiveImage = ({
       window.removeEventListener('resize', debouncedHandleResize);
       clearTimeout(resizeTimeout);
     };
-  }, []);
+  }, [tryMobileVersion]);
 
   // Handle image load errors by falling back to original or provided fallback
   const handleError = (e) => {
