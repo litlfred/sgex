@@ -159,22 +159,7 @@ describe('DataAccessLayer', () => {
       expect(stagingGroundService.removeFile).toHaveBeenCalledWith('test.json');
     });
 
-    test('should block GitHub save for demo users', async () => {
-      userAccessService.canSaveToGitHub.mockResolvedValue(false);
-      userAccessService.getUserType.mockReturnValue('demo');
 
-      const result = await dataAccessLayer.saveAssetGitHub(
-        'owner',
-        'repo',
-        'main',
-        'test.json',
-        '{"test": true}',
-        'Test commit'
-      );
-
-      expect(result.result).toBe(OPERATION_RESULTS.DEMO_MODE_BLOCKED);
-      expect(result.message).toContain('Demo users cannot save to GitHub');
-    });
 
     test('should block GitHub save for unauthenticated users', async () => {
       userAccessService.canSaveToGitHub.mockResolvedValue(false);

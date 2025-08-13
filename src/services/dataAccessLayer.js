@@ -24,8 +24,7 @@ export const SAVE_TARGETS = {
 export const OPERATION_RESULTS = {
   SUCCESS: 'success',
   ERROR: 'error',
-  PERMISSION_DENIED: 'permission_denied',
-  DEMO_MODE_BLOCKED: 'demo_mode_blocked'
+  PERMISSION_DENIED: 'permission_denied'
 };
 
 class DataAccessLayer {
@@ -79,14 +78,7 @@ class DataAccessLayer {
       }
 
       // If no local version, get from GitHub
-      let content;
-      if (userAccessService.isDemoUser() && userAccessService.isDemoDAK(owner, repo)) {
-        // For demo users, provide demo content
-        content = this.getDemoAssetContent(assetPath);
-      } else {
-        // Get real content from GitHub
-        content = await githubService.getFileContent(owner, repo, assetPath, branch);
-      }
+      const content = await githubService.getFileContent(owner, repo, assetPath, branch);
 
       // Cache the content
       this.assetCache.set(cacheKey, content);
@@ -152,13 +144,7 @@ class DataAccessLayer {
       const canSave = await userAccessService.canSaveToGitHub(owner, repo, branch);
       
       if (!canSave) {
-        if (userType === 'demo') {
-          return {
-            result: OPERATION_RESULTS.DEMO_MODE_BLOCKED,
-            message: 'Demo users cannot save to GitHub. Changes can be saved locally.',
-            target: SAVE_TARGETS.GITHUB
-          };
-        } else if (userType === 'unauthenticated') {
+        if (userType === 'unauthenticated') {
           return {
             result: OPERATION_RESULTS.PERMISSION_DENIED,
             message: 'Please authenticate to save changes to GitHub.',
@@ -219,58 +205,7 @@ class DataAccessLayer {
     }
   }
 
-  /**
-   * Get demo asset content for demo users
-   */
-  getDemoAssetContent(assetPath) {
-    const demoAssets = {
-      'input/vocabulary/ValueSet-anc-care-codes.json': JSON.stringify({
-        resourceType: "ValueSet",
-        id: "anc-care-codes",
-        name: "ANCCareCodes",
-        title: "ANC Care Codes (Demo)",
-        status: "draft",
-        description: "Demo value set for antenatal care codes",
-        compose: {
-          include: [{
-            system: "http://example.org/anc-codes",
-            concept: [
-              { code: "anc-visit", display: "Antenatal Care Visit" },
-              { code: "anc-screening", display: "Antenatal Screening" }
-            ]
-          }]
-        }
-      }, null, 2),
-      
-      'input/actors/Patient.json': JSON.stringify({
-        resourceType: "ActorDefinition",
-        id: "patient",
-        name: "Patient",
-        title: "Patient (Demo)",
-        status: "draft",
-        description: "Demo patient actor definition",
-        type: "person"
-      }, null, 2),
 
-      'README.md': `# Demo DAK Repository
-
-This is a demo repository showing the structure of a SMART Guidelines DAK.
-
-## Components
-
-- **ValueSets**: Terminology definitions
-- **Actors**: System and person actors  
-- **Business Processes**: BPMN workflow definitions
-
-This is demo data and cannot be saved to GitHub.`
-    };
-
-    return demoAssets[assetPath] || `# Demo Asset: ${assetPath}
-
-This is demo content for the asset located at: ${assetPath}
-
-Demo users can edit this content and save it locally, but cannot commit changes to GitHub.`;
-  }
 
   /**
    * Get save options for current user and asset
