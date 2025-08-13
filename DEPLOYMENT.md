@@ -10,7 +10,8 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 
 ### Triggers
 - **Manual trigger** (`workflow_dispatch`) - Primary method for controlled deployments
-- **Automatic trigger** - On push to feature branches (excludes main, gh-pages, deploy)
+- **Automatic push trigger** - On push to feature branches (excludes main, gh-pages, deploy)
+- **Automatic PR trigger** - On PR events (opened, synchronize, reopened) targeting main
 - **Workflow call** - Can be triggered by other workflows
 
 ### Inputs
@@ -67,9 +68,11 @@ Both workflows can be manually triggered from the GitHub Actions UI:
 
 ### Automatic Deployment (Feature Branches)
 The branch deployment workflow automatically triggers when:
-- Commits are pushed to feature branches (excludes main, gh-pages, deploy)
-- Copilot commits changes to pull requests
-- Code changes are made to relevant paths (src/, public/, package files)
+- **Push events**: Commits are pushed to feature branches (excludes main, gh-pages, deploy)
+- **Pull request events**: PR creation, updates, or reopening (for PRs targeting main)
+- **Copilot commits**: Both direct pushes and PR updates from copilot agents
+- **External PRs**: Pull requests from external contributors and forks
+- **Code changes**: Changes to relevant paths (src/, public/, package files, workflows)
 
 ### PR Integration
 When commits are pushed to PRs, the system provides:
