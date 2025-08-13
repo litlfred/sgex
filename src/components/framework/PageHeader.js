@@ -54,7 +54,23 @@ const PageHeader = () => {
   };
 
   const handleHomeNavigation = () => {
-    navigate('/');
+    const currentPath = window.location.pathname;
+    
+    // Check if we're already on the home page (accounting for basename)
+    // Home paths include: /, /sgex, /sgex/
+    const isOnHomePage = currentPath === '/' || currentPath === '/sgex' || currentPath === '/sgex/';
+    
+    if (isOnHomePage) {
+      // If already on home page, trigger focus by adding search parameter
+      const searchParams = new URLSearchParams(window.location.search);
+      searchParams.set('focusInput', 'pat');
+      const newSearch = searchParams.toString();
+      // Use window.location to force a URL change that will trigger React Router
+      window.location.search = newSearch;
+    } else {
+      // Navigate to home page with URL parameter to trigger focus
+      navigate('/?focusInput=pat');
+    }
   };
 
   const handleGitHubUser = () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
@@ -20,6 +20,9 @@ const WelcomePage = () => {
   const [patToken, setPatToken] = useState('');
   const [patError, setPATError] = useState('');
   const [patLoading, setPATLoading] = useState(false);
+
+  // Ref for PAT token input field to enable focus functionality
+  const patTokenInputRef = useRef(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,6 +71,33 @@ const WelcomePage = () => {
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, navigate, location.pathname]);
+
+  // Handle PAT input focus when triggered by login button or direct focus request
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const focusInput = searchParams.get('focusInput');
+    const shouldFocus = focusInput === 'pat';
+
+    if (shouldFocus && !isAuthenticated && patTokenInputRef.current) {
+      // Small delay to ensure the component is fully rendered
+      const timer = setTimeout(() => {
+        patTokenInputRef.current.focus();
+      }, 100);
+
+      // Clear the focus trigger from URL to prevent repeated focusing
+      searchParams.delete('focusInput');
+      const newSearch = searchParams.toString();
+      navigate(
+        { 
+          pathname: location.pathname, 
+          search: newSearch ? `?${newSearch}` : '' 
+        }, 
+        { replace: true }
+      );
+
+      return () => clearTimeout(timer);
+    }
+  }, [location.search, isAuthenticated, navigate, location.pathname]);
 
   const handleAuthSuccess = (token, octokitInstance, username) => {
     // Store token in session storage for this session
@@ -234,6 +264,7 @@ const WelcomePage = () => {
                     </div>
                     <div className="form-group">
                       <input
+                        ref={patTokenInputRef}
                         type="password"
                         value={patToken}
                         onChange={handlePATTokenChange}
