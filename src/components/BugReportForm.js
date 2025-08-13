@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import bugReportService from '../services/bugReportService';
 import githubService from '../services/githubService';
+import ScreenshotEditor from './ScreenshotEditor';
 
 const BugReportForm = ({ onClose, contextData = {} }) => {
   const [templates, setTemplates] = useState([]);
@@ -18,6 +19,8 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
   const [screenshotPreview, setScreenshotPreview] = useState(null);
   const [takingScreenshot, setTakingScreenshot] = useState(false);
   const [showContextPreview, setShowContextPreview] = useState(false);
+  const [showScreenshotEditor, setShowScreenshotEditor] = useState(false);
+  const [originalScreenshotBlob, setOriginalScreenshotBlob] = useState(null);
 
   // Load templates on mount
   useEffect(() => {
@@ -79,6 +82,7 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
     try {
       const screenshot = await bugReportService.takeScreenshot();
       if (screenshot) {
+        setOriginalScreenshotBlob(screenshot);
         setScreenshotBlob(screenshot);
         // Create preview URL
         const previewUrl = URL.createObjectURL(screenshot);
@@ -95,11 +99,34 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
     }
   };
 
+  const handleEditScreenshot = () => {
+    setShowScreenshotEditor(true);
+  };
+
+  const handleScreenshotEditorSave = (editedBlob) => {
+    // Update the screenshot with the edited version
+    setScreenshotBlob(editedBlob);
+    
+    // Update preview URL
+    if (screenshotPreview) {
+      URL.revokeObjectURL(screenshotPreview);
+    }
+    const newPreviewUrl = URL.createObjectURL(editedBlob);
+    setScreenshotPreview(newPreviewUrl);
+    
+    setShowScreenshotEditor(false);
+  };
+
+  const handleScreenshotEditorCancel = () => {
+    setShowScreenshotEditor(false);
+  };
+
   const handleRemoveScreenshot = () => {
     if (screenshotPreview) {
       URL.revokeObjectURL(screenshotPreview);
     }
     setScreenshotBlob(null);
+    setOriginalScreenshotBlob(null);
     setScreenshotPreview(null);
     setIncludeScreenshot(false);
   };
@@ -548,6 +575,13 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
                     <button
                       type="button"
                       className="screenshot-btn secondary"
+                      onClick={handleEditScreenshot}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="screenshot-btn secondary"
                       onClick={handleTakeScreenshot}
                       disabled={takingScreenshot}
                     >
@@ -682,6 +716,14 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
           )}
         </div>
       </form>
+
+      {/* Screenshot Editor */}
+      <ScreenshotEditor
+        screenshotBlob={originalScreenshotBlob}
+        onSave={handleScreenshotEditorSave}
+        onCancel={handleScreenshotEditorCancel}
+        isOpen={showScreenshotEditor}
+      />
     </div>
   );
 };
