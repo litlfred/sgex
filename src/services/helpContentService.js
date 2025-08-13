@@ -652,6 +652,114 @@ class HelpContentService {
           ]
         }
       ],
+      'dak-workflow': [
+        {
+          id: 'dak-workflow-overview',
+          title: 'Create New DAK Workflow',
+          badge: '/sgex/cat-paw-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Welcome to DAK Creation',
+              content: `
+                <p>The DAK Creation Workflow guides you through setting up a new WHO SMART Guidelines Digital Adaptation Kit repository with all required configuration files.</p>
+                <h4>What You'll Configure:</h4>
+                <ul>
+                  <li><strong>📁 Repository Settings:</strong> GitHub repository name, description, and topics</li>
+                  <li><strong>🔧 SUSHI Configuration:</strong> Implementation Guide metadata and structure</li>
+                  <li><strong>⚙️ IG Configuration:</strong> Build settings and templates</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💡 Pro Tip:</strong> Required steps are marked with * and must be completed before creating the repository.
+                </div>
+              `
+            },
+            {
+              title: 'Repository Configuration',
+              content: `
+                <h4>Repository Settings</h4>
+                <p>Configure the basic GitHub repository that will host your DAK:</p>
+                <ul>
+                  <li><strong>Repository Name:</strong> Must be lowercase with hyphens (e.g., maternal-health-dak)</li>
+                  <li><strong>Description:</strong> Brief summary of your DAK's purpose and scope</li>
+                  <li><strong>Topics:</strong> Keywords that help others discover your DAK</li>
+                  <li><strong>Visibility:</strong> Public repositories encourage collaboration</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🎯 Naming Convention:</strong> Use descriptive names like "anc-dak", "immunization-dak", or "maternal-health-dak"
+                </div>
+              `
+            },
+            {
+              title: 'SUSHI Configuration',
+              content: `
+                <h4>Implementation Guide Identity</h4>
+                <p>The sushi-config.yaml file defines your FHIR Implementation Guide:</p>
+                <ul>
+                  <li><strong>ID:</strong> Unique identifier (e.g., who.smart.maternal-health)</li>
+                  <li><strong>Canonical URL:</strong> Base URL where the IG will be published</li>
+                  <li><strong>Name:</strong> Technical name in PascalCase (no spaces)</li>
+                  <li><strong>Title:</strong> Human-readable title for documentation</li>
+                </ul>
+                <h4>Dependencies & Pages</h4>
+                <p>Configure FHIR dependencies and enable/disable IG pages as needed.</p>
+                <div class="help-tip">
+                  <strong>📋 Auto-generation:</strong> Many fields are automatically populated based on your repository name!
+                </div>
+              `
+            },
+            {
+              title: 'Dependencies Management',
+              content: `
+                <h4>FHIR Implementation Guide Dependencies</h4>
+                <p>Dependencies are other FHIR IGs that your DAK relies on:</p>
+                <ul>
+                  <li><strong>smart.who.int.base:</strong> WHO SMART Guidelines foundation (required)</li>
+                  <li><strong>hl7.fhir.uv.extensions.r4:</strong> Standard FHIR extensions</li>
+                  <li><strong>hl7.fhir.uv.cpg:</strong> Clinical Practice Guidelines framework</li>
+                  <li><strong>hl7.fhir.uv.sdc:</strong> Structured Data Capture for forms</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🔍 Search & Add:</strong> Use the dependency manager to search for and add common WHO and HL7 dependencies.
+                </div>
+              `
+            },
+            {
+              title: 'Pages Configuration',
+              content: `
+                <h4>Implementation Guide Pages</h4>
+                <p>Enable or disable sections of your Implementation Guide:</p>
+                <ul>
+                  <li><strong>Home:</strong> Main landing page (always recommended)</li>
+                  <li><strong>Business Requirements:</strong> Concepts, personas, scenarios</li>
+                  <li><strong>Data Models:</strong> Actors, transactions, profiles</li>
+                  <li><strong>Deployment:</strong> Security, testing, implementation</li>
+                  <li><strong>Indices:</strong> Artifact listings and mappings</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>📖 Customizable:</strong> You can modify page content later using the DAK Dashboard editors.
+                </div>
+              `
+            },
+            {
+              title: 'Creating Your Repository',
+              content: `
+                <h4>Final Steps</h4>
+                <p>Once all required configuration is complete:</p>
+                <ol>
+                  <li><strong>✅ Validate:</strong> Ensure all required fields are filled correctly</li>
+                  <li><strong>📁 Generate Files:</strong> Create sushi-config.yaml, ig.ini, and README.md</li>
+                  <li><strong>🚀 Create Repository:</strong> Set up the GitHub repository with initial files</li>
+                  <li><strong>🎯 Navigate to Dashboard:</strong> Start editing your DAK components</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>🎉 Next Steps:</strong> After creation, you'll be taken to the DAK Dashboard where you can edit business processes, data elements, and more!
+                </div>
+              `
+            }
+          ]
+        }
+      ],
       'core-data-dictionary-viewer': [
         {
           id: 'core-data-dictionary-help',
