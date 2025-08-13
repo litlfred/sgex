@@ -59,9 +59,9 @@
             // Component-first pattern: /sgex/:component/:user/:repo/:branch
             handleComponentFirst(pathSegments, l, '/sgex/');
           } else {
-            // Assume branch deployment pattern for unknown segments: /sgex/:branch/:component/...
-            // This is more permissive and allows for development/feature branches
-            // that may not be in the deployedBranches configuration
+            // For GitHub Pages, be permissive with unknown segments as they might be development branches
+            // Assume branch deployment pattern: /sgex/:branch/:component/...
+            // This allows for development/feature branches that may not be in the deployedBranches configuration
             handleBranchDeployment(pathSegments, l, routeConfig, '/sgex/');
           }
         }
@@ -85,8 +85,9 @@
             // Component-first pattern: /:component/:user/:repo/... or /sgex/:component/:user/:repo/...
             handleComponentFirst(relevantSegments, l, basePath);
           } else {
-            // Assume branch deployment pattern for unknown segments: /:branch/:component/... or /sgex/:branch/:component/...
-            // This is more permissive and allows for development/feature branches
+            // For local development, be more permissive with unknown segments
+            // Assume branch deployment pattern: /:branch/:component/... or /sgex/:branch/:component/...
+            // This handles development branches that might not be in deployedBranches
             handleBranchDeployment(relevantSegments, l, routeConfig, basePath);
           }
         }
@@ -180,11 +181,42 @@
 
         function getRouteConfiguration() {
           if (typeof window.getSGEXRouteConfig === 'function') {
-            return window.getSGEXRouteConfig();
+            var config = window.getSGEXRouteConfig();
+            if (config) {
+              return config;
+            }
           }
           
-          console.warn('SGEX route configuration not available - falling back to basic routing');
-          return null;
+          // If configuration is not available, create a minimal fallback config
+          // This ensures 404.html routing works even if config loading fails
+          console.warn('SGEX route configuration not available - using fallback config');
+          return {
+            deployType: 'main',
+            dakComponents: {},
+            standardComponents: {},
+            components: {},
+            deployedBranches: ['main'],
+            
+            isValidComponent: function(componentName) {
+              // Fallback: assume common component names are valid
+              var commonComponents = [
+                'dashboard', 'testing-viewer', 'core-data-dictionary-viewer',
+                'health-interventions', 'actor-editor', 'business-process-selection',
+                'bpmn-editor', 'bpmn-viewer', 'bpmn-source', 'decision-support-logic',
+                'questionnaire-editor', 'WelcomePage', 'SelectProfilePage',
+                'DAKActionSelection', 'DAKSelection', 'OrganizationSelection',
+                'DAKConfiguration', 'RepositorySelection', 'DashboardRedirect',
+                'TestDashboard', 'BPMNViewerTestComponent', 'DocumentationViewer',
+                'PagesManager', 'LandingPageWithFramework', 'TestDocumentationPage',
+                'AssetEditorTest', 'NotFound'
+              ];
+              return commonComponents.includes(componentName);
+            },
+            
+            isDeployedBranch: function(branch) {
+              return branch === 'main';
+            }
+          };
         }
 
         function showErrorPage(title, message, errorCode) {

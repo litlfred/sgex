@@ -31,9 +31,32 @@ function getDeploymentType() {
   // Check if we're in a simple deployment (deploy branch)
   if (typeof window !== 'undefined') {
     var path = window.location.pathname;
-    // If we're at the root with minimal functionality, likely deploy branch
-    if (path === '/' || path === '/sgex/' || path.endsWith('/branch-listing')) {
-      return 'deploy';
+    var hostname = window.location.hostname;
+    
+    // For GitHub Pages deployments, check if we're in a specific branch context
+    var isGitHubPages = hostname.endsWith('.github.io');
+    
+    if (isGitHubPages) {
+      // GitHub Pages: Check if this looks like a deploy branch
+      var pathSegments = path.split('/').filter(Boolean);
+      
+      // If we have /sgex/branch-listing or just minimal paths, likely deploy branch
+      if ((pathSegments.length === 1 && pathSegments[0] === 'sgex') ||
+          (pathSegments.length === 2 && pathSegments[0] === 'sgex' && pathSegments[1] === 'branch-listing') ||
+          path === '/' || path.endsWith('/branch-listing')) {
+        return 'deploy';
+      }
+      
+      // Otherwise, assume main deployment for GitHub Pages
+      return 'main';
+    } else {
+      // Local deployment: Check for deploy branch indicators
+      if (path === '/' || path === '/sgex/' || path.endsWith('/branch-listing')) {
+        return 'deploy';
+      }
+      
+      // For local development, default to main unless explicitly deploy
+      return 'main';
     }
   }
   
