@@ -16,6 +16,8 @@
   /* Button/Card Sizing Standards */
   --card-size-default: 18em;
   --icon-size-default: 24px;
+  --icon-size-large: 3em;
+  --icon-size-max: 12em;
 }
 
 /* Standardized icon-cards class for consistent card sizing */
