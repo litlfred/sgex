@@ -2,6 +2,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
+import { sanitizeMarkdown } from '../utils/securityUtils';
 import { lazyLoadMDEditor } from '../utils/lazyRouteUtils';
 
 // Lazy markdown component using the utility
@@ -983,7 +984,7 @@ define "Contraindication Present":
               {selectedDialog.type === 'html' ? (
                 <div 
                   className="html-content"
-                  dangerouslySetInnerHTML={{ __html: selectedDialog.content }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeMarkdown(selectedDialog.content, { maxLength: 100000 }) }}
                 />
               ) : (
                 <pre className="source-content">
