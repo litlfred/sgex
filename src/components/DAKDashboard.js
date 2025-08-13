@@ -75,33 +75,37 @@ const DAKDashboardContent = () => {
           }
         }}
       >
-        <div className="component-header">
-          <div className="component-image-container">
-            <img 
-              src={cardImagePath}
-              alt={getAltText(t, ALT_TEXT_KEYS.ICON_DAK_COMPONENT, component.name, { name: component.name })}
-              className="component-card-image"
-              onLoad={handleImageLoad}
-              onError={handleImageError}
-              style={{ display: imageError ? 'none' : 'block' }}
-            />
-            {/* Fallback icon when image fails to load */}
-            {imageError && (
-              <div className="component-icon" style={{ color: component.color }}>
-                {component.icon}
-              </div>
-            )}
+        <div className="component-main">
+          <div className="component-header">
+            <div className="component-image-container">
+              <img 
+                src={cardImagePath}
+                alt={getAltText(t, ALT_TEXT_KEYS.ICON_DAK_COMPONENT, component.name, { name: component.name })}
+                className="component-card-image"
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+                style={{ display: imageError ? 'none' : 'block' }}
+              />
+              {/* Fallback icon when image fails to load */}
+              {imageError && (
+                <div className="component-icon" style={{ color: component.color }}>
+                  {component.icon}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="component-content">
+            <h4>
+              {component.name}
+            </h4>
+            <p>
+              {component.description}
+            </p>
           </div>
         </div>
         
-        <div className="component-content">
-          <h4>
-            {component.name}
-          </h4>
-          <p>
-            {component.description}
-          </p>
-          
+        <div className="component-meta-section">
           <div className="component-meta">
             <div className="file-types">
               {component.fileTypes.map((type) => (
