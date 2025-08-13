@@ -52,20 +52,17 @@
             return;
           }
 
-          // Check if second segment is a deployed branch
+          // Check if second segment is a component or branch
           var secondSegment = pathSegments[1];
           
-          if (routeConfig && routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(secondSegment)) {
-            // Branch deployment pattern: /sgex/:branch/:component/...
-            handleBranchDeployment(pathSegments, l, routeConfig, '/sgex/');
-          } else if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(secondSegment)) {
+          if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(secondSegment)) {
             // Component-first pattern: /sgex/:component/:user/:repo/:branch
             handleComponentFirst(pathSegments, l, '/sgex/');
           } else {
-            // Unknown pattern - show error
-            showErrorPage('Unknown URL Pattern', 
-              'The URL pattern is not recognized. Expected either /sgex/:branch/:component or /sgex/:component/:user/:repo (with optional :branch/:asset) but got: ' + l.pathname,
-              'unknown-pattern');
+            // Assume branch deployment pattern for unknown segments: /sgex/:branch/:component/...
+            // This is more permissive and allows for development/feature branches
+            // that may not be in the deployedBranches configuration
+            handleBranchDeployment(pathSegments, l, routeConfig, '/sgex/');
           }
         }
 
@@ -81,23 +78,16 @@
             return;
           }
 
-          // Check if first meaningful segment is a deployed branch
+          // Check if first meaningful segment is a component or branch
           var firstSegment = relevantSegments[1];
           
-          if (routeConfig && routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(firstSegment)) {
-            // Branch deployment pattern: /:branch/:component/... or /sgex/:branch/:component/...
-            handleBranchDeployment(relevantSegments, l, routeConfig, basePath);
-          } else if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(firstSegment)) {
+          if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(firstSegment)) {
             // Component-first pattern: /:component/:user/:repo/... or /sgex/:component/:user/:repo/...
             handleComponentFirst(relevantSegments, l, basePath);
           } else {
-            // Simple SPA routing for unknown patterns
-            var routePath = hasStandardPrefix ? pathSegments.slice(1).join('/') : pathSegments.join('/');
-            if (routePath) {
-              redirectToSPA(basePath, routePath);
-            } else {
-              redirectToSPA(basePath, '');
-            }
+            // Assume branch deployment pattern for unknown segments: /:branch/:component/... or /sgex/:branch/:component/...
+            // This is more permissive and allows for development/feature branches
+            handleBranchDeployment(relevantSegments, l, routeConfig, basePath);
           }
         }
 
@@ -120,12 +110,29 @@
           var branch = pathSegments[1];
           var component = pathSegments[2];
           
-          // Validate component exists in the deployed branch
-          if (!routeConfig.isValidComponent(component)) {
-            showErrorPage('Invalid Component', 
-              'Component "' + component + '" is not valid for branch "' + branch + '". Check the component name and try again.',
-              'invalid-component-for-branch');
-            return;
+          // For deployed branches, validate component. For development branches, be more permissive
+          if (routeConfig && routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(branch)) {
+            // This is a known deployed branch, validate component strictly
+            if (!routeConfig.isValidComponent(component)) {
+              showErrorPage('Invalid Component', 
+                'Component "' + component + '" is not valid for branch "' + branch + '". Check the component name and try again.',
+                'invalid-component-for-branch');
+              return;
+            }
+          } else {
+            // This is likely a development/feature branch, be more permissive
+            // Only check if we have route config and the component is definitely invalid
+            if (routeConfig && routeConfig.isValidComponent && !routeConfig.isValidComponent(component)) {
+              // Check if this might be a misunderstood component-first pattern
+              // If the "branch" is actually a valid component, treat as component-first
+              if (routeConfig.isValidComponent(branch)) {
+                handleComponentFirst(pathSegments, l, basePath);
+                return;
+              }
+              
+              // Otherwise, still allow it but log a warning
+              console.warn('Allowing potentially invalid component "' + component + '" for development branch "' + branch + '"');
+            }
           }
 
           // Route to branch SPA: basePath:branch/?/:component/...

@@ -56,9 +56,49 @@ const PageHeader = () => {
   const handleHomeNavigation = () => {
     const currentPath = window.location.pathname;
     
-    // Check if we're already on the home page (accounting for basename)
-    // Home paths include: /, /sgex, /sgex/
-    const isOnHomePage = currentPath === '/' || currentPath === '/sgex' || currentPath === '/sgex/';
+    // Parse the URL to determine the correct home path
+    const pathSegments = currentPath.split('/').filter(Boolean);
+    let homePath = '/';
+    
+    // Determine if we're in a GitHub Pages deployment
+    const isGitHubPages = window.location.hostname.endsWith('.github.io');
+    
+    if (isGitHubPages && pathSegments.length > 0 && pathSegments[0] === 'sgex') {
+      // GitHub Pages deployment - need to handle /sgex/ prefix
+      if (pathSegments.length === 1) {
+        // Already at /sgex/
+        homePath = '/sgex/';
+      } else if (pathSegments.length >= 2) {
+        // Check if second segment is a branch or component
+        const secondSegment = pathSegments[1];
+        
+        // Get route configuration to check if it's a valid component
+        const config = window.getSGEXRouteConfig ? window.getSGEXRouteConfig() : null;
+        const isValidComponent = config ? config.isValidComponent(secondSegment) : false;
+        
+        if (isValidComponent) {
+          // Component-first pattern: /sgex/component/... -> /sgex/
+          homePath = '/sgex/';
+        } else {
+          // Assume branch deployment pattern: /sgex/branch/... -> /sgex/branch/
+          homePath = `/sgex/${secondSegment}/`;
+        }
+      }
+    } else if (pathSegments.length > 0 && pathSegments[0] === 'sgex') {
+      // Local development with /sgex prefix
+      if (pathSegments.length === 1) {
+        homePath = '/sgex/';
+      } else {
+        // For local development, typically component-first
+        homePath = '/sgex/';
+      }
+    } else {
+      // Local development without /sgex prefix or other deployment
+      homePath = '/';
+    }
+    
+    // Check if we're already on the determined home page
+    const isOnHomePage = currentPath === homePath || currentPath === homePath.slice(0, -1);
     
     if (isOnHomePage) {
       // If already on home page, trigger focus by adding search parameter
@@ -68,9 +108,9 @@ const PageHeader = () => {
       // Use window.location to force a URL change that will trigger React Router
       window.location.search = newSearch;
     } else {
-      // Navigate to home page with URL parameter to trigger focus
-      // Use window.location for more reliable cross-page navigation
-      window.location.href = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '') + '/?focusInput=pat';
+      // Navigate to determined home page with URL parameter to trigger focus
+      const homeUrl = window.location.origin + homePath + '?focusInput=pat';
+      window.location.href = homeUrl;
     }
   };
 
