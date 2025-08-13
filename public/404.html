@@ -14,27 +14,38 @@
       // with Internet Explorer (it is currently > 512 bytes)
 
       (function(l) {
-        // First check if this is an existing redirect to prevent infinite loops
-        if (l.search && l.search.indexOf('?/') === 0) {
-          console.error('SGEX 404.html: Detected existing redirect, stopping to prevent infinite loop');
-          showErrorPage('Redirect Loop Detected', 
-            'This URL has already been processed by the routing system but still resulted in a 404. This may indicate a configuration issue.',
-            'routing-loop');
-          return;
+        // Main routing function
+        function performRouting() {
+          // First check if this is an existing redirect to prevent infinite loops
+          if (l.search && l.search.indexOf('?/') === 0) {
+            console.error('SGEX 404.html: Detected existing redirect, stopping to prevent infinite loop');
+            showErrorPage('Redirect Loop Detected', 
+              'This URL has already been processed by the routing system but still resulted in a 404. This may indicate a configuration issue.',
+              'routing-loop');
+            return;
+          }
+
+          var pathSegments = l.pathname.split('/').filter(Boolean);
+          
+          // Check if this is GitHub Pages deployment
+          var isGitHubPages = l.hostname === 'litlfred.github.io' || l.hostname.endsWith('.github.io');
+          var routeConfig = getRouteConfiguration();
+
+          if (isGitHubPages) {
+            // GitHub Pages deployment - handle /sgex/ prefixed URLs
+            handleGitHubPagesDeployment(pathSegments, l, routeConfig);
+          } else {
+            // Local deployment - handle both /sgex/ prefixed and root-level URLs
+            handleLocalDeployment(pathSegments, l, routeConfig);
+          }
         }
 
-        var pathSegments = l.pathname.split('/').filter(Boolean);
-        
-        // Check if this is GitHub Pages deployment
-        var isGitHubPages = l.hostname === 'litlfred.github.io' || l.hostname.endsWith('.github.io');
-        var routeConfig = getRouteConfiguration();
-
-        if (isGitHubPages) {
-          // GitHub Pages deployment - handle /sgex/ prefixed URLs
-          handleGitHubPagesDeployment(pathSegments, l, routeConfig);
+        // Ensure DOM is loaded before performing routing
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', performRouting);
         } else {
-          // Local deployment - handle both /sgex/ prefixed and root-level URLs
-          handleLocalDeployment(pathSegments, l, routeConfig);
+          // DOM already loaded, execute immediately
+          performRouting();
         }
 
         function handleGitHubPagesDeployment(pathSegments, l, routeConfig) {
@@ -52,10 +63,13 @@
             return;
           }
 
-          // Check if second segment is a component or branch
+          // Check if second segment is a deployed branch
           var secondSegment = pathSegments[1];
           
-          if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(secondSegment)) {
+          if (routeConfig && routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(secondSegment)) {
+            // Branch deployment pattern: /sgex/:branch/:component/...
+            handleBranchDeployment(pathSegments, l, routeConfig, '/sgex/');
+          } else if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(secondSegment)) {
             // Component-first pattern: /sgex/:component/:user/:repo/:branch
             handleComponentFirst(pathSegments, l, '/sgex/');
           } else {
@@ -78,10 +92,13 @@
             return;
           }
 
-          // Check if first meaningful segment is a component or branch
+          // Check if first meaningful segment is a deployed branch
           var firstSegment = relevantSegments[1];
           
-          if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(firstSegment)) {
+          if (routeConfig && routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(firstSegment)) {
+            // Branch deployment pattern: /:branch/:component/... or /sgex/:branch/:component/...
+            handleBranchDeployment(relevantSegments, l, routeConfig, basePath);
+          } else if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(firstSegment)) {
             // Component-first pattern: /:component/:user/:repo/... or /sgex/:component/:user/:repo/...
             handleComponentFirst(relevantSegments, l, basePath);
           } else {
@@ -187,9 +204,25 @@
             }
           }
           
+          // Enhanced logging to show which file was attempted and why it failed
+          var deploymentType = 'main'; // default
+          if (l.pathname === '/' || l.pathname === '/sgex/' || l.pathname.endsWith('/branch-listing')) {
+            deploymentType = 'deploy';
+          }
+          
+          var configFileName = deploymentType === 'deploy' ? './routes-config.deploy.json' : './routes-config.json';
+          var attemptedUrl = l.protocol + '//' + l.host + l.pathname.replace(/[^/]*$/, '') + configFileName;
+          
+          console.warn('SGEX route configuration not available - using fallback config', {
+            attemptedConfigFile: configFileName,
+            attemptedUrl: attemptedUrl,
+            deploymentType: deploymentType,
+            currentPath: l.pathname,
+            reason: 'window.getSGEXRouteConfig function not available or routeConfig.js failed to load'
+          });
+          
           // If configuration is not available, create a minimal fallback config
           // This ensures 404.html routing works even if config loading fails
-          console.warn('SGEX route configuration not available - using fallback config');
           return {
             deployType: 'main',
             dakComponents: {},
@@ -234,8 +267,7 @@
             ) +
             '&labels=' + encodeURIComponent('bug,routing');
 
-          document.body.innerHTML = 
-            '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">' +
+          var errorHTML = '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">' +
               '<h1 style="color: #d73527;">SGEX URL Routing Error</h1>' +
               '<h2>' + title + '</h2>' +
               '<p style="background: #f5f5f5; padding: 15px; border-radius: 5px; text-align: left;">' + message + '</p>' +
@@ -246,6 +278,31 @@
               '</div>' +
               '<p style="color: #666; font-size: 12px;">If you think this is a bug, please use the "Report Bug" button to help us fix it.</p>' +
             '</div>';
+
+          // Ensure DOM is ready before setting innerHTML
+          function setErrorHTML() {
+            if (document.body) {
+              document.body.innerHTML = errorHTML;
+            } else {
+              // DOM not ready yet, wait for it
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                  document.body.innerHTML = errorHTML;
+                });
+              } else {
+                // DOM should be ready, but body still doesn't exist - create it
+                setTimeout(function() {
+                  if (document.body) {
+                    document.body.innerHTML = errorHTML;
+                  } else {
+                    console.error('Unable to access document.body for error display');
+                  }
+                }, 100);
+              }
+            }
+          }
+
+          setErrorHTML();
         }
 
       })(window.location);
