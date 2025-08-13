@@ -36,8 +36,10 @@
 }
 
 .sgex-icon {
-    width: 48px;
-    height: 48px;
+    width: var(--icon-size-large);
+    height: var(--icon-size-large);
+    max-width: var(--icon-size-max);
+    max-height: var(--icon-size-max);
     object-fit: contain;
 }
 
