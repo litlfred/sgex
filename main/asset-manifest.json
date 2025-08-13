@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.css": "/sgex/main/static/css/main.6e35552c.css",
+    "main.css": "/sgex/main/static/css/main.6b5daa54.css",
     "main.js": "/sgex/main/static/js/main.c5de4e7a.js",
     "static/css/902.9ba30372.chunk.css": "/sgex/main/static/css/902.9ba30372.chunk.css",
     "static/js/902.649542b4.chunk.js": "/sgex/main/static/js/902.649542b4.chunk.js",
@@ -83,7 +83,7 @@
     "index.html": "/sgex/main/index.html"
   },
   "entrypoints": [
-    "static/css/main.6e35552c.css",
+    "static/css/main.6b5daa54.css",
     "static/js/main.c5de4e7a.js"
   ]
 }
