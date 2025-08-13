@@ -3,6 +3,16 @@ name: Deploy Landing Page from Main
 on:
   push:
     branches: [main]
+    branches-ignore: [gh-pages, deploy]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/landing-page-deployment.yml'
+  pull_request:
+    branches: [main]
+    branches-ignore: [gh-pages, deploy]
     paths:
       - 'src/**'
       - 'public/**'
@@ -62,6 +72,7 @@ jobs:
 
       - name: Install dependencies
         shell: bash
+        continue-on-error: false
         run: |
           set -e
           echo "Installing dependencies..."
@@ -69,6 +80,7 @@ jobs:
 
       - name: Build React application for landing page
         shell: bash
+        continue-on-error: false
         run: |
           set -e
           
@@ -478,3 +490,164 @@ jobs:
           echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
           echo "- [View Landing Page]($deployment_url)" >> $GITHUB_STEP_SUMMARY
           echo "- [View Main Branch Application](https://litlfred.github.io/sgex/main/)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on associated PR (Success)
+        if: always() && steps.deployment_info.outputs.deployment_status == 'success' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const deploymentUrl = '${{ steps.deployment_info.outputs.deployment_url }}';
+              const commitSha = '${{ steps.deployment_info.outputs.commit_sha }}';
+              const deployedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+              const runId = '${{ github.run_id }}';
+              const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+              
+              const commentBody = `## ✅ Landing Page Deployment Successful!
+              
+              **Status:** 🟢 Successfully Deployed to Production
+              **Commit:** \`${commitSha.substring(0, 7)}\`
+              **Deployed:** ${deployedAt}
+              
+              ### 🌐 Live URLs
+              
+              <table>
+              <tr>
+              <td align="center">
+              <a href="${deploymentUrl}" target="_blank"><img src="https://img.shields.io/badge/🏠_LANDING_PAGE-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Landing Page" /></a><br/>
+              <sub><b>View production landing page</b></sub>
+              </td>
+              <td align="center">
+              <a href="https://litlfred.github.io/sgex/main/" target="_blank"><img src="https://img.shields.io/badge/🚀_MAIN_APP-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Main App" /></a><br/>
+              <sub><b>View main application</b></sub>
+              </td>
+              </tr>
+              </table>
+              
+              ### 📋 Deployment Details
+              
+              <table>
+              <tr>
+              <td align="center">
+              <a href="${workflowUrl}"><img src="https://img.shields.io/badge/📄_BUILD_LOGS-6C757D?style=for-the-badge&logo=github&logoColor=white" alt="Build Logs" /></a><br/>
+              <sub><b>View deployment logs</b></sub>
+              </td>
+              </tr>
+              </table>
+              
+              ---
+              💡 *Landing page has been successfully updated and is now live. All branch subdirectories are preserved.*
+              
+              _Note: This deployment affects the production landing page at the repository root._`;
+              
+              // Find existing landing page deployment comment
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              
+              const existingComment = comments.find(comment => 
+                comment.body.includes('Landing Page Deployment')
+              );
+              
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: commentBody
+                });
+                console.log(`✅ Updated existing landing page deployment comment on PR #${context.issue.number}`);
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: commentBody
+                });
+                console.log(`✅ Created new landing page deployment comment on PR #${context.issue.number}`);
+              }
+              
+            } catch (error) {
+              console.error('Error posting landing page deployment comment:', error);
+            }
+
+      - name: Comment on associated PR (Failure)
+        if: always() && failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const commitSha = '${{ github.sha }}';
+              const failedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+              const runId = '${{ github.run_id }}';
+              const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+              
+              const commentBody = `## ❌ Landing Page Deployment Failed!
+              
+              **Status:** 🔴 Deployment Failed
+              **Commit:** \`${commitSha.substring(0, 7)}\`
+              **Failed:** ${failedAt}
+              
+              ### 🔍 Troubleshooting Actions
+              
+              <table>
+              <tr>
+              <td align="center">
+              <a href="${workflowUrl}"><img src="https://img.shields.io/badge/📄_CHECK_LOGS-DC3545?style=for-the-badge&logo=github&logoColor=white" alt="Check Logs" /></a><br/>
+              <sub><b>View error details</b></sub>
+              </td>
+              <td align="center">
+              <a href="https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/landing-page-deployment.yml"><img src="https://img.shields.io/badge/🔄_RETRY_DEPLOY-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Retry Deploy" /></a><br/>
+              <sub><b>Restart deployment</b></sub>
+              </td>
+              </tr>
+              </table>
+              
+              ### 💡 Common Issues
+              - Build errors in TypeScript/React code
+              - Missing dependencies or npm install issues  
+              - GitHub Pages deployment conflicts
+              - Network connectivity issues
+              
+              ### 📋 Instructions
+              **To retry:** Click "RETRY DEPLOY" above, then click "Run workflow" on the landing page deployment workflow
+              
+              ---
+              ❗ *Please check the build logs above and fix any issues before restarting the deployment.*
+              
+              _Note: The previous landing page deployment remains active until this is successfully deployed._`;
+              
+              // Find existing landing page deployment comment
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              
+              const existingComment = comments.find(comment => 
+                comment.body.includes('Landing Page Deployment')
+              );
+              
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: commentBody
+                });
+                console.log(`✅ Updated existing landing page deployment comment with failure status on PR #${context.issue.number}`);
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: commentBody
+                });
+                console.log(`✅ Created new failure landing page deployment comment on PR #${context.issue.number}`);
+              }
+              
+            } catch (error) {
+              console.error('Error posting failure landing page deployment comment:', error);
+            }

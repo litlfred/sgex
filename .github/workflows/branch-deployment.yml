@@ -3,6 +3,7 @@ name: Deploy Feature Branch
 on:
   push:
     branches: [main]
+    branches-ignore: [gh-pages, deploy]
     paths:
       - 'src/**'
       - 'public/**'
@@ -11,6 +12,7 @@ on:
       - '.github/workflows/branch-deployment.yml'
   pull_request:
     branches: [ main, develop ]
+    branches-ignore: [gh-pages, deploy]
     paths:
       - 'src/**'
       - 'public/**'
@@ -103,6 +105,7 @@ jobs:
           
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
+        continue-on-error: false
 
       - name: Skip QA Generation for Branch Deployment
         run: |
@@ -125,6 +128,7 @@ jobs:
           echo "Determined PUBLIC_URL: $public_url"
 
       - name: Build branch-specific React app
+        continue-on-error: false
         run: |
           echo "Building with PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}"
           echo "Building with REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}"
