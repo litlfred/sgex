@@ -185,16 +185,44 @@ body.theme-light .dak-selection {
   position: relative;
   background: var(--who-card-bg);
   backdrop-filter: blur(10px);
+  
+  /* Reset button styling */
+  display: block;
+  text-align: left;
+  font-family: inherit;
+  font-size: inherit;
+  
+  /* Ensure minimum touch target size for mobile accessibility */
+  min-height: 44px;
+  
+  /* Improve touch interaction */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.dak-selection .repo-card:hover {
+/* ActionCard enhancement for repository cards */
+.dak-selection .action-card.repo-card:hover {
   border-color: var(--who-blue);
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   transform: translateY(-2px);
   background: var(--who-hover-bg);
 }
 
-.dak-selection .repo-card.selected {
+/* Add focus styles for keyboard accessibility */
+.dak-selection .action-card.repo-card:focus {
+  outline: 2px solid var(--who-blue);
+  outline-offset: 2px;
+  border-color: var(--who-blue);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Active state for touch feedback */
+.dak-selection .action-card.repo-card:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+.dak-selection .action-card.repo-card.selected {
   border-color: var(--who-blue);
   background: var(--who-selected-bg);
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
@@ -944,6 +972,15 @@ body.theme-dark .warning-text .retry-link:hover:not(:disabled) {
 
   .repo-card {
     padding: 1rem;
+    /* Ensure adequate touch target size on mobile */
+    min-height: 120px;
+  }
+  
+  /* Enhance touch interaction on mobile */
+  .dak-selection .action-card.repo-card:active {
+    background: var(--who-selected-bg);
+    transform: scale(0.98);
+    transition: all 0.1s ease;
   }
 
   .repo-stats {
