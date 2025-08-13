@@ -325,7 +325,7 @@ const DAKDashboardContent = () => {
       icon: '📖',
       cardImage: 'dashboard/dak_interventions.png',
       type: 'L2',
-      color: '#0078d4',
+      color: 'var(--dak-health-interventions)',
       fileTypes: ['IRIS', 'Publication'],
       count: 5,
       editor: 'Publication reference manager with IRIS integration'
@@ -337,7 +337,7 @@ const DAKDashboardContent = () => {
       icon: '👥',
       cardImage: 'dashboard/dak_personas.png',
       type: 'L2',
-      color: '#107c10',
+      color: 'var(--dak-generic-personas)',
       fileTypes: ['Actor', 'Role'],
       count: 8,
       editor: 'Persona definition editor with role-based access specifications'
@@ -349,7 +349,7 @@ const DAKDashboardContent = () => {
       icon: '📝',
       cardImage: 'dashboard/dak_user_scenarios.png',
       type: 'L2',
-      color: '#881798',
+      color: 'var(--dak-user-scenarios)',
       fileTypes: ['Narrative', 'Use Case'],
       count: 12,
       editor: 'Scenario editor with workflow visualization'
@@ -361,7 +361,7 @@ const DAKDashboardContent = () => {
       icon: '🔄',
       cardImage: 'dashboard/dak_business_processes.png',
       type: 'L2',
-      color: '#d13438',
+      color: 'var(--dak-business-processes)',
       fileTypes: ['BPMN', 'XML'],
       count: 15,
       editor: 'Graphical BPMN editor with SVG visualization'
@@ -373,7 +373,7 @@ const DAKDashboardContent = () => {
       icon: '🗃️',
       cardImage: 'dashboard/dak_core_data_elements.png',
       type: 'L2',
-      color: '#ff8c00',
+      color: 'var(--dak-core-data-elements)',
       fileTypes: ['OCL', 'Concept', 'PCMT', 'Product'],
       count: issueCounts.total || 89,
       editor: 'Data element editor with OCL and PCMT integration'
@@ -385,7 +385,7 @@ const DAKDashboardContent = () => {
       icon: '🎯',
       cardImage: 'dashboard/dak_decision_support_logic.png',
       type: 'L2',
-      color: '#00bcf2',
+      color: 'var(--dak-decision-support)',
       fileTypes: ['DMN', 'XML'],
       count: 24,
       editor: 'DMN decision table editor with validation'
@@ -397,7 +397,7 @@ const DAKDashboardContent = () => {
       icon: '📊',
       cardImage: 'dashboard/dak_indicators.png',
       type: 'L2',
-      color: '#498205',
+      color: 'var(--dak-program-indicators)',
       fileTypes: ['Measure', 'Logic'],
       count: 18,
       editor: 'Indicator definition editor with measurement logic'
@@ -409,7 +409,7 @@ const DAKDashboardContent = () => {
       icon: '⚙️',
       cardImage: 'dashboard/dak_requirements.png',
       type: 'L2',
-      color: '#6b69d6',
+      color: 'var(--dak-functional-requirements)',
       fileTypes: ['Requirements', 'Specification'],
       count: 32,
       editor: 'Requirements editor with structured templates'
@@ -421,7 +421,7 @@ const DAKDashboardContent = () => {
       icon: '🧪',
       cardImage: 'dashboard/dak_testing.png',
       type: 'L2',
-      color: '#8b5cf6',
+      color: 'var(--dak-test-scenarios)',
       fileTypes: ['Feature', 'Test'],
       count: 0,
       editor: 'Testing viewer with feature file browser'
@@ -687,10 +687,10 @@ const DAKDashboardContent = () => {
                     
                     handleNavigationClick(event, path, navigate, navigationState);
                   }}
-                  style={{ '--component-color': '#17a2b8' }}
+                  style={{ '--component-color': 'var(--dak-questionnaire-editor)' }}
                 >
                   <div className="component-header">
-                    <div className="component-icon" style={{ color: '#17a2b8' }}>
+                    <div className="component-icon" style={{ color: 'var(--dak-questionnaire-editor)' }}>
                       📋
                     </div>
                   </div>

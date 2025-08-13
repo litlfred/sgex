@@ -13,6 +13,18 @@
   --who-light-blue-light: #e0ebf7;
   --who-light-blue-dark: #a0c8e8;
   
+  /* DAK Component Colors */
+  --dak-health-interventions: #0078d4;
+  --dak-generic-personas: #107c10;
+  --dak-user-scenarios: #881798;
+  --dak-business-processes: #d13438;
+  --dak-core-data-elements: #ff8c00;
+  --dak-decision-support: #00bcf2;
+  --dak-program-indicators: #498205;
+  --dak-functional-requirements: #6b69d6;
+  --dak-test-scenarios: #8b5cf6;
+  --dak-questionnaire-editor: #17a2b8;
+  
   /* Button/Card Sizing Standards */
   --card-size-default: 18em;
   --icon-size-default: 24px;
