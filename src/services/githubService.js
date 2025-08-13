@@ -2520,6 +2520,161 @@ class GitHubService {
       throw error;
     }
   }
+
+  // Create a new repository
+  async createRepository(repoData) {
+    const startTime = Date.now();
+    this.logger.debug('Creating repository', { repoData });
+
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      this.logger.apiCall('POST', '/user/repos', repoData);
+      
+      const { data } = await this.octokit.rest.repos.createForAuthenticatedUser({
+        name: repoData.name,
+        description: repoData.description,
+        private: repoData.private || false,
+        has_issues: repoData.has_issues !== false,
+        has_projects: repoData.has_projects !== false,
+        has_wiki: repoData.has_wiki !== false,
+        allow_squash_merge: repoData.allow_squash_merge !== false,
+        allow_merge_commit: repoData.allow_merge_commit !== false,
+        allow_rebase_merge: repoData.allow_rebase_merge !== false,
+        delete_branch_on_merge: repoData.delete_branch_on_merge !== false,
+        auto_init: false // We'll commit initial files separately
+      });
+
+      // Set repository topics if provided
+      if (repoData.topics && repoData.topics.length > 0) {
+        try {
+          await this.octokit.rest.repos.replaceAllTopics({
+            owner: data.owner.login,
+            repo: data.name,
+            names: repoData.topics
+          });
+        } catch (topicsError) {
+          this.logger.warn('Failed to set repository topics', { 
+            repo: data.name, 
+            topics: repoData.topics, 
+            error: topicsError 
+          });
+        }
+      }
+
+      const duration = Date.now() - startTime;
+      this.logger.apiResponse('POST', '/user/repos', 201, duration, { repoName: data.name });
+      this.logger.performance('Repository creation', duration);
+
+      return data;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.apiError('POST', '/user/repos', error);
+      this.logger.performance('Repository creation (failed)', duration);
+      console.error('Failed to create repository:', error);
+      throw error;
+    }
+  }
+
+  // Commit multiple files to a repository
+  async commitFiles(owner, repo, branch, files, commitMessage) {
+    const startTime = Date.now();
+    this.logger.debug('Committing files', { owner, repo, branch, fileCount: files.length, commitMessage });
+
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    try {
+      // Create initial commit if repository is empty
+      let parentSha = null;
+      try {
+        const { data: refData } = await this.octokit.rest.git.getRef({
+          owner,
+          repo,
+          ref: `heads/${branch}`
+        });
+        parentSha = refData.object.sha;
+      } catch (error) {
+        // Branch doesn't exist, we'll create it with initial commit
+        this.logger.debug('Branch does not exist, creating initial commit');
+      }
+
+      // Create blobs for all files
+      const blobs = await Promise.all(
+        files.map(async (file) => {
+          const { data: blob } = await this.octokit.rest.git.createBlob({
+            owner,
+            repo,
+            content: Buffer.from(file.content, 'utf8').toString('base64'),
+            encoding: 'base64'
+          });
+          return {
+            path: file.path,
+            sha: blob.sha,
+            mode: '100644',
+            type: 'blob'
+          };
+        })
+      );
+
+      // Create tree
+      const { data: tree } = await this.octokit.rest.git.createTree({
+        owner,
+        repo,
+        tree: blobs,
+        base_tree: parentSha ? undefined : null
+      });
+
+      // Create commit
+      const commitData = {
+        owner,
+        repo,
+        message: commitMessage,
+        tree: tree.sha
+      };
+
+      if (parentSha) {
+        commitData.parents = [parentSha];
+      }
+
+      const { data: commit } = await this.octokit.rest.git.createCommit(commitData);
+
+      // Update reference or create it if it doesn't exist
+      if (parentSha) {
+        await this.octokit.rest.git.updateRef({
+          owner,
+          repo,
+          ref: `heads/${branch}`,
+          sha: commit.sha
+        });
+      } else {
+        await this.octokit.rest.git.createRef({
+          owner,
+          repo,
+          ref: `refs/heads/${branch}`,
+          sha: commit.sha
+        });
+      }
+
+      const duration = Date.now() - startTime;
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/git/commits`, 201, duration, { 
+        commitSha: commit.sha,
+        fileCount: files.length
+      });
+      this.logger.performance('Files commit', duration);
+
+      return commit;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.apiError('POST', `/repos/${owner}/${repo}/git/commits`, error);
+      this.logger.performance('Files commit (failed)', duration);
+      console.error('Failed to commit files:', error);
+      throw error;
+    }
+  }
 }
 
 // Create a singleton instance

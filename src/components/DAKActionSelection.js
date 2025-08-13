@@ -57,13 +57,19 @@ const DAKActionSelectionContent = () => {
   ];
 
   const handleActionSelect = (event, actionId) => {
-    // Navigate directly to the DAK selection with the chosen action and user parameter
+    // Handle different actions with appropriate navigation
     const navigationState = { 
       profile: effectiveProfile, 
       action: actionId 
     };
     
-    handleNavigationClick(event, `/dak-selection/${effectiveProfile.login}`, navigate, navigationState);
+    if (actionId === 'create') {
+      // Navigate directly to DAK workflow for creating new DAK
+      handleNavigationClick(event, `/dak-workflow/${effectiveProfile.login}`, navigate, navigationState);
+    } else {
+      // Navigate to DAK selection for edit/fork actions
+      handleNavigationClick(event, `/dak-selection/${effectiveProfile.login}`, navigate, navigationState);
+    }
   };
 
   if (!effectiveProfile) {

@@ -85,6 +85,13 @@
         { "path": "/dak-configuration", "exact": true }
       ]
     },
+    "DAKWorkflow": {
+      "path": "./components/DAKWorkflow",
+      "routes": [
+        { "path": "/dak-workflow/:user", "exact": true },
+        { "path": "/dak-workflow", "exact": true }
+      ]
+    },
     "RepositorySelection": {
       "path": "./components/RepositorySelection",
       "routes": [
