@@ -225,8 +225,8 @@ body.theme-light .dak-action-selection {
 .action-icon img {
   width: 100%;
   height: 100%;
-  max-width: 280px;
-  max-height: 280px;
+  max-width: var(--card-icon-size);
+  max-height: var(--card-icon-size);
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
@@ -305,8 +305,8 @@ body.theme-light .dak-action-selection {
   }
 
   .action-icon img {
-    max-width: 120px;
-    max-height: 120px;
+    max-width: calc(var(--card-icon-size) * 0.6);
+    max-height: calc(var(--card-icon-size) * 0.6);
   }
 
   .action-description {
@@ -356,8 +356,8 @@ body.theme-light .dak-action-selection {
   }
 
   .action-icon img {
-    max-width: 100px;
-    max-height: 100px;
+    max-width: calc(var(--card-icon-size) * 0.5);
+    max-height: calc(var(--card-icon-size) * 0.5);
   }
 
   .action-description p {
