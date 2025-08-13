@@ -473,11 +473,13 @@ class BugReportService {
   // Fallback screenshot using html2canvas (if loaded)
   async _takeScreenshotWithHtml2Canvas() {
     try {
+      // eslint-disable-next-line no-undef
       if (typeof html2canvas !== 'function') {
         console.warn('html2canvas not available');
         return null;
       }
       
+      // eslint-disable-next-line no-undef
       const canvas = await html2canvas(document.body, {
         height: window.innerHeight,
         width: window.innerWidth,
