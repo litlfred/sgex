@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>SGEX Workbench</title>
+    <!-- Load SGEX route configuration service -->
+    <script src="./routeConfig.js"></script>
+    <script type="text/javascript">
+      // SGEX Dynamic URL Routing for GitHub Pages and Local Deployments
+      // Supports branch-first URL patterns: /sgex/:branch/:component/:user/:repo/:branch/:asset
+      // Uses dynamic route configuration instead of hardcoded component lists
+      // Handles both GitHub Pages (/sgex/ prefixed) and local deployment patterns
+      // Note: this 404.html file must be at least 512 bytes for it to work
+      // with Internet Explorer (it is currently > 512 bytes)
+
+      (function(l) {
+        // Main routing function
+        function performRouting() {
+          // First check if this is an existing redirect to prevent infinite loops
+          if (l.search && l.search.indexOf('?/') === 0) {
+            console.error('SGEX 404.html: Detected existing redirect, stopping to prevent infinite loop');
+            showErrorPage('Redirect Loop Detected', 
+              'This URL has already been processed by the routing system but still resulted in a 404. This may indicate a configuration issue.',
+              'routing-loop');
+            return;
+          }
+
+          var pathSegments = l.pathname.split('/').filter(Boolean);
+          
+          // Check if this is GitHub Pages deployment
+          var isGitHubPages = l.hostname === 'litlfred.github.io' || l.hostname.endsWith('.github.io');
+          var routeConfig = getRouteConfiguration();
+
+          if (isGitHubPages) {
+            // GitHub Pages deployment - handle /sgex/ prefixed URLs
+            handleGitHubPagesDeployment(pathSegments, l, routeConfig);
+          } else {
+            // Local deployment - handle both /sgex/ prefixed and root-level URLs
+            handleLocalDeployment(pathSegments, l, routeConfig);
+          }
+        }
+
+        // Ensure DOM is loaded before performing routing
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', performRouting);
+        } else {
+          // DOM already loaded, execute immediately
+          performRouting();
+        }
+
+        function handleGitHubPagesDeployment(pathSegments, l, routeConfig) {
+          // GitHub Pages deployment - check URL pattern
+          if (pathSegments.length === 0 || pathSegments[0] !== 'sgex') {
+            showErrorPage('Invalid URL Pattern', 
+              'Expected URL to start with /sgex/ but got: ' + l.pathname,
+              'invalid-base-path');
+            return;
+          }
+
+          if (pathSegments.length === 1) {
+            // Just /sgex/ - redirect to root
+            redirectToSPA('/sgex/', '');
+            return;
+          }
+
+          // Check if second segment is a deployed branch
+          var secondSegment = pathSegments[1];
+          
+          if (routeConfig && routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(secondSegment)) {
+            // Branch deployment pattern: /sgex/:branch/:component/...
+            handleBranchDeployment(pathSegments, l, routeConfig, '/sgex/');
+          } else if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(secondSegment)) {
+            // Component-first pattern: /sgex/:component/:user/:repo/:branch
+            handleComponentFirst(pathSegments, l, '/sgex/');
+          } else {
+            // Unknown pattern - show error
+            showErrorPage('Unknown URL Pattern', 
+              'The URL pattern is not recognized. Expected either /sgex/:branch/:component or /sgex/:component/:user/:repo (with optional :branch/:asset) but got: ' + l.pathname,
+              'unknown-pattern');
+          }
+        }
+
+        function handleLocalDeployment(pathSegments, l, routeConfig) {
+          // Local deployment - support both /sgex/ prefixed and root-level URLs
+          var hasStandardPrefix = pathSegments.length > 0 && pathSegments[0] === 'sgex';
+          var basePath = hasStandardPrefix ? '/sgex/' : '/';
+          var relevantSegments = hasStandardPrefix ? pathSegments : ['sgex'].concat(pathSegments);
+
+          if (relevantSegments.length <= 1) {
+            // Root path - redirect to SPA root
+            redirectToSPA(basePath, '');
+            return;
+          }
+
+          // Check if first meaningful segment is a deployed branch
+          var firstSegment = relevantSegments[1];
+          
+          if (routeConfig && routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(firstSegment)) {
+            // Branch deployment pattern: /:branch/:component/... or /sgex/:branch/:component/...
+            handleBranchDeployment(relevantSegments, l, routeConfig, basePath);
+          } else if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(firstSegment)) {
+            // Component-first pattern: /:component/:user/:repo/... or /sgex/:component/:user/:repo/...
+            handleComponentFirst(relevantSegments, l, basePath);
+          } else {
+            // Simple SPA routing for unknown patterns
+            var routePath = hasStandardPrefix ? pathSegments.slice(1).join('/') : pathSegments.join('/');
+            if (routePath) {
+              redirectToSPA(basePath, routePath);
+            } else {
+              redirectToSPA(basePath, '');
+            }
+          }
+        }
+
+        function handleStandaloneDeployment(pathSegments, l) {
+          // Legacy function - kept for backward compatibility
+          var routePath = pathSegments.join('/');
+          if (routePath) {
+            redirectToSPA('/', routePath);
+          }
+        }
+
+        function handleBranchDeployment(pathSegments, l, routeConfig, basePath) {
+          if (pathSegments.length < 3) {
+            // Just /:branch/ - redirect to branch root
+            var branchPath = basePath + pathSegments[1] + '/';
+            redirectToSPA(branchPath, '');
+            return;
+          }
+
+          var branch = pathSegments[1];
+          var component = pathSegments[2];
+          
+          // Validate component exists in the deployed branch
+          if (!routeConfig.isValidComponent(component)) {
+            showErrorPage('Invalid Component', 
+              'Component "' + component + '" is not valid for branch "' + branch + '". Check the component name and try again.',
+              'invalid-component-for-branch');
+            return;
+          }
+
+          // Route to branch SPA: basePath:branch/?/:component/...
+          // This handles all patterns including:
+          // - /sgex/:branch/:component (basic component access)
+          // - /sgex/:branch/:component/:user/:repo (DAK repository access)
+          // - /sgex/:branch/:component/:user/:repo/:branch (specific branch access)
+          // - /sgex/:branch/:component/:user/:repo/:branch/:asset (asset pages)
+          var branchPath = basePath + pathSegments[1] + '/';
+          var routePath = pathSegments.slice(2).join('/');
+          redirectToSPA(branchPath, routePath);
+        }
+
+        function handleComponentFirst(pathSegments, l, basePath) {
+          // Component-first pattern: /:component/:user/:repo/:branch
+          // Also handles asset pages: /:component/:user/:repo/:branch/:asset
+          // Route to main SPA: basePath?/:component/...
+          // This preserves all path segments including asset identifiers
+          var routePath = pathSegments.slice(1).join('/'); // Remove prefix
+          redirectToSPA(basePath, routePath);
+        }
+
+        function redirectToSPA(basePath, routePath) {
+          var newUrl = l.protocol + '//' + l.host + basePath;
+          
+          if (routePath) {
+            newUrl += '?/' + routePath.replace(/&/g, '~and~');
+          }
+          
+          if (l.search) {
+            newUrl += (routePath ? '&' : '?') + l.search.slice(1).replace(/&/g, '~and~');
+          }
+          
+          newUrl += l.hash;
+          
+          console.log('SGEX SPA Routing Redirect:', {
+            from: l.pathname,
+            to: newUrl,
+            basePath: basePath,
+            routePath: routePath
+          });
+          
+          l.replace(newUrl);
+        }
+
+        function getRouteConfiguration() {
+          if (typeof window.getSGEXRouteConfig === 'function') {
+            return window.getSGEXRouteConfig();
+          }
+          
+          console.warn('SGEX route configuration not available - falling back to basic routing');
+          return null;
+        }
+
+        function showErrorPage(title, message, errorCode) {
+          var bugReportUrl = 'https://github.com/litlfred/sgex/issues/new?' + 
+            'title=' + encodeURIComponent('[URL Routing Error] ' + title) +
+            '&body=' + encodeURIComponent(
+              'Error Code: ' + errorCode + '\n\n' +
+              'URL: ' + l.href + '\n' +
+              'Hostname: ' + l.hostname + '\n' +
+              'Path: ' + l.pathname + '\n' +
+              'Search: ' + l.search + '\n' +
+              'Hash: ' + l.hash + '\n\n' +
+              'Message: ' + message + '\n\n' +
+              'Please describe what you were trying to do when this error occurred:'
+            ) +
+            '&labels=' + encodeURIComponent('bug,routing');
+
+          var errorHTML = '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">' +
+              '<h1 style="color: #d73527;">SGEX URL Routing Error</h1>' +
+              '<h2>' + title + '</h2>' +
+              '<p style="background: #f5f5f5; padding: 15px; border-radius: 5px; text-align: left;">' + message + '</p>' +
+              '<p><strong>Error Code:</strong> ' + errorCode + '</p>' +
+              '<div style="margin: 30px 0;">' +
+                '<a href="https://litlfred.github.io/sgex/" style="background: #0078d4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px;">Go to SGEX Home</a>' +
+                '<a href="' + bugReportUrl + '" target="_blank" style="background: #d73527; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px;">Report Bug</a>' +
+              '</div>' +
+              '<p style="color: #666; font-size: 12px;">If you think this is a bug, please use the "Report Bug" button to help us fix it.</p>' +
+            '</div>';
+
+          // Ensure DOM is ready before setting innerHTML
+          function setErrorHTML() {
+            if (document.body) {
+              document.body.innerHTML = errorHTML;
+            } else {
+              // DOM not ready yet, wait for it
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                  document.body.innerHTML = errorHTML;
+                });
+              } else {
+                // DOM should be ready, but body still doesn't exist - create it
+                setTimeout(function() {
+                  if (document.body) {
+                    document.body.innerHTML = errorHTML;
+                  } else {
+                    // Last resort: create a basic error display
+                    document.write('<body>' + errorHTML + '</body>');
+                  }
+                }, 10);
+              }
+            }
+          }
+          
+          setErrorHTML();
+        }
+
+      })(window.location);
+    </script>
+  </head>
+  <body>
+    <!-- This 404.html handles dynamic SPA routing for SGEX -->
+    <!-- Supports branch-first patterns: /sgex/:branch/:component/:user/:repo/:branch/:asset -->
+    <!-- Works for both GitHub Pages and local deployments (npm install) -->
+    <!-- Uses route configuration instead of hardcoded component lists -->
+    <!-- Includes proper error handling and bug reporting -->
+  </body>
+</html>
