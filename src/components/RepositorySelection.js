@@ -74,7 +74,7 @@ const RepositorySelection = () => {
       
       // No cached data or forced refresh - fetch from GitHub
       console.log(`Fetching fresh repositories for ${profile.login} (${profileType})`);
-      const repos = await githubService.getRepositories(profile.login, profileType, profile.isDemo);
+      const repos = await githubService.getRepositories(profile.login, profileType);
       
       // Cache the fetched repositories
       try {

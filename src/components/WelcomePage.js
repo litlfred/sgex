@@ -88,24 +88,7 @@ const WelcomePage = () => {
     handleNavigationClick(event, '/select_profile', navigate);
   };
 
-  const handleDemoMode = (event) => {
-    // Create a mock profile for demonstration purposes
-    const demoProfile = {
-      login: 'demo-user',
-      name: 'Demo User',
-      avatar_url: 'https://github.com/github.png',
-      type: 'User',
-      isDemo: true
-    };
-    
-    // Navigate directly to DAK selection with edit action to show enhanced scanning
-    const navigationState = {
-      profile: demoProfile,
-      action: 'edit'
-    };
-    
-    handleNavigationClick(event, `/dak-selection/${demoProfile.login}`, navigate, navigationState);
-  };
+
 
   const handleDismissWarning = () => {
     setWarningMessage(null);
@@ -260,17 +243,6 @@ const WelcomePage = () => {
                       📖 Help creating a PAT
                     </button>
                   </div>
-                </div>
-
-                {/* Demo Section */}
-                <div className="demo-section">
-                  <h4>Want to try without signing in?</h4>
-                  <button onClick={handleDemoMode} className="demo-btn">
-                    🎭 Try Demo Mode
-                  </button>
-                  <p className="demo-note">
-                    Demo mode showcases the enhanced DAK scanning display with mock data.
-                  </p>
                 </div>
               </div>
             )}

@@ -2,9 +2,9 @@
  * Profile Creation Compliance Test
  * 
  * Validates that all components follow the profile creation compliance requirements:
- * - Only demo-user gets isDemo: true
- * - Unauthenticated users accessing real repositories should NOT have isDemo flag
- * - Authenticated users should NOT have isDemo flag
+ * - No components should set isDemo flags (demo mode has been removed)
+ * - Only authenticated/unauthenticated user types should be used
+ * - No demo-user special handling should exist
  * 
  * This test scans all JavaScript/JSX files for profile creation patterns and validates compliance.
  */
@@ -88,19 +88,26 @@ class ProfileCreationComplianceTest {
       const line = lines[i];
       const lineNumber = i + 1;
       
-      // Pattern 1: Check for setProfile calls with isDemo
-      if (this.containsSetProfileWithIsDemo(line)) {
-        this.analyzeSetProfileCall(lines, i, filePath, lineNumber);
+      // Check for any isDemo usage - this should not exist anymore
+      if (this.containsIsDemoUsage(line)) {
+        this.violations.push({
+          file: filePath,
+          line: lineNumber,
+          content: line.trim(),
+          type: 'ISDEMO_USAGE_FORBIDDEN',
+          message: 'Demo mode has been removed. No code should use isDemo flags or reference demo functionality.'
+        });
       }
       
-      // Pattern 2: Check for profile object creation with isDemo
-      if (this.containsProfileObjectWithIsDemo(line)) {
-        this.analyzeProfileObjectCreation(lines, i, filePath, lineNumber);
-      }
-      
-      // Pattern 3: Check for incorrect isDemo assignment patterns
-      if (this.containsIncorrectIsDemoPattern(line)) {
-        this.analyzeIsDemoAssignment(lines, i, filePath, lineNumber);
+      // Check for demo-user special handling - this should not exist anymore
+      if (this.containsDemoUserHandling(line)) {
+        this.violations.push({
+          file: filePath,
+          line: lineNumber,
+          content: line.trim(),
+          type: 'DEMO_USER_HANDLING_FORBIDDEN',
+          message: 'Demo user special handling has been removed. All users should be treated as either authenticated or unauthenticated.'
+        });
       }
     }
   }
