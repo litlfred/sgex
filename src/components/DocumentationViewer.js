@@ -1,25 +1,122 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageLayout } from './framework';
+import bookmarkService from '../services/bookmarkService';
 
-// Dynamically generate documentation files structure
+// Dynamically generate documentation files structure with subdirectories
 const generateDocFiles = () => {
-
   const files = {
-    'overview': { file: 'README.md', title: 'Documentation Overview', category: 'root' },
-    'bpmn-integration': { file: 'bpmn-integration.md', title: 'BPMN Integration', category: 'root' },
-    'dak-components': { file: 'dak-components.md', title: 'DAK Components', category: 'root' },
-    'decision-table-editor': { file: 'decision-table-editor.md', title: 'Decision Table Editor', category: 'root' },
-    'framework-developer-guide': { file: 'framework-developer-guide.md', title: 'Framework Developer Guide', category: 'root' },
-    'page-framework': { file: 'page-framework.md', title: 'Page Framework', category: 'root' },
-    'page-inventory': { file: 'page-inventory.md', title: 'Page Inventory', category: 'root' },
-    'project-plan': { file: 'project-plan.md', title: 'Project Plan', category: 'root' },
-    'qa-testing': { file: 'qa-testing.md', title: 'QA Testing', category: 'root' },
-    'requirements': { file: 'requirements.md', title: 'Requirements', category: 'root' },
-    'solution-architecture': { file: 'solution-architecture.md', title: 'Solution Architecture', category: 'root' },
-    'ui-styling-requirements': { file: 'UI_STYLING_REQUIREMENTS.md', title: 'UI Styling Requirements', category: 'root' },
-    'who-cors-workaround': { file: 'WHO_CORS_WORKAROUND.md', title: 'WHO CORS Workaround', category: 'root' },
-    'workflows-overview': { file: 'workflows/README.md', title: 'Workflows Overview', category: 'workflows' }
+    // Root documentation files
+    'overview': { 
+      file: 'README.md', 
+      title: 'Documentation Overview', 
+      category: 'root',
+      path: 'README.md'
+    },
+    'bpmn-integration': { 
+      file: 'bpmn-integration.md', 
+      title: 'BPMN Integration', 
+      category: 'root',
+      path: 'bpmn-integration.md'
+    },
+    'dak-components': { 
+      file: 'dak-components.md', 
+      title: 'DAK Components', 
+      category: 'root',
+      path: 'dak-components.md'
+    },
+    'decision-table-editor': { 
+      file: 'decision-table-editor.md', 
+      title: 'Decision Table Editor', 
+      category: 'root',
+      path: 'decision-table-editor.md'
+    },
+    'framework-developer-guide': { 
+      file: 'framework-developer-guide.md', 
+      title: 'Framework Developer Guide', 
+      category: 'root',
+      path: 'framework-developer-guide.md'
+    },
+    'page-framework': { 
+      file: 'page-framework.md', 
+      title: 'Page Framework', 
+      category: 'root',
+      path: 'page-framework.md'
+    },
+    'page-inventory': { 
+      file: 'page-inventory.md', 
+      title: 'Page Inventory', 
+      category: 'root',
+      path: 'page-inventory.md'
+    },
+    'project-plan': { 
+      file: 'project-plan.md', 
+      title: 'Project Plan', 
+      category: 'root',
+      path: 'project-plan.md'
+    },
+    'qa-testing': { 
+      file: 'qa-testing.md', 
+      title: 'QA Testing', 
+      category: 'root',
+      path: 'qa-testing.md'
+    },
+    'requirements': { 
+      file: 'requirements.md', 
+      title: 'Requirements', 
+      category: 'root',
+      path: 'requirements.md'
+    },
+    'solution-architecture': { 
+      file: 'solution-architecture.md', 
+      title: 'Solution Architecture', 
+      category: 'root',
+      path: 'solution-architecture.md'
+    },
+    'ui-styling-requirements': { 
+      file: 'UI_STYLING_REQUIREMENTS.md', 
+      title: 'UI Styling Requirements', 
+      category: 'root',
+      path: 'UI_STYLING_REQUIREMENTS.md'
+    },
+    'who-cors-workaround': { 
+      file: 'WHO_CORS_WORKAROUND.md', 
+      title: 'WHO CORS Workaround', 
+      category: 'root',
+      path: 'WHO_CORS_WORKAROUND.md'
+    },
+    
+    // Workflows subdirectory
+    'workflows-overview': { 
+      file: 'workflows/README.md', 
+      title: 'Workflows Overview', 
+      category: 'workflows',
+      path: 'workflows/README.md'
+    },
+    
+    // JSON Schemas
+    'schemas-overview': {
+      file: 'schemas/README.md',
+      title: 'JSON Schemas Overview',
+      category: 'schemas',
+      path: 'schemas/README.md',
+      isVirtual: true
+    },
+    'generated-schemas-tjs': {
+      file: 'schemas/generated-schemas-tjs.json',
+      title: 'Generated Schemas (TypeScript JSON Schema)',
+      category: 'schemas',
+      path: 'schemas/generated-schemas-tjs.json',
+      isJson: true
+    },
+    'generated-schemas-tsjsg': {
+      file: 'schemas/generated-schemas-tsjsg.json',
+      title: 'Generated Schemas (TS JSON Schema Generator)',
+      category: 'schemas',
+      path: 'schemas/generated-schemas-tsjsg.json',
+      isJson: true
+    }
   };
 
   return files;
@@ -30,9 +127,61 @@ const docFiles = generateDocFiles();
 const DocumentationViewer = () => {
   const { docId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPath, setCurrentPath] = useState('');
+
+  // Generate breadcrumbs for documentation navigation
+  const generateDocBreadcrumbs = () => {
+    const breadcrumbs = [
+      { label: t('navigation.documentation'), path: '/docs', onClick: () => navigate('/docs') }
+    ];
+
+    if (docId && docId !== 'overview') {
+      const docInfo = docFiles[docId];
+      if (docInfo) {
+        const pathParts = docInfo.path.split('/');
+        let currentBreadcrumbPath = '/docs';
+        
+        // Add category breadcrumbs for subdirectories
+        if (pathParts.length > 1) {
+          for (let i = 0; i < pathParts.length - 1; i++) {
+            const part = pathParts[i];
+            currentBreadcrumbPath += `/${part}`;
+            breadcrumbs.push({
+              label: part.charAt(0).toUpperCase() + part.slice(1),
+              path: currentBreadcrumbPath,
+              onClick: () => navigate(`/docs/${part}`)
+            });
+          }
+        }
+        
+        breadcrumbs.push({ label: docInfo.title, current: true });
+      }
+    }
+
+    return breadcrumbs;
+  };
+
+  // Add bookmark functionality
+  const handleBookmark = () => {
+    const currentUrl = location.pathname;
+    const docInfo = docFiles[docId] || docFiles['overview'];
+    
+    bookmarkService.addBookmark(
+      'Documentation',
+      currentUrl,
+      {
+        asset: docInfo.title,
+        user: 'sgex',
+        repository: 'documentation',
+        branch: 'main'
+      }
+    );
+  };
 
   useEffect(() => {
     const loadDocumentation = async () => {
@@ -41,6 +190,55 @@ const DocumentationViewer = () => {
 
       try {
         const docInfo = docFiles[docId] || docFiles['overview'];
+        setCurrentPath(docInfo.path || '');
+
+        // Handle virtual schema overview
+        if (docInfo.isVirtual && docId === 'schemas-overview') {
+          const schemaOverview = `# JSON Schemas
+
+This section contains the JSON schemas used throughout the SGEX Workbench system.
+
+## Available Schemas
+
+### Generated Schemas
+- **TypeScript JSON Schema**: Generated using typescript-json-schema tool
+- **TS JSON Schema Generator**: Generated using ts-json-schema-generator tool
+
+### Source Schemas
+The source schemas are located in \`/src/schemas/\` and include:
+- Actor Definition Schema
+- DAK Action Form Schema  
+- DAK Configuration Schema
+- DAK Selection Form Schema
+- Organization Selection Form Schema
+- SUSHI Configuration Schema
+
+These schemas define the data structures and validation rules used throughout the application for forms, APIs, and data validation.
+`;
+          setContent(schemaOverview);
+          setLoading(false);
+          return;
+        }
+
+        // Handle JSON schema files
+        if (docInfo.isJson) {
+          try {
+            const response = await fetch(`${process.env.PUBLIC_URL}/docs/${docInfo.file}`);
+            if (!response.ok) {
+              throw new Error(`Schema file not found: ${response.status}`);
+            }
+            const jsonData = await response.json();
+            const formattedJson = JSON.stringify(jsonData, null, 2);
+            setContent(`# ${docInfo.title}\n\n\`\`\`json\n${formattedJson}\n\`\`\``);
+            setLoading(false);
+            return;
+          } catch (jsonError) {
+            // If public schema doesn't exist, show helpful message
+            setContent(`# ${docInfo.title}\n\nThis schema file is generated during the build process and may not be available in development mode.\n\nThe schema will be available after running:\n\`\`\`bash\nnpm run generate-schemas\n\`\`\``);
+            setLoading(false);
+            return;
+          }
+        }
 
         // For HTML files, open in a new tab to avoid navigation conflicts
         if (docInfo.isHtml) {
@@ -51,18 +249,18 @@ const DocumentationViewer = () => {
               // File exists, open in new tab to avoid server conflicts
               window.open(`${process.env.PUBLIC_URL}/docs/${docInfo.file}`, '_blank');
               // Show message in current tab
-              setContent(`# ${docInfo.title}\n\nThe QA report has been opened in a new tab.\n\nIf it didn't open automatically, you can access it here: [${docInfo.file}](${process.env.PUBLIC_URL}/docs/${docInfo.file})`);
+              setContent(`# ${docInfo.title}\n\n${t('documentation.openedInNewTab')}\n\n${t('documentation.accessDirectly')}: [${docInfo.file}](${process.env.PUBLIC_URL}/docs/${docInfo.file})`);
               setLoading(false);
               return;
             } else {
               // File doesn't exist, show helpful message
-              setContent(`# ${docInfo.title}\n\nThe QA report is generated during deployment and is available on the live site at: [${docInfo.file}](/docs/${docInfo.file})\n\nIf you're viewing this locally, the report will be available after the next deployment to GitHub Pages.`);
+              setContent(`# ${docInfo.title}\n\n${t('documentation.generatedOnDeployment')}: [${docInfo.file}](/docs/${docInfo.file})\n\n${t('documentation.availableAfterDeployment')}`);
               setLoading(false);
               return;
             }
           } catch (htmlCheckError) {
             // If check fails, show helpful message
-            setContent(`# ${docInfo.title}\n\nThe QA report is generated during deployment and is available on the live site.\n\nIf you're viewing this locally, the report will be available after the next deployment to GitHub Pages.`);
+            setContent(`# ${docInfo.title}\n\n${t('documentation.generatedOnDeployment')}\n\n${t('documentation.availableAfterDeployment')}`);
             setLoading(false);
             return;
           }
@@ -79,14 +277,14 @@ const DocumentationViewer = () => {
         setContent(text);
       } catch (err) {
         console.error('Error loading documentation:', err);
-        setError('Failed to load documentation. Please try again later.');
+        setError(t('documentation.loadError'));
       } finally {
         setLoading(false);
       }
     };
 
     loadDocumentation();
-  }, [docId]);
+  }, [docId, t]);
 
   const renderMarkdown = (markdown) => {
     // Simple markdown to HTML conversion for basic formatting
@@ -136,13 +334,14 @@ const DocumentationViewer = () => {
 
   if (loading) {
     return (
-      <PageLayout pageName="documentation-viewer">
+      <PageLayout 
+        pageName="documentation-viewer"
+        customBreadcrumbs={generateDocBreadcrumbs()}
+      >
         <div className="documentation-viewer">
-          <div className="doc-content">
-            <div className="loading">
-              <div className="spinner"></div>
-              <p>Loading documentation...</p>
-            </div>
+          <div className="page-loading">
+            <div className="loading-spinner"></div>
+            <p>{t('common.loading')}</p>
           </div>
         </div>
       </PageLayout>
@@ -151,16 +350,17 @@ const DocumentationViewer = () => {
 
   if (error) {
     return (
-      <PageLayout pageName="documentation-viewer">
+      <PageLayout 
+        pageName="documentation-viewer"
+        customBreadcrumbs={generateDocBreadcrumbs()}
+      >
         <div className="documentation-viewer">
-          <div className="doc-content">
-            <div className="error-state">
-              <h2>Error</h2>
-              <p>{error}</p>
-              <button onClick={() => window.location.reload()} className="retry-btn">
-                Try Again
-              </button>
-            </div>
+          <div className="error-state">
+            <h2>{t('common.error')}</h2>
+            <p>{error}</p>
+            <button onClick={() => window.location.reload()} className="retry-btn">
+              {t('common.tryAgain')}
+            </button>
           </div>
         </div>
       </PageLayout>
@@ -168,62 +368,81 @@ const DocumentationViewer = () => {
   }
 
   return (
-    <PageLayout pageName="documentation-viewer">
+    <PageLayout 
+      pageName="documentation-viewer"
+      customBreadcrumbs={generateDocBreadcrumbs()}
+    >
       <div className="documentation-viewer">
         <div className="doc-content">
-        <div className="doc-sidebar">
-          <h3>Documentation</h3>
-          <nav className="doc-menu">
-            {(() => {
-              // Group files by category
-              const grouped = {};
-              Object.entries(docFiles).forEach(([key, doc]) => {
-                if (!grouped[doc.category]) {
-                  grouped[doc.category] = [];
-                }
-                grouped[doc.category].push({ key, ...doc });
-              });
+          <div className="doc-sidebar">
+            <div className="doc-sidebar-header">
+              <h3>{t('navigation.documentation')}</h3>
+              <button 
+                className="bookmark-btn"
+                onClick={handleBookmark}
+                title={t('common.bookmark')}
+              >
+                ⭐
+              </button>
+            </div>
+            <nav className="doc-menu">
+              {(() => {
+                // Group files by category
+                const grouped = {};
+                Object.entries(docFiles).forEach(([key, doc]) => {
+                  if (!grouped[doc.category]) {
+                    grouped[doc.category] = [];
+                  }
+                  grouped[doc.category].push({ key, ...doc });
+                });
 
-              // Sort within each category
-              Object.keys(grouped).forEach(category => {
-                grouped[category].sort((a, b) => a.title.localeCompare(b.title));
-              });
+                // Sort within each category
+                Object.keys(grouped).forEach(category => {
+                  grouped[category].sort((a, b) => a.title.localeCompare(b.title));
+                });
 
-              // Render sections
-              return Object.entries(grouped)
-                .sort(([a], [b]) => a === 'root' ? -1 : b === 'root' ? 1 : a.localeCompare(b))
-                .map(([category, items]) => (
-                  <div key={category} className="doc-category">
-                    {category !== 'root' && (
-                      <div className="doc-category-header">
-                        {category.charAt(0).toUpperCase() + category.slice(1)}
-                      </div>
-                    )}
-                    {items.map(({ key, title }) => (
-                      <button
-                        key={key}
-                        className={`doc-menu-item ${docId === key ? 'active' : ''} ${category !== 'root' ? 'doc-menu-item-nested' : ''}`}
-                        onClick={() => navigate(`/docs/${key}`)}
-                      >
-                        {title}
-                      </button>
-                    ))}
-                  </div>
-                ));
-            })()}
-          </nav>
+                // Render sections
+                return Object.entries(grouped)
+                  .sort(([a], [b]) => {
+                    const order = ['root', 'workflows', 'schemas'];
+                    const aIndex = order.indexOf(a);
+                    const bIndex = order.indexOf(b);
+                    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+                    if (aIndex !== -1) return -1;
+                    if (bIndex !== -1) return 1;
+                    return a.localeCompare(b);
+                  })
+                  .map(([category, items]) => (
+                    <div key={category} className="doc-category">
+                      {category !== 'root' && (
+                        <div className="doc-category-header">
+                          {t(`documentation.categories.${category}`, category.charAt(0).toUpperCase() + category.slice(1))}
+                        </div>
+                      )}
+                      {items.map(({ key, title }) => (
+                        <button
+                          key={key}
+                          className={`doc-menu-item ${docId === key ? 'active' : ''} ${category !== 'root' ? 'doc-menu-item-nested' : ''}`}
+                          onClick={() => navigate(`/docs/${key}`)}
+                        >
+                          {title}
+                        </button>
+                      ))}
+                    </div>
+                  ));
+              })()}
+            </nav>
+          </div>
+
+          <div className="doc-main">
+            <article 
+              className="doc-article"
+              dangerouslySetInnerHTML={{ 
+                __html: renderMarkdown(content)
+              }}
+            />
+          </div>
         </div>
-
-        <div className="doc-main">
-          <article 
-            className="doc-article"
-            dangerouslySetInnerHTML={{ 
-              __html: renderMarkdown(content)
-            }}
-          />
-        </div>
-      </div>
-      
       </div>
     </PageLayout>
   );

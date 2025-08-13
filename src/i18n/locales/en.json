@@ -122,10 +122,24 @@
     "sort": "Sort",
     "refresh": "Refresh",
     "retry": "Retry",
+    "tryAgain": "Try Again",
     "back": "Back",
     "next": "Next",
     "previous": "Previous",
-    "close": "Close"
+    "close": "Close",
+    "bookmark": "Bookmark"
+  },
+  "documentation": {
+    "title": "Documentation",
+    "loadError": "Failed to load documentation. Please try again later.",
+    "openedInNewTab": "The file has been opened in a new tab.",
+    "accessDirectly": "If it didn't open automatically, you can access it here",
+    "generatedOnDeployment": "This file is generated during deployment and is available on the live site at",
+    "availableAfterDeployment": "If you're viewing this locally, the file will be available after the next deployment to GitHub Pages.",
+    "categories": {
+      "workflows": "Workflows",
+      "schemas": "JSON Schemas"
+    }
   },
   "errors": {
     "generic": "An error occurred. Please try again.",
