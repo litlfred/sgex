@@ -429,8 +429,8 @@ body.theme-light .welcome-page-content {
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
+/* Responsive Design - Mobile Portrait */
+@media (max-width: 768px) and (orientation: portrait) {
   .welcome-hero {
     padding: 2rem 1rem;
   }
@@ -465,12 +465,17 @@ body.theme-light .welcome-page-content {
     flex-direction: column;
     overflow-x: hidden;
     overflow-y: auto;
-    max-height: calc(100vh - 300px);
+    /* Remove restrictive max-height to ensure all cards are visible */
+    max-height: none;
+    height: auto;
     padding: 0 1rem;
     gap: 1.5rem;
     /* Ensure no horizontal scrolling on mobile */
     width: 100%;
     box-sizing: border-box;
+    /* Smooth scrolling */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
   
   .action-card {
@@ -496,7 +501,75 @@ body.theme-light .welcome-page-content {
   }
 }
 
-@media (max-width: 480px) {
+/* Mobile Landscape - Horizontal Scrolling */
+@media (max-width: 768px) and (orientation: landscape) {
+  .welcome-hero {
+    padding: 1.5rem 1rem;
+  }
+  
+  .welcome-intro {
+    flex-direction: row;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  
+  .welcome-mascot img {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .welcome-text h1 {
+    font-size: 2rem;
+  }
+  
+  .welcome-text h2 {
+    font-size: 1.2rem;
+  }
+  
+  .mission-statement {
+    font-size: 0.9rem;
+  }
+  
+  .welcome-cards {
+    padding: 1rem 0;
+  }
+  
+  .card-grid {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.5rem 1rem;
+    gap: 1.5rem;
+    /* Enable horizontal scrolling */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    /* Ensure cards don't wrap */
+    flex-wrap: nowrap;
+  }
+  
+  .action-card {
+    flex: 0 0 280px;
+    min-width: 280px;
+    max-width: 280px;
+    padding: 1.5rem;
+    /* Fit landscape height */
+    min-height: auto;
+    max-height: calc(100vh - 180px);
+    overflow: hidden;
+  }
+  
+  .card-icon {
+    min-height: 120px;
+  }
+  
+  .card-icon img {
+    max-width: 10em;
+    max-height: 10em;
+  }
+}
+
+/* Small Mobile Portrait */
+@media (max-width: 480px) and (orientation: portrait) {
   .welcome-text h1 {
     font-size: 2rem;
   }
@@ -530,6 +603,47 @@ body.theme-light .welcome-page-content {
   
   .card-icon .icon-symbol {
     font-size: 3rem;
+  }
+}
+
+/* Small Mobile Landscape */
+@media (max-width: 480px) and (orientation: landscape) {
+  .welcome-hero {
+    padding: 1rem;
+  }
+  
+  .welcome-text h1 {
+    font-size: 1.8rem;
+  }
+  
+  .welcome-text h2 {
+    font-size: 1rem;
+  }
+  
+  .mission-statement {
+    font-size: 0.85rem;
+  }
+  
+  .card-grid {
+    padding: 0.25rem 0.5rem;
+    gap: 1rem;
+  }
+  
+  .action-card {
+    flex: 0 0 260px;
+    min-width: 260px;
+    max-width: 260px;
+    padding: 1.25rem;
+    max-height: calc(100vh - 150px);
+  }
+  
+  .card-icon {
+    min-height: 100px;
+  }
+  
+  .card-icon img {
+    max-width: 8em;
+    max-height: 8em;
   }
 }
 
