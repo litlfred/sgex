@@ -11,8 +11,7 @@ import ForkStatusBar from './ForkStatusBar';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
-import FAQAnswer from '../dak/faq/components/FAQAnswer.js';
-import faqExecutionEngine from '../dak/faq/engine/FAQExecutionEngine.js';
+import FAQAccordion from '../dak/faq/components/FAQAccordion.js';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const DAKDashboard = () => {
@@ -43,9 +42,6 @@ const DAKDashboardContent = () => {
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [faqQuestions, setFaqQuestions] = useState([]);
-  const [faqLoading, setFaqLoading] = useState(false);
-  const [faqError, setFaqError] = useState(null);
 
   // Component Card component defined within the dashboard
   const ComponentCard = ({ component, handleComponentClick, t }) => {
@@ -302,32 +298,6 @@ const DAKDashboardContent = () => {
       loadIssueCounts();
     }
   }, [repository, loading]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Initialize FAQ engine when component mounts
-  useEffect(() => {
-    initializeFAQEngine();
-  }, []);
-
-  const initializeFAQEngine = async () => {
-    try {
-      setFaqLoading(true);
-      
-      // Initialize the client-side FAQ execution engine
-      await faqExecutionEngine.initialize();
-
-      // Get available questions from the client-side engine
-      const questions = faqExecutionEngine.getCatalog();
-      setFaqQuestions(questions);
-      setFaqError(null);
-
-      console.log(`FAQ system initialized with ${questions.length} questions`);
-    } catch (err) {
-      console.error('Failed to initialize FAQ engine:', err);
-      setFaqError(err.message);
-    } finally {
-      setFaqLoading(false);
-    }
-  };
 
   // Check write permissions on mount
   useEffect(() => {
@@ -793,113 +763,27 @@ const DAKDashboardContent = () => {
                 </p>
               </div>
 
-              {faqLoading && (
-                <div className="faq-loading">
-                  <div className="loading-spinner"></div>
-                  <p>Initializing FAQ system...</p>
-                </div>
-              )}
+              <FAQAccordion
+                repository={`${user}/${repo}`}
+                branch={selectedBranch || 'main'}
+                githubService={githubService}
+                filters={{
+                  level: 'dak' // Start with DAK-level questions
+                }}
+                className="dak-faq-accordion"
+              />
 
-              {faqError && (
-                <div className="faq-error">
-                  <h4>FAQ System Error</h4>
-                  <p>{faqError}</p>
-                  <button onClick={initializeFAQEngine} className="btn-secondary">
-                    Retry
-                  </button>
-                </div>
-              )}
-
-              {!faqLoading && !faqError && (
-                <div className="faq-content">
-                  {/* Sample Questions */}
-                  <div className="faq-questions">
-                    <h4>Example Questions</h4>
-                    <p>Here are some example questions you can ask about this DAK:</p>
-                    
-                    <div className="faq-question-grid">
-                      <div className="faq-question-section">
-                        <h5>What is the name of this DAK?</h5>
-                        <p className="question-description">Extracts the DAK name from sushi-config.yaml</p>
-                        <FAQAnswer
-                          questionId="dak-name"
-                          parameters={{
-                            repository: `${user}/${repo}`,
-                            branch: selectedBranch || 'main'
-                          }}
-                          githubService={githubService}
-                          showRawData={false}
-                        />
-                      </div>
-
-                      <div className="faq-question-section">
-                        <h5>What is the version of this DAK?</h5>
-                        <p className="question-description">Extracts the DAK version from sushi-config.yaml</p>
-                        <FAQAnswer
-                          questionId="dak-version"
-                          parameters={{
-                            repository: `${user}/${repo}`,
-                            branch: selectedBranch || 'main'
-                          }}
-                          githubService={githubService}
-                          showRawData={false}
-                        />
-                      </div>
-
-                      <div className="faq-question-section">
-                        <h5>What DMN decision tables are available?</h5>
-                        <p className="question-description">Analyzes DMN files for decision table inputs and structure</p>
-                        <FAQAnswer
-                          questionId="decision-table-inputs"
-                          parameters={{
-                            repository: `${user}/${repo}`,
-                            branch: selectedBranch || 'main',
-                            assetFile: 'input/cql/IMMZ.D2.DT.BCG.dmn'
-                          }}
-                          githubService={githubService}
-                          showRawData={false}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Question Catalog */}
-                  <div className="faq-catalog">
-                    <h4>Available Questions ({faqQuestions.length})</h4>
-                    <p>All questions available in the FAQ system:</p>
-                    
-                    <div className="catalog-grid">
-                      {faqQuestions.map(question => (
-                        <div key={question.id} className="catalog-item">
-                          <h5>{question.title}</h5>
-                          <p>{question.description}</p>
-                          <div className="catalog-meta">
-                            <span className="level">{question.level}</span>
-                            <span className="version">v{question.version || '1.0'}</span>
-                          </div>
-                          <div className="tags">
-                            {question.tags && question.tags.map(tag => (
-                              <span key={tag} className="tag">{tag}</span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* MCP Server Info */}
-                  <div className="mcp-info">
-                    <h4>MCP Server API</h4>
-                    <p>
-                      The FAQ system can also be accessed programmatically via the MCP server API:
-                    </p>
-                    <ul>
-                      <li><code>GET http://127.0.0.1:3001/faq/questions/catalog</code> - Get question catalog</li>
-                      <li><code>POST http://127.0.0.1:3001/faq/questions/execute</code> - Execute questions</li>
-                    </ul>
-                  </div>
-                </div>
-              )}
+              {/* MCP Server Info */}
+              <div className="mcp-info" style={{ marginTop: '2rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+                <h4>MCP Server API</h4>
+                <p>
+                  The FAQ system can also be accessed programmatically via the MCP server API:
+                </p>
+                <ul>
+                  <li><code>GET http://127.0.0.1:3001/faq/questions/catalog</code> - Get question catalog</li>
+                  <li><code>POST http://127.0.0.1:3001/faq/questions/execute</code> - Execute questions</li>
+                </ul>
+              </div>
             </div>
           )}
         </div>

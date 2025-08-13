@@ -83,27 +83,35 @@ export class GitHubStorage extends Storage {
   async readFile(path) {
     const cacheKey = `${this.repository}:${this.branch}:${path}`;
     if (this.cache.has(cacheKey)) {
+      console.log(`GitHubStorage.readFile: Cache hit for ${path}`);
       return this.cache.get(cacheKey);
     }
 
     try {
       const { owner, repo } = this.parseRepository(this.repository);
+      console.log(`GitHubStorage.readFile: Reading file ${path} from ${owner}/${repo} (branch: ${this.branch})`);
       const response = await this.githubService.getFileContent(owner, repo, path, this.branch);
       
       // GitHub API returns base64 encoded content
       const content = Buffer.from(response.content, 'base64');
       this.cache.set(cacheKey, content);
+      console.log(`GitHubStorage.readFile: Successfully read file ${path}, size: ${content.length} bytes`);
       return content;
     } catch (error) {
+      console.error(`GitHubStorage.readFile: Failed to read file ${path}:`, error.message);
       throw new Error(`Failed to read file ${path}: ${error.message}`);
     }
   }
 
   async fileExists(path) {
     try {
+      console.log(`GitHubStorage.fileExists: Checking if file exists: ${path}`);
+      console.log(`GitHubStorage.fileExists: Repository: ${this.repository}, Branch: ${this.branch}`);
       await this.readFile(path);
+      console.log(`GitHubStorage.fileExists: File ${path} exists`);
       return true;
     } catch (error) {
+      console.log(`GitHubStorage.fileExists: File ${path} does not exist:`, error.message);
       return false;
     }
   }

@@ -47,11 +47,16 @@
     "testScenarios": "Test Scenarios",
     "faq": {
       "loading": "Loading FAQ answer...",
+      "loading_questions": "Loading FAQ questions...",
       "error_title": "Error", 
       "retry": "Retry",
       "no_data": "No data available",
       "structured_data": "Structured Data",
       "metadata": "Metadata",
+      "available_questions": "Available Questions ({{count}})",
+      "accordion_description": "Click on any question below to expand and see the answer. Questions are executed when you expand them.",
+      "no_questions_title": "No Questions Available",
+      "no_questions_message": "No FAQ questions are available for this DAK.",
       "params": {
         "repository": "GitHub repository in format 'user/repo' or local folder path",
         "locale": "Language locale code",
