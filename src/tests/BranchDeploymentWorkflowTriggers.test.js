@@ -182,7 +182,7 @@ describe('Branch Deployment Workflow Configuration', () => {
 });
 
 // Integration test simulation
-describe('Branch Preview Deployment Flow Simulation', () => {
+describe('Deploy Feature Branch Flow Simulation', () => {
   test('should correctly simulate the expected workflow trigger sequence', () => {
     // Simulate the workflow trigger sequence for a feature branch
     const scenario = {
