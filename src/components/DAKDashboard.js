@@ -18,9 +18,6 @@ const DAKDashboard = () => {
   const location = useLocation();
   const { user, repo, branch } = useParams();
   
-  // Theme-aware mascot image for dialog
-  const mascotImage = useThemeImage('sgex-mascot.png');
-  
   // Try to get data from location.state first, then from URL params
   const [profile, setProfile] = useState(location.state?.profile || null);
   const [repository, setRepository] = useState(location.state?.repository || null);
@@ -44,7 +41,6 @@ const DAKDashboard = () => {
         onProfileChange={setProfile}
         onRepositoryChange={setRepository}
         onSelectedBranchChange={setSelectedBranch}
-        mascotImage={mascotImage}
       />
     </PageLayout>
   );
@@ -56,8 +52,7 @@ const DAKDashboardContent = ({
   initialSelectedBranch = null,
   onProfileChange = () => {},
   onRepositoryChange = () => {},
-  onSelectedBranchChange = () => {},
-  mascotImage
+  onSelectedBranchChange = () => {}
 }) => {
   const { t } = useTranslation();
   const location = useLocation();
