@@ -200,7 +200,8 @@ body.theme-light .dak-selection {
   -webkit-tap-highlight-color: transparent;
 }
 
-.dak-selection .repo-card:hover {
+/* ActionCard enhancement for repository cards */
+.dak-selection .action-card.repo-card:hover {
   border-color: var(--who-blue);
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   transform: translateY(-2px);
@@ -208,7 +209,7 @@ body.theme-light .dak-selection {
 }
 
 /* Add focus styles for keyboard accessibility */
-.dak-selection .repo-card:focus {
+.dak-selection .action-card.repo-card:focus {
   outline: 2px solid var(--who-blue);
   outline-offset: 2px;
   border-color: var(--who-blue);
@@ -216,12 +217,12 @@ body.theme-light .dak-selection {
 }
 
 /* Active state for touch feedback */
-.dak-selection .repo-card:active {
+.dak-selection .action-card.repo-card:active {
   transform: translateY(0);
   transition: transform 0.1s ease;
 }
 
-.dak-selection .repo-card.selected {
+.dak-selection .action-card.repo-card.selected {
   border-color: var(--who-blue);
   background: var(--who-selected-bg);
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
@@ -910,7 +911,7 @@ body.theme-dark .rescan-btn:hover:not(:disabled) {
   }
   
   /* Enhance touch interaction on mobile */
-  .dak-selection .repo-card:active {
+  .dak-selection .action-card.repo-card:active {
     background: var(--who-selected-bg);
     transform: scale(0.98);
     transition: all 0.1s ease;

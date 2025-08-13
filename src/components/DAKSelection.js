@@ -4,6 +4,7 @@ import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import dakTemplates from '../config/dak-templates.json';
 import { PageLayout, usePageParams } from './framework';
+import ActionCard from './ActionCard';
 
 const DAKSelection = () => {
   return (
@@ -539,79 +540,24 @@ const DAKSelectionContent = () => {
     fetchRepositories(false, false); // forceRescan=false, useCachedData=false (but still check cache first)
   }, [effectiveProfile, effectiveAction, userParam, fetchRepositories]);
 
-  const handleRepositorySelect = (repo) => {
-    setSelectedRepository(repo);
-    
-    // For 'edit' action, automatically navigate after selection
-    if (effectiveAction === 'edit') {
-      // Add a small delay for visual feedback before navigation
-      setTimeout(() => {
-        const repoPath = getRepositoryPath(repo);
-        if (repoPath) {
-          const dashboardUrl = `/dashboard/${repoPath.user}/${repoPath.repo}`;
-          navigate(dashboardUrl, {
-            state: {
-              profile: effectiveProfile,
-              repository: repo,
-              action: effectiveAction
-            }
-          });
-        } else {
-          // Fallback to original behavior if unable to extract path
-          const config = getActionConfig();
-          navigate(config.nextRoute, {
-            state: {
-              profile: effectiveProfile,
-              repository: repo,
-              action: effectiveAction
-            }
-          });
-        }
-      }, 300); // 300ms delay for visual feedback
-    }
-  };
+  // Removed handleRepositorySelect and navigateToRepository as ActionCard now handles navigation directly
 
-  const handleContinue = () => {
-    if (!selectedRepository) {
-      alert('Please select a repository to continue');
-      return;
-    }
-
+  // Get the navigation URL for a repository
+  const getRepositoryNavigationUrl = (repo) => {
     const config = getActionConfig();
     
     if (effectiveAction === 'edit') {
-      // Go directly to dashboard for editing with user/repo parameters
-      const repoPath = getRepositoryPath(selectedRepository);
+      const repoPath = getRepositoryPath(repo);
       if (repoPath) {
-        const dashboardUrl = `/dashboard/${repoPath.user}/${repoPath.repo}`;
-        navigate(dashboardUrl, {
-          state: {
-            profile: effectiveProfile,
-            repository: selectedRepository,
-            action: effectiveAction
-          }
-        });
-      } else {
-        // Fallback to original behavior if unable to extract path
-        navigate(config.nextRoute, {
-          state: {
-            profile: effectiveProfile,
-            repository: selectedRepository,
-            action: effectiveAction
-          }
-        });
+        return `/dashboard/${repoPath.user}/${repoPath.repo}`;
       }
+      return config.nextRoute;
     } else {
-      // Go to organization selection for fork/create
-      navigate(config.nextRoute, {
-        state: {
-          profile: effectiveProfile,
-          sourceRepository: selectedRepository,
-          action: effectiveAction
-        }
-      });
+      return config.nextRoute;
     }
   };
+
+  // Removed handleContinue function as ActionCard now handles direct navigation
 
   const handleRescan = () => {
     fetchRepositories(true, false); // Force rescan, don't use cache
@@ -777,18 +723,32 @@ const DAKSelectionContent = () => {
                 <p>Found repositories will appear below as they are discovered:</p>
                 <div className="repo-grid">
                   {repositories.map((repo) => (
-                    <button 
+                    <ActionCard
                       key={repo.id}
+                      href={getRepositoryNavigationUrl(repo)}
+                      navigationState={{
+                        profile: effectiveProfile,
+                        repository: repo,
+                        action: effectiveAction
+                      }}
                       className={`repo-card ${selectedRepository?.id === repo.id ? 'selected' : ''} scanning-found`}
-                      onClick={() => handleRepositorySelect(repo)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleRepositorySelect(repo);
+                      ariaLabel={`Select ${repo.name} repository: ${repo.description || 'No description available'}`}
+                      onNavigate={(event, href, state) => {
+                        // Custom navigation handler that triggers repository selection
+                        setSelectedRepository(repo);
+                        // Use the navigation state to include repository info
+                        if (effectiveAction === 'edit') {
+                          navigate(href, { state: state });
+                        } else {
+                          navigate(href, { 
+                            state: {
+                              profile: effectiveProfile,
+                              sourceRepository: repo,
+                              action: effectiveAction
+                            }
+                          });
                         }
                       }}
-                      aria-label={`Select ${repo.name} repository: ${repo.description || 'No description available'}`}
-                      aria-pressed={selectedRepository?.id === repo.id}
                     >
                       <div className="repo-header-info">
                         <h3>{repo.name} <span className="new-badge">✨ Found</span></h3>
@@ -837,7 +797,7 @@ const DAKSelectionContent = () => {
                           <span>✓ Selected</span>
                         </div>
                       )}
-                    </button>
+                    </ActionCard>
                   ))}
                 </div>
               </div>
@@ -981,18 +941,32 @@ const DAKSelectionContent = () => {
               
               <div className="repo-grid">
                 {repositories.map((repo) => (
-                  <button 
+                  <ActionCard
                     key={repo.id}
+                    href={getRepositoryNavigationUrl(repo)}
+                    navigationState={{
+                      profile: effectiveProfile,
+                      repository: repo,
+                      action: effectiveAction
+                    }}
                     className={`repo-card ${selectedRepository?.id === repo.id ? 'selected' : ''}`}
-                    onClick={() => handleRepositorySelect(repo)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleRepositorySelect(repo);
+                    ariaLabel={`Select ${repo.name} repository: ${repo.description || 'No description available'}`}
+                    onNavigate={(event, href, state) => {
+                      // Custom navigation handler that triggers repository selection
+                      setSelectedRepository(repo);
+                      // Use the navigation state to include repository info
+                      if (effectiveAction === 'edit') {
+                        navigate(href, { state: state });
+                      } else {
+                        navigate(href, { 
+                          state: {
+                            profile: effectiveProfile,
+                            sourceRepository: repo,
+                            action: effectiveAction
+                          }
+                        });
                       }
                     }}
-                    aria-label={`Select ${repo.name} repository: ${repo.description || 'No description available'}`}
-                    aria-pressed={selectedRepository?.id === repo.id}
                   >
                     <div className="repo-header-info">
                       <h3>{repo.name}</h3>
@@ -1041,26 +1015,15 @@ const DAKSelectionContent = () => {
                         <span>✓ Selected</span>
                       </div>
                     )}
-                  </button>
+                  </ActionCard>
                 ))}
               </div>
 
               <div className="selection-footer">
-                {action !== 'edit' && (
-                  <button 
-                    className="continue-btn"
-                    onClick={handleContinue}
-                    disabled={!selectedRepository}
-                  >
-                    {config.buttonText}
-                  </button>
-                )}
-                {effectiveAction === 'edit' && (
-                  <div className="direct-selection-note">
-                    <span className="note-icon">💡</span>
-                    <span>Click on a repository above to start editing its components</span>
-                  </div>
-                )}
+                <div className="direct-selection-note">
+                  <span className="note-icon">💡</span>
+                  <span>Click on any repository above to {effectiveAction === 'edit' ? 'start editing its components' : 'continue with ' + (effectiveAction === 'fork' ? 'forking' : 'creation')}. Right-click or long-press to see the destination URL.</span>
+                </div>
               </div>
             </>
           )}

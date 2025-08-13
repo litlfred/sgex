@@ -1,0 +1,222 @@
+/* ActionCard.css - Reusable action card component with context menu support */
+
+.action-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+}
+
+.action-card:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+.action-card:focus {
+  outline: 2px solid var(--who-blue);
+  outline-offset: 2px;
+}
+
+.action-card.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Context Menu Styles */
+.action-card-context-menu {
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  min-width: 250px;
+  animation: contextMenuAppear 0.2s ease-out;
+  z-index: 10000;
+}
+
+@keyframes contextMenuAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.context-menu-content {
+  padding: 0.75rem;
+}
+
+.context-menu-url {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--who-border-color);
+}
+
+.url-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--who-text-secondary);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.url-text {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--who-text-primary);
+  word-break: break-all;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: var(--who-selected-bg);
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--who-border-color);
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.context-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--who-text-primary);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+}
+
+.context-menu-item:hover {
+  background: var(--who-hover-bg);
+}
+
+.context-menu-item:focus {
+  outline: 2px solid var(--who-blue);
+  outline-offset: -2px;
+}
+
+.menu-icon {
+  font-size: 1rem;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Mobile-specific enhancements */
+@media (max-width: 768px) {
+  .action-card-context-menu {
+    max-width: calc(100vw - 2rem);
+    min-width: 200px;
+  }
+  
+  .url-text {
+    max-width: 250px;
+  }
+  
+  .context-menu-item {
+    padding: 1rem 0.75rem;
+    font-size: 0.95rem;
+    min-height: 44px; /* Minimum touch target */
+  }
+  
+  .menu-icon {
+    font-size: 1.1rem;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Dark mode adjustments */
+body.theme-dark .action-card-context-menu {
+  background: rgba(30, 30, 30, 0.95);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+body.theme-dark .url-text {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .context-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .action-card-context-menu {
+    border-width: 2px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  }
+  
+  .context-menu-item:focus {
+    outline-width: 3px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .action-card {
+    transition: none;
+  }
+  
+  .action-card:hover {
+    transform: none;
+  }
+  
+  .action-card:active {
+    transform: none;
+  }
+  
+  @keyframes contextMenuAppear {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+/* Touch-specific enhancements */
+@media (pointer: coarse) {
+  .action-card {
+    /* Enhance touch feedback */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  .action-card:active {
+    background: var(--who-selected-bg);
+    transform: scale(0.98);
+  }
+  
+  .context-menu-item {
+    min-height: 48px; /* Larger touch targets */
+  }
+}
