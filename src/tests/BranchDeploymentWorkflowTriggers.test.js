@@ -27,14 +27,14 @@ describe('Branch Deployment Workflow Configuration', () => {
   });
 
   describe('Branch Deployment Workflow Triggers', () => {
-    test('should trigger on pushes to all branches except excluded ones', () => {
+    test('should trigger on pushes to feature branches (excluding main, gh-pages, deploy)', () => {
       const pushConfig = branchDeploymentConfig.on.push;
       
-      // Should NOT have a specific branches restriction (this was the bug)
+      // Should NOT have a specific branches restriction
       expect(pushConfig.branches).toBeUndefined();
       
-      // Should exclude specific branches
-      expect(pushConfig['branches-ignore']).toEqual(['gh-pages', 'deploy']);
+      // Should exclude main, gh-pages, and deploy branches
+      expect(pushConfig['branches-ignore']).toEqual(['gh-pages', 'deploy', 'main']);
       
       // Should include relevant file paths
       expect(pushConfig.paths).toContain('src/**');
@@ -42,18 +42,11 @@ describe('Branch Deployment Workflow Configuration', () => {
       expect(pushConfig.paths).toContain('.github/workflows/branch-deployment.yml');
     });
 
-    test('should trigger on pull requests to main and develop branches', () => {
+    test('should not have pull request triggers (manual and automatic push only)', () => {
       const prConfig = branchDeploymentConfig.on.pull_request;
       
-      // Should target main and develop branches for PRs
-      expect(prConfig.branches).toEqual(['main', 'develop']);
-      
-      // Should exclude specific branches
-      expect(prConfig['branches-ignore']).toEqual(['gh-pages', 'deploy']);
-      
-      // Should include relevant file paths
-      expect(prConfig.paths).toContain('src/**');
-      expect(prConfig.paths).toContain('public/**');
+      // Pull request trigger should be removed to simplify workflow
+      expect(prConfig).toBeUndefined();
     });
 
     test('should support manual workflow dispatch', () => {
@@ -117,26 +110,26 @@ describe('Branch Deployment Workflow Configuration', () => {
       expect(shouldTriggerFeedback).toBe(true);
     });
 
-    test('main branch push should only trigger deployment workflow', () => {
+    test('main branch push should NOT trigger automatic deployment (manual only)', () => {
       // Simulate a main branch push scenario
       const mainBranch = 'main';
-      const excludedBranches = ['gh-pages', 'deploy'];
+      const excludedBranches = ['gh-pages', 'deploy', 'main'];
       const feedbackExcludedBranches = ['main', 'develop', 'gh-pages', 'deploy'];
       
-      // Branch deployment should trigger (not in excluded list)
+      // Branch deployment should NOT trigger automatically (main is now excluded)
       const shouldTriggerDeployment = !excludedBranches.includes(mainBranch);
-      expect(shouldTriggerDeployment).toBe(true);
+      expect(shouldTriggerDeployment).toBe(false);
       
       // PR feedback should NOT trigger (main is in feedback excluded list)
       const shouldTriggerFeedback = !feedbackExcludedBranches.includes(mainBranch);
       expect(shouldTriggerFeedback).toBe(false);
     });
 
-    test('excluded branches should not trigger workflows', () => {
-      const excludedBranches = ['gh-pages', 'deploy'];
+    test('excluded branches should not trigger automatic deployment', () => {
+      const excludedBranches = ['gh-pages', 'deploy', 'main'];
       
       excludedBranches.forEach(branch => {
-        // Neither workflow should trigger for excluded branches
+        // None of these branches should trigger automatic deployment
         const shouldTriggerDeployment = !excludedBranches.includes(branch);
         expect(shouldTriggerDeployment).toBe(false);
       });
@@ -203,7 +196,7 @@ describe('Branch Preview Deployment Flow Simulation', () => {
     // Check if branch deployment would trigger
     const deploymentShouldTrigger = (
       scenario.action === 'push' &&
-      !['gh-pages', 'deploy'].includes(scenario.branch) &&
+      !['gh-pages', 'deploy', 'main'].includes(scenario.branch) &&
       scenario.files_changed.some(file => 
         file.startsWith('src/') || 
         file.startsWith('public/') ||

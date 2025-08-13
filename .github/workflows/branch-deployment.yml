@@ -1,23 +1,7 @@
 name: Deploy Feature Branch
 
 on:
-  push:
-    branches-ignore: [gh-pages, deploy]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/branch-deployment.yml'
-  pull_request:
-    branches: [ main, develop ]
-    branches-ignore: [gh-pages, deploy]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/branch-deployment.yml'
+  # Manual trigger - primary way to deploy branches
   workflow_dispatch:
     inputs:
       branch:
@@ -29,6 +13,7 @@ on:
         required: false
         type: boolean
         default: false
+  # Workflow call - allows other workflows to trigger this deployment
   workflow_call:
     inputs:
       branch:
@@ -41,6 +26,15 @@ on:
         required: false
         type: boolean
         default: false
+  # Automatic trigger for copilot commits (when PR is updated)
+  push:
+    branches-ignore: [gh-pages, deploy, main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/branch-deployment.yml'
 
 permissions:
   contents: write

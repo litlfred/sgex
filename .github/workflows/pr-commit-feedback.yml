@@ -44,6 +44,117 @@ jobs:
             
             return { prNumber, branchName, commitSha };
 
+      - name: Comment on PR with workflow access and controls
+        if: steps.pr_info.outputs.pr_number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchName = '${{ steps.pr_info.outputs.branch_name }}';
+            const prNumber = '${{ steps.pr_info.outputs.pr_number }}';
+            const commitSha = '${{ steps.pr_info.outputs.commit_sha }}';
+            const timestampUTC = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+            
+            // Create direct workflow dispatch URLs with pre-filled parameters
+            const branchDeploymentUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
+            const landingPageDeploymentUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/landing-page-deployment.yml`;
+            const workflowsListUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions`;
+            
+            // Create action buttons for workflow access
+            const commentBody = `## 🚀 Deployment Workflows Available
+            
+            Manual deployment workflows are now accessible from the GitHub UI for this branch.
+            
+            **Branch:** \`${branchName}\`
+            **Latest Commit:** \`${commitSha.substring(0, 7)}\`
+            **Updated:** ${timestampUTC}
+            
+            ### 🎯 Quick Deploy Actions
+            
+            <table>
+            <tr>
+            <td align="center">
+            <a href="${branchDeploymentUrl}" target="_blank"><img src="https://img.shields.io/badge/🌿_DEPLOY_BRANCH-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Deploy Branch" /></a><br/>
+            <sub><b>Deploy ${branchName} for preview</b></sub>
+            </td>
+            <td align="center">
+            <a href="${landingPageDeploymentUrl}" target="_blank"><img src="https://img.shields.io/badge/🏠_DEPLOY_LANDING-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Deploy Landing Page" /></a><br/>
+            <sub><b>Deploy main to landing page</b></sub>
+            </td>
+            </tr>
+            </table>
+            
+            ### 📊 Workflow Status & Controls
+            
+            <table>
+            <tr>
+            <td align="center">
+            <a href="${workflowsListUrl}" target="_blank"><img src="https://img.shields.io/badge/📋_ALL_WORKFLOWS-6C757D?style=for-the-badge&logo=github&logoColor=white" alt="All Workflows" /></a><br/>
+            <sub><b>View all deployment workflows</b></sub>
+            </td>
+            <td align="center">
+            <a href="${workflowsListUrl}/runs" target="_blank"><img src="https://img.shields.io/badge/📊_BUILD_HISTORY-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Build History" /></a><br/>
+            <sub><b>View recent build history</b></sub>
+            </td>
+            </tr>
+            </table>
+            
+            ### 📋 How to Deploy
+            
+            **For Branch Preview:**
+            1. Click "DEPLOY BRANCH" above
+            2. Click "Run workflow" button  
+            3. Branch name will be pre-filled as: \`${branchName}\`
+            4. Click "Run workflow" to confirm
+            5. Preview will be available at: \`https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/\`
+            
+            **For Landing Page Update:**
+            1. Click "DEPLOY LANDING" above
+            2. Click "Run workflow" button
+            3. Confirm deployment (deploys from main branch)
+            4. Landing page will be updated at: \`https://litlfred.github.io/sgex/\`
+            
+            ### ⚡ Automatic Deployment
+            
+            - **Branch previews** are triggered automatically when you push commits to feature branches
+            - **Landing page** deployments are manual only to prevent accidental overwrites
+            - Check the "ALL WORKFLOWS" link above to monitor deployment progress
+            
+            ---
+            
+            💡 *This PR was updated with commit \`${commitSha.substring(0, 7)}\`. Deployment workflows are ready to use.*
+            
+            _Note: Manual workflows provide full control over when and what gets deployed._`;
+            
+            // Find existing workflow access comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const existingWorkflowComment = comments.find(comment => 
+              comment.body.includes('Deployment Workflows Available') ||
+              comment.body.includes('Manual deployment workflows are now accessible')
+            );
+            
+            if (existingWorkflowComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingWorkflowComment.id,
+                body: commentBody
+              });
+              console.log(`✅ Updated existing workflow access comment on PR #${prNumber}`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+              console.log(`✅ Created new workflow access comment on PR #${prNumber}`);
+            }
+
       - name: Wait for deployment workflow to start
         if: steps.pr_info.outputs.pr_number
         run: |

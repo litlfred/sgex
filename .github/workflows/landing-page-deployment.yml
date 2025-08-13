@@ -1,22 +1,7 @@
 name: Deploy Landing Page from Main
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/landing-page-deployment.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/landing-page-deployment.yml'
+  # Manual trigger only - prevents accidental overwrites of landing page
   workflow_dispatch:
     inputs:
       force_deployment:
