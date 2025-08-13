@@ -1,12 +1,29 @@
 name: PR Commit Feedback
 
 on:
+  # Trigger on pushes to feature branches (for copilot commits and direct pushes)
   push:
     branches-ignore:
       - main
       - develop
       - gh-pages
       - deploy
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/**'
+  # Additional trigger for pull request events to ensure comprehensive coverage
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]  # Only for PRs targeting main branch
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/**'
 
 permissions:
   contents: read

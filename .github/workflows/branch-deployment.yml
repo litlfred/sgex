@@ -26,9 +26,19 @@ on:
         required: false
         type: boolean
         default: false
-  # Automatic trigger for copilot commits (when PR is updated)
+  # Automatic trigger for copilot commits and PR updates
   push:
     branches-ignore: [gh-pages, deploy, main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/branch-deployment.yml'
+  # Additional trigger for pull request events to ensure copilot and external contributions trigger workflows
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]  # Only for PRs targeting main branch
     paths:
       - 'src/**'
       - 'public/**'
