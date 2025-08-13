@@ -219,11 +219,14 @@ export function generateLazyRoutes() {
     
     // Create fallback routes for development and testing
     const DAKSelectionComponent = createLazyComponent('DAKSelection');
+    const DAKActionSelectionComponent = createLazyComponent('DAKActionSelection');
     const WelcomePageComponent = createLazyComponent('WelcomePage');
     const NotFoundComponent = createLazyComponent('NotFound');
     
     return [
       <Route key="fallback-home" path="/" element={<WelcomePageComponent />} />,
+      <Route key="fallback-dak-action" path="/dak-action" element={<DAKActionSelectionComponent />} />,
+      <Route key="fallback-dak-action-user" path="/dak-action/:user" element={<DAKActionSelectionComponent />} />,
       <Route key="fallback-dak-selection" path="/dak-selection" element={<DAKSelectionComponent />} />,
       <Route key="fallback-dak-selection-user" path="/dak-selection/:user" element={<DAKSelectionComponent />} />,
       <Route key="fallback-404" path="*" element={<NotFoundComponent />} />

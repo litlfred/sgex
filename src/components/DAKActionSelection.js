@@ -94,6 +94,10 @@ const DAKActionSelectionContent = () => {
                 <img src={action.icon} alt={getAltText(t, ALT_TEXT_KEYS.ICON_ACTION, action.title, { title: action.title })} />
               </div>
               
+              <div className="action-header-content">
+                <h3>{action.title}</h3>
+              </div>
+              
               <div className="action-description">
                 <p>{action.description}</p>
               </div>
