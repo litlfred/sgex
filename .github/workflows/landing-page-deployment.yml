@@ -1,4 +1,4 @@
-name: Deploy Landing Page from Main
+name: Deploy Landing Page
 
 on:
   push:
@@ -19,6 +19,11 @@ on:
       - '.github/workflows/landing-page-deployment.yml'
   workflow_dispatch:
     inputs:
+      source_branch:
+        description: 'Branch to deploy from (defaults to main)'
+        required: false
+        type: string
+        default: 'main'
       force_deployment:
         description: 'Force deployment even if no changes detected'
         required: false
@@ -50,10 +55,10 @@ jobs:
       commit_sha: ${{ steps.deployment_info.outputs.commit_sha }}
     
     steps:
-      - name: Checkout main branch
+      - name: Checkout source branch
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.event.inputs.source_branch || 'main' }}
           fetch-depth: 0
 
       - name: Configure git user
@@ -82,9 +87,10 @@ jobs:
         run: |
           set -e
           
-          # Always build for landing page deployment from main branch
+          # Build for landing page deployment from selected source branch
+          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
           export PUBLIC_URL="/sgex/"
-          echo "Building React application for landing page deployment from main branch..."
+          echo "Building React application for landing page deployment from source branch: $source_branch"
           echo "Using PUBLIC_URL: $PUBLIC_URL"
           
           # Set CI=false to avoid treating CSS warnings as errors in production builds
@@ -98,14 +104,15 @@ jobs:
             exit 1
           fi
           
-          echo "✅ React application built successfully with PUBLIC_URL: $PUBLIC_URL"
+          echo "✅ React application built successfully from $source_branch with PUBLIC_URL: $PUBLIC_URL"
 
       - name: Prepare deployment files for landing page
         shell: bash
         run: |
           set -e
           
-          echo "Preparing landing page deployment from main branch..."
+          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
+          echo "Preparing landing page deployment from source branch: $source_branch"
           
           # Create a landing page directory to hold the files
           mkdir -p landing-page
@@ -128,11 +135,11 @@ jobs:
             exit 1
           fi
           
-          echo "✅ Landing page preparation completed successfully"
+          echo "✅ Landing page preparation completed successfully from $source_branch"
           echo "Landing page contents:"
           ls -la landing-page/
 
-      - name: Deploy to gh-pages (landing page from main)
+      - name: Deploy to gh-pages (landing page)
         shell: bash
         run: |
           set -e
@@ -221,7 +228,7 @@ jobs:
           
           echo "✅ Landing page deployment completed successfully"
 
-      - name: Commit and push changes (landing page from main)
+      - name: Commit and push changes (landing page)
         shell: bash
         run: |
           set -e
@@ -236,9 +243,10 @@ jobs:
           # Check if there are any changes to commit
           git add -A
           
-          # Determine commit message for landing page deployment from main
-          deployment_msg="🚀 Deploy landing page from main branch"
-          deployment_details="- Updated landing page with React-based branch selector from main branch
+          # Determine commit message for landing page deployment from source branch
+          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
+          deployment_msg="🚀 Deploy landing page from $source_branch branch"
+          deployment_details="- Updated landing page with React-based branch selector from $source_branch branch
           - Landing page deployed to GitHub Pages /sgex/
           - All branch subdirectories preserved
           - Using deploy route configuration for simplified landing page"
@@ -355,7 +363,7 @@ jobs:
               git commit --allow-empty -m "$deployment_msg
               
               - Force deployment requested by user
-              - Built from main branch
+              - Built from $source_branch branch
               - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
               - Commit: ${{ github.sha }}"
             else
@@ -446,12 +454,13 @@ jobs:
         shell: bash
         run: |
           commit_sha="${{ github.sha }}"
+          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
           deployment_url="https://litlfred.github.io/sgex/"
           deployment_type="landing-page"
           
           echo "🚀 Landing Page Deployment Summary:"
           echo "- Landing Page URL: $deployment_url"
-          echo "- Source Branch: main"
+          echo "- Source Branch: $source_branch"
           echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo "- Commit: $commit_sha"
           echo ""
@@ -461,7 +470,7 @@ jobs:
           echo "deployment_status=success" >> $GITHUB_OUTPUT
           echo "deployment_url=$deployment_url" >> $GITHUB_OUTPUT
           echo "deployment_type=$deployment_type" >> $GITHUB_OUTPUT
-          echo "source_branch=main" >> $GITHUB_OUTPUT
+          echo "source_branch=$source_branch" >> $GITHUB_OUTPUT
           echo "commit_sha=$commit_sha" >> $GITHUB_OUTPUT
 
       - name: Create deployment summary
@@ -471,16 +480,17 @@ jobs:
           deployment_type="${{ steps.deployment_info.outputs.deployment_type }}"
           deployment_url="${{ steps.deployment_info.outputs.deployment_url }}"
           commit_sha="${{ steps.deployment_info.outputs.commit_sha }}"
+          source_branch="${{ steps.deployment_info.outputs.source_branch }}"
           
           echo "## 🚀 Landing Page Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Deployment URL:** $deployment_url" >> $GITHUB_STEP_SUMMARY
-          echo "**Source Branch:** main" >> $GITHUB_STEP_SUMMARY
+          echo "**Source Branch:** $source_branch" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`$commit_sha\`" >> $GITHUB_STEP_SUMMARY
           echo "**Deployed:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ✅ Deployment Status" >> $GITHUB_STEP_SUMMARY
-          echo "- Landing page successfully deployed to gh-pages root from main branch" >> $GITHUB_STEP_SUMMARY
+          echo "- Landing page successfully deployed to gh-pages root from $source_branch branch" >> $GITHUB_STEP_SUMMARY
           echo "- All branch subdirectories preserved" >> $GITHUB_STEP_SUMMARY
           echo "- No branch deployments affected" >> $GITHUB_STEP_SUMMARY
           echo "- Landing page uses simplified deploy route configuration" >> $GITHUB_STEP_SUMMARY
