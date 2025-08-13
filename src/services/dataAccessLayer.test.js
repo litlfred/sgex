@@ -15,9 +15,7 @@ jest.mock('./userAccessService', () => ({
   getAccessBadge: jest.fn(),
   canSaveToGitHub: jest.fn(),
   canSaveLocal: jest.fn(),
-  getUIBehavior: jest.fn(),
-  isDemoUser: jest.fn(),
-  isDemoDAK: jest.fn()
+  getUIBehavior: jest.fn()
 }));
 
 jest.mock('./stagingGroundService', () => ({
@@ -76,7 +74,6 @@ describe('DataAccessLayer', () => {
 
     test('should load asset from GitHub if not in staging ground', async () => {
       userAccessService.getRepositoryAccess.mockResolvedValue('read');
-      userAccessService.isDemoUser.mockReturnValue(false);
       stagingGroundService.getStagingGround.mockReturnValue({ files: [] });
       githubService.getFileContent.mockResolvedValue('{"github": true}');
 
@@ -85,18 +82,6 @@ describe('DataAccessLayer', () => {
       expect(result.content).toBe('{"github": true}');
       expect(result.source).toBe('github');
       expect(result.hasLocalChanges).toBe(false);
-    });
-
-    test('should provide demo content for demo users', async () => {
-      userAccessService.getRepositoryAccess.mockResolvedValue('read');
-      userAccessService.isDemoUser.mockReturnValue(true);
-      userAccessService.isDemoDAK.mockReturnValue(true);
-      stagingGroundService.getStagingGround.mockReturnValue({ files: [] });
-
-      const result = await dataAccessLayer.getAsset('WHO', 'smart-anc', 'main', 'README.md');
-
-      expect(result.content).toContain('Demo DAK Repository');
-      expect(result.source).toBe('github');
     });
   });
 
@@ -197,27 +182,6 @@ describe('DataAccessLayer', () => {
       expect(options.showSaveLocal).toBe(true);
       expect(options.showSaveGitHub).toBe(true);
       expect(options.userType).toBe('authenticated');
-    });
-  });
-
-  describe('Demo Asset Content', () => {
-    test('should provide demo content for known asset types', () => {
-      const valueSetContent = dataAccessLayer.getDemoAssetContent('input/vocabulary/ValueSet-anc-care-codes.json');
-      expect(valueSetContent).toContain('ANCCareCodes');
-      expect(valueSetContent).toContain('Demo');
-
-      const actorContent = dataAccessLayer.getDemoAssetContent('input/actors/Patient.json');
-      expect(actorContent).toContain('ActorDefinition');
-      expect(actorContent).toContain('Demo');
-
-      const readmeContent = dataAccessLayer.getDemoAssetContent('README.md');
-      expect(readmeContent).toContain('Demo DAK Repository');
-    });
-
-    test('should provide generic demo content for unknown assets', () => {
-      const content = dataAccessLayer.getDemoAssetContent('unknown/file.txt');
-      expect(content).toContain('Demo Asset: unknown/file.txt');
-      expect(content).toContain('demo content');
     });
   });
 });

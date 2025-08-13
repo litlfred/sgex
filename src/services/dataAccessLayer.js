@@ -353,8 +353,7 @@ class DataAccessLayer {
       access,
       badge,
       saveOptions,
-      userType: userAccessService.getUserType(),
-      isDemo: userAccessService.isDemoUser()
+      userType: userAccessService.getUserType()
     };
   }
 }
