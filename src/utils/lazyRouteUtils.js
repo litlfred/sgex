@@ -225,6 +225,7 @@ export function generateLazyRoutes() {
     const BranchListingPage = createLazyComponent('BranchListingPage');
     const DAKDashboard = createLazyComponent('DAKDashboard');
     const LandingPage = createLazyComponent('LandingPage');
+    const DocumentationViewer = createLazyComponent('DocumentationViewer');
     
     return [
       <Route key="fallback-home" path="/" element={<BranchListingPage />} />,
@@ -232,6 +233,8 @@ export function generateLazyRoutes() {
       <Route key="fallback-dashboard-user" path="/dashboard/:user" element={<DAKDashboard />} />,
       <Route key="fallback-dashboard-user-repo" path="/dashboard/:user/:repo" element={<DAKDashboard />} />,
       <Route key="fallback-dashboard-user-repo-branch" path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />,
+      <Route key="fallback-docs" path="/docs" element={<DocumentationViewer />} />,
+      <Route key="fallback-docs-id" path="/docs/:docId" element={<DocumentationViewer />} />,
       <Route key="fallback-welcome" path="/welcome" element={<LandingPage />} />,
       <Route key="fallback-404" path="*" element={<div>Page not found</div>} />
     ];

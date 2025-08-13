@@ -142,6 +142,41 @@
     "activity": "Recent Activity",
     "errorLoading": "Error Loading Dashboard"
   },
+  "documentation": {
+    "title": "Documentation",
+    "subtitle": "Project Documentation and Technical Guides",
+    "categories": {
+      "root": "General Documentation",
+      "workflows": "Workflows",
+      "schemas": "JSON Schemas",
+      "technical": "Technical Documentation",
+      "user": "User Guides"
+    },
+    "schemas": {
+      "title": "JSON Schemas",
+      "description": "Available JSON schemas for validation and data structures",
+      "source": "Source File",
+      "description_text": "Description",
+      "view": "View Schema",
+      "download": "Download",
+      "noSchemasFound": "No schemas found"
+    },
+    "navigation": {
+      "home": "Documentation Home",
+      "breadcrumb": "Documentation",
+      "back": "Back to Documentation",
+      "viewSource": "View Source",
+      "bookmark": "Bookmark this page"
+    },
+    "loading": "Loading documentation...",
+    "error": "Failed to load documentation. Please try again later.",
+    "notFound": "Documentation not found",
+    "tryAgain": "Try Again",
+    "openedInNewTab": "The QA report has been opened in a new tab.",
+    "ifNotOpenedAutomatically": "If it didn't open automatically, you can access it here",
+    "generatedOnDeployment": "The QA report is generated during deployment and is available on the live site at",
+    "availableAfterDeployment": "If you're viewing this locally, the report will be available after the next deployment to GitHub Pages."
+  },
   "altText": {
     "mascot": {
       "helper": "SGEX Helper",
