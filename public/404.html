@@ -14,20 +14,13 @@
         var isGitHubPages = window.location.hostname === 'litlfred.github.io' || window.location.hostname.endsWith('.github.io');
         
         if (isGitHubPages && pathSegments.length >= 1 && pathSegments[0] === 'sgex') {
-          if (pathSegments.length >= 2) {
-            // This could be a branch deployment like /sgex/copilot-fix-765/ or /sgex/main/
-            // Load routeConfig.js from the branch subdirectory
-            var potentialBranch = pathSegments[1];
-            scriptPath = './' + pathSegments.slice(0, 2).join('/') + '/routeConfig.js';
-            console.log('Loading routeConfig.js for branch deployment:', {
-              url: window.location.pathname,
-              branch: potentialBranch,
-              scriptPath: scriptPath
-            });
-          } else {
-            // Just /sgex/, load from current directory (landing page)
-            scriptPath = './routeConfig.js';
-          }
+          // For GitHub Pages SGEX deployment, always load routeConfig.js from the main sgex directory
+          // This file is shared across all branch deployments
+          scriptPath = './sgex/routeConfig.js';
+          console.log('Loading routeConfig.js for SGEX deployment:', {
+            url: window.location.pathname,
+            scriptPath: scriptPath
+          });
         } else {
           // Standalone deployment, load from current directory
           scriptPath = './routeConfig.js';
