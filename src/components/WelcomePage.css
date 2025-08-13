@@ -171,8 +171,8 @@ body.theme-light .welcome-page-content {
 
 .card-icon img {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
-  max-height: 60px;
-  max-width: 60px;
+  max-height: var(--card-icon-size);
+  max-width: var(--card-icon-size);
   object-fit: contain;
 }
 
@@ -503,8 +503,9 @@ body.theme-light .welcome-page-content {
   
   .card-icon img {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
-    max-height: 50px;
-    max-width: 50px;
+    max-height: var(--card-icon-size);
+    max-width: var(--card-icon-size);
+    object-fit: contain;
   }
 }
 
@@ -539,8 +540,9 @@ body.theme-light .welcome-page-content {
   
   .card-icon img {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
-    max-height: 35px;
-    max-width: 35px;
+    max-height: var(--card-icon-size);
+    max-width: var(--card-icon-size);
+    object-fit: contain;
   }
   
   .card-icon .icon-symbol {
