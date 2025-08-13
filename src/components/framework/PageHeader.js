@@ -69,7 +69,8 @@ const PageHeader = () => {
       window.location.search = newSearch;
     } else {
       // Navigate to home page with URL parameter to trigger focus
-      navigate('/?focusInput=pat');
+      // Use window.location for more reliable cross-page navigation
+      window.location.href = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '') + '/?focusInput=pat';
     }
   };
 
