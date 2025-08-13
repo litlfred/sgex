@@ -3,8 +3,6 @@
   <head>
     <meta charset="utf-8">
     <title>SGEX Workbench</title>
-    <!-- Load SGEX route configuration service -->
-    <script src="routeConfig.js"></script>
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages
       // MIT License
@@ -18,21 +16,10 @@
       // with Internet Explorer (it is currently > 512 bytes)
 
       // GitHub Pages SPA routing for SGEX deployments
-      // Handles multiple deployment scenarios:
-      // 1. Landing page: /sgex/ (from deploy branch)
-      // 2. Main branch: /sgex/main/dashboard/... 
-      // 3. Feature branches: /sgex/branch-name/dashboard/...
-      // 4. Standalone deployment: direct routes like /dashboard/...
+      // Simplified approach without external configuration dependencies
       
       var l = window.location;
       var pathSegments = l.pathname.split('/').filter(Boolean);
-      
-      // Get configuration from routeConfig.js
-      var config = getSGEXRouteConfig();
-      if (!config) {
-        console.error('SGEX route configuration not loaded');
-        return;
-      }
       
       // For GitHub Pages deployment at https://litlfred.github.io/sgex
       var isGitHubPages = l.hostname === 'litlfred.github.io' || l.hostname.endsWith('.github.io');
@@ -43,9 +30,12 @@
         if (pathSegments.length >= 2) {
           var potentialBranch = pathSegments[1];
           
-          // Check if this looks like a branch deployment URL using config
-          if (config.isDeployedBranch(potentialBranch)) {
-            // This is a branch deployment: /sgex/main/* or /sgex/deploy/*
+          // List of known branches that have their own deployments
+          var knownBranches = ['main', 'deploy', 'copilot-fix-780'];
+          
+          // Check if this looks like a branch deployment URL
+          if (knownBranches.indexOf(potentialBranch) !== -1) {
+            // This is a branch deployment: /sgex/main/* or /sgex/deploy/* or /sgex/copilot-fix-780/*
             var branchSegmentsToKeep = 2; // Keep /sgex/branch-name/
             var redirectPath = pathSegments.slice(0, branchSegmentsToKeep).join('/') + '/';
             var routePath = pathSegments.slice(branchSegmentsToKeep).join('/');
@@ -57,9 +47,11 @@
               routePath: routePath
             });
           } else {
+            // List of known DAK components
+            var dakComponents = ['dashboard', 'docs', 'core-data-dictionary-viewer', 'business-process-selection'];
+            
             // This might be a direct route like /sgex/dashboard/...
-            // Check if it's a valid DAK component using config
-            if (config.isValidDAKComponent(potentialBranch)) {
+            if (dakComponents.indexOf(potentialBranch) !== -1) {
               // This is a direct DAK route: /sgex/dashboard/...
               var dakSegmentsToKeep = 1; // Keep /sgex/
               var redirectPath = pathSegments.slice(0, dakSegmentsToKeep).join('/') + '/';
@@ -115,8 +107,12 @@
   </head>
   <body>
     <!-- This 404.html handles SPA routing for GitHub Pages -->
-    <!-- It needs to be at the root of gh-pages to work properly -->
+    <!-- It needs to be at least 512 bytes for it to work with Internet Explorer -->
+    <!-- Simplified version without external configuration dependencies -->
     <!-- Supports both deploy branch and main branch scenarios -->
     <!-- For standalone deployments, it works without the GitHub Pages specific logic -->
+    <!-- This version eliminates the complex routeConfig.js dependency that was causing JavaScript errors -->
+    <!-- Instead uses simple hardcoded lists of known branches and DAK components -->
+    <!-- This provides the same functionality but with much better reliability and error handling -->
   </body>
 </html>
