@@ -98,6 +98,13 @@
     </div>
 
     <div class="test-section">
+        <h2>Test 7: Local Asset Page Routing</h2>
+        <p>Test asset pages in local deployment: <code>/:branch/:component/:user/:repo/:branch/:asset</code></p>
+        <button onclick="testLocalAssetPages()">Run Test</button>
+        <div id="test7-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
         <h2>Run All Tests</h2>
         <button onclick="runAllTests()">Run All Tests</button>
         <div id="all-tests-result" class="result"></div>
@@ -301,6 +308,43 @@
             }
         }
 
+        function testLocalAssetPages() {
+            const resultEl = document.getElementById('test7-result');
+            
+            // Test 1: Root-level branch-first asset page: /main/dashboard/demo-user/test-dak/main/schema.json
+            const result1 = simulateRouting('http://localhost:3000/main/dashboard/demo-user/test-dak/main/schema.json');
+            
+            // Test 2: /sgex/ prefixed branch-first asset page: /sgex/main/dashboard/demo-user/test-dak/main/documentation.md
+            const result2 = simulateRouting('http://localhost:3000/sgex/main/dashboard/demo-user/test-dak/main/documentation.md');
+            
+            // Check results
+            const expected1 = '/main/?/dashboard/demo-user/test-dak/main/schema.json';
+            const expected2 = '/sgex/main/?/dashboard/demo-user/test-dak/main/documentation.md';
+            
+            const pass1 = result1.redirect === expected1 && result1.type === 'branch-deployment';
+            const pass2 = result2.redirect === expected2 && result2.type === 'branch-deployment';
+            
+            if (pass1 && pass2) {
+                resultEl.innerHTML = `<span class="pass">PASS:</span> Asset page routing working correctly
+                
+Test 1 - Root-level asset: ${result1.redirect}
+Test 2 - /sgex/ prefixed asset: ${result2.redirect}
+Both tests preserve complete asset paths correctly`;
+                return true;
+            } else {
+                resultEl.innerHTML = `<span class="fail">FAIL:</span> Asset page routing issues detected
+                
+Test 1 - Expected: ${expected1}
+         Got: ${result1.redirect} (${result1.type})
+         Status: ${pass1 ? 'PASS' : 'FAIL'}
+         
+Test 2 - Expected: ${expected2}
+         Got: ${result2.redirect} (${result2.type})
+         Status: ${pass2 ? 'PASS' : 'FAIL'}`;
+                return false;
+            }
+        }
+
         function runAllTests() {
             const tests = [
                 testLocalRootBranchFirst,
@@ -308,7 +352,8 @@
                 testLocalComponentFirst,
                 testLocalInvalidBranch,
                 testLocalSimplePath,
-                testLocalRoot
+                testLocalRoot,
+                testLocalAssetPages
             ];
 
             let passed = 0;

@@ -85,10 +85,17 @@
     </div>
 
     <div class="test-section">
-        <h2>Test 6: Redirect Loop Prevention</h2>
+        <h2>Test 6: Asset Page URL Routing</h2>
+        <p>Tests asset page URL patterns: /sgex/:branch/:component/:user/:repo/:branch/:asset</p>
+        <button onclick="testAssetPageRouting()">Test Asset Page Routing</button>
+        <div id="test6-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 7: Redirect Loop Prevention</h2>
         <p>Tests detection and prevention of infinite redirect loops</p>
         <button onclick="testRedirectLoop()">Test Redirect Loop Prevention</button>
-        <div id="test6-result" class="result"></div>
+        <div id="test7-result" class="result"></div>
     </div>
 
     <!-- Load route configuration -->
@@ -344,11 +351,41 @@ Analysis: ${hasConfig ? 'Route configuration system working correctly' : 'Route 
             `;
         }
 
+        function testAssetPageRouting() {
+            // Test branch-first asset page URL: /sgex/:branch/:component/:user/:repo/:branch/:asset
+            const result1 = executeRoutingLogic('litlfred.github.io', '/sgex/main/dashboard/demo-user/test-dak/main/documentation.md');
+            const hasRedirect1 = result1.redirectedTo && result1.redirectedTo.includes('?/dashboard/demo-user/test-dak/main/documentation.md');
+            
+            // Test component-first asset page URL: /sgex/:component/:user/:repo/:branch/:asset
+            const result2 = executeRoutingLogic('litlfred.github.io', '/sgex/dashboard/demo-user/test-dak/main/schema.json');
+            const hasRedirect2 = result2.redirectedTo && result2.redirectedTo.includes('?/dashboard/demo-user/test-dak/main/schema.json');
+            
+            const allPass = hasRedirect1 && hasRedirect2;
+            
+            document.getElementById('test6-result').innerHTML = `
+Result: ${allPass ? '<span class="pass">✅ PASS</span>' : '<span class="fail">❌ FAIL</span>'}
+
+Branch-first Asset URL Test:
+Input: /sgex/main/dashboard/demo-user/test-dak/main/documentation.md
+Expected: Redirect to /sgex/main/?/dashboard/demo-user/test-dak/main/documentation.md
+Actual: ${result1.redirectedTo || 'No redirect'}
+Status: ${hasRedirect1 ? '✓ PASS' : '✗ FAIL'}
+
+Component-first Asset URL Test:
+Input: /sgex/dashboard/demo-user/test-dak/main/schema.json
+Expected: Redirect to /sgex/?/dashboard/demo-user/test-dak/main/schema.json
+Actual: ${result2.redirectedTo || 'No redirect'}
+Status: ${hasRedirect2 ? '✓ PASS' : '✗ FAIL'}
+
+Analysis: ${allPass ? 'Asset page routing works correctly for both branch-first and component-first patterns' : 'Asset page routing needs fixes'}
+            `;
+        }
+
         function testRedirectLoop() {
             const result = executeRoutingLogic('litlfred.github.io', '/sgex/dashboard/demo-user/test-dak', '?/already-redirected');
             const hasError = result.errorShown && result.errorShown.code === 'routing-loop';
             
-            document.getElementById('test6-result').innerHTML = `
+            document.getElementById('test7-result').innerHTML = `
 Result: ${hasError ? '<span class="pass">✅ PASS</span>' : '<span class="fail">❌ FAIL</span>'}
 Input URL: /sgex/dashboard/demo-user/test-dak?/already-redirected
 Expected: Redirect loop detection error
