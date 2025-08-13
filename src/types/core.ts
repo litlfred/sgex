@@ -1,9 +1,10 @@
 /**
  * Core SGEX Workbench Type Definitions
  * 
- * This file contains the main type definitions for the SGEX Workbench application.
- * These types are used throughout the application for type safety and will be used
- * to generate JSON schemas for runtime validation.
+ * This file contains the main type definitions for the SGEX Workbench application,
+ * including DAK validation framework types. These types are used throughout the 
+ * application for type safety and will be used to generate JSON schemas for 
+ * runtime validation.
  */
 
 // ============================================================================
@@ -50,9 +51,9 @@ export interface DAKUrlInfo {
   assetPath: string[];
 }
 
-// ====================
-// GitHub API Types
-// ====================
+// ============================================================================
+// GITHUB API TYPES
+// ============================================================================
 
 export interface GitHubUser {
   login: string;
@@ -207,9 +208,150 @@ export interface GitHubBranch {
   protection_url?: string;
 }
 
-// ====================
-// DAK (Digital Adaptation Kit) Types
-// ====================
+export interface GitHubFileResponse {
+  name: string;
+  path: string;
+  sha: string;
+  size: number;
+  url: string;
+  html_url: string;
+  git_url: string;
+  download_url: string;
+  type: 'file';
+  content: string;
+  encoding: 'base64';
+}
+
+// ============================================================================
+// DAK VALIDATION FRAMEWORK TYPES
+// ============================================================================
+
+export type ValidationLevel = 'error' | 'warning' | 'info';
+
+export interface ValidationError {
+  code: string;
+  message: string;
+  path?: string;
+  value?: any;
+}
+
+export interface ValidationWarning {
+  code: string;
+  message: string;
+  path?: string;
+  value?: any;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: ValidationError[];
+  warnings: ValidationWarning[];
+}
+
+export interface DAKValidationResult {
+  validationId: string;
+  component: string;
+  level: ValidationLevel;
+  description: string;
+  filePath: string;
+  message?: string;
+  line?: number;
+  column?: number;
+  suggestion?: string;
+}
+
+export interface ValidationContext {
+  owner?: string;
+  repo?: string;
+  branch?: string;
+  dakFiles?: DAKFile[];
+  githubService?: any;
+  component?: string;
+  stagingGround?: boolean;
+  [key: string]: any;
+}
+
+export interface DAKFile {
+  path: string;
+  content: string;
+  size?: number;
+  sha?: string;
+}
+
+export interface ValidationDefinition {
+  id: string;
+  component: string;
+  level: ValidationLevel;
+  fileTypes: string[];
+  descriptionKey?: string;
+  description: string;
+  validate: (filePath: string, content: string, context: ValidationContext) => Promise<DAKValidationResult | null>;
+  findLineNumber?: (content: string, searchTerm: string) => number | null;
+}
+
+export interface DAKComponent {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface ValidationSummary {
+  error: number;
+  warning: number;
+  info: number;
+}
+
+export interface FormattedValidationResults {
+  summary: ValidationSummary;
+  byComponent: Record<string, DAKValidationResult[]>;
+  byFile: Record<string, DAKValidationResult[]>;
+  canSave: boolean;
+  total: number;
+  error?: string;
+  metadata?: {
+    owner?: string;
+    repo?: string;
+    branch?: string;
+    filesValidated?: number;
+    validatedAt?: string;
+    validationFrameworkVersion?: string;
+    stagingGround?: boolean;
+    canUpload?: boolean;
+  };
+}
+
+export interface ComponentSummary {
+  [componentId: string]: DAKComponent & {
+    validationCount: number;
+    errorCount: number;
+    warningCount: number;
+    infoCount: number;
+  };
+}
+
+export interface ValidationHistory {
+  entries: ValidationHistoryEntry[];
+  maxEntries: number;
+}
+
+export interface ValidationHistoryEntry {
+  id: string;
+  owner: string;
+  repo: string;
+  branch: string;
+  timestamp: string;
+  summary: ValidationSummary;
+  metadata: {
+    filesValidated: number;
+    validationFrameworkVersion: string;
+    stagingGround: boolean;
+    canUpload: boolean;
+  };
+}
+
+// ============================================================================
+// DAK (DIGITAL ADAPTATION KIT) TYPES
+// ============================================================================
 
 export interface SushiConfig {
   id?: string;
@@ -249,7 +391,7 @@ export interface DAKRepository extends GitHubRepository {
   isDak: true;
 }
 
-export interface DAKValidationResult {
+export interface DAKValidationServiceResult {
   isValid: boolean;
   hasSushiConfig: boolean;
   hasWhoBaseDependency: boolean;
@@ -258,9 +400,9 @@ export interface DAKValidationResult {
   warnings: string[];
 }
 
-// ====================
-// Profile Subscription Types
-// ====================
+// ============================================================================
+// PROFILE SUBSCRIPTION TYPES
+// ============================================================================
 
 export interface ProfileSubscription {
   login: string;
@@ -280,9 +422,9 @@ export interface ProfileSubscriptionExport {
   subscriptions: ProfileSubscription[];
 }
 
-// ====================
-// Authentication Types
-// ====================
+// ============================================================================
+// AUTHENTICATION TYPES
+// ============================================================================
 
 export interface AuthenticationState {
   isAuthenticated: boolean;
@@ -334,9 +476,9 @@ export interface TokenFormatValidation {
   reason?: string;
 }
 
-// ====================
-// Cache Types
-// ====================
+// ============================================================================
+// CACHE TYPES
+// ============================================================================
 
 export interface CacheEntry<T = any> {
   key: string;
@@ -369,9 +511,9 @@ export interface CacheResult<T> {
   age?: number;
 }
 
-// ====================
-// Validation Framework Types
-// ====================
+// ============================================================================
+// RUNTIME VALIDATION SERVICE TYPES
+// ============================================================================
 
 export interface ValidationRule<T = any> {
   name: string;
@@ -379,30 +521,6 @@ export interface ValidationRule<T = any> {
   validator: (data: T) => ValidationResult;
   schema?: any; // JSON Schema
 }
-
-export interface ValidationResult {
-  isValid: boolean;
-  errors: ValidationError[];
-  warnings: ValidationWarning[];
-}
-
-export interface ValidationError {
-  code: string;
-  message: string;
-  path?: string;
-  value?: any;
-}
-
-export interface ValidationWarning {
-  code: string;
-  message: string;
-  path?: string;
-  value?: any;
-}
-
-// ====================
-// Runtime Validation Service Types
-// ====================
 
 export interface RuntimeValidationConfig {
   strict: boolean;
@@ -418,9 +536,9 @@ export interface ValidatedData<T> {
   warnings: ValidationWarning[];
 }
 
-// ====================
-// Logging Types
-// ====================
+// ============================================================================
+// LOGGING TYPES
+// ============================================================================
 
 export type LogLevel = 'ERROR' | 'WARN' | 'INFO' | 'DEBUG';
 
@@ -450,9 +568,9 @@ export interface Logger {
   cache: (operation: string, key: string, details?: any) => void;
 }
 
-// ====================
-// Utility Types
-// ====================
+// ============================================================================
+// UTILITY TYPES
+// ============================================================================
 
 export type AsyncResult<T> = Promise<{
   success: boolean;
