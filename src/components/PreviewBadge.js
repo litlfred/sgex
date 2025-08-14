@@ -238,13 +238,24 @@ const PreviewBadge = () => {
       // Process timeline events for status updates
       const relevantTimelineEvents = timelineEvents
         .filter(event => ['committed', 'reviewed', 'merged', 'closed', 'reopened', 'labeled', 'unlabeled', 'head_ref_force_pushed', 'ready_for_review', 'convert_to_draft'].includes(event.event))
-        .map(event => ({
-          ...event,
-          type: 'timeline',
-          created_at: event.created_at || event.submitted_at,
-          user: event.actor || event.author || { login: 'github', avatar_url: 'https://github.com/github.png' },
-          body: formatTimelineEvent(event)
-        }));
+        .map(event => {
+          const user = event.actor || event.author || { login: 'github', avatar_url: 'https://github.com/github.png' };
+          
+          // Ensure user object has the required properties
+          const safeUser = {
+            login: user.login || 'github',
+            avatar_url: user.avatar_url || 'https://github.com/github.png',
+            ...user
+          };
+          
+          return {
+            ...event,
+            type: 'timeline',
+            created_at: event.created_at || event.submitted_at,
+            user: safeUser,
+            body: formatTimelineEvent(event)
+          };
+        });
 
       if (append) {
         // Append to existing comments (for load more)
@@ -334,40 +345,46 @@ const PreviewBadge = () => {
     
     laterComments.forEach(laterComment => {
       // Check if later comment mentions this comment's author
-      if (laterComment.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`)) {
-        viewers.add(laterComment.user.login);
+      if (laterComment.body && comment.user && comment.user.login && laterComment.user && laterComment.user.login) {
+        if (laterComment.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`)) {
+          viewers.add(laterComment.user.login);
+        }
       }
       
       // Check if later comment references this comment content (partial match)
-      const commentWords = comment.body.toLowerCase().split(' ').filter(word => word.length > 3);
-      if (commentWords.length > 0) {
-        const hasReferenceWords = commentWords.some(word => 
-          laterComment.body.toLowerCase().includes(word) && 
-          laterComment.user.login !== comment.user.login
-        );
-        if (hasReferenceWords) {
-          viewers.add(laterComment.user.login);
+      if (comment.body && laterComment.body && laterComment.user && laterComment.user.login) {
+        const commentWords = comment.body.toLowerCase().split(' ').filter(word => word.length > 3);
+        if (commentWords.length > 0) {
+          const hasReferenceWords = commentWords.some(word => 
+            laterComment.body.toLowerCase().includes(word) && 
+            laterComment.user.login !== comment.user.login
+          );
+          if (hasReferenceWords) {
+            viewers.add(laterComment.user.login);
+          }
         }
       }
     });
     
     // Add copilot if mentioned anywhere in the thread related to this comment
-    if (comment.body.toLowerCase().includes('copilot') || 
-        comment.user.login.toLowerCase().includes('copilot')) {
+    if ((comment.body && comment.body.toLowerCase().includes('copilot')) || 
+        (comment.user && comment.user.login && comment.user.login.toLowerCase().includes('copilot'))) {
       viewers.add('copilot');
     }
     
     // Check if copilot has engaged in later comments
     const copilotEngaged = laterComments.some(c => 
-      c.user.login.toLowerCase().includes('copilot') ||
-      c.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`)
+      (c.user && c.user.login && c.user.login.toLowerCase().includes('copilot')) ||
+      (c.body && comment.user && comment.user.login && c.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`))
     );
     if (copilotEngaged) {
       viewers.add('copilot');
     }
     
     // Remove the comment author from viewers (don't show badge for self)
-    viewers.delete(comment.user.login);
+    if (comment.user && comment.user.login) {
+      viewers.delete(comment.user.login);
+    }
     
     return Array.from(viewers);
   };
@@ -1313,10 +1330,10 @@ const PreviewBadge = () => {
                                   {viewers.map((viewer, index) => (
                                     <span 
                                       key={index}
-                                      className={`viewer-badge ${viewer.toLowerCase().includes('copilot') ? 'viewer-badge-copilot' : 'viewer-badge-user'}`}
+                                      className={`viewer-badge ${viewer && viewer.toLowerCase().includes('copilot') ? 'viewer-badge-copilot' : 'viewer-badge-user'}`}
                                       title={`${viewer} is looking at this comment`}
                                     >
-                                      {viewer.toLowerCase().includes('copilot') ? '👁️' : '👀'} {viewer}
+                                      {viewer && viewer.toLowerCase().includes('copilot') ? '👁️' : '👀'} {viewer}
                                     </span>
                                   ))}
                                 </div>
