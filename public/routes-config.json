@@ -44,6 +44,10 @@
     "questionnaire-editor": {
       "component": "QuestionnaireEditor",
       "path": "./components/QuestionnaireEditor"
+    },
+    "faq-demo": {
+      "component": "DAKFAQDemo",
+      "path": "./components/DAKFAQDemo"
     }
   },
   "standardComponents": {

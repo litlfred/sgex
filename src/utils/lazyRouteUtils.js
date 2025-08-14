@@ -100,6 +100,9 @@ function createLazyComponent(componentName) {
     case 'NotFound':
       LazyComponent = React.lazy(() => import('../components/NotFound'));
       break;
+    case 'DAKFAQDemo':
+      LazyComponent = React.lazy(() => import('../components/DAKFAQDemo'));
+      break;
     
     // DAK Components
     case 'DAKDashboard':

@@ -1,0 +1,90 @@
+{
+  "id": "decision-table-inputs",
+  "level": "asset",
+  "title": "dak.faq.decision_table_inputs.title",
+  "description": "dak.faq.decision_table_inputs.description",
+  "parameters": [
+    {
+      "name": "repository",
+      "type": "string", 
+      "required": true,
+      "description": "dak.faq.params.repository"
+    },
+    {
+      "name": "assetFile",
+      "type": "string",
+      "required": true,
+      "description": "dak.faq.params.asset_file"
+    },
+    {
+      "name": "locale",
+      "type": "string",
+      "required": false,
+      "description": "dak.faq.params.locale",
+      "default": "en"
+    }
+  ],
+  "tags": ["asset", "dmn", "decision-table", "inputs"],
+  "componentType": "decision-support-logic",
+  "assetType": "dmn",
+  "schema": {
+    "input": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "description": "GitHub repository in format 'user/repo' or local folder path"
+        },
+        "assetFile": {
+          "type": "string", 
+          "description": "Path to the DMN asset file within the repository"
+        },
+        "locale": {
+          "type": "string",
+          "description": "Language locale code",
+          "default": "en"
+        }
+      },
+      "required": ["repository", "assetFile"]
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "structured": {
+          "type": "object",
+          "properties": {
+            "inputs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "label": { "type": "string" },
+                  "type": { "type": "string" },
+                  "expression": { "type": "string" }
+                }
+              }
+            },
+            "decisionTables": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "name": { "type": "string" },
+                  "hitPolicy": { "type": "string" },
+                  "inputs": { "type": "array" },
+                  "outputs": { "type": "array" }
+                }
+              }
+            }
+          }
+        },
+        "narrative": { "type": "string" },
+        "errors": { "type": "array", "items": { "type": "string" } },
+        "warnings": { "type": "array", "items": { "type": "string" } },
+        "meta": { "type": "object" }
+      }
+    }
+  }
+}
