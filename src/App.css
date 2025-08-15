@@ -600,6 +600,12 @@ a:focus-visible {
   margin-bottom: 8px;
 }
 
+.bug-report-form .context-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .bug-report-form .context-toggle-btn {
   background: none;
   border: 1px solid var(--who-border-color);
@@ -611,6 +617,21 @@ a:focus-visible {
 }
 
 .bug-report-form .context-toggle-btn:hover {
+  background: var(--who-hover-bg);
+}
+
+.bug-report-form .context-copy-btn {
+  background: none;
+  border: 1px solid var(--who-border-color);
+  color: var(--who-blue);
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.bug-report-form .context-copy-btn:hover {
   background: var(--who-hover-bg);
 }
 
