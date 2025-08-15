@@ -302,7 +302,7 @@ const PreviewBadge = () => {
       case 'committed':
         return `📦 Pushed ${event.sha ? event.sha.substring(0, 7) : 'commit'}: ${event.message || 'No commit message'}`;
       case 'reviewed':
-        const reviewState = event.state?.toLowerCase();
+        const reviewState = event.state && typeof event.state === 'string' ? event.state.toLowerCase() : 'reviewed';
         const reviewIcon = reviewState === 'approved' ? '✅' : reviewState === 'changes_requested' ? '❌' : '💬';
         return `${reviewIcon} ${reviewState === 'approved' ? 'Approved' : reviewState === 'changes_requested' ? 'Requested changes' : 'Reviewed'} this pull request`;
       case 'merged':
@@ -322,7 +322,7 @@ const PreviewBadge = () => {
       case 'convert_to_draft':
         return `📝 Converted to draft`;
       default:
-        return `📋 ${event.event.replace(/_/g, ' ')}`;
+        return `📋 ${event.event?.replace(/_/g, ' ') || 'unknown event'}`;
     }
   };
 
@@ -330,29 +330,38 @@ const PreviewBadge = () => {
     const viewers = new Set();
     
     // Extract mentions from the comment body
-    const mentionMatches = comment.body.match(/@(\w+)/g);
-    if (mentionMatches) {
-      mentionMatches.forEach(mention => {
-        const username = mention.substring(1); // Remove @
-        viewers.add(username);
-      });
+    if (comment.body && typeof comment.body === 'string') {
+      const mentionMatches = comment.body.match(/@(\w+)/g);
+      if (mentionMatches) {
+        mentionMatches.forEach(mention => {
+          const username = mention.substring(1); // Remove @
+          if (username && typeof username === 'string') {
+            viewers.add(username);
+          }
+        });
+      }
     }
     
     // Check if any subsequent comments reference this comment or author
     const laterComments = allComments.filter(c => 
+      c && c.created_at && comment && comment.created_at &&
       new Date(c.created_at) > new Date(comment.created_at)
     );
     
     laterComments.forEach(laterComment => {
       // Check if later comment mentions this comment's author
-      if (laterComment.body && comment.user && comment.user.login && laterComment.user && laterComment.user.login) {
+      if (laterComment.body && typeof laterComment.body === 'string' && 
+          comment.user && comment.user.login && typeof comment.user.login === 'string' &&
+          laterComment.user && laterComment.user.login && typeof laterComment.user.login === 'string') {
         if (laterComment.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`)) {
           viewers.add(laterComment.user.login);
         }
       }
       
       // Check if later comment references this comment content (partial match)
-      if (comment.body && laterComment.body && laterComment.user && laterComment.user.login) {
+      if (comment.body && typeof comment.body === 'string' &&
+          laterComment.body && typeof laterComment.body === 'string' && 
+          laterComment.user && laterComment.user.login && typeof laterComment.user.login === 'string') {
         const commentWords = comment.body.toLowerCase().split(' ').filter(word => word.length > 3);
         if (commentWords.length > 0) {
           const hasReferenceWords = commentWords.some(word => 
@@ -367,22 +376,23 @@ const PreviewBadge = () => {
     });
     
     // Add copilot if mentioned anywhere in the thread related to this comment
-    if ((comment.body && comment.body.toLowerCase().includes('copilot')) || 
-        (comment.user && comment.user.login && comment.user.login.toLowerCase().includes('copilot'))) {
+    if ((comment.body && typeof comment.body === 'string' && comment.body.toLowerCase().includes('copilot')) || 
+        (comment.user && comment.user.login && typeof comment.user.login === 'string' && comment.user.login.toLowerCase().includes('copilot'))) {
       viewers.add('copilot');
     }
     
     // Check if copilot has engaged in later comments
     const copilotEngaged = laterComments.some(c => 
-      (c.user && c.user.login && c.user.login.toLowerCase().includes('copilot')) ||
-      (c.body && comment.user && comment.user.login && c.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`))
+      (c.user && c.user.login && typeof c.user.login === 'string' && c.user.login.toLowerCase().includes('copilot')) ||
+      (c.body && typeof c.body === 'string' && comment.user && comment.user.login && typeof comment.user.login === 'string' && 
+       c.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`))
     );
     if (copilotEngaged) {
       viewers.add('copilot');
     }
     
     // Remove the comment author from viewers (don't show badge for self)
-    if (comment.user && comment.user.login) {
+    if (comment.user && comment.user.login && typeof comment.user.login === 'string') {
       viewers.delete(comment.user.login);
     }
     
@@ -1327,15 +1337,20 @@ const PreviewBadge = () => {
                               {/* Comment Viewer Badges - only for regular comments */}
                               {comment.type !== 'timeline' && viewers.length > 0 && (
                                 <div className="comment-viewers">
-                                  {viewers.map((viewer, index) => (
-                                    <span 
-                                      key={index}
-                                      className={`viewer-badge ${viewer && viewer.toLowerCase().includes('copilot') ? 'viewer-badge-copilot' : 'viewer-badge-user'}`}
-                                      title={`${viewer} is looking at this comment`}
-                                    >
-                                      {viewer && viewer.toLowerCase().includes('copilot') ? '👁️' : '👀'} {viewer}
-                                    </span>
-                                  ))}
+                                  {viewers.map((viewer, index) => {
+                                    // Ensure viewer is a string before calling toLowerCase
+                                    const safeViewer = typeof viewer === 'string' ? viewer : String(viewer || '');
+                                    const isCopilot = safeViewer && safeViewer.toLowerCase().includes('copilot');
+                                    return (
+                                      <span 
+                                        key={index}
+                                        className={`viewer-badge ${isCopilot ? 'viewer-badge-copilot' : 'viewer-badge-user'}`}
+                                        title={`${safeViewer} is looking at this comment`}
+                                      >
+                                        {isCopilot ? '👁️' : '👀'} {safeViewer}
+                                      </span>
+                                    );
+                                  })}
                                 </div>
                               )}
                             </div>
