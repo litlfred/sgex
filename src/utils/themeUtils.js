@@ -1,6 +1,7 @@
 /**
  * Utility function to get the appropriate image path based on the current theme
  * This can be used outside React components
+ * DEPRECATED: Use getResponsiveImagePath from responsiveImageUtils for better mobile support
  * @param {string} baseImagePath - The base image path (e.g., "sgex-mascot.png")
  * @returns {string} The theme-appropriate image path
  */
@@ -26,5 +27,8 @@ export const getThemeImagePath = (baseImagePath) => {
   
   return finalPath;
 };
+
+// Re-export responsive utilities for convenience
+export { getResponsiveImagePath, isMobileScreen } from './responsiveImageUtils';
 
 export default getThemeImagePath;

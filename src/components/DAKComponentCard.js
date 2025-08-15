@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import useThemeImage from '../hooks/useThemeImage';
+import ResponsiveImage from './ResponsiveImage';
 import { getAltText, ALT_TEXT_KEYS } from '../utils/imageAltTextHelper';
 import './DAKComponentCard.css';
 
@@ -8,9 +8,6 @@ const DAKComponentCard = ({ component, onClick, className = '' }) => {
   const { t } = useTranslation();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
-  
-  // Get theme-aware image path
-  const cardImagePath = useThemeImage(component.cardImage);
 
   const handleImageLoad = () => {
     setImageLoaded(true);
@@ -48,8 +45,8 @@ const DAKComponentCard = ({ component, onClick, className = '' }) => {
       <div className="component-header">
         {/* Card image with fallback to icon */}
         <div className="component-image-container">
-          <img 
-            src={cardImagePath}
+          <ResponsiveImage 
+            src={component.cardImage}
             alt={getAltText(t, ALT_TEXT_KEYS.ICON_DAK_COMPONENT, component.name, { name: component.name })}
             className="component-card-image"
             onLoad={handleImageLoad}

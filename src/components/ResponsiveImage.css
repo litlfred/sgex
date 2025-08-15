@@ -1,0 +1,120 @@
+/* 
+ * Responsive Image Utilities
+ * CSS classes and utilities for responsive image loading
+ */
+
+/* Base responsive image class */
+.responsive-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  transition: opacity 0.3s ease;
+}
+
+/* Responsive image with aspect ratio preservation */
+.responsive-image-container {
+  position: relative;
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+}
+
+.responsive-image-container.aspect-square {
+  padding-bottom: 100%; /* 1:1 aspect ratio */
+}
+
+.responsive-image-container.aspect-wide {
+  padding-bottom: 66.67%; /* 3:2 aspect ratio */
+}
+
+.responsive-image-container.aspect-portrait {
+  padding-bottom: 150%; /* 2:3 aspect ratio */
+}
+
+.responsive-image-container img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Loading states */
+.responsive-image.loading {
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.responsive-image.loaded {
+  opacity: 1;
+}
+
+/* Mobile-first responsive image loading with CSS */
+.responsive-image-bg {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: background-image 0.3s ease;
+}
+
+/* Performance optimizations */
+.responsive-image-bg {
+  /* Optimize rendering performance */
+  will-change: background-image;
+  contain: layout style paint;
+}
+
+/* Lazy loading support */
+.responsive-image[loading="lazy"] {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.responsive-image[loading="lazy"].loaded {
+  opacity: 1;
+}
+
+/* Responsive behavior for mobile screens */
+@media (max-width: 768px) {
+  .responsive-image {
+    /* Optimize image rendering on mobile */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+  
+  /* Mobile-specific optimizations */
+  .responsive-image-container {
+    /* Reduce reflows on mobile */
+    contain: layout style;
+  }
+}
+
+/* High-DPI display support */
+@media (-webkit-min-device-pixel-ratio: 2), 
+       (min-resolution: 192dpi) {
+  .responsive-image {
+    /* Better rendering on high-DPI displays */
+    image-rendering: -webkit-optimize-contrast;
+  }
+}
+
+/* Dark mode support for image containers */
+body.theme-dark .responsive-image-container {
+  /* Adjust container styling for dark mode if needed */
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Focus and accessibility improvements */
+.responsive-image:focus {
+  outline: 2px solid #0078d4;
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .responsive-image,
+  .responsive-image-bg {
+    transition: none;
+  }
+}
