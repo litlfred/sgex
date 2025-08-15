@@ -67,11 +67,16 @@
           var secondSegment = pathSegments[1];
           
           if (routeConfig && routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(secondSegment)) {
-            // Branch deployment pattern: /sgex/:branch/:component/...
+            // Known deployed branch pattern: /sgex/:branch/:component/...
             handleBranchDeployment(pathSegments, l, routeConfig, '/sgex/');
           } else if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(secondSegment)) {
             // Component-first pattern: /sgex/:component/:user/:repo/:branch
             handleComponentFirst(pathSegments, l, '/sgex/');
+          } else if (secondSegment && pathSegments.length >= 3) {
+            // Try branch deployment pattern for potential branch names
+            // This handles dynamic branch deployments not in the static config
+            console.log('SGEX: Attempting branch deployment for unknown branch: ' + secondSegment);
+            handleBranchDeployment(pathSegments, l, routeConfig, '/sgex/');
           } else {
             // Unknown pattern - show error
             showErrorPage('Unknown URL Pattern', 
@@ -96,11 +101,15 @@
           var firstSegment = relevantSegments[1];
           
           if (routeConfig && routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(firstSegment)) {
-            // Branch deployment pattern: /:branch/:component/... or /sgex/:branch/:component/...
+            // Known deployed branch pattern: /:branch/:component/... or /sgex/:branch/:component/...
             handleBranchDeployment(relevantSegments, l, routeConfig, basePath);
           } else if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(firstSegment)) {
             // Component-first pattern: /:component/:user/:repo/... or /sgex/:component/:user/:repo/...
             handleComponentFirst(relevantSegments, l, basePath);
+          } else if (firstSegment && relevantSegments.length >= 3) {
+            // Try branch deployment pattern for potential branch names
+            console.log('SGEX: Attempting local branch deployment for unknown branch: ' + firstSegment);
+            handleBranchDeployment(relevantSegments, l, routeConfig, basePath);
           } else {
             // Simple SPA routing for unknown patterns
             var routePath = hasStandardPrefix ? pathSegments.slice(1).join('/') : pathSegments.join('/');
@@ -130,9 +139,11 @@
 
           var branch = pathSegments[1];
           var component = pathSegments[2];
+          var isBranchKnown = routeConfig && routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(branch);
           
-          // Validate component exists in the deployed branch
-          if (!routeConfig.isValidComponent(component)) {
+          // For known branches, validate component strictly
+          // For unknown branches, be more permissive to allow dynamic deployments
+          if (isBranchKnown && routeConfig && !routeConfig.isValidComponent(component)) {
             showErrorPage('Invalid Component', 
               'Component "' + component + '" is not valid for branch "' + branch + '". Check the component name and try again.',
               'invalid-component-for-branch');
