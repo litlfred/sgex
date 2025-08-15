@@ -72,6 +72,16 @@
           } else if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(secondSegment)) {
             // Component-first pattern: /sgex/:component/:user/:repo/:branch
             handleComponentFirst(pathSegments, l, '/sgex/');
+          } else if (pathSegments.length === 3 && pathSegments[2] === 'index.html') {
+            // Branch deployment with index.html: /sgex/:branch/index.html
+            // Redirect to the branch root which should load the welcome page
+            var branchPath = '/sgex/' + secondSegment + '/';
+            console.log('SGEX Branch Deployment Redirect (index.html):', {
+              from: l.pathname,
+              to: branchPath,
+              branch: secondSegment
+            });
+            l.replace(l.protocol + '//' + l.host + branchPath);
           } else {
             // Unknown pattern - show error
             showErrorPage('Unknown URL Pattern', 
