@@ -664,6 +664,11 @@ class BugReportService {
   clearCache() {
     this.templateCache.clear();
   }
+
+  // Public method to get technical details for copying to clipboard
+  getTechnicalDetails(contextData = {}) {
+    return this._generateContextualInfo(contextData);
+  }
 }
 
 // Create and export singleton instance
