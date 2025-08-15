@@ -92,10 +92,17 @@
     </div>
 
     <div class="test-section">
-        <h2>Test 7: Redirect Loop Prevention</h2>
+        <h2>Test 7: Branch Deployment with index.html</h2>
+        <p>Tests URL pattern: <code>http://litlfred.github.io/sgex/:branch/index.html</code></p>
+        <button onclick="testBranchIndexHtml()">Test Branch index.html Pattern</button>
+        <div id="test7-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 8: Redirect Loop Prevention</h2>
         <p>Tests detection and prevention of infinite redirect loops</p>
         <button onclick="testRedirectLoop()">Test Redirect Loop Prevention</button>
-        <div id="test7-result" class="result"></div>
+        <div id="test8-result" class="result"></div>
     </div>
 
     <!-- Load route configuration -->
@@ -262,6 +269,13 @@
                     newUrl += l.hash;
                     l.replace(newUrl);
                     
+                } else if (pathSegments.length === 3 && pathSegments[2] === 'index.html') {
+                    // Branch deployment with index.html: /sgex/:branch/index.html
+                    // Redirect to the branch root which should load the welcome page
+                    var branchPath = '/sgex/' + secondSegment + '/';
+                    var newUrl = l.protocol + '//' + l.host + branchPath;
+                    l.replace(newUrl);
+                    
                 } else {
                     // Unknown pattern - show error
                     l.errorShown = {
@@ -381,11 +395,50 @@ Analysis: ${allPass ? 'Asset page routing works correctly for both branch-first 
             `;
         }
 
+        function testBranchIndexHtml() {
+            // Test the specific case from the GitHub issue
+            const result = executeRoutingLogic('litlfred.github.io', '/sgex/copilot-fix-780-2/index.html');
+            const expected = 'https://litlfred.github.io/sgex/copilot-fix-780-2/';
+            const isCorrect = result.redirectedTo === expected;
+            
+            // Test additional cases
+            const result2 = executeRoutingLogic('litlfred.github.io', '/sgex/feature-branch/index.html');
+            const expected2 = 'https://litlfred.github.io/sgex/feature-branch/';
+            const isCorrect2 = result2.redirectedTo === expected2;
+            
+            // Test that it doesn't affect other URLs
+            const result3 = executeRoutingLogic('litlfred.github.io', '/sgex/copilot-fix-780-2/dashboard');
+            const hasError3 = result3.errorShown && result3.errorShown.code === 'unknown-pattern';
+            
+            const allPass = isCorrect && isCorrect2 && hasError3;
+            
+            document.getElementById('test7-result').innerHTML = `
+Result: ${allPass ? '<span class="pass">✅ PASS</span>' : '<span class="fail">❌ FAIL</span>'}
+
+Test 1 - Issue Case: /sgex/copilot-fix-780-2/index.html
+Expected: ${expected}
+Actual: ${result.redirectedTo || 'No redirect'}
+Status: ${isCorrect ? '✓ PASS' : '✗ FAIL'}
+
+Test 2 - General Case: /sgex/feature-branch/index.html  
+Expected: ${expected2}
+Actual: ${result2.redirectedTo || 'No redirect'}
+Status: ${isCorrect2 ? '✓ PASS' : '✗ FAIL'}
+
+Test 3 - Non-index.html: /sgex/copilot-fix-780-2/dashboard
+Expected: Error (unknown-pattern)
+Actual: ${hasError3 ? 'Error (unknown-pattern)' : 'No error or different error'}
+Status: ${hasError3 ? '✓ PASS' : '✗ FAIL'}
+
+Analysis: ${allPass ? 'Branch deployment with index.html routing works correctly - fixes the original GitHub issue' : 'Branch index.html routing needs fixes'}
+            `;
+        }
+
         function testRedirectLoop() {
             const result = executeRoutingLogic('litlfred.github.io', '/sgex/dashboard/demo-user/test-dak', '?/already-redirected');
             const hasError = result.errorShown && result.errorShown.code === 'routing-loop';
             
-            document.getElementById('test7-result').innerHTML = `
+            document.getElementById('test8-result').innerHTML = `
 Result: ${hasError ? '<span class="pass">✅ PASS</span>' : '<span class="fail">❌ FAIL</span>'}
 Input URL: /sgex/dashboard/demo-user/test-dak?/already-redirected
 Expected: Redirect loop detection error
