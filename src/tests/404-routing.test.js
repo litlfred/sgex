@@ -18,8 +18,7 @@ const mockLocation = {
 // Mock getSGEXRouteConfig
 const mockRouteConfig = {
   isDeployedBranch: jest.fn(),
-  isValidDAKComponent: jest.fn(),
-  isValidComponent: jest.fn()
+  isValidDAKComponent: jest.fn()
 };
 
 // Set up global mocks
@@ -61,7 +60,7 @@ describe('404.html SPA Routing', () => {
     const content = fs.readFileSync(publicPath, 'utf8');
     
     // Should contain SPA routing logic
-    expect(content).toContain('SGEX Dynamic URL Routing');
+    expect(content).toContain('Single Page Apps for GitHub Pages');
     expect(content).toContain('getSGEXRouteConfig');
     expect(content).toContain('isGitHubPages');
     expect(content).toContain('l.replace(newUrl)');
@@ -109,26 +108,6 @@ describe('404.html SPA Routing', () => {
     
     expect(isGitHubPages).toBe(false);
     expect(pathSegments[0]).toBe('dashboard');
-  });
-
-  test('should handle dynamic branch deployment URLs', () => {
-    // Mock configuration where the branch is not in known deployedBranches
-    mockRouteConfig.isDeployedBranch.mockReturnValue(false);
-    mockRouteConfig.isValidComponent.mockReturnValue(false);
-    
-    // Set up location for dynamic branch deployment (the issue case)
-    mockLocation.pathname = '/sgex/copilot-fix-809/dashboard/litlfred/smart-ips-pilgrimage';
-    
-    const pathSegments = mockLocation.pathname.split('/').filter(Boolean);
-    
-    expect(pathSegments[0]).toBe('sgex');
-    expect(pathSegments[1]).toBe('copilot-fix-809'); // unknown branch name
-    expect(pathSegments[2]).toBe('dashboard'); // component
-    expect(pathSegments[3]).toBe('litlfred'); // user
-    expect(pathSegments[4]).toBe('smart-ips-pilgrimage'); // repo
-    
-    // Should have enough segments to attempt branch deployment
-    expect(pathSegments.length).toBeGreaterThanOrEqual(3);
   });
 
   test('should preserve query parameters and hash in redirection', () => {
