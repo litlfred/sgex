@@ -17,8 +17,7 @@ const mockLocation = {
 
 // Mock getSGEXRouteConfig
 const mockRouteConfig = {
-  isDeployedBranch: jest.fn(),
-  isValidDAKComponent: jest.fn()
+  isValidComponent: jest.fn()
 };
 
 // Set up global mocks
@@ -60,16 +59,15 @@ describe('404.html SPA Routing', () => {
     const content = fs.readFileSync(publicPath, 'utf8');
     
     // Should contain SPA routing logic
-    expect(content).toContain('Single Page Apps for GitHub Pages');
+    expect(content).toContain('SGEX Dynamic URL Routing');
     expect(content).toContain('getSGEXRouteConfig');
     expect(content).toContain('isGitHubPages');
     expect(content).toContain('l.replace(newUrl)');
   });
 
   test('should handle GitHub Pages SGEX deployment URLs', () => {
-    // Mock configuration
-    mockRouteConfig.isDeployedBranch.mockReturnValue(false);
-    mockRouteConfig.isValidDAKComponent.mockReturnValue(true);
+    // Mock configuration - no deployed branch checks needed
+    mockRouteConfig.isValidComponent.mockReturnValue(true);
     
     // Set up location for GitHub Pages deployment
     mockLocation.pathname = '/sgex/dashboard/user/repo';
@@ -84,9 +82,8 @@ describe('404.html SPA Routing', () => {
   });
 
   test('should handle branch deployment URLs', () => {
-    // Mock configuration for branch deployment
-    mockRouteConfig.isDeployedBranch.mockReturnValue(true);
-    mockRouteConfig.isValidDAKComponent.mockReturnValue(false);
+    // Mock configuration - all branches treated as unknown/dynamic
+    mockRouteConfig.isValidComponent.mockReturnValue(false);
     
     // Set up location for branch deployment
     mockLocation.pathname = '/sgex/main/dashboard/user/repo';
@@ -94,7 +91,7 @@ describe('404.html SPA Routing', () => {
     const pathSegments = mockLocation.pathname.split('/').filter(Boolean);
     
     expect(pathSegments[0]).toBe('sgex');
-    expect(pathSegments[1]).toBe('main'); // branch name
+    expect(pathSegments[1]).toBe('main'); // branch name (treated as unknown/dynamic)
     expect(pathSegments[2]).toBe('dashboard'); // component
   });
 
