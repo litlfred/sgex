@@ -78,13 +78,12 @@ const WelcomePage = () => {
       // Small delay to ensure the component is fully rendered
       const timer = setTimeout(() => {
         patTokenInputRef.current.focus();
-      }, 100);
-      
-      // Clear the focus parameter from state to prevent re-focusing on re-renders
-      navigate(location.pathname, { 
-        replace: true, 
-        state: { ...location.state, focusPATInput: undefined }
-      });
+        // Clear the focus parameter from state AFTER focusing to prevent re-focusing on re-renders
+        navigate(location.pathname, { 
+          replace: true, 
+          state: { ...location.state, focusPATInput: undefined }
+        });
+      }, 150);
       
       return () => clearTimeout(timer);
     }
@@ -260,6 +259,8 @@ const WelcomePage = () => {
                         placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
                         className={`token-input ${patError ? 'error' : ''}`}
                         disabled={patLoading}
+                        aria-label="GitHub Personal Access Token"
+                        aria-describedby="pat-help-text"
                       />
                     </div>
                     <button 
@@ -276,6 +277,7 @@ const WelcomePage = () => {
                       type="button"
                       className="pat-help-btn" 
                       onClick={() => setShowPATHelp(true)}
+                      id="pat-help-text"
                     >
                       📖 Help creating a PAT
                     </button>

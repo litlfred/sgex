@@ -218,7 +218,12 @@ const PageHeader = () => {
             )}
           </div>
         ) : (
-          <button className="login-btn" onClick={handleHomeNavigation}>
+          <button 
+            className="login-btn" 
+            onClick={handleHomeNavigation}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleHomeNavigation()}
+            aria-label="Navigate to login page"
+          >
             Login
           </button>
         )}
