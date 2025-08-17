@@ -1,0 +1,127 @@
+{
+  "whoKnownRepositories": [
+    {
+      "id": 1001,
+      "name": "smart-immunizations",
+      "full_name": "WorldHealthOrganization/smart-immunizations",
+      "description": "WHO SMART Guidelines for Immunizations - Digital Adaptation Kit containing business processes, decision support logic, and data models for immunization programs",
+      "html_url": "https://github.com/WorldHealthOrganization/smart-immunizations",
+      "clone_url": "https://github.com/WorldHealthOrganization/smart-immunizations.git",
+      "topics": ["who", "smart-guidelines", "immunization", "vaccines", "dak", "fhir"],
+      "language": "FML",
+      "stargazers_count": 25,
+      "forks_count": 12,
+      "updated_at": "2024-01-20T10:30:00Z",
+      "smart_guidelines_compatible": true,
+      "private": false,
+      "owner": {
+        "login": "WorldHealthOrganization",
+        "avatar_url": "https://avatars.githubusercontent.com/u/9166906?s=200&v=4",
+        "type": "Organization"
+      }
+    },
+    {
+      "id": 1002,
+      "name": "smart-trust",
+      "full_name": "WorldHealthOrganization/smart-trust",
+      "description": "WHO SMART Guidelines for Trust and Verification Framework - Digital health certificates, verification protocols, and trust networks",
+      "html_url": "https://github.com/WorldHealthOrganization/smart-trust",
+      "clone_url": "https://github.com/WorldHealthOrganization/smart-trust.git",
+      "topics": ["who", "smart-guidelines", "trust", "verification", "certificates", "dak"],
+      "language": "FML",
+      "stargazers_count": 18,
+      "forks_count": 8,
+      "updated_at": "2024-01-18T14:20:00Z",
+      "smart_guidelines_compatible": true,
+      "private": false,
+      "owner": {
+        "login": "WorldHealthOrganization",
+        "avatar_url": "https://avatars.githubusercontent.com/u/9166906?s=200&v=4",
+        "type": "Organization"
+      }
+    },
+    {
+      "id": 1003,
+      "name": "smart-base",
+      "full_name": "WorldHealthOrganization/smart-base",
+      "description": "WHO SMART Guidelines Base Implementation Guide - Core profiles, extensions, and terminology for all SMART Guidelines DAKs",
+      "html_url": "https://github.com/WorldHealthOrganization/smart-base",
+      "clone_url": "https://github.com/WorldHealthOrganization/smart-base.git",
+      "topics": ["who", "smart-guidelines", "base", "fhir", "profiles", "terminology"],
+      "language": "FML",
+      "stargazers_count": 35,
+      "forks_count": 15,
+      "updated_at": "2024-01-22T09:15:00Z",
+      "smart_guidelines_compatible": true,
+      "private": false,
+      "owner": {
+        "login": "WorldHealthOrganization",
+        "avatar_url": "https://avatars.githubusercontent.com/u/9166906?s=200&v=4",
+        "type": "Organization"
+      }
+    },
+    {
+      "id": 1004,
+      "name": "smart-anc",
+      "full_name": "WorldHealthOrganization/smart-anc",
+      "description": "WHO SMART Guidelines for Antenatal Care - Digital Adaptation Kit for pregnancy care, monitoring, and interventions",
+      "html_url": "https://github.com/WorldHealthOrganization/smart-anc",
+      "clone_url": "https://github.com/WorldHealthOrganization/smart-anc.git",
+      "topics": ["who", "smart-guidelines", "anc", "antenatal-care", "pregnancy", "maternal-health"],
+      "language": "FML",
+      "stargazers_count": 22,
+      "forks_count": 10,
+      "updated_at": "2024-01-16T11:45:00Z",
+      "smart_guidelines_compatible": true,
+      "private": false,
+      "owner": {
+        "login": "WorldHealthOrganization",
+        "avatar_url": "https://avatars.githubusercontent.com/u/9166906?s=200&v=4",
+        "type": "Organization"
+      }
+    },
+    {
+      "id": 1005,
+      "name": "smart-ig-starter-kit",
+      "full_name": "WorldHealthOrganization/smart-ig-starter-kit",
+      "description": "WHO SMART Guidelines Implementation Guide Starter Kit - Tools and templates for creating SMART Guidelines DAKs",
+      "html_url": "https://github.com/WorldHealthOrganization/smart-ig-starter-kit",
+      "clone_url": "https://github.com/WorldHealthOrganization/smart-ig-starter-kit.git",
+      "topics": ["who", "smart-guidelines", "starter-kit", "template", "tools", "dak"],
+      "language": "JavaScript",
+      "stargazers_count": 15,
+      "forks_count": 6,
+      "updated_at": "2024-01-14T16:30:00Z",
+      "smart_guidelines_compatible": true,
+      "private": false,
+      "owner": {
+        "login": "WorldHealthOrganization",
+        "avatar_url": "https://avatars.githubusercontent.com/u/9166906?s=200&v=4",
+        "type": "Organization"
+      }
+    },
+    {
+      "id": 1006,
+      "name": "smart-ig-empty",
+      "full_name": "WorldHealthOrganization/smart-ig-empty",
+      "description": "Empty WHO SMART Guidelines template for creating new Digital Adaptation Kits from scratch",
+      "html_url": "https://github.com/WorldHealthOrganization/smart-ig-empty",
+      "clone_url": "https://github.com/WorldHealthOrganization/smart-ig-empty.git",
+      "topics": ["who", "smart-guidelines", "template", "empty", "dak"],
+      "language": "FML",
+      "stargazers_count": 12,
+      "forks_count": 4,
+      "updated_at": "2024-01-12T08:20:00Z",
+      "smart_guidelines_compatible": true,
+      "private": false,
+      "owner": {
+        "login": "WorldHealthOrganization",
+        "avatar_url": "https://avatars.githubusercontent.com/u/9166906?s=200&v=4",
+        "type": "Organization"
+      }
+    }
+  ],
+  "version": "1.0.0",
+  "lastUpdated": "2024-01-22T12:00:00Z",
+  "description": "Known WHO SMART Guidelines repositories for unauthenticated access fallback"
+}

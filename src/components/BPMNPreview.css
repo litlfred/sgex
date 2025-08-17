@@ -23,13 +23,75 @@
   background: var(--bpmn-preview-bg);
 }
 
-/* CSS Variables for BPMN preview backgrounds */
+/* CSS Variables for BPMN preview backgrounds with better contrast */
 :root {
   --bpmn-preview-bg: #f8f9ff; /* Very light blue for light mode */
+  --bpmn-preview-text-color: #333333; /* Dark text for light mode */
+  --bpmn-preview-stroke-color: #666666; /* Medium stroke for light mode */
 }
 
 body.theme-dark {
   --bpmn-preview-bg: #1a1a2e; /* Dark blue for dark mode */
+  --bpmn-preview-text-color: #ffffff; /* White text for dark mode */
+  --bpmn-preview-stroke-color: #cccccc; /* Light stroke for dark mode */
+}
+
+/* BPMN Preview specific SVG styling fixes */
+.preview-container svg,
+.preview-container .bjs-container svg,
+.preview-container .djs-container svg {
+  background-color: var(--bpmn-preview-bg) !important;
+  background: var(--bpmn-preview-bg) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Text elements in preview - ensure visibility */
+.preview-container svg text,
+.preview-container svg .djs-element text,
+.preview-container svg text tspan {
+  fill: var(--bpmn-preview-text-color) !important;
+  color: var(--bpmn-preview-text-color) !important;
+  font-weight: normal !important;
+  font-size: 10px !important;
+  font-family: 'Arial', sans-serif !important;
+}
+
+/* Preview shapes - ensure visibility */
+.preview-container svg .djs-element .djs-visual > rect,
+.preview-container svg g[data-element-id] rect {
+  fill: var(--who-card-bg) !important;
+  stroke: var(--bpmn-preview-stroke-color) !important;
+  stroke-width: 1px !important;
+}
+
+.preview-container svg .djs-element .djs-visual > circle,
+.preview-container svg g[data-element-id] circle {
+  fill: var(--who-card-bg) !important;
+  stroke: var(--bpmn-preview-stroke-color) !important;
+  stroke-width: 1px !important;
+}
+
+.preview-container svg .djs-element .djs-visual > polygon,
+.preview-container svg g[data-element-id] polygon {
+  fill: var(--who-hover-bg) !important;
+  stroke: var(--bpmn-preview-stroke-color) !important;
+  stroke-width: 1px !important;
+}
+
+/* Preview connections */
+.preview-container svg .djs-connection .djs-visual > path,
+.preview-container svg .djs-connection path {
+  stroke: var(--bpmn-preview-stroke-color) !important;
+  fill: none !important;
+  stroke-width: 1px !important;
+}
+
+/* Preview markers */
+.preview-container svg defs marker path,
+.preview-container svg marker path {
+  fill: var(--bpmn-preview-stroke-color) !important;
+  stroke: var(--bpmn-preview-stroke-color) !important;
 }
 
 .preview-loading {

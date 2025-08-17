@@ -1,16 +1,14 @@
-name: Deploy Landing Page from Main
+name: Deploy Landing Page
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/landing-page-deployment.yml'
+  # Manual trigger only - prevents accidental overwrites of landing page
   workflow_dispatch:
     inputs:
+      source_branch:
+        description: 'Branch to deploy from (defaults to main)'
+        required: false
+        type: string
+        default: 'main'
       force_deployment:
         description: 'Force deployment even if no changes detected'
         required: false
@@ -42,10 +40,10 @@ jobs:
       commit_sha: ${{ steps.deployment_info.outputs.commit_sha }}
     
     steps:
-      - name: Checkout main branch
+      - name: Checkout source branch
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.event.inputs.source_branch || 'main' }}
           fetch-depth: 0
 
       - name: Configure git user
@@ -62,19 +60,22 @@ jobs:
 
       - name: Install dependencies
         shell: bash
+        continue-on-error: false
         run: |
           set -e
           echo "Installing dependencies..."
-          npm ci
+          npm ci --legacy-peer-deps
 
       - name: Build React application for landing page
         shell: bash
+        continue-on-error: false
         run: |
           set -e
           
-          # Always build for landing page deployment from main branch
+          # Build for landing page deployment from selected source branch
+          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
           export PUBLIC_URL="/sgex/"
-          echo "Building React application for landing page deployment from main branch..."
+          echo "Building React application for landing page deployment from source branch: $source_branch"
           echo "Using PUBLIC_URL: $PUBLIC_URL"
           
           # Set CI=false to avoid treating CSS warnings as errors in production builds
@@ -88,14 +89,15 @@ jobs:
             exit 1
           fi
           
-          echo "✅ React application built successfully with PUBLIC_URL: $PUBLIC_URL"
+          echo "✅ React application built successfully from $source_branch with PUBLIC_URL: $PUBLIC_URL"
 
       - name: Prepare deployment files for landing page
         shell: bash
         run: |
           set -e
           
-          echo "Preparing landing page deployment from main branch..."
+          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
+          echo "Preparing landing page deployment from source branch: $source_branch"
           
           # Create a landing page directory to hold the files
           mkdir -p landing-page
@@ -118,11 +120,11 @@ jobs:
             exit 1
           fi
           
-          echo "✅ Landing page preparation completed successfully"
+          echo "✅ Landing page preparation completed successfully from $source_branch"
           echo "Landing page contents:"
           ls -la landing-page/
 
-      - name: Deploy to gh-pages (landing page from main)
+      - name: Deploy to gh-pages (landing page)
         shell: bash
         run: |
           set -e
@@ -211,7 +213,7 @@ jobs:
           
           echo "✅ Landing page deployment completed successfully"
 
-      - name: Commit and push changes (landing page from main)
+      - name: Commit and push changes (landing page)
         shell: bash
         run: |
           set -e
@@ -226,12 +228,118 @@ jobs:
           # Check if there are any changes to commit
           git add -A
           
-          # Determine commit message for landing page deployment from main
-          deployment_msg="🚀 Deploy landing page from main branch"
-          deployment_details="- Updated landing page with React-based branch selector from main branch
+          # Determine commit message for landing page deployment from source branch
+          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
+          deployment_msg="🚀 Deploy landing page from $source_branch branch"
+          deployment_details="- Updated landing page with React-based branch selector from $source_branch branch
           - Landing page deployed to GitHub Pages /sgex/
           - All branch subdirectories preserved
           - Using deploy route configuration for simplified landing page"
+          
+          # Function to clean git state
+          clean_git_state() {
+            echo "🧹 Cleaning git state..."
+            # Abort any ongoing rebase or merge
+            git rebase --abort 2>/dev/null || true
+            git merge --abort 2>/dev/null || true
+            # Reset to clean state while preserving staged changes
+            git reset --mixed HEAD 2>/dev/null || true
+            # Re-stage our changes
+            git add -A
+            echo "✅ Git state cleaned"
+          }
+          
+          # Function to perform robust pull with rebase
+          robust_pull_rebase() {
+            echo "🔄 Performing robust pull with rebase..."
+            
+            # Fetch latest changes
+            if ! git fetch origin gh-pages; then
+              echo "❌ Failed to fetch from origin"
+              return 1
+            fi
+            
+            # Check if we're behind remote
+            local_commit=$(git rev-parse HEAD)
+            remote_commit=$(git rev-parse origin/gh-pages)
+            
+            if [[ "$local_commit" == "$remote_commit" ]]; then
+              echo "✅ Already up to date with remote"
+              return 0
+            fi
+            
+            echo "📊 Local: $local_commit"
+            echo "📊 Remote: $remote_commit"
+            
+            # Perform rebase with conflict handling
+            if git pull --rebase origin gh-pages; then
+              echo "✅ Pull rebase successful"
+              return 0
+            else
+              echo "⚠️ Pull rebase conflicts detected, analyzing..."
+              
+              # Check for conflicts
+              if git status --porcelain | grep -q "^UU\|^AA\|^DD"; then
+                echo "🔍 Found unresolved conflicts:"
+                git status --porcelain | grep "^UU\|^AA\|^DD" || true
+                
+                # For landing page deployments, try to auto-resolve by accepting our version
+                # since landing page updates the root while branches use subdirectories
+                echo "🔧 Attempting automatic conflict resolution..."
+                
+                # Get list of conflicted files
+                conflicted_files=$(git diff --name-only --diff-filter=U 2>/dev/null || true)
+                
+                if [[ -n "$conflicted_files" ]]; then
+                  echo "📝 Conflicted files:"
+                  echo "$conflicted_files"
+                  
+                  # For landing page conflicts, use our version (--ours)
+                  echo "🔧 Resolving conflicts by accepting our changes..."
+                  git checkout --ours . 2>/dev/null || true
+                  git add -A
+                  
+                  # Continue rebase
+                  if git rebase --continue; then
+                    echo "✅ Automatic conflict resolution successful"
+                    return 0
+                  else
+                    echo "❌ Failed to continue rebase after conflict resolution"
+                    git rebase --abort
+                    return 1
+                  fi
+                else
+                  echo "❌ No conflicted files found but rebase failed"
+                  git rebase --abort
+                  return 1
+                fi
+              else
+                echo "❌ Pull rebase failed but no conflicts detected"
+                git rebase --abort
+                return 1
+              fi
+            fi
+          }
+          
+          # Function to perform robust push
+          robust_push() {
+            echo "🚀 Performing robust push..."
+            
+            # Try push with lease for safety
+            if git push --force-with-lease origin gh-pages; then
+              echo "✅ Push successful with lease protection"
+              return 0
+            else
+              echo "⚠️ Force-with-lease push failed, trying regular push..."
+              if git push origin gh-pages; then
+                echo "✅ Regular push successful"
+                return 0
+              else
+                echo "❌ Push failed"
+                return 1
+              fi
+            fi
+          }
           
           # Check if there are changes to commit
           if git diff --cached --quiet; then
@@ -240,7 +348,7 @@ jobs:
               git commit --allow-empty -m "$deployment_msg
               
               - Force deployment requested by user
-              - Built from main branch
+              - Built from $source_branch branch
               - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
               - Commit: ${{ github.sha }}"
             else
@@ -258,20 +366,69 @@ jobs:
             - Commit: ${{ github.sha }}"
           fi
           
-          echo "Performing final push with rebase as requested..."
+          # Enhanced push with robust git operations and retry logic
+          max_retries=3
+          retry_count=0
+          success=false
           
-          # Do a final pull --rebase then push as requested in the issue
-          git pull --rebase origin gh-pages || {
-            echo "Rebase failed, trying merge strategy..."
-            git rebase --abort 2>/dev/null || true
-            git pull origin gh-pages
-          }
+          while [[ $retry_count -lt $max_retries ]] && [[ "$success" == "false" ]]; do
+            retry_count=$((retry_count + 1))
+            echo "🔄 Push attempt $retry_count of $max_retries"
+            
+            # Clean git state if this is a retry
+            if [[ $retry_count -gt 1 ]]; then
+              clean_git_state
+              # Re-commit our changes
+              git commit -m "$deployment_msg
+              
+              $deployment_details
+              - Retry deployment attempt $retry_count
+              - Deployed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+              - Commit: ${{ github.sha }}"
+            fi
+            
+            # Perform robust pull with rebase
+            if robust_pull_rebase; then
+              echo "✅ Successfully synced with remote"
+              
+              # Perform robust push
+              if robust_push; then
+                echo "✅ Landing page deployment push successful on attempt $retry_count"
+                success=true
+              else
+                echo "⚠️ Push failed on attempt $retry_count"
+                if [[ $retry_count -lt $max_retries ]]; then
+                  # Brief delay before retry
+                  sleep_time=$((retry_count * 2))
+                  echo "💤 Waiting ${sleep_time} seconds before next attempt..."
+                  sleep $sleep_time
+                fi
+              fi
+            else
+              echo "⚠️ Failed to sync with remote on attempt $retry_count"
+              if [[ $retry_count -lt $max_retries ]]; then
+                # Brief delay before retry
+                sleep_time=$((retry_count * 2))
+                echo "💤 Waiting ${sleep_time} seconds before next attempt..."
+                sleep $sleep_time
+              fi
+            fi
+          done
           
-          # Push the changes
-          if git push origin gh-pages; then
-            echo "✅ Landing page deployment push successful"
-          else
-            echo "❌ Push failed"
+          if [[ "$success" == "false" ]]; then
+            echo "❌ Failed to deploy landing page after $max_retries attempts"
+            echo "This may indicate:"
+            echo "  - Persistent network issues"
+            echo "  - Repository access problems"
+            echo "  - Concurrent deployment conflicts"
+            echo "  - Git repository corruption"
+            echo ""
+            echo "🔍 Final git status:"
+            git status --porcelain || true
+            echo ""
+            echo "📊 Remote status:"
+            git fetch origin gh-pages 2>/dev/null || true
+            git log --oneline -5 origin/gh-pages 2>/dev/null || true
             exit 1
           fi
           
@@ -282,12 +439,13 @@ jobs:
         shell: bash
         run: |
           commit_sha="${{ github.sha }}"
+          source_branch="${{ github.event.inputs.source_branch || 'main' }}"
           deployment_url="https://litlfred.github.io/sgex/"
           deployment_type="landing-page"
           
           echo "🚀 Landing Page Deployment Summary:"
           echo "- Landing Page URL: $deployment_url"
-          echo "- Source Branch: main"
+          echo "- Source Branch: $source_branch"
           echo "- Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo "- Commit: $commit_sha"
           echo ""
@@ -297,7 +455,7 @@ jobs:
           echo "deployment_status=success" >> $GITHUB_OUTPUT
           echo "deployment_url=$deployment_url" >> $GITHUB_OUTPUT
           echo "deployment_type=$deployment_type" >> $GITHUB_OUTPUT
-          echo "source_branch=main" >> $GITHUB_OUTPUT
+          echo "source_branch=$source_branch" >> $GITHUB_OUTPUT
           echo "commit_sha=$commit_sha" >> $GITHUB_OUTPUT
 
       - name: Create deployment summary
@@ -307,16 +465,17 @@ jobs:
           deployment_type="${{ steps.deployment_info.outputs.deployment_type }}"
           deployment_url="${{ steps.deployment_info.outputs.deployment_url }}"
           commit_sha="${{ steps.deployment_info.outputs.commit_sha }}"
+          source_branch="${{ steps.deployment_info.outputs.source_branch }}"
           
           echo "## 🚀 Landing Page Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Deployment URL:** $deployment_url" >> $GITHUB_STEP_SUMMARY
-          echo "**Source Branch:** main" >> $GITHUB_STEP_SUMMARY
+          echo "**Source Branch:** $source_branch" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`$commit_sha\`" >> $GITHUB_STEP_SUMMARY
           echo "**Deployed:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ✅ Deployment Status" >> $GITHUB_STEP_SUMMARY
-          echo "- Landing page successfully deployed to gh-pages root from main branch" >> $GITHUB_STEP_SUMMARY
+          echo "- Landing page successfully deployed to gh-pages root from $source_branch branch" >> $GITHUB_STEP_SUMMARY
           echo "- All branch subdirectories preserved" >> $GITHUB_STEP_SUMMARY
           echo "- No branch deployments affected" >> $GITHUB_STEP_SUMMARY
           echo "- Landing page uses simplified deploy route configuration" >> $GITHUB_STEP_SUMMARY
@@ -324,3 +483,164 @@ jobs:
           echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
           echo "- [View Landing Page]($deployment_url)" >> $GITHUB_STEP_SUMMARY
           echo "- [View Main Branch Application](https://litlfred.github.io/sgex/main/)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on associated PR (Success)
+        if: false # Landing page deployment is manual only - never triggered by PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const deploymentUrl = '${{ steps.deployment_info.outputs.deployment_url }}';
+              const commitSha = '${{ steps.deployment_info.outputs.commit_sha }}';
+              const deployedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+              const runId = '${{ github.run_id }}';
+              const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+              
+              const commentBody = `## ✅ Landing Page Deployment Successful!
+              
+              **Status:** 🟢 Successfully Deployed to Production
+              **Commit:** \`${commitSha.substring(0, 7)}\`
+              **Deployed:** ${deployedAt}
+              
+              ### 🌐 Live URLs
+              
+              <table>
+              <tr>
+              <td align="center">
+              <a href="${deploymentUrl}" target="_blank"><img src="https://img.shields.io/badge/🏠_LANDING_PAGE-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Landing Page" /></a><br/>
+              <sub><b>View production landing page</b></sub>
+              </td>
+              <td align="center">
+              <a href="https://litlfred.github.io/sgex/main/" target="_blank"><img src="https://img.shields.io/badge/🚀_MAIN_APP-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Main App" /></a><br/>
+              <sub><b>View main application</b></sub>
+              </td>
+              </tr>
+              </table>
+              
+              ### 📋 Deployment Details
+              
+              <table>
+              <tr>
+              <td align="center">
+              <a href="${workflowUrl}"><img src="https://img.shields.io/badge/📄_BUILD_LOGS-6C757D?style=for-the-badge&logo=github&logoColor=white" alt="Build Logs" /></a><br/>
+              <sub><b>View deployment logs</b></sub>
+              </td>
+              </tr>
+              </table>
+              
+              ---
+              💡 *Landing page has been successfully updated and is now live. All branch subdirectories are preserved.*
+              
+              _Note: This deployment affects the production landing page at the repository root._`;
+              
+              // Find existing landing page deployment comment
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              
+              const existingComment = comments.find(comment => 
+                comment.body.includes('Landing Page Deployment')
+              );
+              
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: commentBody
+                });
+                console.log(`✅ Updated existing landing page deployment comment on PR #${context.issue.number}`);
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: commentBody
+                });
+                console.log(`✅ Created new landing page deployment comment on PR #${context.issue.number}`);
+              }
+              
+            } catch (error) {
+              console.error('Error posting landing page deployment comment:', error);
+            }
+
+      - name: Comment on associated PR (Failure)
+        if: false # Landing page deployment is manual only - never triggered by PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const commitSha = '${{ github.sha }}';
+              const failedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+              const runId = '${{ github.run_id }}';
+              const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+              
+              const commentBody = `## ❌ Landing Page Deployment Failed!
+              
+              **Status:** 🔴 Deployment Failed
+              **Commit:** \`${commitSha.substring(0, 7)}\`
+              **Failed:** ${failedAt}
+              
+              ### 🔍 Troubleshooting Actions
+              
+              <table>
+              <tr>
+              <td align="center">
+              <a href="${workflowUrl}"><img src="https://img.shields.io/badge/📄_CHECK_LOGS-DC3545?style=for-the-badge&logo=github&logoColor=white" alt="Check Logs" /></a><br/>
+              <sub><b>View error details</b></sub>
+              </td>
+              <td align="center">
+              <a href="https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/landing-page-deployment.yml"><img src="https://img.shields.io/badge/🔄_RETRY_DEPLOY-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Retry Deploy" /></a><br/>
+              <sub><b>Restart deployment</b></sub>
+              </td>
+              </tr>
+              </table>
+              
+              ### 💡 Common Issues
+              - Build errors in TypeScript/React code
+              - Missing dependencies or npm install issues  
+              - GitHub Pages deployment conflicts
+              - Network connectivity issues
+              
+              ### 📋 Instructions
+              **To retry:** Click "RETRY DEPLOY" above, then click "Run workflow" on the landing page deployment workflow
+              
+              ---
+              ❗ *Please check the build logs above and fix any issues before restarting the deployment.*
+              
+              _Note: The previous landing page deployment remains active until this is successfully deployed._`;
+              
+              // Find existing landing page deployment comment
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              
+              const existingComment = comments.find(comment => 
+                comment.body.includes('Landing Page Deployment')
+              );
+              
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: commentBody
+                });
+                console.log(`✅ Updated existing landing page deployment comment with failure status on PR #${context.issue.number}`);
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: commentBody
+                });
+                console.log(`✅ Created new failure landing page deployment comment on PR #${context.issue.number}`);
+              }
+              
+            } catch (error) {
+              console.error('Error posting failure landing page deployment comment:', error);
+            }

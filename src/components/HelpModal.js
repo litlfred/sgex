@@ -1,15 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import useThemeImage from '../hooks/useThemeImage';
-import BugReportForm from './BugReportForm'
+import BugReportForm from './BugReportForm';
+import EnhancedTutorialModal from './EnhancedTutorialModal';
+import tutorialService from '../services/tutorialService';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 
-const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
+const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
   const { t } = useTranslation();
   const [showMenu, setShowMenu] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showBugReportForm, setShowBugReportForm] = useState(false);
+  const [showEnhancedTutorial, setShowEnhancedTutorial] = useState(false);
+  const [currentTutorialId, setCurrentTutorialId] = useState(tutorialId);
+
+  // Check if we should show enhanced tutorial modal
+  useEffect(() => {
+    if (tutorialId) {
+      const tutorial = tutorialService.getTutorial(tutorialId);
+      if (tutorial) {
+        setCurrentTutorialId(tutorialId);
+        setShowEnhancedTutorial(true);
+        return;
+      }
+    }
+    
+    // Try to convert legacy help topic to enhanced tutorial
+    if (helpTopic && helpTopic.type === 'slideshow' && helpTopic.id) {
+      const convertedTutorial = tutorialService.convertHelpTopicToTutorial(helpTopic);
+      if (convertedTutorial) {
+        // Register as temporary tutorial
+        tutorialService.registerTutorial(`legacy-${helpTopic.id}`, convertedTutorial);
+        setCurrentTutorialId(`legacy-${helpTopic.id}`);
+        setShowEnhancedTutorial(true);
+        return;
+      }
+    }
+  }, [tutorialId, helpTopic]);
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -221,7 +249,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
 
         const fallbackModal = document.createElement('div');
         fallbackModal.style.cssText = `
-          background: white;
+          background: var(--who-card-bg, white);
           border-radius: 8px;
           padding: 20px;
           max-width: 500px;
@@ -240,10 +268,10 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
             border: none;
             font-size: 24px;
             cursor: pointer;
-            color: #666;
+            color: var(--who-text-secondary, #666);
           ">×</button>
-          <h3 style="margin-top: 0; color: #333;">${fallback.title}</h3>
-          <div style="color: #555; line-height: 1.5;">${fallback.message}</div>
+          <h3 style="margin-top: 0; color: var(--who-text-primary, #333);">${fallback.title}</h3>
+          <div style="color: var(--who-text-primary, #555); line-height: 1.5;">${fallback.message}</div>
         `;
 
         fallbackOverlay.appendChild(fallbackModal);
@@ -457,6 +485,21 @@ Best regards,
   };
 
   const { title, content } = getHelpContent();
+
+  // Show enhanced tutorial modal if applicable
+  if (showEnhancedTutorial && currentTutorialId) {
+    return (
+      <EnhancedTutorialModal
+        tutorialId={currentTutorialId}
+        onClose={() => {
+          setShowEnhancedTutorial(false);
+          setCurrentTutorialId(null);
+          onClose();
+        }}
+        contextData={contextData}
+      />
+    );
+  }
 
   // Show bug report form if requested
   if (showBugReportForm) {

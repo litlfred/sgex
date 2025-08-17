@@ -1,0 +1,226 @@
+/* DAK Component Card Styles */
+
+.component-card {
+  position: relative;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(0, 120, 212, 0.1);
+  border: 1px solid rgba(0, 120, 212, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.component-card:focus {
+  outline: 2px solid var(--component-color);
+  outline-offset: 2px;
+}
+
+.component-card.large-card {
+  min-height: 200px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.component-card.large-card .component-image-container {
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  position: relative;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.component-card.large-card .component-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.component-card.large-card:hover .component-card-image {
+  transform: scale(1.05);
+}
+
+.component-card.large-card .component-content {
+  padding: 0;
+  position: relative;
+  z-index: 2;
+  background: transparent;
+  min-height: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Dark mode adjustments for card content text */
+body.theme-dark .component-card.large-card .component-content h4 {
+  color: white;
+}
+
+.component-card.large-card .component-content h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--component-color);
+  line-height: 1.3;
+}
+
+.component-card.large-card .component-content p {
+  margin: 0 0 1rem 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #666;
+}
+
+body.theme-dark .component-card.large-card .component-content p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Accessibility: visually hidden but available to screen readers */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.component-card.image-loaded .component-content h4,
+.component-card.image-loaded .component-content p:first-of-type {
+  /* Hide title and description when image loads successfully */
+  display: none;
+}
+
+/* Show meta information when image loads */
+.component-card.image-loaded .component-meta {
+  margin-top: 0;
+}
+
+/* Fallback icon styles when image fails */
+.component-card .component-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  font-size: 2.5rem;
+  background: linear-gradient(135deg, var(--component-color) 0%, rgba(255,255,255,0.1) 100%);
+  border-radius: 12px;
+}
+
+/* Hover effects */
+.component-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  border-color: rgba(0, 120, 212, 0.4);
+}
+
+.component-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--component-color);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 3;
+}
+
+.component-card:hover::before {
+  opacity: 1;
+}
+
+/* Component meta styles */
+.component-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.file-types {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.file-type-tag {
+  background: var(--component-color);
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.file-count {
+  color: #666;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+body.theme-dark .file-count {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Loading states */
+.component-card-image {
+  transition: opacity 0.3s ease;
+}
+
+.component-card-image[style*="none"] {
+  opacity: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .component-card.large-card {
+    min-height: 160px;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .component-card.large-card .component-image-container {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .component-card.large-card .component-content {
+    padding: 0;
+  }
+  
+  .component-card .component-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+  }
+}
+
+/* Animation for cards */
+.component-card {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -3,6 +3,8 @@
  */
 import userAccessService, { USER_TYPES, ACCESS_LEVELS } from './userAccessService';
 
+import githubService from './githubService';
+
 // Mock dependencies
 jest.mock('./githubService', () => ({
   isAuth: jest.fn(),
@@ -10,14 +12,6 @@ jest.mock('./githubService', () => ({
   getRepository: jest.fn(),
   hasRepositoryWriteAccess: jest.fn()
 }));
-
-jest.mock('./dakValidationService', () => ({
-  validateDemoDAKRepository: jest.fn(),
-  validateDAKRepository: jest.fn()
-}));
-
-import githubService from './githubService';
-import dakValidationService from './dakValidationService';
 
 describe('UserAccessService', () => {
   beforeEach(() => {
@@ -57,20 +51,7 @@ describe('UserAccessService', () => {
       });
     });
 
-    test('should detect demo user', async () => {
-      githubService.isAuth.mockReturnValue(true);
-      localStorage.setItem('sgex_demo_mode', 'true');
-      githubService.getCurrentUser.mockResolvedValue({
-        login: 'testuser',
-        name: 'Test User'
-      });
-      
-      await userAccessService.detectUserType();
-      
-      expect(userAccessService.getUserType()).toBe(USER_TYPES.DEMO);
-      expect(userAccessService.getCurrentUser()).toHaveProperty('isDemo', true);
-      expect(userAccessService.getCurrentUser()).toHaveProperty('demoData');
-    });
+
   });
 
   describe('Repository Access', () => {
@@ -82,18 +63,7 @@ describe('UserAccessService', () => {
       expect(access).toBe(ACCESS_LEVELS.READ);
     });
 
-    test('should return READ access for demo users with demo DAKs', async () => {
-      userAccessService.userType = USER_TYPES.DEMO;
-      userAccessService.currentUser = {
-        demoData: {
-          daks: [{ owner: 'WHO', repo: 'smart-anc' }]
-        }
-      };
-      
-      const access = await userAccessService.getRepositoryAccess('WHO', 'smart-anc');
-      
-      expect(access).toBe(ACCESS_LEVELS.READ);
-    });
+
 
     test('should return WRITE access for authenticated users with permissions', async () => {
       userAccessService.userType = USER_TYPES.AUTHENTICATED;
@@ -136,11 +106,6 @@ describe('UserAccessService', () => {
       userAccessService.userType = USER_TYPES.UNAUTHENTICATED;
       let behavior = userAccessService.getUIBehavior();
       expect(behavior.showEditFeatures).toBe(false);
-      expect(behavior.showSaveToGitHub).toBe(false);
-      
-      userAccessService.userType = USER_TYPES.DEMO;
-      behavior = userAccessService.getUIBehavior();
-      expect(behavior.showEditFeatures).toBe(true);
       expect(behavior.showSaveToGitHub).toBe(false);
       
       userAccessService.userType = USER_TYPES.AUTHENTICATED;

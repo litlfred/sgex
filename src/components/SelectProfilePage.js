@@ -188,21 +188,15 @@ const SelectProfilePage = () => {
     setWarningMessage(null);
   };
 
-  // Don't render anything if still loading initial state
-  if (loading && !user) {
-    return (
-      <PageLayout pageName="select-profile">
+  return (
+    <PageLayout pageName="select-profile">
+      {loading && !user ? (
         <div className="loading-section">
           <div className="spinner"></div>
           <p>Loading profile data...</p>
         </div>
-      </PageLayout>
-    );
-  }
-
-  return (
-    <PageLayout pageName="select-profile">
-      <div className="select-profile-content">
+      ) : (
+        <div className="select-profile-content">
         {warningMessage && (
           <div className="warning-message">
             <div className="warning-content">
@@ -298,7 +292,8 @@ const SelectProfilePage = () => {
             </div>
           </div>
         )}
-      </div>
+        </div>
+      )}
     </PageLayout>
   );
 };

@@ -42,6 +42,85 @@ const DAKDashboardContent = () => {
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
 
+  // Component Card component defined within the dashboard
+  const ComponentCard = ({ component, handleComponentClick, t }) => {
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [imageError, setImageError] = useState(false);
+    
+    // Use the theme-aware image hook here instead of in the map function
+    const cardImagePath = useThemeImage(component.cardImage);
+
+    const handleImageLoad = () => {
+      setImageLoaded(true);
+      setImageError(false);
+    };
+
+    const handleImageError = () => {
+      setImageError(true);
+      setImageLoaded(false);
+    };
+
+    return (
+      <div 
+        className={`component-card ${component.type.toLowerCase()} large-card ${imageLoaded ? 'image-loaded' : ''}`}
+        onClick={(event) => handleComponentClick(event, component)}
+        style={{ '--component-color': component.color }}
+        tabIndex={0}
+        role="button"
+        aria-label={`${component.name} - ${component.description}`}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleComponentClick(event, component);
+          }
+        }}
+      >
+        <div className="component-main">
+          <div className="component-header">
+            <div className="component-image-container">
+              <img 
+                src={cardImagePath}
+                alt={getAltText(t, ALT_TEXT_KEYS.ICON_DAK_COMPONENT, component.name, { name: component.name })}
+                className="component-card-image"
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+                style={{ display: imageError ? 'none' : 'block' }}
+              />
+              {/* Fallback icon when image fails to load */}
+              {imageError && (
+                <div className="component-icon" style={{ color: component.color }}>
+                  {component.icon}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="component-content">
+            <h4>
+              {component.name}
+            </h4>
+            <p>
+              {component.description}
+            </p>
+          </div>
+        </div>
+        
+        <div className="component-meta-section">
+          <div className="component-meta">
+            <div className="file-types">
+              {component.fileTypes.map((type) => (
+                <span key={type} className="file-type-tag">{type}</span>
+              ))}
+            </div>
+            <div className="file-count">
+              {component.count} files
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Fetch data from URL parameters if not available in location.state
   useEffect(() => {
     const fetchDataFromUrlParams = async () => {
@@ -50,48 +129,29 @@ const DAKDashboardContent = () => {
           setLoading(true);
           setError(null);
 
-          // Check if githubService is authenticated (allow demo mode to proceed without auth)
+          // Check if githubService is authenticated
           if (!githubService.isAuth()) {
-            // In demo mode, use the DAK validation service for demo repositories
-            if (window.location.pathname.includes('/dashboard/')) {
-              const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
-              
-              if (!isValidDAK) {
-                navigate('/', { 
-                  state: { 
-                    warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
-                  } 
-                });
-                return;
-              }
+            // This is unauthenticated access to public repositories
+            const publicProfile = {
+              login: user,
+              name: user.charAt(0).toUpperCase() + user.slice(1),
+              avatar_url: `https://github.com/${user}.png`,
+              type: 'User'
+            };
 
-              const demoProfile = {
-                login: user,
-                name: user.charAt(0).toUpperCase() + user.slice(1),
-                avatar_url: `https://github.com/${user}.png`,
-                type: 'User',
-                isDemo: true
-              };
+            const publicRepository = {
+              name: repo,
+              full_name: `${user}/${repo}`,
+              owner: { login: user },
+              default_branch: branch || 'main',
+              html_url: `https://github.com/${user}/${repo}`
+            };
 
-              const demoRepository = {
-                name: repo,
-                full_name: `${user}/${repo}`,
-                owner: { login: user },
-                default_branch: branch || 'main',
-                html_url: `https://github.com/${user}/${repo}`,
-                isDemo: true
-              };
-
-              setProfile(demoProfile);
-              setRepository(demoRepository);
-              setSelectedBranch(branch || 'main');
-              setLoading(false);
-              return;
-            } else {
-              setError(t('auth.authRequired'));
-              setLoading(false);
-              return;
-            }
+            setProfile(publicProfile);
+            setRepository(publicRepository);
+            setSelectedBranch(branch || 'main');
+            setLoading(false);
+            return;
           }
 
           // Fetch user profile
@@ -174,8 +234,8 @@ const DAKDashboardContent = () => {
       const storedBranch = branchContextService.getSelectedBranch(repository);
       if (storedBranch) {
         setSelectedBranch(storedBranch);
-      } else if (profile && profile.login === 'demo-user') {
-        // For demo mode, set a default branch
+      } else {
+        // Set a default branch
         const defaultBranch = repository.default_branch || 'main';
         setSelectedBranch(defaultBranch);
         branchContextService.setSelectedBranch(repository, defaultBranch);
@@ -263,9 +323,10 @@ const DAKDashboardContent = () => {
   const coreDAKComponents = [
     {
       id: 'health-interventions',
-      name: 'Health Interventions and Recommendations',
+      name: t('dak.healthInterventions'),
       description: 'Clinical guidelines and health intervention specifications that define evidence-based care recommendations',
       icon: '📖',
+      cardImage: 'dashboard/dak_interventions.png',
       type: 'L2',
       color: '#0078d4',
       fileTypes: ['IRIS', 'Publication'],
@@ -274,9 +335,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'generic-personas',
-      name: 'Generic Personas',
+      name: t('dak.genericPersonas'),
       description: 'Standardized user roles and actor definitions that represent different types of healthcare workers and patients',
       icon: '👥',
+      cardImage: 'dashboard/dak_personas.png',
       type: 'L2',
       color: '#107c10',
       fileTypes: ['Actor', 'Role'],
@@ -285,9 +347,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'user-scenarios',
-      name: 'User Scenarios',
+      name: t('dak.userScenarios'),
       description: 'Narrative descriptions of how different personas interact with the system in specific healthcare contexts',
       icon: '📝',
+      cardImage: 'dashboard/dak_user_scenarios.png',
       type: 'L2',
       color: '#881798',
       fileTypes: ['Narrative', 'Use Case'],
@@ -296,9 +359,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'business-processes',
-      name: 'Generic Business Processes and Workflows',
+      name: t('dak.businessProcesses'),
       description: 'BPMN workflows and business process definitions that model clinical workflows and care pathways',
       icon: '🔄',
+      cardImage: 'dashboard/dak_business_processes.png',
       type: 'L2',
       color: '#d13438',
       fileTypes: ['BPMN', 'XML'],
@@ -307,9 +371,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'core-data-elements',
-      name: 'Core Data Elements',
+      name: t('dak.coreDataElements'),
       description: 'Essential data structures and terminology needed for clinical data capture and exchange (includes Terminology Services via OCL and Product Master Data via PCMT)',
       icon: '🗃️',
+      cardImage: 'dashboard/dak_core_data_elements.png',
       type: 'L2',
       color: '#ff8c00',
       fileTypes: ['OCL', 'Concept', 'PCMT', 'Product'],
@@ -318,9 +383,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'decision-support',
-      name: 'Decision-Support Logic',
+      name: t('dak.decisionSupportLogic'),
       description: 'DMN decision tables and clinical decision support rules that encode clinical logic',
       icon: '🎯',
+      cardImage: 'dashboard/dak_decision_support_logic.png',
       type: 'L2',
       color: '#00bcf2',
       fileTypes: ['DMN', 'XML'],
@@ -329,9 +395,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'program-indicators',
-      name: 'Program Indicators',
+      name: t('dak.programIndicators'),
       description: 'Performance indicators and measurement definitions for monitoring and evaluation',
       icon: '📊',
+      cardImage: 'dashboard/dak_indicators.png',
       type: 'L2',
       color: '#498205',
       fileTypes: ['Measure', 'Logic'],
@@ -340,9 +407,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'functional-requirements',
-      name: 'Functional and Non-Functional Requirements',
+      name: t('dak.requirements'),
       description: 'System requirements specifications that define capabilities and constraints',
       icon: '⚙️',
+      cardImage: 'dashboard/dak_requirements.png',
       type: 'L2',
       color: '#6b69d6',
       fileTypes: ['Requirements', 'Specification'],
@@ -351,9 +419,10 @@ const DAKDashboardContent = () => {
     },
     {
       id: 'test-scenarios',
-      name: 'Test Scenarios',
+      name: t('dak.testScenarios') || 'Test Scenarios',
       description: 'Feature files and test scenarios for validating the DAK implementation',
       icon: '🧪',
+      cardImage: 'dashboard/dak_testing.png',
       type: 'L2',
       color: '#8b5cf6',
       fileTypes: ['Feature', 'Test'],
@@ -400,7 +469,13 @@ const DAKDashboardContent = () => {
 
     // For health-interventions (WHO Digital Library), allow access in read-only mode
     if (component.id === 'health-interventions') {
-      handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/health-interventions/${owner}/${repoName}/${selectedBranch}`
+        : `/health-interventions/${owner}/${repoName}`;
+      
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
@@ -452,8 +527,14 @@ const DAKDashboardContent = () => {
       return;
     }
 
-    // Navigate to generic component editor for other components
-    handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
+    // Navigate to component-specific routes for other components
+    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+    const repoName = repository.name;
+    const path = selectedBranch 
+      ? `/${component.id}/${owner}/${repoName}/${selectedBranch}`
+      : `/${component.id}/${owner}/${repoName}`;
+    
+    handleNavigationClick(event, path, navigate, navigationState);
   };
 
 
@@ -561,36 +642,16 @@ const DAKDashboardContent = () => {
               </div>
 
               <div className="components-grid core-components">
-                {coreDAKComponents.map((component) => (
-                  <div 
-                    key={component.id}
-                    className={`component-card ${component.type.toLowerCase()}`}
-                    onClick={(event) => handleComponentClick(event, component)}
-                    style={{ '--component-color': component.color }}
-                  >
-                    <div className="component-header">
-                      <div className="component-icon" style={{ color: component.color }}>
-                        {component.icon}
-                      </div>
-                    </div>
-                    
-                    <div className="component-content">
-                      <h4>{component.name}</h4>
-                      <p>{component.description}</p>
-                      
-                      <div className="component-meta">
-                        <div className="file-types">
-                          {component.fileTypes.map((type) => (
-                            <span key={type} className="file-type-tag">{type}</span>
-                          ))}
-                        </div>
-                        <div className="file-count">
-                          {component.count} files
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                {coreDAKComponents.map((component) => {
+                  return (
+                    <ComponentCard
+                      key={component.id}
+                      component={component}
+                      handleComponentClick={handleComponentClick}
+                      t={t}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}

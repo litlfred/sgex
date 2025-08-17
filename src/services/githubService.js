@@ -1,4 +1,4 @@
-import { Octokit } from '@octokit/rest';
+import { lazyLoadOctokit } from '../utils/lazyRouteUtils';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
 import secureTokenStorage from './secureTokenStorage';
@@ -16,8 +16,14 @@ class GitHubService {
     this.logger.debug('GitHubService instance created');
   }
 
+  // Helper method to create Octokit instance with lazy loading
+  async createOctokitInstance(auth = null) {
+    const Octokit = await lazyLoadOctokit();
+    return new Octokit(auth ? { auth } : {});
+  }
+
   // Initialize with a GitHub token (supports both OAuth and PAT tokens)
-  authenticate(token) {
+  async authenticate(token) {
     const startTime = Date.now();
     this.logger.auth('Starting authentication', { 
       tokenProvided: !!token, 
@@ -36,9 +42,8 @@ class GitHubService {
         return false;
       }
 
-      this.octokit = new Octokit({
-        auth: validation.token,
-      });
+      // Lazy load Octokit to reduce initial bundle size
+      this.octokit = await this.createOctokitInstance(validation.token);
       this.isAuthenticated = true;
       this.tokenType = validation.type;
       
@@ -92,7 +97,7 @@ class GitHubService {
   }
 
   // Initialize authentication from securely stored token
-  initializeFromStoredToken() {
+  async initializeFromStoredToken() {
     this.logger.auth('Attempting to initialize from stored token');
     
     try {
@@ -109,10 +114,8 @@ class GitHubService {
         return false;
       }
 
-      // Initialize Octokit with stored token
-      this.octokit = new Octokit({
-        auth: tokenData.token,
-      });
+      // Initialize Octokit with stored token using lazy loading
+      this.octokit = await this.createOctokitInstance(tokenData.token);
       this.isAuthenticated = true;
       this.tokenType = tokenData.type;
       
@@ -220,12 +223,15 @@ class GitHubService {
       const duration = Date.now() - startTime;
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/collaborators/${username}/permission`, 200, duration);
       
-      const hasWriteAccess = ['write', 'admin'].includes(data.permission);
+      // GitHub permission levels: read, triage, write, maintain, admin
+      // Users with write, maintain, or admin permissions can merge PRs
+      const hasWriteAccess = ['write', 'maintain', 'admin'].includes(data.permission);
       this.logger.debug('Repository write permissions checked', { 
         owner, 
         repo, 
         permission: data.permission, 
-        hasWriteAccess 
+        hasWriteAccess,
+        supportedLevels: ['write', 'maintain', 'admin']
       });
       
       return hasWriteAccess;
@@ -234,9 +240,21 @@ class GitHubService {
       this.logger.apiError('GET', `/repos/${owner}/${repo}/collaborators/*/permission`, error);
       this.logger.performance('Repository write permission check (failed)', duration);
       
-      // If we can't check permissions, assume we don't have write access
-      console.warn('Could not check repository write permissions:', error);
-      this.logger.warn('Assuming no write access due to permission check failure', { owner, repo, error: error.message });
+      // Better error logging to help debug permission issues
+      console.warn(`Could not check repository write permissions for ${owner}/${repo}:`, {
+        error: error.message,
+        status: error.status,
+        statusText: error.response?.statusText,
+        headers: error.response?.headers
+      });
+      
+      this.logger.warn('Assuming no write access due to permission check failure', { 
+        owner, 
+        repo, 
+        error: error.message,
+        status: error.status,
+        userGuidance: 'Check if your Personal Access Token has the required scopes: repo (classic) or Contents+Pull requests (fine-grained)'
+      });
       return false;
     }
   }
@@ -340,7 +358,7 @@ class GitHubService {
   async getOrganization(orgLogin) {
     try {
       // Create a temporary Octokit instance for public API calls if we don't have one
-      const octokit = this.octokit || new Octokit();
+      const octokit = this.octokit || await this.createOctokitInstance();
       
       const { data } = await octokit.rest.orgs.get({
         org: orgLogin
@@ -356,7 +374,7 @@ class GitHubService {
   async getUser(username) {
     try {
       // Create a temporary Octokit instance for public API calls if we don't have one
-      const octokit = this.octokit || new Octokit();
+      const octokit = this.octokit || await this.createOctokitInstance();
       
       const { data } = await octokit.rest.users.getByUsername({
         username
@@ -372,7 +390,7 @@ class GitHubService {
   async getPublicRepositories(owner, type = 'user') {
     try {
       // Create a temporary Octokit instance for public API calls if we don't have one
-      const octokit = this.octokit || new Octokit();
+      const octokit = this.octokit || await this.createOctokitInstance();
       
       let repositories = [];
       let page = 1;
@@ -457,101 +475,74 @@ class GitHubService {
     }
   }
 
-  // Get repositories for a user or organization (now filters by SMART Guidelines compatibility)
-  async getRepositories(owner, type = 'user', isDemo = false) {
-    // Handle demo mode - return demo repositories without requiring authentication
-    if (isDemo || owner === 'demo-user') {
-      return this.getDemoRepositories(owner);
+  // Rate limiting management methods
+  async checkRateLimit() {
+    try {
+      const octokit = this.octokit || await this.createOctokitInstance();
+      const { data } = await octokit.rest.rateLimit.get();
+      return {
+        core: {
+          limit: data.rate.limit,
+          remaining: data.rate.remaining,
+          reset: data.rate.reset,
+          used: data.rate.used
+        },
+        search: {
+          limit: data.search.limit,
+          remaining: data.search.remaining,
+          reset: data.search.reset,
+          used: data.search.used
+        },
+        isAuthenticated: this.isAuthenticated
+      };
+    } catch (error) {
+      console.warn('Could not check rate limit:', error);
+      return {
+        core: {
+          limit: this.isAuthenticated ? 5000 : 60,
+          remaining: 0,
+          reset: Date.now() + 3600000,
+          used: this.isAuthenticated ? 5000 : 60
+        },
+        search: {
+          limit: this.isAuthenticated ? 30 : 10,
+          remaining: 0,
+          reset: Date.now() + 60000,
+          used: this.isAuthenticated ? 30 : 10
+        },
+        isAuthenticated: this.isAuthenticated
+      };
     }
-    
-    // Use the new SMART guidelines filtering method
-    return this.getSmartGuidelinesRepositories(owner, type);
   }
 
-  // Get demo repositories for demo mode (no authentication required)
-  getDemoRepositories(owner) {
-    const demoRepos = [
-      {
-        id: 'demo-smart-anc',
-        name: 'smart-anc',
-        full_name: `${owner}/smart-anc`,
-        description: 'Demo SMART Guidelines Digital Adaptation Kit for Antenatal Care',
-        private: false,
-        owner: {
-          login: owner,
-          id: 'demo-owner',
-          avatar_url: `https://github.com/${owner}.png`,
-          type: 'User'
-        },
-        html_url: `https://github.com/${owner}/smart-anc`,
-        clone_url: `https://github.com/${owner}/smart-anc.git`,
-        language: 'FSH',
-        stargazers_count: 15,
-        forks_count: 3,
-        open_issues_count: 2,
-        topics: ['who', 'smart-guidelines', 'dak', 'antenatal-care', 'health'],
-        created_at: '2023-01-15T10:00:00Z',
-        updated_at: '2024-12-15T14:30:00Z',
-        pushed_at: '2024-12-15T14:30:00Z',
-        default_branch: 'main',
-        smart_guidelines_compatible: true,
-        isDemo: true
-      },
-      {
-        id: 'demo-smart-tb',
-        name: 'smart-tb',
-        full_name: `${owner}/smart-tb`,
-        description: 'Demo SMART Guidelines Digital Adaptation Kit for Tuberculosis Care',
-        private: false,
-        owner: {
-          login: owner,
-          id: 'demo-owner',
-          avatar_url: `https://github.com/${owner}.png`,
-          type: 'User'
-        },
-        html_url: `https://github.com/${owner}/smart-tb`,
-        clone_url: `https://github.com/${owner}/smart-tb.git`,
-        language: 'FSH',
-        stargazers_count: 8,
-        forks_count: 1,
-        open_issues_count: 0,
-        topics: ['who', 'smart-guidelines', 'dak', 'tuberculosis', 'health'],
-        created_at: '2023-03-20T15:00:00Z',
-        updated_at: '2024-11-30T09:15:00Z',
-        pushed_at: '2024-11-30T09:15:00Z',
-        default_branch: 'main',
-        smart_guidelines_compatible: true,
-        isDemo: true
-      },
-      {
-        id: 'demo-smart-ips-pilgrimage',
-        name: 'smart-ips-pilgrimage',
-        full_name: `${owner}/smart-ips-pilgrimage`,
-        description: 'Demo SMART Guidelines International Patient Summary for Pilgrimage',
-        private: false,
-        owner: {
-          login: owner,
-          id: 'demo-owner',
-          avatar_url: `https://github.com/${owner}.png`,
-          type: 'User'
-        },
-        html_url: `https://github.com/${owner}/smart-ips-pilgrimage`,
-        clone_url: `https://github.com/${owner}/smart-ips-pilgrimage.git`,
-        language: 'FSH',
-        stargazers_count: 12,
-        forks_count: 2,
-        open_issues_count: 1,
-        topics: ['who', 'smart-guidelines', 'dak', 'ips', 'pilgrimage', 'health'],
-        created_at: '2023-06-10T12:00:00Z',
-        updated_at: '2024-12-01T16:45:00Z',
-        pushed_at: '2024-12-01T16:45:00Z',
-        default_branch: 'main',
-        smart_guidelines_compatible: true,
-        isDemo: true
-      }
-    ];
+  // Check if we should skip API calls due to rate limiting
+  async shouldSkipApiCalls() {
+    if (this.isAuthenticated) {
+      return false; // Authenticated users have higher limits
+    }
 
-    return Promise.resolve(demoRepos);
+    try {
+      const rateLimit = await this.checkRateLimit();
+      const remaining = rateLimit.core.remaining;
+      
+      // For unauthenticated users, be conservative and stop making calls if less than 10 remaining
+      if (remaining < 10) {
+        console.warn(`🚫 Rate limit protection: Only ${remaining} API calls remaining, skipping compatibility checks`);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      // If we can't check rate limits, assume we should be conservative
+      console.warn('⚠️ Cannot check rate limits, enabling conservative mode');
+      return !this.isAuthenticated; // Skip for unauthenticated users when in doubt
+    }
+  }
+
+  // Get repositories for a user or organization (now filters by SMART Guidelines compatibility)
+  async getRepositories(owner, type = 'user') {
+    // Use the new SMART guidelines filtering method
+    return this.getSmartGuidelinesRepositories(owner, type);
   }
 
   // Check if a repository has sushi-config.yaml with smart.who.int.base dependency
@@ -563,9 +554,27 @@ class GitHubService {
       return { compatible: cachedResult, cached: true };
     }
 
+    // Check if we should skip this API call due to rate limiting
+    if (!this.isAuthenticated) {
+      try {
+        const shouldSkip = await this.shouldSkipApiCalls();
+        if (shouldSkip) {
+          console.warn(`⚡ Skipping compatibility check for ${owner}/${repo} due to rate limit protection`);
+          // Return false but don't cache it since we didn't actually check
+          return { 
+            compatible: false, 
+            skipped: true, 
+            reason: 'Rate limit protection - API call skipped' 
+          };
+        }
+      } catch (rateLimitCheckError) {
+        console.warn('Could not check rate limits, proceeding with API call:', rateLimitCheckError);
+      }
+    }
+
     try {
       // Use authenticated or public API depending on authentication state
-      const octokit = this.octokit || new Octokit();
+      const octokit = this.octokit || await this.createOctokitInstance();
       
       // Try to get sushi-config.yaml from the repository root
       const { data } = await octokit.rest.repos.getContent({
@@ -605,7 +614,7 @@ class GitHubService {
         
         try {
           // Try with public API (unauthenticated)
-          const publicOctokit = new Octokit();
+          const publicOctokit = await this.createOctokitInstance();
           const { data } = await publicOctokit.rest.repos.getContent({
             owner,
             repo,
@@ -687,7 +696,7 @@ class GitHubService {
 
 
   // Get repositories that are SMART guidelines compatible
-  async getSmartGuidelinesRepositories(owner, type = 'user') {
+  async getSmartGuidelinesRepositories(owner, type = 'user', skipCompatibilityCheck = false) {
     try {
       let repositories = [];
       
@@ -724,6 +733,15 @@ class GitHubService {
       } else {
         // Use public API for unauthenticated access (only public repositories)
         repositories = await this.getPublicRepositories(owner, type);
+      }
+
+      // Skip compatibility checks if requested (to avoid rate limiting for unauthenticated users)
+      if (skipCompatibilityCheck) {
+        console.log(`⚡ Skipping compatibility checks for ${repositories.length} repositories to avoid rate limiting`);
+        return repositories.map(repo => ({
+          ...repo,
+          smart_guidelines_compatible: true // Assume compatible when skipping checks
+        }));
       }
 
       // Check each repository for SMART guidelines compatibility
@@ -935,7 +953,7 @@ class GitHubService {
   async getRepository(owner, repo) {
     try {
       // Use authenticated octokit if available, otherwise create a public instance for public repos
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const { data } = await octokit.rest.repos.get({
         owner,
@@ -955,7 +973,7 @@ class GitHubService {
       console.log('githubService.getBranches: Authentication status:', this.isAuth());
       
       // Use authenticated octokit if available, otherwise create a public instance for public repos
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       console.log('githubService.getBranches: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
       
       const { data } = await octokit.rest.repos.listBranches({
@@ -1011,7 +1029,7 @@ class GitHubService {
   async getBranch(owner, repo, branch) {
     try {
       // Use authenticated octokit if available, otherwise create a public instance for public repos
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const { data } = await octokit.rest.repos.getBranch({
         owner,
@@ -1281,7 +1299,7 @@ class GitHubService {
     try {
       console.log(`🔎 githubService.getBpmnFilesRecursive: Searching ${owner}/${repo}/${path} (ref: ${ref})`);
       // Use authenticated octokit if available, otherwise create a public instance
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       console.log(`🔐 githubService.getBpmnFilesRecursive: Using ${this.isAuth() ? 'authenticated' : 'public'} octokit`);
       
       const { data } = await octokit.rest.repos.getContent({
@@ -1374,7 +1392,7 @@ class GitHubService {
       console.log('📋 githubService.getFileContent: Request parameters:', { owner, repo, path, ref });
       
       // Use authenticated octokit if available, otherwise create a public instance for public repos
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       console.log('🔧 githubService.getFileContent: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
       
       // Create a promise that rejects after timeout
@@ -1628,7 +1646,7 @@ class GitHubService {
   // Get all pull requests for a specific branch
   async getPullRequestsForBranch(owner, repo, branchName) {
     // Use authenticated octokit if available, otherwise create a public instance for public repos
-    const octokit = this.isAuth() ? this.octokit : new Octokit();
+    const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
 
     const startTime = Date.now();
     this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls`, { state: 'open', head: `${owner}:${branchName}` });
@@ -1656,7 +1674,7 @@ class GitHubService {
   // Get pull request comments
   async getPullRequestComments(owner, repo, pullNumber, page = 1, per_page = 100) {
     // Use authenticated octokit if available, otherwise create a public instance for public repos
-    const octokit = this.isAuth() ? this.octokit : new Octokit();
+    const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
 
     const startTime = Date.now();
     this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, { page, per_page });
@@ -1682,7 +1700,7 @@ class GitHubService {
   // Get pull request issue comments (general comments on the PR conversation)
   async getPullRequestIssueComments(owner, repo, pullNumber, page = 1, per_page = 100) {
     // Use authenticated octokit if available, otherwise create a public instance for public repos
-    const octokit = this.isAuth() ? this.octokit : new Octokit();
+    const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
 
     const startTime = Date.now();
     this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, { page, per_page });
@@ -1728,6 +1746,116 @@ class GitHubService {
       this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues/${pullNumber}/comments`, error.status || 'error', Date.now() - startTime);
       console.error('Failed to create pull request comment:', error);
       throw error;
+    }
+  }
+
+  // Get pull request timeline events (status updates, reviews, etc.)
+  async getPullRequestTimeline(owner, repo, pullNumber, page = 1, per_page = 100) {
+    // Use authenticated octokit if available, otherwise create a public instance for public repos
+    const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/timeline`, { page, per_page });
+
+    try {
+      const response = await octokit.rest.issues.listEventsForTimeline({
+        owner,
+        repo,
+        issue_number: pullNumber,
+        page,
+        per_page
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/timeline`, response.status, Date.now() - startTime);
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/timeline`, error.status || 'error', Date.now() - startTime);
+      console.debug('Failed to fetch pull request timeline:', error);
+      return []; // Return empty array for graceful fallback
+    }
+  }
+
+  // Merge a pull request
+  async mergePullRequest(owner, repo, pullNumber, options = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Not authenticated with GitHub');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('PUT', `/repos/${owner}/${repo}/pulls/${pullNumber}/merge`, options);
+
+    try {
+      const mergeOptions = {
+        owner,
+        repo,
+        pull_number: pullNumber,
+        commit_title: options.commit_title,
+        commit_message: options.commit_message,
+        merge_method: options.merge_method || 'merge', // 'merge', 'squash', or 'rebase'
+        ...options
+      };
+
+      const response = await this.octokit.rest.pulls.merge(mergeOptions);
+
+      this.logger.apiResponse('PUT', `/repos/${owner}/${repo}/pulls/${pullNumber}/merge`, response.status, Date.now() - startTime);
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('PUT', `/repos/${owner}/${repo}/pulls/${pullNumber}/merge`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to merge pull request:', error);
+      throw error;
+    }
+  }
+
+  // Check if the current user can merge a specific pull request
+  async checkPullRequestMergePermissions(owner, repo, pullNumber) {
+    if (!this.isAuth()) {
+      this.logger.warn('Cannot check PR merge permissions - not authenticated', { owner, repo, pullNumber });
+      return false;
+    }
+
+    try {
+      const startTime = Date.now();
+      this.logger.apiCall('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}`, {});
+
+      // Get the pull request details to check mergeable state and permissions
+      const response = await this.octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number: pullNumber
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}`, response.status, Date.now() - startTime);
+      
+      const pr = response.data;
+      
+      // Check if PR is in a mergeable state
+      if (pr.state !== 'open') {
+        this.logger.debug('PR not mergeable - not open', { owner, repo, pullNumber, state: pr.state });
+        return false;
+      }
+
+      if (pr.draft) {
+        this.logger.debug('PR not mergeable - is draft', { owner, repo, pullNumber });
+        return false;
+      }
+
+      // Check if the user has write permissions to the repository
+      const hasWriteAccess = await this.checkRepositoryWritePermissions(owner, repo);
+      if (!hasWriteAccess) {
+        this.logger.debug('PR not mergeable - no write access', { owner, repo, pullNumber });
+        return false;
+      }
+
+      // Additional checks could include:
+      // - Required status checks
+      // - Required reviews
+      // - Admin enforcement
+      // For now, we'll rely on the GitHub API to provide proper error messages when merge is attempted
+
+      return true;
+    } catch (error) {
+      this.logger.warn('Error checking PR merge permissions', { owner, repo, pullNumber, error: error.message });
+      return false;
     }
   }
 
@@ -1801,7 +1929,7 @@ class GitHubService {
   async getDirectoryContents(owner, repo, path = '', ref = 'main') {
     try {
       // Create temporary Octokit instance for unauthenticated access if needed
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const { data } = await octokit.rest.repos.getContent({
         owner,
@@ -1862,7 +1990,7 @@ class GitHubService {
   async getCommits(owner, repo, options = {}) {
     try {
       // Create temporary Octokit instance for unauthenticated access if needed
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const params = {
         owner,
@@ -1895,7 +2023,7 @@ class GitHubService {
   async getIssues(owner, repo, options = {}) {
     try {
       // Create temporary Octokit instance for unauthenticated access if needed
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const params = {
         owner,
@@ -1933,7 +2061,7 @@ class GitHubService {
 
     try {
       // Use the GitHub API to fetch forks, no authentication required for public repos
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const params = {
         owner,
@@ -1989,7 +2117,7 @@ class GitHubService {
 
     try {
       // Use the GitHub API to fetch pull requests, no authentication required for public repos
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       const params = {
         owner,
@@ -2317,7 +2445,7 @@ class GitHubService {
 
     try {
       // Create temporary Octokit instance for unauthenticated access if needed
-      const octokit = this.isAuth() ? this.octokit : new Octokit();
+      const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
       
       this.logger.apiCall('GET', `/repos/${owner}/${repo}/forks`, options);
       

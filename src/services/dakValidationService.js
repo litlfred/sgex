@@ -1,5 +1,5 @@
-import yaml from 'js-yaml';
 import githubService from './githubService';
+import { lazyLoadYaml } from '../utils/lazyRouteUtils';
 
 /**
  * Service for validating WHO SMART Guidelines Digital Adaptation Kit repositories
@@ -37,6 +37,8 @@ class DAKValidationService {
       }
 
       // Parse the YAML content
+      // Lazy load js-yaml to improve initial page responsiveness
+      const yaml = await lazyLoadYaml();
       const config = yaml.load(sushiConfigContent);
       
       if (!config || typeof config !== 'object') {

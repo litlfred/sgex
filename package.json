@@ -20,10 +20,10 @@
     "crypto-browserify": "^3.12.1",
     "dompurify": "^3.2.6",
     "events": "^3.3.0",
+    "html2canvas": "^1.4.1",
     "https-browserify": "^1.0.0",
     "i18next": "^25.3.4",
     "i18next-browser-languagedetector": "^8.2.0",
-    "js-yaml": "^4.1.0",
     "node-fetch": "^3.3.2",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
@@ -35,6 +35,7 @@
     "react-router-dom": "^7.7.1",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.6.1",
+    "rehype-raw": "^7.0.0",
     "sql.js": "^1.13.0",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
@@ -54,11 +55,19 @@
     "check-framework-compliance": "node scripts/check-framework-compliance.js",
     "verify-404": "node scripts/verify-404.js",
     "build:verify": "npm run build && npm run verify-404",
-    "lint": "eslint src --ext .js,.jsx",
-    "lint:a11y": "eslint src --ext .js,.jsx --format=compact | grep jsx-a11y || echo 'No accessibility issues found!'",
-    "lint:fix": "eslint src --ext .js,.jsx --fix"
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "lint:a11y": "eslint src --ext .js,.jsx,.ts,.tsx --format=compact | grep jsx-a11y || echo 'No accessibility issues found!'",
+    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch",
+    "generate-schemas": "npm run generate-schemas:typescript-json-schema && npm run generate-schemas:ts-json-schema-generator",
+    "generate-schemas:typescript-json-schema": "typescript-json-schema tsconfig.json \"*\" --out public/docs/schemas/generated-schemas-tjs.json --include src/types/**/*.ts",
+    "generate-schemas:ts-json-schema-generator": "ts-json-schema-generator --path src/types/**/*.ts --type \"*\" --out public/docs/schemas/generated-schemas-tsjsg.json",
+    "prebuild": "npm run type-check && npm run generate-schemas",
+    "compliance:profile": "node src/tests/compliance/profileCreationCompliance.js",
+    "compliance:all": "npm run compliance:profile",
+    "test:compliance": "npm test -- --testPathPattern=compliance"
   },
-
   "jest": {
     "transformIgnorePatterns": [
       "node_modules/(?!(@octokit|universal-user-agent|before-after-hook|@babel|babel-runtime|@ungap|jsdom|@uiw|react-router|react-router-dom)/)"
@@ -84,14 +93,25 @@
     "nth-check": "2.1.1",
     "postcss": "8.5.6",
     "webpack-dev-server": "5.2.1",
-    "typescript": "4.9.5",
     "prismjs": "1.30.0"
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
+    "@testing-library/dom": "^10.4.1",
+    "@types/ajv": "^0.0.5",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.2.1",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "http-proxy-middleware": "^3.0.5",
     "identity-obj-proxy": "^3.0.0",
-    "jsdom": "^26.1.0"
+    "js-yaml": "^4.1.0",
+    "jsdom": "^26.1.0",
+    "ts-json-schema-generator": "^2.4.0",
+    "typescript": "^5.7.3",
+    "typescript-json-schema": "^0.65.1"
   }
 }

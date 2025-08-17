@@ -118,36 +118,14 @@ export const PageProvider = ({ children, pageName }) => {
                 throw new Error(`User '${user}' not found or not accessible.`);
               }
             } else {
-              // Demo mode for DAK validation
-              const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
-              if (!isValidDAK) {
-                // For dashboard pages, set error state instead of redirecting
-                if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
-                  setPageState(prev => ({
-                    ...prev,
-                    loading: false,
-                    error: `Repository '${user}/${repo}' not found or not accessible. This may be a private repository or the repository doesn't exist.`,
-                    user,
-                    profile: {
-                      login: user,
-                      name: user.charAt(0).toUpperCase() + user.slice(1),
-                      avatar_url: `https://github.com/${user}.png`,
-                      type: 'User',
-                      isDemo: true
-                    },
-                    repository: { name: repo, owner: { login: user }, html_url: `https://github.com/${user}/${repo}`, isNotFound: true },
-                    branch: params.branch || 'main'
-                  }));
-                  return;
-                }
-                throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
-              }
+              // Unauthenticated users accessing public repositories
+              // Create profile for public repository access (no isDemo flag)
               profile = {
                 login: user,
                 name: user.charAt(0).toUpperCase() + user.slice(1),
                 avatar_url: `https://github.com/${user}.png`,
-                type: 'User',
-                isDemo: true
+                type: 'User'
+                // Note: isDemo is NOT set - unauthenticated users should access real public repos
               };
             }
           }
@@ -191,38 +169,15 @@ export const PageProvider = ({ children, pageName }) => {
                 throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
               }
             } else {
-              // For demo mode, validate the demo repository exists
-              const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
-              if (!isValidDAK) {
-                // For dashboard pages, set error state instead of redirecting
-                if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
-                  setPageState(prev => ({
-                    ...prev,
-                    loading: false,
-                    error: `Repository '${user}/${repo}' not found or not accessible. This may be a private repository or the repository doesn't exist.`,
-                    user,
-                    profile: {
-                      login: user,
-                      name: user.charAt(0).toUpperCase() + user.slice(1),
-                      avatar_url: `https://github.com/${user}.png`,
-                      type: 'User',
-                      isDemo: true
-                    },
-                    repository: { name: repo, owner: { login: user }, html_url: `https://github.com/${user}/${repo}`, isNotFound: true },
-                    branch: selectedBranch || 'main'
-                  }));
-                  return;
-                }
-                throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
-              }
-              
+              // Unauthenticated users accessing public repositories
+              // Create repository object for public repository access (no isDemo flag)
               repository = {
                 name: repo,
                 full_name: `${user}/${repo}`,
                 owner: { login: user },
                 default_branch: selectedBranch || 'main',
-                html_url: `https://github.com/${user}/${repo}`,
-                isDemo: true
+                html_url: `https://github.com/${user}/${repo}`
+                // Note: isDemo is NOT set - unauthenticated users should access real public repos
               };
             }
           }
@@ -269,12 +224,14 @@ export const PageProvider = ({ children, pageName }) => {
               return;
             }
           } else {
+            // Unauthenticated users accessing public user profiles
+            // Create profile for public access (no isDemo flag)
             profile = {
               login: user,
               name: user.charAt(0).toUpperCase() + user.slice(1),
               avatar_url: `https://github.com/${user}.png`,
-              type: 'User',
-              isDemo: true
+              type: 'User'
+              // Note: isDemo is NOT set - unauthenticated users should access real public data
             };
           }
         }
@@ -302,8 +259,8 @@ export const PageProvider = ({ children, pageName }) => {
             console.debug('Could not fetch current user for subscriptions:', error);
           }
 
-          // Auto-add visited profiles (if not demo and not already subscribed)
-          if (profile && !profile.isDemo && (pageState.type === PAGE_TYPES.USER || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET)) {
+          // Auto-add visited profiles (if authenticated)
+          if (profile && githubService.isAuth() && (pageState.type === PAGE_TYPES.USER || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET)) {
             profileSubscriptionService.autoAddVisitedProfile(profile);
           }
         };

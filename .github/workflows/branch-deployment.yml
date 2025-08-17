@@ -1,22 +1,7 @@
 name: Deploy Feature Branch
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/branch-deployment.yml'
-  pull_request:
-    branches: [ main, develop ]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/branch-deployment.yml'
+  # Manual trigger - primary way to deploy branches
   workflow_dispatch:
     inputs:
       branch:
@@ -28,6 +13,7 @@ on:
         required: false
         type: boolean
         default: false
+  # Workflow call - allows other workflows to trigger this deployment
   workflow_call:
     inputs:
       branch:
@@ -40,6 +26,25 @@ on:
         required: false
         type: boolean
         default: false
+  # Automatic trigger for copilot commits and PR updates
+  push:
+    branches-ignore: [gh-pages, deploy, main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/branch-deployment.yml'
+  # Additional trigger for pull request events to ensure copilot and external contributions trigger workflows
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]  # Only for PRs targeting main branch
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/branch-deployment.yml'
 
 permissions:
   contents: write
@@ -102,23 +107,14 @@ jobs:
           cache: 'npm'
           
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
+        continue-on-error: false
 
-      - name: Generate QA Report
+      - name: Skip QA Generation for Branch Deployment
         run: |
-          if [[ -f "scripts/generate-qa-report.js" ]]; then
-            node scripts/generate-qa-report.js
-          else
-            echo "QA report script not found, skipping..."
-          fi
-
-      - name: Generate Issues Analysis
-        run: |
-          if [[ -f "scripts/analyze-github-issues.js" ]]; then
-            node scripts/analyze-github-issues.js
-          else
-            echo "Issues analysis script not found, skipping..."
-          fi
+          echo "ℹ️  Skipping QA report and issues analysis generation for branch deployment"
+          echo "These reports are generated during main branch CI/CD and are not needed for preview deployments"
+          echo "This prevents merge conflicts when multiple branches deploy simultaneously to gh-pages"
 
       - name: Determine PUBLIC_URL for branch
         id: public_url
@@ -135,6 +131,7 @@ jobs:
           echo "Determined PUBLIC_URL: $public_url"
 
       - name: Build branch-specific React app
+        continue-on-error: false
         run: |
           echo "Building with PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}"
           echo "Building with REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}"
@@ -143,6 +140,8 @@ jobs:
           npm run build
         env:
           CI: false
+          ESLINT_NO_DEV_ERRORS: true
+          GENERATE_SOURCEMAP: false
           PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}
           GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
           REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
@@ -345,17 +344,127 @@ jobs:
             has_changes=true
           fi
           
-          # Commit and push with simple retry for transient network issues only
+          # Enhanced commit and push with robust git operations
           if [[ "$has_changes" == "true" ]]; then
             max_retries=3
             retry_count=0
             success=false
             
+            # Function to clean git state
+            clean_git_state() {
+              echo "🧹 Cleaning git state..."
+              # Abort any ongoing rebase or merge
+              git rebase --abort 2>/dev/null || true
+              git merge --abort 2>/dev/null || true
+              # Reset to clean state while preserving staged changes
+              git reset --mixed HEAD 2>/dev/null || true
+              # Re-stage our changes
+              git add -A
+              echo "✅ Git state cleaned"
+            }
+            
+            # Function to perform robust pull with rebase
+            robust_pull_rebase() {
+              echo "🔄 Performing robust pull with rebase..."
+              
+              # Fetch latest changes
+              if ! git fetch origin gh-pages; then
+                echo "❌ Failed to fetch from origin"
+                return 1
+              fi
+              
+              # Check if we're behind remote
+              local_commit=$(git rev-parse HEAD)
+              remote_commit=$(git rev-parse origin/gh-pages)
+              
+              if [[ "$local_commit" == "$remote_commit" ]]; then
+                echo "✅ Already up to date with remote"
+                return 0
+              fi
+              
+              echo "📊 Local: $local_commit"
+              echo "📊 Remote: $remote_commit"
+              
+              # Perform rebase with conflict handling
+              if git rebase origin/gh-pages; then
+                echo "✅ Rebase successful"
+                return 0
+              else
+                echo "⚠️ Rebase conflicts detected, analyzing..."
+                
+                # Check for conflicts
+                if git status --porcelain | grep -q "^UU\|^AA\|^DD"; then
+                  echo "🔍 Found unresolved conflicts:"
+                  git status --porcelain | grep "^UU\|^AA\|^DD" || true
+                  
+                  # For branch deployments, try to auto-resolve by accepting our version
+                  # since each branch deploys to its own directory
+                  echo "🔧 Attempting automatic conflict resolution..."
+                  
+                  # Get list of conflicted files
+                  conflicted_files=$(git diff --name-only --diff-filter=U 2>/dev/null || true)
+                  
+                  if [[ -n "$conflicted_files" ]]; then
+                    echo "📝 Conflicted files:"
+                    echo "$conflicted_files"
+                    
+                    # For deployment conflicts, use our version (--ours)
+                    echo "🔧 Resolving conflicts by accepting our changes..."
+                    git checkout --ours . 2>/dev/null || true
+                    git add -A
+                    
+                    # Continue rebase
+                    if git rebase --continue; then
+                      echo "✅ Automatic conflict resolution successful"
+                      return 0
+                    else
+                      echo "❌ Failed to continue rebase after conflict resolution"
+                      git rebase --abort
+                      return 1
+                    fi
+                  else
+                    echo "❌ No conflicted files found but rebase failed"
+                    git rebase --abort
+                    return 1
+                  fi
+                else
+                  echo "❌ Rebase failed but no conflicts detected"
+                  git rebase --abort
+                  return 1
+                fi
+              fi
+            }
+            
+            # Function to perform robust push
+            robust_push() {
+              echo "🚀 Performing robust push..."
+              
+              # Try push with lease for safety
+              if git push --force-with-lease origin gh-pages; then
+                echo "✅ Push successful with lease protection"
+                return 0
+              else
+                echo "⚠️ Force-with-lease push failed, trying regular push..."
+                if git push origin gh-pages; then
+                  echo "✅ Regular push successful"
+                  return 0
+                else
+                  echo "❌ Push failed"
+                  return 1
+                fi
+              fi
+            }
+            
             while [[ $retry_count -lt $max_retries ]] && [[ "$success" == "false" ]]; do
               retry_count=$((retry_count + 1))
-              echo "Deployment attempt $retry_count of $max_retries"
+              echo "🔄 Deployment attempt $retry_count of $max_retries"
               
-              # Commit changes first (before fetch/rebase to avoid losing staged changes)
+              # Clean git state if this is a retry
+              if [[ $retry_count -gt 1 ]]; then
+                clean_git_state
+              fi
+              
+              # Commit changes first
               commit_created=false
               if git diff --cached --quiet; then
                 if [[ "${{ github.event.inputs.force_deployment }}" == "true" ]]; then
@@ -383,41 +492,31 @@ jobs:
                 commit_created=true
               fi
               
-              # Only proceed with fetch/rebase/push if we have changes to push
+              # Only proceed with sync and push if we have changes to push
               if [[ "$commit_created" == "true" ]]; then
-                # Fetch latest state immediately before push to minimize race condition window
-                echo "Fetching latest gh-pages state immediately before push..."
-                git fetch origin gh-pages
-                
-                # Rebase with remote to incorporate any concurrent changes
-                echo "Rebasing with remote to incorporate any concurrent changes..."
-                if ! git rebase origin/gh-pages; then
-                  echo "Rebase failed, checking if we can resolve automatically..."
-                  # Check if the conflict is just in different directories (which should auto-resolve)
-                  if git status --porcelain | grep -q "^UU"; then
-                    echo "Found merge conflicts that need manual resolution"
-                    git rebase --abort
-                    echo "Cannot automatically resolve conflicts - this shouldn't happen with separate directories"
-                    exit 1
+                # Perform robust pull with rebase
+                if robust_pull_rebase; then
+                  echo "✅ Successfully synced with remote"
+                  
+                  # Perform robust push
+                  if robust_push; then
+                    echo "✅ Push successful on attempt $retry_count"
+                    success=true
                   else
-                    echo "Rebase completed with automatic resolution"
+                    echo "⚠️ Push failed on attempt $retry_count"
+                    if [[ $retry_count -lt $max_retries ]]; then
+                      # Brief delay before retry
+                      sleep_time=$((retry_count * 2))
+                      echo "💤 Waiting ${sleep_time} seconds before next attempt..."
+                      sleep $sleep_time
+                    fi
                   fi
-                fi
-                
-                # Push to gh-pages immediately after rebase
-                echo "Pushing to gh-pages (attempt $retry_count)..."
-                if git push origin gh-pages; then
-                  echo "✅ Push successful on attempt $retry_count"
-                  success=true
                 else
-                  echo "⚠️ Push failed on attempt $retry_count"
+                  echo "⚠️ Failed to sync with remote on attempt $retry_count"
                   if [[ $retry_count -lt $max_retries ]]; then
-                    # Reset to before the commit to retry cleanly
-                    echo "Resetting commit to retry with fresh state..."
-                    git reset --soft HEAD~1
-                    # Brief delay for transient network issues
+                    # Brief delay before retry
                     sleep_time=$((retry_count * 2))
-                    echo "Waiting ${sleep_time} seconds before next attempt..."
+                    echo "💤 Waiting ${sleep_time} seconds before next attempt..."
                     sleep $sleep_time
                   fi
                 fi
@@ -425,8 +524,19 @@ jobs:
             done
             
             if [[ "$success" == "false" ]]; then
-              echo "❌ Failed to push after $max_retries attempts"
-              echo "This may indicate a persistent network issue or repository problem"
+              echo "❌ Failed to deploy after $max_retries attempts"
+              echo "This may indicate:"
+              echo "  - Persistent network issues"
+              echo "  - Repository access problems"
+              echo "  - Concurrent deployment conflicts"
+              echo "  - Git repository corruption"
+              echo ""
+              echo "🔍 Final git status:"
+              git status --porcelain || true
+              echo ""
+              echo "📊 Remote status:"
+              git fetch origin gh-pages 2>/dev/null || true
+              git log --oneline -5 origin/gh-pages 2>/dev/null || true
               exit 1
             fi
           fi

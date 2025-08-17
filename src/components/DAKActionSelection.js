@@ -5,6 +5,7 @@ import { PageLayout, usePageParams } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
+import './DAKActionSelection.css';
 
 const DAKActionSelection = () => {
   return (
@@ -85,16 +86,21 @@ const DAKActionSelectionContent = () => {
           {dakActions.map((action) => (
             <div 
               key={action.id}
-              className={`action-card`}
+              className={`action-card-container`}
               onClick={(event) => handleActionSelect(event, action.id)}
               style={{ '--action-color': action.color }}
             >
-              <div className="action-icon" style={{ color: action.color }}>
-                <img src={action.icon} alt={getAltText(t, ALT_TEXT_KEYS.ICON_ACTION, action.title, { title: action.title })} />
-              </div>
-              
-              <div className="action-description">
-                <p>{action.description}</p>
+              <div className="action-card-main">
+                <div className="action-card">
+                  <div className="action-icon" style={{ color: action.color }}>
+                    <img src={action.icon} alt={getAltText(t, ALT_TEXT_KEYS.ICON_ACTION, action.title, { title: action.title })} />
+                  </div>
+                </div>
+                
+                <div className="action-description">
+                  <h3>{action.title}</h3>
+                  <p>{action.description}</p>
+                </div>
               </div>
 
               <div className="action-workflow">

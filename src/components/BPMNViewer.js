@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
+import { createLazyBpmnViewer } from '../utils/lazyRouteUtils';
 
 const BPMNViewerComponent = () => {
   return (
@@ -48,6 +48,7 @@ const BPMNViewerContent = () => {
   }, [assetPath, selectedFile]);
   
   const [loading, setLoading] = useState(true);
+  const [loadingStep, setLoadingStep] = useState('initializing');
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [enhancedFullwidth, setEnhancedFullwidth] = useState(false);
@@ -71,7 +72,7 @@ const BPMNViewerContent = () => {
     checkPermissions();
   }, [currentRepository, currentProfile]);
 
-  // Load BPMN file content - simplified to avoid race conditions
+  // Load BPMN file content with enhanced loading states
   const loadBpmnContent = useCallback(async () => {
     console.log('🚀 BPMNViewer: loadBpmnContent called with:', {
       hasViewer: !!viewerRef.current,
@@ -98,6 +99,7 @@ const BPMNViewerContent = () => {
     try {
       setLoading(true);
       setError(null);
+      setLoadingStep('initializing');
 
       console.log('🔍 BPMNViewer: Repository and file analysis:', {
         repository: {
@@ -118,6 +120,7 @@ const BPMNViewerContent = () => {
         githubServiceAuthenticated: githubService.isAuth()
       });
 
+      setLoadingStep('fetching');
       console.log(`📂 BPMNViewer: Preparing to load BPMN content from ${owner}/${repoName}:${currentSelectedFile.path} (ref: ${ref})`);
       console.log('📋 BPMNViewer: Full selected file object:', JSON.stringify(currentSelectedFile, null, 2));
 
@@ -127,6 +130,7 @@ const BPMNViewerContent = () => {
       if (isDemo) {
         // For demo files, generate BPMN XML locally
         console.log('🎭 BPMNViewer: Demo file detected, generating BPMN content locally');
+        setLoadingStep('generating');
         const processName = currentSelectedFile.name.replace('.bpmn', '').replace(/[-_]/g, ' ');
         bpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
@@ -178,20 +182,12 @@ const BPMNViewerContent = () => {
 </bpmn:definitions>`;
       } else {
         // For real files, use githubService to fetch file content
+        setLoadingStep('downloading');
         bpmnXml = await githubService.getFileContent(owner, repoName, currentSelectedFile.path, ref);
       }
       
       // Validate BPMN content
-      if (!bpmnXml || !bpmnXml.trim()) {
-        throw new Error('Empty or invalid BPMN file content');
-      }
-      
-      if (!bpmnXml.includes('bpmn:definitions') && !bpmnXml.includes('<definitions')) {
-        throw new Error('File does not appear to contain valid BPMN XML content');
-      }
-
-      
-      // Validate BPMN content
+      setLoadingStep('validating');
       if (!bpmnXml || !bpmnXml.trim()) {
         throw new Error('Empty or invalid BPMN file content');
       }
@@ -201,10 +197,12 @@ const BPMNViewerContent = () => {
       }
 
       // Import XML into viewer
+      setLoadingStep('importing');
       console.log('🎨 BPMNViewer: Importing XML into BPMN viewer...');
       await viewerRef.current.importXML(bpmnXml);
       
       // Center the diagram
+      setLoadingStep('centering');
       try {
         const canvas = viewerRef.current.get('canvas');
         canvas.zoom('fit-viewport');
@@ -213,6 +211,82 @@ const BPMNViewerContent = () => {
         console.warn('⚠️ BPMNViewer: Could not center diagram:', centerError);
       }
       
+      // Force immediate and comprehensive visibility
+      const forceVisibility = () => {
+        const container = containerRef.current;
+        if (container) {
+          // Force visibility on all SVG elements and their children
+          const svgElements = container.querySelectorAll('svg, svg *');
+          svgElements.forEach(element => {
+            element.style.opacity = '1';
+            element.style.visibility = 'visible';
+            element.style.display = element.tagName.toLowerCase() === 'svg' ? 'block' : '';
+            
+            // Force remove bold styling from text elements
+            if (element.tagName.toLowerCase() === 'text' || element.tagName.toLowerCase() === 'tspan') {
+              element.style.fontWeight = 'normal';
+              element.style.fontStyle = 'normal';
+              element.style.fontVariant = 'normal';
+              // Remove any inline font-weight attributes
+              element.removeAttribute('font-weight');
+              element.removeAttribute('style');
+            }
+            
+            // Force proper fill colors for paths and shapes
+            if (['path', 'rect', 'circle', 'ellipse', 'polygon'].includes(element.tagName.toLowerCase())) {
+              // Don't override text color fills
+              if (!element.closest('text')) {
+                element.style.fill = 'var(--who-card-bg)';
+                element.style.stroke = 'var(--who-text-secondary)';
+                element.style.strokeWidth = '1.5px';
+              }
+            }
+          });
+          
+          // Also force the container itself to be visible
+          container.style.opacity = '1';
+          container.style.visibility = 'visible';
+          container.style.display = 'block';
+          
+          console.log('🎨 BPMNViewer: Forced comprehensive SVG visibility and styling');
+        }
+      };
+      
+      // Apply immediately
+      forceVisibility();
+      
+      // Also apply after a short delay to catch any delayed rendering
+      setTimeout(forceVisibility, 50);
+      setTimeout(forceVisibility, 200);
+      setTimeout(forceVisibility, 500);
+      
+      // Set up a MutationObserver to watch for dynamic changes and fix them
+      const observer = new MutationObserver((mutations) => {
+        let needsUpdate = false;
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList' || mutation.type === 'attributes') {
+            needsUpdate = true;
+          }
+        });
+        if (needsUpdate) {
+          setTimeout(forceVisibility, 10);
+        }
+      });
+      
+      // Observe changes to the container
+      if (containerRef.current) {
+        observer.observe(containerRef.current, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['style', 'fill', 'stroke', 'font-weight']
+        });
+        
+        // Store observer for cleanup
+        containerRef.current._bpmnObserver = observer;
+      }
+      
+      setLoadingStep('complete');
       setLoading(false);
     } catch (err) {
       console.error('💥 BPMNViewer: Error loading BPMN file:', err);
@@ -231,6 +305,7 @@ const BPMNViewerContent = () => {
         }
       });
       
+      setLoadingStep('error');
       // Provide specific error messages
       if (err.status === 404) {
         setError('BPMN file not found in the repository.');
@@ -257,7 +332,7 @@ const BPMNViewerContent = () => {
 
   // Initialize BPMN viewer - simplified to avoid race conditions
   useEffect(() => {
-    const initializeViewer = () => {
+    const initializeViewer = async () => {
       console.log('🛠️ BPMNViewer: initializeViewer called with:', {
         hasContainer: !!containerRef.current,
         hasViewer: !!viewerRef.current,
@@ -280,7 +355,8 @@ const BPMNViewerContent = () => {
             innerHTML: containerRef.current.innerHTML.length
           });
           
-          viewerRef.current = new BpmnViewer({
+          // Lazy load BPMN.js viewer to improve initial page responsiveness
+          viewerRef.current = await createLazyBpmnViewer({
             container: containerRef.current
           });
           console.log('✅ BPMNViewer: BPMN viewer initialized successfully');
@@ -302,11 +378,12 @@ const BPMNViewerContent = () => {
             cleanupContainer();
             
             // Wait a bit and try again
-            setTimeout(() => {
+            setTimeout(async () => {
               if (containerRef.current && !viewerRef.current) {
                 try {
                   console.log('🔄 BPMNViewer: Retrying viewer creation after cleanup...');
-                  viewerRef.current = new BpmnViewer({
+                  // Lazy load BPMN.js viewer to improve initial page responsiveness
+                  viewerRef.current = await createLazyBpmnViewer({
                     container: containerRef.current
                   });
                   console.log('✅ BPMNViewer: BPMN viewer initialized successfully on retry');
@@ -366,6 +443,12 @@ const BPMNViewerContent = () => {
           console.warn('Warning cleaning up BPMN viewer:', error);
         }
         viewerRef.current = null;
+      }
+      
+      // Clean up mutation observer
+      if (containerRef.current && containerRef.current._bpmnObserver) {
+        containerRef.current._bpmnObserver.disconnect();
+        delete containerRef.current._bpmnObserver;
       }
     };
   }, [currentSelectedFile, loadBpmnContent, cleanupContainer]);
@@ -536,6 +619,23 @@ const BPMNViewerContent = () => {
                   <p className="loading-details">
                     Fetching {currentSelectedFile.name} from {currentRepository.name}
                   </p>
+                  <div className="loading-progress">
+                    <div className={`loading-step ${loadingStep === 'initializing' ? 'active' : loadingStep === 'fetching' || loadingStep === 'downloading' || loadingStep === 'generating' || loadingStep === 'validating' || loadingStep === 'importing' || loadingStep === 'centering' || loadingStep === 'complete' ? 'complete' : ''}`}>
+                      Initializing viewer
+                    </div>
+                    <div className={`loading-step ${loadingStep === 'fetching' || loadingStep === 'downloading' || loadingStep === 'generating' ? 'active' : loadingStep === 'validating' || loadingStep === 'importing' || loadingStep === 'centering' || loadingStep === 'complete' ? 'complete' : ''}`}>
+                      {loadingStep === 'generating' ? 'Generating demo content' : 'Fetching BPMN file'}
+                    </div>
+                    <div className={`loading-step ${loadingStep === 'validating' ? 'active' : loadingStep === 'importing' || loadingStep === 'centering' || loadingStep === 'complete' ? 'complete' : ''}`}>
+                      Validating BPMN XML
+                    </div>
+                    <div className={`loading-step ${loadingStep === 'importing' ? 'active' : loadingStep === 'centering' || loadingStep === 'complete' ? 'complete' : ''}`}>
+                      Importing diagram
+                    </div>
+                    <div className={`loading-step ${loadingStep === 'centering' ? 'active' : loadingStep === 'complete' ? 'complete' : ''}`}>
+                      Centering view
+                    </div>
+                  </div>
                   <p className="loading-hint">
                     This may take a few moments for large files or slow connections.
                   </p>

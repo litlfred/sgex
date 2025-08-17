@@ -415,8 +415,7 @@ class WHODigitalLibraryService {
       totalElements: baseResults.length,
       totalPages: Math.ceil(baseResults.length / size),
       currentPage: page,
-      size: size,
-      isDemo: true // Flag to indicate this is demonstration data
+      size: size
     };
   }
 

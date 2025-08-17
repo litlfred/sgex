@@ -408,7 +408,7 @@ const BranchListingPage = () => {
                 setError(err.message);
                 
                 // Fallback mock data
-                if (err.message.includes('Failed to fetch')) {
+                if (err.message.includes('Failed to fetch') || err.message.includes('rate limit')) {
                     console.log('Using fallback mock data...');
                     const mockPRs = [
                         {
@@ -439,7 +439,10 @@ const BranchListingPage = () => {
                         }
                     ];
                     setPullRequests(mockPRs);
-                    setError(null);
+                    // Keep the error for display but don't block functionality
+                    if (err.message.includes('Failed to fetch')) {
+                        setError('API rate limit exceeded for 136.47.145.179. (But here\'s the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.) - https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting');
+                    }
                 }
             } finally {
                 setLoading(false);
@@ -496,43 +499,106 @@ const BranchListingPage = () => {
     const paginatedPRs = sortedPRs.slice((prPage - 1) * ITEMS_PER_PAGE, prPage * ITEMS_PER_PAGE);
     const totalPRPages = Math.ceil(sortedPRs.length / ITEMS_PER_PAGE);
 
-    if (loading) {
-        return (
-            <PageLayout pageName="branch-listing-loading" showBreadcrumbs={false}>
-                <div className="branch-listing-content">
+    return (
+        <PageLayout pageName="branch-listing" showBreadcrumbs={false}>
+            <div className="branch-listing-content">
+                {loading ? (
                     <div className="branch-listing-header">
                         <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
                         <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
                         <div className="loading">Loading previews...</div>
                     </div>
-                </div>
-            </PageLayout>
-        );
-    }
+                ) : error && pullRequests.length === 0 ? (
+                    <>
+                        <header className="branch-listing-header">
+                            <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
+                            <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
+                            
+                            <div className="error-banner">
+                                <div className="error-content">
+                                    <span className="error-icon">⚠️</span>
+                                    <div className="error-text">
+                                        <p><strong>Failed to load previews:</strong> {error}</p>
+                                        <p className="error-help">
+                                            GitHub API rate limit exceeded. 
+                                            {!isAuthenticated && ' Try logging in with a Personal Access Token for higher rate limits, or'}
+                                            {' '}try refreshing the page in a few minutes.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="prominent-info">
+                                <p className="info-text">
+                                    🐾 You can still access the main SGEX workbench and login below.
+                                </p>
+                            </div>
+                        </header>
 
-    if (error) {
-        return (
-            <PageLayout pageName="branch-listing-error" showBreadcrumbs={false}>
-                <div className="branch-listing-content">
-                    <div className="branch-listing-header">
-                        <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
-                        <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
-                        <div className="error">
-                            <p>Failed to load previews: {error}</p>
-                            <p>Please try refreshing the page or check back later.</p>
+                        <div className="action-cards">
+                            <div className="action-card main-site-card">
+                                <a 
+                                    href="./main/"
+                                    className="card-link"
+                                >
+                                    <div className="card-content">
+                                        <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Mascot')} className="card-icon" />
+                                        <div className="card-text">
+                                            <h3>View Main Site</h3>
+                                            <p>Access the main SGEX workbench</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            
+                            {!isAuthenticated ? (
+                                <div className="action-card login-card">
+                                    <div className="card-content">
+                                        <div className="login-icon">🔐</div>
+                                        <div className="card-text">
+                                            <h3>GitHub Login</h3>
+                                            <p>Login to get higher API rate limits and view comments</p>
+                                            <PATLogin onAuthSuccess={handleAuthSuccess} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="action-card logout-card">
+                                    <div className="card-content">
+                                        <div className="login-icon">✅</div>
+                                        <div className="card-text">
+                                            <h3>Logged In</h3>
+                                            <p>You can now view and add comments</p>
+                                            <button onClick={handleLogout} className="logout-btn">
+                                                🚪 Logout
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    </div>
-                </div>
-            </PageLayout>
-        );
-    }
-
-    return (
-        <PageLayout pageName="branch-listing" showBreadcrumbs={false}>
-            <div className="branch-listing-content">
-                <header className="branch-listing-header">
+                    </>
+                ) : (
+                    <>
+                        <header className="branch-listing-header">
                     <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
                     <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
+                    
+                    {error && (
+                        <div className="error-banner">
+                            <div className="error-content">
+                                <span className="error-icon">⚠️</span>
+                                <div className="error-text">
+                                    <p><strong>Failed to load previews:</strong> {error}</p>
+                                    <p className="error-help">
+                                        GitHub API rate limit exceeded. 
+                                        {!isAuthenticated && ' Try logging in with a Personal Access Token for higher rate limits, or'}
+                                        {' '}try refreshing the page in a few minutes.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     
                     <div className="prominent-info">
                         <p className="info-text">
@@ -564,7 +630,7 @@ const BranchListingPage = () => {
                                 <div className="login-icon">🔐</div>
                                 <div className="card-text">
                                     <h3>GitHub Login</h3>
-                                    <p>Login to view and add comments</p>
+                                    <p>Login to view and add comments{error ? ' and get higher API rate limits' : ''}</p>
                                     <PATLogin onAuthSuccess={handleAuthSuccess} />
                                 </div>
                             </div>
@@ -828,7 +894,9 @@ const BranchListingPage = () => {
                             </button>
                         </div>
                     )}
-                </div>
+                    </div>
+                    </>
+                )}
             </div>
         </PageLayout>
     );

@@ -101,6 +101,21 @@ To create branch-specific PRs, the GitHub Personal Access Token needs:
 - **repo**: Full control of private repositories
 - **workflow**: Update GitHub Action workflows (if needed)
 
+### For PR Merge Operations
+To merge pull requests using the Preview Badge merge functionality:
+
+#### Repository Access Level Required
+The authenticated user must have one of these GitHub repository permission levels:
+- **write**: Can push to the repository and manage issues/PRs
+- **maintain**: Can manage the repository without access to destructive actions  
+- **admin**: Full access to the repository
+
+#### Common Permission Issues
+1. **"Triage" permission level**: Can manage issues/PRs but CANNOT merge
+2. **Token scope insufficient**: Classic PATs need `repo` scope; fine-grained PATs need Contents (Write) + Pull requests (Write)
+3. **Branch protection rules**: Repository may require status checks or reviews before allowing merge
+4. **Organization restrictions**: Some organizations restrict merge permissions regardless of repository access
+
 ### For Repository Settings
 Ensure the repository allows:
 - Creating branches from any base branch
