@@ -10,6 +10,7 @@ import logger from '../utils/logger';
 class IssueTrackingService {
   constructor() {
     this.storageKey = 'sgex_tracked_items';
+    this.repositoryFiltersKey = 'sgex_repository_filters';
     this.logger = logger.getLogger('IssueTrackingService');
     this.syncInterval = null;
     this.syncIntervalMs = 5 * 60 * 1000; // 5 minutes
@@ -32,6 +33,32 @@ class IssueTrackingService {
     } catch (error) {
       this.logger.error('Failed to parse stored tracking data:', error);
       return { trackedItems: {} };
+    }
+  }
+
+  /**
+   * Get repository filters from localStorage
+   */
+  _getRepositoryFilters() {
+    try {
+      const data = localStorage.getItem(this.repositoryFiltersKey);
+      return data ? JSON.parse(data) : {};
+    } catch (error) {
+      this.logger.error('Failed to parse repository filters:', error);
+      return {};
+    }
+  }
+
+  /**
+   * Save repository filters to localStorage
+   */
+  _saveRepositoryFilters(filters) {
+    try {
+      localStorage.setItem(this.repositoryFiltersKey, JSON.stringify(filters));
+      return true;
+    } catch (error) {
+      this.logger.error('Failed to save repository filters:', error);
+      return false;
     }
   }
 
@@ -80,6 +107,35 @@ class IssueTrackingService {
     return {
       issues: userItems.issues || [],
       pullRequests: userItems.pullRequests || []
+    };
+  }
+
+  /**
+   * Get tracked items for a specific user with repository filters applied
+   */
+  async getFilteredTrackedItems(username = null) {
+    const items = await this.getTrackedItems(username);
+    const filters = this._getRepositoryFilters();
+    
+    if (!username) {
+      username = await this._getCurrentUsername();
+      if (!username) return items;
+    }
+
+    const userFilters = filters[username] || {};
+    
+    // Filter out hidden repositories
+    const filteredIssues = items.issues.filter(issue => 
+      !userFilters[issue.repository]?.hidden
+    );
+    
+    const filteredPRs = items.pullRequests.filter(pr => 
+      !userFilters[pr.repository]?.hidden
+    );
+
+    return {
+      issues: filteredIssues,
+      pullRequests: filteredPRs
     };
   }
 
@@ -251,12 +307,58 @@ class IssueTrackingService {
    * Get count of tracked items
    */
   async getTrackedCounts(username = null) {
-    const items = await this.getTrackedItems(username);
+    const items = await this.getFilteredTrackedItems(username);
     return {
       issues: items.issues.length,
       pullRequests: items.pullRequests.length,
       total: items.issues.length + items.pullRequests.length
     };
+  }
+
+  /**
+   * Set repository visibility for a user
+   */
+  async setRepositoryVisibility(repository, hidden = false) {
+    const username = await this._getCurrentUsername();
+    if (!username) return false;
+
+    const filters = this._getRepositoryFilters();
+    
+    if (!filters[username]) {
+      filters[username] = {};
+    }
+    
+    if (!filters[username][repository]) {
+      filters[username][repository] = {};
+    }
+    
+    filters[username][repository].hidden = hidden;
+    
+    return this._saveRepositoryFilters(filters);
+  }
+
+  /**
+   * Get repository filters for current user
+   */
+  async getRepositoryFilters() {
+    const username = await this._getCurrentUsername();
+    if (!username) return {};
+
+    const filters = this._getRepositoryFilters();
+    return filters[username] || {};
+  }
+
+  /**
+   * Get list of unique repositories from tracked items
+   */
+  async getTrackedRepositories() {
+    const items = await this.getTrackedItems();
+    const repositories = new Set();
+    
+    items.issues.forEach(issue => repositories.add(issue.repository));
+    items.pullRequests.forEach(pr => repositories.add(pr.repository));
+    
+    return Array.from(repositories).sort();
   }
 
   /**
