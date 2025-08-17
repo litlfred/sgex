@@ -62,6 +62,10 @@ const PreviewBadge = () => {
   const [canApproveWorkflows, setCanApproveWorkflows] = useState(false);
   const [canMergePR, setCanMergePR] = useState(false);
   const [isMergingPR, setIsMergingPR] = useState(false);
+  const [canReviewPR, setCanReviewPR] = useState(false);
+  const [isApprovingPR, setIsApprovingPR] = useState(false);
+  const [isRequestingChanges, setIsRequestingChanges] = useState(false);
+  const [reviewComment, setReviewComment] = useState('');
   const [commentsPage, setCommentsPage] = useState(1);
   const [allComments, setAllComments] = useState([]);
   const [hasMoreComments, setHasMoreComments] = useState(false);
@@ -588,12 +592,112 @@ const PreviewBadge = () => {
     }
   };
 
+  const handleApprovePR = async (owner, repo, prNumber) => {
+    if (!githubService.isAuth() || isApprovingPR || !canReviewPR) {
+      return false;
+    }
+
+    setIsApprovingPR(true);
+    try {
+      const result = await githubService.approvePullRequest(owner, repo, prNumber, reviewComment);
+      
+      console.debug('PR approved successfully:', result);
+      
+      // Clear the review comment after successful approval
+      setReviewComment('');
+      
+      // Refresh the PR info to reflect the new review status
+      setTimeout(async () => {
+        try {
+          const refreshedPRs = await fetchPRsForBranch(branchInfo?.name);
+          if (refreshedPRs && refreshedPRs.length > 0) {
+            setPrInfo(refreshedPRs);
+          }
+        } catch (error) {
+          console.debug('Could not refresh PR status after approval:', error);
+        }
+      }, 2000);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to approve PR:', error);
+      
+      // Provide user-friendly error messages
+      let userMessage = 'Failed to approve PR';
+      if (error.status === 403) {
+        userMessage = 'Permission denied: You may not have permission to review this PR';
+      } else if (error.status === 404) {
+        userMessage = 'PR not found or repository access denied';
+      } else if (error.status === 422) {
+        userMessage = 'Cannot review this PR - it may be from the same user or have other restrictions';
+      }
+      
+      console.warn('User guidance:', userMessage);
+      return false;
+    } finally {
+      setIsApprovingPR(false);
+    }
+  };
+
+  const handleRequestChanges = async (owner, repo, prNumber) => {
+    if (!githubService.isAuth() || isRequestingChanges || !canReviewPR) {
+      return false;
+    }
+
+    if (!reviewComment || !reviewComment.trim()) {
+      alert('Please enter a comment explaining what changes are needed.');
+      return false;
+    }
+
+    setIsRequestingChanges(true);
+    try {
+      const result = await githubService.requestPullRequestChanges(owner, repo, prNumber, reviewComment);
+      
+      console.debug('Changes requested successfully:', result);
+      
+      // Clear the review comment after successful review
+      setReviewComment('');
+      
+      // Refresh the PR info to reflect the new review status
+      setTimeout(async () => {
+        try {
+          const refreshedPRs = await fetchPRsForBranch(branchInfo?.name);
+          if (refreshedPRs && refreshedPRs.length > 0) {
+            setPrInfo(refreshedPRs);
+          }
+        } catch (error) {
+          console.debug('Could not refresh PR status after requesting changes:', error);
+        }
+      }, 2000);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to request changes:', error);
+      
+      // Provide user-friendly error messages
+      let userMessage = 'Failed to request changes';
+      if (error.status === 403) {
+        userMessage = 'Permission denied: You may not have permission to review this PR';
+      } else if (error.status === 404) {
+        userMessage = 'PR not found or repository access denied';
+      } else if (error.status === 422) {
+        userMessage = 'Cannot review this PR - it may be from the same user or have other restrictions';
+      }
+      
+      console.warn('User guidance:', userMessage);
+      return false;
+    } finally {
+      setIsRequestingChanges(false);
+    }
+  };
+
   const checkPermissions = async (owner, repo) => {
     if (!githubService.isAuth()) {
       setCanComment(false);
       setCanTriggerWorkflows(false);
       setCanApproveWorkflows(false);
       setCanMergePR(false);
+      setCanReviewPR(false);
       return;
     }
 
@@ -614,12 +718,17 @@ const PreviewBadge = () => {
       setCanTriggerWorkflows(triggerPermissions);
       setCanApproveWorkflows(approvalPermissions);
 
-      // Check merge permissions for the first PR if available
+      // Check merge and review permissions for the first PR if available
       if (prInfo && prInfo.length > 0) {
-        const mergePermissions = await githubService.checkPullRequestMergePermissions(owner, repo, prInfo[0].number);
+        const [mergePermissions, reviewPermissions] = await Promise.all([
+          githubService.checkPullRequestMergePermissions(owner, repo, prInfo[0].number),
+          githubService.checkPullRequestReviewPermissions(owner, repo, prInfo[0].number)
+        ]);
         setCanMergePR(mergePermissions);
+        setCanReviewPR(reviewPermissions);
       } else {
         setCanMergePR(false);
+        setCanReviewPR(false);
       }
     } catch (error) {
       console.debug('Error checking permissions:', error);
@@ -627,6 +736,7 @@ const PreviewBadge = () => {
       setCanTriggerWorkflows(false);
       setCanApproveWorkflows(false);
       setCanMergePR(false);
+      setCanReviewPR(false);
     }
   };
 
@@ -1174,14 +1284,66 @@ const PreviewBadge = () => {
                           )}
                         </button>
                       )}
+                      
+                      {/* PR Review Buttons */}
+                      {githubService.isAuth() && canReviewPR && (
+                        <>
+                          <div className="pr-review-comment">
+                            <textarea
+                              value={reviewComment}
+                              onChange={(e) => setReviewComment(e.target.value)}
+                              placeholder="Optional: Add a comment with your review..."
+                              className="review-comment-input"
+                              rows="2"
+                            />
+                          </div>
+                          <div className="pr-review-buttons">
+                            <button
+                              onClick={() => handleApprovePR('litlfred', 'sgex', prInfo[0].number)}
+                              disabled={isApprovingPR}
+                              className="pr-approve-btn"
+                              title={`Approve PR #${prInfo[0].number}`}
+                            >
+                              {isApprovingPR ? (
+                                <>⏳ Approving...</>
+                              ) : (
+                                <>✅ Approve</>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleRequestChanges('litlfred', 'sgex', prInfo[0].number)}
+                              disabled={isRequestingChanges || !reviewComment.trim()}
+                              className="pr-request-changes-btn"
+                              title={`Request changes for PR #${prInfo[0].number} (comment required)`}
+                            >
+                              {isRequestingChanges ? (
+                                <>⏳ Requesting...</>
+                              ) : (
+                                <>❌ Request Changes</>
+                              )}
+                            </button>
+                          </div>
+                        </>
+                      )}
+                      
                       {!githubService.isAuth() && (
                         <span className="pr-actions-note">
                           🔒 Sign in to access PR actions
                         </span>
                       )}
-                      {githubService.isAuth() && !canMergePR && (
+                      {githubService.isAuth() && !canMergePR && !canReviewPR && (
                         <span className="pr-actions-note">
-                          ⚠️ You don't have permission to merge this PR
+                          ⚠️ You don't have permission to merge or review this PR
+                        </span>
+                      )}
+                      {githubService.isAuth() && !canMergePR && canReviewPR && (
+                        <span className="pr-actions-note">
+                          ℹ️ You can review this PR but cannot merge it
+                        </span>
+                      )}
+                      {githubService.isAuth() && canMergePR && !canReviewPR && (
+                        <span className="pr-actions-note">
+                          ℹ️ You can merge this PR but cannot review it
                         </span>
                       )}
                     </div>

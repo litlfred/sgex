@@ -1497,6 +1497,100 @@
   gap: 0.25rem;
 }
 
+/* PR Review Styles */
+.pr-review-comment {
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+.review-comment-input {
+  width: 100%;
+  min-height: 60px;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  resize: vertical;
+  background: white;
+  color: #374151;
+  transition: border-color 0.2s ease;
+}
+
+.review-comment-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.review-comment-input::placeholder {
+  color: #9ca3af;
+}
+
+.pr-review-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pr-approve-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.pr-approve-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.pr-approve-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.pr-request-changes-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+.pr-request-changes-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.pr-request-changes-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 /* Dark mode support for PR actions */
 @media (prefers-color-scheme: dark) {
   .pr-actions-wrapper {
@@ -1522,5 +1616,37 @@
   
   .pr-merge-btn:hover:not(:disabled) {
     background: linear-gradient(135deg, #4f46e5, #4338ca);
+  }
+  
+  /* PR Review dark mode styles */
+  .review-comment-input {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+  
+  .review-comment-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+  
+  .review-comment-input::placeholder {
+    color: #6b7280;
+  }
+  
+  .pr-approve-btn {
+    background: linear-gradient(135deg, #059669, #047857);
+  }
+  
+  .pr-approve-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #047857, #065f46);
+  }
+  
+  .pr-request-changes-btn {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+  }
+  
+  .pr-request-changes-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #b91c1c, #991b1b);
   }
 }
