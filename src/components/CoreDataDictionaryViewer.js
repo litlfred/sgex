@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
+import { handleNavigationClick } from '../utils/navigationUtils';
 
 const CoreDataDictionaryViewer = () => {
   return (
@@ -575,6 +576,48 @@ const CoreDataDictionaryViewerContent = () => {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* FHIR Questionnaires Section */}
+          <div className="section questionnaires-section">
+            <h3>FHIR Questionnaires</h3>
+            <p>Structured questionnaires and forms for data collection using FHIR Questionnaire standard</p>
+            
+            <div className="questionnaire-actions">
+              <button 
+                className="action-btn primary questionnaire-editor-btn"
+                onClick={(event) => {
+                  const component = {
+                    id: 'questionnaire-editor',
+                    name: 'FHIR Questionnaires',
+                    description: 'Structured questionnaires and forms for data collection using FHIR standard'
+                  };
+                  const owner = repository?.owner?.login || repository?.full_name.split('/')[0];
+                  const repoName = repository?.name;
+                  const path = branch 
+                    ? `/questionnaire-editor/${owner}/${repoName}/${branch}`
+                    : `/questionnaire-editor/${owner}/${repoName}`;
+                  
+                  const navigationState = {
+                    profile,
+                    repository,
+                    component,
+                    selectedBranch: branch
+                  };
+                  
+                  handleNavigationClick(event, path, navigate, navigationState);
+                }}
+                title="Open FHIR Questionnaire Editor"
+              >
+                📋 Open Questionnaire Editor
+              </button>
+            </div>
+            
+            <div className="questionnaire-info">
+              <p className="info-text">
+                Create and edit FHIR R4 Questionnaire resources stored in <code>input/questionnaires/</code> directory.
+              </p>
+            </div>
           </div>
         </div>
       </div>
