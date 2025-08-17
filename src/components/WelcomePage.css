@@ -118,19 +118,19 @@ body.theme-light .welcome-page-content {
 .action-card {
   background: var(--who-card-bg);
   border: 1px solid var(--who-border-color);
-  border-radius: 24px;
-  padding: 2rem;
+  border-radius: 16px;
+  padding: 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
   backdrop-filter: blur(10px);
   position: relative;
   overflow: hidden;
-  /* Fixed width for vertical layout */
-  min-width: 300px;
-  width: 300px;
-  /* Height for vertical layout */
-  min-height: 250px;
+  /* Use default card sizing - more flexible width */
+  min-width: 280px;
+  width: 280px;
+  /* Use standard height consistent with other components */
+  min-height: 200px;
   display: flex;
   flex-direction: column;
   align-items: center;

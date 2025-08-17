@@ -255,7 +255,7 @@ body.theme-light .landing-page {
   background: var(--who-card-bg);
   border: 1px solid var(--who-border-color);
   border-radius: 12px;
-  padding: 2rem;
+  padding: 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
