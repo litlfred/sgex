@@ -3,7 +3,7 @@ import bugReportService from '../services/bugReportService';
 import githubService from '../services/githubService';
 import ScreenshotEditor from './ScreenshotEditor';
 
-const BugReportForm = ({ onClose, contextData = {} }) => {
+const BugReportForm = ({ onClose, contextData = {}, preferredType = 'bug' }) => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({});
@@ -37,14 +37,22 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
     };
   }, []);
 
-  // Auto-select Bug Report template and enable console by default for bug reports
+  // Auto-select template based on preferredType, defaulting to bug report
   useEffect(() => {
     if (templates.length > 0 && !selectedTemplate) {
-      const bugTemplate = templates.find(t => t.type === 'bug') || templates[0];
-      setSelectedTemplate(bugTemplate);
-      setIncludeConsole(bugTemplate.type === 'bug');
+      let defaultTemplate;
+      
+      if (preferredType === 'blank') {
+        defaultTemplate = templates.find(t => t.type === 'blank') || templates[0];
+      } else {
+        defaultTemplate = templates.find(t => t.type === 'bug') || templates[0];
+      }
+      
+      setSelectedTemplate(defaultTemplate);
+      setIncludeConsole(defaultTemplate.type === 'bug');
+      setIncludeScreenshot(defaultTemplate.type === 'bug');
     }
-  }, [templates, selectedTemplate]); // Added selectedTemplate back to dependencies
+  }, [templates, selectedTemplate, preferredType]);
 
   const loadTemplates = async () => {
     try {

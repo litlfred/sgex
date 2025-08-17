@@ -12,6 +12,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showBugReportForm, setShowBugReportForm] = useState(false);
+  const [bugReportType, setBugReportType] = useState('bug');
   const [showEnhancedTutorial, setShowEnhancedTutorial] = useState(false);
   const [currentTutorialId, setCurrentTutorialId] = useState(tutorialId);
 
@@ -64,8 +65,9 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
     window.helpModalInstance = {
       openSgexIssue: (issueType) => {
-        // For bug reports, show the new integrated form
-        if (issueType === 'bug') {
+        // For bug reports and blank issues, show the new integrated form
+        if (issueType === 'bug' || issueType === 'blank') {
+          setBugReportType(issueType);
           setShowBugReportForm(true);
           return;
         }
@@ -311,6 +313,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
   const handleBugReport = () => {
     // Show the new integrated bug report form
+    setBugReportType('bug');
     setShowBugReportForm(true);
   };
 
@@ -508,10 +511,12 @@ Best regards,
         <BugReportForm 
           onClose={() => {
             setShowBugReportForm(false);
+            setBugReportType('bug'); // Reset to default
             // Close the main modal after successful submission or cancel
             onClose();
           }}
           contextData={contextData}
+          preferredType={bugReportType}
         />
       </div>
     );

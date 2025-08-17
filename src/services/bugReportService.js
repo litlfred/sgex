@@ -124,6 +124,28 @@ class BugReportService {
   _getDefaultTemplates() {
     return [
       {
+        id: 'blank',
+        name: 'Report an Issue',
+        description: 'Create an issue without a template - for general feedback and questions',
+        title: '',
+        labels: ['blank-issue'],
+        type: 'blank',
+        body: [
+          {
+            type: 'textarea',
+            id: 'description',
+            attributes: {
+              label: 'Description',
+              description: 'Please describe your issue, question, or feedback.',
+              placeholder: 'What would you like to report?'
+            },
+            validations: {
+              required: true
+            }
+          }
+        ]
+      },
+      {
         id: 'bug_report',
         name: 'Bug Report',
         description: 'File a bug report to help us improve',
