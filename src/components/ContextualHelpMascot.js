@@ -6,6 +6,7 @@ import cacheManagementService from '../services/cacheManagementService';
 import issueTrackingService from '../services/issueTrackingService';
 import githubService from '../services/githubService';
 import HelpModal from './HelpModal';
+import BugReportForm from './BugReportForm';
 import TrackedItemsViewer from './TrackedItemsViewer';
 import LanguageSelector from './LanguageSelector';
 import useThemeImage from '../hooks/useThemeImage';
@@ -23,6 +24,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [showTrackedItems, setShowTrackedItems] = useState(false);
   const [trackedItemsCount, setTrackedItemsCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showBugReportForm, setShowBugReportForm] = useState(false);
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -81,6 +83,17 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
       issueTrackingService.stopBackgroundSync();
     };
   }, [isAuthenticated]);
+
+  // Set up global direct bug report function
+  useEffect(() => {
+    window.openDirectBugReport = () => {
+      setShowBugReportForm(true);
+    };
+
+    return () => {
+      delete window.openDirectBugReport;
+    };
+  }, []);
 
   const handleToggleTheme = () => {
     const newTheme = toggleTheme();
@@ -355,6 +368,16 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
         <TrackedItemsViewer
           onClose={() => setShowTrackedItems(false)}
         />
+      )}
+
+      {/* Bug Report Form Modal */}
+      {showBugReportForm && (
+        <div className="help-modal-overlay bug-report-overlay">
+          <BugReportForm 
+            onClose={() => setShowBugReportForm(false)}
+            contextData={contextData}
+          />
+        </div>
       )}
     </>
   );

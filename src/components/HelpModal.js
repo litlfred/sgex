@@ -64,8 +64,10 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
     window.helpModalInstance = {
       openSgexIssue: (issueType) => {
+        console.log('openSgexIssue called with type:', issueType);
         // For bug reports, show the new integrated form
         if (issueType === 'bug') {
+          console.log('Setting showBugReportForm to true');
           setShowBugReportForm(true);
           return;
         }
