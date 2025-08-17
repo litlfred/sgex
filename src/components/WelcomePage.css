@@ -165,14 +165,14 @@ body.theme-light .welcome-page-content {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 80px;
-  height: 80px;
+  width: var(--card-icon-size);
+  height: var(--card-icon-size);
 }
 
 .card-icon img {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
-  max-height: var(--card-size-default);
-  max-width: var(--card-size-default);
+  max-height: var(--card-icon-size);
+  max-width: var(--card-icon-size);
   object-fit: contain;
 }
 
@@ -497,15 +497,16 @@ body.theme-light .welcome-page-content {
     text-align: center;
   }
   
+  /* Only reduce card icon size slightly for tablet */
   .card-icon {
-    width: 60px;
-    height: 60px;
+    width: calc(var(--card-icon-size) * 0.8);
+    height: calc(var(--card-icon-size) * 0.8);
   }
   
   .card-icon img {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
-    max-height: 50px;
-    max-width: 50px;
+    max-height: calc(var(--card-icon-size) * 0.8);
+    max-width: calc(var(--card-icon-size) * 0.8);
   }
 }
 
@@ -534,15 +535,16 @@ body.theme-light .welcome-page-content {
     text-align: center;
   }
   
+  /* Reduce card icon size more for mobile */
   .card-icon {
-    width: 40px;
-    height: 40px;
+    width: calc(var(--card-icon-size) * 0.6);
+    height: calc(var(--card-icon-size) * 0.6);
   }
   
   .card-icon img {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
-    max-height: 35px;
-    max-width: 35px;
+    max-height: calc(var(--card-icon-size) * 0.6);
+    max-width: calc(var(--card-icon-size) * 0.6);
   }
   
   .card-icon .icon-symbol {
@@ -564,6 +566,18 @@ body.theme-light .welcome-page-content {
     max-width: calc(100vw - 0.5rem);
     gap: 0.5rem;
     text-align: center;
+  }
+  
+  /* Only for very narrow screens, reduce to small icon size */
+  .card-icon {
+    width: calc(var(--card-icon-size) * 0.4);
+    height: calc(var(--card-icon-size) * 0.4);
+  }
+  
+  .card-icon img {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
+    max-height: calc(var(--card-icon-size) * 0.4);
+    max-width: calc(var(--card-icon-size) * 0.4);
   }
   
   .welcome-cards {
