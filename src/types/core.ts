@@ -473,7 +473,7 @@ export interface FAQExecutionResult {
 
 export interface FAQStorageInterface {
   fileExists(path: string): Promise<boolean>;
-  readFile(path: string): Promise<Buffer>;
+  readFile(path: string): Promise<string>;
   listFiles(pattern?: string): Promise<string[]>;
 }
 
