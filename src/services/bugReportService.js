@@ -108,6 +108,7 @@ class BugReportService {
   // Determine template type from filename
   _getTemplateType(filename) {
     const name = filename.toLowerCase();
+    if (name.includes('blank')) return 'blank';
     if (name.includes('bug')) return 'bug';
     if (name.includes('feature')) return 'feature';
     if (name.includes('question')) return 'question';
@@ -123,6 +124,34 @@ class BugReportService {
   // Get default templates as fallback
   _getDefaultTemplates() {
     return [
+      {
+        id: 'blank',
+        name: 'Blank Issue',
+        description: 'Create a blank issue without pre-filled fields',
+        title: '',
+        labels: ['blank-issue'],
+        type: 'blank',
+        body: [
+          {
+            type: 'markdown',
+            attributes: {
+              value: 'Please describe your issue below. You can use any format you prefer.'
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'description',
+            attributes: {
+              label: 'Description',
+              description: 'Describe your issue, feedback, or question',
+              placeholder: 'Enter your description here...'
+            },
+            validations: {
+              required: false
+            }
+          }
+        ]
+      },
       {
         id: 'bug_report',
         name: 'Bug Report',

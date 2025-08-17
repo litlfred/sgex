@@ -40,7 +40,7 @@ describe('HelpModal - Blank Bug Report Integration', () => {
     
     const callUrl = mockOpen.mock.calls[0][0];
     expect(callUrl).toContain('labels=blank-issue');
-    expect(callUrl).not.toContain('template='); // No template should be specified
+    expect(callUrl).toContain('template=blank.yml'); // Blank template should be specified
   });
 
   test('should handle blank DAK issue creation correctly', () => {
@@ -71,6 +71,6 @@ describe('HelpModal - Blank Bug Report Integration', () => {
     
     const callUrl = mockOpen.mock.calls[0][0];
     expect(callUrl).toContain('labels=blank-issue%2Cdak-feedback');
-    expect(callUrl).not.toContain('template='); // No template should be specified
+    expect(callUrl).toContain('template=blank.yml'); // Blank template should be specified
   });
 });
