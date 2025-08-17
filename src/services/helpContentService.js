@@ -77,19 +77,6 @@ class HelpContentService {
           </div>
         `
       },
-      bugReportDirect: {
-        id: 'bug-report-direct',
-        title: 'Direct Bug Report Form',
-        badge: '/sgex/cat-paw-bug-icon.svg',
-        type: 'action',
-        action: () => {
-          // Directly trigger the bug report form via global function
-          if (window.openDirectBugReport) {
-            window.openDirectBugReport();
-          }
-        },
-        content: `<p>Opens the integrated bug report form directly.</p>`
-      },
       bugReport: {
         id: 'report-sgex-bug',
         title: 'Report a SGeX bug',
@@ -102,7 +89,7 @@ class HelpContentService {
               <p>Help us improve SGeX by reporting bugs and issues:</p>
               <h4>What type of issue are you experiencing?</h4>
               <div class="bug-report-options">
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('bug')">
+                <button class="bug-type-btn" onclick="window.openDirectBugReport?.()">
                   🐛 Bug Report - Something isn't working correctly
                 </button>
                 <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('feature')">
@@ -893,7 +880,6 @@ class HelpContentService {
   getUniversalTopics(contextData = {}) {
     const topics = [
       this.universalTopics.documentation,
-      this.universalTopics.bugReportDirect,
       this.universalTopics.bugReport
     ];
     
