@@ -1,0 +1,38 @@
+<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cat paw -->
+  <g fill="#8B4513" stroke="#654321" stroke-width="0.5">
+    <!-- Main paw pad -->
+    <ellipse cx="10" cy="12" rx="4" ry="3" />
+    
+    <!-- Toe pads -->
+    <circle cx="7" cy="8" r="1.5" />
+    <circle cx="10" cy="7" r="1.5" />
+    <circle cx="13" cy="8" r="1.5" />
+  </g>
+  
+  <!-- Bug being squashed -->
+  <g fill="#2C5234" stroke="#1A3D1F" stroke-width="0.3">
+    <!-- Bug body (squashed/flattened) -->
+    <ellipse cx="10" cy="15" rx="2.5" ry="1" />
+    
+    <!-- Bug legs (spread out from being squashed) -->
+    <line x1="8" y1="15" x2="6" y2="16" stroke="#1A3D1F" stroke-width="0.5" />
+    <line x1="12" y1="15" x2="14" y2="16" stroke="#1A3D1F" stroke-width="0.5" />
+    <line x1="8.5" y1="14.5" x2="6.5" y2="13.5" stroke="#1A3D1F" stroke-width="0.5" />
+    <line x1="11.5" y1="14.5" x2="13.5" y2="13.5" stroke="#1A3D1F" stroke-width="0.5" />
+    
+    <!-- Bug antennae -->
+    <line x1="9" y1="14" x2="8" y2="12" stroke="#1A3D1F" stroke-width="0.5" />
+    <line x1="11" y1="14" x2="12" y2="12" stroke="#1A3D1F" stroke-width="0.5" />
+    <circle cx="8" cy="12" r="0.3" fill="#1A3D1F" />
+    <circle cx="12" cy="12" r="0.3" fill="#1A3D1F" />
+  </g>
+  
+  <!-- Action lines to show squashing motion -->
+  <g stroke="#FFD700" stroke-width="1" fill="none" opacity="0.7">
+    <path d="M 15 6 L 13 8" />
+    <path d="M 16 8 L 14 10" />
+    <path d="M 5 6 L 7 8" />
+    <path d="M 4 8 L 6 10" />
+  </g>
+</svg>
