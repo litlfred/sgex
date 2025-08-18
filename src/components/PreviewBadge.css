@@ -1498,33 +1498,14 @@
 }
 
 /* PR Review Styles */
-.pr-review-comment {
-  width: 100%;
-  margin: 0.5rem 0;
-}
-
-.review-comment-input {
-  width: 100%;
-  min-height: 60px;
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 0.85rem;
-  resize: vertical;
-  background: white;
-  color: #374151;
-  transition: border-color 0.2s ease;
-}
-
-.review-comment-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.review-comment-input::placeholder {
-  color: #9ca3af;
+.pr-review-note {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #007bff;
 }
 
 .pr-review-buttons {
@@ -1619,19 +1600,10 @@
   }
   
   /* PR Review dark mode styles */
-  .review-comment-input {
+  .pr-review-note {
     background: #374151;
-    border-color: #4b5563;
-    color: #f9fafb;
-  }
-  
-  .review-comment-input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-  }
-  
-  .review-comment-input::placeholder {
-    color: #6b7280;
+    color: #d1d5db;
+    border-left-color: #3b82f6;
   }
   
   .pr-approve-btn {

@@ -65,7 +65,6 @@ const PreviewBadge = () => {
   const [canReviewPR, setCanReviewPR] = useState(false);
   const [isApprovingPR, setIsApprovingPR] = useState(false);
   const [isRequestingChanges, setIsRequestingChanges] = useState(false);
-  const [reviewComment, setReviewComment] = useState('');
   const [commentsPage, setCommentsPage] = useState(1);
   const [allComments, setAllComments] = useState([]);
   const [hasMoreComments, setHasMoreComments] = useState(false);
@@ -497,9 +496,10 @@ const PreviewBadge = () => {
       
       const success = await githubActionsService.triggerWorkflow(branchName);
       if (success) {
-        // Refresh workflow status after triggering
+        // Refresh workflow status after triggering and set up intensive monitoring
         setTimeout(() => {
           fetchWorkflowStatus(branchName);
+          setupIntensiveWorkflowRefresh(branchName);
         }, 2000); // Wait 2 seconds before fetching status
       }
       return success;
@@ -521,12 +521,17 @@ const PreviewBadge = () => {
       
       const success = await githubActionsService.approveWorkflowRun(runId);
       if (success) {
-        // Refresh workflow status after approval
+        // Immediately refresh workflow status after approval
         setTimeout(() => {
           if (branchInfo?.name) {
             fetchWorkflowStatus(branchInfo.name);
           }
-        }, 2000); // Wait 2 seconds before fetching status
+        }, 1000); // Reduced delay to 1 second for faster response
+        
+        // Set up intensive monitoring for faster updates after approval
+        if (branchInfo?.name) {
+          setupIntensiveWorkflowRefresh(branchInfo.name);
+        }
       }
       return success;
     } catch (error) {
@@ -599,12 +604,15 @@ const PreviewBadge = () => {
 
     setIsApprovingPR(true);
     try {
-      const result = await githubService.approvePullRequest(owner, repo, prNumber, reviewComment);
+      // Use the main comment from the top comment form for the review
+      const result = await githubService.approvePullRequest(owner, repo, prNumber, newComment.trim());
       
       console.debug('PR approved successfully:', result);
       
-      // Clear the review comment after successful approval
-      setReviewComment('');
+      // Clear the comment after successful approval if it was used for the review
+      if (newComment.trim()) {
+        setNewComment('');
+      }
       
       // Refresh the PR info to reflect the new review status
       setTimeout(async () => {
@@ -644,19 +652,19 @@ const PreviewBadge = () => {
       return false;
     }
 
-    if (!reviewComment || !reviewComment.trim()) {
+    if (!newComment || !newComment.trim()) {
       alert('Please enter a comment explaining what changes are needed.');
       return false;
     }
 
     setIsRequestingChanges(true);
     try {
-      const result = await githubService.requestPullRequestChanges(owner, repo, prNumber, reviewComment);
+      const result = await githubService.requestPullRequestChanges(owner, repo, prNumber, newComment.trim());
       
       console.debug('Changes requested successfully:', result);
       
-      // Clear the review comment after successful review
-      setReviewComment('');
+      // Clear the comment after successful review
+      setNewComment('');
       
       // Refresh the PR info to reflect the new review status
       setTimeout(async () => {
@@ -787,6 +795,38 @@ const PreviewBadge = () => {
         console.debug('Failed to auto-refresh workflow status:', error);
       }
     }, 30000); // 30 seconds for more dynamic updates
+  };
+
+  const setupIntensiveWorkflowRefresh = (branchName) => {
+    // Clear any existing interval
+    if (workflowRefreshIntervalRef.current) {
+      clearInterval(workflowRefreshIntervalRef.current);
+    }
+
+    let refreshCount = 0;
+    const maxIntensiveRefreshes = 6; // 6 refreshes × 5 seconds = 30 seconds of intensive monitoring
+
+    // Set up intensive refresh for 30 seconds after workflow actions
+    workflowRefreshIntervalRef.current = setInterval(async () => {
+      try {
+        const previousStatus = workflowStatus?.status;
+        await fetchWorkflowStatus(branchName);
+        
+        refreshCount++;
+        
+        // Log status changes for debugging
+        if (workflowStatus?.status && workflowStatus.status !== previousStatus) {
+          console.debug(`Workflow status changed from ${previousStatus} to ${workflowStatus.status}`);
+        }
+        
+        // After intensive monitoring period, switch back to normal refresh rate
+        if (refreshCount >= maxIntensiveRefreshes) {
+          setupWorkflowAutoRefresh(branchName);
+        }
+      } catch (error) {
+        console.debug('Failed to auto-refresh workflow status:', error);
+      }
+    }, 5000); // 5 seconds for intensive monitoring
   };
 
   const loadMoreComments = async () => {
@@ -1288,14 +1328,8 @@ const PreviewBadge = () => {
                       {/* PR Review Buttons */}
                       {githubService.isAuth() && canReviewPR && (
                         <>
-                          <div className="pr-review-comment">
-                            <textarea
-                              value={reviewComment}
-                              onChange={(e) => setReviewComment(e.target.value)}
-                              placeholder="Optional: Add a comment with your review..."
-                              className="review-comment-input"
-                              rows="2"
-                            />
+                          <div className="pr-review-note">
+                            💡 Use the comment form above to add feedback with your review.
                           </div>
                           <div className="pr-review-buttons">
                             <button
@@ -1312,7 +1346,7 @@ const PreviewBadge = () => {
                             </button>
                             <button
                               onClick={() => handleRequestChanges('litlfred', 'sgex', prInfo[0].number)}
-                              disabled={isRequestingChanges || !reviewComment.trim()}
+                              disabled={isRequestingChanges || !newComment.trim()}
                               className="pr-request-changes-btn"
                               title={`Request changes for PR #${prInfo[0].number} (comment required)`}
                             >
