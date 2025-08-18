@@ -38,6 +38,13 @@ const NotFound = () => {
 
     // First try to parse as a DAK URL
     if (!tryParseDAKUrl()) {
+      // Special case: index.html should silently redirect to welcome page
+      if (location.pathname === '/index.html') {
+        console.log('NotFound: index.html accessed, silently redirecting to welcome page');
+        navigate('/', { replace: true });
+        return;
+      }
+      
       // Fall back to original behavior if URL doesn't match DAK patterns
       const isAuthenticated = githubService.isAuth();
       
