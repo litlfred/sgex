@@ -83,6 +83,19 @@
             });
             l.replace(l.protocol + '//' + l.host + branchPath);
           } else {
+            // Handle unknown branch-only URLs by redirecting to branch root  
+            if (pathSegments.length === 2) {
+              // Just /sgex/:unknown-branch/ - redirect to branch root
+              console.log('SGEX Branch Root Redirect (unknown branch):', {
+                from: l.pathname,
+                branch: secondSegment,
+                note: 'Unknown branch name, redirecting to branch root'
+              });
+              var branchPath = '/sgex/' + secondSegment + '/';
+              redirectToSPA(branchPath, '');
+              return;
+            }
+
             // Before showing error, check if this could be a branch-first pattern
             // If we have at least 3 segments and the third segment is a valid component,
             // treat the second segment as a branch name regardless of deployed status
