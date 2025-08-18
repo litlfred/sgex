@@ -255,7 +255,7 @@ body.theme-light .landing-page {
   background: var(--who-card-bg);
   border: 1px solid var(--who-border-color);
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: var(--component-padding-default);
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
@@ -623,8 +623,8 @@ body.theme-light .landing-page {
   
   .profile-card {
     /* Increase minimum height for better mobile experience */
-    min-height: 200px;
-    padding: 1.5rem;
+    min-height: var(--component-height-default);
+    padding: var(--component-padding-default);
     /* Ensure proper vertical layout on mobile */
     display: flex;
     flex-direction: column;

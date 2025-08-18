@@ -19,6 +19,12 @@
   --icon-size-default: 24px;
   --icon-size-large: 3em;
   --icon-size-max: 12em;
+  
+  /* Component Spacing Standards */
+  --component-padding-default: 1.5rem;
+  --component-height-default: 200px;
+  --component-width-default: 280px;
+  --component-border-radius-default: 16px;
 }
 
 /* Standardized icon-cards class for consistent card sizing */
