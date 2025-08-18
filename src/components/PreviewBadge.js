@@ -71,6 +71,15 @@ const PreviewBadge = () => {
   const commentRefreshIntervalRef = useRef(null);
   const workflowRefreshIntervalRef = useRef(null);
 
+  // Custom markdown components to make links open in new tabs
+  const markdownComponents = {
+    a: ({ href, children, ...props }) => (
+      <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+        {children}
+      </a>
+    )
+  };
+
   useEffect(() => {
     const detectBranchAndPR = async () => {
       try {
@@ -1112,7 +1121,10 @@ const PreviewBadge = () => {
                   <div className="pr-body">
                     <div className="markdown-content">
                       {ReactMarkdown && rehypeRaw ? (
-                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                        <ReactMarkdown 
+                          rehypePlugins={[rehypeRaw]}
+                          components={markdownComponents}
+                        >
                           {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
                         </ReactMarkdown>
                       ) : (
@@ -1257,7 +1269,10 @@ const PreviewBadge = () => {
                             <div className="copilot-comment-body">
                               <div className="markdown-content">
                                 {ReactMarkdown && rehypeRaw ? (
-                                  <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                                  <ReactMarkdown 
+                                    rehypePlugins={[rehypeRaw]}
+                                    components={markdownComponents}
+                                  >{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
                                 ) : (
                                   <div style={{ whiteSpace: 'pre-wrap' }}>
                                     {sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}
@@ -1367,7 +1382,10 @@ const PreviewBadge = () => {
                                   <div className="comment-preview">
                                     <div className="markdown-content">
                                       {ReactMarkdown && rehypeRaw ? (
-                                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
+                                        <ReactMarkdown 
+                                          rehypePlugins={[rehypeRaw]}
+                                          components={markdownComponents}
+                                        >{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
                                       ) : (
                                         <div style={{ whiteSpace: 'pre-wrap' }}>
                                           {sanitizeAndRenderMarkdown(truncateComment(comment.body))}
@@ -1387,7 +1405,10 @@ const PreviewBadge = () => {
                                   <div className="comment-full">
                                     <div className="markdown-content">
                                       {ReactMarkdown && rehypeRaw ? (
-                                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
+                                        <ReactMarkdown 
+                                          rehypePlugins={[rehypeRaw]}
+                                          components={markdownComponents}
+                                        >{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
                                       ) : (
                                         <div style={{ whiteSpace: 'pre-wrap' }}>
                                           {sanitizeAndRenderMarkdown(comment.body)}
