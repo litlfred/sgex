@@ -3,7 +3,7 @@ import bugReportService from '../services/bugReportService';
 import githubService from '../services/githubService';
 import ScreenshotEditor from './ScreenshotEditor';
 
-const BugReportForm = ({ onClose, contextData = {}, preferredType = 'bug' }) => {
+const BugReportForm = ({ onClose, contextData = {} }) => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({});
@@ -37,22 +37,16 @@ const BugReportForm = ({ onClose, contextData = {}, preferredType = 'bug' }) => 
     };
   }, []);
 
-  // Auto-select template based on preferredType, defaulting to bug report
+  // Don't auto-select any template - let users choose from the dropdown
   useEffect(() => {
-    if (templates.length > 0 && !selectedTemplate) {
-      let defaultTemplate;
-      
-      if (preferredType === 'blank') {
-        defaultTemplate = templates.find(t => t.type === 'blank') || templates[0];
-      } else {
-        defaultTemplate = templates.find(t => t.type === 'bug') || templates[0];
-      }
-      
-      setSelectedTemplate(defaultTemplate);
-      setIncludeConsole(defaultTemplate.type === 'bug');
-      setIncludeScreenshot(defaultTemplate.type === 'bug');
+    // Reset form when templates load to ensure clean state
+    if (templates.length > 0) {
+      setSelectedTemplate(null);
+      setFormData({});
+      setIncludeConsole(false);
+      setIncludeScreenshot(false);
     }
-  }, [templates, selectedTemplate, preferredType]);
+  }, [templates]);
 
   const loadTemplates = async () => {
     try {

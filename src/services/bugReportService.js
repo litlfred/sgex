@@ -25,18 +25,26 @@ class BugReportService {
       // Try to get templates from .github/ISSUE_TEMPLATE directory
       const templates = await this._fetchTemplatesFromDirectory(owner, repo, '.github/ISSUE_TEMPLATE');
       
+      // If no templates found from GitHub, merge with defaults ensuring blank comes first
+      const mergedTemplates = templates.length > 0 ? 
+        this._mergeWithDefaults(templates) : 
+        this._getDefaultTemplates();
+      
+      // Ensure proper ordering with blank template first
+      const orderedTemplates = this._orderTemplates(mergedTemplates);
+      
       // Cache the templates
       const cacheKey = `${owner}/${repo}`;
       this.templateCache.set(cacheKey, {
-        templates,
+        templates: orderedTemplates,
         fetchedAt: Date.now()
       });
       
-      return templates;
+      return orderedTemplates;
     } catch (error) {
       console.warn('Failed to fetch issue templates:', error);
       // Return default templates if fetching fails
-      return this._getDefaultTemplates();
+      return this._orderTemplates(this._getDefaultTemplates());
     }
   }
 
@@ -113,6 +121,39 @@ class BugReportService {
     if (name.includes('question')) return 'question';
     if (name.includes('documentation')) return 'documentation';
     return 'general';
+  }
+
+  // Merge fetched templates with defaults, ensuring blank template is included
+  _mergeWithDefaults(fetchedTemplates) {
+    const defaults = this._getDefaultTemplates();
+    const blankTemplate = defaults.find(t => t.type === 'blank');
+    
+    // Check if fetched templates already include a blank-type template
+    const hasBlank = fetchedTemplates.some(t => t.type === 'blank' || t.id === 'blank');
+    
+    if (!hasBlank && blankTemplate) {
+      // Add the blank template from defaults
+      return [blankTemplate, ...fetchedTemplates];
+    }
+    
+    return fetchedTemplates;
+  }
+
+  // Order templates with blank first, then bug, then others
+  _orderTemplates(templates) {
+    const typeOrder = ['blank', 'bug', 'feature', 'question', 'documentation', 'general'];
+    
+    return templates.sort((a, b) => {
+      const aIndex = typeOrder.indexOf(a.type) !== -1 ? typeOrder.indexOf(a.type) : typeOrder.length;
+      const bIndex = typeOrder.indexOf(b.type) !== -1 ? typeOrder.indexOf(b.type) : typeOrder.length;
+      
+      if (aIndex !== bIndex) {
+        return aIndex - bIndex;
+      }
+      
+      // If same type, sort by name
+      return a.name.localeCompare(b.name);
+    });
   }
 
   // Get default templates as fallback (public method)
