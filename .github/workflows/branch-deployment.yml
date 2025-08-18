@@ -54,7 +54,7 @@ permissions:
 
 concurrency:
   group: "branch-deployment-${{ github.event.inputs.branch || github.head_ref || github.ref_name }}"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy-branch:
