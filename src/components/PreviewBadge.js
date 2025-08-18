@@ -1020,6 +1020,26 @@ const PreviewBadge = () => {
                 </button>
               </div>
 
+              {/* Status notification for closed/merged PRs */}
+              {prInfo[0].state !== 'open' && (
+                <div className={`pr-status-notification pr-status-${prInfo[0].state}`}>
+                  <div className="status-icon">
+                    {prInfo[0].state === 'closed' && '❌'}
+                    {prInfo[0].state === 'merged' && '🔀'}
+                  </div>
+                  <div className="status-message">
+                    <strong>
+                      {prInfo[0].state === 'closed' && 'This pull request is closed'}
+                      {prInfo[0].state === 'merged' && 'This pull request was merged'}
+                    </strong>
+                    <div className="status-details">
+                      {prInfo[0].state === 'closed' && 'The pull request has been closed without merging.'}
+                      {prInfo[0].state === 'merged' && 'The changes have been successfully merged into the target branch.'}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Comment form for authenticated users - MOVED TO TOP */}
               {githubService.isAuth() && (
                 <div className="comment-form">
