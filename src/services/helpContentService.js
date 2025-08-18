@@ -89,7 +89,7 @@ class HelpContentService {
               <p>Help us improve SGeX by reporting bugs and issues:</p>
               <h4>What type of issue are you experiencing?</h4>
               <div class="bug-report-options">
-                <button class="bug-type-btn" onclick="window.openDirectBugReport?.()">
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('bug')">
                   🐛 Bug Report - Something isn't working correctly
                 </button>
                 <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('feature')">
