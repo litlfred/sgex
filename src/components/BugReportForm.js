@@ -241,6 +241,49 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
     );
   };
 
+  // Copy technical details to clipboard
+  const copyTechnicalDetailsToClipboard = async () => {
+    try {
+      // Generate the technical details using the public method
+      const technicalDetails = bugReportService.getTechnicalDetails(contextData);
+      await navigator.clipboard.writeText(technicalDetails);
+      
+      // Show temporary success message
+      const button = document.querySelector('.copy-technical-details-btn');
+      if (button) {
+        const originalText = button.textContent;
+        button.textContent = '✓ Copied!';
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 2000);
+      }
+    } catch (error) {
+      // Fallback for browsers that don't support clipboard API
+      try {
+        const technicalDetails = bugReportService.getTechnicalDetails(contextData);
+        const textArea = document.createElement('textarea');
+        textArea.value = technicalDetails;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        // Show success message for fallback
+        const button = document.querySelector('.copy-technical-details-btn');
+        if (button) {
+          const originalText = button.textContent;
+          button.textContent = '✓ Copied!';
+          setTimeout(() => {
+            button.textContent = originalText;
+          }, 2000);
+        }
+      } catch (fallbackError) {
+        console.error('Failed to copy technical details to clipboard:', fallbackError);
+        alert('Failed to copy technical details to clipboard');
+      }
+    }
+  };
+
   const renderFormField = (field) => {
     const { id, type, attributes = {}, validations = {} } = field;
     const { label, description, placeholder, options } = attributes;
@@ -603,16 +646,26 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
 
         {/* Context Information Preview */}
         <div className="form-field">
-          <label className="context-preview-label">
-            Contextual Information
-            <button
-              type="button"
-              className="context-toggle-btn"
-              onClick={() => setShowContextPreview(!showContextPreview)}
-            >
-              {showContextPreview ? 'Hide' : 'Show'} Context Details
-            </button>
-          </label>
+          <div className="context-preview-label">
+            <span>Contextual Information</span>
+            <div className="context-buttons">
+              <button
+                type="button"
+                className="context-toggle-btn"
+                onClick={() => setShowContextPreview(!showContextPreview)}
+              >
+                {showContextPreview ? 'Hide' : 'Show'} Context Details
+              </button>
+              <button
+                type="button"
+                className="copy-technical-details-btn context-copy-btn"
+                onClick={copyTechnicalDetailsToClipboard}
+                title="Copy technical details to clipboard"
+              >
+                📋 Copy
+              </button>
+            </div>
+          </div>
           <p className="field-description">
             This information will be automatically included to help developers understand the context of your report.
           </p>
