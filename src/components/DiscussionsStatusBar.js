@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
 import githubService from '../services/githubService';
 import IssueCreationModal from './IssueCreationModal';
 import './DiscussionsStatusBar.css';
+
+// Lazy load MDEditor for advanced markdown editing
+const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
 /**
  * Discussions Status Bar component for DAK Dashboard
@@ -11,17 +14,22 @@ import './DiscussionsStatusBar.css';
 const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOpen, setIsOpen] = useState(true); // Filter for open/closed issues
-  const [selectedLabels, setSelectedLabels] = useState(['authoring']); // Default to 'authoring'
+  const [selectedLabels, setSelectedLabels] = useState([]); // No preselected filters
   const [availableLabels, setAvailableLabels] = useState([]);
   const [issues, setIssues] = useState([]);
   const [filteredIssues, setFilteredIssues] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [authoringIssueCount, setAuthoringIssueCount] = useState(0);
-  const [showNewIssueForm, setShowNewIssueForm] = useState(false);
   const [labelsCache, setLabelsCache] = useState({});
   const [lastCacheUpdate, setLastCacheUpdate] = useState(null);
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
+  const [expandedIssues, setExpandedIssues] = useState(new Set()); // Track which issues are expanded
+  const [issueComments, setIssueComments] = useState({}); // Store comments for each issue
+  const [loadingComments, setLoadingComments] = useState(new Set()); // Track which issues are loading comments
+  const [newComments, setNewComments] = useState({}); // Store new comment text for each issue
+  const [submittingComments, setSubmittingComments] = useState(new Set()); // Track comment submission
+  const [showAdvancedEditor, setShowAdvancedEditor] = useState({}); // Track advanced editor state per issue
   const pollingIntervalRef = useRef(null);
 
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -305,6 +313,115 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
     // Error is already handled by the modal
   };
 
+  // Load comments for a specific issue
+  const loadIssueComments = async (issue) => {
+    if (!repository || !githubService.isAuth()) return;
+
+    const owner = repository.owner?.login || repository.full_name?.split('/')[0];
+    const repoName = repository.name;
+    const issueNumber = issue.number;
+
+    if (loadingComments.has(issueNumber)) return; // Already loading
+
+    setLoadingComments(prev => new Set(prev).add(issueNumber));
+
+    try {
+      const comments = await githubService.getPullRequestIssueComments(owner, repoName, issueNumber);
+      setIssueComments(prev => ({
+        ...prev,
+        [issueNumber]: comments
+      }));
+    } catch (error) {
+      console.error('Failed to load comments:', error);
+    } finally {
+      setLoadingComments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(issueNumber);
+        return newSet;
+      });
+    }
+  };
+
+  // Toggle issue expansion
+  const toggleIssueExpansion = (issue) => {
+    const issueNumber = issue.number;
+    setExpandedIssues(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(issueNumber)) {
+        newSet.delete(issueNumber);
+      } else {
+        newSet.add(issueNumber);
+        // Load comments when expanding
+        if (!issueComments[issueNumber]) {
+          loadIssueComments(issue);
+        }
+      }
+      return newSet;
+    });
+  };
+
+  // Handle comment submission
+  const submitComment = async (issue) => {
+    if (!repository || !githubService.isAuth()) return;
+
+    const owner = repository.owner?.login || repository.full_name?.split('/')[0];
+    const repoName = repository.name;
+    const issueNumber = issue.number;
+    const commentText = newComments[issueNumber];
+
+    if (!commentText?.trim()) return;
+
+    setSubmittingComments(prev => new Set(prev).add(issueNumber));
+
+    try {
+      const newComment = await githubService.createPullRequestComment(owner, repoName, issueNumber, commentText);
+      
+      // Add the new comment to the existing comments
+      setIssueComments(prev => ({
+        ...prev,
+        [issueNumber]: [...(prev[issueNumber] || []), newComment]
+      }));
+
+      // Clear the comment input
+      setNewComments(prev => ({
+        ...prev,
+        [issueNumber]: ''
+      }));
+
+      // Close advanced editor
+      setShowAdvancedEditor(prev => ({
+        ...prev,
+        [issueNumber]: false
+      }));
+
+    } catch (error) {
+      console.error('Failed to submit comment:', error);
+      // Could show an error message to user here
+    } finally {
+      setSubmittingComments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(issueNumber);
+        return newSet;
+      });
+    }
+  };
+
+  // Toggle advanced editor for specific issue
+  const toggleAdvancedEditor = (issueNumber) => {
+    setShowAdvancedEditor(prev => ({
+      ...prev,
+      [issueNumber]: !prev[issueNumber]
+    }));
+  };
+
+  // Update comment text for specific issue
+  const updateCommentText = (issueNumber, text) => {
+    setNewComments(prev => ({
+      ...prev,
+      [issueNumber]: text
+    }));
+  };
+
   const formatIssueDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString();
@@ -414,43 +531,170 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
               </div>
             )}
 
-            {!loading && !error && filteredIssues.map(issue => (
-              <div 
-                key={issue.id}
-                className="issue-card"
-                onClick={() => handleIssueClick(issue)}
-              >
-                <div className="issue-header">
-                  <div className="issue-title">
-                    <span className={`issue-state ${issue.state}`}>
-                      {issue.state === 'open' ? '🟢' : '🔴'}
-                    </span>
-                    <span className="issue-title-text">{issue.title}</span>
-                  </div>
-                  <div className="issue-number">#{issue.number}</div>
-                </div>
-                
-                <div className="issue-summary">
-                  {issue.body ? 
-                    issue.body.substring(0, 200) + (issue.body.length > 200 ? '...' : '') :
-                    'No description provided'
-                  }
-                </div>
+            {!loading && !error && filteredIssues.map(issue => {
+              const issueNumber = issue.number;
+              const isExpanded = expandedIssues.has(issueNumber);
+              const comments = issueComments[issueNumber] || [];
+              const isLoadingComments = loadingComments.has(issueNumber);
+              const isSubmittingComment = submittingComments.has(issueNumber);
+              const showAdvanced = showAdvancedEditor[issueNumber];
+              const commentText = newComments[issueNumber] || '';
 
-                <div className="issue-meta">
-                  <div className="issue-labels">
-                    {getIssueLabelBadges(issue)}
+              return (
+                <div key={issue.id} className="issue-card">
+                  <div className="issue-header">
+                    <div className="issue-title">
+                      <span className={`issue-state ${issue.state}`}>
+                        {issue.state === 'open' ? '🟢' : '🔴'}
+                      </span>
+                      <span 
+                        className="issue-title-text"
+                        onClick={() => handleIssueClick(issue)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {issue.title}
+                      </span>
+                    </div>
+                    <div className="issue-controls">
+                      <div className="issue-number">#{issue.number}</div>
+                      {issue.comments > 0 && (
+                        <button
+                          className="expand-comments-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleIssueExpansion(issue);
+                          }}
+                          title={isExpanded ? 'Collapse comments' : 'Show comments'}
+                        >
+                          💬 {issue.comments} {isExpanded ? '▼' : '▶'}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="issue-info">
-                    <span className="issue-author">by {issue.user?.login}</span>
-                    <span className="issue-date">{formatIssueDate(issue.created_at)}</span>
-                    {issue.comments > 0 && (
-                      <span className="issue-comments">💬 {issue.comments}</span>
-                    )}
+
+                  <div className="issue-summary">
+                    {issue.body ? 
+                      issue.body.substring(0, 200) + (issue.body.length > 200 ? '...' : '') :
+                      'No description provided'
+                    }
                   </div>
+
+                  <div className="issue-meta">
+                    <div className="issue-labels">
+                      {getIssueLabelBadges(issue)}
+                    </div>
+                    <div className="issue-info">
+                      <span className="issue-author">by {issue.user?.login}</span>
+                      <span className="issue-date">{formatIssueDate(issue.created_at)}</span>
+                      {issue.comments === 0 && githubService.isAuth() && (
+                        <button
+                          className="add-comment-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleIssueExpansion(issue);
+                          }}
+                          title="Add a comment"
+                        >
+                          💬 Add comment
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Expanded Comments Section */}
+                  {isExpanded && (
+                    <div className="issue-comments-section">
+                      {isLoadingComments && (
+                        <div className="loading-comments">
+                          <span>Loading comments...</span>
+                        </div>
+                      )}
+
+                      {comments.length > 0 && (
+                        <div className="comments-list">
+                          {comments.map(comment => (
+                            <div key={comment.id} className="comment-item">
+                              <div className="comment-header">
+                                <span className="comment-author">{comment.user.login}</span>
+                                <span className="comment-date">{formatIssueDate(comment.created_at)}</span>
+                              </div>
+                              <div className="comment-body">
+                                {comment.body}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Add Comment Form */}
+                      {githubService.isAuth() && (
+                        <div className="add-comment-form">
+                          {!showAdvanced ? (
+                            <div className="comment-form-simple">
+                              <textarea
+                                value={commentText}
+                                onChange={(e) => updateCommentText(issueNumber, e.target.value)}
+                                placeholder="Write a comment... (Click 'Advanced Editor' for markdown preview)"
+                                rows={3}
+                                disabled={isSubmittingComment}
+                              />
+                              <div className="comment-form-actions">
+                                <button
+                                  className="advanced-editor-btn"
+                                  onClick={() => toggleAdvancedEditor(issueNumber)}
+                                  disabled={isSubmittingComment}
+                                >
+                                  📝 Advanced Editor
+                                </button>
+                                <button
+                                  className="submit-comment-btn"
+                                  onClick={() => submitComment(issue)}
+                                  disabled={!commentText.trim() || isSubmittingComment}
+                                >
+                                  {isSubmittingComment ? 'Submitting...' : 'Comment'}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="comment-form-advanced">
+                              <div className="markdown-editor-container">
+                                <Suspense fallback={<div className="loading-spinner">Loading editor...</div>}>
+                                  <MDEditor
+                                    value={commentText}
+                                    onChange={(val) => updateCommentText(issueNumber, val || '')}
+                                    preview="edit"
+                                    height={200}
+                                    visibleDragBar={false}
+                                    data-color-mode="light"
+                                    hideToolbar={isSubmittingComment}
+                                  />
+                                </Suspense>
+                              </div>
+                              <div className="comment-form-actions">
+                                <button
+                                  className="btn-secondary"
+                                  onClick={() => toggleAdvancedEditor(issueNumber)}
+                                  disabled={isSubmittingComment}
+                                >
+                                  Simple Editor
+                                </button>
+                                <button
+                                  className="submit-comment-btn"
+                                  onClick={() => submitComment(issue)}
+                                  disabled={!commentText.trim() || isSubmittingComment}
+                                >
+                                  {isSubmittingComment ? 'Submitting...' : 'Comment'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

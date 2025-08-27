@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import githubService from '../services/githubService';
 import './IssueCreationModal.css';
+
+// Lazy load MDEditor for advanced markdown editing
+const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
 /**
  * Modal component for creating GitHub issues using forms instead of external links
@@ -17,6 +20,7 @@ const IssueCreationModal = ({
   const [formData, setFormData] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [showAdvancedEditor, setShowAdvancedEditor] = useState({});
 
   // Get the repository information
   const getRepoInfo = () => {
@@ -329,18 +333,59 @@ const IssueCreationModal = ({
 
   const renderField = (field) => {
     const value = formData[field.id] || '';
+    const showAdvanced = showAdvancedEditor[field.id];
     
     switch (field.type) {
       case 'textarea':
         return (
-          <textarea
-            id={field.id}
-            value={value}
-            onChange={(e) => handleInputChange(field.id, e.target.value)}
-            placeholder={field.placeholder}
-            rows={4}
-            required={field.required}
-          />
+          <div className="textarea-field-container">
+            {!showAdvanced ? (
+              <div className="textarea-simple-container">
+                <textarea
+                  id={field.id}
+                  value={value}
+                  onChange={(e) => handleInputChange(field.id, e.target.value)}
+                  placeholder={field.placeholder}
+                  rows={4}
+                  required={field.required}
+                />
+                <button
+                  type="button"
+                  className="advanced-editor-toggle"
+                  onClick={() => setShowAdvancedEditor(prev => ({
+                    ...prev,
+                    [field.id]: true
+                  }))}
+                >
+                  📝 Advanced Editor
+                </button>
+              </div>
+            ) : (
+              <div className="textarea-advanced-container">
+                <Suspense fallback={<div className="loading-spinner">Loading editor...</div>}>
+                  <MDEditor
+                    value={value}
+                    onChange={(val) => handleInputChange(field.id, val || '')}
+                    preview="edit"
+                    height={300}
+                    visibleDragBar={false}
+                    data-color-mode="light"
+                    hideToolbar={submitting}
+                  />
+                </Suspense>
+                <button
+                  type="button"
+                  className="simple-editor-toggle"
+                  onClick={() => setShowAdvancedEditor(prev => ({
+                    ...prev,
+                    [field.id]: false
+                  }))}
+                >
+                  Simple Editor
+                </button>
+              </div>
+            )}
+          </div>
         );
       case 'select':
         return (
