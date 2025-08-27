@@ -42,11 +42,12 @@ describe('Branch Deployment Workflow Configuration', () => {
       expect(pushConfig.paths).toContain('.github/workflows/branch-deployment.yml');
     });
 
-    test('should not have pull request triggers (manual and automatic push only)', () => {
+    test('should have pull request triggers for PR events targeting main', () => {
       const prConfig = branchDeploymentConfig.on.pull_request;
       
-      // Pull request trigger should be removed to simplify workflow
-      expect(prConfig).toBeUndefined();
+      expect(prConfig).toBeDefined();
+      expect(prConfig.types).toEqual(['opened', 'synchronize', 'reopened']);
+      expect(prConfig.branches).toEqual(['main']);
     });
 
     test('should support manual workflow dispatch', () => {
@@ -177,6 +178,56 @@ describe('Branch Deployment Workflow Configuration', () => {
       expect(prCommitFeedbackConfig.name).toBe('PR Commit Feedback');
       expect(prCommitFeedbackConfig.on).toBeDefined();
       expect(prCommitFeedbackConfig.jobs).toBeDefined();
+    });
+  });
+
+  describe('Workflow Concurrency Configuration', () => {
+    test('should have proper concurrency settings to prevent race conditions', () => {
+      const concurrencyConfig = branchDeploymentConfig.concurrency;
+      
+      expect(concurrencyConfig).toBeDefined();
+      expect(concurrencyConfig.group).toBeDefined();
+      expect(concurrencyConfig.group).toContain('branch-deployment');
+      
+      // Critical fix for issue #841: should NOT cancel in progress to prevent race conditions
+      expect(concurrencyConfig['cancel-in-progress']).toBe(false);
+    });
+
+    test('concurrency group should include branch identifier', () => {
+      const concurrencyConfig = branchDeploymentConfig.concurrency;
+      const groupPattern = concurrencyConfig.group;
+      
+      // Should include branch identification in group name
+      expect(groupPattern).toMatch(/\$\{\{\s*github\.event\.inputs\.branch.*\}\}/);
+      expect(groupPattern).toMatch(/\$\{\{\s*.*github\.head_ref.*\}\}/);
+      expect(groupPattern).toMatch(/\$\{\{\s*.*github\.ref_name.*\}\}/);
+    });
+
+    test('should allow concurrent deployments of different branches', () => {
+      // The concurrency group uses branch-specific identifiers
+      // This means different branches can deploy concurrently
+      const concurrencyGroup = branchDeploymentConfig.concurrency.group;
+      
+      // Simulate different branch groups
+      const branch1Group = concurrencyGroup.replace(/\$\{\{.*\}\}/, 'feature-branch-1');
+      const branch2Group = concurrencyGroup.replace(/\$\{\{.*\}\}/, 'feature-branch-2');
+      
+      expect(branch1Group).not.toBe(branch2Group);
+      expect(branch1Group).toContain('branch-deployment');
+      expect(branch2Group).toContain('branch-deployment');
+    });
+
+    test('should prevent conflicts for same branch deployments without cancelling', () => {
+      const concurrencyConfig = branchDeploymentConfig.concurrency;
+      
+      // Same branch should use same concurrency group (preventing conflicts)
+      // But cancel-in-progress: false means workflows queue instead of cancelling
+      expect(concurrencyConfig['cancel-in-progress']).toBe(false);
+      
+      // This allows:
+      // 1. Multiple commits to same branch to queue deployments instead of cancelling
+      // 2. Git-level race condition handling to manage actual deployment conflicts
+      // 3. Robust deployment retry mechanism to handle concurrent access to gh-pages
     });
   });
 });

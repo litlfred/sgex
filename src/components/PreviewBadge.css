@@ -223,6 +223,52 @@
   color: #333;
 }
 
+/* PR Status Notification for closed/merged PRs */
+.pr-status-notification {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  margin: 0;
+  border-left: 4px solid;
+  font-size: 0.9rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.pr-status-notification.pr-status-closed {
+  background: #fef2f2;
+  border-left-color: #dc2626;
+  color: #991b1b;
+}
+
+.pr-status-notification.pr-status-merged {
+  background: #f3f4f6;
+  border-left-color: #6b21a8;
+  color: #581c87;
+}
+
+.status-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.status-message {
+  flex: 1;
+}
+
+.status-message strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.status-details {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  line-height: 1.3;
+}
+
 .pr-description {
   padding: 1rem;
   border-bottom: 1px solid #eee;
