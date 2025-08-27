@@ -747,6 +747,43 @@
     grid-template-columns: 1fr;
   }
 
+  .questionnaire-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .questionnaire-card {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .questionnaire-card .card-icon {
+    font-size: 1.5rem;
+    min-width: 2rem;
+  }
+
+  .questionnaire-card .card-content h5 {
+    font-size: 0.9rem;
+  }
+
+  .questionnaire-card .card-path {
+    font-size: 0.75rem;
+    word-break: break-all;
+  }
+
+  .no-questionnaires {
+    padding: 1.5rem 1rem;
+  }
+
+  .no-questionnaires .empty-icon {
+    font-size: 2.5rem;
+  }
+
+  .no-questionnaires ul {
+    max-width: 100%;
+    padding-left: 1rem;
+  }
+
   .artifact-links,
   .dictionary-links,
   .placeholder-links {
