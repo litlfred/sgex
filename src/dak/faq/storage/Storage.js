@@ -90,17 +90,38 @@ export class GitHubStorage extends Storage {
     try {
       const { owner, repo } = this.parseRepository(this.repository);
       console.log(`GitHubStorage.readFile: Reading file ${path} from ${owner}/${repo} (branch: ${this.branch})`);
+      
+      console.log(`GitHubStorage.readFile: Calling githubService.getFileContent...`);
       const contentString = await this.githubService.getFileContent(owner, repo, path, this.branch);
+      console.log(`GitHubStorage.readFile: GitHub service returned content, type: ${typeof contentString}, length: ${contentString?.length || 'undefined'}`);
+      
+      // Validate that we got a string
+      if (typeof contentString !== 'string') {
+        console.error(`GitHubStorage.readFile: Expected string but got ${typeof contentString}:`, contentString);
+        throw new Error(`GitHub service returned invalid content type: ${typeof contentString}`);
+      }
+      
+      if (contentString.length === 0) {
+        console.warn(`GitHubStorage.readFile: Content string is empty for ${path}`);
+      }
       
       // Convert the decoded string content to Buffer 
       // (githubService.getFileContent already decodes the base64 content to a string)
+      console.log(`GitHubStorage.readFile: Converting string to Buffer...`);
       const content = Buffer.from(contentString, 'utf-8');
+      console.log(`GitHubStorage.readFile: Buffer created successfully, size: ${content.length} bytes`);
+      
       this.cache.set(cacheKey, content);
       console.log(`GitHubStorage.readFile: Successfully read file ${path}, size: ${content.length} bytes`);
       console.log(`GitHubStorage.readFile: Content preview (first 200 chars):`, contentString.substring(0, 200));
       return content;
     } catch (error) {
-      console.error(`GitHubStorage.readFile: Failed to read file ${path}:`, error.message);
+      console.error(`GitHubStorage.readFile: Failed to read file ${path}:`, error);
+      console.error(`GitHubStorage.readFile: Error details:`, {
+        message: error.message,
+        name: error.name,
+        stack: error.stack?.substring(0, 500)
+      });
       throw new Error(`Failed to read file ${path}: ${error.message}`);
     }
   }
@@ -121,12 +142,19 @@ export class GitHubStorage extends Storage {
         console.log(`GitHubStorage.fileExists: GitHub service not available or no auth method`);
       }
       
-      await this.readFile(path);
-      console.log(`GitHubStorage.fileExists: File ${path} exists`);
+      console.log(`GitHubStorage.fileExists: About to call readFile...`);
+      const content = await this.readFile(path);
+      console.log(`GitHubStorage.fileExists: readFile completed successfully for ${path}, content size: ${content?.length || 'undefined'}`);
+      console.log(`GitHubStorage.fileExists: File ${path} exists - returning true`);
       return true;
     } catch (error) {
-      console.log(`GitHubStorage.fileExists: File ${path} does not exist:`, error.message);
-      console.log(`GitHubStorage.fileExists: Full error:`, error);
+      console.error(`GitHubStorage.fileExists: readFile failed for ${path}:`, error.message);
+      console.error(`GitHubStorage.fileExists: Full error details:`, {
+        name: error.name,
+        message: error.message,
+        stack: error.stack?.substring(0, 300)
+      });
+      console.log(`GitHubStorage.fileExists: File ${path} does not exist - returning false`);
       return false;
     }
   }
