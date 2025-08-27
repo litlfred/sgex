@@ -4,7 +4,38 @@
     <meta charset="utf-8">
     <title>SGEX Workbench</title>
     <!-- Load SGEX route configuration service -->
-    <script src="./routeConfig.js"></script>
+    <script>
+      // Dynamically determine the correct path to routeConfig.js based on deployment structure
+      (function() {
+        var pathname = window.location.pathname;
+        var configPath = './routeConfig.js'; // Default for root deployment
+        
+        // For GitHub Pages deployments, calculate relative path to deployment root
+        if (pathname.includes('/sgex/')) {
+          var sgexIndex = pathname.indexOf('/sgex/');
+          var afterSgex = pathname.substring(sgexIndex + 6); // Length of '/sgex/'
+          var pathSegments = afterSgex.split('/').filter(Boolean);
+          
+          if (pathSegments.length > 0) {
+            // We're in a subdirectory, need to go back to deployment root
+            var levelsBack = pathSegments.length - 1; // -1 because we want to stay in the branch dir
+            
+            // If we're accessing /sgex/branch/something/else, we need to go back to /sgex/branch/
+            if (levelsBack > 0) {
+              configPath = '../'.repeat(levelsBack) + 'routeConfig.js';
+            }
+          }
+        }
+        
+        // Create and append script tag
+        var script = document.createElement('script');
+        script.src = configPath;
+        script.onerror = function() {
+          console.warn('Failed to load routeConfig.js from', configPath, '- routing will use fallback configuration');
+        };
+        document.head.appendChild(script);
+      })();
+    </script>
     <script type="text/javascript">
       // SGEX Dynamic URL Routing for GitHub Pages and Local Deployments
       // Supports branch-first URL patterns: /sgex/:branch/:component/:user/:repo/:branch/:asset
@@ -275,25 +306,36 @@
 
           // Ensure DOM is ready before setting innerHTML
           function setErrorHTML() {
-            if (document.body) {
-              document.body.innerHTML = errorHTML;
-            } else {
-              // DOM not ready yet, wait for it
+            try {
+              // Wait for document to be ready
               if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function() {
-                  document.body.innerHTML = errorHTML;
-                });
-              } else {
-                // DOM should be ready, but body still doesn't exist - create it
-                setTimeout(function() {
                   if (document.body) {
                     document.body.innerHTML = errorHTML;
                   } else {
-                    // Last resort: create a basic error display
-                    document.write('<body>' + errorHTML + '</body>');
+                    // Create body if it doesn't exist
+                    document.body = document.createElement('body');
+                    document.documentElement.appendChild(document.body);
+                    document.body.innerHTML = errorHTML;
                   }
-                }, 10);
+                });
+              } else {
+                // Document is ready
+                if (document.body) {
+                  document.body.innerHTML = errorHTML;
+                } else {
+                  // Body doesn't exist, create it
+                  document.body = document.createElement('body');
+                  if (document.documentElement) {
+                    document.documentElement.appendChild(document.body);
+                  }
+                  document.body.innerHTML = errorHTML;
+                }
               }
+            } catch (error) {
+              // Last resort: use document.write (not ideal but better than crashing)
+              console.error('Failed to set error HTML via DOM manipulation:', error);
+              document.write('<body>' + errorHTML + '</body>');
             }
           }
           
