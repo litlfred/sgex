@@ -11,11 +11,11 @@ const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
   const [lformsReady, setLformsReady] = useState(false);
   const [lformsContainerId] = useState(`lforms-container-${Date.now()}`);
   
-  // LForms integration with proper lazy loading
+  // LForms integration with local bundle loading
   useEffect(() => {
     const initializeLForms = async () => {
       try {
-        console.log('Loading LForms library...');
+        console.log('Loading LForms library from local bundle...');
         
         // Check if LForms is already loaded globally
         if (window.LForms) {
@@ -28,57 +28,54 @@ const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
           return;
         }
         
-        // Try multiple CDN URLs for LForms
-        const cdnUrls = [
-          'https://lhcforms.nlm.nih.gov/lhcforms/38.2.0/lforms.min.js',
-          'https://lhcforms.nlm.nih.gov/lhcforms/latest/lforms.min.js',
-          'https://cdn.jsdelivr.net/npm/lhc-forms@38.2.0/dist/lforms.min.js',
-          'https://unpkg.com/lhc-forms@38.2.0/dist/lforms.min.js'
+        // Load LForms from local vendor files (bundled with the app)
+        const basePath = process.env.PUBLIC_URL || '';
+        
+        // First, load the CSS styles
+        const cssLink = document.createElement('link');
+        cssLink.rel = 'stylesheet';
+        cssLink.href = `${basePath}/vendor/lforms/lforms-styles.css`;
+        document.head.appendChild(cssLink);
+        
+        const lformsFiles = [
+          `${basePath}/vendor/lforms/webcomponent/polyfills.js`,
+          `${basePath}/vendor/lforms/webcomponent/runtime.js`, 
+          `${basePath}/vendor/lforms/webcomponent/main.js`,
+          `${basePath}/vendor/lforms/webcomponent/lhc-forms.js`,
+          `${basePath}/vendor/lforms/lformsFHIR.js`
         ];
         
-        let loaded = false;
-        
-        for (const url of cdnUrls) {
-          if (loaded) break;
-          
+        // Load files sequentially
+        for (const fileUrl of lformsFiles) {
           try {
-            console.log(`Attempting to load LForms from: ${url}`);
+            console.log(`Loading LForms file: ${fileUrl}`);
             await new Promise((resolve, reject) => {
               const script = document.createElement('script');
-              script.src = url;
-              script.onload = () => {
-                if (window.LForms) {
-                  console.log(`LForms loaded successfully from ${url}`);
-                  setLformsInstance(window.LForms);
-                  setLformsReady(true);
-                  loaded = true;
-                  if (onError) {
-                    onError(null);
-                  }
-                  resolve();
-                } else {
-                  reject(new Error('LForms failed to initialize after script load'));
-                }
-              };
-              script.onerror = () => {
-                reject(new Error(`Failed to load LForms from ${url}`));
-              };
-              // Set timeout for script loading
-              setTimeout(() => {
-                if (!loaded) {
-                  reject(new Error(`Timeout loading LForms from ${url}`));
-                }
-              }, 10000);
+              script.src = fileUrl;
+              script.onload = resolve;
+              script.onerror = () => reject(new Error(`Failed to load ${fileUrl}`));
               document.head.appendChild(script);
             });
           } catch (error) {
-            console.warn(`Failed to load from ${url}:`, error);
-            // Continue to next URL
+            console.warn(`Optional LForms file failed to load: ${error.message}`);
+            // Continue loading other files
           }
         }
         
-        if (!loaded) {
-          throw new Error('All LForms CDN URLs failed to load');
+        // Check if LForms is available after loading files
+        if (window.LForms) {
+          console.log('LForms loaded successfully from local bundle');
+          setLformsInstance(window.LForms);
+          setLformsReady(true);
+          if (onError) {
+            onError(null);
+          }
+        } else {
+          console.warn('LForms not available after loading local files, using fallback editor');
+          if (onError) {
+            onError('LHC-Forms library could not be loaded from local bundle - using fallback editor');
+          }
+          setLformsReady(true); // Still allow fallback editor
         }
         
       } catch (error) {
@@ -308,9 +305,9 @@ const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
                 <div className="lhc-forms-container">
                   <div className="lhc-forms-header">
                     <h5>✨ LHC-Forms Visual Editor</h5>
-                    <p>Powered by NIH LHC-Forms for professional questionnaire design</p>
+                    <p>Powered by locally bundled LHC-Forms for professional questionnaire design</p>
                     <div className="lhc-forms-status success">
-                      ✅ LHC-Forms library loaded successfully
+                      ✅ LHC-Forms library loaded successfully from local bundle
                     </div>
                   </div>
                   
@@ -342,7 +339,7 @@ const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
                     <h5>🔧 Built-in Questionnaire Editor</h5>
                     <p>Visual questionnaire builder with essential features</p>
                     <div className="lhc-forms-status warning">
-                      ⚠️ LHC-Forms library could not be loaded - using fallback editor
+                      ⚠️ LHC-Forms library could not be loaded from local bundle - using fallback editor
                     </div>
                   </div>
                 <>

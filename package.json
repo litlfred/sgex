@@ -18,6 +18,7 @@
     "html2canvas": "^1.4.1",
     "i18next": "^25.3.4",
     "i18next-browser-languagedetector": "^8.2.0",
+    "lforms": "^38.2.0",
     "node-fetch": "^3.3.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -46,7 +47,8 @@
     "generate-schemas": "npm run generate-schemas:typescript-json-schema && npm run generate-schemas:ts-json-schema-generator",
     "generate-schemas:typescript-json-schema": "typescript-json-schema tsconfig.json \"*\" --out public/docs/schemas/generated-schemas-tjs.json --include src/types/**/*.ts",
     "generate-schemas:ts-json-schema-generator": "ts-json-schema-generator --path src/types/**/*.ts --type \"*\" --out public/docs/schemas/generated-schemas-tsjsg.json",
-    "prebuild": "npm run type-check && npm run generate-schemas",
+    "prebuild": "npm run copy-lforms && npm run type-check && npm run generate-schemas",
+    "copy-lforms": "node scripts/copy-lforms.js",
     "compliance:profile": "node src/tests/compliance/profileCreationCompliance.js",
     "compliance:all": "npm run compliance:profile",
     "test:compliance": "npm test -- --testPathPattern=compliance"
