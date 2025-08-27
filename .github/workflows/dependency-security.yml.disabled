@@ -3,12 +3,14 @@ name: Dependency Security Check
 on:
   pull_request:
     branches: [ main, develop ]
+    branches-ignore: [gh-pages, deploy]
     paths:
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/dependency-security.yml'
   push:
     branches: [ main, develop ]
+    branches-ignore: [gh-pages, deploy]
     paths:
       - 'package.json'
       - 'package-lock.json'
@@ -34,9 +36,11 @@ jobs:
 
     - name: Install dependencies
       run: npm ci --legacy-peer-deps
+      continue-on-error: false
 
     - name: Run security audit
       id: audit
+      continue-on-error: false
       run: |
         echo "Running npm audit..."
         
@@ -179,6 +183,7 @@ jobs:
                 **Need help?** Check the [npm audit documentation](https://docs.npmjs.com/cli/v8/commands/npm-audit) for more details.
                 `;
               }
+            }
             
             // Get pull request number (only for PR events)
             const prNumber = context.payload.pull_request?.number || context.issue?.number;

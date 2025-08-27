@@ -8,17 +8,17 @@ import useThemeImage from '../hooks/useThemeImage';
 const ComponentEditor = () => {
   const location = useLocation();
   
-  // Handle health-interventions routes with PageLayout framework
-  if (location.pathname.includes('/health-interventions/')) {
-    return (
-      <PageLayout pageName="health-interventions">
-        <HealthInterventionsEditor />
-      </PageLayout>
-    );
-  }
+  const isHealthInterventions = location.pathname.includes('/health-interventions/');
   
-  // For other routes, use existing logic
-  return <ComponentEditorContent />;
+  return (
+    <PageLayout pageName="component-editor">
+      {isHealthInterventions ? (
+        <HealthInterventionsEditor />
+      ) : (
+        <ComponentEditorContent />
+      )}
+    </PageLayout>
+  );
 };
 
 const HealthInterventionsEditor = () => {
@@ -165,8 +165,7 @@ const ComponentEditorContent = () => {
   }
 
   return (
-    <PageLayout pageName="component-editor">
-      <div className="component-editor">
+    <div className="component-editor">
       <div className="editor-content">
 
         <div className="editor-main">
@@ -210,8 +209,7 @@ const ComponentEditorContent = () => {
           </div>
         </div>
       </div>
-      </div>
-    </PageLayout>
+    </div>
   );
 };
 

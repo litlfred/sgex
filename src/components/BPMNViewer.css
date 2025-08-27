@@ -344,16 +344,24 @@ body.theme-light .bpmn-viewer {
 .bpmn-container {
   width: 100%;
   height: 100%;
-  background: var(--bpmn-preview-bg, #f8f9ff);
+  background: var(--bpmn-preview-bg);
+  position: relative;
+  /* Ensure container is properly sized and visible */
+  min-height: 400px;
+  overflow: hidden;
 }
 
-/* CSS Variables for BPMN backgrounds */
+/* CSS Variables for BPMN backgrounds with better contrast */
 :root {
   --bpmn-preview-bg: #f8f9ff; /* Very light blue for light mode */
+  --bpmn-text-color: #333333; /* Dark text for light mode */
+  --bpmn-stroke-color: #666666; /* Medium stroke for light mode */
 }
 
 body.theme-dark {
   --bpmn-preview-bg: #1a1a2e; /* Dark blue for dark mode */
+  --bpmn-text-color: #ffffff; /* White text for dark mode */
+  --bpmn-stroke-color: #cccccc; /* Light stroke for dark mode */
 }
 
 .loading-overlay,
@@ -369,20 +377,24 @@ body.theme-dark {
   justify-content: center;
   background: var(--who-primary-bg);
   color: var(--who-text-secondary);
+  z-index: 50; /* Ensure overlay is visible */
+  opacity: 1; /* Ensure visibility */
 }
 
 .loading-info {
   text-align: center;
   max-width: 400px;
+  z-index: 51; /* Ensure text is above background */
 }
 
 .loading-info p {
   margin: 0.5rem 0;
+  color: var(--who-text-primary); /* Use primary text color for better visibility */
 }
 
 .loading-details {
   font-size: 0.9rem;
-  color: var(--who-text-muted);
+  color: var(--who-text-secondary);
   font-weight: 500;
 }
 
@@ -390,6 +402,35 @@ body.theme-dark {
   font-size: 0.8rem;
   color: var(--who-text-muted);
   font-style: italic;
+}
+
+/* Enhanced loading progress display */
+.loading-progress {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.loading-step {
+  font-size: 0.85rem;
+  color: var(--who-text-secondary);
+  margin: 0.3rem 0;
+  opacity: 0.7;
+}
+
+.loading-step.active {
+  color: var(--who-blue);
+  opacity: 1;
+  font-weight: 600;
+}
+
+.loading-step.complete {
+  color: var(--who-text-primary);
+  opacity: 1;
+}
+
+.loading-step.complete::before {
+  content: "✓ ";
+  color: #4caf50;
 }
 
 .error-actions {
@@ -599,19 +640,83 @@ body.theme-dark {
 /* Override BPMN.js inline styles for dark mode support */
 /* These rules use high specificity to override inline styles applied by bpmn-js */
 
-/* Main SVG container background */
+/* Main SVG container background - ensure proper visibility */
 .bpmn-container svg,
 .bpmn-container .bjs-container svg,
 .bpmn-container .djs-container svg {
-  background-color: var(--who-primary-bg) !important;
-  background: var(--who-primary-bg) !important;
+  background-color: var(--bpmn-preview-bg) !important;
+  background: var(--bpmn-preview-bg) !important;
 }
 
 /* Viewport background */
 .bpmn-container .viewport,
 .bpmn-container .djs-container .viewport {
-  background-color: var(--who-primary-bg) !important;
-  background: var(--who-primary-bg) !important;
+  background-color: var(--bpmn-preview-bg) !important;
+  background: var(--bpmn-preview-bg) !important;
+}
+
+/* Text elements - CRITICAL FIX for text visibility and styling */
+/* Use maximum specificity to override any inline styles */
+.bpmn-container svg text,
+.bpmn-container svg .djs-element text,
+.bpmn-container svg text tspan,
+.bpmn-container svg g text,
+.bpmn-container svg * text,
+.bpmn-container .djs-container svg text,
+.bpmn-container .djs-container text,
+.bpmn-container svg text[style],
+.bpmn-container svg text[font-weight],
+.bpmn-container svg tspan[style],
+.bpmn-container svg tspan[font-weight] {
+  fill: var(--bpmn-text-color) !important;
+  color: var(--bpmn-text-color) !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  font-size: 12px !important;
+  font-family: 'Arial', sans-serif !important;
+  /* Force remove any bold styling with highest priority */
+  font-weight: 400 !important;
+  font-variant: normal !important;
+}
+
+/* Ensure text is visible and not bold in light mode */
+body.theme-light .bpmn-container svg text,
+body.theme-light .bpmn-container svg .djs-element text,
+body.theme-light .bpmn-container svg text tspan,
+body.theme-light .bpmn-container svg g text,
+body.theme-light .bpmn-container svg * text,
+body.theme-light .bpmn-container .djs-container svg text,
+body.theme-light .bpmn-container .djs-container text,
+body.theme-light .bpmn-container svg text[style],
+body.theme-light .bpmn-container svg text[font-weight],
+body.theme-light .bpmn-container svg tspan[style],
+body.theme-light .bpmn-container svg tspan[font-weight] {
+  fill: #333333 !important;
+  color: #333333 !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  font-variant: normal !important;
+}
+
+/* Ensure text is visible and not bold in dark mode */
+body.theme-dark .bpmn-container svg text,
+body.theme-dark .bpmn-container svg .djs-element text,
+body.theme-dark .bpmn-container svg text tspan,
+body.theme-dark .bpmn-container svg g text,
+body.theme-dark .bpmn-container svg * text,
+body.theme-dark .bpmn-container .djs-container svg text,
+body.theme-dark .bpmn-container .djs-container text,
+body.theme-dark .bpmn-container svg text[style],
+body.theme-dark .bpmn-container svg text[font-weight],
+body.theme-dark .bpmn-container svg tspan[style],
+body.theme-dark .bpmn-container svg tspan[font-weight] {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  font-variant: normal !important;
 }
 
 /* Target all SVG elements with highest specificity */
@@ -644,7 +749,10 @@ body.theme-dark .bpmn-container svg *[stroke="black"] {
 .bpmn-container svg rect[style*="fill:"],
 .bpmn-container svg circle[style*="fill:"],
 .bpmn-container svg polygon[style*="fill:"],
-.bpmn-container svg path[style*="fill:"] {
+.bpmn-container svg path[style*="fill:"],
+.bpmn-container svg ellipse[style*="fill:"],
+.bpmn-container svg *[fill],
+.bpmn-container svg *[style*="fill"] {
   fill: var(--who-card-bg) !important;
 }
 
@@ -652,8 +760,12 @@ body.theme-dark .bpmn-container svg *[stroke="black"] {
 .bpmn-container svg rect[style*="stroke:"],
 .bpmn-container svg circle[style*="stroke:"],
 .bpmn-container svg polygon[style*="stroke:"],
-.bpmn-container svg path[style*="stroke:"] {
+.bpmn-container svg path[style*="stroke:"],
+.bpmn-container svg ellipse[style*="stroke:"],
+.bpmn-container svg *[stroke],
+.bpmn-container svg *[style*="stroke"] {
   stroke: var(--who-text-secondary) !important;
+  stroke-width: 1.5px !important;
 }
 
 /* Theme-specific stroke colors for better visibility */
@@ -671,33 +783,37 @@ body.theme-dark .bpmn-container svg path[style*="stroke:"] {
   stroke: var(--who-text-primary) !important;
 }
 
-/* Specific BPMN element types */
+/* BPMN shapes - ensure visibility with proper fill and stroke */
 .bpmn-container svg .djs-element .djs-visual > rect,
 .bpmn-container svg g[data-element-id] rect {
   fill: var(--who-card-bg) !important;
-  stroke: var(--who-text-secondary) !important;
+  stroke: var(--bpmn-stroke-color) !important;
+  stroke-width: 1.5px !important;
 }
 
 .bpmn-container svg .djs-element .djs-visual > circle,
 .bpmn-container svg g[data-element-id] circle {
   fill: var(--who-card-bg) !important;
-  stroke: var(--who-text-secondary) !important;
+  stroke: var(--bpmn-stroke-color) !important;
+  stroke-width: 1.5px !important;
 }
 
 .bpmn-container svg .djs-element .djs-visual > polygon,
 .bpmn-container svg g[data-element-id] polygon {
   fill: var(--who-hover-bg) !important;
-  stroke: var(--who-text-secondary) !important;
+  stroke: var(--bpmn-stroke-color) !important;
+  stroke-width: 1.5px !important;
 }
 
-/* Theme-specific strokes for BPMN elements */
+/* Theme-specific shape styling for better contrast */
 body.theme-light .bpmn-container svg .djs-element .djs-visual > rect,
 body.theme-light .bpmn-container svg g[data-element-id] rect,
 body.theme-light .bpmn-container svg .djs-element .djs-visual > circle,
 body.theme-light .bpmn-container svg g[data-element-id] circle,
 body.theme-light .bpmn-container svg .djs-element .djs-visual > polygon,
 body.theme-light .bpmn-container svg g[data-element-id] polygon {
-  stroke: #333333 !important;
+  stroke: #666666 !important;
+  fill: #ffffff !important;
 }
 
 body.theme-dark .bpmn-container svg .djs-element .djs-visual > rect,
@@ -706,56 +822,102 @@ body.theme-dark .bpmn-container svg .djs-element .djs-visual > circle,
 body.theme-dark .bpmn-container svg g[data-element-id] circle,
 body.theme-dark .bpmn-container svg .djs-element .djs-visual > polygon,
 body.theme-dark .bpmn-container svg g[data-element-id] polygon {
-  stroke: var(--who-text-primary) !important;
+  stroke: #cccccc !important;
+  fill: rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Text elements */
-.bpmn-container svg text,
-.bpmn-container svg .djs-element text {
-  fill: var(--who-text-primary) !important;
-  color: var(--who-text-primary) !important;
-  font-weight: normal !important;
-}
-
-/* Connection lines and paths */
+/* Connection lines and paths - ensure visibility */
 .bpmn-container svg .djs-connection .djs-visual > path,
-.bpmn-container svg .djs-connection path {
-  stroke: var(--who-text-secondary) !important;
+.bpmn-container svg .djs-connection path,
+.bpmn-container svg path[data-element-id] {
+  stroke: var(--bpmn-stroke-color) !important;
   fill: none !important;
+  stroke-width: 1.5px !important;
 }
 
-/* BPMN markers (arrows, etc.) */
+/* BPMN markers (arrows, etc.) - ensure visibility */
 .bpmn-container svg defs marker path,
 .bpmn-container svg marker path {
-  fill: var(--who-text-secondary) !important;
-  stroke: var(--who-text-secondary) !important;
+  fill: var(--bpmn-stroke-color) !important;
+  stroke: var(--bpmn-stroke-color) !important;
 }
 
-/* Force all SVG children to use theme colors */
+/* Theme-specific connection styling */
+body.theme-light .bpmn-container svg .djs-connection .djs-visual > path,
+body.theme-light .bpmn-container svg .djs-connection path,
+body.theme-light .bpmn-container svg path[data-element-id],
+body.theme-light .bpmn-container svg defs marker path,
+body.theme-light .bpmn-container svg marker path {
+  stroke: #666666 !important;
+  fill: #666666 !important;
+}
+
+body.theme-dark .bpmn-container svg .djs-connection .djs-visual > path,
+body.theme-dark .bpmn-container svg .djs-connection path,
+body.theme-dark .bpmn-container svg path[data-element-id],
+body.theme-dark .bpmn-container svg defs marker path,
+body.theme-dark .bpmn-container svg marker path {
+  stroke: #cccccc !important;
+  fill: #cccccc !important;
+}
+
+/* Force all SVG children to use theme colors - comprehensive override */
 .bpmn-container svg .djs-visual > * {
   fill: var(--who-card-bg) !important;
-  stroke: var(--who-text-secondary) !important;
+  stroke: var(--bpmn-stroke-color) !important;
 }
 
-/* Theme-specific strokes for all visual elements */
-body.theme-light .bpmn-container svg .djs-visual > * {
-  stroke: #333333 !important;
+/* Catch-all for any remaining visibility issues */
+.bpmn-container svg *[fill*="white"],
+.bpmn-container svg *[fill*="#fff"],
+.bpmn-container svg *[fill*="#FFF"],
+.bpmn-container svg *[fill="rgb(255, 255, 255)"],
+.bpmn-container svg *[fill="none"] {
+  fill: var(--who-card-bg) !important;
 }
 
-body.theme-dark .bpmn-container svg .djs-visual > * {
-  stroke: var(--who-text-primary) !important;
+.bpmn-container svg *[stroke*="white"],
+.bpmn-container svg *[stroke*="#fff"], 
+.bpmn-container svg *[stroke*="#FFF"],
+.bpmn-container svg *[stroke="rgb(255, 255, 255)"],
+.bpmn-container svg *[stroke="none"] {
+  stroke: var(--bpmn-stroke-color) !important;
+}
+
+/* Force remove bold from any text with inline styles */
+.bpmn-container svg text[font-weight="bold"],
+.bpmn-container svg text[font-weight="600"],
+.bpmn-container svg text[font-weight="700"],
+.bpmn-container svg text[font-weight="800"],
+.bpmn-container svg text[font-weight="900"],
+.bpmn-container svg tspan[font-weight="bold"],
+.bpmn-container svg tspan[font-weight="600"],
+.bpmn-container svg tspan[font-weight="700"],
+.bpmn-container svg tspan[font-weight="800"],
+.bpmn-container svg tspan[font-weight="900"] {
+  font-weight: normal !important;
+  font-weight: 400 !important;
+}
+
+/* Ensure immediate visibility on load */
+.bpmn-container svg {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+.bpmn-container svg * {
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 /* Specific overrides for common bpmn-js inline styles */
 .bpmn-container svg *[fill-opacity] {
-  fill-opacity: 0.9 !important;
+  fill-opacity: 1 !important;
 }
 
-/* Catch-all for any remaining white backgrounds */
-.bpmn-container svg *[fill*="white"],
-.bpmn-container svg *[fill*="#fff"],
-.bpmn-container svg *[fill*="#FFF"] {
-  fill: var(--who-card-bg) !important;
+.bpmn-container svg *[stroke-opacity] {
+  stroke-opacity: 1 !important;
 }
 
 /* Responsive design */

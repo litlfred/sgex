@@ -43,6 +43,40 @@ class HelpContentService {
           </div>
         `
       },
+      workflows: {
+        id: 'sgex-workflows',
+        title: 'View Deployment Workflows',
+        badge: '/sgex/cat-paw-workflow-icon.svg',
+        type: 'action',
+        action: () => {
+          // Open workflows in GitHub Actions tab
+          const repoUrl = 'https://github.com/litlfred/sgex';
+          window.open(`${repoUrl}/actions`, '_blank');
+        },
+        content: `
+          <p>Access GitHub Actions workflows for automated deployment and quality checks.</p>
+          <div class="help-tip">
+            <strong>🔄 Available Workflows:</strong> Branch deployment, landing page deployment, PR feedback, security scanning, and compliance checks.
+          </div>
+          <div class="workflow-links">
+            <h4>🚀 Deployment Workflows:</h4>
+            <ul>
+              <li><a href="https://github.com/litlfred/sgex/blob/main/.github/workflows/branch-deployment.yml" target="_blank">Branch Deployment</a> - Deploy feature branches for preview</li>
+              <li><a href="https://github.com/litlfred/sgex/blob/main/.github/workflows/landing-page-deployment.yml" target="_blank">Landing Page Deployment</a> - Deploy main app to production</li>
+            </ul>
+            <h4>🛡️ Quality & Security Workflows:</h4>
+            <ul>
+              <li><a href="https://github.com/litlfred/sgex/blob/main/.github/workflows/framework-compliance.yml" target="_blank">Framework Compliance</a> - Code quality and standards</li>
+              <li><a href="https://github.com/litlfred/sgex/blob/main/.github/workflows/dependency-security.yml" target="_blank">Security Scanning</a> - Dependency vulnerability checks</li>
+            </ul>
+            <h4>💬 Feedback Workflows:</h4>
+            <ul>
+              <li><a href="https://github.com/litlfred/sgex/blob/main/.github/workflows/pr-commit-feedback.yml" target="_blank">PR Commit Feedback</a> - Real-time PR status updates</li>
+              <li><a href="https://github.com/litlfred/sgex/blob/main/.github/workflows/review.yml" target="_blank">Review Deployment</a> - Auto-deploy on approval</li>
+            </ul>
+          </div>
+        `
+      },
       bugReport: {
         id: 'report-sgex-bug',
         title: 'Report a SGeX bug',

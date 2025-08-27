@@ -6,9 +6,13 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 
 **Purpose**: Deploy feature branches to subdirectories for preview purposes.
 
+📄 **Workflow File**: [`.github/workflows/branch-deployment.yml`](.github/workflows/branch-deployment.yml)
+
 ### Triggers
-- **Manual only** (`workflow_dispatch`)
-- Requires approval via GitHub environment protection
+- **Manual trigger** (`workflow_dispatch`) - Primary method for controlled deployments
+- **Automatic push trigger** - On push to feature branches (excludes main, gh-pages, deploy)
+- **Automatic PR trigger** - On PR events (opened, synchronize, reopened) targeting main
+- **Workflow call** - Can be triggered by other workflows
 
 ### Inputs
 - `branch`: Branch to deploy (defaults to current branch)
@@ -26,19 +30,20 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 - Extensive path validation to prevent directory traversal
 - Cannot deploy to repository root
 - Validates branch names for safety
-- Requires manual approval
+- Automatic deployment for feature branches, manual control for special branches
 
 ## 🏠 Landing Page Deployment (`landing-page-deployment.yml`)
 
 **Purpose**: Deploy the main application to the root of GitHub Pages.
 
+📄 **Workflow File**: [`.github/workflows/landing-page-deployment.yml`](.github/workflows/landing-page-deployment.yml)
+
 ### Triggers
-- **Manual only** (`workflow_dispatch`)
-- Requires approval via GitHub environment protection
+- **Manual only** (`workflow_dispatch`) - Prevents accidental overwrites of production landing page
 
 ### Inputs
-- `source_branch`: Branch to deploy from (defaults to `main`)
 - `force_deployment`: Force deployment even if no changes detected
+- `clean_old_assets`: Aggressively clean old assets from gh-pages
 
 ### Behavior
 - Deploys to `https://litlfred.github.io/sgex/`
@@ -49,25 +54,32 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 ### Safety Features
 - Only removes specific root-level files
 - Never removes directories (preserves all branch deployments)
-- Requires manual approval
+- Manual trigger only prevents accidental production updates
 
-## 🔒 Security & Approval Process
+## 🔒 Manual & Automatic Deployment
 
-### Manual Deployment
-Both main workflows are manually triggered (`workflow_dispatch`) and require user confirmation:
-1. Navigate to Actions tab
-2. Select the appropriate workflow
-3. Click "Run workflow" and confirm parameters
-4. Workflows will execute immediately upon confirmation
+### Manual Deployment Access
+Both workflows can be manually triggered from the GitHub Actions UI:
 
-### PR Review Deployment
-The `review.yml` workflow automatically triggers when a PR is approved:
-1. When a PR receives an approved review, the workflow runs automatically
-2. It posts a comment with a deployment link for eligible branches
-3. Branches `gh-pages` and `deploy` are excluded from review-triggered deployments
-4. The actual deployment still requires manual confirmation via the deployment link
+1. **Access Workflows**: Go to the repository's "Actions" tab
+2. **Select Workflow**: Choose "Deploy Feature Branch" or "Deploy Landing Page from Main"
+3. **Run Workflow**: Click "Run workflow" and configure parameters
+4. **Monitor Progress**: View real-time logs and deployment status
 
-**Note**: Environment protection was removed to resolve deployment issues while maintaining manual trigger control.
+### Automatic Deployment (Feature Branches)
+The branch deployment workflow automatically triggers when:
+- **Push events**: Commits are pushed to feature branches (excludes main, gh-pages, deploy)
+- **Pull request events**: PR creation, updates, or reopening (for PRs targeting main)
+- **Copilot commits**: Both direct pushes and PR updates from copilot agents
+- **External PRs**: Pull requests from external contributors and forks
+- **Code changes**: Changes to relevant paths (src/, public/, package files, workflows)
+
+### PR Integration
+When commits are pushed to PRs, the system provides:
+- Real-time deployment status updates in PR comments
+- Direct links to manual workflow triggers with pre-filled parameters
+- Build progress monitoring and log access
+- Quick action buttons for redeployment and troubleshooting
 
 ## 📋 Workflow Files
 
@@ -86,10 +98,57 @@ The following workflows were consolidated and removed:
 ## 🧪 Testing & Validation
 
 Both workflows include:
-- Build validation
+- Build validation with TypeScript type checking
+- JSON schema generation and validation
 - Path safety checks
 - Commit verification
 - Rollback capabilities
+
+### TypeScript Integration
+
+The deployment process now includes TypeScript-specific steps:
+
+#### Type Checking
+All deployments perform TypeScript type checking before building:
+```yaml
+- name: Type Check
+  run: npm run type-check
+```
+
+#### Schema Generation
+JSON schemas are automatically generated from TypeScript types during the build process:
+```yaml
+- name: Generate Schemas
+  run: npm run generate-schemas
+```
+
+This ensures that:
+- Type definitions are validated before deployment
+- JSON schemas are always up-to-date with TypeScript types
+- Runtime validation schemas are available in the deployed application
+
+#### Build Process
+The updated build process includes:
+1. Install dependencies
+2. TypeScript type checking
+3. JSON schema generation from TypeScript types
+4. React application build
+5. Deployment artifact creation
+
+Generated schemas are published to `public/docs/schemas/` and include:
+- `generated-schemas-tjs.json` - Schemas from typescript-json-schema
+- `generated-schemas-tsjsg.json` - Schemas from ts-json-schema-generator
+- Individual type schemas for runtime validation
+
+### Build Failure Handling
+
+If TypeScript type checking fails:
+- The deployment stops immediately
+- Error messages show specific type errors
+- No artifacts are deployed
+- The team is notified of type issues
+
+This ensures that only type-safe code reaches production environments.
 
 ## 📝 Usage Examples
 
@@ -120,3 +179,22 @@ Both workflows include:
 - **Preserves work**: No deployment affects other deployments
 - **Simple interface**: Easy-to-use workflow inputs
 - **Comprehensive feedback**: PR comments and deployment summaries
+
+## 🔧 Supporting Workflows
+
+The following additional workflows provide build quality, security, and feedback automation:
+
+### PR Quality & Feedback Workflows
+- **PR Commit Feedback**: [`.github/workflows/pr-commit-feedback.yml`](.github/workflows/pr-commit-feedback.yml) - Provides real-time feedback on PR commits and deployment status
+- **Review Deployment**: [`.github/workflows/review.yml`](.github/workflows/review.yml) - Automates deployment options when PRs are approved
+
+### Code Quality & Compliance Workflows  
+- **Framework Compliance Check**: [`.github/workflows/framework-compliance.yml`](.github/workflows/framework-compliance.yml) - Validates page framework standards and TypeScript compliance
+- **Dependency Security Check**: [`.github/workflows/dependency-security.yml`](.github/workflows/dependency-security.yml) - Scans for security vulnerabilities in dependencies
+
+### Workflow Configuration Details
+All workflows include:
+- ✅ **Explicit fail-fast settings** on critical build steps (`continue-on-error: false`)
+- 🚫 **Branch filtering** to exclude `gh-pages` and `deploy` branches
+- 🔄 **Consistent triggers** on both `push` and `pull_request` events where appropriate
+- 💬 **PR feedback** with detailed status updates and action buttons

@@ -75,34 +75,37 @@ const DAKDashboardContent = () => {
           }
         }}
       >
-        <div className="component-header">
-          <div className="component-image-container">
-            <img 
-              src={cardImagePath}
-              alt={getAltText(t, ALT_TEXT_KEYS.ICON_DAK_COMPONENT, component.name, { name: component.name })}
-              className="component-card-image"
-              onLoad={handleImageLoad}
-              onError={handleImageError}
-              style={{ display: imageError ? 'none' : 'block' }}
-            />
-            {/* Fallback icon when image fails to load */}
-            {imageError && (
-              <div className="component-icon" style={{ color: component.color }}>
-                {component.icon}
-              </div>
-            )}
+        <div className="component-main">
+          <div className="component-header">
+            <div className="component-image-container">
+              <img 
+                src={cardImagePath}
+                alt={getAltText(t, ALT_TEXT_KEYS.ICON_DAK_COMPONENT, component.name, { name: component.name })}
+                className="component-card-image"
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+                style={{ display: imageError ? 'none' : 'block' }}
+              />
+              {/* Fallback icon when image fails to load */}
+              {imageError && (
+                <div className="component-icon" style={{ color: component.color }}>
+                  {component.icon}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="component-content">
+            <h4>
+              {component.name}
+            </h4>
+            <p>
+              {component.description}
+            </p>
           </div>
         </div>
         
-        <div className="component-content">
-          {/* Only show title text if image failed to load or as screen reader backup */}
-          <h4 className={imageLoaded && !imageError ? 'visually-hidden' : ''}>
-            {component.name}
-          </h4>
-          <p className={imageLoaded && !imageError ? 'visually-hidden' : ''}>
-            {component.description}
-          </p>
-          
+        <div className="component-meta-section">
           <div className="component-meta">
             <div className="file-types">
               {component.fileTypes.map((type) => (
@@ -126,48 +129,29 @@ const DAKDashboardContent = () => {
           setLoading(true);
           setError(null);
 
-          // Check if githubService is authenticated (allow demo mode to proceed without auth)
+          // Check if githubService is authenticated
           if (!githubService.isAuth()) {
-            // In demo mode, use the DAK validation service for demo repositories
-            if (window.location.pathname.includes('/dashboard/')) {
-              const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
-              
-              if (!isValidDAK) {
-                navigate('/', { 
-                  state: { 
-                    warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
-                  } 
-                });
-                return;
-              }
+            // This is unauthenticated access to public repositories
+            const publicProfile = {
+              login: user,
+              name: user.charAt(0).toUpperCase() + user.slice(1),
+              avatar_url: `https://github.com/${user}.png`,
+              type: 'User'
+            };
 
-              const demoProfile = {
-                login: user,
-                name: user.charAt(0).toUpperCase() + user.slice(1),
-                avatar_url: `https://github.com/${user}.png`,
-                type: 'User',
-                isDemo: true
-              };
+            const publicRepository = {
+              name: repo,
+              full_name: `${user}/${repo}`,
+              owner: { login: user },
+              default_branch: branch || 'main',
+              html_url: `https://github.com/${user}/${repo}`
+            };
 
-              const demoRepository = {
-                name: repo,
-                full_name: `${user}/${repo}`,
-                owner: { login: user },
-                default_branch: branch || 'main',
-                html_url: `https://github.com/${user}/${repo}`,
-                isDemo: true
-              };
-
-              setProfile(demoProfile);
-              setRepository(demoRepository);
-              setSelectedBranch(branch || 'main');
-              setLoading(false);
-              return;
-            } else {
-              setError(t('auth.authRequired'));
-              setLoading(false);
-              return;
-            }
+            setProfile(publicProfile);
+            setRepository(publicRepository);
+            setSelectedBranch(branch || 'main');
+            setLoading(false);
+            return;
           }
 
           // Fetch user profile
@@ -250,8 +234,8 @@ const DAKDashboardContent = () => {
       const storedBranch = branchContextService.getSelectedBranch(repository);
       if (storedBranch) {
         setSelectedBranch(storedBranch);
-      } else if (profile && profile.login === 'demo-user') {
-        // For demo mode, set a default branch
+      } else {
+        // Set a default branch
         const defaultBranch = repository.default_branch || 'main';
         setSelectedBranch(defaultBranch);
         branchContextService.setSelectedBranch(repository, defaultBranch);
@@ -485,7 +469,13 @@ const DAKDashboardContent = () => {
 
     // For health-interventions (WHO Digital Library), allow access in read-only mode
     if (component.id === 'health-interventions') {
-      handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      const path = selectedBranch 
+        ? `/health-interventions/${owner}/${repoName}/${selectedBranch}`
+        : `/health-interventions/${owner}/${repoName}`;
+      
+      handleNavigationClick(event, path, navigate, navigationState);
       return;
     }
 
@@ -537,8 +527,14 @@ const DAKDashboardContent = () => {
       return;
     }
 
-    // Navigate to generic component editor for other components
-    handleNavigationClick(event, `/editor/${component.id}`, navigate, navigationState);
+    // Navigate to component-specific routes for other components
+    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+    const repoName = repository.name;
+    const path = selectedBranch 
+      ? `/${component.id}/${owner}/${repoName}/${selectedBranch}`
+      : `/${component.id}/${owner}/${repoName}`;
+    
+    handleNavigationClick(event, path, navigate, navigationState);
   };
 
 

@@ -145,6 +145,92 @@ describe('PreviewBadge Merge PR Functionality', () => {
 
     // Ensure PR actions section is not present for closed PRs
     expect(screen.queryByText('🔀 Pull Request Actions')).not.toBeInTheDocument();
+    
+    // Verify status notification is shown for closed PR
+    expect(screen.getByText('This pull request is closed')).toBeInTheDocument();
+    expect(screen.getByText('The pull request has been closed without merging.')).toBeInTheDocument();
+  });
+
+  test('shows status notification for merged PRs', async () => {
+    const mockPR = {
+      id: 1,
+      number: 124,
+      title: 'Test Merged PR',
+      state: 'merged',
+      html_url: 'https://github.com/litlfred/sgex/pull/124',
+      user: { login: 'testuser', html_url: 'https://github.com/testuser' },
+      created_at: '2024-01-01T12:00:00Z',
+      body: 'Test PR description for merged PR'
+    };
+
+    githubService.isAuth.mockReturnValue(true);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
+    githubService.getPullRequestComments.mockResolvedValue([]);
+    githubService.getPullRequestIssueComments.mockResolvedValue([]);
+
+    render(<PreviewBadge />);
+
+    // Wait for initial load and expand the badge
+    await waitFor(() => {
+      expect(screen.getByText('Test Merged PR')).toBeInTheDocument();
+    });
+
+    const badge = screen.getByText('Test Merged PR').closest('.preview-badge');
+    fireEvent.click(badge);
+
+    // Wait for expansion
+    await waitFor(() => {
+      expect(screen.getByText('#124: Test Merged PR')).toBeInTheDocument();
+    });
+
+    // Ensure PR actions section is not present for merged PRs
+    expect(screen.queryByText('🔀 Pull Request Actions')).not.toBeInTheDocument();
+    
+    // Verify status notification is shown for merged PR
+    expect(screen.getByText('This pull request was merged')).toBeInTheDocument();
+    expect(screen.getByText('The changes have been successfully merged into the target branch.')).toBeInTheDocument();
+  });
+
+  test('does not show status notification for open PRs', async () => {
+    const mockPR = {
+      id: 1,
+      number: 125,
+      title: 'Test Open PR',
+      state: 'open',
+      html_url: 'https://github.com/litlfred/sgex/pull/125',
+      user: { login: 'testuser', html_url: 'https://github.com/testuser' },
+      created_at: '2024-01-01T12:00:00Z',
+      body: 'Test PR description for open PR'
+    };
+
+    githubService.isAuth.mockReturnValue(true);
+    githubService.getPullRequestsForBranch.mockResolvedValue([mockPR]);
+    githubService.getPullRequestComments.mockResolvedValue([]);
+    githubService.getPullRequestIssueComments.mockResolvedValue([]);
+    githubService.checkCommentPermissions.mockResolvedValue(true);
+    githubService.checkPullRequestMergePermissions.mockResolvedValue(false);
+
+    render(<PreviewBadge />);
+
+    // Wait for initial load and expand the badge
+    await waitFor(() => {
+      expect(screen.getByText('Test Open PR')).toBeInTheDocument();
+    });
+
+    const badge = screen.getByText('Test Open PR').closest('.preview-badge');
+    fireEvent.click(badge);
+
+    // Wait for expansion
+    await waitFor(() => {
+      expect(screen.getByText('#125: Test Open PR')).toBeInTheDocument();
+    });
+
+    // Ensure PR actions section IS present for open PRs
+    expect(screen.getByText('🔀 Pull Request Actions')).toBeInTheDocument();
+    
+    // Verify status notification is NOT shown for open PRs
+    expect(screen.queryByText('This pull request is closed')).not.toBeInTheDocument();
+    expect(screen.queryByText('This pull request was merged')).not.toBeInTheDocument();
   });
 
   test('successfully merges PR when merge button is clicked', async () => {

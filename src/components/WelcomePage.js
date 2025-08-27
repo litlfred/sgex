@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
@@ -23,6 +23,9 @@ const WelcomePage = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Ref to focus on PAT token input
+  const patTokenInputRef = useRef(null);
 
   // Theme-aware image paths
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -69,6 +72,38 @@ const WelcomePage = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
+  // Handle focus PAT input when navigated with focusPATInput parameter
+  useEffect(() => {
+    if (location.state?.focusPATInput && patTokenInputRef.current && !isAuthenticated) {
+      // Small delay to ensure the component is fully rendered
+      const timer = setTimeout(() => {
+        patTokenInputRef.current.focus();
+        // Clear the focus parameter from state AFTER focusing to prevent re-focusing on re-renders
+        navigate(location.pathname, { 
+          replace: true, 
+          state: { ...location.state, focusPATInput: undefined }
+        });
+      }, 150);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [location.state, navigate, location.pathname, isAuthenticated]);
+
+  // Listen for custom focus PAT input event (for same-page focus)
+  useEffect(() => {
+    const handleFocusPATInput = () => {
+      if (patTokenInputRef.current && !isAuthenticated) {
+        patTokenInputRef.current.focus();
+      }
+    };
+
+    window.addEventListener('focusPATInput', handleFocusPATInput);
+    
+    return () => {
+      window.removeEventListener('focusPATInput', handleFocusPATInput);
+    };
+  }, [isAuthenticated]);
+
   const handleAuthSuccess = (token, octokitInstance, username) => {
     // Store token in session storage for this session
     sessionStorage.setItem('github_token', token);
@@ -88,24 +123,7 @@ const WelcomePage = () => {
     handleNavigationClick(event, '/select_profile', navigate);
   };
 
-  const handleDemoMode = (event) => {
-    // Create a mock profile for demonstration purposes
-    const demoProfile = {
-      login: 'demo-user',
-      name: 'Demo User',
-      avatar_url: 'https://github.com/github.png',
-      type: 'User',
-      isDemo: true
-    };
-    
-    // Navigate directly to DAK selection with edit action to show enhanced scanning
-    const navigationState = {
-      profile: demoProfile,
-      action: 'edit'
-    };
-    
-    handleNavigationClick(event, `/dak-selection/${demoProfile.login}`, navigate, navigationState);
-  };
+
 
   const handleDismissWarning = () => {
     setWarningMessage(null);
@@ -234,12 +252,15 @@ const WelcomePage = () => {
                     </div>
                     <div className="form-group">
                       <input
+                        ref={patTokenInputRef}
                         type="password"
                         value={patToken}
                         onChange={handlePATTokenChange}
                         placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
                         className={`token-input ${patError ? 'error' : ''}`}
                         disabled={patLoading}
+                        aria-label="GitHub Personal Access Token"
+                        aria-describedby="pat-help-text"
                       />
                     </div>
                     <button 
@@ -256,21 +277,11 @@ const WelcomePage = () => {
                       type="button"
                       className="pat-help-btn" 
                       onClick={() => setShowPATHelp(true)}
+                      id="pat-help-text"
                     >
                       📖 Help creating a PAT
                     </button>
                   </div>
-                </div>
-
-                {/* Demo Section */}
-                <div className="demo-section">
-                  <h4>Want to try without signing in?</h4>
-                  <button onClick={handleDemoMode} className="demo-btn">
-                    🎭 Try Demo Mode
-                  </button>
-                  <p className="demo-note">
-                    Demo mode showcases the enhanced DAK scanning display with mock data.
-                  </p>
                 </div>
               </div>
             )}

@@ -207,12 +207,32 @@ function generateStandardRoutes(componentName, componentConfig) {
  * @returns {Array} Array of all Route elements
  */
 export function generateLazyRoutes() {
-  const config = window.getSGEXRouteConfig();
+  let config = null;
+  
+  // Safely try to get the config, handling the case where the function doesn't exist yet
+  try {
+    if (typeof window.getSGEXRouteConfig === 'function') {
+      config = window.getSGEXRouteConfig();
+    }
+  } catch (error) {
+    console.warn('Error getting SGEX route configuration:', error);
+  }
   
   if (!config) {
     console.warn('SGEX route configuration not loaded, falling back to minimal routes');
+    
+    // Provide a more comprehensive fallback that includes essential routes for the help system
+    const BranchListingPage = createLazyComponent('BranchListingPage');
+    const DAKDashboard = createLazyComponent('DAKDashboard');
+    const LandingPage = createLazyComponent('LandingPage');
+    
     return [
-      <Route key="fallback-home" path="/" element={<div>Loading...</div>} />,
+      <Route key="fallback-home" path="/" element={<BranchListingPage />} />,
+      <Route key="fallback-dashboard" path="/dashboard" element={<DAKDashboard />} />,
+      <Route key="fallback-dashboard-user" path="/dashboard/:user" element={<DAKDashboard />} />,
+      <Route key="fallback-dashboard-user-repo" path="/dashboard/:user/:repo" element={<DAKDashboard />} />,
+      <Route key="fallback-dashboard-user-repo-branch" path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />,
+      <Route key="fallback-welcome" path="/welcome" element={<LandingPage />} />,
       <Route key="fallback-404" path="*" element={<div>Page not found</div>} />
     ];
   }
@@ -262,8 +282,15 @@ export function generateLazyRoutes() {
  * @returns {Array} Array of valid DAK component names
  */
 export function getValidDAKComponents() {
-  const config = window.getSGEXRouteConfig();
-  return config ? config.getDAKComponentNames() : [];
+  try {
+    if (typeof window.getSGEXRouteConfig === 'function') {
+      const config = window.getSGEXRouteConfig();
+      return config ? config.getDAKComponentNames() : [];
+    }
+  } catch (error) {
+    console.warn('Error getting DAK components:', error);
+  }
+  return [];
 }
 
 /**
@@ -272,8 +299,15 @@ export function getValidDAKComponents() {
  * @returns {boolean} True if component is valid
  */
 export function isValidComponent(componentName) {
-  const config = window.getSGEXRouteConfig();
-  return config ? config.isValidComponent(componentName) : false;
+  try {
+    if (typeof window.getSGEXRouteConfig === 'function') {
+      const config = window.getSGEXRouteConfig();
+      return config ? config.isValidComponent(componentName) : false;
+    }
+  } catch (error) {
+    console.warn('Error validating component:', error);
+  }
+  return false;
 }
 
 // ============================================================================
@@ -459,7 +493,19 @@ export async function lazyLoadDOMPurify() {
   }
   
   const DOMPurifyModule = await import('dompurify');
-  const DOMPurify = DOMPurifyModule.default;
+  let DOMPurify = DOMPurifyModule.default;
+  
+  // In browser environment, DOMPurify might need to be initialized with window
+  if (typeof window !== 'undefined' && typeof DOMPurify === 'function') {
+    // Some versions of DOMPurify export a factory function that needs the window object
+    try {
+      DOMPurify = DOMPurify(window);
+    } catch (error) {
+      // If it fails, DOMPurify might already be the correct object
+      console.debug('DOMPurify initialization note:', error.message);
+    }
+  }
+  
   moduleCache.set(cacheKey, DOMPurify);
   return DOMPurify;
 }

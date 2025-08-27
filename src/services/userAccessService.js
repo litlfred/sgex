@@ -7,15 +7,13 @@
 
 import githubService from './githubService';
 import logger from '../utils/logger';
-import { getThemeImagePath } from '../utils/themeUtils';
 
 /**
  * User types supported by the access framework
  */
 export const USER_TYPES = {
   AUTHENTICATED: 'authenticated',
-  UNAUTHENTICATED: 'unauthenticated', 
-  DEMO: 'demo'
+  UNAUTHENTICATED: 'unauthenticated'
 };
 
 /**
@@ -51,16 +49,8 @@ class UserAccessService {
   async detectUserType() {
     try {
       if (githubService.isAuth()) {
-        // Check if this is a demo user (has demo DAKs configured)
-        const isDemoUser = this.checkIfDemoUser();
-        
-        if (isDemoUser) {
-          this.userType = USER_TYPES.DEMO;
-          this.currentUser = await this.createDemoUser();
-        } else {
-          this.userType = USER_TYPES.AUTHENTICATED;
-          this.currentUser = await githubService.getCurrentUser();
-        }
+        this.userType = USER_TYPES.AUTHENTICATED;
+        this.currentUser = await githubService.getCurrentUser();
       } else {
         this.userType = USER_TYPES.UNAUTHENTICATED;
         this.currentUser = null;
@@ -78,69 +68,7 @@ class UserAccessService {
     }
   }
 
-  /**
-   * Check if current authenticated user should be treated as demo user
-   */
-  checkIfDemoUser() {
-    // Demo users are determined by having access to demo DAKs
-    // This can be configured via localStorage or environment variables
-    const demoMode = localStorage.getItem('sgex_demo_mode');
-    const envDemoMode = process.env.REACT_APP_DEMO_MODE;
-    
-    return demoMode === 'true' || envDemoMode === 'true';
-  }
 
-  /**
-   * Create demo user object with demo data
-   */
-  async createDemoUser() {
-    try {
-      const realUser = await githubService.getCurrentUser();
-      return {
-        ...realUser,
-        isDemo: true,
-        demoData: this.getDemoData()
-      };
-    } catch (error) {
-      // If we can't get real user, create a synthetic demo user
-      return {
-        login: 'demo-user',
-        name: 'Demo User',
-        avatar_url: getThemeImagePath('sgex-mascot.png'),
-        type: 'User',
-        isDemo: true,
-        demoData: this.getDemoData()
-      };
-    }
-  }
-
-  /**
-   * Get demo data and DAKs
-   */
-  getDemoData() {
-    return {
-      daks: [
-        {
-          owner: 'WHO',
-          repo: 'smart-anc',
-          name: 'Smart Antenatal Care',
-          description: 'Demo DAK for antenatal care guidelines'
-        },
-        {
-          owner: 'WHO', 
-          repo: 'smart-tb',
-          name: 'Smart Tuberculosis',
-          description: 'Demo DAK for tuberculosis care guidelines'
-        }
-      ],
-      sampleAssets: {
-        'input/vocabulary/ValueSet-anc-care-codes.json': {
-          type: 'ValueSet',
-          description: 'Demo value set for antenatal care'
-        }
-      }
-    };
-  }
 
   /**
    * Get current user type
@@ -157,17 +85,10 @@ class UserAccessService {
   }
 
   /**
-   * Check if user is authenticated (includes demo users)
+   * Check if user is authenticated
    */
   isAuthenticated() {
-    return this.userType === USER_TYPES.AUTHENTICATED || this.userType === USER_TYPES.DEMO;
-  }
-
-  /**
-   * Check if user is in demo mode
-   */
-  isDemoUser() {
-    return this.userType === USER_TYPES.DEMO;
+    return this.userType === USER_TYPES.AUTHENTICATED;
   }
 
   /**
@@ -194,10 +115,6 @@ class UserAccessService {
       if (this.userType === USER_TYPES.UNAUTHENTICATED) {
         // Unauthenticated users only get read access to public repos
         access = ACCESS_LEVELS.READ;
-      } else if (this.userType === USER_TYPES.DEMO) {
-        // Demo users get read access to demo DAKs, but no write access
-        const isDemoDAK = this.isDemoDAK(owner, repo);
-        access = isDemoDAK ? ACCESS_LEVELS.READ : ACCESS_LEVELS.NONE;
       } else if (this.userType === USER_TYPES.AUTHENTICATED) {
         // Authenticated users get access based on GitHub permissions
         const hasReadAccess = await this.checkGitHubReadAccess(owner, repo);
@@ -227,18 +144,7 @@ class UserAccessService {
     return access;
   }
 
-  /**
-   * Check if a repository is a demo DAK
-   */
-  isDemoDAK(owner, repo) {
-    if (!this.currentUser?.demoData?.daks) {
-      return false;
-    }
-    
-    return this.currentUser.demoData.daks.some(dak => 
-      dak.owner === owner && dak.repo === repo
-    );
-  }
+
 
   /**
    * Check GitHub read access for authenticated users
@@ -267,7 +173,7 @@ class UserAccessService {
    * Check if user can save to GitHub for a specific repository
    */
   async canSaveToGitHub(owner, repo, branch = 'main') {
-    // Demo users and unauthenticated users never have GitHub write access
+    // Only authenticated users can have GitHub write access
     if (this.userType !== USER_TYPES.AUTHENTICATED) {
       return false;
     }
@@ -303,13 +209,6 @@ class UserAccessService {
           ...behavior,
           showEditFeatures: false,
           showSaveToGitHub: false,
-          allowCreateNew: false
-        };
-      
-      case USER_TYPES.DEMO:
-        return {
-          ...behavior,
-          showSaveToGitHub: false, // Demo users see the UI but get blocked at save
           allowCreateNew: false
         };
       
@@ -356,21 +255,7 @@ class UserAccessService {
     return badges[access] || badges[ACCESS_LEVELS.NONE];
   }
 
-  /**
-   * Enable demo mode for current user
-   */
-  enableDemoMode() {
-    localStorage.setItem('sgex_demo_mode', 'true');
-    this.initialize(); // Re-initialize to update user type
-  }
 
-  /**
-   * Disable demo mode
-   */
-  disableDemoMode() {
-    localStorage.removeItem('sgex_demo_mode');
-    this.initialize(); // Re-initialize to update user type
-  }
 
   /**
    * Clear cached permissions
@@ -400,7 +285,6 @@ class UserAccessService {
       userType: this.userType,
       currentUser: this.currentUser,
       isAuthenticated: this.isAuthenticated(),
-      isDemoUser: this.isDemoUser(),
       uiBehavior: this.getUIBehavior()
     };
 
