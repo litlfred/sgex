@@ -281,23 +281,35 @@ const CoreDataDictionaryViewerContent = () => {
         }
 
         // Fetch branches to check for gh-pages
-        const allBranches = await githubService.getBranches(currentUser, currentRepo);
-        const branchNames = allBranches.map(b => b.name);
-        setBranches(branchNames.filter(name => name !== 'gh-pages'));
-        const hasGhPagesVar = branchNames.includes('gh-pages');
-        setHasGhPages(hasGhPagesVar);
+        try {
+          const allBranches = await githubService.getBranches(currentUser, currentRepo);
+          const branchNames = allBranches.map(b => b.name);
+          setBranches(branchNames.filter(name => name !== 'gh-pages'));
+          const hasGhPagesVar = branchNames.includes('gh-pages');
+          setHasGhPages(hasGhPagesVar);
 
-        // Check if published DAK exists if we have gh-pages
-        if (hasGhPagesVar) {
-          const baseUrl = getBaseUrl(currentBranch);
-          const dakExists = await checkPublishedDakExists(baseUrl);
-          setHasPublishedDak(dakExists);
-        } else {
+          // Check if published DAK exists if we have gh-pages
+          if (hasGhPagesVar) {
+            const baseUrl = getBaseUrl(currentBranch);
+            const dakExists = await checkPublishedDakExists(baseUrl);
+            setHasPublishedDak(dakExists);
+          } else {
+            setHasPublishedDak(false);
+          }
+        } catch (branchError) {
+          console.warn('Failed to fetch branches, using defaults:', branchError);
+          setBranches([]);
+          setHasGhPages(false);
           setHasPublishedDak(false);
         }
 
-        // Load questionnaires from repository
-        await loadQuestionnaires(currentUser, currentRepo, currentBranch);
+        // Load questionnaires from repository (independent of other API calls)
+        try {
+          await loadQuestionnaires(currentUser, currentRepo, currentBranch);
+        } catch (questionnaireError) {
+          console.warn('Failed to load questionnaires:', questionnaireError);
+          setQuestionnaires([]);
+        }
 
       } catch (err) {
         console.error('Error fetching FSH files:', err);
