@@ -6,7 +6,7 @@ The SGEX Workbench uses a consistent page framework to provide unified URL patte
 
 The page framework consists of several key components that work together to provide a consistent user experience:
 
-- **PageLayout**: Main wrapper that provides layout, error handling, and help integration
+- **PageLayout**: Main wrapper that provides layout, error handling, help integration, and tutorial system
 - **PageHeader**: Consistent header with navigation, user controls, access badges, and context information  
 - **ErrorHandler**: Automatic error handling with bug reporting functionality
 - **PageProvider**: Context provider that manages page state and URL parameters
@@ -14,6 +14,7 @@ The page framework consists of several key components that work together to prov
 - **DataAccessLayer**: Comprehensive data management with local storage and GitHub integration
 - **AccessBadge**: Dynamic access level indicators in the title bar
 - **ToolDefinition**: Framework for easily creating new tools
+- **TutorialFramework**: Interactive tutorial system with branching logic and context awareness
 
 ## User Types and Access Control
 
@@ -414,6 +415,7 @@ When creating new pages, developers **MUST**:
 6. **Test User Types**: Verify functionality across all user types and permission levels
 7. **Provide Clear Feedback**: Show appropriate messages for access restrictions
 8. **Correct Profile Creation**: Follow the profile creation compliance requirements
+9. **Tutorial Integration**: Consider adding page-specific tutorials for complex features
 
 ### Profile Creation Compliance Requirements
 
@@ -495,6 +497,8 @@ setProfile(profile);
 - [ ] **Access badges**: Correctly show read/write permissions
 - [ ] **Error handling**: Appropriate error messages for access restrictions
 - [ ] **Save operations**: Correct behavior for local and GitHub saves by user type
+- [ ] **Tutorial integration**: Context-appropriate tutorials appear for each user type
+- [ ] **Help functionality**: Tutorial framework works correctly across user types
 
 ### Access Integration Requirements
 
@@ -537,6 +541,188 @@ When an error occurs, users are presented with:
 - User-type-aware error messages
 - Context-specific retry options
 - Automatic bug report form with user context
+
+## Tutorial Framework Integration
+
+The page framework includes full integration with the enhanced tutorial system, providing interactive learning experiences across all pages. The tutorial framework is automatically available on any page that uses `PageLayout`.
+
+### Automatic Tutorial Integration
+
+Every page that uses the page framework automatically includes:
+
+- **ContextualHelpMascot**: Help mascot with integrated tutorial menu
+- **Tutorial Service**: Context-aware tutorial filtering and management
+- **Progress Tracking**: Automatic tutorial progress persistence
+- **Legacy Compatibility**: Seamless support for existing help topics
+
+```jsx
+import { PageLayout } from '../components/framework';
+
+const MyPage = () => {
+  return (
+    <PageLayout pageName="my-page">
+      {/* Tutorial system is automatically available */}
+      <div>Page content</div>
+    </PageLayout>
+  );
+};
+```
+
+### Page-Specific Tutorial Registration
+
+Pages can register their own tutorials using the tutorial service:
+
+```jsx
+import React, { useEffect } from 'react';
+import { PageLayout } from '../components/framework';
+import tutorialService from '../services/tutorialService';
+
+const MyPage = () => {
+  useEffect(() => {
+    // Register page-specific tutorial
+    tutorialService.registerTutorial('my-page-tutorial', {
+      id: 'my-page-tutorial',
+      title: 'My Page Tutorial',
+      description: 'Learn how to use this page',
+      category: 'getting-started',
+      pages: ['my-page'],
+      requirements: {
+        userType: 'any'  // Available to all user types
+      },
+      steps: [
+        {
+          title: 'Welcome',
+          content: '<p>Welcome to this page tutorial!</p>'
+        }
+      ]
+    });
+  }, []);
+
+  return (
+    <PageLayout pageName="my-page">
+      <div>Page content</div>
+    </PageLayout>
+  );
+};
+```
+
+### Advanced Tutorial Integration
+
+For pages that need more control over tutorial functionality:
+
+```jsx
+import React from 'react';
+import { PageLayout } from '../components/framework';
+import { TutorialManager, TutorialLauncher } from '../components';
+
+const AdvancedPage = () => {
+  const contextData = {
+    userType: userAccessService.getUserType(),
+    hasRepository: !!repository
+  };
+
+  const pageTutorials = [
+    {
+      id: 'advanced-tutorial',
+      title: 'Advanced Features',
+      description: 'Learn advanced page features',
+      category: 'content-editing',
+      requirements: {
+        userType: 'authenticated',
+        context: { hasRepository: true }
+      },
+      steps: [
+        {
+          title: 'Choose Your Path',
+          content: '<p>Select your experience level:</p>',
+          branches: [
+            {
+              choice: 'beginner',
+              label: 'I\'m new to this',
+              targetStep: 1
+            },
+            {
+              choice: 'advanced',
+              label: 'I\'m experienced',
+              targetStep: 2
+            }
+          ]
+        }
+      ]
+    }
+  ];
+
+  return (
+    <PageLayout pageName="advanced-page">
+      <TutorialManager 
+        pageId="advanced-page"
+        tutorials={pageTutorials}
+        contextData={contextData}
+      >
+        {({ launchTutorial, availableTutorials }) => (
+          <div>
+            <h1>Advanced Page</h1>
+            
+            <div className="help-section">
+              <TutorialLauncher 
+                tutorialId="advanced-tutorial"
+                variant="primary"
+                contextData={contextData}
+              >
+                Take Tutorial
+              </TutorialLauncher>
+            </div>
+
+            <div className="page-content">
+              {/* Page content */}
+            </div>
+          </div>
+        )}
+      </TutorialManager>
+    </PageLayout>
+  );
+};
+```
+
+### Tutorial Framework Features
+
+The integrated tutorial framework provides:
+
+#### Context-Aware Tutorials
+- **User Type Filtering**: Tutorials can be shown/hidden based on user type (authenticated, unauthenticated, demo)
+- **Page Context**: Tutorials are filtered based on current page and available context data
+- **Repository Context**: DAK and asset page tutorials can access repository and branch information
+
+#### Interactive Learning Paths
+- **Branching Logic**: Tutorials can include branching choices for personalized learning paths
+- **Progress Tracking**: User progress is automatically saved and restored across sessions
+- **Accessibility**: Full keyboard navigation and screen reader support
+
+#### Seamless Integration
+- **Legacy Compatibility**: Existing help topics continue to work alongside new tutorials
+- **Theme Awareness**: Tutorials automatically adapt to light/dark themes
+- **Responsive Design**: Tutorials work on desktop and mobile devices
+
+### Tutorial Categories
+
+The framework organizes tutorials into categories for better user experience:
+
+- **`getting-started`** - Introduction and basic concepts
+- **`authentication`** - GitHub setup and authentication
+- **`dak-management`** - DAK repository management
+- **`content-editing`** - Content creation and editing
+- **`collaboration`** - Team collaboration features
+- **`troubleshooting`** - Problem resolution guides
+
+### Built-in Tutorials
+
+The page framework includes several built-in tutorials:
+
+- **GitHub PAT Setup**: Interactive setup for GitHub Personal Access Tokens
+- **DAK Components Overview**: Understanding the 8 core DAK components
+- **Tutorial Framework Demo**: Showcasing branching tutorial capabilities
+
+For complete tutorial framework documentation, see [Tutorial Framework](tutorial-framework.md).
 
 ## Migration Guide
 
