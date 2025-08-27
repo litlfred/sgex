@@ -260,7 +260,7 @@ The SGEX Workbench uses a **compartmentalized multi-branch GitHub Pages deployme
 
 The system consists of **two independent workflows**:
 
-1. **Branch Preview Deployment**: Automatically deploys each branch to its own preview URL
+1. **Deploy Feature Branch**: Automatically deploys each branch to its own preview URL
 2. **Landing Page Deployment**: Manually triggered deployment of the main landing page
 
 This separation ensures:
@@ -269,9 +269,9 @@ This separation ensures:
 - Manual control over landing page updates
 - Independent operation of each deployment type
 
-### Branch Preview Deployment
+### Deploy Feature Branch
 
-**Workflow**: `Branch Preview Deployment` (`.github/workflows/pages.yml`)
+**Workflow**: `Deploy Feature Branch` (`.github/workflows/branch-deployment.yml`)
 
 **Automatic Triggers**:
 - Push to any branch (except `gh-pages`)  

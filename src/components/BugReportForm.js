@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import bugReportService from '../services/bugReportService';
 import githubService from '../services/githubService';
+import ScreenshotEditor from './ScreenshotEditor';
 
 const BugReportForm = ({ onClose, contextData = {} }) => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({});
   const [includeConsole, setIncludeConsole] = useState(false);
+  const [includeScreenshot, setIncludeScreenshot] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
   const [submitResult, setSubmitResult] = useState(null);
   const [consoleCapture, setConsoleCapture] = useState(null);
+  const [screenshotBlob, setScreenshotBlob] = useState(null);
+  const [screenshotPreview, setScreenshotPreview] = useState(null);
+  const [takingScreenshot, setTakingScreenshot] = useState(false);
+  const [showContextPreview, setShowContextPreview] = useState(false);
+  const [showScreenshotEditor, setShowScreenshotEditor] = useState(false);
+  const [originalScreenshotBlob, setOriginalScreenshotBlob] = useState(null);
 
   // Load templates on mount
   useEffect(() => {
@@ -57,6 +65,7 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
     setSelectedTemplate(template);
     setFormData({}); // Reset form data when template changes
     setIncludeConsole(template.type === 'bug'); // Auto-enable console for bug reports
+    setIncludeScreenshot(template.type === 'bug'); // Auto-enable screenshot for bug reports
   };
 
   const handleFormChange = (fieldId, value) => {
@@ -65,6 +74,71 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
       [fieldId]: value
     }));
   };
+
+  const handleTakeScreenshot = async () => {
+    setTakingScreenshot(true);
+    setError(null);
+    
+    try {
+      const screenshot = await bugReportService.takeScreenshot();
+      if (screenshot) {
+        setOriginalScreenshotBlob(screenshot);
+        setScreenshotBlob(screenshot);
+        // Create preview URL
+        const previewUrl = URL.createObjectURL(screenshot);
+        setScreenshotPreview(previewUrl);
+        setIncludeScreenshot(true);
+      } else {
+        setError('Screenshot capture is not supported in this browser or was denied by the user.');
+      }
+    } catch (err) {
+      console.error('Failed to take screenshot:', err);
+      setError('Failed to capture screenshot: ' + err.message);
+    } finally {
+      setTakingScreenshot(false);
+    }
+  };
+
+  const handleEditScreenshot = () => {
+    setShowScreenshotEditor(true);
+  };
+
+  const handleScreenshotEditorSave = (editedBlob) => {
+    // Update the screenshot with the edited version
+    setScreenshotBlob(editedBlob);
+    
+    // Update preview URL
+    if (screenshotPreview) {
+      URL.revokeObjectURL(screenshotPreview);
+    }
+    const newPreviewUrl = URL.createObjectURL(editedBlob);
+    setScreenshotPreview(newPreviewUrl);
+    
+    setShowScreenshotEditor(false);
+  };
+
+  const handleScreenshotEditorCancel = () => {
+    setShowScreenshotEditor(false);
+  };
+
+  const handleRemoveScreenshot = () => {
+    if (screenshotPreview) {
+      URL.revokeObjectURL(screenshotPreview);
+    }
+    setScreenshotBlob(null);
+    setOriginalScreenshotBlob(null);
+    setScreenshotPreview(null);
+    setIncludeScreenshot(false);
+  };
+
+  // Clean up screenshot preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (screenshotPreview) {
+        URL.revokeObjectURL(screenshotPreview);
+      }
+    };
+  }, [screenshotPreview]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,6 +155,9 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
       // Get current console output if including
       const currentConsoleOutput = includeConsole && consoleCapture ? consoleCapture.getLogs() : '';
       
+      // Get screenshot blob if including
+      const currentScreenshot = includeScreenshot ? screenshotBlob : null;
+      
       // Check if user is authenticated and can submit via API
       if (githubService.isAuthenticated) {
         const result = await bugReportService.submitIssue(
@@ -89,7 +166,9 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
           selectedTemplate,
           formData,
           includeConsole,
-          currentConsoleOutput
+          currentConsoleOutput,
+          contextData,
+          currentScreenshot
         );
         
         setSubmitResult(result);
@@ -106,7 +185,9 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
           selectedTemplate,
           formData,
           includeConsole,
-          currentConsoleOutput
+          currentConsoleOutput,
+          contextData,
+          currentScreenshot
         );
         
         // Try to open URL
@@ -147,13 +228,16 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
     if (!selectedTemplate) return '';
     
     const currentConsoleOutput = includeConsole && consoleCapture ? consoleCapture.getLogs() : '';
+    const currentScreenshot = includeScreenshot ? screenshotBlob : null;
     return bugReportService.generateIssueUrl(
       'litlfred',
       'sgex',
       selectedTemplate,
       formData,
       includeConsole,
-      currentConsoleOutput
+      currentConsoleOutput,
+      contextData,
+      currentScreenshot
     );
   };
 
@@ -454,6 +538,133 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
           </label>
         </div>
 
+        {/* Screenshot Option */}
+        <div className="form-field">
+          <label className="checkbox-label screenshot-option">
+            <input
+              type="checkbox"
+              className="checkbox-input"
+              checked={includeScreenshot}
+              onChange={(e) => setIncludeScreenshot(e.target.checked)}
+            />
+            Include screenshot of current page
+            <span className="checkbox-help">
+              (Recommended for bug reports - helps visualize the issue)
+            </span>
+          </label>
+          
+          {includeScreenshot && (
+            <div className="screenshot-controls">
+              {!screenshotBlob ? (
+                <button
+                  type="button"
+                  className="screenshot-btn secondary"
+                  onClick={handleTakeScreenshot}
+                  disabled={takingScreenshot}
+                >
+                  {takingScreenshot ? 'Capturing...' : 'Take Screenshot'}
+                </button>
+              ) : (
+                <div className="screenshot-preview">
+                  <img 
+                    src={screenshotPreview} 
+                    alt="Screenshot preview" 
+                    className="screenshot-image"
+                  />
+                  <div className="screenshot-actions">
+                    <button
+                      type="button"
+                      className="screenshot-btn secondary"
+                      onClick={handleEditScreenshot}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="screenshot-btn secondary"
+                      onClick={handleTakeScreenshot}
+                      disabled={takingScreenshot}
+                    >
+                      {takingScreenshot ? 'Capturing...' : 'Retake'}
+                    </button>
+                    <button
+                      type="button"
+                      className="screenshot-btn danger"
+                      onClick={handleRemoveScreenshot}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Context Information Preview */}
+        <div className="form-field">
+          <label className="context-preview-label">
+            Contextual Information
+            <button
+              type="button"
+              className="context-toggle-btn"
+              onClick={() => setShowContextPreview(!showContextPreview)}
+            >
+              {showContextPreview ? 'Hide' : 'Show'} Context Details
+            </button>
+          </label>
+          <p className="field-description">
+            This information will be automatically included to help developers understand the context of your report.
+          </p>
+          
+          {showContextPreview && (
+            <div className="context-preview">
+              <div className="context-section">
+                <h4>Page Context</h4>
+                <ul>
+                  <li><strong>Current Page:</strong> {contextData.pageId || 'Unknown'}</li>
+                  <li><strong>URL:</strong> {window.location.href}</li>
+                  <li><strong>Authentication:</strong> {githubService.isAuthenticated ? 'Authenticated' : 'Demo Mode'}</li>
+                </ul>
+              </div>
+              
+              {contextData.repository && (
+                <div className="context-section">
+                  <h4>Repository Context</h4>
+                  <ul>
+                    <li><strong>Repository:</strong> {contextData.repository.name || contextData.repository}</li>
+                    <li><strong>Branch:</strong> {contextData.branch || 'Unknown'}</li>
+                  </ul>
+                </div>
+              )}
+              
+              {contextData.selectedDak && (
+                <div className="context-section">
+                  <h4>DAK Context</h4>
+                  <ul>
+                    <li><strong>DAK Name:</strong> {contextData.selectedDak.name}</li>
+                    {contextData.selectedDak.description && (
+                      <li><strong>Description:</strong> {contextData.selectedDak.description}</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+              
+              {contextData.component && (
+                <div className="context-section">
+                  <h4>Component Context</h4>
+                  <ul>
+                    <li><strong>Component:</strong> {contextData.component}</li>
+                    {contextData.isEditing !== undefined && (
+                      <li><strong>Editing Mode:</strong> {contextData.isEditing ? 'Yes' : 'No'}</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Template Fields */}
         {selectedTemplate && (
           <div className="template-fields">
@@ -505,6 +716,14 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
           )}
         </div>
       </form>
+
+      {/* Screenshot Editor */}
+      <ScreenshotEditor
+        screenshotBlob={originalScreenshotBlob}
+        onSave={handleScreenshotEditorSave}
+        onCancel={handleScreenshotEditorCancel}
+        isOpen={showScreenshotEditor}
+      />
     </div>
   );
 };

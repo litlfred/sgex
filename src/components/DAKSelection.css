@@ -185,6 +185,14 @@ body.theme-light .dak-selection {
   position: relative;
   background: var(--who-card-bg);
   backdrop-filter: blur(10px);
+  /* Improve touch target for mobile devices */
+  -webkit-tap-highlight-color: rgba(0, 120, 212, 0.2);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  /* Ensure proper touch behavior */
+  touch-action: manipulation;
 }
 
 .dak-selection .repo-card:hover {
@@ -489,6 +497,72 @@ body.theme-dark .rescan-btn:hover:not(:disabled) {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+/* Fallback warning for WHO repositories */
+.fallback-warning {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.warning-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.warning-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  color: #ffc107;
+}
+
+.warning-text {
+  flex: 1;
+  color: var(--who-text-primary);
+  line-height: 1.5;
+}
+
+.warning-text strong {
+  color: var(--who-text-primary);
+}
+
+.warning-text .retry-link {
+  background: none;
+  border: none;
+  color: var(--who-blue);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+  margin: 0 0.25rem;
+}
+
+.warning-text .retry-link:hover:not(:disabled) {
+  color: var(--who-blue-light);
+}
+
+.warning-text .retry-link:disabled {
+  color: var(--who-text-muted);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+/* Dark mode adjustments for fallback warning */
+body.theme-dark .fallback-warning {
+  background: rgba(255, 193, 7, 0.15);
+  border-color: rgba(255, 193, 7, 0.4);
+}
+
+body.theme-dark .warning-text .retry-link {
+  color: var(--who-blue-light);
+}
+
+body.theme-dark .warning-text .retry-link:hover:not(:disabled) {
+  color: #90caf9;
 }
 
 /* Demo controls */
@@ -878,6 +952,11 @@ body.theme-dark .rescan-btn:hover:not(:disabled) {
 
   .repo-card {
     padding: 1rem;
+    /* Enhance touch targets for mobile */
+    min-height: 60px;
+    /* Ensure touch properties are maintained in mobile view */
+    -webkit-tap-highlight-color: rgba(0, 120, 212, 0.3);
+    touch-action: manipulation;
   }
 
   .repo-stats {

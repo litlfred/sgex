@@ -79,10 +79,6 @@ export class ToolDefinition {
       return false;
     }
     
-    if (!this.supportsDemo && userAccessService.isDemoUser()) {
-      return false;
-    }
-    
     return true;
   }
 

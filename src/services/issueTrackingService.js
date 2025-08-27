@@ -10,6 +10,7 @@ import logger from '../utils/logger';
 class IssueTrackingService {
   constructor() {
     this.storageKey = 'sgex_tracked_items';
+    this.repositoryFiltersKey = 'sgex_repository_filters';
     this.logger = logger.getLogger('IssueTrackingService');
     this.syncInterval = null;
     this.syncIntervalMs = 5 * 60 * 1000; // 5 minutes
@@ -32,6 +33,32 @@ class IssueTrackingService {
     } catch (error) {
       this.logger.error('Failed to parse stored tracking data:', error);
       return { trackedItems: {} };
+    }
+  }
+
+  /**
+   * Get repository filters from localStorage
+   */
+  _getRepositoryFilters() {
+    try {
+      const data = localStorage.getItem(this.repositoryFiltersKey);
+      return data ? JSON.parse(data) : {};
+    } catch (error) {
+      this.logger.error('Failed to parse repository filters:', error);
+      return {};
+    }
+  }
+
+  /**
+   * Save repository filters to localStorage
+   */
+  _saveRepositoryFilters(filters) {
+    try {
+      localStorage.setItem(this.repositoryFiltersKey, JSON.stringify(filters));
+      return true;
+    } catch (error) {
+      this.logger.error('Failed to save repository filters:', error);
+      return false;
     }
   }
 
@@ -80,6 +107,35 @@ class IssueTrackingService {
     return {
       issues: userItems.issues || [],
       pullRequests: userItems.pullRequests || []
+    };
+  }
+
+  /**
+   * Get tracked items for a specific user with repository filters applied
+   */
+  async getFilteredTrackedItems(username = null) {
+    const items = await this.getTrackedItems(username);
+    const filters = this._getRepositoryFilters();
+    
+    if (!username) {
+      username = await this._getCurrentUsername();
+      if (!username) return items;
+    }
+
+    const userFilters = filters[username] || {};
+    
+    // Filter out hidden repositories
+    const filteredIssues = items.issues.filter(issue => 
+      !userFilters[issue.repository]?.hidden
+    );
+    
+    const filteredPRs = items.pullRequests.filter(pr => 
+      !userFilters[pr.repository]?.hidden
+    );
+
+    return {
+      issues: filteredIssues,
+      pullRequests: filteredPRs
     };
   }
 
@@ -251,12 +307,157 @@ class IssueTrackingService {
    * Get count of tracked items
    */
   async getTrackedCounts(username = null) {
-    const items = await this.getTrackedItems(username);
+    const items = await this.getFilteredTrackedItems(username);
     return {
       issues: items.issues.length,
       pullRequests: items.pullRequests.length,
       total: items.issues.length + items.pullRequests.length
     };
+  }
+
+  /**
+   * Set repository visibility for a user
+   */
+  async setRepositoryVisibility(repository, hidden = false) {
+    const username = await this._getCurrentUsername();
+    if (!username) return false;
+
+    const filters = this._getRepositoryFilters();
+    
+    if (!filters[username]) {
+      filters[username] = {};
+    }
+    
+    if (!filters[username][repository]) {
+      filters[username][repository] = {};
+    }
+    
+    filters[username][repository].hidden = hidden;
+    
+    return this._saveRepositoryFilters(filters);
+  }
+
+  /**
+   * Get repository filters for current user
+   */
+  async getRepositoryFilters() {
+    const username = await this._getCurrentUsername();
+    if (!username) return {};
+
+    const filters = this._getRepositoryFilters();
+    return filters[username] || {};
+  }
+
+  /**
+   * Get list of unique repositories from tracked items
+   */
+  async getTrackedRepositories() {
+    const items = await this.getTrackedItems();
+    const repositories = new Set();
+    
+    items.issues.forEach(issue => repositories.add(issue.repository));
+    items.pullRequests.forEach(pr => repositories.add(pr.repository));
+    
+    return Array.from(repositories).sort();
+  }
+
+  /**
+   * Discover new user activity - issues and PRs created by or commented on by the user
+   */
+  async _discoverUserActivity(username, existingItems) {
+    const newIssues = [];
+    const newPRs = [];
+    
+    try {
+      // Search for open issues created by the user
+      const createdIssuesQuery = `is:issue author:${username} state:open`;
+      const createdIssuesResult = await githubService.searchIssues(createdIssuesQuery, { per_page: 50 });
+      
+      // Search for open issues where user commented
+      const commentedIssuesQuery = `is:issue commenter:${username} state:open`;
+      const commentedIssuesResult = await githubService.searchIssues(commentedIssuesQuery, { per_page: 50 });
+      
+      // Search for open PRs created by the user  
+      const createdPRsQuery = `is:pr author:${username} state:open`;
+      const createdPRsResult = await githubService.searchPullRequests(createdPRsQuery, { per_page: 50 });
+      
+      // Search for open PRs where user commented
+      const commentedPRsQuery = `is:pr commenter:${username} state:open`;
+      const commentedPRsResult = await githubService.searchPullRequests(commentedPRsQuery, { per_page: 50 });
+
+      // Combine and deduplicate issues
+      const allFoundIssues = [...(createdIssuesResult.items || []), ...(commentedIssuesResult.items || [])];
+      const uniqueIssues = this._deduplicateItems(allFoundIssues);
+      
+      // Combine and deduplicate PRs
+      const allFoundPRs = [...(createdPRsResult.items || []), ...(commentedPRsResult.items || [])];
+      const uniquePRs = this._deduplicateItems(allFoundPRs);
+
+      // Filter out already tracked issues
+      for (const issue of uniqueIssues) {
+        const isAlreadyTracked = existingItems.issues.some(
+          existing => existing.id === issue.id || existing.number === issue.number
+        );
+        
+        if (!isAlreadyTracked) {
+          const trackedIssue = {
+            id: issue.id,
+            number: issue.number,
+            title: issue.title,
+            html_url: issue.html_url,
+            created_at: issue.created_at,
+            repository: issue.repository ? issue.repository.full_name : 'unknown/unknown',
+            state: issue.state,
+            labels: issue.labels || [],
+            trackedAt: new Date().toISOString(),
+            discoveredBy: 'sync'
+          };
+          newIssues.push(trackedIssue);
+        }
+      }
+
+      // Filter out already tracked PRs
+      for (const pr of uniquePRs) {
+        const isAlreadyTracked = existingItems.pullRequests.some(
+          existing => existing.id === pr.id || existing.number === pr.number
+        );
+        
+        if (!isAlreadyTracked) {
+          const trackedPR = {
+            id: pr.id,
+            number: pr.number,
+            title: pr.title,
+            html_url: pr.html_url,
+            created_at: pr.created_at,
+            repository: pr.repository ? pr.repository.full_name : 'unknown/unknown',
+            state: pr.state,
+            linkedIssues: [],
+            trackedAt: new Date().toISOString(),
+            discoveredBy: 'sync'
+          };
+          newPRs.push(trackedPR);
+        }
+      }
+
+    } catch (error) {
+      this.logger.error('Failed to discover user activity:', error);
+    }
+
+    return { issues: newIssues, pullRequests: newPRs };
+  }
+
+  /**
+   * Deduplicate items by ID, keeping the first occurrence
+   */
+  _deduplicateItems(items) {
+    const seen = new Set();
+    return items.filter(item => {
+      if (seen.has(item.id)) {
+        return false;
+      }
+      seen.add(item.id);
+      return true;
+    });
   }
 
   /**
@@ -307,7 +508,7 @@ class IssueTrackingService {
   }
 
   /**
-   * Sync tracked items with GitHub to update their status
+   * Sync tracked items with GitHub to update their status and discover new user activity
    */
   async syncTrackedItems() {
     if (!githubService.isAuth()) return;
@@ -318,7 +519,7 @@ class IssueTrackingService {
     const items = await this.getTrackedItems(username);
     let updated = false;
 
-    // Update issue states
+    // Update existing issue states
     for (const issue of items.issues) {
       try {
         const [owner, repo] = issue.repository.split('/');
@@ -334,7 +535,7 @@ class IssueTrackingService {
       }
     }
 
-    // Update PR states
+    // Update existing PR states
     for (const pr of items.pullRequests) {
       try {
         const [owner, repo] = pr.repository.split('/');
@@ -348,6 +549,24 @@ class IssueTrackingService {
       } catch (error) {
         this.logger.debug(`Failed to sync PR ${pr.number}:`, error);
       }
+    }
+
+    // Discover new user activity - look for issues and PRs created by or commented on by the user
+    try {
+      const newItems = await this._discoverUserActivity(username, items);
+      if (newItems.issues.length > 0 || newItems.pullRequests.length > 0) {
+        // Add newly discovered items
+        items.issues.push(...newItems.issues);
+        items.pullRequests.push(...newItems.pullRequests);
+        updated = true;
+        
+        this.logger.info('Discovered new user activity', { 
+          newIssues: newItems.issues.length,
+          newPRs: newItems.pullRequests.length 
+        });
+      }
+    } catch (error) {
+      this.logger.debug('Failed to discover new user activity:', error);
     }
 
     // Save updated data

@@ -457,21 +457,37 @@ body.theme-light .dak-dashboard {
 }
 
 .component-card.large-card {
-  min-height: 280px;
-  padding: 0;
+  min-height: 200px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 1.5rem;
+  justify-content: space-between;
+}
+
+.component-main {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.component-card.large-card .component-header {
+  margin-bottom: 0;
 }
 
 .component-card.large-card .component-image-container {
-  width: 100%;
-  height: 180px;
   overflow: hidden;
   position: relative;
-  border-radius: 16px 16px 0 0;
+  border-radius: 12px;
+  flex-shrink: 0;
 }
 
 .component-card.large-card .component-card-image {
-  width: 100%;
-  height: 100%;
+  max-width: var(--card-icon-size);
+  max-height: var(--card-icon-size);
   object-fit: cover;
   transition: transform 0.3s ease;
 }
@@ -481,16 +497,29 @@ body.theme-light .dak-dashboard {
 }
 
 .component-card.large-card .component-content {
-  padding: 1rem;
+  padding: 0;
   position: relative;
   z-index: 2;
-  background: rgba(255, 255, 255, 0.95);
-  min-height: 100px;
+  background: transparent;
+  min-height: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-/* Dark mode adjustments for card content background */
-body.theme-dark .component-card.large-card .component-content {
-  background: rgba(10, 20, 40, 0.95);
+.component-meta-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  min-width: 150px;
+  padding-left: 1rem;
+  border-left: 1px solid var(--who-border-color);
+}
+
+/* Dark mode adjustments for card content text */
+body.theme-dark .component-card.large-card .component-content h4 {
   color: white;
 }
 
@@ -500,10 +529,6 @@ body.theme-dark .component-card.large-card .component-content {
   font-weight: 600;
   color: var(--component-color);
   line-height: 1.3;
-}
-
-body.theme-dark .component-card.large-card .component-content h4 {
-  color: white;
 }
 
 .component-card.large-card .component-content p {
@@ -530,16 +555,7 @@ body.theme-dark .component-card.large-card .component-content p {
   border: 0 !important;
 }
 
-.component-card.image-loaded .component-content h4,
-.component-card.image-loaded .component-content p:first-of-type {
-  /* Hide title and description when image loads successfully */
-  display: none;
-}
 
-/* Show meta information when image loads */
-.component-card.image-loaded .component-meta {
-  margin-top: 0;
-}
 
 /* Fallback icon styles when image fails */
 .component-card .component-icon {
@@ -607,14 +623,17 @@ body.theme-dark .component-card.large-card .component-content p {
 
 .component-meta {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: auto;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-end;
+  text-align: right;
 }
 
 .file-types {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
+  justify-content: flex-end;
 }
 
 .file-type-tag {
@@ -625,12 +644,33 @@ body.theme-dark .component-card.large-card .component-content p {
   font-size: 0.7rem;
   font-weight: 500;
   text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+body.theme-dark .file-type-tag {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+body.theme-light .file-type-tag {
+  background: rgba(0, 120, 212, 0.1);
+  color: var(--who-blue-dark);
+  border: 1px solid rgba(0, 120, 212, 0.2);
 }
 
 .file-count {
   color: rgba(255, 255, 255, 0.8);
   font-size: 0.85rem;
   font-weight: 500;
+}
+
+body.theme-dark .file-count {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+body.theme-light .file-count {
+  color: var(--who-text-secondary);
 }
 
 .additional-section .component-card {
@@ -800,6 +840,58 @@ body.theme-dark .component-card.large-card .component-content p {
 
   .tab-button-fullwidth .tab-text {
     font-size: 1rem;
+  }
+
+  /* DAK Component Card Mobile Responsive */
+  .component-card.large-card {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .component-main {
+    flex-direction: column;
+    width: 100%;
+    gap: 1rem;
+  }
+
+  .component-meta-section {
+    width: 100%;
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--who-border-color);
+    padding-top: 1rem;
+    align-items: center;
+  }
+
+  .component-meta {
+    align-items: center;
+    text-align: center;
+  }
+
+  .file-types {
+    justify-content: center;
+  }
+
+  .component-card.large-card .component-card-image {
+    max-width: calc(var(--card-icon-size) * 0.6);
+    max-height: calc(var(--card-icon-size) * 0.6);
+  }
+}
+
+/* Very small screens - further reduce DAK component card images */
+@media (max-width: 480px) {
+  .component-card.large-card .component-card-image {
+    max-width: calc(var(--card-icon-size) * 0.5);
+    max-height: calc(var(--card-icon-size) * 0.5);
+  }
+
+  .component-main {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .component-meta-section {
+    padding-top: 0.75rem;
   }
 }
 
