@@ -33,6 +33,8 @@ const CoreDataDictionaryViewerContent = () => {
   const [dakTableSearch, setDakTableSearch] = useState('');
   const [hasPublishedDak, setHasPublishedDak] = useState(false);
   const [checkingPublishedDak, setCheckingPublishedDak] = useState(false);
+  const [questionnaires, setQuestionnaires] = useState([]);
+  const [questionnaireLoading, setQuestionnaireLoading] = useState(false);
 
   // Generate base URL for IG Publisher artifacts
   const getBaseUrl = useCallback((branchName) => {
@@ -71,6 +73,60 @@ const CoreDataDictionaryViewerContent = () => {
     return concepts;
   }, []);
 
+  // Load questionnaires from repository
+  const loadQuestionnaires = async (currentUser, currentRepo, currentBranch) => {
+    try {
+      setQuestionnaireLoading(true);
+      const allQuestionnaires = [];
+      
+      // Check multiple possible locations for questionnaires
+      const paths = [
+        { path: 'input/questionnaires', extensions: ['.json'], type: 'JSON' },
+        { path: 'input/fsh/questionnaires', extensions: ['.fsh'], type: 'FSH' }
+      ];
+      
+      for (const pathConfig of paths) {
+        try {
+          const files = await githubService.getDirectoryContents(
+            currentUser,
+            currentRepo,
+            pathConfig.path,
+            currentBranch
+          );
+          
+          // Filter for supported file extensions
+          const questionnaireFiles = files
+            .filter(file => file.type === 'file' && 
+              pathConfig.extensions.some(ext => file.name.endsWith(ext)))
+            .map(file => {
+              const extension = pathConfig.extensions.find(ext => file.name.endsWith(ext));
+              return {
+                ...file,
+                displayName: file.name.replace(extension, ''),
+                fullPath: `${pathConfig.path}/${file.name}`,
+                fileType: pathConfig.type,
+                extension: extension
+              };
+            });
+          
+          allQuestionnaires.push(...questionnaireFiles);
+        } catch (error) {
+          // Directory doesn't exist, continue with other paths
+          if (error.status !== 404) {
+            console.warn(`Error loading questionnaires from ${pathConfig.path}:`, error);
+          }
+        }
+      }
+      
+      setQuestionnaires(allQuestionnaires);
+    } catch (error) {
+      console.error('Error loading questionnaires:', error);
+      setQuestionnaires([]);
+    } finally {
+      setQuestionnaireLoading(false);
+    }
+  };
+
   const handleHomeNavigation = () => {
     navigate('/');
   };
@@ -92,6 +148,23 @@ const CoreDataDictionaryViewerContent = () => {
         } 
       });
     }
+  };
+
+  const handleQuestionnaireClick = (questionnaire) => {
+    const owner = repository?.owner?.login || repository?.full_name.split('/')[0];
+    const repoName = repository?.name;
+    const path = branch 
+      ? `/questionnaire-editor/${owner}/${repoName}/${branch}`
+      : `/questionnaire-editor/${owner}/${repoName}`;
+    
+    const navigationState = {
+      profile,
+      repository,
+      selectedBranch: branch,
+      selectedQuestionnaire: questionnaire
+    };
+    
+    navigate(path, { state: navigationState });
   };
 
   // Fetch FSH files from input/fsh directory
@@ -222,6 +295,9 @@ const CoreDataDictionaryViewerContent = () => {
         } else {
           setHasPublishedDak(false);
         }
+
+        // Load questionnaires from repository
+        await loadQuestionnaires(currentUser, currentRepo, currentBranch);
 
       } catch (err) {
         console.error('Error fetching FSH files:', err);
@@ -609,13 +685,55 @@ const CoreDataDictionaryViewerContent = () => {
                 }}
                 title="Open FHIR Questionnaire Editor"
               >
-                📋 Open Questionnaire Editor
+                📋 Create New Questionnaire
               </button>
             </div>
+
+            {/* Existing Questionnaires List */}
+            {questionnaireLoading ? (
+              <div className="questionnaire-loading">
+                <p>Loading questionnaires...</p>
+              </div>
+            ) : questionnaires.length > 0 ? (
+              <div className="existing-questionnaires">
+                <h4>Existing Questionnaires ({questionnaires.length})</h4>
+                <div className="questionnaire-grid">
+                  {questionnaires.map((questionnaire) => (
+                    <div 
+                      key={questionnaire.name}
+                      className="questionnaire-card"
+                      onClick={() => handleQuestionnaireClick(questionnaire)}
+                      title="Click to open questionnaire in editor"
+                    >
+                      <div className="card-icon">
+                        {questionnaire.fileType === 'FSH' ? '📝' : '📋'}
+                      </div>
+                      <div className="card-content">
+                        <h5>{questionnaire.displayName}</h5>
+                        <p className="card-type">{questionnaire.fileType} Questionnaire</p>
+                        <p className="card-path">{questionnaire.fullPath}</p>
+                        <p className="card-size">{(questionnaire.size / 1024).toFixed(1)} KB</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="no-questionnaires">
+                <div className="empty-icon">📋</div>
+                <h4>No Questionnaires Found</h4>
+                <p>This repository doesn't have any FHIR Questionnaire files yet.</p>
+                <p>Questionnaires can be stored in:</p>
+                <ul>
+                  <li><code>input/questionnaires/*.json</code> - FHIR JSON format</li>
+                  <li><code>input/fsh/questionnaires/*.fsh</code> - FHIR Shorthand format</li>
+                </ul>
+              </div>
+            )}
             
             <div className="questionnaire-info">
               <p className="info-text">
-                Create and edit FHIR R4 Questionnaire resources stored in <code>input/questionnaires/</code> directory.
+                Create and edit FHIR R4 Questionnaire resources. Click on existing questionnaires to open them in the editor, or create a new one with the button above.
               </p>
             </div>
           </div>
