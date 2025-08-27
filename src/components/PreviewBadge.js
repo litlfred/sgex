@@ -65,9 +65,20 @@ const PreviewBadge = () => {
   const [commentsPage, setCommentsPage] = useState(1);
   const [allComments, setAllComments] = useState([]);
   const [hasMoreComments, setHasMoreComments] = useState(false);
+  const [displayedCommentsCount, setDisplayedCommentsCount] = useState(5);
+  const [showStatusUpdates, setShowStatusUpdates] = useState(true);
   const expandedRef = useRef(null);
   const commentRefreshIntervalRef = useRef(null);
   const workflowRefreshIntervalRef = useRef(null);
+
+  // Custom markdown components to make links open in new tabs
+  const markdownComponents = {
+    a: ({ href, children, ...props }) => (
+      <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+        {children}
+      </a>
+    )
+  };
 
   useEffect(() => {
     const detectBranchAndPR = async () => {
@@ -158,6 +169,9 @@ const PreviewBadge = () => {
         clearInterval(workflowRefreshIntervalRef.current);
         workflowRefreshIntervalRef.current = null;
       }
+      // Reset comment pagination when collapsed
+      setCommentsPage(1);
+      setDisplayedCommentsCount(5);
     }
   }, [isExpanded]);
 
@@ -218,9 +232,10 @@ const PreviewBadge = () => {
       const perPage = 30; // GitHub default per page
       
       // Fetch both review comments and issue comments with pagination
-      const [reviewComments, issueComments] = await Promise.all([
+      const [reviewComments, issueComments, timelineEvents] = await Promise.all([
         githubService.getPullRequestComments(owner, repo, prNumber, page, perPage).catch(() => []),
-        githubService.getPullRequestIssueComments(owner, repo, prNumber, page, perPage).catch(() => [])
+        githubService.getPullRequestIssueComments(owner, repo, prNumber, page, perPage).catch(() => []),
+        showStatusUpdates ? githubService.getPullRequestTimeline(owner, repo, prNumber, page, perPage).catch(() => []) : Promise.resolve([])
       ]);
 
       // Combine and sort comments by date, mark the type
@@ -229,17 +244,53 @@ const PreviewBadge = () => {
         ...issueComments.map(comment => ({ ...comment, type: 'issue' }))
       ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
+      // Process timeline events for status updates
+      const relevantTimelineEvents = timelineEvents
+        .filter(event => ['committed', 'reviewed', 'merged', 'closed', 'reopened', 'labeled', 'unlabeled', 'head_ref_force_pushed', 'ready_for_review', 'convert_to_draft'].includes(event.event))
+        .map(event => {
+          const user = event.actor || event.author || { login: 'github', avatar_url: 'https://github.com/github.png' };
+          
+          // Ensure user object has the required properties
+          const safeUser = {
+            login: user.login || 'github',
+            avatar_url: user.avatar_url || 'https://github.com/github.png',
+            ...user
+          };
+          
+          return {
+            ...event,
+            type: 'timeline',
+            created_at: event.created_at || event.submitted_at,
+            user: safeUser,
+            body: formatTimelineEvent(event)
+          };
+        });
+
       if (append) {
         // Append to existing comments (for load more)
         const existingIds = new Set(allComments.map(c => c.id));
         const uniqueNewComments = newComments.filter(c => !existingIds.has(c.id));
-        const updatedAllComments = [...allComments, ...uniqueNewComments];
+        const uniqueNewEvents = relevantTimelineEvents.filter(e => !existingIds.has(e.id));
+        
+        const allNewItems = [...uniqueNewComments, ...uniqueNewEvents]
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        const updatedAllComments = [...allComments, ...allNewItems];
         setAllComments(updatedAllComments);
-        setComments(updatedAllComments.slice(0, Math.min(5, updatedAllComments.length)));
+        
+        // When loading more, increase the displayed count to show the new comments
+        const newDisplayCount = Math.min(updatedAllComments.length, displayedCommentsCount + perPage);
+        setDisplayedCommentsCount(newDisplayCount);
+        setComments(updatedAllComments.slice(0, newDisplayCount));
       } else {
         // Replace comments (for initial load or refresh)
-        setAllComments(newComments);
-        setComments(newComments.slice(0, Math.min(5, newComments.length)));
+        const allItems = [...newComments, ...relevantTimelineEvents]
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        setAllComments(allItems);
+        const initialDisplayCount = Math.min(5, allItems.length);
+        setDisplayedCommentsCount(initialDisplayCount);
+        setComments(allItems.slice(0, initialDisplayCount));
       }
       
       // Check if there are more comments to load
@@ -254,59 +305,105 @@ const PreviewBadge = () => {
     }
   };
 
+  // Format timeline events into readable status updates
+  const formatTimelineEvent = (event) => {
+    switch (event.event) {
+      case 'committed':
+        return `📦 Pushed ${event.sha ? event.sha.substring(0, 7) : 'commit'}: ${event.message || 'No commit message'}`;
+      case 'reviewed':
+        const reviewState = event.state && typeof event.state === 'string' ? event.state.toLowerCase() : 'reviewed';
+        const reviewIcon = reviewState === 'approved' ? '✅' : reviewState === 'changes_requested' ? '❌' : '💬';
+        return `${reviewIcon} ${reviewState === 'approved' ? 'Approved' : reviewState === 'changes_requested' ? 'Requested changes' : 'Reviewed'} this pull request`;
+      case 'merged':
+        return `🔀 Merged this pull request`;
+      case 'closed':
+        return `❌ Closed this pull request`;
+      case 'reopened':
+        return `🔄 Reopened this pull request`;
+      case 'labeled':
+        return `🏷️ Added label: ${event.label?.name || 'unknown'}`;
+      case 'unlabeled':
+        return `🏷️ Removed label: ${event.label?.name || 'unknown'}`;
+      case 'head_ref_force_pushed':
+        return `🔄 Force-pushed to ${event.ref || 'branch'}`;
+      case 'ready_for_review':
+        return `✅ Marked as ready for review`;
+      case 'convert_to_draft':
+        return `📝 Converted to draft`;
+      default:
+        return `📋 ${event.event?.replace(/_/g, ' ') || 'unknown event'}`;
+    }
+  };
+
   const getCommentViewers = (comment, allComments) => {
     const viewers = new Set();
     
     // Extract mentions from the comment body
-    const mentionMatches = comment.body.match(/@(\w+)/g);
-    if (mentionMatches) {
-      mentionMatches.forEach(mention => {
-        const username = mention.substring(1); // Remove @
-        viewers.add(username);
-      });
+    if (comment.body && typeof comment.body === 'string') {
+      const mentionMatches = comment.body.match(/@(\w+)/g);
+      if (mentionMatches) {
+        mentionMatches.forEach(mention => {
+          const username = mention.substring(1); // Remove @
+          if (username && typeof username === 'string') {
+            viewers.add(username);
+          }
+        });
+      }
     }
     
     // Check if any subsequent comments reference this comment or author
     const laterComments = allComments.filter(c => 
+      c && c.created_at && comment && comment.created_at &&
       new Date(c.created_at) > new Date(comment.created_at)
     );
     
     laterComments.forEach(laterComment => {
       // Check if later comment mentions this comment's author
-      if (laterComment.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`)) {
-        viewers.add(laterComment.user.login);
+      if (laterComment.body && typeof laterComment.body === 'string' && 
+          comment.user && comment.user.login && typeof comment.user.login === 'string' &&
+          laterComment.user && laterComment.user.login && typeof laterComment.user.login === 'string') {
+        if (laterComment.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`)) {
+          viewers.add(laterComment.user.login);
+        }
       }
       
       // Check if later comment references this comment content (partial match)
-      const commentWords = comment.body.toLowerCase().split(' ').filter(word => word.length > 3);
-      if (commentWords.length > 0) {
-        const hasReferenceWords = commentWords.some(word => 
-          laterComment.body.toLowerCase().includes(word) && 
-          laterComment.user.login !== comment.user.login
-        );
-        if (hasReferenceWords) {
-          viewers.add(laterComment.user.login);
+      if (comment.body && typeof comment.body === 'string' &&
+          laterComment.body && typeof laterComment.body === 'string' && 
+          laterComment.user && laterComment.user.login && typeof laterComment.user.login === 'string') {
+        const commentWords = comment.body.toLowerCase().split(' ').filter(word => word.length > 3);
+        if (commentWords.length > 0) {
+          const hasReferenceWords = commentWords.some(word => 
+            laterComment.body.toLowerCase().includes(word) && 
+            laterComment.user.login !== comment.user.login
+          );
+          if (hasReferenceWords) {
+            viewers.add(laterComment.user.login);
+          }
         }
       }
     });
     
     // Add copilot if mentioned anywhere in the thread related to this comment
-    if (comment.body.toLowerCase().includes('copilot') || 
-        comment.user.login.toLowerCase().includes('copilot')) {
+    if ((comment.body && typeof comment.body === 'string' && comment.body.toLowerCase().includes('copilot')) || 
+        (comment.user && comment.user.login && typeof comment.user.login === 'string' && comment.user.login.toLowerCase().includes('copilot'))) {
       viewers.add('copilot');
     }
     
     // Check if copilot has engaged in later comments
     const copilotEngaged = laterComments.some(c => 
-      c.user.login.toLowerCase().includes('copilot') ||
-      c.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`)
+      (c.user && c.user.login && typeof c.user.login === 'string' && c.user.login.toLowerCase().includes('copilot')) ||
+      (c.body && typeof c.body === 'string' && comment.user && comment.user.login && typeof comment.user.login === 'string' && 
+       c.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`))
     );
     if (copilotEngaged) {
       viewers.add('copilot');
     }
     
     // Remove the comment author from viewers (don't show badge for self)
-    viewers.delete(comment.user.login);
+    if (comment.user && comment.user.login && typeof comment.user.login === 'string') {
+      viewers.delete(comment.user.login);
+    }
     
     return Array.from(viewers);
   };
@@ -592,16 +689,26 @@ const PreviewBadge = () => {
   };
 
   const loadMoreComments = async () => {
-    if (!prInfo || prInfo.length === 0 || commentsLoading || !hasMoreComments) return;
+    if (!prInfo || prInfo.length === 0 || commentsLoading) return;
     
     const owner = 'litlfred';
     const repo = 'sgex';
     const pr = prInfo[0];
     
-    const nextPage = commentsPage + 1;
-    setCommentsPage(nextPage);
+    // If we have more comments already loaded, just show more of them
+    if (displayedCommentsCount < allComments.length) {
+      const newDisplayCount = Math.min(allComments.length, displayedCommentsCount + 5);
+      setDisplayedCommentsCount(newDisplayCount);
+      setComments(allComments.slice(0, newDisplayCount));
+      return;
+    }
     
-    await fetchCommentsForPR(owner, repo, pr.number, nextPage, true);
+    // If we've shown all loaded comments and there might be more on the server, fetch more
+    if (hasMoreComments) {
+      const nextPage = commentsPage + 1;
+      setCommentsPage(nextPage);
+      await fetchCommentsForPR(owner, repo, pr.number, nextPage, true);
+    }
   };
 
   const handleCommentToggle = (commentId) => {
@@ -922,6 +1029,26 @@ const PreviewBadge = () => {
                 </button>
               </div>
 
+              {/* Status notification for closed/merged PRs */}
+              {prInfo[0].state !== 'open' && (
+                <div className={`pr-status-notification pr-status-${prInfo[0].state}`}>
+                  <div className="status-icon">
+                    {prInfo[0].state === 'closed' && '❌'}
+                    {prInfo[0].state === 'merged' && '🔀'}
+                  </div>
+                  <div className="status-message">
+                    <strong>
+                      {prInfo[0].state === 'closed' && 'This pull request is closed'}
+                      {prInfo[0].state === 'merged' && 'This pull request was merged'}
+                    </strong>
+                    <div className="status-details">
+                      {prInfo[0].state === 'closed' && 'The pull request has been closed without merging.'}
+                      {prInfo[0].state === 'merged' && 'The changes have been successfully merged into the target branch.'}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Comment form for authenticated users - MOVED TO TOP */}
               {githubService.isAuth() && (
                 <div className="comment-form">
@@ -1014,7 +1141,10 @@ const PreviewBadge = () => {
                   <div className="pr-body">
                     <div className="markdown-content">
                       {ReactMarkdown && rehypeRaw ? (
-                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                        <ReactMarkdown 
+                          rehypePlugins={[rehypeRaw]}
+                          components={markdownComponents}
+                        >
                           {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
                         </ReactMarkdown>
                       ) : (
@@ -1159,7 +1289,10 @@ const PreviewBadge = () => {
                             <div className="copilot-comment-body">
                               <div className="markdown-content">
                                 {ReactMarkdown && rehypeRaw ? (
-                                  <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                                  <ReactMarkdown 
+                                    rehypePlugins={[rehypeRaw]}
+                                    components={markdownComponents}
+                                  >{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
                                 ) : (
                                   <div style={{ whiteSpace: 'pre-wrap' }}>
                                     {sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}
@@ -1183,7 +1316,25 @@ const PreviewBadge = () => {
               )}
 
               <div className="comments-section">
-                <h4>Recent Comments ({allComments.length > 0 ? `${comments.length}/${allComments.length}` : '0'})</h4>
+                <div className="comments-header">
+                  <h4>Recent Comments & Updates ({allComments.length > 0 ? `${displayedCommentsCount}/${allComments.length}` : '0'})</h4>
+                  <div className="comments-controls">
+                    <label className="status-updates-toggle">
+                      <input 
+                        type="checkbox" 
+                        checked={showStatusUpdates}
+                        onChange={(e) => {
+                          setShowStatusUpdates(e.target.checked);
+                          // Refresh comments when toggling status updates
+                          if (prInfo && prInfo.length > 0) {
+                            fetchCommentsForPR('litlfred', 'sgex', prInfo[0].number, 1, false);
+                          }
+                        }}
+                      />
+                      <span className="checkbox-label">📋 Show status updates</span>
+                    </label>
+                  </div>
+                </div>
                 {commentsLoading ? (
                   <div className="loading">Loading comments...</div>
                 ) : comments.length === 0 ? (
@@ -1198,7 +1349,7 @@ const PreviewBadge = () => {
                         const viewers = getCommentViewers(comment, comments);
                         
                         return (
-                          <div key={comment.id} className={`comment ${isNewComment ? 'comment-new-glow' : ''}`}>
+                          <div key={comment.id} className={`comment ${comment.type === 'timeline' ? 'comment-timeline' : ''} ${isNewComment ? 'comment-new-glow' : ''}`}>
                             <div className="comment-header">
                               <img 
                                 src={comment.user.avatar_url} 
@@ -1214,30 +1365,47 @@ const PreviewBadge = () => {
                                 {comment.user.login}
                               </a>
                               <span className="comment-date">{formatDate(comment.created_at)}</span>
-                              <span className="comment-type">{comment.type}</span>
+                              <span className={`comment-type ${comment.type === 'timeline' ? 'comment-type-timeline' : ''}`}>
+                                {comment.type === 'timeline' ? 'status' : comment.type}
+                              </span>
                               
-                              {/* Comment Viewer Badges */}
-                              {viewers.length > 0 && (
+                              {/* Comment Viewer Badges - only for regular comments */}
+                              {comment.type !== 'timeline' && viewers.length > 0 && (
                                 <div className="comment-viewers">
-                                  {viewers.map((viewer, index) => (
-                                    <span 
-                                      key={index}
-                                      className={`viewer-badge ${viewer.toLowerCase().includes('copilot') ? 'viewer-badge-copilot' : 'viewer-badge-user'}`}
-                                      title={`${viewer} is looking at this comment`}
-                                    >
-                                      {viewer.toLowerCase().includes('copilot') ? '👁️' : '👀'} {viewer}
-                                    </span>
-                                  ))}
+                                  {viewers.map((viewer, index) => {
+                                    // Ensure viewer is a string before calling toLowerCase
+                                    const safeViewer = typeof viewer === 'string' ? viewer : String(viewer || '');
+                                    const isCopilot = safeViewer && safeViewer.toLowerCase().includes('copilot');
+                                    return (
+                                      <span 
+                                        key={index}
+                                        className={`viewer-badge ${isCopilot ? 'viewer-badge-copilot' : 'viewer-badge-user'}`}
+                                        title={`${safeViewer} is looking at this comment`}
+                                      >
+                                        {isCopilot ? '👁️' : '👀'} {safeViewer}
+                                      </span>
+                                    );
+                                  })}
                                 </div>
                               )}
                             </div>
                             <div className="comment-body">
-                              {shouldTruncate && !isExpanded ? (
+                              {comment.type === 'timeline' ? (
+                                // Timeline events are always short, don't truncate
+                                <div className="comment-timeline-body">
+                                  <div className="timeline-content">
+                                    {comment.body}
+                                  </div>
+                                </div>
+                              ) : shouldTruncate && !isExpanded ? (
                                 <>
                                   <div className="comment-preview">
                                     <div className="markdown-content">
                                       {ReactMarkdown && rehypeRaw ? (
-                                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
+                                        <ReactMarkdown 
+                                          rehypePlugins={[rehypeRaw]}
+                                          components={markdownComponents}
+                                        >{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
                                       ) : (
                                         <div style={{ whiteSpace: 'pre-wrap' }}>
                                           {sanitizeAndRenderMarkdown(truncateComment(comment.body))}
@@ -1257,7 +1425,10 @@ const PreviewBadge = () => {
                                   <div className="comment-full">
                                     <div className="markdown-content">
                                       {ReactMarkdown && rehypeRaw ? (
-                                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
+                                        <ReactMarkdown 
+                                          rehypePlugins={[rehypeRaw]}
+                                          components={markdownComponents}
+                                        >{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
                                       ) : (
                                         <div style={{ whiteSpace: 'pre-wrap' }}>
                                           {sanitizeAndRenderMarkdown(comment.body)}
@@ -1282,14 +1453,18 @@ const PreviewBadge = () => {
                     </div>
                     
                     {/* Load More Comments Button */}
-                    {allComments.length > comments.length && (
+                    {(allComments.length > displayedCommentsCount || hasMoreComments) && (
                       <div className="comments-load-more">
                         <button
                           className="load-more-btn"
                           onClick={loadMoreComments}
                           disabled={commentsLoading}
                         >
-                          {commentsLoading ? 'Loading...' : `Load More Comments (${allComments.length - comments.length} remaining)`}
+                          {commentsLoading ? 'Loading...' : 
+                            allComments.length > displayedCommentsCount ? 
+                              `Show More Comments (${allComments.length - displayedCommentsCount} already loaded)` :
+                              'Load More Comments...'
+                          }
                         </button>
                       </div>
                     )}

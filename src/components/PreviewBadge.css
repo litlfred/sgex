@@ -223,6 +223,52 @@
   color: #333;
 }
 
+/* PR Status Notification for closed/merged PRs */
+.pr-status-notification {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  margin: 0;
+  border-left: 4px solid;
+  font-size: 0.9rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.pr-status-notification.pr-status-closed {
+  background: #fef2f2;
+  border-left-color: #dc2626;
+  color: #991b1b;
+}
+
+.pr-status-notification.pr-status-merged {
+  background: #f3f4f6;
+  border-left-color: #6b21a8;
+  color: #581c87;
+}
+
+.status-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.status-message {
+  flex: 1;
+}
+
+.status-message strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.status-details {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  line-height: 1.3;
+}
+
 .pr-description {
   padding: 1rem;
   border-bottom: 1px solid #eee;
@@ -465,6 +511,64 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   margin-left: auto;
+}
+
+/* Timeline event styles */
+.comment-timeline {
+  background: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.comment-type-timeline {
+  background: #007bff;
+  color: white;
+}
+
+.comment-timeline-body {
+  padding: 0.5rem 0.75rem;
+}
+
+.timeline-content {
+  font-size: 0.85rem;
+  color: #495057;
+  font-style: italic;
+}
+
+/* Comments section header with controls */
+.comments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.comments-header h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.comments-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-updates-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.status-updates-toggle input[type="checkbox"] {
+  margin: 0;
+}
+
+.checkbox-label {
+  user-select: none;
 }
 
 .comment-body {

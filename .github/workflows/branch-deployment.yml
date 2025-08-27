@@ -54,7 +54,7 @@ permissions:
 
 concurrency:
   group: "branch-deployment-${{ github.event.inputs.branch || github.head_ref || github.ref_name }}"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy-branch:
@@ -68,7 +68,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.inputs.branch || github.head_ref || github.ref }}
           fetch-depth: 0

@@ -35,6 +35,39 @@ export const constructFullUrl = (relativePath) => {
 };
 
 /**
+ * Check if current location is the welcome page
+ * @param {Object} location - React Router location object
+ * @returns {boolean} - True if currently on welcome page
+ */
+export const isOnWelcomePage = (location) => {
+  // Check if on root path (/) which is the welcome page in main deployment
+  return location.pathname === '/' || location.pathname === '';
+};
+
+/**
+ * Navigate to welcome page and focus PAT input, or just focus if already there
+ * @param {Function} navigate - React Router navigate function
+ * @param {Object} location - React Router location object
+ * @param {Object} patTokenInputRef - Ref to PAT token input element (optional, for same-page focus)
+ */
+export const navigateToWelcomeWithFocus = (navigate, location, patTokenInputRef = null) => {
+  if (isOnWelcomePage(location)) {
+    // Already on welcome page, either focus directly or dispatch event
+    if (patTokenInputRef?.current) {
+      patTokenInputRef.current.focus();
+    } else {
+      // Dispatch custom event for WelcomePage to listen to
+      window.dispatchEvent(new CustomEvent('focusPATInput'));
+    }
+  } else {
+    // Navigate to welcome page with focus parameter
+    navigate('/', {
+      state: { focusPATInput: true }
+    });
+  }
+};
+
+/**
  * Handles navigation with command-click support
  * @param {MouseEvent} event - The click event
  * @param {string} path - The navigation path

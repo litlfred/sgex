@@ -1749,6 +1749,32 @@ class GitHubService {
     }
   }
 
+  // Get pull request timeline events (status updates, reviews, etc.)
+  async getPullRequestTimeline(owner, repo, pullNumber, page = 1, per_page = 100) {
+    // Use authenticated octokit if available, otherwise create a public instance for public repos
+    const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/timeline`, { page, per_page });
+
+    try {
+      const response = await octokit.rest.issues.listEventsForTimeline({
+        owner,
+        repo,
+        issue_number: pullNumber,
+        page,
+        per_page
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/timeline`, response.status, Date.now() - startTime);
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/timeline`, error.status || 'error', Date.now() - startTime);
+      console.debug('Failed to fetch pull request timeline:', error);
+      return []; // Return empty array for graceful fallback
+    }
+  }
+
   // Merge a pull request
   async mergePullRequest(owner, repo, pullNumber, options = {}) {
     if (!this.isAuth()) {
@@ -2336,6 +2362,57 @@ class GitHubService {
     } catch (error) {
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}`, error.status || 'error', Date.now() - startTime);
       console.error('Failed to get pull request:', error);
+      throw error;
+    }
+  }
+
+  // Search issues using GitHub search API
+  async searchIssues(query, options = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to search issues');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', '/search/issues', { query, type: 'issue' });
+
+    try {
+      const response = await this.octokit.rest.search.issuesAndPullRequests({
+        q: query,
+        sort: options.sort || 'created',
+        order: options.order || 'desc',
+        per_page: options.per_page || 30,
+        page: options.page || 1
+      });
+
+      this.logger.apiResponse('GET', '/search/issues', response.status, Date.now() - startTime);
+
+      return {
+        total_count: response.data.total_count,
+        incomplete_results: response.data.incomplete_results,
+        items: response.data.items.map(item => ({
+          id: item.id,
+          number: item.number,
+          title: item.title,
+          body: item.body,
+          html_url: item.html_url,
+          state: item.state,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          closed_at: item.closed_at,
+          labels: item.labels || [],
+          user: {
+            login: item.user.login,
+            avatar_url: item.user.avatar_url
+          },
+          repository: item.repository_url ? {
+            name: item.repository_url.split('/').slice(-1)[0],
+            full_name: item.repository_url.split('/').slice(-2).join('/')
+          } : null
+        }))
+      };
+    } catch (error) {
+      this.logger.apiResponse('GET', '/search/issues', error.status || 'error', Date.now() - startTime);
+      console.error('Failed to search issues:', error);
       throw error;
     }
   }
