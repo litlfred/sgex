@@ -91,32 +91,33 @@ export class GitHubStorage extends Storage {
       const { owner, repo } = this.parseRepository(this.repository);
       console.log(`GitHubStorage.readFile: Reading file ${path} from ${owner}/${repo} (branch: ${this.branch})`);
       
-      console.log(`GitHubStorage.readFile: Calling githubService.getFileContent...`);
+      console.log(`GitHubStorage.readFile: About to call githubService.getFileContent...`);
       const contentString = await this.githubService.getFileContent(owner, repo, path, this.branch);
-      console.log(`GitHubStorage.readFile: GitHub service returned content, type: ${typeof contentString}, length: ${contentString?.length || 'undefined'}`);
+      console.log(`GitHubStorage.readFile: ✅ GitHub service call completed successfully`);
+      console.log(`GitHubStorage.readFile: Received content - type: ${typeof contentString}, length: ${contentString?.length || 'undefined'}`);
       
       // Validate that we got a string
       if (typeof contentString !== 'string') {
-        console.error(`GitHubStorage.readFile: Expected string but got ${typeof contentString}:`, contentString);
+        console.error(`GitHubStorage.readFile: ❌ Expected string but got ${typeof contentString}:`, contentString);
         throw new Error(`GitHub service returned invalid content type: ${typeof contentString}`);
       }
       
       if (contentString.length === 0) {
-        console.warn(`GitHubStorage.readFile: Content string is empty for ${path}`);
+        console.warn(`GitHubStorage.readFile: ⚠️ Content string is empty for ${path}`);
       }
       
       // Convert the decoded string content to Buffer 
       // (githubService.getFileContent already decodes the base64 content to a string)
       console.log(`GitHubStorage.readFile: Converting string to Buffer...`);
       const content = Buffer.from(contentString, 'utf-8');
-      console.log(`GitHubStorage.readFile: Buffer created successfully, size: ${content.length} bytes`);
+      console.log(`GitHubStorage.readFile: ✅ Buffer created successfully, size: ${content.length} bytes`);
       
       this.cache.set(cacheKey, content);
-      console.log(`GitHubStorage.readFile: Successfully read file ${path}, size: ${content.length} bytes`);
+      console.log(`GitHubStorage.readFile: ✅ Successfully read file ${path}, cached and returning content`);
       console.log(`GitHubStorage.readFile: Content preview (first 200 chars):`, contentString.substring(0, 200));
       return content;
     } catch (error) {
-      console.error(`GitHubStorage.readFile: Failed to read file ${path}:`, error);
+      console.error(`GitHubStorage.readFile: ❌ Failed to read file ${path}:`, error);
       console.error(`GitHubStorage.readFile: Error details:`, {
         message: error.message,
         name: error.name,
