@@ -255,7 +255,7 @@ body.theme-light .landing-page {
   background: var(--who-card-bg);
   border: 1px solid var(--who-border-color);
   border-radius: 12px;
-  padding: 2rem;
+  padding: var(--component-padding-default);
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
@@ -618,6 +618,41 @@ body.theme-light .landing-page {
   
   .profile-grid {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .profile-card {
+    /* Increase minimum height for better mobile experience */
+    min-height: var(--component-height-default);
+    padding: var(--component-padding-default);
+    /* Ensure proper vertical layout on mobile */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .profile-card-header {
+    order: 1;
+    flex-shrink: 0;
+  }
+  
+  .profile-card h3 {
+    order: 2;
+  }
+  
+  .profile-card p {
+    order: 3;
+    /* Ensure text below header and title */
+    margin: 0;
+    flex: 1;
+  }
+  
+  .profile-badges {
+    order: 4;
+    /* Keep badges at bottom */
+    margin-top: auto;
   }
   
   .welcome-section h2 {
