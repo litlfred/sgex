@@ -473,12 +473,12 @@ class BugReportService {
   // Fallback screenshot using html2canvas (if loaded)
   async _takeScreenshotWithHtml2Canvas() {
     try {
-      if (typeof html2canvas !== 'function') {
+      if (typeof window.html2canvas !== 'function') {
         console.warn('html2canvas not available');
         return null;
       }
       
-      const canvas = await html2canvas(document.body, {
+      const canvas = await window.html2canvas(document.body, {
         height: window.innerHeight,
         width: window.innerWidth,
         scrollX: 0,
