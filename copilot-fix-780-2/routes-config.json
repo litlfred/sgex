@@ -113,6 +113,7 @@
     "DocumentationViewer": {
       "path": "./components/DocumentationViewer",
       "routes": [
+        { "path": "/docs", "exact": true },
         { "path": "/docs/:docId", "exact": true }
       ]
     },

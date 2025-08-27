@@ -72,11 +72,51 @@
           } else if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(secondSegment)) {
             // Component-first pattern: /sgex/:component/:user/:repo/:branch
             handleComponentFirst(pathSegments, l, '/sgex/');
+          } else if (pathSegments.length === 3 && pathSegments[2] === 'index.html') {
+            // Branch deployment with index.html: /sgex/:branch/index.html
+            // Redirect to the branch root which should load the welcome page
+            var branchPath = '/sgex/' + secondSegment + '/';
+            console.log('SGEX Branch Deployment Redirect (index.html):', {
+              from: l.pathname,
+              to: branchPath,
+              branch: secondSegment
+            });
+            l.replace(l.protocol + '//' + l.host + branchPath);
           } else {
-            // Unknown pattern - show error
-            showErrorPage('Unknown URL Pattern', 
-              'The URL pattern is not recognized. Expected either /sgex/:branch/:component or /sgex/:component/:user/:repo (with optional :branch/:asset) but got: ' + l.pathname,
-              'unknown-pattern');
+            // Handle unknown branch-only URLs by redirecting to branch root  
+            if (pathSegments.length === 2) {
+              // Just /sgex/:unknown-branch/ - redirect to branch root
+              console.log('SGEX Branch Root Redirect (unknown branch):', {
+                from: l.pathname,
+                branch: secondSegment,
+                note: 'Unknown branch name, redirecting to branch root'
+              });
+              var branchPath = '/sgex/' + secondSegment + '/';
+              redirectToSPA(branchPath, '');
+              return;
+            }
+
+            // Before showing error, check if this could be a branch-first pattern
+            // If we have at least 3 segments and the third segment is a valid component,
+            // treat the second segment as a branch name regardless of deployed status
+            if (pathSegments.length >= 3 && 
+                routeConfig && 
+                routeConfig.isValidComponent && 
+                routeConfig.isValidComponent(pathSegments[2])) {
+              // Treat as branch deployment: /sgex/:branch/:component/...
+              console.log('SGEX Branch Deployment (undeployed branch):', {
+                from: l.pathname,
+                branch: secondSegment,
+                component: pathSegments[2],
+                note: 'Branch not in deployedBranches list, but treating as valid branch'
+              });
+              handleBranchDeployment(pathSegments, l, routeConfig, '/sgex/');
+            } else {
+              // Unknown pattern - show error
+              showErrorPage('Unknown URL Pattern', 
+                'The URL pattern is not recognized. Expected either /sgex/:branch/:component or /sgex/:component/:user/:repo (with optional :branch/:asset) but got: ' + l.pathname,
+                'unknown-pattern');
+            }
           }
         }
 
