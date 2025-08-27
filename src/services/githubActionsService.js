@@ -152,6 +152,111 @@ class GitHubActionsService {
   }
 
   /**
+   * Get all workflows and their latest runs for a specific branch
+   * @param {string} branch - Branch name
+   * @returns {Promise<Array>} Array of workflow status objects
+   */
+  async getAllWorkflowsForBranch(branch) {
+    try {
+      console.debug(`Getting all workflows for branch: ${branch}`);
+      
+      const response = await fetch(
+        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows`,
+        {
+          headers: this.getHeaders()
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch workflows: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.debug('All available workflows:', data.workflows.map(w => ({ name: w.name, path: w.path, state: w.state })));
+      
+      // Filter to active workflows that are relevant for this branch
+      const relevantWorkflows = data.workflows.filter(w => 
+        w.state === 'active' && (
+          // Branch-specific workflows
+          w.path.includes('branch-deployment.yml') ||
+          w.path.includes('landing-page-deployment.yml') ||
+          w.name.includes('Deploy Feature Branch') ||
+          w.name.includes('Deploy Landing Page') ||
+          // General CI/CD workflows that might run on all branches
+          w.path.includes('ci.yml') ||
+          w.path.includes('test.yml') ||
+          w.path.includes('build.yml') ||
+          w.name.includes('CI') ||
+          w.name.includes('Test') ||
+          w.name.includes('Build')
+        )
+      );
+
+      console.debug(`Found ${relevantWorkflows.length} relevant workflows for branch ${branch}`);
+
+      // Get latest runs for each workflow
+      const workflowStatuses = await Promise.all(
+        relevantWorkflows.map(async (workflow) => {
+          try {
+            const runsResponse = await fetch(
+              `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows/${workflow.id}/runs?branch=${encodeURIComponent(branch)}&per_page=1`,
+              {
+                headers: this.getHeaders()
+              }
+            );
+
+            let latestRun = null;
+            if (runsResponse.ok) {
+              const runsData = await runsResponse.json();
+              if (runsData.workflow_runs.length > 0) {
+                latestRun = runsData.workflow_runs[0];
+              }
+            }
+
+            const parsedStatus = this.parseWorkflowStatus(latestRun);
+            
+            return {
+              workflow: {
+                id: workflow.id,
+                name: workflow.name,
+                path: workflow.path,
+                url: `https://github.com/${this.owner}/${this.repo}/actions/workflows/${workflow.id}`
+              },
+              ...parsedStatus,
+              lastRunId: latestRun?.id || null,
+              workflowUrl: `https://github.com/${this.owner}/${this.repo}/actions/workflows/${workflow.id}`
+            };
+          } catch (error) {
+            console.error(`Error fetching runs for workflow ${workflow.name}:`, error);
+            return {
+              workflow: {
+                id: workflow.id,
+                name: workflow.name,
+                path: workflow.path,
+                url: `https://github.com/${this.owner}/${this.repo}/actions/workflows/${workflow.id}`
+              },
+              status: 'error',
+              conclusion: null,
+              url: null,
+              runId: null,
+              createdAt: null,
+              displayStatus: 'Error',
+              badgeClass: 'error',
+              icon: '❌',
+              workflowUrl: `https://github.com/${this.owner}/${this.repo}/actions/workflows/${workflow.id}`
+            };
+          }
+        })
+      );
+
+      return workflowStatuses;
+    } catch (error) {
+      console.error(`Error getting all workflows for branch ${branch}:`, error);
+      return [];
+    }
+  }
+
+  /**
    * Get workflow status for multiple branches
    * @param {Array<string>} branches - Array of branch names
    * @returns {Promise<Object>} Object mapping branch names to workflow status

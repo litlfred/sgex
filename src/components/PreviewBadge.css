@@ -1703,3 +1703,38 @@
     background: linear-gradient(135deg, #b91c1c, #991b1b);
   }
 }
+
+/* Workflow view toggle styles */
+.workflow-view-toggle {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.toggle-view-btn {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.toggle-view-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  color: #343a40;
+}
+
+.toggle-view-btn:active {
+  background: #dee2e6;
+  transform: translateY(1px);
+}

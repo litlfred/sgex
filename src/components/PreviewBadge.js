@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import githubService from '../services/githubService';
 import githubActionsService from '../services/githubActionsService';
 import WorkflowStatus from './WorkflowStatus';
+import WorkflowDashboard from './WorkflowDashboard';
 import { lazyLoadReactMarkdown, lazyLoadDOMPurify, lazyLoadRehypeRaw } from '../utils/lazyRouteUtils';
 import './WorkflowStatus.css';
 import './PreviewBadge.css';
@@ -31,6 +32,7 @@ const PreviewBadge = () => {
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
   const [workflowStatus, setWorkflowStatus] = useState(null);
   const [workflowLoading, setWorkflowLoading] = useState(false);
+  const [useWorkflowDashboard, setUseWorkflowDashboard] = useState(true); // Use new dashboard by default
   const [newlyAddedCommentId, setNewlyAddedCommentId] = useState(null);
   const [copilotSessionInfo, setCopilotSessionInfo] = useState(null);
   const [ReactMarkdown, setReactMarkdown] = useState(null);
@@ -413,6 +415,27 @@ const PreviewBadge = () => {
     return Array.from(viewers);
   };
 
+  // Handle workflow dashboard actions
+  const handleWorkflowDashboardAction = (actionData) => {
+    console.debug('Workflow dashboard action:', actionData);
+    
+    if (actionData.type === 'workflow_triggered' || actionData.type === 'workflow_approved') {
+      // Show success message for workflow actions
+      setApprovalStatus('success');
+      if (actionData.type === 'workflow_triggered') {
+        setApprovalMessage('Workflow triggered successfully! Check the dashboard for real-time updates.');
+      } else {
+        setApprovalMessage('Workflow approved successfully! It should start running now.');
+      }
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setApprovalStatus(null);
+        setApprovalMessage('');
+      }, 5000);
+    }
+  };
+
   const fetchWorkflowStatus = async (branchName) => {
     try {
       setWorkflowLoading(true);
@@ -420,6 +443,12 @@ const PreviewBadge = () => {
       // Initialize GitHub Actions service with current token if available
       if (githubService.isAuth() && githubService.token) {
         githubActionsService.setToken(githubService.token);
+      }
+      
+      if (useWorkflowDashboard) {
+        // For dashboard mode, we don't need to set workflowStatus as the dashboard handles its own state
+        setWorkflowLoading(false);
+        return;
       }
       
       const status = await githubActionsService.getLatestWorkflowRun(branchName);
@@ -1511,16 +1540,38 @@ const PreviewBadge = () => {
               {/* Workflow Status Section */}
               {branchInfo?.name && (
                 <div className="workflow-status-wrapper">
-                  <WorkflowStatus
-                    workflowStatus={workflowStatus}
-                    branchName={branchInfo.name}
-                    onTriggerWorkflow={handleTriggerWorkflow}
-                    onApproveWorkflow={handleApproveWorkflow}
-                    isAuthenticated={githubService.isAuth()}
-                    canTriggerWorkflows={canTriggerWorkflows}
-                    canApproveWorkflows={canApproveWorkflows}
-                    isLoading={workflowLoading}
-                  />
+                  {useWorkflowDashboard ? (
+                    <WorkflowDashboard
+                      branchName={branchInfo.name}
+                      githubActionsService={githubActionsService}
+                      isAuthenticated={githubService.isAuth()}
+                      canTriggerWorkflows={canTriggerWorkflows}
+                      canApproveWorkflows={canApproveWorkflows}
+                      onWorkflowAction={handleWorkflowDashboardAction}
+                    />
+                  ) : (
+                    <WorkflowStatus
+                      workflowStatus={workflowStatus}
+                      branchName={branchInfo.name}
+                      onTriggerWorkflow={handleTriggerWorkflow}
+                      onApproveWorkflow={handleApproveWorkflow}
+                      isAuthenticated={githubService.isAuth()}
+                      canTriggerWorkflows={canTriggerWorkflows}
+                      canApproveWorkflows={canApproveWorkflows}
+                      isLoading={workflowLoading}
+                    />
+                  )}
+                  
+                  {/* Dashboard Toggle */}
+                  <div className="workflow-view-toggle">
+                    <button
+                      onClick={() => setUseWorkflowDashboard(!useWorkflowDashboard)}
+                      className="toggle-view-btn"
+                      title={useWorkflowDashboard ? 'Switch to simple view' : 'Switch to dashboard view'}
+                    >
+                      {useWorkflowDashboard ? '📊 Simple View' : '📋 Dashboard View'}
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -1946,16 +1997,38 @@ const PreviewBadge = () => {
 
           {/* Workflow Status Section for branch-only badges */}
           <div className="workflow-status-wrapper">
-            <WorkflowStatus
-              workflowStatus={workflowStatus}
-              branchName={branchInfo.name}
-              onTriggerWorkflow={handleTriggerWorkflow}
-              onApproveWorkflow={handleApproveWorkflow}
-              isAuthenticated={githubService.isAuth()}
-              canTriggerWorkflows={canTriggerWorkflows}
-              canApproveWorkflows={canApproveWorkflows}
-              isLoading={workflowLoading}
-            />
+            {useWorkflowDashboard ? (
+              <WorkflowDashboard
+                branchName={branchInfo.name}
+                githubActionsService={githubActionsService}
+                isAuthenticated={githubService.isAuth()}
+                canTriggerWorkflows={canTriggerWorkflows}
+                canApproveWorkflows={canApproveWorkflows}
+                onWorkflowAction={handleWorkflowDashboardAction}
+              />
+            ) : (
+              <WorkflowStatus
+                workflowStatus={workflowStatus}
+                branchName={branchInfo.name}
+                onTriggerWorkflow={handleTriggerWorkflow}
+                onApproveWorkflow={handleApproveWorkflow}
+                isAuthenticated={githubService.isAuth()}
+                canTriggerWorkflows={canTriggerWorkflows}
+                canApproveWorkflows={canApproveWorkflows}
+                isLoading={workflowLoading}
+              />
+            )}
+            
+            {/* Dashboard Toggle */}
+            <div className="workflow-view-toggle">
+              <button
+                onClick={() => setUseWorkflowDashboard(!useWorkflowDashboard)}
+                className="toggle-view-btn"
+                title={useWorkflowDashboard ? 'Switch to simple view' : 'Switch to dashboard view'}
+              >
+                {useWorkflowDashboard ? '📊 Simple View' : '📋 Dashboard View'}
+              </button>
+            </div>
           </div>
 
           <div className="expanded-footer">
