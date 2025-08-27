@@ -59,7 +59,8 @@
     "dist": "CI=false npm run build && electron-builder --publish=never",
     "dist:win": "CI=false npm run build && electron-builder --win --publish=never",
     "dist:mac": "CI=false npm run build && electron-builder --mac --publish=never",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "test:desktop": "node test-desktop-app.js"
   },
   "jest": {
     "transformIgnorePatterns": [
@@ -88,7 +89,7 @@
     "webpack-dev-server": "5.2.1",
     "prismjs": "1.30.0"
   },
-  "main": "build/electron.js",
+  "main": "public/electron.js",
   "build": {
     "appId": "org.who.sgex-workbench",
     "productName": "SGEX Workbench",
@@ -101,7 +102,9 @@
     "files": [
       "build/**/*",
       "public/electron.js",
-      "public/electron/**/*"
+      "public/electron/**/*",
+      "node_modules/express/**/*",
+      "node_modules/electron-log/**/*"
     ],
     "extraResources": [
       {
@@ -110,6 +113,7 @@
         "filter": ["**/*"]
       }
     ],
+    "extends": null,
     "mac": {
       "category": "public.app-category.developer-tools",
       "icon": "build-resources/icon.icns",
