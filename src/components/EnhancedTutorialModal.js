@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import tutorialService from '../services/tutorialService';
 import useThemeImage from '../hooks/useThemeImage';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
+import { sanitizeMarkdown } from '../utils/securityUtils';
 import './EnhancedTutorialModal.css';
 
 const EnhancedTutorialModal = ({ tutorialId, onClose, contextData = {} }) => {
@@ -113,7 +114,7 @@ const EnhancedTutorialModal = ({ tutorialId, onClose, contextData = {} }) => {
         <div className="tutorial-content">
           <div 
             className="step-content"
-            dangerouslySetInnerHTML={{ __html: currentStep.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeMarkdown(currentStep.content) }}
           />
           
           {hasBranches && (

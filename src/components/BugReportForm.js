@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import bugReportService from '../services/bugReportService';
 import githubService from '../services/githubService';
 import ScreenshotEditor from './ScreenshotEditor';
+import { sanitizeMarkdown } from '../utils/securityUtils';
 
 const BugReportForm = ({ onClose, contextData = {} }) => {
   const [templates, setTemplates] = useState([]);
@@ -251,7 +252,7 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
         <div key={id || Math.random()} className="form-field markdown-field">
           <div 
             className="markdown-content"
-            dangerouslySetInnerHTML={{ __html: attributes.value }}
+            dangerouslySetInnerHTML={{ __html: sanitizeMarkdown(attributes.value) }}
           />
         </div>
       );
