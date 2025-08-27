@@ -3,16 +3,46 @@ import { useTranslation } from 'react-i18next';
 import useThemeImage from '../hooks/useThemeImage';
 import IssueCreationModal from './IssueCreationModal';
 import githubService from '../services/githubService';
+import BugReportForm from './BugReportForm';
+import EnhancedTutorialModal from './EnhancedTutorialModal';
+import tutorialService from '../services/tutorialService';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 import './HelpModal.css';
 
-const HelpModal = ({ topic, helpTopic, contextData, onClose }) => {
+const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
   const { t } = useTranslation();
   const [showMenu, setShowMenu] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showIssueCreationModal, setShowIssueCreationModal] = useState(false);
   const [issueCreationType, setIssueCreationType] = useState('bug');
   const [issueRepository, setIssueRepository] = useState(null);
+  const [showBugReportForm, setShowBugReportForm] = useState(false);
+  const [showEnhancedTutorial, setShowEnhancedTutorial] = useState(false);
+  const [currentTutorialId, setCurrentTutorialId] = useState(tutorialId);
+
+  // Check if we should show enhanced tutorial modal
+  useEffect(() => {
+    if (tutorialId) {
+      const tutorial = tutorialService.getTutorial(tutorialId);
+      if (tutorial) {
+        setCurrentTutorialId(tutorialId);
+        setShowEnhancedTutorial(true);
+        return;
+      }
+    }
+    
+    // Try to convert legacy help topic to enhanced tutorial
+    if (helpTopic && helpTopic.type === 'slideshow' && helpTopic.id) {
+      const convertedTutorial = tutorialService.convertHelpTopicToTutorial(helpTopic);
+      if (convertedTutorial) {
+        // Register as temporary tutorial
+        tutorialService.registerTutorial(`legacy-${helpTopic.id}`, convertedTutorial);
+        setCurrentTutorialId(`legacy-${helpTopic.id}`);
+        setShowEnhancedTutorial(true);
+        return;
+      }
+    }
+  }, [tutorialId, helpTopic]);
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -455,6 +485,36 @@ Best regards,
 
   const { title, content } = getHelpContent();
 
+  // Show enhanced tutorial modal if applicable
+  if (showEnhancedTutorial && currentTutorialId) {
+    return (
+      <EnhancedTutorialModal
+        tutorialId={currentTutorialId}
+        onClose={() => {
+          setShowEnhancedTutorial(false);
+          setCurrentTutorialId(null);
+          onClose();
+        }}
+        contextData={contextData}
+      />
+    );
+  }
+
+  // Show bug report form if requested
+  if (showBugReportForm) {
+    return (
+      <div className="help-modal-overlay bug-report-overlay" onClick={handleOverlayClick}>
+        <BugReportForm 
+          onClose={() => {
+            setShowBugReportForm(false);
+            // Close the main modal after successful submission or cancel
+            onClose();
+          }}
+          contextData={contextData}
+        />
+      </div>
+    );
+  }
   return (
     <>
       <div className="help-modal-overlay" onClick={handleOverlayClick}>

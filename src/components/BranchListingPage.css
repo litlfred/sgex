@@ -36,8 +36,10 @@
 }
 
 .sgex-icon {
-    width: 48px;
-    height: 48px;
+    width: var(--icon-size-large);
+    height: var(--icon-size-large);
+    max-width: var(--icon-size-max);
+    max-height: var(--icon-size-max);
     object-fit: contain;
 }
 
@@ -59,6 +61,47 @@
     text-align: center;
     padding: 3rem;
     color: #d73a49;
+}
+
+/* Error Banner Styles */
+.error-banner {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+}
+
+.error-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-align: left;
+}
+
+.error-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.error-text {
+    flex: 1;
+}
+
+.error-text p {
+    margin: 0.5rem 0;
+    color: #856404;
+}
+
+.error-text p:first-child {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.error-help {
+    font-size: 0.95rem;
+    font-style: italic;
 }
 
 .prominent-info {

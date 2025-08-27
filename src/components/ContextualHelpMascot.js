@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import helpContentService from '../services/helpContentService';
+import tutorialService from '../services/tutorialService';
 import cacheManagementService from '../services/cacheManagementService';
 import issueTrackingService from '../services/issueTrackingService';
 import githubService from '../services/githubService';
@@ -98,8 +99,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
       title: `Tracked Items (${trackedItemsCount})`,
       badge: '/sgex/cat-paw-icon.svg',
       type: 'action',
-      action: () => setShowTrackedItems(true),
-      notificationBadge: trackedItemsCount
+      action: () => setShowTrackedItems(true)
     }] : []),
     // Add tracked items topic when authenticated even if no tracked items (so users know it exists)
     ...(isAuthenticated && trackedItemsCount === 0 ? [{
@@ -134,6 +134,14 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   };
 
   const handleHelpTopicClick = (topic) => {
+    // Check if this is an enhanced tutorial
+    if (topic.tutorialId) {
+      setSelectedHelpTopic({ ...topic, type: 'enhanced-tutorial' });
+      setShowHelp(false);
+      setHelpSticky(false);
+      return;
+    }
+    
     // If it's an action type, execute the action immediately
     if (topic.type === 'action' && topic.action) {
       topic.action();
@@ -197,15 +205,15 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
             className="mascot-icon"
           />
           
-          {/* Notification badge for tracked items or important help messages */}
-          {(notificationBadge || (isAuthenticated && trackedItemsCount > 0)) && (
+          {/* Notification badge for important help messages only (not for tracked items count) */}
+          {notificationBadge && (
             <div className="notification-badge">
-              {isAuthenticated && trackedItemsCount > 0 ? trackedItemsCount : '!'}
+              !
             </div>
           )}
           
           {/* Question mark thought bubble - show when no notification badge */}
-          {!notificationBadge && !(isAuthenticated && trackedItemsCount > 0) && (
+          {!notificationBadge && (
             <div className={`question-bubble ${showHelp ? 'help-open' : ''}`}>
               ?
             </div>
@@ -335,6 +343,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
       {selectedHelpTopic && (
         <HelpModal
           helpTopic={selectedHelpTopic}
+          tutorialId={selectedHelpTopic.type === 'enhanced-tutorial' ? selectedHelpTopic.tutorialId : null}
           contextData={contextData}
           onClose={handleCloseModal}
         />

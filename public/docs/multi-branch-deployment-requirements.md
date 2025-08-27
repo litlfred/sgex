@@ -8,7 +8,7 @@ This document outlines the comprehensive requirements for implementing a safe, r
 
 The deployment system consists of **two separate workflows**:
 
-1. **Branch Preview Deployment** (`pages.yml`): Automatically deploys each branch's static build to its own subdirectory on the `gh-pages` branch (e.g., `gh-pages/main/`, `gh-pages/feature-x/`)
+1. **Branch Preview Deployment** (`branch-deployment.yml`): Automatically deploys each branch's static build to its own subdirectory on the `gh-pages` branch (e.g., `gh-pages/main/`, `gh-pages/feature-x/`)
 2. **Landing Page Deployment** (`landing-page-deploy.yml`): Manually triggered workflow that deploys a self-contained landing page to the root of `gh-pages`
 
 This compartmentalization ensures:
@@ -54,7 +54,7 @@ fi
 
 ### 2.1 Branch Preview Deployment Workflow
 
-The **Branch Preview Deployment** workflow (`pages.yml`) handles automatic deployment of individual branches:
+The **Branch Preview Deployment** workflow (`branch-deployment.yml`) handles automatic deployment of individual branches:
 
 #### Triggers
 - Push to any branch (except `gh-pages`)
@@ -137,7 +137,7 @@ gh-pages/
 
 ## 4. Workflow Separation Requirements
 
-### 4.1 Branch Preview Workflow (`pages.yml`)
+### 4.1 Branch Preview Workflow (`branch-deployment.yml`)
 - **Name**: "Branch Preview Deployment"
 - **Triggers**: Automatic (push, PR events)
 - **Scope**: Single branch deployment only

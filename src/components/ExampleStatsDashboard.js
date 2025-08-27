@@ -96,7 +96,6 @@ const RepositoryStatsDashboard = ({
         <div className="access-info">
           <div className="user-type">
             <strong>User Type:</strong> {userInfo?.type}
-            {userInfo?.type === 'demo' && <span className="demo-badge">DEMO MODE</span>}
           </div>
           <div className="access-level">
             <strong>Access:</strong> {userInfo?.access?.badge?.text}
@@ -197,15 +196,6 @@ const RepositoryStatsDashboard = ({
           display: flex;
           flex-direction: column;
           gap: 0.5rem;
-        }
-
-        .demo-badge {
-          background: #ffc107;
-          color: #212529;
-          padding: 0.25rem 0.5rem;
-          border-radius: 4px;
-          font-size: 0.75rem;
-          margin-left: 0.5rem;
         }
 
         .access-icon {

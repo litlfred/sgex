@@ -1,17 +1,35 @@
 name: PR Commit Feedback
 
 on:
+  # Trigger on pushes to feature branches (for copilot commits and direct pushes)
   push:
     branches-ignore:
       - main
       - develop
       - gh-pages
       - deploy
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/**'
+  # Additional trigger for pull request events to ensure comprehensive coverage
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]  # Only for PRs targeting main branch
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/**'
 
 permissions:
   contents: read
   actions: read
   pull-requests: write
+  deployments: write
 
 jobs:
   check-deployment-status:
@@ -43,6 +61,117 @@ jobs:
             core.setOutput('commit_sha', commitSha);
             
             return { prNumber, branchName, commitSha };
+
+      - name: Comment on PR with workflow access and controls
+        if: steps.pr_info.outputs.pr_number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchName = '${{ steps.pr_info.outputs.branch_name }}';
+            const prNumber = '${{ steps.pr_info.outputs.pr_number }}';
+            const commitSha = '${{ steps.pr_info.outputs.commit_sha }}';
+            const timestampUTC = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+            
+            // Create direct workflow dispatch URLs with pre-filled parameters
+            const branchDeploymentUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
+            const landingPageDeploymentUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/landing-page-deployment.yml`;
+            const workflowsListUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions`;
+            
+            // Create action buttons for workflow access
+            const commentBody = `## 🚀 Deployment Workflows Available
+            
+            Manual deployment workflows are now accessible from the GitHub UI for this branch.
+            
+            **Branch:** \`${branchName}\`
+            **Latest Commit:** \`${commitSha.substring(0, 7)}\`
+            **Updated:** ${timestampUTC}
+            
+            ### 🎯 Quick Deploy Actions
+            
+            <table>
+            <tr>
+            <td align="center">
+            <a href="${branchDeploymentUrl}" target="_blank"><img src="https://img.shields.io/badge/🌿_DEPLOY_BRANCH-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Deploy Branch" /></a><br/>
+            <sub><b>Deploy ${branchName} for preview</b></sub>
+            </td>
+            <td align="center">
+            <a href="${landingPageDeploymentUrl}" target="_blank"><img src="https://img.shields.io/badge/🏠_DEPLOY_LANDING-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Deploy Landing Page" /></a><br/>
+            <sub><b>Deploy main to landing page</b></sub>
+            </td>
+            </tr>
+            </table>
+            
+            ### 📊 Workflow Status & Controls
+            
+            <table>
+            <tr>
+            <td align="center">
+            <a href="${workflowsListUrl}" target="_blank"><img src="https://img.shields.io/badge/📋_ALL_WORKFLOWS-6C757D?style=for-the-badge&logo=github&logoColor=white" alt="All Workflows" /></a><br/>
+            <sub><b>View all deployment workflows</b></sub>
+            </td>
+            <td align="center">
+            <a href="${workflowsListUrl}/runs" target="_blank"><img src="https://img.shields.io/badge/📊_BUILD_HISTORY-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Build History" /></a><br/>
+            <sub><b>View recent build history</b></sub>
+            </td>
+            </tr>
+            </table>
+            
+            ### 📋 How to Deploy
+            
+            **For Branch Preview:**
+            1. Click "DEPLOY BRANCH" above
+            2. Click "Run workflow" button  
+            3. Branch name will be pre-filled as: \`${branchName}\`
+            4. Click "Run workflow" to confirm
+            5. Preview will be available at: \`https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/\`
+            
+            **For Landing Page Update:**
+            1. Click "DEPLOY LANDING" above
+            2. Click "Run workflow" button
+            3. Confirm deployment (deploys from main branch)
+            4. Landing page will be updated at: \`https://litlfred.github.io/sgex/\`
+            
+            ### ⚡ Automatic Deployment
+            
+            - **Branch previews** are triggered automatically when you push commits to feature branches
+            - **Landing page** deployments are manual only to prevent accidental overwrites
+            - Check the "ALL WORKFLOWS" link above to monitor deployment progress
+            
+            ---
+            
+            💡 *This PR was updated with commit \`${commitSha.substring(0, 7)}\`. Deployment workflows are ready to use.*
+            
+            _Note: Manual workflows provide full control over when and what gets deployed._`;
+            
+            // Find existing workflow access comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const existingWorkflowComment = comments.find(comment => 
+              comment.body.includes('Deployment Workflows Available') ||
+              comment.body.includes('Manual deployment workflows are now accessible')
+            );
+            
+            if (existingWorkflowComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingWorkflowComment.id,
+                body: commentBody
+              });
+              console.log(`✅ Updated existing workflow access comment on PR #${prNumber}`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+              console.log(`✅ Created new workflow access comment on PR #${prNumber}`);
+            }
 
       - name: Wait for deployment workflow to start
         if: steps.pr_info.outputs.pr_number
@@ -441,4 +570,67 @@ jobs:
                 body: commentBody
               });
               console.log(`✅ Created new deployment status comment on PR #${prNumber}`);
+            }
+
+      - name: Update deployment status for PR
+        if: steps.pr_info.outputs.pr_number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchName = '${{ steps.pr_info.outputs.branch_name }}';
+            const prNumber = '${{ steps.pr_info.outputs.pr_number }}';
+            const commitSha = '${{ steps.pr_info.outputs.commit_sha }}';
+            const deploymentStatus = '${{ steps.workflow_status.outputs.deployment_status }}';
+            
+            // Calculate deployment URL
+            const safeBranchName = branchName.replace(/[^a-zA-Z0-9]/g, '-');
+            const deploymentUrl = `https://litlfred.github.io/sgex/${branchName === 'main' ? 'main' : safeBranchName}/`;
+            
+            console.log(`Creating deployment status for branch: ${branchName}, status: ${deploymentStatus}`);
+            
+            try {
+              // Create or update deployment for this branch
+              const { data: deployment } = await github.rest.repos.createDeployment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: commitSha,
+                environment: `branch-preview-${safeBranchName}`,
+                description: `Branch preview deployment for ${branchName}`,
+                auto_merge: false,
+                required_contexts: []
+              });
+              
+              console.log(`Created deployment ${deployment.id} for ${branchName}`);
+              
+              // Set deployment status based on workflow result
+              let state = 'pending';
+              let description = 'Deployment in progress';
+              
+              if (deploymentStatus === 'success') {
+                state = 'success';
+                description = 'Branch preview deployed successfully';
+              } else if (deploymentStatus === 'failure') {
+                state = 'failure';
+                description = 'Branch preview deployment failed';
+              } else if (deploymentStatus === 'running') {
+                state = 'in_progress';
+                description = 'Branch preview deployment in progress';
+              }
+              
+              // Update deployment status
+              await github.rest.repos.createDeploymentStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: deployment.id,
+                state: state,
+                description: description,
+                environment_url: deploymentStatus === 'success' ? deploymentUrl : undefined,
+                log_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${{ github.run_id }}`
+              });
+              
+              console.log(`Updated deployment status to: ${state}`);
+              
+            } catch (error) {
+              console.error('Error creating/updating deployment:', error);
+              // Don't fail the workflow if deployment status update fails
             }

@@ -12,7 +12,6 @@ export const useAssetSave = ({
   branch,
   content,
   originalContent,
-  isDemo = false,
   onSave
 }) => {
   // Save states
@@ -25,7 +24,7 @@ export const useAssetSave = ({
 
   // Derived states
   const hasChanges = content !== originalContent;
-  const canSaveToGitHub = githubService.isAuth() && !isDemo;
+  const canSaveToGitHub = githubService.isAuth();
 
   // Check if there's a local version of this file
   useEffect(() => {

@@ -1,22 +1,7 @@
 name: Deploy Feature Branch
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/branch-deployment.yml'
-  pull_request:
-    branches: [ main, develop ]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/branch-deployment.yml'
+  # Manual trigger - primary way to deploy branches
   workflow_dispatch:
     inputs:
       branch:
@@ -28,6 +13,7 @@ on:
         required: false
         type: boolean
         default: false
+  # Workflow call - allows other workflows to trigger this deployment
   workflow_call:
     inputs:
       branch:
@@ -40,6 +26,25 @@ on:
         required: false
         type: boolean
         default: false
+  # Automatic trigger for copilot commits and PR updates
+  push:
+    branches-ignore: [gh-pages, deploy, main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/branch-deployment.yml'
+  # Additional trigger for pull request events to ensure copilot and external contributions trigger workflows
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]  # Only for PRs targeting main branch
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/branch-deployment.yml'
 
 permissions:
   contents: write
@@ -49,7 +54,7 @@ permissions:
 
 concurrency:
   group: "branch-deployment-${{ github.event.inputs.branch || github.head_ref || github.ref_name }}"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy-branch:
@@ -63,7 +68,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.inputs.branch || github.head_ref || github.ref }}
           fetch-depth: 0
@@ -103,6 +108,7 @@ jobs:
           
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
+        continue-on-error: false
 
       - name: Skip QA Generation for Branch Deployment
         run: |
@@ -125,6 +131,7 @@ jobs:
           echo "Determined PUBLIC_URL: $public_url"
 
       - name: Build branch-specific React app
+        continue-on-error: false
         run: |
           echo "Building with PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}"
           echo "Building with REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}"
