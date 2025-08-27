@@ -1004,17 +1004,93 @@ const PreviewBadge = () => {
     setExpandedDescription(!expandedDescription);
   };
 
+  const convertGitHubNotationToLinks = (content) => {
+    if (!content || typeof content !== 'string') return content || '';
+    
+    // Get current repository context
+    const owner = 'litlfred';
+    const repo = 'sgex';
+    const baseUrl = `https://github.com/${owner}/${repo}`;
+    
+    let processedContent = content;
+    
+    // Convert cross-repository references first (org/repo#123)
+    processedContent = processedContent.replace(
+      /\b([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)#(\d+)\b/g,
+      (match, org, repository, number) => `[${org}/${repository}#${number}](https://github.com/${org}/${repository}/issues/${number})`
+    );
+    
+    // Convert issue/PR references with action words (Fixes #123, Closes #456, etc.)
+    processedContent = processedContent.replace(
+      /\b(Fixes?|Closes?|Resolves?)\s+#(\d+)\b/gi,
+      (match, action, number) => `${action} [#${number}](${baseUrl}/issues/${number})`
+    );
+    
+    // Convert standalone issue/PR references (#123)
+    // Avoid converting if already part of a markdown link or cross-repo reference
+    processedContent = processedContent.replace(
+      /#(\d+)\b/g,
+      (match, number, offset, string) => {
+        // Don't convert if it's already part of a markdown link
+        const beforeMatch = string.substring(Math.max(0, offset - 20), offset);
+        const afterMatch = string.substring(offset, offset + match.length + 10);
+        
+        // Skip if inside a markdown link
+        if (beforeMatch.includes('[') && !beforeMatch.includes(']')) {
+          return match;
+        }
+        
+        // Skip if it's part of a cross-repo reference or already a link
+        if (beforeMatch.includes('/') || afterMatch.includes('](')) {
+          return match;
+        }
+        
+        return `[#${number}](${baseUrl}/issues/${number})`;
+      }
+    );
+    
+    // Convert user mentions (@username)
+    processedContent = processedContent.replace(
+      /@([a-zA-Z0-9_-]+)/g,
+      (match, username, offset, string) => {
+        // Don't convert if it's already part of a markdown link
+        const beforeMatch = string.substring(Math.max(0, offset - 10), offset);
+        if (beforeMatch.includes('[') && !beforeMatch.includes(']')) {
+          return match; // Skip if inside a markdown link
+        }
+        return `[@${username}](https://github.com/${username})`;
+      }
+    );
+    
+    // Convert commit SHAs (7+ hex characters)
+    processedContent = processedContent.replace(
+      /\b([a-f0-9]{7,40})\b/gi,
+      (match, sha) => {
+        // Only convert if it looks like a commit SHA (all lowercase hex)
+        if (/^[a-f0-9]+$/i.test(sha) && sha.length >= 7) {
+          return `[\`${sha.substring(0, 7)}\`](${baseUrl}/commit/${sha})`;
+        }
+        return match;
+      }
+    );
+    
+    return processedContent;
+  };
+
   const sanitizeAndRenderMarkdown = (content) => {
     if (!content || !DOMPurify) return content || '';
+    
+    // First convert GitHub notation to markdown links
+    const contentWithLinks = convertGitHubNotationToLinks(content);
     
     // Check if DOMPurify has the sanitize method
     if (typeof DOMPurify.sanitize !== 'function') {
       console.warn('DOMPurify.sanitize is not available, returning unsanitized content');
-      return content;
+      return contentWithLinks;
     }
     
     // Configure DOMPurify to allow HTML table elements while maintaining security
-    const sanitizedContent = DOMPurify.sanitize(content, {
+    const sanitizedContent = DOMPurify.sanitize(contentWithLinks, {
       ALLOWED_TAGS: [
         // Standard markdown elements
         'p', 'br', 'strong', 'b', 'em', 'i', 'code', 'pre', 'blockquote',
