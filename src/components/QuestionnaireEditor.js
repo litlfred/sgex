@@ -28,30 +28,63 @@ const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
           return;
         }
         
-        // Load LForms from CDN if not available as module
-        const script = document.createElement('script');
-        script.src = 'https://clinicaltables.nlm.nih.gov/lforms-versions/38.2.0/lforms.min.js';
-        script.onload = () => {
-          if (window.LForms) {
-            console.log('LForms loaded successfully from CDN');
-            setLformsInstance(window.LForms);
-            setLformsReady(true);
-            if (onError) {
-              onError(null);
-            }
-          } else {
-            throw new Error('LForms failed to initialize');
+        // Try multiple CDN URLs for LForms
+        const cdnUrls = [
+          'https://lhcforms.nlm.nih.gov/lhcforms/38.2.0/lforms.min.js',
+          'https://lhcforms.nlm.nih.gov/lhcforms/latest/lforms.min.js',
+          'https://cdn.jsdelivr.net/npm/lhc-forms@38.2.0/dist/lforms.min.js',
+          'https://unpkg.com/lhc-forms@38.2.0/dist/lforms.min.js'
+        ];
+        
+        let loaded = false;
+        
+        for (const url of cdnUrls) {
+          if (loaded) break;
+          
+          try {
+            console.log(`Attempting to load LForms from: ${url}`);
+            await new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = url;
+              script.onload = () => {
+                if (window.LForms) {
+                  console.log(`LForms loaded successfully from ${url}`);
+                  setLformsInstance(window.LForms);
+                  setLformsReady(true);
+                  loaded = true;
+                  if (onError) {
+                    onError(null);
+                  }
+                  resolve();
+                } else {
+                  reject(new Error('LForms failed to initialize after script load'));
+                }
+              };
+              script.onerror = () => {
+                reject(new Error(`Failed to load LForms from ${url}`));
+              };
+              // Set timeout for script loading
+              setTimeout(() => {
+                if (!loaded) {
+                  reject(new Error(`Timeout loading LForms from ${url}`));
+                }
+              }, 10000);
+              document.head.appendChild(script);
+            });
+          } catch (error) {
+            console.warn(`Failed to load from ${url}:`, error);
+            // Continue to next URL
           }
-        };
-        script.onerror = () => {
-          throw new Error('Failed to load LForms from CDN');
-        };
-        document.head.appendChild(script);
+        }
+        
+        if (!loaded) {
+          throw new Error('All LForms CDN URLs failed to load');
+        }
         
       } catch (error) {
         console.error('Failed to load LForms:', error);
         if (onError) {
-          onError(`Failed to load LHC-Forms library: ${error.message}`);
+          onError(`LHC-Forms library could not be loaded. Using fallback editor. Error: ${error.message}`);
         }
         // Still allow fallback editor to function
         setLformsReady(true);
@@ -276,6 +309,9 @@ const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
                   <div className="lhc-forms-header">
                     <h5>✨ LHC-Forms Visual Editor</h5>
                     <p>Powered by NIH LHC-Forms for professional questionnaire design</p>
+                    <div className="lhc-forms-status success">
+                      ✅ LHC-Forms library loaded successfully
+                    </div>
                   </div>
                   
                   <div 
@@ -301,6 +337,14 @@ const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
                 </div>
               ) : (
                 // Fallback editor if LForms fails to load
+                <div className="fallback-editor-container">
+                  <div className="fallback-editor-header">
+                    <h5>🔧 Built-in Questionnaire Editor</h5>
+                    <p>Visual questionnaire builder with essential features</p>
+                    <div className="lhc-forms-status warning">
+                      ⚠️ LHC-Forms library could not be loaded - using fallback editor
+                    </div>
+                  </div>
                 <>
                   <div className="questionnaire-metadata-editor">
                   <h5>Questionnaire Details</h5>
@@ -443,6 +487,7 @@ const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
                   )}
                 </div>
                 </>
+                </div>
               )}
           </div>
         )}
