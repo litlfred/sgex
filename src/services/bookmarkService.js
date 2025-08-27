@@ -45,7 +45,15 @@ class BookmarkService {
    * @returns {string} Generated bookmark title
    */
   generateBookmarkTitle(pageName, context) {
-    const { user, repository, branch, asset } = context;
+    const { user, repository, branch, asset, title, path } = context;
+
+    // Documentation pages: use document title with path if available
+    if (pageName === 'documentation' && title) {
+      if (path) {
+        return `${title} (${path})`;
+      }
+      return title;
+    }
 
     // Asset pages: {asset} in DAK: {user}/{repo}/{branch}
     if (asset && user && repository) {
