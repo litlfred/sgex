@@ -749,7 +749,7 @@ const QuestionnaireEditorContent = () => {
 
               {lformsError && (
                 <div className="error-message">
-                  <strong>LForms Error:</strong> {lformsError}
+                  <strong>Editor Error:</strong> {lformsError}
                 </div>
               )}
 
@@ -858,7 +858,7 @@ const QuestionnaireEditorContent = () => {
                       </ul>
                     )}
                     <div className="help-tip">
-                      <strong>✨ New:</strong> Visual questionnaire editor is now available using LHC-Forms!
+                      <strong>Note:</strong> Use the visual editor above to build questionnaires interactively or switch to JSON mode for direct editing.
                     </div>
                   </div>
                 </div>

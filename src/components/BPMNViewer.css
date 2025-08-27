@@ -119,7 +119,6 @@ body.theme-light .bpmn-viewer {
   max-width: none;
   margin: 0;
   width: 100%;
-  height: 100vh;
   display: flex;
   flex-direction: column;
 }
