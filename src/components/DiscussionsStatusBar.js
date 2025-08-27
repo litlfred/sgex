@@ -574,18 +574,17 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
                     </div>
                     <div className="issue-controls">
                       <div className="issue-number">#{issue.number}</div>
-                      {issue.comments > 0 && (
-                        <button
-                          className="expand-comments-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleIssueExpansion(issue);
-                          }}
-                          title={isExpanded ? 'Collapse comments' : 'Show comments'}
-                        >
-                          💬 {issue.comments} {isExpanded ? '▼' : '▶'}
-                        </button>
-                      )}
+                      {/* Always show expand button, whether there are comments or not */}
+                      <button
+                        className="expand-comments-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleIssueExpansion(issue);
+                        }}
+                        title={isExpanded ? 'Collapse comments' : 'Show comments and add new comment'}
+                      >
+                        💬 {issue.comments || 0} {isExpanded ? '▼' : '▶'}
+                      </button>
                     </div>
                   </div>
 
@@ -603,18 +602,6 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
                     <div className="issue-info">
                       <span className="issue-author">by {issue.user?.login}</span>
                       <span className="issue-date">{formatIssueDate(issue.created_at)}</span>
-                      {issue.comments === 0 && githubService.isAuth() && (
-                        <button
-                          className="add-comment-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleIssueExpansion(issue);
-                          }}
-                          title="Add a comment"
-                        >
-                          💬 Add comment
-                        </button>
-                      )}
                     </div>
                   </div>
 
@@ -644,7 +631,7 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
                       )}
 
                       {/* Add Comment Form */}
-                      {githubService.isAuth() && (
+                      {githubService.isAuth() ? (
                         <div className="add-comment-form">
                           {!showAdvanced ? (
                             <div className="comment-form-simple">
@@ -705,6 +692,10 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
                               </div>
                             </div>
                           )}
+                        </div>
+                      ) : (
+                        <div className="unauthenticated-comment-notice">
+                          <p>💡 <strong>Want to comment?</strong> <a href={`https://github.com/${repository.owner?.login || repository.full_name?.split('/')[0]}/${repository.name}/issues/${issue.number}`} target="_blank" rel="noopener noreferrer">Comment on GitHub</a> or sign in with your GitHub token.</p>
                         </div>
                       )}
                     </div>
