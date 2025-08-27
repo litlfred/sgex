@@ -90,12 +90,14 @@ export class GitHubStorage extends Storage {
     try {
       const { owner, repo } = this.parseRepository(this.repository);
       console.log(`GitHubStorage.readFile: Reading file ${path} from ${owner}/${repo} (branch: ${this.branch})`);
-      const response = await this.githubService.getFileContent(owner, repo, path, this.branch);
+      const contentString = await this.githubService.getFileContent(owner, repo, path, this.branch);
       
-      // GitHub API returns base64 encoded content
-      const content = Buffer.from(response.content, 'base64');
+      // Convert the decoded string content to Buffer 
+      // (githubService.getFileContent already decodes the base64 content to a string)
+      const content = Buffer.from(contentString, 'utf-8');
       this.cache.set(cacheKey, content);
       console.log(`GitHubStorage.readFile: Successfully read file ${path}, size: ${content.length} bytes`);
+      console.log(`GitHubStorage.readFile: Content preview (first 200 chars):`, contentString.substring(0, 200));
       return content;
     } catch (error) {
       console.error(`GitHubStorage.readFile: Failed to read file ${path}:`, error.message);
