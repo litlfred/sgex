@@ -22,6 +22,129 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
   const [showScreenshotEditor, setShowScreenshotEditor] = useState(false);
   const [originalScreenshotBlob, setOriginalScreenshotBlob] = useState(null);
 
+  // Function to format technical details for copying
+  const formatTechnicalDetails = (errorMessage, errorType = 'general') => {
+    const timestamp = new Date().toISOString();
+    const details = {
+      error: {
+        message: errorMessage,
+        type: errorType,
+        timestamp: timestamp
+      },
+      environment: {
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        viewport: {
+          width: window.innerWidth,
+          height: window.innerHeight
+        },
+        language: navigator.language,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      },
+      sgexContext: {
+        page: {
+          id: contextData.pageId || 'bug-report-form',
+          pathname: window.location.pathname
+        },
+        authentication: {
+          isAuthenticated: githubService.isAuthenticated || false,
+          authMode: githubService.isAuthenticated ? 'authenticated' : 'demo_mode'
+        }
+      }
+    };
+
+    // Add repository context if available
+    if (contextData.repository) {
+      details.sgexContext.repository = {
+        name: contextData.repository.name || contextData.repository,
+        owner: contextData.repository.owner || contextData.repository.split('/')[0],
+        branch: contextData.branch || 'unknown'
+      };
+    }
+
+    // Add DAK context if available  
+    if (contextData.selectedDak) {
+      details.sgexContext.dak = {
+        name: contextData.selectedDak.name,
+        description: contextData.selectedDak.description
+      };
+    }
+
+    // Add component context if available
+    if (contextData.component) {
+      details.sgexContext.component = {
+        type: contextData.component,
+        isEditing: contextData.isEditing || false
+      };
+    }
+
+    return `SGEX Bug Report - Technical Details
+Generated: ${timestamp}
+
+ERROR:
+${errorMessage}
+
+TECHNICAL DETAILS:
+${JSON.stringify(details, null, 2)}
+
+---
+This technical information can help developers debug the issue.
+Please include this when reporting bugs at: https://github.com/litlfred/sgex/issues`;
+  };
+
+  // Copy technical details to clipboard
+  const copyTechnicalDetails = async (errorMessage, errorType = 'general') => {
+    const technicalDetails = formatTechnicalDetails(errorMessage, errorType);
+    
+    try {
+      await navigator.clipboard.writeText(technicalDetails);
+      return true;
+    } catch (err) {
+      // Fallback for browsers that don't support clipboard API
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = technicalDetails;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        textArea.style.top = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return successful;
+      } catch (fallbackErr) {
+        console.error('Failed to copy to clipboard:', fallbackErr);
+        return false;
+      }
+    }
+  };
+
+  // Copy Button Component
+  const CopyButton = ({ onCopy, size = "small", className = "" }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = async () => {
+      const success = await onCopy();
+      if (success) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    };
+
+    return (
+      <button
+        type="button"
+        className={`copy-technical-details-btn ${size} ${className}`}
+        onClick={handleCopy}
+        title="Copy technical details to clipboard"
+        aria-label="Copy technical details to clipboard"
+      >
+        {copied ? '✓' : '📋'}
+      </button>
+    );
+  };
+
   // Load templates on mount
   useEffect(() => {
     loadTemplates();
@@ -477,22 +600,36 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
 
       {error && (
         <div className="error-message">
-          <p>⚠️ {error}</p>
+          <div className="error-content">
+            <p>⚠️ {error}</p>
+            <CopyButton 
+              onCopy={() => copyTechnicalDetails(error, 'form_error')}
+              className="error-copy-btn"
+            />
+          </div>
         </div>
       )}
 
       {submitResult?.error && submitResult.error.type === 'popup_blocked' && (
         <div className="error-message">
-          <p>⚠️ Pop-up blocked. Please allow pop-ups or use the link below:</p>
-          <div>
-            <a 
-              href={submitResult.fallbackUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="fallback-link"
-            >
-              Open GitHub Issue Form
-            </a>
+          <div className="error-content">
+            <div>
+              <p>⚠️ Pop-up blocked. Please allow pop-ups or use the link below:</p>
+              <div>
+                <a 
+                  href={submitResult.fallbackUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="fallback-link"
+                >
+                  Open GitHub Issue Form
+                </a>
+              </div>
+            </div>
+            <CopyButton 
+              onCopy={() => copyTechnicalDetails('Pop-up blocked when trying to open GitHub issue form', 'popup_blocked')}
+              className="error-copy-btn"
+            />
           </div>
         </div>
       )}
