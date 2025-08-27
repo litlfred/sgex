@@ -138,6 +138,22 @@ const IssueCreationModal = ({
             }
           ]
         };
+      case 'discussion':
+        return {
+          title: 'New Discussion',
+          titlePrefix: '[Discussion]: ',
+          labels: ['authoring'],
+          fields: [
+            {
+              id: 'description',
+              label: 'Discussion Topic',
+              type: 'textarea',
+              required: true,
+              description: 'What would you like to discuss with the team? Provide context and any questions you have.',
+              placeholder: 'Please describe what you would like to discuss...'
+            }
+          ]
+        };
       default:
         return {
           title: 'Issue Report',

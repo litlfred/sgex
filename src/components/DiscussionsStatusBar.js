@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import githubService from '../services/githubService';
+import IssueCreationModal from './IssueCreationModal';
 import './DiscussionsStatusBar.css';
 
 /**
  * Discussions Status Bar component for DAK Dashboard
  * Provides filtering and display of repository issues tagged as discussions
+ * Includes polling mechanism when expanded and modal-based issue creation
  */
 const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -19,6 +21,8 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
   const [showNewIssueForm, setShowNewIssueForm] = useState(false);
   const [labelsCache, setLabelsCache] = useState({});
   const [lastCacheUpdate, setLastCacheUpdate] = useState(null);
+  const [showDiscussionModal, setShowDiscussionModal] = useState(false);
+  const pollingIntervalRef = useRef(null);
 
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
@@ -215,6 +219,30 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
     filterIssues();
   }, [filterIssues]);
 
+  // Setup polling when expanded
+  useEffect(() => {
+    if (isExpanded && repository && githubService.isAuth()) {
+      // Start polling every 5 seconds
+      pollingIntervalRef.current = setInterval(() => {
+        fetchIssuesAndLabels();
+      }, 5000);
+    } else {
+      // Clear polling when collapsed or no repository
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    }
+
+    // Cleanup interval on unmount
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+  }, [isExpanded, repository, fetchIssuesAndLabels]);
+
   const handleLabelToggle = (label) => {
     setSelectedLabels(prev => {
       if (prev.includes(label)) {
@@ -236,15 +264,16 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
     
     if (isDemo) {
       // In demo mode, show a mock dialog instead of opening GitHub
-      alert('Demo Mode: In a real implementation, this would open a new DAK Content Feedback issue in the repository.');
+      alert('Demo Mode: In a real implementation, this would open a new discussion creation modal.');
       return;
     }
     
-    // Use the help modal system to create DAK content feedback
-    if (window.helpModalInstance?.openDakIssue) {
-      window.helpModalInstance.openDakIssue('content');
+    // Check if user is authenticated and can potentially create issues
+    if (githubService.isAuth()) {
+      // Show the discussion creation modal
+      setShowDiscussionModal(true);
     } else {
-      // Fallback: Open GitHub new issue page with DAK Content Feedback template
+      // For non-authenticated users, fall back to GitHub URL
       const url = `https://github.com/${owner}/${repoName}/issues/new?template=dak_content_error.yml&labels=authoring`;
       window.open(url, '_blank');
     }
@@ -263,6 +292,17 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
     
     // Open GitHub issue in new tab
     window.open(issue.html_url, '_blank');
+  };
+
+  const handleDiscussionSuccess = (createdIssue) => {
+    console.log('Discussion created successfully:', createdIssue);
+    // Refresh the issues list
+    fetchIssuesAndLabels();
+  };
+
+  const handleDiscussionError = (error) => {
+    console.error('Failed to create discussion:', error);
+    // Error is already handled by the modal
   };
 
   const formatIssueDate = (dateString) => {
@@ -414,6 +454,21 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
           </div>
         </div>
       )}
+      
+      {/* Discussion Creation Modal */}
+      <IssueCreationModal
+        isOpen={showDiscussionModal}
+        onClose={() => setShowDiscussionModal(false)}
+        issueType="discussion"
+        repository={repository}
+        contextData={{
+          pageId: 'discussions-status-bar',
+          selectedDak: repository,
+          selectedBranch: selectedBranch
+        }}
+        onSuccess={handleDiscussionSuccess}
+        onError={handleDiscussionError}
+      />
     </div>
   );
 };
