@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/css/main.b578359b.css",
-    "main.js": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/js/main.11dbf73f.js",
+    "main.css": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/css/main.ccb913d5.css",
+    "main.js": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/js/main.11e12320.js",
     "static/js/228.4952eadf.chunk.js": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/js/228.4952eadf.chunk.js",
     "static/js/700.648effd0.chunk.js": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/js/700.648effd0.chunk.js",
     "static/js/984.b09bcf81.chunk.js": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/js/984.b09bcf81.chunk.js",
@@ -18,7 +18,7 @@
     "static/js/687.4a6779aa.chunk.js": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/js/687.4a6779aa.chunk.js",
     "static/js/571.4f939126.chunk.js": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/js/571.4f939126.chunk.js",
     "static/js/9.69d53f4f.chunk.js": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/js/9.69d53f4f.chunk.js",
-    "static/js/242.a910d493.chunk.js": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/js/242.a910d493.chunk.js",
+    "static/js/242.2313ae03.chunk.js": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/js/242.2313ae03.chunk.js",
     "static/js/919.f3fb1649.chunk.js": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/js/919.f3fb1649.chunk.js",
     "static/js/774.9ed41219.chunk.js": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/js/774.9ed41219.chunk.js",
     "static/js/824.437de1a8.chunk.js": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/static/js/824.437de1a8.chunk.js",
@@ -57,7 +57,7 @@
     "index.html": "/sgex/dependabot-npm_and_yarn-i18next-25.4.2/index.html"
   },
   "entrypoints": [
-    "static/css/main.b578359b.css",
-    "static/js/main.11dbf73f.js"
+    "static/css/main.ccb913d5.css",
+    "static/js/main.11e12320.js"
   ]
 }
