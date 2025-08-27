@@ -779,11 +779,13 @@ const DAKDashboardContent = () => {
                       <h5>Installation Instructions:</h5>
                       <ol>
                         <li>Clone the SGEX repository: <code>git clone https://github.com/litlfred/sgex.git</code></li>
-                        <li>Navigate to MCP server: <code>cd sgex/services/dak-faq-mcp</code></li>
-                        <li>Install dependencies: <code>npm install</code></li>
-                        <li>Build TypeScript: <code>npm run build</code></li>
-                        <li>Start server: <code>npm start</code></li>
+                        <li>Navigate to repository: <code>cd sgex</code></li>
+                        <li>Build MCP server: <code>npm run build-mcp</code></li>
+                        <li>Start MCP server: <code>npm run run-mcp</code></li>
                       </ol>
+                      <p style={{ margin: '0.5rem 0', fontSize: '0.9em', color: '#6c757d' }}>
+                        <strong>Alternative:</strong> For manual setup, navigate to <code>services/dak-faq-mcp</code> and run <code>npm install && npm run build && npm start</code>
+                      </p>
                     </div>
                     <p>
                       Once running, the MCP server will be available at:
