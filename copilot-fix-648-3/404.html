@@ -4,7 +4,66 @@
     <meta charset="utf-8">
     <title>SGEX Workbench</title>
     <!-- Load SGEX route configuration service -->
-    <script src="./routeConfig.js"></script>
+    <script>
+      // Dynamically determine the correct path for routeConfig.js based on URL structure
+      (function() {
+        var pathSegments = window.location.pathname.split('/').filter(Boolean);
+        var scriptPath = './routeConfig.js'; // Default for root deployment
+        
+        // For GitHub Pages deployment at https://litlfred.github.io/sgex
+        var isGitHubPages = window.location.hostname === 'litlfred.github.io' || window.location.hostname.endsWith('.github.io');
+        
+        if (isGitHubPages && pathSegments.length >= 1 && pathSegments[0] === 'sgex') {
+          if (pathSegments.length >= 2) {
+            // This could be a branch deployment like /sgex/copilot-fix-765/ or /sgex/main/
+            // Load routeConfig.js from the branch subdirectory
+            var potentialBranch = pathSegments[1];
+            scriptPath = './' + pathSegments.slice(0, 2).join('/') + '/routeConfig.js';
+            console.log('Loading routeConfig.js for branch deployment:', {
+              url: window.location.pathname,
+              branch: potentialBranch,
+              scriptPath: scriptPath
+            });
+          } else {
+            // Just /sgex/, load from current directory (landing page)
+            scriptPath = './routeConfig.js';
+          }
+        } else {
+          // Standalone deployment, load from current directory
+          scriptPath = './routeConfig.js';
+        }
+        
+        // Dynamically load the script
+        var script = document.createElement('script');
+        script.src = scriptPath;
+        script.async = false; // Load synchronously to ensure it's available for the routing logic
+        
+        script.onload = function() {
+          console.log('Successfully loaded routeConfig.js from:', scriptPath);
+        };
+        
+        script.onerror = function() {
+          console.error('Failed to load routeConfig.js from:', scriptPath);
+          console.error('Attempting fallback to root routeConfig.js...');
+          
+          // Fallback to root if the branch-specific one fails
+          if (scriptPath !== './routeConfig.js') {
+            var fallbackScript = document.createElement('script');
+            fallbackScript.src = './routeConfig.js';
+            fallbackScript.async = false;
+            fallbackScript.onload = function() {
+              console.log('Successfully loaded fallback routeConfig.js');
+            };
+            fallbackScript.onerror = function() {
+              console.error('Failed to load fallback routeConfig.js - deployment may be incomplete');
+            };
+            document.head.appendChild(fallbackScript);
+          }
+        };
+        
+        document.head.appendChild(script);
+      })();
+    </script>
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages
       // MIT License
@@ -28,7 +87,35 @@
         var l = window.location;
         var pathSegments = l.pathname.split('/').filter(Boolean);
         
-        // Get configuration from routeConfig.js
+        // Wait for routeConfig.js to load and check for configuration availability
+        function waitForRouteConfig(maxAttempts, currentAttempt) {
+          currentAttempt = currentAttempt || 1;
+          maxAttempts = maxAttempts || 50; // Try for about 5 seconds (50 * 100ms)
+          
+          if (typeof getSGEXRouteConfig !== 'undefined') {
+            // Route config is available, continue with routing logic
+            continueRouting();
+          } else if (currentAttempt < maxAttempts) {
+            // Wait a bit more and try again
+            setTimeout(function() {
+              waitForRouteConfig(maxAttempts, currentAttempt + 1);
+            }, 100);
+          } else {
+            // Give up after max attempts
+            console.error('SGEX route configuration service not loaded after waiting');
+            console.error('This may be due to a deployment issue or network problem');
+            console.error('URL:', window.location.href);
+            console.error('Expected routeConfig.js to define getSGEXRouteConfig function');
+            return;
+          }
+        }
+        
+        function continueRouting() {
+          if (typeof getSGEXRouteConfig === 'undefined') {
+            console.error('getSGEXRouteConfig still not available');
+            return;
+          }
+        
         var config = getSGEXRouteConfig();
         if (!config) {
           console.error('SGEX route configuration not loaded');
@@ -104,6 +191,10 @@
           
           l.replace(newUrl);
         }
+      }
+      
+      // Start the process by waiting for route config to load
+      waitForRouteConfig();
       })();
     </script>
   </head>
