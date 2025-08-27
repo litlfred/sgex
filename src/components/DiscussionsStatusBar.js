@@ -112,61 +112,72 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
         return;
       }
 
-      // Real GitHub API calls for authenticated mode
-      if (!githubService.isAuth()) {
-        return;
-      }
+      // For non-authenticated access to real repositories, we can still show public issues
+      // but without the ability to create comments or discussions
+      const isAuthenticated = githubService.isAuth();
 
-      // Check cache first for labels
-      const cacheKey = `${owner}/${repoName}`;
-      const now = Date.now();
+      // Check cache first for labels (only for authenticated users)
       let labels = [];
+      if (isAuthenticated) {
+        const cacheKey = `${owner}/${repoName}`;
+        const now = Date.now();
 
-      if (labelsCache[cacheKey] && lastCacheUpdate && (now - lastCacheUpdate) < CACHE_DURATION) {
-        labels = labelsCache[cacheKey];
+        if (labelsCache[cacheKey] && lastCacheUpdate && (now - lastCacheUpdate) < CACHE_DURATION) {
+          labels = labelsCache[cacheKey];
+        } else {
+          // Fetch all issues to extract labels
+          const allIssues = await githubService.getIssues(owner, repoName, {
+            state: 'all',
+            per_page: 100
+          });
+
+          // Extract unique labels from issues
+          const labelSet = new Set();
+          allIssues.forEach(issue => {
+            if (issue.labels && Array.isArray(issue.labels)) {
+              issue.labels.forEach(label => {
+                if (typeof label === 'string') {
+                  labelSet.add(label);
+                } else if (label && label.name) {
+                  labelSet.add(label.name);
+                }
+              });
+            }
+          });
+
+          labels = Array.from(labelSet).sort();
+          
+          // Update cache
+          setLabelsCache(prev => ({
+            ...prev,
+            [cacheKey]: labels
+          }));
+          setLastCacheUpdate(now);
+        }
+
+        // Always include 'authoring' in available labels if not present
+        if (!labels.includes('authoring')) {
+          labels.unshift('authoring');
+        }
       } else {
-        // Fetch all issues to extract labels
-        const allIssues = await githubService.getIssues(owner, repoName, {
-          state: 'all',
-          per_page: 100
-        });
-
-        // Extract unique labels from issues
-        const labelSet = new Set();
-        allIssues.forEach(issue => {
-          if (issue.labels && Array.isArray(issue.labels)) {
-            issue.labels.forEach(label => {
-              if (typeof label === 'string') {
-                labelSet.add(label);
-              } else if (label && label.name) {
-                labelSet.add(label.name);
-              }
-            });
-          }
-        });
-
-        labels = Array.from(labelSet).sort();
-        
-        // Update cache
-        setLabelsCache(prev => ({
-          ...prev,
-          [cacheKey]: labels
-        }));
-        setLastCacheUpdate(now);
-      }
-
-      // Always include 'authoring' in available labels if not present
-      if (!labels.includes('authoring')) {
-        labels.unshift('authoring');
+        // For unauthenticated users, provide basic labels
+        labels = ['authoring', 'bug reports', 'feature request', 'enhancement', 'documentation', 'question'];
       }
       
       setAvailableLabels(labels);
 
-      // Fetch current issues
-      const currentIssues = await githubService.getIssues(owner, repoName, {
-        state: 'all',
-        per_page: 100
-      });
+      // Fetch current issues (this works for public repositories even without authentication)
+      let currentIssues = [];
+      try {
+        currentIssues = await githubService.getIssues(owner, repoName, {
+          state: 'all',
+          per_page: 100
+        });
+      } catch (error) {
+        console.warn('Could not fetch issues for repository:', error);
+        // For unauthenticated access to private repos, we'll just show empty
+        currentIssues = [];
+      }
 
       // Filter out pull requests to get actual issues
       const actualIssues = currentIssues.filter(issue => !issue.pull_request);
@@ -315,7 +326,7 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
 
   // Load comments for a specific issue
   const loadIssueComments = async (issue) => {
-    if (!repository || !githubService.isAuth()) return;
+    if (!repository) return;
 
     const owner = repository.owner?.login || repository.full_name?.split('/')[0];
     const repoName = repository.name;
@@ -333,6 +344,12 @@ const DiscussionsStatusBar = ({ repository, selectedBranch }) => {
       }));
     } catch (error) {
       console.error('Failed to load comments:', error);
+      // For unauthenticated users or private repos, this might fail
+      // Set empty comments array to prevent repeated attempts
+      setIssueComments(prev => ({
+        ...prev,
+        [issueNumber]: []
+      }));
     } finally {
       setLoadingComments(prev => {
         const newSet = new Set(prev);
