@@ -9,6 +9,9 @@ const TrackedItemsViewer = ({ onClose }) => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('issues');
   const [syncing, setSyncing] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [repositoryFilters, setRepositoryFilters] = useState({});
+  const [trackedRepositories, setTrackedRepositories] = useState([]);
 
   useEffect(() => {
     loadTrackedItems();
@@ -18,8 +21,13 @@ const TrackedItemsViewer = ({ onClose }) => {
     try {
       setLoading(true);
       setError(null);
-      const items = await issueTrackingService.getTrackedItems();
+      const items = await issueTrackingService.getFilteredTrackedItems();
+      const filters = await issueTrackingService.getRepositoryFilters();
+      const repositories = await issueTrackingService.getTrackedRepositories();
+      
       setTrackedItems(items);
+      setRepositoryFilters(filters);
+      setTrackedRepositories(repositories);
     } catch (err) {
       console.error('Failed to load tracked items:', err);
       setError('Failed to load tracked items');
@@ -63,6 +71,16 @@ const TrackedItemsViewer = ({ onClose }) => {
     } catch (err) {
       console.error('Failed to remove tracked PR:', err);
       setError('Failed to remove tracked PR');
+    }
+  };
+
+  const handleRepositoryFilterChange = async (repository, hidden) => {
+    try {
+      await issueTrackingService.setRepositoryVisibility(repository, hidden);
+      await loadTrackedItems(); // Reload to apply filters
+    } catch (err) {
+      console.error('Failed to update repository filter:', err);
+      setError('Failed to update repository filter');
     }
   };
 
@@ -200,6 +218,15 @@ const TrackedItemsViewer = ({ onClose }) => {
         <div className="tracked-items-header">
           <h2>Tracked Items</h2>
           <div className="tracked-items-header-actions">
+            {trackedRepositories.length > 1 && (
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="tracked-items-filter-toggle"
+                title="Filter repositories"
+              >
+                🔽 Filters
+              </button>
+            )}
             {githubService.isAuth() && (
               <button
                 onClick={handleSync}
@@ -218,6 +245,27 @@ const TrackedItemsViewer = ({ onClose }) => {
           <div className="tracked-items-error">
             {error}
             <button onClick={() => setError(null)}>×</button>
+          </div>
+        )}
+
+        {showFilters && trackedRepositories.length > 1 && (
+          <div className="tracked-items-filters">
+            <h3>Repository Filters</h3>
+            <div className="repository-filters-list">
+              {trackedRepositories.map(repository => (
+                <div key={repository} className="repository-filter-item">
+                  <label className="repository-filter-label">
+                    <input
+                      type="checkbox"
+                      checked={!repositoryFilters[repository]?.hidden}
+                      onChange={(e) => handleRepositoryFilterChange(repository, !e.target.checked)}
+                      className="repository-filter-checkbox"
+                    />
+                    <span className="repository-filter-name">{repository}</span>
+                  </label>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

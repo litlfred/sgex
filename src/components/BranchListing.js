@@ -926,6 +926,7 @@ const BranchListing = () => {
                             <a 
                               href={branch.url} 
                               className="preview-link"
+                              target="_blank"
                               rel="noopener noreferrer"
                             >
                               <span>🚀 View Preview</span>
@@ -954,6 +955,7 @@ const BranchListing = () => {
                             <a 
                               href={branch.url} 
                               className="preview-link"
+                              target="_blank"
                               rel="noopener noreferrer"
                             >
                               <span>🚀 View Preview</span>
@@ -1160,6 +1162,7 @@ const BranchListing = () => {
                             <a 
                               href={pr.url} 
                               className="preview-link"
+                              target="_blank"
                               rel="noopener noreferrer"
                             >
                               <span>🚀 View Preview</span>
@@ -1188,6 +1191,7 @@ const BranchListing = () => {
                             <a 
                               href={pr.url} 
                               className="preview-link"
+                              target="_blank"
                               rel="noopener noreferrer"
                             >
                               <span>🚀 View Preview</span>
