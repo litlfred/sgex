@@ -24,13 +24,39 @@
           basePath = '/';
         }
         
-        // Load routeConfig.js from the correct base path
-        var script = document.createElement('script');
-        script.src = basePath + 'routeConfig.js';
-        script.onerror = function() {
-          console.error('Failed to load SGEX route configuration from ' + script.src);
-        };
-        document.head.appendChild(script);
+        // Load routeConfig.js from the correct base path using synchronous XHR
+        // This ensures it loads before the main routing logic executes
+        try {
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', basePath + 'routeConfig.js', false); // Synchronous request
+          xhr.send();
+          
+          if (xhr.status === 200) {
+            // Execute the script content
+            eval(xhr.responseText);
+            console.log('SGEX route configuration loaded successfully from ' + basePath + 'routeConfig.js');
+          } else {
+            console.error('Failed to load SGEX route configuration from ' + basePath + 'routeConfig.js: HTTP ' + xhr.status);
+            
+            // Fallback: try to load via script tag
+            var script = document.createElement('script');
+            script.src = basePath + 'routeConfig.js';
+            script.onerror = function() {
+              console.error('Fallback: Failed to load SGEX route configuration from ' + script.src);
+            };
+            document.head.appendChild(script);
+          }
+        } catch (error) {
+          console.error('Error loading SGEX route configuration:', error);
+          
+          // Fallback: try to load via script tag
+          var script = document.createElement('script');
+          script.src = basePath + 'routeConfig.js';
+          script.onerror = function() {
+            console.error('Fallback: Failed to load SGEX route configuration from ' + script.src);
+          };
+          document.head.appendChild(script);
+        }
       })();
     </script>
     <script type="text/javascript">
