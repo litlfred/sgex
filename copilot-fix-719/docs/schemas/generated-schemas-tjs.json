@@ -3,7 +3,7 @@
     "definitions": {
         "AsyncResult": {
             "properties": {
-                "__@toStringTag@9823": {
+                "__@toStringTag@7198": {
                     "type": "string"
                 }
             },
@@ -1389,7 +1389,7 @@
         },
         "Promise<AwaitedReactNode>": {
             "properties": {
-                "__@toStringTag@9823": {
+                "__@toStringTag@7198": {
                     "type": "string"
                 }
             },
