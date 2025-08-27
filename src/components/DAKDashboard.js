@@ -776,13 +776,43 @@ const DAKDashboardContent = () => {
               {/* MCP Server Info */}
               <div className="mcp-info" style={{ marginTop: '2rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
                 <h4>MCP Server API</h4>
-                <p>
-                  The FAQ system can also be accessed programmatically via the MCP server API:
-                </p>
-                <ul>
-                  <li><code>GET http://127.0.0.1:3001/faq/questions/catalog</code> - Get question catalog</li>
-                  <li><code>POST http://127.0.0.1:3001/faq/questions/execute</code> - Execute questions</li>
-                </ul>
+                {window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? (
+                  <>
+                    <p>
+                      The FAQ system can also be accessed programmatically via the MCP server API:
+                    </p>
+                    <ul>
+                      <li><code>GET http://127.0.0.1:3001/faq/questions/catalog</code> - Get question catalog</li>
+                      <li><code>POST http://127.0.0.1:3001/faq/questions/execute</code> - Execute questions</li>
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      For programmatic access to the FAQ system, you can install and run the MCP server locally:
+                    </p>
+                    <div style={{ background: '#e9ecef', padding: '1rem', borderRadius: '4px', marginBottom: '1rem' }}>
+                      <h5>Installation Instructions:</h5>
+                      <ol>
+                        <li>Clone the repository: <code>git clone https://github.com/{user}/{repo}.git</code></li>
+                        <li>Navigate to MCP server: <code>cd {repo}/services/dak-faq-mcp</code></li>
+                        <li>Install dependencies: <code>npm install</code></li>
+                        <li>Build TypeScript: <code>npm run build</code></li>
+                        <li>Start server: <code>npm start</code></li>
+                      </ol>
+                    </div>
+                    <p>
+                      Once running, the MCP server will be available at:
+                    </p>
+                    <ul>
+                      <li><code>GET http://127.0.0.1:3001/faq/questions/catalog</code> - Get question catalog</li>
+                      <li><code>POST http://127.0.0.1:3001/faq/questions/execute</code> - Execute questions</li>
+                    </ul>
+                    <p>
+                      <strong>Note:</strong> The MCP server runs locally for security and provides full API access to the DAK FAQ system.
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           )}

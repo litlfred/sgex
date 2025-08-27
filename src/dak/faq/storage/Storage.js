@@ -107,11 +107,24 @@ export class GitHubStorage extends Storage {
     try {
       console.log(`GitHubStorage.fileExists: Checking if file exists: ${path}`);
       console.log(`GitHubStorage.fileExists: Repository: ${this.repository}, Branch: ${this.branch}`);
+      
+      // Validate repository format before making API call
+      const { owner, repo } = this.parseRepository(this.repository);
+      console.log(`GitHubStorage.fileExists: Parsed repository - owner: ${owner}, repo: ${repo}`);
+      
+      // Check authentication status
+      if (this.githubService && this.githubService.isAuth) {
+        console.log(`GitHubStorage.fileExists: Authentication status: ${this.githubService.isAuth()}`);
+      } else {
+        console.log(`GitHubStorage.fileExists: GitHub service not available or no auth method`);
+      }
+      
       await this.readFile(path);
       console.log(`GitHubStorage.fileExists: File ${path} exists`);
       return true;
     } catch (error) {
       console.log(`GitHubStorage.fileExists: File ${path} does not exist:`, error.message);
+      console.log(`GitHubStorage.fileExists: Full error:`, error);
       return false;
     }
   }
