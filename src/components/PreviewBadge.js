@@ -65,6 +65,8 @@ const PreviewBadge = () => {
   const [canReviewPR, setCanReviewPR] = useState(false);
   const [isApprovingPR, setIsApprovingPR] = useState(false);
   const [isRequestingChanges, setIsRequestingChanges] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState(null); // 'success', 'error'
+  const [approvalMessage, setApprovalMessage] = useState('');
   const [commentsPage, setCommentsPage] = useState(1);
   const [allComments, setAllComments] = useState([]);
   const [hasMoreComments, setHasMoreComments] = useState(false);
@@ -612,11 +614,27 @@ const PreviewBadge = () => {
     }
 
     setIsApprovingPR(true);
+    setApprovalStatus(null); // Clear previous status
+    setApprovalMessage('');
+    
     try {
+      // Add debugging info
+      console.log('Attempting to approve PR:', { owner, repo, prNumber, comment: newComment.trim() });
+      
       // Use the main comment from the top comment form for the review
       const result = await githubService.approvePullRequest(owner, repo, prNumber, newComment.trim());
       
-      console.debug('PR approved successfully:', result);
+      console.log('PR approval result:', result);
+      
+      // Show success message
+      setApprovalStatus('success');
+      setApprovalMessage('PR approved successfully! This should trigger any pending workflows.');
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setApprovalStatus(null);
+        setApprovalMessage('');
+      }, 5000);
       
       // Clear the comment after successful approval if it was used for the review
       if (newComment.trim()) {
@@ -638,6 +656,12 @@ const PreviewBadge = () => {
       return true;
     } catch (error) {
       console.error('Failed to approve PR:', error);
+      console.log('Error details:', {
+        status: error.status,
+        response: error.response?.data,
+        message: error.message,
+        stack: error.stack
+      });
       
       // Provide user-friendly error messages
       let userMessage = 'Failed to approve PR';
@@ -647,7 +671,19 @@ const PreviewBadge = () => {
         userMessage = 'PR not found or repository access denied';
       } else if (error.status === 422) {
         userMessage = 'Cannot review this PR - it may be from the same user or have other restrictions';
+      } else if (error.message) {
+        userMessage = `Failed to approve PR: ${error.message}`;
       }
+      
+      // Show error message to user
+      setApprovalStatus('error');
+      setApprovalMessage(userMessage);
+      
+      // Clear error message after 8 seconds
+      setTimeout(() => {
+        setApprovalStatus(null);
+        setApprovalMessage('');
+      }, 8000);
       
       console.warn('User guidance:', userMessage);
       return false;
@@ -1389,6 +1425,13 @@ const PreviewBadge = () => {
                               )}
                             </button>
                           </div>
+                          
+                          {/* Approval Status Message */}
+                          {approvalStatus && (
+                            <div className={`approval-status-message ${approvalStatus}`}>
+                              {approvalMessage}
+                            </div>
+                          )}
                         </>
                       )}
                       
