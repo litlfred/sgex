@@ -677,6 +677,7 @@
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-word;
+}
 
 .modal-body .modal-fsh-viewer .fsh-file-header {
   display: none; /* Hide duplicate header in modal */
