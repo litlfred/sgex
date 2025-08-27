@@ -2,6 +2,17 @@ import githubService from './githubService';
 import issueTrackingService from './issueTrackingService';
 import { lazyLoadYaml } from '../utils/lazyRouteUtils';
 
+// eslint-disable-next-line no-unused-vars
+let html2canvas = null;
+// Dynamically import html2canvas when needed
+const ensureHtml2Canvas = async () => {
+  if (!html2canvas) {
+    const module = await import('html2canvas');
+    html2canvas = module.default;
+  }
+  return html2canvas;
+};
+
 class BugReportService {
   constructor() {
     this.templates = new Map();
@@ -473,12 +484,13 @@ class BugReportService {
   // Fallback screenshot using html2canvas (if loaded)
   async _takeScreenshotWithHtml2Canvas() {
     try {
-      if (typeof window.html2canvas !== 'function') {
+      await ensureHtml2Canvas();
+      if (typeof html2canvas !== 'function') {
         console.warn('html2canvas not available');
         return null;
       }
       
-      const canvas = await window.html2canvas(document.body, {
+      const canvas = await html2canvas(document.body, {
         height: window.innerHeight,
         width: window.innerWidth,
         scrollX: 0,
