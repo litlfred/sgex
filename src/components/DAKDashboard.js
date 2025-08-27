@@ -778,8 +778,8 @@ const DAKDashboardContent = () => {
                     <div style={{ background: '#e9ecef', padding: '1rem', borderRadius: '4px', marginBottom: '1rem' }}>
                       <h5>Installation Instructions:</h5>
                       <ol>
-                        <li>Clone the repository: <code>git clone https://github.com/{user}/{repo}.git</code></li>
-                        <li>Navigate to MCP server: <code>cd {repo}/services/dak-faq-mcp</code></li>
+                        <li>Clone the SGEX repository: <code>git clone https://github.com/litlfred/sgex.git</code></li>
+                        <li>Navigate to MCP server: <code>cd sgex/services/dak-faq-mcp</code></li>
                         <li>Install dependencies: <code>npm install</code></li>
                         <li>Build TypeScript: <code>npm run build</code></li>
                         <li>Start server: <code>npm start</code></li>
