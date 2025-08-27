@@ -215,7 +215,7 @@ body.theme-light .welcome-page-content {
   /* Override the horizontal layout for this special card */
   flex-direction: column !important;
   text-align: center !important;
-  min-height: 300px !important;
+  min-height: 350px !important;
 }
 
 .pat-demo-card::before {
@@ -487,7 +487,7 @@ body.theme-light .welcome-page-content {
     max-width: 100%;
     padding: var(--component-padding-default);
     /* Increase minimum height to ensure adequate space for image and text */
-    min-height: 250px;
+    min-height: 260px;
     /* Ensure cards never overflow horizontally */
     box-sizing: border-box;
     word-wrap: break-word;
@@ -547,9 +547,8 @@ body.theme-light .welcome-page-content {
   }
   
   .action-card {
-    padding: 1.2rem;
-    /* Ensure adequate height for smaller screens */
-    min-height: 220px;
+    padding: 1rem;
+    min-height: 240px;
     min-width: auto;
     width: auto;
     /* Ensure even smaller screens don't have overflow */
