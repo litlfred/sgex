@@ -259,8 +259,8 @@ export const PageProvider = ({ children, pageName }) => {
             console.debug('Could not fetch current user for subscriptions:', error);
           }
 
-          // Auto-add visited profiles (if not demo and not already subscribed)
-          if (profile && !profile.isDemo && (pageState.type === PAGE_TYPES.USER || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET)) {
+          // Auto-add visited profiles (if authenticated)
+          if (profile && githubService.isAuth() && (pageState.type === PAGE_TYPES.USER || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET)) {
             profileSubscriptionService.autoAddVisitedProfile(profile);
           }
         };

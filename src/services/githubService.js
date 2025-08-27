@@ -224,12 +224,15 @@ class GitHubService {
       const duration = Date.now() - startTime;
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/collaborators/${username}/permission`, 200, duration);
       
-      const hasWriteAccess = ['write', 'admin'].includes(data.permission);
+      // GitHub permission levels: read, triage, write, maintain, admin
+      // Users with write, maintain, or admin permissions can merge PRs
+      const hasWriteAccess = ['write', 'maintain', 'admin'].includes(data.permission);
       this.logger.debug('Repository write permissions checked', { 
         owner, 
         repo, 
         permission: data.permission, 
-        hasWriteAccess 
+        hasWriteAccess,
+        supportedLevels: ['write', 'maintain', 'admin']
       });
       
       return hasWriteAccess;
@@ -238,9 +241,21 @@ class GitHubService {
       this.logger.apiError('GET', `/repos/${owner}/${repo}/collaborators/*/permission`, error);
       this.logger.performance('Repository write permission check (failed)', duration);
       
-      // If we can't check permissions, assume we don't have write access
-      console.warn('Could not check repository write permissions:', error);
-      this.logger.warn('Assuming no write access due to permission check failure', { owner, repo, error: error.message });
+      // Better error logging to help debug permission issues
+      console.warn(`Could not check repository write permissions for ${owner}/${repo}:`, {
+        error: error.message,
+        status: error.status,
+        statusText: error.response?.statusText,
+        headers: error.response?.headers
+      });
+      
+      this.logger.warn('Assuming no write access due to permission check failure', { 
+        owner, 
+        repo, 
+        error: error.message,
+        status: error.status,
+        userGuidance: 'Check if your Personal Access Token has the required scopes: repo (classic) or Contents+Pull requests (fine-grained)'
+      });
       return false;
     }
   }
@@ -547,92 +562,6 @@ class GitHubService {
     
     // Use the new SMART guidelines filtering method
     return this.getSmartGuidelinesRepositories(sanitizedOwner, type);
-  }
-
-  // Get demo repositories for demo mode (no authentication required)
-  getDemoRepositories(owner) {
-    const demoRepos = [
-      {
-        id: 'demo-smart-anc',
-        name: 'smart-anc',
-        full_name: `${owner}/smart-anc`,
-        description: 'Demo SMART Guidelines Digital Adaptation Kit for Antenatal Care',
-        private: false,
-        owner: {
-          login: owner,
-          id: 'demo-owner',
-          avatar_url: `https://github.com/${owner}.png`,
-          type: 'User'
-        },
-        html_url: `https://github.com/${owner}/smart-anc`,
-        clone_url: `https://github.com/${owner}/smart-anc.git`,
-        language: 'FSH',
-        stargazers_count: 15,
-        forks_count: 3,
-        open_issues_count: 2,
-        topics: ['who', 'smart-guidelines', 'dak', 'antenatal-care', 'health'],
-        created_at: '2023-01-15T10:00:00Z',
-        updated_at: '2024-12-15T14:30:00Z',
-        pushed_at: '2024-12-15T14:30:00Z',
-        default_branch: 'main',
-        smart_guidelines_compatible: true,
-        isDemo: true
-      },
-      {
-        id: 'demo-smart-tb',
-        name: 'smart-tb',
-        full_name: `${owner}/smart-tb`,
-        description: 'Demo SMART Guidelines Digital Adaptation Kit for Tuberculosis Care',
-        private: false,
-        owner: {
-          login: owner,
-          id: 'demo-owner',
-          avatar_url: `https://github.com/${owner}.png`,
-          type: 'User'
-        },
-        html_url: `https://github.com/${owner}/smart-tb`,
-        clone_url: `https://github.com/${owner}/smart-tb.git`,
-        language: 'FSH',
-        stargazers_count: 8,
-        forks_count: 1,
-        open_issues_count: 0,
-        topics: ['who', 'smart-guidelines', 'dak', 'tuberculosis', 'health'],
-        created_at: '2023-03-20T15:00:00Z',
-        updated_at: '2024-11-30T09:15:00Z',
-        pushed_at: '2024-11-30T09:15:00Z',
-        default_branch: 'main',
-        smart_guidelines_compatible: true,
-        isDemo: true
-      },
-      {
-        id: 'demo-smart-ips-pilgrimage',
-        name: 'smart-ips-pilgrimage',
-        full_name: `${owner}/smart-ips-pilgrimage`,
-        description: 'Demo SMART Guidelines International Patient Summary for Pilgrimage',
-        private: false,
-        owner: {
-          login: owner,
-          id: 'demo-owner',
-          avatar_url: `https://github.com/${owner}.png`,
-          type: 'User'
-        },
-        html_url: `https://github.com/${owner}/smart-ips-pilgrimage`,
-        clone_url: `https://github.com/${owner}/smart-ips-pilgrimage.git`,
-        language: 'FSH',
-        stargazers_count: 12,
-        forks_count: 2,
-        open_issues_count: 1,
-        topics: ['who', 'smart-guidelines', 'dak', 'ips', 'pilgrimage', 'health'],
-        created_at: '2023-06-10T12:00:00Z',
-        updated_at: '2024-12-01T16:45:00Z',
-        pushed_at: '2024-12-01T16:45:00Z',
-        default_branch: 'main',
-        smart_guidelines_compatible: true,
-        isDemo: true
-      }
-    ];
-
-    return Promise.resolve(demoRepos);
   }
 
   // Check if a repository has sushi-config.yaml with smart.who.int.base dependency
@@ -1884,6 +1813,32 @@ class GitHubService {
     }
   }
 
+  // Get pull request timeline events (status updates, reviews, etc.)
+  async getPullRequestTimeline(owner, repo, pullNumber, page = 1, per_page = 100) {
+    // Use authenticated octokit if available, otherwise create a public instance for public repos
+    const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/timeline`, { page, per_page });
+
+    try {
+      const response = await octokit.rest.issues.listEventsForTimeline({
+        owner,
+        repo,
+        issue_number: pullNumber,
+        page,
+        per_page
+      });
+
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/timeline`, response.status, Date.now() - startTime);
+      return response.data;
+    } catch (error) {
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/issues/${pullNumber}/timeline`, error.status || 'error', Date.now() - startTime);
+      console.debug('Failed to fetch pull request timeline:', error);
+      return []; // Return empty array for graceful fallback
+    }
+  }
+
   // Merge a pull request
   async mergePullRequest(owner, repo, pullNumber, options = {}) {
     if (!this.isAuth()) {
@@ -2471,6 +2426,57 @@ class GitHubService {
     } catch (error) {
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}`, error.status || 'error', Date.now() - startTime);
       console.error('Failed to get pull request:', error);
+      throw error;
+    }
+  }
+
+  // Search issues using GitHub search API
+  async searchIssues(query, options = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to search issues');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', '/search/issues', { query, type: 'issue' });
+
+    try {
+      const response = await this.octokit.rest.search.issuesAndPullRequests({
+        q: query,
+        sort: options.sort || 'created',
+        order: options.order || 'desc',
+        per_page: options.per_page || 30,
+        page: options.page || 1
+      });
+
+      this.logger.apiResponse('GET', '/search/issues', response.status, Date.now() - startTime);
+
+      return {
+        total_count: response.data.total_count,
+        incomplete_results: response.data.incomplete_results,
+        items: response.data.items.map(item => ({
+          id: item.id,
+          number: item.number,
+          title: item.title,
+          body: item.body,
+          html_url: item.html_url,
+          state: item.state,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          closed_at: item.closed_at,
+          labels: item.labels || [],
+          user: {
+            login: item.user.login,
+            avatar_url: item.user.avatar_url
+          },
+          repository: item.repository_url ? {
+            name: item.repository_url.split('/').slice(-1)[0],
+            full_name: item.repository_url.split('/').slice(-2).join('/')
+          } : null
+        }))
+      };
+    } catch (error) {
+      this.logger.apiResponse('GET', '/search/issues', error.status || 'error', Date.now() - startTime);
+      console.error('Failed to search issues:', error);
       throw error;
     }
   }

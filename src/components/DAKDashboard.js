@@ -75,34 +75,37 @@ const DAKDashboardContent = () => {
           }
         }}
       >
-        <div className="component-header">
-          <div className="component-image-container">
-            <img 
-              src={cardImagePath}
-              alt={getAltText(t, ALT_TEXT_KEYS.ICON_DAK_COMPONENT, component.name, { name: component.name })}
-              className="component-card-image"
-              onLoad={handleImageLoad}
-              onError={handleImageError}
-              style={{ display: imageError ? 'none' : 'block' }}
-            />
-            {/* Fallback icon when image fails to load */}
-            {imageError && (
-              <div className="component-icon" style={{ color: component.color }}>
-                {component.icon}
-              </div>
-            )}
+        <div className="component-main">
+          <div className="component-header">
+            <div className="component-image-container">
+              <img 
+                src={cardImagePath}
+                alt={getAltText(t, ALT_TEXT_KEYS.ICON_DAK_COMPONENT, component.name, { name: component.name })}
+                className="component-card-image"
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+                style={{ display: imageError ? 'none' : 'block' }}
+              />
+              {/* Fallback icon when image fails to load */}
+              {imageError && (
+                <div className="component-icon" style={{ color: component.color }}>
+                  {component.icon}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="component-content">
+            <h4>
+              {component.name}
+            </h4>
+            <p>
+              {component.description}
+            </p>
           </div>
         </div>
         
-        <div className="component-content">
-          {/* Only show title text if image failed to load or as screen reader backup */}
-          <h4 className={imageLoaded && !imageError ? 'visually-hidden' : ''}>
-            {component.name}
-          </h4>
-          <p className={imageLoaded && !imageError ? 'visually-hidden' : ''}>
-            {component.description}
-          </p>
-          
+        <div className="component-meta-section">
           <div className="component-meta">
             <div className="file-types">
               {component.fileTypes.map((type) => (
@@ -126,70 +129,29 @@ const DAKDashboardContent = () => {
           setLoading(true);
           setError(null);
 
-          // Check if githubService is authenticated (allow demo mode to proceed without auth)
+          // Check if githubService is authenticated
           if (!githubService.isAuth()) {
-            // Check if this is actual demo mode (demo-user) vs unauthenticated access to real repos
-            if (user === 'demo-user') {
-              // This is actual demo mode - use demo validation and set isDemo flag
-              const isValidDAK = dakValidationService.validateDemoDAKRepository(user, repo);
-              
-              if (!isValidDAK) {
-                navigate('/', { 
-                  state: { 
-                    warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
-                  } 
-                });
-                return;
-              }
+            // This is unauthenticated access to public repositories
+            const publicProfile = {
+              login: user,
+              name: user.charAt(0).toUpperCase() + user.slice(1),
+              avatar_url: `https://github.com/${user}.png`,
+              type: 'User'
+            };
 
-              const demoProfile = {
-                login: user,
-                name: user.charAt(0).toUpperCase() + user.slice(1),
-                avatar_url: `https://github.com/${user}.png`,
-                type: 'User',
-                isDemo: true
-              };
+            const publicRepository = {
+              name: repo,
+              full_name: `${user}/${repo}`,
+              owner: { login: user },
+              default_branch: branch || 'main',
+              html_url: `https://github.com/${user}/${repo}`
+            };
 
-              const demoRepository = {
-                name: repo,
-                full_name: `${user}/${repo}`,
-                owner: { login: user },
-                default_branch: branch || 'main',
-                html_url: `https://github.com/${user}/${repo}`,
-                isDemo: true
-              };
-
-              setProfile(demoProfile);
-              setRepository(demoRepository);
-              setSelectedBranch(branch || 'main');
-              setLoading(false);
-              return;
-            } else {
-              // This is unauthenticated access to real public repositories
-              // Create profile without isDemo flag for public repository access
-              const publicProfile = {
-                login: user,
-                name: user.charAt(0).toUpperCase() + user.slice(1),
-                avatar_url: `https://github.com/${user}.png`,
-                type: 'User'
-                // Note: isDemo is NOT set - unauthenticated users should access real public repos
-              };
-
-              const publicRepository = {
-                name: repo,
-                full_name: `${user}/${repo}`,
-                owner: { login: user },
-                default_branch: branch || 'main',
-                html_url: `https://github.com/${user}/${repo}`
-                // Note: isDemo is NOT set - unauthenticated users should access real public repos
-              };
-
-              setProfile(publicProfile);
-              setRepository(publicRepository);
-              setSelectedBranch(branch || 'main');
-              setLoading(false);
-              return;
-            }
+            setProfile(publicProfile);
+            setRepository(publicRepository);
+            setSelectedBranch(branch || 'main');
+            setLoading(false);
+            return;
           }
 
           // Fetch user profile
@@ -272,8 +234,8 @@ const DAKDashboardContent = () => {
       const storedBranch = branchContextService.getSelectedBranch(repository);
       if (storedBranch) {
         setSelectedBranch(storedBranch);
-      } else if (profile && profile.login === 'demo-user') {
-        // For demo mode, set a default branch
+      } else {
+        // Set a default branch
         const defaultBranch = repository.default_branch || 'main';
         setSelectedBranch(defaultBranch);
         branchContextService.setSelectedBranch(repository, defaultBranch);

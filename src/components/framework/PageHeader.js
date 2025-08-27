@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { usePage } from './PageProvider';
+import { useLocation } from 'react-router-dom';
 import githubService from '../../services/githubService';
 import userAccessService from '../../services/userAccessService';
 import bookmarkService from '../../services/bookmarkService';
 import PreviewBadge from '../PreviewBadge';
+import { navigateToWelcomeWithFocus } from '../../utils/navigationUtils';
 
 /**
  * Consistent header component for all pages
@@ -19,6 +21,7 @@ const PageHeader = () => {
     navigate 
   } = usePage();
 
+  const location = useLocation();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showBookmarkDropdown, setShowBookmarkDropdown] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
@@ -54,7 +57,7 @@ const PageHeader = () => {
   };
 
   const handleHomeNavigation = () => {
-    navigate('/');
+    navigateToWelcomeWithFocus(navigate, location);
   };
 
   const handleGitHubUser = () => {
@@ -215,7 +218,12 @@ const PageHeader = () => {
             )}
           </div>
         ) : (
-          <button className="login-btn" onClick={handleHomeNavigation}>
+          <button 
+            className="login-btn" 
+            onClick={handleHomeNavigation}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleHomeNavigation()}
+            aria-label="Navigate to login page"
+          >
             Login
           </button>
         )}

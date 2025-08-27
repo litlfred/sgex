@@ -1,8 +1,20 @@
 name: Page Framework Compliance Check
 
 on:
+  push:
+    branches: [ main, develop ]
+    branches-ignore: [gh-pages, deploy]
+    paths:
+      - 'src/components/**/*.js'
+      - 'src/components/**/*.jsx'
+      - 'src/hooks/**/*.js'
+      - 'src/services/**/*.js'
+      - 'src/App.js'
+      - 'scripts/check-framework-compliance.js'
+      - 'src/tests/compliance/**/*.js'
   pull_request:
     branches: [ main, develop ]
+    branches-ignore: [gh-pages, deploy]
     paths:
       - 'src/components/**/*.js'
       - 'src/components/**/*.jsx'
@@ -35,12 +47,15 @@ jobs:
 
     - name: Install dependencies
       run: npm ci --legacy-peer-deps
+      continue-on-error: false
 
     - name: Run Framework Compliance Check
       run: npm run check-framework-compliance
+      continue-on-error: false
 
     - name: Run Profile Creation Compliance Check
       run: npm run compliance:profile
+      continue-on-error: false
 
     - name: Comment PR with compliance results
       if: always()
