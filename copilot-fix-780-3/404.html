@@ -233,8 +233,24 @@
             return;
           }
 
+          // Special handling for documentation and pages components
+          // These components expect /:docId or /:pageId parameters, not DAK patterns
+          if (component === 'docs' || component === 'pages') {
+            var branchPath = basePath + pathSegments[1] + '/';
+            var routePath = pathSegments.slice(2).join('/');
+            
+            // If there's no additional path after the component name, route to the base component
+            if (pathSegments.length === 3) {
+              redirectToSPA(branchPath, component);
+            } else {
+              // If there's an additional path segment, treat it as a document/page ID
+              redirectToSPA(branchPath, routePath);
+            }
+            return;
+          }
+
           // Route to branch SPA: basePath:branch/?/:component/...
-          // This handles all patterns including:
+          // This handles all DAK patterns including:
           // - /sgex/:branch/:component (basic component access)
           // - /sgex/:branch/:component/:user/:repo (DAK repository access)
           // - /sgex/:branch/:component/:user/:repo/:branch (specific branch access)
