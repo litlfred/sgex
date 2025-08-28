@@ -462,7 +462,14 @@ class GitHubService {
         isWHO: true
       };
     } catch (error) {
-      console.warn('Could not fetch WHO organization data from API, using fallback:', error);
+      // Check if this is a SAML error and re-throw it
+      if (error.isSAMLError) {
+        console.log('SAML authorization required for WHO organization');
+        throw error; // Re-throw to preserve SAML error context
+      }
+      
+      // For other errors, use fallback but log appropriately
+      console.warn('Could not fetch WHO organization data from API, using fallback:', error.message);
       // Return hardcoded fallback data
       return {
         id: 'who-organization',

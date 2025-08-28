@@ -179,12 +179,13 @@ const SelectProfilePage = () => {
       
       console.log(`Successfully authorized SAML for ${organization}`);
     } catch (error) {
-      console.error('SAML authorization verification failed:', error);
-      // Keep the modal open and show error
+      // Reduce console noise for expected SAML failures
       if (isSAMLError(error)) {
-        // Still needs SAML authorization
+        console.log(`SAML authorization still pending for ${organization}. This is normal - authorization may take a few moments to propagate.`);
+        // Keep the modal open so user can retry later
         return;
       } else {
+        console.error('Unexpected error during SAML authorization verification:', error);
         // Different error, close modal but keep fallback data
         setSamlModal({ isOpen: false, errorInfo: null });
       }
