@@ -3,7 +3,7 @@
     "definitions": {
         "AsyncResult": {
             "properties": {
-                "__@toStringTag@9772": {
+                "__@toStringTag@11065": {
                     "type": "string"
                 }
             },
@@ -467,6 +467,152 @@
                 "sushiConfig": {
                     "$ref": "#/definitions/SushiConfig"
                 },
+                "warnings": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "FAQExecutionInput": {
+            "description": "FAQ Execution Types",
+            "properties": {
+                "locale": {
+                    "type": "string"
+                },
+                "storage": {
+                    "$ref": "#/definitions/FAQStorageInterface"
+                },
+                "t": {
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "FAQExecutionResult": {
+            "properties": {
+                "errors": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "meta": {},
+                "narrative": {
+                    "type": "string"
+                },
+                "structured": {},
+                "warnings": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "FAQParameter": {
+            "properties": {
+                "default": {},
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "FAQQuestionDefinition": {
+            "description": "DAK FAQ Question Definition (manually authored in definition.json files)",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "level": {
+                    "enum": [
+                        "asset",
+                        "component",
+                        "dak"
+                    ],
+                    "type": "string"
+                },
+                "parameters": {
+                    "items": {
+                        "$ref": "#/definitions/FAQParameter"
+                    },
+                    "type": "array"
+                },
+                "schema": {
+                    "properties": {
+                        "input": {
+                            "$ref": "#/definitions/JSONSchema"
+                        },
+                        "output": {
+                            "$ref": "#/definitions/JSONSchema"
+                        }
+                    },
+                    "type": "object"
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "title": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "FAQStorageInterface": {
+            "type": "object"
+        },
+        "FAQSystemConfig": {
+            "description": "FAQ System Configuration",
+            "properties": {
+                "enableCaching": {
+                    "type": "boolean"
+                },
+                "enableValidation": {
+                    "type": "boolean"
+                },
+                "maxCacheAge": {
+                    "type": "number"
+                },
+                "mcpServerUrl": {
+                    "type": "string"
+                },
+                "validationStrict": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "FAQValidationResult": {
+            "properties": {
+                "errors": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "isValid": {
+                    "type": "boolean"
+                },
+                "sanitizedData": {},
                 "warnings": {
                     "items": {
                         "type": "string"
@@ -1014,6 +1160,27 @@
         "Iterable<React.ReactNode>": {
             "type": "object"
         },
+        "JSONSchema": {
+            "additionalProperties": {},
+            "properties": {
+                "additionalProperties": {
+                    "type": "boolean"
+                },
+                "properties": {
+                    "$ref": "#/definitions/Record<string,any>"
+                },
+                "required": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "type": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
         "Language": {
             "description": "Language and Translation Types",
             "properties": {
@@ -1222,7 +1389,7 @@
         },
         "Promise<AwaitedReactNode>": {
             "properties": {
-                "__@toStringTag@9772": {
+                "__@toStringTag@11065": {
                     "type": "string"
                 }
             },
@@ -1302,6 +1469,9 @@
                     ]
                 }
             },
+            "type": "object"
+        },
+        "Record<string,any>": {
             "type": "object"
         },
         "Record<string,string>": {
