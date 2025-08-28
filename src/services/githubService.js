@@ -366,7 +366,20 @@ class GitHubService {
       return data;
     } catch (error) {
       // Enhanced error handling for SAML enforcement
-      if (error.status === 403 && error.message.includes('SAML enforcement')) {
+      const errorMessage = error.message || '';
+      const lowerMessage = errorMessage.toLowerCase();
+      
+      // Check for various SAML-related error patterns
+      const isSAMLRelated = error.status === 403 && (
+        lowerMessage.includes('saml enforcement') ||
+        lowerMessage.includes('saml single sign-on') ||
+        lowerMessage.includes('must grant your personal access token access to this organization') ||
+        lowerMessage.includes('resource protected by organization') ||
+        // Handle cases where the error message might be truncated or different
+        (lowerMessage.includes('forbidden') && orgLogin === 'WorldHealthOrganization')
+      );
+      
+      if (isSAMLRelated) {
         const samlError = new Error(`SAML authorization required for organization ${orgLogin}`);
         samlError.isSAMLError = true;
         samlError.organization = orgLogin;
