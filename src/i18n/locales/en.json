@@ -44,7 +44,79 @@
     "decisionSupportLogic": "Decision-Support Logic",
     "programIndicators": "Program Indicators",
     "requirements": "Functional and Non-Functional Requirements",
-    "testScenarios": "Test Scenarios"
+    "testScenarios": "Test Scenarios",
+    "faq": {
+      "loading": "Loading FAQ answer...",
+      "loading_questions": "Loading FAQ questions...",
+      "error_title": "Error", 
+      "retry": "Retry",
+      "no_data": "No data available",
+      "structured_data": "Structured Data",
+      "metadata": "Metadata",
+      "available_questions": "Available Questions ({{count}})",
+      "accordion_description": "Click on any question below to expand and see the answer. Questions are executed when you expand them.",
+      "no_questions_title": "No Questions Available",
+      "no_questions_message": "No FAQ questions are available for this DAK.",
+      "params": {
+        "repository": "GitHub repository in format 'user/repo' or local folder path",
+        "locale": "Language locale code",
+        "asset_file": "Path to the asset file within the repository"
+      },
+      "name": {
+        "title": "DAK Name",
+        "description": "Extracts the name of the DAK from sushi-config.yaml",
+        "no_data": "No DAK name data available",
+        "not_found": "No DAK name found in configuration",
+        "config_not_found": "The sushi-config.yaml file was not found",
+        "found": "The name of this DAK is **{{name}}**",
+        "no_name_field": "No name field found in sushi-config.yaml",
+        "read_error": "Error reading configuration: {{error}}",
+        "name_label": "Name",
+        "id_label": "ID",
+        "title_label": "Title",
+        "version_label": "Version"
+      },
+      "version": {
+        "title": "DAK Version", 
+        "description": "Extracts the version of the DAK from sushi-config.yaml",
+        "no_data": "No DAK version data available",
+        "not_found": "No DAK version found in configuration",
+        "config_not_found": "The sushi-config.yaml file was not found",
+        "found": "This DAK is version **{{version}}**",
+        "status": "Status: {{status}}",
+        "no_version_field": "No version field found in sushi-config.yaml",
+        "read_error": "Error reading configuration: {{error}}",
+        "version_label": "Version",
+        "status_label": "Status",
+        "release_date_label": "Release Date"
+      },
+      "decision_table_inputs": {
+        "title": "Decision Table Inputs",
+        "description": "Analyzes DMN files to extract decision table input requirements",
+        "no_asset_file": "No asset file specified",
+        "file_not_found": "DMN file not found: {{file}}",
+        "parse_error": "Error parsing DMN XML file",
+        "analysis_error": "Error analyzing DMN file: {{error}}",
+        "no_tables": "No decision tables found in this DMN file",
+        "found_tables": "Found {{count}} decision table(s)",
+        "hit_policy": "Hit Policy",
+        "inputs": "Inputs",
+        "outputs": "Outputs",
+        "no_inputs": "No inputs found in decision tables"
+      },
+      "workflows": {
+        "title": "Business Process Workflows",
+        "no_data": "No workflow data available",
+        "scanned_files": "Scanned files",
+        "total_workflows": "Total workflows",
+        "total_processes": "Total processes",
+        "total_subprocesses": "Total subprocesses",
+        "total_tasks": "Total tasks",
+        "workflows_found": "Workflows Found",
+        "processes": "Processes",
+        "subprocesses": "Subprocesses"
+      }
+    }
   },
   "repository": {
     "select": "Select Repository",
