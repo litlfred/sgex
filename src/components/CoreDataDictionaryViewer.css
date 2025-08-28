@@ -822,15 +822,15 @@
 }
 
 .global-tools {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--who-card-bg, rgba(255, 255, 255, 0.95));
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px var(--who-shadow-light, rgba(0, 0, 0, 0.1));
 }
 
 .global-tools h3 {
-  color: #2c3e50;
+  color: var(--who-text-primary, #2c3e50);
   margin: 0 0 1rem 0;
   font-size: 1.3rem;
 }
@@ -842,27 +842,27 @@
 }
 
 .logical-models-list {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--who-card-bg, rgba(255, 255, 255, 0.95));
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px var(--who-shadow-light, rgba(0, 0, 0, 0.1));
 }
 
 .logical-models-list h3 {
-  color: #2c3e50;
+  color: var(--who-text-primary, #2c3e50);
   margin: 0 0 1rem 0;
   font-size: 1.3rem;
 }
 
 .logical-models-list p {
-  color: #6c757d;
+  color: var(--who-text-secondary, #6c757d);
   margin-bottom: 1.5rem;
 }
 
 .loading-message,
 .no-models-message {
-  background: #f8f9fa;
-  border: 2px dashed #dee2e6;
+  background: var(--who-bg-light, #f8f9fa);
+  border: 2px dashed var(--who-border-color, #dee2e6);
   border-radius: 8px;
   padding: 2rem;
   text-align: center;
@@ -870,7 +870,7 @@
 
 .loading-message p,
 .no-models-message p {
-  color: #6c757d;
+  color: var(--who-text-secondary, #6c757d);
   margin: 0 0 1rem 0;
 }
 
@@ -887,16 +887,16 @@
 }
 
 .logical-model-card {
-  background: white;
-  border: 1px solid #e9ecef;
+  background: var(--who-card-bg, white);
+  border: 1px solid var(--who-border-color, #e9ecef);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--who-shadow-light, rgba(0, 0, 0, 0.1));
   transition: all 0.2s ease;
 }
 
 .logical-model-card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 8px var(--who-shadow-medium, rgba(0, 0, 0, 0.15));
   transform: translateY(-2px);
 }
 
@@ -919,7 +919,7 @@
 .model-title {
   font-weight: 600;
   font-size: 1.1rem;
-  color: #2c3e50;
+  color: var(--who-text-primary, #2c3e50);
   line-height: 1.3;
   margin-bottom: 0.25rem;
 }
@@ -927,11 +927,11 @@
 .model-filename {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 0.9rem;
-  color: #6c757d;
+  color: var(--who-text-muted, #6c757d);
 }
 
 .model-description {
-  color: #495057;
+  color: var(--who-text-secondary, #495057);
   line-height: 1.4;
   margin-bottom: 1.5rem;
   font-size: 0.95rem;
