@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Component } from 'react';
-import { PageLayout, AssetEditorLayout, useDAKParams } from './framework';
+import { AssetEditorLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
 import './QuestionnaireEditor.css';
@@ -1141,11 +1141,9 @@ class QuestionnaireErrorBoundary extends Component {
 
 const QuestionnaireEditor = () => {
   return (
-    <PageLayout pageName="questionnaire-editor">
-      <QuestionnaireErrorBoundary>
-        <QuestionnaireEditorContent />
-      </QuestionnaireErrorBoundary>
-    </PageLayout>
+    <QuestionnaireErrorBoundary>
+      <QuestionnaireEditorContent />
+    </QuestionnaireErrorBoundary>
   );
 };
 
