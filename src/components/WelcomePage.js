@@ -167,7 +167,11 @@ const WelcomePage = () => {
         <div className="welcome-hero">
           <div className="welcome-intro">
             <div className="welcome-mascot">
-              <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Workbench Helper')} />
+              <ResponsiveImage 
+                src="sgex-mascot.png" 
+                alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Workbench Helper')}
+                aggressiveMobile={true}
+              />
             </div>
             <div className="welcome-text">
               <h1>SGEX Workbench</h1>
