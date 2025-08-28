@@ -118,19 +118,19 @@ body.theme-light .welcome-page-content {
 .action-card {
   background: var(--who-card-bg);
   border: 1px solid var(--who-border-color);
-  border-radius: 24px;
-  padding: 2rem;
+  border-radius: var(--component-border-radius-default);
+  padding: var(--component-padding-default);
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
   backdrop-filter: blur(10px);
   position: relative;
   overflow: hidden;
-  /* Fixed width for vertical layout */
-  min-width: 300px;
-  width: 300px;
-  /* Height for vertical layout */
-  min-height: 250px;
+  /* Use default card sizing - more flexible width */
+  min-width: var(--component-width-default);
+  width: var(--component-width-default);
+  /* Use standard height consistent with other components */
+  min-height: var(--component-height-default);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -209,13 +209,13 @@ body.theme-light .welcome-page-content {
 .pat-demo-card {
   display: flex;
   flex-direction: column;
-  padding: 1.5rem;
+  padding: var(--component-padding-default);
   cursor: default;
   pointer-events: auto;
   /* Override the horizontal layout for this special card */
   flex-direction: column !important;
   text-align: center !important;
-  min-height: 300px !important;
+  min-height: 350px !important;
 }
 
 .pat-demo-card::before {
@@ -485,26 +485,48 @@ body.theme-light .welcome-page-content {
     min-width: auto;
     width: auto;
     max-width: 100%;
-    padding: 1.5rem;
-    min-height: 200px;
+    padding: var(--component-padding-default);
+    /* Increase minimum height to ensure adequate space for image and text */
+    min-height: 260px;
     /* Ensure cards never overflow horizontally */
     box-sizing: border-box;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    /* Keep vertical layout on mobile */
-    flex-direction: column;
-    gap: 1rem;
+    /* Explicitly ensure vertical layout with text below image */
+    flex-direction: column !important;
+    gap: 1.2rem;
     text-align: center;
+    justify-content: flex-start;
+    align-items: center;
   }
   
   /* Only reduce card icon size slightly for tablet */
   .card-icon {
+    flex-shrink: 0;
+    /* Ensure icon stays at top */
+    order: 1;
     width: calc(var(--card-icon-size) * 0.8);
     height: calc(var(--card-icon-size) * 0.8);
   }
   
   .card-icon img {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
+    max-height: calc(var(--card-icon-size) * 0.8);
+    max-width: calc(var(--card-icon-size) * 0.8);
+  }
+  
+  .action-card p {
+    /* Ensure text appears below the icon */
+    order: 2;
+    flex: 1;
+    margin: 0;
+    /* Ensure text has adequate space and wraps properly */
+    line-height: 1.5;
+    font-size: 0.95rem;
+    /* Prevent text from being cropped */
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
     max-height: calc(var(--card-icon-size) * 0.8);
     max-width: calc(var(--card-icon-size) * 0.8);
   }
@@ -526,17 +548,23 @@ body.theme-light .welcome-page-content {
   
   .action-card {
     padding: 1rem;
-    min-height: 180px;
+    min-height: 240px;
     min-width: auto;
     width: auto;
     /* Ensure even smaller screens don't have overflow */
     max-width: calc(100vw - 1rem);
-    gap: 0.75rem;
+    gap: 1rem;
     text-align: center;
+    /* Maintain explicit vertical layout */
+    flex-direction: column !important;
+    justify-content: flex-start;
+    align-items: center;
   }
   
   /* Reduce card icon size more for mobile */
   .card-icon {
+    flex-shrink: 0;
+    order: 1;
     width: calc(var(--card-icon-size) * 0.6);
     height: calc(var(--card-icon-size) * 0.6);
   }
@@ -548,7 +576,16 @@ body.theme-light .welcome-page-content {
   }
   
   .card-icon .icon-symbol {
-    font-size: 2rem;
+    font-size: 2.5rem;
+  }
+  
+  .action-card p {
+    order: 2;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin: 0;
+    flex: 1;
+    overflow: visible;
   }
 }
 
@@ -560,12 +597,42 @@ body.theme-light .welcome-page-content {
   }
   
   .action-card {
-    padding: 0.75rem;
-    min-height: 160px;
+    padding: 1rem;
+    /* Ensure minimum height for very narrow screens */
+    min-height: var(--component-height-default);
     /* Ultra-narrow screen protection */
     max-width: calc(100vw - 0.5rem);
-    gap: 0.5rem;
+    gap: 0.75rem;
     text-align: center;
+    /* Maintain vertical layout */
+    flex-direction: column !important;
+    justify-content: flex-start;
+    align-items: center;
+  }
+  
+  .card-icon {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+    order: 1;
+  }
+  
+  .card-icon img {
+    max-height: 40px;
+    max-width: 40px;
+  }
+  
+  .card-icon .icon-symbol {
+    font-size: 1.8rem;
+  }
+  
+  .action-card p {
+    order: 2;
+    font-size: 0.85rem;
+    line-height: 1.3;
+    margin: 0;
+    flex: 1;
+    overflow: visible;
   }
   
   /* Only for very narrow screens, reduce to small icon size */

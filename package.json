@@ -47,6 +47,8 @@
     "generate-schemas:typescript-json-schema": "typescript-json-schema tsconfig.json \"*\" --out public/docs/schemas/generated-schemas-tjs.json --include src/types/**/*.ts",
     "generate-schemas:ts-json-schema-generator": "ts-json-schema-generator --path src/types/**/*.ts --type \"*\" --out public/docs/schemas/generated-schemas-tsjsg.json",
     "prebuild": "npm run type-check && npm run generate-schemas",
+    "build-mcp": "cd services/dak-faq-mcp && npm install && npm run build",
+    "run-mcp": "cd services/dak-faq-mcp && npm start",
     "compliance:profile": "node src/tests/compliance/profileCreationCompliance.js",
     "compliance:all": "npm run compliance:profile",
     "test:compliance": "npm test -- --testPathPattern=compliance"
@@ -86,7 +88,7 @@
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/eslint-plugin": "^8.41.0",
     "@typescript-eslint/parser": "^8.40.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "http-proxy-middleware": "^3.0.5",

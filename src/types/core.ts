@@ -419,6 +419,83 @@ export interface ValidatedData<T> {
 }
 
 // ====================
+// FAQ System Types
+// ====================
+
+/**
+ * DAK FAQ Question Definition (manually authored in definition.json files)
+ */
+export interface FAQQuestionDefinition {
+  id: string;
+  level: 'dak' | 'component' | 'asset';
+  title: string;
+  description: string;
+  parameters: FAQParameter[];
+  tags: string[];
+  schema: {
+    input: JSONSchema;
+    output: JSONSchema;
+  };
+}
+
+export interface FAQParameter {
+  name: string;
+  type: string;
+  required: boolean;
+  description: string;
+  default?: any;
+}
+
+export interface JSONSchema {
+  type: string;
+  properties?: Record<string, any>;
+  required?: string[];
+  additionalProperties?: boolean;
+  [key: string]: any;
+}
+
+/**
+ * FAQ Execution Types
+ */
+export interface FAQExecutionInput {
+  storage: FAQStorageInterface;
+  locale?: string;
+  t: (key: string, params?: any) => string;
+}
+
+export interface FAQExecutionResult {
+  structured: any;
+  narrative: string;
+  errors: string[];
+  warnings: string[];
+  meta: any;
+}
+
+export interface FAQStorageInterface {
+  fileExists(path: string): Promise<boolean>;
+  readFile(path: string): Promise<string>;
+  listFiles(pattern?: string): Promise<string[]>;
+}
+
+export interface FAQValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+  sanitizedData?: any;
+}
+
+/**
+ * FAQ System Configuration
+ */
+export interface FAQSystemConfig {
+  mcpServerUrl: string;
+  enableCaching: boolean;
+  maxCacheAge: number;
+  enableValidation: boolean;
+  validationStrict: boolean;
+}
+
+// ====================
 // Logging Types
 // ====================
 

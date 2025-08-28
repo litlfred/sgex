@@ -1435,12 +1435,19 @@ class GitHubService {
         console.log('🔧 githubService.getFileContent: Decoding base64 content...');
         console.log('📊 githubService.getFileContent: Base64 content length:', data.content.length);
         
-        const content = decodeURIComponent(escape(atob(data.content)));
-        console.log(`✅ githubService.getFileContent: Successfully fetched and decoded file content`);
-        console.log('📏 githubService.getFileContent: Final content length:', content.length, 'characters');
-        console.log('👀 githubService.getFileContent: Content preview (first 200 chars):', content.substring(0, 200));
-        
-        return content;
+        try {
+          // Use modern Buffer approach for reliable base64 decoding
+          const content = Buffer.from(data.content, 'base64').toString('utf-8');
+          console.log(`✅ githubService.getFileContent: Successfully fetched and decoded file content`);
+          console.log('📏 githubService.getFileContent: Final content length:', content.length, 'characters');
+          console.log('👀 githubService.getFileContent: Content preview (first 200 chars):', content.substring(0, 200));
+          
+          return content;
+        } catch (decodeError) {
+          console.error('❌ githubService.getFileContent: Base64 decoding failed:', decodeError);
+          console.error('🔍 githubService.getFileContent: Raw base64 content preview:', data.content.substring(0, 100));
+          throw new Error(`Failed to decode file content: ${decodeError.message}`);
+        }
       } else {
         console.error('❌ githubService.getFileContent: Invalid response - not a file or no content');
         console.error('🔍 githubService.getFileContent: Full response data:', JSON.stringify(data, null, 2));
