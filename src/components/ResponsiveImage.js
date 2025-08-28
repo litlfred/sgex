@@ -48,7 +48,12 @@ const ResponsiveImage = ({
       imageName = imageName.replace(/\.png$/, '_mobile.png');
     }
     
-    return publicUrl ? `${publicUrl}/${imageName}` : `/${imageName}`;
+    // Ensure no double slashes when combining publicUrl and imageName
+    if (publicUrl) {
+      const cleanPublicUrl = publicUrl.endsWith('/') ? publicUrl.slice(0, -1) : publicUrl;
+      return `${cleanPublicUrl}/${imageName}`;
+    }
+    return `/${imageName}`;
   }, [src, forceMobile, forceDesktop, aggressiveMobile]);
 
   const themeImagePath = useThemeImage(src);
