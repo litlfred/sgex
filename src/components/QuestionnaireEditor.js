@@ -509,8 +509,22 @@ const QuestionnaireEditorContent = () => {
   const [editMode, setEditMode] = useState('visual'); // 'visual' or 'json'
   const [lformsError, setLformsError] = useState(null);
 
-  // Get DAK params from PageProvider context (now available since we're inside AssetEditorLayout)
-  const { repository, branch, isLoading: pageLoading } = useDAKParams();
+  // Get DAK params from PageProvider context - with error handling
+  let dakParams;
+  try {
+    dakParams = useDAKParams();
+  } catch (error) {
+    console.error('Error getting DAK params:', error);
+    dakParams = {
+      repository: null,
+      branch: null,
+      isLoading: true,
+      user: null,
+      profile: null
+    };
+  }
+  
+  const { repository, branch, isLoading: pageLoading, user, profile } = dakParams;
   
   // Check if we have the necessary context data
   const hasRequiredData = repository && branch && !pageLoading;
@@ -545,7 +559,9 @@ const QuestionnaireEditorContent = () => {
         console.log('QuestionnaireEditor: Waiting for PageProvider context...', { 
           repository: !!repository, 
           branch: !!branch, 
-          pageLoading 
+          pageLoading,
+          user: !!user,
+          profile: !!profile
         });
         return;
       }
@@ -606,14 +622,20 @@ const QuestionnaireEditorContent = () => {
     };
 
     loadQuestionnaires();
-  }, [hasRequiredData, repository, branch, pageLoading]); // Include pageLoading since it's used in the effect
+  }, [hasRequiredData, repository, branch, pageLoading, user, profile]); // Include all dependencies
 
-  // Early return if PageProvider context is not ready
+  // Early return if PageProvider context is not ready or there's an error
   if (!repository || !branch) {
     return (
       <div className="questionnaire-editor-loading">
         <div className="loading-spinner"></div>
         <p>Initializing Questionnaire Editor...</p>
+        <p className="loading-details">Loading repository context...</p>
+        {error && (
+          <div className="error-message">
+            <strong>Error:</strong> {error}
+          </div>
+        )}
       </div>
     );
   }
@@ -1126,6 +1148,8 @@ const QuestionnaireEditor = () => {
       <AssetEditorLayout
         pageName="questionnaire-editor"
         showSaveButtons={false} // We'll handle save buttons internally for now
+        showHeader={true} // Ensure header is shown
+        showBreadcrumbs={true} // Show breadcrumbs for navigation context
       >
         <QuestionnaireEditorContent />
       </AssetEditorLayout>

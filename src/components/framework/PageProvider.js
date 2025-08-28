@@ -50,10 +50,23 @@ export const usePage = () => {
  * Determine page type from URL parameters
  */
 const determinePageType = (params) => {
-  const { user, repo } = params;
+  const { user, repo, branch } = params;
   const asset = params['*']; // Wildcard parameter for asset path
   
+  // Debug logging to help diagnose route detection issues
+  console.debug('PageProvider: Determining page type from params:', { user, repo, branch, asset, params });
+  
+  // Check current URL path to help with detection
+  const currentPath = window.location.pathname;
+  const pathParts = currentPath.split('/').filter(part => part);
+  
+  // If we have at least [component, user, repo] parts, this should be a DAK route
+  const isDAKRoute = pathParts.length >= 3 && user && repo;
+  
+  console.debug('PageProvider: URL analysis:', { currentPath, pathParts, isDAKRoute });
+  
   if (asset) return PAGE_TYPES.ASSET;
+  if (isDAKRoute) return PAGE_TYPES.DAK; // Enhanced detection for DAK routes
   if (user && repo) return PAGE_TYPES.DAK;
   if (user) return PAGE_TYPES.USER;
   return PAGE_TYPES.TOP_LEVEL;
@@ -81,8 +94,10 @@ export const PageProvider = ({ children, pageName }) => {
   });
 
   // Extract URL parameters
-  const { user, repo } = params;
+  const { user, repo, branch } = params;
   const asset = params['*']; // Wildcard parameter for asset path
+
+  console.debug('PageProvider: URL params extracted:', { user, repo, branch, asset, allParams: params });
 
   // Load data based on page type
   useEffect(() => {
