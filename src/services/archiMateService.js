@@ -133,6 +133,64 @@ const parseFSHLogicalModel = (content) => {
 };
 
 /**
+ * Generate formatted description following Example Description Format from issue #429
+ * @param {Object} parsed - Parsed FSH logical model
+ * @param {string} fileName - Original file name
+ * @returns {string} Formatted description
+ */
+const generateFormattedDescription = (parsed, fileName) => {
+  // Start with the FHIR id
+  const id = parsed.name || fileName.replace('.fsh', '');
+  let description = `id: ${id}\nFields:`;
+  
+  // Add each field with proper formatting
+  parsed.elements.forEach(element => {
+    const cardinality = element.cardinality || '0..1';
+    const dataType = element.type || 'string';
+    
+    // Format: - name [cardinality] (dataType)
+    description += `\n- ${element.name} [${cardinality}] (${dataType})`;
+    
+    // Add hierarchy for complex types (nested elements)
+    // For now, we'll show basic structure. This could be enhanced to parse
+    // nested BackboneElements or complex types in future iterations
+    if (isComplexType(dataType) && !dataType.includes('Reference(')) {
+      // Add placeholder for potential nested elements
+      // This would need to be enhanced based on actual FSH parsing of nested structures
+      description += `\n  └── (nested elements would be parsed here)`;
+    }
+  });
+  
+  return description;
+};
+
+/**
+ * Check if a data type is complex (not primitive)
+ * @param {string} dataType - The data type to check
+ * @returns {boolean} True if complex type
+ */
+const isComplexType = (dataType) => {
+  const primitives = [
+    'string', 'boolean', 'integer', 'decimal', 'date', 'dateTime', 'time',
+    'code', 'uri', 'url', 'canonical', 'base64Binary', 'instant', 
+    'positiveInt', 'unsignedInt', 'id', 'oid', 'uuid'
+  ];
+  
+  // Check if it's a primitive type
+  if (primitives.includes(dataType.toLowerCase())) {
+    return false;
+  }
+  
+  // Reference types are handled separately
+  if (dataType.includes('Reference(')) {
+    return false;
+  }
+  
+  // Everything else is considered complex
+  return true;
+};
+
+/**
  * Generate ArchiMate DataObject from parsed FSH structure
  * @param {Object} parsed - Parsed FSH logical model
  * @param {string} title - Model title
@@ -144,11 +202,14 @@ const generateArchiMateDataObject = (parsed, title, description, fileName) => {
   const modelId = generateId();
   const timestamp = new Date().toISOString();
   
+  // Generate the description following the Example Description Format from the issue
+  const formattedDescription = generateFormattedDescription(parsed, fileName);
+  
   return {
     id: modelId,
     name: parsed.title || title || parsed.name || fileName.replace('.fsh', ''),
     type: 'DataObject',
-    documentation: parsed.description || description || `Logical model derived from ${fileName}`,
+    documentation: formattedDescription,
     source: {
       type: 'FHIR FSH Logical Model',
       fileName: fileName,

@@ -116,6 +116,12 @@
   font-size: 1.1rem;
   line-height: 1.6;
   margin: 0;
+  white-space: pre-line;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: var(--who-bg-light, #f8f9fa);
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--who-border-color, #e9ecef);
 }
 
 .summary-stats {
