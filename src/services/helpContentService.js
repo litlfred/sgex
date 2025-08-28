@@ -86,34 +86,9 @@ class HelpContentService {
           {
             title: 'Report a Bug or Issue',
             content: `
-              <p>Help us improve SGeX by reporting bugs and issues:</p>
-              <h4>What type of issue are you experiencing?</h4>
-              <div class="bug-report-options">
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('bug')">
-                  🐛 Bug Report - Something isn't working correctly
-                </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('feature')">
-                  ✨ Feature Request - Suggest a new feature or improvement
-                </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('question')">
-                  ❓ Question - Ask for help or clarification
-                </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('documentation')">
-                  📚 Documentation Issue - Report problems with documentation
-                </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('blank')">
-                  📝 Blank Issue - Create an issue without a template
-                </button>
-              </div>
-              <div class="help-tip">
-                <strong>💡 Tip:</strong> Please provide as much detail as possible including steps to reproduce, expected behavior, and actual behavior.
-              </div>
-              <div class="help-fallback">
-                <strong>🔗 Can't access GitHub?</strong> If the buttons above don't work in your environment:
-                <ol>
-                  <li>Email us directly at <a href="mailto:smart@who.int?subject=SGEX Bug Report">smart@who.int</a></li>
-                  <li>Or visit <a href="https://github.com/litlfred/sgex/issues/new" target="_blank">github.com/litlfred/sgex/issues/new</a> manually</li>
-                </ol>
+              <!-- This content signals to HelpModal to use renderBugReportContent with React buttons -->
+              <div class="sgex-bug-report-trigger">
+                <p>This will render React buttons for issue creation</p>
               </div>
             `
           }
@@ -127,27 +102,9 @@ class HelpContentService {
           {
             title: 'Provide Feedback on this DAK',
             content: `
-              <p>Share feedback about this Digital Adaptation Kit (DAK):</p>
-              <h4>What type of feedback do you have?</h4>
-              <div class="bug-report-options">
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('content')">
-                  📝 DAK Content Feedback - Provide feedback on clinical content or logic
-                </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('bug')">
-                  🐛 DAK Bug - Report issue with this specific DAK content
-                </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('feature')">
-                  📈 DAK Improvement - Suggest enhancements to this DAK
-                </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('question')">
-                  ❓ DAK Question - Ask about this DAK's implementation
-                </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openDakIssue('blank')">
-                  📝 Blank DAK Issue - Create an issue without a template
-                </button>
-              </div>
-              <div class="help-tip">
-                <strong>💡 Note:</strong> This will open an issue in the selected DAK repository for targeted feedback.
+              <!-- This content signals to HelpModal to use renderBugReportContent with React buttons -->
+              <div class="dak-feedback-trigger">
+                <p>This will render React buttons for DAK feedback</p>
               </div>
             `
           }

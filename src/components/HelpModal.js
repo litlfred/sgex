@@ -330,8 +330,9 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
   // Render bug report content with proper React event handlers
   const renderBugReportContent = (htmlContent) => {
-    // Check if this is SGeX bug report or DAK feedback
-    const isDakFeedback = htmlContent.includes('window.helpModalInstance?.openDakIssue');
+    // Check if this is SGeX bug report or DAK feedback based on content
+    const isDakFeedback = htmlContent.includes('window.helpModalInstance?.openDakIssue') || 
+                         htmlContent.includes('dak-feedback-trigger');
     
     if (isDakFeedback) {
       return (
@@ -484,7 +485,11 @@ Best regards,
     
     // Check if this is the bug report slide with the issue type buttons
     const isBugReportSlide = processedContent.includes('window.helpModalInstance?.openSgexIssue') || 
-                            processedContent.includes('window.helpModalInstance?.openDakIssue');
+                            processedContent.includes('window.helpModalInstance?.openDakIssue') ||
+                            processedContent.includes('sgex-bug-report-trigger') ||
+                            processedContent.includes('dak-feedback-trigger') ||
+                            currentSlideData.title === 'Report a Bug or Issue' ||
+                            currentSlideData.title === 'Provide Feedback on this DAK';
 
     return (
       <div className="help-slideshow">
