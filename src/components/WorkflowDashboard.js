@@ -502,24 +502,24 @@ const WorkflowDashboard = ({
 
                   {/* Action buttons and status messages */}
                   <div className="workflow-actions">
-                    {isAuthenticated && (
+                    {isAuthenticated ? (
                       <>
-                        {canTriggerWorkflows && (
-                          <button
-                            onClick={() => handleTriggerWorkflow(workflow)}
-                            disabled={actionState?.action === 'triggering'}
-                            className="workflow-action-btn trigger-btn"
-                            title={`Trigger ${workflow.workflow.name}`}
-                          >
-                            {actionState?.action === 'triggering' ? (
-                              <>⏳ Starting...</>
-                            ) : (
-                              <>🔄 Trigger</>
-                            )}
-                          </button>
-                        )}
+                        {/* Always show trigger button when authenticated */}
+                        <button
+                          onClick={() => handleTriggerWorkflow(workflow)}
+                          disabled={actionState?.action === 'triggering'}
+                          className="workflow-action-btn trigger-btn"
+                          title={`Trigger ${workflow.workflow.name}`}
+                        >
+                          {actionState?.action === 'triggering' ? (
+                            <>⏳ Starting...</>
+                          ) : (
+                            <>🔄 Trigger</>
+                          )}
+                        </button>
 
-                        {canApproveWorkflows && workflow.status === 'waiting' && workflow.runId && (
+                        {/* Show approve button for workflows awaiting approval */}
+                        {workflow.status === 'waiting' && workflow.runId && (
                           <button
                             onClick={() => handleApproveWorkflow(workflow)}
                             disabled={actionState?.action === 'approving'}
@@ -534,7 +534,7 @@ const WorkflowDashboard = ({
                           </button>
                         )}
 
-                        {/* Rerun button for failed workflows */}
+                        {/* Show rerun button for failed workflows */}
                         {workflow.conclusion === 'failure' && workflow.runId && (
                           <button
                             onClick={() => handleRerunWorkflow(workflow)}
@@ -550,21 +550,32 @@ const WorkflowDashboard = ({
                           </button>
                         )}
 
-                        {workflow.url && (
+                        {/* Always show view button - prefer run URL, fall back to workflow URL */}
+                        {(workflow.url || workflow.workflowUrl) && (
                           <a
-                            href={workflow.url}
+                            href={workflow.url || workflow.workflowUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="workflow-action-btn view-btn"
                           >
-                            📋 View Run
+                            📋 View {workflow.url ? 'Run' : 'Workflow'}
                           </a>
                         )}
                       </>
+                    ) : (
+                      <span className="auth-required">🔒 Sign in for actions</span>
                     )}
 
-                    {!isAuthenticated && (
-                      <span className="auth-required">🔒 Sign in for actions</span>
+                    {/* Debug information - remove in production */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="workflow-debug" style={{ fontSize: '0.7rem', opacity: 0.7, marginTop: '0.5rem' }}>
+                        Auth: {isAuthenticated ? '✅' : '❌'} | 
+                        Status: {workflow.status} | 
+                        Conclusion: {workflow.conclusion || 'N/A'} | 
+                        RunId: {workflow.runId || 'N/A'} | 
+                        URL: {workflow.url ? '✅' : '❌'} | 
+                        WorkflowURL: {workflow.workflowUrl ? '✅' : '❌'}
+                      </div>
                     )}
 
                     {/* Action status messages */}
