@@ -9,19 +9,35 @@
       (function() {
         var basePath = '';
         var path = window.location.pathname;
+        var pathSegments = path.split('/').filter(Boolean);
         
         // For GitHub Pages deployment (e.g., litlfred.github.io/sgex/)
         if (window.location.hostname.endsWith('.github.io')) {
-          // Extract base path from URL (e.g., /sgex/)
-          var pathSegments = path.split('/').filter(Boolean);
           if (pathSegments.length > 0 && pathSegments[0] === 'sgex') {
-            basePath = '/sgex/';
+            // Check if this is a branch deployment: /sgex/:branch/...
+            if (pathSegments.length > 1) {
+              // Potential branch deployment - include branch in base path
+              basePath = '/sgex/' + pathSegments[1] + '/';
+            } else {
+              // Main deployment: /sgex/
+              basePath = '/sgex/';
+            }
           } else {
             basePath = '/';
           }
         } else {
           // For local development or other deployment types
-          basePath = '/';
+          // Check if we have /sgex/ prefix for local testing of branch deployments
+          if (pathSegments.length > 0 && pathSegments[0] === 'sgex') {
+            if (pathSegments.length > 1) {
+              // Local branch deployment simulation
+              basePath = '/sgex/' + pathSegments[1] + '/';
+            } else {
+              basePath = '/sgex/';
+            }
+          } else {
+            basePath = '/';
+          }
         }
         
         // Load routeConfig.js from the correct base path using synchronous XHR
@@ -38,22 +54,45 @@
           } else {
             console.error('Failed to load SGEX route configuration from ' + basePath + 'routeConfig.js: HTTP ' + xhr.status);
             
-            // Fallback: try to load via script tag
-            var script = document.createElement('script');
-            script.src = basePath + 'routeConfig.js';
-            script.onerror = function() {
-              console.error('Fallback: Failed to load SGEX route configuration from ' + script.src);
-            };
-            document.head.appendChild(script);
+            // Fallback: try loading from main deployment path
+            if (basePath !== '/sgex/') {
+              console.log('Attempting fallback to main deployment path...');
+              var fallbackXhr = new XMLHttpRequest();
+              fallbackXhr.open('GET', '/sgex/routeConfig.js', false);
+              fallbackXhr.send();
+              
+              if (fallbackXhr.status === 200) {
+                eval(fallbackXhr.responseText);
+                console.log('SGEX route configuration loaded successfully from fallback path /sgex/routeConfig.js');
+              } else {
+                console.error('Fallback also failed: HTTP ' + fallbackXhr.status);
+                loadViaScriptTag();
+              }
+            } else {
+              loadViaScriptTag();
+            }
           }
         } catch (error) {
           console.error('Error loading SGEX route configuration:', error);
-          
+          loadViaScriptTag();
+        }
+        
+        function loadViaScriptTag() {
           // Fallback: try to load via script tag
           var script = document.createElement('script');
           script.src = basePath + 'routeConfig.js';
           script.onerror = function() {
-            console.error('Fallback: Failed to load SGEX route configuration from ' + script.src);
+            console.error('Script tag fallback: Failed to load SGEX route configuration from ' + script.src);
+            
+            // Final fallback: try main deployment path if not already tried
+            if (basePath !== '/sgex/') {
+              var fallbackScript = document.createElement('script');
+              fallbackScript.src = '/sgex/routeConfig.js';
+              fallbackScript.onerror = function() {
+                console.error('Final fallback failed: ' + fallbackScript.src);
+              };
+              document.head.appendChild(fallbackScript);
+            }
           };
           document.head.appendChild(script);
         }
