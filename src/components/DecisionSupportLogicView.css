@@ -1261,3 +1261,193 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
   align-items: center;
   gap: 1rem;
 }
+
+/* CQL Files Section Styles */
+.cql-files-section {
+  padding: 20px;
+}
+
+.cql-files-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.cql-files-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.category-section {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #e1dfdd;
+}
+
+.category-title {
+  margin: 0 0 8px 0;
+  color: #323130;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.category-description {
+  margin: 0 0 20px 0;
+  color: #605e5c;
+  font-size: 14px;
+}
+
+.cql-files-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px;
+}
+
+.cql-file-card {
+  background: #f8f9fa;
+  border: 1px solid #e1dfdd;
+  border-radius: 6px;
+  padding: 15px;
+  transition: all 0.2s ease;
+}
+
+.cql-file-card:hover {
+  border-color: #0078d4;
+  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.1);
+}
+
+.cql-file-card .file-header {
+  margin-bottom: 12px;
+}
+
+.cql-file-card h5 {
+  margin: 0 0 8px 0;
+  color: #323130;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.file-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: #605e5c;
+}
+
+.file-size {
+  background: #e1dfdd;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.file-context {
+  background: #0078d4;
+  color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.cql-editor-container {
+  height: calc(100vh - 200px);
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e1dfdd;
+  overflow: hidden;
+}
+
+.cql-editor-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e1dfdd;
+}
+
+.back-btn {
+  padding: 6px 12px;
+  border: 1px solid #605e5c;
+  background: #ffffff;
+  color: #605e5c;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+  background: #605e5c;
+  color: #ffffff;
+}
+
+.cql-editor-header h4 {
+  margin: 0;
+  color: #323130;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.no-files {
+  text-align: center;
+  padding: 40px 20px;
+  color: #605e5c;
+}
+
+.no-files p {
+  margin: 8px 0;
+}
+
+/* Tab badge for CQL files count */
+.tab-badge {
+  background: #0078d4;
+  color: #ffffff;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* Enhanced styles for CQL file cards based on context */
+.cql-file-card[data-category="decision"] {
+  border-left: 4px solid #107c10;
+}
+
+.cql-file-card[data-category="indicator"] {
+  border-left: 4px solid #d83b01;
+}
+
+.cql-file-card[data-category="unknown"] {
+  border-left: 4px solid #605e5c;
+}
+
+/* Responsive design for CQL files */
+@media (max-width: 768px) {
+  .cql-files-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .cql-editor-container {
+    height: calc(100vh - 150px);
+  }
+  
+  .cql-editor-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .category-section {
+    padding: 15px;
+  }
+}

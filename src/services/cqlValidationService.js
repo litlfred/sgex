@@ -269,7 +269,7 @@ class CQLValidationService {
     const elementLower = element.toLowerCase();
 
     // Search in data dictionary
-    for (const [key, concept] of this.dataDictionary) {
+    for (const [key] of this.dataDictionary) {
       if (key.toLowerCase().includes(elementLower) || 
           elementLower.includes(key.toLowerCase())) {
         suggestions.push(key);
