@@ -509,20 +509,8 @@ const QuestionnaireEditorContent = () => {
   const [editMode, setEditMode] = useState('visual'); // 'visual' or 'json'
   const [lformsError, setLformsError] = useState(null);
 
-  // Get DAK params from PageProvider context - with error handling
-  let dakParams;
-  try {
-    dakParams = useDAKParams();
-  } catch (error) {
-    console.error('Error getting DAK params:', error);
-    dakParams = {
-      repository: null,
-      branch: null,
-      isLoading: true,
-      user: null,
-      profile: null
-    };
-  }
+  // Get DAK params from PageProvider context - useDAKParams handles its own error states
+  const dakParams = useDAKParams();
   
   const { repository, branch, isLoading: pageLoading, user, profile } = dakParams;
   
