@@ -503,11 +503,62 @@ const BranchListingPage = () => {
         <PageLayout pageName="branch-listing" showBreadcrumbs={false}>
             <div className="branch-listing-content">
                 {loading ? (
-                    <div className="branch-listing-header">
-                        <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
-                        <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
-                        <div className="loading">Loading previews...</div>
-                    </div>
+                    <>
+                        <div className="branch-listing-header">
+                            <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
+                            <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
+                            <div className="loading">Loading previews...</div>
+                            
+                            <div className="prominent-info">
+                                <p className="info-text">
+                                    🐾 While previews load, you can access the main SGEX workbench and login below.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="action-cards">
+                            <div className="action-card main-site-card">
+                                <a 
+                                    href="./main/"
+                                    className="card-link"
+                                >
+                                    <div className="card-content">
+                                        <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Mascot')} className="card-icon" />
+                                        <div className="card-text">
+                                            <h3>View Main Site</h3>
+                                            <p>Access the main SGEX workbench</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            
+                            {!isAuthenticated ? (
+                                <div className="action-card login-card">
+                                    <div className="card-content">
+                                        <div className="login-icon">🔐</div>
+                                        <div className="card-text">
+                                            <h3>GitHub Login</h3>
+                                            <p>Login to get higher API rate limits and view comments</p>
+                                            <PATLogin onAuthSuccess={handleAuthSuccess} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="action-card logout-card">
+                                    <div className="card-content">
+                                        <div className="login-icon">✅</div>
+                                        <div className="card-text">
+                                            <h3>Logged In</h3>
+                                            <p>You can now view and add comments</p>
+                                            <button onClick={handleLogout} className="logout-btn">
+                                                🚪 Logout
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </>
                 ) : error && pullRequests.length === 0 ? (
                     <>
                         <header className="branch-listing-header">

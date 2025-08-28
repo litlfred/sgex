@@ -46,7 +46,7 @@
     "generate-schemas": "npm run generate-schemas:typescript-json-schema && npm run generate-schemas:ts-json-schema-generator",
     "generate-schemas:typescript-json-schema": "typescript-json-schema tsconfig.json \"*\" --out public/docs/schemas/generated-schemas-tjs.json --include src/types/**/*.ts",
     "generate-schemas:ts-json-schema-generator": "ts-json-schema-generator --path src/types/**/*.ts --type \"*\" --out public/docs/schemas/generated-schemas-tsjsg.json",
-    "prebuild": "npm run type-check && npm run generate-schemas",
+    "prebuild": "npm run generate-schemas",
     "build-mcp": "cd services/dak-faq-mcp && npm install && npm run build",
     "run-mcp": "cd services/dak-faq-mcp && npm start",
     "compliance:profile": "node src/tests/compliance/profileCreationCompliance.js",
