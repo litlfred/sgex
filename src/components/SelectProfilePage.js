@@ -5,6 +5,9 @@ import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
+import SAMLAuthorizationModal from './SAMLAuthorizationModal';
+import { isSAMLError, createSAMLErrorInfo } from '../utils/samlErrorHandler';
+import './SelectProfilePage.css';
 
 const SelectProfilePage = () => {
   const { t } = useTranslation();
@@ -15,6 +18,7 @@ const SelectProfilePage = () => {
   const [error, setError] = useState(null);
   const [dakCounts, setDakCounts] = useState({});
   const [warningMessage, setWarningMessage] = useState(null);
+  const [samlModal, setSamlModal] = useState({ isOpen: false, errorInfo: null });
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -50,10 +54,14 @@ const SelectProfilePage = () => {
     setLoading(true);
     setError(null);
     
+    // Capture authentication state at function execution time
+    const currentIsAuthenticated = githubService.isAuth();
+    console.log('fetchUserData: Current authentication state:', currentIsAuthenticated);
+    
     try {
       let userData = null;
       
-      if (isAuthenticated) {
+      if (currentIsAuthenticated) {
         // Check token permissions first for authenticated users
         await githubService.checkTokenPermissions();
         
@@ -69,7 +77,7 @@ const SelectProfilePage = () => {
       // Fetch organizations inline
       let orgsData = [];
       
-      if (isAuthenticated) {
+      if (currentIsAuthenticated) {
         try {
           orgsData = await githubService.getUserOrganizations();
         } catch (error) {
@@ -92,10 +100,26 @@ const SelectProfilePage = () => {
           // Add WHO organization at the beginning of the list
           orgsData.unshift(whoOrganization);
         }
+        console.log('WHO organization loaded successfully (no SAML needed)');
       } catch (whoError) {
-        console.warn('Could not fetch WHO organization data, using fallback:', whoError);
+        console.warn('Could not fetch WHO organization data from API, using fallback:', whoError);
         
-        // Fallback to hardcoded WHO organization
+        // Check if this is a SAML error
+        const isSAMLRequired = isSAMLError(whoError);
+        console.log('SAML Error Detection:', {
+          isSAMLRequired,
+          whoError: whoError.message,
+          status: whoError.status,
+          currentIsAuthenticated
+        });
+        
+        if (isSAMLRequired) {
+          console.log('SAML authorization available for WHO organization');
+          // Set a warning but don't show modal immediately (user can trigger it)
+          setWarningMessage('SAML authorization available for WHO organization. Click the organization to authorize access.');
+        }
+        
+        // Fallback to hardcoded WHO organization regardless of error type
         const whoOrganization = {
           id: 'who-organization',
           login: 'WorldHealthOrganization',
@@ -104,8 +128,15 @@ const SelectProfilePage = () => {
           avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
           html_url: 'https://github.com/WorldHealthOrganization',
           type: 'Organization',
-          isWHO: true
+          isWHO: true,
+          needsSAMLAuth: isSAMLRequired // Flag for SAML requirement
         };
+        
+        console.log('Creating WHO fallback organization:', {
+          login: whoOrganization.login,
+          needsSAMLAuth: whoOrganization.needsSAMLAuth,
+          isWHO: whoOrganization.isWHO
+        });
         
         // Check if WHO organization is already in the list
         const hasWHO = orgsData.some(org => org.login === 'WorldHealthOrganization');
@@ -114,10 +145,10 @@ const SelectProfilePage = () => {
           // Add WHO organization at the beginning of the list
           orgsData.unshift(whoOrganization);
         } else {
-          // Ensure existing WHO organization has the isWHO flag
+          // Ensure existing WHO organization has the isWHO flag and SAML status
           orgsData = orgsData.map(org => 
             org.login === 'WorldHealthOrganization' 
-              ? { ...org, isWHO: true }
+              ? { ...org, isWHO: true, needsSAMLAuth: isSAMLRequired }
               : org
           );
         }
@@ -126,14 +157,14 @@ const SelectProfilePage = () => {
       setOrganizations(orgsData);
       
       // Load cached DAK counts (if available and authenticated)
-      if (isAuthenticated) {
+      if (currentIsAuthenticated) {
         loadCachedDakCounts(userData, orgsData);
       }
       
     } catch (error) {
       console.error('Error fetching user data:', error);
       
-      if (isAuthenticated) {
+      if (currentIsAuthenticated) {
         setError('Failed to fetch user data. Please check your connection and try again.');
         setIsAuthenticated(false);
         githubService.logout(); // Use secure logout method
@@ -144,7 +175,62 @@ const SelectProfilePage = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadCachedDakCounts, isAuthenticated]);
+  }, [loadCachedDakCounts]); // Remove isAuthenticated from dependencies to prevent stale closures
+
+  // Handle SAML authorization workflow
+  const handleSAMLAuthorization = async (organization) => {
+    try {
+      // Retry fetching the organization data after SAML authorization
+      const whoData = await githubService.getWHOOrganization();
+      
+      // Update organizations list with fresh data
+      setOrganizations(prev => prev.map(org => 
+        org.login === organization 
+          ? { ...org, ...whoData, needsSAMLAuth: false }
+          : org
+      ));
+      
+      // Clear any warning message
+      setWarningMessage(null);
+      
+      // Close SAML modal
+      setSamlModal({ isOpen: false, errorInfo: null });
+      
+      console.log(`Successfully authorized SAML for ${organization}`);
+    } catch (error) {
+      // Reduce console noise for expected SAML failures
+      if (isSAMLError(error)) {
+        console.log(`SAML authorization still pending for ${organization}. This is normal - authorization may take a few moments to propagate.`);
+        // Keep the modal open so user can retry later
+        return;
+      } else {
+        console.error('Unexpected error during SAML authorization verification:', error);
+        // Different error, close modal but keep fallback data
+        setSamlModal({ isOpen: false, errorInfo: null });
+      }
+    }
+  };
+
+  const handleSkipSAML = () => {
+    setSamlModal({ isOpen: false, errorInfo: null });
+    setWarningMessage(null);
+  };
+
+  const showSAMLModal = (organization) => {
+    const samlErrorInfo = createSAMLErrorInfo(
+      new Error('SAML authorization required'),
+      organization,
+      {
+        isRequired: false,
+        context: 'access additional organization features'
+      }
+    );
+    
+    setSamlModal({
+      isOpen: true,
+      errorInfo: samlErrorInfo
+    });
+  };
 
   // Initial authentication check - don't redirect if not authenticated
   useEffect(() => {
@@ -171,15 +257,21 @@ const SelectProfilePage = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
-  // Fetch user data when component mounts or authentication state changes
+  // Fetch user data when component mounts
   useEffect(() => {
-    // Always fetch data regardless of authentication state
-    if (!user) {
+    if (!loading) {
       fetchUserData();
     }
-  }, [user, fetchUserData]);
+  }, [fetchUserData, loading]);
 
   const handleProfileSelect = (event, profile) => {
+    // Check if this organization needs SAML authorization
+    if (profile.needsSAMLAuth && isAuthenticated) {
+      event.preventDefault();
+      showSAMLModal(profile.login);
+      return;
+    }
+    
     const navigationState = { profile };
     handleNavigationClick(event, `/dak-action/${profile.login}`, navigate, navigationState);
   };
@@ -264,10 +356,25 @@ const SelectProfilePage = () => {
               )}
               
               {/* Organization Profiles */}
-              {organizations.map((org) => (
+              {organizations.map((org) => {
+                // Debug WHO organization badge visibility
+                if (org.login === 'WorldHealthOrganization') {
+                  console.log('WHO Organization Badge Debug (Render Time):', {
+                    orgLogin: org.login,
+                    needsSAMLAuth: org.needsSAMLAuth,
+                    isAuthenticated: isAuthenticated,
+                    githubServiceAuth: githubService.isAuth(),
+                    shouldShowBadge: org.needsSAMLAuth && isAuthenticated,
+                    samlIndicatorCondition: org.needsSAMLAuth && isAuthenticated,
+                    samlBadgeCondition: org.needsSAMLAuth && isAuthenticated,
+                    orgObject: org
+                  });
+                }
+                
+                return (
                 <div 
                   key={org.login}
-                  className={`profile-card ${org.isWHO ? 'who-org' : ''}`}
+                  className={`profile-card ${org.isWHO ? 'who-org' : ''} ${org.needsSAMLAuth ? 'needs-saml' : ''}`}
                   onClick={(event) => handleProfileSelect(event, { type: 'org', ...org })}
                 >
                   <div className="profile-card-header">
@@ -280,20 +387,38 @@ const SelectProfilePage = () => {
                         {dakCounts[`org-${org.login}`]}
                       </div>
                     )}
+                    {org.needsSAMLAuth && isAuthenticated && (
+                      <div className="saml-indicator" title="SAML authorization available">
+                        🔐
+                      </div>
+                    )}
                   </div>
                   <h3>{org.name || org.login}</h3>
                   <p>@{org.login}</p>
                   <div className="profile-badges">
                     <span className="profile-type">{t('organization.organizations')}</span>
                     {org.isWHO && <span className="who-badge">WHO Official</span>}
+                    {org.needsSAMLAuth && isAuthenticated && (
+                      <span className="saml-badge">SAML Available</span>
+                    )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
         </div>
       )}
+      
+      {/* SAML Authorization Modal */}
+      <SAMLAuthorizationModal
+        isOpen={samlModal.isOpen}
+        onClose={() => setSamlModal({ isOpen: false, errorInfo: null })}
+        samlErrorInfo={samlModal.errorInfo}
+        onRetry={() => handleSAMLAuthorization(samlModal.errorInfo?.organization)}
+        onSkip={handleSkipSAML}
+      />
     </PageLayout>
   );
 };

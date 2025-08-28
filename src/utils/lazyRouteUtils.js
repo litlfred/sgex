@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { Route } from 'react-router-dom';
+import ChunkErrorBoundary from '../components/ChunkErrorBoundary';
 
 /**
  * SGEX Unified Lazy Loading Utility
@@ -148,16 +149,18 @@ function createLazyComponent(componentName) {
       break;
   }
   
-  // Wrap with Suspense and error boundary
+  // Wrap with error boundary and Suspense
   const SuspenseWrapper = (props) => (
-    <Suspense fallback={
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Loading {componentName}...</p>
-      </div>
-    }>
-      <LazyComponent {...props} />
-    </Suspense>
+    <ChunkErrorBoundary>
+      <Suspense fallback={
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading {componentName}...</p>
+        </div>
+      }>
+        <LazyComponent {...props} />
+      </Suspense>
+    </ChunkErrorBoundary>
   );
   
   // Set display name for debugging
