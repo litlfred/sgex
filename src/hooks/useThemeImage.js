@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { combineUrlParts } from '../utils/urlNormalizationUtils';
 
 /**
  * Custom hook that returns the appropriate image path based on the current theme
@@ -23,22 +24,10 @@ const useThemeImage = (baseImagePath) => {
         // Convert base image to dark mode version
         // e.g., "sgex-mascot.png" -> "sgex-mascot_grey_tabby.png"
         const darkImageName = normalizedPath.replace(/\.png$/, '_grey_tabby.png');
-        // Ensure no double slashes when combining publicUrl and imageName
-        if (publicUrl) {
-          const cleanPublicUrl = publicUrl.endsWith('/') ? publicUrl.slice(0, -1) : publicUrl;
-          finalPath = `${cleanPublicUrl}/${darkImageName}`;
-        } else {
-          finalPath = `/${darkImageName}`;
-        }
+        finalPath = combineUrlParts(publicUrl, darkImageName);
       } else {
         // Use original image for light mode
-        // Ensure no double slashes when combining publicUrl and imageName
-        if (publicUrl) {
-          const cleanPublicUrl = publicUrl.endsWith('/') ? publicUrl.slice(0, -1) : publicUrl;
-          finalPath = `${cleanPublicUrl}/${normalizedPath}`;
-        } else {
-          finalPath = `/${normalizedPath}`;
-        }
+        finalPath = combineUrlParts(publicUrl, normalizedPath);
       }
       
       setCurrentImagePath(finalPath);

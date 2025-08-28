@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import useThemeImage from '../hooks/useThemeImage';
 import { extractAltTextFromFilename } from '../utils/imageAltTextHelper';
+import { combineUrlParts } from '../utils/urlNormalizationUtils';
 
 /**
  * Responsive Image component that automatically selects the best image
@@ -49,11 +50,7 @@ const ResponsiveImage = ({
     }
     
     // Ensure no double slashes when combining publicUrl and imageName
-    if (publicUrl) {
-      const cleanPublicUrl = publicUrl.endsWith('/') ? publicUrl.slice(0, -1) : publicUrl;
-      return `${cleanPublicUrl}/${imageName}`;
-    }
-    return `/${imageName}`;
+    return combineUrlParts(publicUrl, imageName);
   }, [src, forceMobile, forceDesktop, aggressiveMobile]);
 
   const themeImagePath = useThemeImage(src);

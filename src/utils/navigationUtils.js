@@ -1,6 +1,7 @@
 /**
  * Utility functions for handling navigation with command-click support
  */
+import { combineUrlParts, normalizePath } from './urlNormalizationUtils';
 
 /**
  * Detects if a click event should open in a new tab
@@ -20,44 +21,42 @@ export const constructFullUrl = (relativePath) => {
   const basePath = process.env.PUBLIC_URL || '';
   const baseUrl = window.location.origin;
   
-  // Remove leading slash from relativePath if present to avoid double slashes
-  const cleanPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
+  // Normalize the relative path first
+  const normalizedPath = normalizePath(relativePath);
   
-  // Only add basePath if it's not empty
-  if (!basePath) {
-    return `${baseUrl}/${cleanPath}`;
-  }
+  // Use the new combineUrlParts utility for proper URL construction
+  const fullPath = combineUrlParts(basePath, normalizedPath);
   
-  // Ensure basePath ends with slash for proper joining
-  const cleanBasePath = basePath.endsWith('/') ? basePath : basePath + '/';
-  
-  return `${baseUrl}${cleanBasePath}${cleanPath}`;
+  return `${baseUrl}${fullPath}`;
 };
 
 /**
- * Handles navigation with command-click support
+ * Handles navigation with command-click support and automatic URL normalization
  * @param {MouseEvent} event - The click event
  * @param {string} path - The navigation path
  * @param {Function} navigate - React Router navigate function
  * @param {Object} state - Optional state to pass with navigation
  */
 export const handleNavigationClick = (event, path, navigate, state = null) => {
+  // Normalize the path before navigation
+  const normalizedPath = normalizePath(path);
+  
   if (shouldOpenInNewTab(event)) {
     // Open in new tab
-    const fullUrl = constructFullUrl(path);
+    const fullUrl = constructFullUrl(normalizedPath);
     window.open(fullUrl, '_blank', 'noopener,noreferrer');
   } else {
     // Navigate in same tab
     if (state) {
-      navigate(path, { state });
+      navigate(normalizedPath, { state });
     } else {
-      navigate(path);
+      navigate(normalizedPath);
     }
   }
 };
 
 /**
- * Creates a click handler that supports command-click for new tabs
+ * Creates a click handler that supports command-click for new tabs with URL normalization
  * @param {string} path - The navigation path
  * @param {Function} navigate - React Router navigate function
  * @param {Object} state - Optional state to pass with navigation

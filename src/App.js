@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes } from 'react-router-dom';
 import './i18n'; // Initialize i18n
 import { generateLazyRoutes } from './utils/lazyRouteUtils';
 import { initializeTheme } from './utils/themeManager';
+import UrlNormalizationMiddleware from './components/UrlNormalizationMiddleware';
 import logger from './utils/logger';
 
 function App() {
@@ -32,11 +33,13 @@ function App() {
 
   return (
     <Router basename={basename}>
-      <div className="App">
-        <Routes>
-          {routes}
-        </Routes>
-      </div>
+      <UrlNormalizationMiddleware>
+        <div className="App">
+          <Routes>
+            {routes}
+          </Routes>
+        </div>
+      </UrlNormalizationMiddleware>
     </Router>
   );
 }
