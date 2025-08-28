@@ -10,21 +10,34 @@
  */
 export const extractLogicalModelToArchiMate = (logicalModel) => {
   try {
+    console.log('🚀 ArchiMate extraction started for:', logicalModel?.name || 'unknown model');
     const { content, title, description, name } = logicalModel;
+    
+    if (!content) {
+      throw new Error('No content provided for extraction');
+    }
+    
+    console.log('📝 Content length:', content.length, 'characters');
     
     // Parse the FSH content to extract structure
     const parsed = parseFSHLogicalModel(content);
+    console.log('📊 Parsed structure:', parsed);
     
     // Generate ArchiMate DataObject
     const archiMateObject = generateArchiMateDataObject(parsed, title, description, name);
+    console.log('🏗️ Generated ArchiMate object:', archiMateObject);
+    
+    const xml = generateArchiMateXML(archiMateObject);
+    console.log('📋 Generated XML length:', xml.length);
     
     return {
       success: true,
       archiMateObject,
-      xml: generateArchiMateXML(archiMateObject),
+      xml,
       sourceModel: logicalModel
     };
   } catch (error) {
+    console.error('❌ ArchiMate extraction failed:', error);
     return {
       success: false,
       error: error.message,
@@ -39,7 +52,10 @@ export const extractLogicalModelToArchiMate = (logicalModel) => {
  * @returns {Object} Parsed logical model structure
  */
 const parseFSHLogicalModel = (content) => {
+  console.log('🔍 Starting FSH parsing...');
   const lines = content.split('\n');
+  console.log('📄 Total lines to parse:', lines.length);
+  
   const result = {
     name: '',
     title: '',
@@ -112,6 +128,7 @@ const parseFSHLogicalModel = (content) => {
     }
   }
   
+  console.log('✅ FSH parsing completed. Found:', result.elements.length, 'elements');
   return result;
 };
 
