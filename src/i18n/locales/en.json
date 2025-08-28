@@ -245,5 +245,38 @@
       "sgex": "SGEX Logo",
       "who": "WHO Logo"
     }
+  },
+  "documentation": {
+    "title": "Documentation",
+    "loading": "Loading documentation...",
+    "errors": {
+      "loadFailed": "Failed to load documentation. Please try again later.",
+      "notFound": "Documentation not found."
+    },
+    "categories": {
+      "overview": "Overview",
+      "architecture": "Architecture & Design", 
+      "development": "Development Guidelines",
+      "features": "Features & Components",
+      "testing": "Testing & Validation",
+      "planning": "Planning & Management",
+      "technical": "Technical Guides",
+      "workflows": "Workflows & Processes",
+      "schemas": "JSON Schemas"
+    },
+    "schemas": {
+      "title": "JSON Schemas",
+      "description": "Generated JSON schemas for SGEX types and interfaces",
+      "tjs": "TypeScript JSON Schema Generated Schemas",
+      "tsjsg": "TS JSON Schema Generator Schemas"
+    }
+  },
+  "bookmarks": {
+    "addBookmark": "Add bookmark",
+    "removeBookmark": "Remove bookmark",
+    "documentation": "Documentation"
+  },
+  "navigation": {
+    "breadcrumbs": "Breadcrumb navigation"
   }
 }

@@ -31,8 +31,23 @@ function getDeploymentType() {
   // Check if we're in a simple deployment (deploy branch)
   if (typeof window !== 'undefined') {
     var path = window.location.pathname;
+    
+    // If we're accessing documentation or other main features, use main config
+    if (path.includes('/docs/') || path.includes('/dashboard/') || path.includes('/test-') || path.includes('/actor-') || path.includes('/bpmn-') || path.includes('/decision-support-') || path.includes('/questionnaire-') || path.includes('/core-data-') || path.includes('/testing-') || path.includes('/business-process-')) {
+      return 'main';
+    }
+    
+    // For development environment, default to main unless specifically accessing deploy-only features
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'main';
+    }
+    
     // If we're at the root with minimal functionality, likely deploy branch
-    if (path === '/' || path === '/sgex/' || path.endsWith('/branch-listing')) {
+    if (path === '/' || path === '/sgex/') {
+      // Check for query parameters or other indicators that suggest main deployment needed
+      if (window.location.search || window.location.hash) {
+        return 'main';
+      }
       return 'deploy';
     }
   }
