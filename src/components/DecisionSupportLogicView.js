@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
 import { lazyLoadMDEditor } from '../utils/lazyRouteUtils';
+import CQLEditor from './CQLEditor';
+import cqlValidationService from '../services/cqlValidationService';
+import stagingGroundService from '../services/stagingGroundService';
 
 // Lazy markdown component using the utility
 const LazyMarkdown = ({ source }) => {
@@ -38,13 +41,15 @@ const DecisionSupportLogicViewContent = () => {
   const [error, setError] = useState(null);
   const [dakDTCodeSystem, setDakDTCodeSystem] = useState(null);
   const [decisionTables, setDecisionTables] = useState([]);
+  const [cqlFiles, setCqlFiles] = useState([]);
   const [filteredVariables, setFilteredVariables] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState('Code');
   const [sortDirection, setSortDirection] = useState('asc');
   const [selectedDialog, setSelectedDialog] = useState(null);
   const [cqlModal, setCqlModal] = useState(null);
-  const [activeSection, setActiveSection] = useState('variables'); // 'variables' or 'tables'
+  const [selectedCQLFile, setSelectedCQLFile] = useState(null);
+  const [activeSection, setActiveSection] = useState('variables'); // 'variables', 'tables', 'cql'
   const [enhancedFullwidth, setEnhancedFullwidth] = useState(false);
   const [autoHide, setAutoHide] = useState(false);
 
@@ -61,6 +66,9 @@ const DecisionSupportLogicViewContent = () => {
         
         // Load decision tables (.dmn files)
         await loadDecisionTables();
+        
+        // Load CQL files
+        await loadCQLFiles();
         
       } catch (err) {
         console.error('Error loading decision support data:', err);
@@ -221,6 +229,85 @@ define "BCG Contraindications":
       } catch (err) {
         console.error('Error loading decision tables:', err);
         setDecisionTables([]);
+      }
+    };
+
+    const loadCQLFiles = async () => {
+      try {
+        const owner = repository.owner?.login || repository.full_name.split('/')[0];
+        const repoName = repository.name;
+
+        // Try to get cql directory contents
+        try {
+          const contents = await githubService.getDirectoryContents(
+            owner,
+            repoName,
+            'input/cql',
+            selectedBranch
+          );
+
+          // Filter for .cql files
+          const cqlFileList = contents.filter(file => 
+            file.name.endsWith('.cql') && file.type === 'file'
+          );
+
+          // Load content for each CQL file to determine context
+          const cqlFilesWithContent = await Promise.all(
+            cqlFileList.map(async (file) => {
+              try {
+                const content = await githubService.getFileContent(
+                  owner,
+                  repoName,
+                  file.path,
+                  selectedBranch
+                );
+                
+                // Determine context from CQL content
+                const contextMatch = content.match(/context\s+(\w+)/i);
+                const context = contextMatch ? contextMatch[1] : 'Patient';
+                
+                return {
+                  name: file.name,
+                  path: file.path,
+                  size: file.size,
+                  sha: file.sha,
+                  downloadUrl: file.download_url,
+                  githubUrl: `https://github.com/${owner}/${repoName}/blob/${selectedBranch}/${file.path}`,
+                  content,
+                  context,
+                  category: context === 'Population' ? 'indicator' : 'decision'
+                };
+              } catch (error) {
+                console.warn(`Failed to load content for ${file.name}:`, error);
+                return {
+                  name: file.name,
+                  path: file.path,
+                  size: file.size,
+                  sha: file.sha,
+                  downloadUrl: file.download_url,
+                  githubUrl: `https://github.com/${owner}/${repoName}/blob/${selectedBranch}/${file.path}`,
+                  content: '',
+                  context: 'Unknown',
+                  category: 'decision'
+                };
+              }
+            })
+          );
+
+          setCqlFiles(cqlFilesWithContent);
+
+          // Load data dictionary for CQL validation
+          if (dakDTCodeSystem) {
+            cqlValidationService.loadDataDictionary(dakDTCodeSystem);
+          }
+
+        } catch (error) {
+          console.warn('CQL directory not found or empty:', error);
+          setCqlFiles([]);
+        }
+      } catch (err) {
+        console.error('Error loading CQL files:', err);
+        setCqlFiles([]);
       }
     };
 
@@ -627,6 +714,24 @@ define "Contraindication Present":
     setAutoHide(!autoHide);
   };
 
+  const handleLibraryNavigation = (libraryName) => {
+    // Find CQL file that matches the library name
+    const libraryFile = cqlFiles.find(file => {
+      const fileName = file.name.replace('.cql', '');
+      // Match exact name or check if the file contains the library
+      return fileName === libraryName || 
+             fileName.toLowerCase().includes(libraryName.toLowerCase()) ||
+             file.content.includes(`library ${libraryName}`);
+    });
+
+    if (libraryFile) {
+      setSelectedCQLFile(libraryFile);
+      alert(`Navigating to library: ${libraryName}`);
+    } else {
+      alert(`Library "${libraryName}" not found in current CQL files. You may need to check external dependencies or ensure the file is in the input/cql directory.`);
+    }
+  };
+
   // Cleanup effect for enhanced fullwidth
   useEffect(() => {
     return () => {
@@ -716,6 +821,16 @@ define "Contraindication Present":
             >
               <span className="tab-icon">📋</span>
               <span className="tab-text">Decision Tables</span>
+            </button>
+            <button 
+              className={`tab-button ${activeSection === 'cql' ? 'active' : ''}`}
+              onClick={() => setActiveSection('cql')}
+            >
+              <span className="tab-icon">📜</span>
+              <span className="tab-text">CQL Files</span>
+              {cqlFiles.length > 0 && (
+                <span className="tab-badge">{cqlFiles.length}</span>
+              )}
             </button>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
               <button 
@@ -930,6 +1045,194 @@ define "Contraindication Present":
                 <div className="no-tables">
                   <p>No decision tables found in the input/dmn directory.</p>
                   <p>Decision tables should be stored as .dmn files in the repository's input/dmn/ directory.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* CQL Files Section */}
+          {activeSection === 'cql' && (
+            <div className="components-section cql-files-section active">
+              <div className="section-header">
+                <h3 className="section-title">📜 CQL Files</h3>
+                <p className="section-description">
+                  Clinical Quality Language files containing decision logic and calculations
+                </p>
+              </div>
+
+              {/* CQL File Editor or List */}
+              {selectedCQLFile ? (
+                <div className="cql-editor-container">
+                  <div className="cql-editor-header">
+                    <button 
+                      onClick={() => setSelectedCQLFile(null)}
+                      className="back-btn"
+                    >
+                      ← Back to CQL Files
+                    </button>
+                    <h4>{selectedCQLFile.name}</h4>
+                  </div>
+                  <CQLEditor
+                    file={selectedCQLFile}
+                    content={selectedCQLFile.content}
+                    repository={repository}
+                    branch={selectedBranch}
+                    dataDictionary={dakDTCodeSystem}
+                    onLibraryClick={(libraryName) => handleLibraryNavigation(libraryName)}
+                    onSave={(content, saveType) => {
+                      if (saveType === 'staging') {
+                        // Save to staging ground
+                        stagingGroundService.updateFile(selectedCQLFile.path, content, {
+                          tool: 'CQL Editor',
+                          type: 'cql'
+                        });
+                        alert('CQL file saved to staging ground');
+                      }
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="cql-files-grid">
+                  <div className="cql-files-categories">
+                    <div className="category-section">
+                      <h4 className="category-title">
+                        🎯 Decision Logic (Patient Context)
+                      </h4>
+                      <p className="category-description">
+                        CQL files with "context Patient" for individual patient decision support
+                      </p>
+                      <div className="cql-files-list">
+                        {cqlFiles.filter(file => file.category === 'decision').map((file, index) => (
+                          <div key={index} className="cql-file-card">
+                            <div className="file-header">
+                              <h5>{file.name}</h5>
+                              <div className="file-meta">
+                                <span className="file-size">{Math.round(file.size / 1024)}KB</span>
+                                <span className="file-context">{file.context}</span>
+                              </div>
+                            </div>
+                            <div className="file-actions">
+                              <button
+                                onClick={() => setSelectedCQLFile(file)}
+                                className="action-btn primary"
+                                title="Edit CQL file"
+                              >
+                                📝 Edit
+                              </button>
+                              <a
+                                href={file.githubUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="action-btn secondary"
+                                title="View on GitHub"
+                              >
+                                🔗 GitHub
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                        {cqlFiles.filter(file => file.category === 'decision').length === 0 && (
+                          <div className="no-files">
+                            <p>No Patient context CQL files found</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="category-section">
+                      <h4 className="category-title">
+                        📊 Indicator Calculations (Population Context)
+                      </h4>
+                      <p className="category-description">
+                        CQL files with "context Population" for program indicators and population measures
+                      </p>
+                      <div className="cql-files-list">
+                        {cqlFiles.filter(file => file.category === 'indicator').map((file, index) => (
+                          <div key={index} className="cql-file-card">
+                            <div className="file-header">
+                              <h5>{file.name}</h5>
+                              <div className="file-meta">
+                                <span className="file-size">{Math.round(file.size / 1024)}KB</span>
+                                <span className="file-context">{file.context}</span>
+                              </div>
+                            </div>
+                            <div className="file-actions">
+                              <button
+                                onClick={() => setSelectedCQLFile(file)}
+                                className="action-btn primary"
+                                title="Edit CQL file"
+                              >
+                                📝 Edit
+                              </button>
+                              <a
+                                href={file.githubUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="action-btn secondary"
+                                title="View on GitHub"
+                              >
+                                🔗 GitHub
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                        {cqlFiles.filter(file => file.category === 'indicator').length === 0 && (
+                          <div className="no-files">
+                            <p>No Population context CQL files found</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {cqlFiles.filter(file => file.context === 'Unknown').length > 0 && (
+                      <div className="category-section">
+                        <h4 className="category-title">
+                          ❓ Other CQL Files
+                        </h4>
+                        <p className="category-description">
+                          CQL files with unrecognized or missing context
+                        </p>
+                        <div className="cql-files-list">
+                          {cqlFiles.filter(file => file.context === 'Unknown').map((file, index) => (
+                            <div key={index} className="cql-file-card">
+                              <div className="file-header">
+                                <h5>{file.name}</h5>
+                                <div className="file-meta">
+                                  <span className="file-size">{Math.round(file.size / 1024)}KB</span>
+                                  <span className="file-context">{file.context}</span>
+                                </div>
+                              </div>
+                              <div className="file-actions">
+                                <button
+                                  onClick={() => setSelectedCQLFile(file)}
+                                  className="action-btn primary"
+                                  title="Edit CQL file"
+                                >
+                                  📝 Edit
+                                </button>
+                                <a
+                                  href={file.githubUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="action-btn secondary"
+                                  title="View on GitHub"
+                                >
+                                  🔗 GitHub
+                                </a>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {cqlFiles.length === 0 && (
+                    <div className="no-files">
+                      <p>No CQL files found in the input/cql directory.</p>
+                      <p>CQL files should be stored as .cql files in the repository's input/cql/ directory.</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

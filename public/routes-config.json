@@ -41,6 +41,10 @@
       "component": "DecisionSupportLogicView",
       "path": "./components/DecisionSupportLogicView"
     },
+    "program-indicators": {
+      "component": "ProgramIndicatorsView",
+      "path": "./components/ProgramIndicatorsView"
+    },
     "questionnaire-editor": {
       "component": "QuestionnaireEditor",
       "path": "./components/QuestionnaireEditor"
