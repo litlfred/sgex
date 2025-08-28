@@ -89,7 +89,7 @@
     "webpack-dev-server": "5.2.1",
     "prismjs": "1.30.0"
   },
-  "main": "public/electron.js",
+  "main": "public/electron/main.js",
   "build": {
     "appId": "org.who.sgex-workbench",
     "productName": "SGEX Workbench",
@@ -101,7 +101,6 @@
     },
     "files": [
       "build/**/*",
-      "public/electron.js",
       "public/electron/**/*",
       "node_modules/express/**/*",
       "node_modules/electron-log/**/*"
