@@ -44,6 +44,14 @@
     "questionnaire-editor": {
       "component": "QuestionnaireEditor",
       "path": "./components/QuestionnaireEditor"
+    },
+    "docs": {
+      "component": "DocumentationViewer",
+      "path": "./components/DocumentationViewer"
+    },
+    "pages": {
+      "component": "PagesManager",
+      "path": "./components/PagesManager"
     }
   },
   "standardComponents": {
@@ -116,19 +124,11 @@
         { "path": "/docs/:docId", "exact": true }
       ]
     },
-    "docs": {
-      "component": "DocumentationViewer",
-      "path": "./components/DocumentationViewer"
-    },
     "PagesManager": {
       "path": "./components/PagesManager",
       "routes": [
         { "path": "/pages", "exact": true }
       ]
-    },
-    "pages": {
-      "component": "PagesManager",
-      "path": "./components/PagesManager"
     },
     "LandingPageWithFramework": {
       "path": "./components/LandingPageWithFramework",
