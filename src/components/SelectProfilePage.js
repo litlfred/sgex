@@ -126,7 +126,7 @@ const SelectProfilePage = () => {
           // Add WHO organization at the beginning of the list
           orgsData.unshift(whoOrganization);
         } else {
-          // Ensure existing WHO organization has the isWHO flag
+          // Ensure existing WHO organization has the isWHO flag and SAML status
           orgsData = orgsData.map(org => 
             org.login === 'WorldHealthOrganization' 
               ? { ...org, isWHO: true, needsSAMLAuth: isSAMLError(whoError) }
@@ -238,13 +238,12 @@ const SelectProfilePage = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
-  // Fetch user data when component mounts or authentication state changes
+  // Fetch user data when component mounts
   useEffect(() => {
-    // Always fetch data regardless of authentication state
-    if (!user) {
+    if (!loading) {
       fetchUserData();
     }
-  }, [user, fetchUserData]);
+  }, [fetchUserData, loading]);
 
   const handleProfileSelect = (event, profile) => {
     // Check if this organization needs SAML authorization
@@ -338,7 +337,19 @@ const SelectProfilePage = () => {
               )}
               
               {/* Organization Profiles */}
-              {organizations.map((org) => (
+              {organizations.map((org) => {
+                // Debug WHO organization badge visibility
+                if (org.login === 'WorldHealthOrganization') {
+                  console.log('WHO Organization Badge Debug:', {
+                    orgLogin: org.login,
+                    needsSAMLAuth: org.needsSAMLAuth,
+                    isAuthenticated: isAuthenticated,
+                    shouldShowBadge: org.needsSAMLAuth && isAuthenticated,
+                    orgObject: org
+                  });
+                }
+                
+                return (
                 <div 
                   key={org.login}
                   className={`profile-card ${org.isWHO ? 'who-org' : ''} ${org.needsSAMLAuth ? 'needs-saml' : ''}`}
@@ -370,7 +381,8 @@ const SelectProfilePage = () => {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
