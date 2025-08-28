@@ -328,6 +328,113 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
     // Error is already shown in the modal
   };
 
+  // Render bug report content with proper React event handlers
+  const renderBugReportContent = (htmlContent) => {
+    // Check if this is SGeX bug report or DAK feedback
+    const isDakFeedback = htmlContent.includes('window.helpModalInstance?.openDakIssue');
+    
+    if (isDakFeedback) {
+      return (
+        <div>
+          <p>Share feedback about this Digital Adaptation Kit (DAK):</p>
+          <h4>What type of feedback do you have?</h4>
+          <div className="bug-report-options">
+            <button className="bug-type-btn" onClick={() => handleDAKIssueClick('content')}>
+              📝 DAK Content Feedback - Provide feedback on clinical content or logic
+            </button>
+            <button className="bug-type-btn" onClick={() => handleDAKIssueClick('bug')}>
+              🐛 DAK Bug - Report issue with this specific DAK content
+            </button>
+            <button className="bug-type-btn" onClick={() => handleDAKIssueClick('feature')}>
+              📈 DAK Improvement - Suggest enhancements to this DAK
+            </button>
+            <button className="bug-type-btn" onClick={() => handleDAKIssueClick('question')}>
+              ❓ DAK Question - Ask about this DAK's implementation
+            </button>
+            <button className="bug-type-btn" onClick={() => handleDAKIssueClick('blank')}>
+              📝 Blank DAK Issue - Create an issue without a template
+            </button>
+          </div>
+          <div className="help-tip">
+            <strong>💡 Note:</strong> This will open an issue in the selected DAK repository for targeted feedback.
+          </div>
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <p>Help us improve SGeX by reporting bugs and issues:</p>
+          <h4>What type of issue are you experiencing?</h4>
+          <div className="bug-report-options">
+            <button className="bug-type-btn" onClick={() => handleSgexIssueClick('bug')}>
+              🐛 Bug Report - Something isn't working correctly
+            </button>
+            <button className="bug-type-btn" onClick={() => handleSgexIssueClick('feature')}>
+              ✨ Feature Request - Suggest a new feature or improvement
+            </button>
+            <button className="bug-type-btn" onClick={() => handleSgexIssueClick('question')}>
+              ❓ Question - Ask for help or clarification
+            </button>
+            <button className="bug-type-btn" onClick={() => handleSgexIssueClick('documentation')}>
+              📚 Documentation Issue - Report problems with documentation
+            </button>
+            <button className="bug-type-btn" onClick={() => handleSgexIssueClick('blank')}>
+              📝 Blank Issue - Create an issue without a template
+            </button>
+          </div>
+          <div className="help-tip">
+            <strong>💡 Tip:</strong> Please provide as much detail as possible including steps to reproduce, expected behavior, and actual behavior.
+          </div>
+          <div className="help-fallback">
+            <strong>🔗 Can't access GitHub?</strong> If the buttons above don't work in your environment:
+            <ol>
+              <li>Email us directly at <a href="mailto:smart@who.int?subject=SGEX Bug Report">smart@who.int</a></li>
+              <li>Or visit <a href="https://github.com/litlfred/sgex/issues/new" target="_blank">github.com/litlfred/sgex/issues/new</a> manually</li>
+            </ol>
+          </div>
+        </div>
+      );
+    }
+  };
+
+  // Handle SGeX issue button clicks
+  const handleSgexIssueClick = (issueType) => {
+    // Check if user is authenticated
+    if (!githubService.isAuth()) {
+      // Open GitHub directly for non-authenticated users
+      const githubUrl = generateGitHubUrl(issueType);
+      window.open(githubUrl, '_blank');
+      return;
+    }
+
+    // Always use the issue creation modal for authenticated users
+    setIssueCreationType(issueType);
+    setIssueRepository(null); // Use default SGEX repo
+    setShowIssueCreationModal(true);
+  };
+
+  // Handle DAK issue button clicks
+  const handleDAKIssueClick = (issueType) => {
+    const repository = contextData.repository || contextData.selectedDak;
+    if (!repository) {
+      console.warn('No DAK repository specified for feedback');
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!githubService.isAuth()) {
+      // Open GitHub directly for non-authenticated users
+      const githubUrl = generateGitHubUrl(issueType === 'content' ? 'dak-content' : issueType, repository);
+      window.open(githubUrl, '_blank');
+      return;
+    }
+
+    // Always use the issue creation modal for authenticated users
+    setIssueCreationType(issueType === 'content' ? 'dak-content' : issueType);
+    setIssueRepository(repository);
+    setShowIssueCreationModal(true);
+  };
+
   const handleEmailSupport = () => {
     const topicTitle = helpTopic?.title || topic;
     const subject = encodeURIComponent(`SGEX Workbench Support: ${topicTitle}`);
@@ -372,8 +479,12 @@ Best regards,
     const slides = helpTopic.content;
     const currentSlideData = slides[currentSlide];
 
-    // Handle DAK feedback buttons - content already has correct handlers
+    // Replace inline onclick handlers with React event handlers
     let processedContent = currentSlideData.content;
+    
+    // Check if this is the bug report slide with the issue type buttons
+    const isBugReportSlide = processedContent.includes('window.helpModalInstance?.openSgexIssue') || 
+                            processedContent.includes('window.helpModalInstance?.openDakIssue');
 
     return (
       <div className="help-slideshow">
@@ -384,10 +495,11 @@ Best regards,
           </div>
         </div>
         
-        <div 
-          className="slideshow-content"
-          dangerouslySetInnerHTML={{ __html: processedContent }}
-        />
+        <div className="slideshow-content">
+          {isBugReportSlide ? renderBugReportContent(processedContent) : (
+            <div dangerouslySetInnerHTML={{ __html: processedContent }} />
+          )}
+        </div>
         
         <div className="slideshow-controls">
           <button 
