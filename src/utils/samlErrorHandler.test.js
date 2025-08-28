@@ -48,6 +48,25 @@ describe('SAML Error Handler', () => {
       expect(isSAMLError(notFoundError)).toBe(false);
     });
 
+    it('should detect custom SAML authorization required errors', () => {
+      const samlError = {
+        status: 403,
+        message: 'SAML authorization required for organization WorldHealthOrganization',
+        isSAMLError: true
+      };
+      
+      expect(isSAMLError(samlError)).toBe(true);
+    });
+
+    it('should detect SAML authorization required via message pattern', () => {
+      const samlError = {
+        status: 403,
+        message: 'SAML authorization required for organization TestOrg'
+      };
+      
+      expect(isSAMLError(samlError)).toBe(true);
+    });
+
     it('should handle null/undefined errors', () => {
       expect(isSAMLError(null)).toBe(false);
       expect(isSAMLError(undefined)).toBe(false);

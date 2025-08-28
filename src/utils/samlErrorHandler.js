@@ -13,6 +13,11 @@
 export const isSAMLError = (error) => {
   if (!error) return false;
   
+  // Check for explicit SAML error flag first (set by our own code)
+  if (error.isSAMLError === true) {
+    return true;
+  }
+  
   // Check for SAML enforcement in error message
   const message = error.message || '';
   const lowerMessage = message.toLowerCase();
@@ -22,6 +27,7 @@ export const isSAMLError = (error) => {
     (
       lowerMessage.includes('saml enforcement') ||
       lowerMessage.includes('saml single sign-on') ||
+      lowerMessage.includes('saml authorization required') ||
       message.includes('must grant your Personal Access token access to this organization')
     )
   );
