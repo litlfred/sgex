@@ -104,43 +104,58 @@ const WorkflowDashboard = ({
 
   // Handle workflow trigger
   const handleTriggerWorkflow = async (workflow) => {
-    if (!isAuthenticated || !canTriggerWorkflows || !githubActionsService) return;
+    if (!isAuthenticated || !githubActionsService) return;
     
     const workflowId = workflow.workflow.id;
     setActionStates(prev => ({ ...prev, [workflowId]: { action: 'triggering' } }));
 
+    let success = false;
     try {
       console.debug(`Triggering workflow: ${workflow.workflow.name} for branch: ${branchName}`);
-      const success = await githubActionsService.triggerWorkflow(branchName);
+      success = await githubActionsService.triggerWorkflow(branchName);
       
       if (success) {
-        setActionStates(prev => ({ ...prev, [workflowId]: { action: 'triggered', message: 'Workflow triggered successfully!' } }));
+        setActionStates(prev => ({ ...prev, [workflowId]: { 
+          action: 'triggered', 
+          message: `✅ Workflow "${workflow.workflow.name}" has been triggered successfully! Check the workflow status above for progress.`,
+          persistent: true
+        } }));
         
-        // Refresh workflows after a short delay
+        // Refresh workflows after a short delay to show updated status
         setTimeout(() => {
           fetchWorkflows(true);
-        }, 2000);
+        }, 3000);
 
         // Call callback
         if (onWorkflowAction) {
           onWorkflowAction({ type: 'workflow_triggered', workflow, success: true });
         }
       } else {
-        setActionStates(prev => ({ ...prev, [workflowId]: { action: 'error', message: 'Failed to trigger workflow' } }));
+        setActionStates(prev => ({ ...prev, [workflowId]: { 
+          action: 'error', 
+          message: `❌ Failed to trigger workflow "${workflow.workflow.name}". Please check your permissions and try again.`,
+          persistent: true
+        } }));
       }
     } catch (error) {
       console.error('Error triggering workflow:', error);
-      setActionStates(prev => ({ ...prev, [workflowId]: { action: 'error', message: error.message } }));
+      setActionStates(prev => ({ ...prev, [workflowId]: { 
+        action: 'error', 
+        message: `❌ Error triggering workflow "${workflow.workflow.name}": ${error.message}`,
+        persistent: true
+      } }));
     }
 
-    // Clear action state after 5 seconds
+    // Clear action state after 15 seconds for success messages, 8 seconds for errors
     setTimeout(() => {
       setActionStates(prev => {
         const newState = { ...prev };
-        delete newState[workflowId];
+        if (newState[workflowId]) {
+          delete newState[workflowId];
+        }
         return newState;
       });
-    }, 5000);
+    }, success ? 15000 : 8000);
   };
 
   // Handle workflow rerun
@@ -151,12 +166,74 @@ const WorkflowDashboard = ({
     const workflowId = workflow.workflow.id;
     setActionStates(prev => ({ ...prev, [workflowId]: { action: 'rerunning' } }));
 
+    let success = false;
     try {
       console.debug(`Rerunning failed workflow run: ${runId} for workflow: ${workflow.workflow.name}`);
-      const success = await githubActionsService.rerunFailedWorkflow(runId);
+      success = await githubActionsService.rerunFailedWorkflow(runId);
       
       if (success) {
-        setActionStates(prev => ({ ...prev, [workflowId]: { action: 'rerun', message: 'Workflow rerun started!' } }));
+        setActionStates(prev => ({ ...prev, [workflowId]: { 
+          action: 'rerun', 
+          message: `✅ Workflow "${workflow.workflow.name}" failed jobs have been restarted! Monitor the status above for progress.`,
+          persistent: true
+        } }));
+        
+        // Refresh workflows after a short delay
+        setTimeout(() => {
+          fetchWorkflows(true);
+        }, 3000);
+
+        // Call callback
+        if (onWorkflowAction) {
+          onWorkflowAction({ type: 'workflow_rerun', workflow, success: true });
+        }
+      } else {
+        setActionStates(prev => ({ ...prev, [workflowId]: { 
+          action: 'error', 
+          message: `❌ Failed to rerun workflow "${workflow.workflow.name}". Please check your permissions and try again.`,
+          persistent: true
+        } }));
+      }
+    } catch (error) {
+      console.error('Error rerunning workflow:', error);
+      setActionStates(prev => ({ ...prev, [workflowId]: { 
+        action: 'error', 
+        message: `❌ Error rerunning workflow "${workflow.workflow.name}": ${error.message}`,
+        persistent: true
+      } }));
+    }
+
+    // Clear action state after 15 seconds for success messages, 8 seconds for errors
+    setTimeout(() => {
+      setActionStates(prev => {
+        const newState = { ...prev };
+        if (newState[workflowId]) {
+          delete newState[workflowId];
+        }
+        return newState;
+      });
+    }, success ? 15000 : 8000);
+  };
+
+  // Handle workflow approval  
+  const handleApproveWorkflow = async (workflow) => {
+    const runId = workflow.runId || workflow.lastRunId;
+    if (!isAuthenticated || !runId || !githubActionsService) return;
+    
+    const workflowId = workflow.workflow.id;
+    setActionStates(prev => ({ ...prev, [workflowId]: { action: 'approving' } }));
+
+    let success = false;
+    try {
+      console.debug(`Approving workflow run: ${runId} for workflow: ${workflow.workflow.name}`);
+      success = await githubActionsService.approveWorkflowRun(runId);
+      
+      if (success) {
+        setActionStates(prev => ({ ...prev, [workflowId]: { 
+          action: 'approved', 
+          message: `✅ Workflow "${workflow.workflow.name}" has been approved! It should continue running shortly.`,
+          persistent: true
+        } }));
         
         // Refresh workflows after a short delay
         setTimeout(() => {
@@ -165,66 +242,34 @@ const WorkflowDashboard = ({
 
         // Call callback
         if (onWorkflowAction) {
-          onWorkflowAction({ type: 'workflow_rerun', workflow, success: true });
-        }
-      } else {
-        setActionStates(prev => ({ ...prev, [workflowId]: { action: 'error', message: 'Failed to rerun workflow' } }));
-      }
-    } catch (error) {
-      console.error('Error rerunning workflow:', error);
-      setActionStates(prev => ({ ...prev, [workflowId]: { action: 'error', message: error.message } }));
-    }
-
-    // Clear action state after 5 seconds
-    setTimeout(() => {
-      setActionStates(prev => {
-        const newState = { ...prev };
-        delete newState[workflowId];
-        return newState;
-      });
-    }, 5000);
-  };
-
-  // Handle workflow approval  
-  const handleApproveWorkflow = async (workflow) => {
-    const runId = workflow.runId || workflow.lastRunId;
-    if (!isAuthenticated || !canApproveWorkflows || !runId || !githubActionsService) return;
-    
-    const workflowId = workflow.workflow.id;
-    setActionStates(prev => ({ ...prev, [workflowId]: { action: 'approving' } }));
-
-    try {
-      console.debug(`Approving workflow run: ${runId} for workflow: ${workflow.workflow.name}`);
-      const success = await githubActionsService.approveWorkflowRun(runId);
-      
-      if (success) {
-        setActionStates(prev => ({ ...prev, [workflowId]: { action: 'approved', message: 'Workflow approved successfully!' } }));
-        
-        // Refresh workflows after a short delay
-        setTimeout(() => {
-          fetchWorkflows(true);
-        }, 1000);
-
-        // Call callback
-        if (onWorkflowAction) {
           onWorkflowAction({ type: 'workflow_approved', workflow, success: true });
         }
       } else {
-        setActionStates(prev => ({ ...prev, [workflowId]: { action: 'error', message: 'Failed to approve workflow' } }));
+        setActionStates(prev => ({ ...prev, [workflowId]: { 
+          action: 'error', 
+          message: `❌ Failed to approve workflow "${workflow.workflow.name}". Please check your permissions and try again.`,
+          persistent: true
+        } }));
       }
     } catch (error) {
       console.error('Error approving workflow:', error);
-      setActionStates(prev => ({ ...prev, [workflowId]: { action: 'error', message: error.message } }));
+      setActionStates(prev => ({ ...prev, [workflowId]: { 
+        action: 'error', 
+        message: `❌ Error approving workflow "${workflow.workflow.name}": ${error.message}`,
+        persistent: true
+      } }));
     }
 
-    // Clear action state after 5 seconds
+    // Clear action state after 15 seconds for success messages, 8 seconds for errors  
     setTimeout(() => {
       setActionStates(prev => {
         const newState = { ...prev };
-        delete newState[workflowId];
+        if (newState[workflowId]) {
+          delete newState[workflowId];
+        }
         return newState;
       });
-    }, 5000);
+    }, success ? 15000 : 8000);
   };
 
   // Manual refresh
@@ -504,89 +549,91 @@ const WorkflowDashboard = ({
 
                   {/* Action buttons and status messages */}
                   <div className="workflow-actions">
-                    {isAuthenticated ? (
-                      <>
-                        {/* Always show trigger button when authenticated */}
-                        <button
-                          onClick={() => handleTriggerWorkflow(workflow)}
-                          disabled={actionState?.action === 'triggering'}
-                          className="workflow-action-btn trigger-btn"
-                          title={`Trigger ${workflow.workflow.name}`}
-                        >
-                          {actionState?.action === 'triggering' ? (
-                            <>⏳ Starting...</>
-                          ) : (
-                            <>🔄 Trigger</>
+                    <div className="workflow-action-buttons">
+                      {isAuthenticated ? (
+                        <>
+                          {/* Always show trigger button when authenticated */}
+                          <button
+                            onClick={() => handleTriggerWorkflow(workflow)}
+                            disabled={actionState?.action === 'triggering'}
+                            className="workflow-action-btn trigger-btn"
+                            title={`Trigger ${workflow.workflow.name}`}
+                          >
+                            {actionState?.action === 'triggering' ? (
+                              <>⏳ Starting...</>
+                            ) : (
+                              <>🔄 Trigger</>
+                            )}
+                          </button>
+
+                          {/* Show approve button for workflows awaiting approval - use both runId and lastRunId */}
+                          {workflow.status === 'waiting' && (workflow.runId || workflow.lastRunId) && (
+                            <button
+                              onClick={() => handleApproveWorkflow(workflow)}
+                              disabled={actionState?.action === 'approving'}
+                              className="workflow-action-btn approve-btn"
+                              title={`Approve ${workflow.workflow.name}`}
+                            >
+                              {actionState?.action === 'approving' ? (
+                                <>⏳ Approving...</>
+                              ) : (
+                                <>✅ Approve</>
+                              )}
+                            </button>
                           )}
-                        </button>
 
-                        {/* Show approve button for workflows awaiting approval - use both runId and lastRunId */}
-                        {workflow.status === 'waiting' && (workflow.runId || workflow.lastRunId) && (
-                          <button
-                            onClick={() => handleApproveWorkflow(workflow)}
-                            disabled={actionState?.action === 'approving'}
-                            className="workflow-action-btn approve-btn"
-                            title={`Approve ${workflow.workflow.name}`}
-                          >
-                            {actionState?.action === 'approving' ? (
-                              <>⏳ Approving...</>
-                            ) : (
-                              <>✅ Approve</>
-                            )}
-                          </button>
-                        )}
+                          {/* Show rerun button for failed workflows - use both runId and lastRunId */}
+                          {workflow.conclusion === 'failure' && (workflow.runId || workflow.lastRunId) && (
+                            <button
+                              onClick={() => handleRerunWorkflow(workflow)}
+                              disabled={actionState?.action === 'rerunning'}
+                              className="workflow-action-btn rerun-btn"
+                              title={`Rerun failed jobs for ${workflow.workflow.name}`}
+                            >
+                              {actionState?.action === 'rerunning' ? (
+                                <>⏳ Rerunning...</>
+                              ) : (
+                                <>🔄 Rerun Failed</>
+                              )}
+                            </button>
+                          )}
 
-                        {/* Show rerun button for failed workflows - use both runId and lastRunId */}
-                        {workflow.conclusion === 'failure' && (workflow.runId || workflow.lastRunId) && (
-                          <button
-                            onClick={() => handleRerunWorkflow(workflow)}
-                            disabled={actionState?.action === 'rerunning'}
-                            className="workflow-action-btn rerun-btn"
-                            title={`Rerun failed jobs for ${workflow.workflow.name}`}
-                          >
-                            {actionState?.action === 'rerunning' ? (
-                              <>⏳ Rerunning...</>
-                            ) : (
-                              <>🔄 Rerun Failed</>
-                            )}
-                          </button>
-                        )}
+                          {/* Always show view button - prefer run URL, fall back to workflow URL */}
+                          {(workflow.url || workflow.workflowUrl) && (
+                            <a
+                              href={workflow.url || workflow.workflowUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="workflow-action-btn view-btn"
+                            >
+                              📋 View {workflow.url ? 'Run' : 'Workflow'}
+                            </a>
+                          )}
+                        </>
+                      ) : (
+                        <span className="auth-required">🔒 Sign in for actions</span>
+                      )}
 
-                        {/* Always show view button - prefer run URL, fall back to workflow URL */}
-                        {(workflow.url || workflow.workflowUrl) && (
-                          <a
-                            href={workflow.url || workflow.workflowUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="workflow-action-btn view-btn"
-                          >
-                            📋 View {workflow.url ? 'Run' : 'Workflow'}
-                          </a>
-                        )}
-                      </>
-                    ) : (
-                      <span className="auth-required">🔒 Sign in for actions</span>
-                    )}
-
-                    {/* Debug information - remove in production */}
-                    {process.env.NODE_ENV === 'development' && (
-                      <div className="workflow-debug" style={{ fontSize: '0.7rem', opacity: 0.7, marginTop: '0.5rem' }}>
-                        Auth: {isAuthenticated ? '✅' : '❌'} | 
-                        Status: {workflow.status} | 
-                        Conclusion: {workflow.conclusion || 'N/A'} | 
-                        RunId: {workflow.runId || 'N/A'} | 
-                        LastRunId: {workflow.lastRunId || 'N/A'} | 
-                        URL: {workflow.url ? '✅' : '❌'} | 
-                        WorkflowURL: {workflow.workflowUrl ? '✅' : '❌'}
-                      </div>
-                    )}
+                      {/* Debug information - remove in production */}
+                      {process.env.NODE_ENV === 'development' && (
+                        <div className="workflow-debug" style={{ fontSize: '0.7rem', opacity: 0.7, marginTop: '0.5rem' }}>
+                          Auth: {isAuthenticated ? '✅' : '❌'} | 
+                          Status: {workflow.status} | 
+                          Conclusion: {workflow.conclusion || 'N/A'} | 
+                          RunId: {workflow.runId || 'N/A'} | 
+                          LastRunId: {workflow.lastRunId || 'N/A'} | 
+                          URL: {workflow.url ? '✅' : '❌'} | 
+                          WorkflowURL: {workflow.workflowUrl ? '✅' : '❌'}
+                        </div>
+                      )}
+                    </div>
 
                     {/* Action status messages */}
                     {actionState && (
                       <div className={`action-status ${actionState.action}`}>
-                        {actionState.action === 'triggered' && '✅ '}
+                        {actionState.action === 'triggered' && '🎯 '}
                         {actionState.action === 'approved' && '✅ '}
-                        {actionState.action === 'rerun' && '✅ '}
+                        {actionState.action === 'rerun' && '🔄 '}
                         {actionState.action === 'error' && '❌ '}
                         {actionState.message || `${actionState.action}...`}
                       </div>
