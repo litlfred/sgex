@@ -127,7 +127,7 @@ body.theme-light .actor-editor {
 }
 
 .editor-toolbar {
-  background: white;
+  background: var(--who-card-bg);
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1.5rem;
@@ -517,7 +517,7 @@ body.theme-light .actor-editor {
 }
 
 .modal-content {
-  background: white;
+  background: var(--who-primary-bg);
   border-radius: 8px;
   max-width: 800px;
   max-height: 80vh;
