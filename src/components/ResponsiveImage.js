@@ -32,7 +32,7 @@ const ResponsiveImage = ({
   const getResponsiveImagePath = useCallback(() => {
     // Use more aggressive mobile detection for action cards/buttons
     const mobileThreshold = aggressiveMobile ? 1024 : 768;
-    const isMobile = forceMobile || (!forceDesktop && window.innerWidth <= mobileThreshold);
+    const isMobile = forceMobile || (!forceDesktop && typeof window !== 'undefined' && window.innerWidth <= mobileThreshold);
     const isDarkMode = document.body && document.body.classList.contains('theme-dark');
     const publicUrl = process.env.PUBLIC_URL || '';
     const normalizedPath = src.startsWith('/') ? src.slice(1) : src;
@@ -53,8 +53,8 @@ const ResponsiveImage = ({
     const finalPath = combineUrlParts(publicUrl, imageName);
     
     // Debug logging for deployment troubleshooting
-    if (process.env.NODE_ENV === 'development' || window.location.hostname.includes('github.io')) {
-      console.log(`ResponsiveImage debug [${src}]: mobile=${isMobile}, dark=${isDarkMode}, path="${finalPath}"`);
+    if (typeof window !== 'undefined' && (process.env.NODE_ENV === 'development' || window.location.hostname.includes('github.io'))) {
+      console.log(`ResponsiveImage debug [${src}]: mobile=${isMobile}, dark=${isDarkMode}, width=${typeof window !== 'undefined' ? window.innerWidth : 'unknown'}, path="${finalPath}"`);
     }
     
     return finalPath;

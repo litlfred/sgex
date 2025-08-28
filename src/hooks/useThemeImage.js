@@ -31,7 +31,7 @@ const useThemeImage = (baseImagePath) => {
       }
       
       // Debug logging for deployment troubleshooting
-      if (process.env.NODE_ENV === 'development' || window.location.hostname.includes('github.io')) {
+      if (typeof window !== 'undefined' && (process.env.NODE_ENV === 'development' || window.location.hostname.includes('github.io'))) {
         console.log(`useThemeImage [${baseImagePath}]: dark=${isDarkMode}, path="${finalPath}"`);
       }
       
