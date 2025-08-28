@@ -108,9 +108,9 @@ export class GitHubStorage extends Storage {
       
       // Convert the decoded string content to Buffer 
       // (githubService.getFileContent already decodes the base64 content to a string)
-      console.log(`GitHubStorage.readFile: Converting string to Buffer...`);
-      const content = Buffer.from(contentString, 'utf-8');
-      console.log(`GitHubStorage.readFile: ✅ Buffer created successfully, size: ${content.length} bytes`);
+      console.log(`GitHubStorage.readFile: Converting string to Uint8Array...`);
+      const content = new TextEncoder().encode(contentString);
+      console.log(`GitHubStorage.readFile: ✅ Uint8Array created successfully, size: ${content.length} bytes`);
       
       this.cache.set(cacheKey, content);
       console.log(`GitHubStorage.readFile: ✅ Successfully read file ${path}, cached and returning content`);
@@ -195,7 +195,7 @@ export class GitHubStorage extends Storage {
       const response = await this.githubService.getFileContent(owner, repo, path, this.branch);
       
       return {
-        size: Buffer.from(response.content, 'base64').length,
+        size: atob(response.content).length,
         sha: response.sha,
         path: response.path,
         type: response.type,
@@ -219,7 +219,7 @@ export class MockStorage extends Storage {
 
   async readFile(path) {
     if (this.mockFiles[path]) {
-      return Buffer.from(this.mockFiles[path], 'utf-8');
+      return new TextEncoder().encode(this.mockFiles[path]);
     }
     throw new Error(`File not found: ${path}`);
   }
@@ -246,7 +246,7 @@ export class MockStorage extends Storage {
   async getFileInfo(path) {
     if (this.mockFiles[path]) {
       return {
-        size: Buffer.from(this.mockFiles[path], 'utf-8').length,
+        size: new TextEncoder().encode(this.mockFiles[path]).length,
         path: path,
         type: 'file'
       };
