@@ -8,7 +8,7 @@ import githubService from '../services/githubService';
 import HelpModal from './HelpModal';
 import TrackedItemsViewer from './TrackedItemsViewer';
 import LanguageSelector from './LanguageSelector';
-import useThemeImage from '../hooks/useThemeImage';
+import ResponsiveImage from './ResponsiveImage';
 import { getSavedTheme, toggleTheme } from '../utils/themeManager';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
@@ -24,8 +24,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [trackedItemsCount, setTrackedItemsCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Theme-aware mascot image
-  const mascotImage = useThemeImage('sgex-mascot.png');
+  // Responsive theme-aware mascot image - now handled by ResponsiveImage component
 
   // Sync local state with actual theme on mount
   useEffect(() => {
@@ -199,10 +198,11 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
           onMouseLeave={handleMouseLeave}
           onClick={handleClick}
         >
-          <img 
-            src={mascotImage} 
+          <ResponsiveImage 
+            src="sgex-mascot.png" 
             alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} 
             className="mascot-icon"
+            aggressiveMobile={true}
           />
           
           {/* Notification badge for important help messages only (not for tracked items count) */}

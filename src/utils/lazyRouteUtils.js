@@ -88,6 +88,9 @@ function createLazyComponent(componentName) {
     case 'LandingPageWithFramework':
       LazyComponent = React.lazy(() => import('../components/LandingPageWithFramework'));
       break;
+    case 'ResponsiveImageDemo':
+      LazyComponent = React.lazy(() => import('../components/ResponsiveImageDemo'));
+      break;
     case 'TestDocumentationPage':
       LazyComponent = React.lazy(() => import('../components/TestDocumentationPage'));
       break;
@@ -228,6 +231,7 @@ export function generateLazyRoutes() {
     const BranchListingPage = createLazyComponent('BranchListingPage');
     const DAKDashboard = createLazyComponent('DAKDashboard');
     const LandingPage = createLazyComponent('LandingPage');
+    const ResponsiveImageDemo = createLazyComponent('ResponsiveImageDemo');
     
     return [
       <Route key="fallback-home" path="/" element={<BranchListingPage />} />,
@@ -236,6 +240,7 @@ export function generateLazyRoutes() {
       <Route key="fallback-dashboard-user-repo" path="/dashboard/:user/:repo" element={<DAKDashboard />} />,
       <Route key="fallback-dashboard-user-repo-branch" path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />,
       <Route key="fallback-welcome" path="/welcome" element={<LandingPage />} />,
+      <Route key="responsive-image-demo" path="/demo/responsive-images" element={<ResponsiveImageDemo />} />,
       <Route key="fallback-404" path="*" element={<div>Page not found</div>} />
     ];
   }

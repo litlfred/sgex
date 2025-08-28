@@ -1,0 +1,159 @@
+.responsive-image-demo {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.responsive-image-demo h1 {
+  color: #0078d4;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.responsive-image-demo h2 {
+  color: #323130;
+  border-bottom: 2px solid #0078d4;
+  padding-bottom: 0.5rem;
+  margin-top: 2rem;
+}
+
+.demo-section {
+  margin: 2rem 0;
+}
+
+.image-showcase {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+.image-item {
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.demo-image {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.demo-image:hover {
+  transform: scale(1.05);
+}
+
+.demo-image.mascot {
+  max-width: 400px;
+}
+
+.image-info {
+  text-align: center;
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #e6f3ff;
+  border-radius: 8px;
+  color: #0078d4;
+  font-weight: 600;
+}
+
+.demo-instructions {
+  background: #fff4e6;
+  border: 1px solid #ffcc80;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+
+.demo-instructions h3 {
+  color: #e65100;
+  margin-top: 0;
+}
+
+.demo-instructions ol {
+  margin: 1rem 0;
+}
+
+.demo-instructions li {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.demo-stats {
+  background: #e8f5e8;
+  border: 1px solid #4caf50;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+
+.demo-stats h3 {
+  color: #2e7d32;
+  margin-top: 0;
+}
+
+.demo-stats ul {
+  margin: 1rem 0;
+}
+
+.demo-stats li {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .responsive-image-demo {
+    padding: 1rem;
+  }
+  
+  .image-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .demo-image.mascot {
+    max-width: 250px;
+  }
+}
+
+/* Dark theme support */
+body.theme-dark .responsive-image-demo {
+  background: #1e1e1e;
+  color: #ffffff;
+}
+
+body.theme-dark .responsive-image-demo h2 {
+  color: #ffffff;
+  border-bottom-color: #4dabf7;
+}
+
+body.theme-dark .image-item {
+  background: #2d2d2d;
+  color: #ffffff;
+}
+
+body.theme-dark .demo-instructions {
+  background: #2d2d2d;
+  border-color: #ffcc80;
+  color: #ffffff;
+}
+
+body.theme-dark .demo-stats {
+  background: #2d2d2d;
+  border-color: #4caf50;
+  color: #ffffff;
+}
