@@ -564,6 +564,46 @@ class GitHubActionsService {
   }
 
   /**
+   * Rerun failed jobs in a workflow run
+   * @param {number} runId - The workflow run ID to rerun
+   * @returns {Promise<boolean>} Success status
+   */
+  async rerunFailedWorkflow(runId) {
+    try {
+      if (!this.token) {
+        throw new Error('Authentication required to rerun workflow');
+      }
+
+      console.debug(`Rerunning failed jobs for workflow run: ${runId}`);
+
+      const response = await fetch(
+        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/runs/${runId}/rerun-failed-jobs`,
+        {
+          method: 'POST',
+          headers: this.getHeaders()
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Workflow rerun failed:`, {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          runId
+        });
+        throw new Error(`Failed to rerun workflow: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      console.debug(`Successfully reran failed jobs for workflow run ${runId}`);
+      return true;
+    } catch (error) {
+      console.error(`Error rerunning workflow run ${runId}:`, error);
+      return false;
+    }
+  }
+
+  /**
    * Check if the service is authenticated
    * @returns {boolean} Authentication status
    */

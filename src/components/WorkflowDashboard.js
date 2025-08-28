@@ -130,7 +130,48 @@ const WorkflowDashboard = ({
     }, 5000);
   };
 
-  // Handle workflow approval
+  // Handle workflow rerun
+  const handleRerunWorkflow = async (workflow) => {
+    if (!isAuthenticated || !workflow.runId || !githubActionsService) return;
+    
+    const workflowId = workflow.workflow.id;
+    setActionStates(prev => ({ ...prev, [workflowId]: { action: 'rerunning' } }));
+
+    try {
+      console.debug(`Rerunning failed workflow run: ${workflow.runId} for workflow: ${workflow.workflow.name}`);
+      const success = await githubActionsService.rerunFailedWorkflow(workflow.runId);
+      
+      if (success) {
+        setActionStates(prev => ({ ...prev, [workflowId]: { action: 'rerun', message: 'Workflow rerun started!' } }));
+        
+        // Refresh workflows after a short delay
+        setTimeout(() => {
+          fetchWorkflows(true);
+        }, 2000);
+
+        // Call callback
+        if (onWorkflowAction) {
+          onWorkflowAction({ type: 'workflow_rerun', workflow, success: true });
+        }
+      } else {
+        setActionStates(prev => ({ ...prev, [workflowId]: { action: 'error', message: 'Failed to rerun workflow' } }));
+      }
+    } catch (error) {
+      console.error('Error rerunning workflow:', error);
+      setActionStates(prev => ({ ...prev, [workflowId]: { action: 'error', message: error.message } }));
+    }
+
+    // Clear action state after 5 seconds
+    setTimeout(() => {
+      setActionStates(prev => {
+        const newState = { ...prev };
+        delete newState[workflowId];
+        return newState;
+      });
+    }, 5000);
+  };
+
+  // Handle workflow approval  
   const handleApproveWorkflow = async (workflow) => {
     if (!isAuthenticated || !canApproveWorkflows || !workflow.runId || !githubActionsService) return;
     
@@ -387,6 +428,22 @@ const WorkflowDashboard = ({
                           </button>
                         )}
 
+                        {/* Rerun button for failed workflows */}
+                        {workflow.conclusion === 'failure' && workflow.runId && (
+                          <button
+                            onClick={() => handleRerunWorkflow(workflow)}
+                            disabled={actionState?.action === 'rerunning'}
+                            className="workflow-action-btn rerun-btn"
+                            title={`Rerun failed jobs for ${workflow.workflow.name}`}
+                          >
+                            {actionState?.action === 'rerunning' ? (
+                              <>⏳ Rerunning...</>
+                            ) : (
+                              <>🔄 Rerun Failed</>
+                            )}
+                          </button>
+                        )}
+
                         {workflow.url && (
                           <a
                             href={workflow.url}
@@ -409,6 +466,7 @@ const WorkflowDashboard = ({
                       <div className={`action-status ${actionState.action}`}>
                         {actionState.action === 'triggered' && '✅ '}
                         {actionState.action === 'approved' && '✅ '}
+                        {actionState.action === 'rerun' && '✅ '}
                         {actionState.action === 'error' && '❌ '}
                         {actionState.message || `${actionState.action}...`}
                       </div>
