@@ -7,6 +7,9 @@ export { default as ErrorHandler } from './ErrorHandler';
 export { PageProvider, usePage, PAGE_TYPES } from './PageProvider';
 export { usePageParams, useDAKParams, useUserParams } from './usePageParams';
 
+// SAML support components
+export { default as withSAMLSupport, useSAMLError } from './SAMLPageSupport';
+
 // Asset editor framework components
 export { default as AssetEditorLayout } from './AssetEditorLayout';
 export { default as SaveButtonsContainer } from './SaveButtonsContainer';

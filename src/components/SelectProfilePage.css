@@ -350,3 +350,39 @@ body.theme-light .select-profile-content {
     font-size: 1.6rem;
   }
 }
+
+/* SAML Authorization Styles */
+.profile-card.needs-saml {
+  border: 2px solid #ffd33d;
+  position: relative;
+}
+
+.profile-card.needs-saml:hover {
+  border-color: #ffb900;
+  box-shadow: 0 4px 20px rgba(255, 185, 0, 0.2);
+}
+
+.saml-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.saml-badge {
+  background: #ffd33d;
+  color: #663c00;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}

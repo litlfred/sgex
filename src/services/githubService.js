@@ -365,6 +365,16 @@ class GitHubService {
       });
       return data;
     } catch (error) {
+      // Enhanced error handling for SAML enforcement
+      if (error.status === 403 && error.message.includes('SAML enforcement')) {
+        const samlError = new Error(`SAML authorization required for organization ${orgLogin}`);
+        samlError.isSAMLError = true;
+        samlError.organization = orgLogin;
+        samlError.originalError = error;
+        samlError.status = error.status;
+        throw samlError;
+      }
+      
       console.error(`Failed to fetch organization ${orgLogin}:`, error);
       throw error;
     }
