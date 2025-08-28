@@ -3,9 +3,10 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  background: white;
+  background: var(--who-card-bg, white);
   margin-bottom: 1rem;
   position: relative;
+  border: 1px solid var(--who-border-color, #e9ecef);
 }
 
 .fsh-editor-header {
@@ -107,7 +108,7 @@
 .editor-pane {
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #e9ecef;
+  border-right: 1px solid var(--who-border-color, #e9ecef);
 }
 
 .preview-pane {
@@ -117,9 +118,9 @@
 
 .preview-header {
   padding: 0.75rem 1rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
-  color: #6c757d;
+  background: var(--who-bg-light, #f8f9fa);
+  border-bottom: 1px solid var(--who-border-color, #e9ecef);
+  color: var(--who-text-muted, #6c757d);
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -143,20 +144,20 @@
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 14px;
   line-height: 1.6;
-  background: #f8f9fa;
-  color: #2c3e50;
+  background: var(--who-bg-light, #f8f9fa);
+  color: var(--who-text-primary, #2c3e50);
   min-height: 350px;
   max-height: 600px;
   overflow-y: auto;
 }
 
 .fsh-textarea::placeholder {
-  color: #6c757d;
+  color: var(--who-text-muted, #6c757d);
   font-style: italic;
 }
 
 .fsh-textarea:focus {
-  background: #ffffff;
+  background: var(--who-card-bg, #ffffff);
   box-shadow: inset 0 0 0 2px rgba(0, 120, 212, 0.1);
 }
 
@@ -167,7 +168,8 @@
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
   font-size: 14px !important;
   line-height: 1.6 !important;
-  background: #f8f9fa !important;
+  background: var(--who-bg-light, #f8f9fa) !important;
+  color: var(--who-text-primary, #2c3e50) !important;
   border: none !important;
   border-radius: 0 !important;
   overflow: auto;
@@ -180,7 +182,8 @@
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
   font-size: 14px !important;
   line-height: 1.6 !important;
-  background: #f8f9fa !important;
+  background: var(--who-bg-light, #f8f9fa) !important;
+  color: var(--who-text-primary, #2c3e50) !important;
   border: none !important;
   border-radius: 0 !important;
   overflow: auto;
@@ -189,8 +192,8 @@
 /* Footer */
 .fsh-editor-footer {
   padding: 0.75rem 1.5rem;
-  background: #f8f9fa;
-  border-top: 1px solid #e9ecef;
+  background: var(--who-bg-light, #f8f9fa);
+  border-top: 1px solid var(--who-border-color, #e9ecef);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -199,13 +202,13 @@
 .content-stats {
   display: flex;
   gap: 0.5rem;
-  color: #6c757d;
+  color: var(--who-text-muted, #6c757d);
   font-size: 0.85rem;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
 }
 
 .editor-help {
-  color: #6c757d;
+  color: var(--who-text-muted, #6c757d);
   font-size: 0.8rem;
 }
 

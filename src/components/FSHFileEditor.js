@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import './FSHFileEditor.css';
 
 /**
@@ -31,7 +31,27 @@ const FSHFileEditor = ({
   const [editorContent, setEditorContent] = useState(content);
   const [isEditing, setIsEditing] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const textareaRef = useRef(null);
+
+  // Check if dark mode is active
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.body.classList.contains('theme-dark'));
+    };
+
+    // Initial check
+    checkDarkMode();
+
+    // Listen for theme changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.body, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Update content when prop changes
   useEffect(() => {
@@ -98,14 +118,17 @@ const FSHFileEditor = ({
     autoResize();
   }, [editorContent]);
 
+  // Choose syntax highlighting theme based on dark mode
+  const syntaxTheme = isDarkMode ? oneDark : oneLight;
+
   // Syntax highlighting styles
   const previewStyle = {
     margin: 0,
     borderRadius: '8px',
     fontSize: '14px',
     lineHeight: '1.6',
-    background: '#f8f9fa',
-    border: '1px solid #e9ecef',
+    background: 'transparent', // Let CSS handle background
+    border: 'none',
     maxHeight: '400px',
     overflow: 'auto',
     ...customStyle
@@ -176,7 +199,7 @@ const FSHFileEditor = ({
                 <div className="preview-content">
                   <SyntaxHighlighter
                     language="javascript"
-                    style={oneLight}
+                    style={syntaxTheme}
                     customStyle={previewStyle}
                   >
                     {editorContent || '// FSH content preview will appear here...'}
@@ -189,7 +212,7 @@ const FSHFileEditor = ({
           <div className="viewer-pane">
             <SyntaxHighlighter
               language="javascript"
-              style={oneLight}
+              style={syntaxTheme}
               customStyle={{
                 ...previewStyle,
                 minHeight: '200px',
@@ -197,6 +220,12 @@ const FSHFileEditor = ({
               }}
               showLineNumbers={true}
               wrapLines={true}
+              lineNumberStyle={{
+                minWidth: '3em',
+                paddingRight: '1em',
+                color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : '#6c757d',
+                textAlign: 'right'
+              }}
             >
               {editorContent || '// FSH content will appear here...'}
             </SyntaxHighlighter>

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import './FSHFileViewer.css';
 
 /**
@@ -20,14 +20,38 @@ const FSHFileViewer = ({
   showLineNumbers = false,
   className = ''
 }) => {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Check if dark mode is active
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.body.classList.contains('theme-dark'));
+    };
+
+    // Initial check
+    checkDarkMode();
+
+    // Listen for theme changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.body, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Choose syntax highlighting theme based on dark mode
+  const syntaxTheme = isDarkMode ? oneDark : oneLight;
+
   // Default styles for FSH syntax highlighting
   const defaultStyle = {
     margin: 0,
     borderRadius: '8px',
     fontSize: '14px',
     lineHeight: '1.6',
-    background: '#f8f9fa',
-    border: '1px solid #e9ecef',
+    background: 'transparent', // Let CSS handle background
+    border: 'none',
     ...customStyle
   };
 
@@ -44,14 +68,14 @@ const FSHFileViewer = ({
       <div className="fsh-syntax-container">
         <SyntaxHighlighter
           language="javascript" // Using javascript as closest match for FSH syntax
-          style={oneLight}
+          style={syntaxTheme}
           customStyle={defaultStyle}
           showLineNumbers={showLineNumbers}
           wrapLines={true}
           lineNumberStyle={{
             minWidth: '3em',
             paddingRight: '1em',
-            color: '#6c757d',
+            color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : '#6c757d',
             textAlign: 'right'
           }}
         >

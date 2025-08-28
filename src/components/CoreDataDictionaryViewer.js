@@ -4,6 +4,8 @@ import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
 import FSHFileViewer from './FSHFileViewer';
 import FSHFileEditor from './FSHFileEditor';
+import ArchiMateExtractionModal from './ArchiMateExtractionModal';
+import { extractLogicalModelToArchiMate, extractMultipleModelsToArchiMate } from '../services/archiMateService';
 
 const CoreDataDictionaryViewer = () => {
   return (
@@ -44,6 +46,11 @@ const CoreDataDictionaryViewerContent = () => {
   // FSH Editor state
   const [showEditor, setShowEditor] = useState(false);
   const [editingModel, setEditingModel] = useState(null);
+  
+  // ArchiMate Extraction state
+  const [showArchiMateModal, setShowArchiMateModal] = useState(false);
+  const [archiMateResult, setArchiMateResult] = useState(null);
+  const [extractingModel, setExtractingModel] = useState(null);
 
   // Generate base URL for IG Publisher artifacts
   const getBaseUrl = useCallback((branchName) => {
@@ -385,14 +392,48 @@ const CoreDataDictionaryViewerContent = () => {
     setShowEditor(true);
   };
 
-  const handleExtractLogicalModel = (model) => {
-    // TODO: Implement ArchiMate extraction for individual model
-    alert(`ArchiMate extraction for "${model.title}" will be implemented in Phase 5`);
+  const handleExtractLogicalModel = async (model) => {
+    try {
+      setExtractingModel(model.name);
+      
+      // Perform ArchiMate extraction
+      const result = await extractLogicalModelToArchiMate(model);
+      
+      setArchiMateResult(result);
+      setShowArchiMateModal(true);
+      setExtractingModel(null);
+    } catch (error) {
+      console.error('ArchiMate extraction failed:', error);
+      setArchiMateResult({
+        success: false,
+        error: error.message,
+        sourceModel: model
+      });
+      setShowArchiMateModal(true);
+      setExtractingModel(null);
+    }
   };
 
-  const handleExtractAllModels = () => {
-    // TODO: Implement bulk ArchiMate extraction
-    alert(`Bulk ArchiMate extraction for all ${logicalModels.length} models will be implemented in Phase 5`);
+  const handleExtractAllModels = async () => {
+    try {
+      setExtractingModel('bulk');
+      
+      // Perform bulk ArchiMate extraction
+      const result = await extractMultipleModelsToArchiMate(logicalModels);
+      
+      setArchiMateResult(result);
+      setShowArchiMateModal(true);
+      setExtractingModel(null);
+    } catch (error) {
+      console.error('Bulk ArchiMate extraction failed:', error);
+      setArchiMateResult({
+        success: false,
+        error: error.message,
+        sourceModel: { name: 'All Models' }
+      });
+      setShowArchiMateModal(true);
+      setExtractingModel(null);
+    }
   };
 
   const handleSaveLogicalModel = (content) => {
@@ -412,6 +453,11 @@ const CoreDataDictionaryViewerContent = () => {
   const closeEditor = () => {
     setShowEditor(false);
     setEditingModel(null);
+  };
+
+  const closeArchiMateModal = () => {
+    setShowArchiMateModal(false);
+    setArchiMateResult(null);
   };
 
   if (!profile || !repository) {
@@ -723,10 +769,10 @@ const CoreDataDictionaryViewerContent = () => {
                 <button 
                   className="action-btn primary" 
                   onClick={handleExtractAllModels}
-                  disabled={logicalModels.length === 0}
+                  disabled={logicalModels.length === 0 || extractingModel === 'bulk'}
                   title="Extract all logical models to ArchiMate DataObjects with relationships"
                 >
-                  📦 Extract All to ArchiMate ({logicalModels.length})
+                  {extractingModel === 'bulk' ? '⏳ Extracting All...' : `📦 Extract All to ArchiMate (${logicalModels.length})`}
                 </button>
                 <button 
                   className="action-btn secondary" 
@@ -800,8 +846,9 @@ const CoreDataDictionaryViewerContent = () => {
                           className="action-btn tertiary"
                           onClick={() => handleExtractLogicalModel(model)}
                           title="Extract to ArchiMate DataObject"
+                          disabled={extractingModel === model.name}
                         >
-                          📊 Extract to ArchiMate
+                          {extractingModel === model.name ? '⏳ Extracting...' : '📊 Extract to ArchiMate'}
                         </button>
                       </div>
                     </div>
@@ -880,6 +927,14 @@ const CoreDataDictionaryViewerContent = () => {
           </div>
         </div>
       )}
+
+      {/* ArchiMate Extraction Modal */}
+      <ArchiMateExtractionModal
+        isOpen={showArchiMateModal}
+        onClose={closeArchiMateModal}
+        extractionResult={archiMateResult}
+        sourceModelName={archiMateResult?.sourceModel?.title || archiMateResult?.sourceModel?.name || 'Logical Model'}
+      />
     </div>
   );
 };
