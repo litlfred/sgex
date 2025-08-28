@@ -2074,45 +2074,130 @@ class GitHubService {
         owner,
         repo,
         sort: options.sort || 'newest',
-        per_page: options.per_page || 100,
+        per_page: Math.min(options.per_page || 30, 100),
         page: options.page || 1
       };
 
       const { data } = await octokit.rest.repos.listForks(params);
       
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/forks`, 200, Date.now() - startTime);
-      
-      // Return formatted fork data
-      return data.map(fork => ({
-        id: fork.id,
-        name: fork.name,
-        full_name: fork.full_name,
-        owner: {
-          login: fork.owner.login,
-          avatar_url: fork.owner.avatar_url,
-          html_url: fork.owner.html_url,
-          type: fork.owner.type
-        },
-        description: fork.description,
-        html_url: fork.html_url,
-        clone_url: fork.clone_url,
-        created_at: fork.created_at,
-        updated_at: fork.updated_at,
-        pushed_at: fork.pushed_at,
-        stargazers_count: fork.stargazers_count,
-        forks_count: fork.forks_count,
-        open_issues_count: fork.open_issues_count,
-        default_branch: fork.default_branch,
-        private: fork.private,
-        fork: fork.fork,
-        parent: fork.parent ? {
-          full_name: fork.parent.full_name,
-          html_url: fork.parent.html_url
-        } : null
-      }));
+      return data;
     } catch (error) {
-      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/forks`, error.status || 'error', Date.now() - startTime);
-      console.error('Failed to fetch repository forks:', error);
+      this.logger.apiResponse('GET', `/repos/${owner}/${repo}/forks`, error.status || 500, Date.now() - startTime);
+      console.error('Failed to fetch forks:', error);
+      throw error;
+    }
+  }
+
+  // Create a new issue (supports both object and individual parameter calling styles)
+  async createIssue(owner, repo, titleOrIssueData, body = null, labels = [], assignees = []) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to create issues');
+    }
+
+    // Support both calling styles:
+    // 1. createIssue(owner, repo, issueData) - object style
+    // 2. createIssue(owner, repo, title, body, labels, assignees) - individual parameters style
+    let issueData;
+    if (typeof titleOrIssueData === 'object' && titleOrIssueData !== null) {
+      // Object style - titleOrIssueData is actually issueData
+      issueData = titleOrIssueData;
+    } else {
+      // Individual parameters style
+      issueData = {
+        title: titleOrIssueData,
+        body: body,
+        labels: labels || [],
+        assignees: assignees || []
+      };
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('POST', `/repos/${owner}/${repo}/issues`, { 
+      title: issueData.title, 
+      bodyLength: issueData.body?.length, 
+      labels: issueData.labels, 
+      assignees: issueData.assignees 
+    });
+
+    try {
+      const params = {
+        owner,
+        repo,
+        title: issueData.title,
+        body: issueData.body
+      };
+
+      // Add optional parameters if provided
+      if (issueData.labels && issueData.labels.length > 0) {
+        params.labels = issueData.labels;
+      }
+      
+      if (issueData.assignees && issueData.assignees.length > 0) {
+        params.assignees = issueData.assignees;
+      }
+      
+      if (issueData.milestone) {
+        params.milestone = issueData.milestone;
+      }
+
+      const response = await this.octokit.rest.issues.create(params);
+
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, response.status, Date.now() - startTime);
+      this.logger.info('Issue created successfully', { 
+        issueNumber: response.data.number,
+        title: issueData.title,
+        owner,
+        repo
+      });
+
+      // Return both the original format and enhanced format for compatibility
+      return {
+        ...response.data,
+        success: true,
+        issue: {
+          id: response.data.id,
+          number: response.data.number,
+          title: response.data.title,
+          body: response.data.body,
+          html_url: response.data.html_url,
+          state: response.data.state,
+          created_at: response.data.created_at,
+          user: {
+            login: response.data.user.login,
+            avatar_url: response.data.user.avatar_url
+          },
+          labels: response.data.labels.map(label => ({
+            name: label.name,
+            color: label.color
+          }))
+        }
+      };
+    } catch (error) {
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, error.status || 'error', Date.now() - startTime);
+      this.logger.error('Failed to create issue', { 
+        error: error.message,
+        owner,
+        repo,
+        title: issueData.title
+      });
+      console.error('Failed to create issue:', error);
+      
+      // Return structured error response for new calling style compatibility
+      if (typeof titleOrIssueData !== 'object') {
+        return {
+          success: false,
+          error: {
+            message: error.message,
+            status: error.status,
+            type: error.status === 403 ? 'permission_denied' : 
+                  error.status === 422 ? 'validation_error' : 
+                  error.status === 404 ? 'repository_not_found' : 'unknown_error'
+          }
+        };
+      }
+      
+      // Throw for object style (original behavior)
       throw error;
     }
   }
@@ -2209,74 +2294,6 @@ class GitHubService {
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls`, error.status || 'error', Date.now() - startTime);
       console.error('Failed to fetch pull requests:', error);
       throw error;
-    }
-  }
-
-  // Create an issue (requires authentication)
-  async createIssue(owner, repo, title, body, labels = [], assignees = []) {
-    if (!this.isAuth()) {
-      throw new Error('Authentication required to create issues');
-    }
-
-    const startTime = Date.now();
-    this.logger.apiCall('POST', `/repos/${owner}/${repo}/issues`, { title, bodyLength: body?.length, labels, assignees });
-
-    try {
-      const params = {
-        owner,
-        repo,
-        title,
-        body
-      };
-
-      // Add optional parameters if provided
-      if (labels.length > 0) {
-        params.labels = labels;
-      }
-      
-      if (assignees.length > 0) {
-        params.assignees = assignees;
-      }
-
-      const response = await this.octokit.rest.issues.create(params);
-      
-      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, response.status, Date.now() - startTime);
-      
-      return {
-        success: true,
-        issue: {
-          id: response.data.id,
-          number: response.data.number,
-          title: response.data.title,
-          body: response.data.body,
-          html_url: response.data.html_url,
-          state: response.data.state,
-          created_at: response.data.created_at,
-          user: {
-            login: response.data.user.login,
-            avatar_url: response.data.user.avatar_url
-          },
-          labels: response.data.labels.map(label => ({
-            name: label.name,
-            color: label.color
-          }))
-        }
-      };
-    } catch (error) {
-      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/issues`, error.status || 'error', Date.now() - startTime);
-      console.error('Failed to create issue:', error);
-      
-      // Return structured error response
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          status: error.status,
-          type: error.status === 403 ? 'permission_denied' : 
-                error.status === 422 ? 'validation_error' : 
-                error.status === 404 ? 'repository_not_found' : 'unknown_error'
-        }
-      };
     }
   }
 
@@ -2473,7 +2490,6 @@ class GitHubService {
       throw error;
     }
   }
-
   // Logout
   logout() {
     this.logger.auth('Logging out and clearing stored token');
