@@ -7,7 +7,20 @@ const WorkflowDashboard = ({
   isAuthenticated, 
   canTriggerWorkflows = false,
   canApproveWorkflows = false,
-  onWorkflowAction = null // Callback for when workflow actions are performed
+  onWorkflowAction = null, // Callback for when workflow actions are performed
+  // PR actions props
+  prInfo = null,
+  canMergePR = false,
+  canReviewPR = false,
+  isMergingPR = false,
+  isApprovingPR = false,
+  isRequestingChanges = false,
+  approvalStatus = null,
+  approvalMessage = '',
+  newComment = '',
+  onMergePR = null,
+  onApprovePR = null,
+  onRequestChanges = null
 }) => {
   const [workflows, setWorkflows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -300,6 +313,99 @@ const WorkflowDashboard = ({
           </button>
         </div>
       </div>
+
+      {/* PR Actions Section - moved into workflow dashboard */}
+      {prInfo && prInfo.length > 0 && prInfo[0].state === 'open' && (
+        <div className="pr-actions-section">
+          <div className="pr-actions-header">
+            <h4>🔀 Pull Request Actions</h4>
+            <span className="pr-actions-status">
+              PR #{prInfo[0].number} is ready for actions
+            </span>
+          </div>
+          <div className="pr-actions-container">
+            <div className="pr-actions-buttons">
+              {isAuthenticated && canMergePR && (
+                <button
+                  onClick={() => onMergePR && onMergePR('litlfred', 'sgex', prInfo[0].number)}
+                  disabled={isMergingPR}
+                  className="pr-merge-btn"
+                  title={`Merge PR #${prInfo[0].number}`}
+                >
+                  {isMergingPR ? (
+                    <>⏳ Merging...</>
+                  ) : (
+                    <>🔀 Merge PR</>
+                  )}
+                </button>
+              )}
+              
+              {/* PR Review Buttons */}
+              {isAuthenticated && canReviewPR && (
+                <>
+                  <div className="pr-review-note">
+                    💡 Use the comment form above to add feedback with your review.
+                  </div>
+                  <div className="pr-review-buttons">
+                    <button
+                      onClick={() => onApprovePR && onApprovePR('litlfred', 'sgex', prInfo[0].number)}
+                      disabled={isApprovingPR}
+                      className="pr-approve-btn"
+                      title={`Approve PR #${prInfo[0].number}`}
+                    >
+                      {isApprovingPR ? (
+                        <>⏳ Approving...</>
+                      ) : (
+                        <>✅ Approve</>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => onRequestChanges && onRequestChanges('litlfred', 'sgex', prInfo[0].number)}
+                      disabled={isRequestingChanges || !newComment.trim()}
+                      className="pr-request-changes-btn"
+                      title={`Request changes for PR #${prInfo[0].number} (comment required)`}
+                    >
+                      {isRequestingChanges ? (
+                        <>⏳ Requesting...</>
+                      ) : (
+                        <>❌ Request Changes</>
+                      )}
+                    </button>
+                  </div>
+                  
+                  {/* Approval Status Message */}
+                  {approvalStatus && (
+                    <div className={`approval-status-message ${approvalStatus}`}>
+                      {approvalMessage}
+                    </div>
+                  )}
+                </>
+              )}
+              
+              {!isAuthenticated && (
+                <span className="pr-actions-note">
+                  🔒 Sign in to access PR actions
+                </span>
+              )}
+              {isAuthenticated && !canMergePR && !canReviewPR && (
+                <span className="pr-actions-note">
+                  ⚠️ You don't have permission to merge or review this PR
+                </span>
+              )}
+              {isAuthenticated && !canMergePR && canReviewPR && (
+                <span className="pr-actions-note">
+                  ℹ️ You can review this PR but cannot merge it
+                </span>
+              )}
+              {isAuthenticated && canMergePR && !canReviewPR && (
+                <span className="pr-actions-note">
+                  ℹ️ You can merge this PR but cannot review it
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {workflows.length === 0 ? (
         <div className="workflow-dashboard-empty">

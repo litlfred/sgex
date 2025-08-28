@@ -33,6 +33,7 @@ const PreviewBadge = () => {
   const [workflowStatus, setWorkflowStatus] = useState(null);
   const [workflowLoading, setWorkflowLoading] = useState(false);
   const [useWorkflowDashboard, setUseWorkflowDashboard] = useState(true); // Use new dashboard by default
+  const [showWorkflowView, setShowWorkflowView] = useState(false); // Default to discussion view
   const [newlyAddedCommentId, setNewlyAddedCommentId] = useState(null);
   const [copilotSessionInfo, setCopilotSessionInfo] = useState(null);
   const [ReactMarkdown, setReactMarkdown] = useState(null);
@@ -1537,396 +1538,340 @@ const PreviewBadge = () => {
                 </div>
               )}
 
-              {/* Workflow Status Section */}
-              {branchInfo?.name && (
-                <div className="workflow-status-wrapper">
-                  {useWorkflowDashboard ? (
-                    <WorkflowDashboard
-                      branchName={branchInfo.name}
-                      githubActionsService={githubActionsService}
-                      isAuthenticated={githubService.isAuth()}
-                      canTriggerWorkflows={canTriggerWorkflows}
-                      canApproveWorkflows={canApproveWorkflows}
-                      onWorkflowAction={handleWorkflowDashboardAction}
-                    />
-                  ) : (
-                    <WorkflowStatus
-                      workflowStatus={workflowStatus}
-                      branchName={branchInfo.name}
-                      onTriggerWorkflow={handleTriggerWorkflow}
-                      onApproveWorkflow={handleApproveWorkflow}
-                      isAuthenticated={githubService.isAuth()}
-                      canTriggerWorkflows={canTriggerWorkflows}
-                      canApproveWorkflows={canApproveWorkflows}
-                      isLoading={workflowLoading}
-                    />
-                  )}
-                  
-                  {/* Dashboard Toggle */}
-                  <div className="workflow-view-toggle">
-                    <button
-                      onClick={() => setUseWorkflowDashboard(!useWorkflowDashboard)}
-                      className="toggle-view-btn"
-                      title={useWorkflowDashboard ? 'Switch to simple view' : 'Switch to dashboard view'}
-                    >
-                      {useWorkflowDashboard ? '📊 Simple View' : '📋 Dashboard View'}
-                    </button>
-                  </div>
+              {/* View Toggle Switch */}
+              <div className="pr-view-toggle">
+                <div className="toggle-switch">
+                  <button
+                    className={`toggle-option ${!showWorkflowView ? 'active' : ''}`}
+                    onClick={() => setShowWorkflowView(false)}
+                  >
+                    💬 Discussion
+                  </button>
+                  <button
+                    className={`toggle-option ${showWorkflowView ? 'active' : ''}`}
+                    onClick={() => setShowWorkflowView(true)}
+                  >
+                    ⚙️ Workflow Dashboard
+                  </button>
                 </div>
-              )}
+              </div>
 
-              {/* PR Actions Section */}
-              {prInfo && prInfo.length > 0 && prInfo[0].state === 'open' && (
-                <div className="pr-actions-wrapper">
-                  <h4>🔀 Pull Request Actions</h4>
-                  <div className="pr-actions-container">
-                    <div className="pr-actions-info">
-                      <span className="pr-actions-status">
-                        PR #{prInfo[0].number} is ready for actions
-                      </span>
-                    </div>
-                    <div className="pr-actions-buttons">
-                      {githubService.isAuth() && canMergePR && (
-                        <button
-                          onClick={() => handleMergePR('litlfred', 'sgex', prInfo[0].number)}
-                          disabled={isMergingPR}
-                          className="pr-merge-btn"
-                          title={`Merge PR #${prInfo[0].number}`}
-                        >
-                          {isMergingPR ? (
-                            <>⏳ Merging...</>
-                          ) : (
-                            <>🔀 Merge PR</>
-                          )}
-                        </button>
-                      )}
-                      
-                      {/* PR Review Buttons */}
-                      {githubService.isAuth() && canReviewPR && (
-                        <>
-                          <div className="pr-review-note">
-                            💡 Use the comment form above to add feedback with your review.
-                          </div>
-                          <div className="pr-review-buttons">
-                            <button
-                              onClick={() => handleApprovePR('litlfred', 'sgex', prInfo[0].number)}
-                              disabled={isApprovingPR}
-                              className="pr-approve-btn"
-                              title={`Approve PR #${prInfo[0].number}`}
-                            >
-                              {isApprovingPR ? (
-                                <>⏳ Approving...</>
-                              ) : (
-                                <>✅ Approve</>
-                              )}
-                            </button>
-                            <button
-                              onClick={() => handleRequestChanges('litlfred', 'sgex', prInfo[0].number)}
-                              disabled={isRequestingChanges || !newComment.trim()}
-                              className="pr-request-changes-btn"
-                              title={`Request changes for PR #${prInfo[0].number} (comment required)`}
-                            >
-                              {isRequestingChanges ? (
-                                <>⏳ Requesting...</>
-                              ) : (
-                                <>❌ Request Changes</>
-                              )}
-                            </button>
-                          </div>
-                          
-                          {/* Approval Status Message */}
-                          {approvalStatus && (
-                            <div className={`approval-status-message ${approvalStatus}`}>
-                              {approvalMessage}
-                            </div>
-                          )}
-                        </>
-                      )}
-                      
-                      {!githubService.isAuth() && (
-                        <span className="pr-actions-note">
-                          🔒 Sign in to access PR actions
-                        </span>
-                      )}
-                      {githubService.isAuth() && !canMergePR && !canReviewPR && (
-                        <span className="pr-actions-note">
-                          ⚠️ You don't have permission to merge or review this PR
-                        </span>
-                      )}
-                      {githubService.isAuth() && !canMergePR && canReviewPR && (
-                        <span className="pr-actions-note">
-                          ℹ️ You can review this PR but cannot merge it
-                        </span>
-                      )}
-                      {githubService.isAuth() && canMergePR && !canReviewPR && (
-                        <span className="pr-actions-note">
-                          ℹ️ You can merge this PR but cannot review it
-                        </span>
-                      )}
+              {/* Conditional Content Based on Toggle */}
+              {showWorkflowView ? (
+                /* Workflow Dashboard View */
+                branchInfo?.name && (
+                  <div className="workflow-status-wrapper">
+                    {useWorkflowDashboard ? (
+                      <WorkflowDashboard
+                        branchName={branchInfo.name}
+                        githubActionsService={githubActionsService}
+                        isAuthenticated={githubService.isAuth()}
+                        canTriggerWorkflows={canTriggerWorkflows}
+                        canApproveWorkflows={canApproveWorkflows}
+                        onWorkflowAction={handleWorkflowDashboardAction}
+                        // Pass PR actions data
+                        prInfo={prInfo}
+                        canMergePR={canMergePR}
+                        canReviewPR={canReviewPR}
+                        isMergingPR={isMergingPR}
+                        isApprovingPR={isApprovingPR}
+                        isRequestingChanges={isRequestingChanges}
+                        approvalStatus={approvalStatus}
+                        approvalMessage={approvalMessage}
+                        newComment={newComment}
+                        onMergePR={handleMergePR}
+                        onApprovePR={handleApprovePR}
+                        onRequestChanges={handleRequestChanges}
+                      />
+                    ) : (
+                      <WorkflowStatus
+                        workflowStatus={workflowStatus}
+                        branchName={branchInfo.name}
+                        onTriggerWorkflow={handleTriggerWorkflow}
+                        onApproveWorkflow={handleApproveWorkflow}
+                        isAuthenticated={githubService.isAuth()}
+                        canTriggerWorkflows={canTriggerWorkflows}
+                        canApproveWorkflows={canApproveWorkflows}
+                        isLoading={workflowLoading}
+                      />
+                    )}
+                    
+                    {/* Dashboard Toggle */}
+                    <div className="workflow-view-toggle">
+                      <button
+                        onClick={() => setUseWorkflowDashboard(!useWorkflowDashboard)}
+                        className="toggle-view-btn"
+                        title={useWorkflowDashboard ? 'Switch to simple view' : 'Switch to dashboard view'}
+                      >
+                        {useWorkflowDashboard ? '📊 Simple View' : '📋 Dashboard View'}
+                      </button>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* GitHub Copilot Session Section */}
-              {copilotSessionInfo && (
-                <div className="copilot-session-wrapper">
-                  <h4>🤖 GitHub Copilot Activity</h4>
-                  {copilotSessionInfo.hasActiveCopilot ? (
-                    <div className="copilot-session-active">
-                      <div className="copilot-session-info">
-                        <span className="copilot-status">✅ Active Copilot session detected</span>
-                        <span className="copilot-activity">
-                          Last activity: {formatDate(copilotSessionInfo.latestActivity)}
-                        </span>
-                        <span className="copilot-comments-count">
-                          {copilotSessionInfo.commentsCount} copilot comment(s) found
-                        </span>
-                      </div>
-                      <div className="copilot-session-actions">
-                        <a 
-                          href={copilotSessionInfo.sessionUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="copilot-session-link"
-                        >
-                          🔗 View Agent Session
-                        </a>
-                        {copilotSessionInfo.commentUrl && (
-                          <a 
-                            href={copilotSessionInfo.commentUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="copilot-comment-link"
-                          >
-                            💬 Latest Comment
-                          </a>
-                        )}
-                        <button
-                          className="copilot-session-toggle"
-                          onClick={() => setShowCopilotSession(!showCopilotSession)}
-                        >
-                          {showCopilotSession ? '📝 Hide Session' : '👁️ Watch Session'}
-                        </button>
-                      </div>
-                      {showCopilotSession && copilotSessionInfo.latestComment && (
-                        <div className="copilot-session-modal">
-                          <div className="copilot-session-header">
-                            <strong>Latest Copilot Activity</strong>
-                            <span className="copilot-comment-date">
-                              {formatDate(copilotSessionInfo.latestComment.created_at)}
+                )
+              ) : (
+                /* Discussion View */
+                <>
+                  {/* GitHub Copilot Session Section */}
+                  {copilotSessionInfo && (
+                    <div className="copilot-session-wrapper">
+                      <h4>🤖 GitHub Copilot Activity</h4>
+                      {copilotSessionInfo.hasActiveCopilot ? (
+                        <div className="copilot-session-active">
+                          <div className="copilot-session-info">
+                            <span className="copilot-status">✅ Active Copilot session detected</span>
+                            <span className="copilot-activity">
+                              Last activity: {formatDate(copilotSessionInfo.latestActivity)}
+                            </span>
+                            <span className="copilot-comments-count">
+                              {copilotSessionInfo.commentsCount} copilot comment(s) found
                             </span>
                           </div>
-                          <div className="copilot-session-content">
-                            <div className="copilot-comment-author">
-                              <img 
-                                src={copilotSessionInfo.latestComment.user.avatar_url} 
-                                alt={copilotSessionInfo.latestComment.user.login}
-                                className="copilot-avatar"
-                              />
+                          <div className="copilot-session-actions">
+                            <a 
+                              href={copilotSessionInfo.sessionUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="copilot-session-link"
+                            >
+                              🔗 View Agent Session
+                            </a>
+                            {copilotSessionInfo.commentUrl && (
                               <a 
-                                href={copilotSessionInfo.latestComment.user.html_url}
-                                target="_blank"
+                                href={copilotSessionInfo.commentUrl} 
+                                target="_blank" 
                                 rel="noopener noreferrer"
-                                className="copilot-username"
+                                className="copilot-comment-link"
                               >
-                                {copilotSessionInfo.latestComment.user.login}
+                                💬 Latest Comment
                               </a>
-                            </div>
-                            <div className="copilot-comment-body">
-                              <div className="markdown-content">
-                                {ReactMarkdown && rehypeRaw ? (
-                                  <ReactMarkdown 
-                                    rehypePlugins={[rehypeRaw]}
-                                    components={markdownComponents}
-                                  >{processMarkdownContent(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
-                                ) : (
-                                  <div 
-                                    style={{ whiteSpace: 'pre-wrap' }}
-                                    dangerouslySetInnerHTML={{
-                                      __html: sanitizeHtmlContent(convertGitHubNotationToHtml(copilotSessionInfo.latestComment.body))
-                                    }}
+                            )}
+                            <button
+                              className="copilot-session-toggle"
+                              onClick={() => setShowCopilotSession(!showCopilotSession)}
+                            >
+                              {showCopilotSession ? '📝 Hide Session' : '👁️ Watch Session'}
+                            </button>
+                          </div>
+                          {showCopilotSession && copilotSessionInfo.latestComment && (
+                            <div className="copilot-session-modal">
+                              <div className="copilot-session-header">
+                                <strong>Latest Copilot Activity</strong>
+                                <span className="copilot-comment-date">
+                                  {formatDate(copilotSessionInfo.latestComment.created_at)}
+                                </span>
+                              </div>
+                              <div className="copilot-session-content">
+                                <div className="copilot-comment-author">
+                                  <img 
+                                    src={copilotSessionInfo.latestComment.user.avatar_url} 
+                                    alt={copilotSessionInfo.latestComment.user.login}
+                                    className="copilot-avatar"
                                   />
-                                )}
+                                  <a 
+                                    href={copilotSessionInfo.latestComment.user.html_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="copilot-username"
+                                  >
+                                    {copilotSessionInfo.latestComment.user.login}
+                                  </a>
+                                </div>
+                                <div className="copilot-comment-body">
+                                  <div className="markdown-content">
+                                    {ReactMarkdown && rehypeRaw ? (
+                                      <ReactMarkdown 
+                                        rehypePlugins={[rehypeRaw]}
+                                        components={markdownComponents}
+                                      >{processMarkdownContent(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                                    ) : (
+                                      <div 
+                                        style={{ whiteSpace: 'pre-wrap' }}
+                                        dangerouslySetInnerHTML={{
+                                          __html: sanitizeHtmlContent(convertGitHubNotationToHtml(copilotSessionInfo.latestComment.body))
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="copilot-session-inactive">
+                          <span className="copilot-status">⚪ No active Copilot session detected</span>
+                          <span className="copilot-hint">
+                            Start a conversation with @copilot to begin a session
+                          </span>
                         </div>
                       )}
                     </div>
-                  ) : (
-                    <div className="copilot-session-inactive">
-                      <span className="copilot-status">⚪ No active Copilot session detected</span>
-                      <span className="copilot-hint">
-                        Start a conversation with @copilot to begin a session
-                      </span>
-                    </div>
                   )}
-                </div>
-              )}
 
-              <div className="comments-section">
-                <div className="comments-header">
-                  <h4>Recent Comments & Updates ({allComments.length > 0 ? `${displayedCommentsCount}/${allComments.length}` : '0'})</h4>
-                  <div className="comments-controls">
-                    <label className="status-updates-toggle">
-                      <input 
-                        type="checkbox" 
-                        checked={showStatusUpdates}
-                        onChange={(e) => {
-                          setShowStatusUpdates(e.target.checked);
-                          // Refresh comments when toggling status updates
-                          if (prInfo && prInfo.length > 0) {
-                            fetchCommentsForPR('litlfred', 'sgex', prInfo[0].number, 1, false);
-                          }
-                        }}
-                      />
-                      <span className="checkbox-label">📋 Show status updates</span>
-                    </label>
-                  </div>
-                </div>
-                {commentsLoading ? (
-                  <div className="loading">Loading comments...</div>
-                ) : comments.length === 0 ? (
-                  <div className="no-comments">No comments yet</div>
-                ) : (
-                  <>
-                    <div className="comments-list">
-                      {comments.map((comment) => {
-                        const isExpanded = expandedComments.has(comment.id);
-                        const shouldTruncate = comment.body && comment.body.length > 200;
-                        const isNewComment = newlyAddedCommentId === comment.id;
-                        const viewers = getCommentViewers(comment, comments);
-                        
-                        return (
-                          <div key={comment.id} className={`comment ${comment.type === 'timeline' ? 'comment-timeline' : ''} ${isNewComment ? 'comment-new-glow' : ''}`}>
-                            <div className="comment-header">
-                              <img 
-                                src={comment.user.avatar_url} 
-                                alt={comment.user.login} 
-                                className="comment-avatar"
-                              />
-                              <a 
-                                href={comment.user.html_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="comment-author"
-                              >
-                                {comment.user.login}
-                              </a>
-                              <span className="comment-date">{formatDate(comment.created_at)}</span>
-                              <span className={`comment-type ${comment.type === 'timeline' ? 'comment-type-timeline' : ''}`}>
-                                {comment.type === 'timeline' ? 'status' : comment.type}
-                              </span>
-                              
-                              {/* Comment Viewer Badges - only for regular comments */}
-                              {comment.type !== 'timeline' && viewers.length > 0 && (
-                                <div className="comment-viewers">
-                                  {viewers.map((viewer, index) => {
-                                    // Ensure viewer is a string before calling toLowerCase
-                                    const safeViewer = typeof viewer === 'string' ? viewer : String(viewer || '');
-                                    const isCopilot = safeViewer && safeViewer.toLowerCase().includes('copilot');
-                                    return (
-                                      <span 
-                                        key={index}
-                                        className={`viewer-badge ${isCopilot ? 'viewer-badge-copilot' : 'viewer-badge-user'}`}
-                                        title={`${safeViewer} is looking at this comment`}
-                                      >
-                                        {isCopilot ? '👁️' : '👀'} {safeViewer}
-                                      </span>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                            <div className="comment-body">
-                              {comment.type === 'timeline' ? (
-                                // Timeline events are always short, don't truncate
-                                <div className="comment-timeline-body">
-                                  <div className="timeline-content">
-                                    {comment.body}
-                                  </div>
-                                </div>
-                              ) : shouldTruncate && !isExpanded ? (
-                                <>
-                                  <div className="comment-preview">
-                                    <div className="markdown-content">
-                                      {ReactMarkdown && rehypeRaw ? (
-                                        <ReactMarkdown 
-                                          rehypePlugins={[rehypeRaw]}
-                                          components={markdownComponents}
-                                        >{processMarkdownContent(truncateComment(comment.body))}</ReactMarkdown>
-                                      ) : (
-                                        <div 
-                                          style={{ whiteSpace: 'pre-wrap' }}
-                                          dangerouslySetInnerHTML={{
-                                            __html: sanitizeHtmlContent(convertGitHubNotationToHtml(truncateComment(comment.body)))
-                                          }}
-                                        />
-                                      )}
-                                    </div>
-                                  </div>
-                                  <button 
-                                    className="comment-toggle"
-                                    onClick={() => handleCommentToggle(comment.id)}
-                                  >
-                                    Show more
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="comment-full">
-                                    <div className="markdown-content">
-                                      {ReactMarkdown && rehypeRaw ? (
-                                        <ReactMarkdown 
-                                          rehypePlugins={[rehypeRaw]}
-                                          components={markdownComponents}
-                                        >{processMarkdownContent(comment.body)}</ReactMarkdown>
-                                      ) : (
-                                        <div 
-                                          style={{ whiteSpace: 'pre-wrap' }}
-                                          dangerouslySetInnerHTML={{
-                                            __html: sanitizeHtmlContent(convertGitHubNotationToHtml(comment.body))
-                                          }}
-                                        />
-                                      )}
-                                    </div>
-                                  </div>
-                                  {shouldTruncate && (
-                                    <button 
-                                      className="comment-toggle"
-                                      onClick={() => handleCommentToggle(comment.id)}
-                                    >
-                                      Show less
-                                    </button>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    
-                    {/* Load More Comments Button */}
-                    {(allComments.length > displayedCommentsCount || hasMoreComments) && (
-                      <div className="comments-load-more">
-                        <button
-                          className="load-more-btn"
-                          onClick={loadMoreComments}
-                          disabled={commentsLoading}
-                        >
-                          {commentsLoading ? 'Loading...' : 
-                            allComments.length > displayedCommentsCount ? 
-                              `Show More Comments (${allComments.length - displayedCommentsCount} already loaded)` :
-                              'Load More Comments...'
-                          }
-                        </button>
+                  <div className="comments-section">
+                    <div className="comments-header">
+                      <h4>Recent Comments & Updates ({allComments.length > 0 ? `${displayedCommentsCount}/${allComments.length}` : '0'})</h4>
+                      <div className="comments-controls">
+                        <label className="status-updates-toggle">
+                          <input 
+                            type="checkbox" 
+                            checked={showStatusUpdates}
+                            onChange={(e) => {
+                              setShowStatusUpdates(e.target.checked);
+                              // Refresh comments when toggling status updates
+                              if (prInfo && prInfo.length > 0) {
+                                fetchCommentsForPR('litlfred', 'sgex', prInfo[0].number, 1, false);
+                              }
+                            }}
+                          />
+                          <span className="checkbox-label">📋 Show status updates</span>
+                        </label>
                       </div>
+                    </div>
+                    {commentsLoading ? (
+                      <div className="loading">Loading comments...</div>
+                    ) : comments.length === 0 ? (
+                      <div className="no-comments">No comments yet</div>
+                    ) : (
+                      <>
+                        <div className="comments-list">
+                          {comments.map((comment) => {
+                            const isExpanded = expandedComments.has(comment.id);
+                            const shouldTruncate = comment.body && comment.body.length > 200;
+                            const isNewComment = newlyAddedCommentId === comment.id;
+                            const viewers = getCommentViewers(comment, comments);
+                            
+                            return (
+                              <div key={comment.id} className={`comment ${comment.type === 'timeline' ? 'comment-timeline' : ''} ${isNewComment ? 'comment-new-glow' : ''}`}>
+                                <div className="comment-header">
+                                  <img 
+                                    src={comment.user.avatar_url} 
+                                    alt={comment.user.login} 
+                                    className="comment-avatar"
+                                  />
+                                  <a 
+                                    href={comment.user.html_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="comment-author"
+                                  >
+                                    {comment.user.login}
+                                  </a>
+                                  <span className="comment-date">{formatDate(comment.created_at)}</span>
+                                  <span className={`comment-type ${comment.type === 'timeline' ? 'comment-type-timeline' : ''}`}>
+                                    {comment.type === 'timeline' ? 'status' : comment.type}
+                                  </span>
+                                  
+                                  {/* Comment Viewer Badges - only for regular comments */}
+                                  {comment.type !== 'timeline' && viewers.length > 0 && (
+                                    <div className="comment-viewers">
+                                      {viewers.map((viewer, index) => {
+                                        // Ensure viewer is a string before calling toLowerCase
+                                        const safeViewer = typeof viewer === 'string' ? viewer : String(viewer || '');
+                                        const isCopilot = safeViewer && safeViewer.toLowerCase().includes('copilot');
+                                        return (
+                                          <span 
+                                            key={index}
+                                            className={`viewer-badge ${isCopilot ? 'viewer-badge-copilot' : 'viewer-badge-user'}`}
+                                            title={`${safeViewer} is looking at this comment`}
+                                          >
+                                            {isCopilot ? '👁️' : '👀'} {safeViewer}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="comment-body">
+                                  {comment.type === 'timeline' ? (
+                                    // Timeline events are always short, don't truncate
+                                    <div className="comment-timeline-body">
+                                      <div className="timeline-content">
+                                        {comment.body}
+                                      </div>
+                                    </div>
+                                  ) : shouldTruncate && !isExpanded ? (
+                                    <>
+                                      <div className="comment-preview">
+                                        <div className="markdown-content">
+                                          {ReactMarkdown && rehypeRaw ? (
+                                            <ReactMarkdown 
+                                              rehypePlugins={[rehypeRaw]}
+                                              components={markdownComponents}
+                                            >{processMarkdownContent(truncateComment(comment.body))}</ReactMarkdown>
+                                          ) : (
+                                            <div 
+                                              style={{ whiteSpace: 'pre-wrap' }}
+                                              dangerouslySetInnerHTML={{
+                                                __html: sanitizeHtmlContent(convertGitHubNotationToHtml(truncateComment(comment.body)))
+                                              }}
+                                            />
+                                          )}
+                                        </div>
+                                      </div>
+                                      <button 
+                                        className="comment-toggle"
+                                        onClick={() => handleCommentToggle(comment.id)}
+                                      >
+                                        Show more
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div className="comment-full">
+                                        <div className="markdown-content">
+                                          {ReactMarkdown && rehypeRaw ? (
+                                            <ReactMarkdown 
+                                              rehypePlugins={[rehypeRaw]}
+                                              components={markdownComponents}
+                                            >{processMarkdownContent(comment.body)}</ReactMarkdown>
+                                          ) : (
+                                            <div 
+                                              style={{ whiteSpace: 'pre-wrap' }}
+                                              dangerouslySetInnerHTML={{
+                                                __html: sanitizeHtmlContent(convertGitHubNotationToHtml(comment.body))
+                                              }}
+                                            />
+                                          )}
+                                        </div>
+                                      </div>
+                                      {shouldTruncate && (
+                                        <button 
+                                          className="comment-toggle"
+                                          onClick={() => handleCommentToggle(comment.id)}
+                                        >
+                                          Show less
+                                        </button>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        
+                        {/* Load More Comments Button */}
+                        {(allComments.length > displayedCommentsCount || hasMoreComments) && (
+                          <div className="comments-load-more">
+                            <button
+                              className="load-more-btn"
+                              onClick={loadMoreComments}
+                              disabled={commentsLoading}
+                            >
+                              {commentsLoading ? 'Loading...' : 
+                                allComments.length > displayedCommentsCount ? 
+                                  `Show More Comments (${allComments.length - displayedCommentsCount} already loaded)` :
+                                  'Load More Comments...'
+                              }
+                            </button>
+                          </div>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-              </div>
+                  </div>
+                </>
+              )}
 
               <div className="expanded-footer">
                 <a href={prInfo[0].html_url} target="_blank" rel="noopener noreferrer" className="github-link">

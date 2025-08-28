@@ -1738,3 +1738,72 @@
   background: #dee2e6;
   transform: translateY(1px);
 }
+
+/* PR View Toggle Styles */
+.pr-view-toggle {
+  margin: 1rem 0;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.toggle-switch {
+  display: flex;
+  background: var(--who-secondary-bg);
+  border: 1px solid var(--who-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.toggle-option {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--who-text-secondary);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.toggle-option:hover {
+  background: var(--who-primary-bg);
+  color: var(--who-text-primary);
+}
+
+.toggle-option.active {
+  background: var(--who-blue);
+  color: var(--who-text-on-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-option.active:hover {
+  background: var(--who-blue-dark);
+  color: var(--who-text-on-primary);
+}
+
+/* Dark mode adjustments for toggle */
+body.theme-dark .toggle-option {
+  color: var(--who-text-secondary);
+}
+
+body.theme-dark .toggle-option:hover {
+  background: var(--who-card-bg);
+  color: var(--who-text-primary);
+}
+
+body.theme-dark .toggle-option.active {
+  background: var(--who-blue);
+  color: var(--who-text-on-primary);
+}
+
+body.theme-dark .toggle-option.active:hover {
+  background: var(--who-blue-dark);
+}
