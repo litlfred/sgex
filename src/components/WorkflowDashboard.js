@@ -145,14 +145,15 @@ const WorkflowDashboard = ({
 
   // Handle workflow rerun
   const handleRerunWorkflow = async (workflow) => {
-    if (!isAuthenticated || !workflow.runId || !githubActionsService) return;
+    const runId = workflow.runId || workflow.lastRunId;
+    if (!isAuthenticated || !runId || !githubActionsService) return;
     
     const workflowId = workflow.workflow.id;
     setActionStates(prev => ({ ...prev, [workflowId]: { action: 'rerunning' } }));
 
     try {
-      console.debug(`Rerunning failed workflow run: ${workflow.runId} for workflow: ${workflow.workflow.name}`);
-      const success = await githubActionsService.rerunFailedWorkflow(workflow.runId);
+      console.debug(`Rerunning failed workflow run: ${runId} for workflow: ${workflow.workflow.name}`);
+      const success = await githubActionsService.rerunFailedWorkflow(runId);
       
       if (success) {
         setActionStates(prev => ({ ...prev, [workflowId]: { action: 'rerun', message: 'Workflow rerun started!' } }));
@@ -186,14 +187,15 @@ const WorkflowDashboard = ({
 
   // Handle workflow approval  
   const handleApproveWorkflow = async (workflow) => {
-    if (!isAuthenticated || !canApproveWorkflows || !workflow.runId || !githubActionsService) return;
+    const runId = workflow.runId || workflow.lastRunId;
+    if (!isAuthenticated || !canApproveWorkflows || !runId || !githubActionsService) return;
     
     const workflowId = workflow.workflow.id;
     setActionStates(prev => ({ ...prev, [workflowId]: { action: 'approving' } }));
 
     try {
-      console.debug(`Approving workflow run: ${workflow.runId} for workflow: ${workflow.workflow.name}`);
-      const success = await githubActionsService.approveWorkflowRun(workflow.runId);
+      console.debug(`Approving workflow run: ${runId} for workflow: ${workflow.workflow.name}`);
+      const success = await githubActionsService.approveWorkflowRun(runId);
       
       if (success) {
         setActionStates(prev => ({ ...prev, [workflowId]: { action: 'approved', message: 'Workflow approved successfully!' } }));
@@ -493,9 +495,9 @@ const WorkflowDashboard = ({
                         Last run: {formatDate(workflow.createdAt)}
                       </span>
                     )}
-                    {workflow.runId && (
+                    {(workflow.runId || workflow.lastRunId) && (
                       <span className="workflow-run-id">
-                        Run ID: {workflow.runId}
+                        Run ID: {workflow.runId || workflow.lastRunId}
                       </span>
                     )}
                   </div>
@@ -518,8 +520,8 @@ const WorkflowDashboard = ({
                           )}
                         </button>
 
-                        {/* Show approve button for workflows awaiting approval */}
-                        {workflow.status === 'waiting' && workflow.runId && (
+                        {/* Show approve button for workflows awaiting approval - use both runId and lastRunId */}
+                        {workflow.status === 'waiting' && (workflow.runId || workflow.lastRunId) && (
                           <button
                             onClick={() => handleApproveWorkflow(workflow)}
                             disabled={actionState?.action === 'approving'}
@@ -534,8 +536,8 @@ const WorkflowDashboard = ({
                           </button>
                         )}
 
-                        {/* Show rerun button for failed workflows */}
-                        {workflow.conclusion === 'failure' && workflow.runId && (
+                        {/* Show rerun button for failed workflows - use both runId and lastRunId */}
+                        {workflow.conclusion === 'failure' && (workflow.runId || workflow.lastRunId) && (
                           <button
                             onClick={() => handleRerunWorkflow(workflow)}
                             disabled={actionState?.action === 'rerunning'}
@@ -573,6 +575,7 @@ const WorkflowDashboard = ({
                         Status: {workflow.status} | 
                         Conclusion: {workflow.conclusion || 'N/A'} | 
                         RunId: {workflow.runId || 'N/A'} | 
+                        LastRunId: {workflow.lastRunId || 'N/A'} | 
                         URL: {workflow.url ? '✅' : '❌'} | 
                         WorkflowURL: {workflow.workflowUrl ? '✅' : '❌'}
                       </div>
