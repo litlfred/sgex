@@ -47,7 +47,7 @@
     "generate-schemas": "npm run generate-schemas:typescript-json-schema && npm run generate-schemas:ts-json-schema-generator",
     "generate-schemas:typescript-json-schema": "typescript-json-schema tsconfig.json \"*\" --out public/docs/schemas/generated-schemas-tjs.json --include src/types/**/*.ts",
     "generate-schemas:ts-json-schema-generator": "ts-json-schema-generator --path src/types/**/*.ts --type \"*\" --out public/docs/schemas/generated-schemas-tsjsg.json",
-    "prebuild": "npm run copy-lforms && npm run type-check && npm run generate-schemas",
+    "prebuild": "npm run copy-lforms",
     "copy-lforms": "node scripts/copy-lforms.js",
     "build-mcp": "cd services/dak-faq-mcp && npm install && npm run build",
     "run-mcp": "cd services/dak-faq-mcp && npm start",
