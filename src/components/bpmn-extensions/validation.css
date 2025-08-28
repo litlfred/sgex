@@ -1,0 +1,119 @@
+/* BPMN Validation Styling */
+
+.sgex-validation-valid {
+  stroke: #16A34A !important; /* green-600 */
+  stroke-width: 3px !important;
+}
+
+.sgex-validation-invalid {
+  stroke: #DC2626 !important; /* red-600 */
+  stroke-width: 3px !important;
+}
+
+.sgex-validation-warning {
+  stroke: #F59E0B !important; /* amber-500 */
+  stroke-width: 3px !important;
+  stroke-dasharray: 5,5 !important;
+}
+
+/* Validation Tooltip Styling */
+.sgex-validation-tooltip {
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  max-width: 300px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.sgex-validation-tooltip-content .error {
+  color: #FEE2E2; /* red-100 */
+  margin: 2px 0;
+}
+
+.sgex-validation-tooltip-content .warning {
+  color: #FEF3C7; /* amber-100 */
+  margin: 2px 0;
+}
+
+/* Custom Properties Panel Styling */
+.custom-properties-group {
+  border: 1px solid #E5E7EB;
+  border-radius: 4px;
+  margin: 8px 0;
+  padding: 12px;
+}
+
+.custom-properties-group label {
+  font-weight: 600;
+  color: #374151;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.custom-properties-group input[type="text"],
+.custom-properties-group input[type="url"] {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #D1D5DB;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.custom-properties-group input[type="text"]:focus,
+.custom-properties-group input[type="url"]:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 1px #3B82F6;
+}
+
+.custom-properties-group input.error {
+  border-color: #DC2626;
+}
+
+.custom-properties-group .field-error {
+  color: #DC2626;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+/* Business Decision Task Icon Styling */
+.bpmn-icon-business-rule::before {
+  content: "📊"; /* Decision table emoji as fallback */
+  font-size: 16px;
+}
+
+/* Enhanced palette entry styling */
+.djs-palette .entry.custom-business-decision-task {
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+  color: white;
+}
+
+.djs-palette .entry.custom-business-decision-task:hover {
+  background: linear-gradient(135deg, #1D4ED8 0%, #1E3A8A 100%);
+}
+
+/* Validation status indicator in element labels */
+.djs-label .validation-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.djs-label .validation-indicator.valid {
+  background-color: #16A34A;
+}
+
+.djs-label .validation-indicator.invalid {
+  background-color: #DC2626;
+}
+
+.djs-label .validation-indicator.warning {
+  background-color: #F59E0B;
+}
