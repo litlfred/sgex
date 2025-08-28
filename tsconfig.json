@@ -6,6 +6,7 @@
       "dom.iterable",
       "esnext"
     ],
+
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -39,6 +40,8 @@
     "build",
     "dist",
     "public",
-    "src/examples/**/*"
+    "src/examples/**/*",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ]
 }
