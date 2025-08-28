@@ -273,6 +273,24 @@ const ProgramIndicatorsViewContent = () => {
     }
   };
 
+  const handleLibraryNavigation = (libraryName) => {
+    // Find CQL file that matches the library name
+    const libraryFile = cqlFiles.find(file => {
+      const fileName = file.name.replace('.cql', '');
+      // Match exact name or check if the file contains the library
+      return fileName === libraryName || 
+             fileName.toLowerCase().includes(libraryName.toLowerCase()) ||
+             file.content.includes(`library ${libraryName}`);
+    });
+
+    if (libraryFile) {
+      setSelectedCQLFile(libraryFile);
+      alert(`Navigating to library: ${libraryName}`);
+    } else {
+      alert(`Library "${libraryName}" not found in current CQL files. You may need to check external dependencies or ensure the file is in the input/cql directory.`);
+    }
+  };
+
   const parseFSHCodeSystem = (fshContent) => {
     // Simplified parser for data dictionary
     const concepts = [];
@@ -451,6 +469,7 @@ const ProgramIndicatorsViewContent = () => {
                     repository={repository}
                     branch={selectedBranch}
                     dataDictionary={dataDictionary}
+                    onLibraryClick={(libraryName) => handleLibraryNavigation(libraryName)}
                     onSave={(content, saveType) => {
                       if (saveType === 'staging') {
                         // Save to staging ground

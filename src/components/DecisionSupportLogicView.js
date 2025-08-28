@@ -714,6 +714,24 @@ define "Contraindication Present":
     setAutoHide(!autoHide);
   };
 
+  const handleLibraryNavigation = (libraryName) => {
+    // Find CQL file that matches the library name
+    const libraryFile = cqlFiles.find(file => {
+      const fileName = file.name.replace('.cql', '');
+      // Match exact name or check if the file contains the library
+      return fileName === libraryName || 
+             fileName.toLowerCase().includes(libraryName.toLowerCase()) ||
+             file.content.includes(`library ${libraryName}`);
+    });
+
+    if (libraryFile) {
+      setSelectedCQLFile(libraryFile);
+      alert(`Navigating to library: ${libraryName}`);
+    } else {
+      alert(`Library "${libraryName}" not found in current CQL files. You may need to check external dependencies or ensure the file is in the input/cql directory.`);
+    }
+  };
+
   // Cleanup effect for enhanced fullwidth
   useEffect(() => {
     return () => {
@@ -1060,6 +1078,7 @@ define "Contraindication Present":
                     repository={repository}
                     branch={selectedBranch}
                     dataDictionary={dakDTCodeSystem}
+                    onLibraryClick={(libraryName) => handleLibraryNavigation(libraryName)}
                     onSave={(content, saveType) => {
                       if (saveType === 'staging') {
                         // Save to staging ground

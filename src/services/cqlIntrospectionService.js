@@ -56,15 +56,33 @@ class CQLIntrospectionService {
           result.libraries.add(includeMatch[1]);
         }
 
-        // Extract value set references
-        const valueSetMatches = line.match(/"[^"]*"/g);
-        if (valueSetMatches) {
-          valueSetMatches.forEach(match => {
-            const valueSet = match.replace(/"/g, '');
-            if (this.isValueSetReference(valueSet)) {
-              result.valueSets.add(valueSet);
+        // Extract value set references - improved pattern matching
+        const valueSetMatches = line.match(/"[^"]*"/g) || [];
+        valueSetMatches.forEach(match => {
+          const valueSet = match.replace(/"/g, '');
+          if (this.isValueSetReference(valueSet)) {
+            result.valueSets.add(valueSet);
+          }
+        });
+
+        // Also look for 'in' operator usage which typically indicates value sets
+        const inValueSetMatch = line.match(/\s+in\s+"([^"]+)"/g);
+        if (inValueSetMatch) {
+          inValueSetMatch.forEach(match => {
+            const valueSetMatch = match.match(/in\s+"([^"]+)"/);
+            if (valueSetMatch) {
+              result.valueSets.add(valueSetMatch[1]);
             }
           });
+        }
+
+        // Look for bare identifiers that might be value sets (no quotes)
+        const bareValueSetMatch = line.match(/\s+in\s+([A-Z][a-zA-Z\s]+)(?:\s|$)/);
+        if (bareValueSetMatch) {
+          const valueSet = bareValueSetMatch[1].trim();
+          if (valueSet && valueSet !== 'true' && valueSet !== 'false') {
+            result.valueSets.add(valueSet);
+          }
         }
 
         // Extract data type references (FHIR resources)
@@ -305,7 +323,8 @@ class CQLIntrospectionService {
            str.includes('oid:') ||
            str.includes(' Codes') ||
            str.includes(' Values') ||
-           str.includes(' Set');
+           str.includes(' Set') ||
+           /^[A-Z][a-zA-Z\s]+$/.test(str); // Capitalized descriptive names
   }
 
   /**

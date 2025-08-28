@@ -19,6 +19,7 @@ const CQLEditor = ({
   branch = 'main',
   isDemo = false,
   onSave,
+  onLibraryClick,
   dataDictionary,
   testData = []
 }) => {
@@ -112,6 +113,24 @@ const CQLEditor = ({
     } finally {
       setIsExecuting(false);
     }
+  };
+
+  const handleLibraryClick = (libraryName) => {
+    if (onLibraryClick) {
+      onLibraryClick(libraryName);
+    } else {
+      // Default behavior - show alert if no handler provided
+      alert(`Navigate to library: ${libraryName}`);
+    }
+  };
+    if (!content.trim()) {
+      alert('Please enter CQL content to validate');
+      return;
+    }
+
+    setActiveTab('validation');
+    const validation = cqlValidationService.validateCQL(content);
+    setValidationResults(validation);
   };
 
   const handleValidate = () => {
@@ -366,7 +385,13 @@ const CQLEditor = ({
                 {introspectionResults.libraries.map((library, index) => (
                   <li key={index} className="library-item">
                     <span className="library-name">{library}</span>
-                    <button className="library-link">View</button>
+                    <button 
+                      className="library-link"
+                      onClick={() => handleLibraryClick(library)}
+                      title={`Navigate to library: ${library}`}
+                    >
+                      View
+                    </button>
                   </li>
                 ))}
               </ul>
