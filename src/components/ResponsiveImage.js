@@ -4,7 +4,8 @@ import { extractAltTextFromFilename } from '../utils/imageAltTextHelper';
 
 /**
  * Responsive Image component that automatically selects the best image
- * based on screen size and theme with graceful fallback handling
+ * based on screen size and theme with graceful fallback handling.
+ * Shows alt text while loading and waits for full image load before display.
  */
 const ResponsiveImage = ({
   src,
@@ -16,14 +17,21 @@ const ResponsiveImage = ({
   fallbackSrc = null,
   onLoad = null,
   onError = null,
+  aggressiveMobile = false, // Force mobile for action cards/buttons
   ...otherProps
 }) => {
   // Auto-generate alt text if not provided
   const autoAlt = alt || extractAltTextFromFilename(src);
   
-  // Function to get the appropriate image path
+  // Track loading state
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  
+  // Function to get the appropriate image path with aggressive mobile option
   const getResponsiveImagePath = useCallback(() => {
-    const isMobile = forceMobile || (!forceDesktop && window.innerWidth <= 768);
+    // Use more aggressive mobile detection for action cards/buttons
+    const mobileThreshold = aggressiveMobile ? 1024 : 768;
+    const isMobile = forceMobile || (!forceDesktop && window.innerWidth <= mobileThreshold);
     const isDarkMode = document.body && document.body.classList.contains('theme-dark');
     const publicUrl = process.env.PUBLIC_URL || '';
     const normalizedPath = src.startsWith('/') ? src.slice(1) : src;
@@ -41,19 +49,23 @@ const ResponsiveImage = ({
     }
     
     return publicUrl ? `${publicUrl}/${imageName}` : `/${imageName}`;
-  }, [src, forceMobile, forceDesktop]);
+  }, [src, forceMobile, forceDesktop, aggressiveMobile]);
 
   const themeImagePath = useThemeImage(src);
   const [currentSrc, setCurrentSrc] = useState(() => getResponsiveImagePath());
   
-  // Update image source when dependencies change
+  // Reset loading state when src changes
   useEffect(() => {
+    setIsLoading(true);
+    setHasError(false);
     setCurrentSrc(getResponsiveImagePath());
   }, [getResponsiveImagePath]);
 
   useEffect(() => {
     // Listen for window resize events
     const handleResize = () => {
+      setIsLoading(true);
+      setHasError(false);
       setCurrentSrc(getResponsiveImagePath());
     };
 
@@ -75,6 +87,8 @@ const ResponsiveImage = ({
   useEffect(() => {
     // Listen for theme changes
     const handleThemeChange = () => {
+      setIsLoading(true);
+      setHasError(false);
       setCurrentSrc(getResponsiveImagePath());
     };
 
@@ -102,13 +116,18 @@ const ResponsiveImage = ({
 
   // Handle image load errors by falling back to theme image or provided fallback
   const handleError = (e) => {
+    setHasError(true);
+    setIsLoading(false);
+    
     // If the responsive image fails, fall back to theme-aware image
     if (e.target.src !== themeImagePath) {
       console.log(`Responsive image failed: ${e.target.src}, falling back to theme image: ${themeImagePath}`);
       e.target.src = themeImagePath;
+      setIsLoading(true); // Start loading again for fallback
     } else if (fallbackSrc && e.target.src !== fallbackSrc) {
       // If theme image also fails, try fallback
       e.target.src = fallbackSrc;
+      setIsLoading(true); // Start loading again for fallback
     }
     
     if (onError) {
@@ -117,21 +136,51 @@ const ResponsiveImage = ({
   };
 
   const handleLoad = (e) => {
+    setIsLoading(false);
+    setHasError(false);
+    
     if (onLoad) {
       onLoad(e);
     }
   };
 
   return (
-    <img
-      src={currentSrc}
-      alt={autoAlt}
-      className={`responsive-image ${className}`}
-      style={style}
-      onLoad={handleLoad}
-      onError={handleError}
-      {...otherProps}
-    />
+    <div className={`responsive-image-container ${className}`} style={style}>
+      {/* Show alt text while loading or on error */}
+      {(isLoading || hasError) && (
+        <div className="responsive-image-alt-text" style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f5f5f5',
+          border: '1px solid #ddd',
+          borderRadius: '4px',
+          padding: '8px',
+          fontSize: '12px',
+          color: '#666',
+          textAlign: 'center',
+          minHeight: '40px',
+          width: '100%'
+        }}>
+          {isLoading ? `Loading: ${autoAlt}` : autoAlt}
+        </div>
+      )}
+      
+      {/* Image element - hidden until loaded */}
+      <img
+        src={currentSrc}
+        alt={autoAlt}
+        className="responsive-image"
+        style={{ 
+          display: (isLoading || hasError) ? 'none' : 'block',
+          width: '100%',
+          height: 'auto'
+        }}
+        onLoad={handleLoad}
+        onError={handleError}
+        {...otherProps}
+      />
+    </div>
   );
 };
 

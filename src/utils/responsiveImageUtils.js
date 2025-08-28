@@ -4,11 +4,13 @@
  */
 
 /**
- * Detect if the current screen is mobile-sized
- * @returns {boolean} True if screen width is mobile-sized (<=768px)
+ * Detect if the current screen is mobile-sized with optional aggressive threshold
+ * @param {boolean} aggressive - Use more aggressive mobile detection (1024px instead of 768px)
+ * @returns {boolean} True if screen width is mobile-sized
  */
-export const isMobileScreen = () => {
-  return window.innerWidth <= 768;
+export const isMobileScreen = (aggressive = false) => {
+  const threshold = aggressive ? 1024 : 768;
+  return window.innerWidth <= threshold;
 };
 
 /**
@@ -17,11 +19,12 @@ export const isMobileScreen = () => {
  * @param {Object} options - Configuration options
  * @param {boolean} options.forceMobile - Force mobile version regardless of screen size
  * @param {boolean} options.forceDesktop - Force desktop version regardless of screen size
+ * @param {boolean} options.aggressiveMobile - Use aggressive mobile detection (1024px threshold)
  * @returns {string} The appropriate image path
  */
 export const getResponsiveImagePath = (baseImagePath, options = {}) => {
   const isDarkMode = document.body.classList.contains('theme-dark');
-  const isMobile = options.forceMobile || (!options.forceDesktop && isMobileScreen());
+  const isMobile = options.forceMobile || (!options.forceDesktop && isMobileScreen(options.aggressiveMobile));
   
   // Get the correct base path for the deployment environment
   const publicUrl = process.env.PUBLIC_URL || '';

@@ -203,6 +203,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
             src="sgex-mascot.png" 
             alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Helper')} 
             className="mascot-icon"
+            aggressiveMobile={true}
           />
           
           {/* Notification badge for tracked items or important help messages */}

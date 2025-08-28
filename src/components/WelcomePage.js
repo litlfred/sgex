@@ -7,7 +7,7 @@ import HelpModal from './HelpModal';
 import helpContentService from '../services/helpContentService';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
-import useThemeImage from '../hooks/useThemeImage';
+import ResponsiveImage from './ResponsiveImage';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const WelcomePage = () => {
@@ -23,11 +23,6 @@ const WelcomePage = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Theme-aware image paths
-  const mascotImage = useThemeImage('sgex-mascot.png');
-  const authoringImage = useThemeImage('authoring.png');
-  const collaborationImage = useThemeImage('collaboration.png');
 
   // Initial authentication check - runs once on mount
   useEffect(() => {
@@ -193,7 +188,11 @@ const WelcomePage = () => {
               onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleAuthoringClick()}
             >
               <div className="card-icon">
-                <img src={authoringImage} alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_AUTHORING, 'Authoring')} />
+                <ResponsiveImage 
+                  src="authoring.png" 
+                  alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_AUTHORING, 'Authoring')}
+                  aggressiveMobile={true}
+                />
               </div>
               <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
             </button>
@@ -254,7 +253,11 @@ const WelcomePage = () => {
               onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleCollaborationOpen()}
             >
               <div className="card-icon">
-                <img src={collaborationImage} alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_COLLABORATION, 'Collaboration')} />
+                <ResponsiveImage 
+                  src="collaboration.png" 
+                  alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_COLLABORATION, 'Collaboration')}
+                  aggressiveMobile={true}
+                />
               </div>
               <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
             </button>

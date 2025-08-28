@@ -49,6 +49,7 @@ const DAKComponentCard = ({ component, onClick, className = '' }) => {
             src={component.cardImage}
             alt={getAltText(t, ALT_TEXT_KEYS.ICON_DAK_COMPONENT, component.name, { name: component.name })}
             className="component-card-image"
+            aggressiveMobile={true}
             onLoad={handleImageLoad}
             onError={handleImageError}
             style={{ display: imageError ? 'none' : 'block' }}
