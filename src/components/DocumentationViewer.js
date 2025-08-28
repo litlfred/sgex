@@ -18,6 +18,7 @@ const generateDocFiles = () => {
     'requirements': { file: 'requirements.md', title: 'Requirements', category: 'root' },
     'solution-architecture': { file: 'solution-architecture.md', title: 'Solution Architecture', category: 'root' },
     'ui-styling-requirements': { file: 'UI_STYLING_REQUIREMENTS.md', title: 'UI Styling Requirements', category: 'root' },
+    'validation-rules': { file: 'validation-rules.md', title: 'Validation Rules', category: 'root' },
     'who-cors-workaround': { file: 'WHO_CORS_WORKAROUND.md', title: 'WHO CORS Workaround', category: 'root' },
     'workflows-overview': { file: 'workflows/README.md', title: 'Workflows Overview', category: 'workflows' }
   };

@@ -2,6 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AssetEditorLayout, useDAKParams } from './framework';
 import { createLazyBpmnModeler, createLazyOctokit } from '../utils/lazyRouteUtils';
+import { allCustomModules } from './bpmn-extensions';
+import './bpmn-extensions/validation.css';
+
+// Filter out properties provider for now since it needs additional dependencies
+const enabledModules = allCustomModules.filter(module => 
+  !module.customPropertiesProvider
+);
 
 const BPMNEditor = () => {
   const navigate = useNavigate();
@@ -22,9 +29,10 @@ const BPMNEditor = () => {
     const initializeModeler = async () => {
       if (containerRef.current && !modelerRef.current && selectedFile) {
         try {
-          // Lazy load BPMN.js modeler to improve initial page responsiveness
+          // Lazy load BPMN.js modeler with custom extensions to improve initial page responsiveness
           modelerRef.current = await createLazyBpmnModeler({
-            container: containerRef.current
+            container: containerRef.current,
+            additionalModules: enabledModules
           });
           console.log('BPMN modeler initialized successfully');
         } catch (error) {
@@ -128,7 +136,7 @@ const BPMNEditor = () => {
     loadBpmnFiles();
   }, [profile, repository, navigate]);
 
-  // Track BPMN content changes
+  // Track BPMN content changes and setup event handlers
   useEffect(() => {
     if (modelerRef.current) {
       const handleChanged = () => {
@@ -142,15 +150,42 @@ const BPMNEditor = () => {
           });
       };
 
+      // Setup double-click handler for Business Rule Tasks to open DMN editor
+      const handleElementDoubleClick = (event) => {
+        const element = event.element;
+        if (element.type === 'bpmn:BusinessRuleTask') {
+          const customAttrs = element.businessObject.$attrs;
+          if (customAttrs && customAttrs['custom:isDecisionTask']) {
+            handleOpenDMNEditor(element);
+          }
+        }
+      };
+
       modelerRef.current.on('commandStack.changed', handleChanged);
+      modelerRef.current.on('element.dblclick', handleElementDoubleClick);
       
       return () => {
         if (modelerRef.current) {
           modelerRef.current.off('commandStack.changed', handleChanged);
+          modelerRef.current.off('element.dblclick', handleElementDoubleClick);
         }
       };
     }
   }, [selectedFile]);
+
+  // Handle opening DMN editor for Business Rule Tasks
+  const handleOpenDMNEditor = (element) => {
+    const taskId = element.businessObject.id;
+    const taskName = element.businessObject.name || taskId;
+    
+    // For now, show an alert with placeholder functionality
+    // In future versions, this will open a proper DMN editor
+    alert(`DMN Integration: Opening decision table for "${taskName}" (${taskId})\n\nThis will open a DMN editor in a future version. Currently using placeholder functionality as requested in the requirements.`);
+    
+    // TODO: Implement actual DMN editor integration
+    // const dmnTableId = taskId.replace('Task', 'DT');
+    // navigate(`/dmn-editor/${profile.login}/${repository.name}/${branch}/${dmnTableId}`);
+  };
 
   // Handle save completion
   const handleSave = async (content, saveType) => {
@@ -367,6 +402,14 @@ const BPMNEditor = () => {
                       key={file.sha}
                       className={`file-item ${selectedFile?.sha === file.sha ? 'selected' : ''}`}
                       onClick={() => loadBpmnFile(file)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          loadBpmnFile(file);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                     >
                       <div className="file-icon">📋</div>
                       <div className="file-details">
@@ -385,6 +428,22 @@ const BPMNEditor = () => {
                   <div className="editor-toolbar">
                     <div className="toolbar-left">
                       <h4>{selectedFile.name}</h4>
+                      <ValidationSummary modelerRef={modelerRef} />
+                    </div>
+                    <div className="toolbar-right">
+                      <button 
+                        className="btn-secondary"
+                        onClick={() => {
+                          if (modelerRef.current) {
+                            const validationRenderer = modelerRef.current.get('validationRenderer');
+                            if (validationRenderer) {
+                              validationRenderer.validateAllElements();
+                            }
+                          }
+                        }}
+                      >
+                        🔍 Validate All
+                      </button>
                     </div>
                   </div>
                   <div className="bpmn-container" ref={containerRef}></div>
@@ -403,6 +462,53 @@ const BPMNEditor = () => {
         </div>
       </div>
     </AssetEditorLayout>
+  );
+};
+
+// Validation Summary Component
+const ValidationSummary = ({ modelerRef }) => {
+  const [validationSummary, setValidationSummary] = useState(null);
+
+  useEffect(() => {
+    if (modelerRef.current) {
+      const updateValidation = () => {
+        const validationRenderer = modelerRef.current.get('validationRenderer');
+        if (validationRenderer) {
+          const summary = validationRenderer.getValidationSummary();
+          setValidationSummary(summary);
+        }
+      };
+
+      // Update validation on changes
+      const eventBus = modelerRef.current.get('eventBus');
+      eventBus.on('commandStack.changed', updateValidation);
+      
+      // Initial validation
+      setTimeout(updateValidation, 100);
+
+      return () => {
+        if (modelerRef.current) {
+          eventBus.off('commandStack.changed', updateValidation);
+        }
+      };
+    }
+  }, [modelerRef]);
+
+  if (!validationSummary) {
+    return null;
+  }
+
+  const { validElements, invalidElements, warningElements, totalElements } = validationSummary;
+
+  return (
+    <div className="validation-summary">
+      <div className="validation-stats">
+        <span className="stat valid">✅ {validElements}</span>
+        <span className="stat warnings">⚠️ {warningElements}</span>
+        <span className="stat invalid">❌ {invalidElements}</span>
+        <span className="stat total">Total: {totalElements}</span>
+      </div>
+    </div>
   );
 };
 
