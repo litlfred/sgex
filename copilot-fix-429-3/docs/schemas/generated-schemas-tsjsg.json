@@ -530,6 +530,218 @@
       ],
       "type": "object"
     },
+    "FAQExecutionInput": {
+      "additionalProperties": false,
+      "description": "FAQ Execution Types",
+      "properties": {
+        "locale": {
+          "type": "string"
+        },
+        "storage": {
+          "$ref": "#/definitions/FAQStorageInterface"
+        },
+        "t": {
+          "$comment": "(key: string, params?: any) => string",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "params": {}
+              },
+              "required": [
+                "key"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "storage",
+        "t"
+      ],
+      "type": "object"
+    },
+    "FAQExecutionResult": {
+      "additionalProperties": false,
+      "properties": {
+        "errors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "meta": {},
+        "narrative": {
+          "type": "string"
+        },
+        "structured": {},
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "structured",
+        "narrative",
+        "errors",
+        "warnings",
+        "meta"
+      ],
+      "type": "object"
+    },
+    "FAQParameter": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {},
+        "description": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "required",
+        "description"
+      ],
+      "type": "object"
+    },
+    "FAQQuestionDefinition": {
+      "additionalProperties": false,
+      "description": "DAK FAQ Question Definition (manually authored in definition.json files)",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "level": {
+          "enum": [
+            "dak",
+            "component",
+            "asset"
+          ],
+          "type": "string"
+        },
+        "parameters": {
+          "items": {
+            "$ref": "#/definitions/FAQParameter"
+          },
+          "type": "array"
+        },
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "input": {
+              "$ref": "#/definitions/JSONSchema"
+            },
+            "output": {
+              "$ref": "#/definitions/JSONSchema"
+            }
+          },
+          "required": [
+            "input",
+            "output"
+          ],
+          "type": "object"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "level",
+        "title",
+        "description",
+        "parameters",
+        "tags",
+        "schema"
+      ],
+      "type": "object"
+    },
+    "FAQStorageInterface": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "FAQSystemConfig": {
+      "additionalProperties": false,
+      "description": "FAQ System Configuration",
+      "properties": {
+        "enableCaching": {
+          "type": "boolean"
+        },
+        "enableValidation": {
+          "type": "boolean"
+        },
+        "maxCacheAge": {
+          "type": "number"
+        },
+        "mcpServerUrl": {
+          "type": "string"
+        },
+        "validationStrict": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "mcpServerUrl",
+        "enableCaching",
+        "maxCacheAge",
+        "enableValidation",
+        "validationStrict"
+      ],
+      "type": "object"
+    },
+    "FAQValidationResult": {
+      "additionalProperties": false,
+      "properties": {
+        "errors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "isValid": {
+          "type": "boolean"
+        },
+        "sanitizedData": {},
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "isValid",
+        "errors",
+        "warnings"
+      ],
+      "type": "object"
+    },
     "GitHubBranch": {
       "additionalProperties": false,
       "properties": {
@@ -1176,6 +1388,29 @@
         "following",
         "created_at",
         "updated_at"
+      ],
+      "type": "object"
+    },
+    "JSONSchema": {
+      "properties": {
+        "additionalProperties": {
+          "type": "boolean"
+        },
+        "properties": {
+          "type": "object"
+        },
+        "required": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
       ],
       "type": "object"
     },
