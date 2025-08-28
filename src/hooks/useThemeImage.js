@@ -30,6 +30,11 @@ const useThemeImage = (baseImagePath) => {
         finalPath = combineUrlParts(publicUrl, normalizedPath);
       }
       
+      // Debug logging for deployment troubleshooting
+      if (process.env.NODE_ENV === 'development' || window.location.hostname.includes('github.io')) {
+        console.log(`useThemeImage [${baseImagePath}]: dark=${isDarkMode}, path="${finalPath}"`);
+      }
+      
       setCurrentImagePath(finalPath);
     };
 

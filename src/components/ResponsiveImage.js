@@ -50,7 +50,14 @@ const ResponsiveImage = ({
     }
     
     // Ensure no double slashes when combining publicUrl and imageName
-    return combineUrlParts(publicUrl, imageName);
+    const finalPath = combineUrlParts(publicUrl, imageName);
+    
+    // Debug logging for deployment troubleshooting
+    if (process.env.NODE_ENV === 'development' || window.location.hostname.includes('github.io')) {
+      console.log(`ResponsiveImage debug [${src}]: mobile=${isMobile}, dark=${isDarkMode}, path="${finalPath}"`);
+    }
+    
+    return finalPath;
   }, [src, forceMobile, forceDesktop, aggressiveMobile]);
 
   const themeImagePath = useThemeImage(src);
@@ -118,18 +125,32 @@ const ResponsiveImage = ({
 
   // Handle image load errors by falling back to theme image or provided fallback
   const handleError = (e) => {
+    const failedSrc = e.target.src;
     setHasError(true);
     setIsLoading(false);
     
+    // Debug logging for deployment troubleshooting
+    if (process.env.NODE_ENV === 'development' || window.location.hostname.includes('github.io')) {
+      console.log(`ResponsiveImage error [${src}]: Failed to load "${failedSrc}"`);
+    }
+    
     // If the responsive image fails, fall back to theme-aware image
-    if (e.target.src !== themeImagePath) {
-      console.log(`Responsive image failed: ${e.target.src}, falling back to theme image: ${themeImagePath}`);
+    if (failedSrc !== themeImagePath) {
+      console.log(`Responsive image failed: ${failedSrc}, falling back to theme image: ${themeImagePath}`);
       e.target.src = themeImagePath;
       setIsLoading(true); // Start loading again for fallback
-    } else if (fallbackSrc && e.target.src !== fallbackSrc) {
+      setHasError(false); // Reset error state for fallback attempt
+    } else if (fallbackSrc && failedSrc !== fallbackSrc) {
       // If theme image also fails, try fallback
+      console.log(`Theme image failed: ${failedSrc}, trying fallback: ${fallbackSrc}`);
       e.target.src = fallbackSrc;
       setIsLoading(true); // Start loading again for fallback
+      setHasError(false); // Reset error state for fallback attempt
+    } else {
+      // All fallbacks failed
+      console.log(`All image sources failed for ${src}`);
+      setHasError(true);
+      setIsLoading(false);
     }
     
     if (onError) {
