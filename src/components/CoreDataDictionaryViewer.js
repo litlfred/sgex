@@ -14,7 +14,7 @@ const CoreDataDictionaryViewer = () => {
 
 const CoreDataDictionaryViewerContent = () => {
   const navigate = useNavigate();
-  const { profile, repository, branch } = useDAKParams();
+  const { profile, repository, branch, isLoading: pageLoading } = useDAKParams();
   
   // Get data from URL params
   const user = profile?.login;
@@ -353,9 +353,15 @@ const CoreDataDictionaryViewerContent = () => {
     setFileContent('');
   };
 
-  if (!profile || !repository) {
-    navigate('/');
-    return <div>Redirecting...</div>;
+  if (pageLoading || (!profile || !repository)) {
+    return (
+      <div className="core-data-dictionary-viewer loading-state">
+        <div className="loading-content">
+          <h2>Loading Core Data Dictionary...</h2>
+          <p>Initializing framework and fetching repository data...</p>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {

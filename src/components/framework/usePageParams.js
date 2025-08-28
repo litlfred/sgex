@@ -60,11 +60,18 @@ export const useDAKParams = () => {
   try {
     const pageParams = usePageParams();
     
-    // Only throw error if page is fully loaded and type is not DAK/ASSET
+    // Handle case where page type hasn't been determined yet but we're clearly on a DAK route
+    // Check if current URL matches DAK pattern
+    const currentPath = window.location.pathname;
+    const pathParts = currentPath.split('/').filter(part => part);
+    const isDAKRoute = pathParts.length >= 3; // At minimum: [component, user, repo]
+    
+    // Only throw error if page is fully loaded, type is not DAK/ASSET, and we're not on a DAK route
     // This prevents errors during initial loading or page type determination
     if (!pageParams.loading && 
         pageParams.type !== PAGE_TYPES.DAK && 
-        pageParams.type !== PAGE_TYPES.ASSET) {
+        pageParams.type !== PAGE_TYPES.ASSET &&
+        !isDAKRoute) {
       throw new Error(`useDAKParams can only be used on DAK or Asset pages. Current page type: ${pageParams.type}`);
     }
 
@@ -75,7 +82,8 @@ export const useDAKParams = () => {
       branch: pageParams.branch,
       asset: pageParams.asset,
       updateBranch: pageParams.updateBranch,
-      navigate: pageParams.navigate
+      navigate: pageParams.navigate,
+      isLoading: pageParams.loading
     };
   } catch (error) {
     // If PageProvider is not ready yet, return empty object
@@ -88,7 +96,8 @@ export const useDAKParams = () => {
         branch: null,
         asset: null,
         updateBranch: () => {},
-        navigate: () => {}
+        navigate: () => {},
+        isLoading: true
       };
     }
     throw error;
