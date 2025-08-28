@@ -60,15 +60,33 @@ const determinePageType = (params) => {
   const currentPath = window.location.pathname;
   const pathParts = currentPath.split('/').filter(part => part);
   
-  // If we have at least [component, user, repo] parts, this should be a DAK route
-  const isDAKRoute = pathParts.length >= 3 && user && repo;
+  // Extract user/repo from URL if params not available yet (during initial route parsing)
+  let detectedUser = user;
+  let detectedRepo = repo;
   
-  console.debug('PageProvider: URL analysis:', { currentPath, pathParts, isDAKRoute });
+  if (!detectedUser && pathParts.length >= 3) {
+    // Pattern: [component, user, repo, branch?, asset?]
+    detectedUser = pathParts[1];
+    detectedRepo = pathParts[2];
+  }
+  
+  // Enhanced DAK route detection - works even before React Router finishes parsing
+  const isDAKRoute = pathParts.length >= 3 && detectedUser && detectedRepo;
+  
+  console.debug('PageProvider: URL analysis:', { 
+    currentPath, 
+    pathParts, 
+    detectedUser, 
+    detectedRepo,
+    isDAKRoute,
+    routerUser: user,
+    routerRepo: repo
+  });
   
   if (asset) return PAGE_TYPES.ASSET;
   if (isDAKRoute) return PAGE_TYPES.DAK; // Enhanced detection for DAK routes
-  if (user && repo) return PAGE_TYPES.DAK;
-  if (user) return PAGE_TYPES.USER;
+  if (detectedUser && detectedRepo) return PAGE_TYPES.DAK;
+  if (detectedUser || user) return PAGE_TYPES.USER;
   return PAGE_TYPES.TOP_LEVEL;
 };
 
@@ -93,11 +111,28 @@ export const PageProvider = ({ children, pageName }) => {
     isAuthenticated: githubService.isAuth()
   });
 
-  // Extract URL parameters
-  const { user, repo, branch } = params;
+  // Extract URL parameters - use both router params and URL parsing for robustness
+  const { user: routerUser, repo: routerRepo, branch: routerBranch } = params;
   const asset = params['*']; // Wildcard parameter for asset path
+  
+  // Fallback URL parsing for when React Router params aren't ready yet
+  const currentPath = window.location.pathname;
+  const pathParts = currentPath.split('/').filter(part => part);
+  const urlUser = pathParts.length >= 2 ? pathParts[1] : null;
+  const urlRepo = pathParts.length >= 3 ? pathParts[2] : null;
+  const urlBranch = pathParts.length >= 4 ? pathParts[3] : null;
+  
+  // Use router params if available, otherwise fall back to URL parsing
+  const user = routerUser || urlUser;
+  const repo = routerRepo || urlRepo;
+  const branch = routerBranch || urlBranch;
 
-  console.debug('PageProvider: URL params extracted:', { user, repo, branch, asset, allParams: params });
+  console.debug('PageProvider: URL params extracted:', { 
+    routerUser, routerRepo, routerBranch,
+    urlUser, urlRepo, urlBranch,
+    finalUser: user, finalRepo: repo, finalBranch: branch,
+    asset, allParams: params 
+  });
 
   // Load data based on page type
   useEffect(() => {
@@ -108,7 +143,7 @@ export const PageProvider = ({ children, pageName }) => {
         // Use location state if available, otherwise fetch from URL params
         let profile = location.state?.profile;
         let repository = location.state?.repository;
-        let selectedBranch = location.state?.selectedBranch || params.branch;
+        let selectedBranch = location.state?.selectedBranch || branch;
 
         // For DAK and Asset pages, validate and fetch data
         if (pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
@@ -299,7 +334,7 @@ export const PageProvider = ({ children, pageName }) => {
     if ((pageState.type !== PAGE_TYPES.TOP_LEVEL && user) || pageState.type === PAGE_TYPES.TOP_LEVEL) {
       loadPageData();
     }
-  }, [user, repo, params.branch, asset, pageState.type, location.state, navigate, pageName]);
+  }, [user, repo, branch, asset, pageState.type, location.state, navigate, pageName]);
 
   // Monitor authentication state changes
   useEffect(() => {
