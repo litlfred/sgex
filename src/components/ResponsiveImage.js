@@ -185,7 +185,7 @@ const ResponsiveImage = ({
           minHeight: '40px',
           width: '100%'
         }}>
-          {isLoading ? `Loading: ${autoAlt}` : autoAlt}
+          {autoAlt}
         </div>
       )}
       
@@ -197,7 +197,8 @@ const ResponsiveImage = ({
         style={{ 
           display: (isLoading || hasError) ? 'none' : 'block',
           width: '100%',
-          height: 'auto'
+          height: 'auto',
+          objectFit: 'contain'
         }}
         onLoad={handleLoad}
         onError={handleError}
