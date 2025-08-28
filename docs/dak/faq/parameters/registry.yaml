@@ -1,0 +1,162 @@
+# DAK FAQ Parameter Registry
+# Defines parameters available for different question types and contexts
+
+# DAK-level parameters
+dak:
+  repository:
+    type: string
+    required: true
+    description: "GitHub repository URL or owner/repo format"
+    validation:
+      pattern: "^([a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+|https://github.com/[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+)$"
+  
+  locale:
+    type: string
+    required: false
+    default: "en_US"
+    description: "Locale for internationalized responses"
+    validation:
+      enum: ["en_US", "fr_FR", "es_ES", "ar_AR", "zh_CN", "ru_RU"]
+  
+  branch:
+    type: string
+    required: false
+    default: "main"
+    description: "Git branch to analyze"
+
+# Component-level parameters
+component:
+  businessProcess:
+    componentType:
+      type: string
+      required: true
+      default: "businessProcess"
+      description: "Type of component being analyzed"
+    
+    bpmnDirectory:
+      type: string
+      required: false
+      default: "input/images"
+      description: "Directory containing BPMN files"
+    
+    includeSubprocesses:
+      type: boolean
+      required: false
+      default: true
+      description: "Whether to include subprocess definitions"
+
+  actor:
+    componentType:
+      type: string
+      required: true
+      default: "actor"
+      description: "Actor component type"
+    
+    actorDirectory:
+      type: string
+      required: false
+      default: "input/actors"
+      description: "Directory containing actor definitions"
+
+# Asset-level parameters
+asset:
+  lesson:
+    assetFile:
+      type: string
+      required: true
+      description: "Relative path to the lesson file"
+      validation:
+        pattern: "^[^/].*\\.(md|markdown)$"
+    
+    checkTranslations:
+      type: boolean
+      required: false
+      default: true
+      description: "Whether to check translation status"
+    
+    templateVersion:
+      type: string
+      required: false
+      default: "1.0"
+      description: "Expected template version"
+
+  bpmn:
+    assetFile:
+      type: string
+      required: true
+      description: "Relative path to the BPMN file"
+      validation:
+        pattern: "^[^/].*\\.bpmn$"
+    
+    validateSyntax:
+      type: boolean
+      required: false
+      default: true
+      description: "Whether to validate BPMN syntax"
+
+  dmn:
+    assetFile:
+      type: string
+      required: true
+      description: "Relative path to the DMN file"
+      validation:
+        pattern: "^[^/].*\\.dmn$"
+    
+    includeRuleDetails:
+      type: boolean
+      required: false
+      default: false
+      description: "Whether to include detailed rule information"
+
+  dataElement:
+    assetFile:
+      type: string
+      required: true
+      description: "Relative path to the data element file"
+      validation:
+        pattern: "^[^/].*\\.(json|yaml|yml|xml)$"
+    
+    checkTerminologyBinding:
+      type: boolean
+      required: false
+      default: true
+      description: "Whether to check terminology binding strength"
+
+  indicator:
+    assetFile:
+      type: string
+      required: true
+      description: "Relative path to the indicator definition file"
+      validation:
+        pattern: "^[^/].*\\.(json|yaml|yml|xml)$"
+    
+    includeFormula:
+      type: boolean
+      required: false
+      default: true
+      description: "Whether to include calculation formulas"
+    
+    analyzeComplexity:
+      type: boolean
+      required: false
+      default: true
+      description: "Whether to analyze calculation complexity"
+
+# Global parameter defaults
+defaults:
+  repository:
+    type: string
+    required: true
+    description: "Repository context (always required)"
+  
+  locale:
+    type: string
+    required: false
+    default: "en_US"
+    description: "Locale for responses"
+  
+  branch:
+    type: string
+    required: false
+    default: "main"
+    description: "Git branch context"

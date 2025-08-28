@@ -11,6 +11,7 @@ import ForkStatusBar from './ForkStatusBar';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
+import FAQAccordion from '../dak/faq/components/FAQAccordion.js';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const DAKDashboard = () => {
@@ -37,7 +38,7 @@ const DAKDashboardContent = () => {
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('core'); // 'core' or 'publications'
+  const [activeTab, setActiveTab] = useState('core'); // 'core', 'publications', 'other', or 'faq'
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -622,6 +623,13 @@ const DAKDashboardContent = () => {
               <span className="tab-icon">📚</span>
               <span className="tab-text">Publications</span>
             </button>
+            <button
+              className={`tab-button-fullwidth ${activeTab === 'faq' ? 'active' : ''}`}
+              onClick={() => setActiveTab('faq')}
+            >
+              <span className="tab-icon">❓</span>
+              <span className="tab-text">DAK FAQ</span>
+            </button>
           </div>
 
           {/* 9 Core DAK Components Section */}
@@ -658,6 +666,72 @@ const DAKDashboardContent = () => {
                 selectedBranch={selectedBranch}
                 hasWriteAccess={hasWriteAccess}
               />
+            </div>
+          )}
+
+          {/* DAK FAQ Section */}
+          {activeTab === 'faq' && (
+            <div className="components-section faq-section active">
+              <div className="section-header">
+                <h3 className="section-title">DAK FAQ System</h3>
+                <p className="section-description">
+                  Ask questions about this DAK and get automated answers based on repository analysis
+                </p>
+              </div>
+
+              <FAQAccordion
+                repository={`${user}/${repo}`}
+                branch={selectedBranch || 'main'}
+                githubService={githubService}
+                filters={{
+                  level: 'dak' // Start with DAK-level questions
+                }}
+                className="dak-faq-accordion"
+              />
+
+              {/* MCP Server Info */}
+              <div className="mcp-info" style={{ marginTop: '2rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+                <h4>MCP Server API</h4>
+                {window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? (
+                  <>
+                    <p>
+                      The FAQ system can also be accessed programmatically via the MCP server API:
+                    </p>
+                    <ul>
+                      <li><code>GET http://127.0.0.1:3001/faq/questions/catalog</code> - Get question catalog</li>
+                      <li><code>POST http://127.0.0.1:3001/faq/questions/execute</code> - Execute questions</li>
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      For programmatic access to the FAQ system, you can install and run the MCP server locally:
+                    </p>
+                    <div style={{ background: '#e9ecef', padding: '1rem', borderRadius: '4px', marginBottom: '1rem' }}>
+                      <h5>Installation Instructions:</h5>
+                      <ol>
+                        <li>Clone the SGEX repository: <code>git clone https://github.com/litlfred/sgex.git</code></li>
+                        <li>Navigate to repository: <code>cd sgex</code></li>
+                        <li>Build MCP server: <code>npm run build-mcp</code></li>
+                        <li>Start MCP server: <code>npm run run-mcp</code></li>
+                      </ol>
+                      <p style={{ margin: '0.5rem 0', fontSize: '0.9em', color: '#6c757d' }}>
+                        <strong>Alternative:</strong> For manual setup, navigate to <code>services/dak-faq-mcp</code> and run <code>npm install && npm run build && npm start</code>
+                      </p>
+                    </div>
+                    <p>
+                      Once running, the MCP server will be available at:
+                    </p>
+                    <ul>
+                      <li><code>GET http://127.0.0.1:3001/faq/questions/catalog</code> - Get question catalog</li>
+                      <li><code>POST http://127.0.0.1:3001/faq/questions/execute</code> - Execute questions</li>
+                    </ul>
+                    <p>
+                      <strong>Note:</strong> The MCP server runs locally for security and provides full API access to the DAK FAQ system.
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>

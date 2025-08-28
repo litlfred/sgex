@@ -1435,12 +1435,19 @@ class GitHubService {
         console.log('🔧 githubService.getFileContent: Decoding base64 content...');
         console.log('📊 githubService.getFileContent: Base64 content length:', data.content.length);
         
-        const content = decodeURIComponent(escape(atob(data.content)));
-        console.log(`✅ githubService.getFileContent: Successfully fetched and decoded file content`);
-        console.log('📏 githubService.getFileContent: Final content length:', content.length, 'characters');
-        console.log('👀 githubService.getFileContent: Content preview (first 200 chars):', content.substring(0, 200));
-        
-        return content;
+        try {
+          // Use modern Buffer approach for reliable base64 decoding
+          const content = Buffer.from(data.content, 'base64').toString('utf-8');
+          console.log(`✅ githubService.getFileContent: Successfully fetched and decoded file content`);
+          console.log('📏 githubService.getFileContent: Final content length:', content.length, 'characters');
+          console.log('👀 githubService.getFileContent: Content preview (first 200 chars):', content.substring(0, 200));
+          
+          return content;
+        } catch (decodeError) {
+          console.error('❌ githubService.getFileContent: Base64 decoding failed:', decodeError);
+          console.error('🔍 githubService.getFileContent: Raw base64 content preview:', data.content.substring(0, 100));
+          throw new Error(`Failed to decode file content: ${decodeError.message}`);
+        }
       } else {
         console.error('❌ githubService.getFileContent: Invalid response - not a file or no content');
         console.error('🔍 githubService.getFileContent: Full response data:', JSON.stringify(data, null, 2));
@@ -2362,6 +2369,57 @@ class GitHubService {
     } catch (error) {
       this.logger.apiResponse('GET', `/repos/${owner}/${repo}/pulls/${pullNumber}`, error.status || 'error', Date.now() - startTime);
       console.error('Failed to get pull request:', error);
+      throw error;
+    }
+  }
+
+  // Search issues using GitHub search API
+  async searchIssues(query, options = {}) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to search issues');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('GET', '/search/issues', { query, type: 'issue' });
+
+    try {
+      const response = await this.octokit.rest.search.issuesAndPullRequests({
+        q: query,
+        sort: options.sort || 'created',
+        order: options.order || 'desc',
+        per_page: options.per_page || 30,
+        page: options.page || 1
+      });
+
+      this.logger.apiResponse('GET', '/search/issues', response.status, Date.now() - startTime);
+
+      return {
+        total_count: response.data.total_count,
+        incomplete_results: response.data.incomplete_results,
+        items: response.data.items.map(item => ({
+          id: item.id,
+          number: item.number,
+          title: item.title,
+          body: item.body,
+          html_url: item.html_url,
+          state: item.state,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          closed_at: item.closed_at,
+          labels: item.labels || [],
+          user: {
+            login: item.user.login,
+            avatar_url: item.user.avatar_url
+          },
+          repository: item.repository_url ? {
+            name: item.repository_url.split('/').slice(-1)[0],
+            full_name: item.repository_url.split('/').slice(-2).join('/')
+          } : null
+        }))
+      };
+    } catch (error) {
+      this.logger.apiResponse('GET', '/search/issues', error.status || 'error', Date.now() - startTime);
+      console.error('Failed to search issues:', error);
       throw error;
     }
   }
