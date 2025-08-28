@@ -495,8 +495,6 @@ const LFormsVisualEditor = ({ questionnaire, onChange, onError }) => {
 };
 
 const QuestionnaireEditorContent = () => {
-  const { repository, branch, isLoading: pageLoading } = useDAKParams();
-  
   // Component state
   const [questionnaires, setQuestionnaires] = useState([]);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
@@ -511,6 +509,9 @@ const QuestionnaireEditorContent = () => {
   const [editMode, setEditMode] = useState('visual'); // 'visual' or 'json'
   const [lformsError, setLformsError] = useState(null);
 
+  // Get DAK params from PageProvider context (now available since we're inside AssetEditorLayout)
+  const { repository, branch, isLoading: pageLoading } = useDAKParams();
+  
   // Check if we have the necessary context data
   const hasRequiredData = repository && branch && !pageLoading;
 
@@ -825,274 +826,254 @@ const QuestionnaireEditorContent = () => {
   // Show loading state when PageProvider is not ready
   if (!hasRequiredData) {
     return (
-      <AssetEditorLayout pageName="questionnaire-editor">
-        <div className="questionnaire-editor-loading">
-          <h2>Initializing Questionnaire Editor...</h2>
-          <p>Loading repository context...</p>
-        </div>
-      </AssetEditorLayout>
+      <div className="questionnaire-editor-loading">
+        <h2>Initializing Questionnaire Editor...</h2>
+        <p>Loading repository context...</p>
+      </div>
     );
   }
 
   // Show loading state when fetching questionnaires
   if (loading && !editing) {
     return (
-      <AssetEditorLayout 
-        pageName="questionnaire-editor"
-        repository={repository}
-        branch={branch}
-      >
-        <div className="questionnaire-editor-loading">
-          <h2>Loading Questionnaires...</h2>
-          <p>Fetching questionnaire files from repository...</p>
-        </div>
-      </AssetEditorLayout>
+      <div className="questionnaire-editor-loading">
+        <h2>Loading Questionnaires...</h2>
+        <p>Fetching questionnaire files from repository...</p>
+      </div>
     );
   }
 
   return (
-    <AssetEditorLayout
-      pageName="questionnaire-editor"
-      file={selectedQuestionnaire}
-      repository={repository}
-      branch={branch}
-      content={questionnaireContent ? JSON.stringify(questionnaireContent, null, 2) : null}
-      originalContent={originalContent}
-      hasChanges={hasChanges}
-      onSave={handleSave}
-      showSaveButtons={editing}
-    >
-      <div className="questionnaire-editor">
-        <div className="questionnaire-content">
-          {error && (
-            <div className="error-message">
-              <strong>Error:</strong> {error}
-            </div>
-          )}
+    <div className="questionnaire-editor">
+      <div className="questionnaire-content">
+        {error && (
+          <div className="error-message">
+            <strong>Error:</strong> {error}
+          </div>
+        )}
 
-          {!editing ? (
-            <div className="questionnaire-list">
-              <div className="list-header">
-                <h2>Questionnaires ({questionnaires.length})</h2>
+        {!editing ? (
+          <div className="questionnaire-list">
+            <div className="list-header">
+              <h2>Questionnaires ({questionnaires.length})</h2>
+              <button 
+                onClick={createNewQuestionnaire}
+                className="btn-primary"
+                disabled={!lformsLoaded}
+              >
+                + Create New Questionnaire
+              </button>
+            </div>
+
+            {questionnaires.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">📋</div>
+                <h3>No Questionnaires Found</h3>
+                <p>This repository doesn't have any FHIR Questionnaire files yet.</p>
+                <p>Questionnaires can be stored as:</p>
+                <ul style={{textAlign: 'left', maxWidth: '400px', margin: '0 auto'}}>
+                  <li><code>input/questionnaires/*.json</code> - FHIR JSON format</li>
+                  <li><code>input/fsh/questionnaires/*.fsh</code> - FHIR Shorthand format</li>
+                </ul>
                 <button 
                   onClick={createNewQuestionnaire}
                   className="btn-primary"
                   disabled={!lformsLoaded}
                 >
-                  + Create New Questionnaire
+                  Create Your First Questionnaire
                 </button>
               </div>
-
-              {questionnaires.length === 0 ? (
-                <div className="empty-state">
-                  <div className="empty-icon">📋</div>
-                  <h3>No Questionnaires Found</h3>
-                  <p>This repository doesn't have any FHIR Questionnaire files yet.</p>
-                  <p>Questionnaires can be stored as:</p>
-                  <ul style={{textAlign: 'left', maxWidth: '400px', margin: '0 auto'}}>
-                    <li><code>input/questionnaires/*.json</code> - FHIR JSON format</li>
-                    <li><code>input/fsh/questionnaires/*.fsh</code> - FHIR Shorthand format</li>
-                  </ul>
-                  <button 
-                    onClick={createNewQuestionnaire}
-                    className="btn-primary"
-                    disabled={!lformsLoaded}
+            ) : (
+              <div className="questionnaire-grid">
+                {questionnaires.map((questionnaire) => (
+                  <div 
+                    key={questionnaire.name}
+                    className="questionnaire-card"
+                    onClick={() => loadQuestionnaireContent(questionnaire)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        loadQuestionnaireContent(questionnaire);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Open ${questionnaire.displayName} questionnaire`}
                   >
-                    Create Your First Questionnaire
+                    <div className="card-icon">
+                      {questionnaire.fileType === 'FSH' ? '📝' : '📋'}
+                    </div>
+                    <div className="card-content">
+                      <h3>{questionnaire.displayName}</h3>
+                      <p className="card-type">{questionnaire.fileType} Questionnaire</p>
+                      <p className="card-path">{questionnaire.fullPath}</p>
+                      <p className="card-size">{(questionnaire.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="questionnaire-editor-container">
+            <div className="editor-header">
+              <button 
+                onClick={() => setEditing(false)}
+                className="back-to-list"
+              >
+                ← Back to List
+              </button>
+              <h2>{selectedQuestionnaire?.displayName || 'New Questionnaire'}</h2>
+              
+              {/* Mode toggle for JSON questionnaires */}
+              {questionnaireContent?.fileType !== 'FSH' && (
+                <div className="edit-mode-toggle">
+                  <button 
+                    className={`mode-btn ${editMode === 'visual' ? 'active' : ''}`}
+                    onClick={() => setEditMode('visual')}
+                  >
+                    📝 Visual Editor
+                  </button>
+                  <button 
+                    className={`mode-btn ${editMode === 'json' ? 'active' : ''}`}
+                    onClick={() => setEditMode('json')}
+                  >
+                    {} JSON Editor
                   </button>
                 </div>
-              ) : (
-                <div className="questionnaire-grid">
-                  {questionnaires.map((questionnaire) => (
-                    <div 
-                      key={questionnaire.name}
-                      className="questionnaire-card"
-                      onClick={() => loadQuestionnaireContent(questionnaire)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          loadQuestionnaireContent(questionnaire);
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Open ${questionnaire.displayName} questionnaire`}
-                    >
-                      <div className="card-icon">
-                        {questionnaire.fileType === 'FSH' ? '📝' : '📋'}
-                      </div>
-                      <div className="card-content">
-                        <h3>{questionnaire.displayName}</h3>
-                        <p className="card-type">{questionnaire.fileType} Questionnaire</p>
-                        <p className="card-path">{questionnaire.fullPath}</p>
-                        <p className="card-size">{(questionnaire.size / 1024).toFixed(1)} KB</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               )}
             </div>
-          ) : (
-            <div className="questionnaire-editor-container">
-              <div className="editor-header">
-                <button 
-                  onClick={() => setEditing(false)}
-                  className="back-to-list"
-                >
-                  ← Back to List
-                </button>
-                <h2>{selectedQuestionnaire?.displayName || 'New Questionnaire'}</h2>
-                
-                {/* Mode toggle for JSON questionnaires */}
-                {questionnaireContent?.fileType !== 'FSH' && (
-                  <div className="edit-mode-toggle">
-                    <button 
-                      className={`mode-btn ${editMode === 'visual' ? 'active' : ''}`}
-                      onClick={() => setEditMode('visual')}
-                    >
-                      📝 Visual Editor
-                    </button>
-                    <button 
-                      className={`mode-btn ${editMode === 'json' ? 'active' : ''}`}
-                      onClick={() => setEditMode('json')}
-                    >
-                      {} JSON Editor
-                    </button>
-                  </div>
-                )}
+
+            {lformsError && (
+              <div className="error-message">
+                <strong>Editor Error:</strong> {lformsError}
               </div>
+            )}
 
-              {lformsError && (
-                <div className="error-message">
-                  <strong>Editor Error:</strong> {lformsError}
-                </div>
-              )}
-
-              {!lformsLoaded ? (
-                <div className="lforms-loading">
-                  <p>Loading questionnaire editor...</p>
-                </div>
-              ) : (
-                <div className="lforms-container">
-                  {/* Preview Section */}
-                  <div className="questionnaire-preview">
-                    <h4>Questionnaire Preview</h4>
-                    <div className="questionnaire-metadata">
-                      <p><strong>Title:</strong> {questionnaireContent?.title || 'Untitled'}</p>
-                      <p><strong>Status:</strong> {questionnaireContent?.status || 'draft'}</p>
-                      <p><strong>Format:</strong> {questionnaireContent?.fileType || 'JSON'}</p>
-                      <p><strong>Date:</strong> {questionnaireContent?.date || 'Not specified'}</p>
-                      {questionnaireContent?.fileType !== 'FSH' && (
-                        <p><strong>Items:</strong> {questionnaireContent?.item?.length || 0} questions</p>
-                      )}
-                    </div>
+            {!lformsLoaded ? (
+              <div className="lforms-loading">
+                <p>Loading questionnaire editor...</p>
+              </div>
+            ) : (
+              <div className="lforms-container">
+                {/* Preview Section */}
+                <div className="questionnaire-preview">
+                  <h4>Questionnaire Preview</h4>
+                  <div className="questionnaire-metadata">
+                    <p><strong>Title:</strong> {questionnaireContent?.title || 'Untitled'}</p>
+                    <p><strong>Status:</strong> {questionnaireContent?.status || 'draft'}</p>
+                    <p><strong>Format:</strong> {questionnaireContent?.fileType || 'JSON'}</p>
+                    <p><strong>Date:</strong> {questionnaireContent?.date || 'Not specified'}</p>
+                    {questionnaireContent?.fileType !== 'FSH' && (
+                      <p><strong>Items:</strong> {questionnaireContent?.item?.length || 0} questions</p>
+                    )}
                   </div>
-                  
-                  {/* Editor Section */}
-                  {questionnaireContent?.fileType === 'FSH' ? (
-                    // FSH files - read-only mode
-                    <div className="questionnaire-content-editor">
-                      <h4>
-                        FHIR Shorthand Content
-                        <span className="readonly-badge"> (Read-Only)</span>
-                      </h4>
-                      
-                      <div className="fsh-editor">
-                        <textarea
-                          value={questionnaireContent?.rawContent || ''}
-                          readOnly={true}
-                          className="fsh-content"
-                          rows={20}
-                        />
-                        <div className="fsh-notice">
-                          <strong>📝 FSH File:</strong> This is a FHIR Shorthand questionnaire. 
-                          Direct editing is not supported yet - please edit the .fsh file directly in your repository.
-                        </div>
-                      </div>
-                    </div>
-                  ) : editMode === 'visual' ? (
-                    // Visual editor
-                    <div className="visual-editor-section">
-                      <h4>Visual Questionnaire Builder</h4>
-                      <div className="lforms-visual-editor">
-                        <LFormsVisualEditor 
-                          questionnaire={questionnaireContent}
-                          onChange={(updatedQuestionnaire) => {
-                            setQuestionnaireContent(updatedQuestionnaire);
-                          }}
-                          onError={setLformsError}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    // JSON editor mode
-                    <div className="questionnaire-content-editor">
-                      <h4>Raw JSON Content</h4>
+                </div>
+                
+                {/* Editor Section */}
+                {questionnaireContent?.fileType === 'FSH' ? (
+                  // FSH files - read-only mode
+                  <div className="questionnaire-content-editor">
+                    <h4>
+                      FHIR Shorthand Content
+                      <span className="readonly-badge"> (Read-Only)</span>
+                    </h4>
+                    
+                    <div className="fsh-editor">
                       <textarea
-                        value={JSON.stringify(questionnaireContent, null, 2)}
-                        onChange={(e) => {
-                          try {
-                            const newContent = JSON.parse(e.target.value);
-                            setQuestionnaireContent(newContent);
-                          } catch (error) {
-                            // Invalid JSON, don't update
-                            console.warn('Invalid JSON in editor');
-                          }
-                        }}
-                        className="json-editor"
+                        value={questionnaireContent?.rawContent || ''}
+                        readOnly={true}
+                        className="fsh-content"
                         rows={20}
                       />
-                    </div>
-                  )}
-                  
-                  <div className="editor-instructions">
-                    <h4>Editing Instructions:</h4>
-                    {questionnaireContent?.fileType === 'FSH' ? (
-                      <ul>
-                        <li>This is a FHIR Shorthand (.fsh) questionnaire file</li>
-                        <li>FSH files define questionnaires using a domain-specific language</li>
-                        <li>To edit this questionnaire, modify the .fsh file directly in your repository</li>
-                        <li>FSH files are compiled into JSON during the build process</li>
-                        <li>Learn more about FHIR Shorthand at <a href="https://build.fhir.org/ig/HL7/fhir-shorthand/" target="_blank" rel="noopener noreferrer">HL7 FHIR Shorthand</a></li>
-                      </ul>
-                    ) : editMode === 'visual' ? (
-                      <ul>
-                        <li>Use the visual editor above to build your questionnaire interactively</li>
-                        <li>Add, remove, and modify questions using the form builder interface</li>
-                        <li>Preview your questionnaire as users will see it</li>
-                        <li>Switch to JSON mode to see the raw FHIR Questionnaire structure</li>
-                        <li>Changes are automatically saved as you work</li>
-                      </ul>
-                    ) : (
-                      <ul>
-                        <li>Edit the JSON structure above to modify the questionnaire</li>
-                        <li>The preview shows key questionnaire metadata</li>
-                        <li>Changes are automatically detected for saving</li>
-                        <li>Switch to Visual mode for an easier editing experience</li>
-                        <li>Click "Save to Staging" to save changes locally</li>
-                      </ul>
-                    )}
-                    <div className="help-tip">
-                      <strong>Note:</strong> Use the visual editor above to build questionnaires interactively or switch to JSON mode for direct editing.
+                      <div className="fsh-notice">
+                        <strong>📝 FSH File:</strong> This is a FHIR Shorthand questionnaire. 
+                        Direct editing is not supported yet - please edit the .fsh file directly in your repository.
+                      </div>
                     </div>
                   </div>
+                ) : editMode === 'visual' ? (
+                  // Visual editor
+                  <div className="visual-editor-section">
+                    <h4>Visual Questionnaire Builder</h4>
+                    <div className="lforms-visual-editor">
+                      <LFormsVisualEditor 
+                        questionnaire={questionnaireContent}
+                        onChange={(updatedQuestionnaire) => {
+                          setQuestionnaireContent(updatedQuestionnaire);
+                        }}
+                        onError={setLformsError}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  // JSON editor mode
+                  <div className="questionnaire-content-editor">
+                    <h4>Raw JSON Content</h4>
+                    <textarea
+                      value={JSON.stringify(questionnaireContent, null, 2)}
+                      onChange={(e) => {
+                        try {
+                          const newContent = JSON.parse(e.target.value);
+                          setQuestionnaireContent(newContent);
+                        } catch (error) {
+                          // Invalid JSON, don't update
+                          console.warn('Invalid JSON in editor');
+                        }
+                      }}
+                      className="json-editor"
+                      rows={20}
+                    />
+                  </div>
+                )}
+                
+                <div className="editor-instructions">
+                  <h4>Editing Instructions:</h4>
+                  {questionnaireContent?.fileType === 'FSH' ? (
+                    <ul>
+                      <li>This is a FHIR Shorthand (.fsh) questionnaire file</li>
+                      <li>FSH files define questionnaires using a domain-specific language</li>
+                      <li>To edit this questionnaire, modify the .fsh file directly in your repository</li>
+                      <li>FSH files are compiled into JSON during the build process</li>
+                      <li>Learn more about FHIR Shorthand at <a href="https://build.fhir.org/ig/HL7/fhir-shorthand/" target="_blank" rel="noopener noreferrer">HL7 FHIR Shorthand</a></li>
+                    </ul>
+                  ) : editMode === 'visual' ? (
+                    <ul>
+                      <li>Use the visual editor above to build your questionnaire interactively</li>
+                      <li>Add, remove, and modify questions using the form builder interface</li>
+                      <li>Preview your questionnaire as users will see it</li>
+                      <li>Switch to JSON mode to see the raw FHIR Questionnaire structure</li>
+                      <li>Changes are automatically saved as you work</li>
+                    </ul>
+                  ) : (
+                    <ul>
+                      <li>Edit the JSON structure above to modify the questionnaire</li>
+                      <li>The preview shows key questionnaire metadata</li>
+                      <li>Changes are automatically detected for saving</li>
+                      <li>Switch to Visual mode for an easier editing experience</li>
+                      <li>Click "Save to Staging" to save changes locally</li>
+                    </ul>
+                  )}
+                  <div className="help-tip">
+                    <strong>Note:</strong> Use the visual editor above to build questionnaires interactively or switch to JSON mode for direct editing.
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <ContextualHelpMascot 
-          pageId="questionnaire-editor"
-          contextData={{
-            repository: repository.name,
-            branch: branch,
-            hasQuestionnaires: questionnaires.length > 0,
-            isEditing: editing
-          }}
-        />
+              </div>
+            )}
+          </div>
+        )}
       </div>
-    </AssetEditorLayout>
+
+      <ContextualHelpMascot 
+        pageId="questionnaire-editor"
+        contextData={{
+          repository: repository.name,
+          branch: branch,
+          hasQuestionnaires: questionnaires.length > 0,
+          isEditing: editing
+        }}
+      />
+    </div>
   );
 };
 
@@ -1142,7 +1123,12 @@ class QuestionnaireErrorBoundary extends Component {
 const QuestionnaireEditor = () => {
   return (
     <QuestionnaireErrorBoundary>
-      <QuestionnaireEditorContent />
+      <AssetEditorLayout
+        pageName="questionnaire-editor"
+        showSaveButtons={false} // We'll handle save buttons internally for now
+      >
+        <QuestionnaireEditorContent />
+      </AssetEditorLayout>
     </QuestionnaireErrorBoundary>
   );
 };
