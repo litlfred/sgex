@@ -662,7 +662,7 @@ const BranchListingPage = () => {
                 <div className="action-cards">
                     <div className="action-card main-site-card">
                         <a 
-                            href="./main/"
+                            href="/sgex/dashboard"
                             className="card-link"
                         >
                             <div className="card-content">
