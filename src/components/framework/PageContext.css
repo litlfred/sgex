@@ -59,7 +59,7 @@
 .context-btn:hover {
   background-color: var(--who-hover-bg, #e9ecef);
   border-color: var(--who-border-color, #adb5bd);
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
 }
 
 .context-btn .github-icon {
@@ -80,7 +80,7 @@
 /* First row: User/repo/branch styling - WHO blue and bold */
 .page-context-user-repo {
   font-weight: bold;
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
 }
 
 .page-context-profile,
@@ -91,7 +91,7 @@
   transition: all 0.2s ease;
   text-decoration: none;
   font-weight: bold;
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
 }
 
 .page-context-profile:hover,
@@ -103,7 +103,7 @@
 
 /* Separating slashes - WHO blue color */
 .page-context-separator {
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
   font-weight: bold;
   font-size: 1.1rem;
   user-select: none;
@@ -113,7 +113,7 @@
 .page-context-branch {
   font-family: monospace;
   font-weight: bold;
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
   background-color: var(--who-hover-bg, #e9ecef);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -132,7 +132,7 @@
   gap: 0.3rem;
   font-family: monospace;
   font-weight: bold;
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
   background-color: var(--who-hover-bg, #e9ecef);
   padding: 0.25rem 0.5rem;
   border: 1px solid transparent;
@@ -144,7 +144,7 @@
 
 .page-context-branch-btn:hover {
   background-color: var(--who-blue-light, #e3f2fd);
-  border-color: var(--who-blue, #006cbe);
+  border-color: var(--who-blue, #d63384);
 }
 
 .branch-icon {
@@ -187,7 +187,7 @@
 }
 
 .branch-search-input:focus {
-  border-color: var(--who-blue, #006cbe);
+  border-color: var(--who-blue, #d63384);
   box-shadow: 0 0 0 2px rgba(0, 108, 190, 0.2);
 }
 
@@ -251,7 +251,7 @@
 }
 
 .current-badge {
-  background-color: var(--who-blue, #006cbe);
+  background-color: var(--who-blue, #d63384);
   color: white;
 }
 
@@ -286,7 +286,7 @@
   cursor: pointer;
   font-size: 1rem;
   font-weight: bold;
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   transition: all 0.2s ease;
@@ -298,12 +298,12 @@
   background-color: var(--who-blue-light, #e3f2fd);
   color: var(--who-blue-dark, #004a99);
   text-decoration: underline;
-  outline: 2px solid var(--who-blue, #006cbe);
+  outline: 2px solid var(--who-blue, #d63384);
   outline-offset: 2px;
 }
 
 .breadcrumb-separator {
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
   font-weight: bold;
   font-size: 1.1rem;
   user-select: none;
@@ -311,7 +311,7 @@
 
 .breadcrumb-current {
   font-weight: normal;
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
 }

@@ -1,11 +1,11 @@
 .test-dashboard {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: linear-gradient(135deg, #d63384 0%, #b02a5b 100%);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .dashboard-header {
-  background: rgb(4, 11, 118);
+  background: rgb(118, 4, 60);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   padding: 1rem 2rem;
@@ -39,7 +39,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 2px solid #0078d4;
+  border: 2px solid #d63384;
 }
 
 .context-details {
@@ -99,7 +99,7 @@
 .dashboard-intro {
   padding: 2rem;
   border-bottom: 1px solid #e1e5e9;
-  background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+  background: linear-gradient(135deg, #d63384 0%, #e85aa1 100%);
   color: white;
 }
 
@@ -124,7 +124,7 @@
 }
 
 .component-card {
-  background: #0078d4;
+  background: #d63384;
   border: 2px solid #e1e5e9;
   border-radius: 12px;
   padding: 1.5rem;

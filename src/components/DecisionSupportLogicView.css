@@ -50,7 +50,7 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
 }
 
 .decision-support-view .view-header {
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: linear-gradient(135deg, #d63384 0%, #b02a5b 100%);
   color: white;
   padding: 1rem 2rem;
   display: flex;
@@ -475,7 +475,7 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: linear-gradient(135deg, #d63384 0%, #b02a5b 100%);
   color: white;
   border: none;
   border-radius: 0.375rem;

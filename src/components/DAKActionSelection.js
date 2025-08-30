@@ -38,7 +38,7 @@ const DAKActionSelectionContent = () => {
       title: 'Edit Existing DAK',
       description: 'Select and modify an existing DAK that you have permission to edit. Changes will be made directly to the repository.',
       icon: editingImage,
-      color: '#0078d4'
+      color: '#d63384'
     },
     {
       id: 'fork', 

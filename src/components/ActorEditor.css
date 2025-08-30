@@ -71,7 +71,7 @@ body.theme-light .actor-editor {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 2px solid #0078d4;
+  border: 2px solid #d63384;
 }
 
 .context-details {
@@ -91,7 +91,7 @@ body.theme-light .actor-editor {
 }
 
 .context-branch {
-  color: #0078d4;
+  color: #d63384;
   font-size: 0.85rem;
   font-family: monospace;
 }
@@ -108,7 +108,7 @@ body.theme-light .actor-editor {
 }
 
 .breadcrumb-link {
-  color: #0078d4;
+  color: #d63384;
   cursor: pointer;
   text-decoration: none;
 }
@@ -156,7 +156,7 @@ body.theme-light .actor-editor {
 
 .toolbar-btn:hover:not(:disabled) {
   background: #f5f5f5;
-  border-color: #0078d4;
+  border-color: #d63384;
 }
 
 .toolbar-btn:disabled {
@@ -165,9 +165,9 @@ body.theme-light .actor-editor {
 }
 
 .toolbar-btn.primary {
-  background: #0078d4;
+  background: #d63384;
   color: white;
-  border-color: #0078d4;
+  border-color: #d63384;
 }
 
 .toolbar-btn.primary:hover:not(:disabled) {
@@ -310,9 +310,9 @@ body.theme-light .actor-editor {
 }
 
 .load-btn:hover {
-  background: #0078d4;
+  background: #d63384;
   color: white;
-  border-color: #0078d4;
+  border-color: #d63384;
 }
 
 .delete-btn:hover {
@@ -357,8 +357,8 @@ body.theme-light .actor-editor {
 }
 
 .tab.active {
-  color: #0078d4;
-  border-bottom-color: #0078d4;
+  color: #d63384;
+  border-bottom-color: #d63384;
   background: white;
 }
 
@@ -435,7 +435,7 @@ body.theme-light .actor-editor {
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #0078d4;
+  border-color: #d63384;
   box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
 }
 
@@ -567,7 +567,7 @@ body.theme-light .actor-editor {
 
 .copy-btn {
   padding: 0.75rem 1.5rem;
-  background: #0078d4;
+  background: #d63384;
   color: white;
   border: none;
   border-radius: 4px;
@@ -655,7 +655,7 @@ body.theme-light .actor-editor {
 .close-btn:focus,
 .copy-btn:focus,
 .tab:focus {
-  outline: 2px solid #0078d4;
+  outline: 2px solid #d63384;
   outline-offset: 2px;
 }
 

@@ -6,7 +6,7 @@ All pages in SGEX Workbench **MUST** use the consistent blue gradient background
 
 ### Required Background Gradient
 ```css
-background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+background: linear-gradient(135deg, #d63384 0%, #b02a5b 100%);
 ```
 
 ### Required Header Styling
@@ -68,7 +68,7 @@ All pages **MUST** use the consistent breadcrumb system provided by the page fra
 }
 
 .breadcrumb-link {
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
   text-decoration: underline;
   transition: color 0.2s ease;
 }
@@ -166,9 +166,9 @@ When modifying existing pages:
 ## Color Palette
 
 ### Primary Colors
-- **Primary Blue**: `#0078d4`
-- **Dark Blue**: `#005a9e`
-- **Text on Blue**: `white` or `rgba(255, 255, 255, 0.95)`
+- **Primary Pink**: `#d63384`
+- **Dark Pink**: `#b02a5b`
+- **Text on Pink**: `white` or `rgba(255, 255, 255, 0.95)`
 
 ### Accent Colors
 - **Success**: `#28a745`

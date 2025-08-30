@@ -11,7 +11,7 @@
 .back-button {
   background: none;
   border: none;
-  color: #0078d4;
+  color: #d63384;
   font-size: 14px;
   cursor: pointer;
   padding: 8px 0;
@@ -51,7 +51,7 @@
   width: 40px;
   height: 40px;
   border: 4px solid #f3f2f1;
-  border-top: 4px solid #0078d4;
+  border-top: 4px solid #d63384;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 20px;
@@ -120,7 +120,7 @@
 }
 
 .feature-file-card:hover {
-  border-color: #0078d4;
+  border-color: #d63384;
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
@@ -167,7 +167,7 @@
 }
 
 .btn-primary {
-  background-color: #0078d4;
+  background-color: #d63384;
   color: white;
 }
 
