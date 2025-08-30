@@ -319,7 +319,7 @@ const CoreDataDictionaryViewerContent = () => {
 
         <div className="viewer-main">
           <div className="component-intro">
-            <div className="component-icon" style={{ color: '#0078d4' }}>
+            <div className="component-icon" style={{ color: '#d63384' }}>
               📊
             </div>
             <div className="intro-content">

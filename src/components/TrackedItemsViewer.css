@@ -44,7 +44,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, rgb(4, 11, 118) 0%, #005a9e 100%);
+  background: linear-gradient(135deg, rgb(118, 4, 60) 0%, #005a9e 100%);
   color: white;
   border-radius: 12px 12px 0 0;
 }

@@ -31,7 +31,7 @@
 .sgex-logo h1 {
   font-size: 1.5rem;
   font-weight: bold;
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
   margin: 0;
   line-height: 1.2;
 }
@@ -70,7 +70,7 @@
 .context-user:hover,
 .context-repo:hover {
   background-color: var(--who-hover-bg, #e9ecef); 
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
 }
 
 .context-avatar {
@@ -109,7 +109,7 @@
 }
 
 .documentation-btn {
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
 }
 
 /* Branch selector in header */
@@ -216,13 +216,13 @@
 
 .bookmarks-dropdown {
   background-color: var(--who-card-bg, white);
-  border-left: 3px solid var(--who-blue, #006cbe);
+  border-left: 3px solid var(--who-blue, #d63384);
   margin: 0;
 }
 
 .bookmark-action {
   font-weight: 500;
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
 }
 
 .bookmark-action:hover {
@@ -274,7 +274,7 @@
 }
 
 .bookmark-link:hover {
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
   text-decoration: underline;
 }
 
@@ -318,7 +318,7 @@
 /* Login button */
 .login-btn {
   padding: 0.4rem 1rem;
-  background-color: var(--who-blue, #006cbe);
+  background-color: var(--who-blue, #d63384);
   color: white;
   border: none;
   border-radius: 4px;

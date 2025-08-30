@@ -329,7 +329,7 @@ const DAKDashboardContent = () => {
       icon: '📖',
       cardImage: 'dashboard/dak_interventions.png',
       type: 'L2',
-      color: '#0078d4',
+      color: '#d63384',
       fileTypes: ['IRIS', 'Publication'],
       count: 5,
       editor: 'Publication reference manager with IRIS integration'

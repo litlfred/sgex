@@ -1,12 +1,12 @@
 .preview-badge-demo {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  background: linear-gradient(135deg, #d63384 0%, #b02a5b 100%);
   color: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .demo-header {
-  background: rgb(4, 11, 118);
+  background: rgb(118, 4, 60);
   padding: 1rem 2rem;
   display: flex;
   align-items: center;

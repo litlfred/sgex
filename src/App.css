@@ -4,14 +4,14 @@
 
 /* CSS Custom Properties for WHO Theme */
 :root {
-  /* WHO Color Palette */
-  --who-blue: #006cbe;
-  --who-blue-light: #338dd6;
-  --who-blue-dark: #004a99;
-  --who-navy: #040B76;
-  --who-light-blue: #c0dcf2;
-  --who-light-blue-light: #e0ebf7;
-  --who-light-blue-dark: #a0c8e8;
+  /* WHO Color Palette - Pink Theme */
+  --who-blue: #d63384;
+  --who-blue-light: #e85aa1;
+  --who-blue-dark: #b02a5b;
+  --who-navy: #76043c;
+  --who-light-blue: #f2c0dc;
+  --who-light-blue-light: #f7e0eb;
+  --who-light-blue-dark: #e8a0c8;
   
   /* Button/Card Sizing Standards */
   --card-size-default: 18em;
@@ -56,7 +56,7 @@ body.theme-light {
   --who-text-on-primary: #ffffff;
   --who-border-color: #a0c8e8;
   --who-hover-bg: #e0ebf7;
-  --who-selected-bg: rgba(0, 108, 190, 0.1);
+  --who-selected-bg: rgba(214, 51, 132, 0.1);
   --who-error-bg: #ffeef0;
   --who-error-text: #d1242f;
   --who-error-border: #fdaeb7;
@@ -69,8 +69,8 @@ body.theme-light {
 
 /* Dark theme */
 body.theme-dark {
-  --who-primary-bg: #040B76;
-  --who-secondary-bg: #1a2380;
+  --who-primary-bg: #76043c;
+  --who-secondary-bg: #80235a;
   --who-card-bg: rgba(255, 255, 255, 0.1);
   --who-text-primary: #ffffff;
   --who-text-secondary: rgba(255, 255, 255, 0.8);
@@ -79,18 +79,18 @@ body.theme-dark {
   --who-border-color: rgba(255, 255, 255, 0.2);
   --who-hover-bg: rgba(255, 255, 255, 0.1);
   --who-bg-light: rgba(255, 255, 255, 0.05);
-  --who-selected-bg: rgba(0, 108, 190, 0.3);
+  --who-selected-bg: rgba(214, 51, 132, 0.3);
   --who-error-bg: rgba(220, 53, 69, 0.1);
   --who-error-text: #ff6b7a;
   --who-error-border: rgba(220, 53, 69, 0.3);
   /* Dropdown specific overrides for better visibility */
-  --who-dropdown-bg: #1a2380;
+  --who-dropdown-bg: #80235a;
   --who-dropdown-hover-bg: rgba(255, 255, 255, 0.15);
-  /* Shadow variables for dark theme - using dark navy instead of black */
-  --who-shadow-light: rgba(4, 11, 118, 0.2);
-  --who-shadow-medium: rgba(4, 11, 118, 0.4);
-  --who-shadow-heavy: rgba(4, 11, 118, 0.6);
-  --who-overlay-bg: rgba(4, 11, 118, 0.8);
+  /* Shadow variables for dark theme - using dark pink instead of black */
+  --who-shadow-light: rgba(118, 4, 60, 0.2);
+  --who-shadow-medium: rgba(118, 4, 60, 0.4);
+  --who-shadow-heavy: rgba(118, 4, 60, 0.6);
+  --who-overlay-bg: rgba(118, 4, 60, 0.8);
 }
 
 /* Lazy Loading Spinner */
@@ -149,7 +149,7 @@ button {
 /* Accessibility */
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--who-blue, #006cbe);
+  outline: 2px solid var(--who-blue, #d63384);
   outline-offset: 2px;
 }
 

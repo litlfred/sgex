@@ -27,7 +27,7 @@
 .breadcrumb-link {
   background: none;
   border: none;
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
   cursor: pointer;
   text-decoration: underline;
   padding: 0.25rem 0;
@@ -44,20 +44,20 @@
 }
 
 .breadcrumb-link:focus {
-  outline: 2px solid var(--who-blue, #006cbe);
+  outline: 2px solid var(--who-blue, #d63384);
   outline-offset: 2px;
   border-radius: 2px;
 }
 
 .breadcrumb-separator {
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
   margin: 0 0.5rem;
   font-weight: bold;
   user-select: none;
 }
 
 .breadcrumb-current {
-  color: var(--who-blue, #006cbe);
+  color: var(--who-blue, #d63384);
   font-weight: bold;
   padding: 0.25rem 0;
 }

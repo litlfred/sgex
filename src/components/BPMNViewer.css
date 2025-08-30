@@ -61,7 +61,7 @@ body.theme-light .bpmn-viewer {
 }
 
 .viewer-header {
-  background: rgb(4, 11, 118);
+  background: rgb(118, 4, 60);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   padding: 1rem 2rem;
