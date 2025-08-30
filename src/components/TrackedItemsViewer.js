@@ -12,6 +12,8 @@ const TrackedItemsViewer = ({ onClose }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [repositoryFilters, setRepositoryFilters] = useState({});
   const [trackedRepositories, setTrackedRepositories] = useState([]);
+  const [sortBy, setSortBy] = useState('updated'); // 'updated', 'created', 'number'
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
 
   useEffect(() => {
     loadTrackedItems();
@@ -90,6 +92,37 @@ const TrackedItemsViewer = ({ onClose }) => {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const sortItems = (items, sortBy, sortOrder) => {
+    return [...items].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'number':
+          comparison = a.number - b.number;
+          break;
+        case 'created':
+          comparison = new Date(a.created_at) - new Date(b.created_at);
+          break;
+        case 'updated':
+        default:
+          // Use updated_at if available, otherwise fall back to created_at
+          const aDate = new Date(a.updated_at || a.created_at);
+          const bDate = new Date(b.updated_at || b.created_at);
+          comparison = aDate - bDate;
+          break;
+      }
+      
+      return sortOrder === 'desc' ? -comparison : comparison;
+    });
+  };
+
+  const getSortedItems = (items) => {
+    return {
+      issues: sortItems(items.issues, sortBy, sortOrder),
+      pullRequests: sortItems(items.pullRequests, sortBy, sortOrder)
+    };
   };
 
   const getStateColor = (state) => {
@@ -269,6 +302,30 @@ const TrackedItemsViewer = ({ onClose }) => {
           </div>
         )}
 
+        <div className="tracked-items-controls">
+          <div className="tracked-items-sort-controls">
+            <label htmlFor="sort-by">Sort by:</label>
+            <select 
+              id="sort-by"
+              value={sortBy} 
+              onChange={(e) => setSortBy(e.target.value)}
+              className="sort-select"
+            >
+              <option value="updated">Last Modified</option>
+              <option value="created">Created Date</option>
+              <option value="number">Issue/PR Number</option>
+            </select>
+            <select 
+              value={sortOrder} 
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="sort-select"
+            >
+              <option value="desc">Newest First</option>
+              <option value="asc">Oldest First</option>
+            </select>
+          </div>
+        </div>
+
         <div className="tracked-items-tabs">
           <button
             className={`tracked-items-tab ${activeTab === 'issues' ? 'active' : ''}`}
@@ -285,31 +342,41 @@ const TrackedItemsViewer = ({ onClose }) => {
         </div>
 
         <div className="tracked-items-content">
-          {activeTab === 'issues' && (
-            <div className="tracked-items-list">
-              {trackedItems.issues.length === 0 ? (
-                <div className="tracked-items-empty">
-                  <p>No tracked issues yet.</p>
-                  <p>Issues you create while authenticated will appear here.</p>
+          {(() => {
+            const sortedItems = getSortedItems(trackedItems);
+            
+            if (activeTab === 'issues') {
+              return (
+                <div className="tracked-items-list">
+                  {sortedItems.issues.length === 0 ? (
+                    <div className="tracked-items-empty">
+                      <p>No tracked issues yet.</p>
+                      <p>Issues you create while authenticated will appear here.</p>
+                    </div>
+                  ) : (
+                    sortedItems.issues.map(renderIssueItem)
+                  )}
                 </div>
-              ) : (
-                trackedItems.issues.map(renderIssueItem)
-              )}
-            </div>
-          )}
+              );
+            }
 
-          {activeTab === 'pullRequests' && (
-            <div className="tracked-items-list">
-              {trackedItems.pullRequests.length === 0 ? (
-                <div className="tracked-items-empty">
-                  <p>No tracked pull requests yet.</p>
-                  <p>PRs related to your tracked issues will appear here automatically.</p>
+            if (activeTab === 'pullRequests') {
+              return (
+                <div className="tracked-items-list">
+                  {sortedItems.pullRequests.length === 0 ? (
+                    <div className="tracked-items-empty">
+                      <p>No tracked pull requests yet.</p>
+                      <p>PRs related to your tracked issues will appear here automatically.</p>
+                    </div>
+                  ) : (
+                    sortedItems.pullRequests.map(renderPRItem)
+                  )}
                 </div>
-              ) : (
-                trackedItems.pullRequests.map(renderPRItem)
-              )}
-            </div>
-          )}
+              );
+            }
+            
+            return null;
+          })()}
         </div>
 
         <div className="tracked-items-footer">

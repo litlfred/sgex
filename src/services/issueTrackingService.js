@@ -111,17 +111,62 @@ class IssueTrackingService {
   }
 
   /**
+   * Initialize default repository filters for a user
+   */
+  async _initializeDefaultFilters(username) {
+    const filters = this._getRepositoryFilters();
+    
+    if (!filters[username]) {
+      filters[username] = {};
+      
+      // Get all tracked repositories
+      const repositories = await this.getTrackedRepositories();
+      
+      // Set all repositories to hidden by default, except litlfred/sgex
+      for (const repo of repositories) {
+        if (repo !== 'litlfred/sgex') {
+          filters[username][repo] = { hidden: true };
+        }
+      }
+      
+      this._saveRepositoryFilters(filters);
+    }
+  }
+
+  /**
+   * Enable filter for a specific DAK repository when user visits it
+   */
+  async enableDAKRepositoryFilter(dakRepository) {
+    const username = await this._getCurrentUsername();
+    if (!username || !dakRepository) return false;
+
+    const filters = this._getRepositoryFilters();
+    
+    if (!filters[username]) {
+      filters[username] = {};
+    }
+    
+    // Enable the DAK repository (set hidden to false)
+    filters[username][dakRepository] = { hidden: false };
+    
+    return this._saveRepositoryFilters(filters);
+  }
+
+  /**
    * Get tracked items for a specific user with repository filters applied
    */
   async getFilteredTrackedItems(username = null) {
     const items = await this.getTrackedItems(username);
-    const filters = this._getRepositoryFilters();
     
     if (!username) {
       username = await this._getCurrentUsername();
       if (!username) return items;
     }
 
+    // Initialize default filters if they don't exist
+    await this._initializeDefaultFilters(username);
+    
+    const filters = this._getRepositoryFilters();
     const userFilters = filters[username] || {};
     
     // Filter out hidden repositories
@@ -173,6 +218,7 @@ class IssueTrackingService {
       title: issueData.title,
       html_url: issueData.html_url,
       created_at: issueData.created_at || new Date().toISOString(),
+      updated_at: issueData.updated_at || issueData.created_at || new Date().toISOString(),
       repository: issueData.repository || 'litlfred/sgex',
       state: issueData.state || 'open',
       labels: issueData.labels || [],
@@ -233,6 +279,7 @@ class IssueTrackingService {
       title: prData.title,
       html_url: prData.html_url,
       created_at: prData.created_at || new Date().toISOString(),
+      updated_at: prData.updated_at || prData.created_at || new Date().toISOString(),
       repository: prData.repository || 'litlfred/sgex',
       state: prData.state || 'open',
       linkedIssues: linkedIssues,
@@ -406,6 +453,7 @@ class IssueTrackingService {
             title: issue.title,
             html_url: issue.html_url,
             created_at: issue.created_at,
+            updated_at: issue.updated_at || issue.created_at,
             repository: issue.repository ? issue.repository.full_name : 'unknown/unknown',
             state: issue.state,
             labels: issue.labels || [],
@@ -429,6 +477,7 @@ class IssueTrackingService {
             title: pr.title,
             html_url: pr.html_url,
             created_at: pr.created_at,
+            updated_at: pr.updated_at || pr.created_at,
             repository: pr.repository ? pr.repository.full_name : 'unknown/unknown',
             state: pr.state,
             linkedIssues: [],
@@ -528,6 +577,7 @@ class IssueTrackingService {
         const currentIssue = await githubService.getIssue(owner, repo, issue.number);
         if (currentIssue && currentIssue.state !== issue.state) {
           issue.state = currentIssue.state;
+          issue.updated_at = currentIssue.updated_at || issue.updated_at;
           updated = true;
         }
       } catch (error) {
@@ -544,6 +594,7 @@ class IssueTrackingService {
         const currentPR = await githubService.getPullRequest(owner, repo, pr.number);
         if (currentPR && currentPR.state !== pr.state) {
           pr.state = currentPR.state;
+          pr.updated_at = currentPR.updated_at || pr.updated_at;
           updated = true;
         }
       } catch (error) {

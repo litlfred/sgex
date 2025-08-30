@@ -145,6 +145,61 @@
   border-bottom: 1px solid var(--sgex-color-border, #404040);
 }
 
+.tracked-items-controls {
+  padding: 16px 24px;
+  background: var(--sgex-color-surface-alt, #2a2a2a);
+  border-bottom: 1px solid var(--sgex-color-border, #404040);
+}
+
+.tracked-items-sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tracked-items-sort-controls label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--sgex-color-text, #ffffff);
+}
+
+.sort-select {
+  background: var(--sgex-color-surface, #1e1e1e);
+  border: 1px solid var(--sgex-color-border, #404040);
+  color: var(--sgex-color-text, #ffffff);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sort-select:hover {
+  border-color: var(--sgex-color-primary, #0078d4);
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--sgex-color-primary, #0078d4);
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+.theme-light .tracked-items-controls {
+  background: var(--sgex-color-surface-alt-light, #f8f9fa);
+  border-bottom: 1px solid var(--sgex-color-border-light, #e0e0e0);
+}
+
+.theme-light .tracked-items-sort-controls label {
+  color: var(--sgex-color-text-light, #333333);
+}
+
+.theme-light .sort-select {
+  background: var(--sgex-color-surface-light, #ffffff);
+  border: 1px solid var(--sgex-color-border-light, #e0e0e0);
+  color: var(--sgex-color-text-light, #333333);
+}
+
 .theme-light .tracked-items-filters {
   background: var(--sgex-color-surface-alt-light, #f8f9fa);
   border-bottom: 1px solid var(--sgex-color-border-light, #e0e0e0);

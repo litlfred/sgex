@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import helpContentService from '../services/helpContentService';
 import tutorialService from '../services/tutorialService';
@@ -14,6 +15,7 @@ import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', contextData = {}, notificationBadge = false }) => {
   const { t, i18n } = useTranslation();
+  const { user, repo } = useParams(); // Extract DAK context from URL
   const [showHelp, setShowHelp] = useState(false);
   const [helpSticky, setHelpSticky] = useState(false);
   const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
@@ -50,7 +52,10 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
       if (authenticated) {
         try {
           const counts = await issueTrackingService.getTrackedCounts();
-          setTrackedItemsCount(counts.total);
+          // Only update count if it's different to prevent flashing
+          setTrackedItemsCount(prevCount => {
+            return prevCount !== counts.total ? counts.total : prevCount;
+          });
         } catch (error) {
           console.warn('Failed to get tracked items count:', error);
           setTrackedItemsCount(0);
@@ -63,8 +68,8 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
     // Update immediately
     updateAuthAndTrackedCount();
 
-    // Set up periodic updates every 30 seconds when authenticated
-    const interval = setInterval(updateAuthAndTrackedCount, 30000);
+    // Set up periodic updates every 60 seconds when authenticated (less frequent to reduce flashing)
+    const interval = setInterval(updateAuthAndTrackedCount, 60000);
 
     return () => clearInterval(interval);
   }, []);
@@ -82,6 +87,22 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
     };
   }, [isAuthenticated]);
 
+  // Auto-enable DAK repository filter when visiting a DAK page
+  useEffect(() => {
+    const enableDAKFilter = async () => {
+      if (isAuthenticated && user && repo) {
+        const dakRepository = `${user}/${repo}`;
+        try {
+          await issueTrackingService.enableDAKRepositoryFilter(dakRepository);
+        } catch (error) {
+          console.warn('Failed to enable DAK repository filter:', error);
+        }
+      }
+    };
+
+    enableDAKFilter();
+  }, [isAuthenticated, user, repo]);
+
   const handleToggleTheme = () => {
     const newTheme = toggleTheme();
     setIsDarkMode(newTheme === 'dark');
@@ -93,19 +114,11 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   // Enhanced help topics with tracked items functionality
   const enhancedHelpTopics = [
     ...helpTopics,
-    // Add tracked items topic when authenticated and there are tracked items
-    ...(isAuthenticated && trackedItemsCount > 0 ? [{
+    // Add tracked items topic when authenticated - show immediately without waiting for count
+    ...(isAuthenticated ? [{
       id: 'tracked-items',
-      title: `Tracked Items (${trackedItemsCount})`,
+      title: trackedItemsCount > 0 ? `Tracked Items (${trackedItemsCount})` : 'Tracked Items',
       badge: '/sgex/cat-paw-icon.svg',
-      type: 'action',
-      action: () => setShowTrackedItems(true)
-    }] : []),
-    // Add tracked items topic when authenticated even if no tracked items (so users know it exists)
-    ...(isAuthenticated && trackedItemsCount === 0 ? [{
-      id: 'tracked-items-empty',
-      title: 'Tracked Items',
-      badge: '/sgex/cat-paw-icon.svg', 
       type: 'action',
       action: () => setShowTrackedItems(true)
     }] : [])
