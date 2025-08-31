@@ -5,7 +5,7 @@ import './TrackedItemsViewer.css';
 
 const TrackedItemsViewer = ({ onClose }) => {
   const [trackedItems, setTrackedItems] = useState({ issues: [], pullRequests: [] });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Start with loading=true immediately
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('issues');
   const [syncing, setSyncing] = useState(false);
@@ -16,16 +16,22 @@ const TrackedItemsViewer = ({ onClose }) => {
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
 
   useEffect(() => {
+    // Start loading immediately when component mounts
     loadTrackedItems();
   }, []);
 
   const loadTrackedItems = async () => {
     try {
+      // Ensure loading state is immediately visible
       setLoading(true);
       setError(null);
-      const items = await issueTrackingService.getFilteredTrackedItems();
-      const filters = await issueTrackingService.getRepositoryFilters();
-      const repositories = await issueTrackingService.getTrackedRepositories();
+      
+      // Load all data concurrently for faster loading
+      const [items, filters, repositories] = await Promise.all([
+        issueTrackingService.getFilteredTrackedItems(),
+        issueTrackingService.getRepositoryFilters(),
+        issueTrackingService.getTrackedRepositories()
+      ]);
       
       setTrackedItems(items);
       setRepositoryFilters(filters);

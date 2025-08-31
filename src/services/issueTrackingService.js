@@ -118,17 +118,27 @@ class IssueTrackingService {
     
     if (!filters[username]) {
       filters[username] = {};
-      
-      // Get all tracked repositories
-      const repositories = await this.getTrackedRepositories();
-      
-      // Set all repositories to hidden by default, except litlfred/sgex
-      for (const repo of repositories) {
-        if (repo !== 'litlfred/sgex') {
+    }
+    
+    // Get all tracked repositories
+    const repositories = await this.getTrackedRepositories();
+    
+    // Set default filters for any repositories that don't have explicit settings
+    let filtersUpdated = false;
+    for (const repo of repositories) {
+      if (!filters[username][repo]) {
+        if (repo === 'litlfred/sgex') {
+          // litlfred/sgex is visible by default
+          filters[username][repo] = { hidden: false };
+        } else {
+          // All other repositories are hidden by default
           filters[username][repo] = { hidden: true };
         }
+        filtersUpdated = true;
       }
-      
+    }
+    
+    if (filtersUpdated) {
       this._saveRepositoryFilters(filters);
     }
   }
@@ -140,13 +150,21 @@ class IssueTrackingService {
     const username = await this._getCurrentUsername();
     if (!username || !dakRepository) return false;
 
-    const filters = this._getRepositoryFilters();
+    let filters = this._getRepositoryFilters();
     
+    if (!filters[username]) {
+      // Initialize user filters first
+      await this._initializeDefaultFilters(username);
+      // Get updated filters after initialization
+      filters = this._getRepositoryFilters();
+    }
+    
+    // Ensure user filters exist
     if (!filters[username]) {
       filters[username] = {};
     }
     
-    // Enable the DAK repository (set hidden to false)
+    // Only enable the specific DAK repository, don't affect others
     filters[username][dakRepository] = { hidden: false };
     
     return this._saveRepositoryFilters(filters);
@@ -169,14 +187,30 @@ class IssueTrackingService {
     const filters = this._getRepositoryFilters();
     const userFilters = filters[username] || {};
     
-    // Filter out hidden repositories
-    const filteredIssues = items.issues.filter(issue => 
-      !userFilters[issue.repository]?.hidden
-    );
+    // For repositories not explicitly in the filter list, apply default behavior:
+    // - litlfred/sgex is visible by default
+    // - all other repositories are hidden by default
+    const filteredIssues = items.issues.filter(issue => {
+      const repository = issue.repository;
+      if (userFilters[repository] !== undefined) {
+        // Use explicit filter setting
+        return !userFilters[repository].hidden;
+      } else {
+        // Apply default: only litlfred/sgex is visible by default
+        return repository === 'litlfred/sgex';
+      }
+    });
     
-    const filteredPRs = items.pullRequests.filter(pr => 
-      !userFilters[pr.repository]?.hidden
-    );
+    const filteredPRs = items.pullRequests.filter(pr => {
+      const repository = pr.repository;
+      if (userFilters[repository] !== undefined) {
+        // Use explicit filter setting
+        return !userFilters[repository].hidden;
+      } else {
+        // Apply default: only litlfred/sgex is visible by default
+        return repository === 'litlfred/sgex';
+      }
+    });
 
     return {
       issues: filteredIssues,
