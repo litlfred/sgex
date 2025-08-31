@@ -647,8 +647,8 @@ class IssueTrackingService {
       const [owner, repo] = issue.repository.split('/');
       if (!owner || !repo) return;
 
-      // Search for PRs that mention this issue
-      const searchQuery = `is:pr repo:${owner}/${repo} ${issue.number}`;
+      // Search for PRs that mention this issue (exclude merged PRs)
+      const searchQuery = `is:pr repo:${owner}/${repo} is:unmerged ${issue.number}`;
       const results = await githubService.searchPullRequests(searchQuery);
 
       if (results && results.items && results.items.length > 0) {
