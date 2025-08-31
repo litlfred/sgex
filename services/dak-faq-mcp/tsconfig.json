@@ -20,7 +20,8 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
-    "allowImportingTsExtensions": false
+    "allowImportingTsExtensions": false,
+    "skipLibCheck": true
   },
   "include": [
     "**/*.ts",
