@@ -83,16 +83,15 @@
             });
             l.replace(l.protocol + '//' + l.host + branchPath);
           } else {
-            // Handle unknown branch-only URLs by redirecting to branch root  
+            // Handle unknown branch-only URLs by redirecting to main SGEX root  
             if (pathSegments.length === 2) {
-              // Just /sgex/:unknown-branch/ - redirect to branch root
+              // Just /sgex/:unknown-branch/ - redirect to main SGEX root to avoid infinite loop
               console.log('SGEX Branch Root Redirect (unknown branch):', {
                 from: l.pathname,
                 branch: secondSegment,
-                note: 'Unknown branch name, redirecting to branch root'
+                note: 'Unknown branch name, redirecting to main SGEX root to avoid infinite redirect'
               });
-              var branchPath = '/sgex/' + secondSegment + '/';
-              redirectToSPA(branchPath, '');
+              redirectToSPA('/sgex/', '');
               return;
             }
 
