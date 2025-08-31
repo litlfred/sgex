@@ -64,6 +64,44 @@ Example request body:
 }
 ```
 
+### WHO SMART Guidelines Canonical Schema Operations
+
+```
+GET /faq/canonical/known
+```
+Get known canonical ValueSets and Logical Models.
+
+```
+POST /faq/canonical/validate
+```
+Validate data against a canonical schema.
+
+```
+GET /faq/canonical/valuesets/*/expand
+```
+Expand a ValueSet to get all codes.
+
+```
+POST /faq/canonical/valuesets/validate-code
+```
+Validate a code against a ValueSet.
+
+```
+GET /faq/canonical/schemas/*
+```
+Load a canonical schema.
+
+```
+GET /faq/canonical/questions/:questionId/valuesets
+```
+Get ValueSet information for question parameters.
+
+```
+GET /faq/canonical/cache/stats
+DELETE /faq/canonical/cache
+```
+Cache management operations.
+
 ## TypeScript Architecture
 
 ### Core Types
@@ -141,3 +179,6 @@ const result: BatchExecuteResponse = await response.json();
 - Supports standard question taxonomy levels (dak, component, asset)
 - Compatible with FHIR R4, BPMN 2.0, DMN 1.3 standards
 - Implements WHO terminology binding patterns
+- **NEW**: Integrated with WHO SMART Guidelines canonical ValueSets and Logical Models
+- **NEW**: Enhanced validation against canonical FHIR schemas
+- **NEW**: Support for WHO ValueSet expansion and code validation
