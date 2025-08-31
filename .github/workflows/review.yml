@@ -75,7 +75,7 @@ jobs:
             **Deploy action:**
             - 🚀 [Deploy ${branchName}](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml?branch=${encodeURIComponent(branchName)})
             
-            **Preview URL:** [https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/](https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/) 📋
+            **Preview URL:** <a href="https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/" target="_blank">https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/</a> 📋
             
             ---
             

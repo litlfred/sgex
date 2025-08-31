@@ -87,7 +87,7 @@ jobs:
             - 🌿 [Deploy ${branchName} for preview](${branchDeploymentUrl}) 📋
             - 🏠 [Deploy main to landing page](${landingPageDeploymentUrl})
             
-            **Preview URL:** [${previewUrl}](${previewUrl}) 📋
+            **Preview URL:** <a href="${previewUrl}" target="_blank">${previewUrl}</a> 📋
             
             ---
             
@@ -204,15 +204,11 @@ jobs:
             const workflowRunUrl = '${{ steps.workflow_status.outputs.workflow_run_url }}';
             const startedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
             
-            // Create workflow dispatch URL for restarting if needed
-            const workflowDispatchUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml?branch=${encodeURIComponent(branchName)}`;
-            
             const commentBody = `## 🔄 Build In Progress
             
             **Branch:** \`${branchName}\` | **Commit:** \`${commitSha.substring(0, 7)}\` | **Status:** 🔵 Building...
             
             - 📊 [Watch build progress](${workflowRunUrl})
-            - 🔄 [Restart build](${workflowDispatchUrl})
             
             ---
             
@@ -265,14 +261,12 @@ jobs:
             
             // Create direct workflow dispatch URL with pre-filled branch name
             const approvalUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${workflowRunId}`;
-            const workflowDispatchUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml?branch=${encodeURIComponent(branchName)}`;
             
             const commentBody = `## ⏳ Deployment Approval Required
             
             **Branch:** \`${branchName}\` | **Commit:** \`${commitSha.substring(0, 7)}\` | **Status:** 🟡 Awaiting Approval
             
             - ✅ [Approve & Run](${approvalUrl})
-            - 🔄 [Redeploy branch](${workflowDispatchUrl})
             
             ---
             
@@ -345,7 +339,6 @@ jobs:
             const mainTargetName = 'sgex-main-app';
             const branchUrl = `https://litlfred.github.io/sgex/${branchName === 'main' ? 'main' : safeBranchName}/`;
             const mainAppUrl = 'https://litlfred.github.io/sgex/main/';
-            const workflowDispatchUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml?branch=${encodeURIComponent(branchName)}`;
             
             let commentBody;
             
@@ -355,11 +348,10 @@ jobs:
               **Branch:** \`${branchName}\` | **Commit:** \`${commitSha.substring(0, 7)}\` | **Status:** 🟢 Deployed
               
               **Preview links:**
-              - 🌐 [Branch Preview](${branchUrl}) 📋
-              - 🏠 [Main App](${mainAppUrl})
+              - 🌐 <a href="${branchUrl}" target="_blank">Branch Preview</a> 📋
+              - 🏠 <a href="${mainAppUrl}" target="_blank">Main App</a>
               
               **Actions:**
-              - 🚀 [Redeploy branch](${workflowDispatchUrl})
               - 📄 [Build logs](${workflowRunUrl})
               
               ---
@@ -371,7 +363,6 @@ jobs:
               
               **Actions:**
               - 📄 [Check logs](${workflowRunUrl})
-              - 🔄 [Retry build](${workflowDispatchUrl})
               
               ---
               ❗ *Check build logs and fix issues before retrying.*`;
