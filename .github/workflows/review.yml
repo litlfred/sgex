@@ -64,18 +64,39 @@ jobs:
             });
             
             const deploymentComment = comments.find(comment => 
-              comment.body.includes('🚀 Deploy Feature Branch') && 
-              comment.body.includes(`branch: ${branchName}`)
+              comment.body.includes('Deployment Status:') ||
+              (comment.body.includes('🚀 Deploy Feature Branch') && 
+               comment.body.includes(`branch: ${branchName}`))
             );
             
-            const commentBody = `## 🚀 Deploy Feature Branch
+            // Get latest commit message for recent change summary
+            const { data: commits } = await github.rest.repos.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: branchName,
+              per_page: 1
+            });
+            const commitMessage = commits.length > 0 ? commits[0].commit.message.split('\n')[0] : 'No recent commits';
+            const commitSha = commits.length > 0 ? commits[0].sha.substring(0, 7) : 'unknown';
             
-            **Branch:** \`${branchName}\` | **Approved:** ${approvedAt}
+            const commentBody = `## 🚀 Deployment Status: Ready for Deployment ✅
             
-            **Deploy action:**
+            **🔗 Quick Actions:**
             - 🚀 [Deploy ${branchName}](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml?branch=${encodeURIComponent(branchName)})
+            - 📄 [View workflow logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions)
             
-            **Preview URL:** <a href="https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/" target="_blank">https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/</a> 📋
+            ---
+            
+            ## 📝 Recent Change Summary
+            **Latest commit:** \`${commitSha}\` - ${commitMessage}
+            **Approved at:** ${approvedAt}
+            
+            ---
+            
+            ## 📊 Overall Progress
+            **Branch:** \`${branchName}\`
+            **Status:** ✅ Approved and ready for deployment
+            **Preview URL (after deployment):** <a href="https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/" target="_blank">https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/</a> 📋
             
             ---
             
