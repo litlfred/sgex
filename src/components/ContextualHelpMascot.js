@@ -23,6 +23,8 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [showTrackedItems, setShowTrackedItems] = useState(false);
   const [trackedItemsCount, setTrackedItemsCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const [clickTimeout, setClickTimeout] = useState(null);
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -79,8 +81,12 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
 
     return () => {
       issueTrackingService.stopBackgroundSync();
+      // Clean up click timeout if component unmounts
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+      }
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, clickTimeout]);
 
   const handleToggleTheme = () => {
     const newTheme = toggleTheme();
@@ -92,7 +98,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
 
   // Enhanced help topics with tracked items functionality
   const enhancedHelpTopics = [
-    ...helpTopics,
+    ...(helpTopics || []),
     // Add tracked items topic when authenticated and there are tracked items
     ...(isAuthenticated && trackedItemsCount > 0 ? [{
       id: 'tracked-items',
@@ -124,8 +130,37 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   };
 
   const handleClick = () => {
-    setHelpSticky(!helpSticky);
-    setShowHelp(!helpSticky || showHelp);
+    // Clear existing timeout if any
+    if (clickTimeout) {
+      clearTimeout(clickTimeout);
+    }
+
+    // Use functional state update to get the latest value
+    setClickCount(prevClickCount => {
+      const newClickCount = prevClickCount + 1;
+
+      // If this is the third click, hide the menu
+      if (newClickCount === 3) {
+        setShowHelp(false);
+        setHelpSticky(false);
+        setClickCount(0);
+        setClickTimeout(null);
+        return 0; // Reset count to 0
+      }
+
+      // For first two clicks, use original behavior
+      setHelpSticky(!helpSticky);
+      setShowHelp(!helpSticky || showHelp);
+
+      // Set timeout to reset click count after 500ms
+      const timeout = setTimeout(() => {
+        setClickCount(0);
+        setClickTimeout(null);
+      }, 500);
+      setClickTimeout(timeout);
+
+      return newClickCount;
+    });
   };
 
   const handleCloseHelp = () => {

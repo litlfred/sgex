@@ -4,6 +4,44 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from 'i18next';
 import ContextualHelpMascot from '../components/ContextualHelpMascot';
 
+// Mock react-router-dom
+jest.mock('react-router-dom', () => ({
+  Route: ({ children }) => children,
+  useNavigate: () => jest.fn(),
+  useLocation: () => ({ pathname: '/test' }),
+}));
+
+// Mock services to avoid dependencies
+jest.mock('../services/githubService', () => ({
+  isAuth: jest.fn(() => false),
+}));
+
+jest.mock('../services/issueTrackingService', () => ({
+  startBackgroundSync: jest.fn(),
+  stopBackgroundSync: jest.fn(),
+  getTrackedCounts: jest.fn(() => Promise.resolve({ total: 0 })),
+}));
+
+jest.mock('../services/helpContentService', () => ({
+  getHelpTopicsForPage: jest.fn(() => []),
+}));
+
+jest.mock('../services/tutorialService', () => ({}));
+
+jest.mock('../services/cacheManagementService', () => ({
+  clearAllCache: jest.fn(() => true),
+}));
+
+jest.mock('../utils/themeManager', () => ({
+  getSavedTheme: jest.fn(() => 'light'),
+  toggleTheme: jest.fn(() => 'dark'),
+}));
+
+jest.mock('../hooks/useThemeImage', () => ({
+  __esModule: true,
+  default: jest.fn(() => '/test-mascot.png'),
+}));
+
 // Mock localStorage
 const localStorageMock = {
   getItem: jest.fn(),
@@ -102,5 +140,32 @@ describe('ContextualHelpMascot Pulsing Animation', () => {
     
     expect(questionBubble).not.toBeInTheDocument();
     expect(notificationBadge).toBeInTheDocument();
+  });
+
+  test('triple-click hides the help menu', async () => {
+    const { container } = renderWithI18n(
+      <ContextualHelpMascot pageId="test-page" />
+    );
+    
+    const mascotContainer = container.querySelector('.mascot-container');
+    const questionBubble = container.querySelector('.question-bubble');
+    
+    // Initially help is not open
+    expect(questionBubble).not.toHaveClass('help-open');
+    
+    // First click opens help menu
+    fireEvent.click(mascotContainer);
+    expect(questionBubble).toHaveClass('help-open');
+    
+    // Second click (still within timeout window)
+    fireEvent.click(mascotContainer);
+    
+    // Third click should hide the menu
+    fireEvent.click(mascotContainer);
+    expect(questionBubble).not.toHaveClass('help-open');
+    
+    // Verify help bubble is not visible
+    const helpBubble = container.querySelector('.help-thought-bubble');
+    expect(helpBubble).not.toBeInTheDocument();
   });
 });
