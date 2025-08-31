@@ -25,6 +25,36 @@
             return;
           }
 
+          // Check for branch redirect loops using sessionStorage
+          var currentPath = l.pathname;
+          var redirectAttempts = JSON.parse(sessionStorage.getItem('sgex-redirect-attempts') || '[]');
+          
+          // Clean old attempts (older than 10 seconds)
+          var now = Date.now();
+          redirectAttempts = redirectAttempts.filter(function(attempt) {
+            return now - attempt.timestamp < 10000;
+          });
+          
+          // Check if we've already tried this exact path recently
+          var recentAttempt = redirectAttempts.find(function(attempt) {
+            return attempt.path === currentPath;
+          });
+          
+          if (recentAttempt && redirectAttempts.length > 1) {
+            console.error('SGEX 404.html: Detected branch redirect loop for path:', currentPath);
+            // Clear redirect attempts and fall back to main SGEX root
+            sessionStorage.removeItem('sgex-redirect-attempts');
+            redirectToSPA('/sgex/', '');
+            return;
+          }
+          
+          // Record this attempt
+          redirectAttempts.push({
+            path: currentPath,
+            timestamp: now
+          });
+          sessionStorage.setItem('sgex-redirect-attempts', JSON.stringify(redirectAttempts));
+
           var pathSegments = l.pathname.split('/').filter(Boolean);
           
           // Check if this is GitHub Pages deployment
@@ -83,15 +113,18 @@
             });
             l.replace(l.protocol + '//' + l.host + branchPath);
           } else {
-            // Handle unknown branch-only URLs by redirecting to branch root  
+            // Handle unknown branch-only URLs by trying to route to the branch first
             if (pathSegments.length === 2) {
-              // Just /sgex/:unknown-branch/ - redirect to branch root
+              // Just /sgex/:unknown-branch/ - assume branch exists and try to route to it
+              var branchPath = '/sgex/' + secondSegment + '/';
               console.log('SGEX Branch Root Redirect (unknown branch):', {
                 from: l.pathname,
+                to: branchPath,
                 branch: secondSegment,
-                note: 'Unknown branch name, redirecting to branch root'
+                note: 'Unknown branch name, assuming it exists and trying to route to it'
               });
-              var branchPath = '/sgex/' + secondSegment + '/';
+              // Clear redirect attempts on successful branch navigation
+              sessionStorage.removeItem('sgex-redirect-attempts');
               redirectToSPA(branchPath, '');
               return;
             }
