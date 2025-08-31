@@ -543,6 +543,59 @@
   box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
 }
 
+/* Logical Models Actions Styles */
+.logical-models-actions {
+  margin-top: 0.5rem;
+  margin-left: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.loading-indicator {
+  color: var(--who-text-secondary, #6c757d);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.models-count {
+  color: var(--who-text-secondary, #6c757d);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.models-dropdown {
+  position: relative;
+}
+
+.model-selector {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--who-border-color, #ced4da);
+  border-radius: 6px;
+  background: var(--who-card-bg, white);
+  color: var(--who-text-primary, #333);
+  font-size: 0.9rem;
+  cursor: pointer;
+  min-width: 200px;
+  transition: all 0.2s;
+}
+
+.model-selector:hover {
+  border-color: var(--who-blue, #0078d4);
+}
+
+.model-selector:focus {
+  outline: none;
+  border-color: var(--who-blue, #0078d4);
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
+}
+
+.model-selector option {
+  padding: 0.5rem;
+  background: var(--who-card-bg, white);
+  color: var(--who-text-primary, #333);
+}
+
 .dak-concepts-table {
   background: var(--who-card-bg, white);
   border-radius: 8px;

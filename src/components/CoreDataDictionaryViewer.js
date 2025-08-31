@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import logicalModelService from '../services/logicalModelService';
 import { PageLayout, useDAKParams } from './framework';
 
 const CoreDataDictionaryViewer = () => {
@@ -32,6 +33,8 @@ const CoreDataDictionaryViewerContent = () => {
   const [dakTableSearch, setDakTableSearch] = useState('');
   const [hasPublishedDak, setHasPublishedDak] = useState(false);
   const [checkingPublishedDak, setCheckingPublishedDak] = useState(false);
+  const [logicalModels, setLogicalModels] = useState([]);
+  const [loadingLogicalModels, setLoadingLogicalModels] = useState(false);
 
   // Generate base URL for IG Publisher artifacts
   const getBaseUrl = useCallback((branchName) => {
@@ -218,8 +221,26 @@ const CoreDataDictionaryViewerContent = () => {
           const baseUrl = getBaseUrl(currentBranch);
           const dakExists = await checkPublishedDakExists(baseUrl);
           setHasPublishedDak(dakExists);
+
+          // Detect logical models from published artifacts
+          setLoadingLogicalModels(true);
+          try {
+            const detectedModels = await logicalModelService.detectLogicalModels(
+              baseUrl, 
+              currentUser, 
+              currentRepo, 
+              currentBranch
+            );
+            setLogicalModels(detectedModels);
+          } catch (error) {
+            console.warn('Error detecting logical models:', error);
+            setLogicalModels([]);
+          } finally {
+            setLoadingLogicalModels(false);
+          }
         } else {
           setHasPublishedDak(false);
+          setLogicalModels([]);
         }
 
       } catch (err) {
@@ -262,6 +283,37 @@ const CoreDataDictionaryViewerContent = () => {
     setShowModal(false);
     setSelectedFile(null);
     setFileContent('');
+  };
+
+  // Handle creating questionnaire from logical model
+  const handleDraftQuestionnaireFromModel = async (logicalModel) => {
+    try {
+      // Generate questionnaire from logical model
+      const questionnaire = logicalModelService.generateQuestionnaireFromLogicalModel(logicalModel, {
+        questionnaireId: `questionnaire-${logicalModel.id.toLowerCase()}`,
+        title: `Data Collection for ${logicalModel.title || logicalModel.name}`,
+        description: `Questionnaire based on ${logicalModel.title || logicalModel.name} logical model for data collection`,
+        prefix: 'lm'
+      });
+
+      // Navigate to questionnaire editor with pre-populated content
+      const questionnaireEditorPath = branch ? 
+        `/questionnaire-editor/${user}/${repo}/${branch}` : 
+        `/questionnaire-editor/${user}/${repo}`;
+      
+      navigate(questionnaireEditorPath, {
+        state: {
+          profile,
+          repository,
+          branch,
+          prePopulatedQuestionnaire: questionnaire,
+          sourceLogicalModel: logicalModel
+        }
+      });
+    } catch (error) {
+      console.error('Error generating questionnaire from logical model:', error);
+      alert('Error generating questionnaire from logical model. Please try again.');
+    }
   };
 
   if (!profile || !repository) {
@@ -512,6 +564,36 @@ const CoreDataDictionaryViewerContent = () => {
                       >
                         Logical Models ↗
                       </a>
+                      {logicalModels.length > 0 && (
+                        <div className="logical-models-actions">
+                          {loadingLogicalModels ? (
+                            <span className="loading-indicator">Detecting models...</span>
+                          ) : (
+                            <>
+                              <span className="models-count">({logicalModels.length} detected)</span>
+                              <div className="models-dropdown">
+                                <select 
+                                  onChange={(e) => {
+                                    const selectedModel = logicalModels.find(m => m.id === e.target.value);
+                                    if (selectedModel) {
+                                      handleDraftQuestionnaireFromModel(selectedModel);
+                                    }
+                                  }}
+                                  defaultValue=""
+                                  className="model-selector"
+                                >
+                                  <option value="" disabled>Draft Questionnaire from...</option>
+                                  {logicalModels.map((model) => (
+                                    <option key={model.id} value={model.id}>
+                                      {model.title || model.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
                       <a 
                         href={`${getBaseUrl(branchName)}/artifacts.html#terminology-concept-maps`}
                         target="_blank"

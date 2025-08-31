@@ -2,6 +2,7 @@ import React, { useState, useEffect, Component } from 'react';
 import { PageLayout, AssetEditorLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
+import { useLocation } from 'react-router-dom';
 import './QuestionnaireEditor.css';
 
 // Enhanced Visual Editor Component with LForms integration
@@ -288,6 +289,7 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
 
 const QuestionnaireEditorContent = () => {
   const { repository, branch, isLoading: pageLoading } = useDAKParams();
+  const location = useLocation();
   
   // Component state
   const [questionnaires, setQuestionnaires] = useState([]);
@@ -305,6 +307,28 @@ const QuestionnaireEditorContent = () => {
 
   // Check if we have the necessary context data
   const hasRequiredData = repository && branch && !pageLoading;
+
+  // Handle pre-populated questionnaire from logical model
+  useEffect(() => {
+    if (location.state?.prePopulatedQuestionnaire) {
+      const { prePopulatedQuestionnaire, sourceLogicalModel } = location.state;
+      
+      console.log('Loading pre-populated questionnaire from logical model:', sourceLogicalModel?.name);
+      
+      setQuestionnaireContent(prePopulatedQuestionnaire);
+      setOriginalContent(JSON.stringify(prePopulatedQuestionnaire, null, 2));
+      setSelectedQuestionnaire({
+        name: `${prePopulatedQuestionnaire.id}.json`,
+        displayName: prePopulatedQuestionnaire.name,
+        fullPath: `input/questionnaires/${prePopulatedQuestionnaire.id}.json`,
+        fileType: 'JSON',
+        isNew: true,
+        generatedFromLogicalModel: sourceLogicalModel
+      });
+      setEditing(true);
+      setEditMode('visual'); // Start with visual editor for generated questionnaires
+    }
+  }, [location.state]);
 
   // Load LForms library
   useEffect(() => {
@@ -727,6 +751,19 @@ const QuestionnaireEditorContent = () => {
                   ← Back to List
                 </button>
                 <h2>{selectedQuestionnaire?.displayName || 'New Questionnaire'}</h2>
+                
+                {/* Logical Model Generation Notice */}
+                {selectedQuestionnaire?.generatedFromLogicalModel && (
+                  <div className="generation-notice">
+                    <div className="notice-content">
+                      <strong>✨ Generated from Logical Model:</strong> {selectedQuestionnaire.generatedFromLogicalModel.title || selectedQuestionnaire.generatedFromLogicalModel.name}
+                      <p className="notice-description">
+                        This questionnaire was automatically generated from the logical model. 
+                        You can customize the questions, add validation rules, and modify the structure as needed.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Mode toggle for JSON questionnaires */}
                 {questionnaireContent?.fileType !== 'FSH' && (
