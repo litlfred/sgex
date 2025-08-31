@@ -1835,7 +1835,7 @@ const PreviewBadge = () => {
                             >
                               {commentsLoading ? 'Loading...' : 
                                 allComments.length > displayedCommentsCount ? 
-                                  `Show More Comments (${allComments.length - displayedCommentsCount} already loaded)` :
+                                  `Show More Comments (${allComments.length - displayedCommentsCount} more to load)` :
                                   'Load More Comments...'
                               }
                             </button>
