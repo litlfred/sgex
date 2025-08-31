@@ -376,6 +376,68 @@ body.theme-light .dak-dashboard {
   font-weight: 600;
 }
 
+/* Status Bar Tab Navigation Styles */
+.tab-navigation-statusbar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 2rem 0 3rem 0;
+  background: var(--who-secondary-bg);
+  border: 1px solid var(--who-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 60px; /* Status bar height */
+}
+
+.tab-navigation-statusbar:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.tab-button-compact {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--who-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  height: 100%;
+  border-right: 1px solid var(--who-border-color);
+}
+
+.tab-button-compact:last-child {
+  border-right: none;
+}
+
+.tab-button-compact:hover {
+  background: var(--who-hover-bg);
+  color: var(--who-text-primary);
+}
+
+.tab-button-compact.active {
+  background: var(--who-blue);
+  color: var(--who-text-on-primary);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tab-button-compact .tab-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.tab-button-compact .tab-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 
 
 /* Section Styles */
@@ -840,6 +902,28 @@ body.theme-light .file-count {
 
   .tab-button-fullwidth .tab-text {
     font-size: 1rem;
+  }
+
+  /* Status Bar Tab Navigation Mobile */
+  .tab-navigation-statusbar {
+    margin: 1.5rem 0 2rem 0;
+    height: 65px; /* Slightly taller on mobile */
+  }
+
+  .tab-button-compact {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .tab-button-compact .tab-icon {
+    font-size: 1.2rem;
+  }
+
+  .tab-button-compact .tab-text {
+    font-size: 0.7rem;
+    line-height: 1.1;
   }
 
   /* DAK Component Card Mobile Responsive */

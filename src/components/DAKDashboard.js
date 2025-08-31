@@ -38,7 +38,7 @@ const DAKDashboardContent = () => {
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('core'); // 'core', 'publications', 'other', or 'faq'
+  const [activeTab, setActiveTab] = useState('core'); // 'core', 'publications', or 'faq'
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -607,31 +607,24 @@ const DAKDashboardContent = () => {
             />
           )}
 
-          {/* Tab Navigation - Full Width Toggle Buttons */}
-          <div className="tab-navigation-fullwidth">
+          {/* Tab Navigation - Status Bar Style */}
+          <div className="tab-navigation-statusbar">
             <button 
-              className={`tab-button-fullwidth ${activeTab === 'core' ? 'active' : ''}`}
+              className={`tab-button-compact ${activeTab === 'core' ? 'active' : ''}`}
               onClick={() => setActiveTab('core')}
             >
               <span className="tab-icon">⭐</span>
               <span className="tab-text">9 Core Components</span>
             </button>
             <button
-              className={`tab-button-fullwidth ${activeTab === 'publications' ? 'active' : ''}`}
+              className={`tab-button-compact ${activeTab === 'publications' ? 'active' : ''}`}
               onClick={() => setActiveTab('publications')}
             >
               <span className="tab-icon">📚</span>
               <span className="tab-text">Publications</span>
             </button>
             <button
-              className={`tab-button-fullwidth ${activeTab === 'other' ? 'active' : ''}`}
-              onClick={() => setActiveTab('other')}
-            >
-              <span className="tab-icon">🔧</span>
-              <span className="tab-text">Other DAK Components</span>
-            </button>
-            <button
-              className={`tab-button-fullwidth ${activeTab === 'faq' ? 'active' : ''}`}
+              className={`tab-button-compact ${activeTab === 'faq' ? 'active' : ''}`}
               onClick={() => setActiveTab('faq')}
             >
               <span className="tab-icon">❓</span>
@@ -664,66 +657,6 @@ const DAKDashboardContent = () => {
             </div>
           )}
 
-          {/* Other DAK Components Section */}
-          {activeTab === 'other' && (
-            <div className="components-section other-components active">
-              <div className="section-header">
-                <h3 className="section-title">Other DAK Components</h3>
-                <p className="section-description">
-                  Additional specialized components for advanced DAK functionality and implementation
-                </p>
-              </div>
-
-              <div className="components-grid other-components">
-                <div 
-                  className="component-card l3"
-                  onClick={(event) => {
-                    const component = {
-                      id: 'questionnaire-editor',
-                      name: 'FHIR Questionnaires',
-                      description: 'Structured questionnaires and forms for data collection using FHIR standard'
-                    };
-                    const owner = repository.owner?.login || repository.full_name.split('/')[0];
-                    const repoName = repository.name;
-                    const path = selectedBranch 
-                      ? `/questionnaire-editor/${owner}/${repoName}/${selectedBranch}`
-                      : `/questionnaire-editor/${owner}/${repoName}`;
-                    
-                    const navigationState = {
-                      profile,
-                      repository,
-                      component,
-                      selectedBranch
-                    };
-                    
-                    handleNavigationClick(event, path, navigate, navigationState);
-                  }}
-                  style={{ '--component-color': '#17a2b8' }}
-                >
-                  <div className="component-header">
-                    <div className="component-icon" style={{ color: '#17a2b8' }}>
-                      📋
-                    </div>
-                  </div>
-                  
-                  <div className="component-content">
-                    <h4>FHIR Questionnaires</h4>
-                    <p>Structured questionnaires and forms for data collection using FHIR Questionnaire standard</p>
-                    
-                    <div className="component-meta">
-                      <div className="file-types">
-                        <span className="file-type-tag">JSON</span>
-                        <span className="file-type-tag">FHIR</span>
-                      </div>
-                      <div className="file-count">
-                        questionnaires/
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Publications Section */}
           {activeTab === 'publications' && (
