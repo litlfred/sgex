@@ -624,7 +624,8 @@ body.theme-dark .action-status.rerunning {
 
 .pr-merge-btn,
 .pr-approve-btn,
-.pr-request-changes-btn {
+.pr-request-changes-btn,
+.pr-ready-review-btn {
   padding: 0.5rem 1rem;
   border-radius: 6px;
   font-size: 0.85rem;
@@ -639,14 +640,16 @@ body.theme-dark .action-status.rerunning {
 
 .pr-merge-btn:hover:not(:disabled),
 .pr-approve-btn:hover:not(:disabled),
-.pr-request-changes-btn:hover:not(:disabled) {
+.pr-request-changes-btn:hover:not(:disabled),
+.pr-ready-review-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 2px 4px var(--who-shadow-light);
 }
 
 .pr-merge-btn:disabled,
 .pr-approve-btn:disabled,
-.pr-request-changes-btn:disabled {
+.pr-request-changes-btn:disabled,
+.pr-ready-review-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
@@ -672,6 +675,17 @@ body.theme-dark .action-status.rerunning {
 .pr-approve-btn:hover:not(:disabled) {
   background: #1e7e34;
   border-color: #1e7e34;
+}
+
+.pr-ready-review-btn {
+  background: #007bff;
+  color: var(--who-text-on-primary);
+  border-color: #007bff;
+}
+
+.pr-ready-review-btn:hover:not(:disabled) {
+  background: #0056b3;
+  border-color: #0056b3;
 }
 
 .pr-request-changes-btn {

@@ -15,12 +15,14 @@ const WorkflowDashboard = ({
   isMergingPR = false,
   isApprovingPR = false,
   isRequestingChanges = false,
+  isMarkingReadyForReview = false,
   approvalStatus = null,
   approvalMessage = '',
   newComment = '',
   onMergePR = null,
   onApprovePR = null,
-  onRequestChanges = null
+  onRequestChanges = null,
+  onMarkReadyForReview = null
 }) => {
   const [workflows, setWorkflows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -367,12 +369,32 @@ const WorkflowDashboard = ({
           <div className="pr-actions-header">
             <h4>🔀 Pull Request Actions</h4>
             <span className="pr-actions-status">
-              PR #{prInfo[0].number} is ready for actions
+              {prInfo[0].draft ? (
+                <>PR #{prInfo[0].number} is in draft mode</>
+              ) : (
+                <>PR #{prInfo[0].number} is ready for actions</>
+              )}
             </span>
           </div>
           <div className="pr-actions-container">
             <div className="pr-actions-buttons">
-              {isAuthenticated && canMergePR && (
+              {/* Ready for Review Button - only for draft PRs */}
+              {isAuthenticated && prInfo[0].draft && canMergePR && (
+                <button
+                  onClick={() => onMarkReadyForReview && onMarkReadyForReview('litlfred', 'sgex', prInfo[0].number)}
+                  disabled={isMarkingReadyForReview}
+                  className="pr-ready-review-btn"
+                  title={`Mark PR #${prInfo[0].number} as ready for review`}
+                >
+                  {isMarkingReadyForReview ? (
+                    <>⏳ Marking ready...</>
+                  ) : (
+                    <>✅ Ready for review</>
+                  )}
+                </button>
+              )}
+              
+              {isAuthenticated && canMergePR && !prInfo[0].draft && (
                 <button
                   onClick={() => onMergePR && onMergePR('litlfred', 'sgex', prInfo[0].number)}
                   disabled={isMergingPR}
