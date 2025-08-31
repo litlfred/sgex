@@ -1,0 +1,128 @@
+{
+  "id": "dak-component-info",
+  "level": "component",
+  "title": "dak.faq.component_info.title",
+  "description": "dak.faq.component_info.description",
+  "parameters": [
+    {
+      "name": "repository",
+      "type": "string",
+      "required": true,
+      "description": "dak.faq.params.repository"
+    },
+    {
+      "name": "componentType",
+      "type": "string",
+      "required": true,
+      "description": "dak.faq.params.component_type",
+      "valueSetBinding": {
+        "strength": "required",
+        "valueSetUrl": "https://worldhealthorganization.github.io/smart-base/ValueSet-DAKComponentType.schema.json",
+        "description": "DAK Component Types ValueSet"
+      }
+    },
+    {
+      "name": "actorType",
+      "type": "string",
+      "required": false,
+      "description": "dak.faq.params.actor_type",
+      "valueSetBinding": {
+        "strength": "extensible",
+        "valueSetUrl": "https://worldhealthorganization.github.io/smart-base/ValueSet-ActorType.schema.json",
+        "description": "Actor Types for SMART Guidelines"
+      }
+    },
+    {
+      "name": "locale",
+      "type": "string",
+      "required": false,
+      "description": "dak.faq.params.locale",
+      "default": "en"
+    }
+  ],
+  "tags": ["component", "metadata", "analysis"],
+  "componentType": "core-data-elements",
+  "canonicalRefs": [
+    {
+      "type": "ValueSet",
+      "url": "https://worldhealthorganization.github.io/smart-base/ValueSet-DAKComponentType.schema.json",
+      "description": "Component types defined in WHO SMART Guidelines",
+      "purpose": "parameter validation"
+    },
+    {
+      "type": "ValueSet",
+      "url": "https://worldhealthorganization.github.io/smart-base/ValueSet-ActorType.schema.json",
+      "description": "Actor types for health workflows",
+      "purpose": "parameter validation"
+    }
+  ],
+  "schema": {
+    "input": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "description": "GitHub repository in format 'user/repo' or local folder path"
+        },
+        "componentType": {
+          "type": "string",
+          "description": "Type of DAK component to analyze",
+          "x-valueset-binding": {
+            "strength": "required",
+            "valueSetUrl": "https://worldhealthorganization.github.io/smart-base/ValueSet-DAKComponentType.schema.json"
+          },
+          "externalDocs": {
+            "description": "Browse DAK Component Types ValueSet",
+            "url": "https://worldhealthorganization.github.io/smart-base/ValueSet-DAKComponentType.schema.json"
+          }
+        },
+        "actorType": {
+          "type": "string",
+          "description": "Type of actor involved with this component",
+          "x-valueset-binding": {
+            "strength": "extensible",
+            "valueSetUrl": "https://worldhealthorganization.github.io/smart-base/ValueSet-ActorType.schema.json"
+          },
+          "externalDocs": {
+            "description": "Browse Actor Types ValueSet",
+            "url": "https://worldhealthorganization.github.io/smart-base/ValueSet-ActorType.schema.json"
+          }
+        },
+        "locale": {
+          "type": "string",
+          "description": "Language locale code",
+          "default": "en"
+        }
+      },
+      "required": ["repository", "componentType"]
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "structured": {
+          "type": "object",
+          "properties": {
+            "componentType": { "type": "string" },
+            "actorType": { "type": "string" },
+            "componentCount": { "type": "number" },
+            "componentDetails": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": { "type": "string" },
+                  "name": { "type": "string" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "narrative": { "type": "string" },
+        "errors": { "type": "array", "items": { "type": "string" } },
+        "warnings": { "type": "array", "items": { "type": "string" } },
+        "meta": { "type": "object" }
+      }
+    }
+  }
+}

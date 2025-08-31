@@ -19,6 +19,14 @@
     }
   ],
   "tags": ["dak", "metadata", "name"],
+  "canonicalRefs": [
+    {
+      "type": "LogicalModel",
+      "url": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-DAK.schema.json",
+      "description": "DAK Logical Model from WHO SMART Guidelines",
+      "purpose": "output structure validation"
+    }
+  ],
   "schema": {
     "input": {
       "type": "object",
@@ -33,7 +41,14 @@
           "default": "en"
         }
       },
-      "required": ["repository"]
+      "required": ["repository"],
+      "x-canonical-refs": [
+        {
+          "type": "LogicalModel",
+          "url": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-DAK.schema.json",
+          "purpose": "output structure validation"
+        }
+      ]
     },
     "output": {
       "type": "object",
@@ -45,7 +60,8 @@
             "id": { "type": "string" },
             "title": { "type": "string" },
             "version": { "type": "string" }
-          }
+          },
+          "x-canonical-url": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-DAK.schema.json"
         },
         "narrative": { "type": "string" },
         "errors": { "type": "array", "items": { "type": "string" } },

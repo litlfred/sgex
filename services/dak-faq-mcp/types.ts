@@ -16,6 +16,7 @@ export interface FAQQuestion {
     input: any;
     output: any;
   };
+  canonicalRefs?: CanonicalReference[]; // References to WHO ValueSets/Logical Models
 }
 
 export interface FAQParameter {
@@ -24,6 +25,14 @@ export interface FAQParameter {
   required: boolean;
   description: string;
   defaultValue?: any;
+  canonicalUrl?: string; // Reference to canonical ValueSet or Logical Model
+  valueSetBinding?: ValueSetBinding; // ValueSet binding information
+}
+
+export interface ValueSetBinding {
+  strength: 'required' | 'extensible' | 'preferred' | 'example';
+  valueSetUrl: string;
+  description?: string;
 }
 
 export interface ExecuteRequest {
@@ -168,4 +177,41 @@ export interface QuestionDefinition {
 export interface QuestionModule {
   definition: QuestionDefinition;
   executor: FAQExecutor;
+}
+
+// Canonical Schema Integration Types
+export interface CanonicalReference {
+  type: 'ValueSet' | 'LogicalModel' | 'StructureDefinition';
+  url: string;
+  description?: string;
+  version?: string;
+  purpose: string; // e.g., "parameter validation", "output structure"
+}
+
+export interface CanonicalSchema {
+  url: string;
+  version?: string;
+  schema: any; // JSON Schema representation
+  loadedAt: Date;
+  source: 'remote' | 'cache';
+}
+
+export interface ValueSetExpansion {
+  url: string;
+  codes: ValueSetCode[];
+  loadedAt: Date;
+}
+
+export interface ValueSetCode {
+  code: string;
+  display: string;
+  system?: string;
+  definition?: string;
+}
+
+export interface CanonicalValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+  validatedAgainst: string[]; // URLs of canonicals used for validation
 }

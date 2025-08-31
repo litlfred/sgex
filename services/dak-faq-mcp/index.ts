@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 import { executeRoute } from './server/routes/execute.js';
 import { catalogRoute } from './server/routes/catalog.js';
 import { schemaRoute } from './server/routes/schema.js';
+import canonicalRoute from './server/routes/canonical.js';
 import { HealthResponse, ErrorResponse } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -44,6 +45,7 @@ app.use('/faq/questions', executeRoute);
 app.use('/faq/questions', catalogRoute);
 app.use('/faq/execute', executeRoute);  // Add single execution routes
 app.use('/faq', schemaRoute);
+app.use('/faq/canonical', canonicalRoute); // WHO SMART Guidelines canonical schemas
 
 // Root endpoint with API information
 app.get('/', (req: Request, res: Response) => {
@@ -60,7 +62,15 @@ app.get('/', (req: Request, res: Response) => {
       'GET /faq/schemas': 'Get all question schemas',
       'GET /faq/schemas/:questionId': 'Get schema for specific question',
       'GET /faq/openapi': 'Get OpenAPI schema for all questions',
-      'POST /faq/validate': 'Validate question parameters'
+      'POST /faq/validate': 'Validate question parameters',
+      'GET /faq/canonical/known': 'Get known WHO canonical ValueSets and Logical Models',
+      'POST /faq/canonical/validate': 'Validate data against canonical schema',
+      'GET /faq/canonical/valuesets/*/expand': 'Expand ValueSet to get all codes',
+      'POST /faq/canonical/valuesets/validate-code': 'Validate code against ValueSet',
+      'GET /faq/canonical/schemas/*': 'Load canonical schema',
+      'GET /faq/canonical/questions/:questionId/valuesets': 'Get ValueSets for question parameters',
+      'GET /faq/canonical/cache/stats': 'Get canonical schema cache statistics',
+      'DELETE /faq/canonical/cache': 'Clear canonical schema cache'
     },
     security: {
       binding: 'localhost only (127.0.0.1)',

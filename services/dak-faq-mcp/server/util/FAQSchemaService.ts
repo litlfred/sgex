@@ -1,9 +1,11 @@
 /**
  * FAQ Schema Service 
  * Provides access to question schemas for the React application
+ * Enhanced with WHO SMART Guidelines canonical schema integration
  */
 
-import { FAQQuestion } from '../../types.js';
+import { FAQQuestion, CanonicalValidationResult } from '../../types.js';
+import { CanonicalSchemaService } from './CanonicalSchemaService.js';
 import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
@@ -16,11 +18,13 @@ export class FAQSchemaService {
   private schemas: Map<string, any>;
   private questions: Map<string, FAQQuestion>;
   private initialized: boolean;
+  private canonicalService: CanonicalSchemaService;
 
   private constructor() {
     this.schemas = new Map();
     this.questions = new Map();
     this.initialized = false;
+    this.canonicalService = CanonicalSchemaService.getInstance();
   }
 
   public static getInstance(): FAQSchemaService {
@@ -48,8 +52,27 @@ export class FAQSchemaService {
    * Load all available question schemas from the questions directory
    */
   private async loadSchemas(): Promise<void> {
-    const questionsPath = path.resolve(__dirname, '../../questions');
-    await this.scanQuestionsDirectory(questionsPath);
+    // Try different paths to find the questions directory
+    const possiblePaths = [
+      path.resolve(__dirname, '../../questions'),  // Original path
+      path.resolve(__dirname, '../questions'),     // When running from dist
+      path.resolve(process.cwd(), 'questions'),    // Relative to working directory
+      path.resolve(process.cwd(), 'dist/questions') // When running npm start
+    ];
+
+    for (const questionsPath of possiblePaths) {
+      try {
+        await fs.access(questionsPath);
+        console.log(`Found questions directory at: ${questionsPath}`);
+        await this.scanQuestionsDirectory(questionsPath);
+        return; // Success, exit early
+      } catch (error) {
+        // Try next path
+        continue;
+      }
+    }
+
+    console.warn('Could not find questions directory in any of the expected locations:', possiblePaths);
   }
 
   /**
@@ -166,30 +189,36 @@ export class FAQSchemaService {
   }
 
   /**
-   * Validate question parameters against schema
+   * Validate question parameters using both manual schemas and canonical validation
    */
-  async validateQuestionParameters(questionId: string, parameters: any): Promise<{ isValid: boolean; errors: string[] }> {
+  async validateQuestionParameters(questionId: string, parameters: any): Promise<CanonicalValidationResult> {
     const question = await this.getQuestion(questionId);
     if (!question) {
       return {
         isValid: false,
-        errors: [`Question not found: ${questionId}`]
+        errors: [`Question not found: ${questionId}`],
+        warnings: [],
+        validatedAgainst: []
       };
     }
 
     const errors: string[] = [];
+    const warnings: string[] = [];
+    const validatedAgainst: string[] = [];
 
-    // Check required parameters
+    // Basic parameter validation (existing logic)
     for (const param of question.parameters) {
       if (param.required && !parameters.hasOwnProperty(param.name)) {
         errors.push(`Missing required parameter: ${param.name}`);
       }
     }
 
-    // Basic type validation (could be expanded)
+    // Enhanced validation with canonical schemas
     for (const param of question.parameters) {
       if (parameters.hasOwnProperty(param.name)) {
         const value = parameters[param.name];
+        
+        // Basic type validation
         if (param.type === 'string' && typeof value !== 'string') {
           errors.push(`Parameter ${param.name} must be a string`);
         } else if (param.type === 'number' && typeof value !== 'number') {
@@ -197,17 +226,79 @@ export class FAQSchemaService {
         } else if (param.type === 'boolean' && typeof value !== 'boolean') {
           errors.push(`Parameter ${param.name} must be a boolean`);
         }
+
+        // Canonical ValueSet validation
+        if (param.valueSetBinding) {
+          try {
+            const isValid = await this.canonicalService.validateValueSetCode(
+              param.valueSetBinding.valueSetUrl, 
+              value
+            );
+            
+            if (!isValid) {
+              if (param.valueSetBinding.strength === 'required') {
+                errors.push(`Parameter ${param.name} value '${value}' is not valid for required ValueSet ${param.valueSetBinding.valueSetUrl}`);
+              } else {
+                warnings.push(`Parameter ${param.name} value '${value}' is not in preferred ValueSet ${param.valueSetBinding.valueSetUrl}`);
+              }
+            }
+            
+            validatedAgainst.push(param.valueSetBinding.valueSetUrl);
+          } catch (error: any) {
+            warnings.push(`Could not validate parameter ${param.name} against ValueSet: ${error.message}`);
+          }
+        }
+
+        // Canonical URL reference validation
+        if (param.canonicalUrl) {
+          try {
+            const validationResult = await this.canonicalService.validateAgainstCanonical(
+              param.canonicalUrl,
+              { [param.name]: value }
+            );
+            
+            if (!validationResult.isValid) {
+              errors.push(...validationResult.errors.map(err => `Parameter ${param.name}: ${err}`));
+            }
+            
+            validatedAgainst.push(param.canonicalUrl);
+          } catch (error: any) {
+            warnings.push(`Could not validate parameter ${param.name} against canonical schema: ${error.message}`);
+          }
+        }
+      }
+    }
+
+    // Validate entire object against canonical references if present
+    if (question.canonicalRefs) {
+      for (const canonicalRef of question.canonicalRefs) {
+        try {
+          const validationResult = await this.canonicalService.validateAgainstCanonical(
+            canonicalRef.url,
+            parameters
+          );
+          
+          if (!validationResult.isValid) {
+            errors.push(...validationResult.errors.map(err => `Canonical validation (${canonicalRef.purpose}): ${err}`));
+          }
+          
+          validatedAgainst.push(canonicalRef.url);
+        } catch (error: any) {
+          warnings.push(`Could not validate against canonical reference ${canonicalRef.url}: ${error.message}`);
+        }
       }
     }
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
+      warnings,
+      validatedAgainst
     };
   }
 
   /**
-   * Get OpenAPI schema for all questions
+   * Get OpenAPI schema for all questions with canonical references
    */
   async getOpenAPISchema(): Promise<any> {
     await this.initialize();
@@ -234,22 +325,204 @@ export class FAQSchemaService {
       }
     };
 
-    // Add question-specific schemas
+    schemas.CanonicalValidationResult = {
+      type: 'object',
+      properties: {
+        isValid: { type: 'boolean' },
+        errors: { type: 'array', items: { type: 'string' } },
+        warnings: { type: 'array', items: { type: 'string' } },
+        validatedAgainst: { 
+          type: 'array', 
+          items: { type: 'string' },
+          description: 'URLs of canonical schemas used for validation'
+        }
+      },
+      required: ['isValid', 'errors', 'warnings', 'validatedAgainst']
+    };
+
+    // Add question-specific schemas with canonical references
     for (const [id, schema] of this.schemas) {
-      schemas[`${id}-input`] = schema.input;
+      const question = this.questions.get(id);
+      
+      // Enhanced input schema with canonical references
+      const inputSchema = { ...schema.input };
+      if (question?.canonicalRefs) {
+        inputSchema['x-canonical-refs'] = question.canonicalRefs;
+      }
+      
+      // Add parameter-level canonical references
+      if (question?.parameters && inputSchema.properties) {
+        for (const param of question.parameters) {
+          if (param.canonicalUrl || param.valueSetBinding) {
+            const paramSchema = inputSchema.properties[param.name] || {};
+            
+            if (param.canonicalUrl) {
+              paramSchema['x-canonical-url'] = param.canonicalUrl;
+            }
+            
+            if (param.valueSetBinding) {
+              paramSchema['x-valueset-binding'] = param.valueSetBinding;
+              paramSchema.externalDocs = {
+                description: `Browse ${param.valueSetBinding.description || 'ValueSet'}`,
+                url: param.valueSetBinding.valueSetUrl
+              };
+            }
+            
+            inputSchema.properties[param.name] = paramSchema;
+          }
+        }
+      }
+      
+      schemas[`${id}-input`] = inputSchema;
       schemas[`${id}-output`] = schema.output;
     }
+
+    // Add canonical schema references
+    const knownCanonicals = this.canonicalService.getKnownCanonicalUrls();
+    schemas['KnownCanonicalReferences'] = {
+      type: 'object',
+      properties: {
+        ValueSets: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              type: { type: 'string', enum: ['ValueSet'] },
+              url: { type: 'string', format: 'uri' },
+              description: { type: 'string' },
+              purpose: { type: 'string' }
+            }
+          }
+        },
+        LogicalModels: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              type: { type: 'string', enum: ['LogicalModel'] },
+              url: { type: 'string', format: 'uri' },
+              description: { type: 'string' },
+              purpose: { type: 'string' }
+            }
+          }
+        }
+      },
+      example: knownCanonicals
+    };
 
     return {
       openapi: '3.0.0',
       info: {
-        title: 'DAK FAQ API',
+        title: 'DAK FAQ API - Enhanced with WHO SMART Guidelines Canonical Schemas',
         version: '1.0.0',
-        description: 'FAQ system for WHO SMART Guidelines Digital Adaptation Kits'
+        description: 'FAQ system for WHO SMART Guidelines Digital Adaptation Kits with integrated ValueSet and Logical Model validation',
+        externalDocs: {
+          description: 'WHO SMART Guidelines Implementation Guide',
+          url: 'https://smart.who.int/ig-starter-kit/'
+        }
       },
       components: {
         schemas
+      },
+      paths: {
+        '/faq/canonical/known': {
+          get: {
+            summary: 'Get known canonical ValueSets and Logical Models',
+            responses: {
+              '200': {
+                description: 'List of known canonical references',
+                content: {
+                  'application/json': {
+                    schema: { $ref: '#/components/schemas/KnownCanonicalReferences' }
+                  }
+                }
+              }
+            }
+          }
+        },
+        '/faq/canonical/validate': {
+          post: {
+            summary: 'Validate data against canonical schema',
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      canonicalUrl: { type: 'string', format: 'uri' },
+                      data: { type: 'object' }
+                    },
+                    required: ['canonicalUrl', 'data']
+                  }
+                }
+              }
+            },
+            responses: {
+              '200': {
+                description: 'Validation result',
+                content: {
+                  'application/json': {
+                    schema: { $ref: '#/components/schemas/CanonicalValidationResult' }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     };
+  }
+
+  /**
+   * Get available ValueSet codes for a parameter
+   */
+  async getParameterValueSetCodes(questionId: string, parameterName: string): Promise<string[]> {
+    const question = await this.getQuestion(questionId);
+    if (!question) {
+      return [];
+    }
+
+    const parameter = question.parameters.find(p => p.name === parameterName);
+    if (!parameter?.valueSetBinding) {
+      return [];
+    }
+
+    try {
+      const expansion = await this.canonicalService.expandValueSet(parameter.valueSetBinding.valueSetUrl);
+      return expansion ? expansion.codes.map(c => c.code) : [];
+    } catch (error: any) {
+      console.warn(`Could not expand ValueSet for parameter ${parameterName}:`, error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Get enhanced question with canonical metadata
+   */
+  async getEnhancedQuestion(questionId: string): Promise<FAQQuestion | null> {
+    const question = await this.getQuestion(questionId);
+    if (!question) {
+      return null;
+    }
+
+    // Clone question to avoid modifying cached version
+    const enhanced = JSON.parse(JSON.stringify(question));
+
+    // Add canonical metadata
+    if (enhanced.canonicalRefs) {
+      for (const ref of enhanced.canonicalRefs) {
+        try {
+          const schema = await this.canonicalService.loadCanonicalSchema(ref.url);
+          if (schema) {
+            ref.version = schema.version;
+          }
+        } catch (error: any) {
+          console.warn(`Could not load canonical schema ${ref.url}:`, error.message);
+        }
+      }
+    }
+
+    return enhanced;
   }
 }
