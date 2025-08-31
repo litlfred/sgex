@@ -105,6 +105,7 @@ describe('Image Alt Text Helper', () => {
       expect(ALT_TEXT_KEYS.AVATAR_USER).toBeDefined();
       expect(ALT_TEXT_KEYS.ICON_SGEX).toBeDefined();
       expect(ALT_TEXT_KEYS.IMAGE_AUTHORING).toBeDefined();
+      expect(ALT_TEXT_KEYS.IMAGE_PRONUNCIATION).toBeDefined();
       expect(ALT_TEXT_KEYS.LOGO_SGEX).toBeDefined();
     });
   });
