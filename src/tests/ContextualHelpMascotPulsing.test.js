@@ -113,20 +113,23 @@ describe('ContextualHelpMascot Pulsing Animation', () => {
     const mascotContainer = container.querySelector('.mascot-container');
     const questionBubble = container.querySelector('.question-bubble');
     
-    // Initially help is not open
+    // Initially help is not open (state 0: hidden)
     expect(questionBubble).not.toHaveClass('help-open');
     
-    // First click opens help menu (makes it sticky)
+    // First click: state 1 (non-sticky, shown)
     fireEvent.click(mascotContainer);
     expect(questionBubble).toHaveClass('help-open');
     
-    // Second click makes help non-sticky but may still be visible
-    // This is the intended behavior - help becomes non-sticky but visible
+    // Second click: state 2 (sticky, shown)
     fireEvent.click(mascotContainer);
-    // The help might still be visible but not sticky, so we can't assert it's closed
+    expect(questionBubble).toHaveClass('help-open');
     
-    // Mouse leave should close non-sticky help
+    // Mouse leave should not close sticky help
     fireEvent.mouseLeave(mascotContainer);
+    expect(questionBubble).toHaveClass('help-open');
+    
+    // Third click: state 0 (hidden)
+    fireEvent.click(mascotContainer);
     expect(questionBubble).not.toHaveClass('help-open');
   });
 
@@ -142,7 +145,7 @@ describe('ContextualHelpMascot Pulsing Animation', () => {
     expect(notificationBadge).toBeInTheDocument();
   });
 
-  test('triple-click hides the help menu', async () => {
+  test('three-state cycling behavior', async () => {
     const { container } = renderWithI18n(
       <ContextualHelpMascot pageId="test-page" />
     );
@@ -150,22 +153,48 @@ describe('ContextualHelpMascot Pulsing Animation', () => {
     const mascotContainer = container.querySelector('.mascot-container');
     const questionBubble = container.querySelector('.question-bubble');
     
-    // Initially help is not open
+    // Initially help is not open (state 0: hidden)
     expect(questionBubble).not.toHaveClass('help-open');
     
-    // First click opens help menu
+    // First click: state 1 (non-sticky, shown)
     fireEvent.click(mascotContainer);
     expect(questionBubble).toHaveClass('help-open');
     
-    // Second click (still within timeout window)
+    // Second click: state 2 (sticky, shown)
     fireEvent.click(mascotContainer);
+    expect(questionBubble).toHaveClass('help-open');
     
-    // Third click should hide the menu
+    // Third click: state 0 (hidden)
     fireEvent.click(mascotContainer);
     expect(questionBubble).not.toHaveClass('help-open');
     
     // Verify help bubble is not visible
     const helpBubble = container.querySelector('.help-thought-bubble');
     expect(helpBubble).not.toBeInTheDocument();
+    
+    // Fourth click: back to state 1 (cycle repeats)
+    fireEvent.click(mascotContainer);
+    expect(questionBubble).toHaveClass('help-open');
+  });
+
+  test('non-sticky state responds to mouse hover', () => {
+    const { container } = renderWithI18n(
+      <ContextualHelpMascot pageId="test-page" />
+    );
+    
+    const mascotContainer = container.querySelector('.mascot-container');
+    const questionBubble = container.querySelector('.question-bubble');
+    
+    // Click once to get to non-sticky state (state 1)
+    fireEvent.click(mascotContainer);
+    expect(questionBubble).toHaveClass('help-open');
+    
+    // Mouse leave should hide in non-sticky state
+    fireEvent.mouseLeave(mascotContainer);
+    expect(questionBubble).not.toHaveClass('help-open');
+    
+    // Mouse enter should show again in non-sticky state
+    fireEvent.mouseEnter(mascotContainer);
+    expect(questionBubble).toHaveClass('help-open');
   });
 });

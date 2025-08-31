@@ -23,8 +23,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [showTrackedItems, setShowTrackedItems] = useState(false);
   const [trackedItemsCount, setTrackedItemsCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [clickCount, setClickCount] = useState(0);
-  const [clickTimeout, setClickTimeout] = useState(null);
+  const [helpState, setHelpState] = useState(0); // 0: hidden, 1: non-sticky, 2: sticky
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -81,12 +80,8 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
 
     return () => {
       issueTrackingService.stopBackgroundSync();
-      // Clean up click timeout if component unmounts
-      if (clickTimeout) {
-        clearTimeout(clickTimeout);
-      }
     };
-  }, [isAuthenticated, clickTimeout]);
+  }, [isAuthenticated]);
 
   const handleToggleTheme = () => {
     const newTheme = toggleTheme();
@@ -118,54 +113,44 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   ];
 
   const handleMouseEnter = () => {
-    if (!helpSticky) {
+    // Only show on hover if we're in non-sticky state (state 1)
+    if (helpState === 1) {
       setShowHelp(true);
     }
   };
 
   const handleMouseLeave = () => {
-    if (!helpSticky) {
+    // Only hide on mouse leave if we're in non-sticky state (state 1)
+    if (helpState === 1) {
       setShowHelp(false);
     }
   };
 
   const handleClick = () => {
-    // Clear existing timeout if any
-    if (clickTimeout) {
-      clearTimeout(clickTimeout);
-    }
-
-    // Use functional state update to get the latest value
-    setClickCount(prevClickCount => {
-      const newClickCount = prevClickCount + 1;
-
-      // If this is the third click, hide the menu
-      if (newClickCount === 3) {
+    // Cycle through three states: 0 (hidden) -> 1 (non-sticky) -> 2 (sticky) -> 0 (hidden)
+    const nextState = (helpState + 1) % 3;
+    setHelpState(nextState);
+    
+    switch (nextState) {
+      case 0: // Hidden
         setShowHelp(false);
         setHelpSticky(false);
-        setClickCount(0);
-        setClickTimeout(null);
-        return 0; // Reset count to 0
-      }
-
-      // For first two clicks, use original behavior
-      setHelpSticky(!helpSticky);
-      setShowHelp(!helpSticky || showHelp);
-
-      // Set timeout to reset click count after 500ms
-      const timeout = setTimeout(() => {
-        setClickCount(0);
-        setClickTimeout(null);
-      }, 500);
-      setClickTimeout(timeout);
-
-      return newClickCount;
-    });
+        break;
+      case 1: // Non-sticky (shown)
+        setShowHelp(true);
+        setHelpSticky(false);
+        break;
+      case 2: // Sticky (shown)
+        setShowHelp(true);
+        setHelpSticky(true);
+        break;
+    }
   };
 
   const handleCloseHelp = () => {
     setShowHelp(false);
     setHelpSticky(false);
+    setHelpState(0); // Reset to hidden state
   };
 
   const handleHelpTopicClick = (topic) => {
@@ -174,6 +159,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
       setSelectedHelpTopic({ ...topic, type: 'enhanced-tutorial' });
       setShowHelp(false);
       setHelpSticky(false);
+      setHelpState(0); // Reset to hidden state
       return;
     }
     
@@ -182,11 +168,13 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
       topic.action();
       setShowHelp(false);
       setHelpSticky(false);
+      setHelpState(0); // Reset to hidden state
     } else {
       // For slideshow and other types, show in modal
       setSelectedHelpTopic(topic);
       setShowHelp(false);
       setHelpSticky(false);
+      setHelpState(0); // Reset to hidden state
     }
   };
 
@@ -258,7 +246,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
         {showHelp && (
           <div className="help-thought-bubble">
             <div className="bubble-content">
-              {helpSticky && (
+              {helpState === 2 && (
                 <button 
                   className="close-bubble-btn"
                   onClick={handleCloseHelp}
