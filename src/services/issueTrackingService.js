@@ -171,9 +171,61 @@ class IssueTrackingService {
   }
 
   /**
-   * Get tracked items for a specific user with repository filters applied
+   * Clean up tracked items from non-DAK repositories
+   * This removes any previously tracked items from repositories that are not DAKs or litlfred/sgex
+   */
+  async cleanupNonDAKRepositories() {
+    const username = await this._getCurrentUsername();
+    if (!username) return false;
+
+    const items = await this.getTrackedItems(username);
+    let cleaned = false;
+
+    // Check issues
+    const validIssues = [];
+    for (const issue of items.issues) {
+      const isAllowed = await this._isAllowedRepository(issue.repository);
+      if (isAllowed) {
+        validIssues.push(issue);
+      } else {
+        this.logger.info(`Removing tracked issue from non-DAK repository: ${issue.repository}#${issue.number}`);
+        cleaned = true;
+      }
+    }
+
+    // Check PRs
+    const validPRs = [];
+    for (const pr of items.pullRequests) {
+      const isAllowed = await this._isAllowedRepository(pr.repository);
+      if (isAllowed) {
+        validPRs.push(pr);
+      } else {
+        this.logger.info(`Removing tracked PR from non-DAK repository: ${pr.repository}#${pr.number}`);
+        cleaned = true;
+      }
+    }
+
+    // Save cleaned data if anything was removed
+    if (cleaned) {
+      const data = this._getStoredData();
+      data.trackedItems[username] = {
+        issues: validIssues,
+        pullRequests: validPRs
+      };
+      this._saveStoredData(data);
+      this.logger.info('Cleaned up tracked items from non-DAK repositories');
+    }
+
+    return cleaned;
+  }
+
+  /**
+   * Get filtered tracked items and ensure cleanup of non-DAK repositories
    */
   async getFilteredTrackedItems(username = null) {
+    // First, cleanup any non-DAK repositories
+    await this.cleanupNonDAKRepositories();
+    
     const items = await this.getTrackedItems(username);
     
     if (!username) {
@@ -443,7 +495,30 @@ class IssueTrackingService {
   }
 
   /**
+   * Check if a repository is a DAK or the special litlfred/sgex repository
+   */
+  async _isAllowedRepository(repositoryFullName) {
+    // Always allow litlfred/sgex repository
+    if (repositoryFullName === 'litlfred/sgex') {
+      return true;
+    }
+    
+    // Check if repository is a DAK
+    try {
+      const [owner, repo] = repositoryFullName.split('/');
+      if (!owner || !repo) return false;
+      
+      const compatibility = await githubService.checkSmartGuidelinesCompatibility(owner, repo);
+      return compatibility.compatible;
+    } catch (error) {
+      this.logger.debug(`Failed to check DAK compatibility for ${repositoryFullName}:`, error);
+      return false;
+    }
+  }
+
+  /**
    * Discover new user activity - issues and PRs created by or commented on by the user
+   * Only includes items from DAK repositories or litlfred/sgex
    */
   async _discoverUserActivity(username, existingItems) {
     const newIssues = [];
@@ -474,13 +549,22 @@ class IssueTrackingService {
       const allFoundPRs = [...(createdPRsResult.items || []), ...(commentedPRsResult.items || [])];
       const uniquePRs = this._deduplicateItems(allFoundPRs);
 
-      // Filter out already tracked issues
+      // Filter out already tracked issues and check repository compatibility
       for (const issue of uniqueIssues) {
         const isAlreadyTracked = existingItems.issues.some(
           existing => existing.id === issue.id || existing.number === issue.number
         );
         
         if (!isAlreadyTracked) {
+          const repositoryFullName = issue.repository ? issue.repository.full_name : 'unknown/unknown';
+          
+          // Only include issues from DAK repositories or litlfred/sgex
+          const isAllowed = await this._isAllowedRepository(repositoryFullName);
+          if (!isAllowed) {
+            this.logger.debug(`Skipping issue from non-DAK repository: ${repositoryFullName}`);
+            continue;
+          }
+          
           const trackedIssue = {
             id: issue.id,
             number: issue.number,
@@ -488,7 +572,7 @@ class IssueTrackingService {
             html_url: issue.html_url,
             created_at: issue.created_at,
             updated_at: issue.updated_at || issue.created_at,
-            repository: issue.repository ? issue.repository.full_name : 'unknown/unknown',
+            repository: repositoryFullName,
             state: issue.state,
             labels: issue.labels || [],
             trackedAt: new Date().toISOString(),
@@ -498,13 +582,22 @@ class IssueTrackingService {
         }
       }
 
-      // Filter out already tracked PRs
+      // Filter out already tracked PRs and check repository compatibility
       for (const pr of uniquePRs) {
         const isAlreadyTracked = existingItems.pullRequests.some(
           existing => existing.id === pr.id || existing.number === pr.number
         );
         
         if (!isAlreadyTracked) {
+          const repositoryFullName = pr.repository ? pr.repository.full_name : 'unknown/unknown';
+          
+          // Only include PRs from DAK repositories or litlfred/sgex
+          const isAllowed = await this._isAllowedRepository(repositoryFullName);
+          if (!isAllowed) {
+            this.logger.debug(`Skipping PR from non-DAK repository: ${repositoryFullName}`);
+            continue;
+          }
+          
           const trackedPR = {
             id: pr.id,
             number: pr.number,
@@ -512,7 +605,7 @@ class IssueTrackingService {
             html_url: pr.html_url,
             created_at: pr.created_at,
             updated_at: pr.updated_at || pr.created_at,
-            repository: pr.repository ? pr.repository.full_name : 'unknown/unknown',
+            repository: repositoryFullName,
             state: pr.state,
             linkedIssues: [],
             trackedAt: new Date().toISOString(),
