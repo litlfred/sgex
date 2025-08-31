@@ -26,11 +26,11 @@ describe('Enhanced Workflow Automation Configuration', () => {
   });
 
   describe('Branch Deployment Workflow Automation', () => {
-    test('should trigger on push events to feature branches', () => {
+    test('should trigger on push events to all branches except gh-pages', () => {
       const pushConfig = branchDeploymentConfig.on.push;
       
-      // Should exclude specific branches
-      expect(pushConfig['branches-ignore']).toEqual(['gh-pages', 'deploy', 'main']);
+      // Should exclude only gh-pages branch
+      expect(pushConfig['branches-ignore']).toEqual(['gh-pages']);
       
       // Should include relevant file paths
       expect(pushConfig.paths).toContain('src/**');
@@ -150,8 +150,8 @@ describe('Enhanced Workflow Automation Configuration', () => {
       });
     });
 
-    test('should not trigger on excluded branches', () => {
-      const excludedBranches = ['main', 'gh-pages', 'deploy', 'develop'];
+    test('should not trigger on only gh-pages branch', () => {
+      const excludedBranches = ['gh-pages']; // Only gh-pages is excluded now
       
       excludedBranches.forEach(branch => {
         const branchPushConfig = branchDeploymentConfig.on.push;
@@ -167,6 +167,11 @@ describe('Enhanced Workflow Automation Configuration', () => {
           expect(feedbackPushConfig['branches-ignore']).toContain(branch);
         }
       });
+
+      // main and deploy should now trigger branch deployment but not feedback
+      const branchPushConfig = branchDeploymentConfig.on.push;
+      expect(branchPushConfig['branches-ignore']).not.toContain('main');
+      expect(branchPushConfig['branches-ignore']).not.toContain('deploy');
     });
   });
 

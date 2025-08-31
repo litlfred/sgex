@@ -28,7 +28,7 @@ on:
         default: false
   # Automatic trigger for copilot commits and PR updates
   push:
-    branches-ignore: [gh-pages, deploy, main]
+    branches-ignore: [gh-pages]
     paths:
       - 'src/**'
       - 'public/**'

@@ -10,7 +10,7 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 
 ### Triggers
 - **Manual trigger** (`workflow_dispatch`) - Primary method for controlled deployments
-- **Automatic push trigger** - On push to feature branches (excludes main, gh-pages, deploy)
+- **Automatic push trigger** - On push to any branch (excludes only gh-pages)
 - **Automatic PR trigger** - On PR events (opened, synchronize, reopened) targeting main
 - **Workflow call** - Can be triggered by other workflows
 
@@ -30,7 +30,7 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 - Extensive path validation to prevent directory traversal
 - Cannot deploy to repository root
 - Validates branch names for safety
-- Automatic deployment for feature branches, manual control for special branches
+- Automatic deployment for all branches except gh-pages, manual control for special environments
 
 ## 🏠 Landing Page Deployment (`landing-page-deployment.yml`)
 
@@ -87,7 +87,7 @@ Both workflows can be manually triggered from the GitHub Actions UI:
 
 ### Automatic Deployment (Feature Branches)
 The branch deployment workflow automatically triggers when:
-- **Push events**: Commits are pushed to feature branches (excludes main, gh-pages, deploy)
+- **Push events**: Commits are pushed to any branch (excludes only gh-pages)
 - **Pull request events**: PR creation, updates, or reopening (for PRs targeting main)
 - **Copilot commits**: Both direct pushes and PR updates from copilot agents
 - **External PRs**: Pull requests from external contributors and forks
