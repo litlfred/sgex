@@ -747,6 +747,43 @@
     grid-template-columns: 1fr;
   }
 
+  .questionnaire-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .questionnaire-card {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .questionnaire-card .card-icon {
+    font-size: 1.5rem;
+    min-width: 2rem;
+  }
+
+  .questionnaire-card .card-content h5 {
+    font-size: 0.9rem;
+  }
+
+  .questionnaire-card .card-path {
+    font-size: 0.75rem;
+    word-break: break-all;
+  }
+
+  .no-questionnaires {
+    padding: 1.5rem 1rem;
+  }
+
+  .no-questionnaires .empty-icon {
+    font-size: 2.5rem;
+  }
+
+  .no-questionnaires ul {
+    max-width: 100%;
+    padding-left: 1rem;
+  }
+
   .artifact-links,
   .dictionary-links,
   .placeholder-links {
@@ -770,4 +807,184 @@
     padding: 1rem;
     font-size: 0.8rem;
   }
+}
+
+/* FHIR Questionnaires Section Styles */
+.questionnaires-section {
+  border-left: 4px solid #17a2b8;
+}
+
+.questionnaire-actions {
+  margin-bottom: 1.5rem;
+}
+
+.questionnaire-editor-btn {
+  background: #17a2b8;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.questionnaire-editor-btn:hover {
+  background: #138496;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.2);
+}
+
+.questionnaire-info {
+  background: var(--who-bg-light, #f8f9fa);
+  border-radius: 8px;
+  padding: 1rem;
+  border-left: 4px solid #17a2b8;
+  margin-top: 1.5rem;
+}
+
+.questionnaire-info .info-text {
+  margin: 0;
+  color: var(--who-text-secondary, #6c757d);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.questionnaire-info code {
+  background: var(--who-bg-light, #e9ecef);
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: var(--who-text-primary, #2c3e50);
+}
+
+/* Existing Questionnaires List Styles */
+.existing-questionnaires {
+  margin-bottom: 1.5rem;
+}
+
+.existing-questionnaires h4 {
+  color: var(--who-text-primary, #2c3e50);
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  border-bottom: 2px solid #17a2b8;
+  padding-bottom: 0.5rem;
+}
+
+.questionnaire-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.questionnaire-card {
+  border: 1px solid var(--who-border-color, #e2e8f0);
+  border-radius: 8px;
+  padding: 1rem;
+  background: var(--who-card-bg, white);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.questionnaire-card:hover {
+  border-color: #17a2b8;
+  box-shadow: 0 4px 12px rgba(23, 162, 184, 0.15);
+  transform: translateY(-2px);
+}
+
+.questionnaire-card .card-icon {
+  font-size: 2rem;
+  color: #17a2b8;
+  min-width: 3rem;
+  text-align: center;
+}
+
+.questionnaire-card .card-content {
+  flex: 1;
+}
+
+.questionnaire-card .card-content h5 {
+  margin: 0 0 0.5rem 0;
+  color: var(--who-text-primary, #2c3e50);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.questionnaire-card .card-type {
+  margin: 0 0 0.25rem 0;
+  color: #17a2b8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.questionnaire-card .card-path {
+  margin: 0 0 0.25rem 0;
+  color: var(--who-text-secondary, #6c757d);
+  font-size: 0.8rem;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.questionnaire-card .card-size {
+  margin: 0;
+  color: var(--who-text-muted, #adb5bd);
+  font-size: 0.75rem;
+}
+
+.questionnaire-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--who-text-secondary, #6c757d);
+  font-style: italic;
+}
+
+.no-questionnaires {
+  background: var(--who-bg-light, #f7fafc);
+  border: 1px dashed var(--who-border-color, #cbd5e0);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.no-questionnaires .empty-icon {
+  font-size: 3rem;
+  color: var(--who-text-muted, #adb5bd);
+  margin-bottom: 1rem;
+}
+
+.no-questionnaires h4 {
+  color: var(--who-text-primary, #2c3e50);
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+}
+
+.no-questionnaires p {
+  margin: 0.5rem 0;
+  color: var(--who-text-secondary, #4a5568);
+}
+
+.no-questionnaires ul {
+  text-align: left;
+  max-width: 400px;
+  margin: 1rem auto;
+  color: var(--who-text-secondary, #6c757d);
+}
+
+.no-questionnaires li {
+  margin: 0.5rem 0;
+}
+
+.no-questionnaires code {
+  background: var(--who-bg-light, #edf2f7);
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: var(--who-text-primary, #2c3e50);
 }
