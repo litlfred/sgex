@@ -597,15 +597,7 @@ const DAKDashboardContent = () => {
             selectedBranch={selectedBranch}
           />
 
-          {/* DAK Status Box - only show when repository and branch are selected */}
-          {repository && selectedBranch && (
-            <DAKStatusBox 
-              repository={repository}
-              selectedBranch={selectedBranch}
-              hasWriteAccess={hasWriteAccess}
-              profile={profile}
-            />
-          )}
+
 
           {/* Tab Navigation - Status Bar Style */}
           <div className="tab-navigation-statusbar">
@@ -621,7 +613,7 @@ const DAKDashboardContent = () => {
               onClick={() => setActiveTab('publications')}
             >
               <span className="tab-icon">📚</span>
-              <span className="tab-text">Publications</span>
+              <span className="tab-text">Publishing</span>
             </button>
             <button
               className={`tab-button-compact ${activeTab === 'faq' ? 'active' : ''}`}
@@ -658,9 +650,19 @@ const DAKDashboardContent = () => {
           )}
 
 
-          {/* Publications Section */}
+          {/* Publishing Section */}
           {activeTab === 'publications' && (
             <div className="components-section publications-section active">
+              {/* Repository Status Dashboard */}
+              {repository && selectedBranch && (
+                <DAKStatusBox 
+                  repository={repository}
+                  selectedBranch={selectedBranch}
+                  hasWriteAccess={hasWriteAccess}
+                  profile={profile}
+                />
+              )}
+              
               <Publications
                 profile={profile}
                 repository={repository}
