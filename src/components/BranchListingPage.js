@@ -107,24 +107,30 @@ const BranchListingPage = () => {
             // Use githubService if authenticated, otherwise make a public API call
             if (githubService.isAuth()) {
                 const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
-                return comments.map(comment => ({
-                    id: comment.id,
-                    author: comment.user.login,
-                    body: comment.body,
-                    created_at: new Date(comment.created_at).toLocaleDateString(),
-                    avatar_url: comment.user.avatar_url
-                }));
-            } else {
-                // For unauthenticated requests, use githubService which handles rate limiting gracefully
-                try {
-                    const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
-                    return comments.map(comment => ({
+                return comments
+                    .map(comment => ({
                         id: comment.id,
                         author: comment.user.login,
                         body: comment.body,
                         created_at: new Date(comment.created_at).toLocaleDateString(),
+                        created_at_raw: new Date(comment.created_at),
                         avatar_url: comment.user.avatar_url
-                    }));
+                    }))
+                    .sort((a, b) => b.created_at_raw - a.created_at_raw); // Sort newest first
+            } else {
+                // For unauthenticated requests, use githubService which handles rate limiting gracefully
+                try {
+                    const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
+                    return comments
+                        .map(comment => ({
+                            id: comment.id,
+                            author: comment.user.login,
+                            body: comment.body,
+                            created_at: new Date(comment.created_at).toLocaleDateString(),
+                            created_at_raw: new Date(comment.created_at),
+                            avatar_url: comment.user.avatar_url
+                        }))
+                        .sort((a, b) => b.created_at_raw - a.created_at_raw); // Sort newest first
                 } catch (error) {
                     console.warn(`Failed to fetch comments for PR ${prNumber}: ${error.message}`);
                     return [];
@@ -861,7 +867,7 @@ const BranchListingPage = () => {
                                                         <div className="comments-loading">Loading full discussion...</div>
                                                     ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
                                                         <div className="comments-list">
-                                                            {prComments[pr.number].slice(-5).map((comment) => (
+                                                            {prComments[pr.number].slice(0, 5).map((comment) => (
                                                                 <div key={comment.id} className="comment-item">
                                                                     <div className="comment-header">
                                                                         <img 
