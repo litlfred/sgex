@@ -179,12 +179,64 @@ function loadRouteConfigSync(deployType) {
         },
 
         /**
+         * Get all route paths from component configurations
+         * @returns {Array} Array of valid route paths
+         */
+        getAllRoutePaths: function() {
+          var routePaths = [];
+          
+          // Extract route paths from standard components
+          for (var compName in this.standardComponents) {
+            var comp = this.standardComponents[compName];
+            if (comp.routes) {
+              for (var i = 0; i < comp.routes.length; i++) {
+                var route = comp.routes[i];
+                var path = route.path || route;
+                if (path && path !== '*') {
+                  // Convert route path to component identifier (remove leading slash and parameters)
+                  var routePath = path.replace(/^\//, '').split('/')[0].split(':')[0];
+                  if (routePath && routePaths.indexOf(routePath) === -1) {
+                    routePaths.push(routePath);
+                  }
+                }
+              }
+            }
+          }
+          
+          // Extract route paths from deploy components
+          for (var compName in this.components) {
+            var comp = this.components[compName];
+            if (comp.routes) {
+              for (var i = 0; i < comp.routes.length; i++) {
+                var route = comp.routes[i];
+                var path = route.path || route;
+                if (path && path !== '*') {
+                  // Convert route path to component identifier (remove leading slash and parameters)
+                  var routePath = path.replace(/^\//, '').split('/')[0].split(':')[0];
+                  if (routePath && routePaths.indexOf(routePath) === -1) {
+                    routePaths.push(routePath);
+                  }
+                }
+              }
+            }
+          }
+          
+          return routePaths;
+        },
+
+        /**
          * Check if a component name is valid (any type)
          * @param {string} componentName - Component name to validate
          * @returns {boolean} True if component is valid
          */
         isValidComponent: function(componentName) {
-          return this.getAllComponentNames().includes(componentName);
+          // Check component names first
+          if (this.getAllComponentNames().includes(componentName)) {
+            return true;
+          }
+          
+          // Check route paths second
+          return this.getAllRoutePaths().includes(componentName);
         },
 
         /**
@@ -259,6 +311,21 @@ function getSGEXRouteConfig(deployType) {
             "component": "LandingPage",
             "path": "./components/LandingPage", 
             "routes": ["/welcome"]
+          },
+          "SelectProfilePage": {
+            "path": "./components/SelectProfilePage",
+            "routes": [{ "path": "/select_profile", "exact": true }]
+          },
+          "DAKActionSelection": {
+            "path": "./components/DAKActionSelection",
+            "routes": [
+              { "path": "/dak-action/:user", "exact": true },
+              { "path": "/dak-action", "exact": true }
+            ]
+          },
+          "OrganizationSelection": {
+            "path": "./components/OrganizationSelection",
+            "routes": [{ "path": "/organization-selection", "exact": true }]
           }
         },
         components: {},
@@ -274,6 +341,47 @@ function getSGEXRouteConfig(deployType) {
           var standardNames = Object.keys(this.standardComponents);
           var deployNames = Object.keys(this.components);
           return dakNames.concat(standardNames).concat(deployNames);
+        },
+        getAllRoutePaths: function() {
+          var routePaths = [];
+          
+          // Extract route paths from standard components
+          for (var compName in this.standardComponents) {
+            var comp = this.standardComponents[compName];
+            if (comp.routes) {
+              for (var i = 0; i < comp.routes.length; i++) {
+                var route = comp.routes[i];
+                var path = route.path || route;
+                if (path && path !== '*') {
+                  // Convert route path to component identifier (remove leading slash and parameters)
+                  var routePath = path.replace(/^\//, '').split('/')[0].split(':')[0];
+                  if (routePath && routePaths.indexOf(routePath) === -1) {
+                    routePaths.push(routePath);
+                  }
+                }
+              }
+            }
+          }
+          
+          // Extract route paths from deploy components
+          for (var compName in this.components) {
+            var comp = this.components[compName];
+            if (comp.routes) {
+              for (var i = 0; i < comp.routes.length; i++) {
+                var route = comp.routes[i];
+                var path = route.path || route;
+                if (path && path !== '*') {
+                  // Convert route path to component identifier (remove leading slash and parameters)
+                  var routePath = path.replace(/^\//, '').split('/')[0].split(':')[0];
+                  if (routePath && routePaths.indexOf(routePath) === -1) {
+                    routePaths.push(routePath);
+                  }
+                }
+              }
+            }
+          }
+          
+          return routePaths;
         },
         getReactComponent: function(component) {
           var dakComp = this.dakComponents[component];
@@ -324,7 +432,13 @@ function getSGEXRouteConfig(deployType) {
           return Object.prototype.hasOwnProperty.call(this.dakComponents, component);
         },
         isValidComponent: function(componentName) {
-          return this.getAllComponentNames().includes(componentName);
+          // Check component names first
+          if (this.getAllComponentNames().includes(componentName)) {
+            return true;
+          }
+          
+          // Check route paths second
+          return this.getAllRoutePaths().includes(componentName);
         },
         isDeployedBranch: function(branch) {
           return this.deployedBranches.includes(branch);

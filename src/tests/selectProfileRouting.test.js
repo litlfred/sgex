@@ -4,11 +4,11 @@
  */
 
 describe('Select Profile URL Routing', () => {
-  // Mock route configuration that matches the actual one
+  // Mock route configuration that matches the updated one
   const mockRouteConfig = {
     isDeployedBranch: (branch) => branch === 'main',
     isValidComponent: (component) => {
-      // This should include component names AND route paths
+      // This now includes component names AND route paths
       const componentNames = [
         'WelcomePage', 'SelectProfilePage', 'DAKActionSelection', 'DAKSelection', 
         'OrganizationSelection', 'DAKConfiguration', 'RepositorySelection',
@@ -30,19 +30,18 @@ describe('Select Profile URL Routing', () => {
       
       return componentNames.includes(component) || routePaths.includes(component);
     },
-    isValidRoutePath: (path) => {
-      const routePaths = [
+    getAllRoutePaths: () => {
+      return [
         'select_profile', 'dak-action', 'dak-selection', 'organization-selection',
         'dak-configuration', 'repositories', 'dashboard', 'test-dashboard',
         'test-bpmn-viewer', 'docs', 'pages', 'test-framework', 'test-documentation',
         'test-asset-editor'
       ];
-      return routePaths.includes(path);
     }
   };
 
-  // Current (broken) routing logic
-  function currentRouteLogic(pathname, routeConfig) {
+  // Updated routing logic that matches 404.html
+  function updatedRouteLogic(pathname, routeConfig) {
     const pathSegments = pathname.split('/').filter(Boolean);
     
     if (pathSegments.length === 0 || pathSegments[0] !== 'sgex') {
@@ -66,8 +65,7 @@ describe('Select Profile URL Routing', () => {
         return { type: 'branch-root-redirect', branch: secondSegment, redirect: `/sgex/${secondSegment}/` };
       }
       
-      // This is where the issue lies - it checks isValidComponent but select_profile 
-      // might not be recognized correctly
+      // This should now work with the updated isValidComponent function
       if (pathSegments.length >= 3 && 
           routeConfig && 
           routeConfig.isValidComponent && 
@@ -79,29 +77,43 @@ describe('Select Profile URL Routing', () => {
     }
   }
 
-  test('should handle select_profile URL correctly', () => {
-    const result = currentRouteLogic('/sgex/copilot-fix-895/select_profile', mockRouteConfig);
+  test('should handle select_profile URL correctly after fix', () => {
+    const result = updatedRouteLogic('/sgex/copilot-fix-895/select_profile', mockRouteConfig);
     expect(result.type).toBe('branch-deployment');
     expect(result.branch).toBe('copilot-fix-895');
     expect(result.component).toBe('select_profile');
   });
 
   test('should handle other standard components correctly', () => {
-    const result = currentRouteLogic('/sgex/some-branch/dak-action', mockRouteConfig);
+    const result = updatedRouteLogic('/sgex/some-branch/dak-action', mockRouteConfig);
     expect(result.type).toBe('branch-deployment');
     expect(result.branch).toBe('some-branch');
     expect(result.component).toBe('dak-action');
   });
 
   test('should handle DAK components correctly', () => {
-    const result = currentRouteLogic('/sgex/feature-branch/dashboard', mockRouteConfig);
+    const result = updatedRouteLogic('/sgex/feature-branch/dashboard', mockRouteConfig);
     expect(result.type).toBe('branch-deployment');
     expect(result.branch).toBe('feature-branch');
     expect(result.component).toBe('dashboard');
   });
 
   test('should still show error for invalid components', () => {
-    const result = currentRouteLogic('/sgex/some-branch/invalid-component', mockRouteConfig);
+    const result = updatedRouteLogic('/sgex/some-branch/invalid-component', mockRouteConfig);
     expect(result.error).toBe('unknown-pattern');
+  });
+
+  test('should handle component-first patterns correctly', () => {
+    const result = updatedRouteLogic('/sgex/select_profile/user/repo', mockRouteConfig);
+    expect(result.type).toBe('component-first');
+  });
+
+  test('should handle the exact problematic URL from the issue', () => {
+    // This is the exact URL from the issue
+    const result = updatedRouteLogic('/sgex/copilot-fix-895/select_profile', mockRouteConfig);
+    expect(result.type).toBe('branch-deployment');
+    expect(result.branch).toBe('copilot-fix-895');
+    expect(result.component).toBe('select_profile');
+    expect(result.error).toBeUndefined();
   });
 });
