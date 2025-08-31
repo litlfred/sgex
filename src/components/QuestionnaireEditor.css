@@ -53,6 +53,110 @@
   line-height: 1.5;
 }
 
+/* Rename Functionality Styles */
+.questionnaire-header-title {
+  margin: 1rem 0;
+}
+
+.title-with-rename {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.title-with-rename h2 {
+  margin: 0;
+}
+
+.rename-btn {
+  padding: 0.5rem 1rem;
+  background: #f0f8ff;
+  border: 1px solid #4fc3f7;
+  border-radius: 6px;
+  color: #0277bd;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.rename-btn:hover {
+  background: #e1f5fe;
+  border-color: #29b6f6;
+}
+
+.rename-section {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.rename-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.rename-input:focus {
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
+}
+
+.rename-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.rename-confirm-btn {
+  padding: 0.5rem 1rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.rename-confirm-btn:hover:not(:disabled) {
+  background: #218838;
+}
+
+.rename-confirm-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.rename-cancel-btn {
+  padding: 0.5rem 1rem;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.rename-cancel-btn:hover {
+  background: #5a6268;
+}
+
+.rename-error {
+  color: #dc3545;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+}
+
 /* Questionnaire List Styles */
 .questionnaire-list {
   background: white;

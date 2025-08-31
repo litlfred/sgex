@@ -2,6 +2,7 @@ import React, { useState, useEffect, Component } from 'react';
 import { PageLayout, AssetEditorLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
+import stagingGroundService from '../services/stagingGroundService';
 import { useLocation } from 'react-router-dom';
 import './QuestionnaireEditor.css';
 
@@ -304,6 +305,11 @@ const QuestionnaireEditorContent = () => {
   const [lformsLoaded, setLformsLoaded] = useState(false);
   const [editMode, setEditMode] = useState('visual'); // 'visual' or 'json'
   const [lformsError, setLformsError] = useState(null);
+  
+  // Rename functionality
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [renameError, setRenameError] = useState(null);
 
   // Check if we have the necessary context data
   const hasRequiredData = repository && branch && !pageLoading;
@@ -640,6 +646,82 @@ const QuestionnaireEditorContent = () => {
   const hasChanges = questionnaireContent && originalContent &&
     JSON.stringify(questionnaireContent, null, 2) !== originalContent;
 
+  // Handle starting rename process
+  const handleStartRename = () => {
+    if (!selectedQuestionnaire) return;
+    
+    setIsRenaming(true);
+    setNewName(selectedQuestionnaire.displayName);
+    setRenameError(null);
+  };
+
+  // Handle canceling rename
+  const handleCancelRename = () => {
+    setIsRenaming(false);
+    setNewName('');
+    setRenameError(null);
+  };
+
+  // Handle confirming rename
+  const handleConfirmRename = async () => {
+    if (!selectedQuestionnaire || !newName.trim()) {
+      setRenameError('Please enter a valid name');
+      return;
+    }
+
+    try {
+      setRenameError(null);
+      
+      // Determine file extension
+      const fileExtension = selectedQuestionnaire.fileType === 'FSH' ? '.fsh' : '.json';
+      const directory = selectedQuestionnaire.fileType === 'FSH' ? 'input/fsh/questionnaires' : 'input/questionnaires';
+      
+      // Create new file path
+      const newFileName = `${newName.trim()}${fileExtension}`;
+      const newFilePath = `${directory}/${newFileName}`;
+      const oldFilePath = selectedQuestionnaire.fullPath;
+
+      // Check if file is in staging ground
+      if (selectedQuestionnaire.isNew) {
+        // Rename in staging ground
+        await stagingGroundService.renameFile(oldFilePath, newFilePath);
+        
+        // Update local state
+        const updatedQuestionnaire = {
+          ...selectedQuestionnaire,
+          name: newFileName,
+          displayName: newName.trim(),
+          fullPath: newFilePath
+        };
+        
+        setSelectedQuestionnaire(updatedQuestionnaire);
+        
+        // Update questionnaire content metadata
+        if (questionnaireContent && questionnaireContent.resourceType === 'Questionnaire') {
+          const updatedContent = {
+            ...questionnaireContent,
+            name: newName.trim().replace(/[^a-zA-Z0-9]/g, '_'),
+            title: newName.trim()
+          };
+          setQuestionnaireContent(updatedContent);
+        }
+        
+        console.log(`Questionnaire renamed from ${selectedQuestionnaire.displayName} to ${newName.trim()}`);
+      } else {
+        // For existing files, we'd need to implement Git operations
+        setRenameError('Renaming existing questionnaires is not yet supported');
+        return;
+      }
+      
+      setIsRenaming(false);
+      setNewName('');
+      
+    } catch (error) {
+      console.error('Error renaming questionnaire:', error);
+      setRenameError(`Failed to rename questionnaire: ${error.message}`);
+    }
+  };
+
   // Show loading state when PageProvider is not ready
   if (!hasRequiredData) {
     return (
@@ -750,7 +832,63 @@ const QuestionnaireEditorContent = () => {
                 >
                   ← Back to List
                 </button>
-                <h2>{selectedQuestionnaire?.displayName || 'New Questionnaire'}</h2>
+                
+                {/* Questionnaire Name/Title with Rename Functionality */}
+                <div className="questionnaire-header-title">
+                  {isRenaming ? (
+                    <div className="rename-section">
+                      <input
+                        type="text"
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        className="rename-input"
+                        placeholder="Enter new name"
+                        autoFocus
+                        // eslint-disable-next-line jsx-a11y/no-autofocus
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleConfirmRename();
+                          } else if (e.key === 'Escape') {
+                            handleCancelRename();
+                          }
+                        }}
+                      />
+                      <div className="rename-actions">
+                        <button 
+                          className="rename-confirm-btn"
+                          onClick={handleConfirmRename}
+                          disabled={!newName.trim()}
+                        >
+                          ✓ Save
+                        </button>
+                        <button 
+                          className="rename-cancel-btn"
+                          onClick={handleCancelRename}
+                        >
+                          ✗ Cancel
+                        </button>
+                      </div>
+                      {renameError && (
+                        <div className="rename-error">
+                          {renameError}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="title-with-rename">
+                      <h2>{selectedQuestionnaire?.displayName || 'New Questionnaire'}</h2>
+                      {selectedQuestionnaire?.isNew && (
+                        <button 
+                          className="rename-btn"
+                          onClick={handleStartRename}
+                          title="Rename questionnaire"
+                        >
+                          ✏️ Rename
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
                 
                 {/* Logical Model Generation Notice */}
                 {selectedQuestionnaire?.generatedFromLogicalModel && (
