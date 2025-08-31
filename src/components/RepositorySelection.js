@@ -128,14 +128,6 @@ const RepositorySelection = () => {
         <div>Redirecting...</div>
       ) : (
         <div className="repo-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Select Repository</span>
-        </div>
-
         <div className="repo-main">
           <div className="repo-selection">
             <h2>Select DAK Repository</h2>

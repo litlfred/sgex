@@ -81,6 +81,7 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
     'landing': 'Home',
     'landing-unauthenticated': 'Home',
     'repositories': 'Select Repository', 
+    'repository-selection': 'Select Repository',
     'dak-selection': 'Select DAK',
     'dak-action': 'Choose DAK Action',
     'dashboard': 'DAK Components',
