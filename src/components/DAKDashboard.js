@@ -6,6 +6,7 @@ import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
 import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
+import DiscussionsStatusBar from './DiscussionsStatusBar';
 import Publications from './Publications';
 import ForkStatusBar from './ForkStatusBar';
 import { PageLayout } from './framework';
@@ -15,14 +16,45 @@ import FAQAccordion from '../dak/faq/components/FAQAccordion.js';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
 const DAKDashboard = () => {
+  const location = useLocation();
+  const { user, repo, branch } = useParams();
+  
+  // Try to get data from location.state first, then from URL params
+  const [profile, setProfile] = useState(location.state?.profile || null);
+  const [repository, setRepository] = useState(location.state?.repository || null);
+  const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
+  
+  // Prepare context data for the help system
+  const contextData = {
+    pageId: 'dak-dashboard',
+    profile,
+    repository,
+    selectedDak: repository,
+    selectedBranch
+  };
+
   return (
-    <PageLayout pageName="dak-dashboard">
-      <DAKDashboardContent />
+    <PageLayout pageName="dak-dashboard" contextData={contextData}>
+      <DAKDashboardContent 
+        initialProfile={profile}
+        initialRepository={repository}
+        initialSelectedBranch={selectedBranch}
+        onProfileChange={setProfile}
+        onRepositoryChange={setRepository}
+        onSelectedBranchChange={setSelectedBranch}
+      />
     </PageLayout>
   );
 };
 
-const DAKDashboardContent = () => {
+const DAKDashboardContent = ({ 
+  initialProfile = null, 
+  initialRepository = null, 
+  initialSelectedBranch = null,
+  onProfileChange = () => {},
+  onRepositoryChange = () => {},
+  onSelectedBranchChange = () => {}
+}) => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -31,18 +63,30 @@ const DAKDashboardContent = () => {
   // Theme-aware mascot image for dialog
   const mascotImage = useThemeImage('sgex-mascot.png');
   
-  // Try to get data from location.state first, then from URL params
-  const [profile, setProfile] = useState(location.state?.profile || null);
-  const [repository, setRepository] = useState(location.state?.repository || null);
+  // Try to get data from props first, then from location.state
+  const [profile, setProfile] = useState(initialProfile || location.state?.profile || null);
+  const [repository, setRepository] = useState(initialRepository || location.state?.repository || null);
   const [loading, setLoading] = useState(!profile || !repository);
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('core'); // 'core', 'publications', 'other', or 'faq'
-  const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
+  const [selectedBranch, setSelectedBranch] = useState(initialSelectedBranch || location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
 
+  // Update parent when state changes
+  useEffect(() => {
+    onProfileChange(profile);
+  }, [profile, onProfileChange]);
+
+  useEffect(() => {
+    onRepositoryChange(repository);
+  }, [repository, onRepositoryChange]);
+
+  useEffect(() => {
+    onSelectedBranchChange(selectedBranch);
+  }, [selectedBranch, onSelectedBranchChange]);
   // Component Card component defined within the dashboard
   const ComponentCard = ({ component, handleComponentClick, t }) => {
     const [imageLoaded, setImageLoaded] = useState(false);
@@ -605,6 +649,16 @@ const DAKDashboardContent = () => {
               hasWriteAccess={hasWriteAccess}
               profile={profile}
             />
+          )}
+
+          {/* Discussions Status Bar - show when repository is selected */}
+          {repository && (
+            <div className="discussions-status-container">
+              <DiscussionsStatusBar 
+                repository={repository}
+                selectedBranch={selectedBranch}
+              />
+            </div>
           )}
 
           {/* Tab Navigation - Full Width Toggle Buttons */}

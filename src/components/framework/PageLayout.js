@@ -49,7 +49,8 @@ const PageLayoutInner = ({
   showHeader = true, 
   showMascot = true, 
   showBreadcrumbs = true, 
-  customBreadcrumbs 
+  customBreadcrumbs,
+  contextData = {}
 }) => {
   const { loading, error, pageName } = usePage();
 
@@ -68,6 +69,7 @@ const PageLayoutInner = ({
           <ContextualHelpMascot 
             pageId={`${pageName}-loading`}
             position="bottom-right"
+            contextData={contextData}
           />
         )}
       </div>
@@ -100,7 +102,7 @@ const PageLayoutInner = ({
           <ContextualHelpMascot 
             pageId={pageName}
             position="bottom-right"
-            contextData={{}}
+            contextData={contextData}
           />
         )}
       </main>
@@ -117,7 +119,8 @@ const PageLayout = ({
   showHeader = true, 
   showMascot = true,
   showBreadcrumbs = true,
-  customBreadcrumbs
+  customBreadcrumbs,
+  contextData = {}
 }) => {
   return (
     <PageErrorBoundary>
@@ -127,6 +130,7 @@ const PageLayout = ({
           showMascot={showMascot}
           showBreadcrumbs={showBreadcrumbs}
           customBreadcrumbs={customBreadcrumbs}
+          contextData={contextData}
         >
           {children}
         </PageLayoutInner>

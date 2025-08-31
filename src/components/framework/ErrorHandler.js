@@ -16,16 +16,15 @@ const ErrorHandler = ({ error, onRetry }) => {
   const [userExplanation, setUserExplanation] = useState('');
 
   const generateBugReportUrl = () => {
-    const title = encodeURIComponent('User should not have reached this page');
-    const body = encodeURIComponent(`
+    const title = encodeURIComponent('[Bug]: Page Error - User should not have reached this page');
+    const body = encodeURIComponent(`**What happened?**
+An error occurred while using the SGEX Workbench application.
+
 **Error Information:**
 - Page: ${pageName}
 - URL: ${window.location.href}
 - Error: ${error}
 - Timestamp: ${new Date().toISOString()}
-- User Agent: ${navigator.userAgent}
-
-**Context:**
 - Browser: ${navigator.userAgent}
 - Viewport: ${window.innerWidth}x${window.innerHeight}
 - Referrer: ${document.referrer || 'Direct access'}
@@ -33,18 +32,26 @@ const ErrorHandler = ({ error, onRetry }) => {
 **User Explanation:**
 ${userExplanation || 'No additional details provided'}
 
-**Steps to Reproduce:**
+**Expected behavior**
+The page should load without errors and function normally.
+
+**Steps to reproduce**
 1. Navigate to: ${window.location.href}
-2. [Please add any additional steps]
+2. [Please add any additional steps that led to this error]
 
-**Expected Behavior:**
-The page should load without errors.
+`);
 
-**Actual Behavior:**
-${error}
-    `);
+    // Only include assignees if it's appropriate (same logic as HelpModal)
+    let assigneeParam = '';
+    try {
+      // Get user context if available (this would need to be passed from parent component)
+      // For now, don't auto-assign copilot from the error handler for security
+      // User can manually assign in the issue if needed
+    } catch (e) {
+      // No user context available
+    }
 
-    return `https://github.com/litlfred/sgex/issues/new?title=${title}&body=${body}&labels=bug,user-error`;
+    return `https://github.com/litlfred/sgex/issues/new?template=bug_report.yml&title=${title}&body=${body}&labels=bug+reports,page-framework-error${assigneeParam}`;
   };
 
   const handleSendBugReport = () => {

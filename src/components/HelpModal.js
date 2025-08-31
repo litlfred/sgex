@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import useThemeImage from '../hooks/useThemeImage';
+import IssueCreationModal from './IssueCreationModal';
+import githubService from '../services/githubService';
 import BugReportForm from './BugReportForm';
 import EnhancedTutorialModal from './EnhancedTutorialModal';
 import tutorialService from '../services/tutorialService';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
-
+import './HelpModal.css';
 
 const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
   const { t } = useTranslation();
   const [showMenu, setShowMenu] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [showIssueCreationModal, setShowIssueCreationModal] = useState(false);
+  const [issueCreationType, setIssueCreationType] = useState('bug');
+  const [issueRepository, setIssueRepository] = useState(null);
   const [showBugReportForm, setShowBugReportForm] = useState(false);
   const [showEnhancedTutorial, setShowEnhancedTutorial] = useState(false);
   const [currentTutorialId, setCurrentTutorialId] = useState(tutorialId);
@@ -44,85 +49,47 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
   // Set up global reference for inline onclick handlers
   useEffect(() => {
-    const createContextualUrl = (baseUrl, params) => {
-      const urlParams = new URLSearchParams(params);
+    // Helper function to generate GitHub issue URL for non-authenticated users
+    const generateGitHubUrl = (issueType, repository = null) => {
+      const repoInfo = repository ? 
+        { owner: repository.owner?.login || repository.owner, repo: repository.name } :
+        { owner: 'litlfred', repo: 'sgex' };
       
-      // Add contextual information
-      if (contextData.pageId) {
-        urlParams.set('sgex_page', contextData.pageId);
+      const params = new URLSearchParams();
+      
+      // Set template based on issue type
+      if (issueType === 'bug') {
+        params.set('template', 'bug_report.yml');
+        params.set('labels', 'bug+reports');
+      } else if (issueType === 'feature') {
+        params.set('template', 'feature_request.yml');
+        params.set('labels', 'feature+request');
+      } else if (issueType === 'content' || issueType === 'dak-content') {
+        params.set('template', 'dak_content_error.yml');
+        params.set('labels', 'authoring');
       }
       
-      const currentUrl = window.location.href;
-      urlParams.set('sgex_current_url', currentUrl);
+      // Add context
+      params.set('sgex_current_url', window.location.href);
       
-      if (contextData.selectedDak?.name) {
-        urlParams.set('sgex_selected_dak', contextData.selectedDak.name);
-      }
-      
-      return `${baseUrl}?${urlParams.toString()}`;
+      return `https://github.com/${repoInfo.owner}/${repoInfo.repo}/issues/new?${params.toString()}`;
     };
 
     window.helpModalInstance = {
       openSgexIssue: (issueType) => {
-        // For bug reports, show the new integrated form
-        if (issueType === 'bug') {
-          setShowBugReportForm(true);
+        // Check if user is authenticated
+        if (!githubService.isAuth()) {
+          // Open GitHub directly for non-authenticated users
+          const githubUrl = generateGitHubUrl(issueType);
+          window.open(githubUrl, '_blank');
           return;
         }
-        
-        // For other issue types, continue with existing behavior
-        const baseUrl = `https://github.com/litlfred/sgex/issues/new`;
-        let params = {};
 
-        switch (issueType) {
-          case 'feature':
-            params.template = 'feature_request.yml';
-            params.labels = 'enhancement';
-            break;
-          case 'question':
-            params.template = 'question.yml';
-            params.labels = 'question';
-            break;
-          case 'documentation':
-            params.template = 'documentation.yml';
-            params.labels = 'documentation';
-            break;
-          case 'blank':
-            // No template specified - this will allow users to create a blank issue
-            params.labels = 'blank-issue';
-            break;
-          default:
-            params.labels = 'needs-triage';
-        }
-
-        const url = createContextualUrl(baseUrl, params);
-        
-        // Try to open the GitHub issue, but handle cases where external links are blocked
-        try {
-          const newWindow = window.open(url, '_blank');
-          
-          // Check if the window was blocked or failed to open
-          if (!newWindow || newWindow.closed) {
-            // Fallback: show instructions to manually open the link
-            window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
-          } else {
-            // Check if the window actually loaded after a brief delay
-            setTimeout(() => {
-              try {
-                if (newWindow.closed || !newWindow.location || newWindow.location.href === 'about:blank') {
-                  newWindow.close();
-                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
-                }
-              } catch (e) {
-                // Cross-origin restriction means it probably loaded successfully
-                // or the check failed due to security - either way, don't show fallback
-              }
-            }, 1000);
-          }
-        } catch (error) {
-          console.warn('Failed to open GitHub issue:', error);
-          window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
-        }
+        // Always use the issue creation modal for authenticated users
+        // The modal will handle PAT permission errors during submission
+        setIssueCreationType(issueType);
+        setIssueRepository(null); // Use default SGEX repo
+        setShowIssueCreationModal(true);
       },
 
       openDakIssue: (issueType) => {
@@ -132,67 +99,19 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
           return;
         }
 
-        const baseUrl = `https://github.com/${repository.owner}/${repository.name}/issues/new`;
-        let params = {};
-
-        switch (issueType) {
-          case 'bug':
-            params.template = 'dak_bug_report.yml';
-            params.labels = 'bug,dak-issue';
-            break;
-          case 'improvement':
-            params.template = 'dak_feature_request.yml';
-            params.labels = 'enhancement,dak-improvement';
-            break;
-          case 'content':
-            params.template = 'dak_content_error.yml';
-            params.labels = 'content-issue,clinical-content';
-            break;
-          case 'question':
-            params.template = 'dak_question.yml';
-            params.labels = 'question,dak-question';
-            break;
-          case 'blank':
-            // No template specified - this will allow users to create a blank issue
-            params.labels = 'blank-issue,dak-feedback';
-            break;
-          default:
-            params.labels = 'dak-feedback';
+        // Check if user is authenticated
+        if (!githubService.isAuth()) {
+          // Open GitHub directly for non-authenticated users
+          const githubUrl = generateGitHubUrl(issueType === 'content' ? 'dak-content' : issueType, repository);
+          window.open(githubUrl, '_blank');
+          return;
         }
 
-        // Add DAK-specific context
-        if (repository.name) {
-          params.sgex_dak_repository = `${repository.owner}/${repository.name}`;
-        }
-
-        const url = createContextualUrl(baseUrl, params);
-        
-        // Try to open the GitHub issue, but handle cases where external links are blocked
-        try {
-          const newWindow = window.open(url, '_blank');
-          
-          // Check if the window was blocked or failed to open
-          if (!newWindow || newWindow.closed) {
-            // Fallback: show instructions to manually open the link
-            window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
-          } else {
-            // Check if the window actually loaded after a brief delay
-            setTimeout(() => {
-              try {
-                if (newWindow.closed || !newWindow.location || newWindow.location.href === 'about:blank') {
-                  newWindow.close();
-                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
-                }
-              } catch (e) {
-                // Cross-origin restriction means it probably loaded successfully
-                // or the check failed due to security - either way, don't show fallback
-              }
-            }, 1000);
-          }
-        } catch (error) {
-          console.warn('Failed to open DAK issue:', error);
-          window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
-        }
+        // Always use the issue creation modal for authenticated users
+        // The modal will handle PAT permission errors during submission
+        setIssueCreationType(issueType === 'content' ? 'dak-content' : issueType);
+        setIssueRepository(repository);
+        setShowIssueCreationModal(true);
       },
 
       // Function to show fallback instructions when GitHub access is blocked
@@ -309,18 +228,212 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
     setShowMenu(!showMenu);
   };
 
+  // Helper function to generate GitHub issue URL for non-authenticated users
+  const generateGitHubUrl = (issueType, repository = null) => {
+    const repoInfo = repository ? 
+      { owner: repository.owner?.login || repository.owner, repo: repository.name } :
+      { owner: 'litlfred', repo: 'sgex' };
+    
+    const params = new URLSearchParams();
+    
+    // Set template based on issue type
+    if (issueType === 'bug') {
+      params.set('template', 'bug_report.yml');
+      params.set('labels', 'bug+reports');
+    } else if (issueType === 'feature') {
+      params.set('template', 'feature_request.yml');
+      params.set('labels', 'feature+request');
+    } else if (issueType === 'content' || issueType === 'dak-content') {
+      params.set('template', 'dak_content_error.yml');
+      params.set('labels', 'authoring');
+    }
+    
+    // Add context
+    params.set('sgex_current_url', window.location.href);
+    
+    return `https://github.com/${repoInfo.owner}/${repoInfo.repo}/issues/new?${params.toString()}`;
+  };
+
   const handleBugReport = () => {
-    // Show the new integrated bug report form
-    setShowBugReportForm(true);
+    // Check if user is authenticated
+    if (!githubService.isAuth()) {
+      // Open GitHub directly for non-authenticated users
+      const githubUrl = generateGitHubUrl('bug');
+      window.open(githubUrl, '_blank');
+      return;
+    }
+
+    // Use the issue creation modal for authenticated users
+    if (window.helpModalInstance?.openSgexIssue) {
+      window.helpModalInstance.openSgexIssue('bug');
+    } else {
+      setIssueCreationType('bug');
+      setIssueRepository(null);
+      setShowIssueCreationModal(true);
+    }
   };
 
   const handleDAKFeedback = () => {
-    if (contextData.repository) {
-      // Default to opening content error as the primary DAK feedback type
-      if (window.helpModalInstance?.openDakIssue) {
-        window.helpModalInstance.openDakIssue('content');
-      }
+    const repository = contextData.repository || contextData.selectedDak;
+    if (!repository) {
+      console.warn('No DAK repository specified for feedback');
+      return;
     }
+
+    // Check if user is authenticated
+    if (!githubService.isAuth()) {
+      // Open GitHub directly for non-authenticated users
+      const githubUrl = generateGitHubUrl('content', repository);
+      window.open(githubUrl, '_blank');
+      return;
+    }
+
+    // Use the issue creation modal for authenticated users
+    if (window.helpModalInstance?.openDakIssue) {
+      window.helpModalInstance.openDakIssue('content');
+    } else {
+      setIssueCreationType('dak-content');
+      setIssueRepository(repository);
+      setShowIssueCreationModal(true);
+    }
+  };
+
+  const handleFeatureRequest = () => {
+    // Check if user is authenticated
+    if (!githubService.isAuth()) {
+      // Open GitHub directly for non-authenticated users
+      const githubUrl = generateGitHubUrl('feature');
+      window.open(githubUrl, '_blank');
+      return;
+    }
+
+    // Use the issue creation modal for authenticated users
+    if (window.helpModalInstance?.openSgexIssue) {
+      window.helpModalInstance.openSgexIssue('feature');
+    } else {
+      setIssueCreationType('feature');
+      setIssueRepository(null);
+      setShowIssueCreationModal(true);
+    }
+  };
+
+  const handleIssueCreationSuccess = (issue) => {
+    console.log('Issue created successfully:', issue);
+    // Show success message or redirect to the created issue
+    alert(`Issue #${issue.number} created successfully: ${issue.title}`);
+  };
+
+  const handleIssueCreationError = (error) => {
+    console.error('Failed to create issue:', error);
+    // Error is already shown in the modal
+  };
+
+  // Render bug report content with proper React event handlers
+  const renderBugReportContent = (htmlContent) => {
+    // Check if this is SGeX bug report or DAK feedback based on content
+    const isDakFeedback = htmlContent.includes('window.helpModalInstance?.openDakIssue') || 
+                         htmlContent.includes('dak-feedback-trigger');
+    
+    if (isDakFeedback) {
+      return (
+        <div>
+          <p>Share feedback about this Digital Adaptation Kit (DAK):</p>
+          <h4>What type of feedback do you have?</h4>
+          <div className="bug-report-options">
+            <button className="bug-type-btn" onClick={() => handleDAKIssueClick('content')}>
+              📝 DAK Content Feedback - Provide feedback on clinical content or logic
+            </button>
+            <button className="bug-type-btn" onClick={() => handleDAKIssueClick('bug')}>
+              🐛 DAK Bug - Report issue with this specific DAK content
+            </button>
+            <button className="bug-type-btn" onClick={() => handleDAKIssueClick('feature')}>
+              📈 DAK Improvement - Suggest enhancements to this DAK
+            </button>
+            <button className="bug-type-btn" onClick={() => handleDAKIssueClick('question')}>
+              ❓ DAK Question - Ask about this DAK's implementation
+            </button>
+            <button className="bug-type-btn" onClick={() => handleDAKIssueClick('blank')}>
+              📝 Blank DAK Issue - Create an issue without a template
+            </button>
+          </div>
+          <div className="help-tip">
+            <strong>💡 Note:</strong> This will open an issue in the selected DAK repository for targeted feedback.
+          </div>
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <p>Help us improve SGeX by reporting bugs and issues:</p>
+          <h4>What type of issue are you experiencing?</h4>
+          <div className="bug-report-options">
+            <button className="bug-type-btn" onClick={() => handleSgexIssueClick('bug')}>
+              🐛 Bug Report - Something isn't working correctly
+            </button>
+            <button className="bug-type-btn" onClick={() => handleSgexIssueClick('feature')}>
+              ✨ Feature Request - Suggest a new feature or improvement
+            </button>
+            <button className="bug-type-btn" onClick={() => handleSgexIssueClick('question')}>
+              ❓ Question - Ask for help or clarification
+            </button>
+            <button className="bug-type-btn" onClick={() => handleSgexIssueClick('documentation')}>
+              📚 Documentation Issue - Report problems with documentation
+            </button>
+            <button className="bug-type-btn" onClick={() => handleSgexIssueClick('blank')}>
+              📝 Blank Issue - Create an issue without a template
+            </button>
+          </div>
+          <div className="help-tip">
+            <strong>💡 Tip:</strong> Please provide as much detail as possible including steps to reproduce, expected behavior, and actual behavior.
+          </div>
+          <div className="help-fallback">
+            <strong>🔗 Can't access GitHub?</strong> If the buttons above don't work in your environment:
+            <ol>
+              <li>Email us directly at <a href="mailto:smart@who.int?subject=SGEX Bug Report">smart@who.int</a></li>
+              <li>Or visit <a href="https://github.com/litlfred/sgex/issues/new" target="_blank">github.com/litlfred/sgex/issues/new</a> manually</li>
+            </ol>
+          </div>
+        </div>
+      );
+    }
+  };
+
+  // Handle SGeX issue button clicks
+  const handleSgexIssueClick = (issueType) => {
+    // Check if user is authenticated
+    if (!githubService.isAuth()) {
+      // Open GitHub directly for non-authenticated users
+      const githubUrl = generateGitHubUrl(issueType);
+      window.open(githubUrl, '_blank');
+      return;
+    }
+
+    // Always use the issue creation modal for authenticated users
+    setIssueCreationType(issueType);
+    setIssueRepository(null); // Use default SGEX repo
+    setShowIssueCreationModal(true);
+  };
+
+  // Handle DAK issue button clicks
+  const handleDAKIssueClick = (issueType) => {
+    const repository = contextData.repository || contextData.selectedDak;
+    if (!repository) {
+      console.warn('No DAK repository specified for feedback');
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!githubService.isAuth()) {
+      // Open GitHub directly for non-authenticated users
+      const githubUrl = generateGitHubUrl(issueType === 'content' ? 'dak-content' : issueType, repository);
+      window.open(githubUrl, '_blank');
+      return;
+    }
+
+    // Always use the issue creation modal for authenticated users
+    setIssueCreationType(issueType === 'content' ? 'dak-content' : issueType);
+    setIssueRepository(repository);
+    setShowIssueCreationModal(true);
   };
 
   const handleEmailSupport = () => {
@@ -367,14 +480,16 @@ Best regards,
     const slides = helpTopic.content;
     const currentSlideData = slides[currentSlide];
 
-    // Handle DAK feedback buttons by replacing onclick handlers
+    // Replace inline onclick handlers with React event handlers
     let processedContent = currentSlideData.content;
-    if (helpTopic.id === 'provide-dak-feedback') {
-      processedContent = processedContent.replace(
-        /onclick="this\.openDakIssue\('([^']+)'\)"/g,
-        `onclick="window.helpModalInstance?.openDakIssue('$1')"`
-      );
-    }
+    
+    // Check if this is the bug report slide with the issue type buttons
+    const isBugReportSlide = processedContent.includes('window.helpModalInstance?.openSgexIssue') || 
+                            processedContent.includes('window.helpModalInstance?.openDakIssue') ||
+                            processedContent.includes('sgex-bug-report-trigger') ||
+                            processedContent.includes('dak-feedback-trigger') ||
+                            currentSlideData.title === 'Report a Bug or Issue' ||
+                            currentSlideData.title === 'Provide Feedback on this DAK';
 
     return (
       <div className="help-slideshow">
@@ -385,10 +500,11 @@ Best regards,
           </div>
         </div>
         
-        <div 
-          className="slideshow-content"
-          dangerouslySetInnerHTML={{ __html: processedContent }}
-        />
+        <div className="slideshow-content">
+          {isBugReportSlide ? renderBugReportContent(processedContent) : (
+            <div dangerouslySetInnerHTML={{ __html: processedContent }} />
+          )}
+        </div>
         
         <div className="slideshow-controls">
           <button 
@@ -516,63 +632,80 @@ Best regards,
       </div>
     );
   }
-
   return (
-    <div className="help-modal-overlay" onClick={handleOverlayClick}>
-      <div className="help-modal">
-        <div className="help-modal-header">
-          <h2>{title}</h2>
-          <div className="help-modal-actions">
-            <button 
-              className="hamburger-menu-btn"
-              onClick={handleMenuToggle}
-              aria-label="More options"
-            >
-              <span></span>
-              <span></span>
-              <span></span>
-            </button>
-            <button 
-              className="close-btn"
-              onClick={onClose}
-              aria-label="Close help"
-            >
-              ×
-            </button>
-          </div>
-          
-          {showMenu && (
-            <div className="help-menu-dropdown">
-              <button onClick={handleDocumentation} className="menu-item">
-                <span className="menu-icon">📖</span>
-                Documentation
+    <>
+      <div className="help-modal-overlay" onClick={handleOverlayClick}>
+        <div className="help-modal">
+          <div className="help-modal-header">
+            <h2>{title}</h2>
+            <div className="help-modal-actions">
+              <button 
+                className="hamburger-menu-btn"
+                onClick={handleMenuToggle}
+                aria-label="More options"
+              >
+                <span></span>
+                <span></span>
+                <span></span>
               </button>
-              
-              <button onClick={handleBugReport} className="menu-item">
-                <img src="/sgex/bug-report-icon.svg" alt={getAltText(t, ALT_TEXT_KEYS.ICON_BUG_REPORT, 'Bug Report')} className="menu-icon" />
-                File Bug Report
-              </button>
-              
-              {contextData.repository && (
-                <button onClick={handleDAKFeedback} className="menu-item">
-                  <span className="menu-icon">📝</span>
-                  Provide DAK Feedback
-                </button>
-              )}
-              
-              <button onClick={handleEmailSupport} className="menu-item">
-                <span className="menu-icon">📧</span>
-                Email Support
+              <button 
+                className="close-btn"
+                onClick={onClose}
+                aria-label="Close help"
+              >
+                ×
               </button>
             </div>
-          )}
-        </div>
-        
-        <div className="help-modal-content">
-          {content}
+            
+            {showMenu && (
+              <div className="help-menu-dropdown">
+                <button onClick={handleDocumentation} className="menu-item">
+                  <span className="menu-icon">📖</span>
+                  Documentation
+                </button>
+                
+                <button onClick={handleBugReport} className="menu-item">
+                  <img src="/sgex/bug-report-icon.svg" alt={getAltText(t, ALT_TEXT_KEYS.ICON_BUG_REPORT, 'Bug Report')} className="menu-icon" />
+                  File Bug Report
+                </button>
+                
+                <button onClick={handleFeatureRequest} className="menu-item">
+                  <span className="menu-icon">💡</span>
+                  Feature Request
+                </button>
+                
+                {(contextData.repository || contextData.selectedDak) && (
+                  <button onClick={handleDAKFeedback} className="menu-item">
+                    <span className="menu-icon">📝</span>
+                    DAK Content Feedback
+                  </button>
+                )}
+                
+                <button onClick={handleEmailSupport} className="menu-item">
+                  <span className="menu-icon">📧</span>
+                  Email Support
+                </button>
+              </div>
+            )}
+          </div>
+          
+          <div className="help-modal-content">
+            {content}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Issue Creation Modal */}
+      <IssueCreationModal
+        isOpen={showIssueCreationModal}
+        onClose={() => setShowIssueCreationModal(false)}
+        issueType={issueCreationType}
+        repository={issueRepository}
+        contextData={contextData}
+        onSuccess={handleIssueCreationSuccess}
+        onError={handleIssueCreationError}
+      />
+    </>
   );
 };
 
