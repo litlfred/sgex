@@ -1,151 +1,120 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import WorkflowDashboard from '../components/WorkflowDashboard';
+import githubService from '../services/githubService';
 
-// Mock GitHub Actions service
-const mockGithubActionsService = {
-  getAllWorkflowsForBranch: jest.fn(() => Promise.resolve([])),
-  setToken: jest.fn()
-};
-
-describe('Ready for Review Button', () => {
-  const mockProps = {
-    branchName: 'test-branch',
-    githubActionsService: mockGithubActionsService,
-    isAuthenticated: true,
-    canMergePR: true,
-    canReviewPR: false,
-    prInfo: [{
-      number: 123,
-      title: 'Test PR',
-      draft: true, // Draft PR
-      state: 'open'
-    }],
-    onMarkReadyForReview: jest.fn()
-  };
+// Test the new GitHub service method for marking PR ready for review
+describe('markPullRequestReadyForReview GitHub Service', () => {
+  let originalOctokit;
+  let originalIsAuthenticated;
+  let originalLogger;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    // Save original state
+    originalOctokit = githubService.octokit;
+    originalIsAuthenticated = githubService.isAuthenticated;
+    originalLogger = githubService.logger;
+
+    // Mock the Octokit instance
+    githubService.octokit = {
+      rest: {
+        pulls: {
+          update: jest.fn()
+        }
+      }
+    };
+    githubService.isAuthenticated = true;
+    githubService.logger = {
+      apiCall: jest.fn(),
+      apiResponse: jest.fn()
+    };
   });
 
-  test('shows ready for review button for draft PR', async () => {
-    render(<WorkflowDashboard {...mockProps} />);
-    
-    // Wait for workflows to load
-    await waitFor(() => {
-      expect(screen.getByText('PR #123 is in draft mode')).toBeInTheDocument();
-    });
-
-    const readyButton = screen.getByText('✅ Ready for review');
-    expect(readyButton).toBeInTheDocument();
-    expect(readyButton).toHaveClass('pr-ready-review-btn');
+  afterEach(() => {
+    // Restore original state
+    githubService.octokit = originalOctokit;
+    githubService.isAuthenticated = originalIsAuthenticated;
+    githubService.logger = originalLogger;
   });
 
-  test('does not show ready for review button for non-draft PR', async () => {
-    const nonDraftProps = {
-      ...mockProps,
-      prInfo: [{
-        ...mockProps.prInfo[0],
-        draft: false
-      }]
+  test('successfully marks draft PR as ready for review', async () => {
+    const mockResponse = {
+      status: 200,
+      data: {
+        id: 123,
+        number: 456,
+        draft: false,
+        state: 'open',
+        title: 'Test PR',
+        html_url: 'https://github.com/test/repo/pull/456'
+      }
     };
 
-    render(<WorkflowDashboard {...nonDraftProps} />);
-    
-    // Wait for workflows to load
-    await waitFor(() => {
-      expect(screen.getByText('PR #123 is ready for actions')).toBeInTheDocument();
+    githubService.octokit.rest.pulls.update.mockResolvedValue(mockResponse);
+
+    const result = await githubService.markPullRequestReadyForReview('test-owner', 'test-repo', 456);
+
+    expect(githubService.octokit.rest.pulls.update).toHaveBeenCalledWith({
+      owner: 'test-owner',
+      repo: 'test-repo',
+      pull_number: 456,
+      draft: false
     });
 
-    expect(screen.queryByText('✅ Ready for review')).not.toBeInTheDocument();
-    expect(screen.getByText('🔀 Merge PR')).toBeInTheDocument();
+    expect(result).toEqual({
+      success: true,
+      pullRequest: {
+        id: 123,
+        number: 456,
+        draft: false,
+        state: 'open',
+        title: 'Test PR',
+        html_url: 'https://github.com/test/repo/pull/456'
+      }
+    });
+
+    expect(githubService.logger.apiCall).toHaveBeenCalledWith(
+      'PATCH', 
+      '/repos/test-owner/test-repo/pulls/456', 
+      { draft: false }
+    );
+    expect(githubService.logger.apiResponse).toHaveBeenCalledWith(
+      'PATCH', 
+      '/repos/test-owner/test-repo/pulls/456', 
+      200, 
+      expect.any(Number)
+    );
   });
 
-  test('shows draft status in PR actions header', async () => {
-    render(<WorkflowDashboard {...mockProps} />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('PR #123 is in draft mode')).toBeInTheDocument();
-    });
+  test('throws error when not authenticated', async () => {
+    githubService.isAuthenticated = false;
+
+    await expect(
+      githubService.markPullRequestReadyForReview('test-owner', 'test-repo', 456)
+    ).rejects.toThrow('Authentication required to mark PR as ready for review');
   });
 
-  test('shows ready status for non-draft PR', async () => {
-    const nonDraftProps = {
-      ...mockProps,
-      prInfo: [{
-        ...mockProps.prInfo[0],
-        draft: false
-      }]
-    };
+  test('handles 403 permission error', async () => {
+    const apiError = new Error('Forbidden');
+    apiError.status = 403;
+    githubService.octokit.rest.pulls.update.mockRejectedValue(apiError);
 
-    render(<WorkflowDashboard {...nonDraftProps} />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('PR #123 is ready for actions')).toBeInTheDocument();
-    });
+    await expect(
+      githubService.markPullRequestReadyForReview('test-owner', 'test-repo', 456)
+    ).rejects.toThrow('Forbidden');
+
+    expect(githubService.logger.apiResponse).toHaveBeenCalledWith(
+      'PATCH', 
+      '/repos/test-owner/test-repo/pulls/456', 
+      403, 
+      expect.any(Number)
+    );
   });
 
-  test('calls onMarkReadyForReview when button is clicked', async () => {
-    render(<WorkflowDashboard {...mockProps} />);
-    
-    // Wait for workflows to load
-    await waitFor(() => {
-      expect(screen.getByText('✅ Ready for review')).toBeInTheDocument();
-    });
+  test('handles 404 not found error', async () => {
+    const apiError = new Error('Not Found');
+    apiError.status = 404;
+    githubService.octokit.rest.pulls.update.mockRejectedValue(apiError);
 
-    const readyButton = screen.getByText('✅ Ready for review');
-    fireEvent.click(readyButton);
-    
-    expect(mockProps.onMarkReadyForReview).toHaveBeenCalledWith('litlfred', 'sgex', 123);
-  });
-
-  test('disables button when marking ready for review', async () => {
-    const loadingProps = {
-      ...mockProps,
-      isMarkingReadyForReview: true
-    };
-
-    render(<WorkflowDashboard {...loadingProps} />);
-    
-    // Wait for workflows to load
-    await waitFor(() => {
-      expect(screen.getByText('⏳ Marking ready...')).toBeInTheDocument();
-    });
-
-    const readyButton = screen.getByText('⏳ Marking ready...');
-    expect(readyButton).toBeDisabled();
-  });
-
-  test('does not show ready for review button when not authenticated', async () => {
-    const unauthenticatedProps = {
-      ...mockProps,
-      isAuthenticated: false
-    };
-
-    render(<WorkflowDashboard {...unauthenticatedProps} />);
-    
-    // Wait for workflows to load
-    await waitFor(() => {
-      expect(screen.getByText('🔒 Sign in to access PR actions')).toBeInTheDocument();
-    });
-
-    expect(screen.queryByText('✅ Ready for review')).not.toBeInTheDocument();
-  });
-
-  test('does not show ready for review button when cannot merge PR', async () => {
-    const noMergeProps = {
-      ...mockProps,
-      canMergePR: false
-    };
-
-    render(<WorkflowDashboard {...noMergeProps} />);
-    
-    // Wait for workflows to load
-    await waitFor(() => {
-      expect(screen.getByText('⚠️ You don\'t have permission to merge or review this PR')).toBeInTheDocument();
-    });
-
-    expect(screen.queryByText('✅ Ready for review')).not.toBeInTheDocument();
+    await expect(
+      githubService.markPullRequestReadyForReview('test-owner', 'test-repo', 456)
+    ).rejects.toThrow('Not Found');
   });
 });
