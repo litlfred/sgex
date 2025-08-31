@@ -253,10 +253,6 @@ body.theme-light .dak-dashboard {
   text-align: center;
   color: var(--who-text-primary);
   margin-bottom: 2rem;
-  background: var(--who-primary-bg);
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard-intro h2 {
