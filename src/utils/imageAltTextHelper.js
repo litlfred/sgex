@@ -98,6 +98,7 @@ export const ALT_TEXT_KEYS = {
   IMAGE_AUTHORING: 'altText.image.authoring',
   IMAGE_COLLABORATION: 'altText.image.collaboration',
   IMAGE_WORKFLOW: 'altText.image.workflow',
+  IMAGE_PRONUNCIATION: 'altText.image.pronunciation',
   
   // Logos
   LOGO_SGEX: 'altText.logo.sgex',
