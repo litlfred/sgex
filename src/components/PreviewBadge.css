@@ -767,6 +767,41 @@
   color: #721c24;
 }
 
+/* Approval Status Message Styles */
+.approval-status-message {
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+  border: 1px solid;
+  animation: slideIn 0.3s ease-out;
+}
+
+.approval-status-message.success {
+  background: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.approval-status-message.error {
+  background: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .comment-form textarea {
   width: 100%;
   padding: 0.5rem;
@@ -1543,6 +1578,81 @@
   gap: 0.25rem;
 }
 
+/* PR Review Styles */
+.pr-review-note {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #007bff;
+}
+
+.pr-review-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pr-approve-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.pr-approve-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.pr-approve-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.pr-request-changes-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+.pr-request-changes-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.pr-request-changes-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 /* Dark mode support for PR actions */
 @media (prefers-color-scheme: dark) {
   .pr-actions-wrapper {
@@ -1569,4 +1679,131 @@
   .pr-merge-btn:hover:not(:disabled) {
     background: linear-gradient(135deg, #4f46e5, #4338ca);
   }
+  
+  /* PR Review dark mode styles */
+  .pr-review-note {
+    background: #374151;
+    color: #d1d5db;
+    border-left-color: #3b82f6;
+  }
+  
+  .pr-approve-btn {
+    background: linear-gradient(135deg, #059669, #047857);
+  }
+  
+  .pr-approve-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #047857, #065f46);
+  }
+  
+  .pr-request-changes-btn {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+  }
+  
+  .pr-request-changes-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #b91c1c, #991b1b);
+  }
+}
+
+/* Workflow view toggle styles */
+.workflow-view-toggle {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.toggle-view-btn {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.toggle-view-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  color: #343a40;
+}
+
+.toggle-view-btn:active {
+  background: #dee2e6;
+  transform: translateY(1px);
+}
+
+/* PR View Toggle Styles */
+.pr-view-toggle {
+  margin: 1rem 0;
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.toggle-switch {
+  display: flex;
+  background: var(--who-secondary-bg);
+  border: 1px solid var(--who-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.toggle-option {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--who-text-secondary);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.toggle-option:hover {
+  background: var(--who-primary-bg);
+  color: var(--who-text-primary);
+}
+
+.toggle-option.active {
+  background: var(--who-blue);
+  color: var(--who-text-on-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-option.active:hover {
+  background: var(--who-blue-dark);
+  color: var(--who-text-on-primary);
+}
+
+/* Dark mode adjustments for toggle */
+body.theme-dark .toggle-option {
+  color: var(--who-text-secondary);
+}
+
+body.theme-dark .toggle-option:hover {
+  background: var(--who-card-bg);
+  color: var(--who-text-primary);
+}
+
+body.theme-dark .toggle-option.active {
+  background: var(--who-blue);
+  color: var(--who-text-on-primary);
+}
+
+body.theme-dark .toggle-option.active:hover {
+  background: var(--who-blue-dark);
 }

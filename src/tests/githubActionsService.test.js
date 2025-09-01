@@ -396,4 +396,50 @@ describe('GitHubActionsService', () => {
       expect(url).toBe('https://github.com/litlfred/sgex/actions/workflows/456');
     });
   });
+
+  describe('rerunFailedWorkflow', () => {
+    test('successfully reruns failed workflow', async () => {
+      const runId = 12345;
+
+      fetch.mockResolvedValueOnce({
+        ok: true
+      });
+
+      const result = await githubActionsService.rerunFailedWorkflow(runId);
+      
+      expect(result).toBe(true);
+      expect(fetch).toHaveBeenCalledWith(
+        `https://api.github.com/repos/litlfred/sgex/actions/runs/${runId}/rerun-failed-jobs`,
+        {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+            'Authorization': 'token test-token'
+          }
+        }
+      );
+    });
+
+    test('fails when no token provided', async () => {
+      githubActionsService.setToken(null);
+      
+      const result = await githubActionsService.rerunFailedWorkflow(12345);
+      expect(result).toBe(false);
+    });
+
+    test('fails when API returns error', async () => {
+      const runId = 12345;
+
+      fetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        text: async () => 'Insufficient permissions'
+      });
+
+      const result = await githubActionsService.rerunFailedWorkflow(runId);
+      expect(result).toBe(false);
+    });
+  });
 });

@@ -32,6 +32,9 @@ concurrency:
 jobs:
   deploy-landing-page:
     runs-on: ubuntu-latest
+    environment: 
+      name: production-pages
+      url: https://litlfred.github.io/sgex/
     outputs:
       deployment_status: ${{ steps.deployment_info.outputs.deployment_status }}
       deployment_url: ${{ steps.deployment_info.outputs.deployment_url }}

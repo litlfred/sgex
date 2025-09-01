@@ -28,7 +28,7 @@ on:
         default: false
   # Automatic trigger for copilot commits and PR updates
   push:
-    branches-ignore: [gh-pages, deploy, main]
+    branches-ignore: [gh-pages]
     paths:
       - 'src/**'
       - 'public/**'
@@ -59,6 +59,8 @@ concurrency:
 jobs:
   deploy-branch:
     runs-on: ubuntu-latest
+    environment: 
+      name: ${{ (github.event_name == 'workflow_dispatch' && (github.event.inputs.branch == 'main' || github.ref_name == 'main')) && 'production-pages' || 'branch-preview' }}
     outputs:
       branch_name: ${{ steps.deployment_info.outputs.branch_name }}
       target_directory: ${{ steps.deployment_info.outputs.target_directory }}

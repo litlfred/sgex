@@ -51,12 +51,15 @@ To create PRs against non-main branches, the copilot agent needs:
 When updating a PR during copilot conversations, follow these specific formatting and content requirements to ensure consistency and clarity:
 
 ### Title Management
-- **Preserve Original Intent**: Maintain the original issue title as much as possible, making improvements only for spelling, grammar, and clarity
-- **Status Tags**: Use status tags at the beginning of the title:
+- **NEVER Change Title Text**: Once a PR title has been created, NEVER modify the core title text. The original title must be preserved exactly as written.
+- **Status Tags Only**: The ONLY allowed changes are adding or updating status tags at the beginning of the title:
   - `[WIP]` - Work in Progress (while analysis/implementation is ongoing)
   - `[REVIEW]` - Ready for review by collaborators
   - `[BLOCKED]` - Waiting for input or dependencies
-- **Issue Reference**: Always include the issue number in the title format: `[STATUS] Original Issue Title - Fix #123`
+- **Status Tag Format**: If adding a status tag, use format: `[STATUS] Original Title Text` (preserve everything after the status tag exactly)
+- **No Text Improvements**: Do NOT make spelling, grammar, or clarity improvements to the title text - preserve it exactly as originally written
+
+⚠️ **CRITICAL**: Changing PR title text (beyond status tags) is explicitly forbidden and will be flagged as incorrect behavior.
 
 ### PR Description Structure
 
@@ -144,8 +147,9 @@ For each copilot session update, add a new section:
 
 ### Quality Checklist for PR Updates
 Before publishing a PR update, verify:
-- [ ] Title preserves original intent with minimal changes
-- [ ] Appropriate status tag is used ([WIP], [REVIEW], etc.)
+- [ ] Title text is NEVER changed - only status tags may be added/updated
+- [ ] Original title text is preserved exactly (no spelling/grammar fixes)
+- [ ] Status tags are used correctly ([WIP], [REVIEW], etc.) if needed
 - [ ] Issues are referenced at the top
 - [ ] Build progress buttons are at the bottom with most recent links
 - [ ] All participants are mentioned at the very bottom

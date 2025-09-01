@@ -27,14 +27,14 @@ describe('Branch Deployment Workflow Configuration', () => {
   });
 
   describe('Branch Deployment Workflow Triggers', () => {
-    test('should trigger on pushes to feature branches (excluding main, gh-pages, deploy)', () => {
+    test('should trigger on pushes to all branches (excluding only gh-pages)', () => {
       const pushConfig = branchDeploymentConfig.on.push;
       
       // Should NOT have a specific branches restriction
       expect(pushConfig.branches).toBeUndefined();
       
-      // Should exclude main, gh-pages, and deploy branches
-      expect(pushConfig['branches-ignore']).toEqual(['gh-pages', 'deploy', 'main']);
+      // Should exclude only gh-pages branch
+      expect(pushConfig['branches-ignore']).toEqual(['gh-pages']);
       
       // Should include relevant file paths
       expect(pushConfig.paths).toContain('src/**');
@@ -99,7 +99,7 @@ describe('Branch Deployment Workflow Configuration', () => {
     test('feature branch push should trigger both workflows appropriately', () => {
       // Simulate a feature branch push scenario
       const featureBranch = 'feature/new-component';
-      const excludedBranches = ['gh-pages', 'deploy'];
+      const excludedBranches = ['gh-pages'];
       const feedbackExcludedBranches = ['main', 'develop', 'gh-pages', 'deploy'];
       
       // Branch deployment should trigger (no branches restriction, not in excluded list)
@@ -111,28 +111,35 @@ describe('Branch Deployment Workflow Configuration', () => {
       expect(shouldTriggerFeedback).toBe(true);
     });
 
-    test('main branch push should NOT trigger automatic deployment (manual only)', () => {
+    test('main branch push should now trigger automatic deployment', () => {
       // Simulate a main branch push scenario
       const mainBranch = 'main';
-      const excludedBranches = ['gh-pages', 'deploy', 'main'];
+      const excludedBranches = ['gh-pages'];
       const feedbackExcludedBranches = ['main', 'develop', 'gh-pages', 'deploy'];
       
-      // Branch deployment should NOT trigger automatically (main is now excluded)
+      // Branch deployment should now trigger automatically (main is no longer excluded)
       const shouldTriggerDeployment = !excludedBranches.includes(mainBranch);
-      expect(shouldTriggerDeployment).toBe(false);
+      expect(shouldTriggerDeployment).toBe(true);
       
-      // PR feedback should NOT trigger (main is in feedback excluded list)
+      // PR feedback should NOT trigger (main is still in feedback excluded list)
       const shouldTriggerFeedback = !feedbackExcludedBranches.includes(mainBranch);
       expect(shouldTriggerFeedback).toBe(false);
     });
 
-    test('excluded branches should not trigger automatic deployment', () => {
-      const excludedBranches = ['gh-pages', 'deploy', 'main'];
+    test('only gh-pages branch should not trigger automatic deployment', () => {
+      const excludedBranches = ['gh-pages'];
       
       excludedBranches.forEach(branch => {
-        // None of these branches should trigger automatic deployment
+        // Only gh-pages should not trigger automatic deployment
         const shouldTriggerDeployment = !excludedBranches.includes(branch);
         expect(shouldTriggerDeployment).toBe(false);
+      });
+
+      // But main and deploy should now trigger deployment
+      const allowedBranches = ['main', 'deploy'];
+      allowedBranches.forEach(branch => {
+        const shouldTriggerDeployment = !excludedBranches.includes(branch);
+        expect(shouldTriggerDeployment).toBe(true);
       });
     });
   });
@@ -247,7 +254,7 @@ describe('Deploy Feature Branch Flow Simulation', () => {
     // Check if branch deployment would trigger
     const deploymentShouldTrigger = (
       scenario.action === 'push' &&
-      !['gh-pages', 'deploy', 'main'].includes(scenario.branch) &&
+      !['gh-pages'].includes(scenario.branch) &&
       scenario.files_changed.some(file => 
         file.startsWith('src/') || 
         file.startsWith('public/') ||

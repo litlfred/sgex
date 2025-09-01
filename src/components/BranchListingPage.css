@@ -140,6 +140,7 @@
     flex: 1;
     min-width: 300px;
     min-height: 140px;
+    pointer-events: none;
 }
 
 .action-card:hover {
@@ -161,6 +162,7 @@
     color: inherit;
     display: block;
     height: 100%;
+    pointer-events: auto;
 }
 
 .card-link:hover {
@@ -252,6 +254,7 @@
     cursor: pointer;
     font-weight: 500;
     transition: background-color 0.2s ease;
+    pointer-events: auto;
 }
 
 .logout-btn:hover {

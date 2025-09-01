@@ -10,7 +10,7 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 
 ### Triggers
 - **Manual trigger** (`workflow_dispatch`) - Primary method for controlled deployments
-- **Automatic push trigger** - On push to feature branches (excludes main, gh-pages, deploy)
+- **Automatic push trigger** - On push to any branch (excludes only gh-pages)
 - **Automatic PR trigger** - On PR events (opened, synchronize, reopened) targeting main
 - **Workflow call** - Can be triggered by other workflows
 
@@ -30,7 +30,7 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 - Extensive path validation to prevent directory traversal
 - Cannot deploy to repository root
 - Validates branch names for safety
-- Automatic deployment for feature branches, manual control for special branches
+- Automatic deployment for all branches except gh-pages, manual control for special environments
 
 ## 🏠 Landing Page Deployment (`landing-page-deployment.yml`)
 
@@ -58,17 +58,36 @@ This repository uses two consolidated GitHub Actions workflows for deployment to
 
 ## 🔒 Manual & Automatic Deployment
 
+### Approval Workflow
+All page deployments now use GitHub environments with protection rules to ensure proper approval:
+
+- **production-pages Environment**: Used for landing page and main branch deployments
+  - ✅ Requires approval from repository administrators
+  - ⏳ Deployment pauses until approved
+  - 🛡️ Prevents accidental production updates
+
+- **branch-preview Environment**: Used for feature branch previews
+  - 🚀 Automatic deployment for development workflows  
+  - 🏗️ No approval required for branch previews
+  - ⚡ Fast iteration for development teams
+
 ### Manual Deployment Access
 Both workflows can be manually triggered from the GitHub Actions UI:
 
 1. **Access Workflows**: Go to the repository's "Actions" tab
 2. **Select Workflow**: Choose "Deploy Feature Branch" or "Deploy Landing Page from Main"
 3. **Run Workflow**: Click "Run workflow" and configure parameters
-4. **Monitor Progress**: View real-time logs and deployment status
+4. **Approval Process**: 
+   - **Landing Page deployments**: Require approval from repository administrators via the `production-pages` environment
+   - **Main branch deployments**: Require approval via the `production-pages` environment
+   - **Feature branch deployments**: Proceed automatically via the `branch-preview` environment
+5. **Monitor Progress**: View real-time logs and deployment status
+
+⚠️ **Environment Setup Required**: Before deployments can work with approval, GitHub environments must be configured. See [Environment Setup Guide](.github/ENVIRONMENT_SETUP.md) for detailed instructions.
 
 ### Automatic Deployment (Feature Branches)
 The branch deployment workflow automatically triggers when:
-- **Push events**: Commits are pushed to feature branches (excludes main, gh-pages, deploy)
+- **Push events**: Commits are pushed to any branch (excludes only gh-pages)
 - **Pull request events**: PR creation, updates, or reopening (for PRs targeting main)
 - **Copilot commits**: Both direct pushes and PR updates from copilot agents
 - **External PRs**: Pull requests from external contributors and forks
@@ -169,7 +188,9 @@ This ensures that only type-safe code reaches production environments.
 1. Go to Actions → "Deploy Landing Page"  
 2. Click "Run workflow"
 3. Choose source branch (defaults to main)
-4. Wait for approval and deployment
+4. **Wait for approval** - The deployment will pause and require approval from a repository administrator
+5. **Approve the deployment** - A repository administrator must approve the deployment in the `production-pages` environment
+6. Deployment proceeds automatically after approval
 
 ## 🎯 Benefits
 
