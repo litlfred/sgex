@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 import { executeRoute } from './server/routes/execute.js';
 import { catalogRoute } from './server/routes/catalog.js';
 import { schemaRoute } from './server/routes/schema.js';
+import { dakComponentsRoute } from './server/routes/dak-components.js';
 import { HealthResponse, ErrorResponse } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -28,8 +29,8 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
-app.get('/health', (req: Request, res: Response<HealthResponse>) => {
+// Health check endpoint - with /mcp prefix
+app.get('/mcp/health', (req: Request, res: Response<HealthResponse>) => {
   const response: HealthResponse = {
     status: 'healthy',
     timestamp: new Date().toISOString(),
@@ -39,11 +40,12 @@ app.get('/health', (req: Request, res: Response<HealthResponse>) => {
   res.json(response);
 });
 
-// FAQ routes
-app.use('/faq/questions', executeRoute);
-app.use('/faq/questions', catalogRoute);
-app.use('/faq/execute', executeRoute);  // Add single execution routes
-app.use('/faq', schemaRoute);
+// FAQ routes - with /mcp prefix
+app.use('/mcp/faq/questions', executeRoute);
+app.use('/mcp/faq/questions', catalogRoute);
+app.use('/mcp/faq/execute', executeRoute);  // Add single execution routes
+app.use('/mcp/faq', schemaRoute);
+app.use('/mcp/faq', dakComponentsRoute);
 
 // Root endpoint with API information
 app.get('/', (req: Request, res: Response) => {
@@ -52,15 +54,20 @@ app.get('/', (req: Request, res: Response) => {
     version: '1.0.0',
     description: 'Local MCP server for WHO SMART Guidelines Digital Adaptation Kit FAQ functionality',
     endpoints: {
-      'GET /health': 'Health check',
-      'GET /faq/questions/catalog': 'List available FAQ questions',
-      'POST /faq/questions/execute': 'Execute FAQ questions in batch',
-      'POST /faq/execute/:questionId': 'Execute a specific FAQ question by ID',
-      'POST /faq/execute': 'Execute a single FAQ question (alternative endpoint)',
-      'GET /faq/schemas': 'Get all question schemas',
-      'GET /faq/schemas/:questionId': 'Get schema for specific question',
-      'GET /faq/openapi': 'Get OpenAPI schema for all questions',
-      'POST /faq/validate': 'Validate question parameters'
+      'GET /mcp/health': 'Health check',
+      'GET /mcp/faq/questions/catalog': 'List available FAQ questions',
+      'POST /mcp/faq/questions/execute': 'Execute FAQ questions in batch',
+      'POST /mcp/faq/execute/:questionId': 'Execute a specific FAQ question by ID',
+      'POST /mcp/faq/execute': 'Execute a single FAQ question (alternative endpoint)',
+      'GET /mcp/faq/schemas': 'Get all question schemas',
+      'GET /mcp/faq/schemas/:questionId': 'Get schema for specific question',
+      'GET /mcp/faq/openapi': 'Get OpenAPI schema for all questions',
+      'POST /mcp/faq/validate': 'Validate question parameters',
+      'GET /mcp/faq/valuesets': 'List value sets available in this DAK',
+      'GET /mcp/faq/decision-tables': 'List decision tables available in this DAK',
+      'GET /mcp/faq/business-processes': 'List business processes in this DAK',
+      'GET /mcp/faq/personas': 'List personas/actors in this DAK',
+      'GET /mcp/faq/questionnaires': 'List questionnaires available in this DAK'
     },
     security: {
       binding: 'localhost only (127.0.0.1)',
@@ -105,9 +112,14 @@ const server = app.listen(PORT, HOST, () => {
   console.log(`DAK FAQ MCP Server running on http://${HOST}:${PORT}`);
   console.log('Security: Local binding only (127.0.0.1)');
   console.log('Available endpoints:');
-  console.log(`  - GET  http://${HOST}:${PORT}/health`);
-  console.log(`  - GET  http://${HOST}:${PORT}/faq/questions/catalog`);
-  console.log(`  - POST http://${HOST}:${PORT}/faq/questions/execute`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/health`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/questions/catalog`);
+  console.log(`  - POST http://${HOST}:${PORT}/mcp/faq/questions/execute`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/valuesets`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/decision-tables`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/business-processes`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/personas`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/questionnaires`);
 });
 
 // Graceful shutdown
