@@ -84,6 +84,7 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
     'repository-selection': 'Select Repository',
     'dak-selection': 'Select DAK',
     'dak-action': 'Choose DAK Action',
+    'dak-action-selection': 'Choose DAK Action',
     'dashboard': 'DAK Components',
     'dak-dashboard': 'DAK Components',
     'actor-editor': 'Actor Definitions',
