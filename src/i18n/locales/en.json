@@ -239,7 +239,8 @@
     "image": {
       "authoring": "Authoring Interface",
       "collaboration": "Collaboration Features",
-      "workflow": "Workflow Diagram"
+      "workflow": "Workflow Diagram",
+      "pronunciation": "How to Pronounce SGeX"
     },
     "logo": {
       "sgex": "SGEX Logo",
