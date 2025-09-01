@@ -254,7 +254,80 @@
 - Notification system for publication updates
 - Role-based access control for template editing
 
-## REQ-PUB-015: Analytics and Monitoring
+## REQ-PUB-015: EPUB Format Support
+
+**Requirement:** The system SHALL support EPUB publication format for full DAK publications
+
+**EPUB Generation Features:**
+- Complete DAK as single EPUB document with all components
+- Chapter-based navigation corresponding to DAK component structure
+- Embedded BPMN/DMN diagrams rendered as images
+- Interactive table of contents with hyperlink navigation
+- Metadata inclusion (title, author, publication date, version)
+
+**Technical Implementation:**
+- Client-side EPUB generation using epub.js or similar library
+- HTML-to-EPUB conversion maintaining styling and structure
+- Image embedding for diagrams and visual elements
+- CSS preservation for consistent formatting across EPUB readers
+
+**User Interface:**
+- EPUB export option in publications dashboard
+- Progress indicator for EPUB generation process
+- Download link for generated EPUB file
+- EPUB preview capability before download
+
+## REQ-PUB-016: GitHub Workflow Integration
+
+**Requirement:** Publication artifacts SHALL be automatically generated via GitHub workflows and uploaded to release artifacts
+
+**Automated Artifact Generation:**
+- Single-page static HTML document for complete DAK
+- EPUB document for complete DAK  
+- Integration with existing IG publisher .tgz artifacts
+- Triggered automatically on every merge to main/deploy branches
+
+**GitHub Workflow Requirements:**
+- Workflow SHALL run on merge events to main and deploy branches
+- Artifacts SHALL be uploaded to GitHub release artifacts or appropriate storage
+- Build logs SHALL be accessible and linkable
+- Workflow SHALL handle failures gracefully with appropriate error reporting
+
+**Artifact Structure:**
+```
+dak-publications-{version}/
+├── dak-complete.html          # Single-page HTML
+├── dak-complete.epub          # Full DAK EPUB
+├── ig-publisher-output.tgz    # IG publisher artifacts
+├── build-logs/               # Build process logs
+└── metadata.json            # Publication metadata
+```
+
+## REQ-PUB-017: Publications Status Bar Integration
+
+**Requirement:** Released artifacts SHALL be visible in the publications status bar with linked build logs
+
+**Status Bar Display:**
+- List of available publication artifacts (HTML, EPUB, .tgz)
+- Download links for each artifact type
+- Publication generation status (building, ready, failed)
+- Last updated timestamp and version information
+- Direct links to build logs and workflow runs
+
+**Build Log Integration:**
+- Links to GitHub Actions workflow logs
+- Real-time build status updates
+- Error reporting for failed publication builds
+- Build duration and performance metrics
+
+**User Interface Features:**
+- Publication artifacts dropdown in DAK dashboard status bar
+- Visual indicators for artifact availability (✅ ready, ⏳ building, ❌ failed)
+- One-click download for published artifacts
+- Build log viewer with syntax highlighting
+- Publication history with previous versions
+
+## REQ-PUB-018: Analytics and Monitoring
 
 **Requirement:** The system SHALL provide analytics for publication usage
 
@@ -294,6 +367,8 @@ These publication requirements extend the existing SGeX Workbench requirements f
   "jspdf": "^2.5.1",
   "html2canvas": "^1.4.1", 
   "docx": "^8.0.0",
+  "epub": "^1.2.0",
+  "epub.js": "^0.3.93",
   "react-beautiful-dnd": "^13.1.1",
   "@tinymce/tinymce-react": "^4.3.0",
   "styled-components": "^6.0.0"

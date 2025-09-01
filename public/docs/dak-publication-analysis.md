@@ -337,18 +337,33 @@ const splitBPMNByElements = (bpmnXml) => {
 - [ ] Implement print CSS framework
 - [ ] Add publications routing to DAK dashboard
 - [ ] Set up styling extraction utilities
+- [ ] Create GitHub workflow for automated publication generation
 
 ### Phase 2: Component Publications (Weeks 3-4)
 - [ ] Business Process publication view with BPMN rendering
 - [ ] Decision Logic publication with DMN tables
 - [ ] Basic page break handling for diagrams
+- [ ] Single-page HTML generation for complete DAK
 
-### Phase 3: Print Optimization (Weeks 5-6)
+### Phase 3: EPUB Integration (Weeks 5-6)
+- [ ] EPUB generation library integration
+- [ ] DAK component to EPUB chapter conversion
+- [ ] Diagram to image conversion for EPUB embedding
+- [ ] EPUB metadata and structure generation
+
+### Phase 4: Print Optimization & GitHub Integration (Weeks 7-8)
 - [ ] Advanced BPMN page splitting algorithm
 - [ ] Cross-browser print compatibility testing
 - [ ] Print preview functionality
+- [ ] GitHub Actions workflow implementation for artifact generation
 
-### Phase 4: Styling & Polish (Weeks 7-8)
+### Phase 5: Status Bar & Artifact Management (Weeks 9-10)
+- [ ] Publications status bar integration
+- [ ] Artifact download and display functionality
+- [ ] Build log linking and status monitoring
+- [ ] IG Publisher coordination and .tgz artifact handling
+
+### Phase 6: Styling & Polish (Weeks 11-12)
 - [ ] DAK PDF styling extraction integration
 - [ ] Responsive print layouts
 - [ ] Documentation and user guides
@@ -361,10 +376,15 @@ const splitBPMNByElements = (bpmnXml) => {
 - `bpmn-js`: Existing BPMN viewer (already installed)
 - `react-to-print`: Print functionality for React components
 - `pdf-lib`: PDF analysis for styling extraction (new)
+- `epub`: EPUB generation library (new)
+- `epub.js`: EPUB reading/parsing library (new)
+- `canvas`: Node.js canvas for server-side diagram rendering
+- `jsdom`: DOM implementation for Node.js workflow scripts
 
 **CSS Framework:**
 - Print media queries for optimal PDF output
 - CSS variables for theme extraction from DAK PDFs
+- EPUB-specific stylesheets for e-reader compatibility
 
 ### 6.2 File Structure
 
@@ -376,6 +396,8 @@ src/
 │   │   ├── BusinessProcessPublication.js
 │   │   ├── DecisionLogicPublication.js
 │   │   ├── DataFormsPublication.js
+│   │   ├── EPUBGenerator.js            # EPUB generation component
+│   │   ├── PublicationStatusBar.js     # Status bar with artifacts
 │   │   └── shared/
 │   │       ├── PublicationHeader.js
 │   │       ├── PublicationFooter.js
@@ -386,10 +408,17 @@ src/
 ├── services/
 │   ├── publicationService.js           # Publication data management
 │   ├── styleExtractionService.js       # DAK PDF styling extraction
-│   └── printLayoutService.js           # Page layout calculations
+│   ├── printLayoutService.js           # Page layout calculations
+│   ├── epubService.js                  # EPUB generation service
+│   └── githubWorkflowService.js        # GitHub Actions integration
+├── scripts/
+│   ├── generate-html-publication.js    # HTML generation script
+│   ├── generate-epub-publication.js    # EPUB generation script
+│   └── package-artifacts.js            # Artifact packaging script
 └── styles/
     ├── publications.css                # Screen styles for publications
-    └── print.css                       # Print-specific styles
+    ├── print.css                       # Print-specific styles
+    └── epub.css                        # EPUB-specific styles
 ```
 
 ## 7. Success Criteria
@@ -399,19 +428,435 @@ src/
 - [ ] Print-to-PDF functionality produces professional-quality output
 - [ ] BPMN diagrams render correctly across page breaks
 - [ ] Styling adapts to extracted DAK PDF graphics and colors
+- [ ] EPUB format generation for complete DAK with embedded diagrams
+- [ ] Single-page HTML generation for complete DAK
+- [ ] GitHub workflow automatically generates publication artifacts on merge
+- [ ] Publications status bar displays available artifacts with download links
+- [ ] Build logs accessible and linked from status bar
 
 ### 7.2 Quality Standards
 - [ ] Print output quality matches professional publication standards
 - [ ] Page breaks occur at logical content boundaries
 - [ ] Cross-browser compatibility (Chrome, Firefox, Safari, Edge)
 - [ ] Responsive design supports different paper sizes
+- [ ] EPUB files are compatible with standard e-readers
+- [ ] Generated artifacts meet WHO publication quality standards
 
 ### 7.3 Performance Targets
 - [ ] Publication views load within 3 seconds for typical DAK components
 - [ ] Print preparation completes within 5 seconds for BPMN-heavy content
 - [ ] Client-side processing handles DAKs up to 50 BPMN diagrams
+- [ ] EPUB generation completes within 10 seconds for typical DAK
+- [ ] GitHub workflow completes within 5 minutes for standard DAK
+- [ ] Artifact downloads are available within 1 minute of workflow completion
 
 This analysis provides a comprehensive roadmap for implementing client-side DAK publication rendering that meets the requirements of browser-based print-to-PDF functionality while leveraging existing React components and maintaining the WHO styling standards through extracted graphics from DAK PDFs.
+
+## 8. EPUB Publication Format Integration
+
+### 8.1 EPUB Generation Architecture
+
+**Client-Side EPUB Creation:**
+```javascript
+const EPUBGenerator = ({ dakData, templateConfig }) => {
+  const [epubStatus, setEpubStatus] = useState('ready');
+  
+  const generateEPUB = async () => {
+    setEpubStatus('generating');
+    
+    try {
+      // Create EPUB structure
+      const epub = new EPUBBuilder({
+        title: dakData.metadata.title,
+        author: dakData.metadata.authors.join(', '),
+        publisher: 'WHO SMART Guidelines',
+        language: dakData.metadata.language || 'en',
+        pubDate: new Date().toISOString()
+      });
+      
+      // Add cover page
+      epub.addCover(await generateCoverHTML(dakData));
+      
+      // Add table of contents
+      epub.addTOC(generateTOCFromDAK(dakData));
+      
+      // Add DAK components as chapters
+      for (const component of dakData.components) {
+        const chapterHTML = await renderComponentHTML(component, templateConfig);
+        epub.addChapter({
+          title: component.title,
+          content: chapterHTML,
+          images: await extractComponentImages(component)
+        });
+      }
+      
+      // Generate and download EPUB
+      const epubBlob = await epub.generate();
+      downloadEPUB(epubBlob, `${dakData.metadata.title}.epub`);
+      
+      setEpubStatus('completed');
+    } catch (error) {
+      setEpubStatus('failed');
+      console.error('EPUB generation failed:', error);
+    }
+  };
+  
+  return (
+    <div className="epub-generator">
+      <button onClick={generateEPUB} disabled={epubStatus === 'generating'}>
+        {epubStatus === 'generating' ? 'Generating EPUB...' : 'Download EPUB'}
+      </button>
+      {epubStatus === 'failed' && (
+        <div className="error">EPUB generation failed. Please try again.</div>
+      )}
+    </div>
+  );
+};
+```
+
+### 8.2 EPUB Content Structure
+
+**Chapter Organization:**
+```javascript
+const generateEPUBStructure = (dakData) => {
+  return {
+    metadata: {
+      title: dakData.title,
+      identifier: `urn:isbn:${dakData.isbn || generateISBN()}`,
+      creator: dakData.authors,
+      date: dakData.publicationDate,
+      language: dakData.language || 'en'
+    },
+    chapters: [
+      {
+        id: 'cover',
+        title: 'Cover',
+        content: generateCoverHTML(dakData)
+      },
+      {
+        id: 'toc',
+        title: 'Table of Contents',
+        content: generateTOCHTML(dakData)
+      },
+      {
+        id: 'executive-summary',
+        title: 'Executive Summary', 
+        content: dakData.executiveSummary
+      },
+      ...dakData.components.map(component => ({
+        id: `component-${component.id}`,
+        title: component.title,
+        content: renderComponentForEPUB(component)
+      })),
+      {
+        id: 'appendices',
+        title: 'Appendices',
+        content: generateAppendicesHTML(dakData)
+      }
+    ],
+    assets: {
+      stylesheets: ['styles/epub.css'],
+      images: extractAllImages(dakData),
+      fonts: extractRequiredFonts(dakData)
+    }
+  };
+};
+```
+
+### 8.3 EPUB Image Handling
+
+**Diagram Conversion for EPUB:**
+```javascript
+const convertDiagramsForEPUB = async (component) => {
+  const images = [];
+  
+  if (component.type === 'business-processes') {
+    // Convert BPMN diagrams to images
+    for (const bpmn of component.bpmnDiagrams) {
+      const canvas = await renderBPMNToCanvas(bpmn.xml);
+      const imageBlob = await canvasToBlob(canvas, 'image/png');
+      images.push({
+        id: `bpmn-${bpmn.id}`,
+        filename: `diagrams/bpmn-${bpmn.id}.png`,
+        blob: imageBlob,
+        alt: bpmn.title || 'BPMN Process Diagram'
+      });
+    }
+  }
+  
+  if (component.type === 'decision-logic') {
+    // Convert DMN tables to images
+    for (const dmn of component.dmnTables) {
+      const canvas = await renderDMNToCanvas(dmn.xml);
+      const imageBlob = await canvasToBlob(canvas, 'image/png');
+      images.push({
+        id: `dmn-${dmn.id}`,
+        filename: `diagrams/dmn-${dmn.id}.png`,
+        blob: imageBlob,
+        alt: dmn.title || 'DMN Decision Table'
+      });
+    }
+  }
+  
+  return images;
+};
+```
+
+## 9. GitHub Workflow Integration
+
+### 9.1 Automated Publication Workflow
+
+**GitHub Actions Workflow:**
+```yaml
+# .github/workflows/dak-publication.yml
+name: Generate DAK Publications
+
+on:
+  push:
+    branches: [main, deploy]
+  pull_request:
+    branches: [main]
+
+jobs:
+  generate-publications:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build SGeX Workbench
+      run: npm run build
+      
+    - name: Generate DAK Publications
+      run: |
+        npm run dak:generate-html
+        npm run dak:generate-epub
+        npm run dak:package-artifacts
+      env:
+        DAK_REPO: ${{ github.repository }}
+        DAK_BRANCH: ${{ github.ref_name }}
+        
+    - name: Run IG Publisher
+      run: |
+        wget -q https://github.com/HL7/fhir-ig-publisher/releases/latest/download/publisher.jar
+        java -jar publisher.jar -ig .
+        
+    - name: Package all artifacts
+      run: |
+        mkdir -p publication-artifacts
+        cp dist/dak-complete.html publication-artifacts/
+        cp dist/dak-complete.epub publication-artifacts/
+        cp output/*.tgz publication-artifacts/ || true
+        
+    - name: Upload artifacts to release
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/deploy')
+      uses: actions/upload-artifact@v4
+      with:
+        name: dak-publications-${{ github.sha }}
+        path: publication-artifacts/
+        retention-days: 90
+        
+    - name: Create release on tag
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: publication-artifacts/*
+        body: |
+          Automated DAK publication artifacts for ${{ github.ref_name }}
+          
+          Generated artifacts:
+          - `dak-complete.html` - Single-page HTML publication
+          - `dak-complete.epub` - EPUB format publication  
+          - `*.tgz` - IG Publisher outputs
+```
+
+### 9.2 Publication Artifact Generation Scripts
+
+**Package.json Scripts:**
+```json
+{
+  "scripts": {
+    "dak:generate-html": "node scripts/generate-html-publication.js",
+    "dak:generate-epub": "node scripts/generate-epub-publication.js", 
+    "dak:package-artifacts": "node scripts/package-artifacts.js",
+    "dak:publish": "npm run dak:generate-html && npm run dak:generate-epub && npm run dak:package-artifacts"
+  }
+}
+```
+
+**HTML Generation Script:**
+```javascript
+// scripts/generate-html-publication.js
+const { renderDAKToHTML } = require('../src/services/publicationService');
+const fs = require('fs/promises');
+const path = require('path');
+
+async function generateHTMLPublication() {
+  try {
+    console.log('Generating DAK HTML publication...');
+    
+    // Load DAK data from repository
+    const dakData = await loadDAKFromRepository();
+    
+    // Generate single-page HTML
+    const htmlContent = await renderDAKToHTML(dakData, {
+      template: 'who-standard',
+      format: 'single-page',
+      includeNavigation: true,
+      optimizeForPrint: true
+    });
+    
+    // Write to dist directory
+    await fs.mkdir('dist', { recursive: true });
+    await fs.writeFile('dist/dak-complete.html', htmlContent);
+    
+    console.log('HTML publication generated successfully');
+    
+    // Generate metadata
+    const metadata = {
+      generated: new Date().toISOString(),
+      version: process.env.GITHUB_SHA || 'local',
+      branch: process.env.GITHUB_REF_NAME || 'unknown',
+      size: htmlContent.length,
+      components: dakData.components.length
+    };
+    
+    await fs.writeFile('dist/publication-metadata.json', JSON.stringify(metadata, null, 2));
+    
+  } catch (error) {
+    console.error('HTML publication generation failed:', error);
+    process.exit(1);
+  }
+}
+
+if (require.main === module) {
+  generateHTMLPublication();
+}
+```
+
+### 9.3 Publications Status Bar Integration
+
+**Status Bar Component:**
+```jsx
+const PublicationStatusBar = ({ user, repo, branch }) => {
+  const [artifacts, setArtifacts] = useState([]);
+  const [buildStatus, setBuildStatus] = useState('unknown');
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchPublicationStatus = async () => {
+      try {
+        // Get latest workflow runs
+        const workflows = await githubService.getWorkflowRuns(user, repo, 'dak-publication.yml');
+        const latestRun = workflows.data.workflow_runs[0];
+        
+        if (latestRun) {
+          setBuildStatus(latestRun.status);
+          
+          if (latestRun.status === 'completed') {
+            // Get artifacts from the run
+            const artifacts = await githubService.getWorkflowArtifacts(user, repo, latestRun.id);
+            setArtifacts(artifacts.data.artifacts);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch publication status:', error);
+        setBuildStatus('failed');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchPublicationStatus();
+  }, [user, repo, branch]);
+  
+  const downloadArtifact = async (artifact) => {
+    try {
+      const downloadUrl = await githubService.getArtifactDownloadUrl(user, repo, artifact.id);
+      window.open(downloadUrl, '_blank');
+    } catch (error) {
+      console.error('Failed to download artifact:', error);
+    }
+  };
+  
+  return (
+    <div className="publication-status-bar">
+      <div className="status-indicator">
+        <span className={`status-badge ${buildStatus}`}>
+          {buildStatus === 'completed' && '✅'}
+          {buildStatus === 'in_progress' && '⏳'}
+          {buildStatus === 'failed' && '❌'}
+          {buildStatus === 'unknown' && '❓'}
+        </span>
+        <span>Publications: {buildStatus}</span>
+      </div>
+      
+      {artifacts.length > 0 && (
+        <div className="artifacts-dropdown">
+          <button className="artifacts-toggle">
+            📦 Artifacts ({artifacts.length})
+          </button>
+          <div className="artifacts-menu">
+            {artifacts.map(artifact => (
+              <div key={artifact.id} className="artifact-item">
+                <span className="artifact-name">{artifact.name}</span>
+                <span className="artifact-size">{formatBytes(artifact.size_in_bytes)}</span>
+                <button 
+                  onClick={() => downloadArtifact(artifact)}
+                  className="download-btn"
+                >
+                  ⬇️ Download
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      <div className="build-logs-link">
+        <a 
+          href={`https://github.com/${user}/${repo}/actions/workflows/dak-publication.yml`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          📋 Build Logs
+        </a>
+      </div>
+    </div>
+  );
+};
+```
+
+### 9.4 Enhanced Publication Requirements
+
+**Updated Dependencies:**
+```json
+{
+  "epub": "^1.2.0",
+  "epub.js": "^0.3.93", 
+  "canvas": "^2.11.2",
+  "jsdom": "^23.0.1"
+}
+```
+
+**Implementation Priorities:**
+1. **Single-page HTML Generation:** Complete DAK as single HTML document with embedded CSS
+2. **EPUB Format Support:** Full DAK publication with chapter navigation and embedded diagrams
+3. **GitHub Workflow Integration:** Automated artifact generation on merge events
+4. **Status Bar Display:** Real-time publication status with download links and build logs
+5. **IG Publisher Integration:** Coordination with existing FHIR IG publishing workflow
+
+This enhancement provides a comprehensive publication system that generates multiple formats automatically while maintaining the client-side architecture and integrating seamlessly with existing GitHub workflows.
 **Approach:** React templates with specialized export libraries
 **Libraries:** React, Puppeteer/Playwright (via API), docx.js, html2canvas
 
