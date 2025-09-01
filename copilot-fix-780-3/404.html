@@ -15,14 +15,9 @@
         if (window.location.hostname.endsWith('.github.io')) {
           if (pathSegments.length > 0 && pathSegments[0] === 'sgex') {
             // For GitHub Pages SGEX deployments
-            // Check if this is a branch deployment (has branch name as second segment)
-            if (pathSegments.length >= 2 && pathSegments[1] !== 'docs' && pathSegments[1] !== 'dashboard') {
-              // Branch deployment: /sgex/:branch/... - load config from branch directory
-              basePath = '/sgex/' + pathSegments[1] + '/';
-            } else {
-              // Main deployment: /sgex/... - load config from main directory
-              basePath = '/sgex/';
-            }
+            // Always load routeConfig.js from main deployment path
+            // Branch deployments share the same configuration files
+            basePath = '/sgex/';
           } else {
             basePath = '/';
           }
@@ -30,12 +25,8 @@
           // For local development or other deployment types
           // Check if we have /sgex/ prefix for local testing of branch deployments
           if (pathSegments.length > 0 && pathSegments[0] === 'sgex') {
-            // Check if this looks like a branch deployment for local testing
-            if (pathSegments.length >= 2 && pathSegments[1] !== 'docs' && pathSegments[1] !== 'dashboard') {
-              basePath = '/sgex/' + pathSegments[1] + '/';
-            } else {
-              basePath = '/sgex/';
-            }
+            // Always use /sgex/ base path for consistency
+            basePath = '/sgex/';
           } else {
             basePath = '/';
           }
@@ -54,24 +45,7 @@
             console.log('SGEX route configuration loaded successfully from ' + basePath + 'routeConfig.js');
           } else {
             console.error('Failed to load SGEX route configuration from ' + basePath + 'routeConfig.js: HTTP ' + xhr.status);
-            
-            // Fallback: try loading from main deployment path
-            if (basePath !== '/sgex/') {
-              console.log('Attempting fallback to main deployment path...');
-              var fallbackXhr = new XMLHttpRequest();
-              fallbackXhr.open('GET', '/sgex/routeConfig.js', false);
-              fallbackXhr.send();
-              
-              if (fallbackXhr.status === 200) {
-                eval(fallbackXhr.responseText);
-                console.log('SGEX route configuration loaded successfully from fallback path /sgex/routeConfig.js');
-              } else {
-                console.error('Fallback also failed: HTTP ' + fallbackXhr.status);
-                loadViaScriptTag();
-              }
-            } else {
-              loadViaScriptTag();
-            }
+            loadViaScriptTag();
           }
         } catch (error) {
           console.error('Error loading SGEX route configuration:', error);
@@ -84,16 +58,6 @@
           script.src = basePath + 'routeConfig.js';
           script.onerror = function() {
             console.error('Script tag fallback: Failed to load SGEX route configuration from ' + script.src);
-            
-            // Final fallback: try main deployment path if not already tried
-            if (basePath !== '/sgex/') {
-              var fallbackScript = document.createElement('script');
-              fallbackScript.src = '/sgex/routeConfig.js';
-              fallbackScript.onerror = function() {
-                console.error('Final fallback failed: ' + fallbackScript.src);
-              };
-              document.head.appendChild(fallbackScript);
-            }
           };
           document.head.appendChild(script);
         }
