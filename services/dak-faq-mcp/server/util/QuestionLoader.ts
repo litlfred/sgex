@@ -16,7 +16,7 @@ export class QuestionLoader {
   private loadedQuestions: Map<string, QuestionModule>;
 
   constructor() {
-    this.questionsPath = path.join(__dirname, '../questions');
+    this.questionsPath = path.join(__dirname, '../../questions');
     this.loadedQuestions = new Map();
   }
 

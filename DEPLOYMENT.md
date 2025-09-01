@@ -219,3 +219,44 @@ All workflows include:
 - 🚫 **Branch filtering** to exclude `gh-pages` and `deploy` branches
 - 🔄 **Consistent triggers** on both `push` and `pull_request` events where appropriate
 - 💬 **PR feedback** with detailed status updates and action buttons
+
+## 🛠️ MCP Services
+
+The SGEX Workbench includes Model Context Protocol (MCP) services that run separately from the main web application.
+
+### DAK FAQ MCP Service
+
+**Location**: `services/dak-faq-mcp/`
+**Purpose**: Provides REST API access to DAK information and FAQ questions
+
+#### Local Development
+```bash
+cd services/dak-faq-mcp
+npm install
+npm start
+```
+**Service URL**: `http://127.0.0.1:3001/mcp`
+
+#### Available Endpoints
+- `GET /mcp/health` - Service health check
+- `GET /mcp/faq/questions/catalog` - Available FAQ questions
+- `POST /mcp/faq/questions/execute` - Execute FAQ questions
+- `GET /mcp/faq/valuesets` - DAK value sets
+- `GET /mcp/faq/decision-tables` - DAK decision tables
+- `GET /mcp/faq/business-processes` - DAK business processes  
+- `GET /mcp/faq/personas` - DAK personas/actors
+- `GET /mcp/faq/questionnaires` - DAK questionnaires
+
+#### Security
+- **Local binding only**: Service binds to `127.0.0.1:3001` for security
+- **No external access**: Not exposed in production deployments
+- **Development use**: Intended for local development and testing
+
+#### Documentation
+Complete MCP services documentation: [`public/docs/mcp/`](public/docs/mcp/)
+
+#### Deployment Considerations
+- MCP services are **not** deployed to GitHub Pages
+- Services run locally for development and testing
+- Production deployments may require separate hosting for MCP services
+- Services follow WHO SMART Guidelines compliance standards
