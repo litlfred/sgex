@@ -246,9 +246,31 @@
             return;
           }
 
+          // Check if this "component" is actually a standard route path
+          // Standard routes should be redirected to the branch SPA root with the route path preserved
+          if (routeConfig && routeConfig.isStandardRoutePath && routeConfig.isStandardRoutePath(component)) {
+            var branchPath = basePath + pathSegments[1] + '/';
+            var routePath = pathSegments.slice(2).join('/');
+            redirectToSPA(branchPath, routePath);
+            return;
+          }
+
           // Validate component exists in the deployed branch (for DAK components)
           // Skip validation if routeConfig is not available (fallback mode)
           if (routeConfig && routeConfig.isValidComponent && !routeConfig.isValidComponent(component)) {
+            // Before showing error, check if this might be a standard route path
+            // that wasn't caught by the check above (for fallback when routeConfig.isStandardRoutePath is not available)
+            var commonRoutePaths = ['select_profile', 'dak-action', 'dak-selection', 'organization-selection', 
+                                   'repositories', 'dashboard', 'test-dashboard', 'test-bpmn-viewer', 
+                                   'test-framework', 'test-documentation', 'test-asset-editor'];
+            
+            if (commonRoutePaths.includes(component)) {
+              var branchPath = basePath + pathSegments[1] + '/';
+              var routePath = pathSegments.slice(2).join('/');
+              redirectToSPA(branchPath, routePath);
+              return;
+            }
+            
             showErrorPage('Invalid Component', 
               'Component "' + component + '" is not valid for branch "' + branch + '". Check the component name and try again.',
               'invalid-component-for-branch');
