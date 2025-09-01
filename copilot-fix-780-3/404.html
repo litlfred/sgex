@@ -14,9 +14,15 @@
         // For GitHub Pages deployment (e.g., litlfred.github.io/sgex/)
         if (window.location.hostname.endsWith('.github.io')) {
           if (pathSegments.length > 0 && pathSegments[0] === 'sgex') {
-            // For all GitHub Pages SGEX deployments, routeConfig.js is always at /sgex/
-            // Branch deployments share the same routeConfig.js from the main deployment
-            basePath = '/sgex/';
+            // For GitHub Pages SGEX deployments
+            // Check if this is a branch deployment (has branch name as second segment)
+            if (pathSegments.length >= 2 && pathSegments[1] !== 'docs' && pathSegments[1] !== 'dashboard') {
+              // Branch deployment: /sgex/:branch/... - load config from branch directory
+              basePath = '/sgex/' + pathSegments[1] + '/';
+            } else {
+              // Main deployment: /sgex/... - load config from main directory
+              basePath = '/sgex/';
+            }
           } else {
             basePath = '/';
           }
@@ -24,8 +30,12 @@
           // For local development or other deployment types
           // Check if we have /sgex/ prefix for local testing of branch deployments
           if (pathSegments.length > 0 && pathSegments[0] === 'sgex') {
-            // For local testing, routeConfig.js is also always at /sgex/
-            basePath = '/sgex/';
+            // Check if this looks like a branch deployment for local testing
+            if (pathSegments.length >= 2 && pathSegments[1] !== 'docs' && pathSegments[1] !== 'dashboard') {
+              basePath = '/sgex/' + pathSegments[1] + '/';
+            } else {
+              basePath = '/sgex/';
+            }
           } else {
             basePath = '/';
           }
@@ -274,7 +284,7 @@
 
           // Validate component exists in the deployed branch (for DAK components)
           // Skip validation if routeConfig is not available (fallback mode)
-          if (routeConfig && !routeConfig.isValidComponent(component)) {
+          if (routeConfig && routeConfig.isValidComponent && !routeConfig.isValidComponent(component)) {
             showErrorPage('Invalid Component', 
               'Component "' + component + '" is not valid for branch "' + branch + '". Check the component name and try again.',
               'invalid-component-for-branch');
