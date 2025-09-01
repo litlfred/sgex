@@ -314,18 +314,33 @@ function getSGEXRouteConfig(deployType) {
           },
           "SelectProfilePage": {
             "path": "./components/SelectProfilePage",
-            "routes": [{ "path": "/select_profile", "exact": true }]
+            "routes": [
+              { "path": "/select_profile", "exact": true },
+              { "path": "/select_profile/:user", "exact": true },
+              { "path": "/select_profile/:user/:repo", "exact": true },
+              { "path": "/select_profile/:user/:repo/:branch", "exact": true },
+              { "path": "/select_profile/:user/:repo/:branch/*" }
+            ]
           },
           "DAKActionSelection": {
             "path": "./components/DAKActionSelection",
             "routes": [
+              { "path": "/dak-action", "exact": true },
               { "path": "/dak-action/:user", "exact": true },
-              { "path": "/dak-action", "exact": true }
+              { "path": "/dak-action/:user/:repo", "exact": true },
+              { "path": "/dak-action/:user/:repo/:branch", "exact": true },
+              { "path": "/dak-action/:user/:repo/:branch/*" }
             ]
           },
           "OrganizationSelection": {
             "path": "./components/OrganizationSelection",
-            "routes": [{ "path": "/organization-selection", "exact": true }]
+            "routes": [
+              { "path": "/organization-selection", "exact": true },
+              { "path": "/organization-selection/:user", "exact": true },
+              { "path": "/organization-selection/:user/:repo", "exact": true },
+              { "path": "/organization-selection/:user/:repo/:branch", "exact": true },
+              { "path": "/organization-selection/:user/:repo/:branch/*" }
+            ]
           }
         },
         components: {},

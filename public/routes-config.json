@@ -60,40 +60,61 @@
     "SelectProfilePage": {
       "path": "./components/SelectProfilePage",
       "routes": [
-        { "path": "/select_profile", "exact": true }
+        { "path": "/select_profile", "exact": true },
+        { "path": "/select_profile/:user", "exact": true },
+        { "path": "/select_profile/:user/:repo", "exact": true },
+        { "path": "/select_profile/:user/:repo/:branch", "exact": true },
+        { "path": "/select_profile/:user/:repo/:branch/*" }
       ]
     },
     "DAKActionSelection": {
       "path": "./components/DAKActionSelection",
       "routes": [
+        { "path": "/dak-action", "exact": true },
         { "path": "/dak-action/:user", "exact": true },
-        { "path": "/dak-action", "exact": true }
+        { "path": "/dak-action/:user/:repo", "exact": true },
+        { "path": "/dak-action/:user/:repo/:branch", "exact": true },
+        { "path": "/dak-action/:user/:repo/:branch/*" }
       ]
     },
     "DAKSelection": {
       "path": "./components/DAKSelection",
       "routes": [
+        { "path": "/dak-selection", "exact": true },
         { "path": "/dak-selection/:user", "exact": true },
-        { "path": "/dak-selection", "exact": true }
+        { "path": "/dak-selection/:user/:repo", "exact": true },
+        { "path": "/dak-selection/:user/:repo/:branch", "exact": true },
+        { "path": "/dak-selection/:user/:repo/:branch/*" }
       ]
     },
     "OrganizationSelection": {
       "path": "./components/OrganizationSelection",
       "routes": [
-        { "path": "/organization-selection", "exact": true }
+        { "path": "/organization-selection", "exact": true },
+        { "path": "/organization-selection/:user", "exact": true },
+        { "path": "/organization-selection/:user/:repo", "exact": true },
+        { "path": "/organization-selection/:user/:repo/:branch", "exact": true },
+        { "path": "/organization-selection/:user/:repo/:branch/*" }
       ]
     },
     "DAKConfiguration": {
       "path": "./components/DAKConfiguration",
       "routes": [
-        { "path": "/dak-configuration", "exact": true }
+        { "path": "/dak-configuration", "exact": true },
+        { "path": "/dak-configuration/:user", "exact": true },
+        { "path": "/dak-configuration/:user/:repo", "exact": true },
+        { "path": "/dak-configuration/:user/:repo/:branch", "exact": true },
+        { "path": "/dak-configuration/:user/:repo/:branch/*" }
       ]
     },
     "RepositorySelection": {
       "path": "./components/RepositorySelection",
       "routes": [
         { "path": "/repositories", "exact": true },
-        { "path": "/repositories/:user", "exact": true }
+        { "path": "/repositories/:user", "exact": true },
+        { "path": "/repositories/:user/:repo", "exact": true },
+        { "path": "/repositories/:user/:repo/:branch", "exact": true },
+        { "path": "/repositories/:user/:repo/:branch/*" }
       ]
     },
     "DashboardRedirect": {
@@ -117,13 +138,21 @@
     "DocumentationViewer": {
       "path": "./components/DocumentationViewer",
       "routes": [
-        { "path": "/docs/:docId", "exact": true }
+        { "path": "/docs/:docId", "exact": true },
+        { "path": "/docs/:docId/:user", "exact": true },
+        { "path": "/docs/:docId/:user/:repo", "exact": true },
+        { "path": "/docs/:docId/:user/:repo/:branch", "exact": true },
+        { "path": "/docs/:docId/:user/:repo/:branch/*" }
       ]
     },
     "PagesManager": {
       "path": "./components/PagesManager",
       "routes": [
-        { "path": "/pages", "exact": true }
+        { "path": "/pages", "exact": true },
+        { "path": "/pages/:user", "exact": true },
+        { "path": "/pages/:user/:repo", "exact": true },
+        { "path": "/pages/:user/:repo/:branch", "exact": true },
+        { "path": "/pages/:user/:repo/:branch/*" }
       ]
     },
     "LandingPageWithFramework": {
