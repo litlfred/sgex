@@ -136,6 +136,8 @@ body.theme-light .welcome-page-content {
   align-items: center;
   gap: 1.5rem;
   flex-shrink: 0;
+  /* Override BranchListingPage CSS that sets pointer-events: none */
+  pointer-events: auto;
 }
 
 .action-card::before {
