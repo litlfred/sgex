@@ -28,8 +28,8 @@ class HelpContentService {
                 // Feature branch: /sgex/branch-name
                 basePath = `/${pathParts.slice(1, sgexIndex + 2).join('/')}`;
               } else {
-                // Main branch: /sgex
-                basePath = `/${pathParts.slice(1, sgexIndex + 1).join('/')}`;
+                // Main branch: /sgex/main
+                basePath = `/${pathParts.slice(1, sgexIndex + 1).join('/')}/main`;
               }
             }
           }

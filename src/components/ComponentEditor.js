@@ -63,7 +63,7 @@ const HealthInterventionsEditor = () => {
             <span className="context-repo">{repository?.name || repo || 'Repository'}</span>
             <span className="context-component">{currentComponent.name}</span>
           </div>
-          <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+          <a href="/sgex/main/docs/overview" className="nav-link">📖 Documentation</a>
         </div>
       </div>
 
@@ -141,7 +141,7 @@ const ComponentEditorContent = () => {
                 <span className="context-repo">{placeholderRepo.name}</span>
                 <span className="context-component">{currentComponent.name}</span>
               </div>
-              <a href="/sgex/docs/overview" className="nav-link">📖 Documentation</a>
+              <a href="/sgex/main/docs/overview" className="nav-link">📖 Documentation</a>
             </div>
           </div>
 
