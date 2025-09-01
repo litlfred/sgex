@@ -203,36 +203,6 @@ function loadRouteConfigSync(deployType) {
         },
 
         /**
-         * Check if a path is a standard route path (not a component name)
-         * @param {string} path - Path to validate
-         * @returns {boolean} True if path is a standard route path
-         */
-        isStandardRoutePath: function(path) {
-          // Extract route paths from standard components
-          for (var componentName in this.standardComponents) {
-            var component = this.standardComponents[componentName];
-            if (component.routes) {
-              for (var i = 0; i < component.routes.length; i++) {
-                var route = component.routes[i];
-                var routePath = route.path;
-                
-                // Handle exact route matches
-                if (routePath === '/' + path) {
-                  return true;
-                }
-                
-                // Handle parameterized routes (e.g., /dak-action/:user)
-                var pathParts = routePath.split('/').filter(Boolean);
-                if (pathParts.length > 0 && pathParts[0] === path) {
-                  return true;
-                }
-              }
-            }
-          }
-          return false;
-        },
-
-        /**
          * Check if a branch name is a deployed branch
          * @param {string} branch - Branch name to validate  
          * @returns {boolean} True if branch is deployed
@@ -370,13 +340,6 @@ function getSGEXRouteConfig(deployType) {
         },
         isValidComponent: function(componentName) {
           return this.getAllComponentNames().includes(componentName);
-        },
-        isStandardRoutePath: function(path) {
-          // Fallback implementation with common route paths
-          var commonRoutePaths = ['select_profile', 'dak-action', 'dak-selection', 'organization-selection', 
-                                 'repositories', 'dashboard', 'test-dashboard', 'test-bpmn-viewer', 
-                                 'test-framework', 'test-documentation', 'test-asset-editor'];
-          return commonRoutePaths.includes(path);
         },
         isDeployedBranch: function(branch) {
           return this.deployedBranches.includes(branch);
