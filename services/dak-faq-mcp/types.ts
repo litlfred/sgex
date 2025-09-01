@@ -169,3 +169,73 @@ export interface QuestionModule {
   definition: QuestionDefinition;
   executor: FAQExecutor;
 }
+
+// New interfaces for DAK component endpoints
+export interface ValueSet {
+  id: string;
+  name: string;
+  description?: string;
+  conceptCount?: number;
+}
+
+export interface ValueSetListResponse {
+  success: boolean;
+  timestamp: string;
+  count: number;
+  valueSets: ValueSet[];
+}
+
+export interface DecisionTable {
+  id: string;
+  name: string;
+  description?: string;
+  file: string;
+}
+
+export interface DecisionTableListResponse {
+  success: boolean;
+  timestamp: string;
+  count: number;
+  decisionTables: DecisionTable[];
+}
+
+export interface BusinessProcess {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface BusinessProcessListResponse {
+  success: boolean;
+  timestamp: string;
+  count: number;
+  businessProcesses: BusinessProcess[];
+}
+
+export interface Persona {
+  id: string;
+  name: string;
+  role?: string;
+  description?: string;
+}
+
+export interface PersonaListResponse {
+  success: boolean;
+  timestamp: string;
+  count: number;
+  personas: Persona[];
+}
+
+export interface Questionnaire {
+  id: string;
+  name: string;
+  description?: string;
+  questionCount?: number;
+}
+
+export interface QuestionnaireListResponse {
+  success: boolean;
+  timestamp: string;
+  count: number;
+  questionnaires: Questionnaire[];
+}

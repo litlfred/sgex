@@ -121,6 +121,33 @@ npm run verify-404    # Verify existing build
 ```
 
 For detailed implementation information, see [docs/404-implementation.md](docs/404-implementation.md).
+
+## MCP Services
+
+SGEX Workbench includes Model Context Protocol (MCP) services that provide structured API access to DAK information:
+
+### DAK FAQ MCP Service
+- **Location**: `services/dak-faq-mcp/`
+- **URL**: `http://127.0.0.1:3001/mcp` (local development only)
+- **Purpose**: REST API for accessing DAK components and FAQ questions
+
+#### Quick Start
+```bash
+cd services/dak-faq-mcp
+npm install
+npm start
+```
+
+#### Available Endpoints
+- FAQ questions catalog and execution
+- DAK value sets, decision tables, business processes
+- Personas/actors and questionnaires
+- Service health checks
+
+#### Documentation
+Complete MCP documentation: [`public/docs/mcp/`](public/docs/mcp/)
+
+**Security Note**: MCP services bind to localhost only (127.0.0.1:3001) and are intended for local development and testing.
 ### Docker
 
 1. **Build the docker image**
