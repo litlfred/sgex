@@ -64,6 +64,7 @@ const PreviewBadge = () => {
   const [canTriggerWorkflows, setCanTriggerWorkflows] = useState(false);
   const [canApproveWorkflows, setCanApproveWorkflows] = useState(false);
   const [canMergePR, setCanMergePR] = useState(false);
+  const [canManagePR, setCanManagePR] = useState(false); // For draft/ready status changes
   const [isMergingPR, setIsMergingPR] = useState(false);
   const [canReviewPR, setCanReviewPR] = useState(false);
   const [isApprovingPR, setIsApprovingPR] = useState(false);
@@ -835,6 +836,7 @@ const PreviewBadge = () => {
       setCanApproveWorkflows(false);
       setCanMergePR(false);
       setCanReviewPR(false);
+      setCanManagePR(false);
       return;
     }
 
@@ -857,15 +859,18 @@ const PreviewBadge = () => {
 
       // Check merge and review permissions for the first PR if available
       if (prInfo && prInfo.length > 0) {
-        const [mergePermissions, reviewPermissions] = await Promise.all([
+        const [mergePermissions, reviewPermissions, writePermissions] = await Promise.all([
           githubService.checkPullRequestMergePermissions(owner, repo, prInfo[0].number),
-          githubService.checkPullRequestReviewPermissions(owner, repo, prInfo[0].number)
+          githubService.checkPullRequestReviewPermissions(owner, repo, prInfo[0].number),
+          githubService.checkRepositoryWritePermissions(owner, repo) // For managing PR draft status
         ]);
         setCanMergePR(mergePermissions);
         setCanReviewPR(reviewPermissions);
+        setCanManagePR(writePermissions); // Repository write access for draft/ready status changes
       } else {
         setCanMergePR(false);
         setCanReviewPR(false);
+        setCanManagePR(false);
       }
     } catch (error) {
       console.debug('Error checking permissions:', error);
@@ -874,6 +879,7 @@ const PreviewBadge = () => {
       setCanApproveWorkflows(false);
       setCanMergePR(false);
       setCanReviewPR(false);
+      setCanManagePR(false);
     }
   };
 
@@ -1625,6 +1631,7 @@ const PreviewBadge = () => {
                       // Pass PR actions data
                       prInfo={prInfo}
                       canMergePR={canMergePR}
+                      canManagePR={canManagePR}
                       canReviewPR={canReviewPR}
                       isMergingPR={isMergingPR}
                       isApprovingPR={isApprovingPR}

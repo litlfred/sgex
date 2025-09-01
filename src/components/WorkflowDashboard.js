@@ -11,6 +11,7 @@ const WorkflowDashboard = ({
   // PR actions props
   prInfo = null,
   canMergePR = false,
+  canManagePR = false, // For draft/ready status changes
   canReviewPR = false,
   isMergingPR = false,
   isApprovingPR = false,
@@ -379,7 +380,7 @@ const WorkflowDashboard = ({
           <div className="pr-actions-container">
             <div className="pr-actions-buttons">
               {/* Ready for Review Button - only for draft PRs */}
-              {isAuthenticated && prInfo[0].draft && canMergePR && (
+              {isAuthenticated && prInfo[0].draft && canManagePR && (
                 <button
                   onClick={() => onMarkReadyForReview && onMarkReadyForReview('litlfred', 'sgex', prInfo[0].number)}
                   disabled={isMarkingReadyForReview}
@@ -456,14 +457,19 @@ const WorkflowDashboard = ({
                   🔒 Sign in to access PR actions
                 </span>
               )}
-              {isAuthenticated && !canMergePR && !canReviewPR && (
+              {isAuthenticated && !canMergePR && !canReviewPR && !canManagePR && (
                 <span className="pr-actions-note">
                   ⚠️ You don't have permission to merge or review this PR
                 </span>
               )}
-              {isAuthenticated && !canMergePR && canReviewPR && (
+              {isAuthenticated && !canMergePR && canReviewPR && !canManagePR && (
                 <span className="pr-actions-note">
                   ℹ️ You can review this PR but cannot merge it
+                </span>
+              )}
+              {isAuthenticated && !canMergePR && canReviewPR && canManagePR && (
+                <span className="pr-actions-note">
+                  ℹ️ You can review and manage this PR but cannot merge it
                 </span>
               )}
               {isAuthenticated && canMergePR && !canReviewPR && (
