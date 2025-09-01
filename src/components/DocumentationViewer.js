@@ -1,38 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageLayout } from './framework';
-
-// Dynamically generate documentation files structure
-const generateDocFiles = () => {
-
-  const files = {
-    'overview': { file: 'README.md', title: 'Documentation Overview', category: 'root' },
-    'bpmn-integration': { file: 'bpmn-integration.md', title: 'BPMN Integration', category: 'root' },
-    'dak-components': { file: 'dak-components.md', title: 'DAK Components', category: 'root' },
-    'decision-table-editor': { file: 'decision-table-editor.md', title: 'Decision Table Editor', category: 'root' },
-    'framework-developer-guide': { file: 'framework-developer-guide.md', title: 'Framework Developer Guide', category: 'root' },
-    'page-framework': { file: 'page-framework.md', title: 'Page Framework', category: 'root' },
-    'page-inventory': { file: 'page-inventory.md', title: 'Page Inventory', category: 'root' },
-    'project-plan': { file: 'project-plan.md', title: 'Project Plan', category: 'root' },
-    'qa-testing': { file: 'qa-testing.md', title: 'QA Testing', category: 'root' },
-    'requirements': { file: 'requirements.md', title: 'Requirements', category: 'root' },
-    'solution-architecture': { file: 'solution-architecture.md', title: 'Solution Architecture', category: 'root' },
-    'ui-styling-requirements': { file: 'UI_STYLING_REQUIREMENTS.md', title: 'UI Styling Requirements', category: 'root' },
-    'who-cors-workaround': { file: 'WHO_CORS_WORKAROUND.md', title: 'WHO CORS Workaround', category: 'root' },
-    'workflows-overview': { file: 'workflows/README.md', title: 'Workflows Overview', category: 'workflows' }
-  };
-
-  return files;
-};
-
-const docFiles = generateDocFiles();
+import documentationService from '../services/documentationService';
+import bookmarkService from '../services/bookmarkService';
 
 const DocumentationViewer = () => {
   const { docId } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [navigationMenu, setNavigationMenu] = useState([]);
+  const [currentDoc, setCurrentDoc] = useState(null);
+  const [breadcrumbs, setBreadcrumbs] = useState([]);
+
+  useEffect(() => {
+    const loadNavigationMenu = async () => {
+      try {
+        const menu = await documentationService.getNavigationMenu();
+        setNavigationMenu(menu);
+      } catch (err) {
+        console.error('Error loading navigation menu:', err);
+      }
+    };
+    
+    loadNavigationMenu();
+  }, []);
 
   useEffect(() => {
     const loadDocumentation = async () => {
@@ -40,57 +35,35 @@ const DocumentationViewer = () => {
       setError(null);
 
       try {
-        const docInfo = docFiles[docId] || docFiles['overview'];
-
-        // For HTML files, open in a new tab to avoid navigation conflicts
-        if (docInfo.isHtml) {
-          // Check if file exists first
-          try {
-            const checkResponse = await fetch(`${process.env.PUBLIC_URL}/docs/${docInfo.file}`, { method: 'HEAD' });
-            if (checkResponse.ok) {
-              // File exists, open in new tab to avoid server conflicts
-              window.open(`${process.env.PUBLIC_URL}/docs/${docInfo.file}`, '_blank');
-              // Show message in current tab
-              setContent(`# ${docInfo.title}\n\nThe QA report has been opened in a new tab.\n\nIf it didn't open automatically, you can access it here: [${docInfo.file}](${process.env.PUBLIC_URL}/docs/${docInfo.file})`);
-              setLoading(false);
-              return;
-            } else {
-              // File doesn't exist, show helpful message
-              setContent(`# ${docInfo.title}\n\nThe QA report is generated during deployment and is available on the live site at: [${docInfo.file}](/docs/${docInfo.file})\n\nIf you're viewing this locally, the report will be available after the next deployment to GitHub Pages.`);
-              setLoading(false);
-              return;
-            }
-          } catch (htmlCheckError) {
-            // If check fails, show helpful message
-            setContent(`# ${docInfo.title}\n\nThe QA report is generated during deployment and is available on the live site.\n\nIf you're viewing this locally, the report will be available after the next deployment to GitHub Pages.`);
-            setLoading(false);
-            return;
-          }
-        }
-
-        // Fetch the markdown file from the docs folder
-        const response = await fetch(`${process.env.PUBLIC_URL}/docs/${docInfo.file}`);
+        const currentDocId = docId || 'overview';
+        const document = await documentationService.getDocument(currentDocId);
         
-        if (!response.ok) {
-          throw new Error(`Failed to load documentation: ${response.status}`);
-        }
-
-        const text = await response.text();
-        setContent(text);
+        setCurrentDoc(document);
+        setContent(document.content);
+        setBreadcrumbs(document.breadcrumbs || []);
+        
+        // Update document title for better UX
+        document.title = `${document.title} - ${t('documentation.title', 'Documentation')}`;
+        
       } catch (err) {
         console.error('Error loading documentation:', err);
-        setError('Failed to load documentation. Please try again later.');
+        setError(t('documentation.errors.loadFailed', 'Failed to load documentation. Please try again later.'));
       } finally {
         setLoading(false);
       }
     };
 
     loadDocumentation();
-  }, [docId]);
+  }, [docId, t]);
 
   const renderMarkdown = (markdown) => {
     // Simple markdown to HTML conversion for basic formatting
     let html = markdown;
+
+    // For JSON schemas, wrap in code block
+    if (currentDoc?.isSchema) {
+      return `<pre class="schema-content"><code>${html}</code></pre>`;
+    }
 
     // Process tables first (before paragraph processing)
     html = html.replace(/(\|[^\n]+\|\n\|[-\s|:]+\|\n(?:\|[^\n]+\|\n?)*)/gm, (match) => {
@@ -134,6 +107,30 @@ const DocumentationViewer = () => {
       .replace(/\n$/gim, '</p>');
   };
 
+  const handleBookmark = () => {
+    if (!currentDoc) return;
+    
+    const context = {
+      docId: currentDoc.id,
+      title: currentDoc.title,
+      path: currentDoc.path || ''
+    };
+    
+    try {
+      bookmarkService.addBookmark(
+        'documentation',
+        window.location.pathname,
+        context
+      );
+      // Could add a toast notification here
+    } catch (error) {
+      console.error('Error adding bookmark:', error);
+    }
+  };
+
+  const isBookmarked = currentDoc ? 
+    bookmarkService.isBookmarked(window.location.pathname) : false;
+
   if (loading) {
     return (
       <PageLayout pageName="documentation-viewer">
@@ -141,7 +138,7 @@ const DocumentationViewer = () => {
           <div className="doc-content">
             <div className="loading">
               <div className="spinner"></div>
-              <p>Loading documentation...</p>
+              <p>{t('documentation.loading', 'Loading documentation...')}</p>
             </div>
           </div>
         </div>
@@ -155,10 +152,10 @@ const DocumentationViewer = () => {
         <div className="documentation-viewer">
           <div className="doc-content">
             <div className="error-state">
-              <h2>Error</h2>
+              <h2>{t('common.error', 'Error')}</h2>
               <p>{error}</p>
               <button onClick={() => window.location.reload()} className="retry-btn">
-                Try Again
+                {t('common.tryAgain', 'Try Again')}
               </button>
             </div>
           </div>
@@ -171,59 +168,91 @@ const DocumentationViewer = () => {
     <PageLayout pageName="documentation-viewer">
       <div className="documentation-viewer">
         <div className="doc-content">
-        <div className="doc-sidebar">
-          <h3>Documentation</h3>
-          <nav className="doc-menu">
-            {(() => {
-              // Group files by category
-              const grouped = {};
-              Object.entries(docFiles).forEach(([key, doc]) => {
-                if (!grouped[doc.category]) {
-                  grouped[doc.category] = [];
-                }
-                grouped[doc.category].push({ key, ...doc });
-              });
+          {/* Breadcrumbs */}
+          {breadcrumbs.length > 1 && (
+            <nav className="doc-breadcrumbs" aria-label={t('navigation.breadcrumbs', 'Breadcrumb navigation')}>
+              <ol className="breadcrumb-list">
+                {breadcrumbs.map((crumb, index) => (
+                  <li key={index} className="breadcrumb-item">
+                    {!crumb.current ? (
+                      <>
+                        <button 
+                          className="breadcrumb-link" 
+                          onClick={() => navigate(crumb.path)}
+                          type="button"
+                        >
+                          {crumb.label}
+                        </button>
+                        <span className="breadcrumb-separator" aria-hidden="true">›</span>
+                      </>
+                    ) : (
+                      <span className="breadcrumb-current" aria-current="page">
+                        {crumb.label}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )}
 
-              // Sort within each category
-              Object.keys(grouped).forEach(category => {
-                grouped[category].sort((a, b) => a.title.localeCompare(b.title));
-              });
-
-              // Render sections
-              return Object.entries(grouped)
-                .sort(([a], [b]) => a === 'root' ? -1 : b === 'root' ? 1 : a.localeCompare(b))
-                .map(([category, items]) => (
-                  <div key={category} className="doc-category">
-                    {category !== 'root' && (
-                      <div className="doc-category-header">
-                        {category.charAt(0).toUpperCase() + category.slice(1)}
+          <div className="doc-sidebar">
+            <div className="doc-sidebar-header">
+              <h3>{t('documentation.title', 'Documentation')}</h3>
+              {currentDoc && (
+                <button 
+                  className={`bookmark-btn ${isBookmarked ? 'bookmarked' : ''}`}
+                  onClick={handleBookmark}
+                  title={isBookmarked ? 
+                    t('bookmarks.removeBookmark', 'Remove bookmark') : 
+                    t('bookmarks.addBookmark', 'Add bookmark')
+                  }
+                  type="button"
+                >
+                  {isBookmarked ? '★' : '☆'}
+                </button>
+              )}
+            </div>
+            
+            <nav className="doc-menu">
+              {navigationMenu.map((section) => (
+                <div key={section.id} className="doc-category">
+                  <div className="doc-category-header">
+                    {section.title}
+                    {section.description && (
+                      <div className="doc-category-description">
+                        {section.description}
                       </div>
                     )}
-                    {items.map(({ key, title }) => (
-                      <button
-                        key={key}
-                        className={`doc-menu-item ${docId === key ? 'active' : ''} ${category !== 'root' ? 'doc-menu-item-nested' : ''}`}
-                        onClick={() => navigate(`/docs/${key}`)}
-                      >
-                        {title}
-                      </button>
-                    ))}
                   </div>
-                ));
-            })()}
-          </nav>
-        </div>
+                  
+                  {section.items.map((item) => (
+                    <button
+                      key={item.id}
+                      className={`doc-menu-item ${docId === item.id || (!docId && item.id === 'overview') ? 'active' : ''} ${item.hasSubpath ? 'has-subpath' : ''} ${item.type === 'schema' ? 'schema-item' : ''}`}
+                      onClick={() => navigate(item.path)}
+                      type="button"
+                    >
+                      <span className="doc-menu-title">{item.title}</span>
+                      {item.description && (
+                        <span className="doc-menu-description">{item.description}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </nav>
+          </div>
 
-        <div className="doc-main">
-          <article 
-            className="doc-article"
-            dangerouslySetInnerHTML={{ 
-              __html: renderMarkdown(content)
-            }}
-          />
+          <div className="doc-main">
+            <article 
+              className={`doc-article ${currentDoc?.isSchema ? 'schema-article' : ''}`}
+              dangerouslySetInnerHTML={{ 
+                __html: renderMarkdown(content)
+              }}
+            />
+          </div>
         </div>
-      </div>
-      
       </div>
     </PageLayout>
   );
