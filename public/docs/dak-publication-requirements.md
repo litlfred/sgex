@@ -1,136 +1,118 @@
 # DAK Publication System - Technical Requirements
 
-*Based on analysis of 9 WHO DAK publication examples provided in Issue #915*
+*Client-Side HTML Rendering with Print-to-PDF Optimization*
 
-## REQ-PUB-001: Publication Template Management
+## REQ-PUB-001: Component-Based Publication Views
 
-**Requirement:** The system SHALL provide template management for DAK publications that conform to WHO publication standards
+**Requirement:** The system SHALL provide individual publication views for each DAK component accessible from the DAK dashboard
 
-- Template registry SHALL support multiple publication templates matching WHO formats observed in reference examples
-- Default WHO SMART Guidelines template SHALL reproduce the layout patterns from provided PDF examples
-- Custom template upload and management capabilities while maintaining WHO branding compliance
-- Template versioning and backward compatibility support
-- Template validation against WHO publication standards extracted from reference documents
+- Each DAK component SHALL have a dedicated publication view at `/publications/{component}/{user}/{repo}/{branch}`
+- Publication views SHALL be accessible through the DAK dashboard publications tab
+- Each publication view SHALL render using existing React components (bpmn-viewer, dmn-viewer, etc.)
+- Publication views SHALL support print-optimized rendering for browser print-to-PDF functionality
 
 **Integration Points:**
-- Extends existing DAK template system at `src/config/dak-templates.json`
-- Integrates with GitHub repository structure for template storage
-- Leverages existing JSON Forms infrastructure for template configuration
-- Implements WHO branding validation based on reference publication analysis
+- Extends existing DAK dashboard component grid
+- Leverages existing component viewers (BPMNViewer, CoreDataDictionaryViewer, etc.)
+- Integrates with current routing infrastructure using URL patterns
+- Maintains existing GitHub authentication and repository access patterns
 
-## REQ-PUB-002: Multi-Format Export Capabilities
+## REQ-PUB-002: Print-Optimized HTML Rendering
 
-**Requirement:** The system SHALL support export to multiple publication formats
+**Requirement:** The system SHALL generate HTML optimized for browser print-to-PDF functionality
 
-**Supported Formats:**
-- **Static HTML:** Single-page and multi-page publications for CDN deployment
-- **PDF Documents:** High-quality PDF generation with WHO branding
-- **Word Documents:** Microsoft Word .docx format with proper styling
+**Print Optimization Features:**
+- **CSS Print Media Queries:** Dedicated print stylesheets for optimal PDF output
+- **Page Break Management:** Intelligent page break placement to avoid content splitting
+- **Print Preview Mode:** Toggle between screen and print-optimized views
+- **Cross-browser Compatibility:** Consistent print output across Chrome, Firefox, Safari, Edge
 
 **Technical Implementation:**
-- HTML export SHALL use React server-side rendering matching WHO publication layout standards
-- PDF export SHALL use html2canvas + jsPDF achieving quality comparable to reference WHO publications
-- Word export SHALL use docx.js library reproducing WHO document formatting patterns
-- Export configuration SHALL be stored per DAK repository
-- Output quality SHALL meet or exceed standards observed in the 9 WHO DAK reference examples
+- Print CSS SHALL use appropriate fonts, spacing, and layout for PDF output
+- Page breaks SHALL be controlled using CSS `page-break-before`, `page-break-after`, and `page-break-inside` properties
+- Print mode SHALL hide navigation, interactive elements, and non-essential UI components
+- Typography SHALL be optimized for print readability with appropriate font sizes and line spacing
 
-## REQ-PUB-003: WYSIWYG Template Editor
+## REQ-PUB-003: BPMN Diagram Page Break Handling
 
-**Requirement:** The system SHALL provide visual template editing capabilities
+**Requirement:** The system SHALL handle BPMN diagram pagination for print output
 
 **Features:**
-- Visual template editor with live preview functionality
-- Drag-and-drop component builder for template structure
-- Template variable system for dynamic content insertion
-- Real-time preview across all supported output formats
-- Template validation with error reporting
+- **Intelligent Splitting:** BPMN diagrams SHALL be split across pages at logical boundaries
+- **Element Preservation:** BPMN elements SHALL NOT be cut across page boundaries
+- **Viewport Segmentation:** Large diagrams SHALL be segmented into print-friendly viewports
+- **Page Layout Calculation:** Automatic calculation of optimal page layouts for BPMN content
 
 **User Interface:**
-- Split-pane interface: editor on left, preview on right
-- Format selection tabs for preview (HTML, PDF preview, Word preview)
+- Print preview SHALL show how BPMN diagrams will appear across multiple pages
+- Users SHALL be able to adjust page break settings for optimal layout
+- Page numbers SHALL be displayed on multi-page BPMN publications
 - Component palette with WHO-branded design elements
 - Style customization panel for colors, fonts, and spacing
 
-## REQ-PUB-004: WHO Reference Publication Compliance
+## REQ-PUB-004: DAK PDF Styling Extraction
 
-**Requirement:** The system SHALL generate publications that match the quality and formatting standards of the 9 WHO DAK reference publications provided in Issue #915
+**Requirement:** The system SHALL extract styling elements from uploaded DAK PDFs to match publication appearance
 
-**Reference Analysis Requirements:**
-- Layout extraction SHALL analyze structural patterns from all 9 provided WHO PDF examples
-- Typography standards SHALL be extracted from reference documents including font families, sizes, and hierarchy
-- WHO branding compliance SHALL match exactly the logo placement, color usage, and visual identity elements observed
-- Quality benchmarks SHALL be established based on PDF metadata, file sizes, and rendering quality of reference examples
-- Accessibility features SHALL meet or exceed the standards present in WHO reference documents
+**Styling Extraction Features:**
+- **Color Palette Analysis:** Extract primary and secondary colors from DAK PDF documents
+- **Typography Detection:** Identify font families, sizes, and formatting patterns used in DAK publications
+- **Layout Pattern Recognition:** Analyze structural elements like headers, footers, margins, and spacing
+- **Graphical Element Extraction:** Extract logo placement, imagery, and decorative elements
 
-**Validation Requirements:**
-- Generated publications SHALL be comparable in layout accuracy to reference examples  
-- Output quality metrics SHALL match or exceed reference publication standards
-- Automated testing SHALL compare generated publications against reference examples for consistency
-- Template validation SHALL ensure compliance with WHO publication patterns observed in examples
+**Implementation Approach:**
+- Use PDF analysis libraries to parse uploaded DAK PDFs for styling information
+- Create adaptive CSS variable system that applies extracted styles to publication templates
+- Maintain professional medical publication appearance while avoiding direct WHO branding
+- Store extracted styling profiles per DAK repository for consistent publication appearance
 
-**Implementation Priorities:**
-- Phase 1: Extract and document exact specifications from the 9 reference PDFs
-- Phase 2: Implement templates matching the most common patterns observed
-- Phase 3: Validate generated outputs against reference examples
-- Phase 4: Refine based on quality comparison metrics
+## REQ-PUB-005: Existing Component Integration
 
-## REQ-PUB-005: DAK Content Aggregation
+**Requirement:** The system SHALL leverage existing React components for publication rendering
 
-**Requirement:** The system SHALL aggregate content from all 9 DAK components
+**Component Reuse:**
+- **BPMNViewer:** Use existing BPMN viewer component with print optimization
+- **DMN Components:** Integrate existing decision table components for decision logic publications
+- **CoreDataDictionaryViewer:** Reuse data dictionary components for terminology publications
+- **Markdown Renderers:** Utilize existing markdown editors for documentation sections
 
-**Content Sources:**
-- Health Interventions & Recommendations (IRIS references)
-- Generic Personas (Actor definitions)
-- User Scenarios (Narrative descriptions) 
-- Business Processes & Workflows (BPMN diagrams and descriptions)
-- Core Data Elements (OCL terminology, PCMT product data)
-- Decision-Support Logic (DMN decision tables)
-- Program Indicators (Measurement definitions)
-- Functional & Non-Functional Requirements (Requirements specifications)
-- Test Scenarios (Feature files and test cases)
+**Print Optimization Extensions:**
+- Extend existing components with print-specific rendering modes
+- Add page break handling capabilities to diagram viewers
+- Implement print-friendly styling variants for all reused components
+- Maintain component API compatibility while adding print functionality
 
-**Aggregation Logic:**
-- Content extraction SHALL preserve original formatting where applicable
-- BPMN and DMN diagrams SHALL be converted to high-resolution images
-- Markdown content SHALL be processed and styled consistently
-- Cross-references between components SHALL be maintained
+## REQ-PUB-006: Client-Side Architecture Compliance
 
-## REQ-PUB-006: Publication Metadata Management
+**Requirement:** The system SHALL operate entirely client-side without server dependencies
 
-**Requirement:** The system SHALL support comprehensive publication metadata
+**Client-Side Requirements:**
+- **No Server Processing:** All publication generation SHALL happen in the browser
+- **React Architecture:** Publication components SHALL be built using React framework
+- **GitHub Integration:** Content SHALL be fetched directly from GitHub repositories using existing services
+- **Browser Print Integration:** PDF generation SHALL use browser print-to-PDF functionality
 
-**Required Metadata Fields:**
-- Title, version, and identification information
-- Author(s), contributors, and organizational affiliation
-- Copyright statement and licensing information
-- Publication date and status (draft/review/published)
-- Digital Object Identifier (DOI) support
-- ISBN support for formal publications
+**Performance Constraints:**
+- Publication views SHALL load within 3 seconds for typical DAK content
+- Large BPMN diagrams SHALL be optimized for client-side rendering
+- Memory usage SHALL be optimized for browser limitations
+- Progressive loading SHALL be implemented for content-heavy publications
 
-**Extended Metadata:**
-- Executive summary and abstract
-- Keywords and subject classification
-- Acknowledgments and funding information
-- Change log and version history
-- Related publications and dependencies
+## REQ-PUB-007: Publication Quality Standards
 
-## REQ-PUB-007: WHO Branding Compliance
+**Requirement:** The system SHALL produce publication output meeting professional standards
 
-**Requirement:** Publications SHALL comply with WHO SMART Guidelines branding standards
+**Quality Metrics:**
+- **Print Resolution:** Output SHALL be suitable for professional printing at 300 DPI equivalent
+- **Typography:** Text SHALL be crisp and readable in printed format
+- **Diagram Quality:** BPMN and DMN diagrams SHALL maintain clarity across page breaks
+- **Layout Consistency:** Page formatting SHALL be consistent across different browsers
 
-**Visual Identity:**
-- Official WHO logo placement and sizing
-- WHO color palette enforcement (Primary: #0093D1, Secondary: #00A651)
-- Typography standards (Arial font family)
-- Layout guidelines for headers, footers, and page structure
-- Consistent spacing and alignment rules
-
-**Content Standards:**
-- Standard disclaimer and copyright text
-- Required attribution statements
-- Consistent terminology usage
-- Bibliography and citation formatting
-- Accessibility compliance (WCAG 2.1 AA)
+**Accessibility Standards:**
+- Generated HTML SHALL meet WCAG 2.1 AA accessibility standards
+- Print output SHALL include proper semantic structure
+- Content SHALL be navigable using assistive technologies
+- Color contrast SHALL meet accessibility requirements in both screen and print modes
 
 ## REQ-PUB-008: Publication Preview and Validation
 

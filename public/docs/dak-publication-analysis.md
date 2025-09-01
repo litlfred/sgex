@@ -1,170 +1,417 @@
-# DAK PDF and Web Publications - Technical Analysis
+# DAK Publications - Client-Side HTML Rendering Analysis
 
 ## Executive Summary
 
-This document provides a comprehensive analysis of options for creating consistent DAK (Digital Adaptation Kit) publications with support for multiple output formats (static HTML, PDF, Word documents) that follow the WHO SMART Guidelines logical model structure. This analysis is informed by 9 actual WHO DAK PDF publications provided as reference examples to ensure compatibility with established WHO publication standards.
+This document provides a comprehensive analysis for implementing client-side DAK (Digital Adaptation Kit) publication rendering using React components that generate print-optimized HTML. The solution focuses on creating individual publication views for each DAK component that can be accessed from the DAK dashboard, leveraging existing React components like bpmn-viewer, and producing HTML that renders well when printed to PDF through browser print functionality.
 
 ## 1. Current State Analysis
 
-### 1.1 Reference WHO DAK Publications
+### 1.1 Client-Side Only Architecture
 
-**Provided PDF Examples (Issue #915):**
-The following 9 WHO DAK publications have been provided as reference examples for layout, structure, and formatting standards:
+**Key Constraints:**
+- **No Server-Side Processing:** All rendering must happen in the browser using React components
+- **Print-to-PDF Focus:** Generate HTML optimized for browser print-to-PDF functionality 
+- **Leverage Existing Components:** Reuse bpmn-viewer, dmn-viewer, and other existing React components
+- **Individual Component Publications:** Separate publication view for each DAK component accessible from dashboard
 
-1. `9789240086616-eng.pdf` - Digital Health Guidelines
-2. `9789240090347-eng.pdf` - Implementation Framework
-3. `9789240110250-eng.pdf` - Clinical Decision Support
-4. `9789240089907-eng.pdf` - Maternal Health Guidelines
-5. `9789240099456-eng.pdf` - Immunization Protocols
-6. `9789240110359-eng.pdf` - Emergency Care Standards
-7. `9789240029743-eng.pdf` - Primary Care Guidelines
-8. `9789240020306-eng.pdf` - Health System Integration
+### 1.2 DAK Component Publication Structure
 
-**Analysis Requirements:**
-- **Layout Patterns:** Extract common structural elements across all 9 publications
-- **Typography Standards:** Identify font families, sizes, and hierarchy patterns
-- **WHO Branding:** Document color schemes, logo placement, and visual identity elements
-- **Content Organization:** Analyze section structures and information architecture
-- **Technical Standards:** Examine PDF metadata, accessibility features, and format specifications
+**Target Publications per DAK Component:**
+1. **Business Processes** - BPMN diagram publication with process documentation
+2. **Decision Support Logic** - DMN table publication with decision logic explanations  
+3. **Indicators & Measures** - Performance indicator reports and measurement documentation
+4. **Data Entry Forms** - Form specifications and field documentation
+5. **Terminology** - Code system and value set publications
+6. **FHIR Profiles** - Profile documentation and structure definitions
+7. **FHIR Extensions** - Extension specifications and usage guides
+8. **Test Data & Examples** - Sample data publications and validation examples
 
-*Note: Detailed content analysis of these PDFs will inform template design and ensure generated publications match established WHO standards.*
+### 1.3 Styling Approach
 
-### 1.2 Existing SGeX Workbench Capabilities
+**Graphics and Styling Extraction:**
+- Extract styling elements from uploaded DAK PDFs rather than direct WHO branding
+- Use WHO color schemes and typography standards without direct logo/branding usage
+- Create template system that adapts to extracted visual elements from DAK publications
+- Maintain professional medical publication appearance matching observed standards
 
-**Content Management:**
-- 9 DAK components with dedicated editors (BPMN, DMN, Markdown, etc.)
-- GitHub-centric workflow for version control and collaboration
-- JSON Forms for structured data entry
-- React-based single-page application architecture
-- Client-side only operation (no backend server)
+### 1.4 Existing SGeX Workbench Capabilities
 
-**Template Infrastructure:**
-- DAK template configuration at `src/config/dak-templates.json`
-- Currently supports WHO SMART Guidelines template (`smart-ig-empty`)
-- Publications component (`src/components/Publications.js`) for GitHub Pages deployment
-- Markdown editor with preview functionality (`@uiw/react-md-editor`)
+**Component Rendering Infrastructure:**
+- **BPMNViewer.js**: Existing BPMN diagram rendering component
+- **DMN Components**: Decision table visualization components
+- **React Component Architecture**: Established pattern for component rendering
+- **JSON Forms**: Structured data rendering capabilities
+- **Markdown Editor**: `@uiw/react-md-editor` for documentation rendering
 
-**Export Capabilities:**
-- HTML2Canvas library already available for screenshot/image export
-- BPMN diagram SVG export functionality
-- GitHub Pages integration for static HTML publication
+**Current DAK Dashboard Integration:**
+- DAK dashboard with component access at `/dak-dashboard/{user}/{repo}/{branch}`
+- Publications tab already exists in DAK dashboard
+- Component routing infrastructure supporting URL patterns: `/{component}/{user}/{repo}/{branch}`
+- Existing component viewers: BPMNViewer, CoreDataDictionaryViewer, etc.
 
-### 1.3 WHO SMART Guidelines DAK Logical Model Structure
+**Print Optimization Challenges:**
+- **BPMN Page Splitting**: Most critical challenge - handling BPMN diagrams that span multiple pages
+- **Responsive Print CSS**: Need print-specific stylesheets that differ from screen rendering
+- **Content Flow**: Managing page breaks across different component types
+- **Cross-browser Print Compatibility**: Ensuring consistent print output across browsers
 
-Based on the WHO SMART Guidelines framework and analysis of the provided DAK publication examples, DAKs follow this logical structure:
+## 2. Technical Implementation Strategy
+
+### 2.1 Component-Based Publication Architecture
+
+**Individual Publication Views:**
+Each DAK component will have a dedicated publication view accessible from the DAK dashboard:
 
 ```
-DAK Publication Structure:
-├── Metadata & Identification
-│   ├── Title & Version Information
-│   ├── Copyright & Legal Information (WHO specific formats)
-│   ├── Author(s) & Contributors
-│   ├── ISBN/Publication Numbers (observed in PDF examples)
-│   └── Publication Date & Status
-├── Pre-matter
-│   ├── Executive Summary
-│   ├── Table of Contents (standardized WHO format)
-│   ├── Glossary & Definitions
-│   ├── Acknowledgments
-│   └── Foreword/Preface (varies by publication)
-├── 9 Core DAK Components
-│   ├── 1. Health Interventions & Recommendations
-│   ├── 2. Generic Personas
-│   ├── 3. User Scenarios
-│   ├── 4. Business Processes & Workflows (BPMN diagrams)
-│   ├── 5. Core Data Elements
-│   ├── 6. Decision-Support Logic
-│   ├── 7. Program Indicators
-│   ├── 8. Functional & Non-Functional Requirements
-│   └── 9. Test Scenarios
-└── Post-matter
-    ├── Appendices
-    ├── References
-    └── Version History
+/publications/business-processes/{user}/{repo}/{branch}
+/publications/decision-logic/{user}/{repo}/{branch}  
+/publications/data-forms/{user}/{repo}/{branch}
+/publications/terminology/{user}/{repo}/{branch}
+/publications/fhir-profiles/{user}/{repo}/{branch}
+/publications/test-data/{user}/{repo}/{branch}
 ```
 
-### 1.4 Analysis of Provided WHO DAK Publication Examples
+**React Component Structure:**
+```jsx
+// Component publication wrapper
+const PublicationView = ({ component, dakData, printMode }) => {
+  return (
+    <div className={`publication-container ${component}-publication`}>
+      <PublicationHeader dakInfo={dakData} component={component} />
+      <ComponentSpecificContent 
+        component={component} 
+        data={dakData} 
+        printOptimized={printMode}
+      />
+      <PublicationFooter />
+    </div>
+  );
+};
+```
 
-**Publication Pattern Analysis:**
-The 9 provided WHO DAK PDFs offer critical insights into established publication standards:
+### 2.2 Print-Optimized HTML Rendering
 
-**Common Layout Elements Observed:**
-1. **WHO Branding Standards:**
-   - Official WHO logo placement and sizing requirements
-   - Consistent color palette usage (WHO Blue #0093D1, WHO Green #00A651)
-   - Standardized typography and font hierarchies
-   - Copyright and legal text formatting patterns
+**CSS Print Media Queries:**
+```css
+@media print {
+  .publication-container {
+    margin: 0;
+    padding: 20mm;
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+  
+  .page-break-before { page-break-before: always; }
+  .page-break-after { page-break-after: always; }
+  .no-page-break { page-break-inside: avoid; }
+}
+```
 
-2. **Document Structure Patterns:**
-   - Standardized cover page layouts with metadata placement
-   - Consistent table of contents formatting and navigation
-   - Section numbering and heading hierarchy standards
-   - Footer and header information placement
+**BPMN Page Break Handling:**
+The most critical technical challenge is splitting BPMN diagrams across pages:
 
-3. **Content Organization:**
-   - Executive summary positioning and length standards
-   - Acknowledgments and contributor attribution patterns
-   - Reference and bibliography formatting requirements
-   - Appendix organization and cross-referencing
+```jsx
+const BPMNPublicationView = ({ bpmnXml, printMode }) => {
+  const [pageLayout, setPageLayout] = useState(null);
+  
+  useEffect(() => {
+    if (printMode) {
+      // Calculate BPMN layout for print pagination
+      const layout = calculateBPMNPageLayout(bpmnXml);
+      setPageLayout(layout);
+    }
+  }, [bpmnXml, printMode]);
+  
+  return (
+    <div className="bpmn-publication">
+      {pageLayout?.pages.map((page, index) => (
+        <div key={index} className="bpmn-page">
+          <BPMNViewerSegment 
+            xml={bpmnXml} 
+            viewport={page.viewport}
+            pageNumber={index + 1}
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
+```
 
-4. **Technical Specifications:**
-   - PDF accessibility features and metadata requirements
-   - Page numbering and navigation standards
-   - Image and diagram placement conventions
-   - Table formatting and data presentation guidelines
+### 2.3 DAK Styling Extraction System
 
-**Template Design Implications:**
-- **Layout System:** Must support multi-column layouts observed in WHO publications
-- **Typography:** Requires implementation of WHO's specific font stack and sizing
-- **Branding:** Must include official WHO logo and color scheme application
-- **Accessibility:** Generated PDFs must match accessibility standards of reference documents
-- **Internationalization:** Template system should support multiple language layouts observed
+**PDF Graphics Extraction:**
+```jsx
+const StyleExtractor = ({ dakPdfUrl }) => {
+  const [extractedStyles, setExtractedStyles] = useState(null);
+  
+  useEffect(() => {
+    // Extract styling elements from uploaded DAK PDFs
+    const extractStyles = async () => {
+      const pdfStyles = await analyzeDakPdfStyling(dakPdfUrl);
+      setExtractedStyles({
+        colors: pdfStyles.colorPalette,
+        fonts: pdfStyles.typography,
+        layout: pdfStyles.layoutPatterns,
+        graphics: pdfStyles.graphicalElements
+      });
+    };
+    
+    if (dakPdfUrl) extractStyles();
+  }, [dakPdfUrl]);
+  
+  return extractedStyles;
+};
+```
 
-**Quality Benchmarks:**
-Analysis of the provided examples establishes quality targets:
-- PDF file sizes and optimization levels
-- Image resolution and compression standards
-- Typography rendering quality expectations
-- Cross-reference and hyperlink functionality requirements
+**Adaptive Template System:**
+```css
+:root {
+  /* Extracted from DAK PDF styling */
+  --primary-color: var(--dak-primary, #0078d4);
+  --secondary-color: var(--dak-secondary, #005a9e);
+  --text-color: var(--dak-text, #333333);
+  --heading-font: var(--dak-heading-font, 'Arial', sans-serif);
+  --body-font: var(--dak-body-font, 'Arial', sans-serif);
+}
+## 3. DAK Dashboard Integration
 
-*Note: Detailed examination of each PDF's internal structure, styling, and content organization will directly inform template specifications and ensure generated publications meet WHO publication standards.*
+### 3.1 Publications Navigation
 
-## 2. Technical Architecture Options
+**Enhanced DAK Dashboard Publications Tab:**
+```jsx
+const PublicationsTab = ({ dakInfo, selectedBranch }) => {
+  const navigate = useNavigate();
+  
+  const dakComponents = [
+    { id: 'business-processes', name: 'Business Processes', icon: '🔄' },
+    { id: 'decision-logic', name: 'Decision Support Logic', icon: '⚖️' },
+    { id: 'data-forms', name: 'Data Entry Forms', icon: '📝' },
+    { id: 'terminology', name: 'Terminology', icon: '📚' },
+    { id: 'fhir-profiles', name: 'FHIR Profiles', icon: '🏗️' },
+    { id: 'test-data', name: 'Test Data & Examples', icon: '🧪' }
+  ];
+  
+  return (
+    <div className="publications-grid">
+      {dakComponents.map(component => (
+        <div 
+          key={component.id}
+          className="publication-component-card"
+          onClick={() => navigate(`/publications/${component.id}/${dakInfo.owner}/${dakInfo.repo}/${selectedBranch}`)}
+        >
+          <span className="component-icon">{component.icon}</span>
+          <h3>{component.name}</h3>
+          <p>Generate publication view</p>
+          <button className="print-button">📄 View/Print</button>
+        </div>
+      ))}
+    </div>
+  );
+};
+```
 
-### 2.1 Template Engine Options
+### 3.2 Component-Specific Publication Views
 
-#### Option A: React-based Template System
-**Approach:** Create React components for publication templates
-**Libraries:** React, styled-components, react-to-print
+**Business Process Publication:**
+```jsx
+const BusinessProcessPublication = ({ user, repo, branch }) => {
+  const [bpmnFiles, setBpmnFiles] = useState([]);
+  const [printMode, setPrintMode] = useState(false);
+  
+  return (
+    <div className="publication-view business-process-publication">
+      <PublicationHeader 
+        title="Business Processes"
+        dakInfo={{ user, repo, branch }}
+        onPrintToggle={() => setPrintMode(!printMode)}
+      />
+      
+      {bpmnFiles.map((file, index) => (
+        <div key={index} className="process-section">
+          <h2>{file.processName}</h2>
+          <BPMNPublicationRenderer 
+            bpmnXml={file.content}
+            printOptimized={printMode}
+          />
+          <ProcessDocumentation content={file.documentation} />
+        </div>
+      ))}
+    </div>
+  );
+};
+```
 
-**Pros:**
-- Leverages existing React infrastructure
-- Type-safe with TypeScript integration
-- Component reusability across templates
-- Easy integration with existing DAK editors
-- Hot-reloading for template development
+## 4. Critical Technical Challenges
 
-**Cons:**
-- PDF generation requires additional libraries
-- Complex styling for print media
-- Limited Word document export support
+### 4.1 BPMN Page Break Solutions
 
-#### Option B: Template Engine with Multi-format Support
-**Approach:** Use specialized template engines (Handlebars/Mustache + Pandoc)
-**Libraries:** Handlebars.js, Pandoc (via API), html-pdf
+**Challenge:** BPMN diagrams often don't fit on a single page and need intelligent splitting.
 
-**Pros:**
-- Native multi-format output (HTML, PDF, DOCX)
-- Mature template syntax
-- Excellent Word document support via Pandoc
-- Separation of content and presentation
+**Proposed Solutions:**
 
-**Cons:**
-- Requires server-side processing for Pandoc
-- Additional complexity in client-side only architecture
-- Learning curve for template syntax
+1. **Viewport-Based Segmentation:**
+```jsx
+const calculateBPMNPageLayout = (bpmnXml) => {
+  const viewer = new BpmnJS({ container: document.createElement('div') });
+  viewer.importXML(bpmnXml);
+  
+  const canvas = viewer.get('canvas');
+  const viewbox = canvas.viewbox();
+  
+  // Calculate page boundaries based on A4 print dimensions
+  const pageWidth = 210 - 40; // A4 width minus margins (mm)
+  const pageHeight = 297 - 40; // A4 height minus margins (mm)
+  
+  const pages = [];
+  let currentY = viewbox.y;
+  
+  while (currentY < viewbox.y + viewbox.height) {
+    pages.push({
+      viewport: {
+        x: viewbox.x,
+        y: currentY,
+        width: Math.min(pageWidth, viewbox.width),
+        height: Math.min(pageHeight, viewbox.y + viewbox.height - currentY)
+      }
+    });
+    currentY += pageHeight;
+  }
+  
+  return { pages };
+};
+```
 
-#### Option C: Hybrid Approach - React + Export Libraries
+2. **Element-Aware Breaking:**
+```jsx
+const splitBPMNByElements = (bpmnXml) => {
+  // Analyze BPMN elements and group by logical sections
+  // Ensure elements don't get cut across page boundaries
+  const elementGroups = analyzeElementGrouping(bpmnXml);
+  return groupsToPages(elementGroups);
+};
+```
+
+### 4.2 Print CSS Optimization
+
+**Print-Specific Stylesheets:**
+```css
+@media print {
+  /* Hide navigation and interactive elements */
+  .navigation, .toolbar, .sidebar { display: none !important; }
+  
+  /* Optimize fonts and spacing for print */
+  body { 
+    font-family: "Times New Roman", serif;
+    font-size: 11pt;
+    line-height: 1.3;
+  }
+  
+  /* BPMN diagram print optimization */
+  .bpmn-publication .djs-container {
+    border: none !important;
+    background: white !important;
+  }
+  
+  /* Page break controls */
+  .page-break-before { page-break-before: always; }
+  .page-break-after { page-break-after: always; }
+  .no-page-break { page-break-inside: avoid; }
+  
+  /* Footer on every page */
+  .publication-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20mm;
+    font-size: 9pt;
+  }
+}
+```
+
+## 5. Implementation Plan
+
+### Phase 1: Foundation (Weeks 1-2)
+- [ ] Create base publication component structure
+- [ ] Implement print CSS framework
+- [ ] Add publications routing to DAK dashboard
+- [ ] Set up styling extraction utilities
+
+### Phase 2: Component Publications (Weeks 3-4)
+- [ ] Business Process publication view with BPMN rendering
+- [ ] Decision Logic publication with DMN tables
+- [ ] Basic page break handling for diagrams
+
+### Phase 3: Print Optimization (Weeks 5-6)
+- [ ] Advanced BPMN page splitting algorithm
+- [ ] Cross-browser print compatibility testing
+- [ ] Print preview functionality
+
+### Phase 4: Styling & Polish (Weeks 7-8)
+- [ ] DAK PDF styling extraction integration
+- [ ] Responsive print layouts
+- [ ] Documentation and user guides
+
+## 6. Technical Specifications
+
+### 6.1 Required Libraries
+
+**Core Dependencies:**
+- `bpmn-js`: Existing BPMN viewer (already installed)
+- `react-to-print`: Print functionality for React components
+- `pdf-lib`: PDF analysis for styling extraction (new)
+
+**CSS Framework:**
+- Print media queries for optimal PDF output
+- CSS variables for theme extraction from DAK PDFs
+
+### 6.2 File Structure
+
+```
+src/
+├── components/
+│   ├── publications/
+│   │   ├── PublicationView.js          # Base publication component
+│   │   ├── BusinessProcessPublication.js
+│   │   ├── DecisionLogicPublication.js
+│   │   ├── DataFormsPublication.js
+│   │   └── shared/
+│   │       ├── PublicationHeader.js
+│   │       ├── PublicationFooter.js
+│   │       └── PrintControls.js
+│   └── viewers/
+│       ├── BPMNPublicationViewer.js    # Print-optimized BPMN viewer
+│       └── PrintOptimizedViewer.js     # Base class for print viewers
+├── services/
+│   ├── publicationService.js           # Publication data management
+│   ├── styleExtractionService.js       # DAK PDF styling extraction
+│   └── printLayoutService.js           # Page layout calculations
+└── styles/
+    ├── publications.css                # Screen styles for publications
+    └── print.css                       # Print-specific styles
+```
+
+## 7. Success Criteria
+
+### 7.1 Functional Requirements
+- [ ] Individual publication view for each DAK component accessible from dashboard
+- [ ] Print-to-PDF functionality produces professional-quality output
+- [ ] BPMN diagrams render correctly across page breaks
+- [ ] Styling adapts to extracted DAK PDF graphics and colors
+
+### 7.2 Quality Standards
+- [ ] Print output quality matches professional publication standards
+- [ ] Page breaks occur at logical content boundaries
+- [ ] Cross-browser compatibility (Chrome, Firefox, Safari, Edge)
+- [ ] Responsive design supports different paper sizes
+
+### 7.3 Performance Targets
+- [ ] Publication views load within 3 seconds for typical DAK components
+- [ ] Print preparation completes within 5 seconds for BPMN-heavy content
+- [ ] Client-side processing handles DAKs up to 50 BPMN diagrams
+
+This analysis provides a comprehensive roadmap for implementing client-side DAK publication rendering that meets the requirements of browser-based print-to-PDF functionality while leveraging existing React components and maintaining the WHO styling standards through extracted graphics from DAK PDFs.
 **Approach:** React templates with specialized export libraries
 **Libraries:** React, Puppeteer/Playwright (via API), docx.js, html2canvas
 
