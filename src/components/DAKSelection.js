@@ -58,6 +58,28 @@ const DAKSelectionContent = () => {
         setDefaultAction('edit');
         return;
       }
+      
+      // Check if user came from breadcrumb navigation (referrer contains dak-action, dashboard, or other pages)
+      // This allows breadcrumb "Select Repository" navigation to work correctly
+      const referrer = document.referrer;
+      const isFromBreadcrumb = referrer && (
+        referrer.includes('/dak-action/') || 
+        referrer.includes('/dashboard/') || 
+        referrer.includes('/actor-editor/') ||
+        referrer.includes('/bpmn-') ||
+        referrer.includes('/decision-support-') ||
+        referrer.includes('/core-data-') ||
+        referrer.includes('/testing-') ||
+        referrer.includes('/pages/') ||
+        referrer.includes('/docs/')
+      );
+      
+      if (isFromBreadcrumb) {
+        // User came from breadcrumb navigation, default to 'edit' action to stay on dak-selection
+        setDefaultAction('edit');
+        return;
+      }
+      
       // For other users, redirect to action selection as before
       navigate(`/dak-action/${userParam}`, { replace: true });
       return;
