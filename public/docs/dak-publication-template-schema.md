@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the data schema and template structure for DAK publications that augment the WHO SMART Guidelines logical model with publication-specific metadata and content organization.
+This document defines the data schema and template structure for DAK publications that augment the WHO SMART Guidelines logical model with publication-specific metadata and content organization. The schema is designed to support generation of publications matching the quality and formatting standards observed in the 9 WHO DAK reference publications provided in Issue #915.
 
 ## Base DAK Logical Model Extension
 
