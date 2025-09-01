@@ -41,7 +41,7 @@ describe('Documentation Button Consistency', () => {
     
     const docButton = screen.getByText('📖 Documentation');
     expect(docButton).toBeInTheDocument();
-    expect(docButton.closest('a')).toHaveAttribute('href', '/sgex/docs/overview');
+    expect(docButton.closest('a')).toHaveAttribute('href', '/sgex/main/docs/overview');
   });
 
   test('DAKActionSelection has documentation button', () => {

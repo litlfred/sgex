@@ -255,7 +255,7 @@ const LandingPage = () => {
             <div className="info-section">
               <p>
                 Need help getting started? Check out our comprehensive{' '}
-                <a href="/sgex/docs/overview" className="doc-link">
+                <a href="/sgex/main/docs/overview" className="doc-link">
                   documentation
                 </a>{' '}
                 to learn more about SGEX Workbench and DAK components.

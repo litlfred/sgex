@@ -344,7 +344,7 @@ Best regards,
   };
 
   const handleDocumentation = () => {
-    window.open('/sgex/docs/overview', '_blank');
+    window.open('/sgex/main/docs/overview', '_blank');
   };
 
   const handlePrevSlide = () => {
