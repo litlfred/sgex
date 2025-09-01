@@ -140,7 +140,33 @@
     flex: 1;
     min-width: 300px;
     min-height: 140px;
+    /* Default to no pointer events for container cards with UI components */
     pointer-events: none;
+}
+
+/* Allow pointer events for navigation cards (those with card-link) */
+.action-card .card-link {
+    pointer-events: auto;
+}
+
+/* Allow pointer events for clickable navigation cards (main-site-card) */
+.action-card.main-site-card {
+    pointer-events: auto;
+}
+
+/* Explicitly disable pointer events for cards with UI components */
+.action-card.login-card,
+.action-card.logout-card {
+    pointer-events: none;
+}
+
+/* But allow pointer events on interactive elements within those cards */
+.action-card.login-card .pat-login,
+.action-card.login-card .pat-form,
+.action-card.login-card input,
+.action-card.login-card button,
+.action-card.logout-card button {
+    pointer-events: auto;
 }
 
 .action-card:hover {
