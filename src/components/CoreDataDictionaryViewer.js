@@ -240,10 +240,6 @@ const CoreDataDictionaryViewerContent = () => {
         } finally {
           setLoadingLogicalModels(false);
         }
-        } else {
-          setHasPublishedDak(false);
-          setLogicalModels([]);
-        }
 
       } catch (err) {
         console.error('Error fetching FSH files:', err);
