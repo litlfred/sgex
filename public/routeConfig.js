@@ -271,21 +271,10 @@ function getSGEXRouteConfig(deployType) {
             "path": "./components/DAKDashboard"
           }
         },
-        standardComponents: deployType === 'deploy' ? {
+        standardComponents: {
           "BranchListingPage": {
             "component": "BranchListingPage",
             "path": "./components/BranchListingPage",
-            "routes": ["/"]
-          },
-          "DAKDashboard": {
-            "component": "DAKDashboard", 
-            "path": "./components/DAKDashboard",
-            "routes": ["/dashboard", "/dashboard/:user/:repo", "/dashboard/:user/:repo/:branch"]
-          }
-        } : {
-          "WelcomePage": {
-            "component": "WelcomePage",
-            "path": "./components/WelcomePage",
             "routes": ["/"]
           },
           "DAKDashboard": {

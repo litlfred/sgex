@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PageLayout } from '../framework';
 import PublicationView from './PublicationView';
 import { createLazyBpmnViewer } from '../../utils/lazyRouteUtils';
 
@@ -12,14 +11,6 @@ import { createLazyBpmnViewer } from '../../utils/lazyRouteUtils';
  * - Print-optimized layout
  */
 const BusinessProcessesPublication = () => {
-  return (
-    <PageLayout pageName="publications-business-processes">
-      <BusinessProcessesPublicationContent />
-    </PageLayout>
-  );
-};
-
-const BusinessProcessesPublicationContent = () => {
   
   const renderBusinessProcesses = (dakData, publicationMeta) => {
     return (
@@ -70,6 +61,7 @@ const BusinessProcessesPublicationContent = () => {
  * - Preserving element boundaries
  */
 const BPMNDiagramRenderer = ({ bpmnFile, printMode = false }) => {
+  const viewerRef = useRef(null);
   const containerRef = useRef(null);
   const [viewer, setViewer] = useState(null);
   const [loading, setLoading] = useState(true);
