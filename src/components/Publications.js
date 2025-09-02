@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import githubService from '../services/githubService';
 import StagingGround from './StagingGround';
+import { constructFullUrl } from '../utils/navigationUtils';
 
 const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) => {
   const [branches, setBranches] = useState([]);
@@ -246,7 +247,7 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
           
           <div className="publication-actions">
             <a 
-              href={`/publications-all-components/${owner}/${repoName}/${selectedBranch}`}
+              href={constructFullUrl(`/publications-all-components/${owner}/${repoName}/${selectedBranch}`)}
               className="comprehensive-publication-btn"
               target="_blank"
               rel="noopener noreferrer"
@@ -288,7 +289,7 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
               </div>
               <div className="component-actions">
                 <a 
-                  href={`/publications-${component.id}/${owner}/${repoName}/${selectedBranch}`}
+                  href={constructFullUrl(`/publications-${component.id}/${owner}/${repoName}/${selectedBranch}`)}
                   className="component-publication-btn"
                   target="_blank"
                   rel="noopener noreferrer"
