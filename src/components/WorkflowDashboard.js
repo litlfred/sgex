@@ -11,16 +11,19 @@ const WorkflowDashboard = ({
   // PR actions props
   prInfo = null,
   canMergePR = false,
+  canManagePR = false, // For draft/ready status changes
   canReviewPR = false,
   isMergingPR = false,
   isApprovingPR = false,
   isRequestingChanges = false,
+  isMarkingReadyForReview = false,
   approvalStatus = null,
   approvalMessage = '',
   newComment = '',
   onMergePR = null,
   onApprovePR = null,
-  onRequestChanges = null
+  onRequestChanges = null,
+  onMarkReadyForReview = null
 }) => {
   const [workflows, setWorkflows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -367,12 +370,32 @@ const WorkflowDashboard = ({
           <div className="pr-actions-header">
             <h4>🔀 Pull Request Actions</h4>
             <span className="pr-actions-status">
-              PR #{prInfo[0].number} is ready for actions
+              {prInfo[0].draft ? (
+                <>PR #{prInfo[0].number} is in draft mode</>
+              ) : (
+                <>PR #{prInfo[0].number} is ready for actions</>
+              )}
             </span>
           </div>
           <div className="pr-actions-container">
             <div className="pr-actions-buttons">
-              {isAuthenticated && canMergePR && (
+              {/* Ready for Review Button - only for draft PRs */}
+              {isAuthenticated && prInfo[0].draft && canManagePR && (
+                <button
+                  onClick={() => onMarkReadyForReview && onMarkReadyForReview('litlfred', 'sgex', prInfo[0].number)}
+                  disabled={isMarkingReadyForReview}
+                  className="pr-ready-review-btn"
+                  title={`Mark PR #${prInfo[0].number} as ready for review`}
+                >
+                  {isMarkingReadyForReview ? (
+                    <>⏳ Marking ready...</>
+                  ) : (
+                    <>✅ Ready for review</>
+                  )}
+                </button>
+              )}
+              
+              {isAuthenticated && canMergePR && !prInfo[0].draft && (
                 <button
                   onClick={() => onMergePR && onMergePR('litlfred', 'sgex', prInfo[0].number)}
                   disabled={isMergingPR}
@@ -434,14 +457,19 @@ const WorkflowDashboard = ({
                   🔒 Sign in to access PR actions
                 </span>
               )}
-              {isAuthenticated && !canMergePR && !canReviewPR && (
+              {isAuthenticated && !canMergePR && !canReviewPR && !canManagePR && (
                 <span className="pr-actions-note">
                   ⚠️ You don't have permission to merge or review this PR
                 </span>
               )}
-              {isAuthenticated && !canMergePR && canReviewPR && (
+              {isAuthenticated && !canMergePR && canReviewPR && !canManagePR && (
                 <span className="pr-actions-note">
                   ℹ️ You can review this PR but cannot merge it
+                </span>
+              )}
+              {isAuthenticated && !canMergePR && canReviewPR && canManagePR && (
+                <span className="pr-actions-note">
+                  ℹ️ You can review and manage this PR but cannot merge it
                 </span>
               )}
               {isAuthenticated && canMergePR && !canReviewPR && (

@@ -64,10 +64,12 @@ const PreviewBadge = () => {
   const [canTriggerWorkflows, setCanTriggerWorkflows] = useState(false);
   const [canApproveWorkflows, setCanApproveWorkflows] = useState(false);
   const [canMergePR, setCanMergePR] = useState(false);
+  const [canManagePR, setCanManagePR] = useState(false); // For draft/ready status changes
   const [isMergingPR, setIsMergingPR] = useState(false);
   const [canReviewPR, setCanReviewPR] = useState(false);
   const [isApprovingPR, setIsApprovingPR] = useState(false);
   const [isRequestingChanges, setIsRequestingChanges] = useState(false);
+  const [isMarkingReadyForReview, setIsMarkingReadyForReview] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState(null); // 'success', 'error'
   const [approvalMessage, setApprovalMessage] = useState('');
   const [commentsPage, setCommentsPage] = useState(1);
@@ -772,6 +774,61 @@ const PreviewBadge = () => {
     }
   };
 
+  const handleMarkReadyForReview = async (owner, repo, prNumber) => {
+    if (!githubService.isAuth() || isMarkingReadyForReview || !canMergePR) {
+      return false;
+    }
+
+    setIsMarkingReadyForReview(true);
+    setApprovalStatus(null); // Clear previous status
+    setApprovalMessage('');
+    
+    try {
+      const result = await githubService.markPullRequestReadyForReview(owner, repo, prNumber);
+      
+      console.debug('PR marked as ready for review successfully:', result);
+      
+      // Show success message
+      setApprovalStatus('success');
+      setApprovalMessage(`PR #${prNumber} is now ready for review!`);
+      
+      // Refresh the PR info to reflect the new draft status
+      setTimeout(async () => {
+        try {
+          const refreshedPRs = await fetchPRsForBranch(branchInfo?.name);
+          if (refreshedPRs && refreshedPRs.length > 0) {
+            setPrInfo(refreshedPRs);
+          }
+        } catch (error) {
+          console.debug('Could not refresh PR status after marking ready for review:', error);
+        }
+      }, 2000);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to mark PR as ready for review:', error);
+      
+      // Provide user-friendly error messages
+      let userMessage = 'Failed to mark PR as ready for review';
+      if (error.status === 403) {
+        userMessage = 'Permission denied: You may not have permission to update this PR';
+      } else if (error.status === 404) {
+        userMessage = 'PR not found or repository access denied';
+      } else if (error.status === 422) {
+        userMessage = 'PR cannot be marked as ready for review - it may already be ready or have other restrictions';
+      } else if (error.message) {
+        userMessage = error.message;
+      }
+      
+      setApprovalStatus('error');
+      setApprovalMessage(userMessage);
+      
+      return false;
+    } finally {
+      setIsMarkingReadyForReview(false);
+    }
+  };
+
   const checkPermissions = async (owner, repo) => {
     if (!githubService.isAuth()) {
       setCanComment(false);
@@ -779,6 +836,7 @@ const PreviewBadge = () => {
       setCanApproveWorkflows(false);
       setCanMergePR(false);
       setCanReviewPR(false);
+      setCanManagePR(false);
       return;
     }
 
@@ -801,15 +859,18 @@ const PreviewBadge = () => {
 
       // Check merge and review permissions for the first PR if available
       if (prInfo && prInfo.length > 0) {
-        const [mergePermissions, reviewPermissions] = await Promise.all([
+        const [mergePermissions, reviewPermissions, writePermissions] = await Promise.all([
           githubService.checkPullRequestMergePermissions(owner, repo, prInfo[0].number),
-          githubService.checkPullRequestReviewPermissions(owner, repo, prInfo[0].number)
+          githubService.checkPullRequestReviewPermissions(owner, repo, prInfo[0].number),
+          githubService.checkRepositoryWritePermissions(owner, repo) // For managing PR draft status
         ]);
         setCanMergePR(mergePermissions);
         setCanReviewPR(reviewPermissions);
+        setCanManagePR(writePermissions); // Repository write access for draft/ready status changes
       } else {
         setCanMergePR(false);
         setCanReviewPR(false);
+        setCanManagePR(false);
       }
     } catch (error) {
       console.debug('Error checking permissions:', error);
@@ -818,6 +879,7 @@ const PreviewBadge = () => {
       setCanApproveWorkflows(false);
       setCanMergePR(false);
       setCanReviewPR(false);
+      setCanManagePR(false);
     }
   };
 
@@ -1569,16 +1631,19 @@ const PreviewBadge = () => {
                       // Pass PR actions data
                       prInfo={prInfo}
                       canMergePR={canMergePR}
+                      canManagePR={canManagePR}
                       canReviewPR={canReviewPR}
                       isMergingPR={isMergingPR}
                       isApprovingPR={isApprovingPR}
                       isRequestingChanges={isRequestingChanges}
+                      isMarkingReadyForReview={isMarkingReadyForReview}
                       approvalStatus={approvalStatus}
                       approvalMessage={approvalMessage}
                       newComment={newComment}
                       onMergePR={handleMergePR}
                       onApprovePR={handleApprovePR}
                       onRequestChanges={handleRequestChanges}
+                      onMarkReadyForReview={handleMarkReadyForReview}
                     />
                   </div>
                 )
