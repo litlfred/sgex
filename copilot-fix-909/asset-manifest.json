@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/sgex/copilot-fix-909/static/css/main.08d09003.css",
-    "main.js": "/sgex/copilot-fix-909/static/js/main.80afab49.js",
-    "static/js/228.bdce0800.chunk.js": "/sgex/copilot-fix-909/static/js/228.bdce0800.chunk.js",
+    "main.js": "/sgex/copilot-fix-909/static/js/main.c58960ff.js",
+    "static/js/228.6a7fd6bb.chunk.js": "/sgex/copilot-fix-909/static/js/228.6a7fd6bb.chunk.js",
     "static/js/8700.f6c418e9.chunk.js": "/sgex/copilot-fix-909/static/js/8700.f6c418e9.chunk.js",
     "static/js/984.3c77cb82.chunk.js": "/sgex/copilot-fix-909/static/js/984.3c77cb82.chunk.js",
     "static/js/9414.1cf22a59.chunk.js": "/sgex/copilot-fix-909/static/js/9414.1cf22a59.chunk.js",
@@ -67,6 +67,6 @@
   },
   "entrypoints": [
     "static/css/main.08d09003.css",
-    "static/js/main.80afab49.js"
+    "static/js/main.c58960ff.js"
   ]
 }
