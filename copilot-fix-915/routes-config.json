@@ -89,6 +89,18 @@
       "component": "TerminologyPublication",
       "path": "./components/publications/TerminologyPublication"
     },
+    "publications-health-interventions": {
+      "component": "HealthInterventionsPublication",
+      "path": "./components/publications/HealthInterventionsPublication"
+    },
+    "publications-user-scenarios": {
+      "component": "UserScenariosPublication",
+      "path": "./components/publications/UserScenariosPublication"
+    },
+    "publications-functional-requirements": {
+      "component": "FunctionalRequirementsPublication",
+      "path": "./components/publications/FunctionalRequirementsPublication"
+    },
     "publications-all-components": {
       "component": "AllComponentsPublication",
       "path": "./components/publications/AllComponentsPublication"
