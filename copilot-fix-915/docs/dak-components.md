@@ -4,7 +4,8 @@ This document provides detailed information about the 9 core Digital Adaptation 
 
 For technical requirements and specifications, see [Requirements Documentation](requirements.md#23-dak-component-management).  
 For comprehensive L2/L3 architecture details, see [L2/L3 Architecture Guide](l2-l3-architecture.md).  
-For asset lifecycle management, see [Asset Management Documentation](asset-management.md).
+For asset lifecycle management, see [Asset Management Documentation](asset-management.md).  
+For programmatic access to DAK component information, see [DAK FAQ MCP API Documentation](dak-faq-mcp-api.md).
 
 ## WHO SMART Guidelines Context
 
