@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
@@ -19,6 +19,7 @@ const SelectProfilePage = () => {
   const [dakCounts, setDakCounts] = useState({});
   const [warningMessage, setWarningMessage] = useState(null);
   const [samlModal, setSamlModal] = useState({ isOpen: false, errorInfo: null });
+  const fetchInProgress = useRef(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -51,6 +52,12 @@ const SelectProfilePage = () => {
   }, []);
 
   const fetchUserData = useCallback(async () => {
+    // Prevent multiple simultaneous calls
+    if (fetchInProgress.current) {
+      return;
+    }
+    
+    fetchInProgress.current = true;
     setLoading(true);
     setError(null);
     
@@ -174,6 +181,7 @@ const SelectProfilePage = () => {
       }
     } finally {
       setLoading(false);
+      fetchInProgress.current = false;
     }
   }, [loadCachedDakCounts]); // Remove isAuthenticated from dependencies to prevent stale closures
 
@@ -257,12 +265,10 @@ const SelectProfilePage = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
-  // Fetch user data when component mounts
+  // Fetch user data when component mounts or authentication state changes
   useEffect(() => {
-    if (!loading) {
-      fetchUserData();
-    }
-  }, [fetchUserData, loading]);
+    fetchUserData();
+  }, [fetchUserData]);
 
   const handleProfileSelect = (event, profile) => {
     // Check if this organization needs SAML authorization
