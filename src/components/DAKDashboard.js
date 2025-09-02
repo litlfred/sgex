@@ -61,6 +61,49 @@ const DAKDashboardContent = () => {
       setImageLoaded(false);
     };
 
+    // Check if component has publication support
+    const hasPublicationSupport = ['business-processes', 'decision-support', 'core-data-elements', 'testing', 'generic-personas'].includes(component.id);
+    
+    // Handle publication view click
+    const handlePublicationClick = (event) => {
+      event.stopPropagation(); // Prevent triggering the main card click
+      
+      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const repoName = repository.name;
+      let publicationPath = '';
+      
+      // Map component IDs to publication routes
+      switch (component.id) {
+        case 'business-processes':
+          publicationPath = `/publications-business-processes/${owner}/${repoName}/${selectedBranch}`;
+          break;
+        case 'decision-support':
+          publicationPath = `/publications-decision-support/${owner}/${repoName}/${selectedBranch}`;
+          break;
+        case 'core-data-elements':
+          publicationPath = `/publications-core-data-dictionary/${owner}/${repoName}/${selectedBranch}`;
+          break;
+        case 'testing':
+          publicationPath = `/publications-testing/${owner}/${repoName}/${selectedBranch}`;
+          break;
+        case 'generic-personas':
+          publicationPath = `/publications-actors/${owner}/${repoName}/${selectedBranch}`;
+          break;
+        default:
+          console.warn('Publication not supported for component:', component.id);
+          return;
+      }
+      
+      const navigationState = {
+        profile,
+        repository,
+        component,
+        selectedBranch
+      };
+      
+      handleNavigationClick(event, publicationPath, navigate, navigationState);
+    };
+
     return (
       <div 
         className={`component-card ${component.type.toLowerCase()} large-card ${imageLoaded ? 'image-loaded' : ''}`}
@@ -116,6 +159,20 @@ const DAKDashboardContent = () => {
             <div className="file-count">
               {component.count} files
             </div>
+          </div>
+          
+          {/* Publication Actions */}
+          <div className="component-actions">
+            {hasPublicationSupport && (
+              <button
+                className="publication-btn"
+                onClick={handlePublicationClick}
+                title="View Publication Format"
+                aria-label={`View ${component.name} in publication format`}
+              >
+                📄 Publication
+              </button>
+            )}
           </div>
         </div>
       </div>

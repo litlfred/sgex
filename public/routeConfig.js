@@ -33,7 +33,7 @@ function getDeploymentType() {
     var path = window.location.pathname;
     
     // If we're accessing documentation or other main features, use main config
-    if (path.includes('/docs/') || path.includes('/dashboard/') || path.includes('/test-') || path.includes('/actor-') || path.includes('/bpmn-') || path.includes('/decision-support-') || path.includes('/questionnaire-') || path.includes('/core-data-') || path.includes('/testing-') || path.includes('/business-process-')) {
+    if (path.includes('/docs/') || path.includes('/dashboard/') || path.includes('/test-') || path.includes('/actor-') || path.includes('/bpmn-') || path.includes('/decision-support-') || path.includes('/questionnaire-') || path.includes('/core-data-') || path.includes('/testing-') || path.includes('/business-process-') || path.includes('/publications-')) {
       return 'main';
     }
     

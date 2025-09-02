@@ -1,0 +1,403 @@
+/* Publication View Styles - Print-Optimized for Browser PDF Generation */
+
+.publication-container {
+  max-width: 210mm; /* A4 width */
+  margin: 0 auto;
+  padding: 20mm;
+  background: white;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+/* Publication Header */
+.publication-header {
+  border-bottom: 3px solid #0078d4;
+  padding-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.publication-title h1 {
+  color: #0078d4;
+  font-size: 2.5em;
+  margin: 0 0 10px 0;
+  font-weight: 700;
+}
+
+.publication-title h2 {
+  color: #666;
+  font-size: 1.4em;
+  margin: 0;
+  font-weight: 400;
+}
+
+.publication-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.meta-item {
+  font-size: 0.95em;
+}
+
+.meta-item strong {
+  color: #0078d4;
+  display: inline-block;
+  min-width: 80px;
+}
+
+/* Publication Content */
+.publication-content {
+  margin: 30px 0;
+  min-height: 50vh;
+}
+
+.publication-content h3 {
+  color: #0078d4;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+  margin-top: 30px;
+  margin-bottom: 20px;
+}
+
+.publication-content ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.publication-content li {
+  background: #f8f9fa;
+  margin: 8px 0;
+  padding: 12px 16px;
+  border-left: 4px solid #0078d4;
+  border-radius: 4px;
+}
+
+.publication-content li:hover {
+  background: #e3f2fd;
+}
+
+/* BPMN-specific publication styles */
+.bpmn-publication {
+  page-break-inside: avoid;
+}
+
+.bpmn-page {
+  page-break-after: always;
+  margin-bottom: 30px;
+}
+
+.bpmn-page:last-child {
+  page-break-after: auto;
+}
+
+.bpmn-page-header {
+  text-align: center;
+  font-size: 0.9em;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.bpmn-viewer-segment {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+  min-height: 400px;
+}
+
+/* DMN Table styles for publication */
+.dmn-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 0.9em;
+}
+
+.dmn-table th,
+.dmn-table td {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.dmn-table th {
+  background: #0078d4;
+  color: white;
+  font-weight: 600;
+}
+
+.dmn-table tr:nth-child(even) {
+  background: #f8f9fa;
+}
+
+/* Publication Footer */
+.publication-footer {
+  border-top: 1px solid #ddd;
+  padding-top: 20px;
+  margin-top: 40px;
+  text-align: center;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.footer-content p {
+  margin: 5px 0;
+}
+
+/* Publication Controls (hidden in print) */
+.publication-controls {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.print-button,
+.epub-button {
+  background: #0078d4;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.3);
+  transition: all 0.2s ease;
+}
+
+.print-button:hover,
+.epub-button:hover {
+  background: #106ebe;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.4);
+}
+
+/* Loading and Error States */
+.publication-loading,
+.publication-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.loading-content,
+.error-content {
+  text-align: center;
+  padding: 40px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.loading-content h3,
+.error-content h3 {
+  color: #0078d4;
+  margin-bottom: 15px;
+}
+
+.error-content {
+  border-left: 4px solid #d32f2f;
+}
+
+.error-content h3 {
+  color: #d32f2f;
+}
+
+/* Print-specific styles */
+@media print {
+  /* Hide navigation and controls */
+  .publication-controls,
+  .page-header,
+  .page-breadcrumbs,
+  .contextual-help-mascot {
+    display: none !important;
+  }
+
+  /* Optimize print layout */
+  .publication-container {
+    max-width: none;
+    margin: 0;
+    padding: 15mm;
+    box-shadow: none;
+  }
+
+  /* Ensure proper page breaks */
+  .bpmn-page {
+    page-break-after: always;
+  }
+
+  .bpmn-page:last-child {
+    page-break-after: auto;
+  }
+
+  /* Optimize colors for print */
+  .publication-header {
+    border-bottom-color: #333;
+  }
+
+  .publication-title h1 {
+    color: #333;
+  }
+
+  .meta-item strong {
+    color: #333;
+  }
+
+  .publication-content h3 {
+    color: #333;
+  }
+
+  /* Ensure tables don't break across pages */
+  .dmn-table {
+    page-break-inside: avoid;
+  }
+
+  /* Print footer on every page */
+  .publication-footer {
+    position: fixed;
+    bottom: 10mm;
+    left: 15mm;
+    right: 15mm;
+    font-size: 8pt;
+    border-top: 1px solid #333;
+    padding-top: 5mm;
+  }
+
+  /* Print header on every page */
+  @page {
+    margin: 20mm;
+    
+    @top-center {
+      content: "WHO SMART Guidelines DAK Publication";
+      font-size: 10pt;
+      color: #666;
+    }
+    
+    @bottom-right {
+      content: "Page " counter(page);
+      font-size: 9pt;
+      color: #666;
+    }
+  }
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .publication-container {
+    padding: 15px;
+    max-width: 100%;
+  }
+
+  .publication-title h1 {
+    font-size: 2em;
+  }
+
+  .publication-title h2 {
+    font-size: 1.2em;
+  }
+
+  .publication-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .publication-controls {
+    position: static;
+    margin: 20px 0;
+    justify-content: center;
+  }
+}
+
+/* Component-specific content styles */
+.component-content {
+  margin: 25px 0;
+}
+
+.component-section {
+  margin-bottom: 35px;
+}
+
+.component-section h4 {
+  color: #0078d4;
+  font-size: 1.2em;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.file-list {
+  display: grid;
+  gap: 8px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #0078d4;
+}
+
+.file-icon {
+  margin-right: 10px;
+  font-size: 1.2em;
+}
+
+.file-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.file-path {
+  font-size: 0.85em;
+  color: #666;
+  margin-left: auto;
+}
+
+/* BPMN specific styles for publication */
+.bpmn-content {
+  margin: 20px 0;
+}
+
+.bpmn-diagram-container {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  margin: 15px 0;
+  overflow: hidden;
+}
+
+.bpmn-diagram-title {
+  background: #0078d4;
+  color: white;
+  padding: 10px 15px;
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+.bpmn-diagram-viewer {
+  min-height: 400px;
+  width: 100%;
+}
+
+/* Ensure diagrams fit well in print */
+@media print {
+  .bpmn-diagram-container {
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+  }
+  
+  .bpmn-diagram-viewer {
+    min-height: 300px;
+  }
+}

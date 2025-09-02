@@ -56,6 +56,26 @@
     "faq-demo": {
       "component": "DAKFAQDemo",
       "path": "./components/DAKFAQDemo"
+    },
+    "publications-business-processes": {
+      "component": "BusinessProcessesPublication",
+      "path": "./components/publications/BusinessProcessesPublication"
+    },
+    "publications-decision-support": {
+      "component": "DecisionSupportPublication",
+      "path": "./components/publications/DecisionSupportPublication"
+    },
+    "publications-core-data-dictionary": {
+      "component": "CoreDataDictionaryPublication",
+      "path": "./components/publications/CoreDataDictionaryPublication"
+    },
+    "publications-testing": {
+      "component": "TestingPublication",
+      "path": "./components/publications/TestingPublication"
+    },
+    "publications-actors": {
+      "component": "ActorsPublication",
+      "path": "./components/publications/ActorsPublication"
     }
   },
   "standardComponents": {

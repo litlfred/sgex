@@ -735,6 +735,62 @@ body.theme-light .file-count {
   color: var(--who-text-secondary);
 }
 
+/* Component Actions */
+.component-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.publication-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.4rem 0.8rem;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.publication-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.publication-btn:active {
+  transform: translateY(0);
+}
+
+/* Theme-specific publication button styles */
+body.theme-dark .publication-btn {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .publication-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+body.theme-light .publication-btn {
+  background: rgba(0, 120, 212, 0.1);
+  color: var(--who-blue-dark);
+  border: 1px solid rgba(0, 120, 212, 0.2);
+}
+
+body.theme-light .publication-btn:hover {
+  background: rgba(0, 120, 212, 0.2);
+  border-color: rgba(0, 120, 212, 0.4);
+}
+
 .additional-section .component-card {
   background: rgba(0, 120, 212, 0.08);
   border: 1px solid rgba(0, 120, 212, 0.15);
