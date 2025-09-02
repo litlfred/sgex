@@ -49,7 +49,9 @@
     "prebuild": "echo 'Skipping prebuild due to TypeScript errors'",
     "build-mcp": "cd services/dak-faq-mcp && npm install && npm run build",
     "run-mcp": "cd services/dak-faq-mcp && npm start",
-    "generate-dak-faq-docs": "node scripts/generate-dak-faq-docs.js",
+    "run-mcp-server": "cd services/dak-faq-mcp && npm run start-mcp",
+    "test-mcp": "cd services/dak-faq-mcp && npm test",
+    "generate-dak-faq-docs": "npm run build-mcp && node scripts/generate-dak-faq-docs.js",
     "compliance:profile": "node src/tests/compliance/profileCreationCompliance.js",
     "compliance:all": "npm run compliance:profile",
     "test:compliance": "npm test -- --testPathPattern=compliance"
