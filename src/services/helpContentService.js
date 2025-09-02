@@ -9,9 +9,40 @@ class HelpContentService {
         badge: '/sgex/cat-paw-info-icon.svg',
         type: 'action',
         action: () => {
-          // Navigate to documentation viewer using the standard routing pattern
-          // The docs component is configured as a DAK component with pattern /docs/:docId
-          window.location.href = '/docs/overview';
+          // Navigate to documentation viewer in the same window
+          const currentPath = window.location.pathname;
+          
+          // Determine the correct documentation path based on deployment context
+          let docsPath = '';
+          
+          if (currentPath.includes('/sgex')) {
+            const pathParts = currentPath.split('/');
+            const sgexIndex = pathParts.indexOf('sgex');
+            
+            if (sgexIndex !== -1 && pathParts.length > sgexIndex + 1) {
+              const potentialBranch = pathParts[sgexIndex + 1];
+              
+              // Check if we're in a branch deployment (not main app pages)
+              const mainAppPages = ['dashboard', 'docs', 'select_profile', 'dak-action', 'dak-selection', 'main'];
+              
+              if (potentialBranch && !mainAppPages.includes(potentialBranch)) {
+                // We're in a feature branch deployment: /sgex/branch-name
+                docsPath = `/sgex/${potentialBranch}/docs`;
+              } else {
+                // We're in the main deployment or a main app page
+                docsPath = '/sgex/main/docs';
+              }
+            } else {
+              // Fallback to main if we can't determine branch
+              docsPath = '/sgex/main/docs';
+            }
+          } else {
+            // Not in a /sgex path, default to main
+            docsPath = '/sgex/main/docs';
+          }
+          
+          // Navigate to docs with overview as the default document
+          window.location.href = `${docsPath}/overview`;
         },
         content: `
           <p>Access comprehensive documentation and guides for using SGEX Workbench.</p>
