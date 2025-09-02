@@ -1907,3 +1907,204 @@ body.theme-dark .toggle-option.active {
 body.theme-dark .toggle-option.active:hover {
   background: var(--who-blue-dark);
 }
+
+/* New Copilot Session Activity Modal Styles */
+.session-url-link {
+  color: #0366d6;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.session-url-link:hover {
+  text-decoration: underline;
+}
+
+.copilot-responses {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.copilot-responses-header {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.copilot-responses-header strong {
+  color: #333;
+  font-size: 0.85rem;
+}
+
+.copilot-response-item {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  border-left: 3px solid #0366d6;
+}
+
+.copilot-response-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.copilot-response-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.copilot-response-username {
+  font-weight: 600;
+  color: #0366d6;
+  text-decoration: none;
+  font-size: 0.8rem;
+}
+
+.copilot-response-username:hover {
+  text-decoration: underline;
+}
+
+.copilot-response-date {
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.copilot-latest-badge {
+  background: #10b981;
+  color: white;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.copilot-response-body {
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.copilot-response-body .markdown-content {
+  color: #333;
+}
+
+.read-full-response {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: #0366d6;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.read-full-response:hover {
+  text-decoration: underline;
+}
+
+.copilot-more-responses {
+  text-align: center;
+  padding: 0.5rem;
+  border-top: 1px solid #e1e5e9;
+}
+
+.view-more-responses {
+  color: #0366d6;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.view-more-responses:hover {
+  text-decoration: underline;
+}
+
+.copilot-fallback-content {
+  padding: 0.5rem 0;
+}
+
+.copilot-activity-date {
+  color: #666;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+}
+
+.no-copilot-activity {
+  text-align: center;
+  color: #666;
+  font-size: 0.85rem;
+  padding: 1rem;
+}
+
+.no-copilot-activity p {
+  margin: 0.5rem 0;
+}
+
+.no-copilot-activity a {
+  color: #0366d6;
+  word-break: break-all;
+}
+
+/* Dark mode support for new copilot session modal */
+@media (prefers-color-scheme: dark) {
+  .session-url-link {
+    color: #60a5fa !important;
+  }
+  
+  .copilot-responses-header {
+    border-bottom-color: #4b5563;
+  }
+  
+  .copilot-responses-header strong {
+    color: #f9fafb !important;
+  }
+  
+  .copilot-response-item {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+    border-left-color: #60a5fa !important;
+  }
+  
+  .copilot-response-username {
+    color: #60a5fa !important;
+  }
+  
+  .copilot-response-date {
+    color: #9ca3af !important;
+  }
+  
+  .copilot-response-body .markdown-content {
+    color: #e5e7eb !important;
+  }
+  
+  .read-full-response {
+    color: #60a5fa !important;
+  }
+  
+  .copilot-more-responses {
+    border-top-color: #4b5563;
+  }
+  
+  .view-more-responses {
+    color: #60a5fa !important;
+  }
+  
+  .copilot-activity-date {
+    color: #9ca3af !important;
+  }
+  
+  .no-copilot-activity {
+    color: #9ca3af !important;
+  }
+  
+  .no-copilot-activity a {
+    color: #60a5fa !important;
+  }
+}

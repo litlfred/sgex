@@ -551,42 +551,79 @@ const PreviewBadge = () => {
         comment.body.includes('GitHub Copilot')
       );
 
+      console.debug('Copilot session detection:', {
+        totalComments: comments.length,
+        copilotComments: copilotComments.length,
+        copilotCommentsInfo: copilotComments.map(c => ({
+          id: c.id,
+          author: c.user.login,
+          created: c.created_at,
+          bodyPreview: c.body.substring(0, 100) + '...'
+        }))
+      });
+
       if (copilotComments.length > 0) {
         // Sort copilot comments by date (newest first) to ensure we get the latest activity
         const sortedCopilotComments = copilotComments.sort((a, b) => 
           new Date(b.created_at) - new Date(a.created_at)
         );
         
-        // Get the most recent copilot activity
-        const latestCopilotComment = sortedCopilotComments[0];
-        
-        // Try to find the newest agent session URL in the comments
+        // Try to find the newest agent session URL by checking ALL comments, not just copilot ones
         let agentSessionUrl = null;
         let latestSessionDate = null;
+        let sessionComment = null;
         
-        // Look for agent session URLs in comments, starting from newest
-        const sessionUrlPattern = /https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+\/agent-sessions\/[a-f0-9-]+/gi;
-        for (const comment of sortedCopilotComments) {
-          const matches = comment.body.match(sessionUrlPattern);
-          if (matches) {
-            // Take the first (and typically only) session URL from this comment
-            const sessionUrl = matches[0];
+        // Enhanced session URL pattern to capture session IDs
+        const sessionUrlPattern = /https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+\/agent-sessions\/([a-f0-9-]+)/gi;
+        
+        // Check ALL comments for session URLs, sorted by date (newest first)
+        const allCommentsSorted = comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        console.debug('Searching for session URLs in all comments:', allCommentsSorted.length);
+        
+        for (const comment of allCommentsSorted) {
+          const matches = [...comment.body.matchAll(sessionUrlPattern)];
+          if (matches.length > 0) {
+            console.debug('Found session URLs in comment:', {
+              commentId: comment.id,
+              author: comment.user.login,
+              created: comment.created_at,
+              urls: matches.map(m => m[0])
+            });
+            
+            // Take the last (most recent) session URL from the most recent comment
+            const sessionUrl = matches[matches.length - 1][0];
             const commentDate = new Date(comment.created_at);
             
-            // If this is the first session URL found, or this comment is newer, use this URL
-            if (!agentSessionUrl || !latestSessionDate || commentDate > latestSessionDate) {
+            // Use the session URL from the newest comment with session URLs
+            if (!agentSessionUrl || commentDate > latestSessionDate) {
               agentSessionUrl = sessionUrl;
               latestSessionDate = commentDate;
+              sessionComment = comment;
+              console.debug('Updated session URL to newest:', {
+                url: agentSessionUrl,
+                commentDate: commentDate.toISOString(),
+                commentId: comment.id
+              });
             }
           }
         }
         
         // If no explicit agent session URL found, construct the likely URL
         if (!agentSessionUrl) {
-          // Generate a plausible agent session URL based on the PR structure
-          // This is a best-effort approach since we don't have direct access to session IDs
           agentSessionUrl = `https://github.com/${owner}/${repo}/pull/${prNumber}/agent-sessions`;
+          console.debug('No session URL found, using default:', agentSessionUrl);
+        } else {
+          console.debug('Final session URL selected:', agentSessionUrl);
         }
+        
+        // Get the most recent copilot activity for display
+        const latestCopilotComment = sortedCopilotComments[0];
+        
+        // Filter to get only copilot's actual responses (not mentions)
+        const copilotResponses = sortedCopilotComments.filter(comment => 
+          comment.user.login === 'copilot' || comment.user.login.includes('copilot')
+        );
         
         return {
           hasActiveCopilot: true,
@@ -594,7 +631,9 @@ const PreviewBadge = () => {
           sessionUrl: agentSessionUrl,
           commentUrl: `https://github.com/${owner}/${repo}/pull/${prNumber}#issuecomment-${latestCopilotComment.id}`,
           commentsCount: copilotComments.length,
-          latestComment: latestCopilotComment
+          latestComment: latestCopilotComment,
+          copilotResponses: copilotResponses, // Add filtered copilot responses
+          sessionComment: sessionComment // Add the comment that contained the session URL
         };
       }
 
@@ -1799,47 +1838,136 @@ const PreviewBadge = () => {
                               </a>
                             )}
                           </div>
-                          {showCopilotSession && copilotSessionInfo.latestComment && (
+                          {showCopilotSession && copilotSessionInfo && (
                             <div className="copilot-session-modal">
                               <div className="copilot-session-header">
-                                <strong>Latest Copilot Activity</strong>
+                                <strong>🤖 Copilot Session Activity</strong>
                                 <span className="copilot-comment-date">
-                                  {formatDate(copilotSessionInfo.latestComment.created_at)}
+                                  {copilotSessionInfo.sessionUrl && (
+                                    <a 
+                                      href={copilotSessionInfo.sessionUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="session-url-link"
+                                    >
+                                      🔗 View Full Session
+                                    </a>
+                                  )}
                                 </span>
                               </div>
                               <div className="copilot-session-content">
-                                <div className="copilot-comment-author">
-                                  <img 
-                                    src={copilotSessionInfo.latestComment.user.avatar_url} 
-                                    alt={copilotSessionInfo.latestComment.user.login}
-                                    className="copilot-avatar"
-                                  />
-                                  <a 
-                                    href={copilotSessionInfo.latestComment.user.html_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="copilot-username"
-                                  >
-                                    {copilotSessionInfo.latestComment.user.login}
-                                  </a>
-                                </div>
-                                <div className="copilot-comment-body">
-                                  <div className="markdown-content">
-                                    {ReactMarkdown && rehypeRaw ? (
-                                      <ReactMarkdown 
-                                        rehypePlugins={[rehypeRaw]}
-                                        components={markdownComponents}
-                                      >{processMarkdownContent(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
-                                    ) : (
-                                      <div 
-                                        style={{ whiteSpace: 'pre-wrap' }}
-                                        dangerouslySetInnerHTML={{
-                                          __html: sanitizeHtmlContent(convertGitHubNotationToHtml(copilotSessionInfo.latestComment.body))
-                                        }}
-                                      />
+                                {copilotSessionInfo.copilotResponses && copilotSessionInfo.copilotResponses.length > 0 ? (
+                                  <div className="copilot-responses">
+                                    <div className="copilot-responses-header">
+                                      <strong>Recent Copilot Responses ({copilotSessionInfo.copilotResponses.length})</strong>
+                                    </div>
+                                    {copilotSessionInfo.copilotResponses.slice(0, 3).map((response, index) => (
+                                      <div key={response.id} className="copilot-response-item">
+                                        <div className="copilot-response-meta">
+                                          <img 
+                                            src={response.user.avatar_url} 
+                                            alt={response.user.login}
+                                            className="copilot-response-avatar"
+                                          />
+                                          <a 
+                                            href={response.user.html_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="copilot-response-username"
+                                          >
+                                            {response.user.login}
+                                          </a>
+                                          <span className="copilot-response-date">
+                                            {formatDate(response.created_at)}
+                                          </span>
+                                          {index === 0 && <span className="copilot-latest-badge">Latest</span>}
+                                        </div>
+                                        <div className="copilot-response-body">
+                                          <div className="markdown-content">
+                                            {ReactMarkdown && rehypeRaw ? (
+                                              <ReactMarkdown 
+                                                rehypePlugins={[rehypeRaw]}
+                                                components={markdownComponents}
+                                              >{processMarkdownContent(response.body.length > 300 ? response.body.substring(0, 300) + '...' : response.body)}</ReactMarkdown>
+                                            ) : (
+                                              <div 
+                                                style={{ whiteSpace: 'pre-wrap' }}
+                                                dangerouslySetInnerHTML={{
+                                                  __html: sanitizeHtmlContent(convertGitHubNotationToHtml(response.body.length > 300 ? response.body.substring(0, 300) + '...' : response.body))
+                                                }}
+                                              />
+                                            )}
+                                          </div>
+                                          {response.body.length > 300 && (
+                                            <a 
+                                              href={`https://github.com/litlfred/sgex/pull/${prInfo[0].number}#issuecomment-${response.id}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="read-full-response"
+                                            >
+                                              Read full response →
+                                            </a>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                    {copilotSessionInfo.copilotResponses.length > 3 && (
+                                      <div className="copilot-more-responses">
+                                        <a 
+                                          href={copilotSessionInfo.sessionUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="view-more-responses"
+                                        >
+                                          View {copilotSessionInfo.copilotResponses.length - 3} more responses in session →
+                                        </a>
+                                      </div>
                                     )}
                                   </div>
-                                </div>
+                                ) : copilotSessionInfo.latestComment ? (
+                                  <div className="copilot-fallback-content">
+                                    <div className="copilot-comment-author">
+                                      <img 
+                                        src={copilotSessionInfo.latestComment.user.avatar_url} 
+                                        alt={copilotSessionInfo.latestComment.user.login}
+                                        className="copilot-avatar"
+                                      />
+                                      <a 
+                                        href={copilotSessionInfo.latestComment.user.html_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="copilot-username"
+                                      >
+                                        {copilotSessionInfo.latestComment.user.login}
+                                      </a>
+                                      <span className="copilot-activity-date">
+                                        {formatDate(copilotSessionInfo.latestComment.created_at)}
+                                      </span>
+                                    </div>
+                                    <div className="copilot-comment-body">
+                                      <div className="markdown-content">
+                                        {ReactMarkdown && rehypeRaw ? (
+                                          <ReactMarkdown 
+                                            rehypePlugins={[rehypeRaw]}
+                                            components={markdownComponents}
+                                          >{processMarkdownContent(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                                        ) : (
+                                          <div 
+                                            style={{ whiteSpace: 'pre-wrap' }}
+                                            dangerouslySetInnerHTML={{
+                                              __html: sanitizeHtmlContent(convertGitHubNotationToHtml(copilotSessionInfo.latestComment.body))
+                                            }}
+                                          />
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="no-copilot-activity">
+                                    <p>No copilot responses found in recent activity.</p>
+                                    <p>Session URL: <a href={copilotSessionInfo.sessionUrl} target="_blank" rel="noopener noreferrer">{copilotSessionInfo.sessionUrl}</a></p>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           )}
