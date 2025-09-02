@@ -93,7 +93,8 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
     'core-data-dictionary-viewer': 'Core Data Dictionary',
     'testing-viewer': 'Testing',
     'pages-manager': 'Pages',
-    'documentation': 'Documentation'
+    'documentation': 'Documentation',
+    'documentation-viewer': 'Documentation'
   };
 
   const currentPageLabel = pageLabels[pageName] || pageName;

@@ -34,6 +34,8 @@ class HelpContentService {
             }
           }
           
+          // Navigate to docs with overview as the default document
+          // The DocumentationService will map 'overview' to README.md
           window.location.href = `${basePath}/docs/overview`;
         },
         content: `

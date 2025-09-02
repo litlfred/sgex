@@ -136,6 +136,28 @@ body.theme-light .welcome-page-content {
   align-items: center;
   gap: 1.5rem;
   flex-shrink: 0;
+  /* Override BranchListingPage CSS that sets pointer-events: none */
+  pointer-events: auto;
+}
+
+/* Specific rules for navigation/clickable action cards */
+.action-card.authoring-card,
+.action-card.collaboration-card {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Specific rules for UI container cards (should not be clickable as whole cards) */
+.action-card.pat-demo-card {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Allow pointer events on interactive elements within UI container cards */
+.pat-demo-card .pat-form,
+.pat-demo-card input,
+.pat-demo-card button {
+  pointer-events: auto;
 }
 
 .action-card::before {
@@ -211,7 +233,8 @@ body.theme-light .welcome-page-content {
   flex-direction: column;
   padding: var(--component-padding-default);
   cursor: default;
-  pointer-events: auto;
+  /* UI container card - not clickable as a whole */
+  pointer-events: none;
   /* Override the horizontal layout for this special card */
   flex-direction: column !important;
   text-align: center !important;

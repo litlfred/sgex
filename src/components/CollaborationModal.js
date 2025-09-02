@@ -9,6 +9,9 @@ const CollaborationModal = ({ onClose }) => {
 
   // Theme-aware collaboration image
   const collaborationImage = useThemeImage('collaboration.png');
+  
+  // Theme-aware pronunciation guide image
+  const pronunciationImage = useThemeImage('pronunciation-guide.png');
 
   const slides = [
     {
@@ -108,8 +111,8 @@ const CollaborationModal = ({ onClose }) => {
         <div className="slide-content">
           <div className="pronunciation-image">
             <img 
-              src="https://github.com/user-attachments/assets/ac49bc04-a463-476e-8f2c-56a89e4035eb" 
-              alt="How to Pronounce SGeX" 
+              src={pronunciationImage} 
+              alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_PRONUNCIATION, 'How to Pronounce SGeX')} 
             />
           </div>
         </div>
