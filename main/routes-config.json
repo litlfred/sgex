@@ -153,6 +153,7 @@
     { "path": "/test-framework-dashboard/:user/:repo/:branch", "component": "DAKDashboardWithFramework" }
   ],
   "deployedBranches": [
-    "main"
+    "main",
+    "copilot-fix-895"
   ]
 }
