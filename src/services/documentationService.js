@@ -302,33 +302,10 @@ class DocumentationService {
    * Get the current documentation base path based on deployment context
    */
   getCurrentDocsBasePath() {
-    const currentPath = window.location.pathname;
-    
-    if (currentPath.includes('/sgex')) {
-      const pathParts = currentPath.split('/');
-      const sgexIndex = pathParts.indexOf('sgex');
-      
-      if (sgexIndex !== -1 && pathParts.length > sgexIndex + 1) {
-        const potentialBranch = pathParts[sgexIndex + 1];
-        
-        // Check if we're in a branch deployment (not main app pages)
-        const mainAppPages = ['dashboard', 'docs', 'select_profile', 'dak-action', 'dak-selection', 'main'];
-        
-        if (potentialBranch && !mainAppPages.includes(potentialBranch)) {
-          // We're in a feature branch deployment: /sgex/branch-name
-          return `/sgex/${potentialBranch}/docs`;
-        } else {
-          // We're in the main deployment or a main app page
-          return '/sgex/main/docs';
-        }
-      } else {
-        // Fallback to main if we can't determine branch
-        return '/sgex/main/docs';
-      }
-    } else {
-      // Not in a /sgex path, use standard docs path
-      return '/docs';
-    }
+    // The docs component is configured as a DAK component in routes-config.json
+    // This means it follows the standard route pattern: /docs, /docs/:user/:repo, /docs/:user/:repo/:branch
+    // For SGEX documentation, we should use the simple /docs base path
+    return '/docs';
   }
 
   /**

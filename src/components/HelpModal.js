@@ -344,37 +344,9 @@ Best regards,
   };
 
   const handleDocumentation = () => {
-    // Use the same logic as helpContentService to determine correct documentation path
-    const currentPath = window.location.pathname;
-    let docsPath = '';
-    
-    if (currentPath.includes('/sgex')) {
-      const pathParts = currentPath.split('/');
-      const sgexIndex = pathParts.indexOf('sgex');
-      
-      if (sgexIndex !== -1 && pathParts.length > sgexIndex + 1) {
-        const potentialBranch = pathParts[sgexIndex + 1];
-        
-        // Check if we're in a branch deployment (not main app pages)
-        const mainAppPages = ['dashboard', 'docs', 'select_profile', 'dak-action', 'dak-selection', 'main'];
-        
-        if (potentialBranch && !mainAppPages.includes(potentialBranch)) {
-          // We're in a feature branch deployment: /sgex/branch-name
-          docsPath = `/sgex/${potentialBranch}/docs`;
-        } else {
-          // We're in the main deployment or a main app page
-          docsPath = '/sgex/main/docs';
-        }
-      } else {
-        // Fallback to main if we can't determine branch
-        docsPath = '/sgex/main/docs';
-      }
-    } else {
-      // Not in a /sgex path, default to main
-      docsPath = '/sgex/main/docs';
-    }
-    
-    window.open(`${docsPath}/overview`, '_blank');
+    // Use the standard /docs path that matches the route configuration
+    // The docs component is configured as a DAK component at /docs
+    window.open('/docs/overview', '_blank');
   };
 
   const handlePrevSlide = () => {
