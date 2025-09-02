@@ -262,10 +262,22 @@ export function generateLazyRoutes() {
   if (!config) {
     console.warn('SGEX route configuration not loaded, falling back to minimal routes');
     
+    // Determine deployment type for fallback routes
+    let deployType = 'main';
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      const branchMatch = path.match(/^\/sgex\/([^\/]+)\/?$/);
+      if (branchMatch && branchMatch[1] !== 'main' && branchMatch[1] !== '') {
+        deployType = 'deploy';
+      } else if (path === '/' || path === '/sgex/' || path === '/sgex') {
+        deployType = 'deploy';
+      }
+    }
+    
     // Provide a more comprehensive fallback that includes essential routes for the help system and publications
     const BranchListingPage = createLazyComponent('BranchListingPage');
+    const WelcomePage = createLazyComponent('WelcomePage');
     const DAKDashboard = createLazyComponent('DAKDashboard');
-    const LandingPage = createLazyComponent('LandingPage');
     const DocumentationViewer = createLazyComponent('DocumentationViewer');
     
     // Publication components for fallback
@@ -282,13 +294,15 @@ export function generateLazyRoutes() {
     const FunctionalRequirementsPublication = createLazyComponent('FunctionalRequirementsPublication');
     const AllComponentsPublication = createLazyComponent('AllComponentsPublication');
     
+    // Choose home page component based on deployment type
+    const HomePage = deployType === 'deploy' ? BranchListingPage : WelcomePage;
+    
     const fallbackRoutes = [
-      <Route key="fallback-home" path="/" element={<BranchListingPage />} />,
+      <Route key="fallback-home" path="/" element={<HomePage />} />,
       <Route key="fallback-dashboard" path="/dashboard" element={<DAKDashboard />} />,
       <Route key="fallback-dashboard-user" path="/dashboard/:user" element={<DAKDashboard />} />,
       <Route key="fallback-dashboard-user-repo" path="/dashboard/:user/:repo" element={<DAKDashboard />} />,
       <Route key="fallback-dashboard-user-repo-branch" path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />,
-      <Route key="fallback-welcome" path="/welcome" element={<LandingPage />} />,
       <Route key="fallback-docs" path="/docs/:docId" element={<DocumentationViewer />} />,
       <Route key="fallback-docs-default" path="/docs" element={<DocumentationViewer />} />
     ];
