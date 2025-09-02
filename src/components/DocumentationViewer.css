@@ -145,8 +145,6 @@ body.theme-dark .documentation-viewer {
   backdrop-filter: blur(10px);
   border-right: 1px solid rgba(255, 255, 255, 0.2);
   padding: 0;
-  position: sticky;
-  top: 0;
   height: calc(100vh - 80px);
   overflow-y: auto;
   flex-shrink: 0;
