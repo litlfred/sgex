@@ -182,6 +182,13 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
   flex-direction: column;
 }
 
+/* Main view container - ensure it can scroll properly */
+.decision-support-view .view-main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 /* Section Toggle Tabs */
 .decision-support-view .section-tabs {
   display: flex;

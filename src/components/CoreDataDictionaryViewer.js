@@ -221,23 +221,25 @@ const CoreDataDictionaryViewerContent = () => {
           const baseUrl = getBaseUrl(currentBranch);
           const dakExists = await checkPublishedDakExists(baseUrl);
           setHasPublishedDak(dakExists);
+        }
 
-          // Detect logical models from published artifacts
-          setLoadingLogicalModels(true);
-          try {
-            const detectedModels = await logicalModelService.detectLogicalModels(
-              baseUrl, 
-              currentUser, 
-              currentRepo, 
-              currentBranch
-            );
-            setLogicalModels(detectedModels);
-          } catch (error) {
-            console.warn('Error detecting logical models:', error);
-            setLogicalModels([]);
-          } finally {
-            setLoadingLogicalModels(false);
-          }
+        // Detect logical models from FSH files (regardless of gh-pages)
+        setLoadingLogicalModels(true);
+        try {
+          const baseUrl = getBaseUrl(currentBranch);
+          const detectedModels = await logicalModelService.detectLogicalModels(
+            baseUrl, 
+            currentUser, 
+            currentRepo, 
+            currentBranch
+          );
+          setLogicalModels(detectedModels);
+        } catch (error) {
+          console.warn('Error detecting logical models:', error);
+          setLogicalModels([]);
+        } finally {
+          setLoadingLogicalModels(false);
+        }
         } else {
           setHasPublishedDak(false);
           setLogicalModels([]);

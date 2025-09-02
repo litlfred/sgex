@@ -29,16 +29,7 @@ class LogicalModelService {
     }
 
     try {
-      // Try to fetch the artifacts page to check for logical models
-      const artifactsUrl = `${baseUrl}/artifacts.html`;
-      
-      // Check if artifacts page exists (this indicates IG Publisher has run)
-      const response = await fetch(artifactsUrl, { method: 'HEAD' });
-      if (!response.ok) {
-        return [];
-      }
-
-      // Look for logical models in the FSH files
+      // Look for logical models in the FSH files (regardless of artifacts page)
       const logicalModels = await this.scanFSHFilesForLogicalModels(user, repo, branch);
       
       // Cache the results
