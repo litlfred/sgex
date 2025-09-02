@@ -66,6 +66,33 @@ const SelectProfilePage = () => {
     console.log('fetchUserData: Current authentication state:', currentIsAuthenticated);
     
     try {
+      // Check if we have cached profile data first
+      const cachedProfile = repositoryCacheService.getCachedProfile(currentIsAuthenticated);
+      
+      if (cachedProfile) {
+        console.log('Using cached profile data', {
+          organizationCount: cachedProfile.organizations?.length || 0,
+          hasUser: !!cachedProfile.user,
+          cacheAge: Date.now() - cachedProfile.timestamp
+        });
+        
+        // Use cached data
+        setUser(cachedProfile.user);
+        setOrganizations(cachedProfile.organizations);
+        
+        // Load cached DAK counts (if available and authenticated)
+        if (currentIsAuthenticated) {
+          loadCachedDakCounts(cachedProfile.user, cachedProfile.organizations);
+        }
+        
+        setLoading(false);
+        fetchInProgress.current = false;
+        return;
+      }
+      
+      // No cache found, fetch fresh data
+      console.log('No cached profile data found, fetching fresh data');
+      
       let userData = null;
       
       if (currentIsAuthenticated) {
@@ -163,6 +190,10 @@ const SelectProfilePage = () => {
       
       setOrganizations(orgsData);
       
+      // Cache the profile data for 5 minutes
+      repositoryCacheService.setCachedProfile(userData, orgsData, currentIsAuthenticated);
+      console.log('Profile data cached for 5 minutes');
+      
       // Load cached DAK counts (if available and authenticated)
       if (currentIsAuthenticated) {
         loadCachedDakCounts(userData, orgsData);
@@ -197,6 +228,10 @@ const SelectProfilePage = () => {
           ? { ...org, ...whoData, needsSAMLAuth: false }
           : org
       ));
+      
+      // Clear profile cache to ensure fresh data on next load
+      repositoryCacheService.clearProfileCache(githubService.isAuth());
+      console.log('SAML authorization successful, cleared profile cache for fresh data');
       
       // Clear any warning message
       setWarningMessage(null);
@@ -245,6 +280,14 @@ const SelectProfilePage = () => {
     const initializeAuth = () => {
       // Try to initialize from securely stored token
       const success = githubService.initializeFromStoredToken();
+      const newAuthState = success;
+      
+      // Clear profile cache if authentication state changed
+      if (newAuthState !== isAuthenticated) {
+        repositoryCacheService.clearAllProfileCaches();
+        console.log('Authentication state changed, cleared profile cache');
+      }
+      
       if (success) {
         setIsAuthenticated(true);
       } else {
@@ -254,7 +297,7 @@ const SelectProfilePage = () => {
     };
 
     initializeAuth();
-  }, []);
+  }, [isAuthenticated]);
 
   // Handle warning message from navigation state
   useEffect(() => {
