@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { PageLayout } from './framework';
 import documentationService from '../services/documentationService';
 import bookmarkService from '../services/bookmarkService';
+import githubService from '../services/githubService';
 
 const DocumentationViewer = () => {
   const { docId } = useParams();
@@ -19,6 +20,11 @@ const DocumentationViewer = () => {
   useEffect(() => {
     const loadNavigationMenu = async () => {
       try {
+        // Initialize authentication if available
+        if (!githubService.isAuth() && githubService.hasStoredToken()) {
+          await githubService.initializeFromStoredToken();
+        }
+        
         const menu = await documentationService.getNavigationMenu();
         setNavigationMenu(menu);
       } catch (err) {
@@ -164,37 +170,22 @@ const DocumentationViewer = () => {
     );
   }
 
+  // Custom breadcrumbs for documentation in the preferred style
+  const customBreadcrumbs = breadcrumbs.length > 1 ? breadcrumbs.map((crumb, index) => ({
+    label: crumb.label,
+    path: crumb.path,
+    current: crumb.current,
+    onClick: crumb.current ? undefined : () => navigate(crumb.path)
+  })) : undefined;
+
   return (
-    <PageLayout pageName="documentation-viewer">
+    <PageLayout 
+      pageName="documentation-viewer" 
+      showBreadcrumbs={true}
+      customBreadcrumbs={customBreadcrumbs}
+    >
       <div className="documentation-viewer">
         <div className="doc-content">
-          {/* Breadcrumbs */}
-          {breadcrumbs.length > 1 && (
-            <nav className="doc-breadcrumbs" aria-label={t('navigation.breadcrumbs', 'Breadcrumb navigation')}>
-              <ol className="breadcrumb-list">
-                {breadcrumbs.map((crumb, index) => (
-                  <li key={index} className="breadcrumb-item">
-                    {!crumb.current ? (
-                      <>
-                        <button 
-                          className="breadcrumb-link" 
-                          onClick={() => navigate(crumb.path)}
-                          type="button"
-                        >
-                          {crumb.label}
-                        </button>
-                        <span className="breadcrumb-separator" aria-hidden="true">›</span>
-                      </>
-                    ) : (
-                      <span className="breadcrumb-current" aria-current="page">
-                        {crumb.label}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </nav>
-          )}
 
           <div className="doc-sidebar">
             <div className="doc-sidebar-header">

@@ -90,6 +90,17 @@ export const PageProvider = ({ children, pageName }) => {
       try {
         setPageState(prev => ({ ...prev, loading: true, error: null }));
 
+        // Special handling for documentation page - no user/repo context needed
+        if (pageName === 'documentation-viewer') {
+          setPageState(prev => ({
+            ...prev,
+            loading: false,
+            error: null,
+            isAuthenticated: githubService.isAuth()
+          }));
+          return;
+        }
+
         // Use location state if available, otherwise fetch from URL params
         let profile = location.state?.profile;
         let repository = location.state?.repository;
