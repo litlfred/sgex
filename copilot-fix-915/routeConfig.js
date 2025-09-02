@@ -58,7 +58,9 @@ function getDeploymentType() {
 
 // Get appropriate config file name based on deployment type  
 function getConfigFileName(deployType) {
-  return deployType === 'deploy' ? './routes-config.deploy.json' : './routes-config.json';
+  // Use absolute paths to avoid issues with nested routes
+  var basePath = window.location.pathname.includes('/sgex/') ? '/sgex/' : '/';
+  return deployType === 'deploy' ? basePath + 'routes-config.deploy.json' : basePath + 'routes-config.json';
 }
 
 // Synchronous configuration loading using XMLHttpRequest for 404.html compatibility
