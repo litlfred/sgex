@@ -39,6 +39,9 @@ const PreviewBadge = () => {
   const [showCopilotSession, setShowCopilotSession] = useState(false);
   const [isWatchingSession, setIsWatchingSession] = useState(false);
   const [watchSessionInterval, setWatchSessionInterval] = useState(null);
+  const [isRefreshingSession, setIsRefreshingSession] = useState(false);
+  const [lastSessionCheck, setLastSessionCheck] = useState(null);
+  const [sessionRefreshCount, setSessionRefreshCount] = useState(0);
   const [ReactMarkdown, setReactMarkdown] = useState(null);
   const [DOMPurify, setDOMPurify] = useState(null);
   const [rehypeRaw, setRehypeRaw] = useState(null);
@@ -451,25 +454,49 @@ const PreviewBadge = () => {
       }
       setIsWatchingSession(false);
       setShowCopilotSession(false);
+      setIsRefreshingSession(false);
+      setSessionRefreshCount(0);
     } else {
       // Start watching - show session and set up auto-refresh
       setIsWatchingSession(true);
       setShowCopilotSession(true);
+      setSessionRefreshCount(0);
+      
+      // Perform initial refresh
+      if (prInfo && prInfo.length > 0) {
+        performSessionRefresh('litlfred', 'sgex', prInfo[0].number);
+      }
       
       // Set up auto-refresh every 10 seconds
       const interval = setInterval(async () => {
         if (prInfo && prInfo.length > 0) {
-          try {
-            // Refresh copilot session info
-            const sessionInfo = await fetchCopilotSessionInfo('litlfred', 'sgex', prInfo[0].number);
-            setCopilotSessionInfo(sessionInfo);
-          } catch (error) {
-            console.debug('Failed to refresh copilot session info:', error);
-          }
+          await performSessionRefresh('litlfred', 'sgex', prInfo[0].number);
         }
       }, 10000); // 10 seconds
       
       setWatchSessionInterval(interval);
+    }
+  };
+
+  // Helper function to perform session refresh with visual feedback
+  const performSessionRefresh = async (owner, repo, prNumber) => {
+    try {
+      setIsRefreshingSession(true);
+      setSessionRefreshCount(prev => prev + 1);
+      
+      // Refresh copilot session info
+      const sessionInfo = await fetchCopilotSessionInfo(owner, repo, prNumber);
+      setCopilotSessionInfo(sessionInfo);
+      setLastSessionCheck(new Date());
+      
+      // Brief visual feedback that refresh completed
+      setTimeout(() => {
+        setIsRefreshingSession(false);
+      }, 1000); // Show "refreshing" state for 1 second
+      
+    } catch (error) {
+      console.debug('Failed to refresh copilot session info:', error);
+      setIsRefreshingSession(false);
     }
   };
 
@@ -1385,10 +1412,14 @@ const PreviewBadge = () => {
       // Check for copilot session activity
       if (githubService.isAuth()) {
         try {
+          setIsRefreshingSession(true);
           const copilotInfo = await fetchCopilotSessionInfo(owner, repo, pr.number);
           setCopilotSessionInfo(copilotInfo);
+          setLastSessionCheck(new Date());
+          setTimeout(() => setIsRefreshingSession(false), 500); // Brief feedback
         } catch (error) {
           console.debug('Could not fetch copilot session info:', error);
+          setIsRefreshingSession(false);
         }
       }
       
@@ -1715,7 +1746,25 @@ const PreviewBadge = () => {
                           <div className="copilot-session-info">
                             <span className="copilot-status">✅ Active Copilot session detected</span>
                             {isWatchingSession && (
-                              <span className="copilot-watching-status">🔄 Watching for updates (every 10s)</span>
+                              <div className="copilot-watching-wrapper">
+                                <span className="copilot-watching-status">
+                                  {isRefreshingSession ? (
+                                    <>🔄 Refreshing session... (#{sessionRefreshCount})</>
+                                  ) : (
+                                    <>🔄 Watching for updates (every 10s)</>
+                                  )}
+                                </span>
+                                {lastSessionCheck && (
+                                  <span className="copilot-last-check">
+                                    Last checked: {formatDate(lastSessionCheck)}
+                                  </span>
+                                )}
+                                {sessionRefreshCount > 0 && (
+                                  <span className="copilot-refresh-count">
+                                    Refreshes: {sessionRefreshCount}
+                                  </span>
+                                )}
+                              </div>
                             )}
                             <span className="copilot-activity">
                               Last activity: {formatDate(copilotSessionInfo.latestActivity)}
@@ -1797,7 +1846,18 @@ const PreviewBadge = () => {
                         </div>
                       ) : (
                         <div className="copilot-session-inactive">
-                          <span className="copilot-status">⚪ No active Copilot session detected</span>
+                          <span className="copilot-status">
+                            {isRefreshingSession ? (
+                              <>🔄 Checking for active Copilot session...</>
+                            ) : (
+                              <>⚪ No active Copilot session detected</>
+                            )}
+                          </span>
+                          {lastSessionCheck && (
+                            <span className="copilot-last-check">
+                              Last checked: {formatDate(lastSessionCheck)}
+                            </span>
+                          )}
                           <span className="copilot-hint">
                             Start a conversation with @copilot to begin a session
                           </span>

@@ -963,6 +963,25 @@
   animation: pulse 2s infinite;
 }
 
+.copilot-watching-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0.25rem 0;
+}
+
+.copilot-last-check {
+  color: #666;
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.copilot-refresh-count {
+  color: #28a745;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
 @keyframes pulse {
   0% { opacity: 0.7; }
   50% { opacity: 1; }
@@ -1774,6 +1793,14 @@
   
   .copilot-watching-status {
     color: #60a5fa !important;
+  }
+
+  .copilot-last-check {
+    color: #9ca3af !important;
+  }
+
+  .copilot-refresh-count {
+    color: #10b981 !important;
   }
 }
 
