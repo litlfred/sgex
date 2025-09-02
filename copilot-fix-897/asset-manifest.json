@@ -1,11 +1,11 @@
 {
   "files": {
     "main.css": "/sgex/copilot-fix-897/static/css/main.46b9191e.css",
-    "main.js": "/sgex/copilot-fix-897/static/js/main.eb8b7b20.js",
+    "main.js": "/sgex/copilot-fix-897/static/js/main.e7f118f7.js",
     "static/js/228.bdce0800.chunk.js": "/sgex/copilot-fix-897/static/js/228.bdce0800.chunk.js",
     "static/js/8700.f6c418e9.chunk.js": "/sgex/copilot-fix-897/static/js/8700.f6c418e9.chunk.js",
     "static/js/984.3c77cb82.chunk.js": "/sgex/copilot-fix-897/static/js/984.3c77cb82.chunk.js",
-    "static/js/9414.c9fa3a11.chunk.js": "/sgex/copilot-fix-897/static/js/9414.c9fa3a11.chunk.js",
+    "static/js/9414.15a59775.chunk.js": "/sgex/copilot-fix-897/static/js/9414.15a59775.chunk.js",
     "static/js/2101.9d35d3b9.chunk.js": "/sgex/copilot-fix-897/static/js/2101.9d35d3b9.chunk.js",
     "static/js/6970.09b2cad5.chunk.js": "/sgex/copilot-fix-897/static/js/6970.09b2cad5.chunk.js",
     "static/js/1008.4a00eb8d.chunk.js": "/sgex/copilot-fix-897/static/js/1008.4a00eb8d.chunk.js",
@@ -67,6 +67,6 @@
   },
   "entrypoints": [
     "static/css/main.46b9191e.css",
-    "static/js/main.eb8b7b20.js"
+    "static/js/main.e7f118f7.js"
   ]
 }
