@@ -12,6 +12,9 @@ export { default as ActorsPublication } from './ActorsPublication';
 export { default as IndicatorsPublication } from './IndicatorsPublication';
 export { default as QuestionnairesPublication } from './QuestionnairesPublication';
 export { default as TerminologyPublication } from './TerminologyPublication';
+export { default as HealthInterventionsPublication } from './HealthInterventionsPublication';
+export { default as UserScenariosPublication } from './UserScenariosPublication';
+export { default as FunctionalRequirementsPublication } from './FunctionalRequirementsPublication';
 export { default as AllComponentsPublication } from './AllComponentsPublication';
 
 /**
@@ -19,12 +22,20 @@ export { default as AllComponentsPublication } from './AllComponentsPublication'
  * Maps component types to their publication implementations
  */
 export const PUBLICATION_COMPONENTS = {
+  'health-interventions': 'HealthInterventionsPublication',
+  'generic-personas': 'ActorsPublication',
+  'user-scenarios': 'UserScenariosPublication',
   'business-processes': 'BusinessProcessesPublication',
+  'core-data-elements': 'CoreDataDictionaryPublication',
   'decision-support': 'DecisionSupportPublication', 
-  'core-data-dictionary': 'CoreDataDictionaryPublication',
-  'testing': 'TestingPublication',
+  'program-indicators': 'IndicatorsPublication',
+  'functional-requirements': 'FunctionalRequirementsPublication',
+  'test-scenarios': 'TestingPublication',
+  // Legacy mappings for backward compatibility
   'actors': 'ActorsPublication',
+  'testing': 'TestingPublication',
   'indicators': 'IndicatorsPublication',
+  'core-data-dictionary': 'CoreDataDictionaryPublication',
   'questionnaires': 'QuestionnairesPublication',
   'terminology': 'TerminologyPublication',
   'all-components': 'AllComponentsPublication'

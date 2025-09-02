@@ -49,6 +49,34 @@ interface Questionnaire {
   file?: string;
 }
 
+interface HealthIntervention {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  iris_id?: string;
+  publication_year?: number;
+  url?: string;
+}
+
+interface UserScenario {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  personas: string[];
+  steps: number;
+}
+
+interface FunctionalRequirement {
+  id: string;
+  name: string;
+  category: string;
+  priority: string;
+  description: string;
+  source: string;
+}
+
 interface ComponentListResponse<T> {
   success: boolean;
   timestamp: string;
@@ -274,6 +302,173 @@ router.get('/questionnaires', (req: Request, res: Response<ComponentListResponse
       error: {
         message: error.message || 'Failed to get questionnaires',
         code: 'QUESTIONNAIRES_ERROR',
+        timestamp: new Date().toISOString()
+      }
+    };
+    res.status(500).json(errorResponse);
+  }
+});
+
+/**
+ * GET /mcp/faq/health-interventions
+ * Get all health interventions and recommendations in the DAK
+ */
+router.get('/health-interventions', (req: Request, res: Response<ComponentListResponse<HealthIntervention> | ErrorResponse>) => {
+  try {
+    // Mock health interventions data - in production this would scan for IRIS publications and intervention files
+    const mockInterventions: HealthIntervention[] = [
+      {
+        id: 'anc-guidelines',
+        name: 'WHO ANC Guidelines',
+        type: 'IRIS Publication',
+        description: 'WHO recommendations on antenatal care for a positive pregnancy experience',
+        iris_id: '9789241549912',
+        publication_year: 2016,
+        url: 'https://iris.who.int/handle/10665/250796'
+      },
+      {
+        id: 'immunization-guidelines', 
+        name: 'Immunization Guidelines',
+        type: 'Clinical Guideline',
+        description: 'WHO position papers on vaccines and comprehensive vaccine recommendations'
+      },
+      {
+        id: 'maternal-health-interventions',
+        name: 'Maternal Health Interventions',
+        type: 'Care Package',
+        description: 'Essential interventions for maternal and newborn health including skilled birth attendance'
+      }
+    ];
+
+    const response: ComponentListResponse<HealthIntervention> = {
+      success: true,
+      timestamp: new Date().toISOString(),
+      count: mockInterventions.length,
+      data: mockInterventions
+    };
+
+    res.json(response);
+  } catch (error: any) {
+    const errorResponse: ErrorResponse = {
+      error: {
+        message: error.message || 'Failed to get health interventions',
+        code: 'HEALTH_INTERVENTIONS_ERROR',
+        timestamp: new Date().toISOString()
+      }
+    };
+    res.status(500).json(errorResponse);
+  }
+});
+
+/**
+ * GET /mcp/faq/user-scenarios
+ * Get all user scenarios and use cases in the DAK
+ */
+router.get('/user-scenarios', (req: Request, res: Response<ComponentListResponse<UserScenario> | ErrorResponse>) => {
+  try {
+    // Mock user scenarios data - in production this would scan for scenario/narrative files
+    const mockScenarios: UserScenario[] = [
+      {
+        id: 'anc-visit-scenario',
+        name: 'Antenatal Care Visit Scenario',
+        type: 'Clinical Scenario',
+        description: 'A pregnant woman visits a health facility for her routine antenatal care appointment',
+        personas: ['Pregnant Woman', 'Midwife', 'Community Health Worker'],
+        steps: 7
+      },
+      {
+        id: 'immunization-campaign',
+        name: 'Immunization Campaign Scenario', 
+        type: 'Public Health Scenario',
+        description: 'Implementation of a mass immunization campaign in a rural district',
+        personas: ['Program Manager', 'Vaccinator', 'Community Mobilizer', 'Caregiver'],
+        steps: 7
+      },
+      {
+        id: 'clinical-decision-support',
+        name: 'Clinical Decision Support Scenario',
+        type: 'Technology Scenario', 
+        description: 'A clinician uses digital tools to make clinical decisions during patient care',
+        personas: ['Clinician', 'Patient', 'System Administrator'],
+        steps: 7
+      }
+    ];
+
+    const response: ComponentListResponse<UserScenario> = {
+      success: true,
+      timestamp: new Date().toISOString(),
+      count: mockScenarios.length,
+      data: mockScenarios
+    };
+
+    res.json(response);
+  } catch (error: any) {
+    const errorResponse: ErrorResponse = {
+      error: {
+        message: error.message || 'Failed to get user scenarios',
+        code: 'USER_SCENARIOS_ERROR',
+        timestamp: new Date().toISOString()
+      }
+    };
+    res.status(500).json(errorResponse);
+  }
+});
+
+/**
+ * GET /mcp/faq/functional-requirements
+ * Get all functional and non-functional requirements in the DAK
+ */
+router.get('/functional-requirements', (req: Request, res: Response<ComponentListResponse<FunctionalRequirement> | ErrorResponse>) => {
+  try {
+    // Mock requirements data - in production this would scan for requirements/specs files
+    const mockRequirements: FunctionalRequirement[] = [
+      {
+        id: 'req-func-001',
+        name: 'Data Management Requirements',
+        category: 'Functional',
+        priority: 'High',
+        description: 'System SHALL capture and store patient demographic information in accordance with local data protection regulations',
+        source: 'Clinical Workflow Analysis'
+      },
+      {
+        id: 'req-perf-001', 
+        name: 'Performance Requirements',
+        category: 'Non-Functional',
+        priority: 'High',
+        description: 'System SHALL respond to user interactions within 2 seconds for 95% of transactions',
+        source: 'User Experience Standards'
+      },
+      {
+        id: 'req-sec-001',
+        name: 'Security Requirements', 
+        category: 'Non-Functional',
+        priority: 'Critical',
+        description: 'System SHALL implement role-based access control with audit logging',
+        source: 'Security Policy'
+      },
+      {
+        id: 'req-int-001',
+        name: 'Integration Requirements',
+        category: 'Integration',
+        priority: 'High', 
+        description: 'System SHALL support FHIR R4 for health information exchange',
+        source: 'Interoperability Standards'
+      }
+    ];
+
+    const response: ComponentListResponse<FunctionalRequirement> = {
+      success: true,
+      timestamp: new Date().toISOString(),
+      count: mockRequirements.length,
+      data: mockRequirements
+    };
+
+    res.json(response);
+  } catch (error: any) {
+    const errorResponse: ErrorResponse = {
+      error: {
+        message: error.message || 'Failed to get functional requirements',
+        code: 'FUNCTIONAL_REQUIREMENTS_ERROR',
         timestamp: new Date().toISOString()
       }
     };

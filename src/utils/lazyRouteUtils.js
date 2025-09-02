@@ -158,6 +158,27 @@ function createLazyComponent(componentName) {
     case 'ActorsPublication':
       LazyComponent = React.lazy(() => import('../components/publications/ActorsPublication'));
       break;
+    case 'IndicatorsPublication':
+      LazyComponent = React.lazy(() => import('../components/publications/IndicatorsPublication'));
+      break;
+    case 'QuestionnairesPublication':
+      LazyComponent = React.lazy(() => import('../components/publications/QuestionnairesPublication'));
+      break;
+    case 'TerminologyPublication':
+      LazyComponent = React.lazy(() => import('../components/publications/TerminologyPublication'));
+      break;
+    case 'HealthInterventionsPublication':
+      LazyComponent = React.lazy(() => import('../components/publications/HealthInterventionsPublication'));
+      break;
+    case 'UserScenariosPublication':
+      LazyComponent = React.lazy(() => import('../components/publications/UserScenariosPublication'));
+      break;
+    case 'FunctionalRequirementsPublication':
+      LazyComponent = React.lazy(() => import('../components/publications/FunctionalRequirementsPublication'));
+      break;
+    case 'AllComponentsPublication':
+      LazyComponent = React.lazy(() => import('../components/publications/AllComponentsPublication'));
+      break;
     
     default:
       console.warn(`Unknown component ${componentName}, using fallback`);
