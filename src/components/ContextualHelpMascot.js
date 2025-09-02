@@ -13,6 +13,27 @@ import useThemeImage from '../hooks/useThemeImage';
 import { getSavedTheme, toggleTheme } from '../utils/themeManager';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
 
+// Help state persistence utilities
+const HELP_STATE_KEY = 'sgex-help-state';
+
+const getSavedHelpState = () => {
+  try {
+    const savedState = localStorage.getItem(HELP_STATE_KEY);
+    return savedState ? parseInt(savedState, 10) : 0;
+  } catch (error) {
+    console.warn('Failed to load help state from localStorage:', error);
+    return 0;
+  }
+};
+
+const saveHelpState = (state) => {
+  try {
+    localStorage.setItem(HELP_STATE_KEY, state.toString());
+  } catch (error) {
+    console.warn('Failed to save help state to localStorage:', error);
+  }
+};
+
 const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', contextData = {}, notificationBadge = false }) => {
   const { t, i18n } = useTranslation();
   const { user, repo } = useParams(); // Extract DAK context from URL
@@ -25,10 +46,37 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [showTrackedItems, setShowTrackedItems] = useState(false);
   const [trackedItemsCount, setTrackedItemsCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [helpState, setHelpState] = useState(0); // 0: hidden, 1: non-sticky, 2: sticky
+  const [helpState, setHelpState] = useState(() => getSavedHelpState()); // 0: hidden, 1: non-sticky, 2: sticky
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
+
+  // Initialize help state from saved preferences and sync with derived states
+  useEffect(() => {
+    const savedState = getSavedHelpState();
+    setHelpState(savedState);
+    
+    // Set derived states based on saved help state
+    switch (savedState) {
+      case 0: // Hidden
+        setShowHelp(false);
+        setHelpSticky(false);
+        break;
+      case 1: // Non-sticky (shown)
+        setShowHelp(true);
+        setHelpSticky(false);
+        break;
+      case 2: // Sticky (shown)
+        setShowHelp(true);
+        setHelpSticky(true);
+        break;
+    }
+  }, []);
+
+  // Save help state whenever it changes
+  useEffect(() => {
+    saveHelpState(helpState);
+  }, [helpState]);
 
   // Sync local state with actual theme on mount
   useEffect(() => {
