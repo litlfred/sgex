@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/sgex/main/static/css/main.46b9191e.css",
-    "main.js": "/sgex/main/static/js/main.5cf317a8.js",
+    "main.js": "/sgex/main/static/js/main.57abae47.js",
     "static/js/228.bdce0800.chunk.js": "/sgex/main/static/js/228.bdce0800.chunk.js",
     "static/js/8700.f6c418e9.chunk.js": "/sgex/main/static/js/8700.f6c418e9.chunk.js",
     "static/js/984.3c77cb82.chunk.js": "/sgex/main/static/js/984.3c77cb82.chunk.js",
-    "static/js/9414.1cf22a59.chunk.js": "/sgex/main/static/js/9414.1cf22a59.chunk.js",
+    "static/js/9414.15a59775.chunk.js": "/sgex/main/static/js/9414.15a59775.chunk.js",
     "static/js/2101.9d35d3b9.chunk.js": "/sgex/main/static/js/2101.9d35d3b9.chunk.js",
     "static/js/6970.09b2cad5.chunk.js": "/sgex/main/static/js/6970.09b2cad5.chunk.js",
-    "static/js/1008.bbc52850.chunk.js": "/sgex/main/static/js/1008.bbc52850.chunk.js",
+    "static/js/1008.4a00eb8d.chunk.js": "/sgex/main/static/js/1008.4a00eb8d.chunk.js",
     "static/js/9906.ef323d83.chunk.js": "/sgex/main/static/js/9906.ef323d83.chunk.js",
     "static/js/4130.3b5df1b9.chunk.js": "/sgex/main/static/js/4130.3b5df1b9.chunk.js",
     "static/js/2796.f694fc0f.chunk.js": "/sgex/main/static/js/2796.f694fc0f.chunk.js",
@@ -67,6 +67,6 @@
   },
   "entrypoints": [
     "static/css/main.46b9191e.css",
-    "static/js/main.5cf317a8.js"
+    "static/js/main.57abae47.js"
   ]
 }
