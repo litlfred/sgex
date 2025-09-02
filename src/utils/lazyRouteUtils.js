@@ -262,13 +262,27 @@ export function generateLazyRoutes() {
   if (!config) {
     console.warn('SGEX route configuration not loaded, falling back to minimal routes');
     
-    // Provide a more comprehensive fallback that includes essential routes for the help system
+    // Provide a more comprehensive fallback that includes essential routes for the help system and publications
     const BranchListingPage = createLazyComponent('BranchListingPage');
     const DAKDashboard = createLazyComponent('DAKDashboard');
     const LandingPage = createLazyComponent('LandingPage');
     const DocumentationViewer = createLazyComponent('DocumentationViewer');
     
-    return [
+    // Publication components for fallback
+    const BusinessProcessesPublication = createLazyComponent('BusinessProcessesPublication');
+    const DecisionSupportPublication = createLazyComponent('DecisionSupportPublication');
+    const CoreDataDictionaryPublication = createLazyComponent('CoreDataDictionaryPublication');
+    const TestingPublication = createLazyComponent('TestingPublication');
+    const ActorsPublication = createLazyComponent('ActorsPublication');
+    const IndicatorsPublication = createLazyComponent('IndicatorsPublication');
+    const QuestionnairesPublication = createLazyComponent('QuestionnairesPublication');
+    const TerminologyPublication = createLazyComponent('TerminologyPublication');
+    const HealthInterventionsPublication = createLazyComponent('HealthInterventionsPublication');
+    const UserScenariosPublication = createLazyComponent('UserScenariosPublication');
+    const FunctionalRequirementsPublication = createLazyComponent('FunctionalRequirementsPublication');
+    const AllComponentsPublication = createLazyComponent('AllComponentsPublication');
+    
+    const fallbackRoutes = [
       <Route key="fallback-home" path="/" element={<BranchListingPage />} />,
       <Route key="fallback-dashboard" path="/dashboard" element={<DAKDashboard />} />,
       <Route key="fallback-dashboard-user" path="/dashboard/:user" element={<DAKDashboard />} />,
@@ -276,9 +290,38 @@ export function generateLazyRoutes() {
       <Route key="fallback-dashboard-user-repo-branch" path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />,
       <Route key="fallback-welcome" path="/welcome" element={<LandingPage />} />,
       <Route key="fallback-docs" path="/docs/:docId" element={<DocumentationViewer />} />,
-      <Route key="fallback-docs-default" path="/docs" element={<DocumentationViewer />} />,
-      <Route key="fallback-404" path="*" element={<div>Page not found</div>} />
+      <Route key="fallback-docs-default" path="/docs" element={<DocumentationViewer />} />
     ];
+    
+    // Add publication routes to fallback
+    const publicationRoutes = [
+      { name: 'publications-business-processes', component: BusinessProcessesPublication },
+      { name: 'publications-decision-support', component: DecisionSupportPublication },
+      { name: 'publications-core-data-dictionary', component: CoreDataDictionaryPublication },
+      { name: 'publications-testing', component: TestingPublication },
+      { name: 'publications-actors', component: ActorsPublication },
+      { name: 'publications-indicators', component: IndicatorsPublication },
+      { name: 'publications-questionnaires', component: QuestionnairesPublication },
+      { name: 'publications-terminology', component: TerminologyPublication },
+      { name: 'publications-health-interventions', component: HealthInterventionsPublication },
+      { name: 'publications-user-scenarios', component: UserScenariosPublication },
+      { name: 'publications-functional-requirements', component: FunctionalRequirementsPublication },
+      { name: 'publications-all-components', component: AllComponentsPublication }
+    ];
+    
+    publicationRoutes.forEach(({ name, component: Component }) => {
+      const basePath = `/${name}`;
+      fallbackRoutes.push(
+        <Route key={`fallback-${name}-base`} path={basePath} element={<Component />} />,
+        <Route key={`fallback-${name}-user-repo`} path={`${basePath}/:user/:repo`} element={<Component />} />,
+        <Route key={`fallback-${name}-user-repo-branch`} path={`${basePath}/:user/:repo/:branch`} element={<Component />} />,
+        <Route key={`fallback-${name}-user-repo-branch-asset`} path={`${basePath}/:user/:repo/:branch/*`} element={<Component />} />
+      );
+    });
+    
+    fallbackRoutes.push(<Route key="fallback-404" path="*" element={<div>Page not found</div>} />);
+    
+    return fallbackRoutes;
   }
 
   const routes = [];

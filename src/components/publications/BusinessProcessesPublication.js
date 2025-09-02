@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { PageLayout } from '../framework';
 import PublicationView from './PublicationView';
 import { createLazyBpmnViewer } from '../../utils/lazyRouteUtils';
 
@@ -11,6 +12,14 @@ import { createLazyBpmnViewer } from '../../utils/lazyRouteUtils';
  * - Print-optimized layout
  */
 const BusinessProcessesPublication = () => {
+  return (
+    <PageLayout pageName="publications-business-processes">
+      <BusinessProcessesPublicationContent />
+    </PageLayout>
+  );
+};
+
+const BusinessProcessesPublicationContent = () => {
   
   const renderBusinessProcesses = (dakData, publicationMeta) => {
     return (
