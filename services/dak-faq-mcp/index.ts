@@ -12,6 +12,7 @@ import { catalogRoute } from './server/routes/catalog.js';
 import { schemaRoute } from './server/routes/schema.js';
 import { componentsRoute } from './server/routes/components.js';
 import { renderingRoute } from './server/routes/rendering.js';
+import { dakComponentsRoute } from './server/routes/dak-components.js';
 import { HealthResponse, ErrorResponse } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -58,6 +59,7 @@ app.use('/mcp/faq/questions', catalogRoute);
 app.use('/mcp/faq/execute', executeRoute);
 app.use('/mcp/faq', schemaRoute);
 app.use('/mcp/faq', componentsRoute);
+app.use('/mcp/faq', dakComponentsRoute);
 app.use('/mcp/faq/render', renderingRoute);
 
 // Legacy FAQ routes (backward compatibility)
@@ -87,7 +89,7 @@ app.get('/', (req: Request, res: Response) => {
       'GET /mcp/faq/openapi': 'Get OpenAPI schema for all questions',
       'POST /mcp/faq/validate': 'Validate question parameters',
       
-      // DAK component endpoints
+      // DAK component endpoints (enhanced)
       'GET /mcp/faq/valuesets': 'Get all value sets in the DAK',
       'GET /mcp/faq/decision-tables': 'Get all decision tables (DMN files)',
       'GET /mcp/faq/business-processes': 'Get all business processes',
@@ -146,9 +148,14 @@ const server = app.listen(PORT, HOST, () => {
   console.log(`DAK FAQ MCP Server running on http://${HOST}:${PORT}`);
   console.log('Security: Local binding only (127.0.0.1)');
   console.log('Available endpoints:');
-  console.log(`  - GET  http://${HOST}:${PORT}/health`);
-  console.log(`  - GET  http://${HOST}:${PORT}/faq/questions/catalog`);
-  console.log(`  - POST http://${HOST}:${PORT}/faq/questions/execute`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/health`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/questions/catalog`);
+  console.log(`  - POST http://${HOST}:${PORT}/mcp/faq/questions/execute`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/valuesets`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/decision-tables`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/business-processes`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/personas`);
+  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/questionnaires`);
 });
 
 // Graceful shutdown

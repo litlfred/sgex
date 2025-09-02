@@ -4,18 +4,7 @@ import { PageLayout, useDAKParams } from '../framework';
 import githubService from '../../services/githubService';
 import './PublicationView.css';
 
-// Import individual publication components for rendering
-import BusinessProcessesPublication from './BusinessProcessesPublication';
-import DecisionSupportPublication from './DecisionSupportPublication';
-import CoreDataDictionaryPublication from './CoreDataDictionaryPublication';
-import TestingPublication from './TestingPublication';
-import ActorsPublication from './ActorsPublication';
-import IndicatorsPublication from './IndicatorsPublication';
-import QuestionnairesPublication from './QuestionnairesPublication';
-import TerminologyPublication from './TerminologyPublication';
-import HealthInterventionsPublication from './HealthInterventionsPublication';
-import UserScenariosPublication from './UserScenariosPublication';
-import FunctionalRequirementsPublication from './FunctionalRequirementsPublication';
+// Individual publication components will be imported dynamically as needed
 
 /**
  * Comprehensive All Components Publication
@@ -30,7 +19,8 @@ import FunctionalRequirementsPublication from './FunctionalRequirementsPublicati
 const AllComponentsPublication = () => {
   const location = useLocation();
   const frameworkData = useDAKParams();
-  const { user, repo, branch } = useParams();
+  const { branch } = useParams();
+  console.log('Publication branch:', branch); // Keep for debugging comprehensive publication loading
   
   // Get data from framework params or location state
   const profile = frameworkData?.profile || location.state?.profile;

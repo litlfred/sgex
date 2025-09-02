@@ -16,7 +16,8 @@ import './PublicationView.css';
 const FunctionalRequirementsPublication = () => {
   const location = useLocation();
   const frameworkData = useDAKParams();
-  const { user, repo, branch } = useParams();
+  const { branch } = useParams();
+  console.log('Functional requirements publication branch:', branch); // Keep for debugging
   
   // Get data from framework params or location state
   const profile = frameworkData?.profile || location.state?.profile;
@@ -63,7 +64,7 @@ const FunctionalRequirementsPublication = () => {
     };
 
     loadRequirementsData();
-  }, [profile, repository, selectedBranch]);
+  }, [profile, repository, selectedBranch, loadFunctionalRequirements]);
 
   const loadFunctionalRequirements = async (owner, repoName, branch) => {
     try {

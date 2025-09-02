@@ -24,7 +24,8 @@ const PublicationView = ({
 }) => {
   const location = useLocation();
   const frameworkData = useDAKParams();
-  const { user, repo, branch } = useParams();
+  const { branch } = useParams();
+  console.log('Publication view branch:', branch); // Keep for debugging
   
   // Get data from framework params or location state
   const profile = frameworkData?.profile || location.state?.profile;
@@ -273,11 +274,11 @@ const PublicationView = ({
           const questionnaireFiles = dirContents.filter(file => 
             file.name.includes('questionnaire') || 
             file.name.includes('form') ||
-            file.name.endsWith('.json') && (
+            (file.name.endsWith('.json') && (
               file.name.includes('registration') ||
               file.name.includes('assessment') ||
               file.name.includes('survey')
-            )
+            ))
           );
           
           questionnaires = questionnaireFiles.map(file => ({

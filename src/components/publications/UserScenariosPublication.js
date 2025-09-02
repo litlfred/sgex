@@ -16,7 +16,8 @@ import './PublicationView.css';
 const UserScenariosPublication = () => {
   const location = useLocation();
   const frameworkData = useDAKParams();
-  const { user, repo, branch } = useParams();
+  const { branch } = useParams();
+  console.log('User scenarios publication branch:', branch); // Keep for debugging
   
   // Get data from framework params or location state
   const profile = frameworkData?.profile || location.state?.profile;
@@ -63,7 +64,7 @@ const UserScenariosPublication = () => {
     };
 
     loadScenariosData();
-  }, [profile, repository, selectedBranch]);
+  }, [profile, repository, selectedBranch, loadUserScenarios]);
 
   const loadUserScenarios = async (owner, repoName, branch) => {
     try {

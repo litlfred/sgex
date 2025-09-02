@@ -61,7 +61,6 @@ const BusinessProcessesPublication = () => {
  * - Preserving element boundaries
  */
 const BPMNDiagramRenderer = ({ bpmnFile, printMode = false }) => {
-  const viewerRef = useRef(null);
   const containerRef = useRef(null);
   const [viewer, setViewer] = useState(null);
   const [loading, setLoading] = useState(true);

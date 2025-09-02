@@ -35,6 +35,12 @@ This document provides an index and summary of all documentation for the SMART G
    - Level 2 (Business Logic) vs Level 3 (Technical Implementation) organization
    - Editor capabilities and file type specifications
 
+4a. **[MCP Services Documentation](mcp/README.md)**
+   - Model Context Protocol (MCP) services documentation
+   - DAK FAQ MCP API with complete endpoint reference
+   - OpenAPI specification and usage examples
+   - DAK component access endpoints (value sets, decision tables, business processes, personas, questionnaires)
+
 5. **[L2/L3 Architecture](l2-l3-architecture.md)**
    - Comprehensive guide to WHO SMART Guidelines L2/L3 methodology
    - Operational vs Executable layer implementation details

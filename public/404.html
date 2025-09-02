@@ -87,23 +87,32 @@
           var currentPath = l.pathname;
           var redirectAttempts = JSON.parse(sessionStorage.getItem('sgex-redirect-attempts') || '[]');
           
-          // Clean old attempts (older than 10 seconds)
+          // Clean old attempts (older than 30 seconds)
           var now = Date.now();
           redirectAttempts = redirectAttempts.filter(function(attempt) {
-            return now - attempt.timestamp < 10000;
+            return now - attempt.timestamp < 30000;
           });
           
-          // Check if we've already tried this exact path recently
-          var recentAttempt = redirectAttempts.find(function(attempt) {
+          // Check if we've already tried this exact path recently (more than 3 times)
+          var recentAttempts = redirectAttempts.filter(function(attempt) {
             return attempt.path === currentPath;
           });
           
-          if (recentAttempt && redirectAttempts.length > 1) {
-            console.error('SGEX 404.html: Detected branch redirect loop for path:', currentPath);
-            // Clear redirect attempts and fall back to main SGEX root
-            sessionStorage.removeItem('sgex-redirect-attempts');
-            redirectToSPA('/sgex/', '');
-            return;
+          if (recentAttempts.length >= 3) {
+            console.error('SGEX 404.html: Detected redirect loop for path:', currentPath, 'attempts:', recentAttempts.length);
+            // For branch URLs that don't exist, try to redirect to main instead of erroring
+            var pathSegments = currentPath.split('/').filter(Boolean);
+            if (pathSegments.length >= 2 && pathSegments[0] === 'sgex' && pathSegments[1] !== 'main') {
+              console.log('SGEX 404.html: Branch deployment not found, redirecting to main:', pathSegments[1]);
+              sessionStorage.removeItem('sgex-redirect-attempts');
+              l.replace(l.protocol + '//' + l.host + '/sgex/main/');
+              return;
+            } else {
+              // Clear redirect attempts and fall back to main SGEX root for other cases
+              sessionStorage.removeItem('sgex-redirect-attempts');
+              redirectToSPA('/sgex/', '');
+              return;
+            }
           }
           
           // Record this attempt

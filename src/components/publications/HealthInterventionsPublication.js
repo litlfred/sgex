@@ -16,7 +16,8 @@ import './PublicationView.css';
 const HealthInterventionsPublication = () => {
   const location = useLocation();
   const frameworkData = useDAKParams();
-  const { user, repo, branch } = useParams();
+  const { branch } = useParams();
+  console.log('Health interventions publication branch:', branch); // Keep for debugging
   
   // Get data from framework params or location state
   const profile = frameworkData?.profile || location.state?.profile;
@@ -63,7 +64,7 @@ const HealthInterventionsPublication = () => {
     };
 
     loadInterventionsData();
-  }, [profile, repository, selectedBranch]);
+  }, [profile, repository, selectedBranch, loadHealthInterventions]);
 
   const loadHealthInterventions = async (owner, repoName, branch) => {
     try {
