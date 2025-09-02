@@ -93,20 +93,47 @@
             return now - attempt.timestamp < 30000;
           });
           
-          // Check if we've already tried this exact path recently (more than 3 times)
+          // Check if we've already tried this exact path recently (more than 2 times)
           var recentAttempts = redirectAttempts.filter(function(attempt) {
             return attempt.path === currentPath;
           });
           
-          if (recentAttempts.length >= 3) {
+          if (recentAttempts.length >= 2) {
             console.error('SGEX 404.html: Detected redirect loop for path:', currentPath, 'attempts:', recentAttempts.length);
-            // For branch URLs that don't exist, try to redirect to main instead of erroring
+            
             var pathSegments = currentPath.split('/').filter(Boolean);
-            if (pathSegments.length >= 2 && pathSegments[0] === 'sgex' && pathSegments[1] !== 'main') {
-              console.log('SGEX 404.html: Branch deployment not found, redirecting to main:', pathSegments[1]);
-              sessionStorage.removeItem('sgex-redirect-attempts');
-              l.replace(l.protocol + '//' + l.host + '/sgex/main/');
-              return;
+            
+            // Enhanced fallback logic: try local branch first, then main
+            if (pathSegments.length >= 2 && pathSegments[0] === 'sgex') {
+              var branch = pathSegments[1];
+              var branchRootPath = '/sgex/' + branch + '/';
+              
+              // If this is not already a branch root and branch is not 'main'
+              if (currentPath !== branchRootPath && branch !== 'main') {
+                // Check if we've already tried the branch root
+                var branchRootAttempts = redirectAttempts.filter(function(attempt) {
+                  return attempt.path === branchRootPath;
+                });
+                
+                if (branchRootAttempts.length < 2) {
+                  console.log('SGEX 404.html: Trying local branch fallback first:', branchRootPath);
+                  // Try the branch root first
+                  l.replace(l.protocol + '//' + l.host + branchRootPath);
+                  return;
+                } else {
+                  console.log('SGEX 404.html: Branch root also failed, falling back to main');
+                  // Branch root has also been tried, fall back to main
+                  sessionStorage.removeItem('sgex-redirect-attempts');
+                  l.replace(l.protocol + '//' + l.host + '/sgex/');
+                  return;
+                }
+              } else {
+                // Already at branch root or this is main branch, fall back to main
+                console.log('SGEX 404.html: Falling back to main deployment');
+                sessionStorage.removeItem('sgex-redirect-attempts');
+                l.replace(l.protocol + '//' + l.host + '/sgex/');
+                return;
+              }
             } else {
               // Clear redirect attempts and fall back to main SGEX root for other cases
               sessionStorage.removeItem('sgex-redirect-attempts');
