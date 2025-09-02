@@ -525,19 +525,32 @@ const PreviewBadge = () => {
       );
 
       if (copilotComments.length > 0) {
+        // Sort copilot comments by date (newest first) to ensure we get the latest activity
+        const sortedCopilotComments = copilotComments.sort((a, b) => 
+          new Date(b.created_at) - new Date(a.created_at)
+        );
+        
         // Get the most recent copilot activity
-        const latestCopilotComment = copilotComments[0];
+        const latestCopilotComment = sortedCopilotComments[0];
         
-        // Try to find an agent session URL in the comments or generate one
+        // Try to find the newest agent session URL in the comments
         let agentSessionUrl = null;
+        let latestSessionDate = null;
         
-        // Look for agent session URLs in comments
+        // Look for agent session URLs in comments, starting from newest
         const sessionUrlPattern = /https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+\/agent-sessions\/[a-f0-9-]+/gi;
-        for (const comment of copilotComments) {
-          const match = comment.body.match(sessionUrlPattern);
-          if (match) {
-            agentSessionUrl = match[0];
-            break;
+        for (const comment of sortedCopilotComments) {
+          const matches = comment.body.match(sessionUrlPattern);
+          if (matches) {
+            // Take the first (and typically only) session URL from this comment
+            const sessionUrl = matches[0];
+            const commentDate = new Date(comment.created_at);
+            
+            // If this is the first session URL found, or this comment is newer, use this URL
+            if (!agentSessionUrl || !latestSessionDate || commentDate > latestSessionDate) {
+              agentSessionUrl = sessionUrl;
+              latestSessionDate = commentDate;
+            }
           }
         }
         
