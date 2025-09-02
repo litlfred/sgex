@@ -10,6 +10,8 @@ import { fileURLToPath } from 'url';
 import { executeRoute } from './server/routes/execute.js';
 import { catalogRoute } from './server/routes/catalog.js';
 import { schemaRoute } from './server/routes/schema.js';
+import { componentsRoute } from './server/routes/components.js';
+import { renderingRoute } from './server/routes/rendering.js';
 import { HealthResponse, ErrorResponse } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -28,7 +30,18 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
+// Health check endpoint with MCP prefix
+app.get('/mcp/health', (req: Request, res: Response<HealthResponse>) => {
+  const response: HealthResponse = {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    description: 'DAK FAQ MCP Server - Local Only'
+  };
+  res.json(response);
+});
+
+// Legacy health check (backward compatibility)
 app.get('/health', (req: Request, res: Response<HealthResponse>) => {
   const response: HealthResponse = {
     status: 'healthy',
@@ -39,10 +52,18 @@ app.get('/health', (req: Request, res: Response<HealthResponse>) => {
   res.json(response);
 });
 
-// FAQ routes
+// MCP FAQ routes with proper prefix
+app.use('/mcp/faq/questions', executeRoute);
+app.use('/mcp/faq/questions', catalogRoute);
+app.use('/mcp/faq/execute', executeRoute);
+app.use('/mcp/faq', schemaRoute);
+app.use('/mcp/faq', componentsRoute);
+app.use('/mcp/faq/render', renderingRoute);
+
+// Legacy FAQ routes (backward compatibility)
 app.use('/faq/questions', executeRoute);
 app.use('/faq/questions', catalogRoute);
-app.use('/faq/execute', executeRoute);  // Add single execution routes
+app.use('/faq/execute', executeRoute);
 app.use('/faq', schemaRoute);
 
 // Root endpoint with API information
@@ -52,20 +73,40 @@ app.get('/', (req: Request, res: Response) => {
     version: '1.0.0',
     description: 'Local MCP server for WHO SMART Guidelines Digital Adaptation Kit FAQ functionality',
     endpoints: {
-      'GET /health': 'Health check',
-      'GET /faq/questions/catalog': 'List available FAQ questions',
-      'POST /faq/questions/execute': 'Execute FAQ questions in batch',
-      'POST /faq/execute/:questionId': 'Execute a specific FAQ question by ID',
-      'POST /faq/execute': 'Execute a single FAQ question (alternative endpoint)',
-      'GET /faq/schemas': 'Get all question schemas',
-      'GET /faq/schemas/:questionId': 'Get schema for specific question',
-      'GET /faq/openapi': 'Get OpenAPI schema for all questions',
-      'POST /faq/validate': 'Validate question parameters'
+      // Health check
+      'GET /mcp/health': 'Health check (MCP prefix)',
+      'GET /health': 'Health check (legacy)',
+      
+      // FAQ operations
+      'GET /mcp/faq/questions/catalog': 'List available FAQ questions',
+      'POST /mcp/faq/questions/execute': 'Execute FAQ questions in batch',
+      'POST /mcp/faq/execute/:questionId': 'Execute a specific FAQ question by ID',
+      'POST /mcp/faq/execute': 'Execute a single FAQ question',
+      'GET /mcp/faq/schemas': 'Get all question schemas',
+      'GET /mcp/faq/schemas/:questionId': 'Get schema for specific question',
+      'GET /mcp/faq/openapi': 'Get OpenAPI schema for all questions',
+      'POST /mcp/faq/validate': 'Validate question parameters',
+      
+      // DAK component endpoints
+      'GET /mcp/faq/valuesets': 'Get all value sets in the DAK',
+      'GET /mcp/faq/decision-tables': 'Get all decision tables (DMN files)',
+      'GET /mcp/faq/business-processes': 'Get all business processes',
+      'GET /mcp/faq/personas': 'Get all personas/actors',
+      'GET /mcp/faq/questionnaires': 'Get all questionnaires',
+      
+      // Publication rendering endpoints
+      'POST /mcp/faq/render/component': 'Render a DAK component for publication',
+      'GET /mcp/faq/render/dmn-xsl': 'Get DMN XSL transformation and CSS resources'
     },
     security: {
       binding: 'localhost only (127.0.0.1)',
       cors: 'localhost:3000 only',
       note: 'This server is designed for local use only and should not be exposed to remote networks'
+    },
+    newFeatures: {
+      mcpPrefix: 'All endpoints now available with /mcp prefix for Model Context Protocol compatibility',
+      dakComponents: 'New DAK component endpoints provide structured access to repository content',
+      publicationRendering: 'Enhanced rendering support for publication views with WHO styling integration'
     }
   });
 });
