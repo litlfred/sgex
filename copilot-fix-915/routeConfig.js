@@ -42,8 +42,18 @@ function getDeploymentType() {
       return 'main';
     }
     
+    // Check if we're in a branch deployment (like /sgex/branch-name/)
+    var branchMatch = path.match(/^\/sgex\/([^\/]+)\/?$/);
+    if (branchMatch) {
+      var branchName = branchMatch[1];
+      // If it's a known deploy branch (main is handled separately), treat as deploy
+      if (branchName !== 'main' && branchName !== '') {
+        return 'deploy';
+      }
+    }
+    
     // If we're at the root with minimal functionality, likely deploy branch
-    if (path === '/' || path === '/sgex/') {
+    if (path === '/' || path === '/sgex/' || path === '/sgex') {
       // Check for query parameters or other indicators that suggest main deployment needed
       if (window.location.search || window.location.hash) {
         return 'main';
@@ -261,10 +271,21 @@ function getSGEXRouteConfig(deployType) {
             "path": "./components/DAKDashboard"
           }
         },
-        standardComponents: {
+        standardComponents: deployType === 'deploy' ? {
           "BranchListingPage": {
             "component": "BranchListingPage",
             "path": "./components/BranchListingPage",
+            "routes": ["/"]
+          },
+          "DAKDashboard": {
+            "component": "DAKDashboard", 
+            "path": "./components/DAKDashboard",
+            "routes": ["/dashboard", "/dashboard/:user/:repo", "/dashboard/:user/:repo/:branch"]
+          }
+        } : {
+          "WelcomePage": {
+            "component": "WelcomePage",
+            "path": "./components/WelcomePage",
             "routes": ["/"]
           },
           "DAKDashboard": {
