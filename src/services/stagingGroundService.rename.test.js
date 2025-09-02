@@ -4,19 +4,25 @@
 
 import stagingGroundService from '../services/stagingGroundService';
 
-// Mock localStorage
-const mockLocalStorage = (() => {
-  let store = {};
-  return {
-    getItem: jest.fn((key) => store[key] || null),
-    setItem: jest.fn((key, value) => { store[key] = value.toString(); }),
-    removeItem: jest.fn((key) => { delete store[key]; }),
-    clear: jest.fn(() => { store = {}; })
-  };
-})();
+// Mock localStorage (using same pattern as stagingGroundService.test.js)
+const localStorageMock = {
+  store: {},
+  getItem: function(key) {
+    return this.store[key] || null;
+  },
+  setItem: function(key, value) {
+    this.store[key] = value.toString();
+  },
+  removeItem: function(key) {
+    delete this.store[key];
+  },
+  clear: function() {
+    this.store = {};
+  }
+};
 
 Object.defineProperty(window, 'localStorage', {
-  value: mockLocalStorage
+  value: localStorageMock
 });
 
 describe('StagingGroundService - Rename Functionality', () => {
@@ -26,8 +32,7 @@ describe('StagingGroundService - Rename Functionality', () => {
   const mockBranch = 'main';
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockLocalStorage.clear();
+    localStorageMock.clear();
     stagingGroundService.initialize(mockRepository, mockBranch);
   });
 
