@@ -1,0 +1,260 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/specification/main/schema/mcp_server_manifest.json",
+  "name": "dak-faq-mcp-server",
+  "version": "1.0.0",
+  "description": "WHO SMART Guidelines DAK FAQ MCP Server - Provides FAQ functionality for Digital Adaptation Kits via Model Context Protocol",
+  "author": "SGeX Workbench Team",
+  "license": "MIT",
+  "homepage": "https://github.com/litlfred/sgex",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/litlfred/sgex.git",
+    "directory": "services/dak-faq-mcp"
+  },
+  "capabilities": {
+    "tools": {
+      "listChanged": true
+    },
+    "resources": {
+      "subscribe": false,
+      "listChanged": false
+    },
+    "prompts": {
+      "listChanged": false
+    }
+  },
+  "transport": {
+    "stdio": {
+      "command": "node",
+      "args": ["dist/mcp-server.js"],
+      "env": {}
+    }
+  },
+  "tools": [
+    {
+      "name": "execute_faq_question",
+      "description": "Execute a specific DAK FAQ question and return structured results with narrative explanation",
+      "category": "analysis",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "string",
+            "description": "ID of the FAQ question to execute",
+            "examples": ["dak-name", "dak-version", "dmn-tables"]
+          },
+          "parameters": {
+            "type": "object",
+            "description": "Parameters specific to the question (varies by question type)",
+            "additionalProperties": true,
+            "examples": [
+              {
+                "repository": "who/smart-immunizations",
+                "locale": "en"
+              }
+            ]
+          },
+          "context": {
+            "type": "object",
+            "properties": {
+              "repositoryPath": {
+                "type": "string",
+                "description": "File system path to the DAK repository",
+                "examples": ["/path/to/dak", "/tmp/smart-immunizations"]
+              }
+            },
+            "additionalProperties": true,
+            "description": "Execution context and environment settings"
+          }
+        },
+        "required": ["questionId"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["text"]
+                },
+                "text": {
+                  "type": "string",
+                  "description": "Markdown-formatted response including structured data and narrative"
+                }
+              }
+            }
+          },
+          "isError": {
+            "type": "boolean",
+            "description": "Whether the execution resulted in an error"
+          }
+        }
+      }
+    },
+    {
+      "name": "list_faq_questions",
+      "description": "List all available DAK FAQ questions with metadata and filtering options",
+      "category": "discovery",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": ["dak", "component", "asset"],
+            "description": "Filter questions by hierarchy level (dak=project-wide, component=component-specific, asset=file-specific)"
+          },
+          "componentType": {
+            "type": "string",
+            "description": "Filter questions by DAK component type",
+            "examples": ["business-processes", "decision-support", "indicators", "terminology"]
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Filter questions by tags",
+            "examples": [["metadata"], ["validation", "structure"]]
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["text"]
+                },
+                "text": {
+                  "type": "string",
+                  "description": "Markdown-formatted list of available questions with metadata"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_question_schema",
+      "description": "Get the JSON schema for a specific FAQ question's parameters",
+      "category": "introspection",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "string",
+            "description": "ID of the FAQ question",
+            "examples": ["dak-name", "dak-version", "dmn-tables"]
+          }
+        },
+        "required": ["questionId"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["text"]
+                },
+                "text": {
+                  "type": "string",
+                  "description": "Markdown-formatted schema documentation with parameter details"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "examples": {
+    "basicUsage": {
+      "description": "Execute a basic DAK question to get the name of a DAK",
+      "request": {
+        "method": "tools/call",
+        "params": {
+          "name": "execute_faq_question",
+          "arguments": {
+            "questionId": "dak-name",
+            "parameters": {
+              "repository": "who/smart-immunizations",
+              "locale": "en"
+            }
+          }
+        }
+      }
+    },
+    "listQuestions": {
+      "description": "List all DAK-level questions",
+      "request": {
+        "method": "tools/call",
+        "params": {
+          "name": "list_faq_questions",
+          "arguments": {
+            "level": "dak"
+          }
+        }
+      }
+    },
+    "getSchema": {
+      "description": "Get parameter schema for the dak-name question",
+      "request": {
+        "method": "tools/call",
+        "params": {
+          "name": "get_question_schema",
+          "arguments": {
+            "questionId": "dak-name"
+          }
+        }
+      }
+    }
+  },
+  "installation": {
+    "requirements": {
+      "node": ">=18.0.0"
+    },
+    "steps": [
+      "npm install",
+      "npm run build",
+      "npm run start-mcp"
+    ]
+  },
+  "usage": {
+    "cli": {
+      "command": "node dist/mcp-server.js",
+      "transport": "stdio",
+      "description": "Start the MCP server with stdio transport for CLI integration"
+    },
+    "programmatic": {
+      "description": "Can be integrated into MCP-compatible applications and AI assistants"
+    }
+  },
+  "metadata": {
+    "keywords": ["WHO", "SMART Guidelines", "DAK", "FAQ", "MCP", "healthcare", "fhir"],
+    "categories": ["healthcare", "documentation", "analysis"],
+    "complexity": "intermediate",
+    "maturity": "stable"
+  }
+}
