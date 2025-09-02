@@ -20,11 +20,6 @@ const DocumentationViewer = () => {
   useEffect(() => {
     const loadNavigationMenu = async () => {
       try {
-        // Initialize authentication if available
-        if (!githubService.isAuth() && githubService.hasStoredToken()) {
-          await githubService.initializeFromStoredToken();
-        }
-        
         const menu = await documentationService.getNavigationMenu();
         setNavigationMenu(menu);
       } catch (err) {

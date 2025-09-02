@@ -91,7 +91,17 @@ export const PageProvider = ({ children, pageName }) => {
         setPageState(prev => ({ ...prev, loading: true, error: null }));
 
         // Special handling for documentation page - no user/repo context needed
+        // But we still need to ensure authentication is properly initialized
         if (pageName === 'documentation-viewer') {
+          // Try to initialize authentication from stored token if available
+          if (!githubService.isAuth() && githubService.hasStoredToken()) {
+            try {
+              await githubService.initializeFromStoredToken();
+            } catch (error) {
+              console.debug('Could not initialize authentication from stored token:', error);
+            }
+          }
+          
           setPageState(prev => ({
             ...prev,
             loading: false,
