@@ -123,15 +123,6 @@ const CQLEditor = ({
       alert(`Navigate to library: ${libraryName}`);
     }
   };
-    if (!content.trim()) {
-      alert('Please enter CQL content to validate');
-      return;
-    }
-
-    setActiveTab('validation');
-    const validation = cqlValidationService.validateCQL(content);
-    setValidationResults(validation);
-  };
 
   const handleValidate = () => {
     if (!content.trim()) {

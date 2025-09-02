@@ -89,7 +89,7 @@ class CQLIntrospectionService {
         const dataTypeMatches = line.match(/\[([A-Z][a-zA-Z]+)\]/g);
         if (dataTypeMatches) {
           dataTypeMatches.forEach(match => {
-            const dataType = match.replace(/[\[\]]/g, '');
+            const dataType = match.replace(/[[\]]/g, '');
             result.dataElements.add(dataType);
           });
         }
