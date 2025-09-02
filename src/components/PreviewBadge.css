@@ -956,6 +956,19 @@
   font-weight: 600;
 }
 
+.copilot-watching-status {
+  color: #0366d6;
+  font-weight: 600;
+  font-size: 0.8rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
 .copilot-activity {
   color: #666;
 }
@@ -1701,6 +1714,66 @@
   
   .pr-request-changes-btn:hover:not(:disabled) {
     background: linear-gradient(135deg, #b91c1c, #991b1b);
+  }
+  
+  /* Copilot session dark mode styles */
+  .copilot-session-wrapper {
+    background: #1e293b !important;
+    border-bottom-color: #374151;
+  }
+  
+  .copilot-session-wrapper h4 {
+    color: #f9fafb !important;
+  }
+  
+  .copilot-session-modal {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+  }
+  
+  .copilot-session-header {
+    background: #374151 !important;
+    border-bottom-color: #4b5563 !important;
+    color: #f9fafb !important;
+  }
+  
+  .copilot-session-header strong {
+    color: #f9fafb !important;
+  }
+  
+  .copilot-comment-date {
+    color: #9ca3af !important;
+  }
+  
+  .copilot-session-content {
+    background: #1f2937 !important;
+  }
+  
+  .copilot-username {
+    color: #60a5fa !important;
+  }
+  
+  .copilot-comment-body {
+    background: #1e293b !important;
+    color: #e5e7eb !important;
+    border-left-color: #60a5fa !important;
+  }
+  
+  .copilot-activity,
+  .copilot-hint {
+    color: #9ca3af !important;
+  }
+  
+  .copilot-status {
+    color: #f9fafb !important;
+  }
+  
+  .copilot-comments-count {
+    color: #60a5fa !important;
+  }
+  
+  .copilot-watching-status {
+    color: #60a5fa !important;
   }
 }
 

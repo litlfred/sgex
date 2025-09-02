@@ -36,6 +36,9 @@ const PreviewBadge = () => {
   const [showWorkflowView, setShowWorkflowView] = useState(false); // Default to discussion view
   const [newlyAddedCommentId, setNewlyAddedCommentId] = useState(null);
   const [copilotSessionInfo, setCopilotSessionInfo] = useState(null);
+  const [showCopilotSession, setShowCopilotSession] = useState(false);
+  const [isWatchingSession, setIsWatchingSession] = useState(false);
+  const [watchSessionInterval, setWatchSessionInterval] = useState(null);
   const [ReactMarkdown, setReactMarkdown] = useState(null);
   const [DOMPurify, setDOMPurify] = useState(null);
   const [rehypeRaw, setRehypeRaw] = useState(null);
@@ -59,7 +62,6 @@ const PreviewBadge = () => {
 
     loadMarkdownComponents();
   }, []);
-  const [showCopilotSession, setShowCopilotSession] = useState(false);
   const [canComment, setCanComment] = useState(true);
   const [canTriggerWorkflows, setCanTriggerWorkflows] = useState(false);
   const [canApproveWorkflows, setCanApproveWorkflows] = useState(false);
@@ -438,6 +440,47 @@ const PreviewBadge = () => {
       }, 5000);
     }
   };
+
+  // Handle watch session toggle with auto-refresh
+  const handleWatchSessionToggle = () => {
+    if (isWatchingSession) {
+      // Stop watching - clear interval and hide session
+      if (watchSessionInterval) {
+        clearInterval(watchSessionInterval);
+        setWatchSessionInterval(null);
+      }
+      setIsWatchingSession(false);
+      setShowCopilotSession(false);
+    } else {
+      // Start watching - show session and set up auto-refresh
+      setIsWatchingSession(true);
+      setShowCopilotSession(true);
+      
+      // Set up auto-refresh every 10 seconds
+      const interval = setInterval(async () => {
+        if (prInfo && prInfo.length > 0) {
+          try {
+            // Refresh copilot session info
+            const sessionInfo = await fetchCopilotSessionInfo('litlfred', 'sgex', prInfo[0].number);
+            setCopilotSessionInfo(sessionInfo);
+          } catch (error) {
+            console.debug('Failed to refresh copilot session info:', error);
+          }
+        }
+      }, 10000); // 10 seconds
+      
+      setWatchSessionInterval(interval);
+    }
+  };
+
+  // Clean up interval on unmount
+  useEffect(() => {
+    return () => {
+      if (watchSessionInterval) {
+        clearInterval(watchSessionInterval);
+      }
+    };
+  }, [watchSessionInterval]);
 
   const fetchWorkflowStatus = async (branchName) => {
     try {
@@ -1658,6 +1701,9 @@ const PreviewBadge = () => {
                         <div className="copilot-session-active">
                           <div className="copilot-session-info">
                             <span className="copilot-status">✅ Active Copilot session detected</span>
+                            {isWatchingSession && (
+                              <span className="copilot-watching-status">🔄 Watching for updates (every 10s)</span>
+                            )}
                             <span className="copilot-activity">
                               Last activity: {formatDate(copilotSessionInfo.latestActivity)}
                             </span>
@@ -1666,13 +1712,19 @@ const PreviewBadge = () => {
                             </span>
                           </div>
                           <div className="copilot-session-actions">
+                            <button
+                              className="copilot-session-toggle"
+                              onClick={handleWatchSessionToggle}
+                            >
+                              {isWatchingSession ? '⏹️ Stop Watching' : '👁️ Watch Session'}
+                            </button>
                             <a 
                               href={copilotSessionInfo.sessionUrl} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="copilot-session-link"
                             >
-                              🔗 View Agent Session
+                              🔗 Open Session
                             </a>
                             {copilotSessionInfo.commentUrl && (
                               <a 
@@ -1684,12 +1736,6 @@ const PreviewBadge = () => {
                                 💬 Latest Comment
                               </a>
                             )}
-                            <button
-                              className="copilot-session-toggle"
-                              onClick={() => setShowCopilotSession(!showCopilotSession)}
-                            >
-                              {showCopilotSession ? '📝 Hide Session' : '👁️ Watch Session'}
-                            </button>
                           </div>
                           {showCopilotSession && copilotSessionInfo.latestComment && (
                             <div className="copilot-session-modal">
