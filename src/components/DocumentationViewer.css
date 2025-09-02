@@ -136,7 +136,7 @@ body.theme-dark .documentation-viewer {
 .doc-content {
   display: flex;
   min-height: calc(100vh - 80px);
-  flex-direction: column;
+  flex-direction: row;
 }
 
 .doc-sidebar {
