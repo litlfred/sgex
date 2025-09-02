@@ -57,7 +57,8 @@ class LogicalModelService {
       const fshDirectories = [
         'input/fsh',
         'input/fsh/logicalmodels',
-        'input/fsh/profiles'
+        'input/fsh/profiles',
+        'input/fsh/models'
       ];
 
       for (const directory of fshDirectories) {
