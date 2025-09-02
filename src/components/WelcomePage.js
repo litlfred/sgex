@@ -57,8 +57,8 @@ const WelcomePage = () => {
       setIsAuthenticated(githubService.isAuthenticated);
     };
 
-    // Check periodically for auth state changes
-    const interval = setInterval(checkAuthState, 1000);
+    // Check periodically for auth state changes, but less frequently to avoid performance issues
+    const interval = setInterval(checkAuthState, 5000); // Reduced from 1000ms to 5000ms
     
     return () => clearInterval(interval);
   }, []);
