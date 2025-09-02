@@ -76,6 +76,22 @@
     "publications-actors": {
       "component": "ActorsPublication",
       "path": "./components/publications/ActorsPublication"
+    },
+    "publications-indicators": {
+      "component": "IndicatorsPublication",
+      "path": "./components/publications/IndicatorsPublication"
+    },
+    "publications-questionnaires": {
+      "component": "QuestionnairesPublication",
+      "path": "./components/publications/QuestionnairesPublication"
+    },
+    "publications-terminology": {
+      "component": "TerminologyPublication",
+      "path": "./components/publications/TerminologyPublication"
+    },
+    "publications-all-components": {
+      "component": "AllComponentsPublication",
+      "path": "./components/publications/AllComponentsPublication"
     }
   },
   "standardComponents": {

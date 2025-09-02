@@ -112,7 +112,7 @@ const BPMNDiagramRenderer = ({ bpmnFile, printMode = false }) => {
         viewer.destroy();
       }
     };
-  }, [bpmnFile.content, printMode]);
+  }, [bpmnFile.content, printMode, viewer]);
 
   /**
    * Calculate optimal page layout for BPMN diagrams
@@ -268,7 +268,7 @@ const BPMNViewerSegment = ({ bpmnContent, viewport, pageNumber }) => {
         segmentViewer.destroy();
       }
     };
-  }, [bpmnContent, viewport]);
+  }, [bpmnContent, viewport, segmentViewer]);
 
   return (
     <div className="bpmn-viewer-segment">

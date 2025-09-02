@@ -9,6 +9,10 @@ export { default as DecisionSupportPublication } from './DecisionSupportPublicat
 export { default as CoreDataDictionaryPublication } from './CoreDataDictionaryPublication';
 export { default as TestingPublication } from './TestingPublication';
 export { default as ActorsPublication } from './ActorsPublication';
+export { default as IndicatorsPublication } from './IndicatorsPublication';
+export { default as QuestionnairesPublication } from './QuestionnairesPublication';
+export { default as TerminologyPublication } from './TerminologyPublication';
+export { default as AllComponentsPublication } from './AllComponentsPublication';
 
 /**
  * Publication Component Registry
@@ -19,7 +23,11 @@ export const PUBLICATION_COMPONENTS = {
   'decision-support': 'DecisionSupportPublication', 
   'core-data-dictionary': 'CoreDataDictionaryPublication',
   'testing': 'TestingPublication',
-  'actors': 'ActorsPublication'
+  'actors': 'ActorsPublication',
+  'indicators': 'IndicatorsPublication',
+  'questionnaires': 'QuestionnairesPublication',
+  'terminology': 'TerminologyPublication',
+  'all-components': 'AllComponentsPublication'
 };
 
 /**

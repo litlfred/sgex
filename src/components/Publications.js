@@ -223,6 +223,84 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
 
   return (
     <div className="publications-section">
+      {/* Comprehensive Publication Section */}
+      <div className="comprehensive-publication-section">
+        <div className="section-header">
+          <h3 className="section-title">📚 Complete DAK Publication</h3>
+          <p className="section-description">
+            Generate a comprehensive publication containing all DAK components in a single document 
+            suitable for stakeholder review and distribution.
+          </p>
+        </div>
+        
+        <div className="comprehensive-publication-card">
+          <div className="publication-header">
+            <div className="publication-info">
+              <span className="publication-icon">📖</span>
+              <div className="publication-details">
+                <h4>All Components Publication</h4>
+                <p>Complete DAK documentation with all 8 core components</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="publication-actions">
+            <a 
+              href={`/publications-all-components/${owner}/${repoName}/${selectedBranch}`}
+              className="comprehensive-publication-btn"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              📄 View Complete Publication
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      {/* Individual Component Publications Section */}
+      <div className="individual-publications-section">
+        <div className="section-header">
+          <h3 className="section-title">📑 Individual Component Publications</h3>
+          <p className="section-description">
+            Access publication views for individual DAK components. Each component can be 
+            reviewed and printed separately for focused stakeholder discussions.
+          </p>
+        </div>
+        
+        <div className="component-publications-grid">
+          {[
+            { id: 'business-processes', name: 'Business Processes', icon: '🔄', description: 'BPMN workflows and care pathways' },
+            { id: 'decision-support', name: 'Decision Support', icon: '🧠', description: 'DMN decision tables and clinical logic' },
+            { id: 'core-data-dictionary', name: 'Core Data Dictionary', icon: '📊', description: 'FHIR profiles and data specifications' },
+            { id: 'actors', name: 'User Personas', icon: '👥', description: 'User roles and system actors' },
+            { id: 'questionnaires', name: 'Data Forms', icon: '📝', description: 'Questionnaires and data entry forms' },
+            { id: 'terminology', name: 'Terminology', icon: '📚', description: 'Value sets and code systems' },
+            { id: 'indicators', name: 'Indicators', icon: '📈', description: 'Performance measures and KPIs' },
+            { id: 'testing', name: 'Testing', icon: '🧪', description: 'Test scenarios and validation' }
+          ].map((component) => (
+            <div key={component.id} className="component-publication-card">
+              <div className="component-header">
+                <span className="component-icon">{component.icon}</span>
+                <div className="component-info">
+                  <h5>{component.name}</h5>
+                  <p>{component.description}</p>
+                </div>
+              </div>
+              <div className="component-actions">
+                <a 
+                  href={`/publications-${component.id}/${owner}/${repoName}/${selectedBranch}`}
+                  className="component-publication-btn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  📄 Publication
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Staging Ground Section */}
       <StagingGround
         repository={repository}
@@ -232,7 +310,7 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
       />
       
       <div className="section-header">
-        <h3 className="section-title">Published DAK Content</h3>
+        <h3 className="section-title">🚀 Published DAK Artifacts</h3>
         <p className="section-description">
           Access published Implementation Guide content for this DAK repository. Each branch is published 
           automatically via GitHub Actions to GitHub Pages.

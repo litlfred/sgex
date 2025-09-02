@@ -62,7 +62,16 @@ const DAKDashboardContent = () => {
     };
 
     // Check if component has publication support
-    const hasPublicationSupport = ['business-processes', 'decision-support', 'core-data-elements', 'testing', 'generic-personas'].includes(component.id);
+    const hasPublicationSupport = [
+      'business-processes', 
+      'decision-support', 
+      'core-data-elements', 
+      'testing', 
+      'generic-personas',
+      'indicators-measures',
+      'questionnaires',
+      'terminology'
+    ].includes(component.id);
     
     // Handle publication view click
     const handlePublicationClick = (event) => {
@@ -88,6 +97,15 @@ const DAKDashboardContent = () => {
           break;
         case 'generic-personas':
           publicationPath = `/publications-actors/${owner}/${repoName}/${selectedBranch}`;
+          break;
+        case 'indicators-measures':
+          publicationPath = `/publications-indicators/${owner}/${repoName}/${selectedBranch}`;
+          break;
+        case 'questionnaires':
+          publicationPath = `/publications-questionnaires/${owner}/${repoName}/${selectedBranch}`;
+          break;
+        case 'terminology':
+          publicationPath = `/publications-terminology/${owner}/${repoName}/${selectedBranch}`;
           break;
         default:
           console.warn('Publication not supported for component:', component.id);

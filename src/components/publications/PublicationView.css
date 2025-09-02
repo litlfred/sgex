@@ -11,6 +11,248 @@
   color: #333;
 }
 
+/* Comprehensive Publication Specific Styles */
+.publication-container.comprehensive {
+  max-width: 100%;
+  padding: 10mm;
+}
+
+.publication-title-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  text-align: center;
+  page-break-after: always;
+  border-bottom: 3px solid #0078d4;
+  padding: 40px;
+}
+
+.publication-title-page .title-content h1 {
+  font-size: 3.5em;
+  color: #0078d4;
+  margin: 0 0 10px 0;
+  font-weight: 700;
+}
+
+.publication-title-page .title-content h2 {
+  font-size: 2.2em;
+  color: #666;
+  margin: 0 0 15px 0;
+  font-weight: 400;
+}
+
+.publication-title-page .title-content h3 {
+  font-size: 1.6em;
+  color: #999;
+  margin: 0 0 40px 0;
+  font-weight: 300;
+}
+
+/* Table of Contents */
+.table-of-contents {
+  page-break-after: always;
+  padding: 40px 0;
+}
+
+.table-of-contents h2 {
+  color: #0078d4;
+  font-size: 2.2em;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #0078d4;
+  padding-bottom: 10px;
+}
+
+.toc-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toc-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dotted #ccc;
+}
+
+.toc-title {
+  font-weight: 500;
+  color: #333;
+}
+
+.toc-page {
+  font-weight: 600;
+  color: #0078d4;
+  font-family: monospace;
+}
+
+/* Executive Summary */
+.executive-summary {
+  page-break-after: always;
+  padding: 40px 0;
+}
+
+.executive-summary h2 {
+  color: #0078d4;
+  font-size: 2.2em;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #0078d4;
+  padding-bottom: 10px;
+}
+
+.executive-summary h3 {
+  color: #333;
+  font-size: 1.4em;
+  margin: 25px 0 15px 0;
+}
+
+.executive-summary h4 {
+  color: #666;
+  font-size: 1.1em;
+  margin: 20px 0 10px 0;
+}
+
+.components-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.component-summary {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #0078d4;
+}
+
+.component-summary h4 {
+  margin: 0 0 8px 0;
+  color: #0078d4;
+  font-size: 1em;
+}
+
+.component-summary p {
+  margin: 0;
+  font-size: 0.9em;
+  color: #666;
+}
+
+/* Publication Sections */
+.publication-section {
+  page-break-before: always;
+  padding: 40px 0;
+  margin-bottom: 40px;
+}
+
+.publication-section .section-header {
+  margin-bottom: 30px;
+}
+
+.publication-section .section-header h2 {
+  color: #0078d4;
+  font-size: 2em;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #0078d4;
+  padding-bottom: 10px;
+}
+
+.bpmn-diagram-summary,
+.dmn-table-summary,
+.profile-summary,
+.actor-summary {
+  background: #f8f9fa;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 8px;
+  border-left: 4px solid #0078d4;
+}
+
+.bpmn-diagram-summary h4,
+.dmn-table-summary h4,
+.profile-summary h4,
+.actor-summary h4 {
+  margin: 0 0 8px 0;
+  color: #0078d4;
+  font-size: 1.2em;
+}
+
+.file-reference {
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.file-reference code {
+  background: #e9ecef;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+/* Implementation Guidance */
+.implementation-guidance {
+  page-break-before: always;
+  padding: 40px 0;
+}
+
+.implementation-guidance h2 {
+  color: #0078d4;
+  font-size: 2em;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #0078d4;
+  padding-bottom: 10px;
+}
+
+.implementation-guidance h3 {
+  color: #333;
+  font-size: 1.4em;
+  margin: 25px 0 15px 0;
+}
+
+.implementation-guidance h4 {
+  color: #666;
+  font-size: 1.1em;
+  margin: 20px 0 10px 0;
+}
+
+.implementation-guidance ol {
+  counter-reset: step-counter;
+  list-style: none;
+  padding-left: 0;
+}
+
+.implementation-guidance ol li {
+  counter-increment: step-counter;
+  margin: 10px 0;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  position: relative;
+  padding-left: 50px;
+}
+
+.implementation-guidance ol li::before {
+  content: counter(step-counter);
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #0078d4;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
 /* Publication Header */
 .publication-header {
   border-bottom: 3px solid #0078d4;
