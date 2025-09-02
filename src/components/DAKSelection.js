@@ -51,6 +51,13 @@ const DAKSelectionContent = () => {
     
     // If user parameter exists but no action - use default action instead of redirecting
     if (userParam && !action && !defaultAction) {
+      // If we have a profile context (user has chosen a profile), always default to 'edit' action
+      // This ensures breadcrumb "Select Repository" navigation works correctly
+      if (effectiveProfile && effectiveProfile.login === userParam) {
+        setDefaultAction('edit');
+        return;
+      }
+      
       // For well-known organizations like WHO, default to 'edit' action to allow direct access
       if (userParam === 'WorldHealthOrganization' || 
           userParam === 'WHO' || 
