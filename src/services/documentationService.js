@@ -108,11 +108,8 @@ class DocumentationService {
       ]
     };
 
-    // Set up breadcrumbs for subdirectories
-    structure.breadcrumbs.set('workflows-overview', [
-      { label: 'Documentation', path: '/docs/overview' },
-      { label: 'Workflows', path: '/docs/workflows-overview', current: true }
-    ]);
+    // Set up breadcrumbs for subdirectories - will be made context-aware when accessed
+    structure.breadcrumbs.set('workflows-overview', 'workflows');
 
     // Add JSON schemas
     const schemaFiles = [
@@ -207,16 +204,31 @@ class DocumentationService {
    */
   async getDocument(docId) {
     const structure = await this.getDocumentationStructure();
+    const docsBasePath = this.getCurrentDocsBasePath();
     
     // Search through all categories
     for (const category of Object.values(structure.categories)) {
       const doc = category.files.find(f => f.id === docId);
       if (doc) {
         const content = await this.fetchDocumentContent(doc.url);
+        
+        // Generate breadcrumbs based on whether there's a stored breadcrumb context
+        let breadcrumbs;
+        const breadcrumbContext = structure.breadcrumbs.get(docId);
+        if (breadcrumbContext && typeof breadcrumbContext === 'string') {
+          // Handle special cases like workflows
+          breadcrumbs = [
+            { label: 'Documentation', path: `${docsBasePath}/overview` },
+            { label: breadcrumbContext.charAt(0).toUpperCase() + breadcrumbContext.slice(1), path: `${docsBasePath}/${docId}`, current: true }
+          ];
+        } else {
+          breadcrumbs = this.generateBreadcrumbs(doc);
+        }
+        
         return {
           ...doc,
           content,
-          breadcrumbs: structure.breadcrumbs.get(docId) || this.generateBreadcrumbs(doc)
+          breadcrumbs
         };
       }
     }
@@ -230,8 +242,8 @@ class DocumentationService {
         content,
         isSchema: true,
         breadcrumbs: [
-          { label: 'Documentation', path: '/docs/overview' },
-          { label: 'JSON Schemas', path: '/docs/schemas-overview' },
+          { label: 'Documentation', path: `${docsBasePath}/overview` },
+          { label: 'JSON Schemas', path: `${docsBasePath}/schemas-overview` },
           { label: schema.title, current: true }
         ]
       };
@@ -267,7 +279,8 @@ class DocumentationService {
    * Generate breadcrumbs for a document
    */
   generateBreadcrumbs(doc) {
-    const breadcrumbs = [{ label: 'Documentation', path: '/docs/overview' }];
+    const docsBasePath = this.getCurrentDocsBasePath();
+    const breadcrumbs = [{ label: 'Documentation', path: `${docsBasePath}/overview` }];
     
     if (doc.path) {
       // Add path segments as breadcrumbs
@@ -276,7 +289,7 @@ class DocumentationService {
         const path = pathSegments.slice(0, index + 1).join('-');
         breadcrumbs.push({
           label: segment.charAt(0).toUpperCase() + segment.slice(1),
-          path: `/docs/${path}`
+          path: `${docsBasePath}/${path}`
         });
       });
     }
@@ -286,10 +299,21 @@ class DocumentationService {
   }
 
   /**
+   * Get the current documentation base path based on deployment context
+   */
+  getCurrentDocsBasePath() {
+    // The docs component is configured as a DAK component in routes-config.json
+    // This means it follows the standard route pattern: /docs, /docs/:user/:repo, /docs/:user/:repo/:branch
+    // For SGEX documentation, we should use the simple /docs base path
+    return '/docs';
+  }
+
+  /**
    * Get navigation menu structure for sidebar
    */
   async getNavigationMenu() {
     const structure = await this.getDocumentationStructure();
+    const docsBasePath = this.getCurrentDocsBasePath();
     
     const menu = [];
     
@@ -303,7 +327,7 @@ class DocumentationService {
           type: 'document',
           id: file.id,
           title: file.title,
-          path: `/docs/${file.id}`,
+          path: `${docsBasePath}/${file.id}`,
           hasSubpath: !!file.path
         }))
       });
@@ -320,7 +344,7 @@ class DocumentationService {
           type: 'schema',
           id: file.id,
           title: file.title,
-          path: `/docs/${file.id}`,
+          path: `${docsBasePath}/${file.id}`,
           description: file.description
         }))
       });

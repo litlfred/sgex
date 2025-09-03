@@ -113,6 +113,11 @@ const PageContext = ({ customBreadcrumbs }) => {
       return customBreadcrumbs;
     }
 
+    // Special handling for documentation-viewer page - don't show default breadcrumbs
+    if (pageName === 'documentation-viewer') {
+      return [];
+    }
+
     // Generate automatic breadcrumbs based on page type
     const breadcrumbs = [];
 

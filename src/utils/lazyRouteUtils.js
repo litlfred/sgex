@@ -179,6 +179,14 @@ function generateDAKRoutes(routeName, dakComponent) {
   
   const basePath = `/${routeName}`;
   
+  // Special case for documentation - use document-specific routes instead of user/repo patterns
+  if (routeName === 'docs') {
+    return [
+      <Route key={`${routeName}-base`} path={basePath} element={<LazyComponent />} />,
+      <Route key={`${routeName}-docid`} path={`${basePath}/:docId`} element={<LazyComponent />} />
+    ];
+  }
+  
   return [
     <Route key={`${routeName}-base`} path={basePath} element={<LazyComponent />} />,
     <Route key={`${routeName}-user-repo`} path={`${basePath}/:user/:repo`} element={<LazyComponent />} />,

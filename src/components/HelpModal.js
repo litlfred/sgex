@@ -344,7 +344,9 @@ Best regards,
   };
 
   const handleDocumentation = () => {
-    window.open('/sgex/docs/overview', '_blank');
+    // Use the standard /docs path that matches the route configuration
+    // The docs component is configured as a DAK component at /docs
+    window.open('/docs/overview', '_blank');
   };
 
   const handlePrevSlide = () => {
