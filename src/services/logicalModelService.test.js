@@ -228,7 +228,7 @@ Title: "Patient Model"
       // Second call should use cache
       await logicalModelService.detectLogicalModels('https://example.com', 'user', 'repo', 'main');
 
-      expect(githubService.getDirectoryContents).toHaveBeenCalledTimes(3); // Once per directory
+      expect(githubService.getDirectoryContents).toHaveBeenCalledTimes(4); // Once per directory (input/fsh, input/fsh/logicalmodels, input/fsh/profiles, input/fsh/models)
     });
 
     test('should clear cache', () => {

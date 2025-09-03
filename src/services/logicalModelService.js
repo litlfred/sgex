@@ -24,13 +24,20 @@ class LogicalModelService {
   async detectLogicalModels(baseUrl, user, repo, branch) {
     const cacheKey = `${user}/${repo}/${branch}`;
     
+    console.log(`🚀 Scanning for logical models in ${cacheKey}`);
+    
     if (this.cache.has(cacheKey)) {
-      return this.cache.get(cacheKey);
+      const cached = this.cache.get(cacheKey);
+      console.log(`📋 Using cached ${cached.length} logical models for ${cacheKey}`);
+      return cached;
     }
 
     try {
       // Look for logical models in the FSH files (regardless of artifacts page)
       const logicalModels = await this.scanFSHFilesForLogicalModels(user, repo, branch);
+      
+      console.log(`💾 Found and caching ${logicalModels.length} logical models for ${cacheKey}`, 
+        logicalModels.map(m => `${m.id} (${m.title || m.name})`));
       
       // Cache the results
       this.cache.set(cacheKey, logicalModels);
@@ -61,6 +68,8 @@ class LogicalModelService {
         'input/fsh/models'
       ];
 
+      console.log(`📂 Scanning FSH directories in ${user}/${repo}/${branch}: ${fshDirectories.join(', ')}`);
+      
       for (const directory of fshDirectories) {
         try {
           const files = await githubService.getDirectoryContents(user, repo, directory, branch);
@@ -69,16 +78,25 @@ class LogicalModelService {
             file.type === 'file' && file.name.endsWith('.fsh')
           );
 
-          for (const file of fshFiles) {
-            const content = await githubService.getFileContent(user, repo, file.path, branch);
-            const models = this.parseFSHForLogicalModels(content, file.path);
-            logicalModels.push(...models);
+          if (fshFiles.length > 0) {
+            console.log(`📄 Found ${fshFiles.length} FSH files in ${directory}: ${fshFiles.map(f => f.name).join(', ')}`);
+
+            for (const file of fshFiles) {
+              const content = await githubService.getFileContent(user, repo, file.path, branch);
+              const models = this.parseFSHForLogicalModels(content, file.path);
+              if (models.length > 0) {
+                console.log(`🎯 Found ${models.length} logical models in ${file.path}: ${models.map(m => m.id).join(', ')}`);
+                logicalModels.push(...models);
+              }
+            }
           }
         } catch (dirError) {
           // Directory might not exist, continue with next one
-          console.debug(`Directory ${directory} not found or inaccessible`);
+          console.debug(`Directory ${directory} not accessible: ${dirError.message}`);
         }
       }
+      
+      console.log(`✅ Total logical models discovered: ${logicalModels.length}`, logicalModels.map(m => `${m.id} (${m.title || m.name})`));
     } catch (error) {
       console.warn('Error scanning FSH files for logical models:', error);
     }
@@ -101,8 +119,11 @@ class LogicalModelService {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
 
-      // Detect logical model definition
-      const logicalModelMatch = line.match(/^Logical:\s*(\S+)/);
+      // Skip empty lines and comments
+      if (!line || line.startsWith('//')) continue;
+
+      // Detect logical model definition - handle various syntax patterns
+      const logicalModelMatch = line.match(/^Logical:\s*(\S+)/i);
       if (logicalModelMatch) {
         if (currentModel) {
           logicalModels.push(currentModel);
@@ -121,22 +142,38 @@ class LogicalModelService {
         continue;
       }
 
-      if (!inModel || !currentModel) continue;
-
-      // Parse metadata
-      if (line.startsWith('Title:')) {
-        currentModel.title = line.replace('Title:', '').trim().replace(/"/g, '');
-      } else if (line.startsWith('Description:')) {
-        currentModel.description = line.replace('Description:', '').trim().replace(/"/g, '');
-      } else if (line.startsWith('Id:')) {
-        currentModel.id = line.replace('Id:', '').trim();
+      // Check for end of model (start of another resource type)
+      if (inModel && (line.match(/^(Profile|Extension|ValueSet|CodeSystem|Instance|Invariant):/i))) {
+        if (currentModel) {
+          logicalModels.push(currentModel);
+          currentModel = null;
+        }
+        inModel = false;
+        continue;
       }
 
-      // Parse elements (simplified FSH parsing)
-      const elementMatch = line.match(/^\*\s+(\S+)\s+(\d+)\.\.(\d+|\*)\s+(\S+)\s*"([^"]+)"/);
+      if (!inModel || !currentModel) continue;
+
+      // Parse metadata with more flexible matching
+      if (line.match(/^Title:\s*/i)) {
+        currentModel.title = line.replace(/^Title:\s*/i, '').trim().replace(/"/g, '');
+      } else if (line.match(/^Description:\s*/i)) {
+        currentModel.description = line.replace(/^Description:\s*/i, '').trim().replace(/"/g, '');
+      } else if (line.match(/^Id:\s*/i)) {
+        currentModel.id = line.replace(/^Id:\s*/i, '').trim();
+      }
+
+      // Parse elements with more flexible patterns
+      // Pattern 1: * element 0..1 type "description"
+      let elementMatch = line.match(/^\*\s+(\S+)\s+(\d+)\.\.(\d+|\*)\s+(\S+)\s*"([^"]+)"/);
+      if (!elementMatch) {
+        // Pattern 2: * element 0..1 type
+        elementMatch = line.match(/^\*\s+(\S+)\s+(\d+)\.\.(\d+|\*)\s+(\S+)/);
+      }
+      
       if (elementMatch) {
-        const [, name, min, max, type, description] = elementMatch;
-        currentModel.elements.push({
+        const [, name, min, max, type, description = ''] = elementMatch;
+        const element = {
           name: name,
           path: `${currentModel.id}.${name}`,
           min: parseInt(min),
@@ -144,7 +181,8 @@ class LogicalModelService {
           type: type,
           description: description,
           required: parseInt(min) > 0
-        });
+        };
+        currentModel.elements.push(element);
       }
     }
 
