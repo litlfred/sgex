@@ -33,7 +33,7 @@ function getDeploymentType() {
     var path = window.location.pathname;
     
     // If we're accessing documentation or other main features, use main config
-    if (path.includes('/docs/') || path.includes('/dashboard/') || path.includes('/test-') || path.includes('/actor-') || path.includes('/bpmn-') || path.includes('/decision-support-') || path.includes('/questionnaire-') || path.includes('/core-data-') || path.includes('/testing-') || path.includes('/business-process-') || path.includes('/publications-')) {
+    if (path.includes('/docs/') || path.includes('/dashboard/') || path.includes('/test-') || path.includes('/actor-') || path.includes('/bpmn-') || path.includes('/decision-support-') || path.includes('/questionnaire-') || path.includes('/core-data-') || path.includes('/testing-') || path.includes('/business-process-')) {
       return 'main';
     }
     
@@ -42,18 +42,8 @@ function getDeploymentType() {
       return 'main';
     }
     
-    // Check if we're in a branch deployment (like /sgex/branch-name/)
-    var branchMatch = path.match(/^\/sgex\/([^\/]+)\/?$/);
-    if (branchMatch) {
-      var branchName = branchMatch[1];
-      // If it's a known deploy branch (main is handled separately), treat as deploy
-      if (branchName !== 'main' && branchName !== '') {
-        return 'deploy';
-      }
-    }
-    
     // If we're at the root with minimal functionality, likely deploy branch
-    if (path === '/' || path === '/sgex/' || path === '/sgex') {
+    if (path === '/' || path === '/sgex/') {
       // Check for query parameters or other indicators that suggest main deployment needed
       if (window.location.search || window.location.hash) {
         return 'main';
@@ -68,9 +58,7 @@ function getDeploymentType() {
 
 // Get appropriate config file name based on deployment type  
 function getConfigFileName(deployType) {
-  // Use absolute paths to avoid issues with nested routes
-  var basePath = window.location.pathname.includes('/sgex/') ? '/sgex/' : '/';
-  return deployType === 'deploy' ? basePath + 'routes-config.deploy.json' : basePath + 'routes-config.json';
+  return deployType === 'deploy' ? './routes-config.deploy.json' : './routes-config.json';
 }
 
 // Synchronous configuration loading using XMLHttpRequest for 404.html compatibility

@@ -17,11 +17,46 @@ export const shouldOpenInNewTab = (event) => {
  * @returns {string} - The full URL
  */
 export const constructFullUrl = (relativePath) => {
-  const basePath = process.env.PUBLIC_URL || '';
   const baseUrl = window.location.origin;
+  const currentPath = window.location.pathname;
   
   // Remove leading slash from relativePath if present to avoid double slashes
   const cleanPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
+  
+  // Detect if we're in a branch deployment context
+  // Look for pattern: /sgex/branch-name/component/... where branch-name is likely a git branch
+  // Common git branch patterns: feature/, hotfix/, develop, branch names with dashes, etc.
+  // Exclude known component names that might appear in this position
+  const knownComponents = ['dashboard', 'docs', 'welcome', 'landing', 'test-', 'actor-', 'bpmn-', 'decision-support-', 'questionnaire-', 'core-data-', 'testing-', 'business-process-', 'publications-'];
+  
+  const pathSegments = currentPath.split('/').filter(Boolean);
+  
+  // Check if we have the pattern: ['sgex', 'potential-branch', 'component', ...]
+  if (pathSegments.length >= 3 && pathSegments[0] === 'sgex') {
+    const potentialBranch = pathSegments[1];
+    const potentialComponent = pathSegments[2];
+    
+    // If the second segment looks like a branch name and the third segment looks like a component
+    // or if the second segment contains branch-like patterns (dashes, dots, etc.)
+    const isLikelyBranch = 
+      potentialBranch.includes('-') ||
+      potentialBranch.includes('.') ||
+      potentialBranch.includes('_') ||
+      potentialBranch.startsWith('feature') ||
+      potentialBranch.startsWith('hotfix') ||
+      potentialBranch.startsWith('copilot') ||
+      potentialBranch === 'develop' ||
+      potentialBranch === 'staging';
+    
+    const isKnownComponent = knownComponents.some(comp => potentialComponent?.startsWith(comp));
+    
+    if (isLikelyBranch && (isKnownComponent || potentialComponent)) {
+      return `${baseUrl}/sgex/${potentialBranch}/${cleanPath}`;
+    }
+  }
+  
+  // Default behavior for main deployment (use PUBLIC_URL if available)
+  const basePath = process.env.PUBLIC_URL || '';
   
   // Only add basePath if it's not empty
   if (!basePath) {
