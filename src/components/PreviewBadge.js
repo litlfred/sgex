@@ -1011,7 +1011,7 @@ const PreviewBadge = () => {
       clearInterval(commentRefreshIntervalRef.current);
     }
 
-    // Set up new interval to refresh comments every minute
+    // Set up new interval to refresh comments every 5 seconds
     commentRefreshIntervalRef.current = setInterval(async () => {
       try {
         const latestComments = await fetchCommentsForPR(owner, repo, prNumber, 1, false);
@@ -1029,7 +1029,7 @@ const PreviewBadge = () => {
       } catch (error) {
         console.debug('Failed to auto-refresh comments:', error);
       }
-    }, 60000); // 60 seconds
+    }, 5000); // 5 seconds
   };
 
   const setupWorkflowAutoRefresh = (branchName) => {
