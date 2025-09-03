@@ -64,8 +64,12 @@ export const extractOrganizationFromSAMLError = (error, fallbackOrg = 'organizat
  * @returns {string} The authorization URL
  */
 export const createSAMLAuthorizationURL = (organization) => {
-  // GitHub's SAML authorization URL pattern
-  return `https://github.com/orgs/${organization}/sso`;
+  // GitHub's SAML authorization URL pattern with return URL
+  const currentUrl = window.location.origin + window.location.pathname;
+  const returnUrl = `${currentUrl}?saml_authorized=1&org=${organization}`;
+  
+  // GitHub's SAML SSO URL with return_to parameter
+  return `https://github.com/orgs/${organization}/sso?return_to=${encodeURIComponent(returnUrl)}`;
 };
 
 /**

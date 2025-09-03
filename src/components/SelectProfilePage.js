@@ -51,7 +51,7 @@ const SelectProfilePage = () => {
     setDakCounts(counts);
   }, []);
 
-  const fetchUserData = useCallback(async () => {
+  const fetchUserData = useCallback(async (forceRefresh = false) => {
     // Prevent multiple simultaneous calls
     if (fetchInProgress.current) {
       return;
@@ -63,13 +63,13 @@ const SelectProfilePage = () => {
     
     // Capture authentication state at function execution time
     const currentIsAuthenticated = githubService.isAuth();
-    console.log('fetchUserData: Current authentication state:', currentIsAuthenticated);
+    console.log('fetchUserData: Current authentication state:', currentIsAuthenticated, 'forceRefresh:', forceRefresh);
     
     try {
-      // Check if we have cached profile data first
-      const cachedProfile = repositoryCacheService.getCachedProfile(currentIsAuthenticated);
+      // Check if we have cached profile data first (unless forcing refresh)
+      const cachedProfile = forceRefresh ? null : repositoryCacheService.getCachedProfile(currentIsAuthenticated);
       
-      if (cachedProfile) {
+      if (cachedProfile && !forceRefresh) {
         console.log('Using cached profile data', {
           organizationCount: cachedProfile.organizations?.length || 0,
           hasUser: !!cachedProfile.user,
@@ -91,7 +91,7 @@ const SelectProfilePage = () => {
       }
       
       // No cache found, fetch fresh data
-      console.log('No cached profile data found, fetching fresh data');
+      console.log('No cached profile data found or forcing refresh, fetching fresh data');
       
       let userData = null;
       
@@ -219,19 +219,13 @@ const SelectProfilePage = () => {
   // Handle SAML authorization workflow
   const handleSAMLAuthorization = async (organization) => {
     try {
-      // Retry fetching the organization data after SAML authorization
-      const whoData = await githubService.getWHOOrganization();
-      
-      // Update organizations list with fresh data
-      setOrganizations(prev => prev.map(org => 
-        org.login === organization 
-          ? { ...org, ...whoData, needsSAMLAuth: false }
-          : org
-      ));
-      
-      // Clear profile cache to ensure fresh data on next load
+      // Clear profile cache first to ensure fresh API calls
       repositoryCacheService.clearProfileCache(githubService.isAuth());
-      console.log('SAML authorization successful, cleared profile cache for fresh data');
+      
+      // Force a complete refresh of profile data to check SAML status
+      await fetchUserData(true); // Force refresh to bypass any remaining cache
+      
+      console.log(`SAML authorization verification completed for ${organization}`);
       
       // Clear any warning message
       setWarningMessage(null);
@@ -239,7 +233,6 @@ const SelectProfilePage = () => {
       // Close SAML modal
       setSamlModal({ isOpen: false, errorInfo: null });
       
-      console.log(`Successfully authorized SAML for ${organization}`);
     } catch (error) {
       // Reduce console noise for expected SAML failures
       if (isSAMLError(error)) {
@@ -307,6 +300,47 @@ const SelectProfilePage = () => {
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, navigate, location.pathname]);
+
+  // Detect potential return from SAML authorization and force fresh data fetch
+  useEffect(() => {
+    // Check if user might be returning from SAML authorization
+    const urlParams = new URLSearchParams(window.location.search);
+    const referrer = document.referrer;
+    
+    // Detect if user is returning from SAML authorization
+    const fromGitHub = referrer && referrer.includes('github.com');
+    const samlAuthorized = urlParams.get('saml_authorized') === '1';
+    const hasAuthParams = urlParams.has('code') || urlParams.has('state') || samlAuthorized;
+    
+    if (fromGitHub || samlAuthorized || hasAuthParams) {
+      console.log('Detected potential return from SAML authorization', {
+        fromGitHub,
+        samlAuthorized,
+        hasAuthParams,
+        organization: urlParams.get('org')
+      });
+      
+      // Clear profile cache to force fresh API calls
+      repositoryCacheService.clearAllProfileCaches();
+      
+      // Clear any existing warning message since user completed authorization
+      if (samlAuthorized) {
+        setWarningMessage(null);
+      }
+      
+      // Force a fresh data fetch
+      if (isAuthenticated) {
+        fetchUserData(true); // Force refresh to bypass cache
+      }
+      
+      // Clean up URL parameters to avoid repeat processing
+      if (hasAuthParams) {
+        const cleanUrl = new URL(window.location);
+        cleanUrl.search = '';
+        window.history.replaceState({}, document.title, cleanUrl.href);
+      }
+    }
+  }, [isAuthenticated, fetchUserData]);
 
   // Fetch user data when component mounts or authentication state changes
   useEffect(() => {
