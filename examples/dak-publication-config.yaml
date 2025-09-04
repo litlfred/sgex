@@ -1,0 +1,60 @@
+# DAK Publication Template Configuration Example
+
+# WHO SMART Guidelines Digital Adaptation Kit Publication Template
+# This configuration file defines how a DAK repository should be transformed
+# into a professional publication following WHO standards and branding.
+
+template:
+  id: "who-dak-standard-v1"
+  name: "WHO DAK Standard Publication Template"
+  version: "1.0.0"
+  description: "Standard WHO SMART Guidelines DAK publication template"
+
+publication:
+  title: "${dak.name} - Digital Adaptation Kit"
+  subtitle: "WHO SMART Guidelines Implementation Guide"
+  publisher: "World Health Organization"
+  copyright: "© 2024 World Health Organization"
+  license: "CC BY-SA 3.0 IGO"
+
+branding:
+  colors:
+    primary: "#0078d4"
+    secondary: "#005a9e"
+    accent: "#40e0d0"
+  fonts:
+    primary: "Arial, sans-serif"
+    headings: "Arial Black, sans-serif"
+
+sections:
+  cover:
+    enabled: true
+    order: 1
+  table_of_contents:
+    enabled: true
+    order: 2
+  executive_summary:
+    enabled: true
+    order: 3
+
+dak_components:
+  health_interventions:
+    enabled: true
+    order: 4
+    title: "Health Interventions and Recommendations"
+  personas:
+    enabled: true
+    order: 5
+    title: "Generic Personas"
+  # ... other components
+
+output:
+  formats:
+    html:
+      enabled: true
+      single_page: true
+    pdf:
+      enabled: true
+      engine: "puppeteer"
+    docx:
+      enabled: false
