@@ -223,24 +223,6 @@ const CoreDataDictionaryViewerContent = () => {
           setHasPublishedDak(dakExists);
         }
 
-        // Detect logical models from FSH files (regardless of gh-pages)
-        setLoadingLogicalModels(true);
-        try {
-          const baseUrl = getBaseUrl(currentBranch);
-          const detectedModels = await logicalModelService.detectLogicalModels(
-            baseUrl, 
-            currentUser, 
-            currentRepo, 
-            currentBranch
-          );
-          setLogicalModels(detectedModels);
-        } catch (error) {
-          console.warn('Error detecting logical models:', error);
-          setLogicalModels([]);
-        } finally {
-          setLoadingLogicalModels(false);
-        }
-
       } catch (err) {
         console.error('Error fetching FSH files:', err);
         setError('Failed to load Core Data Dictionary files. Please check repository access.');
@@ -251,6 +233,45 @@ const CoreDataDictionaryViewerContent = () => {
 
     fetchFshFiles();
   }, [repository, branch, user, repo, getBaseUrl, parseDakFshConcepts]);
+
+  // Separate effect for loading logical models asynchronously
+  useEffect(() => {
+    const detectLogicalModelsAsync = async () => {
+      // Support both URL params and state-based data
+      const currentRepository = repository;
+      const currentBranch = branch;
+      const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
+      const currentRepo = repo || repository?.name;
+      
+      if ((!currentRepository && (!currentUser || !currentRepo)) || !currentBranch) {
+        return;
+      }
+
+      // Only start loading logical models after main loading is complete
+      if (loading) {
+        return;
+      }
+
+      setLoadingLogicalModels(true);
+      try {
+        const baseUrl = getBaseUrl(currentBranch);
+        const detectedModels = await logicalModelService.detectLogicalModels(
+          baseUrl, 
+          currentUser, 
+          currentRepo, 
+          currentBranch
+        );
+        setLogicalModels(detectedModels);
+      } catch (error) {
+        console.warn('Error detecting logical models:', error);
+        setLogicalModels([]);
+      } finally {
+        setLoadingLogicalModels(false);
+      }
+    };
+
+    detectLogicalModelsAsync();
+  }, [loading, repository, branch, user, repo, getBaseUrl]);
 
   // Fetch file content for modal display
   const handleViewSource = async (file) => {
@@ -562,10 +583,10 @@ const CoreDataDictionaryViewerContent = () => {
                       >
                         Logical Models ↗
                       </a>
-                      {logicalModels.length > 0 && (
+                      {(logicalModels.length > 0 || loadingLogicalModels) && (
                         <div className="logical-models-actions">
                           {loadingLogicalModels ? (
-                            <span className="loading-indicator">Detecting models...</span>
+                            <span className="loading-indicator">🔍 Fetching Logical Models...</span>
                           ) : (
                             <>
                               <span className="models-count">({logicalModels.length} detected)</span>
