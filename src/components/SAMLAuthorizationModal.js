@@ -17,6 +17,13 @@ const SAMLAuthorizationModal = ({
 
   const handleSAMLAuthorization = () => {
     setAuthorizationAttempted(true);
+    
+    console.log('SAML Authorization Flow Debug:', {
+      authorizationURL: samlErrorInfo.authorizationURL,
+      currentLocation: window.location.href,
+      organization: samlErrorInfo.organization
+    });
+    
     // Navigate to GitHub's SAML authorization page in the same tab
     // GitHub will redirect back to the select_profile page after authorization
     window.location.href = samlErrorInfo.authorizationURL;

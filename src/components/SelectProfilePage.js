@@ -6,7 +6,7 @@ import repositoryCacheService from '../services/repositoryCacheService';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import SAMLAuthorizationModal from './SAMLAuthorizationModal';
-import { isSAMLError, createSAMLErrorInfo } from '../utils/samlErrorHandler';
+import { isSAMLError, createSAMLErrorInfo, detectSAMLReturn } from '../utils/samlErrorHandler';
 import './SelectProfilePage.css';
 
 const SelectProfilePage = () => {
@@ -312,29 +312,35 @@ const SelectProfilePage = () => {
 
   // Detect potential return from SAML authorization and force fresh data fetch
   useEffect(() => {
-    // Check if user might be returning from SAML authorization
+    // Use the enhanced SAML return detection
+    const samlReturnInfo = detectSAMLReturn();
+    
+    // Also check for OAuth parameters that might indicate a GitHub return
     const urlParams = new URLSearchParams(window.location.search);
-    const referrer = document.referrer;
+    const hasOAuthParams = urlParams.has('code') || urlParams.has('state');
     
-    // Detect if user is returning from SAML authorization
-    const fromGitHub = referrer && referrer.includes('github.com');
-    const samlAuthorized = urlParams.get('saml_authorized') === '1';
-    const authorizedOrg = urlParams.get('org');
-    const hasAuthParams = urlParams.has('code') || urlParams.has('state') || samlAuthorized;
+    console.log('SAML Return Detection Debug:', {
+      currentUrl: window.location.href,
+      referrer: document.referrer,
+      samlReturnInfo,
+      hasOAuthParams,
+      urlParams: Array.from(urlParams.entries())
+    });
     
-    if (fromGitHub || samlAuthorized || hasAuthParams) {
-      console.log('Detected potential return from SAML authorization', {
-        fromGitHub,
-        samlAuthorized,
-        hasAuthParams,
-        organization: authorizedOrg
+    if (samlReturnInfo || hasOAuthParams) {
+      const authorizedOrg = samlReturnInfo?.organization;
+      
+      console.log('Detected return from SAML authorization', {
+        method: samlReturnInfo?.method,
+        organization: authorizedOrg,
+        hasOAuthParams
       });
       
       // Clear profile cache to force fresh API calls
       repositoryCacheService.clearAllProfileCaches();
       
       // Clear any existing warning message since user completed authorization
-      if (samlAuthorized) {
+      if (samlReturnInfo) {
         setWarningMessage(null);
         
         // If SAML was authorized for a specific organization, immediately update the organizations state
@@ -355,13 +361,16 @@ const SelectProfilePage = () => {
       // Force a fresh data fetch with SAML override
       if (isAuthenticated) {
         // Pass the authorized organization to bypass SAML checks during the temporary propagation period
-        fetchUserData(true, samlAuthorized ? authorizedOrg : null); // Force refresh to bypass cache
+        fetchUserData(true, authorizedOrg || null); // Force refresh to bypass cache
       }
       
       // Clean up URL parameters to avoid repeat processing
-      if (hasAuthParams) {
+      if (hasOAuthParams || urlParams.has('saml_authorized')) {
         const cleanUrl = new URL(window.location);
-        cleanUrl.search = '';
+        // Keep essential parameters but clean OAuth/SAML ones
+        ['code', 'state', 'saml_authorized', 'org'].forEach(param => {
+          cleanUrl.searchParams.delete(param);
+        });
         window.history.replaceState({}, document.title, cleanUrl.href);
       }
     }

@@ -64,12 +64,97 @@ export const extractOrganizationFromSAMLError = (error, fallbackOrg = 'organizat
  * @returns {string} The authorization URL
  */
 export const createSAMLAuthorizationURL = (organization) => {
-  // GitHub's SAML authorization URL pattern with return URL
-  const currentUrl = window.location.origin + window.location.pathname;
-  const returnUrl = `${currentUrl}?saml_authorized=1&org=${organization}`;
+  // Get the current URL information
+  const currentOrigin = window.location.origin;
+  const currentPathname = window.location.pathname;
   
-  // GitHub's SAML SSO URL with return_to parameter
-  return `https://github.com/orgs/${organization}/sso?return_to=${encodeURIComponent(returnUrl)}`;
+  // Store the return URL in localStorage as a fallback mechanism
+  // This helps in case GitHub's return_to parameter doesn't work properly
+  const returnUrl = `${currentOrigin}${currentPathname}?saml_authorized=1&org=${organization}`;
+  
+  try {
+    localStorage.setItem('saml_return_url', returnUrl);
+    localStorage.setItem('saml_org', organization);
+    localStorage.setItem('saml_timestamp', Date.now().toString());
+    console.log('Stored SAML return info in localStorage:', { returnUrl, organization });
+  } catch (e) {
+    console.warn('Could not store SAML return info in localStorage:', e);
+  }
+  
+  console.log('SAML Authorization URL Debug:', {
+    origin: currentOrigin,
+    pathname: currentPathname,
+    isGitHubPages: currentOrigin.includes('github.io'),
+    returnUrl,
+    encodedReturnUrl: encodeURIComponent(returnUrl),
+    organization
+  });
+  
+  // Create GitHub's SAML SSO URL with return_to parameter
+  // We'll use both the return_to parameter AND localStorage fallback
+  const encodedReturnUrl = encodeURIComponent(returnUrl);
+  const authUrl = `https://github.com/orgs/${organization}/sso?return_to=${encodedReturnUrl}`;
+  
+  console.log('Final SAML authorization URL:', authUrl);
+  console.log('Expected return after SAML:', returnUrl);
+  
+  return authUrl;
+};
+
+/**
+ * Checks if user returned from SAML authorization and handles fallback
+ * @returns {Object|null} SAML return info if detected
+ */
+export const detectSAMLReturn = () => {
+  // First check URL parameters (primary method)
+  const urlParams = new URLSearchParams(window.location.search);
+  const samlAuthorized = urlParams.get('saml_authorized') === '1';
+  const authorizedOrg = urlParams.get('org');
+  
+  if (samlAuthorized && authorizedOrg) {
+    console.log('SAML return detected via URL parameters');
+    return { organization: authorizedOrg, method: 'url_params' };
+  }
+  
+  // Fallback: Check if user came from GitHub recently and we have localStorage data
+  const referrer = document.referrer;
+  const fromGitHub = referrer && referrer.includes('github.com');
+  
+  if (fromGitHub) {
+    try {
+      const storedReturnUrl = localStorage.getItem('saml_return_url');
+      const storedOrg = localStorage.getItem('saml_org');
+      const storedTimestamp = localStorage.getItem('saml_timestamp');
+      
+      // Check if the stored data is recent (within last 10 minutes)
+      const isRecent = storedTimestamp && (Date.now() - parseInt(storedTimestamp)) < 10 * 60 * 1000;
+      
+      if (storedOrg && isRecent) {
+        console.log('SAML return detected via localStorage fallback', {
+          organization: storedOrg,
+          storedReturnUrl,
+          timestamp: new Date(parseInt(storedTimestamp))
+        });
+        
+        // Clear the stored data to prevent repeat processing
+        localStorage.removeItem('saml_return_url');
+        localStorage.removeItem('saml_org');
+        localStorage.removeItem('saml_timestamp');
+        
+        // Add the parameters to the current URL for consistency
+        const currentUrl = new URL(window.location);
+        currentUrl.searchParams.set('saml_authorized', '1');
+        currentUrl.searchParams.set('org', storedOrg);
+        window.history.replaceState({}, document.title, currentUrl.href);
+        
+        return { organization: storedOrg, method: 'localStorage_fallback' };
+      }
+    } catch (e) {
+      console.warn('Error checking localStorage for SAML return data:', e);
+    }
+  }
+  
+  return null;
 };
 
 /**
