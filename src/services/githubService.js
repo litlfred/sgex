@@ -1436,8 +1436,8 @@ class GitHubService {
         console.log('📊 githubService.getFileContent: Base64 content length:', data.content.length);
         
         try {
-          // Use modern Buffer approach for reliable base64 decoding
-          const content = Buffer.from(data.content, 'base64').toString('utf-8');
+          // Use browser-compatible atob for reliable base64 decoding
+          const content = decodeURIComponent(escape(atob(data.content)));
           console.log(`✅ githubService.getFileContent: Successfully fetched and decoded file content`);
           console.log('📏 githubService.getFileContent: Final content length:', content.length, 'characters');
           console.log('👀 githubService.getFileContent: Content preview (first 200 chars):', content.substring(0, 200));

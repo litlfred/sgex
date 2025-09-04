@@ -1,0 +1,184 @@
+/* FSH File Viewer Styles */
+.fsh-file-viewer {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--who-card-bg, white);
+  margin-bottom: 1rem;
+  border: 1px solid var(--who-border-color, #e9ecef);
+}
+
+.fsh-file-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  color: white;
+  gap: 0.75rem;
+}
+
+.fsh-file-header .file-icon {
+  font-size: 1.25rem;
+}
+
+.fsh-file-header .file-name {
+  flex: 1;
+  font-weight: 600;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 1rem;
+}
+
+.fsh-file-header .file-type {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.fsh-syntax-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.fsh-syntax-container pre {
+  margin: 0 !important;
+  padding: 1.5rem !important;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  background: var(--who-bg-light, #f8f9fa) !important;
+  color: var(--who-text-primary, #2c3e50) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.fsh-syntax-container code {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+  background: transparent !important;
+}
+
+/* Custom syntax highlighting for FSH-like constructs */
+.fsh-syntax-container .token.comment {
+  color: #6a737d !important;
+  font-style: italic;
+}
+
+.fsh-syntax-container .token.string {
+  color: #032f62 !important;
+}
+
+.fsh-syntax-container .token.keyword {
+  color: #d73a49 !important;
+  font-weight: 600;
+}
+
+.fsh-syntax-container .token.number {
+  color: #005cc5 !important;
+}
+
+.fsh-syntax-container .token.operator {
+  color: #d73a49 !important;
+}
+
+.fsh-syntax-container .token.punctuation {
+  color: #24292e !important;
+}
+
+.fsh-file-footer {
+  padding: 0.75rem 1.5rem;
+  background: var(--who-bg-light, #f8f9fa);
+  border-top: 1px solid var(--who-border-color, #e9ecef);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.content-info {
+  color: var(--who-text-muted, #6c757d);
+  font-size: 0.85rem;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+/* Line numbers styling */
+.fsh-syntax-container .react-syntax-highlighter-line-number {
+  color: var(--who-text-muted, #6c757d) !important;
+  background: var(--who-bg-light, #f1f3f4) !important;
+  border-right: 1px solid var(--who-border-color, #e9ecef) !important;
+  padding-right: 1rem !important;
+  margin-right: 1rem !important;
+  text-align: right !important;
+  user-select: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .fsh-file-header {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .fsh-syntax-container pre {
+    padding: 1rem !important;
+    font-size: 13px !important;
+  }
+  
+  .fsh-file-footer {
+    padding: 0.5rem 1rem;
+  }
+  
+  .content-info {
+    font-size: 0.8rem;
+  }
+}
+
+/* Full width variant */
+.fsh-file-viewer.full-width {
+  width: 100%;
+  max-width: none;
+}
+
+/* Compact variant */
+.fsh-file-viewer.compact .fsh-file-header {
+  padding: 0.5rem 1rem;
+}
+
+.fsh-file-viewer.compact .fsh-syntax-container pre {
+  padding: 1rem !important;
+  max-height: 300px;
+}
+
+.fsh-file-viewer.compact .fsh-file-footer {
+  padding: 0.5rem 1rem;
+}
+
+/* Loading state */
+.fsh-file-viewer.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.fsh-file-viewer.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid #0078d4;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

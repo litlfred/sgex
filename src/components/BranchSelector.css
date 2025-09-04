@@ -83,7 +83,7 @@
 }
 
 .create-branch-modal {
-  background: white;
+  background: var(--who-primary-bg);
   border-radius: 8px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   max-width: 500px;
@@ -218,7 +218,7 @@
 }
 
 .btn-secondary {
-  background: white;
+  background: var(--who-card-bg);
   border: 1px solid #d1d5db;
   border-radius: 6px;
   color: #374151;
