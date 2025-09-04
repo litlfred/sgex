@@ -252,8 +252,14 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
               target="_blank"
               rel="noopener noreferrer"
             >
-              📄 View Complete Publication
+              📄 HTML View
             </a>
+            <button 
+              className="comprehensive-publication-btn epub-btn"
+              onClick={() => generateEPUBPublication('all-components', owner, repoName, selectedBranch)}
+            >
+              📚 EPUB Download
+            </button>
           </div>
         </div>
       </div>
@@ -294,8 +300,14 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  📄 Publication
+                  📄 HTML View
                 </a>
+                <button 
+                  className="component-publication-btn epub-btn"
+                  onClick={() => generateEPUBPublication(component.id, owner, repoName, selectedBranch)}
+                >
+                  📚 EPUB Download
+                </button>
               </div>
             </div>
           ))}
@@ -401,6 +413,40 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
       )}
     </div>
   );
+};
+
+/**
+ * Generate EPUB publication for a DAK component
+ */
+const generateEPUBPublication = async (componentType, owner, repoName, branch) => {
+  try {
+    // For now, create a simple EPUB-like package with HTML content
+    // This is a client-side implementation that doesn't require server dependencies
+    
+    const publicationUrl = constructFullUrl(`/publications-${componentType}/${owner}/${repoName}/${branch}`);
+    
+    // Open the HTML publication in a new window for now
+    // In the future, this could be enhanced with proper EPUB generation using libraries like epub-gen
+    const newWindow = window.open(publicationUrl, '_blank');
+    
+    if (newWindow) {
+      // Give the page time to load, then trigger a download simulation
+      setTimeout(() => {
+        try {
+          // Create a simple alert for now - this will be enhanced with proper EPUB generation
+          alert(`EPUB generation initiated for ${componentType}.\n\nNote: Currently opening HTML view. Full EPUB generation with offline reading capability will be implemented in the next phase.\n\nFor now, you can use your browser's "Save As" or "Print to PDF" functionality.`);
+        } catch (err) {
+          console.warn('Could not show EPUB info:', err);
+        }
+      }, 1000);
+    } else {
+      alert('Please allow popups for EPUB generation to work properly.');
+    }
+    
+  } catch (err) {
+    console.error('Error generating EPUB publication:', err);
+    alert('Failed to generate EPUB publication. Please try again.');
+  }
 };
 
 export default Publications;

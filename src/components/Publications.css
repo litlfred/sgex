@@ -68,6 +68,12 @@
   font-size: 14px;
 }
 
+.comprehensive-publication-card .publication-actions {
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+}
+
 .comprehensive-publication-btn {
   background: #ffffff;
   color: #0078d4;
@@ -81,6 +87,8 @@
   gap: 8px;
   transition: all 0.2s ease;
   border: 2px solid #ffffff;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .comprehensive-publication-btn:hover {
@@ -88,6 +96,18 @@
   color: #005a9e;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.comprehensive-publication-btn.epub-btn {
+  background: #6f42c1;
+  color: #ffffff;
+  border-color: #6f42c1;
+}
+
+.comprehensive-publication-btn.epub-btn:hover {
+  background: #5a32a3;
+  color: #ffffff;
+  border-color: #5a32a3;
 }
 
 /* Individual Publications Section */
@@ -144,6 +164,12 @@
   line-height: 1.4;
 }
 
+.component-publication-card .component-actions {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+}
+
 .component-publication-btn {
   background: #0078d4;
   color: #ffffff;
@@ -156,14 +182,23 @@
   align-items: center;
   gap: 6px;
   transition: all 0.2s ease;
-  width: 100%;
   justify-content: center;
+  border: none;
+  cursor: pointer;
 }
 
 .component-publication-btn:hover {
   background: #106ebe;
   color: #ffffff;
   transform: translateY(-1px);
+}
+
+.component-publication-btn.epub-btn {
+  background: #6f42c1;
+}
+
+.component-publication-btn.epub-btn:hover {
+  background: #5a32a3;
 }
 
 .publications-loading,
