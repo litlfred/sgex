@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './WorkflowDashboard.css';
+import { timeAgo, formatTimestamp } from '../utils/timeUtils';
 
 const WorkflowDashboard = ({ 
   branchName, 
@@ -234,14 +235,25 @@ const WorkflowDashboard = ({
       if (success) {
         setActionStates(prev => ({ ...prev, [workflowId]: { 
           action: 'approved', 
-          message: `✅ Workflow "${workflow.workflow.name}" has been approved! It should continue running shortly.`,
+          message: `✅ Workflow "${workflow.workflow.name}" has been approved! Monitoring progress...`,
           persistent: true
         } }));
         
-        // Refresh workflows after a short delay
-        setTimeout(() => {
+        // Immediate refresh to show the workflow starting
+        fetchWorkflows(true);
+        
+        // Setup aggressive monitoring for the next 2 minutes after approval
+        let refreshCount = 0;
+        const maxRefreshes = 12; // 12 refreshes over 2 minutes
+        const approvedWorkflowMonitor = setInterval(() => {
+          refreshCount++;
           fetchWorkflows(true);
-        }, 2000);
+          
+          if (refreshCount >= maxRefreshes) {
+            clearInterval(approvedWorkflowMonitor);
+            console.debug(`Stopping aggressive monitoring for approved workflow: ${workflow.workflow.name}`);
+          }
+        }, 10000); // Every 10 seconds for 2 minutes
 
         // Call callback
         if (onWorkflowAction) {
@@ -564,8 +576,8 @@ const WorkflowDashboard = ({
 
                   <div className="workflow-details">
                     {workflow.createdAt && (
-                      <span className="workflow-timestamp">
-                        Last run: {formatDate(workflow.createdAt)}
+                      <span className="workflow-timestamp" title={formatTimestamp(workflow.createdAt).full}>
+                        Last run: {timeAgo(workflow.createdAt)} ({formatDate(workflow.createdAt)})
                       </span>
                     )}
                     {(workflow.runId || workflow.lastRunId) && (

@@ -345,6 +345,17 @@
 .workflow-run-id {
   display: flex;
   align-items: center;
+  font-size: 0.8rem;
+  color: var(--who-text-secondary);
+}
+
+.workflow-timestamp {
+  cursor: help;
+  transition: color 0.2s ease;
+}
+
+.workflow-timestamp:hover {
+  color: var(--who-text-primary);
 }
 
 .workflow-actions {
