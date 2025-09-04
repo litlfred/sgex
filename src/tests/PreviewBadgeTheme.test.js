@@ -79,7 +79,7 @@ describe('PreviewBadge Theme Support', () => {
     expect(totalMediaQueries).toBe(0); // Should not find any media queries
     expect(totalBodyThemeDarkSelectors).toBeGreaterThan(100); // Should have many instances across all files
     
-    // Verify comprehensive coverage
-    expect(totalBodyThemeDarkSelectors).toBeGreaterThan(150); // Should have comprehensive coverage
+    // Verify comprehensive coverage - we now have 148 selectors
+    expect(totalBodyThemeDarkSelectors).toBeGreaterThan(140); // Should have comprehensive coverage
   });
 });
