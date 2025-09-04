@@ -2,17 +2,23 @@
 
 ## Executive Summary
 
-This document analyzes options for implementing a WHO SMART Guidelines Digital Adaptation Kit (DAK) publication generation system. The goal is to create consistent, professional publications in multiple formats (HTML, PDF, Word/ODT) that follow the WHO DAK logical model structure and support WYSIWYG template editing.
+This document analyzes options for implementing a WHO SMART Guidelines Digital Adaptation Kit (DAK) publication generation system with **WYSIWYG editing as a primary architectural consideration**. The goal is to create consistent, professional publications in multiple formats (HTML, PDF, Word/ODT) that follow the WHO DAK logical model structure and provide user-friendly visual editing capabilities.
+
+**Key Architectural Principle**: WYSIWYG template editing must be designed from the ground up, not added as an afterthought. This influences all design decisions, from data models to user interfaces.
+
+> **📋 Detailed WYSIWYG Analysis**: See [DAK Publication WYSIWYG Architecture and Smart-Base Model Extensions](dak-publication-wysiwyg-analysis.md) for comprehensive analysis of WYSIWYG requirements and smart-base logical model extensions.
 
 ## Problem Statement
 
 Based on the provided WHO published DAK PDFs, there is a need for:
 
-1. **Consistent Publication Templates**: Standardized layout and styling across all DAK publications
-2. **Multi-Format Output**: Support for static HTML (CDN), PDF documents, and Word/ODT formats
-3. **DAK Logical Model Compliance**: Publications should follow the WHO SMART Guidelines DAK logical model structure
-4. **Content Augmentation**: Support for copyright statements, pre-matter, and other publication metadata
-5. **WYSIWYG Template Editing**: User-friendly template customization capabilities
+1. **WYSIWYG Template Editing**: User-friendly visual template customization as a primary feature
+2. **User-Editable Content**: Direct editing of publication content (copyright notices, prefaces, etc.)
+3. **Template Variable System**: Smart variables structured around DAK components with auto-completion
+4. **Consistent Publication Templates**: Standardized layout and styling across all DAK publications
+5. **Multi-Format Output**: Support for static HTML (CDN), PDF documents, and Word/ODT formats
+6. **DAK Logical Model Compliance**: Publications should follow the WHO DAK logical model structure
+7. **Asset Metadata Management**: Rich metadata for DAK component assets used in publications
 
 ## Current Infrastructure Analysis
 
@@ -59,9 +65,12 @@ Logical: DAK
 - Template-based document structure
 
 **Gaps:**
+- No WYSIWYG template editing interface
+- No user-editable content management
+- No template variable system for DAK components
+- No asset metadata for publication usage
 - No PDF generation capability
 - No Word/ODT output format support
-- No WYSIWYG template editing interface
 - Limited to FAQ documentation structure
 - No publication metadata management
 

@@ -1,22 +1,49 @@
 # DAK Publication Template Configuration Example
 
 # WHO SMART Guidelines Digital Adaptation Kit Publication Template
-# This configuration file defines how a DAK repository should be transformed
-# into a professional publication following WHO standards and branding.
+# This configuration file demonstrates WYSIWYG-ready template variables
+# and user-editable content structured around DAK components.
 
 template:
-  id: "who-dak-standard-v1"
-  name: "WHO DAK Standard Publication Template"
+  id: "who-dak-standard-wysiwyg-v1"
+  name: "WHO DAK Standard Publication Template (WYSIWYG)"
   version: "1.0.0"
-  description: "Standard WHO SMART Guidelines DAK publication template"
+  description: "WYSIWYG-enabled WHO SMART Guidelines DAK publication template"
+  wysiwyg_enabled: true
 
+# User-editable publication metadata
 publication:
-  title: "${dak.name} - Digital Adaptation Kit"
-  subtitle: "WHO SMART Guidelines Implementation Guide"
-  publisher: "World Health Organization"
-  copyright: "© 2024 World Health Organization"
-  license: "CC BY-SA 3.0 IGO"
+  title: "${user.editable:${dak.name} - Digital Adaptation Kit}"
+  subtitle: "${user.editable:WHO SMART Guidelines Implementation Guide}"
+  publisher: "${user.editable:World Health Organization}"
+  copyright: "${user.editable:© ${current.year} World Health Organization}"
+  license: "${user.editable:CC BY-SA 3.0 IGO}"
+  custom_preface: "${user.editable.rich_text:}"
+  custom_footer: "${user.editable.rich_text:}"
 
+# Template variables structured around DAK components
+template_variables:
+  # Auto-extracted DAK metadata
+  dak:
+    name: "${dak.logical.metadata.name}"
+    canonical: "${dak.logical.metadata.canonical}"
+    version: "${dak.logical.metadata.version}"
+    description: "${dak.logical.metadata.description}"
+    
+  # Dynamic date/time variables
+  generation:
+    date: "${auto.current_date}"
+    year: "${auto.current_year}"
+    timestamp: "${auto.timestamp}"
+    
+  # Repository information
+  repository:
+    owner: "${repo.owner}"
+    name: "${repo.name}"
+    url: "${repo.url}"
+    branch: "${repo.branch}"
+
+# Branding configuration
 branding:
   colors:
     primary: "#0078d4"
@@ -25,36 +52,177 @@ branding:
   fonts:
     primary: "Arial, sans-serif"
     headings: "Arial Black, sans-serif"
+  logo: "${template.assets}/who-logo.svg"
 
+# Publication structure with user-editable sections
 sections:
   cover:
     enabled: true
     order: 1
+    template: "cover.mustache"
+    variables:
+      custom_subtitle: "${user.editable:}"
+      
   table_of_contents:
     enabled: true
     order: 2
+    template: "toc.mustache"
+    
   executive_summary:
     enabled: true
     order: 3
+    template: "executive-summary.mustache"
+    variables:
+      custom_introduction: "${user.editable.rich_text:}"
+      statistics_note: "${user.editable:}"
 
+# DAK component configuration with asset metadata
 dak_components:
   health_interventions:
     enabled: true
     order: 4
-    title: "Health Interventions and Recommendations"
-  personas:
+    title: "${user.editable:Health Interventions and Recommendations}"
+    template: "health-interventions.mustache"
+    variables:
+      custom_summary: "${user.editable.rich_text:}"
+      intervention_count: "${auto.component.health_interventions.count}"
+    assets:
+      - type: "iris_references"
+        source: "${component.health_interventions.iris_refs}"
+        metadata: "${component.health_interventions.assets.iris.metadata}"
+        
+  generic_personas:
     enabled: true
     order: 5
-    title: "Generic Personas"
-  # ... other components
+    title: "${user.editable:Generic Personas}"
+    template: "personas.mustache"
+    variables:
+      custom_introduction: "${user.editable.rich_text:}"
+      persona_count: "${auto.component.personas.count}"
+    assets:
+      - type: "persona_definitions"
+        source: "${component.personas.definitions}"
+        metadata: "${component.personas.assets.metadata}"
+        
+  user_scenarios:
+    enabled: true
+    order: 6
+    title: "${user.editable:User Scenarios}"
+    template: "scenarios.mustache"
+    variables:
+      scenario_overview: "${user.editable.rich_text:}"
+      scenario_count: "${auto.component.scenarios.count}"
+    assets:
+      - type: "scenario_documents"
+        source: "${component.scenarios.documents}"
+        metadata: "${component.scenarios.assets.metadata}"
+        
+  business_processes:
+    enabled: true
+    order: 7
+    title: "${user.editable:Business Processes and Workflows}"
+    template: "business-processes.mustache"
+    variables:
+      workflow_description: "${user.editable.rich_text:}"
+      process_count: "${auto.component.business_processes.count}"
+    assets:
+      - type: "bpmn_diagrams"
+        source: "${component.business_processes.bpmn_files}"
+        metadata: "${component.business_processes.assets.bpmn.metadata}"
+        display_type: "figure"
+        caption: "${asset.metadata.title}"
+        
+  core_data_elements:
+    enabled: true
+    order: 8
+    title: "${user.editable:Core Data Elements}"
+    template: "data-elements.mustache"
+    variables:
+      data_model_notes: "${user.editable.rich_text:}"
+      element_count: "${auto.component.data_elements.count}"
+    assets:
+      - type: "fhir_profiles"
+        source: "${component.data_elements.fhir_profiles}"
+        metadata: "${component.data_elements.assets.fhir.metadata}"
+        
+  decision_support_logic:
+    enabled: true
+    order: 9
+    title: "${user.editable:Decision Support Logic}"
+    template: "decision-logic.mustache"
+    variables:
+      logic_overview: "${user.editable.rich_text:}"
+      decision_table_count: "${auto.component.decision_logic.count}"
+    assets:
+      - type: "dmn_diagrams"
+        source: "${component.decision_logic.dmn_files}"
+        metadata: "${component.decision_logic.assets.dmn.metadata}"
+        display_type: "figure"
+        
+  program_indicators:
+    enabled: true
+    order: 10
+    title: "${user.editable:Program Indicators}"
+    template: "indicators.mustache"
+    variables:
+      indicator_framework: "${user.editable.rich_text:}"
+      indicator_count: "${auto.component.indicators.count}"
+    assets:
+      - type: "measure_definitions"
+        source: "${component.indicators.measures}"
+        metadata: "${component.indicators.assets.metadata}"
+        
+  requirements:
+    enabled: true
+    order: 11
+    title: "${user.editable:Functional and Non-Functional Requirements}"
+    template: "requirements.mustache"
+    variables:
+      requirements_methodology: "${user.editable.rich_text:}"
+      requirement_count: "${auto.component.requirements.count}"
+    assets:
+      - type: "requirement_documents"
+        source: "${component.requirements.documents}"
+        metadata: "${component.requirements.assets.metadata}"
+        
+  test_scenarios:
+    enabled: true
+    order: 12
+    title: "${user.editable:Test Scenarios}"
+    template: "test-scenarios.mustache"
+    variables:
+      testing_approach: "${user.editable.rich_text:}"
+      test_count: "${auto.component.test_scenarios.count}"
+    assets:
+      - type: "test_bundles"
+        source: "${component.test_scenarios.fhir_bundles}"
+        metadata: "${component.test_scenarios.assets.metadata}"
 
+# Output format configuration
 output:
   formats:
     html:
       enabled: true
       single_page: true
+      css_inline: true
+      preview_mode: true  # For WYSIWYG live preview
     pdf:
       enabled: true
       engine: "puppeteer"
+      page_breaks: true
+      print_styles: true
     docx:
-      enabled: false
+      enabled: true
+      template_base: "who-dak-template.docx"
+      
+# WYSIWYG editor configuration
+wysiwyg:
+  live_preview: true
+  auto_save: true
+  variable_suggestions: true
+  asset_preview: true
+  template_validation: true
+  user_roles:
+    - "dak_author"
+    - "publication_editor"
+    - "template_designer"

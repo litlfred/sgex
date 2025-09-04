@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 
 /**
- * DAK Publication Generator - Proof of Concept Implementation
+ * DAK Publication Generator - WYSIWYG-Ready Proof of Concept Implementation
  * 
  * This script demonstrates the core concepts for generating WHO SMART Guidelines
- * Digital Adaptation Kit publications in multiple formats (HTML, PDF, Word).
+ * Digital Adaptation Kit publications with WYSIWYG editing capabilities.
  * 
  * Usage:
  *   node scripts/generate-dak-publication-poc.js --repo owner/repo-name [options]
  * 
  * Features demonstrated:
- * - DAK repository analysis and content extraction
+ * - WYSIWYG-ready template variable system
+ * - User-editable content management
+ * - Asset metadata for publication usage
  * - Template-based publication generation
  * - Multi-format output (HTML first, extensible to PDF/Word)
  * - WHO branding and styling compliance
@@ -19,6 +21,186 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { execSync } = require('child_process');
+
+/**
+ * WYSIWYG Template Variable Registry
+ * Manages template variables structured around DAK components
+ */
+class WYSIWYGVariableRegistry {
+  constructor() {
+    this.userEditableContent = new Map();
+    this.assetMetadata = new Map();
+  }
+
+  /**
+   * Resolve template variables with user-editable content support
+   */
+  resolveVariables(templateConfig, dakData, userContent = {}) {
+    const variables = {
+      // User-editable publication metadata
+      publication: {
+        title: userContent.title || `${dakData.metadata.name} - Digital Adaptation Kit`,
+        subtitle: userContent.subtitle || 'WHO SMART Guidelines Implementation Guide',
+        copyright: userContent.copyright || `© ${new Date().getFullYear()} World Health Organization`,
+        custom_preface: userContent.custom_preface || '',
+        custom_footer: userContent.custom_footer || ''
+      },
+
+      // Auto-extracted DAK metadata
+      dak: {
+        name: dakData.metadata.name,
+        canonical: dakData.metadata.canonical,
+        version: dakData.metadata.version,
+        description: dakData.metadata.description
+      },
+
+      // Dynamic generation info
+      generation: {
+        date: new Date().toLocaleDateString(),
+        year: new Date().getFullYear(),
+        timestamp: new Date().toISOString()
+      },
+
+      // Repository information
+      repository: {
+        owner: dakData.metadata.owner,
+        name: dakData.metadata.repository,
+        url: `https://github.com/${dakData.metadata.owner}/${dakData.metadata.repository}`,
+        branch: dakData.metadata.branch
+      },
+
+      // Component-specific variables with user-editable content
+      components: this.buildComponentVariables(dakData.components, userContent)
+    };
+
+    // For POC, just return the variables object
+    // In real implementation, this would interpolate templates
+    return variables;
+  }
+
+  /**
+   * Build component-specific variables with asset metadata
+   */
+  buildComponentVariables(components, userContent) {
+    const componentVars = {};
+
+    Object.entries(components).forEach(([key, component]) => {
+      componentVars[key] = {
+        title: userContent[`${key}_title`] || component.title,
+        custom_summary: userContent[`${key}_summary`] || '',
+        custom_introduction: userContent[`${key}_introduction`] || '',
+        count: this.calculateComponentCount(component),
+        assets: this.getComponentAssetMetadata(component),
+        ...component
+      };
+    });
+
+    return componentVars;
+  }
+
+  /**
+   * Calculate component asset counts
+   */
+  calculateComponentCount(component) {
+    if (component.iris_references) return component.iris_references.length;
+    if (component.actors) return component.actors.length;
+    if (component.scenarios) return component.scenarios.length;
+    if (component.workflows) return component.workflows.length;
+    if (component.elements) return component.elements.length;
+    if (component.tables) return component.tables.length;
+    if (component.metrics) return component.metrics.length;
+    return 0;
+  }
+
+  /**
+   * Get asset metadata for publication usage
+   */
+  getComponentAssetMetadata(component) {
+    const metadata = [];
+
+    if (component.iris_references) {
+      component.iris_references.forEach(ref => {
+        metadata.push({
+          type: 'iris_reference',
+          title: ref.title,
+          url: ref.url,
+          display_type: 'link',
+          publication_usage: {
+            section: 'health_interventions',
+            display_type: 'inline',
+            caption: ref.title
+          }
+        });
+      });
+    }
+
+    if (component.workflows) {
+      component.workflows.forEach(workflow => {
+        metadata.push({
+          type: 'bpmn_diagram',
+          title: workflow.name,
+          complexity: workflow.complexity,
+          steps: workflow.steps,
+          publication_usage: {
+            section: 'business_processes',
+            display_type: 'figure',
+            caption: `${workflow.name} (${workflow.steps} steps, ${workflow.complexity} complexity)`
+          }
+        });
+      });
+    }
+
+    // Add metadata for other component types...
+
+    return metadata;
+  }
+
+  /**
+   * Simple template interpolation (in real implementation, use a proper template engine)
+   */
+  interpolateTemplate(template, variables) {
+    let result = template;
+    
+    // Handle nested variable references
+    const interpolate = (str, vars, path = '') => {
+      return str.replace(/\$\{([^}]+)\}/g, (match, varPath) => {
+        const keys = varPath.split('.');
+        let value = vars;
+        
+        for (const key of keys) {
+          if (value && typeof value === 'object' && key in value) {
+            value = value[key];
+          } else {
+            return match; // Keep original if not found
+          }
+        }
+        
+        return value !== null && value !== undefined ? String(value) : '';
+      });
+    };
+
+    return interpolate(result, variables);
+  }
+
+  /**
+   * Get user-editable content fields for WYSIWYG interface
+   */
+  getUserEditableFields() {
+    return [
+      { key: 'title', type: 'text', label: 'Publication Title', section: 'publication' },
+      { key: 'subtitle', type: 'text', label: 'Publication Subtitle', section: 'publication' },
+      { key: 'copyright', type: 'text', label: 'Copyright Notice', section: 'publication' },
+      { key: 'custom_preface', type: 'rich_text', label: 'Custom Preface', section: 'publication' },
+      { key: 'custom_footer', type: 'rich_text', label: 'Custom Footer', section: 'publication' },
+      
+      // Component-specific fields
+      { key: 'health_interventions_summary', type: 'rich_text', label: 'Health Interventions Summary', section: 'components' },
+      { key: 'personas_introduction', type: 'rich_text', label: 'Personas Introduction', section: 'components' },
+      { key: 'business_processes_description', type: 'rich_text', label: 'Business Process Description', section: 'components' },
+      // ... additional component fields
+    ];
+  }
+}
 
 // Configuration for the POC
 const POC_CONFIG = {
@@ -57,20 +239,22 @@ const POC_CONFIG = {
 };
 
 /**
- * Main DAK Publication Generator class
+ * Main DAK Publication Generator class with WYSIWYG support
  */
 class DAKPublicationGeneratorPOC {
   constructor() {
     this.config = POC_CONFIG;
     this.dakData = null;
     this.template = null;
+    this.variableRegistry = new WYSIWYGVariableRegistry();
+    this.userContent = {}; // In real implementation, loaded from storage
   }
 
   /**
    * Main entry point for publication generation
    */
   async generatePublication(options) {
-    console.log('🚀 Starting DAK Publication Generation...');
+    console.log('🚀 Starting WYSIWYG-Ready DAK Publication Generation...');
     
     try {
       // Step 1: Analyze DAK repository
@@ -81,28 +265,74 @@ class DAKPublicationGeneratorPOC {
       console.log('📋 Loading publication template...');
       this.template = await this.loadTemplate(options.template);
       
-      // Step 3: Generate HTML publication
-      console.log('📝 Generating HTML publication...');
-      const htmlOutput = await this.generateHTML();
+      // Step 3: Load user-editable content (mock data for POC)
+      console.log('👤 Loading user-editable content...');
+      this.userContent = await this.loadUserContent(options.repo);
       
-      // Step 4: Save output
+      // Step 4: Generate template variables
+      console.log('🔧 Resolving template variables...');
+      const variables = this.variableRegistry.resolveVariables(
+        this.template, 
+        this.dakData, 
+        this.userContent
+      );
+      
+      // Step 5: Generate HTML publication
+      console.log('📝 Generating HTML publication...');
+      const htmlOutput = await this.generateHTML(variables);
+      
+      // Step 6: Save output
       console.log('💾 Saving publication files...');
       const outputPath = await this.savePublication(htmlOutput, options);
       
-      console.log('✅ Publication generated successfully!');
+      console.log('✅ WYSIWYG-ready publication generated successfully!');
       console.log(`📁 Output saved to: ${outputPath}`);
+      console.log('🎨 Template variables and user-editable content supported');
       
       return {
         success: true,
         outputPath: outputPath,
         formats: ['html'],
-        metadata: this.dakData.metadata
+        metadata: this.dakData.metadata,
+        wysiwygSupport: true,
+        editableFields: this.variableRegistry.getUserEditableFields(),
+        templateVariables: Object.keys(variables)
       };
       
     } catch (error) {
       console.error('❌ Publication generation failed:', error.message);
       throw error;
     }
+  }
+
+  /**
+   * Load user-editable content (mock implementation)
+   */
+  async loadUserContent(repoPath) {
+    // Mock user-editable content for demonstration
+    return {
+      title: null, // Will use default from template variables
+      subtitle: null, // Will use default
+      copyright: '© 2024 World Health Organization - This work is licensed under CC BY-SA 3.0 IGO',
+      custom_preface: `
+        <div class="custom-preface">
+          <h3>About This Publication</h3>
+          <p>This Digital Adaptation Kit (DAK) represents the culmination of extensive collaboration 
+          between WHO technical experts, implementation partners, and digital health practitioners.</p>
+          <p><strong>Note:</strong> This publication was generated using the SGeX Workbench WYSIWYG 
+          publication system, demonstrating user-editable content capabilities.</p>
+        </div>
+      `,
+      health_interventions_summary: `
+        <p><em>This section provides a comprehensive overview of the health interventions and 
+        WHO recommendations that form the clinical foundation of this DAK.</em></p>
+      `,
+      business_processes_description: `
+        <p><strong>Workflow Integration:</strong> The business processes documented here are 
+        designed to integrate seamlessly with existing health system workflows and can be 
+        customized for local implementation contexts.</p>
+      `
+    };
   }
 
   /**
@@ -540,25 +770,26 @@ This section defines comprehensive test scenarios for validating DAK implementat
   }
 
   /**
-   * Generate HTML publication
+   * Generate HTML publication with resolved template variables
    */
-  async generateHTML() {
-    const html = this.buildHTMLDocument();
+  async generateHTML(variables) {
+    const html = this.buildHTMLDocument(variables);
     const css = this.generateCSS();
     
     return {
       html: html,
       css: css,
       assets: [],
-      metadata: this.dakData.metadata
+      metadata: this.dakData.metadata,
+      variables: variables // Include resolved variables for WYSIWYG editing
     };
   }
 
   /**
-   * Build complete HTML document
+   * Build complete HTML document with template variables
    */
-  buildHTMLDocument() {
-    const sections = this.buildSections();
+  buildHTMLDocument(variables) {
+    const sections = this.buildSections(variables);
     const toc = this.generateTableOfContents();
     
     return `<!DOCTYPE html>
@@ -569,14 +800,85 @@ This section defines comprehensive test scenarios for validating DAK implementat
     <meta name="description" content="${this.dakData.metadata.description}">
     <meta name="author" content="World Health Organization">
     <meta name="generator" content="${this.dakData.metadata.generator}">
+    <meta name="publication-title" content="${variables.publication.title}">
+    <meta name="publication-version" content="${variables.dak.version}">
+    <meta name="wysiwyg-enabled" content="true">
     
-    <title>${this.dakData.metadata.title}</title>
+    <title>${variables.publication.title}</title>
     
     <style>
         ${this.generateCSS()}
+        
+        /* WYSIWYG Editor Styles */
+        .wysiwyg-toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #0078d4;
+            color: white;
+            padding: 10px;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .wysiwyg-toolbar button {
+            background: white;
+            color: #0078d4;
+            border: none;
+            padding: 8px 12px;
+            margin-right: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .wysiwyg-editable {
+            position: relative;
+            border: 2px dashed transparent;
+            transition: border-color 0.2s;
+        }
+        
+        .wysiwyg-editable:hover {
+            border-color: #40e0d0;
+            background: rgba(64, 224, 208, 0.1);
+        }
+        
+        .wysiwyg-editable:focus {
+            border-color: #0078d4;
+            background: rgba(0, 120, 212, 0.1);
+            outline: none;
+        }
+        
+        .wysiwyg-editable::before {
+            content: attr(data-wysiwyg-field);
+            position: absolute;
+            top: -20px;
+            left: 0;
+            font-size: 10px;
+            color: #0078d4;
+            background: white;
+            padding: 2px 6px;
+            border-radius: 2px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .wysiwyg-editable:hover::before {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
+    <!-- WYSIWYG Editor Integration Point -->
+    <div id="wysiwyg-toolbar" class="wysiwyg-toolbar" style="display: none;">
+        <span>📝 WYSIWYG Mode:</span>
+        <button onclick="editContent('publication-title')">✏️ Edit Title</button>
+        <button onclick="editContent('custom-preface')">📄 Edit Preface</button>
+        <button onclick="previewPublication()">👁️ Preview</button>
+        <button onclick="saveChanges()">💾 Save</button>
+        <button onclick="toggleWYSIWYG()">❌ Exit WYSIWYG</button>
+    </div>
+    
     <!-- Cover Page -->
     <div class="cover-page">
         <div class="who-header">
@@ -585,132 +887,237 @@ This section defines comprehensive test scenarios for validating DAK implementat
         </div>
         
         <div class="title-section">
-            <h1>${this.dakData.metadata.title}</h1>
-            <div class="subtitle">${this.dakData.metadata.description}</div>
+            <h1 data-wysiwyg-field="publication.title" class="wysiwyg-editable">${variables.publication.title}</h1>
+            <div class="subtitle" data-wysiwyg-field="publication.subtitle" class="wysiwyg-editable">${variables.publication.subtitle}</div>
         </div>
         
         <div class="metadata-section">
-            <div class="metadata-item">
-                <label>Version:</label>
-                <span>${this.dakData.metadata.version}</span>
-            </div>
-            <div class="metadata-item">
-                <label>Generated:</label>
-                <span>${new Date(this.dakData.metadata.generated).toLocaleDateString()}</span>
-            </div>
-            <div class="metadata-item">
-                <label>Repository:</label>
-                <span>${this.dakData.metadata.owner}/${this.dakData.metadata.repository}</span>
-            </div>
+            <div class="metadata-item"><strong>Version:</strong> ${variables.dak.version}</div>
+            <div class="metadata-item"><strong>Generated:</strong> ${variables.generation.date}</div>
+            <div class="metadata-item"><strong>Repository:</strong> ${variables.repository.owner}/${variables.repository.name}</div>
         </div>
         
-        <div class="who-footer">
-            <div class="copyright">© 2024 World Health Organization</div>
-            <div class="license">This work is available under the Creative Commons Attribution-ShareAlike 3.0 IGO licence</div>
+        <div class="copyright-section">
+            <div data-wysiwyg-field="publication.copyright" class="wysiwyg-editable">${variables.publication.copyright}</div>
+            <div>This work is available under the Creative Commons Attribution-ShareAlike 3.0 IGO licence</div>
         </div>
     </div>
-
-    <!-- Table of Contents -->
-    <div class="page-break"></div>
-    <div class="toc-page">
-        <h1>Table of Contents</h1>
-        ${toc}
+    
+    <!-- Custom Preface (User-Editable) -->
+    ${variables.publication.custom_preface ? `
+    <div class="custom-preface-section">
+        <div data-wysiwyg-field="publication.custom_preface" class="wysiwyg-editable">
+            ${variables.publication.custom_preface}
+        </div>
     </div>
-
+    ` : ''}
+    
+    ${toc}
+    
     <!-- Executive Summary -->
-    <div class="page-break"></div>
-    <div class="executive-summary">
-        <h1>Executive Summary</h1>
-        <p>This Digital Adaptation Kit (DAK) provides comprehensive guidance for implementing ${this.dakData.metadata.name} according to WHO SMART Guidelines methodology.</p>
-        
-        <div class="summary-stats">
-            <div class="stat-item">
-                <div class="stat-number">${this.dakData.structure.componentCount}</div>
-                <div class="stat-label">DAK Components</div>
+    <div class="section executive-summary">
+        <h2>Executive Summary</h2>
+        <div class="section-content">
+            <p>This Digital Adaptation Kit (DAK) provides a comprehensive implementation guide for 
+            <strong>${variables.dak.name}</strong> following WHO SMART Guidelines standards.</p>
+            
+            <div class="statistics">
+                <h3>DAK Components Overview</h3>
+                <ul>
+                    <li><strong>Health Interventions:</strong> ${variables.components.healthInterventions.count} references</li>
+                    <li><strong>Generic Personas:</strong> ${variables.components.personas.count} actors defined</li>
+                    <li><strong>User Scenarios:</strong> ${variables.components.userScenarios.count} scenarios documented</li>
+                    <li><strong>Business Processes:</strong> ${variables.components.businessProcesses.count} workflows</li>
+                    <li><strong>Core Data Elements:</strong> ${variables.components.dataElements.count} elements defined</li>
+                    <li><strong>Decision Logic:</strong> ${variables.components.decisionLogic.count} decision tables</li>
+                    <li><strong>Program Indicators:</strong> ${variables.components.indicators.count} metrics</li>
+                    <li><strong>Test Scenarios:</strong> ${variables.components.testScenarios.count} test cases</li>
+                </ul>
             </div>
-            <div class="stat-item">
-                <div class="stat-number">${this.dakData.structure.totalSections}</div>
-                <div class="stat-label">Total Sections</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">${this.dakData.structure.estimatedPages}</div>
-                <div class="stat-label">Estimated Pages</div>
-            </div>
-        </div>
-        
-        <h2>DAK Component Overview</h2>
-        <div class="component-overview">
-            ${Object.keys(this.dakData.components).map(key => `
-                <div class="component-card">
-                    <h3>${this.dakData.components[key].title}</h3>
-                    <p>${this.dakData.components[key].description}</p>
-                </div>
-            `).join('')}
         </div>
     </div>
-
-    <!-- DAK Components -->
+    
     ${sections}
-
-    <!-- Copyright Page -->
-    <div class="page-break"></div>
-    <div class="copyright-page">
-        <h1>Copyright and Licensing</h1>
-        <div class="copyright-notice">
-            <p>© 2024 World Health Organization</p>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-content">
+            <div class="footer-metadata">
+                <div><strong>Generated:</strong> ${variables.generation.timestamp}</div>
+                <div><strong>Source Repository:</strong> <a href="${variables.repository.url}" target="_blank">${variables.repository.url}</a></div>
+                <div><strong>Generator:</strong> SGeX Workbench DAK Publication System (WYSIWYG-enabled)</div>
+            </div>
             
-            <p>This work is available under the Creative Commons Attribution-ShareAlike 3.0 IGO licence 
-            (CC BY-SA 3.0 IGO; https://creativecommons.org/licenses/by-sa/3.0/igo).</p>
-            
-            <p><strong>Under the terms of this licence, you may copy, redistribute and adapt the work for 
-            non-commercial purposes, provided the work is appropriately cited, as indicated below. In any 
-            use of this work, there should be no suggestion that WHO endorses any specific organization, 
-            products or services.</strong></p>
-            
-            <h2>Third-party materials</h2>
-            <p>If you wish to reuse material from this work that is attributed to a third party, such as 
-            tables, figures or images, it is your responsibility to determine whether permission is needed 
-            for that reuse and to obtain permission from the copyright holder.</p>
-            
-            <h2>General disclaimers</h2>
-            <p>The designations employed and the presentation of the material in this publication do not 
-            imply the expression of any opinion whatsoever on the part of WHO concerning the legal status 
-            of any country, territory, city or area or of its authorities, or concerning the delimitation 
-            of its frontiers or boundaries.</p>
+            ${variables.publication.custom_footer ? `
+            <div class="custom-footer" data-wysiwyg-field="publication.custom_footer" class="wysiwyg-editable">
+                ${variables.publication.custom_footer}
+            </div>
+            ` : ''}
         </div>
     </div>
+    
+    <!-- WYSIWYG JavaScript -->
+    <script>
+        // Template variables for WYSIWYG editing
+        window.publicationVariables = ${JSON.stringify(variables, null, 2)};
+        
+        // User-editable content fields
+        window.editableFields = ${JSON.stringify(this.variableRegistry.getUserEditableFields(), null, 2)};
+        
+        // WYSIWYG helper functions
+        function editContent(fieldId) {
+            console.log('🎨 Edit content field:', fieldId);
+            const element = document.querySelector(\`[data-wysiwyg-field="\${fieldId}"]\`);
+            if (element) {
+                element.focus();
+                console.log('📝 Field focused for editing:', fieldId);
+            }
+        }
+        
+        function previewPublication() {
+            console.log('👁️ Preview publication with current edits');
+            // In real implementation, generate live preview
+            alert('Preview mode would show real-time changes here');
+        }
+        
+        function saveChanges() {
+            console.log('💾 Save user changes');
+            const changes = {};
+            document.querySelectorAll('[data-wysiwyg-field]').forEach(el => {
+                changes[el.getAttribute('data-wysiwyg-field')] = el.innerHTML;
+            });
+            console.log('Changes to save:', changes);
+            // In real implementation, persist user-editable content
+            alert('Changes would be saved to user content storage');
+        }
+        
+        function toggleWYSIWYG() {
+            const toolbar = document.getElementById('wysiwyg-toolbar');
+            const isVisible = toolbar.style.display !== 'none';
+            toolbar.style.display = isVisible ? 'none' : 'block';
+            
+            // Toggle editable mode
+            document.querySelectorAll('.wysiwyg-editable').forEach(el => {
+                el.contentEditable = !isVisible;
+            });
+            
+            console.log(isVisible ? '❌ WYSIWYG mode disabled' : '🎨 WYSIWYG mode enabled');
+        }
+        
+        // Initialize WYSIWYG mode
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 WYSIWYG Publication System Initialized');
+            console.log('📊 Available template variables:', Object.keys(window.publicationVariables));
+            console.log('✏️ Editable fields:', window.editableFields.length);
+            
+            // Show WYSIWYG toolbar by default for demonstration
+            document.getElementById('wysiwyg-toolbar').style.display = 'block';
+            document.body.style.paddingTop = '60px'; // Account for toolbar
+            
+            // Mark all editable elements
+            document.querySelectorAll('[data-wysiwyg-field]').forEach(el => {
+                el.classList.add('wysiwyg-editable');
+            });
+        });
+        
+        // Log variable usage for development
+        console.log('🔧 Template Variables Structure:');
+        console.log('- publication:', Object.keys(window.publicationVariables.publication || {}));
+        console.log('- dak:', Object.keys(window.publicationVariables.dak || {}));
+        console.log('- components:', Object.keys(window.publicationVariables.components || {}));
+    </script>
 </body>
 </html>`;
   }
 
   /**
-   * Build DAK component sections
+   * Build DAK component sections with WYSIWYG support
    */
-  buildSections() {
+  buildSections(variables) {
     const enabledSections = Object.entries(this.template.sections)
       .filter(([_, config]) => config.enabled)
       .sort(([_, a], [__, b]) => a.order - b.order);
 
     return enabledSections.map(([sectionName, config]) => {
       const component = this.dakData.components[sectionName];
-      if (!component) return '';
+      const componentVars = variables.components[sectionName];
+      if (!component || !componentVars) return '';
 
       return `
         <div class="page-break"></div>
         <div class="component-section" id="${sectionName}">
-            <h1>${component.title}</h1>
+            <h1 data-wysiwyg-field="components.${sectionName}.title" class="wysiwyg-editable">${componentVars.title}</h1>
+            
+            ${componentVars.custom_summary ? `
+            <div class="custom-summary" data-wysiwyg-field="components.${sectionName}.custom_summary" class="wysiwyg-editable">
+                ${componentVars.custom_summary}
+            </div>
+            ` : ''}
+            
             <div class="component-description">
                 <p>${component.description}</p>
             </div>
             
+            ${componentVars.custom_introduction ? `
+            <div class="custom-introduction" data-wysiwyg-field="components.${sectionName}.custom_introduction" class="wysiwyg-editable">
+                ${componentVars.custom_introduction}
+            </div>
+            ` : ''}
+            
             <div class="component-content">
-                ${this.processMarkdownContent(component.content)}
+                ${component.content}
+                
+                ${this.buildAssetDisplay(componentVars.assets, sectionName)}
             </div>
             
-            ${this.generateComponentMetadata(component, sectionName)}
+            <div class="component-metadata">
+                <p><strong>Assets:</strong> ${componentVars.count} ${this.getComponentAssetType(sectionName)}</p>
+            </div>
         </div>
       `;
     }).join('');
+  }
+
+  /**
+   * Build asset display with publication metadata
+   */
+  buildAssetDisplay(assets, sectionName) {
+    if (!assets || assets.length === 0) return '';
+    
+    return `
+      <div class="assets-section">
+        <h3>Associated Assets</h3>
+        ${assets.map(asset => `
+          <div class="asset-item" data-asset-type="${asset.type}">
+            <h4>${asset.title || asset.name}</h4>
+            ${asset.url ? `<a href="${asset.url}" target="_blank">View Resource</a>` : ''}
+            ${asset.publication_usage && asset.publication_usage.caption ? 
+              `<p><em>${asset.publication_usage.caption}</em></p>` : ''}
+            ${asset.complexity ? `<span class="complexity-badge">${asset.complexity}</span>` : ''}
+            ${asset.steps ? `<span class="steps-badge">${asset.steps} steps</span>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  /**
+   * Get asset type name for component
+   */
+  getComponentAssetType(sectionName) {
+    const assetTypes = {
+      healthInterventions: 'IRIS references',
+      personas: 'actor definitions',
+      userScenarios: 'scenarios',
+      businessProcesses: 'workflows',
+      dataElements: 'data elements',
+      decisionLogic: 'decision tables',
+      indicators: 'metrics',
+      requirements: 'requirements',
+      testScenarios: 'test cases'
+    };
+    
+    return assetTypes[sectionName] || 'assets';
   }
 
   /**
