@@ -275,104 +275,102 @@
 }
 
 /* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .commit-diff-modal {
-    background: #1f2937;
-    color: #f9fafb;
-  }
+body.theme-dark .commit-diff-modal {
+  background: #1f2937;
+  color: #f9fafb;
+}
 
-  .commit-diff-header {
-    background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-    border-bottom-color: #4b5563;
-  }
+body.theme-dark .commit-diff-header {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+  border-bottom-color: #4b5563;
+}
 
-  .commit-diff-header h3 {
-    color: #f9fafb;
-  }
+body.theme-dark .commit-diff-header h3 {
+  color: #f9fafb;
+}
 
-  .close-button {
-    color: #d1d5db;
-  }
+body.theme-dark .close-button {
+  color: #d1d5db;
+}
 
-  .close-button:hover {
-    background-color: #4b5563;
-    color: #f9fafb;
-  }
+body.theme-dark .close-button:hover {
+  background-color: #4b5563;
+  color: #f9fafb;
+}
 
-  .commit-info {
-    background: #374151;
-    border-left-color: #60a5fa;
-  }
+body.theme-dark .commit-info {
+  background: #374151;
+  border-left-color: #60a5fa;
+}
 
-  .commit-link {
-    color: #60a5fa;
-    background: #1e3a8a;
-  }
+body.theme-dark .commit-link {
+  color: #60a5fa;
+  background: #1e3a8a;
+}
 
-  .commit-link:hover {
-    background: #1e40af;
-  }
+body.theme-dark .commit-link:hover {
+  background: #1e40af;
+}
 
-  .commit-stats {
-    background: #374151;
-    border-color: #4b5563;
-  }
+body.theme-dark .commit-stats {
+  background: #374151;
+  border-color: #4b5563;
+}
 
-  .stat-value {
-    color: #f9fafb;
-  }
+body.theme-dark .stat-value {
+  color: #f9fafb;
+}
 
-  .files-changed h4 {
-    color: #f9fafb;
-  }
+body.theme-dark .files-changed h4 {
+  color: #f9fafb;
+}
 
-  .files-list {
-    border-color: #4b5563;
-  }
+body.theme-dark .files-list {
+  border-color: #4b5563;
+}
 
-  .file-item {
-    border-bottom-color: #4b5563;
-  }
+body.theme-dark .file-item {
+  border-bottom-color: #4b5563;
+}
 
-  .file-header {
-    background: #374151;
-  }
+body.theme-dark .file-header {
+  background: #374151;
+}
 
-  .file-item.file-added .file-header {
-    background: #14532d;
-  }
+body.theme-dark .file-item.file-added .file-header {
+  background: #14532d;
+}
 
-  .file-item.file-removed .file-header {
-    background: #7f1d1d;
-  }
+body.theme-dark .file-item.file-removed .file-header {
+  background: #7f1d1d;
+}
 
-  .file-item.file-modified .file-header {
-    background: #78350f;
-  }
+body.theme-dark .file-item.file-modified .file-header {
+  background: #78350f;
+}
 
-  .file-item.file-renamed .file-header {
-    background: #164e63;
-  }
+body.theme-dark .file-item.file-renamed .file-header {
+  background: #164e63;
+}
 
-  .file-name {
-    color: #d1d5db;
-  }
+body.theme-dark .file-name {
+  color: #d1d5db;
+}
 
-  .file-rename-info {
-    background: #4b5563;
-    color: #d1d5db;
-  }
+body.theme-dark .file-rename-info {
+  background: #4b5563;
+  color: #d1d5db;
+}
 
-  .no-files {
-    color: #9ca3af;
-  }
+body.theme-dark .no-files {
+  color: #9ca3af;
+}
 
-  .view-on-github-btn {
-    background: #60a5fa;
-    color: #1f2937;
-  }
+body.theme-dark .view-on-github-btn {
+  background: #60a5fa;
+  color: #1f2937;
+}
 
-  .view-on-github-btn:hover {
-    background: #93c5fd;
-  }
+body.theme-dark .view-on-github-btn:hover {
+  background: #93c5fd;
 }

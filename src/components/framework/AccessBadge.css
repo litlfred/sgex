@@ -161,37 +161,35 @@
 }
 
 /* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .access-badge.green {
-    background-color: #155724;
-    color: #d4edda;
-    border-color: #0f4122;
-  }
-  
-  .access-badge.blue {
-    background-color: #0c5460;
-    color: #d1ecf1;
-    border-color: #093e47;
-  }
-  
-  .access-badge.red {
-    background-color: #721c24;
-    color: #f8d7da;
-    border-color: #5a1a1f;
-  }
-  
-  .access-badge.gray {
-    background-color: #495057;
-    color: #e2e3e5;
-    border-color: #343a40;
-  }
-  
-  .tooltip-content {
-    background: #fff;
-    color: #333;
-  }
-  
-  .tooltip-content::before {
-    border-bottom-color: #fff;
-  }
+body.theme-dark .access-badge.green {
+  background-color: #155724;
+  color: #d4edda;
+  border-color: #0f4122;
+}
+
+body.theme-dark .access-badge.blue {
+  background-color: #0c5460;
+  color: #d1ecf1;
+  border-color: #093e47;
+}
+
+body.theme-dark .access-badge.red {
+  background-color: #721c24;
+  color: #f8d7da;
+  border-color: #5a1a1f;
+}
+
+body.theme-dark .access-badge.gray {
+  background-color: #495057;
+  color: #e2e3e5;
+  border-color: #343a40;
+}
+
+body.theme-dark .tooltip-content {
+  background: #fff;
+  color: #333;
+}
+
+body.theme-dark .tooltip-content::before {
+  border-bottom-color: #fff;
 }
