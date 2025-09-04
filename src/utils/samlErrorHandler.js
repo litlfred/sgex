@@ -94,10 +94,10 @@ export const createSAMLErrorInfo = (error, organization, options = {}) => {
       ? `Access to ${organization} requires SAML authorization to ${context}.`
       : `Your Personal Access Token can be authorized for ${organization} to ${context}.`,
     instructions: [
-      `Click the "Authorize SAML" button to open GitHub's authorization page`,
+      `Click the "Authorize SAML" button to navigate to GitHub's authorization page`,
       `Sign in to your organization's SAML identity provider if prompted`,
       `Click "Authorize" to grant your Personal Access Token access to ${organization}`,
-      `Return to SGEX Workbench and retry your action`
+      `You'll be automatically redirected back to SGEX Workbench after authorization`
     ],
     severity: isRequired ? 'error' : 'warning'
   };

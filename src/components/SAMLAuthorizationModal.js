@@ -17,8 +17,9 @@ const SAMLAuthorizationModal = ({
 
   const handleSAMLAuthorization = () => {
     setAuthorizationAttempted(true);
-    // Open GitHub's SAML authorization page in a new tab
-    window.open(samlErrorInfo.authorizationURL, '_blank', 'noopener,noreferrer');
+    // Navigate to GitHub's SAML authorization page in the same tab
+    // GitHub will redirect back to the select_profile page after authorization
+    window.location.href = samlErrorInfo.authorizationURL;
   };
 
   const handleDocumentation = () => {
@@ -106,7 +107,7 @@ const SAMLAuthorizationModal = ({
             <div className="saml-post-auth">
               <div className="success-note">
                 <span className="success-icon">✅</span>
-                <span>Authorization page opened! Complete the process in the new tab, then return here.</span>
+                <span>Redirecting to GitHub for authorization. You'll return here automatically after completion.</span>
               </div>
             </div>
           )}
