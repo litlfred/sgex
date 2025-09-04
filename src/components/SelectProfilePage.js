@@ -51,7 +51,7 @@ const SelectProfilePage = () => {
     setDakCounts(counts);
   }, []);
 
-  const fetchUserData = useCallback(async (forceRefresh = false) => {
+  const fetchUserData = useCallback(async (forceRefresh = false, samlAuthorizedOrg = null) => {
     // Prevent multiple simultaneous calls
     if (fetchInProgress.current) {
       return;
@@ -63,7 +63,7 @@ const SelectProfilePage = () => {
     
     // Capture authentication state at function execution time
     const currentIsAuthenticated = githubService.isAuth();
-    console.log('fetchUserData: Current authentication state:', currentIsAuthenticated, 'forceRefresh:', forceRefresh);
+    console.log('fetchUserData: Current authentication state:', currentIsAuthenticated, 'forceRefresh:', forceRefresh, 'samlAuthorizedOrg:', samlAuthorizedOrg);
     
     try {
       // Check if we have cached profile data first (unless forcing refresh)
@@ -140,17 +140,25 @@ const SelectProfilePage = () => {
         
         // Check if this is a SAML error
         const isSAMLRequired = isSAMLError(whoError);
+        
+        // If we have a SAML authorized org and it matches WHO, override the SAML requirement
+        const samlOverride = samlAuthorizedOrg === 'WorldHealthOrganization';
+        
         console.log('SAML Error Detection:', {
           isSAMLRequired,
           whoError: whoError.message,
           status: whoError.status,
-          currentIsAuthenticated
+          currentIsAuthenticated,
+          samlAuthorizedOrg,
+          samlOverride
         });
         
-        if (isSAMLRequired) {
+        if (isSAMLRequired && !samlOverride) {
           console.log('SAML authorization available for WHO organization');
           // Set a warning but don't show modal immediately (user can trigger it)
           setWarningMessage('SAML authorization available for WHO organization. Click the organization to authorize access.');
+        } else if (samlOverride) {
+          console.log('SAML authorization recently completed for WHO organization, treating as authorized');
         }
         
         // Fallback to hardcoded WHO organization regardless of error type
@@ -163,13 +171,14 @@ const SelectProfilePage = () => {
           html_url: 'https://github.com/WorldHealthOrganization',
           type: 'Organization',
           isWHO: true,
-          needsSAMLAuth: isSAMLRequired // Flag for SAML requirement
+          needsSAMLAuth: samlOverride ? false : isSAMLRequired // Override SAML requirement if recently authorized
         };
         
         console.log('Creating WHO fallback organization:', {
           login: whoOrganization.login,
           needsSAMLAuth: whoOrganization.needsSAMLAuth,
-          isWHO: whoOrganization.isWHO
+          isWHO: whoOrganization.isWHO,
+          samlOverride
         });
         
         // Check if WHO organization is already in the list
@@ -182,7 +191,7 @@ const SelectProfilePage = () => {
           // Ensure existing WHO organization has the isWHO flag and SAML status
           orgsData = orgsData.map(org => 
             org.login === 'WorldHealthOrganization' 
-              ? { ...org, isWHO: true, needsSAMLAuth: isSAMLRequired }
+              ? { ...org, isWHO: true, needsSAMLAuth: samlOverride ? false : isSAMLRequired }
               : org
           );
         }
@@ -310,6 +319,7 @@ const SelectProfilePage = () => {
     // Detect if user is returning from SAML authorization
     const fromGitHub = referrer && referrer.includes('github.com');
     const samlAuthorized = urlParams.get('saml_authorized') === '1';
+    const authorizedOrg = urlParams.get('org');
     const hasAuthParams = urlParams.has('code') || urlParams.has('state') || samlAuthorized;
     
     if (fromGitHub || samlAuthorized || hasAuthParams) {
@@ -317,7 +327,7 @@ const SelectProfilePage = () => {
         fromGitHub,
         samlAuthorized,
         hasAuthParams,
-        organization: urlParams.get('org')
+        organization: authorizedOrg
       });
       
       // Clear profile cache to force fresh API calls
@@ -326,11 +336,26 @@ const SelectProfilePage = () => {
       // Clear any existing warning message since user completed authorization
       if (samlAuthorized) {
         setWarningMessage(null);
+        
+        // If SAML was authorized for a specific organization, immediately update the organizations state
+        // to remove SAML requirements without waiting for API calls that may still fail during propagation
+        if (authorizedOrg && isAuthenticated) {
+          console.log(`SAML authorization completed for ${authorizedOrg}, immediately clearing SAML requirements`);
+          
+          setOrganizations(prevOrgs => 
+            prevOrgs.map(org => 
+              org.login === authorizedOrg 
+                ? { ...org, needsSAMLAuth: false } 
+                : org
+            )
+          );
+        }
       }
       
-      // Force a fresh data fetch
+      // Force a fresh data fetch with SAML override
       if (isAuthenticated) {
-        fetchUserData(true); // Force refresh to bypass cache
+        // Pass the authorized organization to bypass SAML checks during the temporary propagation period
+        fetchUserData(true, samlAuthorized ? authorizedOrg : null); // Force refresh to bypass cache
       }
       
       // Clean up URL parameters to avoid repeat processing
