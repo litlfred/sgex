@@ -243,27 +243,59 @@ const CoreDataDictionaryViewerContent = () => {
       const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
       const currentRepo = repo || repository?.name;
       
+      console.log('🔍 Logical Models Detection - Effect triggered:', {
+        loading,
+        repository: !!repository,
+        branch,
+        user,
+        repo,
+        currentUser,
+        currentRepo,
+        currentBranch
+      });
+      
       if ((!currentRepository && (!currentUser || !currentRepo)) || !currentBranch) {
+        console.log('❌ Logical Models Detection - Missing required params, skipping:', {
+          hasRepository: !!currentRepository,
+          hasUser: !!currentUser,
+          hasRepo: !!currentRepo,
+          hasBranch: !!currentBranch
+        });
         return;
       }
 
       // Only start loading logical models after main loading is complete
       if (loading) {
+        console.log('⏳ Logical Models Detection - Main loading still in progress, waiting...');
         return;
       }
+
+      console.log('🚀 Logical Models Detection - Starting detection for:', {
+        user: currentUser,
+        repo: currentRepo,
+        branch: currentBranch
+      });
 
       setLoadingLogicalModels(true);
       try {
         const baseUrl = getBaseUrl(currentBranch);
+        console.log('🌐 Logical Models Detection - Base URL:', baseUrl);
+        
         const detectedModels = await logicalModelService.detectLogicalModels(
           baseUrl, 
           currentUser, 
           currentRepo, 
           currentBranch
         );
+        
+        console.log('✅ Logical Models Detection - Completed successfully:', {
+          modelsFound: detectedModels.length,
+          models: detectedModels.map(m => `${m.id} (${m.title || m.name})`)
+        });
+        
         setLogicalModels(detectedModels);
       } catch (error) {
-        console.warn('Error detecting logical models:', error);
+        console.warn('❌ Error detecting logical models:', error);
         setLogicalModels([]);
       } finally {
         setLoadingLogicalModels(false);
