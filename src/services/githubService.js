@@ -2645,6 +2645,43 @@ class GitHubService {
       throw error;
     }
   }
+
+  // Convert draft pull request to ready for review
+  async markPullRequestReadyForReview(owner, repo, pullNumber) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to mark PR as ready for review');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('PATCH', `/repos/${owner}/${repo}/pulls/${pullNumber}`, { draft: false });
+
+    try {
+      const response = await this.octokit.rest.pulls.update({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        draft: false
+      });
+      
+      this.logger.apiResponse('PATCH', `/repos/${owner}/${repo}/pulls/${pullNumber}`, response.status, Date.now() - startTime);
+      
+      return {
+        success: true,
+        pullRequest: {
+          id: response.data.id,
+          number: response.data.number,
+          draft: response.data.draft,
+          state: response.data.state,
+          title: response.data.title,
+          html_url: response.data.html_url
+        }
+      };
+    } catch (error) {
+      this.logger.apiResponse('PATCH', `/repos/${owner}/${repo}/pulls/${pullNumber}`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to mark pull request as ready for review:', error);
+      throw error;
+    }
+  }
 }
 
 // Create a singleton instance

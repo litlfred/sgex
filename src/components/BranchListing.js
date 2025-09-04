@@ -500,9 +500,6 @@ const BranchListing = () => {
               <a href="https://github.com/litlfred/sgex/issues/new?template=feature_request.md" target="_blank" class="contribute-btn secondary">
                 ✨ Request a Feature  
               </a>
-              <a href="/sgex/main/docs/" target="_blank" class="contribute-btn tertiary">
-                📚 Read Documentation
-              </a>
               <a href="https://github.com/litlfred/sgex/tree/main/public/docs" target="_blank" class="contribute-btn tertiary-alt">
                 📖 Docs on GitHub
               </a>
@@ -819,18 +816,6 @@ const BranchListing = () => {
           >
             🌟 How to Contribute
           </button>
-          <a 
-            href="/sgex/main/docs/" 
-            className="contribute-btn secondary"
-            target="_blank"
-            rel="noopener noreferrer"
-            onError={(e) => {
-              // Fallback to GitHub docs if main branch docs not available
-              e.target.href = "https://github.com/litlfred/sgex/tree/main/public/docs";
-            }}
-          >
-            📚 Documentation
-          </a>
           <a 
             href="https://github.com/litlfred/sgex/issues/new" 
             className="contribute-btn tertiary"

@@ -36,6 +36,12 @@ const PreviewBadge = () => {
   const [showWorkflowView, setShowWorkflowView] = useState(false); // Default to discussion view
   const [newlyAddedCommentId, setNewlyAddedCommentId] = useState(null);
   const [copilotSessionInfo, setCopilotSessionInfo] = useState(null);
+  const [showCopilotSession, setShowCopilotSession] = useState(false);
+  const [isWatchingSession, setIsWatchingSession] = useState(false);
+  const [watchSessionInterval, setWatchSessionInterval] = useState(null);
+  const [isRefreshingSession, setIsRefreshingSession] = useState(false);
+  const [lastSessionCheck, setLastSessionCheck] = useState(null);
+  const [sessionRefreshCount, setSessionRefreshCount] = useState(0);
   const [ReactMarkdown, setReactMarkdown] = useState(null);
   const [DOMPurify, setDOMPurify] = useState(null);
   const [rehypeRaw, setRehypeRaw] = useState(null);
@@ -59,15 +65,16 @@ const PreviewBadge = () => {
 
     loadMarkdownComponents();
   }, []);
-  const [showCopilotSession, setShowCopilotSession] = useState(false);
   const [canComment, setCanComment] = useState(true);
   const [canTriggerWorkflows, setCanTriggerWorkflows] = useState(false);
   const [canApproveWorkflows, setCanApproveWorkflows] = useState(false);
   const [canMergePR, setCanMergePR] = useState(false);
+  const [canManagePR, setCanManagePR] = useState(false); // For draft/ready status changes
   const [isMergingPR, setIsMergingPR] = useState(false);
   const [canReviewPR, setCanReviewPR] = useState(false);
   const [isApprovingPR, setIsApprovingPR] = useState(false);
   const [isRequestingChanges, setIsRequestingChanges] = useState(false);
+  const [isMarkingReadyForReview, setIsMarkingReadyForReview] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState(null); // 'success', 'error'
   const [approvalMessage, setApprovalMessage] = useState('');
   const [commentsPage, setCommentsPage] = useState(1);
@@ -437,6 +444,71 @@ const PreviewBadge = () => {
     }
   };
 
+  // Handle watch session toggle with auto-refresh
+  const handleWatchSessionToggle = () => {
+    if (isWatchingSession) {
+      // Stop watching - clear interval and hide session
+      if (watchSessionInterval) {
+        clearInterval(watchSessionInterval);
+        setWatchSessionInterval(null);
+      }
+      setIsWatchingSession(false);
+      setShowCopilotSession(false);
+      setIsRefreshingSession(false);
+      setSessionRefreshCount(0);
+    } else {
+      // Start watching - show session and set up auto-refresh
+      setIsWatchingSession(true);
+      setShowCopilotSession(true);
+      setSessionRefreshCount(0);
+      
+      // Perform initial refresh
+      if (prInfo && prInfo.length > 0) {
+        performSessionRefresh('litlfred', 'sgex', prInfo[0].number);
+      }
+      
+      // Set up auto-refresh every 10 seconds
+      const interval = setInterval(async () => {
+        if (prInfo && prInfo.length > 0) {
+          await performSessionRefresh('litlfred', 'sgex', prInfo[0].number);
+        }
+      }, 10000); // 10 seconds
+      
+      setWatchSessionInterval(interval);
+    }
+  };
+
+  // Helper function to perform session refresh with visual feedback
+  const performSessionRefresh = async (owner, repo, prNumber) => {
+    try {
+      setIsRefreshingSession(true);
+      setSessionRefreshCount(prev => prev + 1);
+      
+      // Refresh copilot session info
+      const sessionInfo = await fetchCopilotSessionInfo(owner, repo, prNumber);
+      setCopilotSessionInfo(sessionInfo);
+      setLastSessionCheck(new Date());
+      
+      // Brief visual feedback that refresh completed
+      setTimeout(() => {
+        setIsRefreshingSession(false);
+      }, 1000); // Show "refreshing" state for 1 second
+      
+    } catch (error) {
+      console.debug('Failed to refresh copilot session info:', error);
+      setIsRefreshingSession(false);
+    }
+  };
+
+  // Clean up interval on unmount
+  useEffect(() => {
+    return () => {
+      if (watchSessionInterval) {
+        clearInterval(watchSessionInterval);
+      }
+    };
+  }, [watchSessionInterval]);
+
   const fetchWorkflowStatus = async (branchName) => {
     try {
       setWorkflowLoading(true);
@@ -479,29 +551,79 @@ const PreviewBadge = () => {
         comment.body.includes('GitHub Copilot')
       );
 
+      console.debug('Copilot session detection:', {
+        totalComments: comments.length,
+        copilotComments: copilotComments.length,
+        copilotCommentsInfo: copilotComments.map(c => ({
+          id: c.id,
+          author: c.user.login,
+          created: c.created_at,
+          bodyPreview: c.body.substring(0, 100) + '...'
+        }))
+      });
+
       if (copilotComments.length > 0) {
-        // Get the most recent copilot activity
-        const latestCopilotComment = copilotComments[0];
+        // Sort copilot comments by date (newest first) to ensure we get the latest activity
+        const sortedCopilotComments = copilotComments.sort((a, b) => 
+          new Date(b.created_at) - new Date(a.created_at)
+        );
         
-        // Try to find an agent session URL in the comments or generate one
+        // Try to find the newest agent session URL by checking ALL comments, not just copilot ones
         let agentSessionUrl = null;
+        let latestSessionDate = null;
+        let sessionComment = null;
         
-        // Look for agent session URLs in comments
-        const sessionUrlPattern = /https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+\/agent-sessions\/[a-f0-9-]+/gi;
-        for (const comment of copilotComments) {
-          const match = comment.body.match(sessionUrlPattern);
-          if (match) {
-            agentSessionUrl = match[0];
-            break;
+        // Enhanced session URL pattern to capture session IDs
+        const sessionUrlPattern = /https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+\/agent-sessions\/([a-f0-9-]+)/gi;
+        
+        // Check ALL comments for session URLs, sorted by date (newest first)
+        const allCommentsSorted = comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        console.debug('Searching for session URLs in all comments:', allCommentsSorted.length);
+        
+        for (const comment of allCommentsSorted) {
+          const matches = [...comment.body.matchAll(sessionUrlPattern)];
+          if (matches.length > 0) {
+            console.debug('Found session URLs in comment:', {
+              commentId: comment.id,
+              author: comment.user.login,
+              created: comment.created_at,
+              urls: matches.map(m => m[0])
+            });
+            
+            // Take the last (most recent) session URL from the most recent comment
+            const sessionUrl = matches[matches.length - 1][0];
+            const commentDate = new Date(comment.created_at);
+            
+            // Use the session URL from the newest comment with session URLs
+            if (!agentSessionUrl || commentDate > latestSessionDate) {
+              agentSessionUrl = sessionUrl;
+              latestSessionDate = commentDate;
+              sessionComment = comment;
+              console.debug('Updated session URL to newest:', {
+                url: agentSessionUrl,
+                commentDate: commentDate.toISOString(),
+                commentId: comment.id
+              });
+            }
           }
         }
         
         // If no explicit agent session URL found, construct the likely URL
         if (!agentSessionUrl) {
-          // Generate a plausible agent session URL based on the PR structure
-          // This is a best-effort approach since we don't have direct access to session IDs
           agentSessionUrl = `https://github.com/${owner}/${repo}/pull/${prNumber}/agent-sessions`;
+          console.debug('No session URL found, using default:', agentSessionUrl);
+        } else {
+          console.debug('Final session URL selected:', agentSessionUrl);
         }
+        
+        // Get the most recent copilot activity for display
+        const latestCopilotComment = sortedCopilotComments[0];
+        
+        // Filter to get only copilot's actual responses (not mentions)
+        const copilotResponses = sortedCopilotComments.filter(comment => 
+          comment.user.login === 'copilot' || comment.user.login.includes('copilot')
+        );
         
         return {
           hasActiveCopilot: true,
@@ -509,7 +631,9 @@ const PreviewBadge = () => {
           sessionUrl: agentSessionUrl,
           commentUrl: `https://github.com/${owner}/${repo}/pull/${prNumber}#issuecomment-${latestCopilotComment.id}`,
           commentsCount: copilotComments.length,
-          latestComment: latestCopilotComment
+          latestComment: latestCopilotComment,
+          copilotResponses: copilotResponses, // Add filtered copilot responses
+          sessionComment: sessionComment // Add the comment that contained the session URL
         };
       }
 
@@ -772,6 +896,61 @@ const PreviewBadge = () => {
     }
   };
 
+  const handleMarkReadyForReview = async (owner, repo, prNumber) => {
+    if (!githubService.isAuth() || isMarkingReadyForReview || !canMergePR) {
+      return false;
+    }
+
+    setIsMarkingReadyForReview(true);
+    setApprovalStatus(null); // Clear previous status
+    setApprovalMessage('');
+    
+    try {
+      const result = await githubService.markPullRequestReadyForReview(owner, repo, prNumber);
+      
+      console.debug('PR marked as ready for review successfully:', result);
+      
+      // Show success message
+      setApprovalStatus('success');
+      setApprovalMessage(`PR #${prNumber} is now ready for review!`);
+      
+      // Refresh the PR info to reflect the new draft status
+      setTimeout(async () => {
+        try {
+          const refreshedPRs = await fetchPRsForBranch(branchInfo?.name);
+          if (refreshedPRs && refreshedPRs.length > 0) {
+            setPrInfo(refreshedPRs);
+          }
+        } catch (error) {
+          console.debug('Could not refresh PR status after marking ready for review:', error);
+        }
+      }, 2000);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to mark PR as ready for review:', error);
+      
+      // Provide user-friendly error messages
+      let userMessage = 'Failed to mark PR as ready for review';
+      if (error.status === 403) {
+        userMessage = 'Permission denied: You may not have permission to update this PR';
+      } else if (error.status === 404) {
+        userMessage = 'PR not found or repository access denied';
+      } else if (error.status === 422) {
+        userMessage = 'PR cannot be marked as ready for review - it may already be ready or have other restrictions';
+      } else if (error.message) {
+        userMessage = error.message;
+      }
+      
+      setApprovalStatus('error');
+      setApprovalMessage(userMessage);
+      
+      return false;
+    } finally {
+      setIsMarkingReadyForReview(false);
+    }
+  };
+
   const checkPermissions = async (owner, repo) => {
     if (!githubService.isAuth()) {
       setCanComment(false);
@@ -779,6 +958,7 @@ const PreviewBadge = () => {
       setCanApproveWorkflows(false);
       setCanMergePR(false);
       setCanReviewPR(false);
+      setCanManagePR(false);
       return;
     }
 
@@ -801,15 +981,18 @@ const PreviewBadge = () => {
 
       // Check merge and review permissions for the first PR if available
       if (prInfo && prInfo.length > 0) {
-        const [mergePermissions, reviewPermissions] = await Promise.all([
+        const [mergePermissions, reviewPermissions, writePermissions] = await Promise.all([
           githubService.checkPullRequestMergePermissions(owner, repo, prInfo[0].number),
-          githubService.checkPullRequestReviewPermissions(owner, repo, prInfo[0].number)
+          githubService.checkPullRequestReviewPermissions(owner, repo, prInfo[0].number),
+          githubService.checkRepositoryWritePermissions(owner, repo) // For managing PR draft status
         ]);
         setCanMergePR(mergePermissions);
         setCanReviewPR(reviewPermissions);
+        setCanManagePR(writePermissions); // Repository write access for draft/ready status changes
       } else {
         setCanMergePR(false);
         setCanReviewPR(false);
+        setCanManagePR(false);
       }
     } catch (error) {
       console.debug('Error checking permissions:', error);
@@ -818,6 +1001,7 @@ const PreviewBadge = () => {
       setCanApproveWorkflows(false);
       setCanMergePR(false);
       setCanReviewPR(false);
+      setCanManagePR(false);
     }
   };
 
@@ -827,7 +1011,7 @@ const PreviewBadge = () => {
       clearInterval(commentRefreshIntervalRef.current);
     }
 
-    // Set up new interval to refresh comments every minute
+    // Set up new interval to refresh comments every 5 seconds
     commentRefreshIntervalRef.current = setInterval(async () => {
       try {
         const latestComments = await fetchCommentsForPR(owner, repo, prNumber, 1, false);
@@ -845,7 +1029,7 @@ const PreviewBadge = () => {
       } catch (error) {
         console.debug('Failed to auto-refresh comments:', error);
       }
-    }, 60000); // 60 seconds
+    }, 5000); // 5 seconds
   };
 
   const setupWorkflowAutoRefresh = (branchName) => {
@@ -1267,10 +1451,14 @@ const PreviewBadge = () => {
       // Check for copilot session activity
       if (githubService.isAuth()) {
         try {
+          setIsRefreshingSession(true);
           const copilotInfo = await fetchCopilotSessionInfo(owner, repo, pr.number);
           setCopilotSessionInfo(copilotInfo);
+          setLastSessionCheck(new Date());
+          setTimeout(() => setIsRefreshingSession(false), 500); // Brief feedback
         } catch (error) {
           console.debug('Could not fetch copilot session info:', error);
+          setIsRefreshingSession(false);
         }
       }
       
@@ -1569,16 +1757,19 @@ const PreviewBadge = () => {
                       // Pass PR actions data
                       prInfo={prInfo}
                       canMergePR={canMergePR}
+                      canManagePR={canManagePR}
                       canReviewPR={canReviewPR}
                       isMergingPR={isMergingPR}
                       isApprovingPR={isApprovingPR}
                       isRequestingChanges={isRequestingChanges}
+                      isMarkingReadyForReview={isMarkingReadyForReview}
                       approvalStatus={approvalStatus}
                       approvalMessage={approvalMessage}
                       newComment={newComment}
                       onMergePR={handleMergePR}
                       onApprovePR={handleApprovePR}
                       onRequestChanges={handleRequestChanges}
+                      onMarkReadyForReview={handleMarkReadyForReview}
                     />
                   </div>
                 )
@@ -1593,6 +1784,27 @@ const PreviewBadge = () => {
                         <div className="copilot-session-active">
                           <div className="copilot-session-info">
                             <span className="copilot-status">✅ Active Copilot session detected</span>
+                            {isWatchingSession && (
+                              <div className="copilot-watching-wrapper">
+                                <span className="copilot-watching-status">
+                                  {isRefreshingSession ? (
+                                    <>🔄 Refreshing session... (#{sessionRefreshCount})</>
+                                  ) : (
+                                    <>🔄 Watching for updates (every 10s)</>
+                                  )}
+                                </span>
+                                {lastSessionCheck && (
+                                  <span className="copilot-last-check">
+                                    Last checked: {formatDate(lastSessionCheck)}
+                                  </span>
+                                )}
+                                {sessionRefreshCount > 0 && (
+                                  <span className="copilot-refresh-count">
+                                    Refreshes: {sessionRefreshCount}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                             <span className="copilot-activity">
                               Last activity: {formatDate(copilotSessionInfo.latestActivity)}
                             </span>
@@ -1601,13 +1813,19 @@ const PreviewBadge = () => {
                             </span>
                           </div>
                           <div className="copilot-session-actions">
+                            <button
+                              className="copilot-session-toggle"
+                              onClick={handleWatchSessionToggle}
+                            >
+                              {isWatchingSession ? '⏹️ Stop Watching' : '👁️ Watch Session'}
+                            </button>
                             <a 
                               href={copilotSessionInfo.sessionUrl} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="copilot-session-link"
                             >
-                              🔗 View Agent Session
+                              🔗 Open Session
                             </a>
                             {copilotSessionInfo.commentUrl && (
                               <a 
@@ -1619,61 +1837,155 @@ const PreviewBadge = () => {
                                 💬 Latest Comment
                               </a>
                             )}
-                            <button
-                              className="copilot-session-toggle"
-                              onClick={() => setShowCopilotSession(!showCopilotSession)}
-                            >
-                              {showCopilotSession ? '📝 Hide Session' : '👁️ Watch Session'}
-                            </button>
                           </div>
-                          {showCopilotSession && copilotSessionInfo.latestComment && (
+                          {showCopilotSession && copilotSessionInfo && (
                             <div className="copilot-session-modal">
                               <div className="copilot-session-header">
-                                <strong>Latest Copilot Activity</strong>
+                                <strong>🤖 Copilot Session Activity</strong>
                                 <span className="copilot-comment-date">
-                                  {formatDate(copilotSessionInfo.latestComment.created_at)}
+                                  {copilotSessionInfo.sessionUrl && (
+                                    <a 
+                                      href={copilotSessionInfo.sessionUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="session-url-link"
+                                    >
+                                      🔗 View Full Session
+                                    </a>
+                                  )}
                                 </span>
                               </div>
                               <div className="copilot-session-content">
-                                <div className="copilot-comment-author">
-                                  <img 
-                                    src={copilotSessionInfo.latestComment.user.avatar_url} 
-                                    alt={copilotSessionInfo.latestComment.user.login}
-                                    className="copilot-avatar"
-                                  />
-                                  <a 
-                                    href={copilotSessionInfo.latestComment.user.html_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="copilot-username"
-                                  >
-                                    {copilotSessionInfo.latestComment.user.login}
-                                  </a>
-                                </div>
-                                <div className="copilot-comment-body">
-                                  <div className="markdown-content">
-                                    {ReactMarkdown && rehypeRaw ? (
-                                      <ReactMarkdown 
-                                        rehypePlugins={[rehypeRaw]}
-                                        components={markdownComponents}
-                                      >{processMarkdownContent(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
-                                    ) : (
-                                      <div 
-                                        style={{ whiteSpace: 'pre-wrap' }}
-                                        dangerouslySetInnerHTML={{
-                                          __html: sanitizeHtmlContent(convertGitHubNotationToHtml(copilotSessionInfo.latestComment.body))
-                                        }}
-                                      />
+                                {copilotSessionInfo.copilotResponses && copilotSessionInfo.copilotResponses.length > 0 ? (
+                                  <div className="copilot-responses">
+                                    <div className="copilot-responses-header">
+                                      <strong>Recent Copilot Responses ({copilotSessionInfo.copilotResponses.length})</strong>
+                                    </div>
+                                    {copilotSessionInfo.copilotResponses.slice(0, 3).map((response, index) => (
+                                      <div key={response.id} className="copilot-response-item">
+                                        <div className="copilot-response-meta">
+                                          <img 
+                                            src={response.user.avatar_url} 
+                                            alt={response.user.login}
+                                            className="copilot-response-avatar"
+                                          />
+                                          <a 
+                                            href={response.user.html_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="copilot-response-username"
+                                          >
+                                            {response.user.login}
+                                          </a>
+                                          <span className="copilot-response-date">
+                                            {formatDate(response.created_at)}
+                                          </span>
+                                          {index === 0 && <span className="copilot-latest-badge">Latest</span>}
+                                        </div>
+                                        <div className="copilot-response-body">
+                                          <div className="markdown-content">
+                                            {ReactMarkdown && rehypeRaw ? (
+                                              <ReactMarkdown 
+                                                rehypePlugins={[rehypeRaw]}
+                                                components={markdownComponents}
+                                              >{processMarkdownContent(response.body.length > 300 ? response.body.substring(0, 300) + '...' : response.body)}</ReactMarkdown>
+                                            ) : (
+                                              <div 
+                                                style={{ whiteSpace: 'pre-wrap' }}
+                                                dangerouslySetInnerHTML={{
+                                                  __html: sanitizeHtmlContent(convertGitHubNotationToHtml(response.body.length > 300 ? response.body.substring(0, 300) + '...' : response.body))
+                                                }}
+                                              />
+                                            )}
+                                          </div>
+                                          {response.body.length > 300 && (
+                                            <a 
+                                              href={`https://github.com/litlfred/sgex/pull/${prInfo[0].number}#issuecomment-${response.id}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="read-full-response"
+                                            >
+                                              Read full response →
+                                            </a>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                    {copilotSessionInfo.copilotResponses.length > 3 && (
+                                      <div className="copilot-more-responses">
+                                        <a 
+                                          href={copilotSessionInfo.sessionUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="view-more-responses"
+                                        >
+                                          View {copilotSessionInfo.copilotResponses.length - 3} more responses in session →
+                                        </a>
+                                      </div>
                                     )}
                                   </div>
-                                </div>
+                                ) : copilotSessionInfo.latestComment ? (
+                                  <div className="copilot-fallback-content">
+                                    <div className="copilot-comment-author">
+                                      <img 
+                                        src={copilotSessionInfo.latestComment.user.avatar_url} 
+                                        alt={copilotSessionInfo.latestComment.user.login}
+                                        className="copilot-avatar"
+                                      />
+                                      <a 
+                                        href={copilotSessionInfo.latestComment.user.html_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="copilot-username"
+                                      >
+                                        {copilotSessionInfo.latestComment.user.login}
+                                      </a>
+                                      <span className="copilot-activity-date">
+                                        {formatDate(copilotSessionInfo.latestComment.created_at)}
+                                      </span>
+                                    </div>
+                                    <div className="copilot-comment-body">
+                                      <div className="markdown-content">
+                                        {ReactMarkdown && rehypeRaw ? (
+                                          <ReactMarkdown 
+                                            rehypePlugins={[rehypeRaw]}
+                                            components={markdownComponents}
+                                          >{processMarkdownContent(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                                        ) : (
+                                          <div 
+                                            style={{ whiteSpace: 'pre-wrap' }}
+                                            dangerouslySetInnerHTML={{
+                                              __html: sanitizeHtmlContent(convertGitHubNotationToHtml(copilotSessionInfo.latestComment.body))
+                                            }}
+                                          />
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="no-copilot-activity">
+                                    <p>No copilot responses found in recent activity.</p>
+                                    <p>Session URL: <a href={copilotSessionInfo.sessionUrl} target="_blank" rel="noopener noreferrer">{copilotSessionInfo.sessionUrl}</a></p>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           )}
                         </div>
                       ) : (
                         <div className="copilot-session-inactive">
-                          <span className="copilot-status">⚪ No active Copilot session detected</span>
+                          <span className="copilot-status">
+                            {isRefreshingSession ? (
+                              <>🔄 Checking for active Copilot session...</>
+                            ) : (
+                              <>⚪ No active Copilot session detected</>
+                            )}
+                          </span>
+                          {lastSessionCheck && (
+                            <span className="copilot-last-check">
+                              Last checked: {formatDate(lastSessionCheck)}
+                            </span>
+                          )}
                           <span className="copilot-hint">
                             Start a conversation with @copilot to begin a session
                           </span>

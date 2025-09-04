@@ -54,6 +54,21 @@ https://litlfred.github.io/sgex/?/dashboard/user/repo
 
 The React app then processes the query parameter `?/dashboard/user/repo` to restore the intended route.
 
+#### 5. Enhanced Branch Fallback (Issue #922)
+Implements intelligent fallback for non-existent branch deployments:
+
+1. **Local Branch First**: If accessing `/sgex/feature-branch/dashboard/user/repo` fails multiple times, first try `/sgex/feature-branch/`
+2. **Main Deployment Last**: Only if branch root also fails, fall back to `/sgex/`
+3. **Redirect Loop Prevention**: Uses reduced threshold (2 attempts instead of 3) for faster fallback
+4. **Context Preservation**: Maintains user/repo context during fallback transitions
+
+**Fallback Sequence Example**:
+```
+1. User accesses: /sgex/feature-branch/dashboard/user/repo (404)
+2. First fallback: /sgex/feature-branch/ (404)  
+3. Final fallback: /sgex/ (main deployment)
+```
+
 ## Deployment Scenarios
 
 ### GitHub Pages Deployment

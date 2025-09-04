@@ -2,12 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import LandingPage from '../components/LandingPage';
-import DAKSelection from '../components/DAKSelection';
-import DAKActionSelection from '../components/DAKActionSelection';
-import OrganizationSelection from '../components/OrganizationSelection';
-import DAKDashboard from '../components/DAKDashboard';
-import BPMNViewerEnhanced from '../components/BPMNViewerEnhanced';
-import BusinessProcessSelection from '../components/BusinessProcessSelection';
+import helpContentService from '../services/helpContentService';
 
 // Mock the GitHub service to avoid authentication issues in tests
 jest.mock('../services/githubService', () => ({
@@ -19,201 +14,104 @@ jest.mock('../services/githubService', () => ({
   checkRepositoryWritePermissions: () => Promise.resolve(false),
 }));
 
-// Mock BPMN-js to avoid import issues in tests
-jest.mock('bpmn-js/lib/NavigatedViewer', () => {
-  return jest.fn().mockImplementation(() => ({
-    importXML: jest.fn().mockResolvedValue(),
-    get: jest.fn().mockReturnValue({
-      zoom: jest.fn().mockReturnValue(1),
-      on: jest.fn()
-    }),
-    destroy: jest.fn()
-  }));
-});
+// Mock the framework components to focus on testing routing logic
+jest.mock('../components/framework', () => ({
+  PageLayout: ({ children }) => <div data-testid="page-layout">{children}</div>,
+  usePageParams: () => ({ params: {} })
+}));
 
-describe('Documentation Button Consistency', () => {
-  test('LandingPage has documentation button when not authenticated', () => {
+describe('Documentation Routing Logic', () => {
+  beforeEach(() => {
+    // Reset the window location for each test
+    Object.defineProperty(window, 'location', {
+      value: {
+        pathname: '/',
+        href: 'http://localhost:3000/'
+      },
+      writable: true
+    });
+  });
+
+  test('LandingPage refers users to help mascot for documentation', () => {
     render(
       <BrowserRouter>
         <LandingPage />
       </BrowserRouter>
     );
     
-    const docButton = screen.getByText('📖 Documentation');
-    expect(docButton).toBeInTheDocument();
-    expect(docButton.closest('a')).toHaveAttribute('href', '/sgex/docs/overview');
+    // Should mention using the help mascot instead of hardcoded links
+    expect(screen.getByText(/help mascot.*bottom-right corner/i)).toBeInTheDocument();
   });
 
-  test('DAKActionSelection has documentation button', () => {
-    const mockProfile = {
-      login: 'testuser',
-      name: 'Test User',
-      avatar_url: 'https://github.com/testuser.png'
-    };
-
-    render(
-      <MemoryRouter initialEntries={[{ pathname: '/dak-action', state: { profile: mockProfile } }]}>
-        <DAKActionSelection />
-      </MemoryRouter>
-    );
+  test('helpContentService determines correct documentation path for main deployment', () => {
+    // Mock being on main deployment
+    window.location.pathname = '/sgex/dashboard';
     
-    const docButton = screen.getByText('📖 Documentation');
-    expect(docButton).toBeInTheDocument();
-    expect(docButton.closest('a')).toHaveAttribute('href', '/sgex/docs/overview');
+    const documentationTopic = helpContentService.getHelpTopic('sgex-documentation');
+    expect(documentationTopic).toBeTruthy();
+    expect(documentationTopic.type).toBe('action');
+    
+    // Mock the action to capture the URL it would navigate to
+    let navigatedUrl = '';
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...originalLocation,
+        href: ''
+      },
+      writable: true
+    });
+    
+    // Execute the action and capture the URL
+    const originalWindowLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...originalWindowLocation,
+        href: navigatedUrl
+      },
+      set: (url) => { navigatedUrl = url; }
+    });
+    
+    documentationTopic.action();
+    expect(navigatedUrl).toBe('/sgex/main/docs/overview');
   });
 
-  test('DAKSelection has documentation button', () => {
-    const mockProfile = {
-      login: 'testuser',
-      name: 'Test User',
-      avatar_url: 'https://github.com/testuser.png'
-    };
-
-    render(
-      <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: { profile: mockProfile, action: 'edit' } }]}>
-        <DAKSelection />
-      </MemoryRouter>
-    );
+  test('helpContentService determines correct documentation path for branch deployment', () => {
+    // Mock being on feature branch deployment
+    window.location.pathname = '/sgex/feature-branch/dashboard';
     
-    const docButton = screen.getByText('📖 Documentation');
-    expect(docButton).toBeInTheDocument();
-    expect(docButton.closest('a')).toHaveAttribute('href', '/sgex/docs/overview');
+    const documentationTopic = helpContentService.getHelpTopic('sgex-documentation');
+    expect(documentationTopic).toBeTruthy();
+    
+    // Mock the action to capture the URL it would navigate to
+    let navigatedUrl = '';
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...originalLocation,
+        href: navigatedUrl
+      },
+      set: (url) => { navigatedUrl = url; }
+    });
+    
+    documentationTopic.action();
+    expect(navigatedUrl).toBe('/sgex/feature-branch/docs/overview');
   });
 
-  test('DAKSelection does not have "Learn more about" message', () => {
-    const mockProfile = {
-      login: 'testuser',
-      name: 'Test User',
-      avatar_url: 'https://github.com/testuser.png'
-    };
-
-    render(
-      <MemoryRouter initialEntries={[{ pathname: '/dak-selection/testuser', state: { profile: mockProfile, action: 'edit' } }]}>
-        <DAKSelection />
-      </MemoryRouter>
-    );
+  test('helpContentService handles edge cases correctly', () => {
+    // Test with non-sgex path
+    window.location.pathname = '/some-other-path';
     
-    // Verify the "Learn more about" text is not present
-    expect(screen.queryByText(/Learn more about/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/DAK Components/)).not.toBeInTheDocument();
-  });
-
-  test('OrganizationSelection has documentation button', () => {
-    const mockProfile = {
-      login: 'testuser',
-      name: 'Test User',
-      avatar_url: 'https://github.com/testuser.png'
-    };
-    const mockRepository = {
-      name: 'test-repo',
-      full_name: 'testuser/test-repo'
-    };
-
-    render(
-      <MemoryRouter initialEntries={[{ 
-        pathname: '/organization-selection', 
-        state: { profile: mockProfile, sourceRepository: mockRepository, action: 'fork' } 
-      }]}>
-        <OrganizationSelection />
-      </MemoryRouter>
-    );
+    const documentationTopic = helpContentService.getHelpTopic('sgex-documentation');
+    expect(documentationTopic).toBeTruthy();
     
-    const docButton = screen.getByText('📖 Documentation');
-    expect(docButton).toBeInTheDocument();
-    expect(docButton.closest('a')).toHaveAttribute('href', '/sgex/docs/overview');
-  });
-
-  test('DAKDashboard has documentation button', () => {
-    const mockProfile = {
-      login: 'testuser',
-      name: 'Test User',
-      avatar_url: 'https://github.com/testuser.png'
-    };
-    const mockRepository = {
-      name: 'test-repo',
-      full_name: 'testuser/test-repo',
-      owner: { login: 'testuser' }
-    };
-
-    render(
-      <MemoryRouter initialEntries={[{ 
-        pathname: '/dashboard', 
-        state: { profile: mockProfile, repository: mockRepository } 
-      }]}>
-        <DAKDashboard />
-      </MemoryRouter>
-    );
+    let navigatedUrl = '';
+    Object.defineProperty(window, 'location', {
+      value: { href: navigatedUrl },
+      set: (url) => { navigatedUrl = url; }
+    });
     
-    const docButton = screen.getByText('📖 Documentation');
-    expect(docButton).toBeInTheDocument();
-    expect(docButton.closest('a')).toHaveAttribute('href', '/sgex/docs/overview');
-  });
-
-  test('BPMNViewerEnhanced has documentation button', () => {
-    const mockProfile = {
-      login: 'testuser',
-      name: 'Test User',
-      avatar_url: 'https://github.com/testuser.png'
-    };
-    const mockRepository = {
-      name: 'test-repo',
-      full_name: 'testuser/test-repo',
-      owner: { login: 'testuser' }
-    };
-    const mockSelectedFile = {
-      name: 'test-process.bpmn',
-      path: 'input/business-processes/test-process.bpmn',
-      size: 2048,
-      download_url: 'https://github.com/testuser/test-repo/raw/main/input/business-processes/test-process.bpmn'
-    };
-
-    render(
-      <MemoryRouter initialEntries={[{ 
-        pathname: '/bpmn-viewer', 
-        state: { 
-          profile: mockProfile, 
-          repository: mockRepository,
-          selectedFile: mockSelectedFile,
-          selectedBranch: 'main',
-          mode: 'view'
-        } 
-      }]}>
-        <BPMNViewerEnhanced />
-      </MemoryRouter>
-    );
-    
-    const docButton = screen.getByText('📖 Documentation');
-    expect(docButton).toBeInTheDocument();
-    expect(docButton.closest('a')).toHaveAttribute('href', '/sgex/docs/overview');
-  });
-
-  test('BusinessProcessSelection has documentation button', () => {
-    const mockProfile = {
-      login: 'testuser',
-      name: 'Test User',
-      avatar_url: 'https://github.com/testuser.png'
-    };
-    const mockRepository = {
-      name: 'test-repo',
-      full_name: 'testuser/test-repo',
-      owner: { login: 'testuser' }
-    };
-
-    render(
-      <MemoryRouter initialEntries={[{ 
-        pathname: '/business-process-selection', 
-        state: { 
-          profile: mockProfile, 
-          repository: mockRepository,
-          selectedBranch: 'main'
-        } 
-      }]}>
-        <BusinessProcessSelection />
-      </MemoryRouter>
-    );
-    
-    const docButton = screen.getByText('📖 Documentation');
-    expect(docButton).toBeInTheDocument();
-    expect(docButton.closest('a')).toHaveAttribute('href', '/sgex/docs/overview');
+    documentationTopic.action();
+    expect(navigatedUrl).toBe('/sgex/main/docs/overview');
   });
 });
