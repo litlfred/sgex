@@ -956,6 +956,38 @@
   font-weight: 600;
 }
 
+.copilot-watching-status {
+  color: #0366d6;
+  font-weight: 600;
+  font-size: 0.8rem;
+  animation: pulse 2s infinite;
+}
+
+.copilot-watching-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0.25rem 0;
+}
+
+.copilot-last-check {
+  color: #666;
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.copilot-refresh-count {
+  color: #28a745;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
 .copilot-activity {
   color: #666;
 }
@@ -1694,6 +1726,129 @@ body.theme-dark .pr-request-changes-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #b91c1c, #991b1b);
 }
 
+/* Copilot session dark mode styles */
+body.theme-dark .copilot-session-wrapper {
+  background: #1e293b !important;
+  border-bottom-color: #374151;
+}
+
+body.theme-dark .copilot-session-wrapper h4 {
+  color: #f9fafb !important;
+}
+
+body.theme-dark .copilot-session-modal {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+body.theme-dark .copilot-session-header {
+  background: #374151 !important;
+  border-bottom-color: #4b5563 !important;
+  color: #f9fafb !important;
+}
+
+body.theme-dark .copilot-session-header strong {
+  color: #f9fafb !important;
+}
+
+body.theme-dark .copilot-comment-date {
+  color: #9ca3af !important;
+}
+
+body.theme-dark .copilot-session-content {
+  background: #1f2937 !important;
+}
+
+body.theme-dark .copilot-username {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-comment-body {
+  background: #1e293b !important;
+  color: #e5e7eb !important;
+  border-left-color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-activity,
+body.theme-dark .copilot-hint {
+  color: #9ca3af !important;
+}
+
+body.theme-dark .copilot-status {
+  color: #f9fafb !important;
+}
+
+body.theme-dark .copilot-comments-count {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-watching-status {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-last-check {
+  color: #9ca3af !important;
+}
+
+body.theme-dark .copilot-refresh-count {
+  color: #10b981 !important;
+}
+
+/* Dark mode support for new copilot session modal */
+body.theme-dark .session-url-link {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-responses-header {
+  border-bottom-color: #4b5563;
+}
+
+body.theme-dark .copilot-responses-header strong {
+  color: #f9fafb !important;
+}
+
+body.theme-dark .copilot-response-item {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  border-left-color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-response-username {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-response-date {
+  color: #9ca3af !important;
+}
+
+body.theme-dark .copilot-response-body .markdown-content {
+  color: #e5e7eb !important;
+}
+
+body.theme-dark .read-full-response {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-more-responses {
+  border-top-color: #4b5563;
+}
+
+body.theme-dark .view-more-responses {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-activity-date {
+  color: #9ca3af !important;
+}
+
+body.theme-dark .no-copilot-activity {
+  color: #9ca3af !important;
+}
+
+body.theme-dark .no-copilot-activity a {
+  color: #60a5fa !important;
+}
+
 /* Workflow view toggle styles */
 .workflow-view-toggle {
   display: flex;
@@ -1796,4 +1951,148 @@ body.theme-dark .toggle-option.active {
 
 body.theme-dark .toggle-option.active:hover {
   background: var(--who-blue-dark);
+}
+
+/* New Copilot Session Activity Modal Styles */
+.session-url-link {
+  color: #0366d6;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.session-url-link:hover {
+  text-decoration: underline;
+}
+
+.copilot-responses {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.copilot-responses-header {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.copilot-responses-header strong {
+  color: #333;
+  font-size: 0.85rem;
+}
+
+.copilot-response-item {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  border-left: 3px solid #0366d6;
+}
+
+.copilot-response-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.copilot-response-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.copilot-response-username {
+  font-weight: 600;
+  color: #0366d6;
+  text-decoration: none;
+  font-size: 0.8rem;
+}
+
+.copilot-response-username:hover {
+  text-decoration: underline;
+}
+
+.copilot-response-date {
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.copilot-latest-badge {
+  background: #10b981;
+  color: white;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.copilot-response-body {
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.copilot-response-body .markdown-content {
+  color: #333;
+}
+
+.read-full-response {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: #0366d6;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.read-full-response:hover {
+  text-decoration: underline;
+}
+
+.copilot-more-responses {
+  text-align: center;
+  padding: 0.5rem;
+  border-top: 1px solid #e1e5e9;
+}
+
+.view-more-responses {
+  color: #0366d6;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.view-more-responses:hover {
+  text-decoration: underline;
+}
+
+.copilot-fallback-content {
+  padding: 0.5rem 0;
+}
+
+.copilot-activity-date {
+  color: #666;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+}
+
+.no-copilot-activity {
+  text-align: center;
+  color: #666;
+  font-size: 0.85rem;
+  padding: 1rem;
+}
+
+.no-copilot-activity p {
+  margin: 0.5rem 0;
+}
+
+.no-copilot-activity a {
+  color: #0366d6;
+  word-break: break-all;
 }
