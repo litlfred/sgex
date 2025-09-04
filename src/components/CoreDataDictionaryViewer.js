@@ -615,36 +615,6 @@ const CoreDataDictionaryViewerContent = () => {
                       >
                         Logical Models ↗
                       </a>
-                      {(logicalModels.length > 0 || loadingLogicalModels) && (
-                        <div className="logical-models-actions">
-                          {loadingLogicalModels ? (
-                            <span className="loading-indicator">🔍 Fetching Logical Models...</span>
-                          ) : (
-                            <>
-                              <span className="models-count">({logicalModels.length} detected)</span>
-                              <div className="models-dropdown">
-                                <select 
-                                  onChange={(e) => {
-                                    const selectedModel = logicalModels.find(m => m.id === e.target.value);
-                                    if (selectedModel) {
-                                      handleDraftQuestionnaireFromModel(selectedModel);
-                                    }
-                                  }}
-                                  defaultValue=""
-                                  className="model-selector"
-                                >
-                                  <option value="" disabled>Draft Questionnaire from...</option>
-                                  {logicalModels.map((model) => (
-                                    <option key={model.id} value={model.id}>
-                                      {model.title || model.name}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )}
                       <a 
                         href={`${getBaseUrl(branchName)}/artifacts.html#terminology-concept-maps`}
                         target="_blank"
@@ -664,6 +634,58 @@ const CoreDataDictionaryViewerContent = () => {
                   <p>📋 No published artifacts available</p>
                   <p>This repository does not have a <code>gh-pages</code> branch for publishing FHIR Implementation Guide artifacts.</p>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Logical Models Section - Independent of Publications */}
+          <div className="section logical-models-section">
+            <h3>Logical Models</h3>
+            <p>FHIR Logical Models detected from FSH files in this repository</p>
+            
+            {loadingLogicalModels ? (
+              <div className="loading-indicator">
+                <span>🔍 Fetching Logical Models...</span>
+              </div>
+            ) : logicalModels.length > 0 ? (
+              <div className="logical-models-content">
+                <div className="models-summary">
+                  <span className="models-count">Found {logicalModels.length} logical model{logicalModels.length === 1 ? '' : 's'}:</span>
+                </div>
+                
+                <div className="models-list">
+                  {logicalModels.map((model) => (
+                    <div key={model.id} className="model-item">
+                      <div className="model-info">
+                        <h4 className="model-title">{model.title || model.name}</h4>
+                        <p className="model-id">ID: <code>{model.id}</code></p>
+                        {model.description && (
+                          <p className="model-description">{model.description}</p>
+                        )}
+                        <p className="model-source">Source: <code>{model.filePath}</code></p>
+                      </div>
+                      <div className="model-actions">
+                        <button 
+                          onClick={() => handleDraftQuestionnaireFromModel(model)}
+                          className="btn btn-primary draft-questionnaire-btn"
+                        >
+                          📝 Draft Questionnaire
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="no-models-message">
+                <p>📋 No logical models found</p>
+                <p>Logical models should be defined in FSH files in directories like:</p>
+                <ul>
+                  <li><code>input/fsh/</code></li>
+                  <li><code>input/fsh/models/</code></li>
+                  <li><code>input/fsh/logicalmodels/</code></li>
+                  <li><code>input/fsh/profiles/</code></li>
+                </ul>
               </div>
             )}
           </div>
