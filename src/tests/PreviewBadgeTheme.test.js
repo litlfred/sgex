@@ -42,22 +42,44 @@ describe('PreviewBadge Theme Support', () => {
   });
 
   test('should verify CSS selectors use body.theme-dark instead of media queries', () => {
-    // Load the PreviewBadge CSS file content (this test verifies our fix)
+    // Load CSS files and verify our complete theme system conversion
     const fs = require('fs');
     const path = require('path');
-    const cssPath = path.join(__dirname, '../components/PreviewBadge.css');
     
-    if (fs.existsSync(cssPath)) {
-      const cssContent = fs.readFileSync(cssPath, 'utf8');
-      
-      // Verify that media queries for dark mode have been replaced
-      const mediaQueries = cssContent.match(/@media\s*\(\s*prefers-color-scheme:\s*dark\s*\)/g);
-      expect(mediaQueries).toBeNull(); // Should not find any media queries
-      
-      // Verify that body.theme-dark selectors exist
-      const bodyThemeDarkSelectors = cssContent.match(/body\.theme-dark/g);
-      expect(bodyThemeDarkSelectors).not.toBeNull(); // Should find body.theme-dark selectors
-      expect(bodyThemeDarkSelectors.length).toBeGreaterThan(10); // Should have many instances
-    }
+    // Manually check key CSS files that should have been converted
+    const cssFiles = [
+      path.join(__dirname, '../components/PreviewBadge.css'),
+      path.join(__dirname, '../components/framework/AccessBadge.css'),
+      path.join(__dirname, '../components/CommitDiffModal.css'),
+      path.join(__dirname, '../dak/faq/components/FAQAccordion.css')
+    ];
+    
+    let totalMediaQueries = 0;
+    let totalBodyThemeDarkSelectors = 0;
+    
+    cssFiles.forEach(cssFile => {
+      if (fs.existsSync(cssFile)) {
+        const cssContent = fs.readFileSync(cssFile, 'utf8');
+        
+        // Count media queries for dark mode
+        const mediaQueries = cssContent.match(/@media\s*\(\s*prefers-color-scheme:\s*dark\s*\)/g);
+        if (mediaQueries) {
+          totalMediaQueries += mediaQueries.length;
+        }
+        
+        // Count body.theme-dark selectors
+        const bodyThemeDarkSelectors = cssContent.match(/body\.theme-dark/g);
+        if (bodyThemeDarkSelectors) {
+          totalBodyThemeDarkSelectors += bodyThemeDarkSelectors.length;
+        }
+      }
+    });
+    
+    // Verify complete conversion
+    expect(totalMediaQueries).toBe(0); // Should not find any media queries
+    expect(totalBodyThemeDarkSelectors).toBeGreaterThan(100); // Should have many instances across all files
+    
+    // Verify comprehensive coverage
+    expect(totalBodyThemeDarkSelectors).toBeGreaterThan(150); // Should have comprehensive coverage
   });
 });
