@@ -89,20 +89,39 @@ class HelpContentService {
         id: 'report-sgex-bug',
         title: 'Report a SGeX bug',
         badge: '/sgex/cat-paw-bug-icon.svg',
-        type: 'action',
-        action: () => {
-          // Trigger the bug report form directly
-          const event = new CustomEvent('sgex-show-bug-report', {
-            detail: { issueType: 'bug' }
-          });
-          window.dispatchEvent(event);
-        },
-        content: `
-          <p>Opens the integrated bug report form to help us improve SGeX.</p>
-          <div class="help-tip">
-            <strong>🐛 Features:</strong> Template-based reporting, automatic environment detection, screenshot capture, and console log inclusion.
-          </div>
-        `
+        type: 'slideshow',
+        content: [
+          {
+            title: 'Report a SGeX Bug',
+            content: `
+              <p>Report issues with the SGeX Workbench to help us improve the application:</p>
+              <h4>What type of issue would you like to report?</h4>
+              <div class="bug-report-options">
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.triggerBugReport('bug')">
+                  🐛 Bug Report - Something is not working correctly
+                </button>
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.triggerBugReport('feature')">
+                  ✨ Feature Request - Suggest a new feature or improvement
+                </button>
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.triggerBugReport('question')">
+                  ❓ Question - Ask for help or clarification about SGeX
+                </button>
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.triggerBugReport('performance')">
+                  🚀 Performance Issue - Report slow loading or responsiveness problems
+                </button>
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.triggerBugReport('ui')">
+                  🎨 UI/UX Issue - Report interface or usability problems
+                </button>
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.triggerBugReport('general')">
+                  📝 General Feedback - Other feedback or suggestions
+                </button>
+              </div>
+              <div class="help-tip">
+                <strong>🔧 Features:</strong> Each report type includes automatic environment detection, screenshot capture, and console log inclusion for faster debugging.
+              </div>
+            `
+          }
+        ]
       },
       dakFeedback: {
         id: 'provide-dak-feedback',
@@ -933,6 +952,17 @@ class HelpContentService {
     }
 
     window.open(url, '_blank');
+  }
+
+  // Trigger bug report form with specific template type
+  triggerBugReport(bugType) {
+    const event = new CustomEvent('sgex-show-bug-report', {
+      detail: { 
+        issueType: bugType,
+        templateType: bugType 
+      }
+    });
+    window.dispatchEvent(event);
   }
 }
 

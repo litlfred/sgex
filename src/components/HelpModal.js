@@ -290,6 +290,13 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
             fallbackOverlay.remove();
           }
         }, 30000);
+      },
+
+      triggerBugReport: (bugType) => {
+        // Import the bug report service method
+        import('../services/helpContentService').then(({ default: helpContentService }) => {
+          helpContentService.triggerBugReport(bugType);
+        });
       }
     };
 

@@ -49,6 +49,7 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [helpState, setHelpState] = useState(() => getSavedHelpState()); // 0: hidden, 1: non-sticky, 2: sticky
   const [showBugReportForm, setShowBugReportForm] = useState(false);
+  const [bugReportTemplateType, setBugReportTemplateType] = useState(null);
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -157,6 +158,8 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   // Listen for bug report custom events
   useEffect(() => {
     const handleBugReportEvent = (event) => {
+      const templateType = event.detail?.templateType || event.detail?.issueType || 'bug';
+      setBugReportTemplateType(templateType);
       setShowBugReportForm(true);
       // Hide help menu when bug report is shown
       setShowHelp(false);
@@ -463,7 +466,11 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
       {showBugReportForm && (
         <div className="help-modal-overlay bug-report-overlay">
           <BugReportForm
-            onClose={() => setShowBugReportForm(false)}
+            onClose={() => {
+              setShowBugReportForm(false);
+              setBugReportTemplateType(null);
+            }}
+            preselectedTemplateType={bugReportTemplateType}
             contextData={{
               pageId,
               ...contextData,
