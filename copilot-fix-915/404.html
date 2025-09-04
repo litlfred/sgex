@@ -87,23 +87,59 @@
           var currentPath = l.pathname;
           var redirectAttempts = JSON.parse(sessionStorage.getItem('sgex-redirect-attempts') || '[]');
           
-          // Clean old attempts (older than 10 seconds)
+          // Clean old attempts (older than 30 seconds)
           var now = Date.now();
           redirectAttempts = redirectAttempts.filter(function(attempt) {
-            return now - attempt.timestamp < 10000;
+            return now - attempt.timestamp < 30000;
           });
           
-          // Check if we've already tried this exact path recently
-          var recentAttempt = redirectAttempts.find(function(attempt) {
+          // Check if we've already tried this exact path recently (more than 2 times)
+          var recentAttempts = redirectAttempts.filter(function(attempt) {
             return attempt.path === currentPath;
           });
           
-          if (recentAttempt && redirectAttempts.length > 1) {
-            console.error('SGEX 404.html: Detected branch redirect loop for path:', currentPath);
-            // Clear redirect attempts and fall back to main SGEX root
-            sessionStorage.removeItem('sgex-redirect-attempts');
-            redirectToSPA('/sgex/', '');
-            return;
+          if (recentAttempts.length >= 2) {
+            console.error('SGEX 404.html: Detected redirect loop for path:', currentPath, 'attempts:', recentAttempts.length);
+            
+            var pathSegments = currentPath.split('/').filter(Boolean);
+            
+            // Enhanced fallback logic: try local branch first, then main
+            if (pathSegments.length >= 2 && pathSegments[0] === 'sgex') {
+              var branch = pathSegments[1];
+              var branchRootPath = '/sgex/' + branch + '/';
+              
+              // If this is not already a branch root and branch is not 'main'
+              if (currentPath !== branchRootPath && branch !== 'main') {
+                // Check if we've already tried the branch root
+                var branchRootAttempts = redirectAttempts.filter(function(attempt) {
+                  return attempt.path === branchRootPath;
+                });
+                
+                if (branchRootAttempts.length < 2) {
+                  console.log('SGEX 404.html: Trying local branch fallback first:', branchRootPath);
+                  // Try the branch root first
+                  l.replace(l.protocol + '//' + l.host + branchRootPath);
+                  return;
+                } else {
+                  console.log('SGEX 404.html: Branch root also failed, falling back to main');
+                  // Branch root has also been tried, fall back to main
+                  sessionStorage.removeItem('sgex-redirect-attempts');
+                  l.replace(l.protocol + '//' + l.host + '/sgex/');
+                  return;
+                }
+              } else {
+                // Already at branch root or this is main branch, fall back to main
+                console.log('SGEX 404.html: Falling back to main deployment');
+                sessionStorage.removeItem('sgex-redirect-attempts');
+                l.replace(l.protocol + '//' + l.host + '/sgex/');
+                return;
+              }
+            } else {
+              // Clear redirect attempts and fall back to main SGEX root for other cases
+              sessionStorage.removeItem('sgex-redirect-attempts');
+              redirectToSPA('/sgex/', '');
+              return;
+            }
           }
           
           // Record this attempt
@@ -133,6 +169,31 @@
         } else {
           // DOM already loaded, execute immediately
           performRouting();
+        }
+
+        function isValidComponentOrRoute(pathSegment, routeConfig) {
+          // Check if it's a valid DAK component
+          if (routeConfig && routeConfig.isValidDAKComponent && routeConfig.isValidDAKComponent(pathSegment)) {
+            return true;
+          }
+          
+          // Check if it's a valid standard route path
+          if (routeConfig && routeConfig.standardComponents) {
+            for (var componentName in routeConfig.standardComponents) {
+              var component = routeConfig.standardComponents[componentName];
+              if (component.routes) {
+                for (var i = 0; i < component.routes.length; i++) {
+                  var route = component.routes[i];
+                  // Handle exact route matches like "/select_profile"
+                  if (route.path === '/' + pathSegment) {
+                    return true;
+                  }
+                }
+              }
+            }
+          }
+          
+          return false;
         }
 
         function handleGitHubPagesDeployment(pathSegments, l) {
@@ -195,15 +256,58 @@
             return;
           }
 
-          // Default: treat as branch deployment with SPA routing
-          // /sgex/{branch}/{anything-else} -> route to branch SPA
-          var branchPath = '/sgex/' + secondSegment + '/';
-          var routePath = pathSegments.slice(2).join('/');
+          // Check if this is a valid routing pattern
+          var routeConfig = null;
+          try {
+            routeConfig = typeof window !== 'undefined' && window.getSGEXRouteConfig ? window.getSGEXRouteConfig() : null;
+          } catch (error) {
+            console.warn('Failed to get route configuration:', error);
+          }
+
+          // Check patterns: deployed branch, unknown branch with valid component, or component-first
+          if (pathSegments.length >= 3 && routeConfig) {
+            var branch = secondSegment;
+            var component = pathSegments[2];
+            
+            // Check if this could be a branch deployment: /sgex/{branch}/{component}/...
+            if (isValidComponentOrRoute(component, routeConfig)) {
+              // Valid component, treat as branch deployment (whether branch is deployed or not)
+              var branchPath = '/sgex/' + branch + '/';
+              var routePath = pathSegments.slice(2).join('/');
+              
+              // Store branch and repo/org context in session storage if available
+              storeRouteContext(pathSegments);
+              
+              redirectToSPA(branchPath, routePath);
+              return;
+            }
+          }
           
-          // Store branch and repo/org context in session storage if available
-          storeRouteContext(pathSegments);
+          // Check if this is a component-first pattern: /sgex/{component}/{user}/{repo}/...
+          if (pathSegments.length >= 4 && routeConfig && isValidComponentOrRoute(secondSegment, routeConfig)) {
+            // Component-first pattern: /sgex/{component}/{user}/{repo}/{branch?}
+            // Route to main SPA  
+            var routePath = pathSegments.slice(1).join('/'); // Remove 'sgex' prefix
+            
+            // Store repo/org context in session storage if available
+            storeRouteContext(pathSegments);
+            
+            redirectToSPA('/sgex/', routePath);
+            return;
+          }
           
-          redirectToSPA(branchPath, routePath);
+          // Check if second segment is just length 2 (likely branch with no component)
+          if (pathSegments.length === 2) {
+            // /sgex/{branch}/ - redirect to branch root
+            var branchPath = '/sgex/' + secondSegment + '/';
+            redirectToSPA(branchPath, '');
+            return;
+          }
+
+          // Unknown pattern - show error
+          showErrorPage('Unknown URL Pattern', 
+            'The URL pattern is not recognized. Expected either /sgex/:branch/:component or /sgex/:component/:user/:repo (with optional :branch/:asset) but got: ' + l.pathname,
+            'unknown-pattern');
         }
 
         function handleLocalDeployment(pathSegments, l) {
@@ -241,13 +345,56 @@
             return;
           }
 
-          // Default: route to SPA
-          var routePath = pathSegments.slice(1).join('/');
+          // Check if this is a valid routing pattern
+          var routeConfig = null;
+          try {
+            routeConfig = typeof window !== 'undefined' && window.getSGEXRouteConfig ? window.getSGEXRouteConfig() : null;
+          } catch (error) {
+            console.warn('Failed to get route configuration:', error);
+          }
+
+          // Check patterns: branch with valid component, or component-first
+          if (pathSegments.length >= 3 && routeConfig) {
+            var branch = firstSegment;
+            var component = pathSegments[2];
+            
+            // Check if this could be a branch deployment: /sgex/{branch}/{component}/...
+            if (isValidComponentOrRoute(component, routeConfig)) {
+              // Valid component, treat as branch deployment
+              var routePath = pathSegments.slice(1).join('/');
+              
+              // Store repo/org context in session storage if available
+              storeRouteContext(pathSegments);
+              
+              redirectToSPA(basePath, routePath);
+              return;
+            }
+          }
           
-          // Store repo/org context in session storage if available
-          storeRouteContext(pathSegments);
+          // Check if this is a component-first pattern: /sgex/{component}/{user}/{repo}/...
+          if (pathSegments.length >= 4 && routeConfig && isValidComponentOrRoute(firstSegment, routeConfig)) {
+            // Component-first pattern: /sgex/{component}/{user}/{repo}/{branch?}
+            // Route to SPA
+            var routePath = pathSegments.slice(1).join('/');
+            
+            // Store repo/org context in session storage if available
+            storeRouteContext(pathSegments);
+            
+            redirectToSPA(basePath, routePath);
+            return;
+          }
           
-          redirectToSPA(basePath, routePath);
+          // Check if first segment is just length 2 (likely branch with no component)
+          if (pathSegments.length === 2) {
+            // /sgex/{branch}/ - redirect to root
+            redirectToSPA(basePath, '');
+            return;
+          }
+
+          // Unknown pattern - show error
+          showErrorPage('Unknown URL Pattern', 
+            'The URL pattern is not recognized. Expected either /sgex/:branch/:component or /sgex/:component/:user/:repo (with optional :branch/:asset) but got: ' + l.pathname,
+            'unknown-pattern');
         }
 
         function handleStandaloneDeployment(pathSegments, l) {
