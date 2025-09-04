@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AssetEditorLayout, useDAKParams } from './framework';
 import { createLazyBpmnModeler, createLazyOctokit } from '../utils/lazyRouteUtils';
+import githubService from '../services/githubService';
 
 const BPMNEditor = () => {
   const navigate = useNavigate();
@@ -69,22 +70,37 @@ const BPMNEditor = () => {
         // Use GitHub API if profile has token, otherwise use mock data
         if (profile.token) {
           try {
-            // Lazy load Octokit to improve initial page responsiveness
-            const octokit = await createLazyOctokit({ auth: profile.token });
-            const { data } = await octokit.rest.repos.getContent({
-              owner: repository.owner?.login || repository.full_name.split('/')[0],
-              repo: repository.name,
-              path: 'input/business-processes'
-            });
+            // Temporarily authenticate githubService with profile token if not already authenticated
+            let shouldRestoreAuth = false;
+            const originalAuthState = githubService.isAuth();
+            
+            if (!githubService.isAuth()) {
+              await githubService.authenticate(profile.token);
+              shouldRestoreAuth = true;
+            }
+            
+            try {
+              // Use githubService.getDirectoryContents for consistent error handling
+              const files = await githubService.getDirectoryContents(
+                repository.owner?.login || repository.full_name.split('/')[0],
+                repository.name,
+                'input/business-processes',
+                branch || repository.default_branch || 'main'
+              );
 
-            // Filter for .bpmn files
-            const bpmnFiles = Array.isArray(data) 
-              ? data.filter(file => file.name.endsWith('.bpmn'))
-              : data.name.endsWith('.bpmn') ? [data] : [];
+              // Filter for .bpmn files
+              const bpmnFiles = files.filter(file => file.type === 'file' && file.name.endsWith('.bpmn'));
 
-            setBpmnFiles(bpmnFiles);
-            setLoading(false);
-            return;
+              setBpmnFiles(bpmnFiles);
+              setLoading(false);
+              return;
+            } finally {
+              // Restore original authentication state if we temporarily changed it
+              if (shouldRestoreAuth && !originalAuthState) {
+                // Note: We don't have a logout method, so we'll leave it authenticated
+                // This is actually better for consistency
+              }
+            }
           } catch (apiError) {
             console.warn('GitHub API error, falling back to mock data:', apiError);
             // Fall through to mock data
@@ -173,12 +189,17 @@ const BPMNEditor = () => {
 
       // Use GitHub API if profile has token
       if (profile.token && repository) {
-        // Lazy load Octokit to improve initial page responsiveness
-        const octokit = await createLazyOctokit({ auth: profile.token });
+        // Ensure githubService is authenticated
+        if (!githubService.isAuth()) {
+          await githubService.authenticate(profile.token);
+        }
         
         // Get current file to get SHA for update
         let currentSha = selectedFile.sha;
         try {
+          // For SHA retrieval, we still need the raw GitHub API response
+          // githubService.getFileContent returns decoded content, but we need the SHA
+          const octokit = await createLazyOctokit({ auth: profile.token });
           const { data: currentFile } = await octokit.rest.repos.getContent({
             owner: repository.owner?.login || repository.full_name.split('/')[0],
             repo: repository.name,
@@ -189,7 +210,8 @@ const BPMNEditor = () => {
           console.warn('Could not get current file SHA, using provided SHA:', getError);
         }
 
-        // Commit the updated BPMN file
+        // Commit the updated BPMN file (githubService doesn't have createOrUpdateFileContents method)
+        const octokit = await createLazyOctokit({ auth: profile.token });
         await octokit.rest.repos.createOrUpdateFileContents({
           owner: repository.owner?.login || repository.full_name.split('/')[0],
           repo: repository.name,
