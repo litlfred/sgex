@@ -345,6 +345,17 @@
 .workflow-run-id {
   display: flex;
   align-items: center;
+  font-size: 0.8rem;
+  color: var(--who-text-secondary);
+}
+
+.workflow-timestamp {
+  cursor: help;
+  transition: color 0.2s ease;
+}
+
+.workflow-timestamp:hover {
+  color: var(--who-text-primary);
 }
 
 .workflow-actions {
@@ -509,6 +520,7 @@
 
   .workflow-status {
     margin-left: 0;
+    width: 100%;
   }
 
   .workflow-summary {
@@ -519,15 +531,39 @@
 
   .summary-stats {
     flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .workflow-actions {
-    justify-content: flex-start;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .workflow-action-buttons {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .workflow-action-btn {
     font-size: 0.75rem;
     padding: 0.3rem 0.6rem;
+    flex: 1;
+    min-width: 100px;
+    justify-content: center;
+  }
+
+  .status-badge {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .workflow-details {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
   }
 }
 

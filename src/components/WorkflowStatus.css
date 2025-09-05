@@ -162,6 +162,12 @@
   font-size: 0.75rem;
   color: #9ca3af;
   margin-top: 0.25rem;
+  cursor: help;
+  transition: color 0.2s ease;
+}
+
+.workflow-status-details:hover {
+  color: #d1d5db;
 }
 
 .workflow-loading {
@@ -200,13 +206,41 @@
   .workflow-status-container {
     flex-direction: column;
     align-items: stretch;
+    width: 100%;
   }
   
   .workflow-status-info {
-    justify-content: space-between;
+    width: 100%;
+    justify-content: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  
+  .workflow-status-badge {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+  
+  .workflow-status-details {
+    width: 100%;
+    text-align: center;
+    margin-top: 0;
   }
   
   .workflow-actions {
-    justify-content: flex-start;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  
+  .workflow-trigger-btn,
+  .workflow-approve-btn,
+  .workflow-link {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
   }
 }

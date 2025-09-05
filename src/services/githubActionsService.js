@@ -182,6 +182,15 @@ class GitHubActionsService {
           w.path.includes('landing-page-deployment.yml') ||
           w.name.includes('Deploy Feature Branch') ||
           w.name.includes('Deploy Landing Page') ||
+          // Code quality and review workflows
+          w.path.includes('code-quality.yml') ||
+          w.path.includes('review.yml') ||
+          w.path.includes('pr-commit-feedback.yml') ||
+          w.path.includes('pr-workflow-failure-notifier.yml') ||
+          w.name.includes('Code Quality') ||
+          w.name.includes('PR Review') ||
+          w.name.includes('PR Commit Feedback') ||
+          w.name.includes('PR Workflow Failure') ||
           // General CI/CD workflows that might run on all branches
           w.path.includes('ci.yml') ||
           w.path.includes('test.yml') ||
