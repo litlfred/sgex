@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './WorkflowDashboard.css';
 import { timeAgo, formatTimestamp } from '../utils/timeUtils';
 
@@ -35,7 +35,7 @@ const WorkflowDashboard = ({
   const [lastRefresh, setLastRefresh] = useState(null);
 
   // Fetch all workflows for the branch
-  const fetchWorkflows = async (isRefresh = false) => {
+  const fetchWorkflows = useCallback(async (isRefresh = false) => {
     try {
       if (!isRefresh) {
         setLoading(true);
@@ -72,10 +72,10 @@ const WorkflowDashboard = ({
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [branchName, githubActionsService, onWorkflowAction]);
 
   // Setup auto-refresh
-  const setupAutoRefresh = () => {
+  const setupAutoRefresh = useCallback(() => {
     if (refreshIntervalRef.current) {
       clearInterval(refreshIntervalRef.current);
     }
@@ -84,7 +84,7 @@ const WorkflowDashboard = ({
     refreshIntervalRef.current = setInterval(() => {
       fetchWorkflows(true);
     }, 15000);
-  };
+  }, [fetchWorkflows]);
 
   // Cleanup
   useEffect(() => {
@@ -104,7 +104,7 @@ const WorkflowDashboard = ({
       };
       initializeWorkflows();
     }
-  }, [branchName, githubActionsService]); // Remove fetchWorkflows and setupAutoRefresh from dependencies to avoid infinite loops
+  }, [branchName, githubActionsService, fetchWorkflows, setupAutoRefresh]);
 
   // Handle workflow trigger
   const handleTriggerWorkflow = async (workflow) => {
@@ -240,6 +240,7 @@ const WorkflowDashboard = ({
         } }));
         
         // Immediate refresh to show the workflow starting
+        console.debug(`Immediately refreshing workflows after approval of ${workflow.workflow.name}`);
         fetchWorkflows(true);
         
         // Setup aggressive monitoring for the next 2 minutes after approval
@@ -247,6 +248,7 @@ const WorkflowDashboard = ({
         const maxRefreshes = 12; // 12 refreshes over 2 minutes
         const approvedWorkflowMonitor = setInterval(() => {
           refreshCount++;
+          console.debug(`Aggressive monitoring refresh ${refreshCount}/${maxRefreshes} for approved workflow: ${workflow.workflow.name}`);
           fetchWorkflows(true);
           
           if (refreshCount >= maxRefreshes) {
@@ -312,6 +314,14 @@ const WorkflowDashboard = ({
       return 'Deploys feature branch for preview';
     } else if (name.includes('deploy') || path.includes('deploy')) {
       return 'Deployment workflow';
+    } else if (name.includes('code quality') || path.includes('code-quality')) {
+      return 'Code quality checks, security audit, and compliance validation';
+    } else if (name.includes('pr review') || path.includes('review')) {
+      return 'Pull request review and automated deployment';
+    } else if (name.includes('pr commit feedback') || path.includes('pr-commit-feedback')) {
+      return 'Pull request deployment status and feedback';
+    } else if (name.includes('pr workflow failure') || path.includes('pr-workflow-failure')) {
+      return 'Pull request workflow failure notifications';
     } else if (name.includes('ci') || name.includes('test') || path.includes('ci') || path.includes('test')) {
       return 'Continuous integration and testing';
     } else if (name.includes('build') || path.includes('build')) {
@@ -654,18 +664,17 @@ const WorkflowDashboard = ({
                         <span className="auth-required">🔒 Sign in for actions</span>
                       )}
 
-                      {/* Debug information - remove in production */}
-                      {process.env.NODE_ENV === 'development' && (
-                        <div className="workflow-debug" style={{ fontSize: '0.7rem', opacity: 0.7, marginTop: '0.5rem' }}>
-                          Auth: {isAuthenticated ? '✅' : '❌'} | 
-                          Status: {workflow.status} | 
-                          Conclusion: {workflow.conclusion || 'N/A'} | 
-                          RunId: {workflow.runId || 'N/A'} | 
-                          LastRunId: {workflow.lastRunId || 'N/A'} | 
-                          URL: {workflow.url ? '✅' : '❌'} | 
-                          WorkflowURL: {workflow.workflowUrl ? '✅' : '❌'}
-                        </div>
-                      )}
+                      {/* Debug information for troubleshooting */}
+                      <div className="workflow-debug" style={{ fontSize: '0.7rem', opacity: 0.7, marginTop: '0.5rem', fontFamily: 'monospace' }}>
+                        Auth: {isAuthenticated ? '✅' : '❌'} | 
+                        Status: {workflow.status} | 
+                        Conclusion: {workflow.conclusion || 'N/A'} | 
+                        RunId: {workflow.runId || 'N/A'} | 
+                        LastRunId: {workflow.lastRunId || 'N/A'} | 
+                        URL: {workflow.url ? '✅' : '❌'} | 
+                        WorkflowURL: {workflow.workflowUrl ? '✅' : '❌'} |
+                        Path: {workflow.workflow.path}
+                      </div>
                     </div>
 
                     {/* Action status messages */}
