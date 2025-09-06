@@ -257,15 +257,23 @@ class LogicalModelService {
   }
 
   /**
-   * Generate a questionnaire item from a logical model element
+   * Generate a questionnaire item from a logical model element with hierarchy support
    * @param {Object} element - Logical model element
    * @param {number} linkId - Link ID for the question
    * @param {string} prefix - Prefix for question IDs
    * @returns {Object} FHIR Questionnaire item
    */
   generateQuestionFromElement(element, linkId, prefix = 'q') {
+    const linkIdStr = `${prefix}-${linkId}`;
+    
+    // Handle group/nested elements for hierarchical structure
+    if (element.elements && element.elements.length > 0) {
+      return this.generateGroupItem(element, linkIdStr, prefix);
+    }
+    
+    // Generate regular question item
     const questionItem = {
-      linkId: `${prefix}-${linkId}`,
+      linkId: linkIdStr,
       code: [
         {
           system: 'http://smart.who.int/fhir/CodeSystem/sgex-logical-model-elements',
@@ -275,10 +283,10 @@ class LogicalModelService {
       ],
       text: element.description || element.name,
       type: this.mapTypeToQuestionType(element.type),
-      required: element.required || false
+      required: this.isElementRequired(element)
     };
 
-    // Handle cardinality
+    // Handle cardinality/multiplicity
     if (element.max === '*' || element.max > 1) {
       questionItem.repeats = true;
     }
@@ -301,7 +309,73 @@ class LogicalModelService {
       ];
     }
 
+    // Handle choice types with binding
+    if (element.binding && (questionItem.type === 'choice' || questionItem.type === 'open-choice')) {
+      questionItem.answerOption = [
+        {
+          valueCoding: {
+            system: element.binding.valueSet || 'http://example.org/fhir/ValueSet/unknown',
+            code: 'see-valueset',
+            display: 'See ValueSet'
+          }
+        }
+      ];
+    }
+
     return questionItem;
+  }
+
+  /**
+   * Generate a group item for nested elements (hierarchical structure)
+   * @param {Object} element - Logical model element with child elements
+   * @param {string} linkId - Link ID for the group
+   * @param {string} prefix - Prefix for question IDs
+   * @returns {Object} FHIR Questionnaire group item
+   */
+  generateGroupItem(element, linkId, prefix) {
+    const groupItem = {
+      linkId: linkId,
+      text: element.description || element.name || 'Group',
+      type: 'group',
+      required: this.isElementRequired(element)
+    };
+
+    // Add repeats based on cardinality
+    if (element.max && (element.max === '*' || parseInt(element.max) > 1)) {
+      groupItem.repeats = true;
+    }
+
+    // Generate child items recursively
+    groupItem.item = [];
+    let childLinkId = 1;
+    for (const childElement of element.elements || []) {
+      const childItem = this.generateQuestionFromElement(childElement, childLinkId, `${linkId}_${childLinkId}`);
+      groupItem.item.push(childItem);
+      childLinkId++;
+    }
+
+    return groupItem;
+  }
+
+  /**
+   * Check if an element is required based on cardinality
+   * @param {Object} element - Logical model element
+   * @returns {boolean} Whether the element is required
+   */
+  isElementRequired(element) {
+    if (element.required !== undefined) {
+      return element.required;
+    }
+    if (element.min !== undefined) {
+      return parseInt(element.min) > 0;
+    }
+    if (element.cardinality) {
+      const cardinalityMatch = element.cardinality.match(/^(\d+)\.\.(\d+|\*)$/);
+      if (cardinalityMatch) {
+        return parseInt(cardinalityMatch[1]) > 0;
+      }
+    }
+    return false;
   }
 
   /**

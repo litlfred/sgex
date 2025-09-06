@@ -6,24 +6,11 @@ import stagingGroundService from '../services/stagingGroundService';
 import { useLocation } from 'react-router-dom';
 import './QuestionnaireEditor.css';
 
-// Enhanced Visual Editor Component with LForms integration
+// Enhanced Visual Editor Component with hierarchical preview
 const LFormsVisualEditor = ({ questionnaire, onChange }) => {
   const [previewMode, setPreviewMode] = useState(false);
-  
-  // LForms integration - using fallback editor for now
-  useEffect(() => {
-    const initializeLForms = async () => {
-      try {
-        // Dynamic import commented out until lforms is properly configured
-        // const LForms = await import('lforms');
-        console.log('LForms initialization skipped - using fallback editor');
-      } catch (error) {
-        console.log('LForms not available, using fallback editor');
-      }
-    };
-    
-    initializeLForms();
-  }, []);
+  const [lformsLoaded] = useState(false); // Set to false since we removed lforms for now
+  const [lformsData] = useState(null);
   
   const addQuestion = () => {
     const newItem = {
@@ -75,6 +62,105 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
     onChange(updatedQuestionnaire);
   };
 
+  // Render hierarchical preview supporting groups and nested items
+  const renderHierarchicalPreview = (items, level = 0) => {
+    if (!items || items.length === 0) {
+      return <p className="no-questions-preview">No questions added yet.</p>;
+    }
+
+    return items.map((item, index) => {
+      const questionNumber = level === 0 ? `${index + 1}` : `${index + 1}`;
+      const indent = level > 0 ? `${'  '.repeat(level)}` : '';
+
+      if (item.type === 'group') {
+        return (
+          <div key={item.linkId} className={`preview-group level-${level}`}>
+            <div className="group-header">
+              <h4 className="group-title">
+                {indent}{questionNumber}. {item.text}
+                {item.required && <span className="required-asterisk"> *</span>}
+                {item.repeats && <span className="repeats-indicator"> (repeatable)</span>}
+              </h4>
+            </div>
+            <div className="group-content">
+              {renderHierarchicalPreview(item.item || [], level + 1)}
+            </div>
+          </div>
+        );
+      } else {
+        return (
+          <div key={item.linkId} className={`preview-question level-${level}`}>
+            <label className="preview-question-label">
+              {indent}{questionNumber}. {item.text}
+              {item.required && <span className="required-asterisk"> *</span>}
+              {item.repeats && <span className="repeats-indicator"> (repeatable)</span>}
+            </label>
+            
+            {item.type === 'string' && (
+              <input type="text" placeholder="Text answer" disabled />
+            )}
+            {item.type === 'text' && (
+              <textarea placeholder="Long text answer" disabled rows={3} />
+            )}
+            {item.type === 'boolean' && (
+              <div className="preview-boolean">
+                <label><input type="radio" disabled /> Yes</label>
+                <label><input type="radio" disabled /> No</label>
+              </div>
+            )}
+            {item.type === 'decimal' && (
+              <input type="number" step="0.01" placeholder="Number" disabled />
+            )}
+            {item.type === 'integer' && (
+              <input type="number" step="1" placeholder="Integer" disabled />
+            )}
+            {item.type === 'date' && (
+              <input type="date" disabled />
+            )}
+            {item.type === 'dateTime' && (
+              <input type="datetime-local" disabled />
+            )}
+            {item.type === 'time' && (
+              <input type="time" disabled />
+            )}
+            {item.type === 'choice' && (
+              <select disabled>
+                <option>Select an option...</option>
+                {item.answerOption?.map((option, optIndex) => (
+                  <option key={optIndex} value={option.valueCoding?.code || option.valueString}>
+                    {option.valueCoding?.display || option.valueString || `Option ${optIndex + 1}`}
+                  </option>
+                ))}
+              </select>
+            )}
+            {item.type === 'open-choice' && (
+              <div className="open-choice-container">
+                <select disabled>
+                  <option>Select an option or enter custom...</option>
+                  {item.answerOption?.map((option, optIndex) => (
+                    <option key={optIndex} value={option.valueCoding?.code || option.valueString}>
+                      {option.valueCoding?.display || option.valueString || `Option ${optIndex + 1}`}
+                    </option>
+                  ))}
+                </select>
+                <input type="text" placeholder="Or enter custom value" disabled />
+              </div>
+            )}
+            {item.type === 'quantity' && (
+              <div className="quantity-container">
+                <input type="number" step="0.01" placeholder="Value" disabled />
+                <input type="text" placeholder="Unit" disabled />
+              </div>
+            )}
+            {item.type === 'url' && (
+              <input type="url" placeholder="https://example.com" disabled />
+            )}
+          </div>
+        );
+      }
+    });
+  };
+
   return (
     <div className="lforms-visual-editor">
       <div className="editor-modes">
@@ -94,49 +180,16 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
 
       {previewMode ? (
         <div className="lforms-preview">
-          <h5>Live Preview</h5>
-          <div className="simple-questionnaire-preview">
+          <h5>Enhanced Hierarchical Preview</h5>
+          
+          <div className="enhanced-questionnaire-preview">
             <div className="preview-header">
               <h3>{questionnaire.title || 'Untitled Questionnaire'}</h3>
               <p>{questionnaire.description || 'No description provided'}</p>
             </div>
             
             <div className="preview-questions">
-              {questionnaire.item?.map((item, index) => (
-                <div key={item.linkId} className="preview-question">
-                  <label className="preview-question-label">
-                    {index + 1}. {item.text}
-                    {item.required && <span className="required-asterisk"> *</span>}
-                  </label>
-                  
-                  {item.type === 'string' && (
-                    <input type="text" placeholder="Text answer" disabled />
-                  )}
-                  {item.type === 'text' && (
-                    <textarea placeholder="Long text answer" disabled rows={3} />
-                  )}
-                  {item.type === 'boolean' && (
-                    <div className="preview-boolean">
-                      <label><input type="radio" disabled /> Yes</label>
-                      <label><input type="radio" disabled /> No</label>
-                    </div>
-                  )}
-                  {item.type === 'decimal' && (
-                    <input type="number" step="0.01" placeholder="Number" disabled />
-                  )}
-                  {item.type === 'integer' && (
-                    <input type="number" step="1" placeholder="Integer" disabled />
-                  )}
-                  {item.type === 'date' && (
-                    <input type="date" disabled />
-                  )}
-                  {item.type === 'choice' && (
-                    <select disabled>
-                      <option>Select an option...</option>
-                    </select>
-                  )}
-                </div>
-              )) || <p className="no-questions-preview">No questions added yet.</p>}
+              {renderHierarchicalPreview(questionnaire.item || [])}
             </div>
           </div>
         </div>
