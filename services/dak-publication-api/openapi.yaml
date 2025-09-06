@@ -1,0 +1,619 @@
+openapi: 3.0.3
+info:
+  title: DAK Publication Services API
+  description: |
+    OpenAPI specification for WHO SMART Guidelines DAK Publication system services.
+    
+    This API provides a service-oriented architecture for WYSIWYG DAK publication generation,
+    replacing YAML-based configurations with RESTful services that integrate with existing
+    MCP and DAK FAQ services.
+    
+    ## Service Integration
+    
+    - **MCP Integration**: Uses Model Context Protocol for AI-driven content generation
+    - **DAK FAQ Integration**: Leverages existing FAQ service for dynamic content extraction
+    - **Template Service**: Manages publication templates and user customizations
+    - **Asset Service**: Handles DAK asset metadata and publication usage
+    - **Variable Service**: Manages template variable resolution and user-editable content
+    
+    ## WYSIWYG Architecture
+    
+    The API supports a WYSIWYG-first approach where:
+    - Templates are defined via service endpoints, not YAML files
+    - User-editable content is managed through REST APIs
+    - Template variables are resolved dynamically via service calls
+    - Asset metadata is enriched through service integration
+    
+  version: 1.0.0
+  contact:
+    name: SGeX Workbench Team
+    url: https://github.com/litlfred/sgex
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://127.0.0.1:3002
+    description: Local development server
+  - url: https://api.sgex.who.int/publication/v1
+    description: Production server (when deployed)
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  # Health and System Info
+  /health:
+    get:
+      summary: Health Check
+      description: Returns service health and API status
+      operationId: getHealth
+      tags:
+        - System
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  # Template Management Service
+  /templates:
+    get:
+      summary: List Publication Templates
+      description: Get available publication templates with filtering options
+      operationId: listTemplates
+      tags:
+        - Templates
+      parameters:
+        - $ref: '#/components/parameters/TemplateType'
+        - $ref: '#/components/parameters/OrganizationParam'
+        - name: dakComponents
+          in: query
+          description: Filter templates by supported DAK components
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/DAKComponent'
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: List of available templates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateListResponse'
+
+    post:
+      summary: Create Publication Template
+      description: Create a new publication template
+      operationId: createTemplate
+      tags:
+        - Templates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '201':
+          description: Template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /templates/{templateId}:
+    get:
+      summary: Get Publication Template
+      description: Get a specific publication template with full configuration
+      operationId: getTemplate
+      tags:
+        - Templates
+      parameters:
+        - $ref: '#/components/parameters/TemplateId'
+      responses:
+        '200':
+          description: Template configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /variables/resolve:
+    post:
+      summary: Resolve Template Variables
+      description: Resolve template variables for a DAK using integrated services
+      operationId: resolveVariables
+      tags:
+        - Variables
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VariableResolutionRequest'
+      responses:
+        '200':
+          description: Template variables resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VariableResolutionResponse'
+
+  # Publication Generation Service
+  /publications/generate:
+    post:
+      summary: Generate DAK Publication
+      description: Generate a complete DAK publication using template and services
+      operationId: generatePublication
+      tags:
+        - Publications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicationGenerationRequest'
+      responses:
+        '200':
+          description: Publication generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicationGenerationResponse'
+
+  # Service Integration Endpoints
+  /integrations/faq/batch:
+    post:
+      summary: Batch Execute FAQ Questions
+      description: Execute multiple FAQ questions for DAK content extraction
+      operationId: batchExecuteFAQ
+      tags:
+        - Integrations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchFAQRequest'
+      responses:
+        '200':
+          description: FAQ questions executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchFAQResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  parameters:
+    TemplateId:
+      name: templateId
+      in: path
+      required: true
+      description: Unique identifier for the publication template
+      schema:
+        type: string
+        example: who-dak-standard-v1
+
+    TemplateType:
+      name: templateType
+      in: query
+      description: Filter templates by type
+      schema:
+        type: string
+        enum: [standard, custom, organization]
+        example: standard
+
+    OrganizationParam:
+      name: organization
+      in: query
+      description: Filter by organization
+      schema:
+        type: string
+        example: who
+
+  schemas:
+    # Basic Response Types
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: 1.0.0
+        integrations:
+          type: object
+          properties:
+            mcpService:
+              type: boolean
+              description: MCP service availability
+            faqService:
+              type: boolean
+              description: FAQ service availability
+
+    # DAK Component Enumeration
+    DAKComponent:
+      type: string
+      enum:
+        - healthInterventions
+        - personas
+        - userScenarios
+        - businessProcesses
+        - dataElements
+        - decisionLogic
+        - indicators
+        - requirements
+        - testScenarios
+      description: The 9 core DAK components
+
+    # Template Management Schemas
+    TemplateListResponse:
+      type: object
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateSummary'
+
+    TemplateSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          example: who-dak-standard-v1
+        name:
+          type: string
+          example: WHO DAK Standard Template
+        version:
+          type: string
+          example: 1.0.0
+        description:
+          type: string
+          example: Standard WHO publication template for DAKs
+        templateType:
+          type: string
+          enum: [standard, custom, organization]
+        supportedComponents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DAKComponent'
+
+    TemplateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateSection'
+        variables:
+          $ref: '#/components/schemas/TemplateVariableDefinitions'
+
+    CreateTemplateRequest:
+      type: object
+      required:
+        - name
+        - templateType
+        - sections
+      properties:
+        name:
+          type: string
+          example: Custom Organization Template
+        description:
+          type: string
+        templateType:
+          type: string
+          enum: [custom, organization]
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateSection'
+
+    TemplateSection:
+      type: object
+      required:
+        - id
+        - name
+        - order
+        - enabled
+      properties:
+        id:
+          type: string
+          example: executive-summary
+        name:
+          type: string
+          example: Executive Summary
+        order:
+          type: integer
+          minimum: 1
+          example: 1
+        enabled:
+          type: boolean
+          example: true
+        componentType:
+          $ref: '#/components/schemas/DAKComponent'
+        template:
+          type: string
+          description: Template content with variable placeholders
+
+    TemplateVariableDefinitions:
+      type: object
+      properties:
+        publication:
+          type: object
+          properties:
+            title:
+              $ref: '#/components/schemas/TemplateVariable'
+            subtitle:
+              $ref: '#/components/schemas/TemplateVariable'
+            copyright:
+              $ref: '#/components/schemas/TemplateVariable'
+        dak:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/TemplateVariable'
+        components:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              $ref: '#/components/schemas/TemplateVariable'
+
+    TemplateVariable:
+      type: object
+      required:
+        - name
+        - type
+        - userEditable
+      properties:
+        name:
+          type: string
+          example: publication.title
+        type:
+          type: string
+          enum: [string, markdown, computed, reference, date, number]
+        userEditable:
+          type: boolean
+          example: true
+        defaultValue:
+          type: string
+        description:
+          type: string
+
+    # Variable Resolution Schemas
+    VariableResolutionRequest:
+      type: object
+      required:
+        - dakRepository
+        - templateId
+      properties:
+        dakRepository:
+          type: string
+          example: who/smart-immunizations
+        templateId:
+          type: string
+          example: who-dak-standard-v1
+        branch:
+          type: string
+          default: main
+        userContent:
+          type: object
+          additionalProperties: true
+        serviceIntegration:
+          type: object
+          properties:
+            useFAQ:
+              type: boolean
+              default: true
+
+    VariableResolutionResponse:
+      type: object
+      properties:
+        variables:
+          type: object
+          additionalProperties: true
+          description: Resolved template variables
+        sources:
+          type: object
+          properties:
+            userContent:
+              type: array
+              items:
+                type: string
+              description: Variables sourced from user content
+            dakMetadata:
+              type: array
+              items:
+                type: string
+              description: Variables sourced from DAK metadata
+            faqService:
+              type: array
+              items:
+                type: string
+              description: Variables sourced from FAQ service
+
+    # Publication Generation Schemas
+    PublicationGenerationRequest:
+      type: object
+      required:
+        - dakRepository
+        - templateId
+      properties:
+        dakRepository:
+          type: string
+          example: who/smart-immunizations
+        templateId:
+          type: string
+          example: who-dak-standard-v1
+        branch:
+          type: string
+          default: main
+        formats:
+          type: array
+          items:
+            type: string
+            enum: [html, pdf, docx, docbook, epub]
+          default: [html]
+        userContent:
+          type: object
+          additionalProperties: true
+        options:
+          type: object
+          properties:
+            wysiwygMode:
+              type: boolean
+              default: true
+              description: Include WYSIWYG editing capabilities in output
+
+    PublicationGenerationResponse:
+      type: object
+      properties:
+        publicationId:
+          type: string
+          format: uuid
+        formats:
+          type: array
+          items:
+            type: object
+            properties:
+              format:
+                type: string
+              url:
+                type: string
+                format: uri
+        metadata:
+          type: object
+          properties:
+            title:
+              type: string
+            dakRepository:
+              type: string
+            templateId:
+              type: string
+            generated:
+              type: string
+              format: date-time
+        wysiwygSupport:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            editableFields:
+              type: array
+              items:
+                type: string
+
+    # Service Integration Schemas
+    BatchFAQRequest:
+      type: object
+      required:
+        - dakRepository
+        - questions
+      properties:
+        dakRepository:
+          type: string
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              questionId:
+                type: string
+              parameters:
+                type: object
+                additionalProperties: true
+
+    BatchFAQResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              questionId:
+                type: string
+              success:
+                type: boolean
+              result:
+                type: object
+                additionalProperties: true
+              error:
+                type: string
+
+    # Common Schemas
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+tags:
+  - name: System
+    description: System health and service information
+  - name: Templates
+    description: Publication template management
+  - name: Variables
+    description: Template variable resolution
+  - name: Publications
+    description: Publication generation and management
+  - name: Integrations
+    description: Service integration endpoints
+
+externalDocs:
+  description: DAK Publication Service Integration Guide
+  url: ./integration-guide.md

@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WHO SMART Guidelines Digital Adaptation Kit for smart-immunizations">
+    <meta name="author" content="World Health Organization">
+    <meta name="generator" content="SGEX DAK Publication Generator POC v0.1.0">
+    
+    <title>Smart Immunizations - Digital Adaptation Kit</title>
+    
+    <style>
+        
+/* WHO SMART Guidelines DAK Publication Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: white;
+    font-size: 11pt;
+}
+
+/* Page layout and breaks */
+.page-break {
+    page-break-before: always;
+}
+
+@page {
+    size: A4;
+    margin: 2.5cm 2cm;
+    
+    @top-center {
+        content: "WHO SMART Guidelines - DAK Publication";
+        font-size: 9pt;
+        color: #666;
+    }
+    
+    @bottom-center {
+        content: "Page " counter(page);
+        font-size: 9pt;
+        color: #666;
+    }
+}
+
+/* WHO Branding */
+.who-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 3px solid #0078d4;
+    margin-bottom: 30px;
+}
+
+.who-logo {
+    font-size: 24pt;
+    font-weight: bold;
+    color: #0078d4;
+    background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.document-type {
+    font-size: 12pt;
+    color: #005a9e;
+    font-weight: 600;
+}
+
+/* Cover page */
+.cover-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px 0;
+}
+
+.title-section {
+    text-align: center;
+    padding: 60px 0;
+}
+
+.title-section h1 {
+    font-size: 28pt;
+    color: #0078d4;
+    margin-bottom: 20px;
+    line-height: 1.3;
+}
+
+.subtitle {
+    font-size: 16pt;
+    color: #666;
+    font-style: italic;
+}
+
+.metadata-section {
+    background: #f8f9fa;
+    padding: 30px;
+    border-radius: 8px;
+    margin: 40px 0;
+}
+
+.metadata-item {
+    display: flex;
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.metadata-item:last-child {
+    border-bottom: none;
+}
+
+.metadata-item label {
+    font-weight: bold;
+    color: #005a9e;
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.metadata-item span {
+    color: #333;
+}
+
+.who-footer {
+    text-align: center;
+    padding: 20px 0;
+    border-top: 2px solid #e9ecef;
+}
+
+.copyright {
+    font-size: 12pt;
+    color: #005a9e;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.license {
+    font-size: 10pt;
+    color: #666;
+}
+
+/* Table of Contents */
+.toc-page h1 {
+    color: #0078d4;
+    font-size: 24pt;
+    margin-bottom: 30px;
+    border-bottom: 3px solid #0078d4;
+    padding-bottom: 10px;
+}
+
+.toc-list {
+    margin: 20px 0;
+}
+
+.toc-item {
+    display: flex;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px dotted #ccc;
+}
+
+.toc-title {
+    flex-shrink: 0;
+}
+
+.toc-title a {
+    color: #0078d4;
+    text-decoration: none;
+}
+
+.toc-title a:hover {
+    text-decoration: underline;
+}
+
+.toc-dots {
+    flex-grow: 1;
+    border-bottom: 1px dotted #ccc;
+    margin: 0 10px;
+    height: 1px;
+}
+
+.toc-page {
+    flex-shrink: 0;
+    font-weight: bold;
+    color: #005a9e;
+}
+
+/* Executive Summary */
+.executive-summary h1 {
+    color: #0078d4;
+    font-size: 24pt;
+    margin-bottom: 20px;
+    border-bottom: 3px solid #0078d4;
+    padding-bottom: 10px;
+}
+
+.summary-stats {
+    display: flex;
+    justify-content: space-around;
+    margin: 30px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+    border-radius: 8px;
+    color: white;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 36pt;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.stat-label {
+    font-size: 12pt;
+    opacity: 0.9;
+}
+
+.component-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.component-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #0078d4;
+}
+
+.component-card h3 {
+    color: #005a9e;
+    margin-bottom: 10px;
+    font-size: 14pt;
+}
+
+.component-card p {
+    color: #666;
+    font-size: 10pt;
+}
+
+/* Component sections */
+.component-section {
+    margin-bottom: 40px;
+}
+
+.component-section h1 {
+    color: #0078d4;
+    font-size: 20pt;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #0078d4;
+    padding-bottom: 10px;
+}
+
+.component-description {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border-left: 4px solid #40e0d0;
+}
+
+.component-description p {
+    color: #666;
+    font-style: italic;
+    margin: 0;
+}
+
+.component-content {
+    margin: 20px 0;
+}
+
+.component-content h2 {
+    color: #005a9e;
+    font-size: 16pt;
+    margin: 25px 0 15px 0;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 8px;
+}
+
+.component-content h3 {
+    color: #333;
+    font-size: 14pt;
+    margin: 20px 0 10px 0;
+}
+
+.component-content h4 {
+    color: #555;
+    font-size: 12pt;
+    margin: 15px 0 8px 0;
+}
+
+.component-content p {
+    margin: 10px 0;
+    text-align: justify;
+}
+
+.component-content ul, .component-content ol {
+    margin: 10px 0 10px 20px;
+}
+
+.component-content li {
+    margin: 5px 0;
+}
+
+.component-content strong {
+    color: #005a9e;
+}
+
+/* Component metadata */
+.component-metadata {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.component-metadata h3 {
+    color: #005a9e;
+    margin-bottom: 15px;
+    font-size: 14pt;
+}
+
+/* Actors grid */
+.actors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.actor-card {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.actor-card h4 {
+    color: #0078d4;
+    margin-bottom: 5px;
+}
+
+.actor-role {
+    font-size: 10pt;
+    color: #666;
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+/* Workflows table */
+.workflows-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.workflows-table th,
+.workflows-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.workflows-table th {
+    background: #0078d4;
+    color: white;
+    font-weight: bold;
+}
+
+.workflows-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+/* Metrics grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.metric-card {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    text-align: center;
+}
+
+.metric-card h4 {
+    color: #0078d4;
+    margin-bottom: 8px;
+    font-size: 12pt;
+}
+
+.metric-type {
+    font-size: 10pt;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.metric-target {
+    font-size: 11pt;
+    color: #005a9e;
+    font-weight: bold;
+}
+
+/* Copyright page */
+.copyright-page {
+    padding: 20px 0;
+}
+
+.copyright-page h1 {
+    color: #0078d4;
+    font-size: 20pt;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #0078d4;
+    padding-bottom: 10px;
+}
+
+.copyright-notice p {
+    margin: 15px 0;
+    text-align: justify;
+}
+
+.copyright-notice h2 {
+    color: #005a9e;
+    font-size: 14pt;
+    margin: 25px 0 10px 0;
+}
+
+/* Print optimizations */
+@media print {
+    body {
+        font-size: 10pt;
+    }
+    
+    .page-break {
+        page-break-before: always;
+    }
+    
+    .component-section {
+        page-break-inside: avoid;
+    }
+    
+    .component-card,
+    .actor-card,
+    .metric-card {
+        page-break-inside: avoid;
+    }
+    
+    a {
+        color: #0078d4 !important;
+        text-decoration: none;
+    }
+    
+    a::after {
+        content: " (" attr(href) ")";
+        font-size: 8pt;
+        color: #666;
+    }
+}
+
+/* Responsive design for web viewing */
+@media screen and (max-width: 768px) {
+    .summary-stats {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .actors-grid,
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .metadata-item {
+        flex-direction: column;
+    }
+    
+    .metadata-item label {
+        width: auto;
+        margin-bottom: 5px;
+    }
+}
+    
+    </style>
+</head>
+<body>
+    <!-- Cover Page -->
+    <div class="cover-page">
+        <div class="who-header">
+            <div class="who-logo">WHO</div>
+            <div class="document-type">SMART Guidelines Digital Adaptation Kit</div>
+        </div>
+        
+        <div class="title-section">
+            <h1>Smart Immunizations - Digital Adaptation Kit</h1>
+            <div class="subtitle">WHO SMART Guidelines Digital Adaptation Kit for smart-immunizations</div>
+        </div>
+        
+        <div class="metadata-section">
+            <div class="metadata-item">
+                <label>Version:</label>
+                <span>1.0.0</span>
+            </div>
+            <div class="metadata-item">
+                <label>Generated:</label>
+                <span>9/4/2025</span>
+            </div>
+            <div class="metadata-item">
+                <label>Repository:</label>
+                <span>WorldHealthOrganization/smart-immunizations</span>
+            </div>
+        </div>
+        
+        <div class="who-footer">
+            <div class="copyright">© 2024 World Health Organization</div>
+            <div class="license">This work is available under the Creative Commons Attribution-ShareAlike 3.0 IGO licence</div>
+        </div>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="page-break"></div>
+    <div class="toc-page">
+        <h1>Table of Contents</h1>
+        
+      <div class="toc-list">
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              Executive Summary
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">3</div>
+          </div>
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              <a href="#cover">cover</a>
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">4</div>
+          </div>
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              <a href="#toc">toc</a>
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">5</div>
+          </div>
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              <a href="#executive_summary">executive_summary</a>
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">6</div>
+          </div>
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              <a href="#health_interventions">health_interventions</a>
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">7</div>
+          </div>
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              <a href="#personas">Generic Personas</a>
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">8</div>
+          </div>
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              <a href="#user_scenarios">user_scenarios</a>
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">9</div>
+          </div>
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              <a href="#business_processes">business_processes</a>
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">10</div>
+          </div>
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              <a href="#data_elements">data_elements</a>
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">11</div>
+          </div>
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              <a href="#decision_logic">decision_logic</a>
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">12</div>
+          </div>
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              <a href="#indicators">Program Indicators</a>
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">13</div>
+          </div>
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              <a href="#requirements">Functional and Non-Functional Requirements</a>
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">14</div>
+          </div>
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              <a href="#test_scenarios">test_scenarios</a>
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">15</div>
+          </div>
+        
+          <div class="toc-item">
+            <div class="toc-title">
+              Copyright and Licensing
+            </div>
+            <div class="toc-dots"></div>
+            <div class="toc-page">99</div>
+          </div>
+        
+      </div>
+    
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="page-break"></div>
+    <div class="executive-summary">
+        <h1>Executive Summary</h1>
+        <p>This Digital Adaptation Kit (DAK) provides comprehensive guidance for implementing Smart Immunizations according to WHO SMART Guidelines methodology.</p>
+        
+        <div class="summary-stats">
+            <div class="stat-item">
+                <div class="stat-number">9</div>
+                <div class="stat-label">DAK Components</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">12</div>
+                <div class="stat-label">Total Sections</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">25</div>
+                <div class="stat-label">Estimated Pages</div>
+            </div>
+        </div>
+        
+        <h2>DAK Component Overview</h2>
+        <div class="component-overview">
+            
+                <div class="component-card">
+                    <h3>Health Interventions and Recommendations</h3>
+                    <p>Overview of the health interventions and WHO recommendations included within the DAK</p>
+                </div>
+            
+                <div class="component-card">
+                    <h3>Generic Personas</h3>
+                    <p>Depiction of the human and system actors</p>
+                </div>
+            
+                <div class="component-card">
+                    <h3>User Scenarios</h3>
+                    <p>Narratives that describe how different personas interact</p>
+                </div>
+            
+                <div class="component-card">
+                    <h3>Business Processes and Workflows</h3>
+                    <p>Business processes and workflows for achieving health programme objectives</p>
+                </div>
+            
+                <div class="component-card">
+                    <h3>Core Data Elements</h3>
+                    <p>Data elements required throughout different points of a workflow</p>
+                </div>
+            
+                <div class="component-card">
+                    <h3>Decision Support Logic</h3>
+                    <p>Decision-support logic and algorithms to support appropriate service delivery</p>
+                </div>
+            
+                <div class="component-card">
+                    <h3>Program Indicators</h3>
+                    <p>Core set of indicators for decision-making, performance metrics and reporting</p>
+                </div>
+            
+                <div class="component-card">
+                    <h3>Functional and Non-Functional Requirements</h3>
+                    <p>High-level list of core functions and capabilities that the system must have</p>
+                </div>
+            
+                <div class="component-card">
+                    <h3>Test Scenarios</h3>
+                    <p>Set of test scenarios to validate an implementation of the DAK</p>
+                </div>
+            
+        </div>
+    </div>
+
+    <!-- DAK Components -->
+    
+        <div class="page-break"></div>
+        <div class="component-section" id="personas">
+            <h1>Generic Personas</h1>
+            <div class="component-description">
+                <p>Depiction of the human and system actors</p>
+            </div>
+            
+            <div class="component-content">
+                
+<h2>Generic Personas</h2>
+<p>This section describes the key actors and personas involved in the healthcare delivery process.</p>
+<h3>Healthcare Worker</h3>
+<p><strong>Role</strong>: Primary care provider</p>
+<p><strong>Responsibilities</strong>: </p>
+<ul><li>Patient assessment and diagnosis</li>
+<li>Treatment planning and implementation</li>
+<li>Documentation and reporting</li>
+<p><strong>Skills and Training</strong>:</p>
+<li>Clinical expertise in relevant health area</li>
+<li>Training on DAK implementation</li>
+<li>Familiarity with digital health tools</li>
+<h3>Patient</h3>
+<p><strong>Role</strong>: Care recipient</p>
+<p><strong>Characteristics</strong>:</p>
+<li>Seeking healthcare services</li>
+<li>May have varying levels of health literacy</li>
+<li>Requires culturally appropriate care</li>
+<h3>System Administrator</h3>
+<p><strong>Role</strong>: Technical support and system management</p>
+<p><strong>Responsibilities</strong>:</p>
+<li>System maintenance and updates</li>
+<li>User access management</li>
+<li>Technical troubleshooting</li></ul>
+<p>      </p>
+            </div>
+            
+            
+            <div class="component-metadata">
+                <h3>Actor Summary</h3>
+                <div class="actors-grid">
+                    
+                        <div class="actor-card">
+                            <h4>Healthcare Worker</h4>
+                            <div class="actor-role">Primary Care Provider</div>
+                            <p>Front-line healthcare provider</p>
+                        </div>
+                    
+                        <div class="actor-card">
+                            <h4>Patient</h4>
+                            <div class="actor-role">Care Recipient</div>
+                            <p>Individual receiving healthcare services</p>
+                        </div>
+                    
+                </div>
+            </div>
+          
+        </div>
+      
+        <div class="page-break"></div>
+        <div class="component-section" id="indicators">
+            <h1>Program Indicators</h1>
+            <div class="component-description">
+                <p>Core set of indicators for decision-making, performance metrics and reporting</p>
+            </div>
+            
+            <div class="component-content">
+                
+<h2>Program Indicators</h2>
+<p>This section defines the key performance indicators for monitoring and evaluation of the DAK implementation.</p>
+<h3>Quality Indicators</h3>
+<h4>Patient Safety Indicators</h4>
+<ul><li><strong>Adverse Event Rate</strong>: Number of adverse events per 1000 patient visits</li>
+<li><strong>Medication Error Rate</strong>: Percentage of medication administration errors</li>
+<li><strong>Patient Satisfaction Score</strong>: Average patient satisfaction rating</li>
+<h4>Clinical Quality Indicators</h4>
+<li><strong>Guideline Adherence Rate</strong>: Percentage of cases following clinical guidelines</li>
+<li><strong>Treatment Completion Rate</strong>: Percentage of patients completing prescribed treatment</li>
+<li><strong>Diagnostic Accuracy</strong>: Percentage of accurate initial diagnoses</li>
+<h3>Efficiency Indicators</h3>
+<h4>Process Indicators</h4>
+<li><strong>Average Wait Time</strong>: Mean time from arrival to consultation</li>
+<li><strong>Consultation Duration</strong>: Average time spent per patient consultation</li>
+<li><strong>Patient Throughput</strong>: Number of patients served per day</li>
+<h4>Resource Utilization</h4>
+<li><strong>Healthcare Worker Productivity</strong>: Patients seen per healthcare worker per day</li>
+<li><strong>Equipment Utilization Rate</strong>: Percentage of time equipment is in use</li>
+<li><strong>Supply Stock-out Rate</strong>: Percentage of time essential supplies are unavailable</li></ul>
+<p>      </p>
+            </div>
+            
+            
+            <div class="component-metadata">
+                <h3>Key Metrics</h3>
+                <div class="metrics-grid">
+                    
+                        <div class="metric-card">
+                            <h4>Patient Satisfaction</h4>
+                            <div class="metric-type">quality</div>
+                            <div class="metric-target">Target: > 90%</div>
+                        </div>
+                    
+                        <div class="metric-card">
+                            <h4>Treatment Completion Rate</h4>
+                            <div class="metric-type">outcome</div>
+                            <div class="metric-target">Target: > 85%</div>
+                        </div>
+                    
+                </div>
+            </div>
+          
+        </div>
+      
+        <div class="page-break"></div>
+        <div class="component-section" id="requirements">
+            <h1>Functional and Non-Functional Requirements</h1>
+            <div class="component-description">
+                <p>High-level list of core functions and capabilities that the system must have</p>
+            </div>
+            
+            <div class="component-content">
+                
+<h2>Functional and Non-Functional Requirements</h2>
+<p>This section outlines the system requirements for successful DAK implementation.</p>
+<h3>Functional Requirements</h3>
+<h4>Core System Functions</h4>
+<li><strong>Patient Registration</strong>: System shall support patient demographic data capture</li>
+<li><strong>Clinical Documentation</strong>: System shall enable structured clinical data entry</li>
+<li><strong>Decision Support</strong>: System shall provide real-time clinical decision support</li>
+<li><strong>Reporting</strong>: System shall generate standardized reports</li>
+<li><strong>Data Export</strong>: System shall support data export in standard formats</li>
+<h4>User Management</h4>
+<li><strong>User Authentication</strong>: System shall authenticate users securely</li>
+<li><strong>Role-Based Access</strong>: System shall enforce role-based permissions</li>
+<li><strong>Audit Trail</strong>: System shall maintain complete audit logs</li>
+<h3>Non-Functional Requirements</h3>
+<h4>Performance Requirements</h4>
+<ul><li><strong>Response Time</strong>: System responses shall be under 3 seconds</li>
+<li><strong>Concurrent Users</strong>: System shall support up to 100 concurrent users</li>
+<li><strong>Availability</strong>: System shall maintain 99.5% uptime</li>
+<h4>Security Requirements</h4>
+<li><strong>Data Encryption</strong>: All data shall be encrypted in transit and at rest</li>
+<li><strong>Access Control</strong>: Strong authentication and authorization mechanisms</li>
+<li><strong>Privacy Compliance</strong>: Adherence to local data protection regulations</li>
+<h4>Usability Requirements</h4>
+<li><strong>User Interface</strong>: Intuitive interface requiring minimal training</li>
+<li><strong>Mobile Compatibility</strong>: Responsive design for mobile devices</li>
+<li><strong>Offline Capability</strong>: Core functions available without internet connectivity</li></ul>
+<p>      </p>
+            </div>
+            
+            
+        </div>
+      
+
+    <!-- Copyright Page -->
+    <div class="page-break"></div>
+    <div class="copyright-page">
+        <h1>Copyright and Licensing</h1>
+        <div class="copyright-notice">
+            <p>© 2024 World Health Organization</p>
+            
+            <p>This work is available under the Creative Commons Attribution-ShareAlike 3.0 IGO licence 
+            (CC BY-SA 3.0 IGO; https://creativecommons.org/licenses/by-sa/3.0/igo).</p>
+            
+            <p><strong>Under the terms of this licence, you may copy, redistribute and adapt the work for 
+            non-commercial purposes, provided the work is appropriately cited, as indicated below. In any 
+            use of this work, there should be no suggestion that WHO endorses any specific organization, 
+            products or services.</strong></p>
+            
+            <h2>Third-party materials</h2>
+            <p>If you wish to reuse material from this work that is attributed to a third party, such as 
+            tables, figures or images, it is your responsibility to determine whether permission is needed 
+            for that reuse and to obtain permission from the copyright holder.</p>
+            
+            <h2>General disclaimers</h2>
+            <p>The designations employed and the presentation of the material in this publication do not 
+            imply the expression of any opinion whatsoever on the part of WHO concerning the legal status 
+            of any country, territory, city or area or of its authorities, or concerning the delimitation 
+            of its frontiers or boundaries.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -3,11 +3,12 @@ import githubService from '../services/githubService';
 import githubActionsService from '../services/githubActionsService';
 import WorkflowStatus from './WorkflowStatus';
 import WorkflowDashboard from './WorkflowDashboard';
+import TinyMCECommentEditor from './TinyMCECommentEditor';
 import { lazyLoadReactMarkdown, lazyLoadDOMPurify, lazyLoadRehypeRaw } from '../utils/lazyRouteUtils';
 import './WorkflowStatus.css';
 import './PreviewBadge.css';
 
-// Lazy load MDEditor to improve initial page responsiveness
+// Lazy load MDEditor as fallback to improve initial page responsiveness
 const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
 /**
@@ -30,6 +31,7 @@ const PreviewBadge = () => {
   const [expandedComments, setExpandedComments] = useState(new Set());
   const [expandedDescription, setExpandedDescription] = useState(false);
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
+  const [commentEditorMode, setCommentEditorMode] = useState('tinymce'); // 'tinymce' or 'markdown'
   const [workflowStatus, setWorkflowStatus] = useState(null);
   const [workflowLoading, setWorkflowLoading] = useState(false);
   // Always use WorkflowDashboard - removed simple view toggle
@@ -1134,7 +1136,8 @@ const PreviewBadge = () => {
         hasToken: !!githubService.token,
         commentLength: newComment.trim().length,
         prInfo: prInfo?.length || 0,
-        canComment
+        canComment,
+        editorMode: commentEditorMode
       });
       
       if (prInfo && prInfo.length > 0) {
@@ -1142,7 +1145,15 @@ const PreviewBadge = () => {
         console.debug('Submitting to PR:', pr.number);
         
         try {
-          const submittedComment = await githubService.createPullRequestComment(owner, repo, pr.number, newComment.trim());
+          // Convert HTML to markdown if using TinyMCE
+          let commentToSubmit = newComment.trim();
+          if (commentEditorMode === 'tinymce') {
+            // For now, submit HTML directly - GitHub supports basic HTML in comments
+            // Could add HTML to markdown conversion here if needed
+            commentToSubmit = newComment.trim();
+          }
+          
+          const submittedComment = await githubService.createPullRequestComment(owner, repo, pr.number, commentToSubmit);
           console.debug('Comment submitted successfully:', submittedComment);
           
           // Set success status
@@ -1629,7 +1640,40 @@ const PreviewBadge = () => {
                       )}
                     </div>
                   )}
-                  {!showMarkdownEditor ? (
+                  
+                  {/* Editor Mode Toggle */}
+                  <div className="comment-editor-toggle">
+                    <button
+                      className={`editor-mode-btn ${commentEditorMode === 'tinymce' ? 'active' : ''}`}
+                      onClick={() => setCommentEditorMode('tinymce')}
+                      disabled={submittingComment || !canComment}
+                      title="Rich text editor with formatting tools"
+                    >
+                      🎨 Rich Text
+                    </button>
+                    <button
+                      className={`editor-mode-btn ${commentEditorMode === 'markdown' ? 'active' : ''}`}
+                      onClick={() => setCommentEditorMode('markdown')}
+                      disabled={submittingComment || !canComment}
+                      title="Markdown editor for technical content"
+                    >
+                      📝 Markdown
+                    </button>
+                  </div>
+                  
+                  {commentEditorMode === 'tinymce' ? (
+                    <TinyMCECommentEditor
+                      value={newComment}
+                      onChange={setNewComment}
+                      onSubmit={handleCommentSubmit}
+                      onCancel={() => setNewComment('')}
+                      disabled={!canComment}
+                      githubUser={githubService.getCurrentUser()?.login}
+                      contextType="comment"
+                      height={180}
+                      placeholder={canComment ? "Write a comment... Use @ to mention users, # to reference issues" : "Comment form disabled - token permissions required"}
+                    />
+                  ) : !showMarkdownEditor ? (
                     <div className="comment-form-simple">
                       <textarea
                         value={newComment}
