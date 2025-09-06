@@ -132,6 +132,43 @@ jobs:
           echo "public_url=$public_url" >> $GITHUB_OUTPUT
           echo "Determined PUBLIC_URL: $public_url"
 
+      - name: Update route configuration for branch deployment
+        shell: bash
+        run: |
+          set -e
+          
+          branch_name="${{ steps.branch_info.outputs.branch_name }}"
+          safe_branch_name=$(echo "$branch_name" | tr '/' '-')
+          
+          echo "Updating route configuration for branch deployment: $safe_branch_name"
+          
+          # Update routes-config.json to include the current branch in deployedBranches
+          if [[ -f "public/routes-config.json" ]]; then
+            # Use jq to update the deployedBranches array
+            if command -v jq >/dev/null 2>&1; then
+              # Create temporary file with updated configuration
+              jq --arg branch "$safe_branch_name" '.deployedBranches |= (. + [$branch] | unique)' public/routes-config.json > public/routes-config.json.tmp
+              mv public/routes-config.json.tmp public/routes-config.json
+              echo "✅ Updated routes-config.json with branch: $safe_branch_name"
+              
+              # Show the updated deployedBranches for verification
+              echo "Current deployed branches:"
+              jq -r '.deployedBranches[]' public/routes-config.json | sed 's/^/  - /'
+            else
+              echo "⚠️  jq not available, using sed fallback to update routes-config.json"
+              # Fallback: use sed to add the branch (basic approach)
+              if ! grep -q "\"$safe_branch_name\"" public/routes-config.json; then
+                sed -i.bak "s/\"deployedBranches\": \[/\"deployedBranches\": [\n    \"$safe_branch_name\",/" public/routes-config.json
+                echo "✅ Updated routes-config.json with branch: $safe_branch_name (via sed)"
+              else
+                echo "✅ Branch $safe_branch_name already in deployedBranches"
+              fi
+            fi
+          else
+            echo "❌ public/routes-config.json not found"
+            exit 1
+          fi
+
       - name: Build branch-specific React app
         continue-on-error: false
         run: |

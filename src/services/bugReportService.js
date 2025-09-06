@@ -230,6 +230,124 @@ class BugReportService {
             }
           }
         ]
+      },
+      {
+        id: 'performance_issue',
+        name: 'Performance Issue',
+        description: 'Report slow loading or responsiveness problems',
+        title: '[Performance]: ',
+        labels: ['performance', 'bug'],
+        type: 'performance',
+        body: [
+          {
+            type: 'textarea',
+            id: 'performance-issue',
+            attributes: {
+              label: 'Performance Issue Description',
+              description: 'Describe the slow loading or responsiveness problem you encountered.'
+            },
+            validations: {
+              required: true
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'when-occurs',
+            attributes: {
+              label: 'When does this occur?',
+              description: 'Describe when you notice the performance issue (specific pages, actions, etc.)'
+            },
+            validations: {
+              required: true
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'browser-specs',
+            attributes: {
+              label: 'Browser and System Information',
+              description: 'What browser, device, and internet connection are you using?'
+            },
+            validations: {
+              required: false
+            }
+          }
+        ]
+      },
+      {
+        id: 'ui_ux_issue',
+        name: 'UI/UX Issue',
+        description: 'Report interface or usability problems',
+        title: '[UI/UX]: ',
+        labels: ['ui', 'ux', 'design'],
+        type: 'ui',
+        body: [
+          {
+            type: 'textarea',
+            id: 'ui-issue',
+            attributes: {
+              label: 'Interface Problem',
+              description: 'Describe the interface or usability issue you encountered.'
+            },
+            validations: {
+              required: true
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'expected-ui',
+            attributes: {
+              label: 'Expected Interface Behavior',
+              description: 'How do you think the interface should work instead?'
+            },
+            validations: {
+              required: true
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'suggestions',
+            attributes: {
+              label: 'Suggestions for Improvement',
+              description: 'Any specific suggestions for improving the user experience?'
+            },
+            validations: {
+              required: false
+            }
+          }
+        ]
+      },
+      {
+        id: 'general_feedback',
+        name: 'General Feedback',
+        description: 'Other feedback or suggestions',
+        title: '[Feedback]: ',
+        labels: ['feedback'],
+        type: 'general',
+        body: [
+          {
+            type: 'textarea',
+            id: 'feedback',
+            attributes: {
+              label: 'Your Feedback',
+              description: 'Share your thoughts, suggestions, or other feedback about SGEX Workbench.'
+            },
+            validations: {
+              required: true
+            }
+          },
+          {
+            type: 'textarea',
+            id: 'area-of-focus',
+            attributes: {
+              label: 'Area of Focus',
+              description: 'Which part of SGEX Workbench does your feedback relate to? (optional)'
+            },
+            validations: {
+              required: false
+            }
+          }
+        ]
       }
     ];
   }

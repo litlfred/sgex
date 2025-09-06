@@ -92,36 +92,32 @@ class HelpContentService {
         type: 'slideshow',
         content: [
           {
-            title: 'Report a Bug or Issue',
+            title: 'Report a SGeX Bug',
             content: `
-              <p>Help us improve SGeX by reporting bugs and issues:</p>
-              <h4>What type of issue are you experiencing?</h4>
+              <p>Report issues with the SGeX Workbench to help us improve the application:</p>
+              <h4>What type of issue would you like to report?</h4>
               <div class="bug-report-options">
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('bug')">
-                  🐛 Bug Report - Something isn't working correctly
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.triggerBugReport('bug')">
+                  🐛 Bug Report - Something is not working correctly
                 </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('feature')">
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.triggerBugReport('feature')">
                   ✨ Feature Request - Suggest a new feature or improvement
                 </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('question')">
-                  ❓ Question - Ask for help or clarification
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.triggerBugReport('question')">
+                  ❓ Question - Ask for help or clarification about SGeX
                 </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('documentation')">
-                  📚 Documentation Issue - Report problems with documentation
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.triggerBugReport('performance')">
+                  🚀 Performance Issue - Report slow loading or responsiveness problems
                 </button>
-                <button class="bug-type-btn" onclick="window.helpModalInstance?.openSgexIssue('blank')">
-                  📝 Blank Issue - Create an issue without a template
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.triggerBugReport('ui')">
+                  🎨 UI/UX Issue - Report interface or usability problems
+                </button>
+                <button class="bug-type-btn" onclick="window.helpModalInstance?.triggerBugReport('general')">
+                  📝 General Feedback - Other feedback or suggestions
                 </button>
               </div>
               <div class="help-tip">
-                <strong>💡 Tip:</strong> Please provide as much detail as possible including steps to reproduce, expected behavior, and actual behavior.
-              </div>
-              <div class="help-fallback">
-                <strong>🔗 Can't access GitHub?</strong> If the buttons above don't work in your environment:
-                <ol>
-                  <li>Email us directly at <a href="mailto:smart@who.int?subject=SGEX Bug Report">smart@who.int</a></li>
-                  <li>Or visit <a href="https://github.com/litlfred/sgex/issues/new" target="_blank">github.com/litlfred/sgex/issues/new</a> manually</li>
-                </ol>
+                <strong>🔧 Features:</strong> Each report type includes automatic environment detection, screenshot capture, and console log inclusion for faster debugging.
               </div>
             `
           }
@@ -956,6 +952,17 @@ class HelpContentService {
     }
 
     window.open(url, '_blank');
+  }
+
+  // Trigger bug report form with specific template type
+  triggerBugReport(bugType) {
+    const event = new CustomEvent('sgex-show-bug-report', {
+      detail: { 
+        issueType: bugType,
+        templateType: bugType 
+      }
+    });
+    window.dispatchEvent(event);
   }
 }
 

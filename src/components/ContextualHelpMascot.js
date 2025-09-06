@@ -7,6 +7,7 @@ import cacheManagementService from '../services/cacheManagementService';
 import issueTrackingService from '../services/issueTrackingService';
 import githubService from '../services/githubService';
 import HelpModal from './HelpModal';
+import BugReportForm from './BugReportForm';
 import TrackedItemsViewer from './TrackedItemsViewer';
 import LanguageSelector from './LanguageSelector';
 import useThemeImage from '../hooks/useThemeImage';
@@ -47,6 +48,8 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const [trackedItemsCount, setTrackedItemsCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [helpState, setHelpState] = useState(() => getSavedHelpState()); // 0: hidden, 1: non-sticky, 2: sticky
+  const [showBugReportForm, setShowBugReportForm] = useState(false);
+  const [bugReportTemplateType, setBugReportTemplateType] = useState(null);
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -151,6 +154,25 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
 
     enableDAKFilter();
   }, [isAuthenticated, user, repo]);
+
+  // Listen for bug report custom events
+  useEffect(() => {
+    const handleBugReportEvent = (event) => {
+      const templateType = event.detail?.templateType || event.detail?.issueType || 'bug';
+      setBugReportTemplateType(templateType);
+      setShowBugReportForm(true);
+      // Hide help menu when bug report is shown
+      setShowHelp(false);
+      setHelpSticky(false);
+      setHelpState(0);
+    };
+
+    window.addEventListener('sgex-show-bug-report', handleBugReportEvent);
+    
+    return () => {
+      window.removeEventListener('sgex-show-bug-report', handleBugReportEvent);
+    };
+  }, []);
 
   const handleToggleTheme = () => {
     const newTheme = toggleTheme();
@@ -438,6 +460,26 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
         <TrackedItemsViewer
           onClose={() => setShowTrackedItems(false)}
         />
+      )}
+
+      {/* Bug Report Form Modal */}
+      {showBugReportForm && (
+        <div className="help-modal-overlay bug-report-overlay">
+          <BugReportForm
+            onClose={() => {
+              setShowBugReportForm(false);
+              setBugReportTemplateType(null);
+            }}
+            preselectedTemplateType={bugReportTemplateType}
+            contextData={{
+              pageId,
+              ...contextData,
+              user,
+              repo,
+              currentUrl: window.location.href
+            }}
+          />
+        </div>
       )}
     </>
   );

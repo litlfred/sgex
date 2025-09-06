@@ -3,7 +3,7 @@ import bugReportService from '../services/bugReportService';
 import githubService from '../services/githubService';
 import ScreenshotEditor from './ScreenshotEditor';
 
-const BugReportForm = ({ onClose, contextData = {} }) => {
+const BugReportForm = ({ onClose, contextData = {}, preselectedTemplateType = null }) => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({});
@@ -25,7 +25,7 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
   // Load templates on mount
   useEffect(() => {
     loadTemplates();
-  }, []);
+  }, [preselectedTemplateType]); // Add preselectedTemplateType as dependency
 
   // Start console capture when component mounts
   useEffect(() => {
@@ -37,18 +37,41 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
     };
   }, []);
 
-  // Auto-select Bug Report template and enable console by default for bug reports
+  // Auto-select template based on preselected type or default to Bug Report
   useEffect(() => {
     if (templates.length > 0 && !selectedTemplate) {
-      const bugTemplate = templates.find(t => t.type === 'bug') || templates[0];
-      setSelectedTemplate(bugTemplate);
-      setIncludeConsole(bugTemplate.type === 'bug');
+      let targetTemplate;
+      
+      if (preselectedTemplateType) {
+        // Try to find template by type first, then by ID
+        targetTemplate = templates.find(t => t.type === preselectedTemplateType) ||
+                        templates.find(t => t.id.includes(preselectedTemplateType)) ||
+                        templates.find(t => t.name.toLowerCase().includes(preselectedTemplateType.toLowerCase()));
+      }
+      
+      // Fallback to bug template or first template
+      if (!targetTemplate) {
+        targetTemplate = templates.find(t => t.type === 'bug') || templates[0];
+      }
+      
+      setSelectedTemplate(targetTemplate);
+      setIncludeConsole(targetTemplate.type === 'bug' || preselectedTemplateType === 'bug');
     }
-  }, [templates, selectedTemplate]); // Added selectedTemplate back to dependencies
+  }, [templates, selectedTemplate, preselectedTemplateType]);
 
   const loadTemplates = async () => {
     try {
       setLoading(true);
+      
+      // If we have a preselected template type, use default templates immediately
+      if (preselectedTemplateType) {
+        const defaultTemplates = bugReportService.getDefaultTemplates();
+        setTemplates(defaultTemplates);
+        setLoading(false);
+        return;
+      }
+      
+      // Otherwise, try to fetch templates from GitHub
       const fetchedTemplates = await bugReportService.getTemplates();
       setTemplates(fetchedTemplates);
     } catch (err) {
