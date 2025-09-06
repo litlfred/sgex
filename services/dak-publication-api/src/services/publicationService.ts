@@ -7,7 +7,7 @@ export interface PublicationConfig {
   dakRepository: string;
   userContent?: Record<string, any>;
   options?: {
-    format?: 'html' | 'pdf' | 'markdown';
+    format?: 'html' | 'pdf' | 'markdown' | 'docbook' | 'epub';
     includeAssets?: boolean;
   };
 }
@@ -79,6 +79,15 @@ export class PublicationService {
   }
 
   private async renderTemplate(template: any, variables: Record<string, any>): Promise<string> {
+    const format = variables['publication.format'] || 'html';
+    
+    if (format === 'docbook') {
+      return this.renderDocBook(template, variables);
+    } else if (format === 'epub') {
+      return this.renderEPUB(template, variables);
+    }
+    
+    // Default HTML rendering
     let content = '<div class="dak-publication">';
 
     // Render each section
@@ -99,9 +108,131 @@ export class PublicationService {
 
     content += '</div>';
 
-    // Add CSS styling
+    // Add CSS styling for HTML
     content = this.addStyling(content);
 
+    return content;
+  }
+
+  private renderDocBook(template: any, variables: Record<string, any>): string {
+    let content = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    content += '<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"\n';
+    content += '  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">\n';
+    content += '<book xmlns="http://docbook.org/ns/docbook" version="5.0">\n';
+    
+    // Book metadata
+    content += '  <info>\n';
+    content += `    <title>${variables['publication.title'] || 'DAK Publication'}</title>\n`;
+    content += `    <author><personname>${variables['publication.author'] || 'World Health Organization'}</personname></author>\n`;
+    content += `    <date>${variables['publication.date'] || new Date().toISOString().split('T')[0]}</date>\n`;
+    content += `    <abstract><para>${variables['publication.description'] || 'WHO SMART Guidelines Digital Adaptation Kit'}</para></abstract>\n`;
+    content += '  </info>\n\n';
+
+    // Render each section as chapters
+    for (const section of template.sections) {
+      content += `  <chapter xml:id="${section.id}">\n`;
+      content += `    <title>${section.name || section.id}</title>\n`;
+      
+      // Convert HTML template to DocBook XML
+      let sectionContent = this.htmlToDocBook(section.template);
+      
+      // Variable substitution
+      for (const [key, value] of Object.entries(variables)) {
+        const placeholder = `{{${key}}}`;
+        sectionContent = sectionContent.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), String(value));
+      }
+
+      content += sectionContent;
+      content += '  </chapter>\n\n';
+    }
+    
+    content += '</book>';
+    return content;
+  }
+
+  private htmlToDocBook(htmlContent: string): string {
+    // Convert common HTML elements to DocBook equivalents
+    let docBookContent = htmlContent
+      .replace(/<h1>/g, '<title>')
+      .replace(/<\/h1>/g, '</title>')
+      .replace(/<h2>/g, '<subtitle>')
+      .replace(/<\/h2>/g, '</subtitle>')
+      .replace(/<p>/g, '    <para>')
+      .replace(/<\/p>/g, '</para>')
+      .replace(/<ul>/g, '    <itemizedlist>')
+      .replace(/<\/ul>/g, '    </itemizedlist>')
+      .replace(/<li>/g, '      <listitem><para>')
+      .replace(/<\/li>/g, '</para></listitem>')
+      .replace(/<strong>/g, '<emphasis role="bold">')
+      .replace(/<\/strong>/g, '</emphasis>')
+      .replace(/<em>/g, '<emphasis>')
+      .replace(/<\/em>/g, '</emphasis>')
+      .replace(/<code>/g, '<code>')
+      .replace(/<\/code>/g, '</code>')
+      .replace(/<div[^>]*>/g, '')
+      .replace(/<\/div>/g, '');
+
+    return docBookContent;
+  }
+
+  private renderEPUB(template: any, variables: Record<string, any>): string {
+    // EPUB is essentially a ZIP file with XHTML content
+    // For this proof-of-concept, we'll generate the main content.opf and XHTML
+    
+    let content = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    content += '<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="3.0">\n';
+    
+    // Metadata
+    content += '  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">\n';
+    content += `    <dc:title>${variables['publication.title'] || 'DAK Publication'}</dc:title>\n`;
+    content += `    <dc:creator>${variables['publication.author'] || 'World Health Organization'}</dc:creator>\n`;
+    content += `    <dc:identifier id="BookId">${variables['publication.id'] || 'dak-pub-' + Date.now()}</dc:identifier>\n`;
+    content += `    <dc:language>en</dc:language>\n`;
+    content += `    <dc:date>${variables['publication.date'] || new Date().toISOString().split('T')[0]}</dc:date>\n`;
+    content += '    <meta property="dcterms:modified">' + new Date().toISOString() + '</meta>\n';
+    content += '  </metadata>\n\n';
+    
+    // Manifest
+    content += '  <manifest>\n';
+    content += '    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>\n';
+    content += '    <item id="content" href="content.xhtml" media-type="application/xhtml+xml"/>\n';
+    content += '  </manifest>\n\n';
+    
+    // Spine
+    content += '  <spine>\n';
+    content += '    <itemref idref="content"/>\n';
+    content += '  </spine>\n';
+    
+    content += '</package>\n\n';
+    
+    // Add XHTML content
+    content += '<!-- XHTML Content (content.xhtml) -->\n';
+    content += '<?xml version="1.0" encoding="UTF-8"?>\n';
+    content += '<html xmlns="http://www.w3.org/1999/xhtml">\n';
+    content += '<head>\n';
+    content += `  <title>${variables['publication.title'] || 'DAK Publication'}</title>\n`;
+    content += '</head>\n';
+    content += '<body>\n';
+    
+    // Render sections as XHTML
+    for (const section of template.sections) {
+      content += `  <section id="${section.id}">\n`;
+      
+      let sectionContent = section.template;
+      
+      // Variable substitution
+      for (const [key, value] of Object.entries(variables)) {
+        const placeholder = `{{${key}}}`;
+        sectionContent = sectionContent.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), String(value));
+      }
+
+      content += sectionContent;
+      content += '  </section>\n';
+    }
+    
+    content += '</body>\n';
+    content += '</html>';
+    
     return content;
   }
 

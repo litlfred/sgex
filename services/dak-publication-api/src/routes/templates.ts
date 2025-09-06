@@ -33,12 +33,12 @@ router.get('/:id', async (req: Request, res: Response) => {
         message: `Template with ID '${req.params.id}' does not exist`,
       });
     }
-    res.json({
+    return res.json({
       success: true,
       data: template,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to retrieve template',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -75,13 +75,13 @@ router.put('/:id', async (req: Request, res: Response) => {
         message: `Template with ID '${req.params.id}' does not exist`,
       });
     }
-    res.json({
+    return res.json({
       success: true,
       data: template,
       message: 'Template updated successfully',
     });
   } catch (error) {
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       error: 'Failed to update template',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -100,12 +100,12 @@ router.delete('/:id', async (req: Request, res: Response) => {
         message: `Template with ID '${req.params.id}' does not exist`,
       });
     }
-    res.json({
+    return res.json({
       success: true,
       message: 'Template deleted successfully',
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to delete template',
       message: error instanceof Error ? error.message : 'Unknown error',

@@ -33,12 +33,12 @@ router.get('/:id', async (req: Request, res: Response) => {
         message: `Publication with ID '${req.params.id}' does not exist`,
       });
     }
-    res.json({
+    return res.json({
       success: true,
       data: publication,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to retrieve publication',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -57,13 +57,13 @@ router.put('/:id', async (req: Request, res: Response) => {
         message: `Publication with ID '${req.params.id}' does not exist`,
       });
     }
-    res.json({
+    return res.json({
       success: true,
       data: publication,
       message: 'Publication updated successfully',
     });
   } catch (error) {
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       error: 'Failed to update publication',
       message: error instanceof Error ? error.message : 'Unknown error',

@@ -48,6 +48,6 @@ export interface TemplateRenderContext {
   userContent?: Record<string, any>;
   options?: {
     includeMetadata?: boolean;
-    format?: 'html' | 'markdown' | 'pdf';
+    format?: 'html' | 'markdown' | 'pdf' | 'docbook' | 'epub';
   };
 }

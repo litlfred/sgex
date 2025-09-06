@@ -484,7 +484,7 @@ components:
           type: array
           items:
             type: string
-            enum: [html, pdf, docx]
+            enum: [html, pdf, docx, docbook, epub]
           default: [html]
         userContent:
           type: object
