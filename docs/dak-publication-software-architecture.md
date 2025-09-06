@@ -57,150 +57,182 @@ Utility Libraries: ⚠️ Can be optimized
 
 ## Architecture Options Analysis
 
-### Option 1: MCP-Centric Consolidation (RECOMMENDED)
+### Option 1: Dual Service Architecture (RECOMMENDED)
 
-**Strategy**: Leverage existing MCP service as the unified backend, eliminate REST API service
+**Strategy**: Maintain specialized services for distinct domains - MCP for FAQ/AI operations and REST API for publication management
 
 #### Advantages:
-- ✅ **Builds on working code**: MCP service is already implemented and functional
-- ✅ **Reduces complexity**: Single service architecture
-- ✅ **Protocol standardization**: MCP is an emerging standard for AI service integration
-- ✅ **Existing investment**: Utilizes current working MCP implementation
+- ✅ **Separation of Concerns**: MCP handles AI/FAQ operations, REST API handles publication workflows
+- ✅ **Protocol Optimization**: MCP for AI interactions, REST for standard web operations
+- ✅ **Independent Scaling**: Services can be scaled based on different usage patterns
+- ✅ **Team Autonomy**: Different teams can work on services independently
+- ✅ **Client Flexibility**: REST API can serve multiple frontend clients
+- ✅ **Microservices Pattern**: Follows modern distributed architecture principles
 
-#### Implementation Plan:
+#### Service Responsibilities:
 ```typescript
-// Extend existing MCP service with publication functionality
-// services/dak-faq-mcp/enhanced-mcp-server.ts
-
-interface MCPPublicationService extends MCPService {
-  // Existing FAQ functionality
+// MCP Service (services/dak-faq-mcp/) - AI & FAQ Operations
+interface MCPService {
   processFAQQuestions(questions: FAQQuestion[]): Promise<FAQResult[]>;
-  
-  // New publication functionality  
+  extractDAKMetadata(repository: string): Promise<DAKMetadata>;
+  generateContentSuggestions(context: AIContext): Promise<ContentSuggestions>;
+}
+
+// REST API Service (services/dak-publication-api/) - Publication Management
+interface PublicationAPI {
+  manageTemplates(template: Template): Promise<TemplateResult>;
+  resolveVariables(config: VariableConfig): Promise<VariableMap>;
+  manageUserContent(content: UserContent): Promise<ContentResult>;
   generatePublication(config: PublicationConfig): Promise<PublicationResult>;
-  resolveTemplateVariables(template: Template, context: DAKContext): Promise<VariableMap>;
-  manageUserContent(userId: string, content: UserContent): Promise<void>;
 }
 ```
 
-#### Migration Steps:
-1. **Phase 1**: Extend MCP service with publication endpoints
-2. **Phase 2**: Implement template variable resolution in MCP
-3. **Phase 3**: Add user content management to MCP  
-4. **Phase 4**: Remove REST API service specification
+#### Service Integration:
+```javascript
+// Frontend integrates with both services
+class DAKPublicationClient {
+  constructor() {
+    this.mcpClient = new MCPClient('http://localhost:3001');
+    this.apiClient = new PublicationAPIClient('http://localhost:3002');
+  }
 
-#### Dependency Reduction:
-```json
-// Remove from services/dak-publication-api/package.json (eliminate entire service)
-// Keep lean MCP service dependencies:
-{
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.4",
-    "express": "^4.18.2", 
-    "cors": "^2.8.5"
-    // Remove: js-yaml (eliminate YAML dependencies)
+  async generatePublication(dakRepo) {
+    // Get AI-generated metadata from MCP service
+    const metadata = await this.mcpClient.extractDAKMetadata(dakRepo);
+    
+    // Use REST API for publication generation
+    const publication = await this.apiClient.generatePublication({
+      repository: dakRepo,
+      metadata: metadata,
+      template: 'who-dak-standard'
+    });
+    
+    return publication;
   }
 }
 ```
 
-### Option 2: REST API Implementation
+### Option 2: MCP-Centric Consolidation
+
+**Strategy**: Leverage existing MCP service as the unified backend, eliminate REST API service
+
+#### Disadvantages:
+- ❌ **Protocol Mismatch**: MCP not ideal for all publication operations
+- ❌ **Single Point of Failure**: All functionality in one service
+- ❌ **Scaling Limitations**: Cannot scale FAQ and publication operations independently
+- ❌ **Mixed Responsibilities**: Combines AI operations with standard CRUD operations
+
+### Option 3: REST API-Only Implementation
 
 **Strategy**: Fully implement the OpenAPI specification, migrate MCP functionality
 
-#### Advantages:
-- ✅ **Standard REST patterns**: Familiar HTTP/JSON API
-- ✅ **OpenAPI documentation**: Self-documenting API
-- ✅ **Tool ecosystem**: Rich tooling for REST APIs
-
 #### Disadvantages:
-- ❌ **Duplicate effort**: Need to reimplement working MCP functionality
-- ❌ **More complex**: Requires implementing full REST service from scratch
-- ❌ **Protocol mismatch**: MCP is better suited for AI/FAQ operations
+- ❌ **Protocol Mismatch**: REST not optimal for AI/MCP operations
+- ❌ **Reimplement Working Code**: Need to recreate existing MCP functionality
+- ❌ **Lost MCP Benefits**: Lose standardized AI service protocol advantages
 
-### Option 3: Hybrid Architecture
+## Recommended Solution: Dual Service Architecture
 
-**Strategy**: Keep MCP for AI/FAQ, implement REST for publication generation
+### Service Optimization Strategy
 
-#### Disadvantages:
-- ❌ **Dual maintenance**: Two services to maintain
-- ❌ **Integration complexity**: Service-to-service communication
-- ❌ **Deployment complexity**: Multiple services to deploy
-
-## Recommended Solution: Enhanced MCP Architecture
-
-### Service Consolidation Strategy
-
-#### 1. Enhanced MCP Service Structure
+#### 1. Specialized Service Architecture
 ```
-services/dak-publication-mcp/  (renamed from dak-faq-mcp)
-├── src/
-│   ├── faq/              # Existing FAQ functionality
-│   ├── publication/      # New publication functionality
-│   ├── templates/        # Template management
-│   ├── variables/        # Variable resolution
-│   └── integration/      # External service integration
-├── schemas/              # JSON schemas (replace YAML)
-├── tests/               # Test suites
-└── package.json         # Minimal dependencies
+services/
+├── dak-faq-mcp/           # MCP Service - AI & FAQ Operations
+│   ├── src/
+│   │   ├── faq/           # FAQ question processing
+│   │   ├── ai/            # AI content generation
+│   │   ├── metadata/      # DAK metadata extraction
+│   │   └── mcp/           # MCP protocol handling
+│   └── package.json       # MCP-specific dependencies
+│
+└── dak-publication-api/   # REST API - Publication Management  
+    ├── src/
+    │   ├── templates/     # Template CRUD operations
+    │   ├── variables/     # Variable resolution
+    │   ├── content/       # User content management
+    │   ├── publication/   # Publication generation
+    │   └── integration/   # Service integration layer
+    └── package.json       # REST API dependencies
 ```
 
 #### 2. Frontend Integration Pattern
 ```javascript
-// Single service integration point
-class MCPServiceClient {
-  constructor(baseUrl = 'http://localhost:3001') {
-    this.baseUrl = baseUrl;
+// Dual service integration with clear separation
+class DAKPublicationWorkflow {
+  constructor() {
+    this.mcpService = new MCPServiceClient('http://localhost:3001');
+    this.publicationAPI = new PublicationAPIClient('http://localhost:3002');
   }
 
-  // FAQ operations (existing)
-  async processFAQ(questions) {
-    return this.callMCP('faq.process', { questions });
+  async createPublication(dakRepository) {
+    // Step 1: Extract metadata via MCP service
+    const dakMetadata = await this.mcpService.extractDAKMetadata(dakRepository);
+    
+    // Step 2: Get AI-generated content suggestions
+    const contentSuggestions = await this.mcpService.generateContentSuggestions({
+      repository: dakRepository,
+      metadata: dakMetadata
+    });
+    
+    // Step 3: Create publication via REST API
+    const publication = await this.publicationAPI.createPublication({
+      repository: dakRepository,
+      template: 'who-dak-standard',
+      metadata: dakMetadata,
+      suggestions: contentSuggestions
+    });
+    
+    return publication;
   }
 
-  // Publication operations (new)
-  async generatePublication(config) {
-    return this.callMCP('publication.generate', config);
+  async updateUserContent(publicationId, content) {
+    // User content managed via REST API
+    return await this.publicationAPI.updateContent(publicationId, content);
   }
 
-  async resolveVariables(template, context) {
-    return this.callMCP('variables.resolve', { template, context });
+  async processFAQQuestions(questions) {
+    // FAQ processing via MCP service
+    return await this.mcpService.processFAQQuestions(questions);
   }
 }
 ```
 
-### Dependency Reduction Plan
+### Service Dependency Optimization
 
-#### Frontend Optimizations:
-```javascript
-// Current: Multiple validation libraries
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
-
-// Optimized: Use built-in browser APIs + JSON Schema
-// Reduce bundle size by ~50KB
-```
-
-#### Service Simplification:
+#### MCP Service Dependencies (Optimized):
 ```json
-// Target minimal service dependencies
 {
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",
     "express": "^4.18.2",
     "cors": "^2.8.5"
-    // Removed: js-yaml, glob, @xmldom/xmldom
-    // Use JSON configs instead of YAML
-    // Use native file operations instead of glob
-    // Use browser DOM APIs instead of xmldom
+    // Focused on MCP and basic HTTP server functionality
+  }
+}
+```
+
+#### Publication API Dependencies (Focused):
+```json
+{
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5", 
+    "helmet": "^7.1.0",
+    "swagger-ui-express": "^5.0.0",
+    "axios": "^1.6.0",
+    "joi": "^17.11.0",
+    "uuid": "^9.0.1"
+    // Focused on REST API, validation, and HTTP client functionality
   }
 }
 ```
 
 ### YAML Elimination Strategy
 
-#### 1. Convert Configuration Files:
+#### 1. Convert Static Configuration to Dynamic APIs:
 ```yaml
-# OLD: YAML configuration files
+# OLD: Static YAML configuration files
 # docs/dak/faq/parameters/registry.yaml
 
 variables:
@@ -208,51 +240,62 @@ variables:
     title: "${dak.name} - DAK"
 ```
 
-```json
-// NEW: JSON configuration via API
-// Served dynamically by MCP service
-{
-  "variables": {
-    "publication": {
-      "title": "${dak.name} - DAK"
-    }
+```javascript
+// NEW: Dynamic configuration via REST API
+const templateConfig = await publicationAPI.getTemplate('who-dak-standard');
+const variables = await publicationAPI.resolveVariables({
+  templateId: 'who-dak-standard',
+  dakRepository: repository,
+  userCustomizations: userContent
+});
+```
+
+#### 2. Service Integration for Variable Resolution:
+```javascript
+// REST API integrates with MCP service for dynamic content
+class VariableResolutionService {
+  async resolveTemplateVariables(template, context) {
+    // Get base DAK metadata from MCP service
+    const dakMetadata = await mcpClient.extractDAKMetadata(context.repository);
+    
+    // Resolve template variables with dynamic content
+    const resolvedVariables = {
+      'dak.name': dakMetadata.name,
+      'dak.version': dakMetadata.version,
+      'current.date': new Date().toISOString(),
+      'user.customizations': context.userContent
+    };
+    
+    return this.processTemplate(template, resolvedVariables);
   }
 }
 ```
 
-#### 2. API-Driven Configuration:
-```javascript
-// Replace static YAML files with dynamic API calls
-const template = await mcpClient.callMCP('templates.get', { 
-  templateId: 'who-dak-standard' 
-});
-```
-
 ### Migration Timeline
 
-#### Phase 1: Service Consolidation (Week 1-2)
-- [ ] Rename `dak-faq-mcp` to `dak-publication-mcp`
-- [ ] Add publication endpoints to MCP service
-- [ ] Create unified service client in frontend
-- [ ] Remove OpenAPI service specification
+#### Phase 1: Implement Publication API Service (Week 1-2)
+- [ ] Create full TypeScript implementation for OpenAPI specification
+- [ ] Implement core REST endpoints (templates, variables, content, publication)
+- [ ] Add integration layer for MCP service communication
+- [ ] Set up development environment and testing framework
 
-#### Phase 2: YAML Elimination (Week 2-3)  
-- [ ] Convert YAML configs to JSON schemas
-- [ ] Implement dynamic configuration via MCP endpoints
-- [ ] Remove js-yaml dependency from service
-- [ ] Update frontend to use API-driven configuration
+#### Phase 2: Service Integration (Week 2-3)  
+- [ ] Implement MCP ↔ REST API integration patterns
+- [ ] Create unified frontend service client
+- [ ] Convert YAML configurations to REST API endpoints
+- [ ] Implement WYSIWYG content management via REST API
 
-#### Phase 3: Dependency Optimization (Week 3-4)
-- [ ] Audit frontend dependencies for consolidation opportunities
-- [ ] Implement native alternatives where possible
-- [ ] Bundle size optimization
-- [ ] Performance testing and validation
+#### Phase 3: YAML Elimination & Frontend Integration (Week 3-4)
+- [ ] Replace all static YAML files with dynamic API calls
+- [ ] Update frontend to use dual service architecture
+- [ ] Implement real-time WYSIWYG editing with API persistence
+- [ ] Add comprehensive error handling and fallback mechanisms
 
-#### Phase 4: Integration Testing (Week 4)
-- [ ] End-to-end testing of consolidated architecture
-- [ ] Performance benchmarking
-- [ ] Documentation updates
-- [ ] Production deployment validation
+#### Phase 4: Testing & Optimization (Week 4)
+- [ ] End-to-end testing of dual service integration
+- [ ] Performance optimization and caching strategies
+- [ ] Security review and authentication implementation
+- [ ] Documentation updates and deployment guides
 
 ## Tool Utilization Analysis
 
@@ -283,66 +326,133 @@ const template = await mcpClient.callMCP('templates.get', {
 - @uiw/react-md-editor: Markdown editing
 ```
 
-### Consolidation Opportunities:
-
-#### 1. Validation Libraries
+#### 4. MCP Service (Leverage & Extend)
 ```javascript
-// Current: Multiple validation approaches
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
-
-// Proposed: Unified validation via MCP service
-const validation = await mcpClient.validateSchema(data, schema);
+// Existing working MCP implementation
+- FAQ question processing
+- DAK metadata extraction
+- AI content generation capabilities
+- Proven MCP protocol implementation
 ```
 
-#### 2. Utility Libraries
-```javascript
-// Current: Multiple utility libraries
-import DOMPurify from 'dompurify';
-import html2canvas from 'html2canvas';
+### Service Specialization Opportunities:
 
-// Consider: Built-in browser APIs or consolidated utility service
+#### 1. MCP Service Focus
+```typescript
+// Optimize for AI and FAQ operations
+interface OptimizedMCPService {
+  // Core AI capabilities
+  generateContentSuggestions(context: AIContext): Promise<ContentSuggestions>;
+  processFAQQuestions(questions: FAQQuestion[]): Promise<FAQResult[]>;
+  extractDAKMetadata(repository: string): Promise<DAKMetadata>;
+  
+  // Remove: Direct publication generation (move to REST API)
+  // Remove: Template management (move to REST API)
+  // Remove: User content storage (move to REST API)
+}
 ```
+
+#### 2. REST API Service Focus
+```typescript
+// Optimize for publication workflows and WYSIWYG
+interface OptimizedPublicationAPI {
+  // Publication management
+  createPublication(config: PublicationConfig): Promise<Publication>;
+  updatePublication(id: string, updates: PublicationUpdates): Promise<Publication>;
+  
+  // Template management
+  createTemplate(template: Template): Promise<TemplateResult>;
+  updateTemplate(id: string, template: Template): Promise<TemplateResult>;
+  
+  // User content (WYSIWYG)
+  saveUserContent(content: UserContent): Promise<ContentResult>;
+  loadUserContent(publicationId: string): Promise<UserContent>;
+  
+  // Integration with MCP for AI content
+  integrateAIContent(suggestions: ContentSuggestions): Promise<IntegrationResult>;
+}
+```
+
+### Tool Consolidation Benefits:
+
+#### 1. Service Specialization
+- **MCP Service**: Optimized for AI operations, FAQ processing, metadata extraction
+- **REST API**: Optimized for publication workflows, template management, WYSIWYG editing
+- **Frontend**: Unified client integrating both services seamlessly
+
+#### 2. Protocol Optimization  
+- **MCP Protocol**: Ideal for AI interactions and real-time FAQ processing
+- **REST Protocol**: Perfect for CRUD operations, file management, user content persistence
+
+#### 3. Independent Scaling
+- **MCP Service**: Scale based on AI/FAQ usage patterns
+- **REST API**: Scale based on publication creation and editing patterns
 
 ## Performance and Scalability Considerations
 
-### Single Service Benefits:
-- **Reduced Network Overhead**: One service connection instead of multiple
-- **Simplified Deployment**: Single service to deploy and maintain
-- **Consistent Error Handling**: Unified error handling patterns
-- **Simplified Authentication**: Single authentication point
+### Dual Service Benefits:
+- **Service Specialization**: Each service optimized for its specific domain
+- **Independent Scaling**: Scale MCP and REST API services based on different usage patterns  
+- **Protocol Optimization**: MCP for AI operations, REST for standard web workflows
+- **Fault Isolation**: Issues in one service don't affect the other
+- **Development Independence**: Teams can work on services independently
+- **Technology Flexibility**: Each service can use optimal technology stack
+
+### Service Communication:
+- **Asynchronous Integration**: Non-blocking service-to-service communication
+- **Caching Layer**: Cache frequently accessed data between services
+- **Circuit Breaker**: Graceful degradation when one service is unavailable
+- **Load Balancing**: Distribute requests across multiple service instances
 
 ### Frontend Optimizations:
 - **Code Splitting**: Lazy load publication components
 - **Bundle Optimization**: Tree shaking and dead code elimination
-- **Caching Strategy**: Service worker for static assets
-- **Performance Monitoring**: Core Web Vitals tracking
+- **Service Workers**: Cache static assets and API responses
+- **Performance Monitoring**: Core Web Vitals tracking across both services
 
 ## Risk Assessment
 
 ### Low Risk:
-- ✅ **MCP Service Extension**: Building on proven, working code
-- ✅ **Frontend Optimization**: Standard React optimization patterns
-- ✅ **YAML Elimination**: Straightforward JSON conversion
+- ✅ **Service Specialization**: Building on proven patterns and existing MCP implementation
+- ✅ **REST API Implementation**: Standard patterns with comprehensive OpenAPI specification
+- ✅ **Frontend Integration**: Well-defined service integration patterns
+- ✅ **YAML Elimination**: Straightforward JSON conversion with API endpoints
 
 ### Medium Risk:
-- ⚠️ **Service Consolidation**: Requires careful migration planning
-- ⚠️ **Dependency Changes**: Need thorough testing of alternatives
+- ⚠️ **Service Integration**: Requires careful design of service-to-service communication
+- ⚠️ **Dual Service Deployment**: Need robust deployment and monitoring for both services
+- ⚠️ **Data Consistency**: Ensure consistency across services for shared data
 
 ### Mitigation Strategies:
-- **Phased Migration**: Implement changes incrementally
-- **Feature Flags**: Toggle between old and new implementations  
-- **Rollback Plan**: Maintain ability to revert changes
-- **Comprehensive Testing**: Unit, integration, and E2E testing
+- **Service Contracts**: Well-defined APIs and service contracts
+- **Integration Testing**: Comprehensive testing of service interactions
+- **Circuit Breakers**: Graceful degradation when services are unavailable
+- **Monitoring & Alerting**: Full observability across both services
+- **Rollback Plan**: Ability to revert changes independently for each service
 
 ## Conclusion
 
-The **Enhanced MCP Architecture** provides the optimal path forward by:
+The **Dual Service Architecture** provides the optimal path forward by:
 
-1. **Leveraging Existing Investment**: Building on the working MCP service
-2. **Reducing Complexity**: Single service architecture eliminates duplication
-3. **Minimizing Dependencies**: Consolidates functionality and reduces maintenance overhead
-4. **Maintaining Standards Compliance**: Preserves WHO SMART Guidelines requirements
-5. **Enabling Future Growth**: Provides foundation for additional AI/ML integrations
+1. **Service Specialization**: Each service optimized for its specific domain (AI/FAQ vs Publication Management)
+2. **Protocol Optimization**: MCP for AI operations, REST for standard web workflows  
+3. **Independent Scaling**: Services can scale based on different usage patterns
+4. **Development Flexibility**: Teams can work on services independently
+5. **Microservices Benefits**: Fault isolation, technology flexibility, and independent deployment
+6. **Maintains Standards Compliance**: Preserves WHO SMART Guidelines requirements
+7. **Future-Proof Architecture**: Foundation for additional specialized services
 
-This approach delivers the WYSIWYG-first publication system while minimizing technical debt and maximizing reuse of existing, proven components.
+### Service Responsibilities Summary:
+
+**MCP Service (dak-faq-mcp)**:
+- FAQ question processing and AI-driven content generation
+- DAK metadata extraction and analysis
+- Real-time AI assistance and content suggestions
+
+**REST API Service (dak-publication-api)**:
+- Publication template management and WYSIWYG editing
+- User content persistence and version management  
+- Publication generation and export workflows
+- Integration orchestration with MCP service
+
+This architecture delivers the WYSIWYG-first publication system while maintaining service specialization, enabling independent scaling, and providing a foundation for future microservices expansion.
