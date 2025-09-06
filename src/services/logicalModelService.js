@@ -83,7 +83,13 @@ class LogicalModelService {
 
             for (const file of fshFiles) {
               const content = await githubService.getFileContent(user, repo, file.path, branch);
-              const models = this.parseFSHForLogicalModels(content, file.path);
+              // Pass file metadata including html_url for GitHub links
+              const models = this.parseFSHForLogicalModels(content, file.path, {
+                user,
+                repo,
+                branch,
+                html_url: file.html_url || `https://github.com/${user}/${repo}/blob/${branch}/${file.path}`
+              });
               if (models.length > 0) {
                 console.log(`🎯 Found ${models.length} logical models in ${file.path}: ${models.map(m => m.id).join(', ')}`);
                 logicalModels.push(...models);
@@ -108,9 +114,10 @@ class LogicalModelService {
    * Parse FSH content to extract logical model definitions
    * @param {string} fshContent - FSH file content
    * @param {string} filePath - Path to the FSH file
+   * @param {Object} fileMetadata - File metadata including GitHub URLs
    * @returns {Array} Array of logical models found in the content
    */
-  parseFSHForLogicalModels(fshContent, filePath) {
+  parseFSHForLogicalModels(fshContent, filePath, fileMetadata = {}) {
     const logicalModels = [];
     const lines = fshContent.split('\n');
     let currentModel = null;
@@ -136,7 +143,12 @@ class LogicalModelService {
           description: '',
           elements: [],
           filePath: filePath,
-          type: 'LogicalModel'
+          type: 'LogicalModel',
+          // Add GitHub metadata for creating links
+          html_url: fileMetadata.html_url,
+          user: fileMetadata.user,
+          repo: fileMetadata.repo,
+          branch: fileMetadata.branch
         };
         inModel = true;
         continue;

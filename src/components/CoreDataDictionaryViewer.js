@@ -662,7 +662,22 @@ const CoreDataDictionaryViewerContent = () => {
                         {model.description && (
                           <p className="model-description">{model.description}</p>
                         )}
-                        <p className="model-source">Source: <code>{model.filePath}</code></p>
+                        <p className="model-source">
+                          Source: 
+                          {model.html_url ? (
+                            <a 
+                              href={model.html_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="source-link"
+                              title="View source file on GitHub"
+                            >
+                              {model.filePath}
+                            </a>
+                          ) : (
+                            <code>{model.filePath}</code>
+                          )}
+                        </p>
                       </div>
                       <div className="model-actions">
                         <button 

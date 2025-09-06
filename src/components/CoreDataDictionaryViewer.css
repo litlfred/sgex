@@ -848,6 +848,22 @@
   font-size: 0.8rem;
 }
 
+.model-info .model-source .source-link {
+  color: var(--who-blue, #0078d4);
+  text-decoration: none;
+  font-family: 'Consolas', 'Monaco', monospace;
+  background: var(--who-bg-light, #e9ecef);
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  margin-left: 0.5rem;
+  transition: all 0.2s;
+}
+
+.model-info .model-source .source-link:hover {
+  background: var(--who-blue-light, #e7f3ff);
+  color: var(--who-blue-dark, #004578);
+}
+
 .model-info .model-source code {
   background: var(--who-bg-light, #f1f3f4);
   padding: 0.1rem 0.3rem;

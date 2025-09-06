@@ -1101,11 +1101,9 @@ class QuestionnaireErrorBoundary extends Component {
 
 const QuestionnaireEditor = () => {
   return (
-    <PageLayout pageName="questionnaire-editor">
-      <QuestionnaireErrorBoundary>
-        <QuestionnaireEditorContent />
-      </QuestionnaireErrorBoundary>
-    </PageLayout>
+    <QuestionnaireErrorBoundary>
+      <QuestionnaireEditorContent />
+    </QuestionnaireErrorBoundary>
   );
 };
 
