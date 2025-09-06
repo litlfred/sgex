@@ -4,6 +4,7 @@ import './i18n'; // Initialize i18n
 import { generateLazyRoutes } from './utils/lazyRouteUtils';
 import { initializeTheme } from './utils/themeManager';
 import logger from './utils/logger';
+import './styles/TinyMCEEditor.css'; // TinyMCE styles
 
 function App() {
   const appLogger = logger.getLogger('App');
