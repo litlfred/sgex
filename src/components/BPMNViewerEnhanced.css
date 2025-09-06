@@ -100,7 +100,6 @@
   background: var(--who-card-bg, #ffffff);
   border-radius: 8px;
   box-shadow: 0 4px 20px var(--who-shadow-light, rgba(0, 0, 0, 0.1));
-  overflow: hidden;
 }
 
 .viewer-toolbar {

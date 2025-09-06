@@ -92,19 +92,13 @@ class DAKValidationService {
    */
   async checkRepositoryExists(owner, repo) {
     try {
-      // Use the same approach as githubService - get the octokit instance
-      const octokit = githubService.isAuth() ? githubService.octokit : null;
-      
-      if (!octokit) {
-        // In unauthenticated mode, we can't reliably check repository existence
+      // Use githubService.getRepository for consistent error handling
+      if (!githubService.isAuth()) {
         console.log(`Cannot check repository existence for ${owner}/${repo} - not authenticated`);
         return false;
       }
 
-      await octokit.rest.repos.get({
-        owner,
-        repo
-      });
+      await githubService.getRepository(owner, repo);
       
       console.log(`Repository ${owner}/${repo} exists on GitHub`);
       return true;
@@ -129,11 +123,8 @@ class DAKValidationService {
    */
   async fetchSushiConfig(owner, repo, branch = 'main') {
     try {
-      // Use the same approach as githubService - get the octokit instance
-      const octokit = githubService.isAuth() ? githubService.octokit : null;
-      
-      if (!octokit) {
-        // In unauthenticated mode, we can't fetch file contents reliably
+      // Check if authenticated - use githubService for consistency
+      if (!githubService.isAuth()) {
         console.log(`Cannot fetch sushi-config.yaml for ${owner}/${repo} - not authenticated`);
         return null;
       }
@@ -143,21 +134,16 @@ class DAKValidationService {
       
       for (const branchName of branchesToTry) {
         try {
-          const { data } = await octokit.rest.repos.getContent({
-            owner,
-            repo,
-            path: 'sushi-config.yaml',
-            ref: branchName
-          });
+          // Use githubService.getFileContent for consistent error handling and base64 decoding
+          const content = await githubService.getFileContent(owner, repo, 'sushi-config.yaml', branchName);
           
-          if (data.type === 'file' && data.content) {
-            // Decode base64 content
-            const content = decodeURIComponent(escape(atob(data.content)));
+          if (content) {
             console.log(`Found sushi-config.yaml in ${owner}/${repo} on branch ${branchName}`);
             return content;
           }
         } catch (branchError) {
-          console.log(`sushi-config.yaml not found on branch ${branchName} for ${owner}/${repo}:`, branchError.status === 404 ? 'File not found' : branchError.message);
+          console.log(`sushi-config.yaml not found on branch ${branchName} for ${owner}/${repo}:`, 
+            branchError.message.includes('File not found') ? 'File not found' : branchError.message);
           continue;
         }
       }

@@ -33,7 +33,6 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
   background: #f8f9fa;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -181,6 +180,13 @@ body:has(.decision-support-view.enhanced-fullwidth) .page-breadcrumb {
   height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* Main view container - ensure it can scroll properly */
+.decision-support-view .view-main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Section Toggle Tabs */

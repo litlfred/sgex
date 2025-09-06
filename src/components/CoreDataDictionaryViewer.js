@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
+import logicalModelService from '../services/logicalModelService';
 import { PageLayout, useDAKParams } from './framework';
 
 const CoreDataDictionaryViewer = () => {
@@ -32,6 +33,9 @@ const CoreDataDictionaryViewerContent = () => {
   const [dakTableSearch, setDakTableSearch] = useState('');
   const [hasPublishedDak, setHasPublishedDak] = useState(false);
   const [checkingPublishedDak, setCheckingPublishedDak] = useState(false);
+  const [logicalModels, setLogicalModels] = useState([]);
+  const [loadingLogicalModels, setLoadingLogicalModels] = useState(false);
+  const [aliasesFshFile, setAliasesFshFile] = useState(null);
 
   // Generate base URL for IG Publisher artifacts
   const getBaseUrl = useCallback((branchName) => {
@@ -137,15 +141,26 @@ const CoreDataDictionaryViewerContent = () => {
             currentBranch
           );
 
-          // Filter for .fsh files
+          // Filter for .fsh files, excluding Aliases.fsh (will be shown in Publications section)
           const fshFilesList = fshDirContents
-            .filter(file => file.name.endsWith('.fsh') && file.type === 'file')
+            .filter(file => file.name.endsWith('.fsh') && file.type === 'file' && file.name.toLowerCase() !== 'aliases.fsh')
             .map(file => ({
               name: file.name,
               path: file.path,
               download_url: file.download_url,
               html_url: file.html_url
             }));
+
+          // Separately track Aliases.fsh for Publications section
+          const aliasesFsh = fshDirContents.find(file => file.name.toLowerCase() === 'aliases.fsh' && file.type === 'file');
+          if (aliasesFsh) {
+            setAliasesFshFile({
+              name: aliasesFsh.name,
+              path: aliasesFsh.path,
+              download_url: aliasesFsh.download_url,
+              html_url: aliasesFsh.html_url
+            });
+          }
 
           setFshFiles(fshFilesList);
         } catch (err) {
@@ -218,8 +233,6 @@ const CoreDataDictionaryViewerContent = () => {
           const baseUrl = getBaseUrl(currentBranch);
           const dakExists = await checkPublishedDakExists(baseUrl);
           setHasPublishedDak(dakExists);
-        } else {
-          setHasPublishedDak(false);
         }
 
       } catch (err) {
@@ -232,6 +245,77 @@ const CoreDataDictionaryViewerContent = () => {
 
     fetchFshFiles();
   }, [repository, branch, user, repo, getBaseUrl, parseDakFshConcepts]);
+
+  // Separate effect for loading logical models asynchronously
+  useEffect(() => {
+    const detectLogicalModelsAsync = async () => {
+      // Support both URL params and state-based data
+      const currentRepository = repository;
+      const currentBranch = branch;
+      const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
+      const currentRepo = repo || repository?.name;
+      
+      console.log('🔍 Logical Models Detection - Effect triggered:', {
+        loading,
+        repository: !!repository,
+        branch,
+        user,
+        repo,
+        currentUser,
+        currentRepo,
+        currentBranch
+      });
+      
+      if ((!currentRepository && (!currentUser || !currentRepo)) || !currentBranch) {
+        console.log('❌ Logical Models Detection - Missing required params, skipping:', {
+          hasRepository: !!currentRepository,
+          hasUser: !!currentUser,
+          hasRepo: !!currentRepo,
+          hasBranch: !!currentBranch
+        });
+        return;
+      }
+
+      // Only start loading logical models after main loading is complete
+      if (loading) {
+        console.log('⏳ Logical Models Detection - Main loading still in progress, waiting...');
+        return;
+      }
+
+      console.log('🚀 Logical Models Detection - Starting detection for:', {
+        user: currentUser,
+        repo: currentRepo,
+        branch: currentBranch
+      });
+
+      setLoadingLogicalModels(true);
+      try {
+        const baseUrl = getBaseUrl(currentBranch);
+        console.log('🌐 Logical Models Detection - Base URL:', baseUrl);
+        
+        const detectedModels = await logicalModelService.detectLogicalModels(
+          baseUrl, 
+          currentUser, 
+          currentRepo, 
+          currentBranch
+        );
+        
+        console.log('✅ Logical Models Detection - Completed successfully:', {
+          modelsFound: detectedModels.length,
+          models: detectedModels.map(m => `${m.id} (${m.title || m.name})`)
+        });
+        
+        setLogicalModels(detectedModels);
+      } catch (error) {
+        console.warn('❌ Error detecting logical models:', error);
+        setLogicalModels([]);
+      } finally {
+        setLoadingLogicalModels(false);
+      }
+    };
+
+    detectLogicalModelsAsync();
+  }, [loading, repository, branch, user, repo, getBaseUrl]);
 
   // Fetch file content for modal display
   const handleViewSource = async (file) => {
@@ -262,6 +346,37 @@ const CoreDataDictionaryViewerContent = () => {
     setShowModal(false);
     setSelectedFile(null);
     setFileContent('');
+  };
+
+  // Handle creating questionnaire from logical model
+  const handleDraftQuestionnaireFromModel = async (logicalModel) => {
+    try {
+      // Generate questionnaire from logical model
+      const questionnaire = logicalModelService.generateQuestionnaireFromLogicalModel(logicalModel, {
+        questionnaireId: `questionnaire-${logicalModel.id.toLowerCase()}`,
+        title: `Data Collection for ${logicalModel.title || logicalModel.name}`,
+        description: `Questionnaire based on ${logicalModel.title || logicalModel.name} logical model for data collection`,
+        prefix: 'lm'
+      });
+
+      // Navigate to questionnaire editor with pre-populated content
+      const questionnaireEditorPath = branch ? 
+        `/questionnaire-editor/${user}/${repo}/${branch}` : 
+        `/questionnaire-editor/${user}/${repo}`;
+      
+      navigate(questionnaireEditorPath, {
+        state: {
+          profile,
+          repository,
+          branch,
+          prePopulatedQuestionnaire: questionnaire,
+          sourceLogicalModel: logicalModel
+        }
+      });
+    } catch (error) {
+      console.error('Error generating questionnaire from logical model:', error);
+      alert('Error generating questionnaire from logical model. Please try again.');
+    }
   };
 
   if (!profile || !repository) {
@@ -484,6 +599,42 @@ const CoreDataDictionaryViewerContent = () => {
                 <h3>Publications</h3>
                 <p>Published FHIR Implementation Guide artifacts generated by the IG Publisher</p>
                 
+                {/* Aliases.fsh - Publication Configuration */}
+                {aliasesFshFile && (
+                  <div className="subsection aliases-section">
+                    <h4>Publication Configuration</h4>
+                    <div className="aliases-info">
+                      <div className="fsh-file-card aliases-card">
+                        <div className="file-header">
+                          <div className="file-icon">⚙️</div>
+                          <div className="file-name">{aliasesFshFile.name}</div>
+                        </div>
+                        <div className="file-description">
+                          <p>Contains aliases and configuration settings used during FHIR IG publication</p>
+                        </div>
+                        <div className="file-actions">
+                          <button 
+                            className="action-btn primary"
+                            onClick={() => handleViewSource(aliasesFshFile)}
+                            title="View Aliases.fsh source code with syntax highlighting"
+                          >
+                            View Source
+                          </button>
+                          <a 
+                            href={aliasesFshFile.html_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="action-btn secondary"
+                            title="View Aliases.fsh source on GitHub"
+                          >
+                            GitHub ↗
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {branches.sort().map((branchName) => (
                   <div key={branchName} className="branch-publication">
                     <h4>Branch: <code>{branchName}</code></h4>
@@ -527,10 +678,114 @@ const CoreDataDictionaryViewerContent = () => {
             ) : (
               <div className="section no-publications-section right-column">
                 <h3>Publications</h3>
+                
+                {/* Show Aliases.fsh even when no gh-pages branch exists */}
+                {aliasesFshFile && (
+                  <div className="subsection aliases-section">
+                    <h4>Publication Configuration</h4>
+                    <div className="aliases-info">
+                      <div className="fsh-file-card aliases-card">
+                        <div className="file-header">
+                          <div className="file-icon">⚙️</div>
+                          <div className="file-name">{aliasesFshFile.name}</div>
+                        </div>
+                        <div className="file-description">
+                          <p>Contains aliases and configuration settings for FHIR IG publication</p>
+                        </div>
+                        <div className="file-actions">
+                          <button 
+                            className="action-btn primary"
+                            onClick={() => handleViewSource(aliasesFshFile)}
+                            title="View Aliases.fsh source code with syntax highlighting"
+                          >
+                            View Source
+                          </button>
+                          <a 
+                            href={aliasesFshFile.html_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="action-btn secondary"
+                            title="View Aliases.fsh source on GitHub"
+                          >
+                            GitHub ↗
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="no-gh-pages-message">
                   <p>📋 No published artifacts available</p>
                   <p>This repository does not have a <code>gh-pages</code> branch for publishing FHIR Implementation Guide artifacts.</p>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Logical Models Section - Independent of Publications */}
+          <div className="section logical-models-section">
+            <h3>Logical Models</h3>
+            <p>FHIR Logical Models detected from FSH files in this repository</p>
+            
+            {loadingLogicalModels ? (
+              <div className="loading-indicator">
+                <span>🔍 Fetching Logical Models...</span>
+              </div>
+            ) : logicalModels.length > 0 ? (
+              <div className="logical-models-content">
+                <div className="models-summary">
+                  <span className="models-count">Found {logicalModels.length} logical model{logicalModels.length === 1 ? '' : 's'}:</span>
+                </div>
+                
+                <div className="models-list">
+                  {logicalModels.map((model) => (
+                    <div key={model.id} className="model-item">
+                      <div className="model-info">
+                        <h4 className="model-title">{model.title || model.name}</h4>
+                        <p className="model-id">ID: <code>{model.id}</code></p>
+                        {model.description && (
+                          <p className="model-description">{model.description}</p>
+                        )}
+                        <p className="model-source">
+                          Source: 
+                          {model.html_url ? (
+                            <a 
+                              href={model.html_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="source-link"
+                              title="View source file on GitHub"
+                            >
+                              {model.filePath}
+                            </a>
+                          ) : (
+                            <code>{model.filePath}</code>
+                          )}
+                        </p>
+                      </div>
+                      <div className="model-actions">
+                        <button 
+                          onClick={() => handleDraftQuestionnaireFromModel(model)}
+                          className="btn btn-primary draft-questionnaire-btn"
+                        >
+                          📝 Draft Questionnaire
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="no-models-message">
+                <p>📋 No logical models found</p>
+                <p>Logical models should be defined in FSH files in directories like:</p>
+                <ul>
+                  <li><code>input/fsh/</code></li>
+                  <li><code>input/fsh/models/</code></li>
+                  <li><code>input/fsh/logicalmodels/</code></li>
+                  <li><code>input/fsh/profiles/</code></li>
+                </ul>
               </div>
             )}
           </div>
