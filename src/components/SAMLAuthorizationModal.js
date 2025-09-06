@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import githubService from '../services/githubService';
 import './SAMLAuthorizationModal.css';
 
 /**
@@ -12,8 +13,91 @@ const SAMLAuthorizationModal = ({
   onSkip 
 }) => {
   const [authorizationAttempted, setAuthorizationAttempted] = useState(false);
+  const [checkingCompletion, setCheckingCompletion] = useState(false);
+  const [completionCheckCount, setCompletionCheckCount] = useState(0);
+  const checkInterval = useRef(null);
+
+  // Clean up interval on unmount or when modal closes
+  useEffect(() => {
+    return () => {
+      if (checkInterval.current) {
+        clearInterval(checkInterval.current);
+        checkInterval.current = null;
+      }
+    };
+  }, []);
+
+  // Clean up when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      if (checkInterval.current) {
+        clearInterval(checkInterval.current);
+        checkInterval.current = null;
+      }
+      setCheckingCompletion(false);
+      setCompletionCheckCount(0);
+    }
+  }, [isOpen]);
+
+  // Add global escape key listener
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleGlobalKeyDown);
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen || !samlErrorInfo) return null;
+
+  const startSAMLCompletionCheck = () => {
+    setCheckingCompletion(true);
+    setCompletionCheckCount(0);
+    
+    console.log('Starting SAML completion check for organization:', samlErrorInfo.organization);
+    
+    // Check for SAML completion every 3 seconds, up to 20 times (1 minute)
+    checkInterval.current = setInterval(async () => {
+      try {
+        setCompletionCheckCount(prev => prev + 1);
+        
+        // Try to access the organization to see if SAML authorization completed
+        const org = await githubService.getOrganization(samlErrorInfo.organization);
+        
+        if (org && !org.needsSAMLAuth) {
+          console.log('SAML authorization detected as complete for', samlErrorInfo.organization);
+          
+          // Stop checking
+          clearInterval(checkInterval.current);
+          checkInterval.current = null;
+          setCheckingCompletion(false);
+          
+          // Trigger success callback
+          if (onRetry) {
+            onRetry();
+          }
+        }
+      } catch (error) {
+        console.log(`SAML check ${completionCheckCount + 1}: Authorization still pending`);
+        
+        // Stop checking after 20 attempts (1 minute)
+        if (completionCheckCount >= 19) {
+          console.log('SAML completion check timeout - stopping automatic checks');
+          clearInterval(checkInterval.current);
+          checkInterval.current = null;
+          setCheckingCompletion(false);
+        }
+      }
+    }, 3000);
+  };
 
   const handleSAMLAuthorization = () => {
     setAuthorizationAttempted(true);
@@ -24,9 +108,12 @@ const SAMLAuthorizationModal = ({
       organization: samlErrorInfo.organization
     });
     
-    // Navigate to GitHub's SAML authorization page in the same tab
-    // GitHub will redirect back to the select_profile page after authorization
-    window.location.href = samlErrorInfo.authorizationURL;
+    // Open GitHub's SAML authorization page in a new tab to preserve the current page
+    // User can complete SAML authorization and return manually or use browser navigation
+    window.open(samlErrorInfo.authorizationURL, '_blank', 'noopener,noreferrer');
+    
+    // Set up interval to check for SAML completion
+    startSAMLCompletionCheck();
   };
 
   const handleDocumentation = () => {
@@ -53,8 +140,9 @@ const SAMLAuthorizationModal = ({
     }
   };
 
-  const handleOverlayKeyDown = (e) => {
-    if (e.key === 'Escape') {
+  const handleCloseWithKeyboard = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
       onClose();
     }
   };
@@ -63,11 +151,11 @@ const SAMLAuthorizationModal = ({
     <div 
       className="saml-modal-overlay" 
       onClick={handleOverlayClick}
-      onKeyDown={handleOverlayKeyDown}
       role="dialog"
       aria-modal="true"
       aria-labelledby="saml-modal-title"
       tabIndex="-1"
+    >
     >
       <div className="saml-modal">
         <div className="saml-modal-header">
@@ -78,6 +166,7 @@ const SAMLAuthorizationModal = ({
           <button 
             className="close-button" 
             onClick={onClose}
+            onKeyDown={handleCloseWithKeyboard}
             aria-label="Close modal"
           >
             ×
@@ -110,12 +199,24 @@ const SAMLAuthorizationModal = ({
             </ol>
           </div>
 
-          {authorizationAttempted && (
+          {(authorizationAttempted || checkingCompletion) && (
             <div className="saml-post-auth">
               <div className="success-note">
                 <span className="success-icon">✅</span>
-                <span>Redirecting to GitHub for authorization. You'll return here automatically after completion.</span>
+                <span>
+                  SAML authorization opened in new tab. 
+                  {checkingCompletion ? 
+                    ` Checking for completion... (${completionCheckCount}/20)` : 
+                    ' Complete the authorization and return here.'
+                  }
+                </span>
               </div>
+              {checkingCompletion && (
+                <div className="checking-status">
+                  <div className="spinner-small"></div>
+                  <span>Automatically checking for SAML completion...</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -123,15 +224,16 @@ const SAMLAuthorizationModal = ({
             <button 
               className="saml-btn primary"
               onClick={handleSAMLAuthorization}
-              disabled={authorizationAttempted}
+              disabled={authorizationAttempted || checkingCompletion}
             >
-              {authorizationAttempted ? '✅ Authorization Started' : '🔓 Authorize SAML'}
+              {(authorizationAttempted || checkingCompletion) ? '✅ Authorization Started' : '🔓 Authorize SAML'}
             </button>
 
-            {authorizationAttempted && (
+            {(authorizationAttempted || checkingCompletion) && (
               <button 
                 className="saml-btn success"
                 onClick={handleRetryAfterAuth}
+                disabled={checkingCompletion}
               >
                 🔄 Retry After Authorization
               </button>

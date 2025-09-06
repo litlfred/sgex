@@ -158,6 +158,33 @@
   flex-shrink: 0;
 }
 
+.checking-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 8px;
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e3f2fd;
+  border-top: 2px solid #0d47a1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .saml-actions {
   display: flex;
   flex-direction: column;
