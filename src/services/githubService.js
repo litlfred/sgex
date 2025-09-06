@@ -365,6 +365,29 @@ class GitHubService {
       });
       return data;
     } catch (error) {
+      // Enhanced error handling for SAML enforcement
+      const errorMessage = error.message || '';
+      const lowerMessage = errorMessage.toLowerCase();
+      
+      // Check for various SAML-related error patterns
+      const isSAMLRelated = error.status === 403 && (
+        lowerMessage.includes('saml enforcement') ||
+        lowerMessage.includes('saml single sign-on') ||
+        lowerMessage.includes('must grant your personal access token access to this organization') ||
+        lowerMessage.includes('resource protected by organization') ||
+        // Handle cases where the error message might be truncated or different
+        (lowerMessage.includes('forbidden') && orgLogin === 'WorldHealthOrganization')
+      );
+      
+      if (isSAMLRelated) {
+        const samlError = new Error(`SAML authorization required for organization ${orgLogin}`);
+        samlError.isSAMLError = true;
+        samlError.organization = orgLogin;
+        samlError.originalError = error;
+        samlError.status = error.status;
+        throw samlError;
+      }
+      
       console.error(`Failed to fetch organization ${orgLogin}:`, error);
       throw error;
     }
@@ -452,7 +475,14 @@ class GitHubService {
         isWHO: true
       };
     } catch (error) {
-      console.warn('Could not fetch WHO organization data from API, using fallback:', error);
+      // Check if this is a SAML error and re-throw it
+      if (error.isSAMLError) {
+        console.log('SAML authorization required for WHO organization');
+        throw error; // Re-throw to preserve SAML error context
+      }
+      
+      // For other errors, use fallback but log appropriately
+      console.warn('Could not fetch WHO organization data from API, using fallback:', error.message);
       // Return hardcoded fallback data
       return {
         id: 'who-organization',

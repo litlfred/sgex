@@ -873,6 +873,86 @@ class HelpContentService {
             }
           ]
         }
+      ],
+      
+      'saml-authorization': [
+        {
+          id: 'saml-setup-guide',
+          title: 'SAML Authorization for GitHub Organizations',
+          badge: '/sgex/cat-paw-lock-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'What is SAML Authorization?',
+              content: `
+                <p>Some organizations (like the WHO) require SAML Single Sign-On authentication to access their GitHub resources. This adds an extra layer of security for organizational data.</p>
+                <div class="help-tip">
+                  <strong>🔒 Security:</strong> SAML ensures that only authorized users with proper organizational credentials can access sensitive repositories.
+                </div>
+              `
+            },
+            {
+              title: 'Why Do I Need SAML Authorization?',
+              content: `
+                <p>Your Personal Access Token needs explicit permission to access SAML-protected organizations. This is a GitHub security feature that prevents unauthorized access.</p>
+                <h4>When SAML is Required:</h4>
+                <ul>
+                  <li><strong>Editing DAK repositories:</strong> Making changes requires full access</li>
+                  <li><strong>Private repositories:</strong> Viewing private organizational content</li>
+                  <li><strong>Organization settings:</strong> Accessing administrative features</li>
+                </ul>
+                <h4>When SAML is Optional:</h4>
+                <ul>
+                  <li><strong>Public repositories:</strong> Reading public content works without SAML</li>
+                  <li><strong>Browsing:</strong> Exploring public organizational information</li>
+                </ul>
+              `
+            },
+            {
+              title: 'How to Authorize Your Token',
+              content: `
+                <h4>Step 1: Click "Authorize SAML"</h4>
+                <p>When you see the SAML authorization modal, click the "🔓 Authorize SAML" button to open GitHub's authorization page.</p>
+                
+                <h4>Step 2: Sign In (if needed)</h4>
+                <p>You may be prompted to sign in to your organization's identity provider (like Microsoft Azure, Okta, etc.).</p>
+                
+                <h4>Step 3: Grant Permission</h4>
+                <p>On GitHub's authorization page, click "Authorize" to grant your Personal Access Token access to the organization.</p>
+                
+                <h4>Step 4: Return to SGEX</h4>
+                <p>Come back to SGEX and click "🔄 Retry After Authorization" to continue your work.</p>
+                
+                <div class="help-tip">
+                  <strong>⏱️ Time Limit:</strong> SAML authorization may expire periodically and need to be renewed.
+                </div>
+              `
+            },
+            {
+              title: 'Troubleshooting SAML Issues',
+              content: `
+                <h4>Authorization Not Working?</h4>
+                <ul>
+                  <li><strong>Check Organization Membership:</strong> Ensure you're a member of the organization</li>
+                  <li><strong>Contact Admin:</strong> Your organization admin may need to approve your access</li>
+                  <li><strong>Token Permissions:</strong> Verify your PAT has 'repo' and 'read:org' scopes</li>
+                  <li><strong>Browser Issues:</strong> Try clearing cookies or using an incognito window</li>
+                </ul>
+                
+                <h4>Still Having Problems?</h4>
+                <ul>
+                  <li><strong>Organization Policies:</strong> Some orgs have strict access policies</li>
+                  <li><strong>Identity Provider:</strong> Issues with your company's SSO system</li>
+                  <li><strong>GitHub Status:</strong> Check if GitHub is experiencing service issues</li>
+                </ul>
+                
+                <div class="help-tip">
+                  <strong>💡 Pro Tip:</strong> You can still work with SGEX using public repositories and local staging even without SAML authorization.
+                </div>
+              `
+            }
+          ]
+        }
       ]
     };
   }

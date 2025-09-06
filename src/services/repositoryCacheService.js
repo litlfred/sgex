@@ -8,10 +8,13 @@ import logger from '../utils/logger';
 class RepositoryCacheService {
   constructor() {
     this.CACHE_KEY_PREFIX = 'sgex_repo_cache_';
+    this.PROFILE_CACHE_KEY_PREFIX = 'sgex_profile_cache_';
     this.CACHE_EXPIRY_HOURS = 24; // Cache expires after 24 hours
+    this.PROFILE_CACHE_EXPIRY_MINUTES = 5; // Profile cache expires after 5 minutes
     this.logger = logger.getLogger('RepositoryCacheService');
     this.logger.debug('RepositoryCacheService initialized', { 
-      cacheExpiryHours: this.CACHE_EXPIRY_HOURS 
+      cacheExpiryHours: this.CACHE_EXPIRY_HOURS,
+      profileCacheExpiryMinutes: this.PROFILE_CACHE_EXPIRY_MINUTES
     });
   }
 
@@ -24,12 +27,14 @@ class RepositoryCacheService {
   }
 
   /**
-   * Check if cached data is stale (older than 24 hours)
+   * Check if cached data is stale (older than 24 hours for repos, 5 minutes for profiles)
    */
-  isStale(timestamp) {
+  isStale(timestamp, isProfile = false) {
     const now = Date.now();
     const cacheAge = now - timestamp;
-    const maxAge = this.CACHE_EXPIRY_HOURS * 60 * 60 * 1000; // 24 hours in milliseconds
+    const maxAge = isProfile 
+      ? this.PROFILE_CACHE_EXPIRY_MINUTES * 60 * 1000  // 5 minutes in milliseconds
+      : this.CACHE_EXPIRY_HOURS * 60 * 60 * 1000; // 24 hours in milliseconds
     return cacheAge > maxAge;
   }
 
@@ -162,6 +167,123 @@ class RepositoryCacheService {
       repositoryCount: cached.repositories.length,
       timestamp: new Date(cached.timestamp).toISOString()
     };
+  }
+
+  /**
+   * Generate profile cache key based on authentication state
+   */
+  getProfileCacheKey(isAuthenticated = false) {
+    return `${this.PROFILE_CACHE_KEY_PREFIX}${isAuthenticated ? 'auth' : 'unauth'}`;
+  }
+
+  /**
+   * Get cached profile data (user + organizations)
+   * Returns null if cache doesn't exist or is stale
+   */
+  getCachedProfile(isAuthenticated = false) {
+    try {
+      const cacheKey = this.getProfileCacheKey(isAuthenticated);
+      this.logger.cache('get', cacheKey);
+      
+      const cachedData = localStorage.getItem(cacheKey);
+      
+      if (!cachedData) {
+        this.logger.cache('miss', cacheKey, 'No cached profile data found');
+        return null;
+      }
+
+      const parsed = JSON.parse(cachedData);
+      
+      // Check if cache is stale (5 minutes for profiles)
+      if (this.isStale(parsed.timestamp, true)) {
+        // Remove stale cache
+        this.logger.cache('expired', cacheKey, { age: Date.now() - parsed.timestamp });
+        localStorage.removeItem(cacheKey);
+        return null;
+      }
+
+      this.logger.cache('hit', cacheKey, { 
+        organizationCount: parsed.organizations?.length || 0,
+        hasUser: !!parsed.user,
+        age: Date.now() - parsed.timestamp
+      });
+
+      return {
+        user: parsed.user,
+        organizations: parsed.organizations,
+        timestamp: parsed.timestamp,
+        isAuthenticated: parsed.isAuthenticated
+      };
+    } catch (error) {
+      const cacheKey = this.getProfileCacheKey(isAuthenticated);
+      this.logger.error('Error reading profile cache', { cacheKey, error: error.message });
+      console.warn('Error reading profile cache:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Cache profile data (user + organizations)
+   */
+  setCachedProfile(user, organizations, isAuthenticated = false) {
+    try {
+      const cacheKey = this.getProfileCacheKey(isAuthenticated);
+      const cacheData = {
+        user,
+        organizations,
+        timestamp: Date.now(),
+        isAuthenticated
+      };
+
+      this.logger.cache('set', cacheKey, { 
+        organizationCount: organizations?.length || 0,
+        hasUser: !!user,
+        isAuthenticated
+      });
+
+      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      return true;
+    } catch (error) {
+      const cacheKey = this.getProfileCacheKey(isAuthenticated);
+      this.logger.error('Error caching profile', { cacheKey, error: error.message });
+      console.warn('Error caching profile:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Clear profile cache for specific authentication state
+   */
+  clearProfileCache(isAuthenticated = false) {
+    try {
+      const cacheKey = this.getProfileCacheKey(isAuthenticated);
+      this.logger.cache('clear', cacheKey, { isAuthenticated });
+      localStorage.removeItem(cacheKey);
+      return true;
+    } catch (error) {
+      const cacheKey = this.getProfileCacheKey(isAuthenticated);
+      this.logger.error('Error clearing profile cache', { cacheKey, error: error.message });
+      console.warn('Error clearing profile cache:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Clear all profile caches (both authenticated and unauthenticated)
+   */
+  clearAllProfileCaches() {
+    try {
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith(this.PROFILE_CACHE_KEY_PREFIX)) {
+          localStorage.removeItem(key);
+        }
+      });
+      return true;
+    } catch (error) {
+      console.warn('Error clearing all profile caches:', error);
+      return false;
+    }
   }
 }
 
