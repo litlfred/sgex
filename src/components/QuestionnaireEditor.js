@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Component } from 'react';
+import React, { useState, useEffect, Component, useRef } from 'react';
 import { PageLayout, AssetEditorLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
@@ -6,12 +6,82 @@ import stagingGroundService from '../services/stagingGroundService';
 import { useLocation } from 'react-router-dom';
 import './QuestionnaireEditor.css';
 
-// Enhanced Visual Editor Component with hierarchical preview
+// LHC-Forms Integration Component
 const LFormsVisualEditor = ({ questionnaire, onChange }) => {
   const [previewMode, setPreviewMode] = useState(false);
-  const [lformsLoaded] = useState(false); // Set to false since we removed lforms for now
-  const [lformsData] = useState(null);
-  
+  const [lformsLoaded, setLformsLoaded] = useState(false);
+  const [lformsData, setLformsData] = useState(null);
+  const [LForms, setLForms] = useState(null);
+  const lformsContainerRef = useRef(null);
+  // Load LHC-Forms library and initialize
+  useEffect(() => {
+    const loadLForms = async () => {
+      try {
+        // Import LHC-Forms library with fallback handling
+        let LFormsModule;
+        try {
+          LFormsModule = await import('lforms');
+        } catch (importError) {
+          console.warn('Failed to import lforms, falling back to basic preview:', importError);
+          setLformsLoaded(true);
+          return;
+        }
+        
+        console.log('LHC-Forms loaded successfully');
+        setLForms(LFormsModule.default || LFormsModule);
+        setLformsLoaded(true);
+      } catch (error) {
+        console.error('Failed to load LHC-Forms:', error);
+        setLformsLoaded(true); // Still mark as loaded to enable basic functionality
+      }
+    };
+
+    loadLForms();
+  }, []);
+
+  // Convert FHIR Questionnaire to LForms format and render
+  useEffect(() => {
+    if (lformsLoaded && LForms && questionnaire && lformsContainerRef.current && previewMode) {
+      try {
+        // Convert FHIR Questionnaire to LForms format
+        const lformsQuestionnaire = LForms.Util.convertFHIRQuestionnaireToLForms(questionnaire);
+        setLformsData(lformsQuestionnaire);
+        
+        // Clear the container
+        lformsContainerRef.current.innerHTML = '';
+        
+        // Render the form using LHC-Forms
+        LForms.Util.addFormToPage(lformsQuestionnaire, lformsContainerRef.current, {
+          prepopulate: false,
+          displayControl: {
+            questionLayout: 'vertical'
+          }
+        });
+        
+        console.log('LHC-Forms questionnaire rendered successfully');
+      } catch (error) {
+        console.error('Error rendering LHC-Forms questionnaire:', error);
+        // Fallback to custom preview
+        setLformsData(null);
+      }
+    }
+  }, [lformsLoaded, LForms, questionnaire, previewMode]);
+
+  // Get form data from LHC-Forms when user interacts
+  const getLFormsData = () => {
+    if (LForms && lformsContainerRef.current) {
+      try {
+        const formData = LForms.Util.getFormData(lformsContainerRef.current);
+        console.log('LHC-Forms data retrieved:', formData);
+        return formData;
+      } catch (error) {
+        console.error('Error getting LHC-Forms data:', error);
+        return null;
+      }
+    }
+    return null;
+  };
+
   const addQuestion = () => {
     const newItem = {
       linkId: `item-${Date.now()}`,
@@ -180,18 +250,70 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
 
       {previewMode ? (
         <div className="lforms-preview">
-          <h5>Enhanced Hierarchical Preview</h5>
+          <h5>LHC-Forms Interactive Preview</h5>
           
-          <div className="enhanced-questionnaire-preview">
-            <div className="preview-header">
-              <h3>{questionnaire.title || 'Untitled Questionnaire'}</h3>
-              <p>{questionnaire.description || 'No description provided'}</p>
+          {lformsLoaded && LForms ? (
+            <div className="lforms-interactive-preview">
+              <div className="preview-header">
+                <h3>{questionnaire.title || 'Untitled Questionnaire'}</h3>
+                <p>{questionnaire.description || 'No description provided'}</p>
+                <div className="preview-controls">
+                  <button
+                    onClick={() => {
+                      const formData = getLFormsData();
+                      if (formData) {
+                        console.log('Form responses:', formData);
+                        alert('Form data logged to console. Check browser developer tools.');
+                      }
+                    }}
+                    className="get-data-btn"
+                  >
+                    📊 Get Form Data
+                  </button>
+                </div>
+              </div>
+              
+              {/* LHC-Forms Container */}
+              <div 
+                ref={lformsContainerRef} 
+                className="lforms-container"
+                style={{
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  padding: '20px',
+                  minHeight: '200px',
+                  backgroundColor: '#fafafa'
+                }}
+              >
+                {!lformsData && (
+                  <div className="lforms-loading">
+                    <p>Loading interactive form preview...</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="lforms-info">
+                <p><strong>✨ Interactive Preview:</strong> This is a fully functional form powered by LHC-Forms. 
+                   Users can fill out the form and submit responses.</p>
+                <p><strong>🔧 Development:</strong> Use "Get Form Data" to see the current form responses in JSON format.</p>
+              </div>
             </div>
-            
-            <div className="preview-questions">
-              {renderHierarchicalPreview(questionnaire.item || [])}
+          ) : (
+            // Fallback to custom preview when LHC-Forms is not available
+            <div className="enhanced-questionnaire-preview">
+              <div className="preview-header">
+                <h3>{questionnaire.title || 'Untitled Questionnaire'}</h3>
+                <p>{questionnaire.description || 'No description provided'}</p>
+                <div className="fallback-notice">
+                  <strong>⚠️ Fallback Preview:</strong> LHC-Forms is not available. Showing basic preview.
+                </div>
+              </div>
+              
+              <div className="preview-questions">
+                {renderHierarchicalPreview(questionnaire.item || [])}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       ) : (
         <div className="lforms-builder">
@@ -395,16 +517,24 @@ const QuestionnaireEditorContent = () => {
       try {
         setLformsError(null);
         
-        // LForms library loading temporarily disabled
-        // const LForms = await import('lforms');
+        // Load LHC-Forms library with fallback handling
+        let LFormsModule;
+        try {
+          LFormsModule = await import('lforms');
+        } catch (importError) {
+          console.warn('Failed to import lforms in main editor, using fallback:', importError);
+          setLformsLoaded(true);
+          return;
+        }
         
-        // Use built-in editor as fallback for now
-        console.log('Using built-in visual editor');
+        console.log('LHC-Forms loaded successfully in main editor');
+        
+        // LHC-Forms is now available globally
         setLformsLoaded(true);
       } catch (error) {
-        console.error('Failed to load LForms:', error);
-        setLformsError(`Failed to load questionnaire editor: ${error.message}`);
-        // Still mark as loaded to enable basic functionality
+        console.error('Failed to load LHC-Forms in main editor:', error);
+        setLformsError(`Failed to load LHC-Forms library: ${error.message}`);
+        // Still mark as loaded to enable basic functionality with fallback
         console.log('Using built-in visual editor as fallback');
         setLformsLoaded(true);
       }
@@ -1086,7 +1216,7 @@ const QuestionnaireEditorContent = () => {
                       </ul>
                     )}
                     <div className="help-tip">
-                      <strong>✨ New:</strong> Visual questionnaire editor is now available using LHC-Forms!
+                      <strong>✨ LHC-Forms Integration:</strong> Interactive questionnaire preview and editing powered by LHC-Forms library for real-time form rendering and data collection!
                     </div>
                   </div>
                 </div>
