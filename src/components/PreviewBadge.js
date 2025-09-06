@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import githubService from '../services/githubService';
 import githubActionsService from '../services/githubActionsService';
 import WorkflowStatus from './WorkflowStatus';
@@ -7,9 +7,6 @@ import TinyMCECommentEditor from './TinyMCECommentEditor';
 import { lazyLoadReactMarkdown, lazyLoadDOMPurify, lazyLoadRehypeRaw } from '../utils/lazyRouteUtils';
 import './WorkflowStatus.css';
 import './PreviewBadge.css';
-
-// Lazy load MDEditor as fallback to improve initial page responsiveness
-const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
 /**
  * PreviewBadge component that displays when the app is deployed from a non-main branch
@@ -30,8 +27,6 @@ const PreviewBadge = () => {
   const [commentSubmissionStatus, setCommentSubmissionStatus] = useState(null); // 'submitting', 'success', 'error'
   const [expandedComments, setExpandedComments] = useState(new Set());
   const [expandedDescription, setExpandedDescription] = useState(false);
-  const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
-  const [commentEditorMode, setCommentEditorMode] = useState('tinymce'); // 'tinymce' or 'markdown'
   const [workflowStatus, setWorkflowStatus] = useState(null);
   const [workflowLoading, setWorkflowLoading] = useState(false);
   // Always use WorkflowDashboard - removed simple view toggle
@@ -1137,7 +1132,7 @@ const PreviewBadge = () => {
         commentLength: newComment.trim().length,
         prInfo: prInfo?.length || 0,
         canComment,
-        editorMode: commentEditorMode
+        editorMode: 'tinymce'
       });
       
       if (prInfo && prInfo.length > 0) {
@@ -1145,15 +1140,7 @@ const PreviewBadge = () => {
         console.debug('Submitting to PR:', pr.number);
         
         try {
-          // Convert HTML to markdown if using TinyMCE
-          let commentToSubmit = newComment.trim();
-          if (commentEditorMode === 'tinymce') {
-            // For now, submit HTML directly - GitHub supports basic HTML in comments
-            // Could add HTML to markdown conversion here if needed
-            commentToSubmit = newComment.trim();
-          }
-          
-          const submittedComment = await githubService.createPullRequestComment(owner, repo, pr.number, commentToSubmit);
+          const submittedComment = await githubService.createPullRequestComment(owner, repo, pr.number, newComment.trim());
           console.debug('Comment submitted successfully:', submittedComment);
           
           // Set success status
@@ -1170,7 +1157,6 @@ const PreviewBadge = () => {
           }
           
           setNewComment('');
-          setShowMarkdownEditor(false); // Close markdown editor after successful submission
           
           // Clear success status after 3 seconds
           setTimeout(() => setCommentSubmissionStatus(null), 3000);
@@ -1641,97 +1627,17 @@ const PreviewBadge = () => {
                     </div>
                   )}
                   
-                  {/* Editor Mode Toggle */}
-                  <div className="comment-editor-toggle">
-                    <button
-                      className={`editor-mode-btn ${commentEditorMode === 'tinymce' ? 'active' : ''}`}
-                      onClick={() => setCommentEditorMode('tinymce')}
-                      disabled={submittingComment || !canComment}
-                      title="Rich text editor with formatting tools"
-                    >
-                      🎨 Rich Text
-                    </button>
-                    <button
-                      className={`editor-mode-btn ${commentEditorMode === 'markdown' ? 'active' : ''}`}
-                      onClick={() => setCommentEditorMode('markdown')}
-                      disabled={submittingComment || !canComment}
-                      title="Markdown editor for technical content"
-                    >
-                      📝 Markdown
-                    </button>
-                  </div>
-                  
-                  {commentEditorMode === 'tinymce' ? (
-                    <TinyMCECommentEditor
-                      value={newComment}
-                      onChange={setNewComment}
-                      onSubmit={handleCommentSubmit}
-                      onCancel={() => setNewComment('')}
-                      disabled={!canComment}
-                      githubUser={githubService.getCurrentUser()?.login}
-                      contextType="comment"
-                      height={180}
-                      placeholder={canComment ? "Write a comment... Use @ to mention users, # to reference issues" : "Comment form disabled - token permissions required"}
-                    />
-                  ) : !showMarkdownEditor ? (
-                    <div className="comment-form-simple">
-                      <textarea
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        placeholder={canComment ? "Write a comment... (Click 'Advanced Editor' for markdown preview)" : "Comment form disabled - token permissions required"}
-                        rows={3}
-                        disabled={submittingComment || !canComment}
-                      />
-                      <div className="comment-form-actions">
-                        <button
-                          className="advanced-editor-btn"
-                          onClick={() => setShowMarkdownEditor(true)}
-                          disabled={submittingComment || !canComment}
-                        >
-                          📝 Advanced Editor
-                        </button>
-                        <button
-                          className="submit-comment"
-                          onClick={handleCommentSubmit}
-                          disabled={!newComment.trim() || submittingComment || !canComment}
-                        >
-                          {submittingComment ? 'Submitting...' : 'Comment'}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="comment-form-advanced">
-                      <div className="markdown-editor-container">
-                        <Suspense fallback={<div className="loading-spinner">Loading editor...</div>}>
-                          <MDEditor
-                            value={newComment}
-                            onChange={(val) => setNewComment(val || '')}
-                            preview="edit"
-                            height={300}
-                            visibleDragBar={false}
-                            data-color-mode="light"
-                            hideToolbar={submittingComment || !canComment}
-                          />
-                        </Suspense>
-                      </div>
-                      <div className="comment-form-actions">
-                        <button
-                          className="btn-secondary"
-                          onClick={() => setShowMarkdownEditor(false)}
-                          disabled={submittingComment || !canComment}
-                        >
-                          Simple Editor
-                        </button>
-                        <button
-                          className="submit-comment"
-                          onClick={handleCommentSubmit}
-                          disabled={!newComment.trim() || submittingComment || !canComment}
-                        >
-                          {submittingComment ? 'Submitting...' : 'Comment'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <TinyMCECommentEditor
+                    value={newComment}
+                    onChange={setNewComment}
+                    onSubmit={handleCommentSubmit}
+                    onCancel={() => setNewComment('')}
+                    disabled={!canComment}
+                    githubUser={githubService.getCurrentUser()?.login}
+                    contextType="comment"
+                    height={180}
+                    placeholder={canComment ? "Write a comment... Use @ to mention users, # to reference issues" : "Comment form disabled - token permissions required"}
+                  />
                 </div>
               )}
 
