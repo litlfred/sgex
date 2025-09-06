@@ -239,6 +239,26 @@ const SAMLAuthorizationModal = ({
               </button>
             )}
 
+            {(authorizationAttempted || checkingCompletion) && (
+              <button 
+                className="saml-btn secondary"
+                onClick={() => {
+                  console.log('Manual completion verification requested');
+                  // Stop automatic checking
+                  if (checkInterval.current) {
+                    clearInterval(checkInterval.current);
+                    checkInterval.current = null;
+                  }
+                  setCheckingCompletion(false);
+                  // Trigger manual retry
+                  handleRetryAfterAuth();
+                }}
+                title="Click if you completed SAML authorization but it wasn't detected automatically"
+              >
+                ✓ I Completed Authorization
+              </button>
+            )}
+
             {!samlErrorInfo.isRequired && onSkip && (
               <button 
                 className="saml-btn secondary"

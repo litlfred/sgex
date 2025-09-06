@@ -116,24 +116,30 @@ export const detectSAMLReturn = () => {
     return { organization: authorizedOrg, method: 'url_params' };
   }
   
-  // Fallback: Check if user came from GitHub recently and we have localStorage data
+  // Enhanced fallback: Check if user came from GitHub and we have localStorage data
   const referrer = document.referrer;
   const fromGitHub = referrer && referrer.includes('github.com');
   
-  if (fromGitHub) {
+  // Also check localStorage even without GitHub referrer (for manual navigation cases)
+  const checkStoredData = fromGitHub || true; // Always check localStorage as fallback
+  
+  if (checkStoredData) {
     try {
       const storedReturnUrl = localStorage.getItem('saml_return_url');
       const storedOrg = localStorage.getItem('saml_org');
       const storedTimestamp = localStorage.getItem('saml_timestamp');
       
-      // Check if the stored data is recent (within last 10 minutes)
-      const isRecent = storedTimestamp && (Date.now() - parseInt(storedTimestamp)) < 10 * 60 * 1000;
+      // Check if the stored data is recent (within last 15 minutes for more flexibility)
+      const isRecent = storedTimestamp && (Date.now() - parseInt(storedTimestamp)) < 15 * 60 * 1000;
       
       if (storedOrg && isRecent) {
         console.log('SAML return detected via localStorage fallback', {
           organization: storedOrg,
           storedReturnUrl,
-          timestamp: new Date(parseInt(storedTimestamp))
+          timestamp: new Date(parseInt(storedTimestamp)),
+          referrer: referrer,
+          fromGitHub: fromGitHub,
+          method: fromGitHub ? 'localStorage_with_github_referrer' : 'localStorage_manual_return'
         });
         
         // Clear the stored data to prevent repeat processing
@@ -147,7 +153,22 @@ export const detectSAMLReturn = () => {
         currentUrl.searchParams.set('org', storedOrg);
         window.history.replaceState({}, document.title, currentUrl.href);
         
-        return { organization: storedOrg, method: 'localStorage_fallback' };
+        return { 
+          organization: storedOrg, 
+          method: fromGitHub ? 'localStorage_with_github_referrer' : 'localStorage_manual_return',
+          referrer: referrer 
+        };
+      } else if (storedOrg && !isRecent) {
+        console.log('Found old SAML localStorage data, clearing it', {
+          organization: storedOrg,
+          age: storedTimestamp ? (Date.now() - parseInt(storedTimestamp)) / 1000 / 60 : 'unknown',
+          timestamp: storedTimestamp ? new Date(parseInt(storedTimestamp)) : 'unknown'
+        });
+        
+        // Clear old data to prevent confusion
+        localStorage.removeItem('saml_return_url');
+        localStorage.removeItem('saml_org');
+        localStorage.removeItem('saml_timestamp');
       }
     } catch (e) {
       console.warn('Error checking localStorage for SAML return data:', e);

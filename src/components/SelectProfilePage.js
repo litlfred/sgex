@@ -333,7 +333,8 @@ const SelectProfilePage = () => {
       console.log('Detected return from SAML authorization', {
         method: samlReturnInfo?.method,
         organization: authorizedOrg,
-        hasOAuthParams
+        hasOAuthParams,
+        referrer: samlReturnInfo?.referrer
       });
       
       // Clear profile cache to force fresh API calls
@@ -342,6 +343,12 @@ const SelectProfilePage = () => {
       // Clear any existing warning message since user completed authorization
       if (samlReturnInfo) {
         setWarningMessage(null);
+        
+        // Show success message for detected SAML completion
+        if (authorizedOrg) {
+          setWarningMessage(`✅ SAML authorization completed for ${authorizedOrg}! Organization access has been updated.`);
+          setTimeout(() => setWarningMessage(null), 5000); // Clear success message after 5 seconds
+        }
         
         // If SAML was authorized for a specific organization, immediately update the organizations state
         // to remove SAML requirements without waiting for API calls that may still fail during propagation
@@ -407,19 +414,35 @@ const SelectProfilePage = () => {
       ) : (
         <div className="select-profile-content">
         {warningMessage && (
-          <div className="warning-message">
+          <div className={`warning-message ${warningMessage.includes('✅') ? 'success-message' : ''}`}>
             <div className="warning-content">
               <div className="warning-header">
-                <span className="warning-icon">⚠️</span>
+                <span className="warning-icon">{warningMessage.includes('✅') ? '✅' : '⚠️'}</span>
                 <span className="warning-text">{warningMessage}</span>
               </div>
-              <button 
-                className="warning-dismiss" 
-                onClick={handleDismissWarning}
-                aria-label="Dismiss warning"
-              >
-                × Dismiss
-              </button>
+              <div className="warning-actions">
+                {warningMessage.includes('SAML authorization available') && (
+                  <button 
+                    className="warning-action-btn refresh-btn" 
+                    onClick={() => {
+                      console.log('Manual refresh after SAML authorization requested');
+                      repositoryCacheService.clearAllProfileCaches();
+                      fetchUserData(true, 'WorldHealthOrganization'); // Force refresh with SAML override for WHO
+                      setWarningMessage(null);
+                    }}
+                    title="Click if you just completed SAML authorization"
+                  >
+                    🔄 Refresh After SAML
+                  </button>
+                )}
+                <button 
+                  className="warning-dismiss" 
+                  onClick={handleDismissWarning}
+                  aria-label="Dismiss warning"
+                >
+                  × Dismiss
+                </button>
+              </div>
             </div>
           </div>
         )}
