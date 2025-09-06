@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AssetEditorLayout, useDAKParams } from './framework';
-import { createLazyBpmnModeler, createLazyOctokit } from '../utils/lazyRouteUtils';
+import { createLazyBpmnModeler } from '../utils/lazyRouteUtils';
 import githubService from '../services/githubService';
 
 const BPMNEditor = () => {
@@ -194,36 +194,21 @@ const BPMNEditor = () => {
           await githubService.authenticate(profile.token);
         }
         
-        // Get current file to get SHA for update
-        let currentSha = selectedFile.sha;
+        // Get the current branch from the selectedFile or default to 'main'
+        const branch = selectedFile.branch || 'main';
+        
+        // Use githubService.updateFile which handles SHA retrieval and file update centrally
+        const owner = repository.owner?.login || repository.full_name.split('/')[0];
+        const repo = repository.name;
+        
         try {
-          // For SHA retrieval, we still need the raw GitHub API response
-          // githubService.getFileContent returns decoded content, but we need the SHA
-          const octokit = await createLazyOctokit({ auth: profile.token });
-          const { data: currentFile } = await octokit.rest.repos.getContent({
-            owner: repository.owner?.login || repository.full_name.split('/')[0],
-            repo: repository.name,
-            path: selectedFile.path
-          });
-          currentSha = currentFile.sha;
-        } catch (getError) {
-          console.warn('Could not get current file SHA, using provided SHA:', getError);
+          await githubService.updateFile(owner, repo, selectedFile.path, xml, commitMessage, branch);
+          console.log(`BPMN file "${selectedFile.name}" has been successfully saved to GitHub!`);
+        } catch (updateError) {
+          console.error('Failed to update BPMN file:', updateError);
+          setError(`Failed to save BPMN file: ${updateError.message}`);
+          return;
         }
-
-        // Commit the updated BPMN file (githubService doesn't have createOrUpdateFileContents method)
-        const octokit = await createLazyOctokit({ auth: profile.token });
-        await octokit.rest.repos.createOrUpdateFileContents({
-          owner: repository.owner?.login || repository.full_name.split('/')[0],
-          repo: repository.name,
-          path: selectedFile.path,
-          message: commitMessage,
-          content: btoa(xml), // Base64 encode the XML content
-          sha: currentSha,
-          committer: {
-            name: profile.name || profile.login,
-            email: profile.email || `${profile.login}@users.noreply.github.com`
-          }
-        });
 
         console.log('BPMN file committed to GitHub successfully');
         return true;
