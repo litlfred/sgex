@@ -16,7 +16,7 @@
     "bpmn-moddle": "^9.0.3",
     "dompurify": "^3.2.6",
     "html2canvas": "^1.4.1",
-    "i18next": "^25.4.2",
+    "i18next": "^25.5.2",
     "i18next-browser-languagedetector": "^8.2.0",
     "node-fetch": "^3.3.2",
     "react": "^19.1.0",
