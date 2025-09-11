@@ -50,7 +50,14 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
       
       try {
         // Check if we should skip API calls due to rate limiting
-        const shouldSkip = await githubService.shouldSkipApiCalls();
+        let shouldSkip = false;
+        try {
+          shouldSkip = await githubService.shouldSkipApiCalls();
+        } catch (rateLimitError) {
+          console.warn('Rate limit check failed, proceeding with API calls:', rateLimitError);
+          shouldSkip = false; // Default to allowing API calls if check fails
+        }
+        
         if (shouldSkip) {
           console.log('⚡ Skipping fork info fetch due to rate limit protection');
           setLoading(false);

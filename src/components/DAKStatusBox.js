@@ -25,7 +25,14 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
 
     // Check if we should skip API calls due to rate limiting
     try {
-      const shouldSkip = await githubService.shouldSkipApiCalls();
+      let shouldSkip = false;
+      try {
+        shouldSkip = await githubService.shouldSkipApiCalls();
+      } catch (rateLimitError) {
+        console.warn('Rate limit check failed for stats, proceeding with API calls:', rateLimitError);
+        shouldSkip = false; // Default to allowing API calls if check fails
+      }
+      
       if (shouldSkip) {
         console.log('⚡ Skipping repository stats fetch due to rate limit protection');
         return;

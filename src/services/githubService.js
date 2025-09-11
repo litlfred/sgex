@@ -517,25 +517,31 @@ class GitHubService {
 
   // Check if we should skip API calls due to rate limiting
   async shouldSkipApiCalls() {
-    if (this.isAuthenticated) {
-      return false; // Authenticated users have higher limits
-    }
-
     try {
-      const rateLimit = await this.checkRateLimit();
-      const remaining = rateLimit.core.remaining;
-      
-      // For unauthenticated users, be conservative and stop making calls if less than 10 remaining
-      if (remaining < 10) {
-        console.warn(`🚫 Rate limit protection: Only ${remaining} API calls remaining, skipping compatibility checks`);
-        return true;
+      if (this.isAuthenticated) {
+        return false; // Authenticated users have higher limits
       }
-      
-      return false;
+
+      try {
+        const rateLimit = await this.checkRateLimit();
+        const remaining = rateLimit.core.remaining;
+        
+        // For unauthenticated users, be conservative and stop making calls if less than 10 remaining
+        if (remaining < 10) {
+          console.warn(`🚫 Rate limit protection: Only ${remaining} API calls remaining, skipping compatibility checks`);
+          return true;
+        }
+        
+        return false;
+      } catch (rateLimitError) {
+        // If we can't check rate limits, assume we should be conservative for unauthenticated users
+        console.warn('⚠️ Cannot check rate limits, enabling conservative mode for unauthenticated users');
+        return !this.isAuthenticated; // Skip for unauthenticated users when in doubt
+      }
     } catch (error) {
-      // If we can't check rate limits, assume we should be conservative
-      console.warn('⚠️ Cannot check rate limits, enabling conservative mode');
-      return !this.isAuthenticated; // Skip for unauthenticated users when in doubt
+      // Fallback: if everything fails, default to allowing API calls for authenticated users
+      console.warn('Rate limit check completely failed, defaulting to allow API calls:', error);
+      return false; // Default to allowing API calls
     }
   }
 

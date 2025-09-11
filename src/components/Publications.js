@@ -60,15 +60,18 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
         }
 
         // Check if we should skip API calls due to rate limiting
+        let shouldSkip = false;
         try {
-          const shouldSkip = await githubService.shouldSkipApiCalls();
-          if (shouldSkip) {
-            console.log('⚡ Skipping publications data fetch due to rate limit protection');
-            setLoading(false);
-            return;
-          }
-        } catch (rateLimitCheckError) {
-          console.warn('Could not check rate limits for publications, proceeding with caution:', rateLimitCheckError);
+          shouldSkip = await githubService.shouldSkipApiCalls();
+        } catch (rateLimitError) {
+          console.warn('Rate limit check failed for publications, proceeding with API calls:', rateLimitError);
+          shouldSkip = false; // Default to allowing API calls if check fails
+        }
+        
+        if (shouldSkip) {
+          console.log('⚡ Skipping publications data fetch due to rate limit protection');
+          setLoading(false);
+          return;
         }
 
         // Fetch branches (excluding gh-pages)
