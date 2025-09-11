@@ -1,0 +1,18 @@
+{
+  "id": "WorldHealthOrganization.smart-immunizations",
+  "name": "Smart Immunizations",
+  "title": "Smart Immunizations - Digital Adaptation Kit",
+  "description": "WHO SMART Guidelines Digital Adaptation Kit for smart-immunizations",
+  "version": "1.0.0",
+  "owner": "WorldHealthOrganization",
+  "repository": "smart-immunizations",
+  "branch": "main",
+  "canonical": "https://smart.who.int/dak/WorldHealthOrganization/smart-immunizations",
+  "generated": "2025-09-04T18:41:17.201Z",
+  "generator": "SGEX DAK Publication Generator POC v0.1.0",
+  "generatedFiles": [
+    "publication.html",
+    "styles.css"
+  ],
+  "outputPath": "/home/runner/work/sgex/sgex/output/dak-publications/WorldHealthOrganization-smart-immunizations-20250904T184117"
+}
