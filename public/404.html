@@ -271,15 +271,38 @@
             
             // Check if this could be a branch deployment: /sgex/{branch}/{component}/...
             if (isValidComponentOrRoute(component, routeConfig)) {
-              // Valid component, treat as branch deployment (whether branch is deployed or not)
-              var branchPath = '/sgex/' + branch + '/';
-              var routePath = pathSegments.slice(2).join('/');
+              // Valid component - check if branch is deployed
+              var isDeployedBranch = routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(branch);
               
-              // Store branch and repo/org context in session storage if available
-              storeRouteContext(pathSegments);
-              
-              redirectToSPA(branchPath, routePath);
-              return;
+              if (isDeployedBranch) {
+                // Branch has its own deployment - route to it
+                var branchPath = '/sgex/' + branch + '/';
+                var routePath = pathSegments.slice(2).join('/');
+                
+                // Store branch and repo/org context in session storage if available
+                storeRouteContext(pathSegments);
+                
+                redirectToSPA(branchPath, routePath);
+                return;
+              } else {
+                // Branch not deployed - route to main with full path including branch context
+                var routePath = pathSegments.slice(1).join('/'); // Include branch: 'copilot-fix-952/dak-action/WorldHealthOrganization'
+                
+                // Store branch and repo/org context in session storage if available
+                storeRouteContext(pathSegments);
+                
+                // Store the intended branch for the React app to handle
+                try {
+                  if (typeof Storage !== 'undefined') {
+                    sessionStorage.setItem('sgex_intended_branch', branch);
+                  }
+                } catch (error) {
+                  console.warn('Could not store intended branch in session storage:', error);
+                }
+                
+                redirectToSPA('/sgex/', routePath);
+                return;
+              }
             }
           }
           

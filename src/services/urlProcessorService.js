@@ -67,7 +67,7 @@ class SGEXURLProcessor {
 
   /**
    * Extract route components from a route string
-   * @param {string} route - Route string like "dashboard/user/repo/branch"
+   * @param {string} route - Route string like "dashboard/user/repo/branch" or "intended-branch/component/user/repo"
    */
   extractRouteComponents(route) {
     if (!route) return;
@@ -76,27 +76,46 @@ class SGEXURLProcessor {
     
     if (segments.length === 0) return;
     
-    const component = segments[0];
+    // Check if we have an intended branch stored (from non-deployed branch routing)
+    const intendedBranch = typeof sessionStorage !== 'undefined' ? 
+      sessionStorage.getItem('sgex_intended_branch') : null;
+    
+    let component, userIndex;
+    
+    if (intendedBranch && segments[0] === intendedBranch) {
+      // Route format: intended-branch/component/user/repo/branch/asset
+      component = segments[1];
+      userIndex = 2;
+      
+      // Store the intended branch as deployment branch context
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('sgex_deployment_branch', intendedBranch);
+      }
+    } else {
+      // Standard route format: component/user/repo/branch/asset
+      component = segments[0];
+      userIndex = 1;
+    }
     
     // Store routing information for the app
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.setItem('sgex_current_component', component);
       
-      // Extract user/repo/branch based on segment count
-      if (segments.length >= 2) {
-        const user = segments[1];
+      // Extract user/repo/branch based on segment count and userIndex
+      if (segments.length > userIndex) {
+        const user = segments[userIndex];
         sessionStorage.setItem('sgex_selected_user', user);
         
-        if (segments.length >= 3) {
-          const repo = segments[2];
+        if (segments.length > userIndex + 1) {
+          const repo = segments[userIndex + 1];
           sessionStorage.setItem('sgex_selected_repo', repo);
           
-          if (segments.length >= 4) {
-            const branch = segments[3];
+          if (segments.length > userIndex + 2) {
+            const branch = segments[userIndex + 2];
             sessionStorage.setItem('sgex_selected_branch', branch);
             
-            if (segments.length >= 5) {
-              const asset = segments.slice(4).join('/');
+            if (segments.length > userIndex + 3) {
+              const asset = segments.slice(userIndex + 3).join('/');
               sessionStorage.setItem('sgex_selected_asset', asset);
             }
           }
@@ -117,7 +136,8 @@ class SGEXURLProcessor {
       repo: sessionStorage.getItem('sgex_selected_repo'),
       branch: sessionStorage.getItem('sgex_selected_branch'),
       asset: sessionStorage.getItem('sgex_selected_asset'),
-      deploymentBranch: sessionStorage.getItem('sgex_deployment_branch')
+      deploymentBranch: sessionStorage.getItem('sgex_deployment_branch'),
+      intendedBranch: sessionStorage.getItem('sgex_intended_branch')
     };
     
     // Store in a global for easy access
@@ -274,6 +294,7 @@ class SGEXURLProcessor {
       sessionStorage.removeItem('sgex_selected_branch');
       sessionStorage.removeItem('sgex_selected_asset');
       sessionStorage.removeItem('sgex_deployment_branch');
+      sessionStorage.removeItem('sgex_intended_branch');
     }
     
     window.SGEX_URL_CONTEXT = {};
