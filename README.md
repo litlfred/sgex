@@ -148,6 +148,33 @@ npm start
 Complete MCP documentation: [`public/docs/mcp/`](public/docs/mcp/)
 
 **Security Note**: MCP services bind to localhost only (127.0.0.1:3001) and are intended for local development and testing.
+
+### MCP Inspector (Local Development Only)
+
+The MCP Inspector provides real-time monitoring and debugging capabilities for local MCP services.
+
+#### Features
+- **Service Discovery**: Automatically discovers running MCP services
+- **Traffic Monitoring**: Real-time request/response logging with filtering
+- **Schema Validation**: JSON syntax highlighting and validation
+- **Multi-Service Support**: Monitor multiple services grouped by functionality
+- **Local Security**: Only available in localhost development environments
+
+#### Access
+- **URL**: `http://localhost:3000/sgex/mcp-inspector` (local development only)
+- **WelcomePage**: MCP Inspector card appears automatically when running locally
+- **Requirements**: MCP services must be running on localhost
+
+#### Usage
+1. Start MCP services: `npm run run-mcp`
+2. Start SGEX development server: `npm start`
+3. Navigate to welcome page and click "MCP Inspector"
+4. Select services to monitor and view real-time traffic logs
+
+#### Service Discovery API
+- **Registry Endpoint**: `GET http://127.0.0.1:3001/mcp/services`
+- **Health Checks**: Individual service health monitoring  
+- **Dynamic Discovery**: No hardcoded service lists - services auto-discovered
 ### Docker
 
 1. **Build the docker image**
