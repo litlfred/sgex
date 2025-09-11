@@ -774,64 +774,16 @@ const QuestionnaireEditorContent = () => {
   };
 
   // Handle save operation (called by AssetEditorLayout)
-  const handleSave = (content, saveType) => {
-    console.log(`Questionnaire saved to ${saveType}`);
-    
-    if (saveType === 'github') {
-      // Refresh questionnaires list after GitHub save
-      const loadQuestionnaires = async () => {
-        try {
-          const allQuestionnaires = [];
-          
-          const paths = [
-            { path: 'input/questionnaires', extensions: ['.json'], type: 'JSON' },
-            { path: 'input/fsh/questionnaires', extensions: ['.fsh'], type: 'FSH' }
-          ];
-          
-          for (const pathConfig of paths) {
-            try {
-              const files = await githubService.getDirectoryContents(
-                repository.owner.login,
-                repository.name,
-                pathConfig.path,
-                branch
-              );
-              
-              const questionnaireFiles = files
-                .filter(file => file.type === 'file' && 
-                  pathConfig.extensions.some(ext => file.name.endsWith(ext)))
-                .map(file => {
-                  const extension = pathConfig.extensions.find(ext => file.name.endsWith(ext));
-                  return {
-                    ...file,
-                    displayName: file.name.replace(extension, ''),
-                    fullPath: `${pathConfig.path}/${file.name}`,
-                    fileType: pathConfig.type,
-                    extension: extension
-                  };
-                });
-              
-              allQuestionnaires.push(...questionnaireFiles);
-            } catch (error) {
-              if (error.status !== 404) {
-                console.warn(`Error loading from ${pathConfig.path}:`, error);
-              }
-            }
-          }
-          
-          setQuestionnaires(allQuestionnaires);
-        } catch (error) {
-          console.error('Error refreshing questionnaires:', error);
-        }
-      };
-      
-      loadQuestionnaires();
-    }
-  };
+  // Note: Currently used for logging and potential future functionality
+  // const handleSave = (content, saveType) => {
+  //   console.log(`Questionnaire saved to ${saveType}`);
+  //   // Future: Refresh questionnaires list after GitHub save
+  // };
 
   // Check if there are changes in the questionnaire
-  const hasChanges = questionnaireContent && originalContent &&
-    JSON.stringify(questionnaireContent, null, 2) !== originalContent;
+  // Note: Currently not used but may be needed for future save functionality
+  // const hasChanges = questionnaireContent && originalContent &&
+  //   JSON.stringify(questionnaireContent, null, 2) !== originalContent;
 
   // Show loading state when PageProvider is not ready
   if (!hasRequiredData) {
