@@ -1149,11 +1149,16 @@
   }
 
   .preview-badge-expanded {
-    min-width: 95vw;
-    max-width: 95vw;
-    width: 95vw;
-    left: -50vw;
-    margin-left: 50vw;
+    /* Reset fixed desktop widths */
+    min-width: unset;
+    max-width: unset;
+    width: auto;
+    /* Full width modal on mobile - no offset positioning */
+    left: 0;
+    right: 0;
+    /* Optional: Add small margins to prevent edge-to-edge if desired */
+    margin-left: 0;
+    margin-right: 0;
   }
 
   .expanded-header {
@@ -1188,11 +1193,14 @@
   }
 
   .preview-badge-expanded {
-    min-width: 98vw;
-    max-width: 98vw;
-    width: 98vw;
-    left: -50vw;
-    margin-left: 50vw;
+    /* Ensure full width on small mobile devices */
+    left: 0;
+    right: 0;
+    margin-left: 0;
+    margin-right: 0;
+    min-width: unset;
+    max-width: unset;
+    width: auto;
   }
 
   .comment-header {
