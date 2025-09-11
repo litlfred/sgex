@@ -39,5 +39,5 @@ This table is automatically generated from the codebase on every commit.
 - OpenAPI Spec links point to the corresponding OpenAPI documentation in the repo.
 - MCP manifest links included for MCP tooling.
 
-*Generated on: 2025-09-11T18:04:41.815Z*
+*Generated on: 2025-09-11T18:37:41.607Z*
 *Generator: scripts/generate-service-table.js*

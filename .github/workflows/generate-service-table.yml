@@ -8,6 +8,10 @@ name: Generate Service Table
 # 2. Job condition excludes commits with "Auto-update service table" message  
 # 3. Path filters exclude the generated files from triggering the workflow
 
+permissions:
+  contents: write
+  actions: read
+
 on:
   push:
     branches: [ main, develop ]
