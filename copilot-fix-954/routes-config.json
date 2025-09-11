@@ -1,0 +1,123 @@
+{
+  "deployType": "main",
+  "dakComponents": {
+    "dashboard": {
+      "component": "DAKDashboard",
+      "path": "./components/DAKDashboard"
+    },
+
+    "core-data-dictionary-viewer": {
+      "component": "CoreDataDictionaryViewer",
+      "path": "./components/CoreDataDictionaryViewer"
+    },
+    "health-interventions": {
+      "component": "ComponentEditor",
+      "path": "./components/ComponentEditor"
+    },
+    "actor-editor": {
+      "component": "ActorEditor",
+      "path": "./components/ActorEditor"
+    },
+    "business-process-selection": {
+      "component": "BusinessProcessSelection",
+      "path": "./components/BusinessProcessSelection"
+    },
+    "bpmn-editor": {
+      "component": "BPMNEditor",
+      "path": "./components/BPMNEditor"
+    },
+    "bpmn-viewer": {
+      "component": "BPMNViewer",
+      "path": "./components/BPMNViewer"
+    },
+    "bpmn-source": {
+      "component": "BPMNSource",
+      "path": "./components/BPMNSource"
+    },
+    "decision-support-logic": {
+      "component": "DecisionSupportLogicView",
+      "path": "./components/DecisionSupportLogicView"
+    },
+    "questionnaire-editor": {
+      "component": "QuestionnaireEditor",
+      "path": "./components/QuestionnaireEditor"
+    },
+    "docs": {
+      "component": "DocumentationViewer",
+      "path": "./components/DocumentationViewer"
+    },
+    "pages": {
+      "component": "PagesManager",
+      "path": "./components/PagesManager"
+    },
+    "faq-demo": {
+      "component": "DAKFAQDemo",
+      "path": "./components/DAKFAQDemo"
+    }
+  },
+  "standardComponents": {
+    "WelcomePage": {
+      "path": "./components/WelcomePage",
+      "routes": [
+        { "path": "/", "exact": true }
+      ]
+    },
+    "SelectProfilePage": {
+      "path": "./components/SelectProfilePage",
+      "routes": [
+        { "path": "/select_profile", "exact": true }
+      ]
+    },
+    "DAKActionSelection": {
+      "path": "./components/DAKActionSelection",
+      "routes": [
+        { "path": "/dak-action/:user", "exact": true },
+        { "path": "/dak-action", "exact": true }
+      ]
+    },
+    "DAKSelection": {
+      "path": "./components/DAKSelection",
+      "routes": [
+        { "path": "/dak-selection/:user", "exact": true },
+        { "path": "/dak-selection", "exact": true }
+      ]
+    },
+    "OrganizationSelection": {
+      "path": "./components/OrganizationSelection",
+      "routes": [
+        { "path": "/organization-selection", "exact": true }
+      ]
+    },
+    "DAKConfiguration": {
+      "path": "./components/DAKConfiguration",
+      "routes": [
+        { "path": "/dak-configuration", "exact": true }
+      ]
+    },
+    "RepositorySelection": {
+      "path": "./components/RepositorySelection",
+      "routes": [
+        { "path": "/repositories", "exact": true },
+        { "path": "/repositories/:user", "exact": true }
+      ]
+    },
+    "DashboardRedirect": {
+      "path": "./components/DashboardRedirect",
+      "routes": [
+        { "path": "/dashboard", "exact": true }
+      ]
+    },
+
+    "NotFound": {
+      "path": "./components/NotFound",
+      "routes": [
+        { "path": "*", "fallback": true }
+      ]
+    }
+  },
+
+  "deployedBranches": [
+    "main",
+    "copilot-fix-895"
+  ]
+}
