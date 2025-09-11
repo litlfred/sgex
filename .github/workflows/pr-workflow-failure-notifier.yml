@@ -40,7 +40,7 @@ jobs:
     steps:
       - name: Get workflow failure details and find associated PR
         id: failure_details
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { workflow_run } = context.payload;
@@ -108,7 +108,7 @@ jobs:
       - name: Get workflow logs for error details
         id: get_logs
         if: steps.failure_details.outputs.has_pr == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const runId = '${{ steps.failure_details.outputs.run_id }}';
@@ -155,7 +155,7 @@ jobs:
 
       - name: Post failure notification comment on PR
         if: steps.failure_details.outputs.has_pr == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = parseInt('${{ steps.failure_details.outputs.pr_number }}');
