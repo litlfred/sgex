@@ -1,17 +1,15 @@
 /**
  * MCP Inspector Component Styles
  * 
- * Follows SGEX styling patterns with blue gradient background and WHO branding.
- * Responsive design for desktop, tablet, and mobile viewing.
+ * Component-specific styles for the MCP Inspector.
+ * Uses shared SGEX styles for consistency and reduces code duplication.
  */
 
 .mcp-inspector-container {
   display: flex;
   gap: 20px;
   padding: 20px;
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
-  min-height: calc(100vh - 120px);
-  color: white;
+  /* Using shared gradient background */
 }
 
 @media (max-width: 768px) {
@@ -21,28 +19,13 @@
   }
 }
 
-/* Error and Loading States */
-.mcp-inspector-error,
+/* Use shared error and loading styles from shared-styles.css */
+.mcp-inspector-error {
+  /* Extended by sgex-error-container class */
+}
+
 .mcp-inspector-loading {
-  padding: 40px;
-  text-align: center;
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
-  min-height: calc(100vh - 120px);
-  color: white;
-}
-
-.error-message {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 30px;
-  max-width: 600px;
-  margin: 0 auto;
-  backdrop-filter: blur(10px);
-}
-
-.error-message h3 {
-  color: #ffeb3b;
-  margin-bottom: 15px;
+  /* Extended by sgex-loading-container class */
 }
 
 .local-only-notice {

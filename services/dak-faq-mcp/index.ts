@@ -7,6 +7,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fetch from 'node-fetch';
 import { executeRoute } from './server/routes/execute.js';
 import { catalogRoute } from './server/routes/catalog.js';
 import { schemaRoute } from './server/routes/schema.js';
@@ -47,44 +48,89 @@ app.use('/mcp/faq/execute', executeRoute);  // Add single execution routes
 app.use('/mcp/faq', schemaRoute);
 app.use('/mcp/faq', dakComponentsRoute);
 
-// MCP Service Registry endpoint
-app.get('/mcp/services', (req: Request, res: Response) => {
-  const serviceRegistry = {
-    services: [
-      {
-        id: 'dak-faq',
-        name: 'DAK FAQ MCP Service',
-        description: 'WHO SMART Guidelines DAK FAQ functionality',
-        functionality: 'dak-faq',
-        baseUrl: `http://${HOST}:${PORT}/mcp`,
+// MCP Service Registry endpoint - discovers all running local MCP services
+app.get('/mcp/services', async (req: Request, res: Response) => {
+  const services = [];
+  
+  // Add this service (DAK FAQ)
+  services.push({
+    id: 'dak-faq',
+    name: 'DAK FAQ MCP Service',
+    description: 'WHO SMART Guidelines DAK FAQ functionality',
+    functionality: 'dak-faq',
+    baseUrl: `http://${HOST}:${PORT}/mcp`,
+    version: '1.0.0',
+    status: 'healthy',
+    endpoints: [
+      'GET /health',
+      'GET /faq/questions/catalog',
+      'POST /faq/questions/execute',
+      'POST /faq/execute/:questionId',
+      'POST /faq/execute',
+      'GET /faq/schemas',
+      'GET /faq/schemas/:questionId',
+      'GET /faq/openapi',
+      'POST /faq/validate',
+      'GET /faq/valuesets',
+      'GET /faq/decision-tables',
+      'GET /faq/business-processes',
+      'GET /faq/personas',
+      'GET /faq/questionnaires'
+    ],
+    transport: ['http'],
+    capabilities: {
+      tools: true,
+      resources: false,
+      prompts: false
+    }
+  });
+  
+  // Try to discover DAK Publication API service on port 3002
+  try {
+    const publicationResponse = await fetch('http://127.0.0.1:3002/');
+    if (publicationResponse.ok) {
+      services.push({
+        id: 'dak-publication-api',
+        name: 'DAK Publication API Service',
+        description: 'WHO SMART Guidelines DAK publication generation and rendering',
+        functionality: 'publishing',
+        baseUrl: 'http://127.0.0.1:3002',
         version: '1.0.0',
         status: 'healthy',
         endpoints: [
-          'GET /health',
-          'GET /faq/questions/catalog',
-          'POST /faq/questions/execute',
-          'POST /faq/execute/:questionId',
-          'POST /faq/execute',
-          'GET /faq/schemas',
-          'GET /faq/schemas/:questionId',
-          'GET /faq/openapi',
-          'POST /faq/validate',
-          'GET /faq/valuesets',
-          'GET /faq/decision-tables',
-          'GET /faq/business-processes',
-          'GET /faq/personas',
-          'GET /faq/questionnaires'
+          'GET /',
+          'GET /status',
+          'GET /api/templates',
+          'POST /api/templates',
+          'GET /api/templates/:id',
+          'PUT /api/templates/:id',
+          'DELETE /api/templates/:id',
+          'GET /api/variables',
+          'POST /api/variables',
+          'GET /api/content',
+          'POST /api/content',
+          'POST /api/publications',
+          'GET /api/publications/:id',
+          'GET /api/integrations',
+          'POST /api/integrations',
+          'GET /docs'
         ],
         transport: ['http'],
         capabilities: {
           tools: true,
-          resources: false,
+          resources: true,
           prompts: false
         }
-      }
-    ],
+      });
+    }
+  } catch (err) {
+    console.log('DAK Publication API service not available on port 3002');
+  }
+  
+  const serviceRegistry = {
+    services,
     timestamp: new Date().toISOString(),
-    totalServices: 1
+    totalServices: services.length
   };
   
   res.json(serviceRegistry);

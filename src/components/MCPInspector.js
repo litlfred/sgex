@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { PageLayout, PageHeader } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import { lazyLoadSyntaxHighlighter, lazyLoadSyntaxHighlighterStyles } from '../utils/lazyRouteUtils';
+import './shared-styles.css';
+import './MCPInspector.css';
 
 /**
  * MCP Inspector Component
@@ -275,8 +277,8 @@ const MCPInspector = () => {
             { label: 'MCP Inspector', path: '/mcp-inspector', current: true }
           ]}
         />
-        <div className="mcp-inspector-error">
-          <div className="error-message">
+        <div className="sgex-error-container mcp-inspector-error">
+          <div className="sgex-error-message">
             <h3>MCP Inspector Unavailable</h3>
             <p>{error}</p>
             {!isLocalDeployment && (
@@ -309,7 +311,7 @@ const MCPInspector = () => {
             { label: 'MCP Inspector', path: '/mcp-inspector', current: true }
           ]}
         />
-        <div className="mcp-inspector-loading">
+        <div className="sgex-loading-container mcp-inspector-loading">
           <div className="loading-spinner"></div>
           <p>Discovering MCP services...</p>
         </div>
@@ -329,7 +331,7 @@ const MCPInspector = () => {
         ]}
       />
       
-      <div className="mcp-inspector-container">
+      <div className="sgex-fullheight-container mcp-inspector-container">
         
         {/* Service Discovery Panel */}
         <div className="mcp-services-panel">
