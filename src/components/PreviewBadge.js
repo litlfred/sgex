@@ -42,6 +42,7 @@ const PreviewBadge = () => {
   const [isRefreshingSession, setIsRefreshingSession] = useState(false);
   const [lastSessionCheck, setLastSessionCheck] = useState(null);
   const [sessionRefreshCount, setSessionRefreshCount] = useState(0);
+  const [isRefreshingComments, setIsRefreshingComments] = useState(false);
   const [ReactMarkdown, setReactMarkdown] = useState(null);
   const [DOMPurify, setDOMPurify] = useState(null);
   const [rehypeRaw, setRehypeRaw] = useState(null);
@@ -240,9 +241,11 @@ const PreviewBadge = () => {
     }
   };
 
-  const fetchCommentsForPR = async (owner, repo, prNumber, page = 1, append = false) => {
+  const fetchCommentsForPR = async (owner, repo, prNumber, page = 1, append = false, showLoading = true) => {
     try {
-      setCommentsLoading(true);
+      if (showLoading) {
+        setCommentsLoading(true);
+      }
       
       const perPage = 30; // GitHub default per page
       
@@ -261,6 +264,8 @@ const PreviewBadge = () => {
 
       // Debug: Log comment details to understand what's being fetched
       console.debug('Comments fetched for PR discussion:', {
+        refreshType: append ? 'append' : 'replace',
+        showLoading,
         reviewCommentsCount: reviewComments.length,
         issueCommentsCount: issueComments.length,
         totalComments: newComments.length,
@@ -344,7 +349,9 @@ const PreviewBadge = () => {
       console.debug('Failed to fetch comments:', error);
       return [];
     } finally {
-      setCommentsLoading(false);
+      if (showLoading) {
+        setCommentsLoading(false);
+      }
     }
   };
 
@@ -1059,7 +1066,7 @@ const PreviewBadge = () => {
     // Set up new interval to refresh comments every 5 seconds
     commentRefreshIntervalRef.current = setInterval(async () => {
       try {
-        const latestComments = await fetchCommentsForPR(owner, repo, prNumber, 1, false);
+        const latestComments = await fetchCommentsForPR(owner, repo, prNumber, 1, false, false);
         
         // Check if there are new comments compared to what we have
         if (latestComments.length > 0 && comments.length > 0) {
@@ -1067,7 +1074,7 @@ const PreviewBadge = () => {
           const currentLatestId = comments[0].id;
           
           if (latestId !== currentLatestId) {
-            console.debug('New comments detected, refreshing...');
+            console.debug('New comments detected during auto-refresh');
             // Don't reset the page, just refresh the current view
           }
         }
@@ -1075,6 +1082,26 @@ const PreviewBadge = () => {
         console.debug('Failed to auto-refresh comments:', error);
       }
     }, 5000); // 5 seconds
+  };
+
+  const handleManualRefreshComments = async () => {
+    if (!prInfo || prInfo.length === 0 || isRefreshingComments) return;
+    
+    setIsRefreshingComments(true);
+    try {
+      const owner = 'litlfred';
+      const repo = 'sgex';
+      const pr = prInfo[0];
+      
+      console.debug('Manual refresh of comments requested');
+      await fetchCommentsForPR(owner, repo, pr.number, 1, false, true);
+      
+      // Brief success feedback
+      setTimeout(() => setIsRefreshingComments(false), 1000);
+    } catch (error) {
+      console.error('Failed to manually refresh comments:', error);
+      setIsRefreshingComments(false);
+    }
   };
 
   const setupWorkflowAutoRefresh = (branchName) => {
@@ -1193,8 +1220,8 @@ const PreviewBadge = () => {
           // Set success status
           setCommentSubmissionStatus('success');
           
-          // Refresh comments after successful submission
-          await fetchCommentsForPR(owner, repo, pr.number, 1, false);
+          // Refresh comments after successful submission - multiple attempts for reliability
+          await fetchCommentsForPR(owner, repo, pr.number, 1, false, true);
           
           // Mark the newly added comment for glow effect
           if (submittedComment && submittedComment.id) {
@@ -1205,6 +1232,16 @@ const PreviewBadge = () => {
           
           setNewComment('');
           setShowMarkdownEditor(false); // Close markdown editor after successful submission
+          
+          // Additional refresh after a short delay to ensure GitHub API consistency
+          setTimeout(async () => {
+            try {
+              await fetchCommentsForPR(owner, repo, pr.number, 1, false, false);
+              console.debug('Secondary comment refresh completed after comment submission');
+            } catch (error) {
+              console.debug('Secondary comment refresh failed:', error);
+            }
+          }, 2000); // 2 second delay
           
           // Clear success status after 3 seconds
           setTimeout(() => setCommentSubmissionStatus(null), 3000);
@@ -2043,6 +2080,14 @@ const PreviewBadge = () => {
                     <div className="comments-header">
                       <h4>Recent Comments & Updates ({allComments.length > 0 ? `${displayedCommentsCount}/${allComments.length}` : '0'})</h4>
                       <div className="comments-controls">
+                        <button
+                          className="manual-refresh-btn"
+                          onClick={handleManualRefreshComments}
+                          disabled={isRefreshingComments}
+                          title="Manually refresh comments"
+                        >
+                          {isRefreshingComments ? '🔄 Refreshing...' : '🔄 Refresh'}
+                        </button>
                         <label className="status-updates-toggle">
                           <input 
                             type="checkbox" 

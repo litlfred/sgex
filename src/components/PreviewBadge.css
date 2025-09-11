@@ -554,6 +554,32 @@
   gap: 0.5rem;
 }
 
+.manual-refresh-btn {
+  background: #0366d6;
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.manual-refresh-btn:hover:not(:disabled) {
+  background: #0256cc;
+  transform: translateY(-1px);
+}
+
+.manual-refresh-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .status-updates-toggle {
   display: flex;
   align-items: center;
