@@ -434,14 +434,16 @@
   }
 }
 
-/* Bug report modal overlay - less transparent for better visibility */
+/* Bug report modal overlay - higher z-index and solid background */
 .help-modal-overlay.bug-report-overlay {
   background-color: rgba(0, 0, 0, 0.85);
+  z-index: 1010; /* Higher than help menu dropdown (1001) */
 }
 
 /* Dark mode adjustments for bug report overlay */
 body.theme-dark .help-modal-overlay.bug-report-overlay {
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: var(--who-navy, #1a2380);
+  background: linear-gradient(135deg, var(--who-navy, #1a2380) 0%, rgba(26, 35, 128, 0.95) 100%);
 }
 
 /* Light mode specific adjustments for bug report overlay */

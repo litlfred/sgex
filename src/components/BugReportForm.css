@@ -380,9 +380,9 @@
   }
 }
 
-/* Dark mode support */
+/* Dark mode support - enhanced for better visibility */
 [data-theme="dark"] .bug-report-form {
-  --who-card-bg: #2d2d2d;
+  --who-card-bg: var(--who-navy, #1a2380);
   --who-text-primary: #ffffff;
   --who-text-secondary: #b0b0b0;
   --who-border: #404040;
@@ -397,14 +397,38 @@
   --who-error-bg: #b71c1c;
   --who-error-text: #ffcdd2;
   --who-error-border: #c62828;
+  background: var(--who-navy, #1a2380);
+  color: #ffffff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+/* Additional dark mode overrides for theme detection */
+body.theme-dark .bug-report-form {
+  background: var(--who-navy, #1a2380);
+  color: var(--who-text-primary, #ffffff);
+  --who-card-bg: var(--who-navy, #1a2380);
 }
 
 [data-theme="dark"] .field-input {
   background: var(--who-card-bg, #2d2d2d);
   color: var(--who-text-primary, #ffffff);
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .field-input {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--who-text-primary, #ffffff);
+  border-color: var(--who-light-blue, #c0dcf2);
 }
 
 [data-theme="dark"] .context-preview pre {
   background: #1e1e1e;
   color: #d4d4d4;
+  border-color: var(--who-light-blue, #c0dcf2);
+}
+
+body.theme-dark .context-preview pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border-color: var(--who-light-blue, #c0dcf2);
 }
