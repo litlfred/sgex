@@ -171,6 +171,8 @@ body.theme-light .dak-action-selection {
   background: var(--who-card-bg);
   backdrop-filter: blur(10px);
   min-height: 200px;
+  /* Navigation action container - should be clickable */
+  pointer-events: auto;
 }
 
 .action-card-container:hover {
@@ -200,10 +202,11 @@ body.theme-light .dak-action-selection {
   justify-content: center;
   align-items: center;
   width: 200px;
-  height: 200px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--who-border-color);
+  /* Navigation action cards - should be clickable */
+  pointer-events: auto;
 }
 
 .action-header-content {

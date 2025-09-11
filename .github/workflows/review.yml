@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Get PR information
         id: pr_info
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const pr = context.payload.pull_request;
@@ -49,7 +49,7 @@ jobs:
 
       - name: Comment on PR with deployment option
         if: steps.pr_info.outputs.should_deploy == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const branchName = '${{ steps.pr_info.outputs.branch_name }}';
@@ -64,40 +64,43 @@ jobs:
             });
             
             const deploymentComment = comments.find(comment => 
-              comment.body.includes('🚀 Deploy Feature Branch') && 
-              comment.body.includes(`branch: ${branchName}`)
+              comment.body.includes('Deployment Status:') ||
+              (comment.body.includes('🚀 Deploy Feature Branch') && 
+               comment.body.includes(`branch: ${branchName}`))
             );
             
-            const commentBody = `## 🚀 Deploy Feature Branch
+            // Get latest commit message for recent change summary
+            const { data: commits } = await github.rest.repos.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: branchName,
+              per_page: 1
+            });
+            const commitMessage = commits.length > 0 ? commits[0].commit.message.split('\n')[0] : 'No recent commits';
+            const commitSha = commits.length > 0 ? commits[0].sha.substring(0, 7) : 'unknown';
             
-            This PR has been **approved** and is ready for deployment!
+            const commentBody = `## 🚀 Deployment Status: Ready for Deployment ✅
             
-            **Branch:** \`${branchName}\`
-            **Approved:** ${approvedAt}
-            **Action:** Click the button below to deploy this branch for preview
-            
-            ### 🚀 Deploy Now
-            
-            <table>
-            <tr>
-            <td align="center">
-            <a href="https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml?branch=${encodeURIComponent(branchName)}"><img src="https://img.shields.io/badge/🚀_DEPLOY_BRANCH-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Deploy Branch" /></a><br/>
-            <sub><b>Click to deploy this branch</b></sub>
-            </td>
-            </tr>
-            </table>
-            
-            ### 📋 Instructions
-            1. Click the "DEPLOY BRANCH" button above
-            2. Click "Run workflow" button
-            3. Branch name will be pre-filled: \`${branchName}\`
-            4. Confirm deployment
-            
-            **Preview will be available at:** \`https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/\`
+            **🔗 Quick Actions:**
+            - 🚀 [Deploy ${branchName}](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml?branch=${encodeURIComponent(branchName)})
+            - 📄 [View workflow logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions)
             
             ---
             
-            _This comment was updated on approval to provide fresh deployment access. The deployment is triggered manually for safety._`;
+            ## 📝 Recent Change Summary
+            **Latest commit:** \`${commitSha}\` - ${commitMessage}
+            **Approved at:** ${approvedAt}
+            
+            ---
+            
+            ## 📊 Overall Progress
+            **Branch:** \`${branchName}\`
+            **Status:** ✅ Approved and ready for deployment
+            **Preview URL (after deployment):** <a href="https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/" target="_blank">https://litlfred.github.io/sgex/${branchName.replace(/\//g, '-')}/</a> 📋
+            
+            ---
+            
+            💡 *Click deploy link above, then "Run workflow". Branch name will be pre-filled.*`;
             
             if (deploymentComment) {
               // Update existing deployment comment
@@ -121,7 +124,7 @@ jobs:
 
       - name: Comment on excluded branch
         if: steps.pr_info.outputs.should_deploy == 'false'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const branchName = '${{ steps.pr_info.outputs.branch_name }}';
@@ -130,12 +133,11 @@ jobs:
             
             const commentBody = `## ℹ️ Deployment Skipped
             
-            This PR has been approved, but automatic deployment is not available for this branch.
+            **Branch:** \`${branchName}\` | **Reason:** ${reason}
             
-            **Branch:** \`${branchName}\`
-            **Reason:** ${reason}
+            ---
             
-            Branches \`gh-pages\` and \`deploy\` are excluded from feature branch deployments as they have special purposes in the deployment pipeline.`;
+            💡 *Branches \`gh-pages\` and \`deploy\` are excluded from feature deployments.*`;
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,

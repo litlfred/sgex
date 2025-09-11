@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import githubService from '../services/githubService';
 import StagingGround from './StagingGround';
+import DAKPublicationGenerator from './DAKPublicationGenerator';
 
 const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) => {
   const [branches, setBranches] = useState([]);
@@ -210,21 +211,20 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
     );
   }
 
-  if (error) {
-    return (
-      <div className="publications-error">
-        <div className="error-content">
-          <h3>Error Loading Publications</h3>
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
+  // Note: Don't return early on error - still show DAK Publication Generator
 
   return (
     <div className="publications-section">
       {/* Staging Ground Section */}
       <StagingGround
+        repository={repository}
+        selectedBranch={selectedBranch}
+        hasWriteAccess={hasWriteAccess}
+        profile={profile}
+      />
+      
+      {/* DAK Publication Generator Section */}
+      <DAKPublicationGenerator
         repository={repository}
         selectedBranch={selectedBranch}
         hasWriteAccess={hasWriteAccess}
@@ -239,83 +239,92 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
         </p>
       </div>
 
-      <div className="publications-grid">
-        {branches.map((branch) => {
-          const isMainBranch = branch.name === repository.default_branch || branch.name === 'main';
-          const publicationUrl = getPublicationUrl(branch.name);
-          const workflowStatus = getWorkflowStatusIcon(branch.name);
+      {error ? (
+        <div className="publications-error">
+          <div className="error-content">
+            <h3>Error Loading GitHub Pages Data</h3>
+            <p>{error}</p>
+          </div>
+        </div>
+      ) : (
+        <div className="publications-grid">
+          {branches.map((branch) => {
+            const isMainBranch = branch.name === repository.default_branch || branch.name === 'main';
+            const publicationUrl = getPublicationUrl(branch.name);
+            const workflowStatus = getWorkflowStatusIcon(branch.name);
 
-          return (
-            <div key={branch.name} className={`publication-card ${isMainBranch ? 'main-branch' : ''}`}>
-              <div className="publication-header">
-                <div className="branch-info">
-                  <span className="branch-icon">🌿</span>
-                  <span className="branch-name">{branch.name}</span>
-                  {isMainBranch && <span className="main-badge">MAIN</span>}
+            return (
+              <div key={branch.name} className={`publication-card ${isMainBranch ? 'main-branch' : ''}`}>
+                <div className="publication-header">
+                  <div className="branch-info">
+                    <span className="branch-icon">🌿</span>
+                    <span className="branch-name">{branch.name}</span>
+                    {isMainBranch && <span className="main-badge">MAIN</span>}
+                  </div>
+                  <div className="workflow-status">
+                    {workflowStatus.link ? (
+                      <a 
+                        href={workflowStatus.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className={`status-icon ${workflowStatus.className || ''}`}
+                        title={workflowStatus.title}
+                      >
+                        {workflowStatus.icon}
+                      </a>
+                    ) : (
+                      <span 
+                        className={`status-icon ${workflowStatus.className || ''}`}
+                        title={workflowStatus.title}
+                      >
+                        {workflowStatus.icon}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="workflow-status">
-                  {workflowStatus.link ? (
+
+                <div className="publication-content">
+                  <div className="publication-url">
+                    <label>Published at:</label>
                     <a 
-                      href={workflowStatus.link} 
-                      target="_blank" 
+                      href={publicationUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
-                      className={`status-icon ${workflowStatus.className || ''}`}
-                      title={workflowStatus.title}
+                      className="publication-link"
                     >
-                      {workflowStatus.icon}
+                      {publicationUrl}
+                      <span className="external-link">↗</span>
                     </a>
-                  ) : (
-                    <span 
-                      className={`status-icon ${workflowStatus.className || ''}`}
-                      title={workflowStatus.title}
+                  </div>
+
+                  <div className="publication-actions">
+                    <button
+                      className="restart-workflow-btn"
+                      onClick={() => handleRestartWorkflow(branch.name)}
+                      disabled={!hasWriteAccess}
+                      title={hasWriteAccess ? 'Restart build workflow for this branch' : 'Write permissions required'}
                     >
-                      {workflowStatus.icon}
-                    </span>
-                  )}
+                      🔄 Rebuild
+                    </button>
+                    
+                    <a 
+                      href={`https://github.com/${owner}/${repoName}/tree/${branch.name}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="view-source-btn"
+                      title="View source code for this branch"
+                    >
+                      👁️ View Source
+                    </a>
+                  </div>
                 </div>
               </div>
+            );
+          })}
+        </div>
+      )}
 
-              <div className="publication-content">
-                <div className="publication-url">
-                  <label>Published at:</label>
-                  <a 
-                    href={publicationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="publication-link"
-                  >
-                    {publicationUrl}
-                    <span className="external-link">↗</span>
-                  </a>
-                </div>
-
-                <div className="publication-actions">
-                  <button
-                    className="restart-workflow-btn"
-                    onClick={() => handleRestartWorkflow(branch.name)}
-                    disabled={!hasWriteAccess}
-                    title={hasWriteAccess ? 'Restart build workflow for this branch' : 'Write permissions required'}
-                  >
-                    🔄 Rebuild
-                  </button>
-                  
-                  <a 
-                    href={`https://github.com/${owner}/${repoName}/tree/${branch.name}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="view-source-btn"
-                    title="View source code for this branch"
-                  >
-                    👁️ View Source
-                  </a>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {branches.length === 0 && (
+      {!error && branches.length === 0 && (
         <div className="no-branches">
           <p>No publishable branches found (excluding gh-pages).</p>
         </div>

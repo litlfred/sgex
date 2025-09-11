@@ -2542,6 +2542,160 @@ class GitHubService {
       throw error;
     }
   }
+
+  // Check if the current user can review pull requests
+  async checkPullRequestReviewPermissions(owner, repo, pullNumber) {
+    try {
+      if (!this.isAuth()) {
+        return false;
+      }
+
+      // Check if user has write access or is a collaborator
+      const hasWriteAccess = await this.checkRepositoryWritePermissions(owner, repo);
+      
+      if (hasWriteAccess) {
+        return true;
+      }
+
+      // For forks, check if user can review (they need read access at minimum)
+      const response = await this.octokit.rest.repos.get({
+        owner,
+        repo
+      });
+
+      return response.status === 200;
+    } catch (error) {
+      console.debug('Cannot check PR review permissions:', error);
+      return false;
+    }
+  }
+
+  // Create a pull request review (approve, request changes, or comment)
+  async createPullRequestReview(owner, repo, pullNumber, event, body = '') {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to review pull requests');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('POST', `/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`, { event, bodyLength: body?.length });
+
+    try {
+      const params = {
+        owner,
+        repo,
+        pull_number: pullNumber,
+        event // 'APPROVE', 'REQUEST_CHANGES', or 'COMMENT'
+      };
+
+      if (body && body.trim()) {
+        params.body = body;
+      }
+
+      const response = await this.octokit.rest.pulls.createReview(params);
+      
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`, response.status, Date.now() - startTime);
+      
+      return {
+        success: true,
+        review: {
+          id: response.data.id,
+          state: response.data.state,
+          body: response.data.body,
+          html_url: response.data.html_url,
+          submitted_at: response.data.submitted_at,
+          user: {
+            login: response.data.user.login,
+            avatar_url: response.data.user.avatar_url
+          }
+        }
+      };
+    } catch (error) {
+      this.logger.apiResponse('POST', `/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to create pull request review:', error);
+      throw error;
+    }
+  }
+
+  // Approve a pull request
+  async approvePullRequest(owner, repo, pullNumber, body = '') {
+    return this.createPullRequestReview(owner, repo, pullNumber, 'APPROVE', body);
+  }
+
+  // Request changes on a pull request
+  async requestPullRequestChanges(owner, repo, pullNumber, body) {
+    if (!body || !body.trim()) {
+      throw new Error('A comment is required when requesting changes');
+    }
+    return this.createPullRequestReview(owner, repo, pullNumber, 'REQUEST_CHANGES', body);
+  }
+
+  // Dismiss a pull request review
+  async dismissPullRequestReview(owner, repo, pullNumber, reviewId, message) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to dismiss reviews');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('PUT', `/repos/${owner}/${repo}/pulls/${pullNumber}/reviews/${reviewId}/dismissals`, { messageLength: message?.length });
+
+    try {
+      const response = await this.octokit.rest.pulls.dismissReview({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        review_id: reviewId,
+        message: message || 'Review dismissed'
+      });
+      
+      this.logger.apiResponse('PUT', `/repos/${owner}/${repo}/pulls/${pullNumber}/reviews/${reviewId}/dismissals`, response.status, Date.now() - startTime);
+      
+      return {
+        success: true,
+        review: response.data
+      };
+    } catch (error) {
+      this.logger.apiResponse('PUT', `/repos/${owner}/${repo}/pulls/${pullNumber}/reviews/${reviewId}/dismissals`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to dismiss pull request review:', error);
+      throw error;
+    }
+  }
+
+  // Convert draft pull request to ready for review
+  async markPullRequestReadyForReview(owner, repo, pullNumber) {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to mark PR as ready for review');
+    }
+
+    const startTime = Date.now();
+    this.logger.apiCall('PATCH', `/repos/${owner}/${repo}/pulls/${pullNumber}`, { draft: false });
+
+    try {
+      const response = await this.octokit.rest.pulls.update({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        draft: false
+      });
+      
+      this.logger.apiResponse('PATCH', `/repos/${owner}/${repo}/pulls/${pullNumber}`, response.status, Date.now() - startTime);
+      
+      return {
+        success: true,
+        pullRequest: {
+          id: response.data.id,
+          number: response.data.number,
+          draft: response.data.draft,
+          state: response.data.state,
+          title: response.data.title,
+          html_url: response.data.html_url
+        }
+      };
+    } catch (error) {
+      this.logger.apiResponse('PATCH', `/repos/${owner}/${repo}/pulls/${pullNumber}`, error.status || 'error', Date.now() - startTime);
+      console.error('Failed to mark pull request as ready for review:', error);
+      throw error;
+    }
+  }
 }
 
 // Create a singleton instance

@@ -81,8 +81,10 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
     'landing': 'Home',
     'landing-unauthenticated': 'Home',
     'repositories': 'Select Repository', 
+    'repository-selection': 'Select Repository',
     'dak-selection': 'Select DAK',
     'dak-action': 'Choose DAK Action',
+    'dak-action-selection': 'Choose DAK Action',
     'dashboard': 'DAK Components',
     'dak-dashboard': 'DAK Components',
     'actor-editor': 'Actor Definitions',
@@ -93,7 +95,8 @@ const PageBreadcrumbs = ({ customBreadcrumbs }) => {
     'core-data-dictionary-viewer': 'Core Data Dictionary',
     'testing-viewer': 'Testing',
     'pages-manager': 'Pages',
-    'documentation': 'Documentation'
+    'documentation': 'Documentation',
+    'documentation-viewer': 'Documentation'
   };
 
   const currentPageLabel = pageLabels[pageName] || pageName;

@@ -9,6 +9,8 @@
   background: rgba(0, 120, 212, 0.1);
   border: 1px solid rgba(0, 120, 212, 0.2);
   backdrop-filter: blur(10px);
+  /* Interactive component cards - should be clickable */
+  pointer-events: auto;
 }
 
 .component-card:focus {

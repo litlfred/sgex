@@ -260,6 +260,8 @@ body.theme-light .landing-page {
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
   text-align: center;
+  /* Navigation card - should be clickable */
+  pointer-events: auto;
 }
 
 .profile-card:hover {

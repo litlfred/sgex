@@ -107,24 +107,30 @@ const BranchListingPage = () => {
             // Use githubService if authenticated, otherwise make a public API call
             if (githubService.isAuth()) {
                 const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
-                return comments.map(comment => ({
-                    id: comment.id,
-                    author: comment.user.login,
-                    body: comment.body,
-                    created_at: new Date(comment.created_at).toLocaleDateString(),
-                    avatar_url: comment.user.avatar_url
-                }));
-            } else {
-                // For unauthenticated requests, use githubService which handles rate limiting gracefully
-                try {
-                    const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
-                    return comments.map(comment => ({
+                return comments
+                    .map(comment => ({
                         id: comment.id,
                         author: comment.user.login,
                         body: comment.body,
                         created_at: new Date(comment.created_at).toLocaleDateString(),
+                        created_at_raw: new Date(comment.created_at),
                         avatar_url: comment.user.avatar_url
-                    }));
+                    }))
+                    .sort((a, b) => b.created_at_raw - a.created_at_raw); // Sort newest first
+            } else {
+                // For unauthenticated requests, use githubService which handles rate limiting gracefully
+                try {
+                    const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
+                    return comments
+                        .map(comment => ({
+                            id: comment.id,
+                            author: comment.user.login,
+                            body: comment.body,
+                            created_at: new Date(comment.created_at).toLocaleDateString(),
+                            created_at_raw: new Date(comment.created_at),
+                            avatar_url: comment.user.avatar_url
+                        }))
+                        .sort((a, b) => b.created_at_raw - a.created_at_raw); // Sort newest first
                 } catch (error) {
                     console.warn(`Failed to fetch comments for PR ${prNumber}: ${error.message}`);
                     return [];
@@ -503,11 +509,62 @@ const BranchListingPage = () => {
         <PageLayout pageName="branch-listing" showBreadcrumbs={false}>
             <div className="branch-listing-content">
                 {loading ? (
-                    <div className="branch-listing-header">
-                        <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
-                        <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
-                        <div className="loading">Loading previews...</div>
-                    </div>
+                    <>
+                        <div className="branch-listing-header">
+                            <h1><img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.ICON_SGEX, 'SGEX Icon')} className="sgex-icon" /> SGEX</h1>
+                            <p className="subtitle">a collaborative workbench for WHO SMART Guidelines</p>
+                            <div className="loading">Loading previews...</div>
+                            
+                            <div className="prominent-info">
+                                <p className="info-text">
+                                    🐾 While previews load, you can access the main SGEX workbench and login below.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="action-cards">
+                            <div className="action-card main-site-card">
+                                <a 
+                                    href="/sgex/main/"
+                                    className="card-link"
+                                >
+                                    <div className="card-content">
+                                        <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Mascot')} className="card-icon" />
+                                        <div className="card-text">
+                                            <h3>View Main Site</h3>
+                                            <p>Access the main SGEX workbench</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            
+                            {!isAuthenticated ? (
+                                <div className="action-card login-card">
+                                    <div className="card-content">
+                                        <div className="login-icon">🔐</div>
+                                        <div className="card-text">
+                                            <h3>GitHub Login</h3>
+                                            <p>Login to get higher API rate limits and view comments</p>
+                                            <PATLogin onAuthSuccess={handleAuthSuccess} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="action-card logout-card">
+                                    <div className="card-content">
+                                        <div className="login-icon">✅</div>
+                                        <div className="card-text">
+                                            <h3>Logged In</h3>
+                                            <p>You can now view and add comments</p>
+                                            <button onClick={handleLogout} className="logout-btn">
+                                                🚪 Logout
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </>
                 ) : error && pullRequests.length === 0 ? (
                     <>
                         <header className="branch-listing-header">
@@ -538,7 +595,7 @@ const BranchListingPage = () => {
                         <div className="action-cards">
                             <div className="action-card main-site-card">
                                 <a 
-                                    href="./main/"
+                                    href="/sgex/main/"
                                     className="card-link"
                                 >
                                     <div className="card-content">
@@ -611,7 +668,7 @@ const BranchListingPage = () => {
                 <div className="action-cards">
                     <div className="action-card main-site-card">
                         <a 
-                            href="./main/"
+                            href="/sgex/main/"
                             className="card-link"
                         >
                             <div className="card-content">
@@ -810,7 +867,7 @@ const BranchListingPage = () => {
                                                         <div className="comments-loading">Loading full discussion...</div>
                                                     ) : prComments[pr.number] && prComments[pr.number].length > 0 ? (
                                                         <div className="comments-list">
-                                                            {prComments[pr.number].slice(-5).map((comment) => (
+                                                            {prComments[pr.number].slice(0, 5).map((comment) => (
                                                                 <div key={comment.id} className="comment-item">
                                                                     <div className="comment-header">
                                                                         <img 

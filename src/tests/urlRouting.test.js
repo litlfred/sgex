@@ -55,9 +55,9 @@ describe('URL Routing - Branch Validation', () => {
     } else if (pathSegments.length === 3 && pathSegments[2] === 'index.html') {
       return { type: 'branch-index-redirect' };
     } else {
-      // FIX: Handle unknown branch-only URLs by redirecting to branch root
+      // FIX: Handle unknown branch-only URLs by assuming they exist and trying to route to them
       if (pathSegments.length === 2) {
-        // Just /sgex/:unknown-branch/ - redirect to branch root
+        // Just /sgex/:unknown-branch/ - assume branch exists and try to route to it
         return { type: 'branch-root-redirect', branch: secondSegment, redirect: `/sgex/${secondSegment}/` };
       }
       
@@ -130,13 +130,14 @@ describe('URL Routing - Branch Validation', () => {
       expect(result.error).toBe('unknown-pattern');
     });
 
-    test('should handle 2-segment unknown branch URL with redirect (updated for fix)', () => {
+    test('should handle 2-segment unknown branch URL by trying to route to branch (updated for fix)', () => {
       const result = fixedRouteLogic('/sgex/unknown-branch', mockRouteConfig);
       expect(result.type).toBe('branch-root-redirect');
       expect(result.branch).toBe('unknown-branch');
+      expect(result.redirect).toBe('/sgex/unknown-branch/');
     });
 
-    test('should handle unknown branch-only URL by redirecting to branch root (issue #846)', () => {
+    test('should handle unknown branch-only URL by trying to route to branch first (issue #877)', () => {
       const result = fixedRouteLogic('/sgex/copilot-fix-839/', mockRouteConfig);
       expect(result.type).toBe('branch-root-redirect');
       expect(result.branch).toBe('copilot-fix-839');

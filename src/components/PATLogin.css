@@ -38,6 +38,7 @@
   background-color: var(--who-secondary-bg, #f6f8fa);
   color: var(--who-text-primary, #24292e);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  pointer-events: auto;
 }
 
 .token-input {
@@ -77,6 +78,7 @@
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.1s ease;
   min-height: 48px;
+  pointer-events: auto;
 }
 
 .github-login-btn:hover:not(:disabled) {
@@ -130,6 +132,7 @@
   align-items: center;
   gap: 0.5rem;
   transition: color 0.2s ease;
+  pointer-events: auto;
 }
 
 .help-toggle-btn:hover {

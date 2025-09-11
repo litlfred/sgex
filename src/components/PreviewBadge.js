@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import githubService from '../services/githubService';
 import githubActionsService from '../services/githubActionsService';
 import WorkflowStatus from './WorkflowStatus';
+import WorkflowDashboard from './WorkflowDashboard';
 import { lazyLoadReactMarkdown, lazyLoadDOMPurify, lazyLoadRehypeRaw } from '../utils/lazyRouteUtils';
 import './WorkflowStatus.css';
 import './PreviewBadge.css';
@@ -31,8 +32,16 @@ const PreviewBadge = () => {
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
   const [workflowStatus, setWorkflowStatus] = useState(null);
   const [workflowLoading, setWorkflowLoading] = useState(false);
+  // Always use WorkflowDashboard - removed simple view toggle
+  const [showWorkflowView, setShowWorkflowView] = useState(false); // Default to discussion view
   const [newlyAddedCommentId, setNewlyAddedCommentId] = useState(null);
   const [copilotSessionInfo, setCopilotSessionInfo] = useState(null);
+  const [showCopilotSession, setShowCopilotSession] = useState(false);
+  const [isWatchingSession, setIsWatchingSession] = useState(false);
+  const [watchSessionInterval, setWatchSessionInterval] = useState(null);
+  const [isRefreshingSession, setIsRefreshingSession] = useState(false);
+  const [lastSessionCheck, setLastSessionCheck] = useState(null);
+  const [sessionRefreshCount, setSessionRefreshCount] = useState(0);
   const [ReactMarkdown, setReactMarkdown] = useState(null);
   const [DOMPurify, setDOMPurify] = useState(null);
   const [rehypeRaw, setRehypeRaw] = useState(null);
@@ -56,12 +65,18 @@ const PreviewBadge = () => {
 
     loadMarkdownComponents();
   }, []);
-  const [showCopilotSession, setShowCopilotSession] = useState(false);
   const [canComment, setCanComment] = useState(true);
   const [canTriggerWorkflows, setCanTriggerWorkflows] = useState(false);
   const [canApproveWorkflows, setCanApproveWorkflows] = useState(false);
   const [canMergePR, setCanMergePR] = useState(false);
+  const [canManagePR, setCanManagePR] = useState(false); // For draft/ready status changes
   const [isMergingPR, setIsMergingPR] = useState(false);
+  const [canReviewPR, setCanReviewPR] = useState(false);
+  const [isApprovingPR, setIsApprovingPR] = useState(false);
+  const [isRequestingChanges, setIsRequestingChanges] = useState(false);
+  const [isMarkingReadyForReview, setIsMarkingReadyForReview] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState(null); // 'success', 'error'
+  const [approvalMessage, setApprovalMessage] = useState('');
   const [commentsPage, setCommentsPage] = useState(1);
   const [allComments, setAllComments] = useState([]);
   const [hasMoreComments, setHasMoreComments] = useState(false);
@@ -408,6 +423,92 @@ const PreviewBadge = () => {
     return Array.from(viewers);
   };
 
+  // Handle workflow dashboard actions
+  const handleWorkflowDashboardAction = (actionData) => {
+    console.debug('Workflow dashboard action:', actionData);
+    
+    if (actionData.type === 'workflow_triggered' || actionData.type === 'workflow_approved') {
+      // Show success message for workflow actions
+      setApprovalStatus('success');
+      if (actionData.type === 'workflow_triggered') {
+        setApprovalMessage('Workflow triggered successfully! Check the dashboard for real-time updates.');
+      } else {
+        setApprovalMessage('Workflow approved successfully! It should start running now.');
+      }
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setApprovalStatus(null);
+        setApprovalMessage('');
+      }, 5000);
+    }
+  };
+
+  // Handle watch session toggle with auto-refresh
+  const handleWatchSessionToggle = () => {
+    if (isWatchingSession) {
+      // Stop watching - clear interval and hide session
+      if (watchSessionInterval) {
+        clearInterval(watchSessionInterval);
+        setWatchSessionInterval(null);
+      }
+      setIsWatchingSession(false);
+      setShowCopilotSession(false);
+      setIsRefreshingSession(false);
+      setSessionRefreshCount(0);
+    } else {
+      // Start watching - show session and set up auto-refresh
+      setIsWatchingSession(true);
+      setShowCopilotSession(true);
+      setSessionRefreshCount(0);
+      
+      // Perform initial refresh
+      if (prInfo && prInfo.length > 0) {
+        performSessionRefresh('litlfred', 'sgex', prInfo[0].number);
+      }
+      
+      // Set up auto-refresh every 10 seconds
+      const interval = setInterval(async () => {
+        if (prInfo && prInfo.length > 0) {
+          await performSessionRefresh('litlfred', 'sgex', prInfo[0].number);
+        }
+      }, 10000); // 10 seconds
+      
+      setWatchSessionInterval(interval);
+    }
+  };
+
+  // Helper function to perform session refresh with visual feedback
+  const performSessionRefresh = async (owner, repo, prNumber) => {
+    try {
+      setIsRefreshingSession(true);
+      setSessionRefreshCount(prev => prev + 1);
+      
+      // Refresh copilot session info
+      const sessionInfo = await fetchCopilotSessionInfo(owner, repo, prNumber);
+      setCopilotSessionInfo(sessionInfo);
+      setLastSessionCheck(new Date());
+      
+      // Brief visual feedback that refresh completed
+      setTimeout(() => {
+        setIsRefreshingSession(false);
+      }, 1000); // Show "refreshing" state for 1 second
+      
+    } catch (error) {
+      console.debug('Failed to refresh copilot session info:', error);
+      setIsRefreshingSession(false);
+    }
+  };
+
+  // Clean up interval on unmount
+  useEffect(() => {
+    return () => {
+      if (watchSessionInterval) {
+        clearInterval(watchSessionInterval);
+      }
+    };
+  }, [watchSessionInterval]);
+
   const fetchWorkflowStatus = async (branchName) => {
     try {
       setWorkflowLoading(true);
@@ -416,6 +517,10 @@ const PreviewBadge = () => {
       if (githubService.isAuth() && githubService.token) {
         githubActionsService.setToken(githubService.token);
       }
+      
+      // Always use WorkflowDashboard which handles its own state
+      setWorkflowLoading(false);
+      return;
       
       const status = await githubActionsService.getLatestWorkflowRun(branchName);
       const parsedStatus = githubActionsService.parseWorkflowStatus(status);
@@ -446,29 +551,79 @@ const PreviewBadge = () => {
         comment.body.includes('GitHub Copilot')
       );
 
+      console.debug('Copilot session detection:', {
+        totalComments: comments.length,
+        copilotComments: copilotComments.length,
+        copilotCommentsInfo: copilotComments.map(c => ({
+          id: c.id,
+          author: c.user.login,
+          created: c.created_at,
+          bodyPreview: c.body.substring(0, 100) + '...'
+        }))
+      });
+
       if (copilotComments.length > 0) {
-        // Get the most recent copilot activity
-        const latestCopilotComment = copilotComments[0];
+        // Sort copilot comments by date (newest first) to ensure we get the latest activity
+        const sortedCopilotComments = copilotComments.sort((a, b) => 
+          new Date(b.created_at) - new Date(a.created_at)
+        );
         
-        // Try to find an agent session URL in the comments or generate one
+        // Try to find the newest agent session URL by checking ALL comments, not just copilot ones
         let agentSessionUrl = null;
+        let latestSessionDate = null;
+        let sessionComment = null;
         
-        // Look for agent session URLs in comments
-        const sessionUrlPattern = /https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+\/agent-sessions\/[a-f0-9-]+/gi;
-        for (const comment of copilotComments) {
-          const match = comment.body.match(sessionUrlPattern);
-          if (match) {
-            agentSessionUrl = match[0];
-            break;
+        // Enhanced session URL pattern to capture session IDs
+        const sessionUrlPattern = /https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+\/agent-sessions\/([a-f0-9-]+)/gi;
+        
+        // Check ALL comments for session URLs, sorted by date (newest first)
+        const allCommentsSorted = comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        console.debug('Searching for session URLs in all comments:', allCommentsSorted.length);
+        
+        for (const comment of allCommentsSorted) {
+          const matches = [...comment.body.matchAll(sessionUrlPattern)];
+          if (matches.length > 0) {
+            console.debug('Found session URLs in comment:', {
+              commentId: comment.id,
+              author: comment.user.login,
+              created: comment.created_at,
+              urls: matches.map(m => m[0])
+            });
+            
+            // Take the last (most recent) session URL from the most recent comment
+            const sessionUrl = matches[matches.length - 1][0];
+            const commentDate = new Date(comment.created_at);
+            
+            // Use the session URL from the newest comment with session URLs
+            if (!agentSessionUrl || commentDate > latestSessionDate) {
+              agentSessionUrl = sessionUrl;
+              latestSessionDate = commentDate;
+              sessionComment = comment;
+              console.debug('Updated session URL to newest:', {
+                url: agentSessionUrl,
+                commentDate: commentDate.toISOString(),
+                commentId: comment.id
+              });
+            }
           }
         }
         
         // If no explicit agent session URL found, construct the likely URL
         if (!agentSessionUrl) {
-          // Generate a plausible agent session URL based on the PR structure
-          // This is a best-effort approach since we don't have direct access to session IDs
           agentSessionUrl = `https://github.com/${owner}/${repo}/pull/${prNumber}/agent-sessions`;
+          console.debug('No session URL found, using default:', agentSessionUrl);
+        } else {
+          console.debug('Final session URL selected:', agentSessionUrl);
         }
+        
+        // Get the most recent copilot activity for display
+        const latestCopilotComment = sortedCopilotComments[0];
+        
+        // Filter to get only copilot's actual responses (not mentions)
+        const copilotResponses = sortedCopilotComments.filter(comment => 
+          comment.user.login === 'copilot' || comment.user.login.includes('copilot')
+        );
         
         return {
           hasActiveCopilot: true,
@@ -476,7 +631,9 @@ const PreviewBadge = () => {
           sessionUrl: agentSessionUrl,
           commentUrl: `https://github.com/${owner}/${repo}/pull/${prNumber}#issuecomment-${latestCopilotComment.id}`,
           commentsCount: copilotComments.length,
-          latestComment: latestCopilotComment
+          latestComment: latestCopilotComment,
+          copilotResponses: copilotResponses, // Add filtered copilot responses
+          sessionComment: sessionComment // Add the comment that contained the session URL
         };
       }
 
@@ -502,9 +659,10 @@ const PreviewBadge = () => {
       
       const success = await githubActionsService.triggerWorkflow(branchName);
       if (success) {
-        // Refresh workflow status after triggering
+        // Refresh workflow status after triggering and set up intensive monitoring
         setTimeout(() => {
           fetchWorkflowStatus(branchName);
+          setupIntensiveWorkflowRefresh(branchName);
         }, 2000); // Wait 2 seconds before fetching status
       }
       return success;
@@ -526,12 +684,17 @@ const PreviewBadge = () => {
       
       const success = await githubActionsService.approveWorkflowRun(runId);
       if (success) {
-        // Refresh workflow status after approval
+        // Immediately refresh workflow status after approval
         setTimeout(() => {
           if (branchInfo?.name) {
             fetchWorkflowStatus(branchInfo.name);
           }
-        }, 2000); // Wait 2 seconds before fetching status
+        }, 1000); // Reduced delay to 1 second for faster response
+        
+        // Set up intensive monitoring for faster updates after approval
+        if (branchInfo?.name) {
+          setupIntensiveWorkflowRefresh(branchInfo.name);
+        }
       }
       return success;
     } catch (error) {
@@ -597,12 +760,205 @@ const PreviewBadge = () => {
     }
   };
 
+  const handleApprovePR = async (owner, repo, prNumber) => {
+    if (!githubService.isAuth() || isApprovingPR || !canReviewPR) {
+      return false;
+    }
+
+    setIsApprovingPR(true);
+    setApprovalStatus(null); // Clear previous status
+    setApprovalMessage('');
+    
+    try {
+      // Add debugging info
+      console.log('Attempting to approve PR:', { owner, repo, prNumber, comment: newComment.trim() });
+      
+      // Use the main comment from the top comment form for the review
+      const result = await githubService.approvePullRequest(owner, repo, prNumber, newComment.trim());
+      
+      console.log('PR approval result:', result);
+      
+      // Show success message
+      setApprovalStatus('success');
+      setApprovalMessage('PR approved successfully! This should trigger any pending workflows.');
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setApprovalStatus(null);
+        setApprovalMessage('');
+      }, 5000);
+      
+      // Clear the comment after successful approval if it was used for the review
+      if (newComment.trim()) {
+        setNewComment('');
+      }
+      
+      // Refresh the PR info to reflect the new review status
+      setTimeout(async () => {
+        try {
+          const refreshedPRs = await fetchPRsForBranch(branchInfo?.name);
+          if (refreshedPRs && refreshedPRs.length > 0) {
+            setPrInfo(refreshedPRs);
+          }
+        } catch (error) {
+          console.debug('Could not refresh PR status after approval:', error);
+        }
+      }, 2000);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to approve PR:', error);
+      console.log('Error details:', {
+        status: error.status,
+        response: error.response?.data,
+        message: error.message,
+        stack: error.stack
+      });
+      
+      // Provide user-friendly error messages
+      let userMessage = 'Failed to approve PR';
+      if (error.status === 403) {
+        userMessage = 'Permission denied: You may not have permission to review this PR';
+      } else if (error.status === 404) {
+        userMessage = 'PR not found or repository access denied';
+      } else if (error.status === 422) {
+        userMessage = 'Cannot review this PR - it may be from the same user or have other restrictions';
+      } else if (error.message) {
+        userMessage = `Failed to approve PR: ${error.message}`;
+      }
+      
+      // Show error message to user
+      setApprovalStatus('error');
+      setApprovalMessage(userMessage);
+      
+      // Clear error message after 8 seconds
+      setTimeout(() => {
+        setApprovalStatus(null);
+        setApprovalMessage('');
+      }, 8000);
+      
+      console.warn('User guidance:', userMessage);
+      return false;
+    } finally {
+      setIsApprovingPR(false);
+    }
+  };
+
+  const handleRequestChanges = async (owner, repo, prNumber) => {
+    if (!githubService.isAuth() || isRequestingChanges || !canReviewPR) {
+      return false;
+    }
+
+    if (!newComment || !newComment.trim()) {
+      alert('Please enter a comment explaining what changes are needed.');
+      return false;
+    }
+
+    setIsRequestingChanges(true);
+    try {
+      const result = await githubService.requestPullRequestChanges(owner, repo, prNumber, newComment.trim());
+      
+      console.debug('Changes requested successfully:', result);
+      
+      // Clear the comment after successful review
+      setNewComment('');
+      
+      // Refresh the PR info to reflect the new review status
+      setTimeout(async () => {
+        try {
+          const refreshedPRs = await fetchPRsForBranch(branchInfo?.name);
+          if (refreshedPRs && refreshedPRs.length > 0) {
+            setPrInfo(refreshedPRs);
+          }
+        } catch (error) {
+          console.debug('Could not refresh PR status after requesting changes:', error);
+        }
+      }, 2000);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to request changes:', error);
+      
+      // Provide user-friendly error messages
+      let userMessage = 'Failed to request changes';
+      if (error.status === 403) {
+        userMessage = 'Permission denied: You may not have permission to review this PR';
+      } else if (error.status === 404) {
+        userMessage = 'PR not found or repository access denied';
+      } else if (error.status === 422) {
+        userMessage = 'Cannot review this PR - it may be from the same user or have other restrictions';
+      }
+      
+      console.warn('User guidance:', userMessage);
+      return false;
+    } finally {
+      setIsRequestingChanges(false);
+    }
+  };
+
+  const handleMarkReadyForReview = async (owner, repo, prNumber) => {
+    if (!githubService.isAuth() || isMarkingReadyForReview || !canMergePR) {
+      return false;
+    }
+
+    setIsMarkingReadyForReview(true);
+    setApprovalStatus(null); // Clear previous status
+    setApprovalMessage('');
+    
+    try {
+      const result = await githubService.markPullRequestReadyForReview(owner, repo, prNumber);
+      
+      console.debug('PR marked as ready for review successfully:', result);
+      
+      // Show success message
+      setApprovalStatus('success');
+      setApprovalMessage(`PR #${prNumber} is now ready for review!`);
+      
+      // Refresh the PR info to reflect the new draft status
+      setTimeout(async () => {
+        try {
+          const refreshedPRs = await fetchPRsForBranch(branchInfo?.name);
+          if (refreshedPRs && refreshedPRs.length > 0) {
+            setPrInfo(refreshedPRs);
+          }
+        } catch (error) {
+          console.debug('Could not refresh PR status after marking ready for review:', error);
+        }
+      }, 2000);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to mark PR as ready for review:', error);
+      
+      // Provide user-friendly error messages
+      let userMessage = 'Failed to mark PR as ready for review';
+      if (error.status === 403) {
+        userMessage = 'Permission denied: You may not have permission to update this PR';
+      } else if (error.status === 404) {
+        userMessage = 'PR not found or repository access denied';
+      } else if (error.status === 422) {
+        userMessage = 'PR cannot be marked as ready for review - it may already be ready or have other restrictions';
+      } else if (error.message) {
+        userMessage = error.message;
+      }
+      
+      setApprovalStatus('error');
+      setApprovalMessage(userMessage);
+      
+      return false;
+    } finally {
+      setIsMarkingReadyForReview(false);
+    }
+  };
+
   const checkPermissions = async (owner, repo) => {
     if (!githubService.isAuth()) {
       setCanComment(false);
       setCanTriggerWorkflows(false);
       setCanApproveWorkflows(false);
       setCanMergePR(false);
+      setCanReviewPR(false);
+      setCanManagePR(false);
       return;
     }
 
@@ -623,12 +979,20 @@ const PreviewBadge = () => {
       setCanTriggerWorkflows(triggerPermissions);
       setCanApproveWorkflows(approvalPermissions);
 
-      // Check merge permissions for the first PR if available
+      // Check merge and review permissions for the first PR if available
       if (prInfo && prInfo.length > 0) {
-        const mergePermissions = await githubService.checkPullRequestMergePermissions(owner, repo, prInfo[0].number);
+        const [mergePermissions, reviewPermissions, writePermissions] = await Promise.all([
+          githubService.checkPullRequestMergePermissions(owner, repo, prInfo[0].number),
+          githubService.checkPullRequestReviewPermissions(owner, repo, prInfo[0].number),
+          githubService.checkRepositoryWritePermissions(owner, repo) // For managing PR draft status
+        ]);
         setCanMergePR(mergePermissions);
+        setCanReviewPR(reviewPermissions);
+        setCanManagePR(writePermissions); // Repository write access for draft/ready status changes
       } else {
         setCanMergePR(false);
+        setCanReviewPR(false);
+        setCanManagePR(false);
       }
     } catch (error) {
       console.debug('Error checking permissions:', error);
@@ -636,6 +1000,8 @@ const PreviewBadge = () => {
       setCanTriggerWorkflows(false);
       setCanApproveWorkflows(false);
       setCanMergePR(false);
+      setCanReviewPR(false);
+      setCanManagePR(false);
     }
   };
 
@@ -645,7 +1011,7 @@ const PreviewBadge = () => {
       clearInterval(commentRefreshIntervalRef.current);
     }
 
-    // Set up new interval to refresh comments every minute
+    // Set up new interval to refresh comments every 5 seconds
     commentRefreshIntervalRef.current = setInterval(async () => {
       try {
         const latestComments = await fetchCommentsForPR(owner, repo, prNumber, 1, false);
@@ -663,7 +1029,7 @@ const PreviewBadge = () => {
       } catch (error) {
         console.debug('Failed to auto-refresh comments:', error);
       }
-    }, 60000); // 60 seconds
+    }, 5000); // 5 seconds
   };
 
   const setupWorkflowAutoRefresh = (branchName) => {
@@ -686,6 +1052,38 @@ const PreviewBadge = () => {
         console.debug('Failed to auto-refresh workflow status:', error);
       }
     }, 30000); // 30 seconds for more dynamic updates
+  };
+
+  const setupIntensiveWorkflowRefresh = (branchName) => {
+    // Clear any existing interval
+    if (workflowRefreshIntervalRef.current) {
+      clearInterval(workflowRefreshIntervalRef.current);
+    }
+
+    let refreshCount = 0;
+    const maxIntensiveRefreshes = 6; // 6 refreshes × 5 seconds = 30 seconds of intensive monitoring
+
+    // Set up intensive refresh for 30 seconds after workflow actions
+    workflowRefreshIntervalRef.current = setInterval(async () => {
+      try {
+        const previousStatus = workflowStatus?.status;
+        await fetchWorkflowStatus(branchName);
+        
+        refreshCount++;
+        
+        // Log status changes for debugging
+        if (workflowStatus?.status && workflowStatus.status !== previousStatus) {
+          console.debug(`Workflow status changed from ${previousStatus} to ${workflowStatus.status}`);
+        }
+        
+        // After intensive monitoring period, switch back to normal refresh rate
+        if (refreshCount >= maxIntensiveRefreshes) {
+          setupWorkflowAutoRefresh(branchName);
+        }
+      } catch (error) {
+        console.debug('Failed to auto-refresh workflow status:', error);
+      }
+    }, 5000); // 5 seconds for intensive monitoring
   };
 
   const loadMoreComments = async () => {
@@ -818,8 +1216,162 @@ const PreviewBadge = () => {
     setExpandedDescription(!expandedDescription);
   };
 
-  const sanitizeAndRenderMarkdown = (content) => {
-    if (!content || !DOMPurify) return content || '';
+  const convertGitHubNotationToLinks = (content) => {
+    if (!content || typeof content !== 'string') return content || '';
+    
+    // Get current repository context
+    const owner = 'litlfred';
+    const repo = 'sgex';
+    const baseUrl = `https://github.com/${owner}/${repo}`;
+    
+    let processedContent = content;
+    
+    // Convert cross-repository references first (org/repo#123)
+    processedContent = processedContent.replace(
+      /\b([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)#(\d+)\b/g,
+      (match, org, repository, number) => `[${org}/${repository}#${number}](https://github.com/${org}/${repository}/issues/${number})`
+    );
+    
+    // Convert issue/PR references with action words (Fixes #123, Closes #456, etc.)
+    processedContent = processedContent.replace(
+      /\b(Fixes?|Closes?|Resolves?)\s+#(\d+)\b/gi,
+      (match, action, number) => `${action} [#${number}](${baseUrl}/issues/${number})`
+    );
+    
+    // Convert standalone issue/PR references (#123)
+    // Avoid converting if already part of a markdown link or cross-repo reference
+    processedContent = processedContent.replace(
+      /#(\d+)\b/g,
+      (match, number, offset, string) => {
+        // Don't convert if it's already part of a markdown link
+        const beforeMatch = string.substring(Math.max(0, offset - 20), offset);
+        const afterMatch = string.substring(offset, offset + match.length + 10);
+        
+        // Skip if inside a markdown link
+        if (beforeMatch.includes('[') && !beforeMatch.includes(']')) {
+          return match;
+        }
+        
+        // Skip if it's part of a cross-repo reference or already a link
+        if (beforeMatch.includes('/') || afterMatch.includes('](')) {
+          return match;
+        }
+        
+        return `[#${number}](${baseUrl}/issues/${number})`;
+      }
+    );
+    
+    // Convert user mentions (@username)
+    processedContent = processedContent.replace(
+      /@([a-zA-Z0-9_-]+)/g,
+      (match, username, offset, string) => {
+        // Don't convert if it's already part of a markdown link
+        const beforeMatch = string.substring(Math.max(0, offset - 10), offset);
+        if (beforeMatch.includes('[') && !beforeMatch.includes(']')) {
+          return match; // Skip if inside a markdown link
+        }
+        return `[@${username}](https://github.com/${username})`;
+      }
+    );
+    
+    // Convert commit SHAs (7+ hex characters)
+    processedContent = processedContent.replace(
+      /\b([a-f0-9]{7,40})\b/gi,
+      (match, sha) => {
+        // Only convert if it looks like a commit SHA (all lowercase hex)
+        if (/^[a-f0-9]+$/i.test(sha) && sha.length >= 7) {
+          return `[\`${sha.substring(0, 7)}\`](${baseUrl}/commit/${sha})`;
+        }
+        return match;
+      }
+    );
+    
+    return processedContent;
+  };
+
+  const processMarkdownContent = (content) => {
+    if (!content || typeof content !== 'string') return content || '';
+    
+    // Convert GitHub notation to markdown links
+    // ReactMarkdown will handle the safe conversion from markdown to HTML
+    return convertGitHubNotationToLinks(content);
+  };
+
+  const convertGitHubNotationToHtml = (content) => {
+    if (!content || typeof content !== 'string') return content || '';
+    
+    // Get current repository context
+    const owner = 'litlfred';
+    const repo = 'sgex';
+    const baseUrl = `https://github.com/${owner}/${repo}`;
+    
+    let processedContent = content;
+    
+    // Convert cross-repository references first (org/repo#123)
+    processedContent = processedContent.replace(
+      /\b([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)#(\d+)\b/g,
+      (match, org, repository, number) => `<a href="https://github.com/${org}/${repository}/issues/${number}" target="_blank" rel="noopener noreferrer">${org}/${repository}#${number}</a>`
+    );
+    
+    // Convert issue/PR references with action words (Fixes #123, Closes #456, etc.)
+    processedContent = processedContent.replace(
+      /\b(Fixes?|Closes?|Resolves?)\s+#(\d+)\b/gi,
+      (match, action, number) => `${action} <a href="${baseUrl}/issues/${number}" target="_blank" rel="noopener noreferrer">#${number}</a>`
+    );
+    
+    // Convert standalone issue/PR references (#123)
+    // Avoid converting if already part of an HTML link or cross-repo reference
+    processedContent = processedContent.replace(
+      /#(\d+)\b/g,
+      (match, number, offset, string) => {
+        // Don't convert if it's already part of an HTML link
+        const beforeMatch = string.substring(Math.max(0, offset - 20), offset);
+        const afterMatch = string.substring(offset, offset + match.length + 10);
+        
+        // Skip if inside an HTML link
+        if (beforeMatch.includes('<a ') && !beforeMatch.includes('</a>')) {
+          return match;
+        }
+        
+        // Skip if it's part of a cross-repo reference or already a link
+        if (beforeMatch.includes('/') || afterMatch.includes('</a>')) {
+          return match;
+        }
+        
+        return `<a href="${baseUrl}/issues/${number}" target="_blank" rel="noopener noreferrer">#${number}</a>`;
+      }
+    );
+    
+    // Convert user mentions (@username)
+    processedContent = processedContent.replace(
+      /@([a-zA-Z0-9_-]+)/g,
+      (match, username, offset, string) => {
+        // Don't convert if it's already part of an HTML link
+        const beforeMatch = string.substring(Math.max(0, offset - 10), offset);
+        if (beforeMatch.includes('<a ') && !beforeMatch.includes('</a>')) {
+          return match; // Skip if inside an HTML link
+        }
+        return `<a href="https://github.com/${username}" target="_blank" rel="noopener noreferrer">@${username}</a>`;
+      }
+    );
+    
+    // Convert commit SHAs (7+ hex characters)
+    processedContent = processedContent.replace(
+      /\b([a-f0-9]{7,40})\b/gi,
+      (match, sha) => {
+        // Only convert if it looks like a commit SHA (all lowercase hex)
+        if (/^[a-f0-9]+$/i.test(sha) && sha.length >= 7) {
+          return `<a href="${baseUrl}/commit/${sha}" target="_blank" rel="noopener noreferrer"><code>${sha.substring(0, 7)}</code></a>`;
+        }
+        return match;
+      }
+    );
+    
+    return processedContent;
+  };
+
+  const sanitizeHtmlContent = (content) => {
+    if (!content || !DOMPurify || typeof content !== 'string') return content || '';
     
     // Check if DOMPurify has the sanitize method
     if (typeof DOMPurify.sanitize !== 'function') {
@@ -899,10 +1451,14 @@ const PreviewBadge = () => {
       // Check for copilot session activity
       if (githubService.isAuth()) {
         try {
+          setIsRefreshingSession(true);
           const copilotInfo = await fetchCopilotSessionInfo(owner, repo, pr.number);
           setCopilotSessionInfo(copilotInfo);
+          setLastSessionCheck(new Date());
+          setTimeout(() => setIsRefreshingSession(false), 500); // Brief feedback
         } catch (error) {
           console.debug('Could not fetch copilot session info:', error);
+          setIsRefreshingSession(false);
         }
       }
       
@@ -1145,12 +1701,15 @@ const PreviewBadge = () => {
                           rehypePlugins={[rehypeRaw]}
                           components={markdownComponents}
                         >
-                          {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
+                          {processMarkdownContent(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
                         </ReactMarkdown>
                       ) : (
-                        <div style={{ whiteSpace: 'pre-wrap' }}>
-                          {sanitizeAndRenderMarkdown(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body))}
-                        </div>
+                        <div 
+                          style={{ whiteSpace: 'pre-wrap' }}
+                          dangerouslySetInnerHTML={{
+                            __html: sanitizeHtmlContent(convertGitHubNotationToHtml(expandedDescription ? prInfo[0].body : truncateDescription(prInfo[0].body)))
+                          }}
+                        />
                       )}
                     </div>
                     {prInfo[0].body.split('\n').length > 6 && (
@@ -1165,312 +1724,440 @@ const PreviewBadge = () => {
                 </div>
               )}
 
-              {/* Workflow Status Section */}
-              {branchInfo?.name && (
-                <div className="workflow-status-wrapper">
-                  <WorkflowStatus
-                    workflowStatus={workflowStatus}
-                    branchName={branchInfo.name}
-                    onTriggerWorkflow={handleTriggerWorkflow}
-                    onApproveWorkflow={handleApproveWorkflow}
-                    isAuthenticated={githubService.isAuth()}
-                    canTriggerWorkflows={canTriggerWorkflows}
-                    canApproveWorkflows={canApproveWorkflows}
-                    isLoading={workflowLoading}
-                  />
+              {/* View Toggle Switch */}
+              <div className="pr-view-toggle">
+                <div className="toggle-switch">
+                  <button
+                    className={`toggle-option ${!showWorkflowView ? 'active' : ''}`}
+                    onClick={() => setShowWorkflowView(false)}
+                  >
+                    💬 Discussion
+                  </button>
+                  <button
+                    className={`toggle-option ${showWorkflowView ? 'active' : ''}`}
+                    onClick={() => setShowWorkflowView(true)}
+                  >
+                    ⚙️ Workflow Dashboard
+                  </button>
                 </div>
-              )}
+              </div>
 
-              {/* PR Actions Section */}
-              {prInfo && prInfo.length > 0 && prInfo[0].state === 'open' && (
-                <div className="pr-actions-wrapper">
-                  <h4>🔀 Pull Request Actions</h4>
-                  <div className="pr-actions-container">
-                    <div className="pr-actions-info">
-                      <span className="pr-actions-status">
-                        PR #{prInfo[0].number} is ready for actions
-                      </span>
-                    </div>
-                    <div className="pr-actions-buttons">
-                      {githubService.isAuth() && canMergePR && (
-                        <button
-                          onClick={() => handleMergePR('litlfred', 'sgex', prInfo[0].number)}
-                          disabled={isMergingPR}
-                          className="pr-merge-btn"
-                          title={`Merge PR #${prInfo[0].number}`}
-                        >
-                          {isMergingPR ? (
-                            <>⏳ Merging...</>
-                          ) : (
-                            <>🔀 Merge PR</>
-                          )}
-                        </button>
-                      )}
-                      {!githubService.isAuth() && (
-                        <span className="pr-actions-note">
-                          🔒 Sign in to access PR actions
-                        </span>
-                      )}
-                      {githubService.isAuth() && !canMergePR && (
-                        <span className="pr-actions-note">
-                          ⚠️ You don't have permission to merge this PR
-                        </span>
-                      )}
-                    </div>
+              {/* Conditional Content Based on Toggle */}
+              {showWorkflowView ? (
+                /* Workflow Dashboard View */
+                branchInfo?.name && (
+                  <div className="workflow-status-wrapper">
+                    <WorkflowDashboard
+                      branchName={branchInfo.name}
+                      githubActionsService={githubActionsService}
+                      isAuthenticated={githubService.isAuth()}
+                      canTriggerWorkflows={canTriggerWorkflows}
+                      canApproveWorkflows={canApproveWorkflows}
+                      onWorkflowAction={handleWorkflowDashboardAction}
+                      // Pass PR actions data
+                      prInfo={prInfo}
+                      canMergePR={canMergePR}
+                      canManagePR={canManagePR}
+                      canReviewPR={canReviewPR}
+                      isMergingPR={isMergingPR}
+                      isApprovingPR={isApprovingPR}
+                      isRequestingChanges={isRequestingChanges}
+                      isMarkingReadyForReview={isMarkingReadyForReview}
+                      approvalStatus={approvalStatus}
+                      approvalMessage={approvalMessage}
+                      newComment={newComment}
+                      onMergePR={handleMergePR}
+                      onApprovePR={handleApprovePR}
+                      onRequestChanges={handleRequestChanges}
+                      onMarkReadyForReview={handleMarkReadyForReview}
+                    />
                   </div>
-                </div>
-              )}
-
-              {/* GitHub Copilot Session Section */}
-              {copilotSessionInfo && (
-                <div className="copilot-session-wrapper">
-                  <h4>🤖 GitHub Copilot Activity</h4>
-                  {copilotSessionInfo.hasActiveCopilot ? (
-                    <div className="copilot-session-active">
-                      <div className="copilot-session-info">
-                        <span className="copilot-status">✅ Active Copilot session detected</span>
-                        <span className="copilot-activity">
-                          Last activity: {formatDate(copilotSessionInfo.latestActivity)}
-                        </span>
-                        <span className="copilot-comments-count">
-                          {copilotSessionInfo.commentsCount} copilot comment(s) found
-                        </span>
-                      </div>
-                      <div className="copilot-session-actions">
-                        <a 
-                          href={copilotSessionInfo.sessionUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="copilot-session-link"
-                        >
-                          🔗 View Agent Session
-                        </a>
-                        {copilotSessionInfo.commentUrl && (
-                          <a 
-                            href={copilotSessionInfo.commentUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="copilot-comment-link"
-                          >
-                            💬 Latest Comment
-                          </a>
-                        )}
-                        <button
-                          className="copilot-session-toggle"
-                          onClick={() => setShowCopilotSession(!showCopilotSession)}
-                        >
-                          {showCopilotSession ? '📝 Hide Session' : '👁️ Watch Session'}
-                        </button>
-                      </div>
-                      {showCopilotSession && copilotSessionInfo.latestComment && (
-                        <div className="copilot-session-modal">
-                          <div className="copilot-session-header">
-                            <strong>Latest Copilot Activity</strong>
-                            <span className="copilot-comment-date">
-                              {formatDate(copilotSessionInfo.latestComment.created_at)}
+                )
+              ) : (
+                /* Discussion View */
+                <>
+                  {/* GitHub Copilot Session Section */}
+                  {copilotSessionInfo && (
+                    <div className="copilot-session-wrapper">
+                      <h4>🤖 GitHub Copilot Activity</h4>
+                      {copilotSessionInfo.hasActiveCopilot ? (
+                        <div className="copilot-session-active">
+                          <div className="copilot-session-info">
+                            <span className="copilot-status">✅ Active Copilot session detected</span>
+                            {isWatchingSession && (
+                              <div className="copilot-watching-wrapper">
+                                <span className="copilot-watching-status">
+                                  {isRefreshingSession ? (
+                                    <>🔄 Refreshing session... (#{sessionRefreshCount})</>
+                                  ) : (
+                                    <>🔄 Watching for updates (every 10s)</>
+                                  )}
+                                </span>
+                                {lastSessionCheck && (
+                                  <span className="copilot-last-check">
+                                    Last checked: {formatDate(lastSessionCheck)}
+                                  </span>
+                                )}
+                                {sessionRefreshCount > 0 && (
+                                  <span className="copilot-refresh-count">
+                                    Refreshes: {sessionRefreshCount}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            <span className="copilot-activity">
+                              Last activity: {formatDate(copilotSessionInfo.latestActivity)}
+                            </span>
+                            <span className="copilot-comments-count">
+                              {copilotSessionInfo.commentsCount} copilot comment(s) found
                             </span>
                           </div>
-                          <div className="copilot-session-content">
-                            <div className="copilot-comment-author">
-                              <img 
-                                src={copilotSessionInfo.latestComment.user.avatar_url} 
-                                alt={copilotSessionInfo.latestComment.user.login}
-                                className="copilot-avatar"
-                              />
+                          <div className="copilot-session-actions">
+                            <button
+                              className="copilot-session-toggle"
+                              onClick={handleWatchSessionToggle}
+                            >
+                              {isWatchingSession ? '⏹️ Stop Watching' : '👁️ Watch Session'}
+                            </button>
+                            <a 
+                              href={copilotSessionInfo.sessionUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="copilot-session-link"
+                            >
+                              🔗 Open Session
+                            </a>
+                            {copilotSessionInfo.commentUrl && (
                               <a 
-                                href={copilotSessionInfo.latestComment.user.html_url}
-                                target="_blank"
+                                href={copilotSessionInfo.commentUrl} 
+                                target="_blank" 
                                 rel="noopener noreferrer"
-                                className="copilot-username"
+                                className="copilot-comment-link"
                               >
-                                {copilotSessionInfo.latestComment.user.login}
+                                💬 Latest Comment
                               </a>
-                            </div>
-                            <div className="copilot-comment-body">
-                              <div className="markdown-content">
-                                {ReactMarkdown && rehypeRaw ? (
-                                  <ReactMarkdown 
-                                    rehypePlugins={[rehypeRaw]}
-                                    components={markdownComponents}
-                                  >{sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                            )}
+                          </div>
+                          {showCopilotSession && copilotSessionInfo && (
+                            <div className="copilot-session-modal">
+                              <div className="copilot-session-header">
+                                <strong>🤖 Copilot Session Activity</strong>
+                                <span className="copilot-comment-date">
+                                  {copilotSessionInfo.sessionUrl && (
+                                    <a 
+                                      href={copilotSessionInfo.sessionUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="session-url-link"
+                                    >
+                                      🔗 View Full Session
+                                    </a>
+                                  )}
+                                </span>
+                              </div>
+                              <div className="copilot-session-content">
+                                {copilotSessionInfo.copilotResponses && copilotSessionInfo.copilotResponses.length > 0 ? (
+                                  <div className="copilot-responses">
+                                    <div className="copilot-responses-header">
+                                      <strong>Recent Copilot Responses ({copilotSessionInfo.copilotResponses.length})</strong>
+                                    </div>
+                                    {copilotSessionInfo.copilotResponses.slice(0, 3).map((response, index) => (
+                                      <div key={response.id} className="copilot-response-item">
+                                        <div className="copilot-response-meta">
+                                          <img 
+                                            src={response.user.avatar_url} 
+                                            alt={response.user.login}
+                                            className="copilot-response-avatar"
+                                          />
+                                          <a 
+                                            href={response.user.html_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="copilot-response-username"
+                                          >
+                                            {response.user.login}
+                                          </a>
+                                          <span className="copilot-response-date">
+                                            {formatDate(response.created_at)}
+                                          </span>
+                                          {index === 0 && <span className="copilot-latest-badge">Latest</span>}
+                                        </div>
+                                        <div className="copilot-response-body">
+                                          <div className="markdown-content">
+                                            {ReactMarkdown && rehypeRaw ? (
+                                              <ReactMarkdown 
+                                                rehypePlugins={[rehypeRaw]}
+                                                components={markdownComponents}
+                                              >{processMarkdownContent(response.body.length > 300 ? response.body.substring(0, 300) + '...' : response.body)}</ReactMarkdown>
+                                            ) : (
+                                              <div 
+                                                style={{ whiteSpace: 'pre-wrap' }}
+                                                dangerouslySetInnerHTML={{
+                                                  __html: sanitizeHtmlContent(convertGitHubNotationToHtml(response.body.length > 300 ? response.body.substring(0, 300) + '...' : response.body))
+                                                }}
+                                              />
+                                            )}
+                                          </div>
+                                          {response.body.length > 300 && (
+                                            <a 
+                                              href={`https://github.com/litlfred/sgex/pull/${prInfo[0].number}#issuecomment-${response.id}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="read-full-response"
+                                            >
+                                              Read full response →
+                                            </a>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                    {copilotSessionInfo.copilotResponses.length > 3 && (
+                                      <div className="copilot-more-responses">
+                                        <a 
+                                          href={copilotSessionInfo.sessionUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="view-more-responses"
+                                        >
+                                          View {copilotSessionInfo.copilotResponses.length - 3} more responses in session →
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : copilotSessionInfo.latestComment ? (
+                                  <div className="copilot-fallback-content">
+                                    <div className="copilot-comment-author">
+                                      <img 
+                                        src={copilotSessionInfo.latestComment.user.avatar_url} 
+                                        alt={copilotSessionInfo.latestComment.user.login}
+                                        className="copilot-avatar"
+                                      />
+                                      <a 
+                                        href={copilotSessionInfo.latestComment.user.html_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="copilot-username"
+                                      >
+                                        {copilotSessionInfo.latestComment.user.login}
+                                      </a>
+                                      <span className="copilot-activity-date">
+                                        {formatDate(copilotSessionInfo.latestComment.created_at)}
+                                      </span>
+                                    </div>
+                                    <div className="copilot-comment-body">
+                                      <div className="markdown-content">
+                                        {ReactMarkdown && rehypeRaw ? (
+                                          <ReactMarkdown 
+                                            rehypePlugins={[rehypeRaw]}
+                                            components={markdownComponents}
+                                          >{processMarkdownContent(copilotSessionInfo.latestComment.body)}</ReactMarkdown>
+                                        ) : (
+                                          <div 
+                                            style={{ whiteSpace: 'pre-wrap' }}
+                                            dangerouslySetInnerHTML={{
+                                              __html: sanitizeHtmlContent(convertGitHubNotationToHtml(copilotSessionInfo.latestComment.body))
+                                            }}
+                                          />
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
                                 ) : (
-                                  <div style={{ whiteSpace: 'pre-wrap' }}>
-                                    {sanitizeAndRenderMarkdown(copilotSessionInfo.latestComment.body)}
+                                  <div className="no-copilot-activity">
+                                    <p>No copilot responses found in recent activity.</p>
+                                    <p>Session URL: <a href={copilotSessionInfo.sessionUrl} target="_blank" rel="noopener noreferrer">{copilotSessionInfo.sessionUrl}</a></p>
                                   </div>
                                 )}
                               </div>
                             </div>
-                          </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="copilot-session-inactive">
+                          <span className="copilot-status">
+                            {isRefreshingSession ? (
+                              <>🔄 Checking for active Copilot session...</>
+                            ) : (
+                              <>⚪ No active Copilot session detected</>
+                            )}
+                          </span>
+                          {lastSessionCheck && (
+                            <span className="copilot-last-check">
+                              Last checked: {formatDate(lastSessionCheck)}
+                            </span>
+                          )}
+                          <span className="copilot-hint">
+                            Start a conversation with @copilot to begin a session
+                          </span>
                         </div>
                       )}
                     </div>
-                  ) : (
-                    <div className="copilot-session-inactive">
-                      <span className="copilot-status">⚪ No active Copilot session detected</span>
-                      <span className="copilot-hint">
-                        Start a conversation with @copilot to begin a session
-                      </span>
-                    </div>
                   )}
-                </div>
-              )}
 
-              <div className="comments-section">
-                <div className="comments-header">
-                  <h4>Recent Comments & Updates ({allComments.length > 0 ? `${displayedCommentsCount}/${allComments.length}` : '0'})</h4>
-                  <div className="comments-controls">
-                    <label className="status-updates-toggle">
-                      <input 
-                        type="checkbox" 
-                        checked={showStatusUpdates}
-                        onChange={(e) => {
-                          setShowStatusUpdates(e.target.checked);
-                          // Refresh comments when toggling status updates
-                          if (prInfo && prInfo.length > 0) {
-                            fetchCommentsForPR('litlfred', 'sgex', prInfo[0].number, 1, false);
-                          }
-                        }}
-                      />
-                      <span className="checkbox-label">📋 Show status updates</span>
-                    </label>
-                  </div>
-                </div>
-                {commentsLoading ? (
-                  <div className="loading">Loading comments...</div>
-                ) : comments.length === 0 ? (
-                  <div className="no-comments">No comments yet</div>
-                ) : (
-                  <>
-                    <div className="comments-list">
-                      {comments.map((comment) => {
-                        const isExpanded = expandedComments.has(comment.id);
-                        const shouldTruncate = comment.body && comment.body.length > 200;
-                        const isNewComment = newlyAddedCommentId === comment.id;
-                        const viewers = getCommentViewers(comment, comments);
-                        
-                        return (
-                          <div key={comment.id} className={`comment ${comment.type === 'timeline' ? 'comment-timeline' : ''} ${isNewComment ? 'comment-new-glow' : ''}`}>
-                            <div className="comment-header">
-                              <img 
-                                src={comment.user.avatar_url} 
-                                alt={comment.user.login} 
-                                className="comment-avatar"
-                              />
-                              <a 
-                                href={comment.user.html_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="comment-author"
-                              >
-                                {comment.user.login}
-                              </a>
-                              <span className="comment-date">{formatDate(comment.created_at)}</span>
-                              <span className={`comment-type ${comment.type === 'timeline' ? 'comment-type-timeline' : ''}`}>
-                                {comment.type === 'timeline' ? 'status' : comment.type}
-                              </span>
-                              
-                              {/* Comment Viewer Badges - only for regular comments */}
-                              {comment.type !== 'timeline' && viewers.length > 0 && (
-                                <div className="comment-viewers">
-                                  {viewers.map((viewer, index) => {
-                                    // Ensure viewer is a string before calling toLowerCase
-                                    const safeViewer = typeof viewer === 'string' ? viewer : String(viewer || '');
-                                    const isCopilot = safeViewer && safeViewer.toLowerCase().includes('copilot');
-                                    return (
-                                      <span 
-                                        key={index}
-                                        className={`viewer-badge ${isCopilot ? 'viewer-badge-copilot' : 'viewer-badge-user'}`}
-                                        title={`${safeViewer} is looking at this comment`}
-                                      >
-                                        {isCopilot ? '👁️' : '👀'} {safeViewer}
-                                      </span>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                            <div className="comment-body">
-                              {comment.type === 'timeline' ? (
-                                // Timeline events are always short, don't truncate
-                                <div className="comment-timeline-body">
-                                  <div className="timeline-content">
-                                    {comment.body}
-                                  </div>
-                                </div>
-                              ) : shouldTruncate && !isExpanded ? (
-                                <>
-                                  <div className="comment-preview">
-                                    <div className="markdown-content">
-                                      {ReactMarkdown && rehypeRaw ? (
-                                        <ReactMarkdown 
-                                          rehypePlugins={[rehypeRaw]}
-                                          components={markdownComponents}
-                                        >{sanitizeAndRenderMarkdown(truncateComment(comment.body))}</ReactMarkdown>
-                                      ) : (
-                                        <div style={{ whiteSpace: 'pre-wrap' }}>
-                                          {sanitizeAndRenderMarkdown(truncateComment(comment.body))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <button 
-                                    className="comment-toggle"
-                                    onClick={() => handleCommentToggle(comment.id)}
-                                  >
-                                    Show more
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="comment-full">
-                                    <div className="markdown-content">
-                                      {ReactMarkdown && rehypeRaw ? (
-                                        <ReactMarkdown 
-                                          rehypePlugins={[rehypeRaw]}
-                                          components={markdownComponents}
-                                        >{sanitizeAndRenderMarkdown(comment.body)}</ReactMarkdown>
-                                      ) : (
-                                        <div style={{ whiteSpace: 'pre-wrap' }}>
-                                          {sanitizeAndRenderMarkdown(comment.body)}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                  {shouldTruncate && (
-                                    <button 
-                                      className="comment-toggle"
-                                      onClick={() => handleCommentToggle(comment.id)}
-                                    >
-                                      Show less
-                                    </button>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    
-                    {/* Load More Comments Button */}
-                    {(allComments.length > displayedCommentsCount || hasMoreComments) && (
-                      <div className="comments-load-more">
-                        <button
-                          className="load-more-btn"
-                          onClick={loadMoreComments}
-                          disabled={commentsLoading}
-                        >
-                          {commentsLoading ? 'Loading...' : 
-                            allComments.length > displayedCommentsCount ? 
-                              `Show More Comments (${allComments.length - displayedCommentsCount} already loaded)` :
-                              'Load More Comments...'
-                          }
-                        </button>
+                  <div className="comments-section">
+                    <div className="comments-header">
+                      <h4>Recent Comments & Updates ({allComments.length > 0 ? `${displayedCommentsCount}/${allComments.length}` : '0'})</h4>
+                      <div className="comments-controls">
+                        <label className="status-updates-toggle">
+                          <input 
+                            type="checkbox" 
+                            checked={showStatusUpdates}
+                            onChange={(e) => {
+                              setShowStatusUpdates(e.target.checked);
+                              // Refresh comments when toggling status updates
+                              if (prInfo && prInfo.length > 0) {
+                                fetchCommentsForPR('litlfred', 'sgex', prInfo[0].number, 1, false);
+                              }
+                            }}
+                          />
+                          <span className="checkbox-label">📋 Show status updates</span>
+                        </label>
                       </div>
+                    </div>
+                    {commentsLoading ? (
+                      <div className="loading">Loading comments...</div>
+                    ) : comments.length === 0 ? (
+                      <div className="no-comments">No comments yet</div>
+                    ) : (
+                      <>
+                        <div className="comments-list">
+                          {comments.map((comment) => {
+                            const isExpanded = expandedComments.has(comment.id);
+                            const shouldTruncate = comment.body && comment.body.length > 200;
+                            const isNewComment = newlyAddedCommentId === comment.id;
+                            const viewers = getCommentViewers(comment, comments);
+                            
+                            return (
+                              <div key={comment.id} className={`comment ${comment.type === 'timeline' ? 'comment-timeline' : ''} ${isNewComment ? 'comment-new-glow' : ''}`}>
+                                <div className="comment-header">
+                                  <img 
+                                    src={comment.user.avatar_url} 
+                                    alt={comment.user.login} 
+                                    className="comment-avatar"
+                                  />
+                                  <a 
+                                    href={comment.user.html_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="comment-author"
+                                  >
+                                    {comment.user.login}
+                                  </a>
+                                  <span className="comment-date">{formatDate(comment.created_at)}</span>
+                                  <span className={`comment-type ${comment.type === 'timeline' ? 'comment-type-timeline' : ''}`}>
+                                    {comment.type === 'timeline' ? 'status' : comment.type}
+                                  </span>
+                                  
+                                  {/* Comment Viewer Badges - only for regular comments */}
+                                  {comment.type !== 'timeline' && viewers.length > 0 && (
+                                    <div className="comment-viewers">
+                                      {viewers.map((viewer, index) => {
+                                        // Ensure viewer is a string before calling toLowerCase
+                                        const safeViewer = typeof viewer === 'string' ? viewer : String(viewer || '');
+                                        const isCopilot = safeViewer && safeViewer.toLowerCase().includes('copilot');
+                                        return (
+                                          <span 
+                                            key={index}
+                                            className={`viewer-badge ${isCopilot ? 'viewer-badge-copilot' : 'viewer-badge-user'}`}
+                                            title={`${safeViewer} is looking at this comment`}
+                                          >
+                                            {isCopilot ? '👁️' : '👀'} {safeViewer}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="comment-body">
+                                  {comment.type === 'timeline' ? (
+                                    // Timeline events are always short, don't truncate
+                                    <div className="comment-timeline-body">
+                                      <div className="timeline-content">
+                                        {comment.body}
+                                      </div>
+                                    </div>
+                                  ) : shouldTruncate && !isExpanded ? (
+                                    <>
+                                      <div className="comment-preview">
+                                        <div className="markdown-content">
+                                          {ReactMarkdown && rehypeRaw ? (
+                                            <ReactMarkdown 
+                                              rehypePlugins={[rehypeRaw]}
+                                              components={markdownComponents}
+                                            >{processMarkdownContent(truncateComment(comment.body))}</ReactMarkdown>
+                                          ) : (
+                                            <div 
+                                              style={{ whiteSpace: 'pre-wrap' }}
+                                              dangerouslySetInnerHTML={{
+                                                __html: sanitizeHtmlContent(convertGitHubNotationToHtml(truncateComment(comment.body)))
+                                              }}
+                                            />
+                                          )}
+                                        </div>
+                                      </div>
+                                      <button 
+                                        className="comment-toggle"
+                                        onClick={() => handleCommentToggle(comment.id)}
+                                      >
+                                        Show more
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div className="comment-full">
+                                        <div className="markdown-content">
+                                          {ReactMarkdown && rehypeRaw ? (
+                                            <ReactMarkdown 
+                                              rehypePlugins={[rehypeRaw]}
+                                              components={markdownComponents}
+                                            >{processMarkdownContent(comment.body)}</ReactMarkdown>
+                                          ) : (
+                                            <div 
+                                              style={{ whiteSpace: 'pre-wrap' }}
+                                              dangerouslySetInnerHTML={{
+                                                __html: sanitizeHtmlContent(convertGitHubNotationToHtml(comment.body))
+                                              }}
+                                            />
+                                          )}
+                                        </div>
+                                      </div>
+                                      {shouldTruncate && (
+                                        <button 
+                                          className="comment-toggle"
+                                          onClick={() => handleCommentToggle(comment.id)}
+                                        >
+                                          Show less
+                                        </button>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        
+                        {/* Load More Comments Button */}
+                        {(allComments.length > displayedCommentsCount || hasMoreComments) && (
+                          <div className="comments-load-more">
+                            <button
+                              className="load-more-btn"
+                              onClick={loadMoreComments}
+                              disabled={commentsLoading}
+                            >
+                              {commentsLoading ? 'Loading...' : 
+                                allComments.length > displayedCommentsCount ? 
+                                  `Show More Comments (${allComments.length - displayedCommentsCount} more to load)` :
+                                  'Load More Comments...'
+                              }
+                            </button>
+                          </div>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-              </div>
+                  </div>
+                </>
+              )}
 
               <div className="expanded-footer">
                 <a href={prInfo[0].html_url} target="_blank" rel="noopener noreferrer" className="github-link">
@@ -1541,15 +2228,13 @@ const PreviewBadge = () => {
 
           {/* Workflow Status Section for branch-only badges */}
           <div className="workflow-status-wrapper">
-            <WorkflowStatus
-              workflowStatus={workflowStatus}
+            <WorkflowDashboard
               branchName={branchInfo.name}
-              onTriggerWorkflow={handleTriggerWorkflow}
-              onApproveWorkflow={handleApproveWorkflow}
+              githubActionsService={githubActionsService}
               isAuthenticated={githubService.isAuth()}
               canTriggerWorkflows={canTriggerWorkflows}
               canApproveWorkflows={canApproveWorkflows}
-              isLoading={workflowLoading}
+              onWorkflowAction={handleWorkflowDashboardAction}
             />
           </div>
 

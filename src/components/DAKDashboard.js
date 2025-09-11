@@ -28,6 +28,25 @@ const DAKDashboardContent = () => {
   const navigate = useNavigate();
   const { user, repo, branch } = useParams();
   
+  // Mapping between activeTab states and URL fragments
+  const tabToFragment = {
+    'core': 'components',
+    'publications': 'publishing', 
+    'faq': 'dak-faq'
+  };
+  
+  const fragmentToTab = {
+    'components': 'core',
+    'publishing': 'publications',
+    'dak-faq': 'faq'
+  };
+  
+  // Helper function to get initial tab from URL fragment
+  const getInitialTab = () => {
+    const hash = window.location.hash.slice(1); // Remove the '#'
+    return fragmentToTab[hash] || 'core'; // Default to 'core' if no valid fragment
+  };
+  
   // Theme-aware mascot image for dialog
   const mascotImage = useThemeImage('sgex-mascot.png');
   
@@ -38,7 +57,7 @@ const DAKDashboardContent = () => {
   const [error, setError] = useState(null);
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('core'); // 'core', 'publications', 'other', or 'faq'
+  const [activeTab, setActiveTab] = useState(getInitialTab); // 'core', 'publications', or 'faq'
   const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -317,6 +336,34 @@ const DAKDashboardContent = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showUserMenu]);
+
+  // Update URL fragment when activeTab changes (only when we have valid data)
+  useEffect(() => {
+    // Only set hash if we have valid profile and repository data, and we're not loading/error
+    if (!loading && !error && profile && repository) {
+      const fragment = tabToFragment[activeTab];
+      if (fragment) {
+        window.location.hash = fragment;
+      }
+    }
+  }, [activeTab, tabToFragment, loading, error, profile, repository]);
+
+  // Listen for hash changes to sync tab state with URL (only when we have valid data)
+  useEffect(() => {
+    // Only listen for hash changes if we have valid profile and repository data
+    if (!loading && !error && profile && repository) {
+      const handleHashChange = () => {
+        const hash = window.location.hash.slice(1);
+        const tab = fragmentToTab[hash];
+        if (tab && tab !== activeTab) {
+          setActiveTab(tab);
+        }
+      };
+
+      window.addEventListener('hashchange', handleHashChange);
+      return () => window.removeEventListener('hashchange', handleHashChange);
+    }
+  }, [activeTab, fragmentToTab, loading, error, profile, repository]);
 
 
 
@@ -597,34 +644,26 @@ const DAKDashboardContent = () => {
             selectedBranch={selectedBranch}
           />
 
-          {/* DAK Status Box - only show when repository and branch are selected */}
-          {repository && selectedBranch && (
-            <DAKStatusBox 
-              repository={repository}
-              selectedBranch={selectedBranch}
-              hasWriteAccess={hasWriteAccess}
-              profile={profile}
-            />
-          )}
 
-          {/* Tab Navigation - Full Width Toggle Buttons */}
-          <div className="tab-navigation-fullwidth">
+
+          {/* Tab Navigation - Status Bar Style */}
+          <div className="tab-navigation-statusbar">
             <button 
-              className={`tab-button-fullwidth ${activeTab === 'core' ? 'active' : ''}`}
+              className={`tab-button-compact ${activeTab === 'core' ? 'active' : ''}`}
               onClick={() => setActiveTab('core')}
             >
               <span className="tab-icon">⭐</span>
               <span className="tab-text">9 Core Components</span>
             </button>
             <button
-              className={`tab-button-fullwidth ${activeTab === 'publications' ? 'active' : ''}`}
+              className={`tab-button-compact ${activeTab === 'publications' ? 'active' : ''}`}
               onClick={() => setActiveTab('publications')}
             >
               <span className="tab-icon">📚</span>
-              <span className="tab-text">Publications</span>
+              <span className="tab-text">Publishing</span>
             </button>
             <button
-              className={`tab-button-fullwidth ${activeTab === 'faq' ? 'active' : ''}`}
+              className={`tab-button-compact ${activeTab === 'faq' ? 'active' : ''}`}
               onClick={() => setActiveTab('faq')}
             >
               <span className="tab-icon">❓</span>
@@ -657,9 +696,19 @@ const DAKDashboardContent = () => {
             </div>
           )}
 
-          {/* Publications Section */}
+          {/* Publishing Section */}
           {activeTab === 'publications' && (
             <div className="components-section publications-section active">
+              {/* Repository Status Dashboard */}
+              {repository && selectedBranch && (
+                <DAKStatusBox 
+                  repository={repository}
+                  selectedBranch={selectedBranch}
+                  hasWriteAccess={hasWriteAccess}
+                  profile={profile}
+                />
+              )}
+              
               <Publications
                 profile={profile}
                 repository={repository}

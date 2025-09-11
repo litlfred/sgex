@@ -179,6 +179,14 @@ function generateDAKRoutes(routeName, dakComponent) {
   
   const basePath = `/${routeName}`;
   
+  // Special case for documentation - use document-specific routes instead of user/repo patterns
+  if (routeName === 'docs') {
+    return [
+      <Route key={`${routeName}-base`} path={basePath} element={<LazyComponent />} />,
+      <Route key={`${routeName}-docid`} path={`${basePath}/:docId`} element={<LazyComponent />} />
+    ];
+  }
+  
   return [
     <Route key={`${routeName}-base`} path={basePath} element={<LazyComponent />} />,
     <Route key={`${routeName}-user-repo`} path={`${basePath}/:user/:repo`} element={<LazyComponent />} />,
@@ -228,6 +236,7 @@ export function generateLazyRoutes() {
     const BranchListingPage = createLazyComponent('BranchListingPage');
     const DAKDashboard = createLazyComponent('DAKDashboard');
     const LandingPage = createLazyComponent('LandingPage');
+    const DocumentationViewer = createLazyComponent('DocumentationViewer');
     
     return [
       <Route key="fallback-home" path="/" element={<BranchListingPage />} />,
@@ -236,6 +245,8 @@ export function generateLazyRoutes() {
       <Route key="fallback-dashboard-user-repo" path="/dashboard/:user/:repo" element={<DAKDashboard />} />,
       <Route key="fallback-dashboard-user-repo-branch" path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />,
       <Route key="fallback-welcome" path="/welcome" element={<LandingPage />} />,
+      <Route key="fallback-docs" path="/docs/:docId" element={<DocumentationViewer />} />,
+      <Route key="fallback-docs-default" path="/docs" element={<DocumentationViewer />} />,
       <Route key="fallback-404" path="*" element={<div>Page not found</div>} />
     ];
   }
