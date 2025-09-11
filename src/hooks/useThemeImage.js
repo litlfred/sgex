@@ -29,6 +29,13 @@ const useThemeImage = (baseImagePath) => {
         finalPath = publicUrl ? `${publicUrl}/${normalizedPath}` : `/${normalizedPath}`;
       }
       
+      // Ensure the final path is absolute to prevent relative path resolution issues
+      // When users are at routes like /dashboard/user/repo/branch, relative paths would
+      // resolve incorrectly (e.g., dashboard/image.png -> /dashboard/user/dashboard/image.png)
+      if (!finalPath.startsWith('/')) {
+        finalPath = `/${finalPath}`;
+      }
+      
       setCurrentImagePath(finalPath);
     };
 
