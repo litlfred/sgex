@@ -234,13 +234,14 @@ export function generateLazyRoutes() {
     
     // Provide a more comprehensive fallback that includes essential routes for the help system
     const BranchListingPage = createLazyComponent('BranchListingPage');
+    const DashboardRedirect = createLazyComponent('DashboardRedirect');
     const DAKDashboard = createLazyComponent('DAKDashboard');
     const LandingPage = createLazyComponent('LandingPage');
     const DocumentationViewer = createLazyComponent('DocumentationViewer');
     
     return [
       <Route key="fallback-home" path="/" element={<BranchListingPage />} />,
-      <Route key="fallback-dashboard" path="/dashboard" element={<DAKDashboard />} />,
+      <Route key="fallback-dashboard" path="/dashboard" element={<DashboardRedirect />} />,
       <Route key="fallback-dashboard-user" path="/dashboard/:user" element={<DAKDashboard />} />,
       <Route key="fallback-dashboard-user-repo" path="/dashboard/:user/:repo" element={<DAKDashboard />} />,
       <Route key="fallback-dashboard-user-repo-branch" path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />,
