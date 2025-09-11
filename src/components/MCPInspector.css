@@ -1,0 +1,540 @@
+/**
+ * MCP Inspector Component Styles
+ * 
+ * Follows SGEX styling patterns with blue gradient background and WHO branding.
+ * Responsive design for desktop, tablet, and mobile viewing.
+ */
+
+.mcp-inspector-container {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  min-height: calc(100vh - 120px);
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .mcp-inspector-container {
+    flex-direction: column;
+    padding: 10px;
+  }
+}
+
+/* Error and Loading States */
+.mcp-inspector-error,
+.mcp-inspector-loading {
+  padding: 40px;
+  text-align: center;
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  min-height: calc(100vh - 120px);
+  color: white;
+}
+
+.error-message {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 30px;
+  max-width: 600px;
+  margin: 0 auto;
+  backdrop-filter: blur(10px);
+}
+
+.error-message h3 {
+  color: #ffeb3b;
+  margin-bottom: 15px;
+}
+
+.local-only-notice {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.local-only-notice code {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Services Panel */
+.mcp-services-panel {
+  flex: 0 0 350px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+
+.mcp-services-panel h3 {
+  margin-top: 0;
+  color: white;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 10px;
+}
+
+.functionality-group {
+  margin-bottom: 20px;
+}
+
+.functionality-title {
+  color: #ffeb3b;
+  font-size: 1.1em;
+  margin-bottom: 10px;
+  border-left: 3px solid #ffeb3b;
+  padding-left: 10px;
+}
+
+.service-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.service-card:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.service-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.service-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex: 1;
+}
+
+.service-checkbox input {
+  margin-right: 8px;
+  transform: scale(1.2);
+}
+
+.service-name {
+  font-weight: bold;
+  color: white;
+}
+
+.service-health {
+  font-size: 1.2em;
+}
+
+.service-health.healthy {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.service-details {
+  font-size: 0.9em;
+}
+
+.service-description {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 5px 0;
+}
+
+.service-url {
+  color: #b3d9ff;
+  font-family: 'Courier New', monospace;
+  margin: 5px 0;
+}
+
+.service-endpoints {
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 5px;
+}
+
+/* Traffic Panel */
+.mcp-traffic-panel {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 160px);
+}
+
+.traffic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.traffic-header h3 {
+  margin: 0;
+  color: white;
+}
+
+.traffic-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-input {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  backdrop-filter: blur(5px);
+  min-width: 200px;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.clear-logs-btn {
+  padding: 8px 16px;
+  background: rgba(255, 87, 87, 0.8);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.clear-logs-btn:hover {
+  background: rgba(255, 87, 87, 1);
+}
+
+.traffic-logs {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.no-logs {
+  padding: 40px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.log-entry {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.log-entry:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.log-entry.error {
+  border-left: 4px solid #ff5757;
+}
+
+.log-entry.success {
+  border-left: 4px solid #4caf50;
+}
+
+.log-summary {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 5px;
+  flex-wrap: wrap;
+}
+
+.log-method {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: bold;
+  min-width: 50px;
+  text-align: center;
+}
+
+.log-url {
+  color: #b3d9ff;
+  font-family: 'Courier New', monospace;
+  flex: 1;
+  min-width: 200px;
+}
+
+.log-status {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: bold;
+  min-width: 40px;
+  text-align: center;
+}
+
+.log-status.status-2xx {
+  background: #4caf50;
+  color: white;
+}
+
+.log-status.status-3xx {
+  background: #ff9800;
+  color: white;
+}
+
+.log-status.status-4xx {
+  background: #ff5757;
+  color: white;
+}
+
+.log-status.status-5xx {
+  background: #9c27b0;
+  color: white;
+}
+
+.log-time {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9em;
+}
+
+.log-timestamp {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8em;
+}
+
+.log-service {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8em;
+}
+
+/* Log Detail Modal */
+.log-detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 800px;
+  display: flex;
+  flex-direction: column;
+  color: #333;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: rgb(4, 11, 118);
+  color: white;
+  border-radius: 8px 8px 0 0;
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: white;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.log-metadata {
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.metadata-row {
+  display: flex;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.metadata-row strong {
+  min-width: 120px;
+  color: #333;
+}
+
+.status-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+.log-details {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.detail-section h4 {
+  color: rgb(4, 11, 118);
+  margin-bottom: 10px;
+}
+
+.syntax-highlighter,
+.json-display {
+  border-radius: 6px;
+  max-height: 300px;
+  overflow: auto;
+  font-size: 0.9em;
+}
+
+.json-display {
+  background: #f8f8f8;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  color: #333;
+  font-family: 'Courier New', monospace;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .mcp-services-panel {
+    flex: none;
+    max-height: 300px;
+    margin-bottom: 20px;
+  }
+  
+  .traffic-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .traffic-controls {
+    flex-direction: column;
+  }
+  
+  .search-input {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .log-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .log-url {
+    min-width: auto;
+    word-break: break-all;
+  }
+  
+  .modal-content {
+    width: 95vw;
+    height: 95vh;
+    margin: 0;
+  }
+  
+  .log-details {
+    gap: 15px;
+  }
+  
+  .metadata-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .metadata-row strong {
+    min-width: auto;
+  }
+}
+
+/* Accessibility improvements */
+.service-checkbox:focus-within {
+  outline: 2px solid #ffeb3b;
+  outline-offset: 2px;
+}
+
+.log-entry:focus {
+  outline: 2px solid #ffeb3b;
+  outline-offset: -2px;
+}
+
+.search-input:focus {
+  outline: 2px solid #ffeb3b;
+  outline-offset: 2px;
+}
+
+/* Animation for new log entries */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.log-entry {
+  animation: slideIn 0.3s ease-out;
+}

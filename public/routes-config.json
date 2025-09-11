@@ -56,6 +56,10 @@
     "faq-demo": {
       "component": "DAKFAQDemo",
       "path": "./components/DAKFAQDemo"
+    },
+    "mcp-inspector": {
+      "component": "MCPInspector",
+      "path": "./components/MCPInspector"
     }
   },
   "standardComponents": {

@@ -873,6 +873,83 @@ class HelpContentService {
             }
           ]
         }
+      ],
+
+      'mcp-inspector': [
+        {
+          id: 'mcp-inspector-overview',
+          title: 'MCP Inspector Overview',
+          badge: '/sgex/cat-paw-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'What is the MCP Inspector?',
+              content: `
+                <p>The MCP Inspector is a debugging and monitoring tool for local Model Context Protocol (MCP) services.</p>
+                <p><strong>Key Features:</strong></p>
+                <ul>
+                  <li>🔍 <strong>Service Discovery:</strong> Automatically finds running MCP services</li>
+                  <li>📊 <strong>Traffic Monitoring:</strong> View requests, responses, and errors in real-time</li>
+                  <li>🎯 <strong>Schema Validation:</strong> Validate traffic against OpenAPI schemas</li>
+                  <li>🔗 <strong>Multi-Service Support:</strong> Monitor multiple MCP services simultaneously</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💡 Local Only:</strong> MCP Inspector only works in local development environments for security.
+                </div>
+              `
+            },
+            {
+              title: 'Getting Started',
+              content: `
+                <p>To use the MCP Inspector:</p>
+                <ol>
+                  <li><strong>Start MCP Services:</strong> Run <code>npm run run-mcp</code> in the SGEX project</li>
+                  <li><strong>Open Inspector:</strong> Click the MCP Inspector card on the welcome page</li>
+                  <li><strong>Select Services:</strong> Check the services you want to monitor</li>
+                  <li><strong>Monitor Traffic:</strong> View real-time logs and click entries for details</li>
+                </ol>
+                <div class="help-warning">
+                  <strong>⚠️ Local Development Only:</strong> The MCP Inspector requires localhost access and will not work on deployed versions.
+                </div>
+              `
+            }
+          ]
+        },
+        {
+          id: 'mcp-service-discovery',
+          title: 'MCP Service Discovery',
+          badge: '/sgex/cat-paw-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'How Service Discovery Works',
+              content: `
+                <p>The MCP Inspector automatically discovers available MCP services using:</p>
+                <ul>
+                  <li><strong>Service Registry:</strong> Queries <code>http://127.0.0.1:3001/mcp/services</code></li>
+                  <li><strong>Health Checks:</strong> Verifies service availability via <code>/health</code> endpoints</li>
+                  <li><strong>Functionality Grouping:</strong> Groups services by their purpose (e.g., dak-faq, publishing)</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🔧 Dynamic Discovery:</strong> Services are discovered in real-time - no hardcoded lists!
+                </div>
+              `
+            },
+            {
+              title: 'Service Categories',
+              content: `
+                <p>MCP services are organized by functionality:</p>
+                <ul>
+                  <li><strong>DAK FAQ:</strong> Digital Adaptation Kit question answering</li>
+                  <li><strong>Publishing:</strong> Documentation and content publishing</li>
+                  <li><strong>Validation:</strong> Schema and content validation services</li>
+                  <li><strong>Other:</strong> General utility services</li>
+                </ul>
+                <p>Each service shows its health status, endpoints, and capabilities.</p>
+              `
+            }
+          ]
+        }
       ]
     };
   }

@@ -32,6 +32,10 @@ const WelcomePage = () => {
   const authoringImage = useThemeImage('authoring.png');
   const collaborationImage = useThemeImage('collaboration.png');
 
+  // Check if running in local development environment
+  const isLocalDeployment = window.location.hostname === 'localhost' || 
+                            window.location.hostname === '127.0.0.1';
+
   // Initial authentication check - runs once on mount
   useEffect(() => {
     const initializeAuth = () => {
@@ -121,6 +125,10 @@ const WelcomePage = () => {
 
   const handleAuthoringClick = (event) => {
     handleNavigationClick(event, '/select_profile', navigate);
+  };
+
+  const handleMCPInspectorClick = (event) => {
+    handleNavigationClick(event, '/mcp-inspector', navigate);
   };
 
 
@@ -297,6 +305,21 @@ const WelcomePage = () => {
               </div>
               <p>Learn about our mission, how to contribute, and join our community-driven development process.</p>
             </button>
+
+            {/* MCP Inspector Card - Only show in local development */}
+            {isLocalDeployment && (
+              <button 
+                className="action-card mcp-inspector-card" 
+                onClick={handleMCPInspectorClick}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleMCPInspectorClick()}
+              >
+                <div className="card-icon">
+                  <div className="mcp-icon">🔍</div>
+                </div>
+                <h4>MCP Inspector</h4>
+                <p>Inspect and monitor local MCP service traffic for debugging and development.</p>
+              </button>
+            )}
           </div>
         </div>
 

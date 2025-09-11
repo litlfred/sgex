@@ -47,6 +47,49 @@ app.use('/mcp/faq/execute', executeRoute);  // Add single execution routes
 app.use('/mcp/faq', schemaRoute);
 app.use('/mcp/faq', dakComponentsRoute);
 
+// MCP Service Registry endpoint
+app.get('/mcp/services', (req: Request, res: Response) => {
+  const serviceRegistry = {
+    services: [
+      {
+        id: 'dak-faq',
+        name: 'DAK FAQ MCP Service',
+        description: 'WHO SMART Guidelines DAK FAQ functionality',
+        functionality: 'dak-faq',
+        baseUrl: `http://${HOST}:${PORT}/mcp`,
+        version: '1.0.0',
+        status: 'healthy',
+        endpoints: [
+          'GET /health',
+          'GET /faq/questions/catalog',
+          'POST /faq/questions/execute',
+          'POST /faq/execute/:questionId',
+          'POST /faq/execute',
+          'GET /faq/schemas',
+          'GET /faq/schemas/:questionId',
+          'GET /faq/openapi',
+          'POST /faq/validate',
+          'GET /faq/valuesets',
+          'GET /faq/decision-tables',
+          'GET /faq/business-processes',
+          'GET /faq/personas',
+          'GET /faq/questionnaires'
+        ],
+        transport: ['http'],
+        capabilities: {
+          tools: true,
+          resources: false,
+          prompts: false
+        }
+      }
+    ],
+    timestamp: new Date().toISOString(),
+    totalServices: 1
+  };
+  
+  res.json(serviceRegistry);
+});
+
 // Root endpoint with API information
 app.get('/', (req: Request, res: Response) => {
   res.json({
