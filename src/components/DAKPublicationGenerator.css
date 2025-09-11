@@ -342,6 +342,11 @@
   animation: pulse 2s infinite;
 }
 
+.status-dot.ready {
+  background: #28a745;
+  animation: none;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
