@@ -141,6 +141,12 @@
         { "path": "/test-asset-editor", "exact": true }
       ]
     },
+    "LocalRepositoryDemo": {
+      "path": "./components/LocalRepositoryDemo",
+      "routes": [
+        { "path": "/local-repository-demo", "exact": true }
+      ]
+    },
     "NotFound": {
       "path": "./components/NotFound",
       "routes": [
