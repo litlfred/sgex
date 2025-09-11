@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './styles';  // Central CSS loader
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import './utils/consoleControl';  // Initialize console control utility
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

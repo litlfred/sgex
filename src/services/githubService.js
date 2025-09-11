@@ -743,7 +743,7 @@ class GitHubService {
 
       // Skip compatibility checks if requested (to avoid rate limiting for unauthenticated users)
       if (skipCompatibilityCheck) {
-        console.log(`⚡ Skipping compatibility checks for ${repositories.length} repositories to avoid rate limiting`);
+        this.logger.debug(`⚡ Skipping compatibility checks for ${repositories.length} repositories to avoid rate limiting`);
         return repositories.map(repo => ({
           ...repo,
           smart_guidelines_compatible: true // Assume compatible when skipping checks
@@ -809,7 +809,7 @@ class GitHubService {
 
       // Handle case where user has no repositories
       if (repositories.length === 0) {
-        console.log('📊 No repositories found for user, completing scan immediately');
+        this.logger.debug('📊 No repositories found for user, completing scan immediately');
         // Call progress callback to indicate completion
         if (onProgress) {
           onProgress({
@@ -975,12 +975,12 @@ class GitHubService {
   // Get repository branches
   async getBranches(owner, repo) {
     try {
-      console.log(`githubService.getBranches: Fetching branches for ${owner}/${repo}`);
-      console.log('githubService.getBranches: Authentication status:', this.isAuth());
+      this.logger.debug(`Fetching branches for ${owner}/${repo}`);
+      this.logger.debug('Authentication status:', this.isAuth());
       
       // Use authenticated octokit if available, otherwise create a public instance for public repos
       const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
-      console.log('githubService.getBranches: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
+      this.logger.debug('Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
       
       const { data } = await octokit.rest.repos.listBranches({
         owner,
@@ -988,16 +988,10 @@ class GitHubService {
         per_page: 100
       });
       
-      console.log(`githubService.getBranches: Successfully fetched ${data.length} branches`);
+      this.logger.debug(`Successfully fetched ${data.length} branches`);
       return data;
     } catch (error) {
-      console.error('githubService.getBranches: Failed to fetch branches:', error);
-      console.error('githubService.getBranches: Error details:', {
-        status: error.status,
-        message: error.message,
-        owner,
-        repo
-      });
+      this.logger.apiError('getBranches', `${owner}/${repo}`, error);
       throw error;
     }
   }
@@ -1303,10 +1297,10 @@ class GitHubService {
   // Recursively fetch BPMN files from a directory and its subdirectories
   async getBpmnFilesRecursive(owner, repo, path, ref = 'main', allFiles = []) {
     try {
-      console.log(`🔎 githubService.getBpmnFilesRecursive: Searching ${owner}/${repo}/${path} (ref: ${ref})`);
+      this.logger.debug(`🔎 Searching ${owner}/${repo}/${path} (ref: ${ref})`);
       // Use authenticated octokit if available, otherwise create a public instance
       const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
-      console.log(`🔐 githubService.getBpmnFilesRecursive: Using ${this.isAuth() ? 'authenticated' : 'public'} octokit`);
+      this.logger.debug(`🔐 Using ${this.isAuth() ? 'authenticated' : 'public'} octokit`);
       
       const { data } = await octokit.rest.repos.getContent({
         owner,
@@ -1315,12 +1309,12 @@ class GitHubService {
         ref
       });
 
-      console.log(`📦 githubService.getBpmnFilesRecursive: Received data type: ${Array.isArray(data) ? 'array' : 'single file'}, length: ${Array.isArray(data) ? data.length : 1}`);
+      this.logger.debug(`📦 Received data type: ${Array.isArray(data) ? 'array' : 'single file'}, length: ${Array.isArray(data) ? data.length : 1}`);
 
       // Handle single file response
       if (!Array.isArray(data)) {
         if (data.name.endsWith('.bpmn')) {
-          console.log(`📄 githubService.getBpmnFilesRecursive: Found single BPMN file: ${data.name}`);
+          this.logger.debug(`📄 Found single BPMN file: ${data.name}`);
           allFiles.push(data);
         }
         return allFiles;
@@ -1329,19 +1323,19 @@ class GitHubService {
       // Handle directory response
       for (const item of data) {
         if (item.type === 'file' && item.name.endsWith('.bpmn')) {
-          console.log(`📄 githubService.getBpmnFilesRecursive: Found BPMN file: ${item.name}`);
+          this.logger.debug(`📄 Found BPMN file: ${item.name}`);
           allFiles.push(item);
         } else if (item.type === 'dir') {
-          console.log(`📁 githubService.getBpmnFilesRecursive: Found subdirectory: ${item.name}, recursing...`);
+          this.logger.debug(`📁 Found subdirectory: ${item.name}, recursing...`);
           // Recursively search subdirectories
           await this.getBpmnFilesRecursive(owner, repo, item.path, ref, allFiles);
         }
       }
 
-      console.log(`✅ githubService.getBpmnFilesRecursive: Completed search of ${path}, found ${allFiles.length} total files so far`);
+      this.logger.debug(`✅ Completed search of ${path}, found ${allFiles.length} total files so far`);
       return allFiles;
     } catch (error) {
-      console.log(`❌ githubService.getBpmnFilesRecursive: Error searching ${path}:`, error.status, error.message);
+      this.logger.debug(`❌ Error searching ${path}:`, error.status, error.message);
       // If directory doesn't exist, return empty array (not an error)
       if (error.status === 404) {
         return allFiles;
@@ -1393,19 +1387,19 @@ class GitHubService {
     const timeoutMs = 15000; // 15 second timeout
     
     try {
-      console.log(`🚀 githubService.getFileContent: Starting request for ${owner}/${repo}/${path} (ref: ${ref})`);
-      console.log('🔐 githubService.getFileContent: Authentication status:', this.isAuth());
-      console.log('📋 githubService.getFileContent: Request parameters:', { owner, repo, path, ref });
+      this.logger.debug(`🚀 Starting request for ${owner}/${repo}/${path} (ref: ${ref})`);
+      this.logger.debug('🔐 Authentication status:', this.isAuth());
+      this.logger.debug('📋 Request parameters:', { owner, repo, path, ref });
       
       // Use authenticated octokit if available, otherwise create a public instance for public repos
       const octokit = this.isAuth() ? this.octokit : await this.createOctokitInstance();
-      console.log('🔧 githubService.getFileContent: Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
+      this.logger.debug('🔧 Using', this.isAuth() ? 'authenticated' : 'public', 'octokit instance');
       
       // Create a promise that rejects after timeout
       const timeoutPromise = new Promise((_, reject) => {
-        console.log(`⏰ githubService.getFileContent: Setting up ${timeoutMs}ms timeout`);
+        this.logger.debug(`⏰ Setting up ${timeoutMs}ms timeout`);
         setTimeout(() => {
-          console.error(`⏰ githubService.getFileContent: Request timed out after ${timeoutMs}ms`);
+          this.logger.error(`⏰ Request timed out after ${timeoutMs}ms`);
           reject(new Error(`Request timeout after ${timeoutMs}ms`));
         }, timeoutMs);
       });

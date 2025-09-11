@@ -3,6 +3,8 @@
  * Provides unified access to file system operations for local repositories
  */
 
+import logger from '../../../utils/logger';
+
 export class Storage {
   /**
    * Read a file from the repository
@@ -53,6 +55,7 @@ export class GitHubStorage extends Storage {
     this.repository = repository;
     this.branch = branch;
     this.cache = new Map();
+    this.logger = logger.getLogger('GitHubStorage');
   }
 
   /**
@@ -83,42 +86,42 @@ export class GitHubStorage extends Storage {
   async readFile(path) {
     const cacheKey = `${this.repository}:${this.branch}:${path}`;
     if (this.cache.has(cacheKey)) {
-      console.log(`GitHubStorage.readFile: Cache hit for ${path}`);
+      this.logger.debug(`Cache hit for ${path}`);
       return this.cache.get(cacheKey);
     }
 
     try {
       const { owner, repo } = this.parseRepository(this.repository);
-      console.log(`GitHubStorage.readFile: Reading file ${path} from ${owner}/${repo} (branch: ${this.branch})`);
+      this.logger.debug(`Reading file ${path} from ${owner}/${repo} (branch: ${this.branch})`);
       
-      console.log(`GitHubStorage.readFile: About to call githubService.getFileContent...`);
+      this.logger.debug(`About to call githubService.getFileContent...`);
       const contentString = await this.githubService.getFileContent(owner, repo, path, this.branch);
-      console.log(`GitHubStorage.readFile: ✅ GitHub service call completed successfully`);
-      console.log(`GitHubStorage.readFile: Received content - type: ${typeof contentString}, length: ${contentString?.length || 'undefined'}`);
+      this.logger.debug(`✅ GitHub service call completed successfully`);
+      this.logger.debug(`Received content - type: ${typeof contentString}, length: ${contentString?.length || 'undefined'}`);
       
       // Validate that we got a string
       if (typeof contentString !== 'string') {
-        console.error(`GitHubStorage.readFile: ❌ Expected string but got ${typeof contentString}:`, contentString);
+        this.logger.error(`❌ Expected string but got ${typeof contentString}:`, contentString);
         throw new Error(`GitHub service returned invalid content type: ${typeof contentString}`);
       }
       
       if (contentString.length === 0) {
-        console.warn(`GitHubStorage.readFile: ⚠️ Content string is empty for ${path}`);
+        this.logger.warn(`⚠️ Content string is empty for ${path}`);
       }
       
       // Convert the decoded string content to Buffer 
       // (githubService.getFileContent already decodes the base64 content to a string)
-      console.log(`GitHubStorage.readFile: Converting string to Buffer...`);
+      this.logger.debug(`Converting string to Buffer...`);
       const content = Buffer.from(contentString, 'utf-8');
-      console.log(`GitHubStorage.readFile: ✅ Buffer created successfully, size: ${content.length} bytes`);
+      this.logger.debug(`✅ Buffer created successfully, size: ${content.length} bytes`);
       
       this.cache.set(cacheKey, content);
-      console.log(`GitHubStorage.readFile: ✅ Successfully read file ${path}, cached and returning content`);
-      console.log(`GitHubStorage.readFile: Content preview (first 200 chars):`, contentString.substring(0, 200));
+      this.logger.debug(`✅ Successfully read file ${path}, cached and returning content`);
+      this.logger.debug(`Content preview (first 200 chars):`, contentString.substring(0, 200));
       return content;
     } catch (error) {
-      console.error(`GitHubStorage.readFile: ❌ Failed to read file ${path}:`, error);
-      console.error(`GitHubStorage.readFile: Error details:`, {
+      this.logger.error(`❌ Failed to read file ${path}:`, error);
+      this.logger.error(`Error details:`, {
         message: error.message,
         name: error.name,
         stack: error.stack?.substring(0, 500)
@@ -129,33 +132,33 @@ export class GitHubStorage extends Storage {
 
   async fileExists(path) {
     try {
-      console.log(`GitHubStorage.fileExists: Checking if file exists: ${path}`);
-      console.log(`GitHubStorage.fileExists: Repository: ${this.repository}, Branch: ${this.branch}`);
+      this.logger.debug(`Checking if file exists: ${path}`);
+      this.logger.debug(`Repository: ${this.repository}, Branch: ${this.branch}`);
       
       // Validate repository format before making API call
       const { owner, repo } = this.parseRepository(this.repository);
-      console.log(`GitHubStorage.fileExists: Parsed repository - owner: ${owner}, repo: ${repo}`);
+      this.logger.debug(`Parsed repository - owner: ${owner}, repo: ${repo}`);
       
       // Check authentication status
       if (this.githubService && this.githubService.isAuth) {
-        console.log(`GitHubStorage.fileExists: Authentication status: ${this.githubService.isAuth()}`);
+        this.logger.debug(`Authentication status: ${this.githubService.isAuth()}`);
       } else {
-        console.log(`GitHubStorage.fileExists: GitHub service not available or no auth method`);
+        this.logger.debug(`GitHub service not available or no auth method`);
       }
       
-      console.log(`GitHubStorage.fileExists: About to call readFile...`);
+      this.logger.debug(`About to call readFile...`);
       const content = await this.readFile(path);
-      console.log(`GitHubStorage.fileExists: readFile completed successfully for ${path}, content size: ${content?.length || 'undefined'}`);
-      console.log(`GitHubStorage.fileExists: File ${path} exists - returning true`);
+      this.logger.debug(`readFile completed successfully for ${path}, content size: ${content?.length || 'undefined'}`);
+      this.logger.debug(`File ${path} exists - returning true`);
       return true;
     } catch (error) {
-      console.error(`GitHubStorage.fileExists: readFile failed for ${path}:`, error.message);
-      console.error(`GitHubStorage.fileExists: Full error details:`, {
+      this.logger.error(`readFile failed for ${path}:`, error.message);
+      this.logger.error(`Full error details:`, {
         name: error.name,
         message: error.message,
         stack: error.stack?.substring(0, 300)
       });
-      console.log(`GitHubStorage.fileExists: File ${path} does not exist - returning false`);
+      this.logger.debug(`File ${path} does not exist - returning false`);
       return false;
     }
   }
