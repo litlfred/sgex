@@ -337,27 +337,33 @@ const DAKDashboardContent = () => {
     };
   }, [showUserMenu]);
 
-  // Update URL fragment when activeTab changes
+  // Update URL fragment when activeTab changes (only when we have valid data)
   useEffect(() => {
-    const fragment = tabToFragment[activeTab];
-    if (fragment) {
-      window.location.hash = fragment;
-    }
-  }, [activeTab, tabToFragment]);
-
-  // Listen for hash changes to sync tab state with URL
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.slice(1);
-      const tab = fragmentToTab[hash];
-      if (tab && tab !== activeTab) {
-        setActiveTab(tab);
+    // Only set hash if we have valid profile and repository data, and we're not loading/error
+    if (!loading && !error && profile && repository) {
+      const fragment = tabToFragment[activeTab];
+      if (fragment) {
+        window.location.hash = fragment;
       }
-    };
+    }
+  }, [activeTab, tabToFragment, loading, error, profile, repository]);
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [activeTab, fragmentToTab]);
+  // Listen for hash changes to sync tab state with URL (only when we have valid data)
+  useEffect(() => {
+    // Only listen for hash changes if we have valid profile and repository data
+    if (!loading && !error && profile && repository) {
+      const handleHashChange = () => {
+        const hash = window.location.hash.slice(1);
+        const tab = fragmentToTab[hash];
+        if (tab && tab !== activeTab) {
+          setActiveTab(tab);
+        }
+      };
+
+      window.addEventListener('hashchange', handleHashChange);
+      return () => window.removeEventListener('hashchange', handleHashChange);
+    }
+  }, [activeTab, fragmentToTab, loading, error, profile, repository]);
 
 
 
