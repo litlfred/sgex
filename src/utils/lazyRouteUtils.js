@@ -189,6 +189,7 @@ function generateDAKRoutes(routeName, dakComponent) {
   
   return [
     <Route key={`${routeName}-base`} path={basePath} element={<LazyComponent />} />,
+    <Route key={`${routeName}-user`} path={`${basePath}/:user`} element={<LazyComponent />} />,
     <Route key={`${routeName}-user-repo`} path={`${basePath}/:user/:repo`} element={<LazyComponent />} />,
     <Route key={`${routeName}-user-repo-branch`} path={`${basePath}/:user/:repo/:branch`} element={<LazyComponent />} />,
     <Route key={`${routeName}-user-repo-branch-asset`} path={`${basePath}/:user/:repo/:branch/*`} element={<LazyComponent />} />
