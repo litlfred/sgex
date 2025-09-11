@@ -3,6 +3,7 @@ import './DAKPublicationGenerator.css';
 
 const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWriteAccess }) => {
   const [selectedFormat, setSelectedFormat] = useState('html');
+  const [selectedScope, setSelectedScope] = useState('full'); // 'full' or component id
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPublications, setGeneratedPublications] = useState([]);
   const [error, setError] = useState(null);
@@ -17,6 +18,19 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
     { value: 'pdf', label: 'PDF Document', icon: '📋', description: 'Print to PDF using browser functionality' },
   ];
 
+  const dakComponents = [
+    { id: 'full', name: 'Complete DAK', icon: '📚', description: 'Generate publication for the entire DAK' },
+    { id: 'health-interventions', name: 'Health Interventions', icon: '📖', description: 'Clinical guidelines and health intervention specifications' },
+    { id: 'generic-personas', name: 'Generic Personas', icon: '👥', description: 'Standardized user roles and actor definitions' },
+    { id: 'user-scenarios', name: 'User Scenarios', icon: '📝', description: 'Narrative descriptions of system interactions' },
+    { id: 'business-processes', name: 'Business Processes', icon: '🔄', description: 'BPMN workflows and business process definitions' },
+    { id: 'core-data-elements', name: 'Core Data Elements', icon: '🗃️', description: 'Essential data structures and terminology' },
+    { id: 'decision-support', name: 'Decision Support Logic', icon: '🎯', description: 'DMN decision tables and clinical decision support' },
+    { id: 'program-indicators', name: 'Program Indicators', icon: '📊', description: 'Performance indicators and measurement definitions' },
+    { id: 'functional-requirements', name: 'Functional Requirements', icon: '⚙️', description: 'System requirements specifications' },
+    { id: 'test-scenarios', name: 'Test Scenarios', icon: '🧪', description: 'Feature files and test scenarios' }
+  ];
+
   const handleGeneratePublication = async () => {
     // Handle PDF print functionality
     if (selectedFormat === 'pdf') {
@@ -29,13 +43,19 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
     if (profile?.isDemo || !hasWriteAccess) {
       setIsGenerating(true);
       setTimeout(() => {
+        const selectedComponent = dakComponents.find(comp => comp.id === selectedScope);
+        const scopeName = selectedComponent ? selectedComponent.name : 'Full DAK';
+        const filePrefix = selectedScope === 'full' ? repoName : `${repoName}-${selectedScope}`;
+        
         const mockPublication = {
           id: `demo-${Date.now()}`,
           format: selectedFormat,
-          filename: `${repoName}-${selectedBranch}-publication.${selectedFormat === 'html' ? 'html' : selectedFormat}`,
+          scope: selectedScope,
+          scopeName: scopeName,
+          filename: `${filePrefix}-${selectedBranch}-publication.${selectedFormat === 'html' ? 'html' : selectedFormat}`,
           downloadUrl: '#demo-download',
           generatedAt: new Date().toISOString(),
-          size: '2.1 MB'
+          size: selectedScope === 'full' ? '2.1 MB' : '850 KB'
         };
         setGeneratedPublications(prev => [mockPublication, ...prev]);
         setIsGenerating(false);
@@ -58,6 +78,7 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
           dakRepository: `${owner}/${repoName}`,
           options: {
             format: selectedFormat,
+            scope: selectedScope,
             includeAssets: true,
           }
         })
@@ -70,10 +91,16 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
       const result = await response.json();
       
       if (result.success) {
+        const selectedComponent = dakComponents.find(comp => comp.id === selectedScope);
+        const scopeName = selectedComponent ? selectedComponent.name : 'Full DAK';
+        const filePrefix = selectedScope === 'full' ? repoName : `${repoName}-${selectedScope}`;
+        
         const publication = {
           id: result.data.id,
           format: selectedFormat,
-          filename: `${repoName}-${selectedBranch}-publication.${selectedFormat === 'html' ? 'html' : selectedFormat}`,
+          scope: selectedScope,
+          scopeName: scopeName,
+          filename: `${filePrefix}-${selectedBranch}-publication.${selectedFormat === 'html' ? 'html' : selectedFormat}`,
           downloadUrl: `/api/publication/${result.data.id}/download`,
           generatedAt: result.data.generatedAt,
           size: result.data.metadata?.size || 'Unknown'
@@ -95,6 +122,11 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
     return option ? option.icon : '📄';
   };
 
+  const getSelectedComponentName = () => {
+    const component = dakComponents.find(comp => comp.id === selectedScope);
+    return component ? component.name : 'Unknown';
+  };
+
   return (
     <div className="dak-publication-generator">
       <div className="section-header">
@@ -105,6 +137,26 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
       </div>
 
       <div className="publication-generator-content">
+        <div className="publication-scope-selection">
+          <label className="scope-label">Publication Scope:</label>
+          <div className="scope-options">
+            {dakComponents.map((component) => (
+              <div
+                key={component.id}
+                className={`scope-option ${selectedScope === component.id ? 'selected' : ''}`}
+                onClick={() => setSelectedScope(component.id)}
+              >
+                <div className="scope-icon">{component.icon}</div>
+                <div className="scope-info">
+                  <div className="scope-name">{component.name}</div>
+                  <div className="scope-description">{component.description}</div>
+                </div>
+                {selectedScope === component.id && <div className="scope-selected">✓</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="format-selection">
           <label className="format-label">Select Publication Format:</label>
           <div className="format-options">
@@ -138,11 +190,11 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
               </>
             ) : selectedFormat === 'pdf' ? (
               <>
-                🖨️ Print to PDF
+                🖨️ Print {getSelectedComponentName()} to PDF
               </>
             ) : (
               <>
-                🚀 Generate {selectedFormat.toUpperCase()} Publication
+                🚀 Generate {getSelectedComponentName()} {selectedFormat.toUpperCase()} Publication
               </>
             )}
           </button>
@@ -172,6 +224,9 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
                   </div>
                   <div className="publication-details">
                     <div className="publication-name">{publication.filename}</div>
+                    <div className="publication-scope">
+                      {publication.scopeName || 'Complete DAK'} • {publication.format.toUpperCase()}
+                    </div>
                     <div className="publication-meta">
                       Generated: {new Date(publication.generatedAt).toLocaleString()} • 
                       Size: {publication.size}
