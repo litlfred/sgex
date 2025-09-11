@@ -14,10 +14,17 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
     { value: 'html', label: 'HTML Publication', icon: '🌐', description: 'Web-ready HTML with WHO styling' },
     { value: 'epub', label: 'EPUB E-book', icon: '📖', description: 'EPUB 3.0 format for e-readers' },
     { value: 'docbook', label: 'DocBook XML', icon: '📄', description: 'Professional publishing format' },
-    { value: 'pdf', label: 'PDF Document', icon: '📋', description: 'Portable document format (coming soon)' },
+    { value: 'pdf', label: 'PDF Document', icon: '📋', description: 'Print to PDF using browser functionality' },
   ];
 
   const handleGeneratePublication = async () => {
+    // Handle PDF print functionality
+    if (selectedFormat === 'pdf') {
+      // Open current page in print mode
+      window.print();
+      return;
+    }
+
     // Handle demo mode or users without write access
     if (profile?.isDemo || !hasWriteAccess) {
       setIsGenerating(true);
@@ -104,8 +111,8 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
             {formatOptions.map((option) => (
               <div
                 key={option.value}
-                className={`format-option ${selectedFormat === option.value ? 'selected' : ''} ${option.value === 'pdf' ? 'disabled' : ''}`}
-                onClick={() => option.value !== 'pdf' && setSelectedFormat(option.value)}
+                className={`format-option ${selectedFormat === option.value ? 'selected' : ''}`}
+                onClick={() => setSelectedFormat(option.value)}
               >
                 <div className="format-icon">{option.icon}</div>
                 <div className="format-info">
@@ -122,12 +129,16 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
           <button
             className="generate-btn"
             onClick={handleGeneratePublication}
-            disabled={isGenerating || selectedFormat === 'pdf'}
+            disabled={isGenerating}
           >
             {isGenerating ? (
               <>
                 <span className="spinner">⏳</span>
                 Generating {selectedFormat.toUpperCase()}...
+              </>
+            ) : selectedFormat === 'pdf' ? (
+              <>
+                🖨️ Print to PDF
               </>
             ) : (
               <>
