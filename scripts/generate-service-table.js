@@ -209,10 +209,132 @@ class ServiceTableGenerator {
   }
 
   /**
-   * Scan other services (placeholder for future expansion)
+   * Scan DAK Publication API services
+   */
+  async scanDAKPublicationAPI() {
+    console.log('📖 Scanning DAK Publication API...');
+    
+    const publicationServicePath = path.join(this.basePath, 'services/dak-publication-api');
+    
+    // Check if service exists
+    try {
+      await fs.access(publicationServicePath);
+    } catch (error) {
+      console.warn('DAK Publication API not found, skipping...');
+      return;
+    }
+
+    // Load OpenAPI specification
+    let openApiSpec;
+    try {
+      const openApiPath = path.join(publicationServicePath, 'openapi.yaml');
+      const openApiContent = await fs.readFile(openApiPath, 'utf8');
+      openApiSpec = yaml.load(openApiContent);
+    } catch (error) {
+      console.warn(`Could not load Publication API OpenAPI spec: ${error.message}`);
+    }
+
+    // Load MCP manifest
+    let mcpManifest;
+    try {
+      const mcpPath = path.join(publicationServicePath, 'mcp-manifest.json');
+      const mcpContent = await fs.readFile(mcpPath, 'utf8');
+      mcpManifest = JSON.parse(mcpContent);
+    } catch (error) {
+      console.warn(`Could not load Publication API MCP manifest: ${error.message}`);
+    }
+
+    // Add main DAK Publication service
+    this.services.push({
+      category: 'DAK Publication',
+      name: 'Publication Generator',
+      description: 'Generate DAK publications in multiple formats (HTML, EPUB, DocBook, PDF)',
+      inputParameters: [
+        '`dakRepository`: GitHub repository path',
+        '`format`: Output format (html/epub/docbook/pdf)',
+        '`scope`: Publication scope (full/component)',
+        '`templateId`: Template identifier'
+      ],
+      inputSchemas: [
+        this.createSchemaLink('publication request schema', 'services/dak-publication-api/schemas/publication-request.schema.json'),
+        this.createSchemaLink('template query schema', 'services/dak-publication-api/schemas/template-query.schema.json'),
+        this.createSchemaLink('publication config schema', 'services/dak-publication-api/schemas/publication-config.schema.json')
+      ],
+      outputDescription: 'Generated publication files with metadata and download links',
+      outputSchema: this.createSchemaLink('publication output schema', 'services/dak-publication-api/schemas/publication-output.schema.json'),
+      openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-publication-api/openapi.yaml'),
+      webInterface: 'Yes',
+      mcpInterface: 'Yes',
+      openApiCompliance: 'Full'
+    });
+
+    // Add Template Management service
+    this.services.push({
+      category: '',
+      name: 'Template Manager',
+      description: 'Manage publication templates and customizations',
+      inputParameters: [
+        '`category`: Template category filter',
+        '`format`: Supported format filter',
+        '`scope`: Template scope filter'
+      ],
+      inputSchemas: [
+        this.createSchemaLink('template query schema', 'services/dak-publication-api/schemas/template-query.schema.json')
+      ],
+      outputDescription: 'List of available templates with metadata',
+      outputSchema: this.createSchemaLink('template list schema', 'services/dak-publication-api/schemas/template-list.schema.json'),
+      openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-publication-api/openapi.yaml'),
+      webInterface: 'Yes',
+      mcpInterface: mcpManifest ? 'Yes' : 'No',
+      openApiCompliance: 'Full'
+    });
+
+    // Add Publication Status service
+    this.services.push({
+      category: '',
+      name: 'Publication Status',
+      description: 'Track publication generation status and retrieve results',
+      inputParameters: [
+        '`publicationId`: Publication identifier',
+        '`dakRepository`: Repository filter (optional)'
+      ],
+      inputSchemas: [
+        this.createSchemaLink('status query schema', 'services/dak-publication-api/schemas/publication-status-query.schema.json')
+      ],
+      outputDescription: 'Publication status, progress, and download information',
+      outputSchema: this.createSchemaLink('status output schema', 'services/dak-publication-api/schemas/publication-status.schema.json'),
+      openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-publication-api/openapi.yaml'),
+      webInterface: 'Yes',
+      mcpInterface: mcpManifest ? 'Yes' : 'No', 
+      openApiCompliance: 'Full'
+    });
+
+    // Add Service Integration service
+    this.services.push({
+      category: '',
+      name: 'Service Integration',
+      description: 'Integration status with MCP and FAQ services',
+      inputParameters: ['No parameters'],
+      inputSchemas: [],
+      outputDescription: 'Service availability and integration status',
+      outputSchema: this.createSchemaLink('integration status schema', 'services/dak-publication-api/schemas/integration-status.schema.json'),
+      openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-publication-api/openapi.yaml'),
+      webInterface: 'Yes',
+      mcpInterface: mcpManifest ? 'Yes' : 'No',
+      openApiCompliance: 'Full'
+    });
+
+    console.log(`✅ Added ${4} publication services`);
+  }
+
+  /**
+   * Scan other services including publication API
    */
   async scanOtherServices() {
     console.log('📋 Scanning other services...');
+    
+    // Scan DAK Publication API
+    await this.scanDAKPublicationAPI();
     
     // Add placeholder services based on the example table
     const placeholderServices = [

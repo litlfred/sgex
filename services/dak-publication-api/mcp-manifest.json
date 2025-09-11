@@ -1,0 +1,82 @@
+{
+  "mcpVersion": "1.0.0",
+  "name": "dak-publication-mcp",
+  "version": "1.0.0",
+  "description": "WHO SMART Guidelines DAK Publication Services - MCP Interface",
+  "author": "SGeX Workbench Team",
+  "license": "MIT",
+  "main": "src/mcp-server.ts",
+  "scripts": {
+    "start": "ts-node src/mcp-server.ts",
+    "build": "tsc",
+    "dev": "ts-node --watch src/mcp-server.ts"
+  },
+  "capabilities": {
+    "tools": true,
+    "resources": false,
+    "prompts": false
+  },
+  "tools": [
+    {
+      "name": "generate_publication",
+      "description": "Generate DAK publication in specified format",
+      "inputSchema": {
+        "$ref": "./schemas/publication-request.schema.json"
+      }
+    },
+    {
+      "name": "list_publication_templates",
+      "description": "List available publication templates",
+      "inputSchema": {
+        "$ref": "./schemas/template-query.schema.json"
+      }
+    },
+    {
+      "name": "get_publication_status",
+      "description": "Get status of publication generation",
+      "inputSchema": {
+        "$ref": "./schemas/publication-status-query.schema.json"
+      }
+    },
+    {
+      "name": "validate_publication_config",
+      "description": "Validate publication configuration",
+      "inputSchema": {
+        "$ref": "./schemas/publication-config.schema.json"
+      }
+    },
+    {
+      "name": "get_service_integration_status",
+      "description": "Get status of integrated services (MCP, FAQ)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    }
+  ],
+  "integration": {
+    "mcpService": {
+      "description": "Integrates with core MCP service for content generation",
+      "endpoint": "http://localhost:3001/api/mcp/execute"
+    },
+    "faqService": {
+      "description": "Leverages DAK FAQ service for dynamic content extraction",
+      "endpoint": "http://localhost:3001/api/faq/batch"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/litlfred/sgex.git",
+    "directory": "services/dak-publication-api"
+  },
+  "keywords": [
+    "mcp",
+    "who",
+    "smart-guidelines",
+    "dak",
+    "publication",
+    "wysiwyg",
+    "template"
+  ]
+}
