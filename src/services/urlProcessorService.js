@@ -116,7 +116,8 @@ class SGEXURLProcessor {
       user: sessionStorage.getItem('sgex_selected_user'),
       repo: sessionStorage.getItem('sgex_selected_repo'),
       branch: sessionStorage.getItem('sgex_selected_branch'),
-      asset: sessionStorage.getItem('sgex_selected_asset')
+      asset: sessionStorage.getItem('sgex_selected_asset'),
+      deploymentBranch: sessionStorage.getItem('sgex_deployment_branch')
     };
     
     // Store in a global for easy access
@@ -272,6 +273,7 @@ class SGEXURLProcessor {
       sessionStorage.removeItem('sgex_selected_repo');
       sessionStorage.removeItem('sgex_selected_branch');
       sessionStorage.removeItem('sgex_selected_asset');
+      sessionStorage.removeItem('sgex_deployment_branch');
     }
     
     window.SGEX_URL_CONTEXT = {};

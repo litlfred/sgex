@@ -97,7 +97,22 @@
                 return;
               }
               
-              // For other patterns, try component-first: /sgex/{component}/{user}/{repo}/...
+              // Try to determine if this is branch-first or component-first
+              // Heuristic: if secondSegment looks like a branch name (contains dash, known pattern)
+              // and thirdSegment looks like a component, treat as branch-first
+              var looksLikeBranch = isLikelyBranchName(secondSegment);
+              var looksLikeComponent = isLikelyComponentName(thirdSegment);
+              
+              if (looksLikeBranch && looksLikeComponent) {
+                // Branch-first: /sgex/{branch}/{component}/...
+                var branchPath = '/sgex/' + secondSegment + '/';
+                var routePath = segments.slice(2).join('/');
+                storeContextFromURL(segments);
+                redirectToSPA(branchPath, routePath);
+                return;
+              }
+              
+              // Default to component-first: /sgex/{component}/{user}/{repo}/...
               if (segments.length >= 4) {
                 var routePath = segments.slice(1).join('/');
                 storeContextFromURL(segments);
@@ -105,7 +120,7 @@
                 return;
               }
               
-              // Branch with component: /sgex/{branch}/{component}/...
+              // Fallback: treat as branch deployment
               var branchPath = '/sgex/' + secondSegment + '/';
               var routePath = segments.slice(2).join('/');
               storeContextFromURL(segments);
@@ -116,6 +131,31 @@
           
           // Default fallback
           redirectToSPA(base, '');
+        }
+
+        function isLikelyBranchName(name) {
+          // Branch names often contain dashes, version numbers, or known patterns
+          return /^(main|master|develop|dev|feature-|fix-|hotfix-|release-|copilot-|deploy)/.test(name) ||
+                 /^v?\d+\.\d+/.test(name); // version patterns like v1.0, 1.2.3
+        }
+
+        function isLikelyComponentName(name) {
+          // Component names are typically kebab-case DAK component names
+          var knownComponents = [
+            'dashboard', 'testing-viewer', 'core-data-dictionary-viewer',
+            'health-interventions', 'actor-editor', 'business-process-selection',
+            'bpmn-editor', 'bpmn-viewer', 'bpmn-source', 'decision-support-logic',
+            'questionnaire-editor', 'docs', 'pages', 'faq-demo',
+            'dak-action', 'dak-selection', 'repositories'
+          ];
+          
+          return knownComponents.includes(name) ||
+                 (/^[a-z]+(-[a-z]+)*$/.test(name) && 
+                  !name.includes('.') && 
+                  !/^v?\d+/.test(name) &&
+                  !name.startsWith('feature-') &&
+                  !name.startsWith('fix-') &&
+                  !name.startsWith('copilot-'));
         }
 
         function handleLocalRouting(segments, location, base) {
@@ -143,37 +183,64 @@
           try {
             if (typeof Storage === 'undefined') return;
             
-            // Look for patterns with user/repo context
-            var userIndex = -1;
-            var repoIndex = -1;
-            var branchIndex = -1;
-            
-            // Find user/repo pattern in segments
-            for (var i = 0; i < segments.length - 1; i++) {
-              var segment = segments[i];
-              var nextSegment = segments[i + 1];
+            // Detect pattern type and extract accordingly
+            if (segments.length >= 4 && segments[0] === 'sgex') {
+              var secondSegment = segments[1];
+              var thirdSegment = segments[2];
               
-              // Skip known non-user segments
-              if (segment === 'sgex' || segment === 'docs') continue;
+              // Check if this is branch-first or component-first
+              var looksLikeBranch = isLikelyBranchName(secondSegment);
+              var looksLikeComponent = isLikelyComponentName(thirdSegment);
               
-              // Look for user/repo pattern (simple heuristic)
-              if (nextSegment && 
-                  /^[a-zA-Z0-9._-]+$/.test(segment) && 
-                  /^[a-zA-Z0-9._-]+$/.test(nextSegment) &&
-                  userIndex === -1) {
-                userIndex = i;
-                repoIndex = i + 1;
-                branchIndex = i + 2;
-                break;
+              if (looksLikeBranch && looksLikeComponent) {
+                // Branch-first: /sgex/{branch}/{component}/{user}/{repo}/...
+                if (segments.length >= 5) {
+                  var user = segments[3];
+                  var repo = segments[4];
+                  sessionStorage.setItem('sgex_selected_user', user);
+                  sessionStorage.setItem('sgex_selected_repo', repo);
+                  sessionStorage.setItem('sgex_deployment_branch', secondSegment);
+                  
+                  if (segments.length > 5) {
+                    sessionStorage.setItem('sgex_selected_branch', segments[5]);
+                  }
+                  
+                  if (segments.length > 6) {
+                    sessionStorage.setItem('sgex_selected_asset', segments.slice(6).join('/'));
+                  }
+                }
+              } else {
+                // Component-first: /sgex/{component}/{user}/{repo}/...
+                var user = segments[2];
+                var repo = segments[3];
+                sessionStorage.setItem('sgex_selected_user', user);
+                sessionStorage.setItem('sgex_selected_repo', repo);
+                
+                if (segments.length > 4) {
+                  sessionStorage.setItem('sgex_selected_branch', segments[4]);
+                }
+                
+                if (segments.length > 5) {
+                  sessionStorage.setItem('sgex_selected_asset', segments.slice(5).join('/'));
+                }
               }
             }
             
-            if (userIndex >= 0 && repoIndex >= 0) {
-              sessionStorage.setItem('sgex_selected_user', segments[userIndex]);
-              sessionStorage.setItem('sgex_selected_repo', segments[repoIndex]);
-              
-              if (branchIndex < segments.length) {
-                sessionStorage.setItem('sgex_selected_branch', segments[branchIndex]);
+            // For direct patterns without sgex prefix
+            else if (segments.length >= 3) {
+              var user = segments[1];
+              var repo = segments[2];
+              if (user && repo && /^[a-zA-Z0-9._-]+$/.test(user) && /^[a-zA-Z0-9._-]+$/.test(repo)) {
+                sessionStorage.setItem('sgex_selected_user', user);
+                sessionStorage.setItem('sgex_selected_repo', repo);
+                
+                if (segments.length > 3) {
+                  sessionStorage.setItem('sgex_selected_branch', segments[3]);
+                }
+                
+                if (segments.length > 4) {
+                  sessionStorage.setItem('sgex_selected_asset', segments.slice(4).join('/'));
+                }
               }
             }
           } catch (error) {
