@@ -22,23 +22,69 @@ Following these guidelines will help us code together better:
 
 ## Branch-Specific PR Workflow
 
-For issues that need to be fixed on branches other than `main`, use this naming convention:
+For all copilot-generated branches, use this standardized naming convention:
 
 ### Branch Naming Pattern
-- **For main branch fixes**: `copilot-fix-{issue_number}`
-- **For other branch fixes**: `copilot-{target_branch}-fix-{issue_number}`
+```
+copilot-TAG-ISSNO-N-description
+```
+
+**Components:**
+- **TAG**: Either `fix` (for bug fixes) or `feature` (for new functionality)
+- **ISSNO**: GitHub issue number (e.g., 122, 607)
+- **N**: Iteration number starting with 0 (increment for retry attempts if earlier attempts were abandoned)
+- **description**: Short 6-word max summary using lowercase alphanumeric and dashes only
+
+**Rules:**
+- Branch names are stable once created (unless explicitly requested to change)
+- Only lowercase letters, numbers, and dashes allowed
+- No leading, trailing, or consecutive dashes
+- Description should clearly identify what is being addressed
+
+### Determining TAG Type
+- **fix**: Bug reports, error corrections, broken functionality, security issues, performance problems
+- **feature**: New functionality requests, enhancements, new components, feature additions
 
 ### Examples
-- Fix issue #607 on main: `copilot-fix-607`
-- Fix issue #607 on deploy branch: `copilot-deploy-fix-607`
-- Fix issue #123 on feature/new-ui: `copilot-feature-new-ui-fix-123`
+- Bug fix for issue #607: `copilot-fix-607-0-eslint-deploy-branch-errors`
+- Feature request #123: `copilot-feature-123-0-new-branch-selector-ui`
+- Second attempt at fix #456: `copilot-fix-456-1-github-api-rate-limiting`
+- Deploy branch specific fix #789: `copilot-fix-789-0-landing-page-asset-paths`
+- Performance improvement #234: `copilot-feature-234-0-lazy-load-components`
+- Security vulnerability fix #567: `copilot-fix-567-0-token-storage-vulnerability`
+- Documentation update #890: `copilot-feature-890-0-api-usage-examples`
 
 ### Implementation Process
-1. **Create feature branch** from the target branch (not main)
-2. **Make minimal fixes** addressing only the specific issue
-3. **Target the PR** against the intended branch
-4. **Document the fix** in commit messages and PR description
-5. **Reference the issue** in all commits and PR title
+1. **Analyze issue type**: Determine if it's a `fix` (bug/error) or `feature` (enhancement/new functionality)
+2. **Create branch name**: Use format `copilot-TAG-ISSNO-N-description` where:
+   - TAG is `fix` or `feature` 
+   - ISSNO is the GitHub issue number
+   - N starts at 0, increment for retries
+   - description is max 6 words, lowercase alphanumeric and dashes only
+3. **Create feature branch** from the appropriate target branch
+4. **Make minimal fixes** addressing only the specific issue
+5. **Target the PR** against the intended branch
+6. **Document the fix** in commit messages and PR description
+7. **Reference the issue** in all commits and PR title
+
+### Branch Name Validation Rules
+- **Character set**: Only lowercase letters (a-z), numbers (0-9), and dashes (-)
+- **No consecutive dashes**: Replace multiple consecutive dashes with single dash
+- **No leading/trailing dashes**: Trim dashes from start and end
+- **Stability**: Once created, branch names should remain unchanged unless explicitly requested
+- **Maximum length**: Keep total length reasonable (recommended under 80 characters)
+
+### Description Creation Guidelines
+For the 6-word description component:
+1. **Be specific**: Identify the core issue or feature
+2. **Use keywords**: Include technology/component names when relevant
+3. **Be concise**: Maximum 6 words, fewer is better
+4. **Use dashes**: Replace spaces with single dashes
+5. **Avoid articles**: Skip "a", "an", "the" when possible
+6. **Example transformations**:
+   - "ESLint errors in deploy branch" → `eslint-deploy-branch-errors`
+   - "New branch selector UI" → `new-branch-selector-ui`  
+   - "GitHub API rate limiting fix" → `github-api-rate-limiting`
 
 ### Required Permissions
 To create PRs against non-main branches, the copilot agent needs:
