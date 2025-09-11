@@ -1,5 +1,8 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import TinyMCEEditor from './TinyMCEEditor';
+import userAccessService from '../services/userAccessService';
+import dataAccessLayer from '../services/dataAccessLayer';
+import logger from '../utils/logger';
 
 /**
  * TinyMCE Template Editor for WHO DAK Publications
@@ -20,22 +23,72 @@ const TinyMCETemplateEditor = ({
   disabled = false,
   className = '',
   style = {},
+  // Framework integration props
+  repository = null,
+  branch = null,
+  dakComponents = [],
   ...props
 }) => {
   const [resolvedVariables, setResolvedVariables] = useState({});
   const [isResolvingVariables, setIsResolvingVariables] = useState(false);
+  const [userType, setUserType] = useState('unauthenticated');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [accessLevel, setAccessLevel] = useState('read');
+  
+  // Initialize framework integration
+  useEffect(() => {
+    const initializeFramework = async () => {
+      try {
+        const type = userAccessService.getUserType();
+        const user = userAccessService.getCurrentUser();
+        
+        setUserType(type);
+        setCurrentUser(user);
+        
+        // Determine access level
+        if (repository) {
+          const saveOptions = await dataAccessLayer.getSaveOptions(
+            repository.owner.login,
+            repository.name,
+            branch
+          );
+          setAccessLevel(saveOptions.showSaveGitHub ? 'write' : 'read');
+        }
+        
+        if (logger?.getLogger) {
+          logger.getLogger('TinyMCETemplateEditor').debug('Framework initialized', {
+            userType: type,
+            repository: repository?.name,
+            branch,
+            accessLevel
+          });
+        }
+      } catch (error) {
+        if (logger?.getLogger) {
+          logger.getLogger('TinyMCETemplateEditor').error('Framework initialization failed', error);
+        }
+      }
+    };
+    
+    initializeFramework();
+  }, [repository, branch]);
 
-  // Default WHO DAK template variables
+  // Enhanced WHO DAK template variables with repository context
   const defaultVariables = useMemo(() => ({
     'dak.name': {
       label: 'DAK Name',
       description: 'Name of the Digital Adaptation Kit',
-      defaultValue: 'WHO SMART Guidelines DAK'
+      defaultValue: repository?.name || 'WHO SMART Guidelines DAK'
     },
     'dak.version': {
       label: 'DAK Version',
       description: 'Version of the DAK',
       defaultValue: '1.0.0'
+    },
+    'dak.owner': {
+      label: 'DAK Owner',
+      description: 'Owner/organization of the DAK',
+      defaultValue: repository?.owner.login || 'WHO'
     },
     'current.year': {
       label: 'Current Year',
@@ -47,15 +100,30 @@ const TinyMCETemplateEditor = ({
       description: 'Current date in ISO format',
       defaultValue: new Date().toISOString().split('T')[0]
     },
+    'current.datetime': {
+      label: 'Current DateTime',
+      description: 'Current date and time',
+      defaultValue: new Date().toISOString()
+    },
     'publication.title': {
       label: 'Publication Title',
       description: 'Title of the publication document',
-      defaultValue: '${dak.name} - Implementation Guide'
+      defaultValue: `${repository?.name || 'DAK'} - Implementation Guide`
     },
     'publication.author': {
       label: 'Publication Author',
       description: 'Author or organization',
       defaultValue: 'World Health Organization'
+    },
+    'user.name': {
+      label: 'User Name',
+      description: 'Current user name',
+      defaultValue: currentUser?.name || currentUser?.login || 'Anonymous'
+    },
+    'user.login': {
+      label: 'User Login',
+      description: 'Current user login/username',
+      defaultValue: currentUser?.login || 'anonymous'
     },
     'user.preface': {
       label: 'User Preface',
@@ -79,22 +147,38 @@ const TinyMCETemplateEditor = ({
       description: 'Description of the current DAK component',
       defaultValue: 'Component description'
     },
+    'component.count': {
+      label: 'Component Count',
+      description: 'Total number of DAK components',
+      defaultValue: dakComponents.length.toString()
+    },
     'repository.name': {
       label: 'Repository Name',
       description: 'Name of the GitHub repository',
-      defaultValue: 'dak-repository'
+      defaultValue: repository?.name || 'dak-repository'
     },
     'repository.owner': {
       label: 'Repository Owner',
       description: 'Owner of the GitHub repository',
-      defaultValue: 'organization'
+      defaultValue: repository?.owner.login || 'organization'
     },
     'repository.branch': {
       label: 'Repository Branch',
       description: 'Current branch of the repository',
-      defaultValue: 'main'
+      defaultValue: branch || 'main'
+    },
+    'repository.url': {
+      label: 'Repository URL',
+      description: 'Full URL to the GitHub repository',
+      defaultValue: repository ? `https://github.com/${repository.owner.login}/${repository.name}` : ''
+    },
+    'branch.url': {
+      label: 'Branch URL',
+      description: 'URL to the current branch',
+      defaultValue: repository && branch ? 
+        `https://github.com/${repository.owner.login}/${repository.name}/tree/${branch}` : ''
     }
-  }), []);
+  }), [repository, branch, currentUser, dakComponents]);
 
   // Merge default variables with template data
   const allVariables = useMemo(() => ({
@@ -349,6 +433,11 @@ const TinyMCETemplateEditor = ({
         variables={allVariables}
         toolbar={templateToolbar}
         placeholder="Start creating your WHO DAK publication content..."
+        // Framework integration
+        repository={repository}
+        branch={branch}
+        userContext={currentUser}
+        accessLevel={accessLevel}
         {...props}
       />
       

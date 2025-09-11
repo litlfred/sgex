@@ -1,5 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
+import userAccessService from '../services/userAccessService';
+import githubService from '../services/githubService';
+import logger from '../utils/logger';
 
 /**
  * Base TinyMCE Editor Component for SGEX Workbench
@@ -24,45 +27,184 @@ const TinyMCEEditor = ({
   apiKey = 'no-api-key', // Use TinyMCE's free tier
   className = '',
   style = {},
+  // Framework integration props
+  repository = null,
+  branch = null,
+  userContext = null,
+  accessLevel = 'read',
   ...props
 }) => {
   const editorRef = useRef(null);
   const [isReady, setIsReady] = useState(false);
   const [loadError, setLoadError] = useState(null);
+  const [userType, setUserType] = useState('unauthenticated');
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  // Initialize user context and access checking
+  useEffect(() => {
+    const initializeUserContext = async () => {
+      try {
+        const type = userAccessService.getUserType();
+        const user = userAccessService.getCurrentUser();
+        
+        setUserType(type);
+        setCurrentUser(user);
+        
+        if (logger?.getLogger) {
+          logger.getLogger('TinyMCEEditor').debug('User context initialized', {
+            userType: type,
+            hasUser: !!user,
+            accessLevel,
+            repository: repository?.name
+          });
+        }
+      } catch (error) {
+        if (logger?.getLogger) {
+          logger.getLogger('TinyMCEEditor').error('Failed to initialize user context', error);
+        }
+      }
+    };
+    
+    initializeUserContext();
+  }, [repository, accessLevel]);
+  
+  // Check if editing is allowed based on user type and access level
+  const isEditingAllowed = () => {
+    if (disabled) return false;
+    
+    switch (userType) {
+      case 'authenticated':
+        return accessLevel === 'write';
+      case 'demo':
+        return true; // Demo users can edit locally
+      case 'unauthenticated':
+        return false; // Unauthenticated users cannot edit
+      default:
+        return false;
+    }
+  };
+  
+  // Get user-specific placeholder text
+  const getUserPlaceholder = () => {
+    if (!isEditingAllowed()) {
+      return 'Editing not available - please authenticate for write access';
+    }
+    
+    if (userType === 'demo') {
+      return placeholder + ' (Demo mode - changes will not be saved to GitHub)';
+    }
+    
+    return placeholder;
+  };
 
   // WHO SMART Guidelines TinyMCE Configuration
   const getEditorConfig = () => {
+    const isReadOnly = !isEditingAllowed();
+    
     const baseConfig = {
       height,
-      menubar: mode === 'comment' ? false : 'edit view insert format tools table help',
+      menubar: mode === 'comment' ? false : (isReadOnly ? false : 'edit view insert format tools table help'),
       plugins: [
         'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
         'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
         'insertdatetime', 'media', 'table', 'help', 'wordcount',
         mode === 'template' ? 'template' : '',
-        'autosave', 'save'
+        !isReadOnly ? 'autosave' : '', 
+        !isReadOnly ? 'save' : ''
       ].filter(Boolean),
-      toolbar: getToolbarConfig(),
+      toolbar: isReadOnly ? false : getToolbarConfig(),
       content_style: getContentStyle(),
-      placeholder,
+      placeholder: getUserPlaceholder(),
       branding: false,
       promotion: false,
-      resize: true,
-      contextmenu: 'link image table',
+      resize: !isReadOnly,
+      readonly: isReadOnly,
+      contextmenu: isReadOnly ? false : 'link image table',
       skin: 'oxide',
       content_css: 'default',
       directionality: 'ltr',
       language: 'en',
+      // User access integration
+      setup: (editor) => {
+        // Add user context to editor
+        editor.userContext = {
+          userType,
+          currentUser,
+          repository,
+          branch,
+          accessLevel,
+          isEditingAllowed: isEditingAllowed()
+        };
+        
+        if (onInit) {
+          onInit(editor);
+        }
+        
+        // Add GitHub services integration for authenticated users
+        if (userType === 'authenticated' && githubService.isAuth()) {
+          setupGitHubIntegration(editor);
+        }
+        
+        // Add custom buttons for template variables
+        if (mode === 'template' && Object.keys(variables).length > 0 && !isReadOnly) {
+          setupTemplateVariableButtons(editor, variables);
+        }
+        
+        // Add WHO-specific commands
+        if (!isReadOnly) {
+          setupWHOCommands(editor);
+        }
+        
+        // Set up editor ready state
+        editor.on('init', () => {
+          setIsReady(true);
+          setLoadError(null);
+          
+          // Add user access notification if needed
+          if (userType === 'demo') {
+            editor.notificationManager.open({
+              text: '📝 Demo Mode: Changes will be saved locally but not to GitHub',
+              type: 'info',
+              timeout: 5000
+            });
+          } else if (userType === 'unauthenticated') {
+            editor.notificationManager.open({
+              text: '👀 Read Only: Please authenticate for editing capabilities',
+              type: 'warning',
+              timeout: 3000
+            });
+          }
+        });
+        
+        // Handle content changes with user access awareness
+        if (!isReadOnly) {
+          editor.on('change keyup setcontent', () => {
+            if (onChange) {
+              onChange(editor.getContent());
+            }
+          });
+        }
+        
+        // Error handling
+        editor.on('LoadError', (e) => {
+          setLoadError('Failed to load TinyMCE editor');
+          if (logger?.getLogger) {
+            logger.getLogger('TinyMCEEditor').error('TinyMCE LoadError:', e);
+          }
+        });
+      },
       // Accessibility features
       a11y_advanced_options: true,
-      // Auto-save functionality
-      autosave_ask_before_unload: true,
-      autosave_interval: '30s',
-      autosave_prefix: '{path}{query}-{id}-',
-      autosave_restore_when_empty: false,
-      autosave_retention: '2m',
+      // Auto-save functionality (only for authenticated users)
+      ...(userType === 'authenticated' && !isReadOnly && {
+        autosave_ask_before_unload: true,
+        autosave_interval: '30s',
+        autosave_prefix: `sgex-${repository?.name || 'editor'}-`,
+        autosave_restore_when_empty: false,
+        autosave_retention: '2m'
+      }),
       // Template support
-      ...(mode === 'template' && templates.length > 0 && {
+      ...(mode === 'template' && templates.length > 0 && !isReadOnly && {
         templates: templates.map(template => ({
           title: template.title,
           description: template.description || '',
@@ -70,15 +212,15 @@ const TinyMCEEditor = ({
         }))
       }),
       // Link configuration
-      link_context_toolbar: true,
+      link_context_toolbar: !isReadOnly,
       link_default_target: '_blank',
       link_default_protocol: 'https',
       // Image configuration
-      image_advtab: true,
-      image_caption: true,
-      image_title: true,
+      image_advtab: !isReadOnly,
+      image_caption: !isReadOnly,
+      image_title: !isReadOnly,
       // Table configuration
-      table_use_colgroups: true,
+      table_use_colgroups: !isReadOnly,
       table_responsive_width: true,
       table_default_attributes: {
         border: '1'
@@ -93,7 +235,8 @@ const TinyMCEEditor = ({
         {text: 'CSS', value: 'css'},
         {text: 'JSON', value: 'json'},
         {text: 'Python', value: 'python'},
-        {text: 'CQL', value: 'sql'}
+        {text: 'CQL', value: 'sql'},
+        {text: 'FHIR', value: 'json'}
       ],
       // Custom formats for WHO content
       formats: {
@@ -138,46 +281,19 @@ const TinyMCEEditor = ({
         }
       ],
       // Custom CSS for WHO branding
-      content_style: getContentStyle(),
-      // Setup callback
-      setup: (editor) => {
-        if (onInit) {
-          onInit(editor);
-        }
-        
-        // Add custom buttons for template variables
-        if (mode === 'template' && Object.keys(variables).length > 0) {
-          setupTemplateVariableButtons(editor, variables);
-        }
-        
-        // Add WHO-specific commands
-        setupWHOCommands(editor);
-        
-        // Set up editor ready state
-        editor.on('init', () => {
-          setIsReady(true);
-          setLoadError(null);
-        });
-        
-        // Handle content changes
-        editor.on('change keyup setcontent', () => {
-          if (onChange) {
-            onChange(editor.getContent());
-          }
-        });
-        
-        // Error handling
-        editor.on('LoadError', (e) => {
-          setLoadError('Failed to load TinyMCE editor');
-          console.error('TinyMCE LoadError:', e);
-        });
-      }
+      content_style: getContentStyle()
     };
 
     return baseConfig;
   };
 
   const getToolbarConfig = () => {
+    const isReadOnly = !isEditingAllowed();
+    
+    if (isReadOnly) {
+      return false; // No toolbar for read-only mode
+    }
+    
     switch (mode) {
       case 'comment':
         return [
@@ -196,16 +312,67 @@ const TinyMCEEditor = ({
     }
   };
 
+  // GitHub integration for authenticated users
+  const setupGitHubIntegration = (editor) => {
+    // Add GitHub-specific commands and buttons
+    editor.addCommand('openGitHubRepo', () => {
+      if (repository) {
+        const url = `https://github.com/${repository.owner.login}/${repository.name}`;
+        window.open(url, '_blank');
+      }
+    });
+    
+    editor.ui.registry.addButton('github_repo', {
+      text: '📁',
+      tooltip: 'Open GitHub Repository',
+      onAction: () => editor.execCommand('openGitHubRepo')
+    });
+    
+    // Add branch information
+    if (branch && branch !== 'main') {
+      editor.ui.registry.addButton('github_branch', {
+        text: `🌿 ${branch}`,
+        tooltip: `Current branch: ${branch}`,
+        onAction: () => {
+          editor.notificationManager.open({
+            text: `Working on branch: ${branch}`,
+            type: 'info',
+            timeout: 3000
+          });
+        }
+      });
+    }
+  };
+
   const getContentStyle = () => {
+    const isReadOnly = !isEditingAllowed();
+    
     return `
       body { 
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
         font-size: 14px; 
         line-height: 1.6;
         color: #333;
-        background-color: #fff;
+        background-color: ${isReadOnly ? '#f8f9fa' : '#fff'};
         margin: 8px;
+        ${isReadOnly ? 'cursor: default !important;' : ''}
       }
+      
+      /* Read-only mode indicator */
+      ${isReadOnly ? `
+        body::before {
+          content: "🔒 Read-only mode";
+          position: fixed;
+          top: 10px;
+          right: 10px;
+          background-color: #6c757d;
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 11px;
+          z-index: 1000;
+        }
+      ` : ''}
       
       /* WHO Template Variables */
       .who-template-variable {
@@ -216,11 +383,11 @@ const TinyMCEEditor = ({
         border: 1px solid #bbdefb;
         font-family: 'Courier New', monospace;
         font-size: 0.9em;
-        cursor: pointer;
+        cursor: ${isReadOnly ? 'default' : 'pointer'};
       }
       
       .who-template-variable:hover {
-        background-color: #bbdefb;
+        background-color: ${isReadOnly ? '#e3f2fd' : '#bbdefb'};
       }
       
       /* WHO Highlight */
@@ -294,6 +461,22 @@ const TinyMCEEditor = ({
       li {
         margin-bottom: 4px;
       }
+      
+      /* User type specific styling */
+      ${userType === 'demo' ? `
+        body::after {
+          content: "📝 Demo Mode - Changes saved locally";
+          position: fixed;
+          bottom: 10px;
+          right: 10px;
+          background-color: #17a2b8;
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 11px;
+          z-index: 1000;
+        }
+      ` : ''}
     `;
   };
 
@@ -360,11 +543,12 @@ const TinyMCEEditor = ({
   };
 
   const handleEditorChange = (content, editor) => {
-    if (onChange) {
+    if (onChange && isEditingAllowed()) {
       onChange(content);
     }
   };
 
+  // User access aware error display
   if (loadError) {
     return (
       <div className={`tinymce-error ${className}`} style={style}>
@@ -378,23 +562,42 @@ const TinyMCEEditor = ({
           <p><strong>Editor Load Error</strong></p>
           <p>{loadError}</p>
           <p style={{ fontSize: '0.9em', color: '#6c757d' }}>
-            Falling back to basic text editor...
+            {isEditingAllowed() ? 
+              'Falling back to basic text editor...' : 
+              'Editor not available in read-only mode'
+            }
           </p>
-          <textarea
-            value={value}
-            onChange={(e) => onChange && onChange(e.target.value)}
-            style={{
+          {isEditingAllowed() && (
+            <textarea
+              value={value}
+              onChange={(e) => onChange && onChange(e.target.value)}
+              style={{
+                width: '100%',
+                height: height,
+                minHeight: '200px',
+                padding: '8px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
+                resize: 'vertical'
+              }}
+              placeholder={getUserPlaceholder()}
+              disabled={disabled}
+            />
+          )}
+          {!isEditingAllowed() && (
+            <div style={{
               width: '100%',
               height: height,
               minHeight: '200px',
               padding: '8px',
               border: '1px solid #ced4da',
               borderRadius: '4px',
-              resize: 'vertical'
-            }}
-            placeholder={placeholder}
-            disabled={disabled}
-          />
+              backgroundColor: '#f8f9fa',
+              color: '#6c757d',
+              overflow: 'auto',
+              textAlign: 'left'
+            }} dangerouslySetInnerHTML={{ __html: value || '<p>No content available</p>' }} />
+          )}
         </div>
       </div>
     );
@@ -412,17 +615,66 @@ const TinyMCEEditor = ({
           marginBottom: '8px'
         }}>
           Loading TinyMCE editor...
+          {userType && (
+            <div style={{ fontSize: '0.8em', marginTop: '4px' }}>
+              User type: {userType} | Access: {isEditingAllowed() ? 'Write' : 'Read-only'}
+            </div>
+          )}
         </div>
       )}
+      
+      {/* User access information bar */}
+      {isReady && (userType === 'demo' || userType === 'unauthenticated') && (
+        <div style={{
+          padding: '8px 12px',
+          backgroundColor: userType === 'demo' ? '#e3f2fd' : '#fff3cd',
+          border: `1px solid ${userType === 'demo' ? '#bbdefb' : '#ffc107'}`,
+          borderRadius: '4px',
+          marginBottom: '8px',
+          fontSize: '0.9em',
+          color: userType === 'demo' ? '#1976d2' : '#856404'
+        }}>
+          {userType === 'demo' && (
+            <>📝 <strong>Demo Mode:</strong> Changes will be saved locally but not to GitHub</>
+          )}
+          {userType === 'unauthenticated' && (
+            <>👀 <strong>Read Only:</strong> Please authenticate for editing capabilities</>
+          )}
+        </div>
+      )}
+      
       <Editor
         ref={editorRef}
         apiKey={apiKey}
         value={value}
         init={getEditorConfig()}
-        disabled={disabled}
+        disabled={disabled || !isEditingAllowed()}
         onEditorChange={handleEditorChange}
         {...props}
       />
+      
+      {/* Repository context information */}
+      {repository && isReady && (
+        <div style={{
+          marginTop: '8px',
+          padding: '6px 8px',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '4px',
+          fontSize: '0.8em',
+          color: '#6c757d',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <span>
+            📁 {repository.owner.login}/{repository.name}
+            {branch && branch !== 'main' && ` • 🌿 ${branch}`}
+          </span>
+          <span>
+            {accessLevel === 'write' ? '✏️ Write' : '👁️ Read'}
+          </span>
+        </div>
+      )}
     </div>
   );
 };

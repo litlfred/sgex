@@ -1,5 +1,8 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import TinyMCEEditor from './TinyMCEEditor';
+import userAccessService from '../services/userAccessService';
+import githubService from '../services/githubService';
+import logger from '../utils/logger';
 
 /**
  * TinyMCE Comment Editor for GitHub Integration
@@ -23,10 +26,47 @@ const TinyMCECommentEditor = ({
   contextType = 'comment', // 'comment', 'review', 'issue'
   className = '',
   style = {},
+  // Framework integration props
+  repository = null,
+  branch = null,
   ...props
 }) => {
   const [isAdvancedMode, setIsAdvancedMode] = useState(showAdvanced);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userType, setUserType] = useState('unauthenticated');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [accessLevel, setAccessLevel] = useState('read');
+  
+  // Initialize framework integration
+  useEffect(() => {
+    const initializeFramework = async () => {
+      try {
+        const type = userAccessService.getUserType();
+        const user = userAccessService.getCurrentUser();
+        
+        setUserType(type);
+        setCurrentUser(user);
+        
+        // Comments typically require authentication for GitHub integration
+        setAccessLevel(githubService.isAuth() ? 'write' : 'read');
+        
+        if (logger?.getLogger) {
+          logger.getLogger('TinyMCECommentEditor').debug('Framework initialized', {
+            userType: type,
+            hasUser: !!user,
+            canComment: githubService.isAuth(),
+            repository: repository?.name
+          });
+        }
+      } catch (error) {
+        if (logger?.getLogger) {
+          logger.getLogger('TinyMCECommentEditor').error('Framework initialization failed', error);
+        }
+      }
+    };
+    
+    initializeFramework();
+  }, [repository]);
 
   // Comment templates for GitHub interactions
   const commentTemplates = useMemo(() => [
@@ -208,6 +248,23 @@ const TinyMCECommentEditor = ({
 
   const handleSubmit = useCallback(async () => {
     if (!value.trim() || isSubmitting) return;
+    
+    // Check if user can actually submit comments
+    if (!githubService.isAuth()) {
+      if (logger?.getLogger) {
+        logger.getLogger('TinyMCECommentEditor').warn('Comment submission attempted without authentication');
+      }
+      alert('Authentication required to submit comments');
+      return;
+    }
+    
+    if (userType === 'demo') {
+      if (logger?.getLogger) {
+        logger.getLogger('TinyMCECommentEditor').info('Demo user attempted comment submission');
+      }
+      alert('Demo mode: Comments cannot be submitted to GitHub');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -215,11 +272,14 @@ const TinyMCECommentEditor = ({
         await onSubmit(value);
       }
     } catch (error) {
-      console.error('Failed to submit comment:', error);
+      if (logger?.getLogger) {
+        logger.getLogger('TinyMCECommentEditor').error('Failed to submit comment:', error);
+      }
+      alert('Failed to submit comment. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
-  }, [value, onSubmit, isSubmitting]);
+  }, [value, onSubmit, isSubmitting, userType]);
 
   const handleCancel = useCallback(() => {
     if (onCancel) {
@@ -353,6 +413,11 @@ const TinyMCECommentEditor = ({
           statusbar={false}
           branding={false}
           resize={false}
+          // Framework integration
+          repository={repository}
+          branch={branch}
+          userContext={currentUser}
+          accessLevel={accessLevel}
           {...props}
         />
         
@@ -385,12 +450,13 @@ const TinyMCECommentEditor = ({
               {isAdvancedMode ? '📝 Simple' : '⚙️ Advanced'}
             </button>
             
-            {githubUser && (
+            {githubUser || currentUser?.login && (
               <span style={{
                 fontSize: '12px',
                 color: '#656d76'
               }}>
-                Commenting as @{githubUser}
+                Commenting as @{githubUser || currentUser.login}
+                {userType === 'demo' && ' (Demo)'}
               </span>
             )}
           </div>
@@ -419,7 +485,7 @@ const TinyMCECommentEditor = ({
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={!value.trim() || isSubmitting}
+                disabled={!value.trim() || isSubmitting || !githubService.isAuth() || userType === 'demo'}
                 style={{
                   padding: '6px 12px',
                   borderRadius: '6px',
@@ -427,9 +493,15 @@ const TinyMCECommentEditor = ({
                   backgroundColor: '#1f883d',
                   color: '#ffffff',
                   fontSize: '14px',
-                  cursor: !value.trim() || isSubmitting ? 'not-allowed' : 'pointer',
-                  opacity: !value.trim() || isSubmitting ? 0.6 : 1
+                  cursor: (!value.trim() || isSubmitting || !githubService.isAuth() || userType === 'demo') ? 'not-allowed' : 'pointer',
+                  opacity: (!value.trim() || isSubmitting || !githubService.isAuth() || userType === 'demo') ? 0.6 : 1
                 }}
+                title={
+                  !githubService.isAuth() ? 'Authentication required' :
+                  userType === 'demo' ? 'Demo mode - cannot submit to GitHub' :
+                  !value.trim() ? 'Enter comment text' :
+                  'Submit comment'
+                }
               >
                 {isSubmitting ? 'Submitting...' : 'Comment'}
               </button>
@@ -448,6 +520,16 @@ const TinyMCECommentEditor = ({
           color: '#1e40af'
         }}>
           💡 <strong>Tip:</strong> Use templates for common responses, @ to mention users, # to reference issues/PRs
+          {userType === 'demo' && (
+            <div style={{ marginTop: '4px', color: '#dc2626' }}>
+              <strong>Demo Mode:</strong> Comments cannot be submitted to GitHub
+            </div>
+          )}
+          {!githubService.isAuth() && (
+            <div style={{ marginTop: '4px', color: '#dc2626' }}>
+              <strong>Not Authenticated:</strong> Please authenticate to submit comments
+            </div>
+          )}
         </div>
       )}
     </div>
