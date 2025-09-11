@@ -274,6 +274,9 @@ const PreviewBadge = () => {
         copilotComments: newComments.filter(c => 
           c.user?.login === 'copilot' || 
           c.user?.login?.includes('copilot') ||
+          c.user?.login === 'github-actions[bot]' ||
+          c.user?.login === 'copilot[bot]' ||
+          (c.user?.type === 'Bot' && c.user?.login?.toLowerCase().includes('copilot')) ||
           c.body?.toLowerCase().includes('copilot')
         ).map(c => ({
           id: c.id,
@@ -425,14 +428,21 @@ const PreviewBadge = () => {
     });
     
     // Add copilot if mentioned anywhere in the thread related to this comment
+    // Enhanced detection for various copilot username formats
     if ((comment.body && typeof comment.body === 'string' && comment.body.toLowerCase().includes('copilot')) || 
-        (comment.user && comment.user.login && typeof comment.user.login === 'string' && comment.user.login.toLowerCase().includes('copilot'))) {
+        (comment.user && comment.user.login && typeof comment.user.login === 'string' && 
+         (comment.user.login.toLowerCase().includes('copilot') || 
+          comment.user.login === 'github-actions[bot]' ||
+          comment.user.login === 'copilot[bot]'))) {
       viewers.add('copilot');
     }
     
     // Check if copilot has engaged in later comments
     const copilotEngaged = laterComments.some(c => 
-      (c.user && c.user.login && typeof c.user.login === 'string' && c.user.login.toLowerCase().includes('copilot')) ||
+      (c.user && c.user.login && typeof c.user.login === 'string' && 
+       (c.user.login.toLowerCase().includes('copilot') ||
+        c.user.login === 'github-actions[bot]' ||
+        c.user.login === 'copilot[bot]')) ||
       (c.body && typeof c.body === 'string' && comment.user && comment.user.login && typeof comment.user.login === 'string' && 
        c.body.toLowerCase().includes(`@${comment.user.login.toLowerCase()}`))
     );
@@ -568,12 +578,17 @@ const PreviewBadge = () => {
       const comments = await githubService.getPullRequestIssueComments(owner, repo, prNumber);
       
       // Look for comments from GitHub Copilot or containing copilot session indicators
+      // Enhanced detection for various copilot username formats
       const copilotComments = comments.filter(comment => 
         comment.user.login === 'copilot' || 
         comment.user.login.includes('copilot') ||
+        comment.user.login === 'github-actions[bot]' ||
+        comment.user.login === 'copilot[bot]' ||
+        comment.user.type === 'Bot' && comment.user.login.toLowerCase().includes('copilot') ||
         comment.body.includes('@copilot') ||
         comment.body.includes('copilot session') ||
-        comment.body.includes('GitHub Copilot')
+        comment.body.includes('GitHub Copilot') ||
+        comment.body.includes('I\'ve') && comment.body.includes('commit') // Common copilot response pattern
       );
 
       console.debug('Copilot session detection:', {
@@ -646,8 +661,13 @@ const PreviewBadge = () => {
         const latestCopilotComment = sortedCopilotComments[0];
         
         // Filter to get only copilot's actual responses (not mentions)
+        // Enhanced detection for various copilot username formats
         const copilotResponses = sortedCopilotComments.filter(comment => 
-          comment.user.login === 'copilot' || comment.user.login.includes('copilot')
+          comment.user.login === 'copilot' || 
+          comment.user.login.includes('copilot') ||
+          comment.user.login === 'github-actions[bot]' ||
+          comment.user.login === 'copilot[bot]' ||
+          (comment.user.type === 'Bot' && comment.user.login.toLowerCase().includes('copilot'))
         );
         
         return {
@@ -2053,11 +2073,15 @@ const PreviewBadge = () => {
                             const viewers = getCommentViewers(comment, comments);
                             
                             // Debug: Log each comment being displayed
-                            if (comment.user?.login?.toLowerCase().includes('copilot')) {
+                            if (comment.user?.login?.toLowerCase().includes('copilot') || 
+                                comment.user?.login === 'github-actions[bot]' ||
+                                comment.user?.login === 'copilot[bot]' ||
+                                (comment.user?.type === 'Bot' && comment.user?.login?.toLowerCase().includes('copilot'))) {
                               console.debug('Displaying copilot comment in main discussion:', {
                                 id: comment.id,
                                 author: comment.user.login,
                                 type: comment.type,
+                                userType: comment.user.type,
                                 created: comment.created_at,
                                 bodyPreview: comment.body?.substring(0, 100) + '...'
                               });
