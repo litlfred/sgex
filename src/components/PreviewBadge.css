@@ -1149,16 +1149,26 @@
   }
 
   .preview-badge-expanded {
+    /* Full height and width modal on mobile */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100vh;
+    max-height: 100vh;
     /* Reset fixed desktop widths */
     min-width: unset;
     max-width: unset;
-    width: auto;
-    /* Full width modal on mobile - no offset positioning */
-    left: 0;
-    right: 0;
-    /* Optional: Add small margins to prevent edge-to-edge if desired */
+    /* Remove desktop margins */
     margin-left: 0;
     margin-right: 0;
+    /* Ensure it's above everything */
+    z-index: 9999;
+    /* Adjust border radius for full screen */
+    border-radius: 0;
+    border: none;
   }
 
   .expanded-header {
@@ -1193,14 +1203,22 @@
   }
 
   .preview-badge-expanded {
-    /* Ensure full width on small mobile devices */
+    /* Ensure full height and width on smaller mobile devices */
+    position: fixed;
+    top: 0;
     left: 0;
     right: 0;
-    margin-left: 0;
-    margin-right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100vh;
+    max-height: 100vh;
     min-width: unset;
     max-width: unset;
-    width: auto;
+    margin-left: 0;
+    margin-right: 0;
+    z-index: 9999;
+    border-radius: 0;
+    border: none;
   }
 
   .comment-header {
