@@ -45,6 +45,14 @@
       "component": "QuestionnaireEditor",
       "path": "./components/QuestionnaireEditor"
     },
+    "docs": {
+      "component": "DocumentationViewer",
+      "path": "./components/DocumentationViewer"
+    },
+    "pages": {
+      "component": "PagesManager",
+      "path": "./components/PagesManager"
+    },
     "faq-demo": {
       "component": "DAKFAQDemo",
       "path": "./components/DAKFAQDemo"
@@ -114,18 +122,7 @@
         { "path": "/test-bpmn-viewer", "exact": true }
       ]
     },
-    "DocumentationViewer": {
-      "path": "./components/DocumentationViewer",
-      "routes": [
-        { "path": "/docs/:docId", "exact": true }
-      ]
-    },
-    "PagesManager": {
-      "path": "./components/PagesManager",
-      "routes": [
-        { "path": "/pages", "exact": true }
-      ]
-    },
+
     "LandingPageWithFramework": {
       "path": "./components/LandingPageWithFramework",
       "routes": [
@@ -156,6 +153,7 @@
     { "path": "/test-framework-dashboard/:user/:repo/:branch", "component": "DAKDashboardWithFramework" }
   ],
   "deployedBranches": [
-    "main"
+    "main",
+    "copilot-fix-895"
   ]
 }
