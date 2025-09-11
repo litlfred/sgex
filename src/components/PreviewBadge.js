@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import githubService from '../services/githubService';
 import githubActionsService from '../services/githubActionsService';
 import WorkflowStatus from './WorkflowStatus';
 import WorkflowDashboard from './WorkflowDashboard';
-import TinyMCECommentEditor from './TinyMCECommentEditor';
 import { lazyLoadReactMarkdown, lazyLoadDOMPurify, lazyLoadRehypeRaw } from '../utils/lazyRouteUtils';
 import './WorkflowStatus.css';
 import './PreviewBadge.css';
+
+// Lazy load MDEditor to improve initial page responsiveness
+const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
 /**
  * PreviewBadge component that displays when the app is deployed from a non-main branch
@@ -27,6 +29,7 @@ const PreviewBadge = () => {
   const [commentSubmissionStatus, setCommentSubmissionStatus] = useState(null); // 'submitting', 'success', 'error'
   const [expandedComments, setExpandedComments] = useState(new Set());
   const [expandedDescription, setExpandedDescription] = useState(false);
+  const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
   const [workflowStatus, setWorkflowStatus] = useState(null);
   const [workflowLoading, setWorkflowLoading] = useState(false);
   // Always use WorkflowDashboard - removed simple view toggle
@@ -1131,8 +1134,7 @@ const PreviewBadge = () => {
         hasToken: !!githubService.token,
         commentLength: newComment.trim().length,
         prInfo: prInfo?.length || 0,
-        canComment,
-        editorMode: 'tinymce'
+        canComment
       });
       
       if (prInfo && prInfo.length > 0) {
@@ -1157,6 +1159,7 @@ const PreviewBadge = () => {
           }
           
           setNewComment('');
+          setShowMarkdownEditor(false); // Close markdown editor after successful submission
           
           // Clear success status after 3 seconds
           setTimeout(() => setCommentSubmissionStatus(null), 3000);
@@ -1626,18 +1629,65 @@ const PreviewBadge = () => {
                       )}
                     </div>
                   )}
-                  
-                  <TinyMCECommentEditor
-                    value={newComment}
-                    onChange={setNewComment}
-                    onSubmit={handleCommentSubmit}
-                    onCancel={() => setNewComment('')}
-                    disabled={!canComment}
-                    githubUser={githubService.getCurrentUser()?.login}
-                    contextType="comment"
-                    height={180}
-                    placeholder={canComment ? "Write a comment... Use @ to mention users, # to reference issues" : "Comment form disabled - token permissions required"}
-                  />
+                  {!showMarkdownEditor ? (
+                    <div className="comment-form-simple">
+                      <textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder={canComment ? "Write a comment... (Click 'Advanced Editor' for markdown preview)" : "Comment form disabled - token permissions required"}
+                        rows={3}
+                        disabled={submittingComment || !canComment}
+                      />
+                      <div className="comment-form-actions">
+                        <button
+                          className="advanced-editor-btn"
+                          onClick={() => setShowMarkdownEditor(true)}
+                          disabled={submittingComment || !canComment}
+                        >
+                          📝 Advanced Editor
+                        </button>
+                        <button
+                          className="submit-comment"
+                          onClick={handleCommentSubmit}
+                          disabled={!newComment.trim() || submittingComment || !canComment}
+                        >
+                          {submittingComment ? 'Submitting...' : 'Comment'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="comment-form-advanced">
+                      <div className="markdown-editor-container">
+                        <Suspense fallback={<div className="loading-spinner">Loading editor...</div>}>
+                          <MDEditor
+                            value={newComment}
+                            onChange={(val) => setNewComment(val || '')}
+                            preview="edit"
+                            height={300}
+                            visibleDragBar={false}
+                            data-color-mode="light"
+                            hideToolbar={submittingComment || !canComment}
+                          />
+                        </Suspense>
+                      </div>
+                      <div className="comment-form-actions">
+                        <button
+                          className="btn-secondary"
+                          onClick={() => setShowMarkdownEditor(false)}
+                          disabled={submittingComment || !canComment}
+                        >
+                          Simple Editor
+                        </button>
+                        <button
+                          className="submit-comment"
+                          onClick={handleCommentSubmit}
+                          disabled={!newComment.trim() || submittingComment || !canComment}
+                        >
+                          {submittingComment ? 'Submitting...' : 'Comment'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

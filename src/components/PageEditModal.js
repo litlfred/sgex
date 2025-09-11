@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import stagingGroundService from '../services/stagingGroundService';
-import TinyMCEEditor from './TinyMCEEditor';
+
+// Lazy load MDEditor to improve initial page responsiveness
+const MDEditor = lazy(() => import('@uiw/react-md-editor'));
 
 const PageEditModal = ({ page, onClose, onSave }) => {
   const [content, setContent] = useState(page?.content ? atob(page.content.content) : '');
   const [isSaving, setIsSaving] = useState(false);
-  const [editorError, setEditorError] = useState(null);
 
   if (!page) return null;
 
@@ -18,15 +19,15 @@ const PageEditModal = ({ page, onClose, onSave }) => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Save content from TinyMCE (HTML format)
+      // Save content to staging ground instead of directly to GitHub
       const success = stagingGroundService.updateFile(
         page.path,
         content,
         {
           title: page.title,
           filename: page.filename,
-          tool: 'TinyMCE PageEditor',
-          contentType: 'html'
+          tool: 'PageEditor',
+          contentType: 'markdown'
         }
       );
       
@@ -77,29 +78,17 @@ const PageEditModal = ({ page, onClose, onSave }) => {
           </div>
           
           <div className="md-editor-container">
-            <TinyMCEEditor
-              value={content}
-              onChange={(val) => setContent(val || '')}
-              height={500}
-              disabled={isSaving}
-              placeholder="Start editing your page content..."
-              mode="standard"
-              onInit={(editor) => {
-                setEditorError(null);
-                console.log('TinyMCE editor initialized');
-              }}
-              onError={(error) => {
-                setEditorError(error);
-                console.error('TinyMCE error:', error);
-              }}
-            />
-            
-            {editorError && (
-              <div className="editor-error-notice">
-                <p><strong>⚠️ Editor Error:</strong> {editorError}</p>
-                <p>Please try refreshing the page or contact support if the problem persists.</p>
-              </div>
-            )}
+            <Suspense fallback={<div className="loading-spinner">Loading editor...</div>}>
+              <MDEditor
+                value={content}
+                onChange={(val) => setContent(val || '')}
+                preview="edit"
+                height={500}
+                visibleDragBar={false}
+                data-color-mode="light"
+                hideToolbar={isSaving}
+              />
+            </Suspense>
           </div>
         </div>
       </div>

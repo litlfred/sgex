@@ -395,6 +395,22 @@ export async function lazyLoadYaml() {
   return yamlModule;
 }
 
+/**
+ * Lazy load MDEditor for markdown editing
+ * @returns {Promise<MDEditor>} MDEditor component
+ */
+export async function lazyLoadMDEditor() {
+  const cacheKey = 'md-editor';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const MDEditor = await import('@uiw/react-md-editor');
+  const editor = MDEditor.default;
+  moduleCache.set(cacheKey, editor);
+  return editor;
+}
 
 /**
  * Lazy load react-syntax-highlighter for code syntax highlighting
@@ -589,6 +605,7 @@ const LazyUtils = {
   lazyLoadBpmnModeler,
   lazyLoadBpmnViewer,
   lazyLoadYaml,
+  lazyLoadMDEditor,
   lazyLoadSyntaxHighlighter,
   lazyLoadSyntaxHighlighterStyles,
   lazyLoadReactMarkdown,

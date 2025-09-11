@@ -9,12 +9,12 @@ jest.mock('../services/stagingGroundService', () => ({
   initialize: jest.fn()
 }));
 
-// Mock TinyMCE to avoid canvas issues in tests
-jest.mock('../components/TinyMCEEditor', () => {
-  return function MockTinyMCEEditor({ value, onChange }) {
+// Mock MDEditor to avoid canvas issues in tests
+jest.mock('@uiw/react-md-editor', () => {
+  return function MockMDEditor({ value, onChange }) {
     return (
       <textarea
-        data-testid="tinymce-editor"
+        data-testid="md-editor"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -50,7 +50,7 @@ describe('PageEditModal Staging Ground Integration', () => {
       />
     );
 
-    expect(screen.getByTestId('tinymce-editor')).toHaveValue('# Test Content\n\nThis is test content.');
+    expect(screen.getByTestId('md-editor')).toHaveValue('# Test Content\n\nThis is test content.');
     expect(screen.getByText('Edit Test Page')).toBeInTheDocument();
     expect(screen.getByText('test.md')).toBeInTheDocument();
   });
@@ -78,7 +78,7 @@ describe('PageEditModal Staging Ground Integration', () => {
     );
 
     // Modify content
-    const editor = screen.getByTestId('tinymce-editor');
+    const editor = screen.getByTestId('md-editor');
     fireEvent.change(editor, { target: { value: '# Modified Content\n\nThis is modified.' } });
 
     // Click Stage Changes
@@ -92,8 +92,8 @@ describe('PageEditModal Staging Ground Integration', () => {
         {
           title: 'Test Page',
           filename: 'test.md',
-          tool: 'TinyMCE PageEditor',
-          contentType: 'html'
+          tool: 'PageEditor',
+          contentType: 'markdown'
         }
       );
     });
