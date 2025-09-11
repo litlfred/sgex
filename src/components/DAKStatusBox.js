@@ -23,6 +23,17 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
       return;
     }
 
+    // Check if we should skip API calls due to rate limiting
+    try {
+      const shouldSkip = await githubService.shouldSkipApiCalls();
+      if (shouldSkip) {
+        console.log('⚡ Skipping repository stats fetch due to rate limit protection');
+        return;
+      }
+    } catch (rateLimitCheckError) {
+      console.warn('Could not check rate limits for stats, proceeding with caution:', rateLimitCheckError);
+    }
+
     setRepositoryStats(prev => ({ ...prev, statsLoading: true, statsError: null }));
 
     try {
@@ -36,11 +47,22 @@ const DAKStatusBox = ({ repository, selectedBranch, hasWriteAccess, profile }) =
       });
     } catch (err) {
       console.error('Error loading repository stats:', err);
-      setRepositoryStats(prev => ({
-        ...prev,
-        statsLoading: false,
-        statsError: 'Failed to load repository statistics'
-      }));
+      
+      // Handle rate limiting errors gracefully
+      if (err.message.includes('rate limit') || err.status === 403) {
+        console.log('🚫 Rate limit reached while fetching repository stats');
+        setRepositoryStats(prev => ({
+          ...prev,
+          statsLoading: false,
+          statsError: null // Don't show error for rate limiting
+        }));
+      } else {
+        setRepositoryStats(prev => ({
+          ...prev,
+          statsLoading: false,
+          statsError: 'Failed to load repository statistics'
+        }));
+      }
     }
   }, [owner, repoName, branch]);
 

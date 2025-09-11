@@ -59,6 +59,18 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
           return;
         }
 
+        // Check if we should skip API calls due to rate limiting
+        try {
+          const shouldSkip = await githubService.shouldSkipApiCalls();
+          if (shouldSkip) {
+            console.log('⚡ Skipping publications data fetch due to rate limit protection');
+            setLoading(false);
+            return;
+          }
+        } catch (rateLimitCheckError) {
+          console.warn('Could not check rate limits for publications, proceeding with caution:', rateLimitCheckError);
+        }
+
         // Fetch branches (excluding gh-pages)
         const branchesData = await githubService.getBranches(owner, repoName);
         const filteredBranches = branchesData.filter(branch => branch.name !== 'gh-pages');
@@ -101,7 +113,14 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
         setLoading(false);
       } catch (err) {
         console.error('Error fetching publication data:', err);
-        setError('Failed to load publication data');
+        
+        // Handle rate limiting errors gracefully
+        if (err.message.includes('rate limit') || err.status === 403) {
+          console.log('🚫 Rate limit reached while fetching publication data');
+          setError(null); // Don't show error for rate limiting
+        } else {
+          setError('Failed to load publication data');
+        }
         setLoading(false);
       }
     };

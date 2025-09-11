@@ -49,6 +49,14 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
       setError(null);
       
       try {
+        // Check if we should skip API calls due to rate limiting
+        const shouldSkip = await githubService.shouldSkipApiCalls();
+        if (shouldSkip) {
+          console.log('⚡ Skipping fork info fetch due to rate limit protection');
+          setLoading(false);
+          return;
+        }
+
         // Check if we need to fetch full repository details to get parent info
         let fullRepository = repository;
         if (!repository.parent && (repository.fork === true || repository.fork === undefined)) {
@@ -71,7 +79,14 @@ const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
         setForks(forks);
       } catch (err) {
         console.error('Error fetching repository information:', err);
-        setError(err.message);
+        
+        // Handle rate limiting errors gracefully
+        if (err.message.includes('rate limit') || err.status === 403) {
+          console.log('🚫 Rate limit reached while fetching repository info, using minimal data');
+          setError(null); // Don't show error for rate limiting
+        } else {
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
       }
