@@ -1149,26 +1149,29 @@
   }
 
   .preview-badge-expanded {
-    /* Full height and width modal on mobile */
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100vh;
-    max-height: 100vh;
-    /* Reset fixed desktop widths */
-    min-width: unset;
-    max-width: unset;
-    /* Remove desktop margins */
-    margin-left: 0;
-    margin-right: 0;
+    /* Full height and width modal on mobile - break out of all constraints */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    /* Reset ALL desktop constraints */
+    min-width: unset !important;
+    max-width: unset !important;
+    /* Remove ALL margins and offsets */
+    margin: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     /* Ensure it's above everything */
-    z-index: 9999;
+    z-index: 9999 !important;
     /* Adjust border radius for full screen */
-    border-radius: 0;
-    border: none;
+    border-radius: 0 !important;
+    border: none !important;
+    /* Ensure proper viewport sizing */
+    box-sizing: border-box !important;
   }
 
   .expanded-header {
@@ -1203,22 +1206,29 @@
   }
 
   .preview-badge-expanded {
-    /* Ensure full height and width on smaller mobile devices */
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100vh;
-    max-height: 100vh;
-    min-width: unset;
-    max-width: unset;
-    margin-left: 0;
-    margin-right: 0;
-    z-index: 9999;
-    border-radius: 0;
-    border: none;
+    /* Ensure full height and width on smaller mobile devices - break out of all constraints */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    /* Reset ALL desktop constraints */
+    min-width: unset !important;
+    max-width: unset !important;
+    /* Remove ALL margins and offsets */
+    margin: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    /* Ensure it's above everything */
+    z-index: 9999 !important;
+    /* Adjust border radius for full screen */
+    border-radius: 0 !important;
+    border: none !important;
+    /* Ensure proper viewport sizing */
+    box-sizing: border-box !important;
   }
 
   .comment-header {
