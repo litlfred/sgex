@@ -11,9 +11,13 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
   const { t } = useTranslation();
   const [showMenu, setShowMenu] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [showBugReportForm, setShowBugReportForm] = useState(false);
   const [showEnhancedTutorial, setShowEnhancedTutorial] = useState(false);
   const [currentTutorialId, setCurrentTutorialId] = useState(tutorialId);
+  
+  // Bug report state for sliding functionality
+  const [bugReportMode, setBugReportMode] = useState(false);
+  const [selectedBugType, setSelectedBugType] = useState(null);
+  const [bugReportFormData, setBugReportFormData] = useState({});
 
   // Check if we should show enhanced tutorial modal
   useEffect(() => {
@@ -64,9 +68,11 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
     window.helpModalInstance = {
       openSgexIssue: (issueType) => {
-        // For bug reports, show the new integrated form
+        // For bug reports, show the bug report slider
         if (issueType === 'bug') {
-          setShowBugReportForm(true);
+          setBugReportMode(true);
+          setSelectedBugType('bug');
+          setCurrentSlide(1); // Go directly to form
           return;
         }
         
@@ -293,10 +299,10 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
       },
 
       triggerBugReport: (bugType) => {
-        // Import the bug report service method
-        import('../services/helpContentService').then(({ default: helpContentService }) => {
-          helpContentService.triggerBugReport(bugType);
-        });
+        // Instead of opening a new modal, slide to bug report form
+        setBugReportMode(true);
+        setSelectedBugType(bugType);
+        setCurrentSlide(1); // Move to the bug report form slide
       }
     };
 
@@ -317,8 +323,10 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
   };
 
   const handleBugReport = () => {
-    // Show the new integrated bug report form
-    setShowBugReportForm(true);
+    // Switch to bug report mode using the slider
+    setBugReportMode(true);
+    setCurrentSlide(0); // Start with bug type selection
+    setShowMenu(false); // Hide the menu
   };
 
   const handleDAKFeedback = () => {
@@ -356,21 +364,210 @@ Best regards,
     window.open('/docs/overview', '_blank');
   };
 
-  const handlePrevSlide = () => {
-    if (currentSlide > 0) {
-      setCurrentSlide(currentSlide - 1);
-    }
-  };
-
   const handleNextSlide = () => {
+    if (bugReportMode) {
+      // In bug report mode, handle navigation between menu and form
+      if (currentSlide === 0) {
+        setCurrentSlide(1); // Go to form
+      }
+      return;
+    }
+    
     if (helpTopic?.content && currentSlide < helpTopic.content.length - 1) {
       setCurrentSlide(currentSlide + 1);
     }
   };
 
+  const handlePrevSlide = () => {
+    if (bugReportMode) {
+      // In bug report mode, handle navigation between menu and form
+      if (currentSlide === 1) {
+        setCurrentSlide(0); // Go back to menu
+        setSelectedBugType(null); // Clear selection but preserve form data
+      } else if (currentSlide === 0) {
+        // Exit bug report mode
+        setBugReportMode(false);
+        setSelectedBugType(null);
+        setCurrentSlide(0);
+      }
+      return;
+    }
+    
+    if (currentSlide > 0) {
+      setCurrentSlide(currentSlide - 1);
+    }
+  };
+
+  const renderBugReportSlides = () => {
+    const bugReportSlides = [
+      {
+        title: 'Report a SGeX Bug',
+        content: (
+          <div className="slideshow-content">
+            <p>Report issues with the SGeX Workbench to help us improve the application:</p>
+            <h4>What type of issue would you like to report?</h4>
+            <div className="bug-report-options">
+              <button 
+                className="bug-type-btn" 
+                onClick={() => {
+                  setSelectedBugType('bug');
+                  setCurrentSlide(1);
+                }}
+              >
+                🐛 Bug Report - Something is not working correctly
+              </button>
+              <button 
+                className="bug-type-btn"
+                onClick={() => {
+                  setSelectedBugType('feature');
+                  setCurrentSlide(1);
+                }}
+              >
+                ✨ Feature Request - Suggest a new feature or improvement
+              </button>
+              <button 
+                className="bug-type-btn"
+                onClick={() => {
+                  setSelectedBugType('question');
+                  setCurrentSlide(1);
+                }}
+              >
+                ❓ Question - Ask for help or clarification about SGeX
+              </button>
+              <button 
+                className="bug-type-btn"
+                onClick={() => {
+                  setSelectedBugType('performance');
+                  setCurrentSlide(1);
+                }}
+              >
+                🚀 Performance Issue - Report slow loading or responsiveness problems
+              </button>
+              <button 
+                className="bug-type-btn"
+                onClick={() => {
+                  setSelectedBugType('ui');
+                  setCurrentSlide(1);
+                }}
+              >
+                🎨 UI/UX Issue - Report interface or usability problems
+              </button>
+              <button 
+                className="bug-type-btn"
+                onClick={() => {
+                  setSelectedBugType('general');
+                  setCurrentSlide(1);
+                }}
+              >
+                📝 General Feedback - Other feedback or suggestions
+              </button>
+            </div>
+            <div className="help-tip">
+              <strong>🔧 Features:</strong> Each report type includes automatic environment detection, screenshot capture, and console log inclusion for faster debugging.
+            </div>
+          </div>
+        )
+      },
+      {
+        title: selectedBugType ? getBugTypeTitle(selectedBugType) : 'Bug Report Form',
+        content: selectedBugType ? renderBugReportForm() : null
+      }
+    ];
+
+    const currentSlideData = bugReportSlides[currentSlide] || bugReportSlides[0];
+    const totalSlides = 2;
+
+    return (
+      <div className="help-slideshow">
+        <div className="slideshow-header">
+          <h3>{currentSlideData.title}</h3>
+          <div className="slide-counter">
+            {currentSlide + 1} of {totalSlides}
+          </div>
+        </div>
+        
+        <div className="slideshow-content-wrapper">
+          {typeof currentSlideData.content === 'string' ? (
+            <div 
+              className="slideshow-content"
+              dangerouslySetInnerHTML={{ __html: currentSlideData.content }}
+            />
+          ) : (
+            currentSlideData.content
+          )}
+        </div>
+        
+        <div className="slideshow-controls">
+          <button 
+            onClick={handlePrevSlide}
+            disabled={false}
+            className="slide-nav-btn"
+          >
+            {currentSlide === 0 ? '← Back to Help' : '← Back to Types'}
+          </button>
+          
+          <div className="slide-dots">
+            {[0, 1].map((index) => (
+              <button
+                key={index}
+                className={`slide-dot ${index === currentSlide ? 'active' : ''}`}
+                onClick={() => setCurrentSlide(index)}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+          
+          <button 
+            onClick={handleNextSlide}
+            disabled={currentSlide === 1}
+            className="slide-nav-btn"
+            style={{ visibility: currentSlide === 0 ? 'visible' : 'hidden' }}
+          >
+            Next →
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const getBugTypeTitle = (bugType) => {
+    const titles = {
+      bug: '🐛 Bug Report',
+      feature: '✨ Feature Request',
+      question: '❓ Question',
+      performance: '🚀 Performance Issue',
+      ui: '🎨 UI/UX Issue',
+      general: '📝 General Feedback'
+    };
+    return titles[bugType] || 'Bug Report';
+  };
+
+  const renderBugReportForm = () => {
+    return (
+      <BugReportForm
+        onClose={() => {
+          setBugReportMode(false);
+          setSelectedBugType(null);
+          setCurrentSlide(0);
+          onClose();
+        }}
+        contextData={contextData}
+        preselectedTemplateType={selectedBugType}
+        embedded={true}
+        formData={bugReportFormData}
+        onFormDataChange={setBugReportFormData}
+      />
+    );
+  };
+
   const renderSlideshow = () => {
     if (!helpTopic?.content || helpTopic.type !== 'slideshow') {
       return null;
+    }
+
+    // If we're in bug report mode, create dynamic slides
+    if (bugReportMode && helpTopic.id === 'report-sgex-bug') {
+      return renderBugReportSlides();
     }
 
     const slides = helpTopic.content;
@@ -512,22 +709,6 @@ Best regards,
         }}
         contextData={contextData}
       />
-    );
-  }
-
-  // Show bug report form if requested
-  if (showBugReportForm) {
-    return (
-      <div className="help-modal-overlay bug-report-overlay" onClick={handleOverlayClick}>
-        <BugReportForm 
-          onClose={() => {
-            setShowBugReportForm(false);
-            // Close the main modal after successful submission or cancel
-            onClose();
-          }}
-          contextData={contextData}
-        />
-      </div>
     );
   }
 

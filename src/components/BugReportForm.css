@@ -11,6 +11,18 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Embedded mode adjustments */
+.bug-report-form.embedded {
+  background: transparent;
+  border-radius: 0;
+  max-width: none;
+  width: 100%;
+  max-height: none;
+  overflow-y: visible;
+  box-shadow: none;
+  padding: 0;
+}
+
 .form-header {
   background: var(--who-primary-gradient, linear-gradient(135deg, #0078d4 0%, #005a9e 100%));
   color: white;

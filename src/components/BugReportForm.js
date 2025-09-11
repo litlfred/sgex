@@ -3,10 +3,17 @@ import bugReportService from '../services/bugReportService';
 import githubService from '../services/githubService';
 import ScreenshotEditor from './ScreenshotEditor';
 
-const BugReportForm = ({ onClose, contextData = {}, preselectedTemplateType = null }) => {
+const BugReportForm = ({ 
+  onClose, 
+  contextData = {}, 
+  preselectedTemplateType = null, 
+  embedded = false, 
+  formData: externalFormData = {}, 
+  onFormDataChange = null 
+}) => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState(externalFormData);
   const [includeConsole, setIncludeConsole] = useState(false);
   const [includeScreenshot, setIncludeScreenshot] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -21,6 +28,13 @@ const BugReportForm = ({ onClose, contextData = {}, preselectedTemplateType = nu
   const [showContextPreview, setShowContextPreview] = useState(false);
   const [showScreenshotEditor, setShowScreenshotEditor] = useState(false);
   const [originalScreenshotBlob, setOriginalScreenshotBlob] = useState(null);
+
+  // Sync with external form data when in embedded mode
+  useEffect(() => {
+    if (embedded && externalFormData) {
+      setFormData(externalFormData);
+    }
+  }, [embedded, externalFormData]);
 
   // Load templates on mount
   useEffect(() => {
@@ -92,10 +106,16 @@ const BugReportForm = ({ onClose, contextData = {}, preselectedTemplateType = nu
   };
 
   const handleFormChange = (fieldId, value) => {
-    setFormData(prev => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [fieldId]: value
-    }));
+    };
+    setFormData(newFormData);
+    
+    // Call external callback if in embedded mode
+    if (embedded && onFormDataChange) {
+      onFormDataChange(newFormData);
+    }
   };
 
   const handleTakeScreenshot = async () => {
@@ -485,19 +505,8 @@ const BugReportForm = ({ onClose, contextData = {}, preselectedTemplateType = nu
     );
   }
 
-  return (
-    <div className="bug-report-form">
-      <div className="form-header">
-        <h3>Report an Issue</h3>
-        <button 
-          className="close-btn"
-          onClick={onClose}
-          aria-label="Close bug report form"
-        >
-          ×
-        </button>
-      </div>
-
+  const formContent = (
+    <>
       {error && (
         <div className="error-message">
           <p>⚠️ {error}</p>
@@ -747,6 +756,30 @@ const BugReportForm = ({ onClose, contextData = {}, preselectedTemplateType = nu
         onCancel={handleScreenshotEditorCancel}
         isOpen={showScreenshotEditor}
       />
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="bug-report-form embedded">
+        {formContent}
+      </div>
+    );
+  }
+
+  return (
+    <div className="bug-report-form">
+      <div className="form-header">
+        <h3>Report an Issue</h3>
+        <button 
+          className="close-btn"
+          onClick={onClose}
+          aria-label="Close bug report form"
+        >
+          ×
+        </button>
+      </div>
+      {formContent}
     </div>
   );
 };
