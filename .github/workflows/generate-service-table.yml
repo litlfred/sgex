@@ -1,5 +1,13 @@
 name: Generate Service Table
 
+# This workflow automatically generates the service table documentation
+# from the codebase and commits it back to the repository.
+# 
+# INFINITE LOOP PREVENTION:
+# 1. Job condition excludes commits made by github-actions[bot]
+# 2. Job condition excludes commits with "Auto-update service table" message  
+# 3. Path filters exclude the generated files from triggering the workflow
+
 on:
   push:
     branches: [ main, develop ]
@@ -8,6 +16,9 @@ on:
       - 'services/**'
       - 'scripts/generate-service-table.js'
       - 'package.json'
+      # Exclude generated files to prevent infinite loops
+      - '!docs/SERVICE_TABLE.md'
+      - '!services/dak-faq-mcp/schemas/questionId.schema.json'
   pull_request:
     branches: [ main ]
     paths:
@@ -18,6 +29,8 @@ on:
 jobs:
   generate-service-table:
     runs-on: ubuntu-latest
+    # Skip if the commit was made by the GitHub Action itself to prevent infinite loops
+    if: github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, 'Auto-update service table')
     
     steps:
     - name: Checkout repository
@@ -50,7 +63,7 @@ jobs:
       if: steps.verify-changed-files.outputs.changed == 'true'
       run: |
         git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+        git config --local user.name "github-actions[bot]"
         git add docs/SERVICE_TABLE.md
         git add services/dak-faq-mcp/schemas/questionId.schema.json
         git commit -m "Auto-update service table and question ID schema
