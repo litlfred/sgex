@@ -5,10 +5,7 @@
       "component": "DAKDashboard",
       "path": "./components/DAKDashboard"
     },
-    "testing-viewer": {
-      "component": "TestingViewer", 
-      "path": "./components/TestingViewer"
-    },
+
     "core-data-dictionary-viewer": {
       "component": "CoreDataDictionaryViewer",
       "path": "./components/CoreDataDictionaryViewer"
@@ -110,37 +107,7 @@
         { "path": "/dashboard", "exact": true }
       ]
     },
-    "TestDashboard": {
-      "path": "./components/TestDashboard",
-      "routes": [
-        { "path": "/test-dashboard", "exact": true }
-      ]
-    },
-    "BPMNViewerTestComponent": {
-      "path": "./components/BPMNViewerTestComponent",
-      "routes": [
-        { "path": "/test-bpmn-viewer", "exact": true }
-      ]
-    },
 
-    "LandingPageWithFramework": {
-      "path": "./components/LandingPageWithFramework",
-      "routes": [
-        { "path": "/test-framework", "exact": true }
-      ]
-    },
-    "TestDocumentationPage": {
-      "path": "./components/TestDocumentationPage",
-      "routes": [
-        { "path": "/test-documentation", "exact": true }
-      ]
-    },
-    "AssetEditorTest": {
-      "path": "./components/AssetEditorTest",
-      "routes": [
-        { "path": "/test-asset-editor", "exact": true }
-      ]
-    },
     "NotFound": {
       "path": "./components/NotFound",
       "routes": [
@@ -148,10 +115,7 @@
       ]
     }
   },
-  "testRoutes": [
-    { "path": "/test-framework-dashboard/:user/:repo", "component": "DAKDashboardWithFramework" },
-    { "path": "/test-framework-dashboard/:user/:repo/:branch", "component": "DAKDashboardWithFramework" }
-  ],
+
   "deployedBranches": [
     "main",
     "copilot-fix-895"

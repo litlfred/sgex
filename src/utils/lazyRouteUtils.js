@@ -73,27 +73,14 @@ function createLazyComponent(componentName) {
     case 'DashboardRedirect':
       LazyComponent = React.lazy(() => import('../components/DashboardRedirect'));
       break;
-    case 'TestDashboard':
-      LazyComponent = React.lazy(() => import('../components/TestDashboard'));
-      break;
-    case 'BPMNViewerTestComponent':
-      LazyComponent = React.lazy(() => import('../components/BPMNViewerTestComponent'));
-      break;
+
     case 'DocumentationViewer':
       LazyComponent = React.lazy(() => import('../components/DocumentationViewer'));
       break;
     case 'PagesManager':
       LazyComponent = React.lazy(() => import('../components/PagesManager'));
       break;
-    case 'LandingPageWithFramework':
-      LazyComponent = React.lazy(() => import('../components/LandingPageWithFramework'));
-      break;
-    case 'TestDocumentationPage':
-      LazyComponent = React.lazy(() => import('../components/TestDocumentationPage'));
-      break;
-    case 'AssetEditorTest':
-      LazyComponent = React.lazy(() => import('../components/AssetEditorTest'));
-      break;
+
     case 'BranchListingPage':
       LazyComponent = React.lazy(() => import('../components/BranchListingPage'));
       break;
@@ -111,9 +98,7 @@ function createLazyComponent(componentName) {
     case 'DAKDashboardWithFramework':
       LazyComponent = React.lazy(() => import('../components/DAKDashboardWithFramework'));
       break;
-    case 'TestingViewer':
-      LazyComponent = React.lazy(() => import('../components/TestingViewer'));
-      break;
+
     case 'CoreDataDictionaryViewer':
       LazyComponent = React.lazy(() => import('../components/CoreDataDictionaryViewer'));
       break;
@@ -275,19 +260,6 @@ export function generateLazyRoutes() {
     });
   }
 
-  // Generate test routes (main deployment only)
-  if (config.deployType === 'main' && config.testRoutes) {
-    config.testRoutes.forEach((testRoute, index) => {
-      const LazyComponent = createLazyComponent('DAKDashboardWithFramework'); // Use dashboard component for test routes
-      routes.push(
-        <Route 
-          key={`test-route-${index}`}
-          path={testRoute.path}
-          element={<LazyComponent />}
-        />
-      );
-    });
-  }
 
   return routes;
 }

@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import urlProcessor from '../services/urlProcessorService';
+import useDAKUrlParams from './useDAKUrlParams';
 
 /**
  * Hook to access URL context extracted from direct URL entry
@@ -86,15 +87,25 @@ export const useRouteContext = (routerParams = {}) => {
 
 /**
  * Hook specifically for DAK components that need user/repo context
+ * Enhanced version that can optionally fetch GitHub data when needed
  */
-export const useDAKContext = (routerParams = {}) => {
+export const useDAKContext = (routerParams = {}, options = {}) => {
   const routeContext = useRouteContext(routerParams);
+  const { 
+    fetchData = false, 
+    includeAuthentication = false,
+    includeValidation = false 
+  } = options;
   
   if (!routeContext.isReady) {
     return {
       ...routeContext,
       isValidDAK: false,
-      missingParams: []
+      missingParams: [],
+      profile: null,
+      repository: null,
+      loading: false,
+      error: null
     };
   }
 
@@ -102,13 +113,60 @@ export const useDAKContext = (routerParams = {}) => {
   if (!routeContext.user) missingParams.push('user');
   if (!routeContext.repo) missingParams.push('repo');
 
-  return {
+  const baseContext = {
     ...routeContext,
     isValidDAK: missingParams.length === 0,
     missingParams,
     // Default branch if none specified
     effectiveBranch: routeContext.branch || 'main'
   };
+
+  // If data fetching is not requested, return basic context
+  if (!fetchData) {
+    return {
+      ...baseContext,
+      profile: null,
+      repository: null,
+      loading: false,
+      error: null
+    };
+  }
+
+  // For data fetching, delegate to useDAKUrlParams for full GitHub integration
+  // This maintains the separation of concerns while providing a unified interface
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const dakUrlParams = useDAKUrlParams();
+  
+  return {
+    ...baseContext,
+    // Merge with GitHub data when available
+    profile: dakUrlParams.profile,
+    repository: dakUrlParams.repository,
+    selectedBranch: dakUrlParams.selectedBranch,
+    loading: dakUrlParams.loading,
+    error: dakUrlParams.error,
+    navigate: dakUrlParams.navigate
+  };
+};
+
+/**
+ * Simplified hook for DAK components that only need parameter validation
+ * Use this instead of useDAKUrlParams when you don't need GitHub data fetching
+ */
+export const useDAKParams = (routerParams = {}) => {
+  return useDAKContext(routerParams, { fetchData: false });
+};
+
+/**
+ * Enhanced hook for DAK components that need full GitHub integration
+ * Use this as a direct replacement for useDAKUrlParams
+ */
+export const useDAKData = (routerParams = {}) => {
+  return useDAKContext(routerParams, { 
+    fetchData: true, 
+    includeAuthentication: true, 
+    includeValidation: true 
+  });
 };
 
 export default useURLContext;

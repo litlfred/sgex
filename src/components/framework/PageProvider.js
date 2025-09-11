@@ -87,6 +87,9 @@ export const PageProvider = ({ children, pageName }) => {
 
   // Load data based on page type
   useEffect(() => {
+    // Use URL processor context to supplement location state
+    const urlContext = urlProcessor.getContext();
+
     const loadPageData = async () => {
       try {
         setPageState(prev => ({ ...prev, loading: true, error: null }));
@@ -112,8 +115,6 @@ export const PageProvider = ({ children, pageName }) => {
           return;
         }
 
-        // Use URL processor context to supplement location state
-        const urlContext = urlProcessor.getContext();
         
         // Use location state if available, otherwise fall back to URL context, then URL params
         let profile = location.state?.profile;
