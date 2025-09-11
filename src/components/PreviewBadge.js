@@ -259,6 +259,31 @@ const PreviewBadge = () => {
         ...issueComments.map(comment => ({ ...comment, type: 'issue' }))
       ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
+      // Debug: Log comment details to understand what's being fetched
+      console.debug('Comments fetched for PR discussion:', {
+        reviewCommentsCount: reviewComments.length,
+        issueCommentsCount: issueComments.length,
+        totalComments: newComments.length,
+        commentDetails: newComments.map(c => ({
+          id: c.id,
+          author: c.user?.login || 'unknown',
+          type: c.type,
+          created: c.created_at,
+          bodyPreview: c.body?.substring(0, 50) + '...' || 'no body'
+        })),
+        copilotComments: newComments.filter(c => 
+          c.user?.login === 'copilot' || 
+          c.user?.login?.includes('copilot') ||
+          c.body?.toLowerCase().includes('copilot')
+        ).map(c => ({
+          id: c.id,
+          author: c.user?.login,
+          type: c.type,
+          bodyPreview: c.body?.substring(0, 100) + '...'
+        })),
+        allUsernames: [...new Set(newComments.map(c => c.user?.login).filter(Boolean))]
+      });
+
       // Process timeline events for status updates
       const relevantTimelineEvents = timelineEvents
         .filter(event => ['committed', 'reviewed', 'merged', 'closed', 'reopened', 'labeled', 'unlabeled', 'head_ref_force_pushed', 'ready_for_review', 'convert_to_draft'].includes(event.event))
@@ -2026,6 +2051,17 @@ const PreviewBadge = () => {
                             const shouldTruncate = comment.body && comment.body.length > 200;
                             const isNewComment = newlyAddedCommentId === comment.id;
                             const viewers = getCommentViewers(comment, comments);
+                            
+                            // Debug: Log each comment being displayed
+                            if (comment.user?.login?.toLowerCase().includes('copilot')) {
+                              console.debug('Displaying copilot comment in main discussion:', {
+                                id: comment.id,
+                                author: comment.user.login,
+                                type: comment.type,
+                                created: comment.created_at,
+                                bodyPreview: comment.body?.substring(0, 100) + '...'
+                              });
+                            }
                             
                             return (
                               <div key={comment.id} className={`comment ${comment.type === 'timeline' ? 'comment-timeline' : ''} ${isNewComment ? 'comment-new-glow' : ''}`}>
