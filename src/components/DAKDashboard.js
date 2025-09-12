@@ -696,7 +696,6 @@ const DAKDashboardContent = () => {
             </div>
           )}
 
-
           {/* Publishing Section */}
           {activeTab === 'publications' && (
             <div className="components-section publications-section active">

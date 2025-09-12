@@ -1436,8 +1436,22 @@ class GitHubService {
         console.log('📊 githubService.getFileContent: Base64 content length:', data.content.length);
         
         try {
-          // Use modern Buffer approach for reliable base64 decoding
-          const content = Buffer.from(data.content, 'base64').toString('utf-8');
+          // Use browser-compatible base64 decoding
+          // Remove newlines and whitespace from base64 content
+          const cleanBase64 = data.content.replace(/\s+/g, '');
+          
+          // Decode base64 using browser's native atob()
+          const binaryString = atob(cleanBase64);
+          
+          // Convert binary string to UTF-8 using TextDecoder for proper Unicode handling
+          const uint8Array = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            uint8Array[i] = binaryString.charCodeAt(i);
+          }
+          
+          const textDecoder = new TextDecoder('utf-8');
+          const content = textDecoder.decode(uint8Array);
+          
           console.log(`✅ githubService.getFileContent: Successfully fetched and decoded file content`);
           console.log('📏 githubService.getFileContent: Final content length:', content.length, 'characters');
           console.log('👀 githubService.getFileContent: Content preview (first 200 chars):', content.substring(0, 200));
