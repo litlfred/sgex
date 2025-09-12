@@ -17,16 +17,31 @@ When issues arise in these non-main branches, we need a structured approach to c
 
 ### Pattern
 ```
-copilot-{target_branch}-fix-{issue_number}
+copilot-TAG-ISSNO-N-description
 ```
 
+**Components:**
+- **TAG**: Either `fix` (for bug fixes) or `feature` (for new functionality)
+- **ISSNO**: GitHub issue number (e.g., 122, 607)
+- **N**: Iteration number starting with 0 (increment for retry attempts)
+- **description**: Short 6-word max summary using lowercase alphanumeric and dashes only
+
+**Rules:**
+- Branch names are stable once created (unless explicitly requested to change)
+- Only lowercase letters, numbers, and dashes allowed
+- No leading, trailing, or consecutive dashes
+
+### Determining TAG Type
+- **fix**: Bug reports, error corrections, broken functionality, security issues, performance problems
+- **feature**: New functionality requests, enhancements, new components, feature additions
+
 ### Examples
-| Target Branch | Issue Number | PR Branch Name |
-|---------------|--------------|----------------|
-| `main` | 607 | `copilot-fix-607` |
-| `deploy` | 607 | `copilot-deploy-fix-607` |
-| `feature/new-ui` | 123 | `copilot-feature-new-ui-fix-123` |
-| `release/v2.0` | 456 | `copilot-release-v2.0-fix-456` |
+| Issue Type | Issue Number | Iteration | Branch Name |
+|------------|--------------|-----------|-------------|
+| Bug fix | 607 | First attempt (0) | `copilot-fix-607-0-eslint-deploy-branch-errors` |
+| Feature request | 123 | First attempt (0) | `copilot-feature-123-0-new-branch-selector-ui` |
+| Bug fix retry | 456 | Second attempt (1) | `copilot-fix-456-1-github-api-rate-limiting` |
+| Security fix | 789 | First attempt (0) | `copilot-fix-789-0-token-storage-vulnerability` |
 
 ## Workflow Process
 
@@ -40,12 +55,23 @@ copilot-{target_branch}-fix-{issue_number}
 # Fetch latest changes
 git fetch origin
 
-# Create feature branch from target branch (not main)
-git checkout -b copilot-{target_branch}-fix-{issue_number} origin/{target_branch}
+# Create feature branch using new naming convention
+# Pattern: copilot-TAG-ISSNO-N-description
+git checkout -b copilot-fix-607-0-eslint-deploy-branch-errors origin/deploy
 
-# Example: Fix issue #607 in deploy branch
-git checkout -b copilot-deploy-fix-607 origin/deploy
+# For feature requests:
+git checkout -b copilot-feature-123-0-new-branch-selector-ui origin/main
+
+# For retry attempts (increment N):
+git checkout -b copilot-fix-456-1-github-api-rate-limiting origin/main
 ```
+
+**Branch Name Guidelines:**
+- Determine TAG: `fix` for bugs, `feature` for new functionality
+- Use actual issue number for ISSNO
+- Start with N=0 for first attempt, increment for retries
+- Create descriptive 6-word summary using only lowercase, numbers, and dashes
+- Ensure no leading, trailing, or consecutive dashes
 
 ### 3. Making Changes
 - **Minimal scope**: Address only the specific issue mentioned
@@ -54,10 +80,11 @@ git checkout -b copilot-deploy-fix-607 origin/deploy
 - **Document changes**: Clear commit messages explaining the fix
 
 ### 4. Pull Request Creation
-- **Target**: Set the base branch to the intended target (not main)
-- **Title**: `Fix {issue description} in {target_branch} branch - Fixes #{issue_number}`
+- **Branch name**: Use the new naming convention `copilot-TAG-ISSNO-N-description`
+- **Target**: Set the base branch to the intended target (not main)  
+- **Title**: Include the issue number and brief description
 - **Description**: Include:
-  - Problem description specific to the target branch
+  - Problem description
   - Solution implemented
   - Testing performed
   - Files changed and why
@@ -65,7 +92,9 @@ git checkout -b copilot-deploy-fix-607 origin/deploy
 ### 5. Example PR Template
 
 ```markdown
-# Fix ESLint errors in deploy branch BranchListing.js - Fixes #607
+# Fix ESLint errors in deploy branch - Fixes #607
+
+**Branch**: `copilot-fix-607-0-eslint-deploy-branch-errors`
 
 ## Problem
 The deploy branch fails to build due to ESLint errors in `src/components/BranchListing.js`:
