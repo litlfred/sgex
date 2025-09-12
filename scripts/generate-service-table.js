@@ -58,7 +58,7 @@ class ServiceTableGenerator {
     const serviceDir = path.join(this.basePath, 'services/dak-faq-mcp');
     
     // Load OpenAPI spec
-    const openApiPath = path.join(serviceDir, 'docs/openapi.yaml');
+    const openApiPath = path.join(serviceDir, 'openapi.yaml');
     let openApiSpec = null;
     try {
       const openApiContent = await fs.readFile(openApiPath, 'utf-8');
@@ -113,9 +113,9 @@ class ServiceTableGenerator {
               name: methodData.operationId,
               description: methodData.description || methodData.summary || 'No description available',
               inputParameters: this.extractInputParameters(methodData),
-              inputSchemas: this.extractInputSchemas(methodData),
+              inputSchemas: this.extractInputSchemas(methodData, 'dak-faq-mcp'),
               outputDescription: this.extractOutputDescription(methodData),
-              outputSchema: this.extractOutputSchema(methodData),
+              outputSchema: this.extractOutputSchema(methodData, 'dak-faq-mcp'),
               openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-faq-mcp/openapi.yaml'),
               webInterface: pathKey.includes('/health') ? 'No' : 'Yes',
               mcpInterface: this.getMCPInterface(methodData.operationId, mcpManifest),
@@ -232,6 +232,7 @@ class ServiceTableGenerator {
       openApiSpec = yaml.load(openApiContent);
     } catch (error) {
       console.warn(`Could not load Publication API OpenAPI spec: ${error.message}`);
+      return;
     }
 
     // Load MCP manifest
@@ -244,15 +245,14 @@ class ServiceTableGenerator {
       console.warn(`Could not load Publication API MCP manifest: ${error.message}`);
     }
 
-    // Add main DAK Publication service
+    // Add main DAK Publication category service
     this.services.push({
       category: 'DAK Publication',
-      name: 'Publication Generator',
-      description: 'Generate DAK publications in multiple formats (HTML, EPUB, DocBook, PDF)',
+      name: 'DAK Publication Main',
+      description: 'Main publication generation and management service for DAKs',
       inputParameters: [
         '`dakRepository`: GitHub repository path',
         '`format`: Output format (html/epub/docbook/pdf)',
-        '`scope`: Publication scope (full/component)',
         '`templateId`: Template identifier'
       ],
       inputSchemas: [
@@ -264,67 +264,37 @@ class ServiceTableGenerator {
       outputSchema: this.createSchemaLink('publication output schema', 'services/dak-publication-api/schemas/publication-output.schema.json'),
       openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-publication-api/openapi.yaml'),
       webInterface: 'Yes',
-      mcpInterface: 'Yes',
-      openApiCompliance: 'Full'
-    });
-
-    // Add Template Management service
-    this.services.push({
-      category: '',
-      name: 'Template Manager',
-      description: 'Manage publication templates and customizations',
-      inputParameters: [
-        '`category`: Template category filter',
-        '`format`: Supported format filter',
-        '`scope`: Template scope filter'
-      ],
-      inputSchemas: [
-        this.createSchemaLink('template query schema', 'services/dak-publication-api/schemas/template-query.schema.json')
-      ],
-      outputDescription: 'List of available templates with metadata',
-      outputSchema: this.createSchemaLink('template list schema', 'services/dak-publication-api/schemas/template-list.schema.json'),
-      openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-publication-api/openapi.yaml'),
-      webInterface: 'Yes',
       mcpInterface: mcpManifest ? 'Yes' : 'No',
       openApiCompliance: 'Full'
     });
 
-    // Add Publication Status service
-    this.services.push({
-      category: '',
-      name: 'Publication Status',
-      description: 'Track publication generation status and retrieve results',
-      inputParameters: [
-        '`publicationId`: Publication identifier',
-        '`dakRepository`: Repository filter (optional)'
-      ],
-      inputSchemas: [
-        this.createSchemaLink('status query schema', 'services/dak-publication-api/schemas/publication-status-query.schema.json')
-      ],
-      outputDescription: 'Publication status, progress, and download information',
-      outputSchema: this.createSchemaLink('status output schema', 'services/dak-publication-api/schemas/publication-status.schema.json'),
-      openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-publication-api/openapi.yaml'),
-      webInterface: 'Yes',
-      mcpInterface: mcpManifest ? 'Yes' : 'No', 
-      openApiCompliance: 'Full'
-    });
-
-    // Add Service Integration service
-    this.services.push({
-      category: '',
-      name: 'Service Integration',
-      description: 'Integration status with MCP and FAQ services',
-      inputParameters: ['No parameters'],
-      inputSchemas: [],
-      outputDescription: 'Service availability and integration status',
-      outputSchema: this.createSchemaLink('integration status schema', 'services/dak-publication-api/schemas/integration-status.schema.json'),
-      openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-publication-api/openapi.yaml'),
-      webInterface: 'Yes',
-      mcpInterface: mcpManifest ? 'Yes' : 'No',
-      openApiCompliance: 'Full'
-    });
-
-    console.log(`✅ Added ${4} publication services`);
+    // Add sub-services based on OpenAPI paths
+    if (openApiSpec && openApiSpec.paths) {
+      let servicesAdded = 0;
+      for (const [pathKey, pathData] of Object.entries(openApiSpec.paths)) {
+        for (const [method, methodData] of Object.entries(pathData)) {
+          if (typeof methodData === 'object' && methodData.operationId) {
+            this.services.push({
+              category: '',
+              name: methodData.operationId,
+              description: methodData.description || methodData.summary || 'No description available',
+              inputParameters: this.extractInputParameters(methodData),
+              inputSchemas: this.extractInputSchemas(methodData, 'dak-publication-api'),
+              outputDescription: this.extractOutputDescription(methodData),
+              outputSchema: this.extractOutputSchema(methodData, 'dak-publication-api'),
+              openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-publication-api/openapi.yaml'),
+              webInterface: pathKey.includes('/health') ? 'No' : 'Yes',
+              mcpInterface: this.getMCPInterface(methodData.operationId, mcpManifest),
+              openApiCompliance: 'Full'
+            });
+            servicesAdded++;
+          }
+        }
+      }
+      console.log(`✅ Added ${servicesAdded + 1} publication services (1 main + ${servicesAdded} endpoints)`);
+    } else {
+      console.log(`✅ Added 1 publication service (main only - no OpenAPI paths found)`);
+    }
   }
 
   /**
@@ -455,10 +425,10 @@ class ServiceTableGenerator {
   /**
    * Extract input schemas from OpenAPI method
    */
-  extractInputSchemas(methodData) {
+  extractInputSchemas(methodData, serviceType = 'dak-faq-mcp') {
     // This would normally extract actual schema references
-    // For now, return placeholder
-    return [this.createSchemaLink('input schema', 'services/dak-faq-mcp/schemas/input.schema.json')];
+    // For now, return placeholder based on service type
+    return [this.createSchemaLink('input schema', `services/${serviceType}/schemas/input.schema.json`)];
   }
 
   /**
@@ -474,8 +444,8 @@ class ServiceTableGenerator {
   /**
    * Extract output schema from OpenAPI method
    */
-  extractOutputSchema(methodData) {
-    return this.createSchemaLink('output schema', 'services/dak-faq-mcp/schemas/output.schema.json');
+  extractOutputSchema(methodData, serviceType = 'dak-faq-mcp') {
+    return this.createSchemaLink('output schema', `services/${serviceType}/schemas/output.schema.json`);
   }
 
   /**
@@ -486,15 +456,32 @@ class ServiceTableGenerator {
     
     const mcpTools = mcpManifest.tools.map(t => t.name);
     
-    // Map operation IDs to MCP tool names
-    const mapping = {
+    // Map operation IDs to MCP tool names for FAQ services
+    const faqMapping = {
       'executeFAQQuestions': 'execute_faq_question',
       'getFAQCatalog': 'list_faq_questions',
       'getQuestionSchema': 'get_question_schema'
     };
 
-    const mcpToolName = mapping[operationId];
-    return mcpTools.includes(mcpToolName) ? 'Yes' : 'Partial';
+    // Map operation IDs to MCP tool names for Publication services
+    const publicationMapping = {
+      'generatePublication': 'generate_publication',
+      'listTemplates': 'list_publication_templates',
+      'getTemplate': 'get_publication_template',
+      'getHealth': 'get_service_integration_status',
+      'resolveVariables': 'validate_publication_config',
+      'batchExecuteFAQ': 'get_service_integration_status'
+    };
+
+    // Try FAQ mapping first, then publication mapping
+    let mcpToolName = faqMapping[operationId] || publicationMapping[operationId];
+    
+    if (mcpToolName && mcpTools.includes(mcpToolName)) {
+      return 'Yes';
+    }
+    
+    // Check if any MCP tools exist for this service
+    return mcpTools.length > 0 ? 'Partial' : 'No';
   }
 
   /**
