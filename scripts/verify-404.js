@@ -63,23 +63,20 @@ function main() {
   // Check if files exist
   const public404Path = path.join(PUBLIC_DIR, '404.html');
   const build404Path = path.join(BUILD_DIR, '404.html');
-  const routeConfigPath = path.join(BUILD_DIR, 'routeConfig.js');
   
   allChecks = checkFile(public404Path, 'public/404.html') && allChecks;
   allChecks = checkFile(build404Path, 'build/404.html') && allChecks;
-  allChecks = checkFile(routeConfigPath, 'build/routeConfig.js') && allChecks;
   
   // Check file size (IE compatibility requirement)
   allChecks = checkFileSize(public404Path, 512, '404.html') && allChecks;
   
   // Check required content
   const requiredPatterns = [
-    { pattern: 'Single Page Apps for GitHub Pages', description: 'SPA routing header' },
-    { pattern: 'getSGEXRouteConfig', description: 'SGEX route configuration function' },
-    { pattern: 'isGitHubPages', description: 'GitHub Pages detection' },
-    { pattern: 'l.replace(newUrl)', description: 'URL redirection logic' },
-    { pattern: 'l.pathname.split(\'/\')', description: 'path processing logic' },
-    { pattern: 'routeConfig.js', description: 'route configuration dependency' }
+    { pattern: 'SGEX Dynamic URL Routing for GitHub Pages', description: 'SGEX routing header' },
+    { pattern: 'SGEX_storeStructuredContext', description: 'SGEX context storage function' },
+    { pattern: 'optimisticBranchRedirect', description: 'optimistic routing function' },
+    { pattern: 'redirectToSPA', description: 'SPA redirect function' },
+    { pattern: 'l.pathname.split(\'/\')', description: 'path processing logic' }
   ];
   
   allChecks = checkFileContent(public404Path, requiredPatterns, '404.html') && allChecks;
