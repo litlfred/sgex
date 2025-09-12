@@ -20,7 +20,7 @@ import type {
   ServiceResponse
 } from '../types/core';
 
-import { lazyLoadOctokit } from '../utils/lazyRouteUtils';
+import { lazyLoadOctokit } from '../services/libraryLoaderService';
 import { processConcurrently } from '../utils/concurrency';
 import repositoryCompatibilityCache from '../utils/repositoryCompatibilityCache';
 import secureTokenStorage from './secureTokenStorage';

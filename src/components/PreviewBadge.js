@@ -3,7 +3,7 @@ import githubService from '../services/githubService';
 import githubActionsService from '../services/githubActionsService';
 import WorkflowStatus from './WorkflowStatus';
 import WorkflowDashboard from './WorkflowDashboard';
-import { lazyLoadReactMarkdown, lazyLoadDOMPurify, lazyLoadRehypeRaw } from '../utils/lazyRouteUtils';
+import { lazyLoadReactMarkdown, lazyLoadDOMPurify, lazyLoadRehypeRaw } from '../services/libraryLoaderService';
 import './WorkflowStatus.css';
 import './PreviewBadge.css';
 

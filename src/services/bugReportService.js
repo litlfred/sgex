@@ -1,6 +1,6 @@
 import githubService from './githubService';
 import issueTrackingService from './issueTrackingService';
-import { lazyLoadYaml } from '../utils/lazyRouteUtils';
+import { lazyLoadYaml } from '../services/libraryLoaderService';
 
 // eslint-disable-next-line no-unused-vars
 let html2canvas = null;

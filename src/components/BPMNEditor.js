@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AssetEditorLayout, useDAKParams } from './framework';
-import { createLazyBpmnModeler, createLazyOctokit } from '../utils/lazyRouteUtils';
+import { createLazyBpmnModeler, createLazyOctokit } from '../services/lazyFactoryService';
 
 const BPMNEditor = () => {
   const navigate = useNavigate();
