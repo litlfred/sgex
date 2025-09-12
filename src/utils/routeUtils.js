@@ -25,7 +25,6 @@ export const extractDAKComponentsFromRoutes = () => {
   console.warn('SGEX route configuration not available, using fallback');
   return [
     'dashboard',                    
-    'testing-viewer',              
     'core-data-dictionary-viewer', 
     'health-interventions',        
     'actor-editor',               

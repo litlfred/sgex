@@ -283,9 +283,15 @@ jobs:
           
           echo "Copying new build to branch directory: $target_subdir"
           
-          # Create branch directory and copy build
+          # Create branch directory and copy build (excluding 404.html - not needed for branch deployments)
           mkdir -p "$target_subdir"
           cp -a build/. "$target_subdir/"
+          
+          # Remove 404.html from branch deployment - root 404.html handles all routing
+          if [[ -f "$target_subdir/404.html" ]]; then
+            echo "Removing redundant 404.html from branch deployment (root 404.html handles routing)"
+            rm "$target_subdir/404.html"
+          fi
           
           # Ensure .nojekyll file exists in root to disable Jekyll processing for entire gh-pages
           if [[ ! -f ".nojekyll" ]]; then
