@@ -103,6 +103,27 @@
             
             var pathSegments = currentPath.split('/').filter(Boolean);
             
+            // Check if this is a branch deployment failure (optimistic redirect failed)
+            if (pathSegments.length >= 3 && pathSegments[0] === 'sgex') {
+              var branch = pathSegments[1];
+              var component = pathSegments[2];
+              
+              // Check if this looks like a branch deployment that failed
+              if (branch !== 'main' && isValidComponentOrRoute(component, routeConfig)) {
+                console.log('SGEX 404.html: Branch deployment not found for branch:', branch);
+                showErrorPage(
+                  'Branch Deployment Not Found', 
+                  'The branch "' + branch + '" does not appear to be deployed. This could mean:\n\n' +
+                  '• The branch has not been deployed to GitHub Pages yet\n' +
+                  '• The branch deployment is still in progress\n' +
+                  '• The branch name was mistyped in the URL\n\n' +
+                  'You can try accessing the main deployment instead, or create an issue if you believe this branch should be deployed.',
+                  'branch-not-deployed'
+                );
+                return;
+              }
+            }
+            
             // Enhanced fallback logic: try local branch first, then main
             if (pathSegments.length >= 2 && pathSegments[0] === 'sgex') {
               var branch = pathSegments[1];
@@ -271,38 +292,18 @@
             
             // Check if this could be a branch deployment: /sgex/{branch}/{component}/...
             if (isValidComponentOrRoute(component, routeConfig)) {
-              // Valid component - check if branch is deployed
-              var isDeployedBranch = routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(branch);
+              // Optimistic approach: assume branch is deployed and try to redirect to it first
+              var branchPath = '/sgex/' + branch + '/';
+              var routePath = pathSegments.slice(2).join('/');
               
-              if (isDeployedBranch) {
-                // Branch has its own deployment - route to it
-                var branchPath = '/sgex/' + branch + '/';
-                var routePath = pathSegments.slice(2).join('/');
-                
-                // Store branch and repo/org context in session storage if available
-                storeRouteContext(pathSegments);
-                
-                redirectToSPA(branchPath, routePath);
-                return;
-              } else {
-                // Branch not deployed - route to main with full path including branch context
-                var routePath = pathSegments.slice(1).join('/'); // Include branch: 'copilot-fix-952/dak-action/WorldHealthOrganization'
-                
-                // Store branch and repo/org context in session storage if available
-                storeRouteContext(pathSegments);
-                
-                // Store the intended branch for the React app to handle
-                try {
-                  if (typeof Storage !== 'undefined') {
-                    sessionStorage.setItem('sgex_intended_branch', branch);
-                  }
-                } catch (error) {
-                  console.warn('Could not store intended branch in session storage:', error);
-                }
-                
-                redirectToSPA('/sgex/', routePath);
-                return;
-              }
+              // Store branch and repo/org context in session storage if available
+              storeRouteContext(pathSegments);
+              
+              // Try to redirect to branch deployment
+              // If branch doesn't exist, this will result in another 404 that we'll handle gracefully
+              redirectToSPA(branchPath, routePath);
+              return;
+            }
             }
           }
           

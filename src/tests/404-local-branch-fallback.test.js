@@ -29,7 +29,7 @@ describe('404.html Local Branch Fallback', () => {
 
     mockRouteConfig = {
       isValidDAKComponent: jest.fn(() => true),
-      isDeployedBranch: jest.fn(() => false),
+      // Note: isDeployedBranch removed - now using optimistic approach
       standardComponents: {
         'DashboardComponent': {
           routes: [{ path: '/dashboard' }]
@@ -221,16 +221,16 @@ describe('404.html Local Branch Fallback', () => {
       expect(repo).toBe('repo');
     });
 
-    test('should not interfere with valid deployed branches', () => {
-      // Mock that this is a valid deployed branch
-      mockRouteConfig.isDeployedBranch.mockReturnValue(true);
+    test('should handle all branches optimistically (no deployed branch check)', () => {
+      // With optimistic approach, all branches are treated the same
       mockLocation.pathname = '/sgex/main/dashboard/user/repo';
       
       const pathSegments = mockLocation.pathname.split('/').filter(Boolean);
       const branch = pathSegments[1]; // 'main'
       
-      // Should not trigger fallback for deployed branches
-      expect(mockRouteConfig.isDeployedBranch(branch)).toBe(true);
+      // Should always try the branch optimistically
+      expect(branch).toBe('main');
+      expect(pathSegments[2]).toBe('dashboard'); // valid component
     });
   });
 

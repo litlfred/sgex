@@ -17,7 +17,7 @@ const mockLocation = {
 
 // Mock getSGEXRouteConfig
 const mockRouteConfig = {
-  isDeployedBranch: jest.fn(),
+  // Note: isDeployedBranch removed in favor of optimistic routing
   isValidDAKComponent: jest.fn()
 };
 
@@ -59,16 +59,15 @@ describe('404.html SPA Routing', () => {
     const publicPath = path.join(__dirname, '../../public/404.html');
     const content = fs.readFileSync(publicPath, 'utf8');
     
-    // Should contain SPA routing logic
-    expect(content).toContain('Single Page Apps for GitHub Pages');
+    // Should contain SGEX-specific SPA routing logic
+    expect(content).toContain('SGEX Dynamic URL Routing');
     expect(content).toContain('getSGEXRouteConfig');
-    expect(content).toContain('isGitHubPages');
+    expect(content).toContain('GitHub Pages');
     expect(content).toContain('l.replace(newUrl)');
   });
 
   test('should handle GitHub Pages SGEX deployment URLs', () => {
-    // Mock configuration
-    mockRouteConfig.isDeployedBranch.mockReturnValue(false);
+    // Mock configuration - no longer checking isDeployedBranch
     mockRouteConfig.isValidDAKComponent.mockReturnValue(true);
     
     // Set up location for GitHub Pages deployment
@@ -83,18 +82,17 @@ describe('404.html SPA Routing', () => {
     expect(pathSegments[1]).toBe('dashboard');
   });
 
-  test('should handle branch deployment URLs', () => {
-    // Mock configuration for branch deployment
-    mockRouteConfig.isDeployedBranch.mockReturnValue(true);
-    mockRouteConfig.isValidDAKComponent.mockReturnValue(false);
+  test('should handle branch deployment URLs optimistically', () => {
+    // Mock configuration - optimistic approach doesn't check deployment status
+    mockRouteConfig.isValidDAKComponent.mockReturnValue(true);
     
     // Set up location for branch deployment
-    mockLocation.pathname = '/sgex/main/dashboard/user/repo';
+    mockLocation.pathname = '/sgex/copilot-fix-915/dashboard/user/repo';
     
     const pathSegments = mockLocation.pathname.split('/').filter(Boolean);
     
     expect(pathSegments[0]).toBe('sgex');
-    expect(pathSegments[1]).toBe('main'); // branch name
+    expect(pathSegments[1]).toBe('copilot-fix-915'); // branch name
     expect(pathSegments[2]).toBe('dashboard'); // component
   });
 

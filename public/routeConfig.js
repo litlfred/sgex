@@ -103,11 +103,6 @@ function loadRouteConfigSync(deployType) {
         testRoutes: config.testRoutes || [],
 
         /**
-         * Deployed branches for GitHub Pages routing.
-         */
-        deployedBranches: config.deployedBranches || [],
-
-        /**
          * Get list of DAK component names
          * @returns {Array} Array of valid DAK component names
          */
@@ -200,15 +195,6 @@ function loadRouteConfigSync(deployType) {
          */
         isValidComponent: function(componentName) {
           return this.getAllComponentNames().includes(componentName);
-        },
-
-        /**
-         * Check if a branch name is a deployed branch
-         * @param {string} branch - Branch name to validate  
-         * @returns {boolean} True if branch is deployed
-         */
-        isDeployedBranch: function(branch) {
-          return this.deployedBranches.includes(branch);
         }
       };
       
@@ -278,7 +264,6 @@ function getSGEXRouteConfig(deployType) {
         },
         components: {},
         testRoutes: [],
-        deployedBranches: [],
         
         // Helper methods
         getDAKComponentNames: function() {
@@ -340,9 +325,6 @@ function getSGEXRouteConfig(deployType) {
         },
         isValidComponent: function(componentName) {
           return this.getAllComponentNames().includes(componentName);
-        },
-        isDeployedBranch: function(branch) {
-          return this.deployedBranches.includes(branch);
         }
       };
     }
