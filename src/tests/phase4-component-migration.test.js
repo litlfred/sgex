@@ -33,7 +33,7 @@ jest.mock('../services/githubService', () => mockGithubService);
 
 // Mock route utils
 const mockParseDAKUrl = jest.fn();
-jest.mock('../utils/routeUtils', () => ({
+jest.mock('../services/urlProcessorService', () => ({
   parseDAKUrl: mockParseDAKUrl
 }));
 

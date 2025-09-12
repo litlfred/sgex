@@ -1,4 +1,4 @@
-import { extractDAKComponentsFromRoutes, isValidDAKComponent, parseDAKUrl } from './routeUtils';
+import { extractDAKComponentsFromRoutes, isValidDAKComponent, parseDAKUrl } from '../services/urlProcessorService';
 
 describe('routeUtils', () => {
   describe('extractDAKComponentsFromRoutes', () => {
@@ -17,13 +17,13 @@ describe('routeUtils', () => {
       expect(isValidDAKComponent('dashboard')).toBe(true);
       expect(isValidDAKComponent('bpmn-viewer')).toBe(true);
       expect(isValidDAKComponent('core-data-dictionary-viewer')).toBe(true);
-      expect(isValidDAKComponent('testing-viewer')).toBe(true);
       expect(isValidDAKComponent('health-interventions')).toBe(true);
       expect(isValidDAKComponent('actor-editor')).toBe(true);
       expect(isValidDAKComponent('business-process-selection')).toBe(true);
       expect(isValidDAKComponent('bpmn-editor')).toBe(true);
       expect(isValidDAKComponent('bpmn-source')).toBe(true);
       expect(isValidDAKComponent('decision-support-logic')).toBe(true);
+      expect(isValidDAKComponent('questionnaire-editor')).toBe(true);
     });
 
     it('should return false for invalid DAK components', () => {
@@ -92,9 +92,9 @@ describe('routeUtils', () => {
     });
 
     it('should handle URLs without branches', () => {
-      const result = parseDAKUrl('/testing-viewer/user/repo');
+      const result = parseDAKUrl('/dashboard/user/repo');
       expect(result).toEqual({
-        component: 'testing-viewer',
+        component: 'dashboard',
         user: 'user',
         repo: 'repo',
         branch: undefined,
