@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../../services/githubService';
 import dakValidationService from '../../services/dakValidationService';
 import profileSubscriptionService from '../../services/profileSubscriptionService';
-import urlProcessor from '../../services/urlProcessorService';
+import { getRoutingContext } from '../../services/routingContextService';
 
 /**
  * Page types supported by the framework
@@ -87,8 +87,8 @@ export const PageProvider = ({ children, pageName }) => {
 
   // Load data based on page type
   useEffect(() => {
-    // Use URL processor context to supplement location state
-    const urlContext = urlProcessor.getContext();
+    // Use routing context to supplement location state
+    const urlContext = getRoutingContext();
 
     const loadPageData = async () => {
       try {

@@ -4,7 +4,7 @@ import './i18n'; // Initialize i18n
 import { generateLazyRoutes } from './utils/lazyRouteUtils';
 import { initializeTheme } from './utils/themeManager';
 import logger from './utils/logger';
-import urlProcessor from './services/urlProcessorService';
+import { initializeRoutingContext } from './services/routingContextService';
 
 function App() {
   const appLogger = logger.getLogger('App');
@@ -19,10 +19,9 @@ function App() {
       basename: basename
     });
     
-    // Initialize URL processor to handle routing context
-    urlProcessor.initialize();
-    const urlContext = urlProcessor.getContext();
-    appLogger.info('URL context initialized', urlContext);
+    // Initialize routing context to handle URL processing
+    const urlContext = initializeRoutingContext();
+    appLogger.info('Routing context initialized', urlContext);
     
     // Initialize theme before any components render
     const appliedTheme = initializeTheme();

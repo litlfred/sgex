@@ -1,4 +1,4 @@
-import { extractDAKComponentsFromRoutes, isValidDAKComponent, parseDAKUrl } from '../services/urlProcessorService';
+import { extractDAKComponentsFromRoutes, isValidDAKComponent, parseDAKUrl } from '../services/routingContextService';
 
 describe('routeUtils', () => {
   describe('extractDAKComponentsFromRoutes', () => {

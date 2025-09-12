@@ -28,31 +28,22 @@ window.SGEX_ROUTES_CONFIG = null;
 
 // Detect deployment type based on current URL and environment
 function getDeploymentType() {
-  // Check if we're in a simple deployment (deploy branch)
+  // Simplified deployment detection - default to main unless specifically deploy-only
   if (typeof window !== 'undefined') {
     var path = window.location.pathname;
     
-    // If we're accessing documentation or other main features, use main config
-    if (path.includes('/docs/') || path.includes('/dashboard/') || path.includes('/test-') || path.includes('/actor-') || path.includes('/bpmn-') || path.includes('/decision-support-') || path.includes('/questionnaire-') || path.includes('/core-data-') || path.includes('/testing-') || path.includes('/business-process-')) {
-      return 'main';
-    }
-    
-    // For development environment, default to main unless specifically accessing deploy-only features
+    // For development environment, always use main config
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return 'main';
     }
     
-    // If we're at the root with minimal functionality, likely deploy branch
-    if (path === '/' || path === '/sgex/') {
-      // Check for query parameters or other indicators that suggest main deployment needed
-      if (window.location.search || window.location.hash) {
-        return 'main';
-      }
+    // If we're at the root with no routing context, likely deploy branch
+    if ((path === '/' || path === '/sgex/') && !window.location.search && !window.location.hash) {
       return 'deploy';
     }
   }
   
-  // Default to main deployment type
+  // Default to main deployment type for all other cases
   return 'main';
 }
 
@@ -208,23 +199,6 @@ function loadRouteConfigSync(deployType) {
   }
 }
 
-// Asynchronous configuration loading for modern environments
-async function loadRouteConfigAsync(deployType) {
-  try {
-    deployType = deployType || getDeploymentType();
-    var configFile = getConfigFileName(deployType);
-    
-    const response = await fetch(configFile);
-    if (!response.ok) {
-      throw new Error(`Failed to load ${configFile}: ${response.status}`);
-    }
-    return loadRouteConfigSync(deployType); // Use the sync version to create the config object
-  } catch (error) {
-    console.error('Failed to load SGEX route configuration:', error);
-    return null;
-  }
-}
-
 // For synchronous access (mainly for 404.html and immediate use)
 function getSGEXRouteConfig(deployType) {
   if (!window.SGEX_ROUTES_CONFIG) {
@@ -236,31 +210,15 @@ function getSGEXRouteConfig(deployType) {
       console.warn('Using fallback route configuration due to loading failure');
       deployType = deployType || getDeploymentType();
       
-      // Create minimal working configuration with essential routes
+      // Create minimal working configuration with essential routes only
       window.SGEX_ROUTES_CONFIG = {
         deployType: deployType,
         dakComponents: {
-          "dashboard": {
-            "component": "DAKDashboard",
-            "path": "./components/DAKDashboard"
-          }
+          "dashboard": { "component": "DAKDashboard", "path": "./components/DAKDashboard" }
         },
         standardComponents: {
-          "BranchListingPage": {
-            "component": "BranchListingPage",
-            "path": "./components/BranchListingPage",
-            "routes": ["/"]
-          },
-          "DAKDashboard": {
-            "component": "DAKDashboard", 
-            "path": "./components/DAKDashboard",
-            "routes": ["/dashboard", "/dashboard/:user/:repo", "/dashboard/:user/:repo/:branch"]
-          },
-          "LandingPage": {
-            "component": "LandingPage",
-            "path": "./components/LandingPage", 
-            "routes": ["/welcome"]
-          }
+          "BranchListingPage": { "component": "BranchListingPage", "path": "./components/BranchListingPage", "routes": ["/"] },
+          "NotFound": { "component": "NotFound", "path": "./components/NotFound", "routes": ["*"] }
         },
         components: {},
         testRoutes: [],
@@ -336,18 +294,13 @@ function getSGEXRouteConfig(deployType) {
 if (typeof window !== 'undefined') {
   var deployType = getDeploymentType();
   
-  // Try synchronous load first
+  // Load configuration synchronously
   loadRouteConfigSync(deployType);
   
-  // If that failed, try async load for development environments
-  if (!window.SGEX_ROUTES_CONFIG) {
-    loadRouteConfigAsync(deployType).then(config => {
-      if (config) {
-        console.log('SGEX route configuration loaded successfully (async) - ' + deployType);
-      }
-    });
+  if (window.SGEX_ROUTES_CONFIG) {
+    console.log('SGEX route configuration loaded successfully - ' + deployType);
   } else {
-    console.log('SGEX route configuration loaded successfully (sync) - ' + deployType);
+    console.error('Failed to load SGEX route configuration');
   }
 }
 

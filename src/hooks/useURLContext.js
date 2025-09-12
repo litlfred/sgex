@@ -2,11 +2,11 @@
  * SGEX URL Context Hook
  * 
  * React hook that provides access to URL context and routing information
- * extracted by the URL processor service and 404.html routing logic.
+ * extracted by the routing context service and 404.html routing logic.
  */
 
 import { useState, useEffect } from 'react';
-import urlProcessor from '../services/urlProcessorService';
+import { useRoutingContext, getRoutingContext } from '../services/routingContextService';
 import useDAKUrlParams from './useDAKUrlParams';
 
 /**
@@ -18,16 +18,15 @@ export const useURLContext = () => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Initialize and get context
-    urlProcessor.initialize();
-    const context = urlProcessor.getContext();
+    // Get context from the new routing context service
+    const context = getRoutingContext();
     setUrlContext(context);
     setIsReady(true);
 
     // Listen for context changes (e.g., navigation)
     const handleStorageChange = (e) => {
       if (e.key && e.key.startsWith('sgex_')) {
-        const updatedContext = urlProcessor.getContext();
+        const updatedContext = getRoutingContext();
         setUrlContext(updatedContext);
       }
     };
@@ -51,7 +50,17 @@ export const useURLContext = () => {
     getDeploymentBranch: () => urlContext.deploymentBranch,
     hasContext: () => !!(urlContext.user && urlContext.repo),
     clearContext: () => {
-      urlProcessor.clearContext();
+      // Clear individual sessionStorage items for backward compatibility
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('sgex_url_context');
+        sessionStorage.removeItem('sgex_current_component');
+        sessionStorage.removeItem('sgex_selected_user');
+        sessionStorage.removeItem('sgex_selected_repo');
+        sessionStorage.removeItem('sgex_selected_branch');
+        sessionStorage.removeItem('sgex_selected_asset');
+        sessionStorage.removeItem('sgex_deployment_branch');
+        sessionStorage.removeItem('sgex_intended_branch');
+      }
       setUrlContext({});
     }
   };
