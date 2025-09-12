@@ -539,6 +539,10 @@ const BranchListingPage = () => {
                                 <a 
                                     href="/sgex/main/"
                                     className="card-link"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        window.location.href = '/sgex/main/';
+                                    }}
                                 >
                                     <div className="card-content">
                                         <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Mascot')} className="card-icon" />
@@ -624,6 +628,10 @@ const BranchListingPage = () => {
                                 <a 
                                     href="/sgex/main/"
                                     className="card-link"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        window.location.href = '/sgex/main/';
+                                    }}
                                 >
                                     <div className="card-content">
                                         <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Mascot')} className="card-icon" />
@@ -712,6 +720,10 @@ const BranchListingPage = () => {
                         <a 
                             href="/sgex/main/"
                             className="card-link"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                window.location.href = '/sgex/main/';
+                            }}
                         >
                             <div className="card-content">
                                 <img src={mascotImage} alt={getAltText(t, ALT_TEXT_KEYS.MASCOT_HELPER, 'SGEX Mascot')} className="card-icon" />
