@@ -171,35 +171,31 @@ const PagesManager = () => {
   const fetchSushiConfig = async (owner, repo, branch) => {
     try {
       // Check if GitHub service is authenticated and available
-      if (!githubService.isAuth() || !githubService.octokit) {
+      if (!githubService.isAuth()) {
         throw new Error('GitHub service not authenticated');
       }
 
       console.log(`Fetching sushi-config.yaml from ${owner}/${repo} on branch ${branch}`);
       
-      const { data } = await githubService.octokit.rest.repos.getContent({
-        owner,
-        repo,
-        path: 'sushi-config.yaml',
-        ref: branch
-      });
-
-      if (data.type === 'file' && data.content) {
+      // Use githubService.getFileContent for consistent error handling and base64 decoding
+      const content = await githubService.getFileContent(owner, repo, 'sushi-config.yaml', branch);
+      
+      if (content) {
         console.log('Successfully fetched sushi-config.yaml');
-        return atob(data.content);
+        return content;
       }
       
-      console.log('sushi-config.yaml found but no content or not a file');
+      console.log('sushi-config.yaml found but no content');
       return null;
     } catch (error) {
       console.error('Failed to fetch sushi-config.yaml:', error);
       
-      // Provide more specific error messages
-      if (error.status === 404) {
+      // Provide more specific error messages based on common error patterns
+      if (error.message.includes('File not found')) {
         throw new Error(`sushi-config.yaml not found in repository on branch "${branch}"`);
-      } else if (error.status === 403) {
+      } else if (error.message.includes('Access denied')) {
         throw new Error('Access denied - insufficient permissions to read repository contents');
-      } else if (error.status === 401) {
+      } else if (error.message.includes('Authentication failed')) {
         throw new Error('Authentication failed - please check your GitHub token');
       } else if (!githubService.isAuth()) {
         throw new Error('GitHub service not authenticated');
@@ -300,17 +296,18 @@ const PagesManager = () => {
       
       try {
         // Check if GitHub service is authenticated and available
-        if (githubService.isAuth() && githubService.octokit) {
-          const { data } = await githubService.octokit.rest.repos.getContent({
-            owner,
-            repo,
-            path: page.path,
-            ref: branch
-          });
+        if (githubService.isAuth()) {
+          // Use githubService.getFileContent for consistent error handling
+          const fileContent = await githubService.getFileContent(owner, repo, page.path, branch);
           
-          if (data.type === 'file') {
+          if (fileContent) {
             exists = true;
-            content = data;
+            // Create a minimal content object similar to what was expected
+            content = {
+              type: 'file',
+              content: btoa(fileContent), // Convert back to base64 if needed elsewhere
+              path: page.path
+            };
           }
         }
       } catch (error) {

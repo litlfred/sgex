@@ -1,28 +1,91 @@
-import React, { useState, useEffect, Component } from 'react';
+import React, { useState, useEffect, Component, useRef } from 'react';
 import { PageLayout, AssetEditorLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
+import stagingGroundService from '../services/stagingGroundService';
+import { useLocation } from 'react-router-dom';
 import './QuestionnaireEditor.css';
 
-// Enhanced Visual Editor Component with LForms integration
+// LHC-Forms Integration Component
 const LFormsVisualEditor = ({ questionnaire, onChange }) => {
   const [previewMode, setPreviewMode] = useState(false);
-  
-  // LForms integration - using fallback editor for now
+  const [lformsLoaded, setLformsLoaded] = useState(false);
+  const [lformsData, setLformsData] = useState(null);
+  const [LForms, setLForms] = useState(null);
+  const lformsContainerRef = useRef(null);
+  // Load LHC-Forms library and initialize
   useEffect(() => {
-    const initializeLForms = async () => {
+    const loadLForms = async () => {
       try {
-        // Dynamic import commented out until lforms is properly configured
-        // const LForms = await import('lforms');
-        console.log('LForms initialization skipped - using fallback editor');
+        // LHC-Forms doesn't support ES6 imports properly, so we'll use script loading
+        if (typeof window !== 'undefined') {
+          // Check if LForms is already available globally
+          if (window.LForms) {
+            console.log('LHC-Forms already available globally');
+            setLForms(window.LForms);
+            setLformsLoaded(true);
+            return;
+          }
+          
+          // Try to load LHC-Forms from CDN or fall back to basic editor
+          console.log('LHC-Forms not available, using fallback editor');
+          setLformsLoaded(true);
+          return;
+        }
+        
+        setLformsLoaded(true);
       } catch (error) {
-        console.log('LForms not available, using fallback editor');
+        console.error('Failed to load LHC-Forms:', error);
+        setLformsLoaded(true); // Still mark as loaded to enable basic functionality
       }
     };
-    
-    initializeLForms();
+
+    loadLForms();
   }, []);
-  
+
+  // Convert FHIR Questionnaire to LForms format and render
+  useEffect(() => {
+    if (lformsLoaded && LForms && questionnaire && lformsContainerRef.current && previewMode) {
+      try {
+        // Convert FHIR Questionnaire to LForms format
+        const lformsQuestionnaire = LForms.Util.convertFHIRQuestionnaireToLForms(questionnaire);
+        setLformsData(lformsQuestionnaire);
+        
+        // Clear the container
+        lformsContainerRef.current.innerHTML = '';
+        
+        // Render the form using LHC-Forms
+        LForms.Util.addFormToPage(lformsQuestionnaire, lformsContainerRef.current, {
+          prepopulate: false,
+          displayControl: {
+            questionLayout: 'vertical'
+          }
+        });
+        
+        console.log('LHC-Forms questionnaire rendered successfully');
+      } catch (error) {
+        console.error('Error rendering LHC-Forms questionnaire:', error);
+        // Fallback to custom preview
+        setLformsData(null);
+      }
+    }
+  }, [lformsLoaded, LForms, questionnaire, previewMode]);
+
+  // Get form data from LHC-Forms when user interacts
+  const getLFormsData = () => {
+    if (LForms && lformsContainerRef.current) {
+      try {
+        const formData = LForms.Util.getFormData(lformsContainerRef.current);
+        console.log('LHC-Forms data retrieved:', formData);
+        return formData;
+      } catch (error) {
+        console.error('Error getting LHC-Forms data:', error);
+        return null;
+      }
+    }
+    return null;
+  };
+
   const addQuestion = () => {
     const newItem = {
       linkId: `item-${Date.now()}`,
@@ -73,6 +136,105 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
     onChange(updatedQuestionnaire);
   };
 
+  // Render hierarchical preview supporting groups and nested items
+  const renderHierarchicalPreview = (items, level = 0) => {
+    if (!items || items.length === 0) {
+      return <p className="no-questions-preview">No questions added yet.</p>;
+    }
+
+    return items.map((item, index) => {
+      const questionNumber = level === 0 ? `${index + 1}` : `${index + 1}`;
+      const indent = level > 0 ? `${'  '.repeat(level)}` : '';
+
+      if (item.type === 'group') {
+        return (
+          <div key={item.linkId} className={`preview-group level-${level}`}>
+            <div className="group-header">
+              <h4 className="group-title">
+                {indent}{questionNumber}. {item.text}
+                {item.required && <span className="required-asterisk"> *</span>}
+                {item.repeats && <span className="repeats-indicator"> (repeatable)</span>}
+              </h4>
+            </div>
+            <div className="group-content">
+              {renderHierarchicalPreview(item.item || [], level + 1)}
+            </div>
+          </div>
+        );
+      } else {
+        return (
+          <div key={item.linkId} className={`preview-question level-${level}`}>
+            <label className="preview-question-label">
+              {indent}{questionNumber}. {item.text}
+              {item.required && <span className="required-asterisk"> *</span>}
+              {item.repeats && <span className="repeats-indicator"> (repeatable)</span>}
+            </label>
+            
+            {item.type === 'string' && (
+              <input type="text" placeholder="Text answer" disabled />
+            )}
+            {item.type === 'text' && (
+              <textarea placeholder="Long text answer" disabled rows={3} />
+            )}
+            {item.type === 'boolean' && (
+              <div className="preview-boolean">
+                <label><input type="radio" disabled /> Yes</label>
+                <label><input type="radio" disabled /> No</label>
+              </div>
+            )}
+            {item.type === 'decimal' && (
+              <input type="number" step="0.01" placeholder="Number" disabled />
+            )}
+            {item.type === 'integer' && (
+              <input type="number" step="1" placeholder="Integer" disabled />
+            )}
+            {item.type === 'date' && (
+              <input type="date" disabled />
+            )}
+            {item.type === 'dateTime' && (
+              <input type="datetime-local" disabled />
+            )}
+            {item.type === 'time' && (
+              <input type="time" disabled />
+            )}
+            {item.type === 'choice' && (
+              <select disabled>
+                <option>Select an option...</option>
+                {item.answerOption?.map((option, optIndex) => (
+                  <option key={optIndex} value={option.valueCoding?.code || option.valueString}>
+                    {option.valueCoding?.display || option.valueString || `Option ${optIndex + 1}`}
+                  </option>
+                ))}
+              </select>
+            )}
+            {item.type === 'open-choice' && (
+              <div className="open-choice-container">
+                <select disabled>
+                  <option>Select an option or enter custom...</option>
+                  {item.answerOption?.map((option, optIndex) => (
+                    <option key={optIndex} value={option.valueCoding?.code || option.valueString}>
+                      {option.valueCoding?.display || option.valueString || `Option ${optIndex + 1}`}
+                    </option>
+                  ))}
+                </select>
+                <input type="text" placeholder="Or enter custom value" disabled />
+              </div>
+            )}
+            {item.type === 'quantity' && (
+              <div className="quantity-container">
+                <input type="number" step="0.01" placeholder="Value" disabled />
+                <input type="text" placeholder="Unit" disabled />
+              </div>
+            )}
+            {item.type === 'url' && (
+              <input type="url" placeholder="https://example.com" disabled />
+            )}
+          </div>
+        );
+      }
+    });
+  };
+
   return (
     <div className="lforms-visual-editor">
       <div className="editor-modes">
@@ -92,51 +254,70 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
 
       {previewMode ? (
         <div className="lforms-preview">
-          <h5>Live Preview</h5>
-          <div className="simple-questionnaire-preview">
-            <div className="preview-header">
-              <h3>{questionnaire.title || 'Untitled Questionnaire'}</h3>
-              <p>{questionnaire.description || 'No description provided'}</p>
-            </div>
-            
-            <div className="preview-questions">
-              {questionnaire.item?.map((item, index) => (
-                <div key={item.linkId} className="preview-question">
-                  <label className="preview-question-label">
-                    {index + 1}. {item.text}
-                    {item.required && <span className="required-asterisk"> *</span>}
-                  </label>
-                  
-                  {item.type === 'string' && (
-                    <input type="text" placeholder="Text answer" disabled />
-                  )}
-                  {item.type === 'text' && (
-                    <textarea placeholder="Long text answer" disabled rows={3} />
-                  )}
-                  {item.type === 'boolean' && (
-                    <div className="preview-boolean">
-                      <label><input type="radio" disabled /> Yes</label>
-                      <label><input type="radio" disabled /> No</label>
-                    </div>
-                  )}
-                  {item.type === 'decimal' && (
-                    <input type="number" step="0.01" placeholder="Number" disabled />
-                  )}
-                  {item.type === 'integer' && (
-                    <input type="number" step="1" placeholder="Integer" disabled />
-                  )}
-                  {item.type === 'date' && (
-                    <input type="date" disabled />
-                  )}
-                  {item.type === 'choice' && (
-                    <select disabled>
-                      <option>Select an option...</option>
-                    </select>
-                  )}
+          <h5>LHC-Forms Interactive Preview</h5>
+          
+          {lformsLoaded && LForms ? (
+            <div className="lforms-interactive-preview">
+              <div className="preview-header">
+                <h3>{questionnaire.title || 'Untitled Questionnaire'}</h3>
+                <p>{questionnaire.description || 'No description provided'}</p>
+                <div className="preview-controls">
+                  <button
+                    onClick={() => {
+                      const formData = getLFormsData();
+                      if (formData) {
+                        console.log('Form responses:', formData);
+                        alert('Form data logged to console. Check browser developer tools.');
+                      }
+                    }}
+                    className="get-data-btn"
+                  >
+                    📊 Get Form Data
+                  </button>
                 </div>
-              )) || <p className="no-questions-preview">No questions added yet.</p>}
+              </div>
+              
+              {/* LHC-Forms Container */}
+              <div 
+                ref={lformsContainerRef} 
+                className="lforms-container"
+                style={{
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  padding: '20px',
+                  minHeight: '200px',
+                  backgroundColor: '#fafafa'
+                }}
+              >
+                {!lformsData && (
+                  <div className="lforms-loading">
+                    <p>Loading interactive form preview...</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="lforms-info">
+                <p><strong>✨ Interactive Preview:</strong> This is a fully functional form powered by LHC-Forms. 
+                   Users can fill out the form and submit responses.</p>
+                <p><strong>🔧 Development:</strong> Use "Get Form Data" to see the current form responses in JSON format.</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            // Fallback to custom preview when LHC-Forms is not available
+            <div className="enhanced-questionnaire-preview">
+              <div className="preview-header">
+                <h3>{questionnaire.title || 'Untitled Questionnaire'}</h3>
+                <p>{questionnaire.description || 'No description provided'}</p>
+                <div className="fallback-notice">
+                  <strong>⚠️ Fallback Preview:</strong> LHC-Forms is not available. Showing basic preview.
+                </div>
+              </div>
+              
+              <div className="preview-questions">
+                {renderHierarchicalPreview(questionnaire.item || [])}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="lforms-builder">
@@ -288,6 +469,7 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
 
 const QuestionnaireEditorContent = () => {
   const { repository, branch, isLoading: pageLoading } = useDAKParams();
+  const location = useLocation();
   
   // Component state
   const [questionnaires, setQuestionnaires] = useState([]);
@@ -302,9 +484,36 @@ const QuestionnaireEditorContent = () => {
   const [lformsLoaded, setLformsLoaded] = useState(false);
   const [editMode, setEditMode] = useState('visual'); // 'visual' or 'json'
   const [lformsError, setLformsError] = useState(null);
+  
+  // Rename functionality
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [renameError, setRenameError] = useState(null);
 
   // Check if we have the necessary context data
   const hasRequiredData = repository && branch && !pageLoading;
+
+  // Handle pre-populated questionnaire from logical model
+  useEffect(() => {
+    if (location.state?.prePopulatedQuestionnaire) {
+      const { prePopulatedQuestionnaire, sourceLogicalModel } = location.state;
+      
+      console.log('Loading pre-populated questionnaire from logical model:', sourceLogicalModel?.name);
+      
+      setQuestionnaireContent(prePopulatedQuestionnaire);
+      setOriginalContent(JSON.stringify(prePopulatedQuestionnaire, null, 2));
+      setSelectedQuestionnaire({
+        name: `${prePopulatedQuestionnaire.id}.json`,
+        displayName: prePopulatedQuestionnaire.name,
+        fullPath: `input/questionnaires/${prePopulatedQuestionnaire.id}.json`,
+        fileType: 'JSON',
+        isNew: true,
+        generatedFromLogicalModel: sourceLogicalModel
+      });
+      setEditing(true);
+      setEditMode('visual'); // Start with visual editor for generated questionnaires
+    }
+  }, [location.state]);
 
   // Load LForms library
   useEffect(() => {
@@ -312,16 +521,19 @@ const QuestionnaireEditorContent = () => {
       try {
         setLformsError(null);
         
-        // LForms library loading temporarily disabled
-        // const LForms = await import('lforms');
+        // LHC-Forms doesn't support ES6 imports properly, so we'll use global availability
+        if (typeof window !== 'undefined' && window.LForms) {
+          console.log('LHC-Forms available globally in main editor');
+          setLformsLoaded(true);
+          return;
+        }
         
-        // Use built-in editor as fallback for now
-        console.log('Using built-in visual editor');
+        console.log('LHC-Forms not available in main editor, using fallback');
         setLformsLoaded(true);
       } catch (error) {
-        console.error('Failed to load LForms:', error);
-        setLformsError(`Failed to load questionnaire editor: ${error.message}`);
-        // Still mark as loaded to enable basic functionality
+        console.error('Failed to load LHC-Forms in main editor:', error);
+        setLformsError(`Failed to load LHC-Forms library: ${error.message}`);
+        // Still mark as loaded to enable basic functionality with fallback
         console.log('Using built-in visual editor as fallback');
         setLformsLoaded(true);
       }
@@ -616,6 +828,82 @@ const QuestionnaireEditorContent = () => {
   const hasChanges = questionnaireContent && originalContent &&
     JSON.stringify(questionnaireContent, null, 2) !== originalContent;
 
+  // Handle starting rename process
+  const handleStartRename = () => {
+    if (!selectedQuestionnaire) return;
+    
+    setIsRenaming(true);
+    setNewName(selectedQuestionnaire.displayName);
+    setRenameError(null);
+  };
+
+  // Handle canceling rename
+  const handleCancelRename = () => {
+    setIsRenaming(false);
+    setNewName('');
+    setRenameError(null);
+  };
+
+  // Handle confirming rename
+  const handleConfirmRename = async () => {
+    if (!selectedQuestionnaire || !newName.trim()) {
+      setRenameError('Please enter a valid name');
+      return;
+    }
+
+    try {
+      setRenameError(null);
+      
+      // Determine file extension
+      const fileExtension = selectedQuestionnaire.fileType === 'FSH' ? '.fsh' : '.json';
+      const directory = selectedQuestionnaire.fileType === 'FSH' ? 'input/fsh/questionnaires' : 'input/questionnaires';
+      
+      // Create new file path
+      const newFileName = `${newName.trim()}${fileExtension}`;
+      const newFilePath = `${directory}/${newFileName}`;
+      const oldFilePath = selectedQuestionnaire.fullPath;
+
+      // Check if file is in staging ground
+      if (selectedQuestionnaire.isNew) {
+        // Rename in staging ground
+        await stagingGroundService.renameFile(oldFilePath, newFilePath);
+        
+        // Update local state
+        const updatedQuestionnaire = {
+          ...selectedQuestionnaire,
+          name: newFileName,
+          displayName: newName.trim(),
+          fullPath: newFilePath
+        };
+        
+        setSelectedQuestionnaire(updatedQuestionnaire);
+        
+        // Update questionnaire content metadata
+        if (questionnaireContent && questionnaireContent.resourceType === 'Questionnaire') {
+          const updatedContent = {
+            ...questionnaireContent,
+            name: newName.trim().replace(/[^a-zA-Z0-9]/g, '_'),
+            title: newName.trim()
+          };
+          setQuestionnaireContent(updatedContent);
+        }
+        
+        console.log(`Questionnaire renamed from ${selectedQuestionnaire.displayName} to ${newName.trim()}`);
+      } else {
+        // For existing files, we'd need to implement Git operations
+        setRenameError('Renaming existing questionnaires is not yet supported');
+        return;
+      }
+      
+      setIsRenaming(false);
+      setNewName('');
+      
+    } catch (error) {
+      console.error('Error renaming questionnaire:', error);
+      setRenameError(`Failed to rename questionnaire: ${error.message}`);
+    }
+  };
+
   // Show loading state when PageProvider is not ready
   if (!hasRequiredData) {
     return (
@@ -726,7 +1014,76 @@ const QuestionnaireEditorContent = () => {
                 >
                   ← Back to List
                 </button>
-                <h2>{selectedQuestionnaire?.displayName || 'New Questionnaire'}</h2>
+                
+                {/* Questionnaire Name/Title with Rename Functionality */}
+                <div className="questionnaire-header-title">
+                  {isRenaming ? (
+                    <div className="rename-section">
+                      <input
+                        type="text"
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        className="rename-input"
+                        placeholder="Enter new name"
+                        autoFocus
+                        // eslint-disable-next-line jsx-a11y/no-autofocus
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleConfirmRename();
+                          } else if (e.key === 'Escape') {
+                            handleCancelRename();
+                          }
+                        }}
+                      />
+                      <div className="rename-actions">
+                        <button 
+                          className="rename-confirm-btn"
+                          onClick={handleConfirmRename}
+                          disabled={!newName.trim()}
+                        >
+                          ✓ Save
+                        </button>
+                        <button 
+                          className="rename-cancel-btn"
+                          onClick={handleCancelRename}
+                        >
+                          ✗ Cancel
+                        </button>
+                      </div>
+                      {renameError && (
+                        <div className="rename-error">
+                          {renameError}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="title-with-rename">
+                      <h2>{selectedQuestionnaire?.displayName || 'New Questionnaire'}</h2>
+                      {selectedQuestionnaire?.isNew && (
+                        <button 
+                          className="rename-btn"
+                          onClick={handleStartRename}
+                          title="Rename questionnaire"
+                        >
+                          ✏️ Rename
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Logical Model Generation Notice */}
+                {selectedQuestionnaire?.generatedFromLogicalModel && (
+                  <div className="generation-notice">
+                    <div className="notice-content">
+                      <strong>✨ Generated from Logical Model:</strong> {selectedQuestionnaire.generatedFromLogicalModel.title || selectedQuestionnaire.generatedFromLogicalModel.name}
+                      <p className="notice-description">
+                        This questionnaire was automatically generated from the logical model. 
+                        You can customize the questions, add validation rules, and modify the structure as needed.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Mode toggle for JSON questionnaires */}
                 {questionnaireContent?.fileType !== 'FSH' && (
@@ -858,7 +1215,7 @@ const QuestionnaireEditorContent = () => {
                       </ul>
                     )}
                     <div className="help-tip">
-                      <strong>✨ New:</strong> Visual questionnaire editor is now available using LHC-Forms!
+                      <strong>✨ LHC-Forms Integration:</strong> Interactive questionnaire preview and editing powered by LHC-Forms library for real-time form rendering and data collection!
                     </div>
                   </div>
                 </div>
@@ -926,11 +1283,9 @@ class QuestionnaireErrorBoundary extends Component {
 
 const QuestionnaireEditor = () => {
   return (
-    <PageLayout pageName="questionnaire-editor">
-      <QuestionnaireErrorBoundary>
-        <QuestionnaireEditorContent />
-      </QuestionnaireErrorBoundary>
-    </PageLayout>
+    <QuestionnaireErrorBoundary>
+      <QuestionnaireEditorContent />
+    </QuestionnaireErrorBoundary>
   );
 };
 

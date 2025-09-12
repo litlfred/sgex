@@ -118,6 +118,66 @@ class StagingGroundService {
   }
 
   /**
+   * Rename a file in the staging ground
+   * @param {string} oldPath - Current file path
+   * @param {string} newPath - New file path
+   * @returns {boolean} Success indicator
+   */
+  renameFile(oldPath, newPath) {
+    try {
+      const stagingGround = this.getStagingGround();
+      
+      // Find the file to rename
+      const fileIndex = stagingGround.files.findIndex(f => f.path === oldPath);
+      if (fileIndex === -1) {
+        throw new Error(`File not found in staging ground: ${oldPath}`);
+      }
+
+      // Check if new path already exists
+      const existingFileIndex = stagingGround.files.findIndex(f => f.path === newPath);
+      if (existingFileIndex >= 0) {
+        throw new Error(`File already exists at destination: ${newPath}`);
+      }
+
+      // Update the file path
+      const file = stagingGround.files[fileIndex];
+      const renamedFile = {
+        ...file,
+        path: newPath,
+        metadata: {
+          ...file.metadata,
+          lastModified: Date.now(),
+          originalPath: oldPath,
+          isRenamed: true
+        },
+        timestamp: Date.now()
+      };
+
+      stagingGround.files[fileIndex] = renamedFile;
+
+      const success = this.saveStagingGround(stagingGround);
+      
+      if (success) {
+        console.log(`File renamed from ${oldPath} to ${newPath}`);
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error renaming file:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get renamed files information
+   * @returns {Array} Array of files that have been renamed
+   */
+  getRenamedFiles() {
+    const stagingGround = this.getStagingGround();
+    return stagingGround.files.filter(file => file.metadata?.isRenamed);
+  }
+
+  /**
    * Update commit message
    */
   updateCommitMessage(message) {

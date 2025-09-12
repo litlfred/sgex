@@ -60,11 +60,41 @@ export const useDAKParams = () => {
   try {
     const pageParams = usePageParams();
     
+    console.log('🔧 useDAKParams called:', {
+      type: pageParams.type,
+      loading: pageParams.loading,
+      user: pageParams.user,
+      profile: pageParams.profile?.login,
+      repository: pageParams.repository?.name,
+      branch: pageParams.branch,
+      location: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+    });
+    
+    // If still loading, return empty data without error
+    if (pageParams.loading) {
+      console.log('⏳ useDAKParams: Still loading, returning empty data');
+      return {
+        user: pageParams.user,
+        profile: pageParams.profile,
+        repository: pageParams.repository,
+        branch: pageParams.branch,
+        asset: pageParams.asset,
+        updateBranch: pageParams.updateBranch,
+        navigate: pageParams.navigate,
+        isLoading: true
+      };
+    }
+    
     // Only throw error if page is fully loaded and type is not DAK/ASSET
     // This prevents errors during initial loading or page type determination
-    if (!pageParams.loading && 
-        pageParams.type !== PAGE_TYPES.DAK && 
+    if (pageParams.type !== PAGE_TYPES.DAK && 
         pageParams.type !== PAGE_TYPES.ASSET) {
+      console.error('❌ useDAKParams error:', {
+        type: pageParams.type,
+        loading: pageParams.loading,
+        expectedTypes: [PAGE_TYPES.DAK, PAGE_TYPES.ASSET],
+        currentLocation: typeof window !== 'undefined' ? window.location.href : 'unknown'
+      });
       throw new Error(`useDAKParams can only be used on DAK or Asset pages. Current page type: ${pageParams.type}`);
     }
 
@@ -75,7 +105,8 @@ export const useDAKParams = () => {
       branch: pageParams.branch,
       asset: pageParams.asset,
       updateBranch: pageParams.updateBranch,
-      navigate: pageParams.navigate
+      navigate: pageParams.navigate,
+      isLoading: false
     };
   } catch (error) {
     // If PageProvider is not ready yet, return empty object
@@ -88,7 +119,8 @@ export const useDAKParams = () => {
         branch: null,
         asset: null,
         updateBranch: () => {},
-        navigate: () => {}
+        navigate: () => {},
+        isLoading: true
       };
     }
     throw error;

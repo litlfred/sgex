@@ -53,9 +53,64 @@ const determinePageType = (params) => {
   const { user, repo } = params;
   const asset = params['*']; // Wildcard parameter for asset path
   
-  if (asset) return PAGE_TYPES.ASSET;
-  if (user && repo) return PAGE_TYPES.DAK;
-  if (user) return PAGE_TYPES.USER;
+  // Always try to extract from pathname first for better reliability
+  if (typeof window !== 'undefined') {
+    const pathname = window.location.pathname;
+    const pathParts = pathname.split('/').filter(part => part);
+    
+    console.log('🔍 PageProvider determinePageType:', {
+      params,
+      user,
+      repo,
+      asset,
+      allParams: Object.keys(params),
+      pathname,
+      pathParts,
+      pathPartsLength: pathParts.length
+    });
+    
+    // Check for DAK components first (questionnaire-editor, core-data-dictionary-viewer, etc.)
+    const dakComponents = [
+      'questionnaire-editor', 'core-data-dictionary-viewer', 'dashboard', 
+      'business-process-selection', 'bpmn-editor', 'bpmn-viewer', 
+      'decision-support-logic', 'actor-editor', 'testing-viewer'
+    ];
+    
+    if (pathParts.length >= 1 && dakComponents.includes(pathParts[0])) {
+      // For DAK component URLs like /questionnaire-editor/user/repo/branch
+      if (pathParts.length >= 3 && pathParts[1] && pathParts[2]) {
+        console.log('📊 Page type: DAK (DAK component with user/repo)');
+        return PAGE_TYPES.DAK;
+      }
+      
+      // For DAK component base URLs like /questionnaire-editor (redirect pages)
+      if (pathParts.length === 1) {
+        console.log('🔀 Page type: TOP_LEVEL (DAK component base)');
+        return PAGE_TYPES.TOP_LEVEL;
+      }
+    }
+    
+    // For user URLs like /dak-action/user
+    if (pathParts.length >= 2 && pathParts[1] && !pathParts[2]) {
+      console.log('👤 Page type: USER (extracted from pathname)');
+      return PAGE_TYPES.USER;
+    }
+  }
+  
+  // Fallback to parameter-based detection
+  if (asset) {
+    console.log('📄 Page type: ASSET (has asset)');
+    return PAGE_TYPES.ASSET;
+  }
+  if (user && repo) {
+    console.log('📊 Page type: DAK (has user and repo)');
+    return PAGE_TYPES.DAK;
+  }
+  if (user) {
+    console.log('👤 Page type: USER (has user only)');
+    return PAGE_TYPES.USER;
+  }
+  console.log('🏠 Page type: TOP_LEVEL (no params)');
   return PAGE_TYPES.TOP_LEVEL;
 };
 
@@ -80,9 +135,42 @@ export const PageProvider = ({ children, pageName }) => {
     isAuthenticated: githubService.isAuth()
   });
 
-  // Extract URL parameters
-  const { user, repo } = params;
-  const asset = params['*']; // Wildcard parameter for asset path
+  // Extract URL parameters with enhanced fallback for DAK components
+  let { user, repo } = params;
+  let asset = params['*']; // Wildcard parameter for asset path
+  let branch = params.branch;
+  
+  // Enhanced parameter extraction for DAK components
+  if ((!user || !repo) && typeof window !== 'undefined') {
+    console.log('🔧 PageProvider: useParams did not extract user/repo, attempting pathname extraction');
+    const pathParts = location.pathname.split('/').filter(part => part);
+    
+    console.log('🔧 Pathname extraction details:', {
+      pathname: location.pathname,
+      pathParts,
+      currentParams: { user, repo, branch, asset }
+    });
+    
+    // For DAK component URLs like /questionnaire-editor/user/repo/branch
+    if (pathParts.length >= 3) {
+      const component = pathParts[0];
+      const extractedUser = pathParts[1];
+      const extractedRepo = pathParts[2];
+      const extractedBranch = pathParts[3];
+      
+      console.log('🔧 Extracted from pathname:', {
+        component,
+        user: extractedUser,
+        repo: extractedRepo,
+        branch: extractedBranch,
+        pathname: location.pathname
+      });
+      
+      user = user || extractedUser;
+      repo = repo || extractedRepo;
+      branch = branch || extractedBranch;
+    }
+  }
 
   // Load data based on page type
   useEffect(() => {
@@ -114,7 +202,7 @@ export const PageProvider = ({ children, pageName }) => {
         // Use location state if available, otherwise fetch from URL params
         let profile = location.state?.profile;
         let repository = location.state?.repository;
-        let selectedBranch = location.state?.selectedBranch || params.branch;
+        let selectedBranch = location.state?.selectedBranch || branch;
 
         // For DAK and Asset pages, validate and fetch data
         if (pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
@@ -132,7 +220,7 @@ export const PageProvider = ({ children, pageName }) => {
                     user,
                     // Still set available URL parameters for context
                     repository: repo ? { name: repo, owner: { login: user }, html_url: `https://github.com/${user}/${repo}`, isNotFound: true } : null,
-                    branch: params.branch || 'main'
+                    branch: branch || 'main'
                   }));
                   return;
                 }
@@ -305,7 +393,7 @@ export const PageProvider = ({ children, pageName }) => {
     if ((pageState.type !== PAGE_TYPES.TOP_LEVEL && user) || pageState.type === PAGE_TYPES.TOP_LEVEL) {
       loadPageData();
     }
-  }, [user, repo, params.branch, asset, pageState.type, location.state, navigate, pageName]);
+  }, [user, repo, branch, asset, pageState.type, location.state, navigate, pageName]);
 
   // Monitor authentication state changes
   useEffect(() => {

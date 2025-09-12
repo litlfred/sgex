@@ -13,7 +13,9 @@ const useThemeImage = (baseImagePath) => {
       const isDarkMode = document.body.classList.contains('theme-dark');
       
       // Get the correct base path for the deployment environment
+      // Use window.location.origin + PUBLIC_URL for absolute paths
       const publicUrl = process.env.PUBLIC_URL || '';
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
       
       // Normalize the base image path (remove leading slash if present)
       const normalizedPath = baseImagePath.startsWith('/') ? baseImagePath.slice(1) : baseImagePath;
@@ -23,11 +25,27 @@ const useThemeImage = (baseImagePath) => {
         // Convert base image to dark mode version
         // e.g., "sgex-mascot.png" -> "sgex-mascot_grey_tabby.png"
         const darkImageName = normalizedPath.replace(/\.png$/, '_grey_tabby.png');
-        finalPath = publicUrl ? `${publicUrl}/${darkImageName}` : `/${darkImageName}`;
+        if (publicUrl) {
+          finalPath = `${origin}${publicUrl}/${darkImageName}`;
+        } else {
+          finalPath = `${origin}/${darkImageName}`;
+        }
       } else {
         // Use original image for light mode
-        finalPath = publicUrl ? `${publicUrl}/${normalizedPath}` : `/${normalizedPath}`;
+        if (publicUrl) {
+          finalPath = `${origin}${publicUrl}/${normalizedPath}`;
+        } else {
+          finalPath = `${origin}/${normalizedPath}`;
+        }
       }
+      
+      console.log('🖼️ useThemeImage: Updated image path', {
+        baseImagePath,
+        isDarkMode,
+        publicUrl,
+        origin,
+        finalPath
+      });
       
       setCurrentImagePath(finalPath);
     };
