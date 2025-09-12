@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
+import SAMLAuthorizationModal from './SAMLAuthorizationModal';
+import { isSAMLError, createSAMLErrorInfo, detectSAMLReturn } from '../utils/samlErrorHandler';
+import './SelectProfilePage.css';
 
 const SelectProfilePage = () => {
   const { t } = useTranslation();
@@ -15,6 +18,8 @@ const SelectProfilePage = () => {
   const [error, setError] = useState(null);
   const [dakCounts, setDakCounts] = useState({});
   const [warningMessage, setWarningMessage] = useState(null);
+  const [samlModal, setSamlModal] = useState({ isOpen: false, errorInfo: null });
+  const fetchInProgress = useRef(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -46,14 +51,51 @@ const SelectProfilePage = () => {
     setDakCounts(counts);
   }, []);
 
-  const fetchUserData = useCallback(async () => {
+  const fetchUserData = useCallback(async (forceRefresh = false, samlAuthorizedOrg = null) => {
+    // Prevent multiple simultaneous calls
+    if (fetchInProgress.current) {
+      return;
+    }
+    
+    fetchInProgress.current = true;
     setLoading(true);
     setError(null);
     
+    // Capture authentication state at function execution time
+    const currentIsAuthenticated = githubService.isAuth();
+    console.log('fetchUserData: Current authentication state:', currentIsAuthenticated, 'forceRefresh:', forceRefresh, 'samlAuthorizedOrg:', samlAuthorizedOrg);
+    
     try {
+      // Check if we have cached profile data first (unless forcing refresh)
+      const cachedProfile = forceRefresh ? null : repositoryCacheService.getCachedProfile(currentIsAuthenticated);
+      
+      if (cachedProfile && !forceRefresh) {
+        console.log('Using cached profile data', {
+          organizationCount: cachedProfile.organizations?.length || 0,
+          hasUser: !!cachedProfile.user,
+          cacheAge: Date.now() - cachedProfile.timestamp
+        });
+        
+        // Use cached data
+        setUser(cachedProfile.user);
+        setOrganizations(cachedProfile.organizations);
+        
+        // Load cached DAK counts (if available and authenticated)
+        if (currentIsAuthenticated) {
+          loadCachedDakCounts(cachedProfile.user, cachedProfile.organizations);
+        }
+        
+        setLoading(false);
+        fetchInProgress.current = false;
+        return;
+      }
+      
+      // No cache found, fetch fresh data
+      console.log('No cached profile data found or forcing refresh, fetching fresh data');
+      
       let userData = null;
       
-      if (isAuthenticated) {
+      if (currentIsAuthenticated) {
         // Check token permissions first for authenticated users
         await githubService.checkTokenPermissions();
         
@@ -69,7 +111,7 @@ const SelectProfilePage = () => {
       // Fetch organizations inline
       let orgsData = [];
       
-      if (isAuthenticated) {
+      if (currentIsAuthenticated) {
         try {
           orgsData = await githubService.getUserOrganizations();
         } catch (error) {
@@ -92,10 +134,34 @@ const SelectProfilePage = () => {
           // Add WHO organization at the beginning of the list
           orgsData.unshift(whoOrganization);
         }
+        console.log('WHO organization loaded successfully (no SAML needed)');
       } catch (whoError) {
-        console.warn('Could not fetch WHO organization data, using fallback:', whoError);
+        console.warn('Could not fetch WHO organization data from API, using fallback:', whoError);
         
-        // Fallback to hardcoded WHO organization
+        // Check if this is a SAML error
+        const isSAMLRequired = isSAMLError(whoError);
+        
+        // If we have a SAML authorized org and it matches WHO, override the SAML requirement
+        const samlOverride = samlAuthorizedOrg === 'WorldHealthOrganization';
+        
+        console.log('SAML Error Detection:', {
+          isSAMLRequired,
+          whoError: whoError.message,
+          status: whoError.status,
+          currentIsAuthenticated,
+          samlAuthorizedOrg,
+          samlOverride
+        });
+        
+        if (isSAMLRequired && !samlOverride) {
+          console.log('SAML authorization available for WHO organization');
+          // Set a warning but don't show modal immediately (user can trigger it)
+          setWarningMessage('SAML authorization available for WHO organization. Click the organization to authorize access.');
+        } else if (samlOverride) {
+          console.log('SAML authorization recently completed for WHO organization, treating as authorized');
+        }
+        
+        // Fallback to hardcoded WHO organization regardless of error type
         const whoOrganization = {
           id: 'who-organization',
           login: 'WorldHealthOrganization',
@@ -104,8 +170,16 @@ const SelectProfilePage = () => {
           avatar_url: 'https://avatars.githubusercontent.com/u/12261302?s=200&v=4',
           html_url: 'https://github.com/WorldHealthOrganization',
           type: 'Organization',
-          isWHO: true
+          isWHO: true,
+          needsSAMLAuth: samlOverride ? false : isSAMLRequired // Override SAML requirement if recently authorized
         };
+        
+        console.log('Creating WHO fallback organization:', {
+          login: whoOrganization.login,
+          needsSAMLAuth: whoOrganization.needsSAMLAuth,
+          isWHO: whoOrganization.isWHO,
+          samlOverride
+        });
         
         // Check if WHO organization is already in the list
         const hasWHO = orgsData.some(org => org.login === 'WorldHealthOrganization');
@@ -114,10 +188,10 @@ const SelectProfilePage = () => {
           // Add WHO organization at the beginning of the list
           orgsData.unshift(whoOrganization);
         } else {
-          // Ensure existing WHO organization has the isWHO flag
+          // Ensure existing WHO organization has the isWHO flag and SAML status
           orgsData = orgsData.map(org => 
             org.login === 'WorldHealthOrganization' 
-              ? { ...org, isWHO: true }
+              ? { ...org, isWHO: true, needsSAMLAuth: samlOverride ? false : isSAMLRequired }
               : org
           );
         }
@@ -125,15 +199,19 @@ const SelectProfilePage = () => {
       
       setOrganizations(orgsData);
       
+      // Cache the profile data for 5 minutes
+      repositoryCacheService.setCachedProfile(userData, orgsData, currentIsAuthenticated);
+      console.log('Profile data cached for 5 minutes');
+      
       // Load cached DAK counts (if available and authenticated)
-      if (isAuthenticated) {
+      if (currentIsAuthenticated) {
         loadCachedDakCounts(userData, orgsData);
       }
       
     } catch (error) {
       console.error('Error fetching user data:', error);
       
-      if (isAuthenticated) {
+      if (currentIsAuthenticated) {
         setError('Failed to fetch user data. Please check your connection and try again.');
         setIsAuthenticated(false);
         githubService.logout(); // Use secure logout method
@@ -143,14 +221,75 @@ const SelectProfilePage = () => {
       }
     } finally {
       setLoading(false);
+      fetchInProgress.current = false;
     }
-  }, [loadCachedDakCounts, isAuthenticated]);
+  }, [loadCachedDakCounts]); // Remove isAuthenticated from dependencies to prevent stale closures
+
+  // Handle SAML authorization workflow
+  const handleSAMLAuthorization = async (organization) => {
+    try {
+      // Clear profile cache first to ensure fresh API calls
+      repositoryCacheService.clearProfileCache(githubService.isAuth());
+      
+      // Force a complete refresh of profile data to check SAML status
+      await fetchUserData(true); // Force refresh to bypass any remaining cache
+      
+      console.log(`SAML authorization verification completed for ${organization}`);
+      
+      // Clear any warning message
+      setWarningMessage(null);
+      
+      // Close SAML modal
+      setSamlModal({ isOpen: false, errorInfo: null });
+      
+    } catch (error) {
+      // Reduce console noise for expected SAML failures
+      if (isSAMLError(error)) {
+        console.log(`SAML authorization still pending for ${organization}. This is normal - authorization may take a few moments to propagate.`);
+        // Keep the modal open so user can retry later
+        return;
+      } else {
+        console.error('Unexpected error during SAML authorization verification:', error);
+        // Different error, close modal but keep fallback data
+        setSamlModal({ isOpen: false, errorInfo: null });
+      }
+    }
+  };
+
+  const handleSkipSAML = () => {
+    setSamlModal({ isOpen: false, errorInfo: null });
+    setWarningMessage(null);
+  };
+
+  const showSAMLModal = (organization) => {
+    const samlErrorInfo = createSAMLErrorInfo(
+      new Error('SAML authorization required'),
+      organization,
+      {
+        isRequired: false,
+        context: 'access additional organization features'
+      }
+    );
+    
+    setSamlModal({
+      isOpen: true,
+      errorInfo: samlErrorInfo
+    });
+  };
 
   // Initial authentication check - don't redirect if not authenticated
   useEffect(() => {
     const initializeAuth = () => {
       // Try to initialize from securely stored token
       const success = githubService.initializeFromStoredToken();
+      const newAuthState = success;
+      
+      // Clear profile cache if authentication state changed
+      if (newAuthState !== isAuthenticated) {
+        repositoryCacheService.clearAllProfileCaches();
+        console.log('Authentication state changed, cleared profile cache');
+      }
+      
       if (success) {
         setIsAuthenticated(true);
       } else {
@@ -160,7 +299,7 @@ const SelectProfilePage = () => {
     };
 
     initializeAuth();
-  }, []);
+  }, [isAuthenticated]);
 
   // Handle warning message from navigation state
   useEffect(() => {
@@ -171,15 +310,92 @@ const SelectProfilePage = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
+  // Detect potential return from SAML authorization and force fresh data fetch
+  useEffect(() => {
+    // Use the enhanced SAML return detection
+    const samlReturnInfo = detectSAMLReturn();
+    
+    // Also check for OAuth parameters that might indicate a GitHub return
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasOAuthParams = urlParams.has('code') || urlParams.has('state');
+    
+    console.log('SAML Return Detection Debug:', {
+      currentUrl: window.location.href,
+      referrer: document.referrer,
+      samlReturnInfo,
+      hasOAuthParams,
+      urlParams: Array.from(urlParams.entries())
+    });
+    
+    if (samlReturnInfo || hasOAuthParams) {
+      const authorizedOrg = samlReturnInfo?.organization;
+      
+      console.log('Detected return from SAML authorization', {
+        method: samlReturnInfo?.method,
+        organization: authorizedOrg,
+        hasOAuthParams,
+        referrer: samlReturnInfo?.referrer
+      });
+      
+      // Clear profile cache to force fresh API calls
+      repositoryCacheService.clearAllProfileCaches();
+      
+      // Clear any existing warning message since user completed authorization
+      if (samlReturnInfo) {
+        setWarningMessage(null);
+        
+        // Show success message for detected SAML completion
+        if (authorizedOrg) {
+          setWarningMessage(`✅ SAML authorization completed for ${authorizedOrg}! Organization access has been updated.`);
+          setTimeout(() => setWarningMessage(null), 5000); // Clear success message after 5 seconds
+        }
+        
+        // If SAML was authorized for a specific organization, immediately update the organizations state
+        // to remove SAML requirements without waiting for API calls that may still fail during propagation
+        if (authorizedOrg && isAuthenticated) {
+          console.log(`SAML authorization completed for ${authorizedOrg}, immediately clearing SAML requirements`);
+          
+          setOrganizations(prevOrgs => 
+            prevOrgs.map(org => 
+              org.login === authorizedOrg 
+                ? { ...org, needsSAMLAuth: false } 
+                : org
+            )
+          );
+        }
+      }
+      
+      // Force a fresh data fetch with SAML override
+      if (isAuthenticated) {
+        // Pass the authorized organization to bypass SAML checks during the temporary propagation period
+        fetchUserData(true, authorizedOrg || null); // Force refresh to bypass cache
+      }
+      
+      // Clean up URL parameters to avoid repeat processing
+      if (hasOAuthParams || urlParams.has('saml_authorized')) {
+        const cleanUrl = new URL(window.location);
+        // Keep essential parameters but clean OAuth/SAML ones
+        ['code', 'state', 'saml_authorized', 'org'].forEach(param => {
+          cleanUrl.searchParams.delete(param);
+        });
+        window.history.replaceState({}, document.title, cleanUrl.href);
+      }
+    }
+  }, [isAuthenticated, fetchUserData]);
+
   // Fetch user data when component mounts or authentication state changes
   useEffect(() => {
-    // Always fetch data regardless of authentication state
-    if (!user) {
-      fetchUserData();
-    }
-  }, [user, fetchUserData]);
+    fetchUserData();
+  }, [fetchUserData]);
 
   const handleProfileSelect = (event, profile) => {
+    // Check if this organization needs SAML authorization
+    if (profile.needsSAMLAuth && isAuthenticated) {
+      event.preventDefault();
+      showSAMLModal(profile.login);
+      return;
+    }
+    
     const navigationState = { profile };
     handleNavigationClick(event, `/dak-action/${profile.login}`, navigate, navigationState);
   };
@@ -198,19 +414,35 @@ const SelectProfilePage = () => {
       ) : (
         <div className="select-profile-content">
         {warningMessage && (
-          <div className="warning-message">
+          <div className={`warning-message ${warningMessage.includes('✅') ? 'success-message' : ''}`}>
             <div className="warning-content">
               <div className="warning-header">
-                <span className="warning-icon">⚠️</span>
+                <span className="warning-icon">{warningMessage.includes('✅') ? '✅' : '⚠️'}</span>
                 <span className="warning-text">{warningMessage}</span>
               </div>
-              <button 
-                className="warning-dismiss" 
-                onClick={handleDismissWarning}
-                aria-label="Dismiss warning"
-              >
-                × Dismiss
-              </button>
+              <div className="warning-actions">
+                {warningMessage.includes('SAML authorization available') && (
+                  <button 
+                    className="warning-action-btn refresh-btn" 
+                    onClick={() => {
+                      console.log('Manual refresh after SAML authorization requested');
+                      repositoryCacheService.clearAllProfileCaches();
+                      fetchUserData(true, 'WorldHealthOrganization'); // Force refresh with SAML override for WHO
+                      setWarningMessage(null);
+                    }}
+                    title="Click if you just completed SAML authorization"
+                  >
+                    🔄 Refresh After SAML
+                  </button>
+                )}
+                <button 
+                  className="warning-dismiss" 
+                  onClick={handleDismissWarning}
+                  aria-label="Dismiss warning"
+                >
+                  × Dismiss
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -264,10 +496,25 @@ const SelectProfilePage = () => {
               )}
               
               {/* Organization Profiles */}
-              {organizations.map((org) => (
+              {organizations.map((org) => {
+                // Debug WHO organization badge visibility
+                if (org.login === 'WorldHealthOrganization') {
+                  console.log('WHO Organization Badge Debug (Render Time):', {
+                    orgLogin: org.login,
+                    needsSAMLAuth: org.needsSAMLAuth,
+                    isAuthenticated: isAuthenticated,
+                    githubServiceAuth: githubService.isAuth(),
+                    shouldShowBadge: org.needsSAMLAuth && isAuthenticated,
+                    samlIndicatorCondition: org.needsSAMLAuth && isAuthenticated,
+                    samlBadgeCondition: org.needsSAMLAuth && isAuthenticated,
+                    orgObject: org
+                  });
+                }
+                
+                return (
                 <div 
                   key={org.login}
-                  className={`profile-card ${org.isWHO ? 'who-org' : ''}`}
+                  className={`profile-card ${org.isWHO ? 'who-org' : ''} ${org.needsSAMLAuth ? 'needs-saml' : ''}`}
                   onClick={(event) => handleProfileSelect(event, { type: 'org', ...org })}
                 >
                   <div className="profile-card-header">
@@ -280,20 +527,38 @@ const SelectProfilePage = () => {
                         {dakCounts[`org-${org.login}`]}
                       </div>
                     )}
+                    {org.needsSAMLAuth && isAuthenticated && (
+                      <div className="saml-indicator" title="SAML authorization available">
+                        🔐
+                      </div>
+                    )}
                   </div>
                   <h3>{org.name || org.login}</h3>
                   <p>@{org.login}</p>
                   <div className="profile-badges">
                     <span className="profile-type">{t('organization.organizations')}</span>
                     {org.isWHO && <span className="who-badge">WHO Official</span>}
+                    {org.needsSAMLAuth && isAuthenticated && (
+                      <span className="saml-badge">SAML Available</span>
+                    )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
         </div>
       )}
+      
+      {/* SAML Authorization Modal */}
+      <SAMLAuthorizationModal
+        isOpen={samlModal.isOpen}
+        onClose={() => setSamlModal({ isOpen: false, errorInfo: null })}
+        samlErrorInfo={samlModal.errorInfo}
+        onRetry={() => handleSAMLAuthorization(samlModal.errorInfo?.organization)}
+        onSkip={handleSkipSAML}
+      />
     </PageLayout>
   );
 };

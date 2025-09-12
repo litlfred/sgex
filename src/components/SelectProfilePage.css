@@ -228,6 +228,20 @@ body.theme-light .select-profile-content {
   max-width: 600px;
 }
 
+/* Success message styles */
+.warning-message.success-message {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+.success-message .warning-text {
+  color: #155724;
+}
+
+.success-message .warning-icon {
+  color: #155724;
+}
+
 /* Authentication status message styles */
 .auth-status-message {
   background: rgba(33, 150, 243, 0.1);
@@ -277,6 +291,37 @@ body.theme-light .select-profile-content {
   align-items: center;
   gap: 0.5rem;
   justify-content: center;
+}
+
+.warning-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.warning-action-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.warning-action-btn:hover {
+  background: #0056b3;
+}
+
+.warning-action-btn.refresh-btn {
+  background: #28a745;
+}
+
+.warning-action-btn.refresh-btn:hover {
+  background: #1e7e34;
 }
 
 .warning-icon {
@@ -349,4 +394,40 @@ body.theme-light .select-profile-content {
   .profile-selection h2 {
     font-size: 1.6rem;
   }
+}
+
+/* SAML Authorization Styles */
+.profile-card.needs-saml {
+  border: 2px solid #ffd33d;
+  position: relative;
+}
+
+.profile-card.needs-saml:hover {
+  border-color: #ffb900;
+  box-shadow: 0 4px 20px rgba(255, 185, 0, 0.2);
+}
+
+.saml-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.saml-badge {
+  background: #ffd33d;
+  color: #663c00;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
 }
