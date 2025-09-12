@@ -114,10 +114,5 @@
         { "path": "*", "fallback": true }
       ]
     }
-  },
-
-  "deployedBranches": [
-    "main",
-    "copilot-fix-895"
-  ]
+  }
 }
