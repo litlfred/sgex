@@ -21,6 +21,10 @@ class ServiceTableGenerator {
     this.services = [];
     this.baseUrl = 'https://github.com/litlfred/sgex';
     this.basePath = '/home/runner/work/sgex/sgex';
+    this.localhostUrls = {
+      'dak-faq-mcp': 'http://localhost:3001',
+      'dak-publication-api': 'http://localhost:3002'
+    };
   }
 
   /**
@@ -31,6 +35,7 @@ class ServiceTableGenerator {
     
     try {
       // Scan for all services
+      await this.scanSystemServices();
       await this.scanDAKFAQService();
       await this.scanOtherServices();
       
@@ -47,6 +52,32 @@ class ServiceTableGenerator {
       console.error('❌ Error generating service table:', error);
       throw error;
     }
+  }
+
+  /**
+   * Scan system-wide services (health checks, etc.)
+   */
+  async scanSystemServices() {
+    console.log('🔧 Scanning system services...');
+    
+    // Add general health service that aggregates all service health checks
+    this.services.push({
+      category: 'System Services',
+      name: 'Health Check',
+      description: 'General health check endpoint available across all services',
+      inputParameters: ['None'],
+      inputSchemas: ['No input schema required'],
+      outputDescription: 'Service health status, version, and capabilities',
+      outputSchema: 'Standard health response schema',
+      openApiSpec: 'Available in individual service OpenAPI specs',
+      webInterface: 'Yes',
+      mcpInterface: 'Partial',
+      openApiCompliance: 'Yes',
+      localhostUrl: this.createLocalhostLinks([
+        { service: 'dak-faq-mcp', path: '/health' },
+        { service: 'dak-publication-api', path: '/health' }
+      ])
+    });
   }
 
   /**
@@ -100,7 +131,8 @@ class ServiceTableGenerator {
       openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-faq-mcp/openapi.yaml'),
       webInterface: 'Yes',
       mcpInterface: 'Yes',
-      openApiCompliance: 'Partial'
+      openApiCompliance: 'Partial',
+      localhostUrl: this.createLocalhostLink('dak-faq-mcp', '/')
     });
 
     // Add sub-services based on OpenAPI paths
@@ -108,6 +140,11 @@ class ServiceTableGenerator {
       for (const [pathKey, pathData] of Object.entries(openApiSpec.paths)) {
         for (const [method, methodData] of Object.entries(pathData)) {
           if (typeof methodData === 'object' && methodData.operationId) {
+            // Skip health endpoints as they're handled in system services
+            if (pathKey.includes('/health')) {
+              continue;
+            }
+            
             // Clean up description - remove excessive newlines and format properly
             let description = methodData.description || methodData.summary || 'No description available';
             description = description.replace(/\n\s*\n/g, ' '); // Replace double newlines with space
@@ -124,9 +161,10 @@ class ServiceTableGenerator {
               outputDescription: this.extractOutputDescription(methodData),
               outputSchema: this.extractOutputSchema(methodData, 'dak-faq-mcp'),
               openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-faq-mcp/openapi.yaml'),
-              webInterface: pathKey.includes('/health') ? 'No' : 'Yes',
+              webInterface: 'Yes',
               mcpInterface: this.getMCPInterface(methodData.operationId, mcpManifest),
-              openApiCompliance: 'Partial'
+              openApiCompliance: 'Partial',
+              localhostUrl: this.createLocalhostLink('dak-faq-mcp', pathKey)
             });
           }
         }
@@ -272,7 +310,8 @@ class ServiceTableGenerator {
       openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-publication-api/openapi.yaml'),
       webInterface: 'Yes',
       mcpInterface: mcpManifest ? 'Yes' : 'No',
-      openApiCompliance: 'Full'
+      openApiCompliance: 'Full',
+      localhostUrl: this.createLocalhostLink('dak-publication-api', '/')
     });
 
     // Add sub-services based on OpenAPI paths
@@ -281,6 +320,11 @@ class ServiceTableGenerator {
       for (const [pathKey, pathData] of Object.entries(openApiSpec.paths)) {
         for (const [method, methodData] of Object.entries(pathData)) {
           if (typeof methodData === 'object' && methodData.operationId) {
+            // Skip health endpoints as they're handled in system services
+            if (pathKey.includes('/health')) {
+              continue;
+            }
+            
             // Clean up description - remove excessive newlines and format properly
             let description = methodData.description || methodData.summary || 'No description available';
             description = description.replace(/\n\s*\n/g, ' '); // Replace double newlines with space
@@ -297,9 +341,10 @@ class ServiceTableGenerator {
               outputDescription: this.extractOutputDescription(methodData),
               outputSchema: this.extractOutputSchema(methodData, 'dak-publication-api'),
               openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-publication-api/openapi.yaml'),
-              webInterface: pathKey.includes('/health') ? 'No' : 'Yes',
+              webInterface: 'Yes',
               mcpInterface: this.getMCPInterface(methodData.operationId, mcpManifest),
-              openApiCompliance: 'Full'
+              openApiCompliance: 'Full',
+              localhostUrl: this.createLocalhostLink('dak-publication-api', pathKey)
             });
             servicesAdded++;
           }
@@ -336,7 +381,8 @@ class ServiceTableGenerator {
         openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-catalog/openapi.yaml'),
         webInterface: 'Yes',
         mcpInterface: 'Partial',
-        openApiCompliance: 'Partial'
+        openApiCompliance: 'Partial',
+        localhostUrl: 'Planned'
       },
       {
         category: 'DAK Component View',
@@ -351,7 +397,8 @@ class ServiceTableGenerator {
         openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/dak-components/openapi.yaml'),
         webInterface: 'Yes',
         mcpInterface: 'No',
-        openApiCompliance: 'Partial'
+        openApiCompliance: 'Partial',
+        localhostUrl: 'Planned'
       },
       {
         category: 'Asset Browser',
@@ -371,7 +418,8 @@ class ServiceTableGenerator {
         openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/assets/openapi.yaml'),
         webInterface: 'Yes',
         mcpInterface: 'No',
-        openApiCompliance: 'Partial'
+        openApiCompliance: 'Partial',
+        localhostUrl: 'Planned'
       },
       {
         category: 'MCP Tooling',
@@ -386,7 +434,8 @@ class ServiceTableGenerator {
         openApiSpec: this.createSchemaLink('MCP manifest', 'services/dak-faq-mcp/mcp-manifest.json'),
         webInterface: 'No',
         mcpInterface: 'Yes',
-        openApiCompliance: 'No'
+        openApiCompliance: 'No',
+        localhostUrl: 'Via MCP protocol'
       },
       {
         category: 'Documentation Gen',
@@ -401,7 +450,8 @@ class ServiceTableGenerator {
         openApiSpec: this.createSchemaLink('OpenAPI spec', 'services/docs/openapi.yaml'),
         webInterface: 'Yes',
         mcpInterface: 'Partial',
-        openApiCompliance: 'Yes'
+        openApiCompliance: 'Yes',
+        localhostUrl: 'Build-time tool'
       }
     ];
 
@@ -527,6 +577,32 @@ class ServiceTableGenerator {
   }
 
   /**
+   * Create localhost link for a service endpoint
+   */
+  createLocalhostLink(serviceType, path) {
+    const baseUrl = this.localhostUrls[serviceType];
+    if (!baseUrl) {
+      return 'N/A';
+    }
+    const fullUrl = `${baseUrl}${path}`;
+    return `[${fullUrl}](${fullUrl})`;
+  }
+
+  /**
+   * Create multiple localhost links
+   */
+  createLocalhostLinks(endpoints) {
+    return endpoints.map(endpoint => {
+      const baseUrl = this.localhostUrls[endpoint.service];
+      if (!baseUrl) {
+        return 'N/A';
+      }
+      const fullUrl = `${baseUrl}${endpoint.path}`;
+      return `[${endpoint.service}](${fullUrl})`;
+    }).join(' • ');
+  }
+
+  /**
    * Create schema link with proper formatting
    */
   createSchemaLink(text, relativePath) {
@@ -541,8 +617,8 @@ class ServiceTableGenerator {
 
 This table is automatically generated from the codebase on every commit.
 
-| Service Category    | Service Name / Sub-Service          | Description                                                       | Input Parameters (bulleted)                                                                                                                                         | Input JSON Schemas (ordered list)                                                                                                                                           | Output Description                                           | Output JSON Schema Link         | OpenAPI Spec Link        | Web Interface | MCP Interface | OpenAPI Compliance |
-|---------------------|-------------------------------------|-------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------|-------------------------------|--------------------------|:-------------:|:-------------:|:------------------:|`;
+| Service Category    | Service Name / Sub-Service          | Description                                                       | Input Parameters (bulleted)                                                                                                                                         | Input JSON Schemas (ordered list)                                                                                                                                           | Output Description                                           | Output JSON Schema Link         | OpenAPI Spec Link        | Localhost URL | Web Interface | MCP Interface | OpenAPI Compliance |
+|---------------------|-------------------------------------|-------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------|-------------------------------|--------------------------|:-------------:|:-------------:|:-------------:|:------------------:|`;
 
     let tableRows = '';
     
@@ -555,7 +631,9 @@ This table is automatically generated from the codebase on every commit.
         ? service.inputSchemas.map((s, i) => `${i + 1}. ${s}`).join('<br>')
         : service.inputSchemas;
 
-      tableRows += `\n| ${service.category} | ${service.name} | ${service.description} | ${inputParams} | ${inputSchemas} | ${service.outputDescription} | ${service.outputSchema} | ${service.openApiSpec} | ${service.webInterface} | ${service.mcpInterface} | ${service.openApiCompliance} |`;
+      const localhostUrl = service.localhostUrl || 'N/A';
+
+      tableRows += `\n| ${service.category} | ${service.name} | ${service.description} | ${inputParams} | ${inputSchemas} | ${service.outputDescription} | ${service.outputSchema} | ${service.openApiSpec} | ${localhostUrl} | ${service.webInterface} | ${service.mcpInterface} | ${service.openApiCompliance} |`;
     }
 
     const legend = `
@@ -569,6 +647,7 @@ This table is automatically generated from the codebase on every commit.
 - Input parameters are bullet lists for clarity, with input JSON schemas linked in the same order.
 - Output schema links are provided for structured responses.
 - OpenAPI Spec links point to the corresponding OpenAPI documentation in the repo.
+- Localhost URLs are clickable links for local development testing.
 - MCP manifest links included for MCP tooling.
 
 *Generated on: ${new Date().toISOString()}*
