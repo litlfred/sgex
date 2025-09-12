@@ -503,10 +503,8 @@ const DAKDashboardContent = () => {
     );
   }
 
-  if (!profile || !repository) {
-    navigate('/');
-    return <div>Redirecting...</div>;
-  }
+  // Removed immediate redirect - let PageProvider handle loading and error states
+  // The PageLayout framework properly handles cases where profile/repository are not available
 
   return (
     <div className="dak-dashboard">
