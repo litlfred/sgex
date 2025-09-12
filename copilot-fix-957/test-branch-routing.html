@@ -106,7 +106,22 @@
     </div>
 
     <!-- Load route configuration -->
-    <script src="./routeConfig.js"></script>
+    <script type="text/javascript">
+        // Simple stub for routeConfig functionality in test file
+        window.getSGEXRouteConfig = function() {
+            return {
+                isDeployedBranch: function(branch) {
+                    // Simple heuristic for test - known deployment branch patterns
+                    return branch.match(/^(main|master|deploy|copilot-.*)$/);
+                },
+                isValidComponent: function(component) {
+                    // Common component names for testing
+                    return ['dashboard', 'core-data-dictionary-viewer', 'business-process-selection',
+                           'bpmn-editor', 'actor-editor', 'health-interventions'].includes(component);
+                }
+            };
+        };
+    </script>
     
     <script>
         // Mock route configuration for testing
