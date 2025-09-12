@@ -114,7 +114,5 @@
         { "path": "*", "fallback": true }
       ]
     }
-  },
-
-  "deployedBranches": []
+  }
 }
