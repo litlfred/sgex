@@ -2,6 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
+import FSHFileViewer from './FSHFileViewer';
+import FSHFileEditor from './FSHFileEditor';
+import ArchiMateExtractionModal from './ArchiMateExtractionModal';
+import { extractLogicalModelToArchiMate, extractMultipleModelsToArchiMate } from '../services/archiMateService';
 
 const CoreDataDictionaryViewer = () => {
   return (
@@ -32,6 +36,21 @@ const CoreDataDictionaryViewerContent = () => {
   const [dakTableSearch, setDakTableSearch] = useState('');
   const [hasPublishedDak, setHasPublishedDak] = useState(false);
   const [checkingPublishedDak, setCheckingPublishedDak] = useState(false);
+  const [activeSection, setActiveSection] = useState('core-data-dictionary');
+  
+  // Logical Models state
+  const [logicalModels, setLogicalModels] = useState([]);
+  const [loadingLogicalModels, setLoadingLogicalModels] = useState(false);
+  const [logicalModelsError, setLogicalModelsError] = useState(null);
+  
+  // FSH Editor state
+  const [showEditor, setShowEditor] = useState(false);
+  const [editingModel, setEditingModel] = useState(null);
+  
+  // ArchiMate Extraction state
+  const [showArchiMateModal, setShowArchiMateModal] = useState(false);
+  const [archiMateResult, setArchiMateResult] = useState(null);
+  const [extractingModel, setExtractingModel] = useState(null);
 
   // Generate base URL for IG Publisher artifacts
   const getBaseUrl = useCallback((branchName) => {
@@ -70,28 +89,120 @@ const CoreDataDictionaryViewerContent = () => {
     return concepts;
   }, []);
 
-  const handleHomeNavigation = () => {
-    navigate('/');
-  };
-
-  const handleBackToDashboard = () => {
-    if (user && repo) {
-      // Use URL parameters for navigation
-      const dashboardPath = branch ? 
-        `/dashboard/${user}/${repo}/${branch}` : 
-        `/dashboard/${user}/${repo}`;
-      navigate(dashboardPath);
-    } else {
-      // Fallback to state-based navigation
-      navigate('/dashboard', { 
-        state: { 
-          profile, 
-          repository, 
-          branch 
-        } 
-      });
+  // Parse FSH content to extract logical model information
+  const parseLogicalModelInfo = useCallback((content, fileName) => {
+    const lines = content.split('\n');
+    let title = fileName.replace('.fsh', '');
+    let description = '';
+    
+    // Look for Logical model definition and title
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Look for Logical declaration: Logical: ModelName
+      const logicalMatch = line.match(/^Logical:\s*(.+)$/);
+      if (logicalMatch) {
+        title = logicalMatch[1].trim();
+        continue;
+      }
+      
+      // Look for Title: "..."
+      const titleMatch = line.match(/^Title:\s*"([^"]+)"/);
+      if (titleMatch) {
+        title = titleMatch[1].trim();
+        continue;
+      }
+      
+      // Look for Description: "..."
+      const descMatch = line.match(/^Description:\s*"([^"]+)"/);
+      if (descMatch) {
+        description = descMatch[1].trim();
+        continue;
+      }
     }
-  };
+    
+    return {
+      title,
+      description,
+      fileName
+    };
+  }, []);
+
+  // Fetch logical models from inputs/fsh/models directory
+  const fetchLogicalModels = useCallback(async () => {
+    const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
+    const currentRepo = repo || repository?.name;
+    const currentBranch = branch;
+    
+    if (!currentUser || !currentRepo || !currentBranch) {
+      return;
+    }
+
+    try {
+      setLoadingLogicalModels(true);
+      setLogicalModelsError(null);
+      
+      // Try to fetch the input/fsh/models directory
+      const modelsDir = await githubService.getDirectoryContents(
+        currentUser, 
+        currentRepo, 
+        'input/fsh/models', 
+        currentBranch
+      );
+
+      // Filter for .fsh files
+      const fshModelFiles = modelsDir
+        .filter(file => file.name.endsWith('.fsh') && file.type === 'file')
+        .map(file => ({
+          name: file.name,
+          path: file.path,
+          download_url: file.download_url,
+          html_url: file.html_url
+        }));
+
+      // Fetch content for each file to extract model information
+      const modelsWithInfo = await Promise.all(
+        fshModelFiles.map(async (file) => {
+          try {
+            const content = await githubService.getFileContent(
+              currentUser,
+              currentRepo,
+              file.path,
+              currentBranch
+            );
+            
+            const modelInfo = parseLogicalModelInfo(content, file.name);
+            
+            return {
+              ...file,
+              ...modelInfo,
+              content
+            };
+          } catch (error) {
+            console.warn(`Failed to fetch content for ${file.name}:`, error);
+            return {
+              ...file,
+              title: file.name.replace('.fsh', ''),
+              description: 'Failed to load model details',
+              content: ''
+            };
+          }
+        })
+      );
+
+      setLogicalModels(modelsWithInfo);
+    } catch (err) {
+      if (err.status === 404) {
+        // inputs/fsh/models directory doesn't exist
+        setLogicalModels([]);
+      } else {
+        console.error('Error fetching logical models:', err);
+        setLogicalModelsError('Failed to load logical models. Please check repository access.');
+      }
+    } finally {
+      setLoadingLogicalModels(false);
+    }
+  }, [user, repository, repo, branch, parseLogicalModelInfo]);
 
   // Fetch FSH files from input/fsh directory
   useEffect(() => {
@@ -233,6 +344,13 @@ const CoreDataDictionaryViewerContent = () => {
     fetchFshFiles();
   }, [repository, branch, user, repo, getBaseUrl, parseDakFshConcepts]);
 
+  // Fetch logical models when the Logical Models section is active
+  useEffect(() => {
+    if (activeSection === 'logical-models') {
+      fetchLogicalModels();
+    }
+  }, [activeSection, fetchLogicalModels]);
+
   // Fetch file content for modal display
   const handleViewSource = async (file) => {
     try {
@@ -258,10 +376,88 @@ const CoreDataDictionaryViewerContent = () => {
     }
   };
 
+  // Handle logical model actions
+  const handleViewLogicalModel = (model) => {
+    setSelectedFile({
+      name: model.name,
+      path: model.path,
+      html_url: model.html_url
+    });
+    setFileContent(model.content);
+    setShowModal(true);
+  };
+
+  const handleEditLogicalModel = (model) => {
+    setEditingModel(model);
+    setShowEditor(true);
+  };
+
+  const handleExtractLogicalModel = async (model) => {
+    try {
+      setExtractingModel(model.name);
+      
+      // Perform ArchiMate extraction
+      const result = await extractLogicalModelToArchiMate(model);
+      
+      setArchiMateResult(result);
+      setShowArchiMateModal(true);
+      setExtractingModel(null);
+    } catch (error) {
+      console.error('ArchiMate extraction failed:', error);
+      setArchiMateResult({
+        success: false,
+        error: error.message,
+        sourceModel: model
+      });
+      setShowArchiMateModal(true);
+      setExtractingModel(null);
+    }
+  };
+
+  const handleExtractAllModels = async () => {
+    try {
+      setExtractingModel('bulk');
+      
+      // Perform bulk ArchiMate extraction
+      const result = await extractMultipleModelsToArchiMate(logicalModels);
+      
+      setArchiMateResult(result);
+      setShowArchiMateModal(true);
+      setExtractingModel(null);
+    } catch (error) {
+      console.error('Bulk ArchiMate extraction failed:', error);
+      setArchiMateResult({
+        success: false,
+        error: error.message,
+        sourceModel: { name: 'All Models' }
+      });
+      setShowArchiMateModal(true);
+      setExtractingModel(null);
+    }
+  };
+
+  const handleSaveLogicalModel = (content) => {
+    // TODO: Implement save functionality
+    console.log('Saving logical model:', editingModel?.name, content);
+    alert('Save functionality will be implemented with proper GitHub integration');
+    setShowEditor(false);
+    setEditingModel(null);
+  };
+
   const closeModal = () => {
     setShowModal(false);
     setSelectedFile(null);
     setFileContent('');
+  };
+
+  const closeEditor = () => {
+    setShowEditor(false);
+    setEditingModel(null);
+  };
+
+  const closeArchiMateModal = () => {
+    setShowArchiMateModal(false);
+    setArchiMateResult(null);
   };
 
   if (!profile || !repository) {
@@ -282,40 +478,7 @@ const CoreDataDictionaryViewerContent = () => {
 
   return (
     <div className="core-data-dictionary-viewer">
-      <div className="viewer-header">
-        <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
-          <p className="subtitle">WHO SMART Guidelines Exchange</p>
-        </div>
-        <div className="context-info">
-          <img 
-            src={profile?.avatar_url || `https://github.com/${user || profile?.login}.png`} 
-            alt="Profile" 
-            className="context-avatar" 
-          />
-          <div className="context-details">
-            <span className="context-repo">{repo || repository?.name}</span>
-            <span className="context-component">Core Data Dictionary</span>
-          </div>
-        </div>
-      </div>
-
       <div className="viewer-content">
-        <div className="breadcrumb">
-          <button onClick={() => navigate('/')} className="breadcrumb-link">
-            Select Profile
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={() => navigate(`/dak-selection/${profile.login}`, { state: { profile } })} className="breadcrumb-link">
-            Select Repository
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <button onClick={handleBackToDashboard} className="breadcrumb-link">
-            DAK Components
-          </button>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">Core Data Dictionary</span>
-        </div>
 
         <div className="viewer-main">
           <div className="component-intro">
@@ -336,6 +499,22 @@ const CoreDataDictionaryViewerContent = () => {
             </div>
           </div>
 
+          {/* Section Navigation Tabs */}
+          <div className="section-tabs">
+            <button 
+              className={`tab-button ${activeSection === 'core-data-dictionary' ? 'active' : ''}`}
+              onClick={() => setActiveSection('core-data-dictionary')}
+            >
+              📊 Core Data Dictionary
+            </button>
+            <button 
+              className={`tab-button ${activeSection === 'logical-models' ? 'active' : ''}`}
+              onClick={() => setActiveSection('logical-models')}
+            >
+              🗂️ Logical Models
+            </button>
+          </div>
+
           {error && (
             <div className="error-message">
               <h3>⚠️ Error</h3>
@@ -344,18 +523,20 @@ const CoreDataDictionaryViewerContent = () => {
           )}
 
           {/* Documentation Link */}
-          <div className="documentation-section">
-            <p>
-              <a 
-                href="https://smart.who.int/ig-starter-kit/v1.0.0/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="documentation-link"
-              >
-                📚 WHO IG Starter Kit Documentation ↗
-              </a>
-            </p>
-          </div>
+          {activeSection === 'core-data-dictionary' && (
+            <div className="core-data-dictionary-section">
+              <div className="documentation-section">
+                <p>
+                  <a 
+                    href="https://smart.who.int/ig-starter-kit/v1.0.0/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="documentation-link"
+                  >
+                    📚 WHO IG Starter Kit Documentation ↗
+                  </a>
+                </p>
+              </div>
 
           {/* Main content layout with two columns */}
           <div className="two-column-layout">
@@ -577,20 +758,124 @@ const CoreDataDictionaryViewerContent = () => {
             )}
           </div>
         </div>
+        )}
+
+        {/* Logical Models Section */}
+        {activeSection === 'logical-models' && (
+          <div className="logical-models-section">
+            <div className="global-tools">
+              <h3>Global Tools</h3>
+              <div className="global-tools-buttons">
+                <button 
+                  className="action-btn primary" 
+                  onClick={handleExtractAllModels}
+                  disabled={logicalModels.length === 0 || extractingModel === 'bulk'}
+                  title="Extract all logical models to ArchiMate DataObjects with relationships"
+                >
+                  {extractingModel === 'bulk' ? '⏳ Extracting All...' : `📦 Extract All to ArchiMate (${logicalModels.length})`}
+                </button>
+                <button 
+                  className="action-btn secondary" 
+                  onClick={() => fetchLogicalModels()}
+                  disabled={loadingLogicalModels}
+                  title="Refresh the list of logical models"
+                >
+                  🔄 {loadingLogicalModels ? 'Refreshing...' : 'Refresh All Models'}
+                </button>
+              </div>
+            </div>
+
+            <div className="logical-models-list">
+              <h3>Logical Models</h3>
+              <p>FHIR Logical Models stored as StructureDefinitions in FSH format under <code>input/fsh/models/</code></p>
+              
+              {loadingLogicalModels && (
+                <div className="loading-message">
+                  <p>🔄 Loading logical models...</p>
+                </div>
+              )}
+
+              {logicalModelsError && (
+                <div className="error-message">
+                  <h4>⚠️ Error</h4>
+                  <p>{logicalModelsError}</p>
+                </div>
+              )}
+
+              {!loadingLogicalModels && !logicalModelsError && logicalModels.length === 0 && (
+                <div className="no-models-message">
+                  <p>📂 No logical models found in <code>input/fsh/models/</code> directory.</p>
+                  <p>Logical models should be stored as <code>*.fsh</code> files in this location.</p>
+                </div>
+              )}
+
+              {!loadingLogicalModels && logicalModels.length > 0 && (
+                <div className="logical-models-grid">
+                  {logicalModels.map((model) => (
+                    <div key={model.path} className="logical-model-card">
+                      <div className="model-header">
+                        <div className="model-icon">🗂️</div>
+                        <div className="model-info">
+                          <div className="model-title">{model.title}</div>
+                          <div className="model-filename">{model.name}</div>
+                        </div>
+                      </div>
+                      
+                      {model.description && (
+                        <div className="model-description">
+                          {model.description}
+                        </div>
+                      )}
+                      
+                      <div className="model-actions">
+                        <button 
+                          className="action-btn primary"
+                          onClick={() => handleViewLogicalModel(model)}
+                          title="View FSH source with syntax highlighting"
+                        >
+                          📄 View
+                        </button>
+                        <button 
+                          className="action-btn secondary"
+                          onClick={() => handleEditLogicalModel(model)}
+                          title="Edit FSH file with syntax highlighting and validation"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button 
+                          className="action-btn tertiary"
+                          onClick={() => handleExtractLogicalModel(model)}
+                          title="Extract to ArchiMate DataObject"
+                          disabled={extractingModel === model.name}
+                        >
+                          {extractingModel === model.name ? '⏳ Extracting...' : '📊 Extract to ArchiMate'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        </div>
       </div>
 
-      {/* Source Code Modal */}
+      {/* FSH File Viewer Modal */}
       {showModal && selectedFile && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content fsh-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{selectedFile.name}</h3>
+              <h3>View FSH File</h3>
               <button className="modal-close" onClick={closeModal}>×</button>
             </div>
             <div className="modal-body">
-              <pre className="fsh-code">
-                <code>{fileContent}</code>
-              </pre>
+              <FSHFileViewer 
+                content={fileContent}
+                fileName={selectedFile.name}
+                showLineNumbers={true}
+                className="modal-fsh-viewer"
+              />
             </div>
             <div className="modal-footer">
               <a 
@@ -608,7 +893,49 @@ const CoreDataDictionaryViewerContent = () => {
           </div>
         </div>
       )}
-      </div>
+
+      {/* FSH File Editor Modal */}
+      {showEditor && editingModel && (
+        <div className="modal-overlay" onClick={closeEditor}>
+          <div className="modal-content fsh-modal editor-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Edit Logical Model</h3>
+              <button className="modal-close" onClick={closeEditor}>×</button>
+            </div>
+            <div className="modal-body">
+              <FSHFileEditor 
+                content={editingModel.content}
+                fileName={editingModel.name}
+                onSave={handleSaveLogicalModel}
+                showPreview={true}
+                className="modal-fsh-editor"
+              />
+            </div>
+            <div className="modal-footer">
+              <a 
+                href={editingModel.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary"
+              >
+                View on GitHub ↗
+              </a>
+              <button className="btn-primary" onClick={closeEditor}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ArchiMate Extraction Modal */}
+      <ArchiMateExtractionModal
+        isOpen={showArchiMateModal}
+        onClose={closeArchiMateModal}
+        extractionResult={archiMateResult}
+        sourceModelName={archiMateResult?.sourceModel?.title || archiMateResult?.sourceModel?.name || 'Logical Model'}
+      />
+    </div>
   );
 };
 
