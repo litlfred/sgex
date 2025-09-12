@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { timeAgo, formatTimestamp } from '../utils/timeUtils';
 
 const WorkflowStatus = ({ 
   workflowStatus, 
@@ -93,8 +94,8 @@ const WorkflowStatus = ({
           )}
           
           {workflowStatus.createdAt && (
-            <span className="workflow-status-details">
-              {formatDate(workflowStatus.createdAt)}
+            <span className="workflow-status-details" title={formatTimestamp(workflowStatus.createdAt).full}>
+              {timeAgo(workflowStatus.createdAt)} ({formatDate(workflowStatus.createdAt)})
             </span>
           )}
         </div>
