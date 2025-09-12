@@ -108,11 +108,18 @@ class ServiceTableGenerator {
       for (const [pathKey, pathData] of Object.entries(openApiSpec.paths)) {
         for (const [method, methodData] of Object.entries(pathData)) {
           if (typeof methodData === 'object' && methodData.operationId) {
+            // Clean up description - remove excessive newlines and format properly
+            let description = methodData.description || methodData.summary || 'No description available';
+            description = description.replace(/\n\s*\n/g, ' '); // Replace double newlines with space
+            description = description.replace(/\n/g, ' '); // Replace single newlines with space
+            description = description.replace(/\s+/g, ' '); // Replace multiple spaces with single space
+            description = description.trim(); // Remove leading/trailing whitespace
+            
             this.services.push({
               category: '',
               name: methodData.operationId,
-              description: methodData.description || methodData.summary || 'No description available',
-              inputParameters: this.extractInputParameters(methodData),
+              description: description,
+              inputParameters: this.extractInputParameters(methodData, openApiSpec),
               inputSchemas: this.extractInputSchemas(methodData, 'dak-faq-mcp'),
               outputDescription: this.extractOutputDescription(methodData),
               outputSchema: this.extractOutputSchema(methodData, 'dak-faq-mcp'),
@@ -274,11 +281,18 @@ class ServiceTableGenerator {
       for (const [pathKey, pathData] of Object.entries(openApiSpec.paths)) {
         for (const [method, methodData] of Object.entries(pathData)) {
           if (typeof methodData === 'object' && methodData.operationId) {
+            // Clean up description - remove excessive newlines and format properly
+            let description = methodData.description || methodData.summary || 'No description available';
+            description = description.replace(/\n\s*\n/g, ' '); // Replace double newlines with space
+            description = description.replace(/\n/g, ' '); // Replace single newlines with space
+            description = description.replace(/\s+/g, ' '); // Replace multiple spaces with single space
+            description = description.trim(); // Remove leading/trailing whitespace
+            
             this.services.push({
               category: '',
               name: methodData.operationId,
-              description: methodData.description || methodData.summary || 'No description available',
-              inputParameters: this.extractInputParameters(methodData),
+              description: description,
+              inputParameters: this.extractInputParameters(methodData, openApiSpec),
               inputSchemas: this.extractInputSchemas(methodData, 'dak-publication-api'),
               outputDescription: this.extractOutputDescription(methodData),
               outputSchema: this.extractOutputSchema(methodData, 'dak-publication-api'),
@@ -397,12 +411,39 @@ class ServiceTableGenerator {
   /**
    * Extract input parameters from OpenAPI method
    */
-  extractInputParameters(methodData) {
+  extractInputParameters(methodData, openApiSpec = null) {
     const parameters = [];
     
     if (methodData.parameters) {
       for (const param of methodData.parameters) {
-        parameters.push(`\`${param.name}\`: ${param.schema?.type || 'string'}${param.required ? '' : ' (optional)'}`);
+        let paramName, paramType, required;
+        
+        if (param.$ref && openApiSpec) {
+          // Handle $ref parameters - resolve from OpenAPI spec
+          const refPath = param.$ref.replace('#/', '').split('/');
+          let refData = openApiSpec;
+          for (const part of refPath) {
+            refData = refData[part];
+            if (!refData) break;
+          }
+          
+          if (refData && refData.name) {
+            paramName = refData.name;
+            paramType = refData.schema?.type || 'string';
+            required = refData.required !== false ? '' : ' (optional)';
+          } else {
+            // Fallback to ref name
+            paramName = refPath[refPath.length - 1] || 'ref-parameter';
+            paramType = 'string';
+            required = ' (optional)';
+          }
+        } else {
+          paramName = param.name || 'unnamed';
+          paramType = param.schema?.type || 'string';
+          required = param.required !== false ? '' : ' (optional)';
+        }
+        
+        parameters.push(`\`${paramName}\`: ${paramType}${required}`);
       }
     }
 
@@ -413,7 +454,8 @@ class ServiceTableGenerator {
         if (schema.properties) {
           for (const [propName, propData] of Object.entries(schema.properties)) {
             const required = schema.required && schema.required.includes(propName) ? '' : ' (optional)';
-            parameters.push(`\`${propName}\`: ${propData.type || 'object'}${required}`);
+            const propType = propData.type || (propData.items ? 'array' : 'object');
+            parameters.push(`\`${propName}\`: ${propType}${required}`);
           }
         }
       }
