@@ -513,7 +513,7 @@ const DAKDashboardContent = () => {
           <div className="dashboard-intro">
             <h2>{t('dak.components')}</h2>
             <p>
-              Select a component to edit content for <strong>{repository.name}</strong>
+              Select a component to edit content for <strong>{repository?.name}</strong>
               {selectedBranch && (
                 <span> on branch <code className="branch-display">{selectedBranch}</code></span>
               )}. 
@@ -708,7 +708,7 @@ const DAKDashboardContent = () => {
                     <HelpButton 
                       helpTopic="github-token"
                       contextData={{ 
-                        repository: { owner: repository.owner?.login || repository.full_name.split('/')[0], name: repository.name },
+                        repository: { owner: repository?.owner?.login || repository?.full_name?.split('/')[0], name: repository?.name },
                         requiredScopes: ['Contents: Write', 'Metadata: Read', 'Pull requests: Write'],
                         permissionMode: 'edit',
                         upgradeMode: true

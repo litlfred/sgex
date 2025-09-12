@@ -12,26 +12,37 @@ const useThemeImage = (baseImagePath) => {
     const updateImagePath = () => {
       const isDarkMode = document.body.classList.contains('theme-dark');
       
-      // Get the correct base path for the deployment environment
-      // Always ensure we have a PUBLIC_URL for proper path resolution
-      const publicUrl = process.env.PUBLIC_URL || '';
+      // Detect the deployment root path from the current URL
+      // For main deployment: /sgex/
+      // For branch deployment: /sgex/branch-name/
+      let deploymentRoot = '/sgex/';
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/sgex/') && currentPath !== '/sgex/') {
+        const pathParts = currentPath.split('/');
+        if (pathParts.length >= 3 && pathParts[1] === 'sgex') {
+          // Check if this might be a branch deployment by looking for a third segment
+          // that's not a typical route like 'dashboard', 'welcome', etc.
+          const possibleBranch = pathParts[2];
+          const typicalRoutes = ['dashboard', 'welcome', 'docs', 'business-process-selection', 'decision-support-logic'];
+          if (possibleBranch && !typicalRoutes.includes(possibleBranch)) {
+            deploymentRoot = `/sgex/${possibleBranch}/`;
+          }
+        }
+      }
       
       // Normalize the base image path (remove leading slash if present)
       const normalizedPath = baseImagePath.startsWith('/') ? baseImagePath.slice(1) : baseImagePath;
       
-      // IMPORTANT: Always use absolute paths to prevent relative path resolution issues
-      // When the current URL is /dashboard/user/repo, relative paths would resolve incorrectly
+      // Always use absolute paths to prevent relative path resolution issues
       let finalPath;
       if (isDarkMode) {
         // Convert base image to dark mode version
         // e.g., "sgex-mascot.png" -> "sgex-mascot_grey_tabby.png"
         const darkImageName = normalizedPath.replace(/\.png$/, '_grey_tabby.png');
-        // Force absolute path from root to prevent URL context issues
-        finalPath = publicUrl ? `${publicUrl}/${darkImageName}` : `/${darkImageName}`;
+        finalPath = deploymentRoot + darkImageName;
       } else {
         // Use original image for light mode
-        // Force absolute path from root to prevent URL context issues
-        finalPath = publicUrl ? `${publicUrl}/${normalizedPath}` : `/${normalizedPath}`;
+        finalPath = deploymentRoot + normalizedPath;
       }
       
       setCurrentImagePath(finalPath);
