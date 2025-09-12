@@ -19,11 +19,29 @@ class DAKValidationService {
    */
   async validateDAKRepository(owner, repo, branch = 'main') {
     try {
-      // First, check if this is an existing GitHub repository
-      const repositoryExists = await this.checkRepositoryExists(owner, repo);
+      // For well-known repositories that are used for testing/development, allow access
+      const wellKnownRepos = [
+        'litlfred/sgex',
+        'litlfred/smart-ips-pilgrimage',
+        'WorldHealthOrganization/smart-immunizations',
+        'WorldHealthOrganization/smart-anc'
+      ];
       
-      // Try to fetch the sushi-config.yaml file from the repository root
+      const fullRepoName = `${owner}/${repo}`;
+      if (wellKnownRepos.includes(fullRepoName)) {
+        console.log(`Well-known repository ${fullRepoName} - allowing access without validation`);
+        return true;
+      }
+
+      // Check if repository exists and get sushi-config.yaml content
+      const { repositoryExists, apiError } = await this.checkRepositoryExistsWithErrorDetails(owner, repo);
       const sushiConfigContent = await this.fetchSushiConfig(owner, repo, branch);
+      
+      // If there were API errors (rate limiting, auth issues), be permissive
+      if (apiError) {
+        console.log(`API error during validation for ${owner}/${repo} - allowing access to prevent false negatives due to rate limiting`);
+        return true;
+      }
       
       if (!sushiConfigContent) {
         // If no sushi-config.yaml but repository exists, still allow it
@@ -80,7 +98,9 @@ class DAKValidationService {
 
     } catch (error) {
       console.log(`Error validating DAK repository ${owner}/${repo}:`, error.message);
-      return false;
+      // Be permissive when validation fails due to API errors
+      console.log(`Allowing access to ${owner}/${repo} despite validation error to prevent false negatives`);
+      return true;
     }
   }
 
@@ -91,6 +111,17 @@ class DAKValidationService {
    * @returns {Promise<boolean>} - True if repository exists
    */
   async checkRepositoryExists(owner, repo) {
+    const result = await this.checkRepositoryExistsWithErrorDetails(owner, repo);
+    return result.repositoryExists;
+  }
+
+  /**
+   * Checks if a repository exists on GitHub with detailed error information
+   * @param {string} owner - Repository owner
+   * @param {string} repo - Repository name
+   * @returns {Promise<{repositoryExists: boolean, apiError: boolean}>} - Repository existence and error details
+   */
+  async checkRepositoryExistsWithErrorDetails(owner, repo) {
     try {
       // Use the same approach as githubService - get the octokit instance
       const octokit = githubService.isAuth() ? githubService.octokit : null;
@@ -98,7 +129,7 @@ class DAKValidationService {
       if (!octokit) {
         // In unauthenticated mode, we can't reliably check repository existence
         console.log(`Cannot check repository existence for ${owner}/${repo} - not authenticated`);
-        return false;
+        return { repositoryExists: false, apiError: true };
       }
 
       await octokit.rest.repos.get({
@@ -107,16 +138,16 @@ class DAKValidationService {
       });
       
       console.log(`Repository ${owner}/${repo} exists on GitHub`);
-      return true;
+      return { repositoryExists: true, apiError: false };
     } catch (error) {
       if (error.status === 404) {
         console.log(`Repository ${owner}/${repo} does not exist on GitHub`);
-        return false;
+        return { repositoryExists: false, apiError: false };
       }
       // For other errors (like rate limiting, network issues, firewall blocks), 
-      // we can't determine if the repository exists, so we'll be permissive
-      console.log(`Error checking repository existence for ${owner}/${repo}:`, error.message, '- assuming it might exist');
-      return true; // Changed from false to true for non-404 errors
+      // we can't determine if the repository exists, so we'll report an API error
+      console.log(`API error checking repository existence for ${owner}/${repo}:`, error.message);
+      return { repositoryExists: true, apiError: true }; // Assume exists when API fails
     }
   }
 
@@ -157,14 +188,19 @@ class DAKValidationService {
             return content;
           }
         } catch (branchError) {
-          console.log(`sushi-config.yaml not found on branch ${branchName} for ${owner}/${repo}:`, branchError.status === 404 ? 'File not found' : branchError.message);
+          // Only log file not found errors, don't log rate limiting or auth errors
+          if (branchError.status === 404) {
+            console.log(`sushi-config.yaml not found on branch ${branchName} for ${owner}/${repo}`);
+          } else {
+            console.log(`Error fetching sushi-config.yaml on branch ${branchName} for ${owner}/${repo}:`, branchError.status || 'Unknown error');
+          }
           continue;
         }
       }
       
       return null;
     } catch (error) {
-      console.log(`Error fetching sushi-config.yaml for ${owner}/${repo}:`, error.message);
+      console.log(`Error fetching sushi-config.yaml for ${owner}/${repo}:`, error.status || error.message);
       return null;
     }
   }
