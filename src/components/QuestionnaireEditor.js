@@ -20,7 +20,8 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
         // Import LHC-Forms library with fallback handling
         let LFormsModule;
         try {
-          LFormsModule = await import('lforms');
+          // LFormsModule = await import('lforms');
+          throw new Error('LForms import disabled temporarily for build');
         } catch (importError) {
           console.warn('Failed to import lforms, falling back to basic preview:', importError);
           setLformsLoaded(true);

@@ -53,9 +53,27 @@ const determinePageType = (params) => {
   const { user, repo } = params;
   const asset = params['*']; // Wildcard parameter for asset path
   
-  if (asset) return PAGE_TYPES.ASSET;
-  if (user && repo) return PAGE_TYPES.DAK;
-  if (user) return PAGE_TYPES.USER;
+  console.log('🔍 PageProvider determinePageType:', {
+    params,
+    user,
+    repo,
+    asset,
+    allParams: Object.keys(params)
+  });
+  
+  if (asset) {
+    console.log('📄 Page type: ASSET (has asset)');
+    return PAGE_TYPES.ASSET;
+  }
+  if (user && repo) {
+    console.log('📊 Page type: DAK (has user and repo)');
+    return PAGE_TYPES.DAK;
+  }
+  if (user) {
+    console.log('👤 Page type: USER (has user only)');
+    return PAGE_TYPES.USER;
+  }
+  console.log('🏠 Page type: TOP_LEVEL (no params)');
   return PAGE_TYPES.TOP_LEVEL;
 };
 
