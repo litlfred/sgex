@@ -348,6 +348,11 @@ body.theme-light .landing-page {
   font-weight: 500;
 }
 
+/* Ensure proper contrast in dark mode */
+body.theme-dark .profile-card h3 {
+  color: var(--who-text-primary);
+}
+
 .profile-card p {
   color: var(--who-text-secondary);
   margin: 0 0 1rem 0;
