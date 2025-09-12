@@ -13,7 +13,25 @@ const useThemeImage = (baseImagePath) => {
       const isDarkMode = document.body.classList.contains('theme-dark');
       
       // Get the correct base path for the deployment environment
-      const publicUrl = process.env.PUBLIC_URL || '';
+      // For branch deployments, PUBLIC_URL might not be set correctly, so detect from current location
+      let publicUrl = process.env.PUBLIC_URL || '';
+      
+      // If PUBLIC_URL is not set, try to detect the base path from current location
+      if (!publicUrl && window.location.pathname.includes('/sgex/')) {
+        const pathParts = window.location.pathname.split('/');
+        const sgexIndex = pathParts.indexOf('sgex');
+        if (sgexIndex >= 0 && pathParts.length > sgexIndex + 1) {
+          // For branch deployments like /sgex/copilot-fix-952/dashboard/...
+          const branchName = pathParts[sgexIndex + 1];
+          if (branchName !== 'dashboard' && branchName !== 'main') {
+            publicUrl = `/sgex/${branchName}`;
+          } else {
+            publicUrl = '/sgex';
+          }
+        } else {
+          publicUrl = '/sgex';
+        }
+      }
       
       // Normalize the base image path (remove leading slash if present)
       const normalizedPath = baseImagePath.startsWith('/') ? baseImagePath.slice(1) : baseImagePath;
