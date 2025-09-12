@@ -35,6 +35,7 @@ const WorkflowDashboard = ({
   const [workflowJobs, setWorkflowJobs] = useState({}); // Cache for workflow jobs
   const [loadingJobs, setLoadingJobs] = useState({}); // Track job loading states
   const refreshIntervalRef = useRef(null);
+  const expandedWorkflowsRef = useRef({}); // Ref to track expanded workflows for refresh logic
   const [lastRefresh, setLastRefresh] = useState(null);
 
   // Fetch all workflows for the branch
@@ -62,6 +63,41 @@ const WorkflowDashboard = ({
 
       setWorkflows(workflowData);
       setLastRefresh(new Date());
+
+      // Clear job cache during refresh to ensure job data matches the 30-second update interval
+      if (isRefresh) {
+        console.debug('Clearing job cache to sync with 30-second refresh interval');
+        setWorkflowJobs({});
+        
+        // Refetch jobs for currently expanded workflows to maintain up-to-date job information
+        const currentlyExpanded = Object.keys(expandedWorkflowsRef.current).filter(workflowId => expandedWorkflowsRef.current[workflowId]);
+        if (currentlyExpanded.length > 0) {
+          console.debug(`Refreshing job data for ${currentlyExpanded.length} expanded workflows`);
+          
+          // Use setTimeout to allow the workflow data to be processed first
+          setTimeout(async () => {
+            for (const workflowId of currentlyExpanded) {
+              const workflow = workflowData.find(w => w.workflow.id.toString() === workflowId);
+              const runId = workflow?.runId || workflow?.lastRunId;
+              
+              if (runId) {
+                try {
+                  const jobs = await githubActionsService.getWorkflowRunJobs(runId);
+                  if (jobs) {
+                    setWorkflowJobs(prev => ({
+                      ...prev,
+                      [runId]: jobs
+                    }));
+                    console.debug(`Refreshed ${jobs.length} jobs for expanded workflow ${workflow.workflow.name}`);
+                  }
+                } catch (error) {
+                  console.error(`Error refreshing jobs for expanded workflow ${workflow?.workflow.name}:`, error);
+                }
+              }
+            }
+          }, 100);
+        }
+      }
 
       // Call callback if provided
       if (onWorkflowAction && workflowData.length > 0) {
@@ -304,10 +340,14 @@ const WorkflowDashboard = ({
     
     // If already expanded, just collapse it
     if (expandedWorkflows[workflowId]) {
-      setExpandedWorkflows(prev => ({
-        ...prev,
-        [workflowId]: false
-      }));
+      setExpandedWorkflows(prev => {
+        const newState = {
+          ...prev,
+          [workflowId]: false
+        };
+        expandedWorkflowsRef.current = newState; // Update ref
+        return newState;
+      });
       return;
     }
 
@@ -333,10 +373,14 @@ const WorkflowDashboard = ({
     }
 
     // Expand the workflow
-    setExpandedWorkflows(prev => ({
-      ...prev,
-      [workflowId]: true
-    }));
+    setExpandedWorkflows(prev => {
+      const newState = {
+        ...prev,
+        [workflowId]: true
+      };
+      expandedWorkflowsRef.current = newState; // Update ref
+      return newState;
+    });
   };
 
   const formatDate = (date) => {
