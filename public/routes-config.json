@@ -141,6 +141,20 @@
         { "path": "/test-asset-editor", "exact": true }
       ]
     },
+    "LocalRepositoryDemo": {
+      "path": "./components/LocalRepositoryDemo",
+      "routes": [
+        { "path": "/local-repository-demo", "exact": true }
+      ]
+    },
+    "DAKLocalIntegrationDemo": {
+      "path": "./components/DAKLocalIntegrationDemo", 
+      "routes": [
+        { "path": "/dak-local-integration-demo", "exact": true },
+        { "path": "/dak-local-integration-demo/:user/:repo", "exact": true },
+        { "path": "/dak-local-integration-demo/:user/:repo/:branch", "exact": true }
+      ]
+    },
     "NotFound": {
       "path": "./components/NotFound",
       "routes": [

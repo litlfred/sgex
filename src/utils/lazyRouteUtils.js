@@ -94,6 +94,12 @@ function createLazyComponent(componentName) {
     case 'AssetEditorTest':
       LazyComponent = React.lazy(() => import('../components/AssetEditorTest'));
       break;
+    case 'LocalRepositoryDemo':
+      LazyComponent = React.lazy(() => import('../components/LocalRepositoryDemo'));
+      break;
+    case 'DAKLocalIntegrationDemo':
+      LazyComponent = React.lazy(() => import('../components/DAKLocalIntegrationDemo'));
+      break;
     case 'BranchListingPage':
       LazyComponent = React.lazy(() => import('../components/BranchListingPage'));
       break;
