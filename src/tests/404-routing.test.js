@@ -61,9 +61,10 @@ describe('404.html SPA Routing', () => {
     
     // Should contain SGEX-specific SPA routing logic
     expect(content).toContain('SGEX Dynamic URL Routing');
-    expect(content).toContain('getSGEXRouteConfig');
     expect(content).toContain('GitHub Pages');
-    expect(content).toContain('l.replace(newUrl)');
+    expect(content).toContain('l.replace(');
+    expect(content).toContain('optimisticBranchRedirect');
+    expect(content).toContain('window.SGEX_storeStructuredContext');
   });
 
   test('should handle GitHub Pages SGEX deployment URLs', () => {

@@ -189,6 +189,44 @@ export function getRoutingContext() {
 }
 
 /**
+ * Store structured routing context in sessionStorage
+ * Moved from 404.html to centralize context management
+ */
+export function storeStructuredContext(routePath, branch) {
+  if (!routePath) return;
+  
+  const segments = routePath.split('/').filter(Boolean);
+  if (segments.length === 0) return;
+  
+  const context = {
+    component: segments[0],
+    user: segments[1] || null,
+    repo: segments[2] || null,
+    branch: segments[3] || null,
+    asset: segments.length > 4 ? segments.slice(4).join('/') : null,
+    deploymentBranch: branch,
+    intendedBranch: branch,
+    timestamp: Date.now()
+  };
+  
+  // Store structured context for React app
+  if (typeof sessionStorage !== 'undefined') {
+    sessionStorage.setItem('sgex_url_context', JSON.stringify(context));
+    
+    // Store individual items for backward compatibility
+    sessionStorage.setItem('sgex_current_component', context.component);
+    if (context.user) sessionStorage.setItem('sgex_selected_user', context.user);
+    if (context.repo) sessionStorage.setItem('sgex_selected_repo', context.repo);
+    if (context.branch) sessionStorage.setItem('sgex_selected_branch', context.branch);
+    if (context.asset) sessionStorage.setItem('sgex_selected_asset', context.asset);
+    sessionStorage.setItem('sgex_deployment_branch', context.deploymentBranch);
+    sessionStorage.setItem('sgex_intended_branch', context.intendedBranch);
+  }
+  
+  return context;
+}
+
+/**
  * Extract DAK components from route configuration
  */
 export function extractDAKComponentsFromRoutes() {
@@ -198,22 +236,8 @@ export function extractDAKComponentsFromRoutes() {
   }
   
   // Fallback for server-side rendering or if config not loaded
-  console.warn('SGEX route configuration not available, using fallback');
-  return [
-    'dashboard',                    
-    'core-data-dictionary-viewer', 
-    'health-interventions',        
-    'actor-editor',               
-    'business-process-selection',  
-    'bpmn-editor',                
-    'bpmn-viewer',                
-    'bpmn-source',                
-    'decision-support-logic',
-    'questionnaire-editor',
-    'docs',
-    'pages',
-    'faq-demo'
-  ];
+  console.warn('SGEX route configuration not available, returning empty array');
+  return [];
 }
 
 /**
@@ -250,3 +274,8 @@ export function isValidDAKComponent(component) {
 }
 
 export default routingContext;
+
+// Make storeStructuredContext globally available for 404.html
+if (typeof window !== 'undefined') {
+  window.SGEX_storeStructuredContext = storeStructuredContext;
+}

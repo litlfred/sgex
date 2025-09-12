@@ -307,3 +307,38 @@ if (typeof window !== 'undefined') {
 // Make functions available globally
 window.loadSGEXRouteConfig = loadRouteConfigSync;
 window.getSGEXRouteConfig = getSGEXRouteConfig;
+
+// Structured context storage function for 404.html
+window.SGEX_storeStructuredContext = function(routePath, branch) {
+  if (!routePath) return;
+  
+  var segments = routePath.split('/').filter(Boolean);
+  if (segments.length === 0) return;
+  
+  var context = {
+    component: segments[0],
+    user: segments[1] || null,
+    repo: segments[2] || null,
+    branch: segments[3] || null,
+    asset: segments.length > 4 ? segments.slice(4).join('/') : null,
+    deploymentBranch: branch,
+    intendedBranch: branch,
+    timestamp: Date.now()
+  };
+  
+  // Store structured context for React app
+  if (typeof sessionStorage !== 'undefined') {
+    sessionStorage.setItem('sgex_url_context', JSON.stringify(context));
+    
+    // Store individual items for backward compatibility
+    sessionStorage.setItem('sgex_current_component', context.component);
+    if (context.user) sessionStorage.setItem('sgex_selected_user', context.user);
+    if (context.repo) sessionStorage.setItem('sgex_selected_repo', context.repo);
+    if (context.branch) sessionStorage.setItem('sgex_selected_branch', context.branch);
+    if (context.asset) sessionStorage.setItem('sgex_selected_asset', context.asset);
+    sessionStorage.setItem('sgex_deployment_branch', context.deploymentBranch);
+    sessionStorage.setItem('sgex_intended_branch', context.intendedBranch);
+  }
+  
+  return context;
+};

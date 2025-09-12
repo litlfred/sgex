@@ -6,8 +6,8 @@
     <!-- Load SGEX route configuration service -->
     <script src="./routeConfig.js"></script>
     <script type="text/javascript">
-      // SGEX Simplified Optimistic Routing for GitHub Pages
-      // Uses optimistic branch detection with graceful fallback
+      // SGEX Dynamic URL Routing for GitHub Pages
+      // Simplified Optimistic Routing with graceful fallback
       // Significantly reduced from 651 lines to ~100 lines
 
       (function(l) {
@@ -89,9 +89,9 @@
         }
 
         function optimisticBranchRedirect(branch, routePath) {
-          // Parse and store structured context before redirect
-          if (routePath) {
-            storeStructuredContext(routePath, branch);
+          // Parse and store structured context before redirect using global service
+          if (routePath && typeof window.SGEX_storeStructuredContext === 'function') {
+            window.SGEX_storeStructuredContext(routePath, branch);
           }
           
           // Always try branch deployment first (optimistic approach)
@@ -102,36 +102,6 @@
           
           console.log('SGEX 404.html: Optimistic branch redirect to:', branchUrl);
           redirectToSPA(branchUrl, '');
-        }
-
-        function storeStructuredContext(routePath, branch) {
-          if (!routePath) return;
-          
-          var segments = routePath.split('/').filter(Boolean);
-          if (segments.length === 0) return;
-          
-          var context = {
-            component: segments[0],
-            user: segments[1] || null,
-            repo: segments[2] || null,
-            branch: segments[3] || null,
-            asset: segments.length > 4 ? segments.slice(4).join('/') : null,
-            deploymentBranch: branch,
-            intendedBranch: branch,
-            timestamp: Date.now()
-          };
-          
-          // Store structured context for React app
-          sessionStorage.setItem('sgex_url_context', JSON.stringify(context));
-          
-          // Store individual items for backward compatibility
-          sessionStorage.setItem('sgex_current_component', context.component);
-          if (context.user) sessionStorage.setItem('sgex_selected_user', context.user);
-          if (context.repo) sessionStorage.setItem('sgex_selected_repo', context.repo);
-          if (context.branch) sessionStorage.setItem('sgex_selected_branch', context.branch);
-          if (context.asset) sessionStorage.setItem('sgex_selected_asset', context.asset);
-          sessionStorage.setItem('sgex_deployment_branch', context.deploymentBranch);
-          sessionStorage.setItem('sgex_intended_branch', context.intendedBranch);
         }
 
         function redirectToSPA(basePath, routePath) {

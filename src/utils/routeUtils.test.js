@@ -1,6 +1,36 @@
 import { extractDAKComponentsFromRoutes, isValidDAKComponent, parseDAKUrl } from '../services/routingContextService';
 
 describe('routeUtils', () => {
+  // Mock window.SGEX_ROUTES_CONFIG for tests to avoid hardcoded lists
+  beforeAll(() => {
+    // @ts-ignore
+    global.window = global.window || {};
+    global.window.SGEX_ROUTES_CONFIG = {
+      getDAKComponentNames: () => [
+        'dashboard',
+        'core-data-dictionary-viewer', 
+        'health-interventions',        
+        'actor-editor',               
+        'business-process-selection',  
+        'bpmn-editor',                
+        'bpmn-viewer',                
+        'bpmn-source',                
+        'decision-support-logic',
+        'questionnaire-editor',
+        'docs',
+        'pages',
+        'faq-demo'
+      ]
+    };
+  });
+
+  afterAll(() => {
+    // Clean up global mock
+    if (global.window && global.window.SGEX_ROUTES_CONFIG) {
+      delete global.window.SGEX_ROUTES_CONFIG;
+    }
+  });
+
   describe('extractDAKComponentsFromRoutes', () => {
     it('should return an array of valid DAK components', () => {
       const components = extractDAKComponentsFromRoutes();
