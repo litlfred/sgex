@@ -77,18 +77,18 @@ const DAKDashboardContent = () => {
 
     return (
       <div 
-        className={`component-card ${component.type.toLowerCase()} large-card ${imageLoaded ? 'image-loaded' : ''}`}
-        onClick={(event) => handleComponentClick(event, component)}
+        className={`component-card ${component.type.toLowerCase()} large-card ${imageLoaded ? 'image-loaded' : ''} ${!repository?.name ? 'disabled' : ''}`}
+        onClick={repository?.name ? (event) => handleComponentClick(event, component) : undefined}
         style={{ '--component-color': component.color }}
-        tabIndex={0}
+        tabIndex={repository?.name ? 0 : -1}
         role="button"
         aria-label={`${component.name} - ${component.description}`}
-        onKeyDown={(event) => {
+        onKeyDown={repository?.name ? (event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             handleComponentClick(event, component);
           }
-        }}
+        } : undefined}
       >
         <div className="component-main">
           <div className="component-header">
@@ -152,10 +152,10 @@ const DAKDashboardContent = () => {
 
   // Load issue counts for repository
   const loadIssueCounts = async () => {
-    if (!repository) return;
+    if (!repository?.name) return;
     
     try {
-      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const owner = repository.owner?.login || repository.full_name?.split('/')[0];
       const repoName = repository.name;
       
       // Get all issues (includes pull requests in GitHub API)
@@ -192,10 +192,10 @@ const DAKDashboardContent = () => {
   // Check write permissions on mount
   useEffect(() => {
     const checkPermissions = async () => {
-      if (repository && profile) {
+      if (repository?.name && profile) {
         try {
           const writeAccess = await githubService.checkRepositoryWritePermissions(
-            repository.owner?.login || repository.full_name.split('/')[0],
+            repository.owner?.login || repository.full_name?.split('/')[0],
             repository.name
           );
           setHasWriteAccess(writeAccess);
@@ -368,6 +368,12 @@ const DAKDashboardContent = () => {
 
 
   const handleComponentClick = (event, component) => {
+    // Early return if repository is not available
+    if (!repository?.name) {
+      console.warn('Repository not available for component navigation');
+      return;
+    }
+    
     const navigationState = {
       profile,
       repository,
@@ -377,7 +383,7 @@ const DAKDashboardContent = () => {
     
     // For decision-support, always navigate to view page (no permission check needed)
     if (component.id === 'decision-support') {
-      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const owner = repository.owner?.login || repository.full_name?.split('/')[0];
       const repoName = repository.name;
       const path = selectedBranch 
         ? `/decision-support-logic/${owner}/${repoName}/${selectedBranch}`
@@ -389,7 +395,7 @@ const DAKDashboardContent = () => {
 
     // For business processes, navigate to selection page without permission check
     if (component.id === 'business-processes') {
-      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const owner = repository.owner?.login || repository.full_name?.split('/')[0];
       const repoName = repository.name;
       const path = selectedBranch 
         ? `/business-process-selection/${owner}/${repoName}/${selectedBranch}`
@@ -403,7 +409,7 @@ const DAKDashboardContent = () => {
 
     // For health-interventions (WHO Digital Library), allow access in read-only mode
     if (component.id === 'health-interventions') {
-      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const owner = repository.owner?.login || repository.full_name?.split('/')[0];
       const repoName = repository.name;
       const path = selectedBranch 
         ? `/health-interventions/${owner}/${repoName}/${selectedBranch}`
@@ -431,7 +437,7 @@ const DAKDashboardContent = () => {
 
     // For generic-personas, navigate to actor editor
     if (component.id === 'generic-personas') {
-      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const owner = repository.owner?.login || repository.full_name?.split('/')[0];
       const repoName = repository.name;
       const path = selectedBranch 
         ? `/actor-editor/${owner}/${repoName}/${selectedBranch}`
@@ -443,7 +449,7 @@ const DAKDashboardContent = () => {
 
     // For test-scenarios, navigate to testing viewer
     if (component.id === 'test-scenarios') {
-      const owner = repository.owner?.login || repository.full_name.split('/')[0];
+      const owner = repository.owner?.login || repository.full_name?.split('/')[0];
       const repoName = repository.name;
       const path = selectedBranch 
         ? `/testing-viewer/${owner}/${repoName}/${selectedBranch}`
@@ -462,7 +468,7 @@ const DAKDashboardContent = () => {
     }
 
     // Navigate to component-specific routes for other components
-    const owner = repository.owner?.login || repository.full_name.split('/')[0];
+    const owner = repository.owner?.login || repository.full_name?.split('/')[0];
     const repoName = repository.name;
     const path = selectedBranch 
       ? `/${component.id}/${owner}/${repoName}/${selectedBranch}`
