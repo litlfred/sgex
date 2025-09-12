@@ -46,6 +46,7 @@
 @import '../components/BranchDeploymentSelector.css';
 @import '../components/BranchListingPage.css';
 @import '../components/BranchSelector.css';
+@import '../components/BugReportForm.css';
 @import '../components/BusinessProcessSelection.css';
 @import '../components/CollaborationModal.css';
 @import '../components/CommitDiffModal.css';

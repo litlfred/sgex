@@ -3,10 +3,17 @@ import bugReportService from '../services/bugReportService';
 import githubService from '../services/githubService';
 import ScreenshotEditor from './ScreenshotEditor';
 
-const BugReportForm = ({ onClose, contextData = {} }) => {
+const BugReportForm = ({ 
+  onClose, 
+  contextData = {}, 
+  preselectedTemplateType = null, 
+  embedded = false, 
+  formData: externalFormData = {}, 
+  onFormDataChange = null 
+}) => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState(externalFormData);
   const [includeConsole, setIncludeConsole] = useState(false);
   const [includeScreenshot, setIncludeScreenshot] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -22,10 +29,17 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
   const [showScreenshotEditor, setShowScreenshotEditor] = useState(false);
   const [originalScreenshotBlob, setOriginalScreenshotBlob] = useState(null);
 
+  // Sync with external form data when in embedded mode
+  useEffect(() => {
+    if (embedded && externalFormData) {
+      setFormData(externalFormData);
+    }
+  }, [embedded, externalFormData]);
+
   // Load templates on mount
   useEffect(() => {
     loadTemplates();
-  }, []);
+  }, [preselectedTemplateType]); // Add preselectedTemplateType as dependency
 
   // Start console capture when component mounts
   useEffect(() => {
@@ -37,18 +51,41 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
     };
   }, []);
 
-  // Auto-select Bug Report template and enable console by default for bug reports
+  // Auto-select template based on preselected type or default to Bug Report
   useEffect(() => {
     if (templates.length > 0 && !selectedTemplate) {
-      const bugTemplate = templates.find(t => t.type === 'bug') || templates[0];
-      setSelectedTemplate(bugTemplate);
-      setIncludeConsole(bugTemplate.type === 'bug');
+      let targetTemplate;
+      
+      if (preselectedTemplateType) {
+        // Try to find template by type first, then by ID
+        targetTemplate = templates.find(t => t.type === preselectedTemplateType) ||
+                        templates.find(t => t.id.includes(preselectedTemplateType)) ||
+                        templates.find(t => t.name.toLowerCase().includes(preselectedTemplateType.toLowerCase()));
+      }
+      
+      // Fallback to bug template or first template
+      if (!targetTemplate) {
+        targetTemplate = templates.find(t => t.type === 'bug') || templates[0];
+      }
+      
+      setSelectedTemplate(targetTemplate);
+      setIncludeConsole(targetTemplate.type === 'bug' || preselectedTemplateType === 'bug');
     }
-  }, [templates, selectedTemplate]); // Added selectedTemplate back to dependencies
+  }, [templates, selectedTemplate, preselectedTemplateType]);
 
   const loadTemplates = async () => {
     try {
       setLoading(true);
+      
+      // If we have a preselected template type, use default templates immediately
+      if (preselectedTemplateType) {
+        const defaultTemplates = bugReportService.getDefaultTemplates();
+        setTemplates(defaultTemplates);
+        setLoading(false);
+        return;
+      }
+      
+      // Otherwise, try to fetch templates from GitHub
       const fetchedTemplates = await bugReportService.getTemplates();
       setTemplates(fetchedTemplates);
     } catch (err) {
@@ -69,10 +106,16 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
   };
 
   const handleFormChange = (fieldId, value) => {
-    setFormData(prev => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [fieldId]: value
-    }));
+    };
+    setFormData(newFormData);
+    
+    // Call external callback if in embedded mode
+    if (embedded && onFormDataChange) {
+      onFormDataChange(newFormData);
+    }
   };
 
   const handleTakeScreenshot = async () => {
@@ -462,19 +505,8 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
     );
   }
 
-  return (
-    <div className="bug-report-form">
-      <div className="form-header">
-        <h3>Report an Issue</h3>
-        <button 
-          className="close-btn"
-          onClick={onClose}
-          aria-label="Close bug report form"
-        >
-          ×
-        </button>
-      </div>
-
+  const formContent = (
+    <>
       {error && (
         <div className="error-message">
           <p>⚠️ {error}</p>
@@ -724,6 +756,30 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
         onCancel={handleScreenshotEditorCancel}
         isOpen={showScreenshotEditor}
       />
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="bug-report-form embedded">
+        {formContent}
+      </div>
+    );
+  }
+
+  return (
+    <div className="bug-report-form">
+      <div className="form-header">
+        <h3>Report an Issue</h3>
+        <button 
+          className="close-btn"
+          onClick={onClose}
+          aria-label="Close bug report form"
+        >
+          ×
+        </button>
+      </div>
+      {formContent}
     </div>
   );
 };
