@@ -52,6 +52,7 @@
     "run-mcp-server": "cd services/dak-faq-mcp && npm run start-mcp",
     "test-mcp": "cd services/dak-faq-mcp && npm test",
     "generate-dak-faq-docs": "npm run build-mcp && node scripts/generate-dak-faq-docs.js",
+    "generate-service-table": "node scripts/generate-service-table.js",
     "compliance:profile": "node src/tests/compliance/profileCreationCompliance.js",
     "compliance:all": "npm run compliance:profile",
     "test:compliance": "npm test -- --testPathPattern=compliance"

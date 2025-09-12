@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Publication Request",
+  "description": "Request parameters for generating DAK publications",
+  "type": "object",
+  "properties": {
+    "dakRepository": {
+      "type": "string",
+      "description": "GitHub repository path (owner/repo)",
+      "pattern": "^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$",
+      "examples": ["WorldHealthOrganization/smart-immunizations"]
+    },
+    "branch": {
+      "type": "string",
+      "description": "Git branch or tag reference",
+      "default": "main",
+      "examples": ["main", "develop", "v1.0.0"]
+    },
+    "format": {
+      "type": "string",
+      "description": "Output format for publication",
+      "enum": ["html", "epub", "docbook", "pdf"],
+      "default": "html"
+    },
+    "scope": {
+      "type": "string",
+      "description": "Publication scope - full DAK or specific component",
+      "enum": [
+        "full",
+        "health-interventions",
+        "generic-personas", 
+        "user-scenarios",
+        "business-processes",
+        "core-data-elements",
+        "decision-support",
+        "program-indicators",
+        "functional-requirements",
+        "test-scenarios"
+      ],
+      "default": "full"
+    },
+    "templateId": {
+      "type": "string",
+      "description": "Template identifier for publication layout",
+      "examples": ["who-standard", "custom-template"],
+      "default": "who-standard"
+    },
+    "variables": {
+      "type": "object",
+      "description": "Template variables and customizations",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "examples": [
+        {
+          "title": "Custom Publication Title",
+          "author": "WHO Technical Team",
+          "version": "1.2.0"
+        }
+      ]
+    },
+    "options": {
+      "type": "object",
+      "description": "Publication generation options",
+      "properties": {
+        "includeTableOfContents": {
+          "type": "boolean",
+          "default": true
+        },
+        "includeMetadata": {
+          "type": "boolean", 
+          "default": true
+        },
+        "includeWHOBranding": {
+          "type": "boolean",
+          "default": true
+        },
+        "generateIndex": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["dakRepository", "format"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "dakRepository": "WorldHealthOrganization/smart-immunizations",
+      "branch": "main",
+      "format": "html",
+      "scope": "full",
+      "templateId": "who-standard"
+    },
+    {
+      "dakRepository": "example-org/anc-dak", 
+      "format": "epub",
+      "scope": "business-processes",
+      "variables": {
+        "title": "ANC Business Processes",
+        "version": "2.1.0"
+      }
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP Tools Call Input",
+  "description": "Input schema for MCP tools/call method",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the tool to call",
+      "enum": [
+        "execute_faq_question",
+        "list_faq_questions", 
+        "get_question_schema"
+      ]
+    },
+    "arguments": {
+      "type": "object",
+      "description": "Arguments to pass to the tool",
+      "additionalProperties": true,
+      "anyOf": [
+        {
+          "title": "execute_faq_question arguments",
+          "properties": {
+            "questionId": {
+              "$ref": "./questionId.schema.json"
+            },
+            "parameters": {
+              "$ref": "./faq-parameters.schema.json"
+            },
+            "context": {
+              "$ref": "./context.schema.json"
+            }
+          },
+          "required": ["questionId"]
+        },
+        {
+          "title": "list_faq_questions arguments",
+          "properties": {
+            "level": {
+              "type": "string",
+              "enum": ["dak", "component", "asset"]
+            },
+            "componentType": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        {
+          "title": "get_question_schema arguments",
+          "properties": {
+            "questionId": {
+              "$ref": "./questionId.schema.json"
+            }
+          },
+          "required": ["questionId"]
+        }
+      ]
+    }
+  },
+  "required": ["name", "arguments"],
+  "examples": [
+    {
+      "name": "execute_faq_question",
+      "arguments": {
+        "questionId": "dak-name",
+        "parameters": {
+          "repository": "who/smart-immunizations"
+        }
+      }
+    },
+    {
+      "name": "list_faq_questions",
+      "arguments": {
+        "level": "dak"
+      }
+    },
+    {
+      "name": "get_question_schema",
+      "arguments": {
+        "questionId": "dak-version"
+      }
+    }
+  ]
+}

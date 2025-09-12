@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Publication Status",
+  "description": "Publication generation status and progress information",
+  "type": "object",
+  "properties": {
+    "publicationId": {
+      "type": "string",
+      "description": "Unique identifier for the publication",
+      "pattern": "^pub-[a-f0-9-]+$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["queued", "processing", "completed", "failed", "cancelled"],
+      "description": "Current status of publication generation"
+    },
+    "progress": {
+      "type": "object",
+      "description": "Progress information for ongoing generation",
+      "properties": {
+        "percentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Completion percentage"
+        },
+        "currentStep": {
+          "type": "string",
+          "description": "Current processing step"
+        },
+        "estimatedTimeRemaining": {
+          "type": "number",
+          "description": "Estimated time remaining in seconds"
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "description": "Original publication request",
+      "properties": {
+        "dakRepository": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "templateId": {
+          "type": "string"
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "description": "Publication result (if completed)",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "filename": {
+                "type": "string"
+              },
+              "format": {
+                "type": "string"
+              },
+              "downloadUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "size": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "generationTime": {
+          "type": "number",
+          "description": "Total generation time in seconds"
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "description": "Error information (if failed)",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Error message"
+        },
+        "details": {
+          "type": "string",
+          "description": "Detailed error information"
+        }
+      }
+    },
+    "timestamps": {
+      "type": "object",
+      "description": "Processing timestamps",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "started": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completed": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  },
+  "required": ["publicationId", "status"],
+  "additionalProperties": false
+}

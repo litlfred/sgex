@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FAQ Catalog Output",
+  "description": "List of available FAQ questions with metadata",
+  "type": "object",
+  "properties": {
+    "questions": {
+      "type": "array",
+      "description": "Array of available FAQ questions",
+      "items": {
+        "$ref": "#/definitions/FAQQuestion"
+      }
+    },
+    "totalCount": {
+      "type": "integer",
+      "description": "Total number of questions available",
+      "minimum": 0
+    },
+    "filteredCount": {
+      "type": "integer", 
+      "description": "Number of questions after applying filters",
+      "minimum": 0
+    },
+    "filters": {
+      "type": "object",
+      "description": "Applied filters",
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["dak", "component", "asset"]
+        },
+        "componentType": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": ["questions"],
+  "definitions": {
+    "FAQQuestion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique question identifier"
+        },
+        "title": {
+          "type": "string", 
+          "description": "Human-readable title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description"
+        },
+        "level": {
+          "type": "string",
+          "enum": ["dak", "component", "asset"],
+          "description": "Question hierarchy level"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Question tags for categorization"
+        },
+        "componentType": {
+          "type": "string",
+          "description": "DAK component type (if applicable)"
+        },
+        "assetType": {
+          "type": "string",
+          "description": "Asset type (if applicable)"
+        },
+        "parameters": {
+          "type": "array",
+          "description": "Question parameter definitions",
+          "items": {
+            "$ref": "#/definitions/QuestionParameter"
+          }
+        },
+        "version": {
+          "type": "string",
+          "description": "Question version"
+        }
+      },
+      "required": ["id", "title", "level"]
+    },
+    "QuestionParameter": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Parameter name"
+        },
+        "type": {
+          "type": "string",
+          "description": "Parameter type"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether parameter is required"
+        },
+        "description": {
+          "type": "string",
+          "description": "Parameter description"
+        },
+        "defaultValue": {
+          "description": "Default value (any type)"
+        }
+      },
+      "required": ["name", "type", "required"]
+    }
+  }
+}

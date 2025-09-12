@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FAQ Output",
+  "description": "Result from executing a FAQ question",
+  "type": "object",
+  "properties": {
+    "structured": {
+      "type": "object",
+      "description": "Structured data result specific to the question",
+      "additionalProperties": true,
+      "examples": [
+        {
+          "name": "Immunization DAK",
+          "version": "1.0.0",
+          "status": "draft"
+        },
+        {
+          "processCount": 5,
+          "processes": ["registration", "screening", "vaccination"]
+        }
+      ]
+    },
+    "narrative": {
+      "type": "string",
+      "description": "Human-readable narrative explanation in HTML format",
+      "contentMediaType": "text/html",
+      "examples": [
+        "<h4>DAK Name</h4><p>The name of this DAK is <strong>Immunization DAK</strong>.</p>",
+        "<h4>Business Processes</h4><p>Found 5 business processes in this DAK.</p>"
+      ]
+    },
+    "errors": {
+      "type": "array",
+      "description": "Errors encountered during execution",
+      "items": {
+        "type": "string"
+      },
+      "examples": [
+        ["File not found: sushi-config.yaml"],
+        ["Invalid YAML syntax in configuration file"]
+      ]
+    },
+    "warnings": {
+      "type": "array", 
+      "description": "Warnings from execution",
+      "items": {
+        "type": "string"
+      },
+      "examples": [
+        ["No description found in DAK configuration"],
+        ["Some BPMN files may be invalid"]
+      ]
+    },
+    "meta": {
+      "type": "object",
+      "description": "Metadata about the execution",
+      "properties": {
+        "executionTime": {
+          "type": "number",
+          "description": "Execution time in milliseconds"
+        },
+        "cacheHit": {
+          "type": "boolean",
+          "description": "Whether result was served from cache"
+        },
+        "questionId": {
+          "type": "string",
+          "description": "ID of the executed question"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Execution timestamp"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "required": ["structured", "narrative"],
+  "examples": [
+    {
+      "structured": {
+        "name": "Immunization DAK",
+        "version": "1.0.0"
+      },
+      "narrative": "<h4>DAK Name</h4><p>The name of this DAK is <strong>Immunization DAK</strong>.</p>",
+      "errors": [],
+      "warnings": [],
+      "meta": {
+        "executionTime": 150,
+        "cacheHit": false,
+        "questionId": "dak-name",
+        "timestamp": "2024-01-15T10:30:00Z"
+      }
+    }
+  ]
+}

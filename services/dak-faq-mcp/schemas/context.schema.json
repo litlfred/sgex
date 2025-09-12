@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Execution Context",
+  "description": "Context information for FAQ question execution",
+  "type": "object",
+  "properties": {
+    "repositoryPath": {
+      "type": "string",
+      "description": "Local path to the DAK repository",
+      "examples": ["/tmp/dak-repo", "/workspace/immunizations-dak"]
+    },
+    "githubToken": {
+      "type": "string",
+      "description": "GitHub personal access token (if needed)",
+      "format": "password"
+    },
+    "cacheEnabled": {
+      "type": "boolean",
+      "description": "Whether to use caching for repository data",
+      "default": true
+    },
+    "timeout": {
+      "type": "integer",
+      "description": "Timeout in seconds for network operations",
+      "default": 30,
+      "minimum": 5,
+      "maximum": 300
+    },
+    "userAgent": {
+      "type": "string",
+      "description": "User agent for HTTP requests",
+      "default": "SGEX-DAK-FAQ/1.0"
+    }
+  },
+  "additionalProperties": true,
+  "examples": [
+    {
+      "repositoryPath": "/tmp/dak-repo",
+      "cacheEnabled": true
+    },
+    {
+      "repositoryPath": "/workspace/immunizations-dak",
+      "timeout": 60,
+      "githubToken": "ghp_xxxxxxxxxxxx"
+    }
+  ]
+}

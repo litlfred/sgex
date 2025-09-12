@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Template List",
+  "description": "List of available publication templates",
+  "type": "object",
+  "properties": {
+    "templates": {
+      "type": "array",
+      "description": "Available publication templates",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Template identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable template name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Template description"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["who-standard", "custom", "minimal", "detailed"]
+          },
+          "supportedFormats": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["html", "epub", "docbook", "pdf"]
+            }
+          },
+          "supportedScopes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "full",
+                "health-interventions",
+                "generic-personas",
+                "user-scenarios",
+                "business-processes",
+                "core-data-elements",
+                "decision-support",
+                "program-indicators",
+                "functional-requirements",
+                "test-scenarios"
+              ]
+            }
+          },
+          "variables": {
+            "type": "array",
+            "description": "Configurable template variables",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["string", "boolean", "number"]
+                },
+                "required": {
+                  "type": "boolean"
+                },
+                "default": {
+                  "description": "Default value"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "required": ["name", "type"]
+            }
+          },
+          "preview": {
+            "type": "string",
+            "format": "uri",
+            "description": "Preview image or URL"
+          }
+        },
+        "required": ["id", "name", "category", "supportedFormats"]
+      }
+    },
+    "total": {
+      "type": "integer",
+      "description": "Total number of templates"
+    },
+    "filtered": {
+      "type": "integer", 
+      "description": "Number of templates after filtering"
+    }
+  },
+  "required": ["templates", "total"],
+  "additionalProperties": false
+}
