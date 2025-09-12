@@ -31,6 +31,9 @@ const WorkflowDashboard = ({
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [actionStates, setActionStates] = useState({}); // Track individual action states
+  const [expandedWorkflows, setExpandedWorkflows] = useState({}); // Track expanded workflow details
+  const [workflowJobs, setWorkflowJobs] = useState({}); // Cache for workflow jobs
+  const [loadingJobs, setLoadingJobs] = useState({}); // Track job loading states
   const refreshIntervalRef = useRef(null);
   const [lastRefresh, setLastRefresh] = useState(null);
 
@@ -294,6 +297,48 @@ const WorkflowDashboard = ({
     fetchWorkflows(true);
   };
 
+  // Toggle workflow expansion to show job details
+  const toggleWorkflowExpansion = async (workflow) => {
+    const workflowId = workflow.workflow.id;
+    const runId = workflow.runId || workflow.lastRunId;
+    
+    // If already expanded, just collapse it
+    if (expandedWorkflows[workflowId]) {
+      setExpandedWorkflows(prev => ({
+        ...prev,
+        [workflowId]: false
+      }));
+      return;
+    }
+
+    // If not expanded and we have a run ID, fetch jobs
+    if (runId && githubActionsService) {
+      setLoadingJobs(prev => ({ ...prev, [workflowId]: true }));
+      
+      try {
+        const jobs = await githubActionsService.getWorkflowRunJobs(runId);
+        
+        if (jobs) {
+          setWorkflowJobs(prev => ({
+            ...prev,
+            [runId]: jobs
+          }));
+          console.debug(`Fetched ${jobs.length} jobs for workflow ${workflow.workflow.name}`);
+        }
+      } catch (error) {
+        console.error(`Error fetching jobs for workflow ${workflow.workflow.name}:`, error);
+      } finally {
+        setLoadingJobs(prev => ({ ...prev, [workflowId]: false }));
+      }
+    }
+
+    // Expand the workflow
+    setExpandedWorkflows(prev => ({
+      ...prev,
+      [workflowId]: true
+    }));
+  };
+
   const formatDate = (date) => {
     if (!date) return 'Never';
     return new Intl.DateTimeFormat('en-US', {
@@ -302,6 +347,23 @@ const WorkflowDashboard = ({
       hour: '2-digit',
       minute: '2-digit'
     }).format(date);
+  };
+
+  const formatDuration = (seconds) => {
+    if (!seconds) return 'N/A';
+    
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (minutes === 0) {
+      return `${remainingSeconds}s`;
+    } else if (minutes < 60) {
+      return `${minutes}m ${remainingSeconds}s`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return `${hours}h ${remainingMinutes}m`;
+    }
   };
 
   const getWorkflowDescription = (workflow) => {
@@ -545,6 +607,11 @@ const WorkflowDashboard = ({
           <div className="workflows-list">
             {workflows.map((workflow) => {
               const actionState = actionStates[workflow.workflow.id];
+              const workflowId = workflow.workflow.id;
+              const runId = workflow.runId || workflow.lastRunId;
+              const isExpanded = expandedWorkflows[workflowId];
+              const isLoadingJobs = loadingJobs[workflowId];
+              const jobs = runId ? workflowJobs[runId] : null;
               
               return (
                 <div key={workflow.workflow.id} className="workflow-card">
@@ -595,7 +662,111 @@ const WorkflowDashboard = ({
                         Run ID: {workflow.runId || workflow.lastRunId}
                       </span>
                     )}
+                    {/* Job expansion toggle */}
+                    {runId && (
+                      <button
+                        onClick={() => toggleWorkflowExpansion(workflow)}
+                        className="job-expansion-toggle"
+                        disabled={isLoadingJobs}
+                      >
+                        {isLoadingJobs ? (
+                          <>⏳ Loading jobs...</>
+                        ) : isExpanded ? (
+                          <>🔽 Hide jobs</>
+                        ) : (
+                          <>🔼 Show jobs</>
+                        )}
+                      </button>
+                    )}
                   </div>
+
+                  {/* Expandable job details section */}
+                  {isExpanded && runId && (
+                    <div className="workflow-jobs-section">
+                      {isLoadingJobs ? (
+                        <div className="jobs-loading">
+                          <div className="loading-spinner"></div>
+                          <span>Loading job details...</span>
+                        </div>
+                      ) : jobs && jobs.length > 0 ? (
+                        <div className="jobs-list">
+                          <div className="jobs-header">
+                            <h5>Jobs for this run:</h5>
+                          </div>
+                          {jobs.map((job) => (
+                            <div key={job.id} className="job-card">
+                              <div className="job-header">
+                                <div className="job-info">
+                                  <div className="job-name">
+                                    {job.url ? (
+                                      <a 
+                                        href={job.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="job-link"
+                                      >
+                                        {job.name}
+                                      </a>
+                                    ) : (
+                                      <span>{job.name}</span>
+                                    )}
+                                  </div>
+                                  <div className="job-details">
+                                    {job.runnerName && (
+                                      <span className="job-runner">Runner: {job.runnerName}</span>
+                                    )}
+                                    {job.duration && (
+                                      <span className="job-duration">Duration: {formatDuration(job.duration)}</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="job-status">
+                                  <span className={`status-badge ${job.badgeClass}`}>
+                                    <span className="status-icon">{job.icon}</span>
+                                    <span className="status-text">{job.displayStatus}</span>
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              {/* Job steps - only show if there are steps */}
+                              {job.steps && job.steps.length > 0 && (
+                                <div className="job-steps">
+                                  <details className="job-steps-details">
+                                    <summary className="job-steps-summary">
+                                      {job.steps.length} step{job.steps.length !== 1 ? 's' : ''}
+                                    </summary>
+                                    <div className="job-steps-list">
+                                      {job.steps.map((step, stepIndex) => (
+                                        <div key={stepIndex} className="job-step">
+                                          <div className="step-info">
+                                            <span className="step-number">{step.number}.</span>
+                                            <span className="step-name">{step.name}</span>
+                                          </div>
+                                          <div className="step-status">
+                                            <span className={`step-badge ${step.badgeClass}`}>
+                                              <span className="step-icon">{step.icon}</span>
+                                              <span className="step-text">{step.displayStatus}</span>
+                                            </span>
+                                            {step.duration && (
+                                              <span className="step-duration">{formatDuration(step.duration)}</span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </details>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="jobs-empty">
+                          <span>No job details available for this run</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Action buttons and status messages */}
                   <div className="workflow-actions">

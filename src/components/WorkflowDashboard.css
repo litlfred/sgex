@@ -565,6 +565,38 @@
     text-align: center;
     gap: 0.5rem;
   }
+
+  /* Mobile responsive job details */
+  .job-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .job-status {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .job-details {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .job-step {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .step-status {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .job-steps-list {
+    padding-left: 0.5rem;
+  }
 }
 
 /* Dark mode specific adjustments */
@@ -807,4 +839,290 @@ body.theme-dark .action-status.rerunning {
   .pr-review-buttons {
     flex-direction: column;
   }
+}
+
+/* Job expansion toggle button */
+.job-expansion-toggle {
+  background: var(--who-secondary-bg);
+  border: 1px solid var(--who-border-color);
+  color: var(--who-text-primary);
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.job-expansion-toggle:hover:not(:disabled) {
+  background: var(--who-blue);
+  color: var(--who-text-on-primary);
+  border-color: var(--who-blue);
+}
+
+.job-expansion-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Workflow jobs section */
+.workflow-jobs-section {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--who-secondary-bg);
+  border: 1px solid var(--who-border-color);
+  border-radius: 6px;
+  animation: expandIn 0.3s ease;
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
+
+.jobs-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  color: var(--who-text-secondary);
+}
+
+.jobs-header h5 {
+  margin: 0 0 0.75rem 0;
+  color: var(--who-text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.jobs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.job-card {
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
+  border-radius: 4px;
+  padding: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.job-card:hover {
+  border-color: var(--who-blue);
+  box-shadow: 0 1px 3px var(--who-shadow-light);
+}
+
+.job-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.job-info {
+  flex: 1;
+}
+
+.job-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.job-link {
+  color: var(--who-blue);
+  text-decoration: none;
+}
+
+.job-link:hover {
+  text-decoration: underline;
+  color: var(--who-blue-dark);
+}
+
+.job-details {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--who-text-secondary);
+}
+
+.job-runner,
+.job-duration {
+  display: flex;
+  align-items: center;
+}
+
+.job-status {
+  margin-left: 1rem;
+}
+
+/* Job steps */
+.job-steps {
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--who-border-color);
+  padding-top: 0.5rem;
+}
+
+.job-steps-details {
+  background: var(--who-primary-bg);
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.job-steps-summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--who-text-secondary);
+  font-weight: 500;
+  padding: 0.25rem 0;
+  user-select: none;
+}
+
+.job-steps-summary:hover {
+  color: var(--who-text-primary);
+}
+
+.job-steps-list {
+  margin-top: 0.5rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--who-border-color);
+}
+
+.job-step {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--who-border-color);
+}
+
+.job-step:last-child {
+  border-bottom: none;
+}
+
+.step-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.step-number {
+  font-size: 0.7rem;
+  color: var(--who-text-muted);
+  font-weight: 500;
+  min-width: 20px;
+}
+
+.step-name {
+  font-size: 0.75rem;
+  color: var(--who-text-primary);
+}
+
+.step-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+.step-badge.succeeded {
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+  border-color: #28a745;
+}
+
+.step-badge.failed {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.step-badge.in-progress {
+  background: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+  border-color: #ffc107;
+}
+
+.step-badge.skipped {
+  background: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+  border-color: #6c757d;
+}
+
+.step-badge.cancelled {
+  background: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+  border-color: #ffc107;
+}
+
+.step-icon {
+  font-size: 0.7rem;
+}
+
+.step-duration {
+  font-size: 0.7rem;
+  color: var(--who-text-muted);
+}
+
+.jobs-empty {
+  text-align: center;
+  padding: 1rem;
+  color: var(--who-text-secondary);
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+/* Dark mode specific adjustments for job details */
+body.theme-dark .step-badge.succeeded {
+  background: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+  border-color: #28a745;
+}
+
+body.theme-dark .step-badge.failed {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+body.theme-dark .step-badge.in-progress {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  border-color: #ffc107;
+}
+
+body.theme-dark .step-badge.skipped {
+  background: rgba(108, 117, 125, 0.2);
+  color: #6c757d;
+  border-color: #6c757d;
+}
+
+body.theme-dark .step-badge.cancelled {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  border-color: #ffc107;
 }
