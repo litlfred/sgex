@@ -610,6 +610,67 @@ class ServiceTableGenerator {
   }
 
   /**
+   * Combine input parameters with their corresponding schemas into a condensed format
+   */
+  combineInputParametersAndSchemas(inputParameters, inputSchemas) {
+    if (!Array.isArray(inputParameters) || !Array.isArray(inputSchemas)) {
+      // Handle non-array cases
+      const params = Array.isArray(inputParameters) ? inputParameters.join(', ') : inputParameters;
+      const schemas = Array.isArray(inputSchemas) ? inputSchemas.join(', ') : inputSchemas;
+      return `${params} → ${schemas}`;
+    }
+
+    // Handle the case where we have "None" parameters
+    if (inputParameters.length === 1 && inputParameters[0] === 'None') {
+      return `None → ${inputSchemas[0] || 'No schema required'}`;
+    }
+
+    // Combine parameters with their corresponding schemas
+    const combined = [];
+    
+    // If we have more parameters than schemas, link all params to the first schema
+    if (inputParameters.length > inputSchemas.length && inputSchemas.length === 1) {
+      const schema = inputSchemas[0];
+      for (const param of inputParameters) {
+        const paramMatch = param.match(/`([^`]+)`:\s*(.+)/);
+        if (paramMatch) {
+          const paramName = paramMatch[1];
+          const paramType = paramMatch[2];
+          combined.push(`\`${paramName}\`: ${paramType} → ${schema}`);
+        } else {
+          combined.push(`${param} → ${schema}`);
+        }
+      }
+    } else {
+      // Normal case: try to match parameters with schemas
+      const maxLength = Math.max(inputParameters.length, inputSchemas.length);
+      
+      for (let i = 0; i < maxLength; i++) {
+        const param = inputParameters[i] || '';
+        const schema = inputSchemas[i] || inputSchemas[0] || ''; // fallback to first schema
+        
+        if (param && schema) {
+          // Extract parameter name for cleaner display
+          const paramMatch = param.match(/`([^`]+)`:\s*(.+)/);
+          if (paramMatch) {
+            const paramName = paramMatch[1];
+            const paramType = paramMatch[2];
+            combined.push(`\`${paramName}\`: ${paramType} → ${schema}`);
+          } else {
+            combined.push(`${param} → ${schema}`);
+          }
+        } else if (param) {
+          combined.push(param);
+        } else if (schema) {
+          combined.push(`→ ${schema}`);
+        }
+      }
+    }
+
+    return combined.join('<br>');
+  }
+
+  /**
    * Generate markdown table
    */
   generateMarkdownTable() {
@@ -617,23 +678,21 @@ class ServiceTableGenerator {
 
 This table is automatically generated from the codebase on every commit.
 
-| Service Category    | Service Name / Sub-Service          | Description                                                       | Input Parameters (bulleted)                                                                                                                                         | Input JSON Schemas (ordered list)                                                                                                                                           | Output Description                                           | Output JSON Schema Link         | OpenAPI Spec Link        | Localhost URL | Web Interface | MCP Interface | OpenAPI Compliance |
-|---------------------|-------------------------------------|-------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------|-------------------------------|--------------------------|:-------------:|:-------------:|:-------------:|:------------------:|`;
+| Service Category    | Service Name / Sub-Service          | Description                                                       | Input Parameters & Schemas                                                                                                                                         | Output & Schema                                           | OpenAPI Spec Link        | Localhost URL | Web Interface | MCP Interface | OpenAPI Compliance |
+|---------------------|-------------------------------------|-------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------|--------------------------|:-------------:|:-------------:|:-------------:|:------------------:|`;
 
     let tableRows = '';
     
     for (const service of this.services) {
-      const inputParams = Array.isArray(service.inputParameters) 
-        ? service.inputParameters.map(p => `- ${p}`).join('<br>')
-        : service.inputParameters;
+      // Combine input parameters with their corresponding schemas
+      const combinedInput = this.combineInputParametersAndSchemas(service.inputParameters, service.inputSchemas);
       
-      const inputSchemas = Array.isArray(service.inputSchemas)
-        ? service.inputSchemas.map((s, i) => `${i + 1}. ${s}`).join('<br>')
-        : service.inputSchemas;
+      // Combine output description with schema link
+      const combinedOutput = `${service.outputDescription} → ${service.outputSchema}`;
 
       const localhostUrl = service.localhostUrl || 'N/A';
 
-      tableRows += `\n| ${service.category} | ${service.name} | ${service.description} | ${inputParams} | ${inputSchemas} | ${service.outputDescription} | ${service.outputSchema} | ${service.openApiSpec} | ${localhostUrl} | ${service.webInterface} | ${service.mcpInterface} | ${service.openApiCompliance} |`;
+      tableRows += `\n| ${service.category} | ${service.name} | ${service.description} | ${combinedInput} | ${combinedOutput} | ${service.openApiSpec} | ${localhostUrl} | ${service.webInterface} | ${service.mcpInterface} | ${service.openApiCompliance} |`;
     }
 
     const legend = `
@@ -644,11 +703,11 @@ This table is automatically generated from the codebase on every commit.
 - **No**: Not supported/implemented
 
 **Notes:**
-- Input parameters are bullet lists for clarity, with input JSON schemas linked in the same order.
-- Output schema links are provided for structured responses.
-- OpenAPI Spec links point to the corresponding OpenAPI documentation in the repo.
-- Localhost URLs are clickable links for local development testing.
-- MCP manifest links included for MCP tooling.
+- Input Parameters & Schemas: Combined format showing parameter type followed by corresponding schema link
+- Output & Schema: Output description combined with schema link for conciseness
+- OpenAPI Spec links point to the corresponding OpenAPI documentation in the repo
+- Localhost URLs are clickable links for local development testing
+- MCP manifest links included for MCP tooling
 
 *Generated on: ${new Date().toISOString()}*
 *Generator: scripts/generate-service-table.js*
