@@ -554,6 +554,32 @@
   gap: 0.5rem;
 }
 
+.manual-refresh-btn {
+  background: #0366d6;
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.manual-refresh-btn:hover:not(:disabled) {
+  background: #0256cc;
+  transform: translateY(-1px);
+}
+
+.manual-refresh-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .status-updates-toggle {
   display: flex;
   align-items: center;
@@ -1149,11 +1175,29 @@
   }
 
   .preview-badge-expanded {
-    min-width: 95vw;
-    max-width: 95vw;
-    width: 95vw;
-    left: -50vw;
-    margin-left: 50vw;
+    /* Full height and width modal on mobile - break out of all constraints */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    /* Reset ALL desktop constraints */
+    min-width: unset !important;
+    max-width: unset !important;
+    /* Remove ALL margins and offsets */
+    margin: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    /* Ensure it's above everything */
+    z-index: 9999 !important;
+    /* Adjust border radius for full screen */
+    border-radius: 0 !important;
+    border: none !important;
+    /* Ensure proper viewport sizing */
+    box-sizing: border-box !important;
   }
 
   .expanded-header {
@@ -1188,11 +1232,29 @@
   }
 
   .preview-badge-expanded {
-    min-width: 98vw;
-    max-width: 98vw;
-    width: 98vw;
-    left: -50vw;
-    margin-left: 50vw;
+    /* Ensure full height and width on smaller mobile devices - break out of all constraints */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    /* Reset ALL desktop constraints */
+    min-width: unset !important;
+    max-width: unset !important;
+    /* Remove ALL margins and offsets */
+    margin: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    /* Ensure it's above everything */
+    z-index: 9999 !important;
+    /* Adjust border radius for full screen */
+    border-radius: 0 !important;
+    border: none !important;
+    /* Ensure proper viewport sizing */
+    box-sizing: border-box !important;
   }
 
   .comment-header {
