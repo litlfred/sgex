@@ -138,6 +138,9 @@ function createLazyComponent(componentName) {
     case 'DecisionSupportLogicView':
       LazyComponent = React.lazy(() => import('../components/DecisionSupportLogicView'));
       break;
+    case 'ProgramIndicatorsView':
+      LazyComponent = React.lazy(() => import('../components/ProgramIndicatorsView'));
+      break;
     case 'QuestionnaireEditor':
       LazyComponent = React.lazy(() => import('../components/QuestionnaireEditor'));
       break;

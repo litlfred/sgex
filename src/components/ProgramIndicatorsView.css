@@ -1,0 +1,539 @@
+/* Program Indicators View Styles */
+
+.program-indicators-view {
+  height: 100vh;
+  background: linear-gradient(135deg, #d83b01 0%, #a4262c 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.program-indicators-view .view-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #ffffff;
+  margin: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.program-indicators-view .view-main {
+  padding: 20px;
+}
+
+.program-indicators-view .view-intro {
+  margin-bottom: 25px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #d83b01;
+}
+
+.program-indicators-view .view-intro h2 {
+  margin: 0 0 15px 0;
+  color: #323130;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.program-indicators-view .view-intro p {
+  margin: 0;
+  color: #605e5c;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.program-indicators-view .artifact-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.program-indicators-view .artifact-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.program-indicators-view .artifact-badge.indicators {
+  background: #d83b01;
+}
+
+.program-indicators-view .dak-component-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #605e5c;
+  color: #ffffff;
+}
+
+/* Loading and Error States */
+.program-indicators-view.loading-state,
+.program-indicators-view.error-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+}
+
+.program-indicators-view .loading-content,
+.program-indicators-view .error-content {
+  text-align: center;
+  padding: 40px;
+  max-width: 500px;
+}
+
+.program-indicators-view .loading-content h2,
+.program-indicators-view .error-content h2 {
+  margin: 0 0 15px 0;
+  color: #323130;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.program-indicators-view .loading-content p,
+.program-indicators-view .error-content p {
+  margin: 0 0 20px 0;
+  color: #605e5c;
+  font-size: 16px;
+}
+
+.program-indicators-view .error-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+/* Section Tabs */
+.program-indicators-view .section-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #e1dfdd;
+  padding-bottom: 15px;
+}
+
+.program-indicators-view .tab-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  background: #f8f9fa;
+  color: #605e5c;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.program-indicators-view .tab-button:hover {
+  background: #e1dfdd;
+  color: #323130;
+}
+
+.program-indicators-view .tab-button.active {
+  background: #d83b01;
+  color: #ffffff;
+}
+
+.program-indicators-view .tab-icon {
+  font-size: 16px;
+}
+
+.program-indicators-view .tab-badge {
+  background: #ffffff;
+  color: #d83b01;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.program-indicators-view .tab-button.active .tab-badge {
+  background: rgba(255, 255, 255, 0.9);
+  color: #d83b01;
+}
+
+/* Components Section */
+.program-indicators-view .components-section {
+  margin-bottom: 30px;
+}
+
+.program-indicators-view .section-header {
+  margin-bottom: 20px;
+}
+
+.program-indicators-view .section-title {
+  margin: 0 0 8px 0;
+  color: #323130;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.program-indicators-view .section-description {
+  margin: 0;
+  color: #605e5c;
+  font-size: 14px;
+}
+
+/* Indicators Grid */
+.program-indicators-view .indicators-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.program-indicators-view .indicator-card {
+  background: #ffffff;
+  border: 1px solid #e1dfdd;
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.2s ease;
+  border-left: 4px solid #d83b01;
+}
+
+.program-indicators-view .indicator-card:hover {
+  border-color: #d83b01;
+  box-shadow: 0 2px 8px rgba(216, 59, 1, 0.1);
+}
+
+.program-indicators-view .indicator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.program-indicators-view .indicator-card h4 {
+  margin: 0;
+  color: #323130;
+  font-size: 16px;
+  font-weight: 600;
+  flex: 1;
+  margin-right: 10px;
+}
+
+.program-indicators-view .indicator-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.program-indicators-view .indicator-type,
+.program-indicators-view .indicator-status {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.program-indicators-view .indicator-type {
+  background: #d83b01;
+  color: #ffffff;
+}
+
+.program-indicators-view .indicator-status {
+  background: #f8f9fa;
+  color: #605e5c;
+  border: 1px solid #e1dfdd;
+}
+
+.program-indicators-view .indicator-description {
+  margin-bottom: 15px;
+  color: #605e5c;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.program-indicators-view .indicator-library {
+  margin-bottom: 15px;
+  font-size: 13px;
+  color: #323130;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.program-indicators-view .indicator-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* CQL Files Section */
+.program-indicators-view .population-cql-section {
+  padding: 0;
+}
+
+.program-indicators-view .cql-files-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.program-indicators-view .cql-files-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.program-indicators-view .cql-file-card {
+  background: #ffffff;
+  border: 1px solid #e1dfdd;
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.program-indicators-view .cql-file-card.population-context {
+  border-left: 4px solid #d83b01;
+}
+
+.program-indicators-view .cql-file-card:hover {
+  border-color: #d83b01;
+  box-shadow: 0 2px 8px rgba(216, 59, 1, 0.1);
+}
+
+.program-indicators-view .file-header {
+  margin-bottom: 15px;
+}
+
+.program-indicators-view .cql-file-card h5 {
+  margin: 0 0 8px 0;
+  color: #323130;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.program-indicators-view .file-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.program-indicators-view .file-size {
+  background: #e1dfdd;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #605e5c;
+}
+
+.program-indicators-view .file-context.population {
+  background: #d83b01;
+  color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.program-indicators-view .file-preview {
+  margin-bottom: 15px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e1dfdd;
+}
+
+.program-indicators-view .file-preview code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  color: #323130;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.program-indicators-view .file-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* CQL Editor Container */
+.program-indicators-view .cql-editor-container {
+  height: calc(100vh - 250px);
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e1dfdd;
+  overflow: hidden;
+}
+
+.program-indicators-view .cql-editor-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e1dfdd;
+}
+
+.program-indicators-view .back-btn {
+  padding: 6px 12px;
+  border: 1px solid #605e5c;
+  background: #ffffff;
+  color: #605e5c;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.program-indicators-view .back-btn:hover {
+  background: #605e5c;
+  color: #ffffff;
+}
+
+.program-indicators-view .cql-editor-header h4 {
+  margin: 0;
+  color: #323130;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  flex: 1;
+}
+
+.program-indicators-view .context-badge.population {
+  background: #d83b01;
+  color: #ffffff;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Action Buttons */
+.program-indicators-view .action-btn {
+  padding: 6px 12px;
+  border: 1px solid #d83b01;
+  background: #ffffff;
+  color: #d83b01;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.program-indicators-view .action-btn:hover {
+  background: #d83b01;
+  color: #ffffff;
+}
+
+.program-indicators-view .action-btn.primary {
+  background: #d83b01;
+  color: #ffffff;
+}
+
+.program-indicators-view .action-btn.primary:hover {
+  background: #a4262c;
+}
+
+.program-indicators-view .action-btn.secondary {
+  border-color: #605e5c;
+  color: #605e5c;
+}
+
+.program-indicators-view .action-btn.secondary:hover {
+  background: #605e5c;
+  color: #ffffff;
+}
+
+/* No Data States */
+.program-indicators-view .no-indicators,
+.program-indicators-view .no-files {
+  text-align: center;
+  padding: 40px 20px;
+  color: #605e5c;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e1dfdd;
+}
+
+.program-indicators-view .no-indicators p,
+.program-indicators-view .no-files p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+/* Footer */
+.program-indicators-view .diagram-info {
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #e1dfdd;
+  margin: 0;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.program-indicators-view .condensed-file-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 14px;
+  color: #605e5c;
+}
+
+.program-indicators-view .condensed-info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.program-indicators-view .condensed-info-item .label {
+  font-weight: 500;
+  color: #323130;
+}
+
+.program-indicators-view .condensed-info-item .value {
+  color: #605e5c;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .program-indicators-view .indicators-grid,
+  .program-indicators-view .cql-files-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .program-indicators-view .view-main {
+    padding: 15px;
+  }
+  
+  .program-indicators-view .section-tabs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .program-indicators-view .tab-button {
+    justify-content: center;
+  }
+  
+  .program-indicators-view .condensed-file-info {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  
+  .program-indicators-view .cql-editor-container {
+    height: calc(100vh - 200px);
+  }
+  
+  .program-indicators-view .cql-editor-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
