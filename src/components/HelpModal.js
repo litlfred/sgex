@@ -343,6 +343,11 @@ Best regards,
     window.open(`mailto:smart@who.int?subject=${subject}&body=${body}`);
   };
 
+  const handleGitHubSource = () => {
+    // Open the SGEX GitHub repository
+    window.open('https://github.com/litlfred/sgex', '_blank');
+  };
+
   const handleDocumentation = () => {
     // Use the standard /docs path that matches the route configuration
     // The docs component is configured as a DAK component at /docs
@@ -561,6 +566,11 @@ Best regards,
                   Provide DAK Feedback
                 </button>
               )}
+              
+              <button onClick={handleGitHubSource} className="menu-item">
+                <span className="menu-icon">🐙</span>
+                GitHub Source
+              </button>
               
               <button onClick={handleEmailSupport} className="menu-item">
                 <span className="menu-icon">📧</span>

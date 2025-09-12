@@ -262,6 +262,62 @@
     padding: 8px 16px;
     font-size: 14px;
   }
+
+  /* Mobile full-screen help menu dropdown similar to PreviewBadge */
+  .help-menu-dropdown {
+    /* Break out of all constraints for mobile full-screen experience */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    /* Reset desktop constraints */
+    min-width: unset !important;
+    max-width: unset !important;
+    /* Remove margins and offsets */
+    margin: 0 !important;
+    /* Ensure it's above everything */
+    z-index: 9999 !important;
+    /* Remove border radius for full screen */
+    border-radius: 0 !important;
+    border: none !important;
+    /* Ensure proper viewport sizing */
+    box-sizing: border-box !important;
+    /* Add padding for content spacing */
+    padding: 1rem !important;
+    /* Center the content */
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 1rem !important;
+  }
+
+  .menu-item {
+    /* Make menu items larger and easier to tap on mobile */
+    padding: 1rem 1.5rem !important;
+    font-size: 1.1rem !important;
+    border-radius: 8px !important;
+    margin-bottom: 0.5rem !important;
+    /* Add visual feedback */
+    border: 1px solid var(--who-border-color) !important;
+    background: var(--who-card-bg) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .menu-item:hover,
+  .menu-item:focus {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .menu-icon {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 1.2rem !important;
+  }
 }
 
 /* Help slideshow styles */
