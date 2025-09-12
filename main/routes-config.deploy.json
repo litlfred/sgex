@@ -13,8 +13,5 @@
         { "path": "*", "fallback": true }
       ]
     }
-  },
-  "deployedBranches": [
-    "main"
-  ]
+  }
 }
