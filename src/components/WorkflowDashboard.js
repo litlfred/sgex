@@ -83,10 +83,10 @@ const WorkflowDashboard = ({
       clearInterval(refreshIntervalRef.current);
     }
 
-    // Refresh every 15 seconds for active monitoring
+    // Refresh every 30 seconds for active monitoring with visual feedback
     refreshIntervalRef.current = setInterval(() => {
       fetchWorkflows(true);
-    }, 15000);
+    }, 30000);
   }, [fetchWorkflows]);
 
   // Cleanup
@@ -435,13 +435,14 @@ const WorkflowDashboard = ({
           {lastRefresh && (
             <span className="last-refresh">
               Last updated: {formatDate(lastRefresh)}
+              {refreshing && <span className="refresh-indicator"> • Checking for updates...</span>}
             </span>
           )}
           <button 
             onClick={handleManualRefresh}
             disabled={refreshing}
-            className="refresh-btn"
-            title="Refresh workflow status"
+            className={`refresh-btn ${refreshing ? 'refreshing' : ''}`}
+            title="Refresh workflow status (auto-refreshes every 30 seconds)"
           >
             {refreshing ? '⏳' : '🔄'} Refresh
           </button>
@@ -637,13 +638,13 @@ const WorkflowDashboard = ({
                           href={workflow.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`status-badge ${workflow.badgeClass}`}
+                          className={`status-badge ${workflow.badgeClass} ${refreshing ? 'refreshing-badge' : ''}`}
                         >
                           <span className="status-icon">{workflow.icon}</span>
                           <span className="status-text">{workflow.displayStatus}</span>
                         </a>
                       ) : (
-                        <span className={`status-badge ${workflow.badgeClass}`}>
+                        <span className={`status-badge ${workflow.badgeClass} ${refreshing ? 'refreshing-badge' : ''}`}>
                           <span className="status-icon">{workflow.icon}</span>
                           <span className="status-text">{workflow.displayStatus}</span>
                         </span>
