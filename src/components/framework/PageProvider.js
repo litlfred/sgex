@@ -58,8 +58,37 @@ const determinePageType = (params) => {
     user,
     repo,
     asset,
-    allParams: Object.keys(params)
+    allParams: Object.keys(params),
+    pathname: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
   });
+  
+  // If useParams doesn't give us user/repo, try to extract from pathname
+  if (!user || !repo) {
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname;
+      const pathParts = pathname.split('/').filter(part => part);
+      
+      console.log('🔍 Extracting from pathname:', {
+        pathname,
+        pathParts,
+        possibleUser: pathParts[1],
+        possibleRepo: pathParts[2],
+        possibleBranch: pathParts[3]
+      });
+      
+      // For DAK component URLs like /questionnaire-editor/user/repo/branch
+      if (pathParts.length >= 3 && pathParts[1] && pathParts[2]) {
+        console.log('📊 Page type: DAK (extracted from pathname)');
+        return PAGE_TYPES.DAK;
+      }
+      
+      // For user URLs like /dak-action/user
+      if (pathParts.length >= 2 && pathParts[1]) {
+        console.log('👤 Page type: USER (extracted from pathname)');
+        return PAGE_TYPES.USER;
+      }
+    }
+  }
   
   if (asset) {
     console.log('📄 Page type: ASSET (has asset)');
@@ -98,9 +127,34 @@ export const PageProvider = ({ children, pageName }) => {
     isAuthenticated: githubService.isAuth()
   });
 
-  // Extract URL parameters
-  const { user, repo } = params;
-  const asset = params['*']; // Wildcard parameter for asset path
+  // Extract URL parameters with fallback
+  let { user, repo } = params;
+  let asset = params['*']; // Wildcard parameter for asset path
+  let branch = params.branch;
+  
+  // Fallback parameter extraction if useParams doesn't work correctly
+  if (!user || !repo) {
+    console.log('🔧 PageProvider: useParams did not extract user/repo, attempting pathname extraction');
+    const pathParts = location.pathname.split('/').filter(part => part);
+    
+    // For DAK component URLs like /questionnaire-editor/user/repo/branch
+    if (pathParts.length >= 3) {
+      const extractedUser = pathParts[1];
+      const extractedRepo = pathParts[2];
+      const extractedBranch = pathParts[3];
+      
+      console.log('🔧 Extracted from pathname:', {
+        user: extractedUser,
+        repo: extractedRepo,
+        branch: extractedBranch,
+        pathname: location.pathname
+      });
+      
+      user = user || extractedUser;
+      repo = repo || extractedRepo;
+      branch = branch || extractedBranch;
+    }
+  }
 
   // Load data based on page type
   useEffect(() => {
@@ -132,7 +186,7 @@ export const PageProvider = ({ children, pageName }) => {
         // Use location state if available, otherwise fetch from URL params
         let profile = location.state?.profile;
         let repository = location.state?.repository;
-        let selectedBranch = location.state?.selectedBranch || params.branch;
+        let selectedBranch = location.state?.selectedBranch || branch;
 
         // For DAK and Asset pages, validate and fetch data
         if (pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
@@ -150,7 +204,7 @@ export const PageProvider = ({ children, pageName }) => {
                     user,
                     // Still set available URL parameters for context
                     repository: repo ? { name: repo, owner: { login: user }, html_url: `https://github.com/${user}/${repo}`, isNotFound: true } : null,
-                    branch: params.branch || 'main'
+                    branch: branch || 'main'
                   }));
                   return;
                 }
@@ -323,7 +377,7 @@ export const PageProvider = ({ children, pageName }) => {
     if ((pageState.type !== PAGE_TYPES.TOP_LEVEL && user) || pageState.type === PAGE_TYPES.TOP_LEVEL) {
       loadPageData();
     }
-  }, [user, repo, params.branch, asset, pageState.type, location.state, navigate, pageName]);
+  }, [user, repo, branch, asset, pageState.type, location.state, navigate, pageName]);
 
   // Monitor authentication state changes
   useEffect(() => {
