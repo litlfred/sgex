@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './shared-styles.css';
 import './DAKPublicationGenerator.css';
 
 const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWriteAccess }) => {
@@ -332,16 +333,16 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
   };
 
   return (
-    <div className="dak-publication-generator">
-      <div className="section-header">
-        <h3 className="section-title">📚 DAK Publication Generator</h3>
-        <p className="section-description">
+    <div className="sgex-component-container dak-publication-generator">
+      <div className="sgex-section-header section-header">
+        <h3 className="sgex-section-title section-title">📚 DAK Publication Generator</h3>
+        <p className="sgex-section-description section-description">
           Generate professional WHO SMART Guidelines publications in multiple formats from your DAK repository content.
         </p>
       </div>
 
       <div className="publication-generator-content">
-        <div className="publication-scope-selection">
+        <div className="sgex-glass-panel publication-scope-selection">
           <label className="scope-label">Publication Scope:</label>
           <div className="scope-options">
             {dakComponents.map((component) => (

@@ -227,6 +227,23 @@ body.theme-light .welcome-page-content {
   background: var(--who-hover-bg);
 }
 
+.mcp-inspector-card:hover {
+  border-color: #0078d4;
+  background: var(--who-hover-bg);
+}
+
+.mcp-inspector-card .mcp-icon {
+  font-size: 4rem;
+  display: block;
+  color: var(--who-blue);
+}
+
+.mcp-inspector-card h4 {
+  margin: 1rem 0 0.5rem 0;
+  color: var(--who-text-primary);
+  font-size: 1.1rem;
+}
+
 /* PAT + Demo Card Styles */
 .pat-demo-card {
   display: flex;

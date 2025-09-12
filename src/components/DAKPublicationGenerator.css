@@ -1,17 +1,16 @@
+/* DAKPublicationGenerator - using shared SGEX styles */
 .dak-publication-generator {
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  color: white;
-  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.2);
+  /* Use shared component container style */
 }
 
+/* Section headers - using shared styles */
 .dak-publication-generator .section-header {
+  /* Extended by sgex-section-header */
   margin-bottom: 24px;
 }
 
 .dak-publication-generator .section-title {
+  /* Extended by sgex-section-title */
   font-size: 1.5rem;
   margin: 0 0 8px 0;
   color: white;
@@ -19,6 +18,7 @@
 }
 
 .dak-publication-generator .section-description {
+  /* Extended by sgex-section-description */
   font-size: 1rem;
   margin: 0;
   opacity: 0.9;
@@ -32,6 +32,7 @@
 }
 
 .publication-scope-selection {
+  /* Using shared glass panel style */
   background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   padding: 20px;

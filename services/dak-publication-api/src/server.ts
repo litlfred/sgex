@@ -80,7 +80,7 @@ export class DAKPublicationServer {
     this.app.use('/', healthRoutes);
 
     // API documentation
-    const swaggerDocument = YAML.load(join(__dirname, '../../openapi.yaml'));
+    const swaggerDocument = YAML.load(join(__dirname, '../openapi.yaml'));
     this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
       explorer: true,
       swaggerOptions: {
