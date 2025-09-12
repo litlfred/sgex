@@ -107,6 +107,7 @@
   gap: 12px;
   padding: 12px 16px;
   border: none;
+  border-bottom: 1px solid var(--who-border-color);
   background: none;
   color: var(--who-text-primary);
   font-size: 14px;
@@ -114,6 +115,10 @@
   width: 100%;
   text-align: left;
   transition: background-color 0.2s;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
 }
 
 .menu-item:hover {
@@ -299,18 +304,23 @@
     /* Make menu items larger and easier to tap on mobile */
     padding: 1rem 1.5rem !important;
     font-size: 1.1rem !important;
-    border-radius: 8px !important;
-    margin-bottom: 0.5rem !important;
-    /* Add visual feedback */
-    border: 1px solid var(--who-border-color) !important;
+    border-radius: 0 !important;
+    margin-bottom: 0 !important;
+    /* Remove visual separators for condensed menu */
+    border: none !important;
     background: var(--who-card-bg) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: none !important;
+    border-bottom: 1px solid var(--who-border-color) !important;
   }
 
   .menu-item:hover,
   .menu-item:focus {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+    background-color: var(--who-hover-bg) !important;
+    border-bottom: 1px solid var(--who-border-color) !important;
+  }
+
+  .menu-item:last-child {
+    border-bottom: none !important;
   }
 
   .menu-icon {
