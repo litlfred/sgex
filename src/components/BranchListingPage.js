@@ -525,7 +525,7 @@ const BranchListingPage = () => {
                         <div className="action-cards">
                             <div className="action-card main-site-card">
                                 <a 
-                                    href="/sgex/main/"
+                                    href="/sgex/"
                                     className="card-link"
                                 >
                                     <div className="card-content">
@@ -595,7 +595,7 @@ const BranchListingPage = () => {
                         <div className="action-cards">
                             <div className="action-card main-site-card">
                                 <a 
-                                    href="/sgex/main/"
+                                    href="/sgex/"
                                     className="card-link"
                                 >
                                     <div className="card-content">
@@ -668,7 +668,7 @@ const BranchListingPage = () => {
                 <div className="action-cards">
                     <div className="action-card main-site-card">
                         <a 
-                            href="/sgex/main/"
+                            href="/sgex/"
                             className="card-link"
                         >
                             <div className="card-content">
