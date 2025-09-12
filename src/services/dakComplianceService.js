@@ -5,7 +5,7 @@
  * Designed to work in multiple environments: React client-side, command-line, and IDE integration.
  */
 
-import { lazyLoadAjv, lazyLoadAjvFormats, lazyLoadYaml } from '../utils/lazyRouteUtils';
+import { lazyLoadAjv, lazyLoadAjvFormats, lazyLoadYaml } from '../services/libraryLoaderService';
 
 // Import schema as a module
 const sushiConfigSchema = require('../schemas/sushi-config.json');

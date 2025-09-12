@@ -29,19 +29,10 @@
     <!-- Load SGEX route configuration service -->
     <script src="./routeConfig.js"></script>
     
-    <!-- Single Page Apps for GitHub Pages -->
-    <!-- Start single page apps for github pages -->
+    <!-- Simplified SPA Routing for GitHub Pages -->
+    <!-- Only handles the final route restoration, 404.html handles initial routing -->
     <script type="text/javascript">
-      // Single Page Apps for GitHub Pages
-      // MIT License
-      // https://github.com/rafgraph/spa-github-pages
-      // This script checks to see if a redirect is present in the query string,
-      // converts it back into the correct url and adds it to the
-      // browser's history using window.history.replaceState(...),
-      // which won't cause the browser to attempt to load the new url.
-      // When the single page app is loaded further down in this file,
-      // the correct url will be waiting in the browser's history for
-      // the single page app to route accordingly.
+      // Simplified SPA routing - just restore routes processed by 404.html
       (function(l) {
         if (l.search[1] === '/' ) {
           var decoded = l.search.slice(1).split('&').map(function(s) { 
@@ -49,18 +40,15 @@
           }).join('?');
           var restoredPath = l.pathname.slice(0, -1) + decoded + l.hash;
           
-          // Debug logging for development
           console.log('SPA Route Restoration:', {
             originalSearch: l.search,
-            decoded: decoded,
             restoredPath: restoredPath
           });
           
           window.history.replaceState(null, null, restoredPath);
         }
-      }(window.location))
+      }(window.location));
     </script>
-    <!-- End single page apps for github pages -->
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

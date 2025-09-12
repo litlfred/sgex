@@ -3,7 +3,7 @@
  * This tests the fix for the "z.sanitize is not a function" error
  */
 
-import { lazyLoadDOMPurify } from '../utils/lazyRouteUtils';
+import { lazyLoadDOMPurify } from '../services/libraryLoaderService';
 
 // Mock browser environment for testing
 const mockWindow = {

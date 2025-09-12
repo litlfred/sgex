@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { lazyLoadBpmnViewer } from '../utils/lazyRouteUtils';
+import { lazyLoadBpmnViewer } from '../services/libraryLoaderService';
 import githubService from '../services/githubService';
 
 const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {

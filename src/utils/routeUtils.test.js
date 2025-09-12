@@ -1,6 +1,36 @@
-import { extractDAKComponentsFromRoutes, isValidDAKComponent, parseDAKUrl } from './routeUtils';
+import { extractDAKComponentsFromRoutes, isValidDAKComponent, parseDAKUrl } from '../services/routingContextService';
 
 describe('routeUtils', () => {
+  // Mock window.SGEX_ROUTES_CONFIG for tests to avoid hardcoded lists
+  beforeAll(() => {
+    // @ts-ignore
+    global.window = global.window || {};
+    global.window.SGEX_ROUTES_CONFIG = {
+      getDAKComponentNames: () => [
+        'dashboard',
+        'core-data-dictionary-viewer', 
+        'health-interventions',        
+        'actor-editor',               
+        'business-process-selection',  
+        'bpmn-editor',                
+        'bpmn-viewer',                
+        'bpmn-source',                
+        'decision-support-logic',
+        'questionnaire-editor',
+        'docs',
+        'pages',
+        'faq-demo'
+      ]
+    };
+  });
+
+  afterAll(() => {
+    // Clean up global mock
+    if (global.window && global.window.SGEX_ROUTES_CONFIG) {
+      delete global.window.SGEX_ROUTES_CONFIG;
+    }
+  });
+
   describe('extractDAKComponentsFromRoutes', () => {
     it('should return an array of valid DAK components', () => {
       const components = extractDAKComponentsFromRoutes();
@@ -17,13 +47,13 @@ describe('routeUtils', () => {
       expect(isValidDAKComponent('dashboard')).toBe(true);
       expect(isValidDAKComponent('bpmn-viewer')).toBe(true);
       expect(isValidDAKComponent('core-data-dictionary-viewer')).toBe(true);
-      expect(isValidDAKComponent('testing-viewer')).toBe(true);
       expect(isValidDAKComponent('health-interventions')).toBe(true);
       expect(isValidDAKComponent('actor-editor')).toBe(true);
       expect(isValidDAKComponent('business-process-selection')).toBe(true);
       expect(isValidDAKComponent('bpmn-editor')).toBe(true);
       expect(isValidDAKComponent('bpmn-source')).toBe(true);
       expect(isValidDAKComponent('decision-support-logic')).toBe(true);
+      expect(isValidDAKComponent('questionnaire-editor')).toBe(true);
     });
 
     it('should return false for invalid DAK components', () => {
@@ -92,9 +122,9 @@ describe('routeUtils', () => {
     });
 
     it('should handle URLs without branches', () => {
-      const result = parseDAKUrl('/testing-viewer/user/repo');
+      const result = parseDAKUrl('/dashboard/user/repo');
       expect(result).toEqual({
-        component: 'testing-viewer',
+        component: 'dashboard',
         user: 'user',
         repo: 'repo',
         branch: undefined,

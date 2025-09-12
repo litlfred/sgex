@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import { PageLayout, useDAKParams } from './framework';
+import { PageLayout, usePage } from './framework';
 
 const CoreDataDictionaryViewer = () => {
   return (
@@ -13,9 +13,9 @@ const CoreDataDictionaryViewer = () => {
 
 const CoreDataDictionaryViewerContent = () => {
   const navigate = useNavigate();
-  const { profile, repository, branch } = useDAKParams();
+  const { profile, repository, branch } = usePage();
   
-  // Get data from URL params
+  // Get data from page framework
   const user = profile?.login;
   const repo = repository?.name;
   

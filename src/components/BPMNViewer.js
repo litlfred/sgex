@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
-import { PageLayout, useDAKParams } from './framework';
-import { createLazyBpmnViewer } from '../utils/lazyRouteUtils';
+import { PageLayout, usePage } from './framework';
+import { createLazyBpmnViewer } from '../services/lazyFactoryService';
 
 const BPMNViewerComponent = () => {
   return (
@@ -18,34 +18,34 @@ const BPMNViewerContent = () => {
   const viewerRef = useRef(null);
   const containerRef = useRef(null);
   
-  // Try to get data from framework params first, then fall back to location state
-  const frameworkData = useDAKParams();
+  // Get page data from framework
+  const { profile, repository, branch, asset, loading: pageLoading, error: pageError } = usePage();
   
-  console.log('BPMNViewer: Framework data received:', frameworkData);
-  console.log('BPMNViewer: Location state:', location.state);
+  console.log('BPMNViewer: Page framework data:', { profile: !!profile, repository: !!repository, branch, asset });
+  console.log('BPMNViewer: Location state (legacy):', location.state);
   
-  const { profile, repository, component, selectedFile, selectedBranch } = location.state || {};
+  // Legacy support for location.state (backward compatibility)
+  const { component, selectedFile, selectedBranch } = location.state || {};
   
-  // Use framework data if available, otherwise use location state
-  const currentProfile = frameworkData?.profile || profile;
-  const currentRepository = frameworkData?.repository || repository;
-  const currentBranch = frameworkData?.branch || selectedBranch;
-  const assetPath = frameworkData?.asset;
+  // Use framework data as primary source, fall back to location state
+  const currentProfile = profile || location.state?.profile;
+  const currentRepository = repository || location.state?.repository;
+  const currentBranch = branch || selectedBranch;
   
   console.log('BPMNViewer: Final computed values:', {
     currentProfile: !!currentProfile,
     currentRepository: !!currentRepository,
     currentBranch,
-    assetPath
+    asset
   });
   
-  // If we have asset path from URL, create a selectedFile object
+  // Create selectedFile from asset path or use legacy selectedFile
   const currentSelectedFile = useMemo(() => {
-    return assetPath ? {
-      name: assetPath.split('/').pop(),
-      path: assetPath
+    return asset ? {
+      name: asset.split('/').pop(),
+      path: asset
     } : selectedFile;
-  }, [assetPath, selectedFile]);
+  }, [asset, selectedFile]);
   
   const [loading, setLoading] = useState(true);
   const [loadingStep, setLoadingStep] = useState('initializing');
@@ -534,7 +534,7 @@ const BPMNViewerContent = () => {
     // If we're on an asset URL, wait for framework to load before deciding to redirect
     if (isAssetURL) {
       // Only redirect if we have both no framework data AND no location state
-      if (!frameworkData?.profile && !frameworkData?.repository && !frameworkData?.asset && 
+      if (!profile && !repository && !asset && 
           !currentProfile && !currentRepository && !currentSelectedFile) {
         console.log('BPMNViewer: On asset URL but no data available from framework or location state, redirecting to home');
         navigate('/');
@@ -550,14 +550,14 @@ const BPMNViewerContent = () => {
         navigate('/');
       }
     }
-  }, [currentProfile, currentRepository, currentSelectedFile, frameworkData, location.pathname, navigate]);
+  }, [currentProfile, currentRepository, currentSelectedFile, profile, repository, asset, location.pathname, navigate]);
 
   // Don't render the component if we're missing required data, unless we're on asset URL and framework is loading
   const pathSegments = location.pathname.split('/').filter(segment => segment);
   const isAssetURL = pathSegments.length > 5;
   
   if (!currentProfile || !currentRepository || !currentSelectedFile) {
-    if (isAssetURL && (!frameworkData?.profile || !frameworkData?.repository || !frameworkData?.asset)) {
+    if (isAssetURL && (!profile || !repository || !asset)) {
       // Framework might still be loading for asset URL
       return <div>Loading framework data...</div>;
     }

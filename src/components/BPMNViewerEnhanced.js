@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { createLazyBpmnViewer } from '../utils/lazyRouteUtils';
+import { createLazyBpmnViewer } from '../services/lazyFactoryService';
 
 // Sample BPMN content for demo purposes - moved outside component to avoid re-renders
 const sampleBpmnXml = `<?xml version="1.0" encoding="UTF-8"?>

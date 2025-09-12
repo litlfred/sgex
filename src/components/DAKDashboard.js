@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import dakValidationService from '../services/dakValidationService';
@@ -8,7 +7,7 @@ import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';
 import Publications from './Publications';
 import ForkStatusBar from './ForkStatusBar';
-import { PageLayout } from './framework';
+import { PageLayout, usePage } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
 import FAQAccordion from '../dak/faq/components/FAQAccordion.js';
@@ -24,9 +23,7 @@ const DAKDashboard = () => {
 
 const DAKDashboardContent = () => {
   const { t } = useTranslation();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { user, repo, branch } = useParams();
+  const { profile, repository, branch, navigate, loading, error } = usePage();
   
   // Mapping between activeTab states and URL fragments
   const tabToFragment = {
@@ -50,17 +47,15 @@ const DAKDashboardContent = () => {
   // Theme-aware mascot image for dialog
   const mascotImage = useThemeImage('sgex-mascot.png');
   
-  // Try to get data from location.state first, then from URL params
-  const [profile, setProfile] = useState(location.state?.profile || null);
-  const [repository, setRepository] = useState(location.state?.repository || null);
-  const [loading, setLoading] = useState(!profile || !repository);
-  const [error, setError] = useState(null);
+  // Dashboard-specific state (PageProvider handles profile/repository loading)
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [activeTab, setActiveTab] = useState(getInitialTab); // 'core', 'publications', or 'faq'
-  const [selectedBranch, setSelectedBranch] = useState(location.state?.selectedBranch || branch || null);
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Use the branch from PageProvider
+  const selectedBranch = branch;
 
   // Component Card component defined within the dashboard
   const ComponentCard = ({ component, handleComponentClick, t }) => {
@@ -141,127 +136,19 @@ const DAKDashboardContent = () => {
     );
   };
 
-  // Fetch data from URL parameters if not available in location.state
-  useEffect(() => {
-    const fetchDataFromUrlParams = async () => {
-      if ((!profile || !repository) && user && repo) {
-        try {
-          setLoading(true);
-          setError(null);
-
-          // Check if githubService is authenticated
-          if (!githubService.isAuth()) {
-            // This is unauthenticated access to public repositories
-            const publicProfile = {
-              login: user,
-              name: user.charAt(0).toUpperCase() + user.slice(1),
-              avatar_url: `https://github.com/${user}.png`,
-              type: 'User'
-            };
-
-            const publicRepository = {
-              name: repo,
-              full_name: `${user}/${repo}`,
-              owner: { login: user },
-              default_branch: branch || 'main',
-              html_url: `https://github.com/${user}/${repo}`
-            };
-
-            setProfile(publicProfile);
-            setRepository(publicRepository);
-            setSelectedBranch(branch || 'main');
-            setLoading(false);
-            return;
-          }
-
-          // Fetch user profile
-          let userProfile = null;
-          try {
-            const userResponse = await githubService.getUser(user);
-            userProfile = userResponse;
-          } catch (err) {
-            console.error('Error fetching user:', err);
-            // Redirect to landing page with warning message
-            navigate('/', { 
-              state: { 
-                warningMessage: `Could not access the requested DAK. User '${user}' not found or not accessible.` 
-              } 
-            });
-            return;
-          }
-
-          // Fetch repository
-          let repoData = null;
-          try {
-            const repoResponse = await githubService.getRepository(user, repo);
-            repoData = repoResponse;
-          } catch (err) {
-            console.error('Error fetching repository:', err);
-            // Redirect to landing page with warning message
-            navigate('/', { 
-              state: { 
-                warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
-              } 
-            });
-            return;
-          }
-
-          // Validate that this is actually a DAK repository
-          const isValidDAK = await dakValidationService.validateDAKRepository(user, repo, branch || repoData.default_branch);
-          
-          if (!isValidDAK) {
-            console.log(`Repository ${user}/${repo} is not a valid DAK repository`);
-            navigate('/', { 
-              state: { 
-                warningMessage: `Could not access the requested DAK. Repository '${user}/${repo}' not found or not accessible.` 
-              } 
-            });
-            return;
-          }
-
-          // Validate branch if specified
-          if (branch) {
-            try {
-              await githubService.getBranch(user, repo, branch);
-              setSelectedBranch(branch);
-            } catch (err) {
-              console.warn(`Branch '${branch}' not found, falling back to default branch`);
-              setSelectedBranch(repoData.default_branch);
-            }
-          } else {
-            setSelectedBranch(repoData.default_branch);
-          }
-
-          setProfile(userProfile);
-          setRepository(repoData);
-          setLoading(false);
-        } catch (err) {
-          console.error('Error fetching data from URL params:', err);
-          setError('Failed to load dashboard data. Please check the URL or try again.');
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
-      }
-    };
-
-    fetchDataFromUrlParams();
-  }, [user, repo, branch, profile, repository, navigate, t]);
-
   // Initialize selected branch from session context
   useEffect(() => {
     if (repository) {
       const storedBranch = branchContextService.getSelectedBranch(repository);
       if (storedBranch) {
-        setSelectedBranch(storedBranch);
+        // Branch is managed by PageProvider, this is just for backward compatibility
       } else {
-        // Set a default branch
+        // Set a default branch in the branch context service
         const defaultBranch = repository.default_branch || 'main';
-        setSelectedBranch(defaultBranch);
         branchContextService.setSelectedBranch(repository, defaultBranch);
       }
     }
-  }, [repository, profile]);
+  }, [repository]);
 
   // Load issue counts for repository
   const loadIssueCounts = async () => {
@@ -317,7 +204,6 @@ const DAKDashboardContent = () => {
           setHasWriteAccess(false);
         }
       }
-      setLoading(false);
     };
 
     checkPermissions();
@@ -529,8 +415,8 @@ const DAKDashboardContent = () => {
 
     // For core-data-elements (Component 2 Core Data Dictionary), navigate to viewer
     if (component.id === 'core-data-elements') {
-      const owner = user || repository.owner?.login || repository.full_name.split('/')[0];
-      const repoName = repo || repository.name;
+      const owner = profile?.login || repository?.owner?.login || repository?.full_name?.split('/')[0];
+      const repoName = repository?.name;
       const branchName = selectedBranch;
       
       const viewerPath = branchName ? 
@@ -730,7 +616,7 @@ const DAKDashboardContent = () => {
               </div>
 
               <FAQAccordion
-                repository={`${user}/${repo}`}
+                repository={`${profile?.login}/${repository?.name}`}
                 branch={selectedBranch || 'main'}
                 githubService={githubService}
                 filters={{

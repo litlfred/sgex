@@ -43,7 +43,6 @@ describe('Page Framework Compliance', () => {
       const mentionedPages = [
         'BPMNViewer',
         'BusinessProcessSelection', 
-        'TestingViewer',
         'ActorEditor'
       ];
       

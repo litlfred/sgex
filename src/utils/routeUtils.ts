@@ -115,13 +115,13 @@ export const parseDAKUrl = (pathname: string): DAKUrlInfo | null => {
 /**
  * Generate React Router Route objects for all DAK components
  * This is now a legacy function kept for compatibility.
- * The new lazy loading system uses generateLazyRoutes() from lazyRouteUtils.js
+ * The new lazy loading system uses generateLazyRoutes() from componentRouteService.js
  * 
  * @param importedComponents - Object containing all imported React components
  * @returns Array of route objects for React Router
  */
 export const generateDAKRoutes = (importedComponents: Record<string, React.ComponentType>): RouteObject[] => {
-  console.warn('generateDAKRoutes() is deprecated. Use generateLazyRoutes() from lazyRouteUtils.js instead.');
+  console.warn('generateDAKRoutes() is deprecated. Use generateLazyRoutes() from componentRouteService.js instead.');
   
   const routes: RouteObject[] = [];
   
