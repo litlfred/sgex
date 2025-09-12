@@ -17,18 +17,22 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
   useEffect(() => {
     const loadLForms = async () => {
       try {
-        // Import LHC-Forms library with fallback handling
-        let LFormsModule;
-        try {
-          LFormsModule = await import('lforms');
-        } catch (importError) {
-          console.warn('Failed to import lforms, falling back to basic preview:', importError);
+        // LHC-Forms doesn't support ES6 imports properly, so we'll use script loading
+        if (typeof window !== 'undefined') {
+          // Check if LForms is already available globally
+          if (window.LForms) {
+            console.log('LHC-Forms already available globally');
+            setLForms(window.LForms);
+            setLformsLoaded(true);
+            return;
+          }
+          
+          // Try to load LHC-Forms from CDN or fall back to basic editor
+          console.log('LHC-Forms not available, using fallback editor');
           setLformsLoaded(true);
           return;
         }
         
-        console.log('LHC-Forms loaded successfully');
-        setLForms(LFormsModule.default || LFormsModule);
         setLformsLoaded(true);
       } catch (error) {
         console.error('Failed to load LHC-Forms:', error);
@@ -517,19 +521,14 @@ const QuestionnaireEditorContent = () => {
       try {
         setLformsError(null);
         
-        // Load LHC-Forms library with fallback handling
-        let LFormsModule;
-        try {
-          LFormsModule = await import('lforms');
-        } catch (importError) {
-          console.warn('Failed to import lforms in main editor, using fallback:', importError);
+        // LHC-Forms doesn't support ES6 imports properly, so we'll use global availability
+        if (typeof window !== 'undefined' && window.LForms) {
+          console.log('LHC-Forms available globally in main editor');
           setLformsLoaded(true);
           return;
         }
         
-        console.log('LHC-Forms loaded successfully in main editor');
-        
-        // LHC-Forms is now available globally
+        console.log('LHC-Forms not available in main editor, using fallback');
         setLformsLoaded(true);
       } catch (error) {
         console.error('Failed to load LHC-Forms in main editor:', error);
