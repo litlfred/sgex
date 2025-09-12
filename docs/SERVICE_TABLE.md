@@ -54,5 +54,5 @@ schemas, and usage examples for MCP-compatible clients.
 - OpenAPI Spec links point to the corresponding OpenAPI documentation in the repo.
 - MCP manifest links included for MCP tooling.
 
-*Generated on: 2025-09-12T12:36:47.799Z*
+*Generated on: 2025-09-12T14:58:33.300Z*
 *Generator: scripts/generate-service-table.js*
