@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AssetEditorLayout, useDAKParams } from './framework';
+import { AssetEditorLayout, usePage } from './framework';
 import { createLazyBpmnModeler, createLazyOctokit } from '../services/lazyFactoryService';
 
 const BPMNEditor = () => {
   const navigate = useNavigate();
-  const { profile, repository, branch } = useDAKParams();
+  const { profile, repository, branch } = usePage();
   const modelerRef = useRef(null);
   const containerRef = useRef(null);
   
