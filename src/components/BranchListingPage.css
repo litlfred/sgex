@@ -150,7 +150,8 @@
 }
 
 /* Allow pointer events for clickable navigation cards (main-site-card) */
-.action-card.main-site-card {
+.action-card.main-site-card,
+.action-card.collaboration-card {
     pointer-events: auto;
 }
 
@@ -177,6 +178,26 @@
 
 .main-site-card {
     border-left: 4px solid #28a745;
+}
+
+.collaboration-card {
+    border-left: 4px solid #107c10;
+}
+
+.collaboration-card:hover {
+    border-color: #107c10;
+    background: var(--who-hover-bg);
+}
+
+.collaboration-card button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    width: 100%;
+    height: 100%;
 }
 
 .login-card {
@@ -208,6 +229,13 @@
 .card-icon {
     object-fit: contain;
     flex-shrink: 0;
+    width: var(--icon-size-large);
+    height: var(--icon-size-large);
+    max-width: var(--icon-size-large);
+    max-height: var(--icon-size-large);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .card-text {
