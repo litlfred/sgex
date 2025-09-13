@@ -16,6 +16,7 @@ _site/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.build
 
 # IDE and editor files
 .vscode/
