@@ -1,0 +1,878 @@
+name: Generate Multilingual Screen Recording Tutorials
+
+on:
+  workflow_dispatch:
+    inputs:
+      feature_files:
+        description: 'Feature files to process (comma-separated, or "all" for all files)'
+        required: false
+        default: 'all'
+        type: string
+      target_branch:
+        description: 'Branch to build SGEX from for recording'
+        required: false
+        default: 'main'
+        type: string
+      languages:
+        description: 'Languages for narration (comma-separated: en,fr,es,ar,zh,ru)'
+        required: false
+        default: 'en,fr,es'
+        type: string
+      include_captions:
+        description: 'Include captions in video output'
+        required: false
+        default: true
+        type: boolean
+      video_quality:
+        description: 'Video quality (720p, 1080p)'
+        required: false
+        default: '720p'
+        type: choice
+        options:
+          - '720p'
+          - '1080p'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  actions: read
+
+concurrency:
+  group: "tutorial-generation-${{ github.ref_name }}"
+  cancel-in-progress: false
+
+jobs:
+  generate-tutorials:
+    runs-on: ubuntu-latest
+    environment: tutorial-generation
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.target_branch || 'main' }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Validate GitHub PAT
+        run: |
+          if [[ -z "${{ secrets.GH_PAT }}" ]]; then
+            echo "❌ ERROR: GitHub Personal Access Token (GH_PAT) is not configured"
+            echo ""
+            echo "To configure the PAT:"
+            echo "1. Go to repository Settings > Secrets and variables > Actions"
+            echo "2. Click 'New repository secret'"
+            echo "3. Name: GH_PAT"
+            echo "4. Value: Paste your GitHub PAT with 'repo' and 'workflow' scopes"
+            echo "5. Click 'Add secret'"
+            echo ""
+            echo "The PAT is required for authenticated screen recording scenarios."
+            exit 1
+          fi
+          echo "✅ GitHub PAT is configured"
+
+      - name: Install system dependencies
+        run: |
+          # Update package list
+          sudo apt-get update
+          
+          # Install eSpeak NG for text-to-speech
+          sudo apt-get install -y espeak-ng espeak-ng-data
+          
+          # Install ffmpeg for video processing
+          sudo apt-get install -y ffmpeg
+          
+          # Install additional audio tools
+          sudo apt-get install -y sox libsox-fmt-all
+          
+          # Verify installations
+          echo "✅ Installed system dependencies:"
+          espeak-ng --version
+          ffmpeg -version | head -1
+          sox --version
+
+      - name: Install and setup Playwright
+        run: |
+          # Install Playwright
+          npm install -D @playwright/test
+          
+          # Install browsers
+          npx playwright install chromium
+          npx playwright install-deps
+          
+          echo "✅ Playwright setup complete"
+
+      - name: Parse workflow inputs
+        id: parse_inputs
+        run: |
+          # Parse feature files
+          FEATURE_FILES="${{ github.event.inputs.feature_files || 'all' }}"
+          if [[ "$FEATURE_FILES" == "all" ]]; then
+            FEATURE_FILES="user-login-pat,profile-selection-dak-scanning,help-mascot-documentation"
+          fi
+          echo "feature_files=$FEATURE_FILES" >> $GITHUB_OUTPUT
+          
+          # Parse languages
+          LANGUAGES="${{ github.event.inputs.languages || 'en,fr,es' }}"
+          echo "languages=$LANGUAGES" >> $GITHUB_OUTPUT
+          
+          # Video resolution
+          RESOLUTION="${{ github.event.inputs.video_quality || '720p' }}"
+          if [[ "$RESOLUTION" == "720p" ]]; then
+            echo "video_width=1280" >> $GITHUB_OUTPUT
+            echo "video_height=720" >> $GITHUB_OUTPUT
+          else
+            echo "video_width=1920" >> $GITHUB_OUTPUT
+            echo "video_height=1080" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "resolution=$RESOLUTION" >> $GITHUB_OUTPUT
+          echo "include_captions=${{ github.event.inputs.include_captions || 'true' }}" >> $GITHUB_OUTPUT
+
+      - name: Build SGEX Workbench
+        run: |
+          echo "🔨 Building SGEX Workbench from branch: ${{ github.event.inputs.target_branch || 'main' }}"
+          
+          # Build the application
+          npm run build
+          
+          # Verify build output
+          if [[ ! -f "build/index.html" ]]; then
+            echo "❌ Build failed - index.html not found"
+            exit 1
+          fi
+          
+          echo "✅ SGEX Workbench build complete"
+        env:
+          CI: false
+          ESLINT_NO_DEV_ERRORS: true
+          GENERATE_SOURCEMAP: false
+
+      - name: Start local server
+        run: |
+          echo "🚀 Starting local SGEX server"
+          
+          # Start server in background
+          cd build
+          python3 -m http.server 3000 &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          
+          # Wait for server to start
+          echo "Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:3000/sgex/ > /dev/null; then
+              echo "✅ Server is running on http://localhost:3000/sgex/"
+              break
+            fi
+            if [[ $i -eq 30 ]]; then
+              echo "❌ Server failed to start"
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Test TTS system
+        run: |
+          echo "🎙️ Testing Text-to-Speech system"
+          
+          # Test eSpeak with supported languages
+          IFS=',' read -ra LANGS <<< "${{ steps.parse_inputs.outputs.languages }}"
+          for lang in "${LANGS[@]}"; do
+            case $lang in
+              en) voice="en+f3" ;;
+              fr) voice="fr+f2" ;;
+              es) voice="es+f2" ;;
+              ar) voice="ar+f1" ;;
+              zh) voice="zh+f1" ;;
+              ru) voice="ru+f2" ;;
+              *) voice="en+f3" ;;
+            esac
+            
+            echo "Testing TTS for language: $lang (voice: $voice)"
+            espeak-ng -v "$voice" -s 150 -w "test-$lang.wav" "This is a test of the tutorial generation system for $lang."
+            
+            if [[ -f "test-$lang.wav" ]]; then
+              echo "✅ TTS test successful for $lang"
+              rm "test-$lang.wav"
+            else
+              echo "⚠️ TTS test failed for $lang"
+            fi
+          done
+
+      - name: Extract narrations from feature files
+        id: extract_narrations
+        run: |
+          echo "📝 Extracting narrations from feature files"
+          
+          # Create extraction script
+          cat > extract-narrations.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          
+          function extractNarrations(featureFile) {
+            const content = fs.readFileSync(featureFile, 'utf8');
+            const lines = content.split('\n');
+            const narrations = [];
+            
+            lines.forEach((line, index) => {
+              const match = line.match(/When I say "([^"]+)"/);
+              if (match) {
+                narrations.push({
+                  id: `narration-${narrations.length + 1}`,
+                  text: match[1],
+                  lineNumber: index + 1,
+                  estimatedDuration: Math.max(2000, match[1].length * 60) // ~60ms per character
+                });
+              }
+            });
+            
+            return narrations;
+          }
+          
+          const featuresDir = 'features';
+          const featureFiles = process.argv[2].split(',');
+          const allNarrations = {};
+          
+          featureFiles.forEach(featureName => {
+            const featureFile = path.join(featuresDir, `${featureName}.feature`);
+            if (fs.existsSync(featureFile)) {
+              allNarrations[featureName] = extractNarrations(featureFile);
+              console.log(`Extracted ${allNarrations[featureName].length} narrations from ${featureName}`);
+            }
+          });
+          
+          fs.writeFileSync('narrations.json', JSON.stringify(allNarrations, null, 2));
+          console.log('Narrations saved to narrations.json');
+          EOF
+          
+          node extract-narrations.js "${{ steps.parse_inputs.outputs.feature_files }}"
+          
+          # Show summary
+          echo "📊 Narration extraction summary:"
+          cat narrations.json | jq -r 'to_entries[] | "\(.key): \(.value | length) narrations"'
+
+      - name: Generate TTS audio files
+        run: |
+          echo "🎙️ Generating TTS audio files"
+          
+          # Create TTS generation script
+          cat > generate-tts.js << 'EOF'
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+          const path = require('path');
+          
+          const narrations = JSON.parse(fs.readFileSync('narrations.json', 'utf8'));
+          const languages = process.argv[2].split(',');
+          const audioResults = {};
+          
+          // Ensure audio directories exist
+          languages.forEach(lang => {
+            const dir = path.join('audio', lang);
+            if (!fs.existsSync(dir)) {
+              fs.mkdirSync(dir, { recursive: true });
+            }
+          });
+          
+          Object.entries(narrations).forEach(([featureName, featureNarrations]) => {
+            audioResults[featureName] = {};
+            
+            languages.forEach(lang => {
+              console.log(`Generating audio for ${featureName} in ${lang}...`);
+              audioResults[featureName][lang] = [];
+              
+              const voiceMap = {
+                en: 'en+f3', fr: 'fr+f2', es: 'es+f2',
+                ar: 'ar+f1', zh: 'zh+f1', ru: 'ru+f2'
+              };
+              
+              const voice = voiceMap[lang] || 'en+f3';
+              
+              featureNarrations.forEach((narration, index) => {
+                const outputFile = path.join('audio', lang, `${featureName}-${narration.id}.wav`);
+                
+                try {
+                  const command = `espeak-ng -v "${voice}" -s 150 -p 50 -a 100 -w "${outputFile}" "${narration.text.replace(/"/g, '\\"')}"`;
+                  execSync(command, { stdio: 'pipe' });
+                  
+                  // Get actual duration using ffprobe
+                  let duration = narration.estimatedDuration;
+                  try {
+                    const durationOutput = execSync(`ffprobe -v quiet -show_entries format=duration -of csv=p=0 "${outputFile}"`, { encoding: 'utf8' });
+                    duration = Math.round(parseFloat(durationOutput.trim()) * 1000);
+                  } catch (e) {
+                    console.warn(`Could not get exact duration for ${outputFile}, using estimate`);
+                  }
+                  
+                  audioResults[featureName][lang].push({
+                    id: narration.id,
+                    text: narration.text,
+                    file: outputFile,
+                    duration: duration,
+                    success: true
+                  });
+                  
+                  console.log(`✅ Generated: ${outputFile} (${duration}ms)`);
+                } catch (error) {
+                  console.error(`❌ Failed to generate ${outputFile}:`, error.message);
+                  audioResults[featureName][lang].push({
+                    id: narration.id,
+                    text: narration.text,
+                    success: false,
+                    error: error.message
+                  });
+                }
+              });
+            });
+          });
+          
+          fs.writeFileSync('audio-results.json', JSON.stringify(audioResults, null, 2));
+          console.log('Audio generation results saved to audio-results.json');
+          EOF
+          
+          node generate-tts.js "${{ steps.parse_inputs.outputs.languages }}"
+          
+          # Show audio generation summary
+          echo "📊 Audio generation summary:"
+          find audio -name "*.wav" | wc -l | xargs echo "Total audio files generated:"
+          du -sh audio/ | xargs echo "Total audio size:"
+
+      - name: Generate Playwright scripts
+        run: |
+          echo "🎭 Generating Playwright test scripts"
+          
+          # Create enhanced script generator
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          
+          const audioResults = JSON.parse(fs.readFileSync('audio-results.json', 'utf8'));
+          const PlaywrightScriptGenerator = require('./scripts/tutorial-generation/playwrightScriptGenerator');
+          
+          const generator = new PlaywrightScriptGenerator();
+          const featuresDir = 'features';
+          const featureFiles = '${{ steps.parse_inputs.outputs.feature_files }}'.split(',');
+          
+          featureFiles.forEach(async (featureName) => {
+            const featureFile = path.join(featuresDir, \`\${featureName}.feature\`);
+            if (fs.existsSync(featureFile)) {
+              const audioClips = audioResults[featureName] || {};
+              await generator.generateScript(featureFile, audioClips);
+              console.log(\`✅ Generated script for \${featureName}\`);
+            }
+          });
+          "
+          
+          echo "✅ Playwright scripts generated"
+
+      - name: Record screen tutorials
+        run: |
+          echo "🎬 Recording screen tutorials"
+          
+          # Create recording script
+          cat > record-tutorials.js << 'EOF'
+          const { chromium } = require('@playwright/test');
+          const fs = require('fs');
+          const path = require('path');
+          
+          async function recordTutorial(featureName, audioResults) {
+            console.log(`🎬 Recording tutorial: ${featureName}`);
+            
+            const browser = await chromium.launch({
+              headless: true,
+              args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            
+            const context = await browser.newContext({
+              viewport: { width: ${{ steps.parse_inputs.outputs.video_width }}, height: ${{ steps.parse_inputs.outputs.video_height }} },
+              recordVideo: {
+                dir: path.join('recordings', featureName),
+                size: { width: ${{ steps.parse_inputs.outputs.video_width }}, height: ${{ steps.parse_inputs.outputs.video_height }} }
+              }
+            });
+            
+            const page = await context.newPage();
+            
+            try {
+              // Import and run the generated Playwright script
+              const scriptPath = path.join('scripts', 'playwright', `${featureName}.spec.js`);
+              if (fs.existsSync(scriptPath)) {
+                // For now, do a simple recording of the scenario
+                await page.goto('http://localhost:3000/sgex/');
+                await page.waitForLoadState('networkidle');
+                
+                // Simulate the tutorial flow with timing based on audio clips
+                const narrations = audioResults[featureName]?.en || [];
+                
+                for (const narration of narrations) {
+                  console.log(`🎙️ Narration: ${narration.text.substring(0, 50)}...`);
+                  await page.waitForTimeout(narration.duration || 3000);
+                  
+                  // Add some interaction based on the content
+                  if (narration.text.includes('click') || narration.text.includes('Click')) {
+                    // Simulate mouse movement
+                    await page.mouse.move(Math.random() * 100 + 100, Math.random() * 100 + 100);
+                  }
+                }
+                
+                console.log(`✅ Recording completed for ${featureName}`);
+              } else {
+                console.warn(`Script not found: ${scriptPath}`);
+              }
+            } catch (error) {
+              console.error(`❌ Recording failed for ${featureName}:`, error.message);
+            } finally {
+              await context.close();
+              await browser.close();
+            }
+          }
+          
+          // Main execution
+          (async () => {
+            const audioResults = JSON.parse(fs.readFileSync('audio-results.json', 'utf8'));
+            const features = '${{ steps.parse_inputs.outputs.feature_files }}'.split(',');
+            
+            for (const featureName of features) {
+              await recordTutorial(featureName, audioResults);
+            }
+          })();
+          EOF
+          
+          # Ensure recordings directory exists
+          mkdir -p recordings
+          
+          # Run the recording
+          node record-tutorials.js
+          
+          echo "✅ Screen recording completed"
+
+      - name: Process videos with audio overlay
+        run: |
+          echo "🎬 Processing videos with audio overlay and captions"
+          
+          # Create video processing script
+          cat > process-videos.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          const { execSync } = require('child_process');
+          
+          const audioResults = JSON.parse(fs.readFileSync('audio-results.json', 'utf8'));
+          const languages = '${{ steps.parse_inputs.outputs.languages }}'.split(',');
+          const features = '${{ steps.parse_inputs.outputs.feature_files }}'.split(',');
+          const includeCaption = '${{ steps.parse_inputs.outputs.include_captions }}' === 'true';
+          
+          // Ensure output directories exist
+          languages.forEach(lang => {
+            features.forEach(feature => {
+              const dir = path.join('tutorials', feature, lang);
+              if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+              }
+            });
+          });
+          
+          features.forEach(featureName => {
+            const recordingDir = path.join('recordings', featureName);
+            
+            if (fs.existsSync(recordingDir)) {
+              const videoFiles = fs.readdirSync(recordingDir).filter(f => f.endsWith('.webm'));
+              
+              if (videoFiles.length > 0) {
+                const inputVideo = path.join(recordingDir, videoFiles[0]);
+                console.log(`Processing video: ${inputVideo}`);
+                
+                languages.forEach(lang => {
+                  const audioClips = audioResults[featureName]?.[lang] || [];
+                  const outputDir = path.join('tutorials', featureName, lang);
+                  const outputVideo = path.join(outputDir, `${featureName}-${lang}.mp4`);
+                  
+                  if (audioClips.length > 0) {
+                    try {
+                      // Create audio playlist
+                      const audioFiles = audioClips
+                        .filter(clip => clip.success && fs.existsSync(clip.file))
+                        .map(clip => clip.file);
+                      
+                      if (audioFiles.length > 0) {
+                        // Concatenate audio files
+                        const audioList = audioFiles.map(f => `file '${path.resolve(f)}'`).join('\n');
+                        const audioListFile = path.join(outputDir, 'audio-list.txt');
+                        fs.writeFileSync(audioListFile, audioList);
+                        
+                        const combinedAudio = path.join(outputDir, 'combined-audio.wav');
+                        execSync(`ffmpeg -y -f concat -safe 0 -i "${audioListFile}" -c copy "${combinedAudio}"`, { stdio: 'pipe' });
+                        
+                        // Combine video with audio
+                        const ffmpegCmd = [
+                          'ffmpeg', '-y',
+                          `-i "${inputVideo}"`,
+                          `-i "${combinedAudio}"`,
+                          '-c:v libx264',
+                          '-c:a aac',
+                          '-shortest',
+                          `"${outputVideo}"`
+                        ].join(' ');
+                        
+                        execSync(ffmpegCmd, { stdio: 'pipe' });
+                        console.log(`✅ Created: ${outputVideo}`);
+                        
+                        // Generate captions if requested
+                        if (includeCaption) {
+                          const captionsFile = path.join(outputDir, `${featureName}-${lang}.srt`);
+                          let srtContent = '';
+                          let currentTime = 0;
+                          
+                          audioClips.forEach((clip, index) => {
+                            if (clip.success) {
+                              const startTime = formatTime(currentTime);
+                              const endTime = formatTime(currentTime + clip.duration);
+                              
+                              srtContent += `${index + 1}\n`;
+                              srtContent += `${startTime} --> ${endTime}\n`;
+                              srtContent += `${clip.text}\n\n`;
+                              
+                              currentTime += clip.duration;
+                            }
+                          });
+                          
+                          fs.writeFileSync(captionsFile, srtContent);
+                          console.log(`✅ Created captions: ${captionsFile}`);
+                        }
+                        
+                        // Clean up temporary files
+                        if (fs.existsSync(combinedAudio)) fs.unlinkSync(combinedAudio);
+                        if (fs.existsSync(audioListFile)) fs.unlinkSync(audioListFile);
+                        
+                      } else {
+                        console.warn(`No valid audio files for ${featureName} in ${lang}`);
+                      }
+                    } catch (error) {
+                      console.error(`❌ Failed to process ${featureName} in ${lang}:`, error.message);
+                    }
+                  }
+                });
+              } else {
+                console.warn(`No video recordings found for ${featureName}`);
+              }
+            }
+          });
+          
+          function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            const milliseconds = ms % 1000;
+            
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')},${milliseconds.toString().padStart(3, '0')}`;
+          }
+          EOF
+          
+          node process-videos.js
+          
+          echo "✅ Video processing completed"
+
+      - name: Generate documentation
+        run: |
+          echo "📚 Generating tutorial documentation"
+          
+          # Create documentation generator
+          cat > generate-docs.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          
+          const audioResults = JSON.parse(fs.readFileSync('audio-results.json', 'utf8'));
+          const languages = '${{ steps.parse_inputs.outputs.languages }}'.split(',');
+          const features = '${{ steps.parse_inputs.outputs.feature_files }}'.split(',');
+          
+          // Ensure docs directory exists
+          const docsDir = path.join('docs', 'user-journey');
+          if (!fs.existsSync(docsDir)) {
+            fs.mkdirSync(docsDir, { recursive: true });
+          }
+          
+          features.forEach(featureName => {
+            console.log(`Generating documentation for ${featureName}`);
+            
+            // Read original feature file
+            const featureFile = path.join('features', `${featureName}.feature`);
+            const featureContent = fs.existsSync(featureFile) ? fs.readFileSync(featureFile, 'utf8') : '';
+            
+            // Extract feature title
+            const titleMatch = featureContent.match(/Feature:\s*(.+)/);
+            const featureTitle = titleMatch ? titleMatch[1].trim() : featureName;
+            
+            let docContent = `# ${featureTitle}\n\n`;
+            docContent += `**Generated on:** ${new Date().toISOString()}\n`;
+            docContent += `**Source Branch:** ${{ github.event.inputs.target_branch || 'main' }}\n`;
+            docContent += `**Languages:** ${{ steps.parse_inputs.outputs.languages }}\n\n`;
+            
+            docContent += `## Overview\n\n`;
+            docContent += `This tutorial demonstrates ${featureTitle.toLowerCase()} in SGEX Workbench.\n\n`;
+            
+            docContent += `## Available Formats\n\n`;
+            
+            // Video links
+            docContent += `### 🎬 Videos with Narration\n\n`;
+            languages.forEach(lang => {
+              const langName = { en: 'English', fr: 'French', es: 'Spanish', ar: 'Arabic', zh: 'Chinese', ru: 'Russian' }[lang] || lang;
+              const videoFile = `tutorials/${featureName}/${lang}/${featureName}-${lang}.mp4`;
+              const captionsFile = `tutorials/${featureName}/${lang}/${featureName}-${lang}.srt`;
+              
+              docContent += `- **${langName}**: [${featureName}-${lang}.mp4](../${videoFile})`;
+              if (fs.existsSync(captionsFile)) {
+                docContent += ` | [Captions](../${captionsFile})`;
+              }
+              docContent += `\n`;
+            });
+            
+            // Audio files
+            docContent += `\n### 🎙️ Audio Narration Files\n\n`;
+            languages.forEach(lang => {
+              const langName = { en: 'English', fr: 'French', es: 'Spanish', ar: 'Arabic', zh: 'Chinese', ru: 'Russian' }[lang] || lang;
+              const audioClips = audioResults[featureName]?.[lang] || [];
+              
+              if (audioClips.length > 0) {
+                docContent += `#### ${langName}\n`;
+                audioClips.forEach((clip, index) => {
+                  if (clip.success) {
+                    const fileName = path.basename(clip.file);
+                    docContent += `${index + 1}. [${fileName}](../${clip.file}) - "${clip.text}"\n`;
+                  }
+                });
+                docContent += `\n`;
+              }
+            });
+            
+            // Feature file reference
+            docContent += `## Source Materials\n\n`;
+            docContent += `- **Original Feature File**: [${featureName}.feature](../features/${featureName}.feature)\n`;
+            docContent += `- **Generated Playwright Script**: [${featureName}.spec.js](../scripts/playwright/${featureName}.spec.js)\n\n`;
+            
+            // Narration transcript
+            if (audioResults[featureName]?.en) {
+              docContent += `## Narration Transcript (English)\n\n`;
+              audioResults[featureName].en.forEach((clip, index) => {
+                if (clip.success) {
+                  docContent += `${index + 1}. ${clip.text}\n`;
+                }
+              });
+              docContent += `\n`;
+            }
+            
+            // Technical details
+            docContent += `## Technical Details\n\n`;
+            docContent += `- **Recording Resolution**: ${{ steps.parse_inputs.outputs.video_width }}x${{ steps.parse_inputs.outputs.video_height }}\n`;
+            docContent += `- **TTS Engine**: eSpeak NG\n`;
+            docContent += `- **Video Format**: MP4 (H.264)\n`;
+            docContent += `- **Audio Format**: AAC\n`;
+            docContent += `- **Caption Format**: SRT\n\n`;
+            
+            // Usage instructions
+            docContent += `## Usage\n\n`;
+            docContent += `1. **Watch the video**: Choose your preferred language from the videos above\n`;
+            docContent += `2. **Enable captions**: Use the caption files for accessibility\n`;
+            docContent += `3. **Listen separately**: Use individual audio files for specific steps\n`;
+            docContent += `4. **Reproduce steps**: Follow the original feature file for manual testing\n\n`;
+            
+            docContent += `## Contributing\n\n`;
+            docContent += `To update this tutorial:\n`;
+            docContent += `1. Edit the source feature file: \`features/${featureName}.feature\`\n`;
+            docContent += `2. Run the tutorial generation workflow\n`;
+            docContent += `3. Review the generated content\n\n`;
+            
+            docContent += `---\n`;
+            docContent += `*This documentation was automatically generated by the SGEX Tutorial Generation System.*\n`;
+            
+            // Write documentation file
+            const docFile = path.join(docsDir, `${featureName}.md`);
+            fs.writeFileSync(docFile, docContent);
+            console.log(`✅ Generated documentation: ${docFile}`);
+          });
+          
+          // Generate index file
+          let indexContent = `# SGEX Workbench User Journey Tutorials\n\n`;
+          indexContent += `**Generated on:** ${new Date().toISOString()}\n\n`;
+          indexContent += `This directory contains automatically generated screen recording tutorials for SGEX Workbench user scenarios.\n\n`;
+          indexContent += `## Available Tutorials\n\n`;
+          
+          features.forEach(featureName => {
+            const featureFile = path.join('features', `${featureName}.feature`);
+            const featureContent = fs.existsSync(featureFile) ? fs.readFileSync(featureFile, 'utf8') : '';
+            const titleMatch = featureContent.match(/Feature:\s*(.+)/);
+            const featureTitle = titleMatch ? titleMatch[1].trim() : featureName;
+            
+            indexContent += `- [${featureTitle}](${featureName}.md)\n`;
+          });
+          
+          indexContent += `\n## Languages\n\n`;
+          indexContent += `All tutorials are available in the following languages:\n`;
+          languages.forEach(lang => {
+            const langName = { en: 'English', fr: 'French', es: 'Spanish', ar: 'Arabic', zh: 'Chinese', ru: 'Russian' }[lang] || lang;
+            indexContent += `- ${langName} (${lang})\n`;
+          });
+          
+          indexContent += `\n## System Requirements\n\n`;
+          indexContent += `- **Video Player**: Any modern video player supporting MP4/H.264\n`;
+          indexContent += `- **Caption Support**: SRT subtitle support recommended\n`;
+          indexContent += `- **Audio Player**: Any standard audio player for WAV files\n\n`;
+          
+          indexContent += `## Generation Details\n\n`;
+          indexContent += `- **Source Branch**: ${{ github.event.inputs.target_branch || 'main' }}\n`;
+          indexContent += `- **Resolution**: ${{ steps.parse_inputs.outputs.video_width }}x${{ steps.parse_inputs.outputs.video_height }}\n`;
+          indexContent += `- **TTS Engine**: eSpeak NG\n`;
+          indexContent += `- **Automation**: Playwright\n`;
+          indexContent += `- **Workflow**: GitHub Actions\n\n`;
+          
+          fs.writeFileSync(path.join(docsDir, 'README.md'), indexContent);
+          console.log('✅ Generated index documentation');
+          EOF
+          
+          node generate-docs.js
+          
+          echo "✅ Documentation generation completed"
+
+      - name: Create summary report
+        run: |
+          echo "📊 Creating generation summary report"
+          
+          echo "# Tutorial Generation Summary" > generation-summary.md
+          echo "" >> generation-summary.md
+          echo "**Generated on:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> generation-summary.md
+          echo "**Branch:** ${{ github.event.inputs.target_branch || 'main' }}" >> generation-summary.md
+          echo "**Languages:** ${{ steps.parse_inputs.outputs.languages }}" >> generation-summary.md
+          echo "**Resolution:** ${{ steps.parse_inputs.outputs.video_width }}x${{ steps.parse_inputs.outputs.video_height }}" >> generation-summary.md
+          echo "" >> generation-summary.md
+          
+          echo "## Generated Content" >> generation-summary.md
+          echo "" >> generation-summary.md
+          
+          # Count files
+          FEATURE_COUNT=$(echo "${{ steps.parse_inputs.outputs.feature_files }}" | tr ',' '\n' | wc -l)
+          AUDIO_COUNT=$(find audio -name "*.wav" 2>/dev/null | wc -l)
+          VIDEO_COUNT=$(find tutorials -name "*.mp4" 2>/dev/null | wc -l)
+          CAPTION_COUNT=$(find tutorials -name "*.srt" 2>/dev/null | wc -l)
+          DOC_COUNT=$(find docs/user-journey -name "*.md" 2>/dev/null | wc -l)
+          
+          echo "- **Feature Files Processed:** $FEATURE_COUNT" >> generation-summary.md
+          echo "- **Audio Files Generated:** $AUDIO_COUNT" >> generation-summary.md
+          echo "- **Video Files Created:** $VIDEO_COUNT" >> generation-summary.md
+          echo "- **Caption Files Created:** $CAPTION_COUNT" >> generation-summary.md
+          echo "- **Documentation Files:** $DOC_COUNT" >> generation-summary.md
+          echo "" >> generation-summary.md
+          
+          # File sizes
+          if [[ -d "audio" ]]; then
+            AUDIO_SIZE=$(du -sh audio 2>/dev/null | cut -f1)
+            echo "- **Total Audio Size:** $AUDIO_SIZE" >> generation-summary.md
+          fi
+          
+          if [[ -d "tutorials" ]]; then
+            TUTORIAL_SIZE=$(du -sh tutorials 2>/dev/null | cut -f1)
+            echo "- **Total Tutorial Size:** $TUTORIAL_SIZE" >> generation-summary.md
+          fi
+          
+          echo "" >> generation-summary.md
+          echo "## File Structure" >> generation-summary.md
+          echo "" >> generation-summary.md
+          echo "\`\`\`" >> generation-summary.md
+          
+          if [[ -d "tutorials" ]]; then
+            find tutorials -type f | head -20 | sort >> generation-summary.md
+            REMAINING=$(find tutorials -type f | wc -l)
+            if [[ $REMAINING -gt 20 ]]; then
+              echo "... and $((REMAINING - 20)) more files" >> generation-summary.md
+            fi
+          fi
+          
+          echo "\`\`\`" >> generation-summary.md
+          echo "" >> generation-summary.md
+          
+          echo "## Next Steps" >> generation-summary.md
+          echo "" >> generation-summary.md
+          echo "1. Review generated tutorials in the \`tutorials/\` directory" >> generation-summary.md
+          echo "2. Check documentation in \`docs/user-journey/\`" >> generation-summary.md
+          echo "3. Test video playback and caption functionality" >> generation-summary.md
+          echo "4. Consider adding tutorials to the main SGEX documentation" >> generation-summary.md
+          
+          cat generation-summary.md
+
+      - name: Stop local server
+        if: always()
+        run: |
+          if [[ -n "$SERVER_PID" ]]; then
+            echo "🛑 Stopping local server (PID: $SERVER_PID)"
+            kill $SERVER_PID || true
+          fi
+
+      - name: Upload tutorial artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sgex-tutorials-${{ github.event.inputs.target_branch || 'main' }}-${{ github.run_number }}
+          path: |
+            tutorials/
+            audio/
+            docs/user-journey/
+            generation-summary.md
+          retention-days: 30
+
+      - name: Commit generated content
+        if: github.event.inputs.target_branch == 'main' || github.event.inputs.target_branch == ''
+        run: |
+          echo "💾 Committing generated tutorial content"
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add generated files
+          git add tutorials/ audio/ docs/user-journey/ generation-summary.md
+          
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "🎬 Generate multilingual screen recording tutorials
+
+- Features: ${{ steps.parse_inputs.outputs.feature_files }}
+- Languages: ${{ steps.parse_inputs.outputs.languages }}
+- Resolution: ${{ steps.parse_inputs.outputs.video_width }}x${{ steps.parse_inputs.outputs.video_height }}
+- Generated on: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+
+Automated tutorial generation workflow #${{ github.run_number }}"
+            
+            git push origin ${{ github.event.inputs.target_branch || 'main' }}
+            echo "✅ Changes committed and pushed"
+          fi
+
+      - name: Create workflow summary
+        if: always()
+        run: |
+          echo "## 🎬 Tutorial Generation Workflow Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.event.inputs.target_branch || 'main' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Features:** ${{ steps.parse_inputs.outputs.feature_files }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Languages:** ${{ steps.parse_inputs.outputs.languages }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Resolution:** ${{ steps.parse_inputs.outputs.video_width }}x${{ steps.parse_inputs.outputs.video_height }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ job.status }}" == "success" ]]; then
+            echo "### ✅ Generation Successful" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Tutorial artifacts have been generated and are available in the workflow artifacts." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Download:** Use the 'sgex-tutorials-*' artifact from this workflow run" >> $GITHUB_STEP_SUMMARY
+            echo "**Documentation:** Check \`docs/user-journey/README.md\` for usage instructions" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Generation Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Please check the workflow logs for detailed error information." >> $GITHUB_STEP_SUMMARY
+          fi

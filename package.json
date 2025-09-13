@@ -60,7 +60,11 @@
     "generate-service-table": "node scripts/generate-service-table.js",
     "compliance:profile": "node src/tests/compliance/profileCreationCompliance.js",
     "compliance:all": "npm run compliance:profile",
-    "test:compliance": "npm test -- --testPathPattern=compliance"
+    "test:compliance": "npm test -- --testPathPattern=compliance",
+    "tutorial:test": "node scripts/test-tutorial-system.js",
+    "tutorial:generate": "node scripts/tutorial-orchestrator.js",
+    "tutorial:generate-local": "node scripts/tutorial-orchestrator.js --features user-login-pat --languages en",
+    "tutorial:install-deps": "sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg sox && npx playwright install chromium"
   },
   "jest": {
     "transformIgnorePatterns": [
