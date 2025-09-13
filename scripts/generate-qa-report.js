@@ -3,10 +3,10 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { extractRepositoryInfo } = require('./configure-repository');
+const { getRepositoryFromPackageJson } = require('./configure-repository');
 
 // Get repository info for dynamic URLs
-const repoInfo = extractRepositoryInfo();
+const repoInfo = getRepositoryFromPackageJson();
 const repositoryUrl = `https://github.com/${repoInfo.owner}/${repoInfo.name}`;
 
 /**

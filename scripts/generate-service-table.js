@@ -15,12 +15,12 @@
 const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('js-yaml');
-const { extractRepositoryInfo } = require('./configure-repository');
+const { getRepositoryFromPackageJson } = require('./configure-repository');
 
 class ServiceTableGenerator {
   constructor() {
     this.services = [];
-    const repoInfo = extractRepositoryInfo();
+    const repoInfo = getRepositoryFromPackageJson();
     this.baseUrl = `https://github.com/${repoInfo.owner}/${repoInfo.name}`;
     this.basePath = '/home/runner/work/sgex/sgex';
     this.localhostUrls = {

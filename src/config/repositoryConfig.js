@@ -1,19 +1,13 @@
 /**
  * Repository Configuration Service
  * 
- * Provides centralized repository configuration that can be set at build time
- * or determined from environment variables and package.json.
+ * Provides centralized repository configuration that must be set at build time
+ * from environment variables. These are set by the configure-repository.js script
+ * which extracts and validates repository information from package.json.
  * 
- * This allows for fork-friendly deployment where the repository owner/name
- * is automatically detected rather than hardcoded.
+ * This ensures fork-friendly deployment where the repository owner/name
+ * is automatically detected and validated rather than hardcoded.
  */
-
-// Central fallback repository configuration
-const FALLBACK_REPOSITORY = {
-  owner: 'litlfred',
-  name: 'sgex',
-  fullName: 'litlfred/sgex'
-};
 
 class RepositoryConfig {
   constructor() {
@@ -23,58 +17,33 @@ class RepositoryConfig {
 
   /**
    * Initialize repository configuration
-   * Priority order:
-   * 1. Build-time environment variables (REACT_APP_REPO_OWNER, REACT_APP_REPO_NAME)
-   * 2. Package.json repository field
-   * 3. Default fallback to original repository
+   * Requires build-time environment variables set by configure-repository.js script:
+   * - REACT_APP_REPO_OWNER: Repository owner
+   * - REACT_APP_REPO_NAME: Repository name
+   * 
+   * These are validated and set during the build process to ensure consistency.
    */
   _initialize() {
     if (this._initialized) return;
 
-    // Try build-time environment variables first
+    // Require build-time environment variables
     const envOwner = process.env.REACT_APP_REPO_OWNER;
     const envRepo = process.env.REACT_APP_REPO_NAME;
+    const configSource = process.env.REACT_APP_REPO_CONFIG_SOURCE;
     
-    if (envOwner && envRepo) {
-      this._config = {
-        owner: envOwner,
-        name: envRepo,
-        fullName: `${envOwner}/${envRepo}`,
-        source: 'environment'
-      };
-      this._initialized = true;
-      return;
+    if (!envOwner || !envRepo) {
+      throw new Error(
+        'Repository configuration not found. ' +
+        'Build-time environment variables REACT_APP_REPO_OWNER and REACT_APP_REPO_NAME must be set. ' +
+        'Please run "npm run configure:repo" or ensure package.json has a valid repository field.'
+      );
     }
 
-    // Try to extract from package.json repository field
-    try {
-      // This would be injected at build time or available as a build variable
-      const packageRepo = process.env.REACT_APP_PACKAGE_REPOSITORY;
-      if (packageRepo) {
-        // Parse repository URL like "https://github.com/owner/repo.git"
-        const match = packageRepo.match(/github\.com[/:]([\w-]+)\/([\w-]+?)(?:\.git)?$/);
-        if (match) {
-          const [, owner, name] = match;
-          this._config = {
-            owner,
-            name,
-            fullName: `${owner}/${name}`,
-            source: 'package.json'
-          };
-          this._initialized = true;
-          return;
-        }
-      }
-    } catch (error) {
-      console.warn('Failed to parse repository from package.json:', error);
-    }
-
-    // Default fallback to original repository
     this._config = {
-      owner: FALLBACK_REPOSITORY.owner,
-      name: FALLBACK_REPOSITORY.name,
-      fullName: FALLBACK_REPOSITORY.fullName,
-      source: 'default'
+      owner: envOwner,
+      name: envRepo,
+      fullName: `${envOwner}/${envRepo}`,
+      source: configSource || 'environment'
     };
     this._initialized = true;
   }
@@ -136,14 +105,6 @@ class RepositoryConfig {
   }
 
   /**
-   * Check if this is the default repository (fallback repository)
-   */
-  isDefaultRepository() {
-    this._initialize();
-    return this._config.fullName === FALLBACK_REPOSITORY.fullName;
-  }
-
-  /**
    * Override configuration (for testing or manual setup)
    */
   setConfig(owner, name) {
@@ -154,13 +115,6 @@ class RepositoryConfig {
       source: 'manual'
     };
     this._initialized = true;
-  }
-
-  /**
-   * Get fallback repository configuration
-   */
-  getFallbackRepository() {
-    return { ...FALLBACK_REPOSITORY };
   }
 
   /**
@@ -175,6 +129,4 @@ class RepositoryConfig {
 // Create and export singleton instance
 const repositoryConfig = new RepositoryConfig();
 
-// Export both the singleton and the fallback repository constant
 export default repositoryConfig;
-export { FALLBACK_REPOSITORY };

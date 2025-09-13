@@ -3,126 +3,111 @@
 /**
  * Build-time Repository Configuration Script
  * 
- * This script extracts repository information and sets environment variables
- * for use in the React build process. It's designed to be run before build
- * to inject the correct repository configuration.
+ * This script extracts and validates repository information from package.json
+ * and sets environment variables for use in the React build process.
+ * 
+ * Requirements:
+ * - package.json MUST have a repository field
+ * - If git remote exists, it MUST match package.json repository
+ * - Build will fail if these requirements are not met
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Central fallback repository configuration (shared with repositoryConfig.js)
-const FALLBACK_REPOSITORY = {
-  owner: 'litlfred',
-  name: 'sgex',
-  fullName: 'litlfred/sgex'
-};
-
-function extractRepositoryInfo() {
+function getRepositoryFromPackageJson() {
   try {
-    // Try build-time environment variables first
-    const envOwner = process.env.REACT_APP_REPO_OWNER;
-    const envRepo = process.env.REACT_APP_REPO_NAME;
-    
-    if (envOwner && envRepo) {
-      return { owner: envOwner, name: envRepo, source: 'environment' };
-    }
-
     // Read package.json
     const packageJsonPath = path.join(process.cwd(), 'package.json');
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
     
-    // Extract repository info from package.json
-    let packageRepoInfo = null;
-    let repositoryUrl = null;
+    // Repository field is required
+    if (!packageJson.repository) {
+      console.error('❌ FATAL ERROR: package.json is missing the "repository" field');
+      console.error('   Add a repository field like:');
+      console.error('   {');
+      console.error('     "repository": {');
+      console.error('       "type": "git",');
+      console.error('       "url": "https://github.com/owner/repo.git"');
+      console.error('     }');
+      console.error('   }');
+      process.exit(1);
+    }
     
-    if (packageJson.repository) {
-      if (typeof packageJson.repository === 'string') {
-        repositoryUrl = packageJson.repository;
-      } else if (packageJson.repository.url) {
-        repositoryUrl = packageJson.repository.url;
-      }
+    // Extract repository URL
+    let repositoryUrl = null;
+    if (typeof packageJson.repository === 'string') {
+      repositoryUrl = packageJson.repository;
+    } else if (packageJson.repository.url) {
+      repositoryUrl = packageJson.repository.url;
+    } else {
+      console.error('❌ FATAL ERROR: package.json repository field is invalid');
+      console.error('   Repository must be a string or object with "url" property');
+      process.exit(1);
     }
     
     // Parse GitHub repository URL from package.json
-    if (repositoryUrl) {
-      // Handle various GitHub URL formats:
-      // - https://github.com/owner/repo.git
-      // - git+https://github.com/owner/repo.git
-      // - git://github.com/owner/repo.git
-      // - owner/repo
-      const match = repositoryUrl.match(/(?:github\.com[/:])?([\w-]+)\/([\w-]+?)(?:\.git)?$/);
-      
-      if (match) {
-        const [, owner, name] = match;
-        packageRepoInfo = { owner, name, source: 'package.json' };
-      }
+    // Handle various GitHub URL formats:
+    // - https://github.com/owner/repo.git
+    // - git+https://github.com/owner/repo.git
+    // - git://github.com/owner/repo.git
+    // - owner/repo
+    const match = repositoryUrl.match(/(?:github\.com[/:])?([\w-]+)\/([\w-]+?)(?:\.git)?$/);
+    
+    if (!match) {
+      console.error('❌ FATAL ERROR: package.json repository is not a valid GitHub repository');
+      console.error(`   Repository URL: ${repositoryUrl}`);
+      console.error('   Expected format: https://github.com/owner/repo.git');
+      process.exit(1);
     }
     
-    // Try to get from git remote
-    let gitRepoInfo = null;
-    try {
-      const { execSync } = require('child_process');
-      const gitRemote = execSync('git remote get-url origin', { encoding: 'utf8' }).trim();
-      const match = gitRemote.match(/github\.com[/:]([\w-]+)\/([\w-]+?)(?:\.git)?$/);
-      
-      if (match) {
-        const [, owner, name] = match;
-        gitRepoInfo = { owner, name, source: 'git-remote' };
-      }
-    } catch (error) {
-      console.warn('Could not extract repository from git remote:', error.message);
-    }
-    
-    // Check for mismatch between package.json and git remote
-    if (packageRepoInfo && gitRepoInfo) {
-      const packageRepo = `${packageRepoInfo.owner}/${packageRepoInfo.name}`;
-      const gitRepo = `${gitRepoInfo.owner}/${gitRepoInfo.name}`;
-      
-      if (packageRepo !== gitRepo) {
-        console.warn('⚠️  REPOSITORY MISMATCH DETECTED:');
-        console.warn(`   package.json repository: ${packageRepo}`);
-        console.warn(`   git remote origin:       ${gitRepo}`);
-        console.warn('');
-        console.warn('   RECOMMENDATION:');
-        console.warn('   1. Update package.json repository field to match git remote, OR');
-        console.warn('   2. Change git remote origin to match package.json');
-        console.warn('   3. Set environment variables REACT_APP_REPO_OWNER and REACT_APP_REPO_NAME to override');
-        console.warn('');
-        console.warn('   Using git remote as source of truth for now...');
-        return gitRepoInfo;
-      }
-    }
-    
-    // Use package.json if available, otherwise git remote
-    if (packageRepoInfo) {
-      return packageRepoInfo;
-    }
-    
-    if (gitRepoInfo) {
-      return gitRepoInfo;
-    }
-    
-    // Default fallback
-    return { 
-      owner: FALLBACK_REPOSITORY.owner, 
-      name: FALLBACK_REPOSITORY.name, 
-      source: 'default' 
-    };
+    const [, owner, name] = match;
+    return { owner, name, url: repositoryUrl, source: 'package.json' };
     
   } catch (error) {
-    console.error('Error extracting repository info:', error);
-    return { 
-      owner: FALLBACK_REPOSITORY.owner, 
-      name: FALLBACK_REPOSITORY.name, 
-      source: 'error-fallback' 
-    };
+    console.error('❌ FATAL ERROR: Failed to read or parse package.json:', error.message);
+    process.exit(1);
+  }
+}
+
+function validateGitRemote(packageRepoInfo) {
+  try {
+    const { execSync } = require('child_process');
+    const gitRemote = execSync('git remote get-url origin', { encoding: 'utf8' }).trim();
+    const match = gitRemote.match(/github\.com[/:]([\w-]+)\/([\w-]+?)(?:\.git)?$/);
+    
+    if (match) {
+      const [, gitOwner, gitName] = match;
+      const packageRepo = `${packageRepoInfo.owner}/${packageRepoInfo.name}`;
+      const gitRepo = `${gitOwner}/${gitName}`;
+      
+      if (packageRepo !== gitRepo) {
+        console.error('❌ FATAL ERROR: Repository mismatch detected');
+        console.error(`   package.json repository: ${packageRepo}`);
+        console.error(`   git remote origin:       ${gitRepo}`);
+        console.error('');
+        console.error('   Fix by choosing one of:');
+        console.error('   1. Update package.json repository field to match git remote');
+        console.error('   2. Change git remote origin to match package.json');
+        console.error('');
+        console.error('   Commands to fix:');
+        console.error(`   git remote set-url origin https://github.com/${packageRepo}.git`);
+        console.error('   OR update package.json repository.url field');
+        process.exit(1);
+      }
+      
+      console.log(`✅ Repository consistency verified: ${packageRepo}`);
+    } else {
+      console.warn('⚠️  Warning: Could not parse git remote origin, skipping validation');
+    }
+  } catch (error) {
+    console.warn('⚠️  Warning: No git remote found, skipping validation');
   }
 }
 
 function setEnvironmentVariables(repoInfo) {
   // Create .env file for build
-  const envContent = `# Auto-generated repository configuration
+  const envContent = `# Auto-generated repository configuration from package.json
 REACT_APP_REPO_OWNER=${repoInfo.owner}
 REACT_APP_REPO_NAME=${repoInfo.name}
 REACT_APP_REPO_FULL_NAME=${repoInfo.owner}/${repoInfo.name}
@@ -141,6 +126,7 @@ REACT_APP_REPO_CONFIG_SOURCE=${repoInfo.source}
     updateStaticFiles(repoInfo);
   } catch (error) {
     console.error('❌ Failed to write .env.build file:', error);
+    process.exit(1);
   }
 }
 
@@ -151,17 +137,17 @@ function updateStaticFiles(repoInfo) {
     if (fs.existsSync(notFoundPath)) {
       let content = fs.readFileSync(notFoundPath, 'utf8');
       
-      // Replace hardcoded repository references
-      const oldRepo = FALLBACK_REPOSITORY.fullName;
+      // Replace repository references with current repository
       const newRepo = `${repoInfo.owner}/${repoInfo.name}`;
       
-      // Replace GitHub URLs and repository references
+      // Replace GitHub URLs that might be hardcoded
+      // This is a generic replacement that works for any existing hardcoded references
       content = content.replace(
-        new RegExp(`https://github\\.com/${oldRepo.replace('/', '\\/')}/`, 'g'),
+        /https:\/\/github\.com\/[\w-]+\/[\w-]+\//g,
         `https://github.com/${newRepo}/`
       );
       content = content.replace(
-        new RegExp(`https://${FALLBACK_REPOSITORY.owner}\\.github\\.io/${FALLBACK_REPOSITORY.name}/`, 'g'),
+        /https:\/\/[\w-]+\.github\.io\/[\w-]+\//g,
         `https://${repoInfo.owner}.github.io/${repoInfo.name}/`
       );
       
@@ -176,7 +162,13 @@ function updateStaticFiles(repoInfo) {
 function main() {
   console.log('🔧 Configuring repository settings for build...');
   
-  const repoInfo = extractRepositoryInfo();
+  // Get repository from package.json (required)
+  const repoInfo = getRepositoryFromPackageJson();
+  
+  // Validate against git remote if present
+  validateGitRemote(repoInfo);
+  
+  // Set environment variables
   setEnvironmentVariables(repoInfo);
   
   console.log('✨ Repository configuration complete!');
@@ -186,4 +178,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { extractRepositoryInfo, setEnvironmentVariables, updateStaticFiles, FALLBACK_REPOSITORY };
+module.exports = { getRepositoryFromPackageJson, validateGitRemote, setEnvironmentVariables, updateStaticFiles };
