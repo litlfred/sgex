@@ -61,7 +61,37 @@ const WorkflowDashboard = ({
         lastRun: w.createdAt
       })));
 
-      setWorkflows(workflowData);
+      // During refresh, update workflows seamlessly to prevent visual flashing
+      if (isRefresh) {
+        setWorkflows(prevWorkflows => {
+          // If this is the same data structure, preserve the array reference to prevent re-rendering
+          if (prevWorkflows.length === workflowData.length) {
+            // Check if data actually changed before updating
+            const hasChanges = workflowData.some((newWorkflow, index) => {
+              const prevWorkflow = prevWorkflows[index];
+              return !prevWorkflow || 
+                     prevWorkflow.status !== newWorkflow.status ||
+                     prevWorkflow.conclusion !== newWorkflow.conclusion ||
+                     prevWorkflow.displayStatus !== newWorkflow.displayStatus ||
+                     prevWorkflow.runId !== newWorkflow.runId ||
+                     (prevWorkflow.createdAt?.getTime() !== newWorkflow.createdAt?.getTime());
+            });
+            
+            // Only update if there are actual changes
+            if (!hasChanges) {
+              console.debug('No workflow changes detected during refresh, keeping existing data');
+              return prevWorkflows;
+            }
+          }
+          
+          console.debug('Workflow changes detected, updating data seamlessly');
+          return workflowData;
+        });
+      } else {
+        // Initial load - normal replacement
+        setWorkflows(workflowData);
+      }
+      
       setLastRefresh(new Date());
 
       // Clear job cache during refresh to ensure job data matches the 30-second update interval
@@ -479,13 +509,13 @@ const WorkflowDashboard = ({
           {lastRefresh && (
             <span className="last-refresh">
               Last updated: {formatDate(lastRefresh)}
-              {refreshing && <span className="refresh-indicator"> • Checking for updates...</span>}
+              {refreshing && <span className="refresh-indicator"> • Updating...</span>}
             </span>
           )}
           <button 
             onClick={handleManualRefresh}
             disabled={refreshing}
-            className={`refresh-btn ${refreshing ? 'refreshing' : ''}`}
+            className="refresh-btn"
             title="Refresh workflow status (auto-refreshes every 30 seconds)"
           >
             {refreshing ? '⏳' : '🔄'} Refresh
@@ -682,13 +712,13 @@ const WorkflowDashboard = ({
                           href={workflow.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`status-badge ${workflow.badgeClass} ${refreshing ? 'refreshing-badge' : ''}`}
+                          className={`status-badge ${workflow.badgeClass}`}
                         >
                           <span className="status-icon">{workflow.icon}</span>
                           <span className="status-text">{workflow.displayStatus}</span>
                         </a>
                       ) : (
-                        <span className={`status-badge ${workflow.badgeClass} ${refreshing ? 'refreshing-badge' : ''}`}>
+                        <span className={`status-badge ${workflow.badgeClass}`}>
                           <span className="status-icon">{workflow.icon}</span>
                           <span className="status-text">{workflow.displayStatus}</span>
                         </span>
