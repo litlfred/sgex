@@ -459,6 +459,51 @@ body.theme-dark {
   color: var(--who-text-primary);
 }
 
+.error-content {
+  text-align: center;
+  max-width: 600px;
+  padding: 2rem;
+  background: var(--who-secondary-bg);
+  border-radius: 8px;
+  border: 1px solid var(--who-border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.error-content h2 {
+  margin: 0 0 1rem 0;
+  color: var(--who-text-primary);
+  font-size: 1.5rem;
+}
+
+.error-help {
+  margin-top: 2rem;
+  text-align: left;
+}
+
+.error-help details {
+  background: var(--who-primary-bg);
+  border: 1px solid var(--who-border-color);
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+.error-help summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--who-blue);
+  margin-bottom: 0.5rem;
+}
+
+.error-help ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+}
+
+.error-help li {
+  margin: 0.5rem 0;
+  color: var(--who-text-secondary);
+}
+
 .diagram-info {
   padding: 0.8rem 2rem;
   background: var(--who-secondary-bg);
