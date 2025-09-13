@@ -34,6 +34,8 @@ const WorkflowDashboard = ({
   const [expandedWorkflows, setExpandedWorkflows] = useState({}); // Track expanded workflow details
   const [workflowJobs, setWorkflowJobs] = useState({}); // Cache for workflow jobs
   const [loadingJobs, setLoadingJobs] = useState({}); // Track job loading states
+  const [approvalStates, setApprovalStates] = useState({}); // Track if workflows were recently approved
+  const [approvalCheckInterval, setApprovalCheckInterval] = useState(null); // Interval for approval checking
   const refreshIntervalRef = useRef(null);
   const expandedWorkflowsRef = useRef({}); // Ref to track expanded workflows for refresh logic
   const [lastRefresh, setLastRefresh] = useState(null);
@@ -155,14 +157,53 @@ const WorkflowDashboard = ({
     }, 30000);
   }, [fetchWorkflows]);
 
+  // Setup periodic approval checking (every minute)
+  const setupApprovalChecking = useCallback(() => {
+    if (approvalCheckInterval) {
+      clearInterval(approvalCheckInterval);
+    }
+
+    // Check every minute (60 seconds) if workflows can be approved
+    const interval = setInterval(() => {
+      console.debug('Performing periodic approval check for workflows');
+      
+      // Re-evaluate approval states for all workflows
+      setApprovalStates(prevStates => {
+        const newStates = { ...prevStates };
+        
+        // Check each workflow to see if it can be approved now
+        workflows.forEach(workflow => {
+          const workflowId = workflow.workflow.id;
+          const runId = workflow.runId || workflow.lastRunId;
+          
+          // If workflow status is waiting, it can potentially be approved
+          if (workflow.status === 'waiting' && runId) {
+            // Reset approval state to allow re-approval if needed
+            if (newStates[workflowId]?.wasApproved) {
+              console.debug(`Resetting approval state for workflow ${workflow.workflow.name} - can be approved again`);
+              delete newStates[workflowId];
+            }
+          }
+        });
+        
+        return newStates;
+      });
+    }, 60000); // 60 seconds = 1 minute
+    
+    setApprovalCheckInterval(interval);
+  }, [workflows, approvalCheckInterval]);
+
   // Cleanup
   useEffect(() => {
     return () => {
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current);
       }
+      if (approvalCheckInterval) {
+        clearInterval(approvalCheckInterval);
+      }
     };
-  }, []);
+  }, [approvalCheckInterval]);
 
   // Initial load and setup refresh when branch changes
   useEffect(() => {
@@ -170,10 +211,11 @@ const WorkflowDashboard = ({
       const initializeWorkflows = async () => {
         await fetchWorkflows();
         setupAutoRefresh();
+        setupApprovalChecking();
       };
       initializeWorkflows();
     }
-  }, [branchName, githubActionsService, fetchWorkflows, setupAutoRefresh]);
+  }, [branchName, githubActionsService, fetchWorkflows, setupAutoRefresh, setupApprovalChecking]);
 
   // Handle workflow trigger
   const handleTriggerWorkflow = async (workflow) => {
@@ -185,7 +227,9 @@ const WorkflowDashboard = ({
     let success = false;
     try {
       console.debug(`Triggering workflow: ${workflow.workflow.name} for branch: ${branchName}`);
-      success = await githubActionsService.triggerWorkflow(branchName);
+      
+      // Use the specific workflow ID instead of the generic triggerWorkflow method
+      success = await githubActionsService.triggerSpecificWorkflow(workflow.workflow.id, branchName);
       
       if (success) {
         setActionStates(prev => ({ ...prev, [workflowId]: { 
@@ -302,6 +346,16 @@ const WorkflowDashboard = ({
       success = await githubActionsService.approveWorkflowRun(runId);
       
       if (success) {
+        // Mark this workflow as recently approved to disable the button temporarily
+        setApprovalStates(prev => ({
+          ...prev,
+          [workflowId]: {
+            wasApproved: true,
+            approvedAt: Date.now(),
+            runId: runId
+          }
+        }));
+
         setActionStates(prev => ({ ...prev, [workflowId]: { 
           action: 'approved', 
           message: `✅ Workflow "${workflow.workflow.name}" has been approved! Monitoring progress...`,
@@ -866,12 +920,21 @@ const WorkflowDashboard = ({
                           {workflow.status === 'waiting' && (workflow.runId || workflow.lastRunId) && (
                             <button
                               onClick={() => handleApproveWorkflow(workflow)}
-                              disabled={actionState?.action === 'approving'}
+                              disabled={
+                                actionState?.action === 'approving' || 
+                                approvalStates[workflowId]?.wasApproved
+                              }
                               className="workflow-action-btn approve-btn"
-                              title={`Approve ${workflow.workflow.name}`}
+                              title={
+                                approvalStates[workflowId]?.wasApproved 
+                                  ? `Workflow was recently approved. Button will re-enable in the next minute if approval is needed again.`
+                                  : `Approve ${workflow.workflow.name}`
+                              }
                             >
                               {actionState?.action === 'approving' ? (
                                 <>⏳ Approving...</>
+                              ) : approvalStates[workflowId]?.wasApproved ? (
+                                <>✅ Recently Approved</>
                               ) : (
                                 <>✅ Approve</>
                               )}

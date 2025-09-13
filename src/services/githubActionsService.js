@@ -367,7 +367,55 @@ class GitHubActionsService {
   }
 
   /**
-   * Trigger a workflow run for a specific branch
+   * Trigger a specific workflow by workflow ID for a given branch
+   * @param {number} workflowId - The specific workflow ID to trigger
+   * @param {string} branch - Branch name to trigger workflow for
+   * @returns {Promise<boolean>} Success status
+   */
+  async triggerSpecificWorkflow(workflowId, branch) {
+    try {
+      if (!this.token) {
+        throw new Error('Authentication required to trigger workflows');
+      }
+
+      console.debug(`Triggering specific workflow ID: ${workflowId} for branch: ${branch}`);
+
+      const triggerResponse = await fetch(
+        `${this.baseURL}/repos/${this.owner}/${this.repo}/actions/workflows/${workflowId}/dispatches`,
+        {
+          method: 'POST',
+          headers: this.getHeaders(),
+          body: JSON.stringify({
+            ref: branch,
+            inputs: {
+              branch: branch
+            }
+          })
+        }
+      );
+
+      if (!triggerResponse.ok) {
+        const errorText = await triggerResponse.text();
+        console.error(`Specific workflow trigger failed:`, {
+          status: triggerResponse.status,
+          statusText: triggerResponse.statusText,
+          error: errorText,
+          branch,
+          workflowId
+        });
+        throw new Error(`Failed to trigger workflow: ${triggerResponse.status} ${triggerResponse.statusText} - ${errorText}`);
+      }
+
+      console.debug(`Successfully triggered specific workflow ${workflowId} for branch ${branch}`);
+      return true;
+    } catch (error) {
+      console.error(`Error triggering specific workflow ${workflowId} for branch ${branch}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Trigger a workflow run for a specific branch (legacy method - now calls specific deployment workflows)
    * @param {string} branch - Branch name to trigger workflow for
    * @returns {Promise<boolean>} Success status
    */
