@@ -30,8 +30,9 @@
     "web-vitals": "^5.1.0"
   },
   "scripts": {
-    "start": "craco start",
-    "build": "react-scripts build",
+    "configure:repo": "node scripts/configure-repository.js",
+    "start": "npm run configure:repo && craco start",
+    "build": "npm run configure:repo && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve": "npm run build && cd build && python3 -m http.server 3000",

@@ -15,11 +15,13 @@
 const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('js-yaml');
+const { extractRepositoryInfo } = require('./configure-repository');
 
 class ServiceTableGenerator {
   constructor() {
     this.services = [];
-    this.baseUrl = 'https://github.com/litlfred/sgex';
+    const repoInfo = extractRepositoryInfo();
+    this.baseUrl = `https://github.com/${repoInfo.owner}/${repoInfo.name}`;
     this.basePath = '/home/runner/work/sgex/sgex';
     this.localhostUrls = {
       'dak-faq-mcp': 'http://localhost:3001',
