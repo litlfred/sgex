@@ -3,10 +3,13 @@ Feature: User PAT Login Process
   I want to authenticate using a Personal Access Token
   So that I can access GitHub repositories and DAK content
 
+  @authentication @login @pat
+  @next:profile-selection-dak-scanning
   Background:
     Given I am on the SGEX Workbench landing page
     And I am not currently logged in
 
+  @authentication @login @pat
   Scenario: User successfully logs in with PAT
     When I say "Welcome to SGEX Workbench! Let me show you how to log in using a Personal Access Token."
     And I navigate to the login page

@@ -8,14 +8,26 @@ const path = require('path');
 const StepMappingService = require('./stepMappingService');
 const { Parser, AstBuilder } = require('@cucumber/gherkin');
 
-// ID generator for @cucumber/gherkin
-let idCounter = 0;
-const newId = () => (++idCounter).toString();
+// Create ID generator instance for @cucumber/gherkin
+class IdGenerator {
+  constructor() {
+    this.counter = 0;
+  }
+  
+  newId() {
+    return (++this.counter).toString();
+  }
+  
+  reset() {
+    this.counter = 0;
+  }
+}
 
 class PlaywrightScriptGenerator {
   constructor() {
     this.scriptsOutputDir = path.join(process.cwd(), 'scripts', 'playwright');
-    this.parser = new Parser(new AstBuilder(newId));
+    this.idGenerator = new IdGenerator();
+    this.parser = new Parser(new AstBuilder(this.idGenerator.newId.bind(this.idGenerator)));
     this.ensureDirectoriesExist();
   }
 
@@ -46,8 +58,10 @@ class PlaywrightScriptGenerator {
       const feature = {
         title: gherkinDocument.feature.name || '',
         description: gherkinDocument.feature.description || '',
+        tags: gherkinDocument.feature.tags ? gherkinDocument.feature.tags.map(tag => tag.name) : [],
         background: [],
-        scenarios: []
+        scenarios: [],
+        chaining: this.extractChaining(gherkinDocument.feature)
       };
 
       // Process background steps and scenarios
@@ -63,6 +77,7 @@ class PlaywrightScriptGenerator {
           } else if (child.scenario) {
             const scenario = {
               title: child.scenario.name || `Scenario ${feature.scenarios.length + 1}`,
+              tags: child.scenario.tags ? child.scenario.tags.map(tag => tag.name) : [],
               steps: child.scenario.steps.map(step => ({
                 keyword: step.keyword.trim(),
                 text: step.text,
@@ -82,6 +97,31 @@ class PlaywrightScriptGenerator {
       // Fallback to custom parser for any parsing issues
       return this.parseFeatureFileCustom(content);
     }
+  }
+
+  /**
+   * Extract scenario chaining information from tags
+   */
+  extractChaining(feature) {
+    const chaining = {
+      next: null,
+      previous: null,
+      tags: []
+    };
+
+    if (feature.tags) {
+      for (const tag of feature.tags) {
+        if (tag.name.startsWith('@next:')) {
+          chaining.next = tag.name.substring(6); // Remove @next: prefix
+        } else if (tag.name.startsWith('@previous:')) {
+          chaining.previous = tag.name.substring(10); // Remove @previous: prefix
+        } else {
+          chaining.tags.push(tag.name);
+        }
+      }
+    }
+
+    return chaining;
   }
 
   /**

@@ -3,10 +3,14 @@ Feature: Profile Selection and DAK Repository Scanning
   I want to select a profile and find DAK repositories
   So that I can work with WHO SMART Guidelines Digital Adaptation Kits
 
+  @repository-scanning @profile @dak
+  @previous:user-login-pat
+  @next:help-mascot-documentation
   Background:
     Given I am logged in to SGEX Workbench
     And I am on the welcome page
 
+  @repository-scanning @profile @dak
   Scenario: User selects WHO profile and finds smart-immunization DAK
     When I say "Now that we're logged in, let's explore how to select a profile and find DAK repositories."
     And I am on the profile selection page

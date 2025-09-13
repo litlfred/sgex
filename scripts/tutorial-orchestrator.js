@@ -455,7 +455,8 @@ const { chromium } = require('@playwright/test');
    * Process a single video with audio overlay
    */
   async processVideoWithAudio(featureName, recordingPath, audioClips, language) {
-    const outputDir = path.join(this.options.outputDir, featureName, language);
+    // Simplified structure: tutorials/{feature}-{language}.mp4
+    const outputDir = this.options.outputDir;
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
@@ -472,11 +473,16 @@ const { chromium } = require('@playwright/test');
     const audioFiles = audioClips.filter(clip => clip.success && fs.existsSync(clip.outputFile));
     
     if (audioFiles.length > 0) {
-      const audioListPath = path.join(outputDir, 'audio-list.txt');
+      const tempDir = path.join(outputDir, 'temp');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+
+      const audioListPath = path.join(tempDir, `${featureName}-${language}-audio-list.txt`);
       const audioListContent = audioFiles.map(clip => `file '${path.resolve(clip.outputFile)}'`).join('\n');
       fs.writeFileSync(audioListPath, audioListContent);
       
-      const combinedAudioPath = path.join(outputDir, 'combined-audio.wav');
+      const combinedAudioPath = path.join(tempDir, `${featureName}-${language}-combined-audio.wav`);
       execSync(`ffmpeg -y -f concat -safe 0 -i "${audioListPath}" -c copy "${combinedAudioPath}"`, { stdio: 'pipe' });
       
       // Combine video with audio
@@ -539,6 +545,10 @@ const { chromium } = require('@playwright/test');
     const featureName = path.basename(featureFile, '.feature');
     const featureContent = fs.readFileSync(featureFile, 'utf8');
     
+    // Parse the feature to extract chaining information
+    const feature = this.scriptGenerator.parseFeatureFile(featureFile);
+    const featureChaining = feature.chaining;
+    
     const titleMatch = featureContent.match(/Feature:\s*(.+)/);
     const featureTitle = titleMatch ? titleMatch[1].trim() : featureName;
     
@@ -549,8 +559,20 @@ const { chromium } = require('@playwright/test');
     docContent += `## 🎬 Tutorials\n\n`;
     languages.forEach(lang => {
       const langName = { en: 'English', fr: 'French', es: 'Spanish', ar: 'Arabic', zh: 'Chinese', ru: 'Russian' }[lang] || lang;
-      docContent += `- [${langName} Tutorial](../../tutorials/${featureName}/${lang}/${featureName}-${lang}.mp4)\n`;
+      docContent += `- [${langName} Tutorial](../../tutorials/${featureName}-${lang}.mp4)\n`;
+      docContent += `- [${langName} Player](../../tutorials/${featureName}-${lang}.html)\n`;
     });
+    
+    // Add chaining navigation if available
+    if (featureChaining && (featureChaining.next || featureChaining.previous)) {
+      docContent += `\n## 🔗 Tutorial Chain\n\n`;
+      if (featureChaining.previous) {
+        docContent += `⬅️ **Previous**: [${featureChaining.previous}](${featureChaining.previous}.md)\n\n`;
+      }
+      if (featureChaining.next) {
+        docContent += `➡️ **Next**: [${featureChaining.next}](${featureChaining.next}.md)\n\n`;
+      }
+    }
     
     // Add audio files
     docContent += `\n## 🎙️ Audio Narration\n\n`;

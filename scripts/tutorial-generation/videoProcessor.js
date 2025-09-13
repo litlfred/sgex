@@ -306,7 +306,8 @@ class VideoProcessor {
    * Process a complete tutorial (video + audio + subtitles)
    */
   async processTutorial(rawVideoPath, audioPath, narrations, featureName, language = 'en', options = {}) {
-    const outputDir = path.join(this.outputDir, featureName, language);
+    // Simplified structure: tutorials/{feature}-{language}.mp4
+    const outputDir = path.join(this.outputDir);
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }

@@ -3,10 +3,13 @@ Feature: Help Mascot and Documentation Browsing
   I want to access help and documentation
   So that I can understand the technical descriptions of core DAK components
 
+  @help @documentation @mascot
+  @previous:profile-selection-dak-scanning
   Background:
     Given I am logged in to SGEX Workbench
     And I am on any page within the application
 
+  @help @documentation @mascot
   Scenario: User accesses help system and browses DAK component documentation
     When I say "Let me show you how to get help and find documentation in SGEX Workbench using our friendly help mascot."
     And I see the SGEX Workbench interface
