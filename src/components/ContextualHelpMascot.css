@@ -346,6 +346,52 @@
 /* Help topics list */
 .help-topics-list {
   width: 100%;
+  
+  /* Default single column layout */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Desktop multi-column layout for help topics */
+@media (min-width: 1024px) {
+  .help-thought-bubble {
+    /* Allow wider bubble on desktop for multi-column layout */
+    max-width: min(80vw, 600px);
+  }
+  
+  /* 2-column layout for 6+ topics */
+  .help-topics-list.multi-column-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+    align-items: start;
+  }
+  
+  /* 3-column layout for 11+ topics */
+  .help-topics-list.multi-column-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px 12px;
+  }
+  
+  /* Title spans full width in grid layout */
+  .help-topics-list.multi-column-2 h4,
+  .help-topics-list.multi-column-3 h4 {
+    grid-column: 1 / -1;
+    margin-bottom: 8px;
+  }
+  
+  /* Dividers and full-width elements span all columns */
+  .help-topics-list.multi-column-2 .help-menu-divider,
+  .help-topics-list.multi-column-3 .help-menu-divider,
+  .help-topics-list.multi-column-2 .help-menu-language-selector,
+  .help-topics-list.multi-column-3 .help-menu-language-selector,
+  .help-topics-list.multi-column-2 .help-theme-toggle-btn,
+  .help-topics-list.multi-column-3 .help-theme-toggle-btn,
+  .help-topics-list.multi-column-2 .help-menu-cache-section,
+  .help-topics-list.multi-column-3 .help-menu-cache-section {
+    grid-column: 1 / -1;
+  }
 }
 
 .help-topics-list h4 {

@@ -99,6 +99,35 @@
   overflow: hidden;
   z-index: 1001;
   min-width: 200px;
+  max-height: 80vh;
+  overflow-y: auto;
+  
+  /* Default single column layout */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Desktop multi-column layout when there are many menu items */
+@media (min-width: 1024px) {
+  .help-menu-dropdown {
+    /* Allow wider menu on desktop */
+    max-width: min(80vw, 800px);
+  }
+  
+  /* 2-column layout for 5+ items */
+  .help-menu-dropdown.multi-column-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    width: max-content;
+    min-width: 500px;
+  }
+  
+  /* 3-column layout for 9+ items */
+  .help-menu-dropdown.multi-column-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+    min-width: 700px;
+  }
 }
 
 .menu-item {
