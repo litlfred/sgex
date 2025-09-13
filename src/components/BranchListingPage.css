@@ -1,17 +1,6 @@
 /* Branch Listing Page Styles - Extracted from branch-listing.html */
 
-:root {
-    --who-blue: #0366d6;
-    --who-text-primary: #333;
-    --who-text-secondary: #586069;
-    --who-text-muted: #6a737d;
-    --who-border-color: #e1e5e9;
-    --who-card-bg: #ffffff;
-    --who-secondary-bg: #f8f9fa;
-    --who-tertiary-bg: #f8f9fa;
-    --who-hover-bg: #f1f3f4;
-    --who-selected-bg: #e1e7fd;
-}
+/* Removed local CSS variable overrides to allow proper dark mode theming via App.css */
 
 /* Basic styles for the branch listing */
 .branch-listing-content {
@@ -135,10 +124,10 @@
     border-radius: 12px;
     padding: 1.5rem;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
+    box-shadow: 0 2px 8px var(--who-shadow-light);
+    max-width: 480px;
     flex: 1;
-    min-width: 300px;
+    min-width: 360px;
     min-height: 140px;
     /* Default to no pointer events for container cards with UI components */
     pointer-events: none;
@@ -150,7 +139,8 @@
 }
 
 /* Allow pointer events for clickable navigation cards (main-site-card) */
-.action-card.main-site-card {
+.action-card.main-site-card,
+.action-card.collaboration-card {
     pointer-events: auto;
 }
 
@@ -171,12 +161,32 @@
 
 .action-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px var(--who-shadow-medium);
     border-color: var(--who-blue);
 }
 
 .main-site-card {
     border-left: 4px solid #28a745;
+}
+
+.collaboration-card {
+    border-left: 4px solid #107c10;
+}
+
+.collaboration-card:hover {
+    border-color: #107c10;
+    background: var(--who-hover-bg);
+}
+
+.collaboration-card button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    width: 100%;
+    height: 100%;
 }
 
 .login-card {
@@ -187,8 +197,15 @@
     text-decoration: none;
     color: inherit;
     display: block;
+    width: 100%;
     height: 100%;
     pointer-events: auto;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font: inherit;
+    text-align: inherit;
 }
 
 .card-link:hover {
@@ -198,20 +215,28 @@
 
 .card-content {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     gap: 1.5rem;
     height: 100%;
+    text-align: center;
 }
 
 .card-icon {
     object-fit: contain;
     flex-shrink: 0;
+    width: var(--card-icon-size);
+    height: var(--card-icon-size);
+    max-width: var(--card-icon-size);
+    max-height: var(--card-icon-size);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .card-text {
     flex: 1;
-    text-align: left;
+    text-align: center;
 }
 
 .login-icon {
@@ -917,27 +942,44 @@
     .action-cards {
         flex-direction: column;
         align-items: center;
-        gap: 1rem;
+        gap: 0.75rem;
+        margin: 1rem 0;
     }
 
     .action-card {
-        width: 100%;
-        max-width: 350px;
+        width: calc(100vw - 2rem);
+        max-width: 95vw;
+        min-height: auto;
+        padding: 1rem;
     }
 
     .card-content {
-        flex-direction: column;
-        text-align: center;
+        flex-direction: row;
+        text-align: left;
         gap: 1rem;
+        align-items: center;
     }
 
     .card-text {
-        text-align: center;
+        text-align: left;
+        flex: 1;
+    }
+
+    .card-text h3 {
+        margin: 0 0 0.25rem 0;
+        font-size: 1.1rem;
+    }
+
+    .card-text p {
+        margin: 0;
+        font-size: 0.85rem;
+        line-height: 1.3;
     }
 
     .login-icon, .card-icon {
-        width: 64px;
-        height: 64px;
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
     }
 
     .main-actions {
@@ -987,5 +1029,83 @@
     .pagination {
         flex-direction: column;
         gap: 0.5rem;
+    }
+}
+
+/* Extra small screens - Further optimize for mobile login accessibility */
+@media (max-width: 480px) {
+    .branch-listing-content {
+        padding: 0.75rem;
+    }
+
+    .branch-listing-header {
+        margin-bottom: 1rem;
+    }
+
+    .branch-listing-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .action-cards {
+        gap: 0.5rem;
+        margin: 0.75rem 0 1.5rem 0;
+    }
+
+    .action-card {
+        padding: 0.75rem;
+        width: calc(100vw - 1.5rem);
+        max-width: 95vw;
+        border-radius: 8px;
+    }
+
+    .card-content {
+        gap: 0.75rem;
+    }
+
+    .card-text h3 {
+        font-size: 1rem;
+    }
+
+    .card-text p {
+        font-size: 0.8rem;
+    }
+
+    .login-icon, .card-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Ensure login card has adequate height and form elements are properly sized on small screens */
+    .action-card.login-card {
+        min-height: 140px;
+    }
+    
+    .action-card.login-card .pat-login,
+    .action-card.login-card .pat-form {
+        width: 100%;
+    }
+
+    .action-card.login-card input,
+    .action-card.login-card button {
+        font-size: 0.9rem;
+    }
+
+    /* Compact the info sections for mobile */
+    .prominent-info {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+
+    .info-text {
+        font-size: 1rem;
+    }
+
+    .error-banner {
+        padding: 1rem;
+        margin: 1rem 0;
     }
 }

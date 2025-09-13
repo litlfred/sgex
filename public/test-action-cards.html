@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Action Cards Clicking</title>
+    <style>
+        /* Extracted relevant styles from BranchListingPage.css */
+        .action-cards {
+            display: flex;
+            gap: 1.5rem;
+            margin: 2rem 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-card {
+            background: #ffffff;
+            border: 1px solid #e1e5e9;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            flex: 1;
+            min-width: 300px;
+            min-height: 140px;
+            /* Default to no pointer events for container cards with UI components */
+            pointer-events: none;
+        }
+
+        /* Allow pointer events for navigation cards (those with card-link) */
+        .action-card .card-link {
+            pointer-events: auto;
+        }
+
+        /* Allow pointer events for clickable navigation cards (main-site-card) */
+        .action-card.main-site-card {
+            pointer-events: auto;
+        }
+
+        .action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            border-color: #0366d6;
+        }
+
+        .main-site-card {
+            border-left: 4px solid #28a745;
+        }
+
+        .card-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            height: 100%;
+            pointer-events: auto;
+        }
+
+        .card-link:hover {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .card-content {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 1.5rem;
+            height: 100%;
+        }
+
+        .card-icon {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .card-text {
+            flex: 1;
+            text-align: left;
+        }
+
+        .action-card h3 {
+            margin: 1rem 0 0.5rem 0;
+            color: #333;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .action-card p {
+            margin: 0;
+            color: #586069;
+            font-size: 0.9rem;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background: #f8f9fa;
+        }
+
+        .test-info {
+            background: #e7f3ff;
+            border: 1px solid #0366d6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .click-test {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h2>Action Card Click Test</h2>
+        <p>This page tests if the "View Main Site" action cards are clickable. Click the card below and check the browser address bar or developer tools for navigation attempts.</p>
+    </div>
+
+    <div class="click-test">
+        <h3>Test Result Logger</h3>
+        <div id="test-log" style="border: 1px solid #ccc; padding: 10px; height: 100px; overflow-y: auto; background: #f9f9f9; font-family: monospace; font-size: 12px;">
+            Waiting for clicks...
+        </div>
+    </div>
+
+    <div class="action-cards">
+        <div class="action-card main-site-card">
+            <a 
+                href="/sgex/main/"
+                className="card-link"
+                onclick="logClick(event, 'Card Link')"
+            >
+                <div class="card-content">
+                    <div class="card-icon" style="background: #ffa500; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🐱</div>
+                    <div class="card-text">
+                        <h3>View Main Site</h3>
+                        <p>Access the main SGEX workbench</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let clickCount = 0;
+        
+        function logClick(event, source) {
+            clickCount++;
+            const timestamp = new Date().toLocaleTimeString();
+            const message = `[${timestamp}] Click #${clickCount} from ${source} - href: ${event.target.closest('a')?.href || 'no href'}\n`;
+            
+            const log = document.getElementById('test-log');
+            if (clickCount === 1) {
+                log.innerHTML = '';
+            }
+            log.innerHTML += message;
+            log.scrollTop = log.scrollHeight;
+            
+            console.log('Click event:', {
+                source,
+                href: event.target.closest('a')?.href,
+                target: event.target,
+                timestamp
+            });
+            
+            // Prevent navigation for testing
+            event.preventDefault();
+            return false;
+        }
+
+        // Add click listener to the whole card for testing
+        document.querySelector('.action-card.main-site-card').addEventListener('click', function(e) {
+            logClick(e, 'Card Container');
+        });
+        
+        // Add click listener to the link
+        document.querySelector('.card-link').addEventListener('click', function(e) {
+            logClick(e, 'Card Link Element');
+        });
+    </script>
+</body>
+</html>
