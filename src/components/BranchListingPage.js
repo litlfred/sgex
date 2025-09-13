@@ -536,11 +536,9 @@ const BranchListingPage = () => {
 
                         <div className="action-cards">
                             <div className="action-card main-site-card">
-                                <a 
-                                    href="/sgex/main/"
+                                <button 
                                     className="card-link"
-                                    onClick={(e) => {
-                                        e.preventDefault();
+                                    onClick={() => {
                                         window.location.href = '/sgex/main/';
                                     }}
                                 >
@@ -551,7 +549,7 @@ const BranchListingPage = () => {
                                             <p>Access the main SGEX workbench</p>
                                         </div>
                                     </div>
-                                </a>
+                                </button>
                             </div>
                             <div className="action-card collaboration-card">
                                 <button 
@@ -625,11 +623,9 @@ const BranchListingPage = () => {
 
                         <div className="action-cards">
                             <div className="action-card main-site-card">
-                                <a 
-                                    href="/sgex/main/"
+                                <button 
                                     className="card-link"
-                                    onClick={(e) => {
-                                        e.preventDefault();
+                                    onClick={() => {
                                         window.location.href = '/sgex/main/';
                                     }}
                                 >
@@ -640,7 +636,7 @@ const BranchListingPage = () => {
                                             <p>Access the main SGEX workbench</p>
                                         </div>
                                     </div>
-                                </a>
+                                </button>
                             </div>
                             <div className="action-card collaboration-card">
                                 <button 
@@ -717,11 +713,9 @@ const BranchListingPage = () => {
 
                 <div className="action-cards">
                     <div className="action-card main-site-card">
-                        <a 
-                            href="/sgex/main/"
+                        <button 
                             className="card-link"
-                            onClick={(e) => {
-                                e.preventDefault();
+                            onClick={() => {
                                 window.location.href = '/sgex/main/';
                             }}
                         >
@@ -732,7 +726,7 @@ const BranchListingPage = () => {
                                     <p>Access the main SGEX workbench</p>
                                 </div>
                             </div>
-                        </a>
+                        </button>
                     </div>
                     <div className="action-card collaboration-card">
                         <button 
