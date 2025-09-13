@@ -58,7 +58,7 @@ const BranchListingPage = () => {
         try {
             // Use githubService if authenticated, otherwise make a public API call
             if (githubService.isAuth()) {
-                const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(, prNumber);
+                const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(), prNumber);
                 
                 if (comments.length === 0) {
                     return { count: 0, lastComment: null };
@@ -76,7 +76,7 @@ const BranchListingPage = () => {
             } else {
                 // For unauthenticated requests, use githubService which handles rate limiting gracefully
                 try {
-                    const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(, prNumber);
+                    const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(), prNumber);
                     
                     if (comments.length === 0) {
                         return { count: 0, lastComment: null };
@@ -107,7 +107,7 @@ const BranchListingPage = () => {
         try {
             // Use githubService if authenticated, otherwise make a public API call
             if (githubService.isAuth()) {
-                const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(, prNumber);
+                const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(), prNumber);
                 return comments
                     .map(comment => ({
                         id: comment.id,
@@ -121,7 +121,7 @@ const BranchListingPage = () => {
             } else {
                 // For unauthenticated requests, use githubService which handles rate limiting gracefully
                 try {
-                    const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(, prNumber);
+                    const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(), prNumber);
                     return comments
                         .map(comment => ({
                             id: comment.id,
@@ -221,7 +221,7 @@ const BranchListingPage = () => {
         setSubmittingComments(prev => ({ ...prev, [prNumber]: true }));
         
         try {
-            await githubService.createPullRequestComment(repositoryConfig.getOwner(), repositoryConfig.getName(, prNumber, commentText);
+            await githubService.createPullRequestComment(repositoryConfig.getOwner(), repositoryConfig.getName(), prNumber, commentText);
             
             setCommentInputs(prev => ({ ...prev, [prNumber]: '' }));
             
@@ -250,7 +250,7 @@ const BranchListingPage = () => {
             // Use githubService if authenticated, otherwise make a public API call
             if (githubService.isAuth()) {
                 try {
-                    const workflowRuns = await githubService.getWorkflowRuns(repositoryConfig.getOwner(), repositoryConfig.getName(, {
+                    const workflowRuns = await githubService.getWorkflowRuns(repositoryConfig.getOwner(), repositoryConfig.getName(), {
                         branch: safeBranchName,
                         workflow_id: 'deploy.yml',
                         per_page: 1
@@ -274,7 +274,7 @@ const BranchListingPage = () => {
             } else {
                 // For unauthenticated requests, use githubService which handles rate limiting gracefully
                 try {
-                    const workflowRuns = await githubService.getWorkflowRuns(repositoryConfig.getOwner(), repositoryConfig.getName(, {
+                    const workflowRuns = await githubService.getWorkflowRuns(repositoryConfig.getOwner(), repositoryConfig.getName(), {
                         branch: safeBranchName,
                         workflow_id: 'deploy.yml',
                         per_page: 1

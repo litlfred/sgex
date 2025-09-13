@@ -405,7 +405,7 @@ const WorkflowDashboard = ({
               {/* Ready for Review Button - only for draft PRs */}
               {isAuthenticated && prInfo[0].draft && canManagePR && (
                 <button
-                  onClick={() => onMarkReadyForReview && onMarkReadyForReview(repositoryConfig.getOwner(), repositoryConfig.getName(, prInfo[0].number)}
+                  onClick={() => onMarkReadyForReview && onMarkReadyForReview(repositoryConfig.getOwner(), repositoryConfig.getName(), prInfo[0].number)}
                   disabled={isMarkingReadyForReview}
                   className="pr-ready-review-btn"
                   title={`Mark PR #${prInfo[0].number} as ready for review`}
@@ -420,7 +420,7 @@ const WorkflowDashboard = ({
               
               {isAuthenticated && canMergePR && !prInfo[0].draft && (
                 <button
-                  onClick={() => onMergePR && onMergePR(repositoryConfig.getOwner(), repositoryConfig.getName(, prInfo[0].number)}
+                  onClick={() => onMergePR && onMergePR(repositoryConfig.getOwner(), repositoryConfig.getName(), prInfo[0].number)}
                   disabled={isMergingPR}
                   className="pr-merge-btn"
                   title={`Merge PR #${prInfo[0].number}`}
@@ -441,7 +441,7 @@ const WorkflowDashboard = ({
                   </div>
                   <div className="pr-review-buttons">
                     <button
-                      onClick={() => onApprovePR && onApprovePR(repositoryConfig.getOwner(), repositoryConfig.getName(, prInfo[0].number)}
+                      onClick={() => onApprovePR && onApprovePR(repositoryConfig.getOwner(), repositoryConfig.getName(), prInfo[0].number)}
                       disabled={isApprovingPR}
                       className="pr-approve-btn"
                       title={`Approve PR #${prInfo[0].number}`}
@@ -453,7 +453,7 @@ const WorkflowDashboard = ({
                       )}
                     </button>
                     <button
-                      onClick={() => onRequestChanges && onRequestChanges(repositoryConfig.getOwner(), repositoryConfig.getName(, prInfo[0].number)}
+                      onClick={() => onRequestChanges && onRequestChanges(repositoryConfig.getOwner(), repositoryConfig.getName(), prInfo[0].number)}
                       disabled={isRequestingChanges || !newComment.trim()}
                       className="pr-request-changes-btn"
                       title={`Request changes for PR #${prInfo[0].number} (comment required)`}
