@@ -208,6 +208,21 @@ class TTSAudioService {
   }
 
   /**
+   * Check if feature file contains narration keywords
+   */
+  hasNarrationKeywords(featureFilePath) {
+    try {
+      const content = fs.readFileSync(featureFilePath, 'utf8');
+      const narrationKeywords = ['I say "', 'say "', 'narrate "', 'speak "'];
+      
+      return narrationKeywords.some(keyword => content.includes(keyword));
+    } catch (error) {
+      console.error(`Error reading feature file ${featureFilePath}:`, error.message);
+      return false;
+    }
+  }
+
+  /**
    * Extract narration steps from feature file
    */
   extractNarrationsFromFeature(featureFilePath) {
@@ -215,15 +230,28 @@ class TTSAudioService {
     const lines = content.split('\n');
     const narrations = [];
     
+    // Extended pattern matching for various narration keywords
+    const narrationPatterns = [
+      /When I say "([^"]+)"/,
+      /And I say "([^"]+)"/,
+      /Given I say "([^"]+)"/,
+      /Then I say "([^"]+)"/,
+      /I narrate "([^"]+)"/,
+      /I speak "([^"]+)"/
+    ];
+    
     lines.forEach((line, index) => {
-      const match = line.match(/When I say "([^"]+)"/);
-      if (match) {
-        narrations.push({
-          id: `narration-${narrations.length + 1}`,
-          text: match[1],
-          lineNumber: index + 1,
-          originalLine: line.trim()
-        });
+      for (const pattern of narrationPatterns) {
+        const match = line.match(pattern);
+        if (match) {
+          narrations.push({
+            id: `narration-${narrations.length + 1}`,
+            text: match[1],
+            lineNumber: index + 1,
+            originalLine: line.trim()
+          });
+          break; // Only match first pattern per line
+        }
       }
     });
     
@@ -231,18 +259,33 @@ class TTSAudioService {
   }
 
   /**
-   * Get translated narrations (integration point for i18n)
+   * Get translated narrations with fallback to English
    */
   async getTranslatedNarrations(narrations, language) {
-    // For now, return original text - this would integrate with translation service
-    // TODO: Integrate with SGEX i18n system
     if (language === 'en') {
       return narrations;
     }
     
-    // Placeholder for translation integration
-    console.log(`Translation for ${language} not yet implemented - using English`);
+    // Check if translations exist for the requested language
+    const translationsExist = await this.checkTranslationsExist(language);
+    
+    if (!translationsExist) {
+      console.log(`Translations for ${language} not available - falling back to English`);
+      return narrations;
+    }
+    
+    // TODO: Integrate with SGEX i18n system for actual translations
+    console.log(`Translation for ${language} not yet implemented - using English fallback`);
     return narrations;
+  }
+
+  /**
+   * Check if translations exist for a language
+   */
+  async checkTranslationsExist(language) {
+    // Check for i18n files in the SGEX project
+    const i18nPath = path.join(process.cwd(), 'public', 'locales', language);
+    return fs.existsSync(i18nPath);
   }
 
   /**

@@ -37,6 +37,16 @@ module.exports = defineConfig({
     /* Disable animations for consistent recordings */
     actionTimeout: 10000,
     navigationTimeout: 30000,
+
+    /* Show mouse cursor and clicks for better tutorials */
+    launchOptions: {
+      args: [
+        '--enable-features=OverlayScrollbar',
+        '--enable-pointer-events'
+      ],
+      // Slow down actions to make them visible in recordings
+      slowMo: parseInt(process.env.SLOW_MO) || 200,
+    },
   },
 
   /* Configure projects for major browsers */
@@ -45,24 +55,32 @@ module.exports = defineConfig({
       name: 'chromium-tutorial',
       use: { 
         ...devices['Desktop Chrome'],
-        // Fixed viewport for consistent tutorial recordings
+        // Laptop-sized viewport for realistic tutorial recordings
         viewport: { 
-          width: parseInt(process.env.VIDEO_WIDTH) || 1280, 
-          height: parseInt(process.env.VIDEO_HEIGHT) || 720 
+          width: parseInt(process.env.VIDEO_WIDTH) || 1366, 
+          height: parseInt(process.env.VIDEO_HEIGHT) || 768 
         },
         // Additional settings for tutorial recording
         launchOptions: {
-          slowMo: 100, // Add delay between actions for better recording
+          slowMo: parseInt(process.env.SLOW_MO) || 200, // Slow down for visibility
+          args: [
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
+            '--enable-features=OverlayScrollbar',
+            '--force-device-scale-factor=1'
+          ]
         },
         // Context options
         contextOptions: {
           recordVideo: process.env.RECORD_VIDEO === 'true' ? {
             dir: 'recordings/',
             size: { 
-              width: parseInt(process.env.VIDEO_WIDTH) || 1280, 
-              height: parseInt(process.env.VIDEO_HEIGHT) || 720 
+              width: parseInt(process.env.VIDEO_WIDTH) || 1366, 
+              height: parseInt(process.env.VIDEO_HEIGHT) || 768 
             }
           } : undefined,
+          // Reduce motion to make recordings clearer
+          reducedMotion: 'reduce',
         }
       },
     },
@@ -73,8 +91,8 @@ module.exports = defineConfig({
       use: { 
         ...devices['Desktop Firefox'],
         viewport: { 
-          width: parseInt(process.env.VIDEO_WIDTH) || 1280, 
-          height: parseInt(process.env.VIDEO_HEIGHT) || 720 
+          width: parseInt(process.env.VIDEO_WIDTH) || 1366, 
+          height: parseInt(process.env.VIDEO_HEIGHT) || 768 
         }
       },
     },
@@ -85,8 +103,8 @@ module.exports = defineConfig({
       use: { 
         ...devices['Desktop Safari'],
         viewport: { 
-          width: parseInt(process.env.VIDEO_WIDTH) || 1280, 
-          height: parseInt(process.env.VIDEO_HEIGHT) || 720 
+          width: parseInt(process.env.VIDEO_WIDTH) || 1366, 
+          height: parseInt(process.env.VIDEO_HEIGHT) || 768 
         }
       },
     },

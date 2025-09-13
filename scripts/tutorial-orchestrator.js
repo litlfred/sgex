@@ -12,6 +12,7 @@ const { spawn, execSync } = require('child_process');
 const StepMappingService = require('./tutorial-generation/stepMappingService');
 const TTSAudioService = require('./tutorial-generation/ttsAudioService');
 const PlaywrightScriptGenerator = require('./tutorial-generation/playwrightScriptGenerator');
+const VideoProcessor = require('./tutorial-generation/videoProcessor');
 
 class TutorialOrchestrator {
   constructor(options = {}) {
@@ -23,14 +24,16 @@ class TutorialOrchestrator {
       docsDir: path.join(process.cwd(), 'docs', 'user-journey'),
       languages: ['en', 'fr', 'es', 'ar', 'zh', 'ru'],
       baseUrl: 'http://localhost:3000/sgex',
-      videoWidth: 1280,
-      videoHeight: 720,
+      videoWidth: 1366,
+      videoHeight: 768,
+      videoFormat: 'mp4',
       verbose: false,
       ...options
     };
 
     this.ttsService = new TTSAudioService();
     this.scriptGenerator = new PlaywrightScriptGenerator();
+    this.videoProcessor = new VideoProcessor();
     this.results = {
       features: [],
       audio: {},
@@ -138,7 +141,7 @@ class TutorialOrchestrator {
   }
 
   /**
-   * Discover feature files to process
+   * Discover feature files to process with narration filtering
    */
   async discoverFeatureFiles(featureNames = []) {
     console.log('📋 Discovering feature files...');
@@ -166,13 +169,26 @@ class TutorialOrchestrator {
       });
     }
 
-    console.log(`  📄 Found ${selectedFiles.length} feature files:`);
-    selectedFiles.forEach(file => {
+    // Filter out feature files that don't contain narration keywords
+    const validFeatureFiles = selectedFiles.filter(featureFile => {
+      const hasNarration = this.ttsService.hasNarrationKeywords(featureFile);
+      if (!hasNarration) {
+        console.log(`  ⚠️  Skipping ${path.basename(featureFile)} - no narration keywords found`);
+      }
+      return hasNarration;
+    });
+
+    if (validFeatureFiles.length === 0) {
+      throw new Error('No feature files with narration keywords found. Feature files should contain steps like \'When I say "..."\' to generate tutorials.');
+    }
+
+    console.log(`  📄 Found ${validFeatureFiles.length} feature files with narration:`);
+    validFeatureFiles.forEach(file => {
       console.log(`    • ${path.basename(file)}`);
     });
 
-    this.results.features = selectedFiles;
-    return selectedFiles;
+    this.results.features = validFeatureFiles;
+    return validFeatureFiles;
   }
 
   /**

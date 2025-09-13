@@ -24,11 +24,12 @@ on:
         default: true
         type: boolean
       video_quality:
-        description: 'Video quality (720p, 1080p)'
+        description: 'Video quality (768p laptop, 720p standard, 1080p HD)'
         required: false
-        default: '720p'
+        default: '768p'
         type: choice
         options:
+          - '768p'
           - '720p'
           - '1080p'
 
@@ -125,9 +126,12 @@ jobs:
           LANGUAGES="${{ github.event.inputs.languages || 'en,fr,es' }}"
           echo "languages=$LANGUAGES" >> $GITHUB_OUTPUT
           
-          # Video resolution
-          RESOLUTION="${{ github.event.inputs.video_quality || '720p' }}"
-          if [[ "$RESOLUTION" == "720p" ]]; then
+          # Video resolution with laptop size as default
+          RESOLUTION="${{ github.event.inputs.video_quality || '768p' }}"
+          if [[ "$RESOLUTION" == "768p" ]]; then
+            echo "video_width=1366" >> $GITHUB_OUTPUT
+            echo "video_height=768" >> $GITHUB_OUTPUT
+          elif [[ "$RESOLUTION" == "720p" ]]; then
             echo "video_width=1280" >> $GITHUB_OUTPUT
             echo "video_height=720" >> $GITHUB_OUTPUT
           else

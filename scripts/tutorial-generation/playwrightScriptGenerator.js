@@ -6,10 +6,16 @@
 const fs = require('fs');
 const path = require('path');
 const StepMappingService = require('./stepMappingService');
+const { Parser, AstBuilder } = require('@cucumber/gherkin');
+
+// ID generator for @cucumber/gherkin
+let idCounter = 0;
+const newId = () => (++idCounter).toString();
 
 class PlaywrightScriptGenerator {
   constructor() {
     this.scriptsOutputDir = path.join(process.cwd(), 'scripts', 'playwright');
+    this.parser = new Parser(new AstBuilder(newId));
     this.ensureDirectoriesExist();
   }
 
@@ -23,10 +29,66 @@ class PlaywrightScriptGenerator {
   }
 
   /**
-   * Parse a Gherkin feature file
+   * Parse a Gherkin feature file using @cucumber/gherkin
    */
   parseFeatureFile(featureFilePath) {
     const content = fs.readFileSync(featureFilePath, 'utf8');
+    
+    try {
+      // Use @cucumber/gherkin parser
+      const gherkinDocument = this.parser.parse(content);
+      
+      if (!gherkinDocument || !gherkinDocument.feature) {
+        console.warn(`@cucumber/gherkin parser failed for ${featureFilePath}, using fallback`);
+        return this.parseFeatureFileCustom(content);
+      }
+      
+      const feature = {
+        title: gherkinDocument.feature.name || '',
+        description: gherkinDocument.feature.description || '',
+        background: [],
+        scenarios: []
+      };
+
+      // Process background steps and scenarios
+      if (gherkinDocument.feature.children) {
+        for (const child of gherkinDocument.feature.children) {
+          if (child.background) {
+            feature.background = child.background.steps.map(step => ({
+              keyword: step.keyword.trim(),
+              text: step.text,
+              isNarration: step.text.includes('I say "'),
+              originalLine: `${step.keyword}${step.text}`
+            }));
+          } else if (child.scenario) {
+            const scenario = {
+              title: child.scenario.name || `Scenario ${feature.scenarios.length + 1}`,
+              steps: child.scenario.steps.map(step => ({
+                keyword: step.keyword.trim(),
+                text: step.text,
+                isNarration: step.text.includes('I say "'),
+                originalLine: `${step.keyword}${step.text}`
+              }))
+            };
+            feature.scenarios.push(scenario);
+          }
+        }
+      }
+      
+      return feature;
+    } catch (error) {
+      console.warn(`@cucumber/gherkin parser error for ${featureFilePath}: ${error.message}`);
+      console.warn('Falling back to custom parser');
+      // Fallback to custom parser for any parsing issues
+      return this.parseFeatureFileCustom(content);
+    }
+  }
+
+  /**
+   * Fallback custom parser for malformed Gherkin files
+   */
+  parseFeatureFileCustom(content) {
+    console.warn('Using fallback custom parser');
     const lines = content.split('\n').map(line => line.trim()).filter(line => line);
     
     const feature = {
