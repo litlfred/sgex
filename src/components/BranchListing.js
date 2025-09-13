@@ -7,6 +7,7 @@ import githubActionsService from '../services/githubActionsService';
 import githubService from '../services/githubService';
 import branchListingCacheService from '../services/branchListingCacheService';
 import useThemeImage from '../hooks/useThemeImage';
+import repositoryConfig from '../config/repositoryConfig';
 import './BranchListing.css';
 
 const BranchListing = () => {
@@ -40,8 +41,6 @@ const BranchListing = () => {
   const [cacheInfo, setCacheInfo] = useState(null);
 
   const ITEMS_PER_PAGE = 10;
-  const GITHUB_OWNER = 'litlfred';
-  const GITHUB_REPO = 'sgex';
 
   // Function to manually refresh cache and reload data
   const handleManualRefresh = useCallback(async () => {
@@ -78,7 +77,7 @@ const BranchListing = () => {
     try {
       // Use githubService if authenticated, otherwise make a public API call
       if (githubService.isAuth()) {
-        const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
+        const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(), prNumber);
         
         if (comments.length === 0) {
           return { count: 0, lastComment: null };
@@ -96,7 +95,7 @@ const BranchListing = () => {
       } else {
         // For unauthenticated requests, use githubService which handles rate limiting gracefully
         try {
-          const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
+          const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(), prNumber);
           
           if (comments.length === 0) {
             return { count: 0, lastComment: null };
@@ -229,7 +228,7 @@ const BranchListing = () => {
     setSubmittingComments(prev => ({ ...prev, [prNumber]: true }));
     
     try {
-      await githubService.createPullRequestComment('litlfred', 'sgex', prNumber, commentText);
+      await githubService.createPullRequestComment(repositoryConfig.getOwner(), repositoryConfig.getName(), prNumber, commentText);
       
       // Clear the comment input
       setCommentInputs(prev => ({ ...prev, [prNumber]: '' }));
@@ -494,13 +493,13 @@ const BranchListing = () => {
             </div>
             <h3>🚀 Ready to Contribute?</h3>
             <div class="action-buttons">
-              <a href="https://github.com/litlfred/sgex/issues/new" target="_blank" class="contribute-btn primary">
+              <a href={`${repositoryConfig.getGitHubUrl()}/issues/new`} target="_blank" class="contribute-btn primary">
                 🐛 Report a Bug
               </a>
-              <a href="https://github.com/litlfred/sgex/issues/new?template=feature_request.md" target="_blank" class="contribute-btn secondary">
+              <a href={`${repositoryConfig.getGitHubUrl()}/issues/new?template=feature_request.md`} target="_blank" class="contribute-btn secondary">
                 ✨ Request a Feature  
               </a>
-              <a href="https://github.com/litlfred/sgex/tree/main/public/docs" target="_blank" class="contribute-btn tertiary-alt">
+              <a href={`${repositoryConfig.getGitHubUrl()}/tree/main/public/docs`} target="_blank" class="contribute-btn tertiary-alt">
                 📖 Docs on GitHub
               </a>
             </div>
@@ -659,7 +658,7 @@ const BranchListing = () => {
             branchName: 'copilot/fix-459',
             safeBranchName: 'copilot-fix-459',
             url: './copilot-fix-459/index.html',
-            prUrl: 'https://github.com/litlfred/sgex/pull/123',
+            prUrl: '${repositoryConfig.getGitHubUrl()}/pull/123',
             updatedAt: new Date().toLocaleDateString(),
             createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
           },
@@ -672,7 +671,7 @@ const BranchListing = () => {
             branchName: 'feature/dark-mode',
             safeBranchName: 'feature-dark-mode',
             url: './feature-dark-mode/index.html',
-            prUrl: 'https://github.com/litlfred/sgex/pull/122',
+            prUrl: '${repositoryConfig.getGitHubUrl()}/pull/122',
             updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
             createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
           },
@@ -685,7 +684,7 @@ const BranchListing = () => {
             branchName: 'fix/auth-flow',
             safeBranchName: 'fix-auth-flow',
             url: './fix-auth-flow/index.html',
-            prUrl: 'https://github.com/litlfred/sgex/pull/121',
+            prUrl: '${repositoryConfig.getGitHubUrl()}/pull/121',
             updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
             createdAt: new Date(Date.now() - 432000000).toLocaleDateString()
           }
@@ -817,7 +816,7 @@ const BranchListing = () => {
             🌟 How to Contribute
           </button>
           <a 
-            href="https://github.com/litlfred/sgex/issues/new" 
+            href={`${repositoryConfig.getGitHubUrl()}/issues/new`}
             className="contribute-btn tertiary"
             target="_blank"
             rel="noopener noreferrer"
@@ -928,7 +927,7 @@ const BranchListing = () => {
                                 ❌ Deployment failed. Please check the GitHub Actions logs or contact support.
                               </span>
                               <a 
-                                href={`https://github.com/litlfred/sgex/actions`}
+                                href={`${repositoryConfig.getGitHubUrl()}/actions`}
                                 className="actions-link"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -1091,7 +1090,7 @@ const BranchListing = () => {
                                 <h4 className="discussion-title">Discussion</h4>
                                 <div className="discussion-actions">
                                   <a 
-                                    href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
+                                    href={`${repositoryConfig.getGitHubUrl()}/pull/${pr.number}/files`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="discussion-action-btn"
@@ -1164,7 +1163,7 @@ const BranchListing = () => {
                                 ❌ Deployment failed. Please check the GitHub Actions logs or contact support.
                               </span>
                               <a 
-                                href={`https://github.com/litlfred/sgex/actions`}
+                                href={`${repositoryConfig.getGitHubUrl()}/actions`}
                                 className="actions-link"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -1256,7 +1255,7 @@ const BranchListing = () => {
           <div className="footer-content">
             <div className="footer-left">
               <a 
-                href="https://github.com/litlfred/sgex" 
+                href={repositoryConfig.getGitHubUrl()}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="source-link"

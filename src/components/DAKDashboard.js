@@ -12,6 +12,7 @@ import { handleNavigationClick } from '../utils/navigationUtils';
 import useThemeImage from '../hooks/useThemeImage';
 import FAQAccordion from '../dak/faq/components/FAQAccordion.js';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
+import repositoryConfig from '../config/repositoryConfig';
 
 const DAKDashboard = () => {
   return (
@@ -646,7 +647,7 @@ const DAKDashboardContent = () => {
                     <div style={{ background: '#e9ecef', padding: '1rem', borderRadius: '4px', marginBottom: '1rem' }}>
                       <h5>Installation Instructions:</h5>
                       <ol>
-                        <li>Clone the SGEX repository: <code>git clone https://github.com/litlfred/sgex.git</code></li>
+                        <li>Clone the SGEX repository: <code>git clone {repositoryConfig.getGitHubUrl()}.git</code></li>
                         <li>Navigate to repository: <code>cd sgex</code></li>
                         <li>Build MCP server: <code>npm run build-mcp</code></li>
                         <li>Start MCP server: <code>npm run run-mcp</code></li>

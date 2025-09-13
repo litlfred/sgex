@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import bugReportService from '../services/bugReportService';
 import githubService from '../services/githubService';
 import ScreenshotEditor from './ScreenshotEditor';
+import repositoryConfig from '../config/repositoryConfig';
 
 const BugReportForm = ({ onClose, contextData = {} }) => {
   const [templates, setTemplates] = useState([]);
@@ -161,8 +162,8 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
       // Check if user is authenticated and can submit via API
       if (githubService.isAuthenticated) {
         const result = await bugReportService.submitIssue(
-          'litlfred',
-          'sgex',
+          repositoryConfig.getOwner(),
+          repositoryConfig.getName(),
           selectedTemplate,
           formData,
           includeConsole,
@@ -180,8 +181,8 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
       } else {
         // Generate URL for manual submission
         const url = bugReportService.generateIssueUrl(
-          'litlfred',
-          'sgex',
+          repositoryConfig.getOwner(),
+          repositoryConfig.getName(),
           selectedTemplate,
           formData,
           includeConsole,
@@ -230,8 +231,8 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
     const currentConsoleOutput = includeConsole && consoleCapture ? consoleCapture.getLogs() : '';
     const currentScreenshot = includeScreenshot ? screenshotBlob : null;
     return bugReportService.generateIssueUrl(
-      'litlfred',
-      'sgex',
+      repositoryConfig.getOwner(),
+      repositoryConfig.getName(),
       selectedTemplate,
       formData,
       includeConsole,
