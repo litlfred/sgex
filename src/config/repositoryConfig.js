@@ -8,6 +8,13 @@
  * is automatically detected rather than hardcoded.
  */
 
+// Central fallback repository configuration
+const FALLBACK_REPOSITORY = {
+  owner: 'litlfred',
+  name: 'sgex',
+  fullName: 'litlfred/sgex'
+};
+
 class RepositoryConfig {
   constructor() {
     this._config = null;
@@ -64,9 +71,9 @@ class RepositoryConfig {
 
     // Default fallback to original repository
     this._config = {
-      owner: 'litlfred',
-      name: 'sgex',
-      fullName: 'litlfred/sgex',
+      owner: FALLBACK_REPOSITORY.owner,
+      name: FALLBACK_REPOSITORY.name,
+      fullName: FALLBACK_REPOSITORY.fullName,
       source: 'default'
     };
     this._initialized = true;
@@ -129,11 +136,11 @@ class RepositoryConfig {
   }
 
   /**
-   * Check if this is the default repository (litlfred/sgex)
+   * Check if this is the default repository (fallback repository)
    */
   isDefaultRepository() {
     this._initialize();
-    return this._config.fullName === 'litlfred/sgex';
+    return this._config.fullName === FALLBACK_REPOSITORY.fullName;
   }
 
   /**
@@ -150,6 +157,13 @@ class RepositoryConfig {
   }
 
   /**
+   * Get fallback repository configuration
+   */
+  getFallbackRepository() {
+    return { ...FALLBACK_REPOSITORY };
+  }
+
+  /**
    * Reset configuration to force re-initialization
    */
   reset() {
@@ -160,4 +174,7 @@ class RepositoryConfig {
 
 // Create and export singleton instance
 const repositoryConfig = new RepositoryConfig();
+
+// Export both the singleton and the fallback repository constant
 export default repositoryConfig;
+export { FALLBACK_REPOSITORY };
