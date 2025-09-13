@@ -5,6 +5,7 @@ import PATLogin from './PATLogin';
 import githubService from '../services/githubService';
 import useThemeImage from '../hooks/useThemeImage';
 import { ALT_TEXT_KEYS, getAltText, getAvatarAltText } from '../utils/imageAltTextHelper';
+import repositoryConfig from '../config/repositoryConfig';
 
 const BranchListingPage = () => {
     const { t } = useTranslation();
@@ -57,7 +58,7 @@ const BranchListingPage = () => {
         try {
             // Use githubService if authenticated, otherwise make a public API call
             if (githubService.isAuth()) {
-                const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
+                const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(), prNumber);
                 
                 if (comments.length === 0) {
                     return { count: 0, lastComment: null };
@@ -75,7 +76,7 @@ const BranchListingPage = () => {
             } else {
                 // For unauthenticated requests, use githubService which handles rate limiting gracefully
                 try {
-                    const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
+                    const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(), prNumber);
                     
                     if (comments.length === 0) {
                         return { count: 0, lastComment: null };
@@ -106,7 +107,7 @@ const BranchListingPage = () => {
         try {
             // Use githubService if authenticated, otherwise make a public API call
             if (githubService.isAuth()) {
-                const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
+                const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(), prNumber);
                 return comments
                     .map(comment => ({
                         id: comment.id,
@@ -120,7 +121,7 @@ const BranchListingPage = () => {
             } else {
                 // For unauthenticated requests, use githubService which handles rate limiting gracefully
                 try {
-                    const comments = await githubService.getPullRequestIssueComments('litlfred', 'sgex', prNumber);
+                    const comments = await githubService.getPullRequestIssueComments(repositoryConfig.getOwner(), repositoryConfig.getName(), prNumber);
                     return comments
                         .map(comment => ({
                             id: comment.id,
@@ -220,7 +221,7 @@ const BranchListingPage = () => {
         setSubmittingComments(prev => ({ ...prev, [prNumber]: true }));
         
         try {
-            await githubService.createPullRequestComment('litlfred', 'sgex', prNumber, commentText);
+            await githubService.createPullRequestComment(repositoryConfig.getOwner(), repositoryConfig.getName(), prNumber, commentText);
             
             setCommentInputs(prev => ({ ...prev, [prNumber]: '' }));
             
@@ -249,7 +250,7 @@ const BranchListingPage = () => {
             // Use githubService if authenticated, otherwise make a public API call
             if (githubService.isAuth()) {
                 try {
-                    const workflowRuns = await githubService.getWorkflowRuns('litlfred', 'sgex', {
+                    const workflowRuns = await githubService.getWorkflowRuns(repositoryConfig.getOwner(), repositoryConfig.getName(), {
                         branch: safeBranchName,
                         workflow_id: 'deploy.yml',
                         per_page: 1
@@ -273,7 +274,7 @@ const BranchListingPage = () => {
             } else {
                 // For unauthenticated requests, use githubService which handles rate limiting gracefully
                 try {
-                    const workflowRuns = await githubService.getWorkflowRuns('litlfred', 'sgex', {
+                    const workflowRuns = await githubService.getWorkflowRuns(repositoryConfig.getOwner(), repositoryConfig.getName(), {
                         branch: safeBranchName,
                         workflow_id: 'deploy.yml',
                         per_page: 1
@@ -376,7 +377,7 @@ const BranchListingPage = () => {
             try {
                 setLoading(true);
                 
-                const owner = 'litlfred';
+                const owner = repositoryConfig.getOwner();
                 const repo = 'sgex';
                 
                 const prState = prFilter === 'all' ? 'all' : prFilter;
@@ -426,7 +427,7 @@ const BranchListingPage = () => {
                             branchName: 'copilot/fix-459',
                             safeBranchName: 'copilot-fix-459',
                             url: './sgex/copilot-fix-459/index.html',
-                            prUrl: 'https://github.com/litlfred/sgex/pull/460',
+                            prUrl: `${repositoryConfig.getGitHubUrl()}/pull/460`,
                             updatedAt: new Date().toLocaleDateString(),
                             createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
                         },
@@ -439,7 +440,7 @@ const BranchListingPage = () => {
                             branchName: 'feature/pr-preview',
                             safeBranchName: 'feature-pr-preview',
                             url: './sgex/feature-pr-preview/index.html',
-                            prUrl: 'https://github.com/litlfred/sgex/pull/459',
+                            prUrl: `${repositoryConfig.getGitHubUrl()}/pull/459`,
                             updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
                             createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
                         }
@@ -820,7 +821,7 @@ const BranchListingPage = () => {
                                                     <h4 className="discussion-title">Discussion</h4>
                                                     <div className="discussion-actions">
                                                         <a 
-                                                            href={`https://github.com/litlfred/sgex/pull/${pr.number}/files`}
+                                                            href={`${repositoryConfig.getGitHubUrl()}/pull/${pr.number}/files`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="discussion-action-btn"

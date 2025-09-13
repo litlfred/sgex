@@ -1,9 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes } from 'react-router-dom';
 import './i18n'; // Initialize i18n
-import { generateLazyRoutes } from './utils/lazyRouteUtils';
+import { generateLazyRoutes } from './services/componentRouteService';
 import { initializeTheme } from './utils/themeManager';
 import logger from './utils/logger';
+import { initializeRoutingContext } from './services/routingContextService';
 
 function App() {
   const appLogger = logger.getLogger('App');
@@ -17,6 +18,10 @@ function App() {
       environment: process.env.NODE_ENV,
       basename: basename
     });
+    
+    // Initialize routing context to handle URL processing
+    const urlContext = initializeRoutingContext();
+    appLogger.info('Routing context initialized', urlContext);
     
     // Initialize theme before any components render
     const appliedTheme = initializeTheme();

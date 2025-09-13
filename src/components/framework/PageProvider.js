@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import githubService from '../../services/githubService';
 import dakValidationService from '../../services/dakValidationService';
 import profileSubscriptionService from '../../services/profileSubscriptionService';
+import { getRoutingContext } from '../../services/routingContextService';
 
 /**
  * Page types supported by the framework
@@ -86,6 +87,9 @@ export const PageProvider = ({ children, pageName }) => {
 
   // Load data based on page type
   useEffect(() => {
+    // Use routing context to supplement location state
+    const urlContext = getRoutingContext();
+
     const loadPageData = async () => {
       try {
         setPageState(prev => ({ ...prev, loading: true, error: null }));
@@ -111,67 +115,72 @@ export const PageProvider = ({ children, pageName }) => {
           return;
         }
 
-        // Use location state if available, otherwise fetch from URL params
+        
+        // Use location state if available, otherwise fall back to URL context, then URL params
         let profile = location.state?.profile;
         let repository = location.state?.repository;
-        let selectedBranch = location.state?.selectedBranch || params.branch;
+        let selectedBranch = location.state?.selectedBranch || params.branch || urlContext.branch;
 
         // For DAK and Asset pages, validate and fetch data
         if (pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
-          if (!profile && user) {
+          // Use user from params or URL context
+          const effectiveUser = user || urlContext.user;
+          const effectiveRepo = repo || urlContext.repo;
+          
+          if (!profile && effectiveUser) {
             if (githubService.isAuth()) {
               try {
-                profile = await githubService.getUser(user);
+                profile = await githubService.getUser(effectiveUser);
               } catch (err) {
                 // For dashboard pages, set error state instead of redirecting
                 if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
                   setPageState(prev => ({
                     ...prev,
                     loading: false,
-                    error: `User '${user}' not found or not accessible. Please check the username and try again.`,
-                    user,
+                    error: `User '${effectiveUser}' not found or not accessible. Please check the username and try again.`,
+                    user: effectiveUser,
                     // Still set available URL parameters for context
-                    repository: repo ? { name: repo, owner: { login: user }, html_url: `https://github.com/${user}/${repo}`, isNotFound: true } : null,
-                    branch: params.branch || 'main'
+                    repository: effectiveRepo ? { name: effectiveRepo, owner: { login: effectiveUser }, html_url: `https://github.com/${effectiveUser}/${effectiveRepo}`, isNotFound: true } : null,
+                    branch: params.branch || urlContext.branch || 'main'
                   }));
                   return;
                 }
-                throw new Error(`User '${user}' not found or not accessible.`);
+                throw new Error(`User '${effectiveUser}' not found or not accessible.`);
               }
             } else {
               // Unauthenticated users accessing public repositories
               // Create profile for public repository access (no isDemo flag)
               profile = {
-                login: user,
-                name: user.charAt(0).toUpperCase() + user.slice(1),
-                avatar_url: `https://github.com/${user}.png`,
+                login: effectiveUser,
+                name: effectiveUser.charAt(0).toUpperCase() + effectiveUser.slice(1),
+                avatar_url: `https://github.com/${effectiveUser}.png`,
                 type: 'User'
                 // Note: isDemo is NOT set - unauthenticated users should access real public repos
               };
             }
           }
 
-          if (!repository && user && repo) {
+          if (!repository && effectiveUser && effectiveRepo) {
             if (githubService.isAuth()) {
               try {
-                repository = await githubService.getRepository(user, repo);
+                repository = await githubService.getRepository(effectiveUser, effectiveRepo);
                 // Validate it's a DAK repository
-                const isValidDAK = await dakValidationService.validateDAKRepository(user, repo, selectedBranch || repository.default_branch);
+                const isValidDAK = await dakValidationService.validateDAKRepository(effectiveUser, effectiveRepo, selectedBranch || repository.default_branch);
                 if (!isValidDAK) {
                   // For dashboard pages, set error state instead of redirecting
                   if (pageName === 'dashboard' || pageName.includes('editor') || pageName.includes('viewer') || pageState.type === PAGE_TYPES.DAK || pageState.type === PAGE_TYPES.ASSET) {
                     setPageState(prev => ({
                       ...prev,
                       loading: false,
-                      error: `Repository '${user}/${repo}' is not a valid DAK repository. This repository may not contain WHO SMART Guidelines content.`,
-                      user,
+                      error: `Repository '${effectiveUser}/${effectiveRepo}' is not a valid DAK repository. This repository may not contain WHO SMART Guidelines content.`,
+                      user: effectiveUser,
                       profile,
                       repository: { ...repository, isInvalidDAK: true },
                       branch: selectedBranch || repository.default_branch
                     }));
                     return;
                   }
-                  throw new Error(`Repository '${user}/${repo}' is not a valid DAK repository.`);
+                  throw new Error(`Repository '${effectiveUser}/${effectiveRepo}' is not a valid DAK repository.`);
                 }
               } catch (err) {
                 // For dashboard pages, set error state instead of redirecting
@@ -179,25 +188,25 @@ export const PageProvider = ({ children, pageName }) => {
                   setPageState(prev => ({
                     ...prev,
                     loading: false,
-                    error: `Repository '${user}/${repo}' not found or not accessible. Please check the repository name and your access permissions.`,
-                    user,
+                    error: `Repository '${effectiveUser}/${effectiveRepo}' not found or not accessible. Please check the repository name and your access permissions.`,
+                    user: effectiveUser,
                     profile,
-                    repository: { name: repo, owner: { login: user }, html_url: `https://github.com/${user}/${repo}`, isNotFound: true },
+                    repository: { name: effectiveRepo, owner: { login: effectiveUser }, html_url: `https://github.com/${effectiveUser}/${effectiveRepo}`, isNotFound: true },
                     branch: selectedBranch || 'main'
                   }));
                   return;
                 }
-                throw new Error(`Repository '${user}/${repo}' not found or not accessible.`);
+                throw new Error(`Repository '${effectiveUser}/${effectiveRepo}' not found or not accessible.`);
               }
             } else {
               // Unauthenticated users accessing public repositories
               // Create repository object for public repository access (no isDemo flag)
               repository = {
-                name: repo,
-                full_name: `${user}/${repo}`,
-                owner: { login: user },
+                name: effectiveRepo,
+                full_name: `${effectiveUser}/${effectiveRepo}`,
+                owner: { login: effectiveUser },
                 default_branch: selectedBranch || 'main',
-                html_url: `https://github.com/${user}/${repo}`
+                html_url: `https://github.com/${effectiveUser}/${effectiveRepo}`
                 // Note: isDemo is NOT set - unauthenticated users should access real public repos
               };
             }
@@ -206,41 +215,43 @@ export const PageProvider = ({ children, pageName }) => {
           selectedBranch = selectedBranch || repository?.default_branch || 'main';
 
           // For asset pages, validate the asset exists (when authenticated or public repo)
-          if (pageState.type === PAGE_TYPES.ASSET && asset) {
+          if (pageState.type === PAGE_TYPES.ASSET && (asset || urlContext.asset)) {
+            const effectiveAsset = asset || urlContext.asset;
             try {
-              await githubService.getFileContent(user, repo, asset, selectedBranch);
+              await githubService.getFileContent(effectiveUser, effectiveRepo, effectiveAsset, selectedBranch);
             } catch (err) {
               // For asset pages, set error state instead of redirecting  
               if (pageName === 'asset' || pageName.includes('editor') || pageName.includes('viewer')) {
                 setPageState(prev => ({
                   ...prev,
                   loading: false,
-                  error: `Asset '${asset}' not found in repository '${user}/${repo}'. The file may have been moved or deleted.`,
-                  user,
+                  error: `Asset '${effectiveAsset}' not found in repository '${effectiveUser}/${effectiveRepo}'. The file may have been moved or deleted.`,
+                  user: effectiveUser,
                   profile,
                   repository,
                   branch: selectedBranch,
-                  asset
+                  asset: effectiveAsset
                 }));
                 return;
               }
-              throw new Error(`Asset '${asset}' not found in repository.`);
+              throw new Error(`Asset '${effectiveAsset}' not found in repository.`);
             }
           }
         }
 
         // For User pages, just need profile
-        if (pageState.type === PAGE_TYPES.USER && !profile && user) {
+        if (pageState.type === PAGE_TYPES.USER && !profile && (user || urlContext.user)) {
+          const effectiveUser = user || urlContext.user;
           if (githubService.isAuth()) {
             try {
-              profile = await githubService.getUser(user);
+              profile = await githubService.getUser(effectiveUser);
             } catch (err) {
               // For user pages, set error state instead of redirecting
               setPageState(prev => ({
                 ...prev,
                 loading: false,
-                error: `User '${user}' not found or not accessible. Please check the username and try again.`,
-                user
+                error: `User '${effectiveUser}' not found or not accessible. Please check the username and try again.`,
+                user: effectiveUser
               }));
               return;
             }
@@ -248,9 +259,9 @@ export const PageProvider = ({ children, pageName }) => {
             // Unauthenticated users accessing public user profiles
             // Create profile for public access (no isDemo flag)
             profile = {
-              login: user,
-              name: user.charAt(0).toUpperCase() + user.slice(1),
-              avatar_url: `https://github.com/${user}.png`,
+              login: effectiveUser,
+              name: effectiveUser.charAt(0).toUpperCase() + effectiveUser.slice(1),
+              avatar_url: `https://github.com/${effectiveUser}.png`,
               type: 'User'
               // Note: isDemo is NOT set - unauthenticated users should access real public data
             };
@@ -260,11 +271,11 @@ export const PageProvider = ({ children, pageName }) => {
         setPageState(prev => ({
           ...prev,
           loading: false,
-          user,
+          user: user || urlContext.user,
           profile,
           repository,
           branch: selectedBranch,
-          asset,
+          asset: asset || urlContext.asset,
           isAuthenticated: githubService.isAuth()
         }));
 
@@ -302,7 +313,7 @@ export const PageProvider = ({ children, pageName }) => {
     };
 
     // Only load data if we have URL parameters that require it
-    if ((pageState.type !== PAGE_TYPES.TOP_LEVEL && user) || pageState.type === PAGE_TYPES.TOP_LEVEL) {
+    if ((pageState.type !== PAGE_TYPES.TOP_LEVEL && (user || urlContext.user)) || pageState.type === PAGE_TYPES.TOP_LEVEL) {
       loadPageData();
     }
   }, [user, repo, params.branch, asset, pageState.type, location.state, navigate, pageName]);

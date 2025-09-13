@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Publication Output",
+  "description": "Generated publication result with metadata",
+  "type": "object",
+  "properties": {
+    "publicationId": {
+      "type": "string",
+      "description": "Unique identifier for the generated publication",
+      "pattern": "^pub-[a-f0-9-]+$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "failed", "processing"],
+      "description": "Generation status"
+    },
+    "files": {
+      "type": "array",
+      "description": "Generated publication files",
+      "items": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "Generated filename"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["html", "epub", "docbook", "pdf"]
+          },
+          "size": {
+            "type": "integer",
+            "description": "File size in bytes"
+          },
+          "downloadUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Download URL for the file"
+          },
+          "checksum": {
+            "type": "string",
+            "description": "SHA-256 checksum of the file"
+          }
+        },
+        "required": ["filename", "format", "downloadUrl"]
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Publication metadata",
+      "properties": {
+        "dakRepository": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "templateId": {
+          "type": "string"
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "generationTime": {
+          "type": "number",
+          "description": "Generation time in seconds"
+        }
+      }
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if status is 'failed'"
+    }
+  },
+  "required": ["publicationId", "status"],
+  "additionalProperties": false
+}

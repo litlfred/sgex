@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DAK Catalog Filter",
+  "description": "Filter parameters for DAK catalog queries",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Filter by DAK name (partial match)",
+      "examples": ["immunization", "anc"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "active", "retired"],
+      "description": "Filter by DAK status"
+    },
+    "componentType": {
+      "type": "string",
+      "enum": [
+        "business-processes",
+        "decision-support-logic",
+        "indicators-measures", 
+        "data-entry-forms",
+        "terminology",
+        "fhir-profiles",
+        "fhir-extensions",
+        "test-data"
+      ],
+      "description": "Filter by component type"
+    },
+    "organization": {
+      "type": "string",
+      "description": "Filter by organization/owner",
+      "examples": ["who", "litlfred"]
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Filter by tags"
+    },
+    "hasComponents": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Only return DAKs that have these components"
+    }
+  },
+  "additionalProperties": false
+}

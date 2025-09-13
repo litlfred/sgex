@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PageLayout } from './framework';
 import githubService from '../services/githubService';
-import { parseDAKUrl } from '../utils/routeUtils';
+import { parseDAKUrl } from '../services/routingContextService';
 
 const NotFound = () => {
   const navigate = useNavigate();

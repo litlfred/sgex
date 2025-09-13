@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FAQ Parameters",
+  "description": "Parameters for executing FAQ questions",
+  "type": "object",
+  "properties": {
+    "repository": {
+      "type": "string",
+      "description": "GitHub repository in format 'user/repo' or local folder path",
+      "examples": [
+        "who/smart-immunizations",
+        "litlfred/anc-dak",
+        "/tmp/local-dak"
+      ]
+    },
+    "locale": {
+      "type": "string",
+      "description": "Language locale code",
+      "default": "en_US",
+      "enum": ["en_US", "fr_FR", "es_ES", "ar_AR", "zh_CN", "ru_RU"],
+      "examples": ["en_US", "fr_FR", "es_ES"]
+    },
+    "branch": {
+      "type": "string",
+      "description": "Git branch name",
+      "default": "main",
+      "examples": ["main", "develop", "feature/new-indicators"]
+    },
+    "assetFiles": {
+      "type": "array",
+      "description": "Specific asset files to analyze (for asset-level questions)",
+      "items": {
+        "type": "string"
+      },
+      "examples": [
+        ["input/profiles/patient.json"],
+        ["input/vocabulary/valueset-1.json", "input/vocabulary/valueset-2.json"]
+      ]
+    },
+    "componentType": {
+      "type": "string",
+      "description": "DAK component type filter",
+      "enum": [
+        "business-processes",
+        "decision-support-logic", 
+        "indicators-measures",
+        "data-entry-forms",
+        "terminology",
+        "fhir-profiles",
+        "fhir-extensions",
+        "test-data"
+      ],
+      "examples": ["business-processes", "terminology"]
+    }
+  },
+  "additionalProperties": true,
+  "examples": [
+    {
+      "repository": "who/smart-immunizations",
+      "locale": "en_US"
+    },
+    {
+      "repository": "litlfred/anc-dak",
+      "locale": "fr_FR",
+      "branch": "develop",
+      "assetFiles": ["input/profiles/anc-patient.json"]
+    }
+  ]
+}

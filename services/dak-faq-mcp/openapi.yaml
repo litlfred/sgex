@@ -1,0 +1,519 @@
+openapi: 3.0.3
+info:
+  title: DAK FAQ MCP Service API
+  description: |
+    Complete REST API for WHO SMART Guidelines DAK FAQ functionality.
+    
+    This API provides HTTP endpoints for the same functionality available via the MCP protocol.
+    All endpoints support the same question catalog, parameters, and output formats as the MCP interface.
+    
+    **MCP Interface**: See `mcp-manifest.json` for Model Context Protocol documentation.
+    **GitHub Repository**: https://github.com/litlfred/sgex
+    
+    ## Key Features
+    - Dynamic question catalog with 7+ FAQ questions
+    - Structured JSON and narrative HTML output
+    - Multi-language support (en_US, fr_FR, es_ES, ar_AR, zh_CN, ru_RU)
+    - Hierarchical questions (DAK → Component → Asset levels)
+    - Full JSON schema validation for all inputs and outputs
+    
+  version: 1.0.0
+  contact:
+    name: SGeX Workbench Team
+    url: https://github.com/litlfred/sgex
+    email: support@sgex.who.int
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://127.0.0.1:3001
+    description: Local development server (localhost only for security)
+  - url: https://litlfred.github.io/sgex/api
+    description: GitHub Pages deployment (read-only documentation)
+
+security:
+  - localOnly: []
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Returns server health status, version information, and service catalog
+      operationId: getHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              examples:
+                healthy:
+                  summary: Healthy server response
+                  value:
+                    status: healthy
+                    timestamp: "2024-01-15T10:30:00Z"
+                    version: "1.0.0"
+                    description: "DAK FAQ MCP Server - Local Only"
+                    capabilities:
+                      questionsAvailable: 7
+                      mcpSupport: true
+                      restSupport: true
+
+  /faq/questions/catalog:
+    get:
+      summary: Get FAQ Questions Catalog
+      description: |
+        List all available DAK FAQ questions with comprehensive metadata and filtering options.
+        
+        **MCP Equivalent**: `list_faq_questions` tool
+        
+        Returns dynamic question catalog with current question IDs as constrained enum.
+      operationId: getFAQCatalog
+      tags:
+        - FAQ Questions
+      parameters:
+        - name: level
+          in: query
+          description: Filter questions by hierarchy level
+          schema:
+            type: string
+            enum: [dak, component, asset]
+          example: dak
+        - name: componentType
+          in: query
+          description: Filter questions by DAK component type
+          schema:
+            type: string
+            enum: [
+              business-processes,
+              decision-support-logic,
+              indicators-measures,
+              data-entry-forms,
+              terminology,
+              fhir-profiles,
+              fhir-extensions,
+              test-data
+            ]
+          example: business-processes
+        - name: tags
+          in: query
+          description: Filter questions by tags (comma-separated)
+          schema:
+            type: string
+          example: metadata,validation
+        - name: format
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: [json, openapi]
+            default: json
+      responses:
+        '200':
+          description: List of available FAQ questions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogResponse'
+              examples:
+                allQuestions:
+                  summary: All available questions
+                  value:
+                    questions:
+                      - id: dak-name
+                        title: Get DAK Name
+                        description: Extracts the name of the DAK from sushi-config.yaml
+                        level: dak
+                        tags: [dak, metadata, name]
+                        parameters:
+                          - name: repository
+                            type: string
+                            required: true
+                            description: GitHub repository or local path
+                    totalCount: 7
+                    filteredCount: 7
+                dakLevelOnly:
+                  summary: DAK level questions only
+                  value:
+                    questions:
+                      - id: dak-name
+                        title: Get DAK Name
+                        level: dak
+                        tags: [dak, metadata]
+                      - id: dak-version  
+                        title: Get DAK Version
+                        level: dak
+                        tags: [dak, metadata]
+                    totalCount: 7
+                    filteredCount: 2
+                    filters:
+                      level: dak
+
+  /faq/questions/execute:
+    post:
+      summary: Execute FAQ Questions (Batch)
+      description: |
+        Execute one or more FAQ questions in batch and return structured results.
+        
+        **MCP Equivalent**: `execute_faq_question` tool (single execution)
+        
+        Supports all question types with proper JSON schema validation for question-specific parameters.
+      operationId: executeFAQQuestions
+      tags:
+        - FAQ Questions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchExecuteRequest'
+            examples:
+              singleQuestion:
+                summary: Execute single DAK name question
+                value:
+                  requests:
+                    - questionId: dak-name
+                      parameters:
+                        repository: who/smart-immunizations
+                        locale: en_US
+                  context:
+                    repositoryPath: /tmp/dak-repo
+              multipleQuestions:
+                summary: Execute multiple questions
+                value:
+                  requests:
+                    - questionId: dak-name
+                      parameters:
+                        repository: who/smart-immunizations
+                        locale: en_US
+                    - questionId: dak-version
+                      parameters:
+                        repository: who/smart-immunizations
+                        locale: en_US
+                  context:
+                    repositoryPath: /tmp/dak-repo
+              assetLevelQuestion:
+                summary: Execute asset-level question
+                value:
+                  requests:
+                    - questionId: terminology-coverage
+                      parameters:
+                        repository: who/smart-immunizations
+                        assetFiles: ["input/vocabulary/valueset-immunization-status.json"]
+                        locale: en_US
+      responses:
+        '200':
+          description: Execution results for all questions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchExecuteResponse'
+              examples:
+                successfulExecution:
+                  summary: Successful execution with results
+                  value:
+                    results:
+                      - questionId: dak-name
+                        success: true
+                        result:
+                          structured:
+                            name: Immunization DAK
+                            version: 1.0.0
+                            id: smart-immunizations
+                          narrative: "<h4>DAK Name</h4><p>The name of this DAK is <strong>Immunization DAK</strong>.</p>"
+                          errors: []
+                          warnings: []
+                          meta:
+                            executionTime: 45
+                            cacheHit: false
+                    success: true
+                errorExecution:
+                  summary: Execution with errors
+                  value:
+                    results:
+                      - questionId: invalid-question
+                        success: false
+                        error: "Question 'invalid-question' not found"
+                    success: false
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidQuestionId:
+                  summary: Invalid question ID
+                  value:
+                    error: "Invalid question ID"
+                    code: "VALIDATION_ERROR"
+                    details:
+                      questionId: "unknown-question"
+                      availableQuestions: ["dak-name", "dak-version"]
+
+  /faq/schema/{questionId}:
+    get:
+      summary: Get Question Parameter Schema
+      description: |
+        Get the JSON schema for a specific FAQ question's parameters.
+        
+        **MCP Equivalent**: `get_question_schema` tool
+        
+        Returns the exact JSON schema used for parameter validation.
+      operationId: getQuestionSchema
+      tags:
+        - FAQ Questions
+      parameters:
+        - name: questionId
+          in: path
+          required: true
+          description: ID of the FAQ question
+          schema:
+            $ref: '#/components/schemas/QuestionId'
+          example: dak-name
+      responses:
+        '200':
+          description: JSON schema for the question parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionSchemaResponse'
+              examples:
+                dakNameSchema:
+                  summary: Schema for dak-name question
+                  value:
+                    questionId: dak-name
+                    schema:
+                      type: object
+                      properties:
+                        repository:
+                          type: string
+                          description: "GitHub repository in format 'user/repo'"
+                        locale:
+                          type: string
+                          enum: [en_US, fr_FR, es_ES, ar_AR, zh_CN, ru_RU]
+                          default: en_US
+                      required: [repository]
+                    examples:
+                      - repository: "who/smart-immunizations"
+                        locale: "en_US"
+        '404':
+          description: Question not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mcp/manifest:
+    get:
+      summary: Get MCP Manifest
+      description: |
+        Returns the Model Context Protocol manifest for this service.
+        
+        This endpoint provides the complete MCP specification including tools,
+        schemas, and usage examples for MCP-compatible clients.
+      operationId: getMCPManifest
+      tags:
+        - MCP Protocol
+      responses:
+        '200':
+          description: MCP manifest specification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MCPManifest'
+
+components:
+  schemas:
+    QuestionId:
+      $ref: './schemas/questionId.schema.json'
+    
+    FAQParameters:
+      $ref: './schemas/faq-parameters.schema.json'
+    
+    ExecutionContext:
+      $ref: './schemas/context.schema.json'
+    
+    FAQOutput:
+      $ref: './schemas/faq-output.schema.json'
+    
+    CatalogResponse:
+      $ref: './schemas/faq-catalog-output.schema.json'
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: 1.0.0
+        description:
+          type: string
+          example: DAK FAQ MCP Server - Local Only
+        capabilities:
+          type: object
+          properties:
+            questionsAvailable:
+              type: integer
+              description: Number of FAQ questions available
+            mcpSupport:
+              type: boolean
+              description: Whether MCP protocol is supported
+            restSupport:
+              type: boolean
+              description: Whether REST API is supported
+            localesSupported:
+              type: array
+              items:
+                type: string
+              example: [en_US, fr_FR, es_ES, ar_AR, zh_CN, ru_RU]
+      required: [status, timestamp, version]
+
+    BatchExecuteRequest:
+      type: object
+      properties:
+        requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecuteRequest'
+          minItems: 1
+          maxItems: 10
+        context:
+          $ref: '#/components/schemas/ExecutionContext'
+      required: [requests]
+
+    ExecuteRequest:
+      type: object
+      properties:
+        questionId:
+          $ref: '#/components/schemas/QuestionId'
+        parameters:
+          $ref: '#/components/schemas/FAQParameters'
+        assetFiles:
+          type: array
+          items:
+            type: string
+          description: Specific asset files for asset-level questions
+      required: [questionId]
+
+    BatchExecuteResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecuteResponse'
+        success:
+          type: boolean
+          description: Whether all executions were successful
+        meta:
+          type: object
+          properties:
+            totalRequests:
+              type: integer
+            successfulRequests:
+              type: integer
+            executionTime:
+              type: number
+              description: Total execution time in milliseconds
+
+    ExecuteResponse:
+      type: object
+      properties:
+        questionId:
+          type: string
+        success:
+          type: boolean
+        result:
+          $ref: '#/components/schemas/FAQOutput'
+        error:
+          type: string
+          description: Error message if execution failed
+      required: [questionId, success]
+
+    QuestionSchemaResponse:
+      type: object
+      properties:
+        questionId:
+          type: string
+        schema:
+          type: object
+          description: JSON schema for question parameters
+        examples:
+          type: array
+          items:
+            type: object
+          description: Example parameter sets
+      required: [questionId, schema]
+
+    MCPManifest:
+      type: object
+      description: Model Context Protocol manifest
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        capabilities:
+          type: object
+        tools:
+          type: array
+          items:
+            type: object
+        examples:
+          type: object
+      required: [name, version, capabilities, tools]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+          enum: [
+            VALIDATION_ERROR,
+            QUESTION_NOT_FOUND,
+            EXECUTION_ERROR,
+            INTERNAL_ERROR
+          ]
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+      required: [error, code]
+
+  securitySchemes:
+    localOnly:
+      type: http
+      scheme: bearer
+      description: Local-only access (development server)
+
+tags:
+  - name: System
+    description: System health and information endpoints
+  - name: FAQ Questions
+    description: DAK FAQ question operations and catalog
+  - name: MCP Protocol
+    description: Model Context Protocol specification and manifest
+
+externalDocs:
+  description: GitHub Repository and Documentation
+  url: https://github.com/litlfred/sgex

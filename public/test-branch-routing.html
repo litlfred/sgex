@@ -112,7 +112,6 @@
         // Mock route configuration for testing
         function createMockRouteConfig() {
             return {
-                deployedBranches: ['main', 'develop', 'feature-test'],
                 dakComponents: {
                     'dashboard': { component: 'DAKDashboard' },
                     'testing-viewer': { component: 'TestingViewer' },
@@ -121,9 +120,6 @@
                 standardComponents: {
                     'repositories': { routes: [{ path: '/repositories' }] },
                     'dak-selection': { routes: [{ path: '/dak-selection' }] }
-                },
-                isDeployedBranch: function(branch) {
-                    return this.deployedBranches.includes(branch);
                 },
                 isValidComponent: function(component) {
                     return Object.keys(this.dakComponents).includes(component) ||

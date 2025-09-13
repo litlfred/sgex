@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Template Query",
+  "description": "Query parameters for listing publication templates",
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string",
+      "description": "Filter templates by category",
+      "enum": ["who-standard", "custom", "minimal", "detailed"],
+      "examples": ["who-standard"]
+    },
+    "format": {
+      "type": "string", 
+      "description": "Filter templates by supported format",
+      "enum": ["html", "epub", "docbook", "pdf", "all"],
+      "default": "all"
+    },
+    "scope": {
+      "type": "string",
+      "description": "Filter templates by supported scope",
+      "enum": [
+        "full",
+        "component",
+        "health-interventions",
+        "generic-personas",
+        "user-scenarios", 
+        "business-processes",
+        "core-data-elements",
+        "decision-support",
+        "program-indicators",
+        "functional-requirements",
+        "test-scenarios",
+        "all"
+      ],
+      "default": "all"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {},
+    {
+      "category": "who-standard",
+      "format": "html"
+    },
+    {
+      "scope": "business-processes"
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import githubService from './githubService';
 import logger from '../utils/logger';
+import repositoryConfig from '../config/repositoryConfig';
 
 /**
  * Issue Tracking Service
@@ -127,8 +128,8 @@ class IssueTrackingService {
     let filtersUpdated = false;
     for (const repo of repositories) {
       if (!filters[username][repo]) {
-        if (repo === 'litlfred/sgex') {
-          // litlfred/sgex is visible by default
+        if (repo === repositoryConfig.getFullName()) {
+          // Current repository is visible by default
           filters[username][repo] = { hidden: false };
         } else {
           // All other repositories are hidden by default
@@ -172,7 +173,7 @@ class IssueTrackingService {
 
   /**
    * Clean up tracked items from non-DAK repositories
-   * This removes any previously tracked items from repositories that are not DAKs or litlfred/sgex
+   * This removes any previously tracked items from repositories that are not DAKs or the current repository
    */
   async cleanupNonDAKRepositories() {
     const username = await this._getCurrentUsername();
@@ -240,7 +241,7 @@ class IssueTrackingService {
     const userFilters = filters[username] || {};
     
     // For repositories not explicitly in the filter list, apply default behavior:
-    // - litlfred/sgex is visible by default
+    // - Current repository is visible by default
     // - all other repositories are hidden by default
     const filteredIssues = items.issues.filter(issue => {
       const repository = issue.repository;
@@ -248,8 +249,8 @@ class IssueTrackingService {
         // Use explicit filter setting
         return !userFilters[repository].hidden;
       } else {
-        // Apply default: only litlfred/sgex is visible by default
-        return repository === 'litlfred/sgex';
+        // Apply default: only current repository is visible by default
+        return repository === repositoryConfig.getFullName();
       }
     });
     
@@ -259,8 +260,8 @@ class IssueTrackingService {
         // Use explicit filter setting
         return !userFilters[repository].hidden;
       } else {
-        // Apply default: only litlfred/sgex is visible by default
-        return repository === 'litlfred/sgex';
+        // Apply default: only current repository is visible by default
+        return repository === repositoryConfig.getFullName();
       }
     });
 
@@ -305,7 +306,7 @@ class IssueTrackingService {
       html_url: issueData.html_url,
       created_at: issueData.created_at || new Date().toISOString(),
       updated_at: issueData.updated_at || issueData.created_at || new Date().toISOString(),
-      repository: issueData.repository || 'litlfred/sgex',
+      repository: issueData.repository || repositoryConfig.getFullName(),
       state: issueData.state || 'open',
       labels: issueData.labels || [],
       trackedAt: new Date().toISOString()
@@ -366,7 +367,7 @@ class IssueTrackingService {
       html_url: prData.html_url,
       created_at: prData.created_at || new Date().toISOString(),
       updated_at: prData.updated_at || prData.created_at || new Date().toISOString(),
-      repository: prData.repository || 'litlfred/sgex',
+      repository: prData.repository || repositoryConfig.getFullName(),
       state: prData.state || 'open',
       linkedIssues: linkedIssues,
       trackedAt: new Date().toISOString()
@@ -495,11 +496,11 @@ class IssueTrackingService {
   }
 
   /**
-   * Check if a repository is a DAK or the special litlfred/sgex repository
+   * Check if a repository is a DAK or the current repository
    */
   async _isAllowedRepository(repositoryFullName) {
-    // Always allow litlfred/sgex repository
-    if (repositoryFullName === 'litlfred/sgex') {
+    // Always allow current repository
+    if (repositoryFullName === repositoryConfig.getFullName()) {
       return true;
     }
     
@@ -518,7 +519,7 @@ class IssueTrackingService {
 
   /**
    * Discover new user activity - issues and PRs created by or commented on by the user
-   * Only includes items from DAK repositories or litlfred/sgex
+   * Only includes items from DAK repositories or the current repository
    */
   async _discoverUserActivity(username, existingItems) {
     const newIssues = [];
@@ -558,7 +559,7 @@ class IssueTrackingService {
         if (!isAlreadyTracked) {
           const repositoryFullName = issue.repository ? issue.repository.full_name : 'unknown/unknown';
           
-          // Only include issues from DAK repositories or litlfred/sgex
+          // Only include issues from DAK repositories or the current repository
           const isAllowed = await this._isAllowedRepository(repositoryFullName);
           if (!isAllowed) {
             this.logger.debug(`Skipping issue from non-DAK repository: ${repositoryFullName}`);
@@ -591,7 +592,7 @@ class IssueTrackingService {
         if (!isAlreadyTracked) {
           const repositoryFullName = pr.repository ? pr.repository.full_name : 'unknown/unknown';
           
-          // Only include PRs from DAK repositories or litlfred/sgex
+          // Only include PRs from DAK repositories or the current repository
           const isAllowed = await this._isAllowedRepository(repositoryFullName);
           if (!isAllowed) {
             this.logger.debug(`Skipping PR from non-DAK repository: ${repositoryFullName}`);

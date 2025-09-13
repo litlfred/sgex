@@ -5,19 +5,31 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import FAQAnswer from '../dak/faq/components/FAQAnswer.js';
 import faqExecutionEngine from '../dak/faq/engine/FAQExecutionEngine.js';
 import githubService from '../services/githubService.js';
+import { PageLayout, usePage } from './framework';
 import './DAKFAQDemo.css';
 
 const DAKFAQDemo = () => {
+  return (
+    <PageLayout pageName="dak-faq-demo">
+      <DAKFAQDemoContent />
+    </PageLayout>
+  );
+};
+
+const DAKFAQDemoContent = () => {
   const { t } = useTranslation();
-  const { user, repo, branch } = useParams();
+  const { user, repository, branch } = usePage();
   const location = useLocation();
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Get user and repo from page framework
+  const repo = repository?.name;
 
   // Sample questions to demonstrate
   const sampleQuestions = [

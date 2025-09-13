@@ -19,73 +19,42 @@ describe('URL Routing - Branch Validation', () => {
 
     const secondSegment = pathSegments[1];
     
-    // Original logic (before fix)
-    if (routeConfig && routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(secondSegment)) {
-      return { type: 'branch-deployment', branch: secondSegment };
+    // NEW OPTIMISTIC LOGIC: Always try branch deployment first, no hardcoded list check
+    if (pathSegments.length >= 3 && 
+        routeConfig && 
+        routeConfig.isValidComponent && 
+        routeConfig.isValidComponent(pathSegments[2])) {
+      // Optimistically assume this is a branch deployment
+      return { type: 'branch-deployment', branch: secondSegment, component: pathSegments[2] };
     } else if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(secondSegment)) {
       return { type: 'component-first' };
     } else if (pathSegments.length === 3 && pathSegments[2] === 'index.html') {
       return { type: 'branch-index-redirect' };
+    } else if (pathSegments.length === 2) {
+      // Just /sgex/:branch/ - assume branch exists and try to route to it
+      return { type: 'branch-root-redirect', branch: secondSegment, redirect: `/sgex/${secondSegment}/` };
     } else {
-      // This is where the error occurs in the original code
       return { error: 'unknown-pattern' };
     }
   }
 
-  // Fixed routing logic
+  // Fixed routing logic (now this is the main logic since we implemented optimistic routing)
   function fixedRouteLogic(pathname, routeConfig) {
-    const pathSegments = pathname.split('/').filter(Boolean);
-    
-    // Simulate the GitHub Pages routing logic
-    if (pathSegments.length === 0 || pathSegments[0] !== 'sgex') {
-      return { error: 'invalid-base-path' };
-    }
-
-    if (pathSegments.length === 1) {
-      return { redirect: '/sgex/', type: 'root-redirect' };
-    }
-
-    const secondSegment = pathSegments[1];
-    
-    // Check if second segment is a deployed branch
-    if (routeConfig && routeConfig.isDeployedBranch && routeConfig.isDeployedBranch(secondSegment)) {
-      return { type: 'branch-deployment', branch: secondSegment };
-    } else if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(secondSegment)) {
-      return { type: 'component-first' };
-    } else if (pathSegments.length === 3 && pathSegments[2] === 'index.html') {
-      return { type: 'branch-index-redirect' };
-    } else {
-      // FIX: Handle unknown branch-only URLs by assuming they exist and trying to route to them
-      if (pathSegments.length === 2) {
-        // Just /sgex/:unknown-branch/ - assume branch exists and try to route to it
-        return { type: 'branch-root-redirect', branch: secondSegment, redirect: `/sgex/${secondSegment}/` };
-      }
-      
-      // FIX: Before showing error, check if this could be a branch-first pattern
-      // If we have at least 3 segments and the third segment is a valid component,
-      // treat the second segment as a branch name regardless of deployed status
-      if (pathSegments.length >= 3 && 
-          routeConfig && 
-          routeConfig.isValidComponent && 
-          routeConfig.isValidComponent(pathSegments[2])) {
-        return { type: 'branch-deployment', branch: secondSegment, component: pathSegments[2] };
-      }
-      
-      // Only show error for truly unrecognized patterns
-      return { error: 'unknown-pattern' };
-    }
+    // This is now the same as mockRouteLogic since we implemented the optimistic approach
+    return mockRouteLogic(pathname, routeConfig);
   }
 
   const mockRouteConfig = {
-    isDeployedBranch: (branch) => branch === 'main',
+    // Note: isDeployedBranch function removed - we now use optimistic approach
     isValidComponent: (component) => ['dashboard', 'testing-viewer', 'business-process-selection'].includes(component)
   };
 
-  describe('Original behavior (before fix)', () => {
-    test('should handle known deployed branch correctly', () => {
+  describe('Current optimistic behavior (implemented)', () => {
+    test('should handle known branch correctly', () => {
       const result = mockRouteLogic('/sgex/main/dashboard/litlfred/smart-ips-pilgrimage', mockRouteConfig);
       expect(result.type).toBe('branch-deployment');
       expect(result.branch).toBe('main');
+      expect(result.component).toBe('dashboard');
     });
 
     test('should handle component-first pattern correctly', () => {
@@ -93,17 +62,26 @@ describe('URL Routing - Branch Validation', () => {
       expect(result.type).toBe('component-first');
     });
 
-    test('should show error for unknown branch (the bug)', () => {
+    test('should optimistically handle unknown branch (the fix)', () => {
       const result = mockRouteLogic('/sgex/copilot-fix-809/dashboard/litlfred/smart-ips-pilgrimage', mockRouteConfig);
-      expect(result.error).toBe('unknown-pattern');
+      expect(result.type).toBe('branch-deployment');
+      expect(result.branch).toBe('copilot-fix-809');
+      expect(result.component).toBe('dashboard');
+    });
+
+    test('should handle branch-only URLs optimistically', () => {
+      const result = mockRouteLogic('/sgex/copilot-fix-915/', mockRouteConfig);
+      expect(result.type).toBe('branch-root-redirect');
+      expect(result.branch).toBe('copilot-fix-915');
     });
   });
 
-  describe('Fixed behavior (after fix)', () => {
-    test('should handle known deployed branch correctly', () => {
+  describe('Fixed behavior (now implemented)', () => {
+    test('should handle any branch correctly (optimistic)', () => {
       const result = fixedRouteLogic('/sgex/main/dashboard/litlfred/smart-ips-pilgrimage', mockRouteConfig);
       expect(result.type).toBe('branch-deployment');
       expect(result.branch).toBe('main');
+      expect(result.component).toBe('dashboard');
     });
 
     test('should handle component-first pattern correctly', () => {

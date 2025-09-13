@@ -5,6 +5,7 @@ import BugReportForm from './BugReportForm';
 import EnhancedTutorialModal from './EnhancedTutorialModal';
 import tutorialService from '../services/tutorialService';
 import { ALT_TEXT_KEYS, getAltText } from '../utils/imageAltTextHelper';
+import repositoryConfig from '../config/repositoryConfig';
 
 
 const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
@@ -71,7 +72,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
         }
         
         // For other issue types, continue with existing behavior
-        const baseUrl = `https://github.com/litlfred/sgex/issues/new`;
+        const baseUrl = `${repositoryConfig.getGitHubUrl()}/issues/new`;
         let params = {};
 
         switch (issueType) {

@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Integration Status",
+  "description": "Status of service integrations (MCP, FAQ services)",
+  "type": "object",
+  "properties": {
+    "services": {
+      "type": "object",
+      "description": "Status of integrated services",
+      "properties": {
+        "mcpService": {
+          "type": "object",
+          "description": "MCP service integration status",
+          "properties": {
+            "available": {
+              "type": "boolean",
+              "description": "Whether MCP service is available"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "MCP service endpoint URL"
+            },
+            "lastChecked": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Last health check timestamp"
+            },
+            "version": {
+              "type": "string",
+              "description": "MCP service version"
+            },
+            "responseTime": {
+              "type": "number",
+              "description": "Last response time in milliseconds"
+            }
+          },
+          "required": ["available", "url", "lastChecked"]
+        },
+        "faqService": {
+          "type": "object",
+          "description": "FAQ service integration status",
+          "properties": {
+            "available": {
+              "type": "boolean",
+              "description": "Whether FAQ service is available"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "FAQ service endpoint URL"
+            },
+            "lastChecked": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Last health check timestamp"
+            },
+            "questionCount": {
+              "type": "integer",
+              "description": "Number of available FAQ questions"
+            },
+            "responseTime": {
+              "type": "number",
+              "description": "Last response time in milliseconds"
+            }
+          },
+          "required": ["available", "url", "lastChecked"]
+        }
+      },
+      "required": ["mcpService", "faqService"]
+    },
+    "overall": {
+      "type": "object",
+      "description": "Overall integration health",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["healthy", "degraded", "unavailable"],
+          "description": "Overall service health status"
+        },
+        "availableServices": {
+          "type": "integer",
+          "description": "Number of available services"
+        },
+        "totalServices": {
+          "type": "integer",
+          "description": "Total number of integrated services"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last status update timestamp"
+        }
+      },
+      "required": ["status", "availableServices", "totalServices", "lastUpdated"]
+    }
+  },
+  "required": ["services", "overall"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "services": {
+        "mcpService": {
+          "available": true,
+          "url": "http://localhost:3001",
+          "lastChecked": "2024-09-11T18:00:00Z",
+          "version": "1.0.0",
+          "responseTime": 45
+        },
+        "faqService": {
+          "available": true,
+          "url": "http://localhost:3001",
+          "lastChecked": "2024-09-11T18:00:00Z",
+          "questionCount": 7,
+          "responseTime": 123
+        }
+      },
+      "overall": {
+        "status": "healthy",
+        "availableServices": 2,
+        "totalServices": 2,
+        "lastUpdated": "2024-09-11T18:00:00Z"
+      }
+    }
+  ]
+}

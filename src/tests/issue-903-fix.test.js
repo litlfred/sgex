@@ -7,7 +7,7 @@ describe('Issue #903 - URL Routing for Branch Deployment with Standard Component
   
   // Mock route configuration that matches actual structure
   const mockRouteConfig = {
-    isDeployedBranch: (branch) => branch === 'main',
+    // Note: isDeployedBranch removed - now using optimistic approach
     isValidDAKComponent: (component) => [
       'dashboard', 'testing-viewer', 'business-process-selection'
     ].includes(component),

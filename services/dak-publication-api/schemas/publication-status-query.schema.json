@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Publication Status Query",
+  "description": "Query parameters for checking publication status",
+  "type": "object",
+  "properties": {
+    "publicationId": {
+      "type": "string",
+      "description": "Unique identifier of the publication generation request",
+      "pattern": "^pub-[a-f0-9-]+$",
+      "examples": ["pub-123e4567-e89b-12d3-a456-426614174000"]
+    },
+    "dakRepository": {
+      "type": "string", 
+      "description": "GitHub repository path to check all publications for",
+      "pattern": "^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$",
+      "examples": ["WorldHealthOrganization/smart-immunizations"]
+    }
+  },
+  "oneOf": [
+    {
+      "required": ["publicationId"]
+    },
+    {
+      "required": ["dakRepository"]
+    }
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "publicationId": "pub-123e4567-e89b-12d3-a456-426614174000"
+    },
+    {
+      "dakRepository": "WorldHealthOrganization/smart-immunizations"
+    }
+  ]
+}

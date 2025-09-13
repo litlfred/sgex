@@ -7,7 +7,7 @@
 import { shouldOpenInNewTab, constructFullUrl } from '../utils/navigationUtils.ts';
 import { processConcurrently, RateLimiter } from '../utils/concurrency.ts';
 import logger from '../utils/logger.ts';
-import { isValidDAKComponent, parseDAKUrl } from '../utils/routeUtils.ts';
+import { isValidDAKComponent, parseDAKUrl } from '../services/routingContextService';
 
 describe('TypeScript Interoperability Tests', () => {
   describe('Navigation Utils Integration', () => {

@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Publication Configuration",
+  "description": "Full publication configuration for validation",
+  "type": "object",
+  "properties": {
+    "publication": {
+      "$ref": "./publication-request.schema.json"
+    },
+    "template": {
+      "type": "object",
+      "description": "Template configuration",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Template identifier"
+        },
+        "layout": {
+          "type": "string",
+          "enum": ["single-page", "multi-page", "sectioned"],
+          "default": "sectioned"
+        },
+        "styling": {
+          "type": "object",
+          "properties": {
+            "theme": {
+              "type": "string",
+              "enum": ["who-standard", "minimal", "corporate"],
+              "default": "who-standard"
+            },
+            "colorScheme": {
+              "type": "string",
+              "enum": ["blue", "neutral", "custom"],
+              "default": "blue"
+            }
+          }
+        }
+      },
+      "required": ["id"]
+    },
+    "content": {
+      "type": "object",
+      "description": "Content configuration and overrides",
+      "properties": {
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "include": {
+                "type": "boolean",
+                "default": true
+              },
+              "customContent": {
+                "type": "string",
+                "description": "Custom HTML or markdown content"
+              }
+            },
+            "required": ["id"]
+          }
+        },
+        "variables": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": ["publication", "template"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "publication": {
+        "dakRepository": "WorldHealthOrganization/smart-immunizations",
+        "format": "html",
+        "scope": "full"
+      },
+      "template": {
+        "id": "who-standard",
+        "layout": "sectioned",
+        "styling": {
+          "theme": "who-standard",
+          "colorScheme": "blue"
+        }
+      },
+      "content": {
+        "variables": {
+          "title": "WHO SMART Guidelines: Immunizations",
+          "version": "1.0.0"
+        }
+      }
+    }
+  ]
+}

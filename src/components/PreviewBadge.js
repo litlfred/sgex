@@ -3,7 +3,8 @@ import githubService from '../services/githubService';
 import githubActionsService from '../services/githubActionsService';
 import WorkflowStatus from './WorkflowStatus';
 import WorkflowDashboard from './WorkflowDashboard';
-import { lazyLoadReactMarkdown, lazyLoadDOMPurify, lazyLoadRehypeRaw } from '../utils/lazyRouteUtils';
+import { lazyLoadReactMarkdown, lazyLoadDOMPurify, lazyLoadRehypeRaw } from '../services/libraryLoaderService';
+import repositoryConfig from '../config/repositoryConfig';
 import './WorkflowStatus.css';
 import './PreviewBadge.css';
 
@@ -228,7 +229,7 @@ const PreviewBadge = () => {
     try {
       // Get current repository context if available
       // For now, we'll use the main repository
-      const owner = 'litlfred';
+      const owner = repositoryConfig.getOwner();
       const repo = 'sgex';
 
       const prs = await githubService.getPullRequestsForBranch(owner, repo, branchName);
@@ -506,13 +507,13 @@ const PreviewBadge = () => {
       
       // Perform initial refresh
       if (prInfo && prInfo.length > 0) {
-        performSessionRefresh('litlfred', 'sgex', prInfo[0].number);
+        performSessionRefresh(repositoryConfig.getOwner(), repositoryConfig.getName(), prInfo[0].number);
       }
       
       // Set up auto-refresh every 10 seconds
       const interval = setInterval(async () => {
         if (prInfo && prInfo.length > 0) {
-          await performSessionRefresh('litlfred', 'sgex', prInfo[0].number);
+          await performSessionRefresh(repositoryConfig.getOwner(), repositoryConfig.getName(), prInfo[0].number);
         }
       }, 10000); // 10 seconds
       
@@ -1089,7 +1090,7 @@ const PreviewBadge = () => {
     
     setIsRefreshingComments(true);
     try {
-      const owner = 'litlfred';
+      const owner = repositoryConfig.getOwner();
       const repo = 'sgex';
       const pr = prInfo[0];
       
@@ -1161,7 +1162,7 @@ const PreviewBadge = () => {
   const loadMoreComments = async () => {
     if (!prInfo || prInfo.length === 0 || commentsLoading) return;
     
-    const owner = 'litlfred';
+    const owner = repositoryConfig.getOwner();
     const repo = 'sgex';
     const pr = prInfo[0];
     
@@ -1197,7 +1198,7 @@ const PreviewBadge = () => {
     try {
       setSubmittingComment(true);
       setCommentSubmissionStatus('submitting');
-      const owner = 'litlfred';
+      const owner = repositoryConfig.getOwner();
       const repo = 'sgex';
       
       // Add detailed logging for debugging
@@ -1302,7 +1303,7 @@ const PreviewBadge = () => {
     if (!content || typeof content !== 'string') return content || '';
     
     // Get current repository context
-    const owner = 'litlfred';
+    const owner = repositoryConfig.getOwner();
     const repo = 'sgex';
     const baseUrl = `https://github.com/${owner}/${repo}`;
     
@@ -1383,7 +1384,7 @@ const PreviewBadge = () => {
     if (!content || typeof content !== 'string') return content || '';
     
     // Get current repository context
-    const owner = 'litlfred';
+    const owner = repositoryConfig.getOwner();
     const repo = 'sgex';
     const baseUrl = `https://github.com/${owner}/${repo}`;
     
@@ -1511,7 +1512,7 @@ const PreviewBadge = () => {
       setIsSticky(true);
       
       // Fetch comments for this PR
-      const owner = 'litlfred';
+      const owner = repositoryConfig.getOwner();
       const repo = 'sgex';
       await fetchCommentsForPR(owner, repo, pr.number, 1, false);
       
@@ -1982,7 +1983,7 @@ const PreviewBadge = () => {
                                           </div>
                                           {response.body.length > 300 && (
                                             <a 
-                                              href={`https://github.com/litlfred/sgex/pull/${prInfo[0].number}#issuecomment-${response.id}`}
+                                              href={`${repositoryConfig.getGitHubUrl()}/pull/${prInfo[0].number}#issuecomment-${response.id}`}
                                               target="_blank"
                                               rel="noopener noreferrer"
                                               className="read-full-response"
@@ -2096,7 +2097,7 @@ const PreviewBadge = () => {
                               setShowStatusUpdates(e.target.checked);
                               // Refresh comments when toggling status updates
                               if (prInfo && prInfo.length > 0) {
-                                fetchCommentsForPR('litlfred', 'sgex', prInfo[0].number, 1, false);
+                                fetchCommentsForPR(repositoryConfig.getOwner(), repositoryConfig.getName(), prInfo[0].number, 1, false);
                               }
                             }}
                           />
@@ -2344,7 +2345,7 @@ const PreviewBadge = () => {
           </div>
 
           <div className="expanded-footer">
-            <a href={`https://github.com/litlfred/sgex/tree/${branchInfo.name}`} target="_blank" rel="noopener noreferrer" className="github-link">
+            <a href={`${repositoryConfig.getGitHubUrl()}/tree/${branchInfo.name}`} target="_blank" rel="noopener noreferrer" className="github-link">
               View Branch on GitHub →
             </a>
           </div>

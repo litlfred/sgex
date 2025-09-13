@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP Tools Output",
+  "description": "Output schema for MCP tool execution results",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "array",
+      "description": "Array of content blocks returned by the tool",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["text"],
+            "description": "Content type (currently only text supported)"
+          },
+          "text": {
+            "type": "string",
+            "description": "Text content, typically markdown formatted"
+          }
+        },
+        "required": ["type", "text"]
+      }
+    },
+    "isError": {
+      "type": "boolean",
+      "description": "Whether the tool execution resulted in an error",
+      "default": false
+    },
+    "_meta": {
+      "type": "object",
+      "description": "Internal metadata (not part of MCP spec)",
+      "properties": {
+        "toolName": {
+          "type": "string",
+          "description": "Name of the executed tool"
+        },
+        "executionTime": {
+          "type": "number",
+          "description": "Execution time in milliseconds"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Execution timestamp"
+        }
+      }
+    }
+  },
+  "required": ["content"],
+  "examples": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "# DAK Name: Immunization DAK\n\nThe name of this DAK is **Immunization DAK** (version 1.0.0).\n\n## Structured Data\n```json\n{\n  \"name\": \"Immunization DAK\",\n  \"version\": \"1.0.0\",\n  \"id\": \"smart-immunizations\"\n}\n```"
+        }
+      ],
+      "isError": false,
+      "_meta": {
+        "toolName": "execute_faq_question",
+        "executionTime": 45,
+        "timestamp": "2024-01-15T10:30:00Z"
+      }
+    },
+    {
+      "content": [
+        {
+          "type": "text", 
+          "text": "# Available FAQ Questions\n\n## DAK Level Questions\n- **dak-name**: Get the name of the DAK\n- **dak-version**: Get version and metadata\n\n## Component Level Questions\n- **business-process-workflows**: Analyze BPMN workflows\n\nTotal: 7 questions available"
+        }
+      ],
+      "isError": false
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Error: Question 'invalid-question' not found. Available questions: dak-name, dak-version, business-process-workflows"
+        }
+      ],
+      "isError": true
+    }
+  ]
+}

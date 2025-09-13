@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FAQ Question ID",
+  "description": "Enum of valid FAQ question identifiers, dynamically generated from available questions",
+  "type": "string",
+  "enum": [
+    "business-process-workflows",
+    "dak-name",
+    "dak-version",
+    "decision-table-inputs",
+    "decision-table-rules",
+    "indicator-calculations",
+    "terminology-coverage"
+  ],
+  "examples": [
+    "business-process-workflows",
+    "dak-name",
+    "dak-version"
+  ],
+  "errorMessage": {
+    "enum": "Question ID must be one of the available FAQ questions. Use the list_faq_questions endpoint to get current options."
+  },
+  "_generated": {
+    "timestamp": "2025-09-13T09:30:23.951Z",
+    "count": 7,
+    "source": "scripts/generate-service-table.js"
+  }
+}

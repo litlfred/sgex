@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { lazyLoadSyntaxHighlighter, lazyLoadSyntaxHighlighterStyles } from '../utils/lazyRouteUtils';
+import { lazyLoadSyntaxHighlighter, lazyLoadSyntaxHighlighterStyles } from '../services/libraryLoaderService';
 import { AssetEditorLayout } from './framework';
 import localStorageService from '../services/localStorageService';
 

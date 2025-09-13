@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import WorkflowDashboard from './WorkflowDashboard';
 import { timeAgo, formatTimestamp } from '../utils/timeUtils';
+import repositoryConfig from '../config/repositoryConfig';
 
 // Mock GitHub Actions Service for demonstration
 class MockGitHubActionsService {
@@ -11,51 +12,51 @@ class MockGitHubActionsService {
           id: 1,
           name: 'Code Quality Checks',
           path: '.github/workflows/code-quality.yml',
-          url: 'https://github.com/litlfred/sgex/actions/workflows/code-quality.yml'
+          url: '${repositoryConfig.getGitHubUrl()}/actions/workflows/code-quality.yml'
         },
         status: 'completed',
         conclusion: 'success',
-        url: 'https://github.com/litlfred/sgex/actions/runs/12345',
+        url: '${repositoryConfig.getGitHubUrl()}/actions/runs/12345',
         runId: 12345,
         createdAt: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
         displayStatus: 'Succeeded',
         badgeClass: 'succeeded',
         icon: '🟢',
-        workflowUrl: 'https://github.com/litlfred/sgex/actions/workflows/1'
+        workflowUrl: '${repositoryConfig.getGitHubUrl()}/actions/workflows/1'
       },
       {
         workflow: {
           id: 2,
           name: 'Deploy Feature Branch',
           path: '.github/workflows/branch-deployment.yml',
-          url: 'https://github.com/litlfred/sgex/actions/workflows/branch-deployment.yml'
+          url: '${repositoryConfig.getGitHubUrl()}/actions/workflows/branch-deployment.yml'
         },
         status: 'waiting',
         conclusion: null,
-        url: 'https://github.com/litlfred/sgex/actions/runs/12346',
+        url: '${repositoryConfig.getGitHubUrl()}/actions/runs/12346',
         runId: 12346,
         createdAt: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes ago
         displayStatus: 'Awaiting Approval',
         badgeClass: 'waiting',
         icon: '🟠',
-        workflowUrl: 'https://github.com/litlfred/sgex/actions/workflows/2'
+        workflowUrl: '${repositoryConfig.getGitHubUrl()}/actions/workflows/2'
       },
       {
         workflow: {
           id: 3,
           name: 'PR Commit Feedback',
           path: '.github/workflows/pr-feedback.yml',
-          url: 'https://github.com/litlfred/sgex/actions/workflows/pr-feedback.yml'
+          url: '${repositoryConfig.getGitHubUrl()}/actions/workflows/pr-feedback.yml'
         },
         status: 'in_progress',
         conclusion: null,
-        url: 'https://github.com/litlfred/sgex/actions/runs/12347',
+        url: '${repositoryConfig.getGitHubUrl()}/actions/runs/12347',
         runId: 12347,
         createdAt: new Date(Date.now() - 2 * 60 * 1000), // 2 minutes ago
         displayStatus: 'In Progress',
         badgeClass: 'in-progress',
         icon: '🟡',
-        workflowUrl: 'https://github.com/litlfred/sgex/actions/workflows/3'
+        workflowUrl: '${repositoryConfig.getGitHubUrl()}/actions/workflows/3'
       }
     ];
   }

@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DAK ID",
+  "description": "Unique identifier for a DAK (Digital Adaptation Kit)",
+  "type": "string",
+  "pattern": "^[a-z0-9-]+$",
+  "minLength": 1,
+  "maxLength": 100,
+  "examples": [
+    "smart-immunizations",
+    "anc-dak",
+    "maternal-health-dak",
+    "tb-dak"
+  ],
+  "description": "DAK ID must be lowercase alphanumeric with hyphens, matching the GitHub repository name or sushi-config.yaml id field"
+}
