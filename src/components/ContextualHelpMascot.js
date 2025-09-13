@@ -317,47 +317,59 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                 </button>
               )}
               <div className="help-text">
-                {enhancedHelpTopics.length > 0 ? (
-                  <div className="help-topics-list">
-                    <h4>{t('help.title')}</h4>
-                    {enhancedHelpTopics.map((topic) => (
-                      <button
-                        key={topic.id}
-                        className="help-topic-btn"
-                        onClick={() => handleHelpTopicClick(topic)}
+                {enhancedHelpTopics.length > 0 ? (() => {
+                  // Calculate multi-column class based on number of topics
+                  // Count total interactive elements (topics + language selector + theme toggle + cache management)
+                  const totalElements = enhancedHelpTopics.length + 3; // +3 for language, theme, and cache elements
+                  
+                  let columnClass = '';
+                  if (totalElements >= 11) {
+                    columnClass = 'multi-column-3';
+                  } else if (totalElements >= 6) {
+                    columnClass = 'multi-column-2';
+                  }
+                  
+                  return (
+                    <div className={`help-topics-list ${columnClass}`}>
+                      <h4>{t('help.title')}</h4>
+                      {enhancedHelpTopics.map((topic) => (
+                        <button
+                          key={topic.id}
+                          className="help-topic-btn"
+                          onClick={() => handleHelpTopicClick(topic)}
+                        >
+                          {topic.badge && (
+                            <img 
+                              src={topic.badge} 
+                              alt="" 
+                              className="help-topic-badge"
+                            />
+                          )}
+                          <span className="help-topic-title">{topic.title}</span>
+                          {topic.notificationBadge && (
+                            <span className="help-topic-notification-badge">
+                              {topic.notificationBadge}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                      
+                      {/* Language Selector in Help Menu */}
+                      <div className="help-menu-divider"></div>
+                      <LanguageSelector className="help-menu-language-selector" />
+                      
+                      {/* Theme Toggle in Help Menu */}
+                      <div className="help-menu-divider"></div>
+                      <button 
+                        className={`help-theme-toggle-btn ${isDarkMode ? 'dark' : 'light'}`}
+                        onClick={handleToggleTheme}
+                        aria-label={t('theme.toggle')}
+                        title={t('theme.toggle')}
                       >
-                        {topic.badge && (
-                          <img 
-                            src={topic.badge} 
-                            alt="" 
-                            className="help-topic-badge"
-                          />
-                        )}
-                        <span className="help-topic-title">{topic.title}</span>
-                        {topic.notificationBadge && (
-                          <span className="help-topic-notification-badge">
-                            {topic.notificationBadge}
-                          </span>
-                        )}
+                        <span className="theme-icon">{isDarkMode ? '🌞' : '🌙'}</span>
+                        <span className="theme-label">{isDarkMode ? t('theme.switchToLight', 'Light Mode') : t('theme.switchToDark', 'Dark Mode')}</span>
                       </button>
-                    ))}
-                    
-                    {/* Language Selector in Help Menu */}
-                    <div className="help-menu-divider"></div>
-                    <LanguageSelector className="help-menu-language-selector" />
-                    
-                    {/* Theme Toggle in Help Menu */}
-                    <div className="help-menu-divider"></div>
-                    <button 
-                      className={`help-theme-toggle-btn ${isDarkMode ? 'dark' : 'light'}`}
-                      onClick={handleToggleTheme}
-                      aria-label={t('theme.toggle')}
-                      title={t('theme.toggle')}
-                    >
-                      <span className="theme-icon">{isDarkMode ? '🌞' : '🌙'}</span>
-                      <span className="theme-label">{isDarkMode ? t('theme.switchToLight', 'Light Mode') : t('theme.switchToDark', 'Dark Mode')}</span>
-                    </button>
-                    
+                      
                     {/* Flush Cache Option */}
                     <div className="help-menu-divider"></div>
                     <div className="help-menu-cache-section">
@@ -377,7 +389,8 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                       )}
                     </div>
                   </div>
-                ) : (
+                );
+                })() : (
                   <div>
                     {helpContent}
                     {/* Language Selector in Help Menu */}
