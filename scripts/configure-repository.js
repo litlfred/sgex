@@ -115,17 +115,19 @@ REACT_APP_REPO_CONFIG_SOURCE=${repoInfo.source}
 `;
 
   try {
+    // Write both .env.build and .env to ensure compatibility
     fs.writeFileSync('.env.build', envContent);
+    fs.writeFileSync('.env', envContent);
     console.log(`✅ Repository configuration set from ${repoInfo.source}:`);
     console.log(`   Owner: ${repoInfo.owner}`);
     console.log(`   Name: ${repoInfo.name}`);
     console.log(`   Full: ${repoInfo.owner}/${repoInfo.name}`);
-    console.log(`   Env file: .env.build`);
+    console.log(`   Env files: .env.build and .env`);
     
     // Also update 404.html with dynamic repository configuration
     updateStaticFiles(repoInfo);
   } catch (error) {
-    console.error('❌ Failed to write .env.build file:', error);
+    console.error('❌ Failed to write env files:', error);
     process.exit(1);
   }
 }

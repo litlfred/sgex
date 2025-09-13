@@ -84,6 +84,14 @@ jobs:
           # Set CI=false to avoid treating CSS warnings as errors in production builds
           export CI=false
           
+          # Set repository configuration environment variables
+          export REACT_APP_REPO_OWNER="${{ github.repository_owner }}"
+          export REACT_APP_REPO_NAME="${{ github.event.repository.name }}"
+          export REACT_APP_REPO_FULL_NAME="${{ github.repository }}"
+          export REACT_APP_REPO_CONFIG_SOURCE="github-actions"
+          
+          echo "Repository: ${{ github.repository }}"
+          
           npm run build
           
           # Verify build was successful
