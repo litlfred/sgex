@@ -255,10 +255,12 @@ const SelectProfilePage = () => {
                       </div>
                     )}
                   </div>
-                  <h3>{user?.name || user?.login}</h3>
-                  <p>Personal repositories</p>
-                  <div className="profile-badges">
-                    <span className="profile-type">Personal</span>
+                  <div className="profile-card-content">
+                    <h3>{user?.name || user?.login}</h3>
+                    <p>Personal repositories</p>
+                    <div className="profile-badges">
+                      <span className="profile-type">Personal</span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -281,11 +283,13 @@ const SelectProfilePage = () => {
                       </div>
                     )}
                   </div>
-                  <h3>{org.name || org.login}</h3>
-                  <p>@{org.login}</p>
-                  <div className="profile-badges">
-                    <span className="profile-type">{t('organization.organizations')}</span>
-                    {org.isWHO && <span className="who-badge">WHO Official</span>}
+                  <div className="profile-card-content">
+                    <h3>{org.name || org.login}</h3>
+                    <p>@{org.login}</p>
+                    <div className="profile-badges">
+                      <span className="profile-type">{t('organization.organizations')}</span>
+                      {org.isWHO && <span className="who-badge">WHO Official</span>}
+                    </div>
                   </div>
                 </div>
               ))}

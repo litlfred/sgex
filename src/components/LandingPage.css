@@ -259,9 +259,14 @@ body.theme-light .landing-page {
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
-  text-align: center;
+  /* Changed from center to left align for horizontal layout */
+  text-align: left;
   /* Navigation card - should be clickable */
   pointer-events: auto;
+  /* Horizontal layout with icon on left, content on right */
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .profile-card:hover {
@@ -272,21 +277,37 @@ body.theme-light .landing-page {
 }
 
 .profile-card img {
-  width: 64px;
-  height: 64px;
+  /* Make icons wider as requested */
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  margin-bottom: 1rem;
+  /* Remove margin-bottom since we're in horizontal layout */
+  margin-bottom: 0;
   border: 3px solid var(--who-border-color);
+  /* Ensure image doesn't shrink */
+  flex-shrink: 0;
 }
 
 .profile-card-header {
   position: relative;
   display: inline-block;
-  margin-bottom: 1rem;
+  /* Remove margin-bottom since we're in horizontal layout */
+  margin-bottom: 0;
+  /* Ensure header doesn't shrink */
+  flex-shrink: 0;
 }
 
 .profile-card-header img {
   margin-bottom: 0;
+}
+
+/* Content area to the right of the icon */
+.profile-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 0; /* Allow content to shrink if needed */
 }
 
 .dak-count-badge {
@@ -348,9 +369,13 @@ body.theme-light .landing-page {
   font-weight: 500;
 }
 
-/* Ensure proper contrast in dark mode */
+/* Ensure proper contrast in dark mode for both titles and descriptions */
 body.theme-dark .profile-card h3 {
   color: var(--who-text-primary);
+}
+
+body.theme-dark .profile-card p {
+  color: var(--who-text-secondary);
 }
 
 .profile-card p {
@@ -632,10 +657,13 @@ body.theme-dark .profile-card h3 {
     /* Increase minimum height for better mobile experience */
     min-height: var(--component-height-default);
     padding: var(--component-padding-default);
-    /* Ensure proper vertical layout on mobile */
-    display: flex;
+    /* Ensure proper vertical layout on mobile - keep horizontal but stack on very small screens */
+    /* Make slightly less than screen width as requested */
+    width: calc(100vw - 3rem);
+    max-width: 400px;
+    /* On mobile, change to vertical layout for better space usage */
     flex-direction: column;
-    justify-content: flex-start;
+    text-align: center;
     align-items: center;
     gap: 1rem;
   }
@@ -643,6 +671,12 @@ body.theme-dark .profile-card h3 {
   .profile-card-header {
     order: 1;
     flex-shrink: 0;
+    margin-bottom: 1rem; /* Restore margin for mobile */
+  }
+  
+  .profile-card-content {
+    order: 2;
+    text-align: center; /* Center content on mobile */
   }
   
   .profile-card h3 {

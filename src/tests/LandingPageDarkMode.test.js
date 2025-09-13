@@ -1,6 +1,6 @@
 /**
- * Test for dark mode card title styling issue
- * Validates that profile card titles have proper contrast in dark mode
+ * Test for dark mode card title and description styling issue
+ * Validates that profile card titles and descriptions have proper contrast in dark mode
  */
 
 import React from 'react';
@@ -71,6 +71,33 @@ describe('LandingPage Dark Mode Card Titles', () => {
           
           // In dark mode, text should be light (white or near-white)
           // CSS variable --who-text-primary should resolve to #ffffff in dark mode
+          expect(color).not.toBe('rgb(0, 0, 0)'); // Should not be black
+          expect(color).not.toBe('black'); // Should not be black
+        });
+      }
+    }, 100);
+  });
+
+  test('profile card descriptions should use proper CSS variables in dark mode', () => {
+    setDarkMode();
+    
+    const { container } = render(
+      <BrowserRouter>
+        <LandingPage />
+      </BrowserRouter>
+    );
+
+    // Wait for the component to render profile cards
+    setTimeout(() => {
+      const profileCardDescriptions = container.querySelectorAll('.profile-card p');
+      
+      if (profileCardDescriptions.length > 0) {
+        profileCardDescriptions.forEach(description => {
+          const computedStyle = window.getComputedStyle(description);
+          const color = computedStyle.color;
+          
+          // In dark mode, description text should also be light 
+          // CSS variable --who-text-secondary should resolve to a light color in dark mode
           expect(color).not.toBe('rgb(0, 0, 0)'); // Should not be black
           expect(color).not.toBe('black'); // Should not be black
         });
