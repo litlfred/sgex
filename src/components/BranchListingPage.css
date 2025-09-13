@@ -946,27 +946,44 @@
     .action-cards {
         flex-direction: column;
         align-items: center;
-        gap: 1rem;
+        gap: 0.75rem;
+        margin: 1rem 0;
     }
 
     .action-card {
         width: 100%;
         max-width: 350px;
+        min-height: auto;
+        padding: 1rem;
     }
 
     .card-content {
-        flex-direction: column;
-        text-align: center;
+        flex-direction: row;
+        text-align: left;
         gap: 1rem;
+        align-items: center;
     }
 
     .card-text {
-        text-align: center;
+        text-align: left;
+        flex: 1;
+    }
+
+    .card-text h3 {
+        margin: 0 0 0.25rem 0;
+        font-size: 1.1rem;
+    }
+
+    .card-text p {
+        margin: 0;
+        font-size: 0.85rem;
+        line-height: 1.3;
     }
 
     .login-icon, .card-icon {
-        width: 64px;
-        height: 64px;
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
     }
 
     .main-actions {
@@ -1016,5 +1033,78 @@
     .pagination {
         flex-direction: column;
         gap: 0.5rem;
+    }
+}
+
+/* Extra small screens - Further optimize for mobile login accessibility */
+@media (max-width: 480px) {
+    .branch-listing-content {
+        padding: 0.75rem;
+    }
+
+    .branch-listing-header {
+        margin-bottom: 1rem;
+    }
+
+    .branch-listing-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .action-cards {
+        gap: 0.5rem;
+        margin: 0.75rem 0 1.5rem 0;
+    }
+
+    .action-card {
+        padding: 0.75rem;
+        max-width: 100%;
+        border-radius: 8px;
+    }
+
+    .card-content {
+        gap: 0.75rem;
+    }
+
+    .card-text h3 {
+        font-size: 1rem;
+    }
+
+    .card-text p {
+        font-size: 0.8rem;
+    }
+
+    .login-icon, .card-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Ensure login form elements are properly sized on small screens */
+    .action-card.login-card .pat-login,
+    .action-card.login-card .pat-form {
+        width: 100%;
+    }
+
+    .action-card.login-card input,
+    .action-card.login-card button {
+        font-size: 0.9rem;
+    }
+
+    /* Compact the info sections for mobile */
+    .prominent-info {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+
+    .info-text {
+        font-size: 1rem;
+    }
+
+    .error-banner {
+        padding: 1rem;
+        margin: 1rem 0;
     }
 }
