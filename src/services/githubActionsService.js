@@ -3,12 +3,26 @@
  * Provides functionality to fetch workflow runs and trigger workflows
  */
 
+import repositoryConfig from '../config/repositoryConfig';
+
 class GitHubActionsService {
   constructor() {
     this.baseURL = 'https://api.github.com';
-    this.owner = 'litlfred';
-    this.repo = 'sgex';
     this.workflowFileName = 'pages.yml'; // The build-and-deploy workflow
+  }
+
+  /**
+   * Get the repository owner
+   */
+  get owner() {
+    return repositoryConfig.getOwner();
+  }
+
+  /**
+   * Get the repository name
+   */
+  get repo() {
+    return repositoryConfig.getName();
   }
 
   /**

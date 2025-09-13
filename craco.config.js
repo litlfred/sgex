@@ -2,11 +2,13 @@
  * CRACO configuration for SGEX Workbench
  * 
  * This configuration provides compatibility between react-scripts and webpack-dev-server v5.x
+ * and loads repository configuration for fork-friendly builds.
  * 
  * Key fixes:
  * 1. Replaces deprecated onBeforeSetupMiddleware/onAfterSetupMiddleware with setupMiddlewares
  * 2. Handles HTTPS configuration migration from 'https' to 'server' property  
  * 3. Adds devServer.close() compatibility method for graceful shutdown (fixes TypeError)
+ * 4. Loads build-time repository configuration from .env.build
  */
 
 const fs = require('fs');
@@ -17,6 +19,31 @@ const noopServiceWorkerMiddleware = require('react-dev-utils/noopServiceWorkerMi
 const redirectServedPath = require('react-dev-utils/redirectServedPathMiddleware');
 const paths = require('react-scripts/config/paths');
 const getHttpsConfig = require('react-scripts/config/getHttpsConfig');
+
+// Load repository configuration from .env.build if it exists
+function loadRepositoryConfig() {
+  const envBuildPath = path.join(__dirname, '.env.build');
+  if (fs.existsSync(envBuildPath)) {
+    const envContent = fs.readFileSync(envBuildPath, 'utf8');
+    const envVars = {};
+    
+    envContent.split('\n').forEach(line => {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) {
+        const [key, ...valueParts] = trimmed.split('=');
+        if (key && valueParts.length > 0) {
+          envVars[key] = valueParts.join('=');
+        }
+      }
+    });
+    
+    // Set environment variables for the build process
+    Object.assign(process.env, envVars);
+  }
+}
+
+// Load repository configuration before module export
+loadRepositoryConfig();
 
 module.exports = {
   devServer: (devServerConfig, { env, paths, proxy, allowedHost }) => {
