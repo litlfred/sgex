@@ -538,8 +538,12 @@ const BranchListingPage = () => {
                             <div className="action-card main-site-card">
                                 <button 
                                     className="card-link"
-                                    onClick={() => {
-                                        window.location.href = '/sgex/main/';
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        console.log('View Main Site clicked (loading state) - navigating to /sgex/main/');
+                                        window.location.assign('/sgex/main/');
                                     }}
                                 >
                                     <div className="card-content">
@@ -625,8 +629,12 @@ const BranchListingPage = () => {
                             <div className="action-card main-site-card">
                                 <button 
                                     className="card-link"
-                                    onClick={() => {
-                                        window.location.href = '/sgex/main/';
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        console.log('View Main Site clicked (error state) - navigating to /sgex/main/');
+                                        window.location.assign('/sgex/main/');
                                     }}
                                 >
                                     <div className="card-content">
@@ -715,8 +723,12 @@ const BranchListingPage = () => {
                     <div className="action-card main-site-card">
                         <button 
                             className="card-link"
-                            onClick={() => {
-                                window.location.href = '/sgex/main/';
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('View Main Site clicked (main content state) - navigating to /sgex/main/');
+                                window.location.assign('/sgex/main/');
                             }}
                         >
                             <div className="card-content">
