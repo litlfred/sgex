@@ -13,6 +13,14 @@ const path = require('path');
 
 function extractRepositoryInfo() {
   try {
+    // Try build-time environment variables first
+    const envOwner = process.env.REACT_APP_REPO_OWNER;
+    const envRepo = process.env.REACT_APP_REPO_NAME;
+    
+    if (envOwner && envRepo) {
+      return { owner: envOwner, name: envRepo, source: 'environment' };
+    }
+
     // Read package.json
     const packageJsonPath = path.join(process.cwd(), 'package.json');
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));

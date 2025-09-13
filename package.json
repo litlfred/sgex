@@ -4,6 +4,10 @@
   "description": "SGEX Workbench - WHO SMART Guidelines Exchange collaborative editor",
   "private": true,
   "homepage": "/sgex/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/litlfred/sgex.git"
+  },
   "dependencies": {
     "@octokit/rest": "^22.0.0",
     "@testing-library/jest-dom": "^6.8.0",
