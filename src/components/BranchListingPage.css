@@ -135,10 +135,10 @@
     border-radius: 12px;
     padding: 1.5rem;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
+    box-shadow: 0 2px 8px var(--who-shadow-light);
+    max-width: 480px;
     flex: 1;
-    min-width: 300px;
+    min-width: 360px;
     min-height: 140px;
     /* Default to no pointer events for container cards with UI components */
     pointer-events: none;
@@ -172,7 +172,7 @@
 
 .action-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px var(--who-shadow-medium);
     border-color: var(--who-blue);
 }
 
@@ -951,8 +951,8 @@
     }
 
     .action-card {
-        width: 100%;
-        max-width: 350px;
+        width: calc(100vw - 2rem);
+        max-width: 95vw;
         min-height: auto;
         padding: 1rem;
     }
@@ -1061,7 +1061,8 @@
 
     .action-card {
         padding: 0.75rem;
-        max-width: 100%;
+        width: calc(100vw - 1.5rem);
+        max-width: 95vw;
         border-radius: 8px;
     }
 
