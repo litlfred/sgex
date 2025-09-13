@@ -377,7 +377,7 @@ Test 2 - Expected: ${expected2}
             const setupEl = document.getElementById('setup-result');
             
             if (routeConfig) {
-                setupEl.innerHTML = `<span class="pass">✅ Route configuration loaded successfully</span>\nDeployment type: ${routeConfig.deployType}\nDeployed branches: ${routeConfig.deployedBranches.join(', ')}\nValid components: ${routeConfig.getAllComponentNames().slice(0, 5).join(', ')}...`;
+                setupEl.innerHTML = `<span class="pass">✅ Route configuration loaded successfully</span>\nDeployment type: ${routeConfig.deployType}\nValid components: ${routeConfig.getAllComponentNames().slice(0, 5).join(', ')}...`;
             } else {
                 setupEl.innerHTML = `<span class="fail">❌ Failed to load route configuration</span>`;
             }
