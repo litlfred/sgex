@@ -39,21 +39,16 @@ const DAKDashboardContent = () => {
     'dak-faq': 'faq'
   };
   
-  // Helper function to get initial tab from URL fragment
-  const getInitialTab = () => {
-    const hash = window.location.hash.slice(1); // Remove the '#'
-    return fragmentToTab[hash] || 'core'; // Default to 'core' if no valid fragment
-  };
-  
   // Theme-aware mascot image for dialog
   const mascotImage = useThemeImage('sgex-mascot.png');
   
   // Dashboard-specific state (PageProvider handles profile/repository loading)
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState(getInitialTab); // 'core', 'publications', or 'faq'
+  const [activeTab, setActiveTab] = useState('core'); // Default to 'core', will be updated by useEffect if URL has fragment
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [initialTabSetFromURL, setInitialTabSetFromURL] = useState(false); // Track if we've set initial tab from URL
 
   // Use the branch from PageProvider
   const selectedBranch = branch;
@@ -224,33 +219,47 @@ const DAKDashboardContent = () => {
     };
   }, [showUserMenu]);
 
-  // Update URL fragment when activeTab changes (only when we have valid data)
+  // Update URL fragment when activeTab changes (only when we have valid data and it's not from URL)
   useEffect(() => {
     // Only set hash if we have valid profile and repository data, and we're not loading/error
-    if (!loading && !error && profile && repository) {
-      const fragment = tabToFragment[activeTab];
-      if (fragment) {
-        window.location.hash = fragment;
+    // Also don't override if this is the initial load from URL
+    if (!loading && !error && profile && repository && initialTabSetFromURL) {
+      const currentHash = window.location.hash.slice(1);
+      const expectedFragment = tabToFragment[activeTab];
+      
+      // Only update hash if it's different from what's expected for current tab
+      // This prevents overriding URL fragments during initial load
+      if (expectedFragment && currentHash !== expectedFragment) {
+        window.location.hash = expectedFragment;
       }
     }
-  }, [activeTab, tabToFragment, loading, error, profile, repository]);
+  }, [activeTab, tabToFragment, loading, error, profile, repository, initialTabSetFromURL]);
 
-  // Listen for hash changes to sync tab state with URL (only when we have valid data)
+  // Listen for hash changes to sync tab state with URL
+  // This effect should run regardless of data loading state to handle direct URL access
   useEffect(() => {
-    // Only listen for hash changes if we have valid profile and repository data
-    if (!loading && !error && profile && repository) {
-      const handleHashChange = () => {
-        const hash = window.location.hash.slice(1);
-        const tab = fragmentToTab[hash];
-        if (tab && tab !== activeTab) {
-          setActiveTab(tab);
-        }
-      };
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      const tab = fragmentToTab[hash];
+      if (tab && tab !== activeTab) {
+        setActiveTab(tab);
+      }
+    };
 
-      window.addEventListener('hashchange', handleHashChange);
-      return () => window.removeEventListener('hashchange', handleHashChange);
+    // Set initial tab from URL fragment on component mount
+    const initialHash = window.location.hash.slice(1);
+    const initialTab = fragmentToTab[initialHash];
+    if (initialTab && initialTab !== activeTab) {
+      setActiveTab(initialTab);
+      setInitialTabSetFromURL(true);
+    } else {
+      // No valid fragment, so initial tab setting is complete
+      setInitialTabSetFromURL(true);
     }
-  }, [activeTab, fragmentToTab, loading, error, profile, repository]);
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []); // Run only once on mount, no dependencies
 
 
 
