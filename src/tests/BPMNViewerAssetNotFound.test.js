@@ -166,4 +166,47 @@ describe('BPMNViewer Asset Not Found Error Handling', () => {
     // Should show the custom error message
     expect(screen.getByText(customErrorMessage)).toBeInTheDocument();
   });
+
+  it('handles URL-encoded asset paths correctly', async () => {
+    // Test with URL-encoded path that should decode properly
+    const urlEncodedPath = 'Clinical%20Encounter%20for%20Unplanned%20Care%20(brief).bpmn';
+    const decodedPath = 'Clinical Encounter for Unplanned Care (brief).bpmn';
+    const errorMessage = `Asset '${decodedPath}' not found in repository 'litlfred/smart-ips-pilgrimage'. The file may have been moved or deleted.`;
+    
+    // Mock usePage to return URL-encoded asset path with error
+    usePage.mockReturnValue({
+      pageName: 'bpmn-viewer',
+      user: 'litlfred',
+      profile: mockProfile,
+      repository: mockRepository,
+      branch: 'main',
+      asset: decodedPath, // PageProvider should have decoded this already
+      type: PAGE_TYPES.ASSET,
+      loading: false,
+      error: errorMessage, // Error message should use decoded path
+      isAuthenticated: true,
+      navigate: jest.fn(),
+      params: {
+        user: 'litlfred',
+        repo: 'smart-ips-pilgrimage',
+        branch: 'main'
+      },
+      location: { 
+        pathname: `/bpmn-viewer/litlfred/smart-ips-pilgrimage/main/${urlEncodedPath}` // URL still has encoded path
+      }
+    });
+
+    render(
+      <BrowserRouter>
+        <BPMNViewerComponent />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('❌ Asset Not Found')).toBeInTheDocument();
+    });
+
+    // Should show the error message with decoded path
+    expect(screen.getByText(errorMessage)).toBeInTheDocument();
+  });
 });
