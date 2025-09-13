@@ -1,7 +1,7 @@
 import githubService from './githubService';
 import issueTrackingService from './issueTrackingService';
 import { lazyLoadYaml } from '../services/libraryLoaderService';
-import repositoryConfig from '../config/repositoryConfig';
+import environmentConfig from '../config/environmentConfig';
 
 // eslint-disable-next-line no-unused-vars
 let html2canvas = null;
@@ -21,7 +21,7 @@ class BugReportService {
   }
 
   // Fetch available bug report templates from GitHub
-  async fetchIssueTemplates(owner = repositoryConfig.getOwner(), repo = repositoryConfig.getName()) {
+  async fetchIssueTemplates(owner = environmentConfig.getRepoOwner(), repo = environmentConfig.getRepoName()) {
     try {
       // Try to get templates from .github/ISSUE_TEMPLATE directory
       const templates = await this._fetchTemplatesFromDirectory(owner, repo, '.github/ISSUE_TEMPLATE');
@@ -236,7 +236,7 @@ class BugReportService {
   }
 
   // Get cached templates or fetch if not available
-  async getTemplates(owner = repositoryConfig.getOwner(), repo = repositoryConfig.getName(), forceRefresh = false) {
+  async getTemplates(owner = environmentConfig.getRepoOwner(), repo = environmentConfig.getRepoName(), forceRefresh = false) {
     const cacheKey = `${owner}/${repo}`;
     const cached = this.templateCache.get(cacheKey);
     

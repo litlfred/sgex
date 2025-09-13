@@ -1,6 +1,6 @@
 import githubService from './githubService';
 import logger from '../utils/logger';
-import repositoryConfig from '../config/repositoryConfig';
+import environmentConfig from '../config/environmentConfig';
 
 /**
  * Issue Tracking Service
@@ -128,7 +128,7 @@ class IssueTrackingService {
     let filtersUpdated = false;
     for (const repo of repositories) {
       if (!filters[username][repo]) {
-        if (repo === repositoryConfig.getFullName()) {
+        if (repo === environmentConfig.getFullRepoName()) {
           // Current repository is visible by default
           filters[username][repo] = { hidden: false };
         } else {
@@ -250,7 +250,7 @@ class IssueTrackingService {
         return !userFilters[repository].hidden;
       } else {
         // Apply default: only current repository is visible by default
-        return repository === repositoryConfig.getFullName();
+        return repository === environmentConfig.getFullRepoName();
       }
     });
     
@@ -261,7 +261,7 @@ class IssueTrackingService {
         return !userFilters[repository].hidden;
       } else {
         // Apply default: only current repository is visible by default
-        return repository === repositoryConfig.getFullName();
+        return repository === environmentConfig.getFullRepoName();
       }
     });
 
@@ -306,7 +306,7 @@ class IssueTrackingService {
       html_url: issueData.html_url,
       created_at: issueData.created_at || new Date().toISOString(),
       updated_at: issueData.updated_at || issueData.created_at || new Date().toISOString(),
-      repository: issueData.repository || repositoryConfig.getFullName(),
+      repository: issueData.repository || environmentConfig.getFullRepoName(),
       state: issueData.state || 'open',
       labels: issueData.labels || [],
       trackedAt: new Date().toISOString()
@@ -367,7 +367,7 @@ class IssueTrackingService {
       html_url: prData.html_url,
       created_at: prData.created_at || new Date().toISOString(),
       updated_at: prData.updated_at || prData.created_at || new Date().toISOString(),
-      repository: prData.repository || repositoryConfig.getFullName(),
+      repository: prData.repository || environmentConfig.getFullRepoName(),
       state: prData.state || 'open',
       linkedIssues: linkedIssues,
       trackedAt: new Date().toISOString()
@@ -500,7 +500,7 @@ class IssueTrackingService {
    */
   async _isAllowedRepository(repositoryFullName) {
     // Always allow current repository
-    if (repositoryFullName === repositoryConfig.getFullName()) {
+    if (repositoryFullName === environmentConfig.getFullRepoName()) {
       return true;
     }
     
