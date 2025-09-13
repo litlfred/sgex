@@ -39,6 +39,7 @@ const WorkflowDashboard = ({
   const [approvalCheckInterval, setApprovalCheckInterval] = useState(null); // Interval for approval checking
   const refreshIntervalRef = useRef(null);
   const expandedWorkflowsRef = useRef({}); // Ref to track expanded workflows for refresh logic
+  const workflowsRef = useRef([]); // Ref to track current workflows for approval checking
   const [lastRefresh, setLastRefresh] = useState(null);
 
   // Fetch all workflows for the branch
@@ -88,11 +89,15 @@ const WorkflowDashboard = ({
           }
           
           console.debug('Workflow changes detected, updating data seamlessly');
+          // Update the ref for approval checking
+          workflowsRef.current = workflowData;
           return workflowData;
         });
       } else {
         // Initial load - normal replacement
         setWorkflows(workflowData);
+        // Update the ref for approval checking
+        workflowsRef.current = workflowData;
       }
       
       setLastRefresh(new Date());
@@ -146,77 +151,102 @@ const WorkflowDashboard = ({
     }
   }, [branchName, githubActionsService, onWorkflowAction]);
 
-  // Setup auto-refresh
-  const setupAutoRefresh = useCallback(() => {
-    if (refreshIntervalRef.current) {
-      clearInterval(refreshIntervalRef.current);
-    }
-
-    // Refresh every 30 seconds for active monitoring with visual feedback
-    refreshIntervalRef.current = setInterval(() => {
-      fetchWorkflows(true);
-    }, 30000);
-  }, [fetchWorkflows]);
-
-  // Setup periodic approval checking (every minute)
-  const setupApprovalChecking = useCallback(() => {
-    if (approvalCheckInterval) {
-      clearInterval(approvalCheckInterval);
-    }
-
-    // Check every minute (60 seconds) if workflows can be approved
-    const interval = setInterval(() => {
-      console.debug('Performing periodic approval check for workflows');
-      
-      // Re-evaluate approval states for all workflows
-      setApprovalStates(prevStates => {
-        const newStates = { ...prevStates };
-        
-        // Check each workflow to see if it can be approved now
-        workflows.forEach(workflow => {
-          const workflowId = workflow.workflow.id;
-          const runId = workflow.runId || workflow.lastRunId;
-          
-          // If workflow status is waiting, it can potentially be approved
-          if (workflow.status === 'waiting' && runId) {
-            // Reset approval state to allow re-approval if needed
-            if (newStates[workflowId]?.wasApproved) {
-              console.debug(`Resetting approval state for workflow ${workflow.workflow.name} - can be approved again`);
-              delete newStates[workflowId];
-            }
-          }
-        });
-        
-        return newStates;
-      });
-    }, 60000); // 60 seconds = 1 minute
-    
-    setApprovalCheckInterval(interval);
-  }, [workflows, approvalCheckInterval]);
-
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-      if (approvalCheckInterval) {
-        clearInterval(approvalCheckInterval);
-      }
-    };
-  }, [approvalCheckInterval]);
+  // Cleanup is now handled in the main useEffect above
 
   // Initial load and setup refresh when branch changes
   useEffect(() => {
-    if (branchName && githubActionsService) {
-      const initializeWorkflows = async () => {
-        await fetchWorkflows();
-        setupAutoRefresh();
-        setupApprovalChecking();
-      };
-      initializeWorkflows();
-    }
-  }, [branchName, githubActionsService, fetchWorkflows, setupAutoRefresh, setupApprovalChecking]);
+    if (!branchName || !githubActionsService) return;
+
+    let mounted = true;
+    
+    const initializeWorkflows = async () => {
+      // Fetch workflows
+      try {
+        setLoading(true);
+        setError(null);
+        console.debug(`Fetching workflows for branch: ${branchName}`);
+        const workflowData = await githubActionsService.getAllWorkflowsForBranch(branchName);
+        
+        if (!mounted) return; // Component was unmounted
+        
+        console.debug(`Fetched ${workflowData.length} workflows:`, workflowData.map(w => ({
+          name: w.workflow.name,
+          status: w.displayStatus,
+          lastRun: w.createdAt
+        })));
+
+        setWorkflows(workflowData);
+        workflowsRef.current = workflowData;
+        setLastRefresh(new Date());
+
+        // Call callback if provided
+        if (onWorkflowAction && workflowData.length > 0) {
+          onWorkflowAction({ type: 'workflows_loaded', workflows: workflowData });
+        }
+      } catch (err) {
+        if (!mounted) return;
+        console.error('Error fetching workflows:', err);
+        setError(err.message);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+
+      // Setup auto-refresh
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+      refreshIntervalRef.current = setInterval(() => {
+        if (mounted) {
+          fetchWorkflows(true);
+        }
+      }, 30000);
+
+      // Setup approval checking  
+      if (approvalCheckInterval) {
+        clearInterval(approvalCheckInterval);
+      }
+      const interval = setInterval(() => {
+        if (!mounted) return;
+        console.debug('Performing periodic approval check for workflows');
+        
+        setApprovalStates(prevStates => {
+          const newStates = { ...prevStates };
+          const currentWorkflows = workflowsRef.current;
+          
+          currentWorkflows.forEach(workflow => {
+            const workflowId = workflow.workflow.id;
+            const runId = workflow.runId || workflow.lastRunId;
+            
+            if (workflow.status === 'waiting' && runId) {
+              if (newStates[workflowId]?.wasApproved) {
+                console.debug(`Resetting approval state for workflow ${workflow.workflow.name} - can be approved again`);
+                delete newStates[workflowId];
+              }
+            }
+          });
+          
+          return newStates;
+        });
+      }, 60000);
+      setApprovalCheckInterval(interval);
+    };
+
+    initializeWorkflows();
+
+    return () => {
+      mounted = false;
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+      if (approvalCheckInterval) {
+        clearInterval(approvalCheckInterval);
+        setApprovalCheckInterval(null);
+      }
+    };
+  }, [branchName, githubActionsService, onWorkflowAction]); // Only essential dependencies
 
   // Handle workflow trigger
   const handleTriggerWorkflow = async (workflow) => {
@@ -366,20 +396,6 @@ const WorkflowDashboard = ({
         // Immediate refresh to show the workflow starting
         console.debug(`Immediately refreshing workflows after approval of ${workflow.workflow.name}`);
         fetchWorkflows(true);
-        
-        // Setup aggressive monitoring for the next 2 minutes after approval
-        let refreshCount = 0;
-        const maxRefreshes = 12; // 12 refreshes over 2 minutes
-        const approvedWorkflowMonitor = setInterval(() => {
-          refreshCount++;
-          console.debug(`Aggressive monitoring refresh ${refreshCount}/${maxRefreshes} for approved workflow: ${workflow.workflow.name}`);
-          fetchWorkflows(true);
-          
-          if (refreshCount >= maxRefreshes) {
-            clearInterval(approvedWorkflowMonitor);
-            console.debug(`Stopping aggressive monitoring for approved workflow: ${workflow.workflow.name}`);
-          }
-        }, 10000); // Every 10 seconds for 2 minutes
 
         // Call callback
         if (onWorkflowAction) {
