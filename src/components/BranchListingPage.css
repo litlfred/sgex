@@ -215,19 +215,20 @@
 
 .card-content {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     gap: 1.5rem;
     height: 100%;
+    text-align: center;
 }
 
 .card-icon {
     object-fit: contain;
     flex-shrink: 0;
-    width: var(--icon-size-large);
-    height: var(--icon-size-large);
-    max-width: var(--icon-size-large);
-    max-height: var(--icon-size-large);
+    width: var(--card-icon-size);
+    height: var(--card-icon-size);
+    max-width: var(--card-icon-size);
+    max-height: var(--card-icon-size);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -235,7 +236,7 @@
 
 .card-text {
     flex: 1;
-    text-align: left;
+    text-align: center;
 }
 
 .login-icon {

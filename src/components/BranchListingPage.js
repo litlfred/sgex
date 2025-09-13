@@ -540,10 +540,21 @@ const BranchListingPage = () => {
                                     className="card-link"
                                     type="button"
                                     onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        console.log('View Main Site clicked (loading state) - navigating to /sgex/main/');
-                                        window.location.assign('/sgex/main/');
+                                        try {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            console.log('View Main Site clicked (loading state) - navigating to /sgex/main/');
+                                            console.log('Current location:', window.location.href);
+                                            console.log('Target location:', '/sgex/main/');
+                                            // Try multiple methods to ensure navigation works
+                                            setTimeout(() => {
+                                                window.location.href = '/sgex/main/';
+                                            }, 100);
+                                        } catch (error) {
+                                            console.error('Navigation error:', error);
+                                            // Fallback
+                                            window.open('/sgex/main/', '_self');
+                                        }
                                     }}
                                 >
                                     <div className="card-content">
@@ -631,10 +642,21 @@ const BranchListingPage = () => {
                                     className="card-link"
                                     type="button"
                                     onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        console.log('View Main Site clicked (error state) - navigating to /sgex/main/');
-                                        window.location.assign('/sgex/main/');
+                                        try {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            console.log('View Main Site clicked (error state) - navigating to /sgex/main/');
+                                            console.log('Current location:', window.location.href);
+                                            console.log('Target location:', '/sgex/main/');
+                                            // Try multiple methods to ensure navigation works
+                                            setTimeout(() => {
+                                                window.location.href = '/sgex/main/';
+                                            }, 100);
+                                        } catch (error) {
+                                            console.error('Navigation error:', error);
+                                            // Fallback
+                                            window.open('/sgex/main/', '_self');
+                                        }
                                     }}
                                 >
                                     <div className="card-content">
@@ -725,10 +747,21 @@ const BranchListingPage = () => {
                             className="card-link"
                             type="button"
                             onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                console.log('View Main Site clicked (main content state) - navigating to /sgex/main/');
-                                window.location.assign('/sgex/main/');
+                                try {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    console.log('View Main Site clicked (main content state) - navigating to /sgex/main/');
+                                    console.log('Current location:', window.location.href);
+                                    console.log('Target location:', '/sgex/main/');
+                                    // Try multiple methods to ensure navigation works
+                                    setTimeout(() => {
+                                        window.location.href = '/sgex/main/';
+                                    }, 100);
+                                } catch (error) {
+                                    console.error('Navigation error:', error);
+                                    // Fallback
+                                    window.open('/sgex/main/', '_self');
+                                }
                             }}
                         >
                             <div className="card-content">
