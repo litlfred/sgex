@@ -818,16 +818,92 @@ jobs:
             kill $SERVER_PID || true
           fi
 
-      - name: Upload tutorial artifacts
-        uses: actions/upload-artifact@v4
+      - name: Prepare release assets and documentation
+        run: |
+          # Create release notes with file sizes
+          echo "# SGEX Tutorial Videos - $(date '+%Y-%m-%d %H:%M:%S')" > release-notes.md
+          echo "" >> release-notes.md
+          echo "## Generated Tutorials" >> release-notes.md
+          echo "" >> release-notes.md
+          
+          total_size=0
+          if [[ -d "tutorials" ]]; then
+            for file in tutorials/*.mp4; do
+              if [[ -f "$file" ]]; then
+                size=$(stat -c%s "$file")
+                size_mb=$(echo "scale=2; $size / 1024 / 1024" | bc)
+                total_size=$(echo "$total_size + $size" | bc)
+                basename=$(basename "$file")
+                echo "- \`$basename\` (${size_mb} MB)" >> release-notes.md
+                
+                # Generate direct access URLs for documentation
+                echo "https://github.com/${{ github.repository }}/releases/download/tutorial-v${{ github.run_number }}/$basename" >> tutorial-urls.txt
+              fi
+            done
+          fi
+          
+          total_mb=$(echo "scale=2; $total_size / 1024 / 1024" | bc)
+          echo "" >> release-notes.md
+          echo "**Total size**: ${total_mb} MB" >> release-notes.md
+          echo "" >> release-notes.md
+          echo "## Features Included" >> release-notes.md
+          echo "${{ github.event.inputs.feature_files || 'all' }}" | tr ',' '\n' | sed 's/^/- /' >> release-notes.md
+          echo "" >> release-notes.md
+          echo "## Languages" >> release-notes.md
+          echo "${{ github.event.inputs.languages || 'en,fr,es' }}" | tr ',' '\n' | sed 's/^/- /' >> release-notes.md
+          
+          echo "📦 Release preparation complete. Total size: ${total_mb} MB"
+
+      - name: Create GitHub Release with tutorial videos
+        id: create_release
+        uses: softprops/action-gh-release@v1
         with:
-          name: sgex-tutorials-${{ github.event.inputs.target_branch || 'main' }}-${{ github.run_number }}
-          path: |
-            tutorials/
-            audio/
-            docs/user-journey/
+          tag_name: tutorial-v${{ github.run_number }}
+          name: "SGEX Tutorial Videos v${{ github.run_number }}"
+          body_path: release-notes.md
+          files: |
+            tutorials/*.mp4
+            tutorials/*.html
+            tutorials/*.srt
+            docs/user-journey/README.md
             generation-summary.md
-          retention-days: 30
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update repository documentation with release links
+        run: |
+          # Create tutorial index with direct release links
+          cat > docs/tutorial-index.md << 'EOF'
+          # SGEX Tutorial Videos
+          
+          ## Latest Tutorial Release
+          
+          **Release**: [tutorial-v${{ github.run_number }}](https://github.com/${{ github.repository }}/releases/tag/tutorial-v${{ github.run_number }})
+          
+          ## Direct Video Links
+          
+          EOF
+          
+          if [[ -f "tutorial-urls.txt" ]]; then
+            while IFS= read -r url; do
+              filename=$(basename "$url")
+              feature=$(echo "$filename" | cut -d'-' -f1-3)
+              language=$(echo "$filename" | cut -d'-' -f4 | cut -d'.' -f1)
+              echo "- [$feature ($language)]($url)" >> docs/tutorial-index.md
+            done < tutorial-urls.txt
+          fi
+          
+          echo "" >> docs/tutorial-index.md
+          echo "## Usage Instructions" >> docs/tutorial-index.md
+          echo "" >> docs/tutorial-index.md
+          echo "1. Click on the direct video links above to download tutorial files" >> docs/tutorial-index.md
+          echo "2. Videos are optimized for web playback (compressed to ~1/3 original size)" >> docs/tutorial-index.md  
+          echo "3. HTML players are also available for each video with subtitles" >> docs/tutorial-index.md
+          echo "4. All files are hosted via GitHub Releases (no bandwidth limitations)" >> docs/tutorial-index.md
+          
+          echo "📖 Documentation updated with release links"
 
       - name: Commit generated content
         if: github.event.inputs.target_branch == 'main' || github.event.inputs.target_branch == ''

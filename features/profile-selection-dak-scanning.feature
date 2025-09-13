@@ -5,9 +5,10 @@ Feature: Profile Selection and DAK Repository Scanning
 
   @repository-scanning @profile @dak
   @previous:user-login-pat
-  @next:help-mascot-documentation
+  @next:user-selected-immunizations-dak
   Background:
     Given I am logged in to SGEX Workbench
+    And I am in dark mode interface
     And I am on the welcome page
 
   @repository-scanning @profile @dak
@@ -34,3 +35,13 @@ Feature: Profile Selection and DAK Repository Scanning
     Then I should be on the DAK dashboard for smart-immunization
     And I should see the DAK components available for editing
     When I say "Great work! You've learned how to select a profile, scan for DAK repositories, and choose a specific DAK to work with."
+    And I should see the WHO profile repositories have been scanned
+    Then I should have access to the WHO DAK repositories
+    And the smart-immunization DAK should be identified and accessible
+
+  @postcondition
+  Scenario: Profile selection and DAK scanning postcondition verification
+    Then the WHO profile should be selected and scanned
+    And all available WHO DAK repositories should be identified
+    And the user should be ready to select a specific DAK for work
+    And the repository scanning results should be cached for performance

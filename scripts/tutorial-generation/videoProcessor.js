@@ -26,19 +26,25 @@ class VideoProcessor {
   }
 
   /**
-   * Convert video to MP4 format optimized for web hosting
+   * Convert video to MP4 format optimized for web hosting with compression
    */
   async convertToOptimizedMP4(inputVideoPath, outputPath, options = {}) {
     const {
       width = 1366,
       height = 768,
       fps = 30,
-      bitrate = '2000k',
+      bitrate = '600k', // Reduced from 2000k for 1/3 size compression
       audioCodec = 'aac',
-      videoCodec = 'libx264'
+      videoCodec = 'libx264',
+      webOptimized = true,
+      compressionLevel = 3 // 1/3 size target
     } = options;
 
-    console.log(`🎬 Converting ${path.basename(inputVideoPath)} to optimized MP4...`);
+    console.log(`🎬 Converting ${path.basename(inputVideoPath)} to optimized MP4 (${compressionLevel}x compression)...`);
+
+    // Calculate target dimensions for web deployment (1/3 scale for size reduction)
+    const targetWidth = webOptimized ? Math.round(width / Math.sqrt(compressionLevel)) : width;
+    const targetHeight = webOptimized ? Math.round(height / Math.sqrt(compressionLevel)) : height;
 
     const ffmpegCommand = [
       'ffmpeg',
@@ -48,18 +54,23 @@ class VideoProcessor {
       `-c:a ${audioCodec}`,
       `-b:v ${bitrate}`,
       `-r ${fps}`,
-      `-vf "scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2"`,
+      `-vf "scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2"`,
       '-movflags +faststart', // Optimize for streaming
       '-preset medium', // Balance between compression and speed
       '-profile:v baseline', // Maximum compatibility
       '-level 3.0',
       '-pix_fmt yuv420p', // Maximum compatibility
+      '-crf 28', // Higher compression for smaller file sizes
       `"${outputPath}"`
     ].join(' ');
 
     try {
       execSync(ffmpegCommand, { stdio: 'inherit' });
-      console.log(`  ✅ Converted to: ${path.basename(outputPath)}`);
+      
+      // Log file size information
+      const stats = fs.statSync(outputPath);
+      const fileSizeMB = (stats.size / (1024 * 1024)).toFixed(2);
+      console.log(`  ✅ Converted to: ${path.basename(outputPath)} (${fileSizeMB} MB, ${targetWidth}x${targetHeight})`);
       return outputPath;
     } catch (error) {
       console.error(`  ❌ Failed to convert video: ${error.message}`);

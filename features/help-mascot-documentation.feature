@@ -4,9 +4,10 @@ Feature: Help Mascot and Documentation Browsing
   So that I can understand the technical descriptions of core DAK components
 
   @help @documentation @mascot
-  @previous:profile-selection-dak-scanning
+  @previous:user-selected-immunizations-dak
   Background:
     Given I am logged in to SGEX Workbench
+    And I am in dark mode interface
     And I am on any page within the application
 
   @help @documentation @mascot
@@ -45,3 +46,12 @@ Feature: Help Mascot and Documentation Browsing
     Then I should have a good understanding of DAK component documentation
     And I should know how to access help whenever needed
     When I say "The help system is always available via the mascot in the bottom-right corner, providing instant access to documentation and support."
+    And I should be familiar with the help system navigation
+    Then I should understand how to access contextual help and documentation
+
+  @postcondition
+  Scenario: Help and documentation postcondition verification
+    Then the user should be familiar with the help mascot functionality
+    And the user should know how to access DAK component documentation
+    And the user should understand the help system navigation
+    And the user should be able to find technical information when needed

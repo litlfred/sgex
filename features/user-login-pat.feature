@@ -4,9 +4,11 @@ Feature: User PAT Login Process
   So that I can access GitHub repositories and DAK content
 
   @authentication @login @pat
+  @previous:user-selects-language
   @next:profile-selection-dak-scanning
   Background:
-    Given I am on the SGEX Workbench landing page
+    Given I am on the SGEX Workbench welcome page
+    And I am in dark mode interface
     And I am not currently logged in
 
   @authentication @login @pat
@@ -27,3 +29,13 @@ Feature: User PAT Login Process
     Then I should be redirected to the welcome page
     And I should see my user profile information
     When I say "Congratulations! You've successfully authenticated with SGEX Workbench using a Personal Access Token."
+    And I should see the authenticated interface
+    Then I should be successfully logged in
+    And I should have access to GitHub repositories through the authenticated session
+
+  @postcondition
+  Scenario: PAT login postcondition verification
+    Then the user should be authenticated with GitHub
+    And the PAT token should be stored securely for subsequent API calls
+    And all subsequent operations should have authenticated GitHub access
+    And the user profile should be loaded and displayed
