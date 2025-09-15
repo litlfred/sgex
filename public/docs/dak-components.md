@@ -1,6 +1,6 @@
 # WHO SMART Guidelines DAK Components
 
-This document provides detailed information about the 9 core Digital Adaptation Kit (DAK) components supported by the SGEX Workbench, as defined by the WHO SMART Guidelines framework.
+This document provides detailed information about the 10 core Digital Adaptation Kit (DAK) components supported by the SGEX Workbench, as defined by the WHO SMART Guidelines framework.
 
 For technical requirements and specifications, see [Requirements Documentation](requirements.md#23-dak-component-management).  
 For comprehensive L2/L3 architecture details, see [L2/L3 Architecture Guide](l2-l3-architecture.md).  
@@ -18,12 +18,12 @@ Reference: [WHO SMART IG Starter Kit - L2 DAK Authoring](https://smart.who.int/i
 
 ## Overview
 
-Digital Adaptation Kits (DAKs) are structured packages of clinical logic and implementation guidance that support the digitization of WHO health guidelines. The SGEX Workbench provides collaborative editing capabilities for all 9 core DAK components, organized into two implementation levels:
+Digital Adaptation Kits (DAKs) are structured packages of clinical logic and implementation guidance that support the digitization of WHO health guidelines. The SGEX Workbench provides collaborative editing capabilities for all 10 core DAK components, organized into two implementation levels:
 
 - **L2 (Level 2)**: Data model agnostic representations that capture business logic and clinical processes independent of specific technical implementations
 - **L3 (Level 3)**: FHIR R4-specific implementations following WHO enterprise architecture specifications at http://smart.who.int/ra
 
-## The 9 Core DAK Components
+## The 10 Core DAK Components
 
 ### 1. Health Interventions and Recommendations
 
@@ -100,12 +100,23 @@ Digital Adaptation Kits (DAKs) are structured packages of clinical logic and imp
 - **Purpose**: Define validation scenarios, test cases, and acceptance criteria for DAK implementation
 - **Editor**: Testing viewer with feature file browser
 
+### 10. FHIR Mapping and Transformation (FML/StructureMap)
+
+- **Description**: FHIR Mapping Language (FML) definitions and StructureMap resources that enable transformation between different FHIR logical models and resource structures
+- **L2 Representation**: FML mapping definitions (.fml files) with visual mapping representations
+- **L3 Representation**: FHIR StructureMap resources for executable transformations
+- **Purpose**: Define data transformations, mappings between logical models, and interoperability patterns for data exchange
+- **Editor**: Visual mapping interface with FML code editor, logical model visualization, and transformation testing
+- **Integration**: Leverages fmlrunner as upstream processing engine for parsing, validation, and execution
+- **Note**: Supports both simple element mappings and complex transformation logic with conditional rules and terminology translation
+
 ## Standards Compliance
 
 All DAK components must comply with relevant industry standards:
 
 - **Business processes**: [OMG BPMN 2.0 specification](https://www.omg.org/spec/BPMN/2.0/)
 - **Decision support logic**: [OMG DMN 1.3 specification](https://www.omg.org/spec/DMN/1.3/)
+- **FHIR mapping and transformation**: [FHIR Mapping Language (FML) specification](https://hl7.org/fhir/mapping-language.html) and [FHIR StructureMap](https://hl7.org/fhir/structuremap.html)
 - **L3 implementations**: WHO enterprise architecture at http://smart.who.int/ra
 - **FHIR resources**: FHIR R4 specification compliance
 - **Functional/Non-functional requirements**: WHO smart-base StructureDefinitions
