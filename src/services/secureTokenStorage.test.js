@@ -20,6 +20,8 @@ describe('SecureTokenStorage', () => {
   const validOAuthToken = 'gho_123456789012345678901234567890123456';
   const validLegacyToken = '1234567890123456789012345678901234567890';
   const invalidToken = 'invalid_token_format';
+  
+  let mockGetTimezoneOffset;
 
   beforeEach(() => {
     // Clear all storage before each test
@@ -65,23 +67,16 @@ describe('SecureTokenStorage', () => {
       configurable: true
     });
 
-    // Mock Date timezone offset with consistent value
-    const originalGetTimezoneOffset = Date.prototype.getTimezoneOffset;
-    Date.prototype.getTimezoneOffset = jest.fn(() => -300);
-    
-    // Store original for cleanup
-    global._originalGetTimezoneOffset = originalGetTimezoneOffset;
+    // Mock Date timezone offset with consistent value using Jest spy
+    mockGetTimezoneOffset = jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(-300);
   });
 
   afterEach(() => {
     sessionStorage.clear();
     localStorage.clear();
     
-    // Restore original Date.prototype.getTimezoneOffset
-    if (global._originalGetTimezoneOffset) {
-      Date.prototype.getTimezoneOffset = global._originalGetTimezoneOffset;
-      delete global._originalGetTimezoneOffset;
-    }
+    // Restore Date.prototype.getTimezoneOffset
+    mockGetTimezoneOffset.mockRestore();
   });
 
   describe('Token Format Validation', () => {

@@ -658,7 +658,7 @@ const BranchListing = () => {
             branchName: 'copilot/fix-459',
             safeBranchName: 'copilot-fix-459',
             url: './copilot-fix-459/index.html',
-            prUrl: '${repositoryConfig.getGitHubUrl()}/pull/123',
+            prUrl: `${repositoryConfig.getGitHubUrl()}/pull/123`,
             updatedAt: new Date().toLocaleDateString(),
             createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
           },
@@ -671,7 +671,7 @@ const BranchListing = () => {
             branchName: 'feature/dark-mode',
             safeBranchName: 'feature-dark-mode',
             url: './feature-dark-mode/index.html',
-            prUrl: '${repositoryConfig.getGitHubUrl()}/pull/122',
+            prUrl: `${repositoryConfig.getGitHubUrl()}/pull/122`,
             updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
             createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
           },
@@ -684,7 +684,7 @@ const BranchListing = () => {
             branchName: 'fix/auth-flow',
             safeBranchName: 'fix-auth-flow',
             url: './fix-auth-flow/index.html',
-            prUrl: '${repositoryConfig.getGitHubUrl()}/pull/121',
+            prUrl: `${repositoryConfig.getGitHubUrl()}/pull/121`,
             updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
             createdAt: new Date(Date.now() - 432000000).toLocaleDateString()
           }
