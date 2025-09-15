@@ -11,9 +11,10 @@ The FML/StructureMap integration adds a powerful new DAK component that enables 
 ## Architectural Alignment
 
 ### SGeX Workbench Responsibilities (Frontend)
-- **Visual Mapping Interface**: Interactive SVG-based visualization of logical models as nodes and mappings as annotated edges
+- **ArchiMate Logical Model Visualization**: Interactive ArchiMate-based visualization of FHIR Logical Models using archimate-js
+- **diagram-js Mapping Interface**: Interactive mapping connections and overlays using existing bpmn-js/diagram-js infrastructure
 - **FML Code Editor**: Monaco Editor-based .fml syntax highlighting with live validation feedback
-- **Mapping Workflows**: Guided mapping creation and editing workflows
+- **Mapping Workflows**: Guided mapping creation and editing workflows with ArchiMate context
 - **Resource Management**: Storage and versioning of StructureMaps in GitHub repositories
 
 ### fmlrunner Responsibilities (Processing Engine)
@@ -21,6 +22,11 @@ The FML/StructureMap integration adds a powerful new DAK component that enables 
 - **StructureMap Operations**: Complete StructureMap lifecycle management
 - **Transformation Engine**: Resource transformation and bundle processing
 - **Terminology Services**: Concept mapping and terminology validation
+
+### Enhanced Visualization Strategy
+- **Strategic View**: ArchiMate Application Layer models showing logical model relationships and business context
+- **Technical View**: diagram-js based detailed mapping interface for precise FML expression authoring
+- **Reuse Existing LMs**: Generate visualizations from existing Logical Models already parsed in CoreDataDictionaryViewer
 
 ## Integration Architecture
 
@@ -35,11 +41,20 @@ flowchart TD
     SGeX <--> FMLRunner
     SGeX <--> GitHub
     
-    subgraph "SGeX Components"
-        LMViz[Logical Model Visualizer]
+    subgraph "Enhanced SGeX Visualization"
+        ArchiViz[ArchiMate LM Visualizer]
+        DiagramMapping[diagram-js Mapping Interface]
         FMLEdit[FML Code Editor]
         MapWorkflow[Mapping Workflow]
         ResManager[Resource Manager]
+        LMParser[Existing LM Parser]
+    end
+    
+    subgraph "Visualization Foundation"
+        ArchiLib[archimate-js]
+        DiagramLib[diagram-js from bpmn-js]
+        LazyService[lazyFactoryService]
+        ExistingLM[CoreDataDictionaryViewer LMs]
     end
     
     subgraph "fmlrunner Services"
@@ -48,34 +63,116 @@ flowchart TD
         TermService[Terminology Service]
         TransformEngine[Transformation Engine]
     end
+    
+    ArchiViz --> ArchiLib
+    DiagramMapping --> DiagramLib
+    ArchiViz --> ExistingLM
+    LazyService --> ArchiLib
+    LazyService --> DiagramLib
 ```
 
 ## Implementation Plan
 
 ### Phase 1: Foundation Components (Sprint 1-2)
 
-#### 1.1 Service Integration Layer
-**File: `src/services/fmlRunnerService.js`**
+#### 1.1 Enhanced Service Integration Layer
+
+**File: `src/services/fmlRunnerService.js`** (No changes - remains as specified)
+
+**File: `src/services/archimateModelService.js` (NEW)**
 
 ```javascript
-class FMLRunnerService {
+class ArchimateModelService {
   constructor() {
-    this.baseUrl = process.env.REACT_APP_FMLRUNNER_URL || 'http://localhost:8080';
-    this.logger = logger.getLogger('FMLRunnerService');
+    this.logger = logger.getLogger('ArchimateModelService');
   }
 
-  // StructureMap Operations
-  async validateStructureMap(fmlContent) { }
-  async transformResource(structureMap, sourceResource) { }
-  async parseStructureMap(fmlContent) { }
+  // Convert existing FSH Logical Models to ArchiMate Application Objects
+  generateArchimateFromLogicalModels(logicalModels) {
+    return logicalModels.map(lm => ({
+      id: lm.id,
+      name: lm.name,
+      type: 'application-data-object',
+      documentation: lm.definition || `Logical Model: ${lm.name}`,
+      elements: lm.elements.map(elem => ({
+        id: `${lm.id}.${elem.path}`,
+        name: elem.path,
+        type: 'application-data-object',
+        cardinality: elem.cardinality,
+        dataType: elem.type,
+        parent: lm.id
+      })),
+      relationships: this.generateElementRelationships(lm.elements, lm.id)
+    }));
+  }
+
+  // Generate ArchiMate relationships between elements
+  generateElementRelationships(elements, modelId) {
+    const relationships = [];
+    elements.forEach(element => {
+      // Create composition relationships for nested elements
+      if (element.path.includes('.')) {
+        const parentPath = element.path.substring(0, element.path.lastIndexOf('.'));
+        const parentElement = elements.find(e => e.path === parentPath);
+        if (parentElement) {
+          relationships.push({
+            id: `${modelId}.${parentPath}-${element.path}`,
+            type: 'composition',
+            source: `${modelId}.${parentPath}`,
+            target: `${modelId}.${element.path}`
+          });
+        }
+      }
+    });
+    return relationships;
+  }
+}
+```
+
+**Extended File: `src/services/lazyFactoryService.js`**
+
+```javascript
+// Add archimate-js factory support
+export async function createLazyArchimateViewer(options = {}) {
+  const ArchimateViewer = await lazyLoadArchimateViewer();
+  return new ArchimateViewer(options);
+}
+
+export async function createLazyDiagramJsRenderer(options = {}) {
+  const DiagramRenderer = await lazyLoadDiagramJsRenderer();
+  return new DiagramRenderer(options);
+}
+```
+
+**Extended File: `src/services/libraryLoaderService.js`**
+
+```javascript
+// Add archimate-js lazy loading
+export async function lazyLoadArchimateViewer() {
+  const cacheKey = 'archimate-viewer';
   
-  // FML Validation and Suggestions
-  async validateFML(fmlContent) { }
-  async getFMLSuggestions(fmlContent, position) { }
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
   
-  // Terminology Operations
-  async translateConcept(conceptMap, sourceSystem, code) { }
-  async validateTerminology(valueSet, concept) { }
+  const ArchimateViewer = await import('archimate-js/lib/Viewer');
+  const viewer = ArchimateViewer.default;
+  moduleCache.set(cacheKey, viewer);
+  return viewer;
+}
+
+// Add diagram-js direct access (extracted from bpmn-js)
+export async function lazyLoadDiagramJsRenderer() {
+  const cacheKey = 'diagram-js-renderer';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const DiagramJS = await import('diagram-js');
+  const renderer = DiagramJS.default;
+  moduleCache.set(cacheKey, renderer);
+  return renderer;
 }
 ```
 
@@ -87,47 +184,103 @@ class FMLRunnerService {
 - `POST /terminology/translate` - Concept mapping and translation
 - `GET /terminology/validate` - Terminology validation
 
-#### 1.2 Logical Model Service
+#### 1.2 Enhanced Logical Model Service
 **File: `src/services/logicalModelService.js`**
 
 ```javascript
+import githubService from './githubService';
+import archimateModelService from './archimateModelService';
+
 class LogicalModelService {
-  // Extract logical models from FHIR StructureDefinitions
-  async getLogicalModels(owner, repo, branch) { }
+  // Reuse existing LM parsing from CoreDataDictionaryViewer
+  async getLogicalModelsFromExistingParser(owner, repo, branch) {
+    // Leverage the FSH parsing logic already implemented
+    return this.getLogicalModelsFromFSH(owner, repo, branch);
+  }
   
-  // Parse StructureDefinition to visual model nodes
-  parseStructureDefinitionToNodes(structureDefinition) { }
-  
-  // Generate SVG visualization data
-  generateVisualizationData(logicalModels, mappings) { }
+  // Enhanced to generate both traditional nodes and ArchiMate models
+  generateVisualizationData(logicalModels, mappings, viewType = 'archimate') {
+    if (viewType === 'archimate') {
+      return this.generateArchimateVisualization(logicalModels, mappings);
+    } else {
+      return this.generateDiagramJsVisualization(logicalModels, mappings);
+    }
+  }
+
+  generateArchimateVisualization(logicalModels, mappings) {
+    // Convert logical models to ArchiMate Application Layer objects
+    const archimateModels = archimateModelService.generateArchimateFromLogicalModels(logicalModels);
+    
+    return {
+      type: 'archimate',
+      models: archimateModels,
+      mappings: mappings.map(mapping => ({
+        id: mapping.id,
+        source: mapping.sourceModel,
+        target: mapping.targetModel,
+        type: 'flow-relationship',
+        documentation: mapping.fmlExpression
+      }))
+    };
+  }
+
+  generateDiagramJsVisualization(logicalModels, mappings) {
+    // Traditional node-based visualization using diagram-js
+    return {
+      type: 'diagram-js',
+      nodes: logicalModels.map((model, index) => ({
+        id: model.id,
+        name: model.name,
+        type: model.type,
+        elements: model.elements,
+        position: { x: index * 400, y: 100 },
+        width: 300,
+        height: Math.max(200, model.elements.length * 25 + 50)
+      })),
+      edges: mappings.map(mapping => ({
+        id: mapping.id,
+        source: mapping.sourceElement,
+        target: mapping.targetElement,
+        label: mapping.fmlExpression,
+        isValid: mapping.isValid
+      }))
+    };
+  }
 }
 ```
+  
+#### 1.3 ArchiMate-Enhanced React Components
 
-#### 1.3 Core React Components
+**ArchiMate Logical Model Viewer: `src/components/ArchimateLogicalModelViewer.js`**
+- ArchiMate-based visualization using archimate-js library
+- Application Layer view of FHIR Logical Models
+- Interactive exploration of model relationships
+- Seamless integration with existing SGEX page framework
 
-**Logical Model Visualizer: `src/components/LogicalModelVisualizer.js`**
-- Interactive SVG rendering of FHIR StructureDefinitions as node graphs
-- Click/hover interactions for element details
-- Drag-and-drop interface for creating mappings
-- Zoom and pan capabilities for large models
+**diagram-js Mapping Interface: `src/components/DiagramJsMappingInterface.js`**
+- Reuses existing bpmn-js/diagram-js infrastructure
+- Custom overlays for FML expression visualization
+- Interactive mapping creation with drag-and-drop
+- Leverages SGEX's established diagram rendering patterns
 
-**FML Code Editor: `src/components/FMLCodeEditor.js`**
-- Monaco Editor integration with FML syntax highlighting
+**Enhanced FML Code Editor: `src/components/FMLCodeEditor.js`**
+- Monaco Editor integration with FML syntax highlighting (unchanged)
 - Real-time validation with fmlrunner integration
-- Code completion and error reporting
-- Split-pane view with visual mapping interface
+- ArchiMate context awareness for code completion
+- Split-pane view with both ArchiMate and diagram-js views
 
-### Phase 2: Mapping Workflow (Sprint 3-4)
+### Phase 2: Enhanced Mapping Workflow (Sprint 3-4)
 
-#### 2.1 Mapping Workflow Component
+#### 2.1 Dual-View Mapping Workflow Component
 **File: `src/components/StructureMapWorkflow.js`**
 
 ```javascript
 const StructureMapWorkflow = () => {
   const { profile, repository, branch } = usePage();
   
-  // Workflow states: source-selection, target-selection, mapping-creation, testing
+  // Enhanced workflow with dual visualization modes
   const [workflowStep, setWorkflowStep] = useState('source-selection');
+  const [visualizationMode, setVisualizationMode] = useState('archimate'); // 'archimate' | 'diagram-js'
   const [sourceModel, setSourceModel] = useState(null);
   const [targetModel, setTargetModel] = useState(null);
   const [mappings, setMappings] = useState([]);
@@ -135,11 +288,34 @@ const StructureMapWorkflow = () => {
   
   return (
     <AssetEditorLayout pageId="structure-map-workflow">
+      <div className="workflow-header">
+        <ViewToggle 
+          mode={visualizationMode} 
+          onModeChange={setVisualizationMode}
+          options={[
+            { value: 'archimate', label: 'Strategic View (ArchiMate)' },
+            { value: 'diagram-js', label: 'Technical View (Detailed)' }
+          ]}
+        />
+      </div>
+      
       {workflowStep === 'source-selection' && <SourceModelSelection />}
       {workflowStep === 'target-selection' && <TargetModelSelection />}
       {workflowStep === 'mapping-creation' && (
-        <div className="mapping-interface">
-          <LogicalModelVisualizer models={[sourceModel, targetModel]} mappings={mappings} />
+        <div className="dual-view-mapping-interface">
+          {visualizationMode === 'archimate' ? (
+            <ArchimateLogicalModelViewer 
+              models={[sourceModel, targetModel]} 
+              mappings={mappings} 
+              onMappingCreate={handleArchimateMapping}
+            />
+          ) : (
+            <DiagramJsMappingInterface 
+              models={[sourceModel, targetModel]} 
+              mappings={mappings}
+              onMappingCreate={handleDetailedMapping}
+            />
+          )}
           <FMLCodeEditor content={fmlContent} onChange={setFmlContent} />
         </div>
       )}
@@ -149,16 +325,24 @@ const StructureMapWorkflow = () => {
 };
 ```
 
-#### 2.2 Mapping Visualization Components
+#### 2.2 Enhanced Mapping Visualization Components
 
-**Mapping Edge Renderer: `src/components/MappingEdgeRenderer.js`**
-- SVG path rendering between source and target elements
-- Interactive edge editing with FML expression preview
-- Visual indicators for mapping complexity and validation status
+**ArchiMate Strategic View: `src/components/ArchimateLogicalModelViewer.js`**
+- High-level business context visualization
+- ArchiMate Application Layer relationships
+- Focus on logical model interactions and dependencies
+- Business-friendly representation for stakeholder communication
 
-**Element Property Panel: `src/components/ElementPropertyPanel.js`**
-- Side panel showing detailed element information
+**diagram-js Technical View: `src/components/DiagramJsMappingInterface.js`**
+- Detailed element-level mapping visualization
+- Precise FML expression editing and validation
+- Fine-grained drag-and-drop mapping creation
+- Technical implementation details and constraints
+
+**Enhanced Element Property Panel: `src/components/ElementPropertyPanel.js`**
+- Context-aware property display (ArchiMate vs. technical)
 - FML expression editing for selected mappings
+- ArchiMate documentation integration
 - Cardinality and constraint visualization
 
 ### Phase 3: Advanced Features (Sprint 5-6)
@@ -246,17 +430,25 @@ Add StructureMap/FML component card to the main DAK dashboard following existing
 
 ### Phase 5: Advanced Visualization (Sprint 9-10)
 
-#### 5.1 Enhanced Visual Features
+#### 5.1 Advanced ArchiMate and diagram-js Integration
 
-**Interactive Mapping Canvas:**
-- Minimap for navigation in large mapping scenarios
-- Layer management for complex transformations
-- Visual debugging with step-through transformation
+**Multi-Layer Visualization:**
+- ArchiMate Application Layer for business context
+- diagram-js technical layer for implementation details
+- Seamless navigation between strategic and tactical views
+- Synchronized model state across visualization modes
+
+**Enhanced Interactive Canvas:**
+- ArchiMate-native minimap for strategic navigation
+- diagram-js precision tools for detailed mapping
+- Layer management for complex transformation scenarios
+- Visual debugging with step-through transformation using both views
 
 **Export and Documentation:**
-- SVG export of mapping visualizations
-- Auto-generated mapping documentation
-- Mapping impact analysis and dependency graphs
+- ArchiMate model export for enterprise architecture tools
+- diagram-js SVG export for technical documentation
+- Dual-format mapping documentation (business + technical)
+- ArchiMate-enhanced impact analysis and dependency graphs
 
 #### 5.2 Collaboration Features
 
@@ -465,12 +657,33 @@ Response:
 
 ### Configuration Requirements
 
+**Enhanced Dependencies (package.json additions):**
+```json
+{
+  "dependencies": {
+    "archimate-js": "^1.0.0",
+    "diagram-js": "^12.0.0",
+    "bpmn-js": "^18.6.2",
+    "monaco-editor": "^0.45.0"
+  }
+}
+```
+
 **Environment Variables:**
 ```
 REACT_APP_FMLRUNNER_URL=http://localhost:8080
 REACT_APP_FMLRUNNER_TIMEOUT=30000
 REACT_APP_ENABLE_FML_CACHING=true
+REACT_APP_ENABLE_ARCHIMATE_VISUALIZATION=true
+REACT_APP_DEFAULT_VISUALIZATION_MODE=archimate
 ```
+
+**Lazy Loading Configuration:**
+The enhanced approach leverages SGEX's existing lazy loading infrastructure:
+- `archimate-js` loaded on-demand for ArchiMate visualization
+- `diagram-js` extracted from existing `bpmn-js` dependency 
+- Existing Logical Model parsing from `CoreDataDictionaryViewer`
+- Monaco Editor patterns already established in SGEX
 
 **CORS Configuration:**
 fmlrunner must allow CORS requests from SGEX domains:
@@ -530,6 +743,39 @@ fmlrunner must allow CORS requests from SGEX domains:
 - AI-assisted mapping suggestions based on element semantics
 - Automated mapping generation from examples
 - Natural language mapping description generation
+
+## Key Architectural Enhancements
+
+### Enhanced Visualization Strategy
+
+**1. Dual-View Architecture:**
+- **Strategic View**: ArchiMate Application Layer models for business stakeholder communication
+- **Technical View**: diagram-js detailed interface for precise FML implementation
+- **Seamless Navigation**: Toggle between views with synchronized state
+
+**2. Existing Infrastructure Reuse:**
+- **Logical Models**: Reuse existing FSH parsing from `CoreDataDictionaryViewer`
+- **diagram-js Foundation**: Leverage existing `bpmn-js` infrastructure and patterns
+- **Lazy Loading**: Extend established `lazyFactoryService` for `archimate-js`
+- **Component Patterns**: Follow existing SGEX PageLayout and AssetEditorLayout patterns
+
+**3. Enhanced Service Layer:**
+- **ArchimateModelService**: Convert FSH Logical Models to ArchiMate Application Objects
+- **Enhanced LogicalModelService**: Support both ArchiMate and diagram-js visualization modes
+- **Backward Compatibility**: Maintain existing APIs while adding enhanced visualization
+
+### Implementation Benefits
+
+**Stakeholder Value:**
+- Business users get ArchiMate strategic views for logical model relationships
+- Technical users get detailed diagram-js interfaces for precise FML authoring
+- Existing DAK Logical Models automatically available for visualization
+
+**Technical Advantages:**
+- Minimal new dependencies (`archimate-js` only major addition)
+- Maximum reuse of existing SGEX infrastructure
+- Proven lazy loading and component patterns
+- Enhanced visualization without breaking existing functionality
 
 ---
 

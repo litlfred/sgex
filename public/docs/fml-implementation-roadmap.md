@@ -8,26 +8,177 @@ This document provides a detailed, step-by-step implementation roadmap for integ
 
 | Phase | Duration | Focus | Deliverables |
 |-------|----------|-------|--------------|
-| 1 | 2 weeks | Foundation Services | fmlrunner integration, base components |
-| 2 | 2 weeks | Core UI Components | Visual editor, FML code editor |
-| 3 | 2 weeks | Mapping Workflow | End-to-end mapping creation |
-| 4 | 2 weeks | Testing & Validation | Comprehensive testing framework |
-| 5 | 2 weeks | Integration & Polish | DAK integration, help system |
+| 1 | 2 weeks | Enhanced Foundation Services | archimate-js & diagram-js integration, enhanced LM services |
+| 2 | 2 weeks | Dual-View UI Components | ArchiMate viewer, diagram-js interface, enhanced FML editor |
+| 3 | 2 weeks | Multi-Mode Mapping Workflow | Strategic/technical view workflow, existing LM integration |
+| 4 | 2 weeks | Testing & Validation | Comprehensive testing for both visualization modes |
+| 5 | 2 weeks | Integration & Polish | DAK integration, help system, performance optimization |
 
-## Phase 1: Foundation Services (Weeks 1-2)
+## Phase 1: Enhanced Foundation Services (Weeks 1-2)
 
-### Week 1: Service Layer Foundation
+### Week 1: Enhanced Service Layer Foundation
 
-#### Day 1-2: fmlrunner Service Integration
-**File: `src/services/fmlRunnerService.js`**
+#### Day 1-2: fmlrunner Service Integration (Unchanged)
+**File: `src/services/fmlRunnerService.js`** - Implementation remains as specified in original plan
+
+#### Day 3-4: archimate-js Integration
+**File: `src/services/archimateModelService.js`**
 
 ```javascript
 import logger from '../utils/logger';
 
-class FMLRunnerService {
+class ArchimateModelService {
   constructor() {
-    this.baseUrl = process.env.REACT_APP_FMLRUNNER_URL || 'http://localhost:8080';
-    this.timeout = parseInt(process.env.REACT_APP_FMLRUNNER_TIMEOUT || '30000');
+    this.logger = logger.getLogger('ArchimateModelService');
+  }
+
+  // Convert existing FSH Logical Models to ArchiMate Application Objects
+  generateArchimateFromLogicalModels(logicalModels) {
+    return logicalModels.map(lm => this.convertToArchimateModel(lm));
+  }
+
+  convertToArchimateModel(logicalModel) {
+    return {
+      id: logicalModel.id,
+      name: logicalModel.name,
+      type: 'application-data-object',
+      layer: 'application',
+      documentation: logicalModel.definition || `FHIR Logical Model: ${logicalModel.name}`,
+      properties: {
+        url: logicalModel.url,
+        baseDefinition: logicalModel.baseDefinition,
+        kind: logicalModel.type || 'logical'
+      },
+      elements: this.convertElementsToArchimate(logicalModel.elements, logicalModel.id),
+      relationships: this.generateArchimateRelationships(logicalModel.elements, logicalModel.id)
+    };
+  }
+
+  convertElementsToArchimate(elements, parentId) {
+    return elements.map(element => ({
+      id: `${parentId}.${element.path}`,
+      name: element.path,
+      type: 'application-data-object',
+      layer: 'application',
+      properties: {
+        cardinality: element.cardinality,
+        dataType: element.type,
+        definition: element.definition,
+        short: element.short
+      },
+      parent: parentId
+    }));
+  }
+
+  generateArchimateRelationships(elements, modelId) {
+    const relationships = [];
+    
+    // Create composition relationships for nested elements
+    elements.forEach(element => {
+      if (element.path.includes('.')) {
+        const parentPath = element.path.substring(0, element.path.lastIndexOf('.'));
+        const parentElement = elements.find(e => e.path === parentPath);
+        if (parentElement) {
+          relationships.push({
+            id: `${modelId}.comp.${parentPath}-${element.path}`,
+            type: 'composition-relationship',
+            source: `${modelId}.${parentPath}`,
+            target: `${modelId}.${element.path}`,
+            properties: {
+              strength: 'strong'
+            }
+          });
+        }
+      }
+    });
+
+    return relationships;
+  }
+
+  // Generate mapping relationships between models for FML visualization
+  generateMappingRelationships(sourceModel, targetModel, mappings) {
+    return mappings.map(mapping => ({
+      id: `map.${mapping.id}`,
+      type: 'flow-relationship',
+      source: `${sourceModel.id}.${mapping.sourceElement}`,
+      target: `${targetModel.id}.${mapping.targetElement}`,
+      properties: {
+        fmlExpression: mapping.fmlExpression,
+        isValid: mapping.isValid,
+        complexity: mapping.complexity || 'simple'
+      },
+      documentation: `FML Mapping: ${mapping.fmlExpression}`
+    }));
+  }
+}
+
+export default new ArchimateModelService();
+```
+
+#### Day 5: Enhanced lazyFactoryService Integration
+**File: `src/services/lazyFactoryService.js`**
+
+```javascript
+// Add to existing exports
+export async function createLazyArchimateViewer(options = {}) {
+  const ArchimateViewer = await lazyLoadArchimateViewer();
+  return new ArchimateViewer({
+    container: options.container,
+    width: options.width || '100%',
+    height: options.height || '600px',
+    ...options
+  });
+}
+
+export async function createLazyDiagramJsRenderer(options = {}) {
+  // Leverage existing diagram-js from bpmn-js infrastructure
+  const DiagramJS = await lazyLoadDiagramJsRenderer();
+  return new DiagramJS({
+    container: options.container,
+    modules: options.modules || [],
+    ...options
+  });
+}
+```
+
+**File: `src/services/libraryLoaderService.js`**
+
+```javascript
+// Add archimate-js lazy loading
+export async function lazyLoadArchimateViewer() {
+  const cacheKey = 'archimate-viewer';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  try {
+    const ArchimateJS = await import('archimate-js');
+    const viewer = ArchimateJS.Viewer || ArchimateJS.default.Viewer;
+    moduleCache.set(cacheKey, viewer);
+    return viewer;
+  } catch (error) {
+    console.warn('archimate-js not available, falling back to basic visualization');
+    // Fallback to basic diagram rendering
+    return await lazyLoadDiagramJsRenderer();
+  }
+}
+
+// Enhanced diagram-js access (reusing from bpmn-js)
+export async function lazyLoadDiagramJsRenderer() {
+  const cacheKey = 'diagram-js-direct';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  // Extract diagram-js from existing bpmn-js dependency
+  const BpmnViewer = await import('bpmn-js/lib/NavigatedViewer');
+  const DiagramJS = BpmnViewer.default.prototype.constructor.super_;
+  moduleCache.set(cacheKey, DiagramJS);
+  return DiagramJS;
+}
+```
     this.logger = logger.getLogger('FMLRunnerService');
     this.cache = new Map(); // Simple caching for validation results
   }
