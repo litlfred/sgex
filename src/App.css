@@ -19,6 +19,19 @@
   --who-navy-gradient: linear-gradient(135deg, var(--who-navy) 0%, var(--who-secondary-bg) 100%);
   --who-light-gradient: linear-gradient(135deg, var(--who-light-blue) 0%, var(--who-light-blue-light) 100%);
   
+  /* Status/Workflow Gradient Variables */
+  --status-success-gradient: linear-gradient(135deg, #28a745, #20c997);
+  --status-success-gradient-dark: linear-gradient(135deg, #218838, #1ea87a);
+  --status-warning-gradient: linear-gradient(135deg, #fd7e14, #f39c12);
+  --status-warning-gradient-dark: linear-gradient(135deg, #e8590c, #d68910);
+  --status-error-gradient: linear-gradient(135deg, #dc2626, #b91c1c);
+  --status-error-gradient-dark: linear-gradient(135deg, #b91c1c, #991b1b);
+  --status-info-gradient: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  --status-info-gradient-dark: linear-gradient(135deg, #1d4ed8, #1e40af);
+  --status-orange-gradient: linear-gradient(135deg, #ff6b35, #f7931e);
+  --status-orange-gradient-dark: linear-gradient(135deg, #ff5722, #e68900);
+  --status-golden-gradient: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  
   /* Button/Card Sizing Standards */
   --card-size-default: 18em;
   --card-icon-size: 12em;

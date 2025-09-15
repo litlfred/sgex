@@ -800,8 +800,9 @@ const ContextTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChang
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Type</label>
+              <label htmlFor={`interaction-type-${index}`}>Type</label>
               <select
+                id={`interaction-type-${index}`}
                 value={interaction.type}
                 onChange={(e) => onNestedFieldChange('interactions', index, 'type', e.target.value)}
               >
@@ -815,8 +816,9 @@ const ContextTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChang
               </select>
             </div>
             <div className="form-group">
-              <label>Target</label>
+              <label htmlFor={`interaction-target-${index}`}>Target</label>
               <input
+                id={`interaction-target-${index}`}
                 type="text"
                 value={interaction.target}
                 onChange={(e) => onNestedFieldChange('interactions', index, 'target', e.target.value)}
@@ -825,8 +827,9 @@ const ContextTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChang
             </div>
           </div>
           <div className="form-group">
-            <label>Description</label>
+            <label htmlFor={`interaction-description-${index}`}>Description</label>
             <input
+              id={`interaction-description-${index}`}
               type="text"
               value={interaction.description || ''}
               onChange={(e) => onNestedFieldChange('interactions', index, 'description', e.target.value)}

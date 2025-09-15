@@ -97,7 +97,7 @@ body.theme-light .dak-dashboard {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background-color: #548ad1;
+  background-color: var(--who-blue-light);
   padding: 0.5rem;
   border-radius: 6px;
 }
@@ -153,7 +153,7 @@ body.theme-light .dak-dashboard {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: #548ad1;
+  background-color: var(--who-blue-light);
   padding: 0.5rem;
   border-radius: 6px;
 }
@@ -173,7 +173,7 @@ body.theme-light .dak-dashboard {
   border-radius: 4px;
   font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 0.85rem;
-  color: #e3f2fd;
+  color: var(--who-text-on-primary);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
@@ -187,13 +187,13 @@ body.theme-light .dak-dashboard {
 
 .access-level.read {
   background: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
+  color: var(--warning-color, #ffc107);
   border: 1px solid rgba(255, 193, 7, 0.3);
 }
 
 .access-level.write {
   background: rgba(40, 167, 69, 0.2);
-  color: #28a745;
+  color: var(--success-color, #28a745);
   border: 1px solid rgba(40, 167, 69, 0.3);
 }
 
@@ -222,7 +222,7 @@ body.theme-light .dak-dashboard {
 .breadcrumb-link {
   background: none;
   border: none;
-  color: #041c4d;
+  color: var(--who-navy);
   cursor: pointer;
   text-decoration: underline;
   font-size: 1rem;
@@ -230,7 +230,7 @@ body.theme-light .dak-dashboard {
 }
 
 .breadcrumb-link:hover {
-  color: #041c4d;
+  color: var(--who-navy);
   text-decoration: underline;
 }
 
@@ -240,7 +240,7 @@ body.theme-light .dak-dashboard {
 }
 
 .breadcrumb-current {
-  color: #041c4d;
+  color: var(--who-navy);
   font-weight: 500;
 }
 
@@ -1325,8 +1325,8 @@ body.theme-light .file-count {
 
 /* Tab badge styles for workflows */
 .tab-badge.workflows {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-  color: #1a1a1a;
+  background: var(--status-golden-gradient);
+  color: var(--who-text-primary);
 }
 
 /* Loading and Error States */
