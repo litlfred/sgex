@@ -103,7 +103,7 @@
     "http-proxy-middleware": "^3.0.5",
     "identity-obj-proxy": "^3.0.0",
     "js-yaml": "^4.1.0",
-    "jsdom": "^26.1.0",
+    "jsdom": "^27.0.0",
     "ts-json-schema-generator": "^2.4.0",
     "typescript": "^5.9.2",
     "typescript-json-schema": "^0.65.1"
