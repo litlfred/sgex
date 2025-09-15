@@ -68,10 +68,10 @@ function createLazyComponent(componentName) {
       break;
 
     case 'DocumentationViewer':
-      LazyComponent = React.lazy(() => import('../components/DocumentationViewer'));
+      LazyComponent = React.lazy(() => import('../components/lazyFramework').then(module => ({ default: module.LazyDocumentationViewer })));
       break;
     case 'PagesManager':
-      LazyComponent = React.lazy(() => import('../components/PagesManager'));
+      LazyComponent = React.lazy(() => import('../components/lazyFramework').then(module => ({ default: module.LazyPagesManager })));
       break;
 
     case 'BranchListingPage':
@@ -81,7 +81,7 @@ function createLazyComponent(componentName) {
       LazyComponent = React.lazy(() => import('../components/NotFound'));
       break;
     case 'DAKFAQDemo':
-      LazyComponent = React.lazy(() => import('../components/DAKFAQDemo'));
+      LazyComponent = React.lazy(() => import('../components/lazyFramework').then(module => ({ default: module.LazyDAKFAQDemo })));
       break;
     
     // DAK Components
@@ -93,31 +93,31 @@ function createLazyComponent(componentName) {
       break;
 
     case 'CoreDataDictionaryViewer':
-      LazyComponent = React.lazy(() => import('../components/CoreDataDictionaryViewer'));
+      LazyComponent = React.lazy(() => import('../components/lazyFramework').then(module => ({ default: module.LazyCoreDataDictionaryViewer })));
       break;
     case 'ComponentEditor':
-      LazyComponent = React.lazy(() => import('../components/ComponentEditor'));
+      LazyComponent = React.lazy(() => import('../components/lazyModals').then(module => ({ default: module.LazyComponentEditor })));
       break;
     case 'ActorEditor':
-      LazyComponent = React.lazy(() => import('../components/ActorEditor'));
+      LazyComponent = React.lazy(() => import('../components/lazyModals').then(module => ({ default: module.LazyActorEditor })));
       break;
     case 'BusinessProcessSelection':
-      LazyComponent = React.lazy(() => import('../components/BusinessProcessSelection'));
+      LazyComponent = React.lazy(() => import('../components/lazyFramework').then(module => ({ default: module.LazyBusinessProcessSelection })));
       break;
     case 'BPMNEditor':
-      LazyComponent = React.lazy(() => import('../components/BPMNEditor'));
+      LazyComponent = React.lazy(() => import('../components/lazyModals').then(module => ({ default: module.LazyBPMNEditor })));
       break;
     case 'BPMNViewer':
-      LazyComponent = React.lazy(() => import('../components/BPMNViewer'));
+      LazyComponent = React.lazy(() => import('../components/lazyModals').then(module => ({ default: module.LazyBPMNViewer })));
       break;
     case 'BPMNSource':
-      LazyComponent = React.lazy(() => import('../components/BPMNSource'));
+      LazyComponent = React.lazy(() => import('../components/lazyFramework').then(module => ({ default: module.LazyBPMNSource })));
       break;
     case 'DecisionSupportLogicView':
-      LazyComponent = React.lazy(() => import('../components/DecisionSupportLogicView'));
+      LazyComponent = React.lazy(() => import('../components/lazyFramework').then(module => ({ default: module.LazyDecisionSupportLogicView })));
       break;
     case 'QuestionnaireEditor':
-      LazyComponent = React.lazy(() => import('../components/QuestionnaireEditor'));
+      LazyComponent = React.lazy(() => import('../components/lazyModals').then(module => ({ default: module.LazyQuestionnaireEditor })));
       break;
     
     default:

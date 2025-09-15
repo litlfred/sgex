@@ -5,6 +5,7 @@ import { generateLazyRoutes } from './services/componentRouteService';
 import { initializeTheme } from './utils/themeManager';
 import logger from './utils/logger';
 import { initializeRoutingContext } from './services/routingContextService';
+import LibraryLoaderService from './services/libraryLoaderService';
 
 function App() {
   const appLogger = logger.getLogger('App');
@@ -27,6 +28,9 @@ function App() {
     const appliedTheme = initializeTheme();
     appLogger.info('Theme initialized', { theme: appliedTheme });
     
+    // Start preloading critical libraries after initial render
+    LibraryLoaderService.preloadCriticalLibraries();
+    
     return () => {
       appLogger.componentUnmount();
     };
@@ -34,6 +38,17 @@ function App() {
 
   // Generate all routes dynamically using lazy loading
   const routes = generateLazyRoutes();
+
+  return (
+    <Router basename={basename}>
+      <div className="App">
+        <Routes>
+          {routes}
+        </Routes>
+      </div>
+    </Router>
+  );
+}
 
   return (
     <Router basename={basename}>
