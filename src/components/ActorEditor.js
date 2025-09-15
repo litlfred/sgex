@@ -429,14 +429,26 @@ const ActorEditor = () => {
           <div 
             className="modal-overlay" 
             onClick={() => setShowPreview(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setShowPreview(false);
+              }
+            }}
             role="presentation"
+            tabIndex={0}
           >
             <div 
               className="modal-content" 
               onClick={e => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setShowPreview(false);
+                }
+              }}
               role="dialog"
               aria-labelledby="fsh-preview-title"
               aria-modal="true"
+              tabIndex={-1}
             >
               <div className="modal-header">
                 <h3 id="fsh-preview-title">FSH Preview</h3>
