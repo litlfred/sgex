@@ -13,6 +13,12 @@
   --who-light-blue-light: #e0ebf7;
   --who-light-blue-dark: #a0c8e8;
   
+  /* WHO Gradient Variables */
+  --who-blue-gradient: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  --who-blue-gradient-light: linear-gradient(135deg, #106ebe 0%, #004578 100%);
+  --who-navy-gradient: linear-gradient(135deg, var(--who-navy) 0%, var(--who-secondary-bg) 100%);
+  --who-light-gradient: linear-gradient(135deg, var(--who-light-blue) 0%, var(--who-light-blue-light) 100%);
+  
   /* Button/Card Sizing Standards */
   --card-size-default: 18em;
   --card-icon-size: 12em;
@@ -86,6 +92,11 @@ body.theme-dark {
   /* Dropdown specific overrides for better visibility */
   --who-dropdown-bg: #1a2380;
   --who-dropdown-hover-bg: rgba(255, 255, 255, 0.15);
+  /* Dark theme gradient overrides */
+  --who-blue-gradient: linear-gradient(135deg, var(--who-navy) 0%, var(--who-secondary-bg) 100%);
+  --who-blue-gradient-light: linear-gradient(135deg, var(--who-secondary-bg) 0%, rgba(255, 255, 255, 0.1) 100%);
+  --who-navy-gradient: linear-gradient(135deg, var(--who-navy) 0%, rgba(255, 255, 255, 0.05) 100%);
+  --who-light-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
   /* Shadow variables for dark theme - using dark navy instead of black */
   --who-shadow-light: rgba(4, 11, 118, 0.2);
   --who-shadow-medium: rgba(4, 11, 118, 0.4);
