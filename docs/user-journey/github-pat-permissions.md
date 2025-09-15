@@ -129,8 +129,61 @@ If any test fails, check that your PAT includes the required permissions listed 
 - **Cause**: Too many API calls in short time
 - **Solution**: Wait for rate limit reset (usually 1 hour)
 
+## Tutorial Generation Workflow
+
+### Using PAT with GitHub Actions Workflow Dispatch
+
+The tutorial generation system now supports entering your PAT directly through the GitHub Actions workflow dispatch interface, which works seamlessly with browser password managers.
+
+#### Setup Process:
+
+1. **Navigate to GitHub Actions**:
+   - Go to the repository's Actions tab
+   - Select "Generate Multilingual Screen Recording Tutorials"
+   - Click "Run workflow"
+
+2. **Enter PAT via Workflow Form**:
+   - **GitHub Personal Access Token**: Paste your PAT (works with Chrome/browser password managers)
+   - **PAT description/username**: Enter a description like "read-only-for-tutorial-generation"
+   - Configure other parameters (features, languages, resolution)
+
+3. **Browser Password Manager Integration**:
+   - Chrome and other modern browsers can auto-fill the PAT field
+   - Password managers can save and auto-populate the token
+   - More secure than storing in repository secrets
+   - Easier for one-time or infrequent use
+
+#### Advantages of Workflow Dispatch Approach:
+
+✅ **Password Manager Friendly**: Works seamlessly with Chrome, Firefox, Safari password managers  
+✅ **No Repository Secrets Required**: No need to configure repository secrets  
+✅ **Per-Execution Control**: Different PATs can be used for different tutorial generations  
+✅ **Transparency**: PAT permissions and description are clearly documented in the workflow run  
+✅ **Security**: PAT is only available during the specific workflow execution  
+
+#### Required Permissions (Same as Above):
+- **Classic PAT**: `repo` + `read:org`
+- **Fine-grained PAT**: Contents (Read) + Metadata (Read) + Organization permissions (Read)
+
+#### Workflow Usage:
+```yaml
+inputs:
+  github_pat:
+    description: 'GitHub Personal Access Token (paste from password manager)'
+    required: true
+    type: string
+  pat_description:
+    description: 'PAT description/username (e.g., "read-only-for-tutorial-generation")'
+    required: false
+    default: 'tutorial-generation-token'
+    type: string
+```
+
+The workflow validates the PAT format and tests it against the GitHub API before proceeding with tutorial generation.
+
 ## References
 
 - [GitHub PAT Documentation](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 - [GitHub API Scopes](https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps)
 - [Fine-grained PAT Documentation](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#creating-a-fine-grained-personal-access-token)
+- [GitHub Actions Workflow Dispatch](https://docs.github.com/en/actions/using-workflows/manually-running-a-workflow)

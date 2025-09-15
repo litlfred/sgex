@@ -128,14 +128,20 @@ class StepMappingService {
 
   async enterSamplePAT(match, stepText) {
     const selector = this.getFieldSelector('token');
-    const samplePAT = 'ghp_sample1234567890abcdefghijklmnopqrstuvwxyz';
+    // Use the actual PAT from environment variable or fallback to sample
+    const actualPAT = process.env.TUTORIAL_GITHUB_PAT || 'ghp_sample1234567890abcdefghijklmnopqrstuvwxyz';
     
     try {
       await this.page.waitForSelector(selector, { timeout: 5000 });
-      await this.page.fill(selector, samplePAT);
-      return { success: true, action: 'Entered sample PAT in token field' };
+      await this.page.fill(selector, actualPAT);
+      
+      // If using real PAT, also ensure the description is visible 
+      const description = process.env.TUTORIAL_PAT_DESCRIPTION || 'tutorial-generation-token';
+      console.log(`Using PAT with description: ${description}`);
+      
+      return { success: true, action: `Entered PAT in token field (${process.env.TUTORIAL_GITHUB_PAT ? 'real' : 'sample'} PAT)` };
     } catch (error) {
-      return { success: false, error: `Failed to enter sample PAT: ${error.message}` };
+      return { success: false, error: `Failed to enter PAT: ${error.message}` };
     }
   }
 

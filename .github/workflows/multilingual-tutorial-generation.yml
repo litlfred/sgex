@@ -32,6 +32,15 @@ on:
           - '768p'
           - '720p'
           - '1080p'
+      github_pat:
+        description: 'GitHub Personal Access Token (paste from password manager)'
+        required: true
+        type: string
+      pat_description:
+        description: 'PAT description/username (e.g., "read-only-for-tutorial-generation")'
+        required: false
+        default: 'tutorial-generation-token'
+        type: string
 
 permissions:
   contents: write
@@ -66,20 +75,44 @@ jobs:
 
       - name: Validate GitHub PAT
         run: |
-          if [[ -z "${{ secrets.GH_PAT }}" ]]; then
-            echo "❌ ERROR: GitHub Personal Access Token (GH_PAT) is not configured"
+          if [[ -z "${{ github.event.inputs.github_pat }}" ]]; then
+            echo "❌ ERROR: GitHub Personal Access Token is required"
             echo ""
-            echo "To configure the PAT:"
-            echo "1. Go to repository Settings > Secrets and variables > Actions"
-            echo "2. Click 'New repository secret'"
-            echo "3. Name: GH_PAT"
-            echo "4. Value: Paste your GitHub PAT with 'repo' and 'workflow' scopes"
-            echo "5. Click 'Add secret'"
+            echo "Please provide your GitHub PAT in the workflow dispatch form:"
+            echo "1. Navigate to Actions → 'Generate Multilingual Screen Recording Tutorials'"
+            echo "2. Click 'Run workflow'"
+            echo "3. Paste your GitHub PAT in the 'GitHub Personal Access Token' field"
+            echo "4. Optionally provide a description in 'PAT description/username' field"
             echo ""
-            echo "The PAT is required for authenticated screen recording scenarios."
+            echo "Required PAT permissions:"
+            echo "- repo (Full control of private repositories)"
+            echo "- read:org (Read org and team membership)"
+            echo ""
+            echo "💡 This works seamlessly with browser password managers!"
             exit 1
           fi
-          echo "✅ GitHub PAT is configured"
+          
+          # Validate token format (basic check)
+          if [[ ! "${{ github.event.inputs.github_pat }}" =~ ^(ghp_|github_pat_) ]]; then
+            echo "⚠️  WARNING: Token format doesn't match expected GitHub PAT format"
+            echo "Expected: ghp_xxxx... or github_pat_xxxx..."
+          fi
+          
+          # Test token with GitHub API
+          echo "🔍 Testing GitHub PAT validity..."
+          response=$(curl -s -H "Authorization: token ${{ github.event.inputs.github_pat }}" \
+                     -H "Accept: application/vnd.github.v3+json" \
+                     https://api.github.com/user)
+          
+          if echo "$response" | grep -q '"login"'; then
+            username=$(echo "$response" | grep '"login"' | cut -d'"' -f4)
+            echo "✅ GitHub PAT is valid for user: $username"
+            echo "📝 PAT description: ${{ github.event.inputs.pat_description || 'tutorial-generation-token' }}"
+          else
+            echo "❌ ERROR: GitHub PAT validation failed"
+            echo "Response: $response"
+            exit 1
+          fi
 
       - name: Install system dependencies
         run: |
@@ -377,6 +410,9 @@ jobs:
           "
           
           echo "✅ Playwright scripts generated"
+        env:
+          TUTORIAL_GITHUB_PAT: ${{ github.event.inputs.github_pat }}
+          TUTORIAL_PAT_DESCRIPTION: ${{ github.event.inputs.pat_description || 'tutorial-generation-token' }}
 
       - name: Record screen tutorials
         run: |
@@ -458,6 +494,9 @@ jobs:
           node record-tutorials.js
           
           echo "✅ Screen recording completed"
+        env:
+          TUTORIAL_GITHUB_PAT: ${{ github.event.inputs.github_pat }}
+          TUTORIAL_PAT_DESCRIPTION: ${{ github.event.inputs.pat_description || 'tutorial-generation-token' }}
 
       - name: Process videos with audio overlay
         run: |
@@ -919,14 +958,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "🎬 Generate multilingual screen recording tutorials
-
-- Features: ${{ steps.parse_inputs.outputs.feature_files }}
-- Languages: ${{ steps.parse_inputs.outputs.languages }}
-- Resolution: ${{ steps.parse_inputs.outputs.video_width }}x${{ steps.parse_inputs.outputs.video_height }}
-- Generated on: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-
-Automated tutorial generation workflow #${{ github.run_number }}"
+            git commit -m "🎬 Generate multilingual tutorials: ${{ steps.parse_inputs.outputs.feature_files }} [${{ steps.parse_inputs.outputs.languages }}] (#${{ github.run_number }})"
             
             git push origin ${{ github.event.inputs.target_branch || 'main' }}
             echo "✅ Changes committed and pushed"
