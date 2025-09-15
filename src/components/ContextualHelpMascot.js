@@ -282,6 +282,9 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           onClick={handleClick}
+          onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+          role="button"
+          tabIndex={0}
         >
           <img 
             src={mascotImage} 

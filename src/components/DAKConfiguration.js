@@ -290,7 +290,7 @@ const DAKConfiguration = () => {
               </div>
 
               <div className="form-group">
-                <label>Repository Topics</label>
+                <h4>Repository Topics</h4>
                 <div className="topics-container">
                   <div className="current-topics">
                     {configuration.repositoryTopics.map(topic => (

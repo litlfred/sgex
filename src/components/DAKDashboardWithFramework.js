@@ -295,6 +295,9 @@ const DAKDashboardContent = () => {
                   key={component.id}
                   className="component-card"
                   onClick={() => handleComponentNavigate(component.path)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleComponentNavigate(component.path)}
+                  role="button"
+                  tabIndex={0}
                 >
                   <div className="component-icon">{component.icon}</div>
                   <h3>{component.title}</h3>
@@ -316,6 +319,9 @@ const DAKDashboardContent = () => {
                   key={component.id}
                   className="component-card"
                   onClick={() => handleComponentNavigate(component.path)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleComponentNavigate(component.path)}
+                  role="button"
+                  tabIndex={0}
                 >
                   <div className="component-icon">{component.icon}</div>
                   <h3>{component.title}</h3>

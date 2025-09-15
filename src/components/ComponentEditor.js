@@ -50,7 +50,15 @@ const HealthInterventionsEditor = () => {
     <div className="component-editor">
       <div className="editor-header">
         <div className="who-branding">
-          <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
+          <button 
+            onClick={handleHomeNavigation} 
+            className="clickable-title-button"
+            style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer', textAlign: 'left' }}
+          >
+            <h1 className="clickable-title">
+              SGEX Workbench
+            </h1>
+          </button>
           <p className="subtitle">WHO SMART Guidelines Exchange</p>
         </div>
         <div className="context-info">
@@ -127,7 +135,15 @@ const ComponentEditorContent = () => {
         <div className="component-editor">
           <div className="editor-header">
             <div className="who-branding">
-              <h1 onClick={handleHomeNavigation} className="clickable-title">SGEX Workbench</h1>
+              <button 
+                onClick={handleHomeNavigation} 
+                className="clickable-title-button"
+                style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer', textAlign: 'left' }}
+              >
+                <h1 className="clickable-title">
+                  SGEX Workbench
+                </h1>
+              </button>
               <p className="subtitle">WHO SMART Guidelines Exchange</p>
             </div>
             <div className="context-info">
