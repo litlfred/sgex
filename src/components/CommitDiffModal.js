@@ -60,8 +60,28 @@ const CommitDiffModal = ({ isOpen, onClose, owner, repo, commitSha, commitMessag
   if (!isOpen) return null;
 
   return (
-    <div className="commit-diff-modal-overlay" onClick={onClose}>
-      <div className="commit-diff-modal" onClick={e => e.stopPropagation()}>
+    <div 
+      className="commit-diff-modal-overlay" 
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      }}
+      tabIndex={0}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Commit diff modal"
+    >
+      <div 
+        className="commit-diff-modal" 
+        onClick={e => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation();
+          }
+        }}
+      >
         <div className="commit-diff-header">
           <h3>📋 Commit Changes</h3>
           <button className="close-button" onClick={onClose}>✕</button>

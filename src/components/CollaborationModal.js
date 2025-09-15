@@ -139,7 +139,19 @@ const CollaborationModal = ({ onClose }) => {
   };
 
   return (
-    <div className="collaboration-modal-overlay" onClick={handleOverlayClick}>
+    <div 
+      className="collaboration-modal-overlay" 
+      onClick={handleOverlayClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      }}
+      tabIndex={0}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Collaboration modal"
+    >
       <div className="collaboration-modal">
         <div className="modal-header">
           <h2>{slides[currentSlide].title}</h2>

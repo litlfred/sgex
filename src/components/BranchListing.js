@@ -1073,6 +1073,15 @@ const BranchListing = () => {
                           <div 
                             className="discussion-summary-bar"
                             onClick={() => toggleDiscussion(pr.number)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                toggleDiscussion(pr.number);
+                              }
+                            }}
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`Toggle discussion for PR #${pr.number}`}
                           >
                             <div className="discussion-summary-text">
                               <span className="discussion-summary-icon">💬</span>
