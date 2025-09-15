@@ -265,19 +265,19 @@ const BPMNSource = () => {
               <h4>File Information</h4>
               <div className="info-grid">
                 <div className="info-item">
-                  <label>File Path:</label>
+                  <div className="info-label">File Path:</div>
                   <span className="file-path">{selectedFile.path}</span>
                 </div>
                 <div className="info-item">
-                  <label>File Size:</label>
+                  <div className="info-label">File Size:</div>
                   <span>{(selectedFile.size / 1024).toFixed(1)} KB</span>
                 </div>
                 <div className="info-item">
-                  <label>Format:</label>
+                  <div className="info-label">Format:</div>
                   <span>BPMN 2.0 XML</span>
                 </div>
                 <div className="info-item">
-                  <label>Access Level:</label>
+                  <div className="info-label">Access Level:</div>
                   <span className={`access-badge ${hasWriteAccess ? 'write' : 'read'}`}>
                     {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only'}
                   </span>

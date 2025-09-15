@@ -438,7 +438,9 @@ body.theme-dark .help-text {
   gap: 0.3rem;
 }
 
-.info-item label {
+.info-item label,
+.info-item .info-label,
+.property-item .property-label {
   font-size: 0.85rem;
   color: var(--who-text-secondary, #666);
   font-weight: 500;

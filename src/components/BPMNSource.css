@@ -305,7 +305,8 @@ body.theme-dark .source-code .xml-code {
   gap: 0.3rem;
 }
 
-.info-item label {
+.info-item label,
+.info-item .info-label {
   font-size: 0.85rem;
   color: var(--who-text-secondary);
   font-weight: 500;
