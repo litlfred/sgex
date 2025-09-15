@@ -1300,12 +1300,10 @@
 }
 
 /* Dark mode support for comment disabled notice */
-@media (prefers-color-scheme: dark) {
-  .comment-disabled-notice {
-    background-color: #451a03;
-    border-color: #92400e;
-    color: #fbbf24;
-  }
+body.theme-dark .comment-disabled-notice {
+  background-color: #451a03;
+  border-color: #92400e;
+  color: #fbbf24;
 }
 
 /* PR author link styling */
@@ -1321,14 +1319,12 @@
 }
 
 /* Dark mode support for PR author link */
-@media (prefers-color-scheme: dark) {
-  .pr-author-link {
-    color: #3b82f6;
-  }
-  
-  .pr-author-link:hover {
-    color: #60a5fa;
-  }
+body.theme-dark .pr-author-link {
+  color: #3b82f6;
+}
+
+body.theme-dark .pr-author-link:hover {
+  color: #60a5fa;
 }
 
 /* Copilot session link styling */
@@ -1348,14 +1344,12 @@
 }
 
 /* Dark mode support for copilot session links */
-@media (prefers-color-scheme: dark) {
-  .copilot-comment-link {
-    color: #059669;
-  }
-  
-  .copilot-comment-link:hover {
-    color: #10b981;
-  }
+body.theme-dark .copilot-comment-link {
+  color: #059669;
+}
+
+body.theme-dark .copilot-comment-link:hover {
+  color: #10b981;
 }
 
 /* Load more comments button */
@@ -1390,208 +1384,206 @@
 }
 
 /* Dark mode support for expanded PR status */
-@media (prefers-color-scheme: dark) {
-  .preview-badge-expanded {
-    background: #1f2937; /* Solid dark background instead of transparent */
-    border-color: #374151;
-  }
+body.theme-dark .preview-badge-expanded {
+  background: #1f2937; /* Solid dark background instead of transparent */
+  border-color: #374151;
+}
+
+body.theme-dark .expanded-header {
+  background: #111827; /* Solid dark header background */
+  border-bottom-color: #374151;
+}
+
+body.theme-dark .pr-info h3 a {
+  color: #60a5fa;
+}
+
+body.theme-dark .pr-info h3 a:hover {
+  color: #93c5fd;
+}
+
+body.theme-dark .pr-meta {
+  color: #d1d5db;
+}
+
+/* PR Description section dark mode */
+body.theme-dark .pr-description {
+  background: #1f2937;
+  border-bottom-color: #374151;
+}
+
+body.theme-dark .pr-description h4,
+body.theme-dark .comments-section h4,
+body.theme-dark .comment-form h4,
+body.theme-dark .workflow-status-wrapper h4,
+body.theme-dark .copilot-session-wrapper h4 {
+  color: #f9fafb;
+}
+
+body.theme-dark .pr-body {
+  color: #e5e7eb;
+}
+
+/* Comment header dark mode - no white background */
+body.theme-dark .comment-header {
+  background: #374151; /* Solid dark background instead of white */
+  border-bottom-color: #4b5563;
+}
+
+/* Comment form dark mode - no white background */
+body.theme-dark .comment-form {
+  background: #1f2937; /* Solid dark background instead of white */
+  border-bottom-color: #374151;
+}
+
+/* Copilot session wrapper dark mode - no white background */
+body.theme-dark .copilot-session-wrapper {
+  background: #1e293b; /* Solid dark background instead of white/light blue */
+  border-bottom-color: #374151;
+}
+
+body.theme-dark .comment {
+  background: #374151; /* Solid dark comment background */
+  border-color: #4b5563;
+}
+
+body.theme-dark .comment-author {
+  color: #60a5fa;
+}
+
+body.theme-dark .comment-author:hover {
+  color: #93c5fd;
+}
+
+body.theme-dark .comment-date,
+body.theme-dark .comment-type {
+  color: #9ca3af;
+}
+
+/* Enhanced markdown content readability in dark mode */
+body.theme-dark .markdown-content {
+  color: #f3f4f6 !important;
+}
+
+body.theme-dark .pr-body .markdown-content {
+  color: #e5e7eb !important;
+}
+
+body.theme-dark .markdown-content h1,
+body.theme-dark .markdown-content h2,
+body.theme-dark .markdown-content h3,
+body.theme-dark .markdown-content h4,
+body.theme-dark .markdown-content h5,
+body.theme-dark .markdown-content h6 {
+  color: #f9fafb !important;
+}
+
+body.theme-dark .pr-body .markdown-content h1,
+body.theme-dark .pr-body .markdown-content h2,
+body.theme-dark .pr-body .markdown-content h3,
+body.theme-dark .pr-body .markdown-content h4,
+body.theme-dark .pr-body .markdown-content h5,
+body.theme-dark .pr-body .markdown-content h6 {
+  color: #f9fafb !important;
+}
   
-  .expanded-header {
-    background: #111827; /* Solid dark header background */
-    border-bottom-color: #374151;
-  }
-  
-  .pr-info h3 a {
-    color: #60a5fa;
-  }
-  
-  .pr-info h3 a:hover {
-    color: #93c5fd;
-  }
-  
-  .pr-meta {
-    color: #d1d5db;
-  }
-  
-  /* PR Description section dark mode */
-  .pr-description {
-    background: #1f2937;
-    border-bottom-color: #374151;
-  }
-  
-  .pr-description h4,
-  .comments-section h4,
-  .comment-form h4,
-  .workflow-status-wrapper h4,
-  .copilot-session-wrapper h4 {
-    color: #f9fafb;
-  }
-  
-  .pr-body {
-    color: #e5e7eb;
-  }
-  
-  /* Comment header dark mode - no white background */
-  .comment-header {
-    background: #374151; /* Solid dark background instead of white */
-    border-bottom-color: #4b5563;
-  }
-  
-  /* Comment form dark mode - no white background */
-  .comment-form {
-    background: #1f2937; /* Solid dark background instead of white */
-    border-bottom-color: #374151;
-  }
-  
-  /* Copilot session wrapper dark mode - no white background */
-  .copilot-session-wrapper {
-    background: #1e293b; /* Solid dark background instead of white/light blue */
-    border-bottom-color: #374151;
-  }
-  
-  .comment {
-    background: #374151; /* Solid dark comment background */
-    border-color: #4b5563;
-  }
-  
-  .comment-author {
-    color: #60a5fa;
-  }
-  
-  .comment-author:hover {
-    color: #93c5fd;
-  }
-  
-  .comment-date,
-  .comment-type {
-    color: #9ca3af;
-  }
-  
-  /* Enhanced markdown content readability in dark mode */
-  .markdown-content {
-    color: #f3f4f6 !important;
-  }
-  
-  .pr-body .markdown-content {
-    color: #e5e7eb !important;
-  }
-  
-  .markdown-content h1,
-  .markdown-content h2,
-  .markdown-content h3,
-  .markdown-content h4,
-  .markdown-content h5,
-  .markdown-content h6 {
-    color: #f9fafb !important;
-  }
-  
-  .pr-body .markdown-content h1,
-  .pr-body .markdown-content h2,
-  .pr-body .markdown-content h3,
-  .pr-body .markdown-content h4,
-  .pr-body .markdown-content h5,
-  .pr-body .markdown-content h6 {
-    color: #f9fafb !important;
-  }
-  
-  .markdown-content p {
-    color: inherit;
-  }
-  
-  .markdown-content code {
-    background: #1f2937;
-    color: #fbbf24;
-    border: 1px solid #374151;
-  }
-  
-  .markdown-content pre {
-    background: #1f2937;
-    border: 1px solid #374151;
-  }
-  
-  .markdown-content pre code {
-    color: #e5e7eb;
-  }
-  
-  .markdown-content blockquote {
-    border-left-color: #374151;
-    background: #1f2937;
-    color: #d1d5db;
-  }
-  
-  .markdown-content a {
-    color: #60a5fa;
-  }
-  
-  .markdown-content a:hover {
-    color: #93c5fd;
-  }
-  
-  /* Comment-specific markdown content dark mode overrides */
-  .comment-preview .markdown-content code,
-  .comment-full .markdown-content code,
-  .copilot-comment-body .markdown-content code {
-    background: #1f2937;
-    color: #fbbf24;
-    border: 1px solid #374151;
-  }
-  
-  .comment-preview .markdown-content pre,
-  .comment-full .markdown-content pre,
-  .copilot-comment-body .markdown-content pre {
-    background: #1f2937;
-    border: 1px solid #374151;
-  }
-  
-  .comment-preview .markdown-content pre code,
-  .comment-full .markdown-content pre code,
-  .copilot-comment-body .markdown-content pre code {
-    background: none;
-    color: #e5e7eb;
-    border: none;
-  }
-  
-  .comment-preview .markdown-content blockquote,
-  .comment-full .markdown-content blockquote,
-  .copilot-comment-body .markdown-content blockquote {
-    border-left-color: #374151;
-    background: #1f2937;
-    color: #d1d5db;
-  }
-  
-  .comment-preview .markdown-content a,
-  .comment-full .markdown-content a,
-  .copilot-comment-body .markdown-content a {
-    color: #60a5fa;
-  }
-  
-  .comment-preview .markdown-content a:hover,
-  .comment-full .markdown-content a:hover,
-  .copilot-comment-body .markdown-content a:hover {
-    color: #93c5fd;
-  }
-  
-  .comment-form textarea {
-    background: #374151;
-    border-color: #4b5563;
-    color: #f3f4f6;
-  }
-  
-  .comment-form textarea:focus {
-    border-color: #3b82f6;
-  }
-  
-  .comment-form textarea::placeholder {
-    color: #9ca3af;
-  }
-  
-  .load-more-btn {
-    background: linear-gradient(135deg, #1e40af, #1d4ed8);
-  }
-  
-  .load-more-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #1e3a8a, #1e40af);
-  }
+body.theme-dark .markdown-content p {
+  color: inherit;
+}
+
+body.theme-dark .markdown-content code {
+  background: #1f2937;
+  color: #fbbf24;
+  border: 1px solid #374151;
+}
+
+body.theme-dark .markdown-content pre {
+  background: #1f2937;
+  border: 1px solid #374151;
+}
+
+body.theme-dark .markdown-content pre code {
+  color: #e5e7eb;
+}
+
+body.theme-dark .markdown-content blockquote {
+  border-left-color: #374151;
+  background: #1f2937;
+  color: #d1d5db;
+}
+
+body.theme-dark .markdown-content a {
+  color: #60a5fa;
+}
+
+body.theme-dark .markdown-content a:hover {
+  color: #93c5fd;
+}
+
+/* Comment-specific markdown content dark mode overrides */
+body.theme-dark .comment-preview .markdown-content code,
+body.theme-dark .comment-full .markdown-content code,
+body.theme-dark .copilot-comment-body .markdown-content code {
+  background: #1f2937;
+  color: #fbbf24;
+  border: 1px solid #374151;
+}
+
+body.theme-dark .comment-preview .markdown-content pre,
+body.theme-dark .comment-full .markdown-content pre,
+body.theme-dark .copilot-comment-body .markdown-content pre {
+  background: #1f2937;
+  border: 1px solid #374151;
+}
+
+body.theme-dark .comment-preview .markdown-content pre code,
+body.theme-dark .comment-full .markdown-content pre code,
+body.theme-dark .copilot-comment-body .markdown-content pre code {
+  background: none;
+  color: #e5e7eb;
+  border: none;
+}
+
+body.theme-dark .comment-preview .markdown-content blockquote,
+body.theme-dark .comment-full .markdown-content blockquote,
+body.theme-dark .copilot-comment-body .markdown-content blockquote {
+  border-left-color: #374151;
+  background: #1f2937;
+  color: #d1d5db;
+}
+
+body.theme-dark .comment-preview .markdown-content a,
+body.theme-dark .comment-full .markdown-content a,
+body.theme-dark .copilot-comment-body .markdown-content a {
+  color: #60a5fa;
+}
+
+body.theme-dark .comment-preview .markdown-content a:hover,
+body.theme-dark .comment-full .markdown-content a:hover,
+body.theme-dark .copilot-comment-body .markdown-content a:hover {
+  color: #93c5fd;
+}
+
+body.theme-dark .comment-form textarea {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+body.theme-dark .comment-form textarea:focus {
+  border-color: #3b82f6;
+}
+
+body.theme-dark .comment-form textarea::placeholder {
+  color: #9ca3af;
+}
+
+body.theme-dark .load-more-btn {
+  background: linear-gradient(135deg, #1e40af, #1d4ed8);
+}
+
+body.theme-dark .load-more-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1e3a8a, #1e40af);
 }
 
 /* PR Actions Section */
@@ -1748,122 +1740,175 @@
 }
 
 /* Dark mode support for PR actions */
-@media (prefers-color-scheme: dark) {
-  .pr-actions-wrapper {
-    background: #1e293b;
-    border-bottom-color: #374151;
-  }
-  
-  .pr-actions-wrapper h4 {
-    color: #f9fafb;
-  }
-  
-  .pr-actions-status {
-    color: #f3f4f6;
-  }
-  
-  .pr-actions-note {
-    color: #9ca3af;
-  }
-  
-  .pr-merge-btn {
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
-  }
-  
-  .pr-merge-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #4f46e5, #4338ca);
-  }
-  
-  /* PR Review dark mode styles */
-  .pr-review-note {
-    background: #374151;
-    color: #d1d5db;
-    border-left-color: #3b82f6;
-  }
-  
-  .pr-approve-btn {
-    background: linear-gradient(135deg, #059669, #047857);
-  }
-  
-  .pr-approve-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #047857, #065f46);
-  }
-  
-  .pr-request-changes-btn {
-    background: linear-gradient(135deg, #dc2626, #b91c1c);
-  }
-  
-  .pr-request-changes-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #b91c1c, #991b1b);
-  }
-  
-  /* Copilot session dark mode styles */
-  .copilot-session-wrapper {
-    background: #1e293b !important;
-    border-bottom-color: #374151;
-  }
-  
-  .copilot-session-wrapper h4 {
-    color: #f9fafb !important;
-  }
-  
-  .copilot-session-modal {
-    background: #1f2937 !important;
-    border-color: #374151 !important;
-  }
-  
-  .copilot-session-header {
-    background: #374151 !important;
-    border-bottom-color: #4b5563 !important;
-    color: #f9fafb !important;
-  }
-  
-  .copilot-session-header strong {
-    color: #f9fafb !important;
-  }
-  
-  .copilot-comment-date {
-    color: #9ca3af !important;
-  }
-  
-  .copilot-session-content {
-    background: #1f2937 !important;
-  }
-  
-  .copilot-username {
-    color: #60a5fa !important;
-  }
-  
-  .copilot-comment-body {
-    background: #1e293b !important;
-    color: #e5e7eb !important;
-    border-left-color: #60a5fa !important;
-  }
-  
-  .copilot-activity,
-  .copilot-hint {
-    color: #9ca3af !important;
-  }
-  
-  .copilot-status {
-    color: #f9fafb !important;
-  }
-  
-  .copilot-comments-count {
-    color: #60a5fa !important;
-  }
-  
-  .copilot-watching-status {
-    color: #60a5fa !important;
-  }
+body.theme-dark .pr-actions-wrapper {
+  background: #1e293b;
+  border-bottom-color: #374151;
+}
 
-  .copilot-last-check {
-    color: #9ca3af !important;
-  }
+body.theme-dark .pr-actions-wrapper h4 {
+  color: #f9fafb;
+}
 
-  .copilot-refresh-count {
-    color: #10b981 !important;
-  }
+body.theme-dark .pr-actions-status {
+  color: #f3f4f6;
+}
+
+body.theme-dark .pr-actions-note {
+  color: #9ca3af;
+}
+
+body.theme-dark .pr-merge-btn {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+body.theme-dark .pr-merge-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+}
+
+/* PR Review dark mode styles */
+body.theme-dark .pr-review-note {
+  background: #374151;
+  color: #d1d5db;
+  border-left-color: #3b82f6;
+}
+
+body.theme-dark .pr-approve-btn {
+  background: linear-gradient(135deg, #059669, #047857);
+}
+
+body.theme-dark .pr-approve-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #047857, #065f46);
+}
+
+body.theme-dark .pr-request-changes-btn {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+body.theme-dark .pr-request-changes-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b91c1c, #991b1b);
+}
+
+/* Copilot session dark mode styles */
+body.theme-dark .copilot-session-wrapper {
+  background: #1e293b !important;
+  border-bottom-color: #374151;
+}
+
+body.theme-dark .copilot-session-wrapper h4 {
+  color: #f9fafb !important;
+}
+
+body.theme-dark .copilot-session-modal {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+body.theme-dark .copilot-session-header {
+  background: #374151 !important;
+  border-bottom-color: #4b5563 !important;
+  color: #f9fafb !important;
+}
+
+body.theme-dark .copilot-session-header strong {
+  color: #f9fafb !important;
+}
+
+body.theme-dark .copilot-comment-date {
+  color: #9ca3af !important;
+}
+
+body.theme-dark .copilot-session-content {
+  background: #1f2937 !important;
+}
+
+body.theme-dark .copilot-username {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-comment-body {
+  background: #1e293b !important;
+  color: #e5e7eb !important;
+  border-left-color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-activity,
+body.theme-dark .copilot-hint {
+  color: #9ca3af !important;
+}
+
+body.theme-dark .copilot-status {
+  color: #f9fafb !important;
+}
+
+body.theme-dark .copilot-comments-count {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-watching-status {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-last-check {
+  color: #9ca3af !important;
+}
+
+body.theme-dark .copilot-refresh-count {
+  color: #10b981 !important;
+}
+
+/* Dark mode support for new copilot session modal */
+body.theme-dark .session-url-link {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-responses-header {
+  border-bottom-color: #4b5563;
+}
+
+body.theme-dark .copilot-responses-header strong {
+  color: #f9fafb !important;
+}
+
+body.theme-dark .copilot-response-item {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  border-left-color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-response-username {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-response-date {
+  color: #9ca3af !important;
+}
+
+body.theme-dark .copilot-response-body .markdown-content {
+  color: #e5e7eb !important;
+}
+
+body.theme-dark .read-full-response {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-more-responses {
+  border-top-color: #4b5563;
+}
+
+body.theme-dark .view-more-responses {
+  color: #60a5fa !important;
+}
+
+body.theme-dark .copilot-activity-date {
+  color: #9ca3af !important;
+}
+
+body.theme-dark .no-copilot-activity {
+  color: #9ca3af !important;
+}
+
+body.theme-dark .no-copilot-activity a {
+  color: #60a5fa !important;
 }
 
 /* Workflow view toggle styles */
@@ -2112,61 +2157,4 @@ body.theme-dark .toggle-option.active:hover {
 .no-copilot-activity a {
   color: #0366d6;
   word-break: break-all;
-}
-
-/* Dark mode support for new copilot session modal */
-@media (prefers-color-scheme: dark) {
-  .session-url-link {
-    color: #60a5fa !important;
-  }
-  
-  .copilot-responses-header {
-    border-bottom-color: #4b5563;
-  }
-  
-  .copilot-responses-header strong {
-    color: #f9fafb !important;
-  }
-  
-  .copilot-response-item {
-    background: #374151 !important;
-    border-color: #4b5563 !important;
-    border-left-color: #60a5fa !important;
-  }
-  
-  .copilot-response-username {
-    color: #60a5fa !important;
-  }
-  
-  .copilot-response-date {
-    color: #9ca3af !important;
-  }
-  
-  .copilot-response-body .markdown-content {
-    color: #e5e7eb !important;
-  }
-  
-  .read-full-response {
-    color: #60a5fa !important;
-  }
-  
-  .copilot-more-responses {
-    border-top-color: #4b5563;
-  }
-  
-  .view-more-responses {
-    color: #60a5fa !important;
-  }
-  
-  .copilot-activity-date {
-    color: #9ca3af !important;
-  }
-  
-  .no-copilot-activity {
-    color: #9ca3af !important;
-  }
-  
-  .no-copilot-activity a {
-    color: #60a5fa !important;
-  }
 }
