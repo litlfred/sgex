@@ -17,7 +17,8 @@ import {
   lazyLoadAjv, 
   lazyLoadAjvFormats,
   lazyLoadMonacoEditor,
-  lazyLoadArchimateViewer
+  lazyLoadArchimateViewer,
+  lazyLoadGraphVizService
 } from './libraryLoaderService';
 
 /**
@@ -84,6 +85,15 @@ export async function createLazyArchimateViewer(options = {}) {
 }
 
 /**
+ * Create a lazy-loaded GraphViz Service instance
+ * @returns {Promise<GraphVizService>} GraphViz service with layout methods
+ */
+export async function createLazyGraphVizService() {
+  const GraphVizService = await lazyLoadGraphVizService();
+  return GraphVizService;
+}
+
+/**
  * Lazy factory utilities for unified access
  */
 const LazyFactoryService = {
@@ -92,7 +102,8 @@ const LazyFactoryService = {
   createLazyBpmnViewer,
   createLazyAjv,
   createLazyMonacoEditor,
-  createLazyArchimateViewer
+  createLazyArchimateViewer,
+  createLazyGraphVizService
 };
 
 export default LazyFactoryService;

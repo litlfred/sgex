@@ -262,6 +262,24 @@ export async function lazyLoadArchimateViewer() {
 }
 
 /**
+ * Lazy load GraphViz service for SVG layout generation
+ * @returns {Promise<GraphVizService>} GraphViz service module
+ */
+export async function lazyLoadGraphVizService() {
+  const cacheKey = 'graphviz-service';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  // Import our custom GraphViz service
+  const GraphVizService = await import('./graphvizService');
+  const service = GraphVizService.default;
+  moduleCache.set(cacheKey, service);
+  return service;
+}
+
+/**
  * Clear the module cache (useful for testing)
  */
 export function clearLazyImportCache() {
@@ -286,6 +304,7 @@ const LibraryLoaderService = {
   lazyLoadRehypeRaw,
   lazyLoadMonacoEditor,
   lazyLoadArchimateViewer,
+  lazyLoadGraphVizService,
   clearLazyImportCache
 };
 

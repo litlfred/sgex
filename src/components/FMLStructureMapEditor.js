@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PageLayout, usePage } from './framework';
-import { createLazyArchimateViewer, createLazyMonacoEditor, createLazyBpmnViewer } from '../services/lazyFactoryService';
+import { createLazyArchimateViewer, createLazyMonacoEditor, createLazyBpmnViewer, createLazyGraphVizService } from '../services/lazyFactoryService';
 import { generateArchimateModel, parseLogicalModelForArchimate } from '../services/archimateModelService';
 import githubService from '../services/githubService';
 import ContextualHelpMascot from './ContextualHelpMascot';
@@ -36,6 +36,9 @@ const FMLStructureMapEditorContent = () => {
   const [logicalModels, setLogicalModels] = useState([]);
   const [archimateModel, setArchimateModel] = useState(null);
   const [dakConcepts, setDakConcepts] = useState([]);
+  const [layoutEngine, setLayoutEngine] = useState('dot');
+  const [graphvizService, setGraphvizService] = useState(null);
+  const [layoutCoordinates, setLayoutCoordinates] = useState({});
   
   // Component refs
   const archimateViewerRef = useRef(null);
@@ -178,6 +181,10 @@ const FMLStructureMapEditorContent = () => {
       setError(null);
       
       try {
+        // Initialize GraphViz service
+        const gvService = await createLazyGraphVizService();
+        setGraphvizService(gvService);
+        
         await Promise.all([
           loadLogicalModels(),
           loadFMLFiles()
@@ -273,6 +280,118 @@ const FMLStructureMapEditorContent = () => {
 </bpmn:definitions>`;
   };
   
+  // Generate GraphViz layout for strategic view
+  const generateStrategicLayout = useCallback(async () => {
+    if (!graphvizService || !archimateModel || !archimateModel.elements.length) return;
+    
+    try {
+      console.log('Generating strategic layout with GraphViz...');
+      const layoutResult = await graphvizService.generateArchimateLayout(archimateModel, {
+        engine: layoutEngine,
+        showDataObjects: true,
+        groupByType: true
+      });
+      
+      if (layoutResult.success) {
+        setLayoutCoordinates(layoutResult.coordinates);
+        console.log('Strategic layout generated successfully:', layoutResult.engine);
+      } else {
+        console.warn('GraphViz layout failed, using fallback:', layoutResult.error);
+        setLayoutCoordinates(layoutResult.fallbackCoordinates || {});
+      }
+    } catch (error) {
+      console.error('Failed to generate strategic layout:', error);
+    }
+  }, [graphvizService, archimateModel, layoutEngine]);
+  
+  // Generate GraphViz layout for technical mapping view
+  const generateTechnicalLayout = useCallback(async () => {
+    if (!graphvizService || !logicalModels.length) return;
+    
+    try {
+      console.log('Generating technical mapping layout with GraphViz...');
+      
+      // Generate relationships between models for layout
+      const relationships = generateModelRelationships(logicalModels);
+      
+      const layoutResult = await graphvizService.generateLogicalModelLayout(
+        logicalModels, 
+        relationships,
+        {
+          engine: layoutEngine,
+          rankDir: 'TB',
+          nodeSpacing: 150,
+          rankSep: 100
+        }
+      );
+      
+      if (layoutResult.success) {
+        setLayoutCoordinates(layoutResult.coordinates);
+        console.log('Technical layout generated successfully:', layoutResult.engine);
+      } else {
+        console.warn('GraphViz layout failed, using fallback:', layoutResult.error);
+        setLayoutCoordinates(layoutResult.fallbackCoordinates || {});
+      }
+    } catch (error) {
+      console.error('Failed to generate technical layout:', error);
+    }
+  }, [graphvizService, logicalModels, layoutEngine]);
+  
+  // Generate simple relationships for GraphViz layout
+  const generateModelRelationships = (models) => {
+    const relationships = [];
+    
+    // Create relationships between models with similar names
+    for (let i = 0; i < models.length; i++) {
+      for (let j = i + 1; j < models.length; j++) {
+        const model1 = models[i];
+        const model2 = models[j];
+        
+        if (haveSimilarNames(model1.metadata?.title || model1.fileName, 
+                            model2.metadata?.title || model2.fileName)) {
+          relationships.push({
+            sourceIndex: i,
+            targetIndex: j,
+            type: 'related to',
+            description: 'Models with related concepts'
+          });
+        }
+      }
+    }
+    
+    return relationships;
+  };
+  
+  // Check if two model names are similar
+  const haveSimilarNames = (name1, name2) => {
+    if (!name1 || !name2) return false;
+    
+    const normalize = (str) => str.toLowerCase().replace(/[-_\s]/g, '');
+    const norm1 = normalize(name1);
+    const norm2 = normalize(name2);
+    
+    // Check for common prefixes or shared keywords
+    const words1 = name1.toLowerCase().split(/[-_\s]+/);
+    const words2 = name2.toLowerCase().split(/[-_\s]+/);
+    
+    const commonWords = words1.filter(word => words2.includes(word) && word.length > 2);
+    return commonWords.length > 0;
+  };
+  
+  // Trigger layout generation when data or settings change
+  useEffect(() => {
+    if (viewMode === 'strategic') {
+      generateStrategicLayout();
+    } else if (viewMode === 'technical') {
+      generateTechnicalLayout();
+    }
+  }, [viewMode, archimateModel, logicalModels, layoutEngine, generateStrategicLayout, generateTechnicalLayout]);
+  
+  // Handle layout engine change
+  const handleLayoutEngineChange = (engine) => {
+    setLayoutEngine(engine);
+  };
+  
   // Handle FML file selection
   const handleFMLFileSelect = async (file) => {
     try {
@@ -340,18 +459,44 @@ const FMLStructureMapEditorContent = () => {
       
       {/* View Mode Selector */}
       <div className="view-mode-selector">
-        <button 
-          className={`mode-btn ${viewMode === 'strategic' ? 'active' : ''}`}
-          onClick={() => setViewMode('strategic')}
-        >
-          📊 Strategic View (ArchiMate)
-        </button>
-        <button 
-          className={`mode-btn ${viewMode === 'technical' ? 'active' : ''}`}
-          onClick={() => setViewMode('technical')}
-        >
-          🔧 Technical View (Mapping)
-        </button>
+        <div className="mode-buttons">
+          <button 
+            className={`mode-btn ${viewMode === 'strategic' ? 'active' : ''}`}
+            onClick={() => setViewMode('strategic')}
+          >
+            📊 Strategic View (ArchiMate)
+          </button>
+          <button 
+            className={`mode-btn ${viewMode === 'technical' ? 'active' : ''}`}
+            onClick={() => setViewMode('technical')}
+          >
+            🔧 Technical View (Mapping)
+          </button>
+        </div>
+        
+        {/* GraphViz Layout Engine Selector */}
+        <div className="layout-controls">
+          <label htmlFor="layout-engine">Layout Engine:</label>
+          <select 
+            id="layout-engine"
+            value={layoutEngine} 
+            onChange={(e) => handleLayoutEngineChange(e.target.value)}
+            className="layout-engine-select"
+          >
+            <option value="dot">Dot - Hierarchical (trees)</option>
+            <option value="neato">Neato - Spring model (networks)</option>
+            <option value="fdp">FDP - Force-directed (large graphs)</option>
+            <option value="circo">Circo - Circular (cycles)</option>
+            <option value="twopi">Twopi - Radial (hub-spoke)</option>
+          </select>
+          <button 
+            onClick={() => viewMode === 'strategic' ? generateStrategicLayout() : generateTechnicalLayout()}
+            className="regenerate-layout-btn"
+            disabled={!graphvizService}
+          >
+            🔄 Regenerate Layout
+          </button>
+        </div>
       </div>
       
       {error && (

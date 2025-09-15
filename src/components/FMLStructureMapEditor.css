@@ -92,9 +92,17 @@
 .view-mode-selector {
   padding: 20px 40px;
   display: flex;
-  gap: 20px;
+  justify-content: space-between;
+  align-items: center;
   background: rgba(255, 255, 255, 0.1);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.mode-buttons {
+  display: flex;
+  gap: 15px;
 }
 
 .mode-btn {
@@ -118,6 +126,70 @@
   background: rgba(255, 255, 255, 0.2);
   border-color: white;
   font-weight: 600;
+}
+
+/* Layout Controls */
+.layout-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.layout-controls label {
+  color: white;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.layout-engine-select {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: #333;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.layout-engine-select:hover {
+  background: white;
+  border-color: #0078d4;
+}
+
+.layout-engine-select:focus {
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+.regenerate-layout-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.regenerate-layout-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.regenerate-layout-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Error Banner */
@@ -430,7 +502,31 @@
   .view-mode-selector {
     padding: 15px 20px;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
+  }
+  
+  .mode-buttons {
+    justify-content: center;
+  }
+  
+  .layout-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .layout-controls label {
+    font-size: 0.85rem;
+  }
+  
+  .layout-engine-select {
+    font-size: 0.85rem;
+    padding: 5px 10px;
+  }
+  
+  .regenerate-layout-btn {
+    font-size: 0.8rem;
+    padding: 5px 10px;
   }
   
   .fml-editor-content {
