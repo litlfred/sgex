@@ -138,7 +138,12 @@ jobs:
           echo "Building with PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}"
           echo "Building with REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}"
           
-          # Build the React app
+          # Ensure repository configuration is available for build
+          echo "Repository: ${{ github.repository }}"
+          echo "Repository Owner: $REACT_APP_REPO_OWNER"
+          echo "Repository Name: $REACT_APP_REPO_NAME"
+          
+          # Use npm run build which includes configure:repo step
           npm run build
         env:
           CI: false
@@ -147,6 +152,10 @@ jobs:
           PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}
           GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
           REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
+          REACT_APP_REPO_OWNER: ${{ github.repository_owner }}
+          REACT_APP_REPO_NAME: ${{ github.event.repository.name }}
+          REACT_APP_REPO_FULL_NAME: ${{ github.repository }}
+          REACT_APP_REPO_CONFIG_SOURCE: github-actions
 
       - name: Validate branch directory safety
         id: validate_branch

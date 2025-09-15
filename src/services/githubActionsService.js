@@ -3,7 +3,7 @@
  * Provides functionality to fetch workflow runs and trigger workflows
  */
 
-import repositoryConfig from '../config/repositoryConfig';
+import environmentConfig from '../config/environmentConfig';
 
 class GitHubActionsService {
   constructor() {
@@ -15,14 +15,14 @@ class GitHubActionsService {
    * Get the repository owner
    */
   get owner() {
-    return repositoryConfig.getOwner();
+    return environmentConfig.getRepoOwner();
   }
 
   /**
    * Get the repository name
    */
   get repo() {
-    return repositoryConfig.getName();
+    return environmentConfig.getRepoName();
   }
 
   /**
