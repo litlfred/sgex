@@ -19,7 +19,7 @@ const BPMNViewerContent = () => {
   const containerRef = useRef(null);
   
   // Get page data from framework
-  const { profile, repository, branch, asset, loading: pageLoading, error: pageError } = usePage();
+  const { profile, repository, branch, asset } = usePage();
   
   console.log('BPMNViewer: Page framework data:', { profile: !!profile, repository: !!repository, branch, asset });
   console.log('BPMNViewer: Location state (legacy):', location.state);

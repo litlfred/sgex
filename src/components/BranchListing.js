@@ -493,13 +493,13 @@ const BranchListing = () => {
             </div>
             <h3>🚀 Ready to Contribute?</h3>
             <div class="action-buttons">
-              <a href={`${repositoryConfig.getGitHubUrl()}/issues/new`} target="_blank" class="contribute-btn primary">
+              <a href="${repositoryConfig.getGitHubUrl()}/issues/new" target="_blank" class="contribute-btn primary">
                 🐛 Report a Bug
               </a>
-              <a href={`${repositoryConfig.getGitHubUrl()}/issues/new?template=feature_request.md`} target="_blank" class="contribute-btn secondary">
+              <a href="${repositoryConfig.getGitHubUrl()}/issues/new?template=feature_request.md" target="_blank" class="contribute-btn secondary">
                 ✨ Request a Feature  
               </a>
-              <a href={`${repositoryConfig.getGitHubUrl()}/tree/main/public/docs`} target="_blank" class="contribute-btn tertiary-alt">
+              <a href="${repositoryConfig.getGitHubUrl()}/tree/main/public/docs" target="_blank" class="contribute-btn tertiary-alt">
                 📖 Docs on GitHub
               </a>
             </div>
