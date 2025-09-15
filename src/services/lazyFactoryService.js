@@ -15,7 +15,9 @@ import {
   lazyLoadBpmnModeler, 
   lazyLoadBpmnViewer, 
   lazyLoadAjv, 
-  lazyLoadAjvFormats 
+  lazyLoadAjvFormats,
+  lazyLoadMonacoEditor,
+  lazyLoadArchimateViewer
 } from './libraryLoaderService';
 
 /**
@@ -62,13 +64,35 @@ export async function createLazyAjv(options = {}) {
 }
 
 /**
+ * Create a lazy-loaded Monaco Editor instance
+ * @param {Object} options - Monaco Editor configuration options
+ * @returns {Promise<MonacoEditor>} Monaco Editor component
+ */
+export async function createLazyMonacoEditor(options = {}) {
+  const MonacoEditor = await lazyLoadMonacoEditor();
+  return MonacoEditor;
+}
+
+/**
+ * Create a lazy-loaded ArchiMate Viewer instance
+ * @param {Object} options - ArchiMate viewer configuration options
+ * @returns {Promise<ArchiMateViewer>} Configured ArchiMate viewer instance
+ */
+export async function createLazyArchimateViewer(options = {}) {
+  const ArchiMateViewer = await lazyLoadArchimateViewer();
+  return new ArchiMateViewer(options);
+}
+
+/**
  * Lazy factory utilities for unified access
  */
 const LazyFactoryService = {
   createLazyOctokit,
   createLazyBpmnModeler,
   createLazyBpmnViewer,
-  createLazyAjv
+  createLazyAjv,
+  createLazyMonacoEditor,
+  createLazyArchimateViewer
 };
 
 export default LazyFactoryService;

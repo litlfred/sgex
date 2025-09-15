@@ -119,6 +119,9 @@ function createLazyComponent(componentName) {
     case 'QuestionnaireEditor':
       LazyComponent = React.lazy(() => import('../components/QuestionnaireEditor'));
       break;
+    case 'FMLStructureMapEditor':
+      LazyComponent = React.lazy(() => import('../components/FMLStructureMapEditor'));
+      break;
     
     default:
       console.warn(`Unknown component ${componentName}, using fallback`);

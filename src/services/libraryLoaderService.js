@@ -227,6 +227,41 @@ export async function lazyLoadRehypeRaw() {
 }
 
 /**
+ * Lazy load Monaco Editor for code editing with syntax highlighting
+ * @returns {Promise<MonacoEditor>} Monaco Editor component
+ */
+export async function lazyLoadMonacoEditor() {
+  const cacheKey = 'monaco-editor';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  const MonacoEditor = await import('@monaco-editor/react');
+  const editor = MonacoEditor.default;
+  moduleCache.set(cacheKey, editor);
+  return editor;
+}
+
+/**
+ * Lazy load ArchiMate.js for ArchiMate diagram visualization
+ * @returns {Promise<ArchiMateViewer>} ArchiMate viewer constructor
+ */
+export async function lazyLoadArchimateViewer() {
+  const cacheKey = 'archimate-viewer';
+  
+  if (moduleCache.has(cacheKey)) {
+    return moduleCache.get(cacheKey);
+  }
+  
+  // archimate-js provides Viewer component for visualization
+  const ArchimateModule = await import('archimate-js');
+  const Viewer = ArchimateModule.Viewer || ArchimateModule.default?.Viewer || ArchimateModule.default;
+  moduleCache.set(cacheKey, Viewer);
+  return Viewer;
+}
+
+/**
  * Clear the module cache (useful for testing)
  */
 export function clearLazyImportCache() {
@@ -249,6 +284,8 @@ const LibraryLoaderService = {
   lazyLoadAjvFormats,
   lazyLoadDOMPurify,
   lazyLoadRehypeRaw,
+  lazyLoadMonacoEditor,
+  lazyLoadArchimateViewer,
   clearLazyImportCache
 };
 
