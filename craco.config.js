@@ -125,9 +125,27 @@ module.exports = {
     configure: (webpackConfig, { env, paths }) => {
       // Suppress CSS ordering warnings from mini-css-extract-plugin in production builds
       if (env === 'production') {
+        // Find and modify MiniCssExtractPlugin
         webpackConfig.plugins.forEach(plugin => {
           if (plugin.constructor.name === 'MiniCssExtractPlugin') {
+            plugin.options = plugin.options || {};
             plugin.options.ignoreOrder = true;
+          }
+        });
+        
+        // Also check module rules for the plugin loader options
+        webpackConfig.module.rules.forEach(rule => {
+          if (rule.oneOf) {
+            rule.oneOf.forEach(oneOfRule => {
+              if (oneOfRule.use && Array.isArray(oneOfRule.use)) {
+                oneOfRule.use.forEach(useItem => {
+                  if (useItem.loader && useItem.loader.includes('mini-css-extract-plugin')) {
+                    useItem.options = useItem.options || {};
+                    useItem.options.ignoreOrder = true;
+                  }
+                });
+              }
+            });
           }
         });
       }

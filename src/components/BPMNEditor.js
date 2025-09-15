@@ -367,6 +367,14 @@ const BPMNEditor = () => {
                       key={file.sha}
                       className={`file-item ${selectedFile?.sha === file.sha ? 'selected' : ''}`}
                       onClick={() => loadBpmnFile(file)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          loadBpmnFile(file);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                     >
                       <div className="file-icon">📋</div>
                       <div className="file-details">
