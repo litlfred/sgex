@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import helpContentService from '../services/helpContentService';
-import tutorialService from '../services/tutorialService';
 import cacheManagementService from '../services/cacheManagementService';
 import issueTrackingService from '../services/issueTrackingService';
 import githubService from '../services/githubService';
@@ -38,7 +37,6 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const { t, i18n } = useTranslation();
   const { user, repo } = useParams(); // Extract DAK context from URL
   const [showHelp, setShowHelp] = useState(false);
-  const [helpSticky, setHelpSticky] = useState(false);
   const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(getSavedTheme() === 'dark');
   const [cacheClearing, setCacheClearing] = useState(false);

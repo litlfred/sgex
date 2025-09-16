@@ -29,7 +29,6 @@ const BranchListing = () => {
   const [checkingStatuses, setCheckingStatuses] = useState(false);
   const [prFilter, setPrFilter] = useState('open'); // 'open', 'closed', 'all'
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [githubToken, setGithubToken] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
   const [submittingComments, setSubmittingComments] = useState({});
   const [expandedDiscussions, setExpandedDiscussions] = useState({});
@@ -53,7 +52,7 @@ const BranchListing = () => {
   }, []);
 
   // GitHub authentication functions
-  const handleAuthSuccess = (token, octokitInstance) => {
+  const handleAuthSuccess = (token) => {
     // Use githubService for authentication management
     const success = githubService.authenticate(token);
     if (success) {

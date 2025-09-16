@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import githubService from '../services/githubService';
 
-const CommitDiffModal = ({ isOpen, onClose, owner, repo, commitSha, commitMessage }) => {
+const CommitDiffModal = ({ isOpen, onClose, owner, repo, commitSha }) => {
   const [commitData, setCommitData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
