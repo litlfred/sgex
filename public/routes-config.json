@@ -53,6 +53,10 @@
     "faq-demo": {
       "component": "DAKFAQDemo",
       "path": "./components/DAKFAQDemo"
+    },
+    "user-scenarios": {
+      "component": "UserScenariosViewer",
+      "path": "./components/UserScenariosViewer"
     }
   },
   "standardComponents": {
