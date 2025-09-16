@@ -334,6 +334,141 @@ class HelpContentService {
           ]
         }
       ],
+      'user-scenarios': [
+        {
+          id: 'user-scenarios-overview',
+          title: 'Understanding User Scenarios',
+          badge: '/sgex/cat-paw-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'What are User Scenarios?',
+              content: `
+                <p>User scenarios are narrative descriptions that document how different personas interact with healthcare systems in specific contexts.</p>
+                <h4>🎯 Purpose</h4>
+                <ul>
+                  <li>Document user journeys and interaction patterns</li>
+                  <li>Capture real-world usage scenarios</li>
+                  <li>Bridge the gap between personas and business processes</li>
+                  <li>Provide context for system requirements and design decisions</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💡 L2 vs L3:</strong> User scenarios exist at both Level 2 (narrative descriptions) and Level 3 (FHIR scenario test bundles).
+                </div>
+              `
+            },
+            {
+              title: 'Scenario Structure',
+              content: `
+                <p>Well-structured user scenarios typically include these elements:</p>
+                <h4>📋 Essential Components</h4>
+                <ul>
+                  <li><strong>Overview</strong> - Brief description of the scenario</li>
+                  <li><strong>Actors</strong> - Primary and secondary personas involved</li>
+                  <li><strong>Preconditions</strong> - Starting state or requirements</li>
+                  <li><strong>Flow of Events</strong> - Step-by-step interaction sequence</li>
+                  <li><strong>Postconditions</strong> - Expected outcomes</li>
+                  <li><strong>Alternative Flows</strong> - Different paths through the scenario</li>
+                  <li><strong>Exception Flows</strong> - Error handling and recovery</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>✨ Best Practice:</strong> Reference specific personas from your DAK's actor definitions.
+                </div>
+              `
+            },
+            {
+              title: 'File Naming Convention',
+              content: `
+                <p>User scenario files follow WHO SMART Guidelines naming conventions:</p>
+                <h4>📁 File Pattern</h4>
+                <code>input/pagecontent/userscenario-{id}.md</code>
+                <h4>🏷️ ID Requirements</h4>
+                <ul>
+                  <li>Lowercase letters and numbers only</li>
+                  <li>Use hyphens (-) instead of spaces</li>
+                  <li>3-50 characters in length</li>
+                  <li>Descriptive and meaningful</li>
+                </ul>
+                <h4>Examples</h4>
+                <ul>
+                  <li><code>userscenario-patient-registration.md</code></li>
+                  <li><code>userscenario-immunization-workflow.md</code></li>
+                  <li><code>userscenario-emergency-care-triage.md</code></li>
+                </ul>
+              `
+            }
+          ]
+        },
+        {
+          id: 'editing-scenarios',
+          title: 'Creating and Editing Scenarios',
+          badge: '/sgex/cat-paw-edit-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Creating New Scenarios',
+              content: `
+                <p>Follow these steps to create a new user scenario:</p>
+                <h4>🆕 Creation Process</h4>
+                <ol>
+                  <li>Click the <strong>"Create New Scenario"</strong> button</li>
+                  <li>Enter a descriptive title for your scenario</li>
+                  <li>Review the auto-generated ID (or customize if needed)</li>
+                  <li>Click <strong>"Create Scenario"</strong> to generate the file</li>
+                  <li>Edit the template content to match your specific scenario</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>🔧 Auto-Generation:</strong> The system creates a structured template with all standard sections.
+                </div>
+              `
+            },
+            {
+              title: 'Edit and Preview Modes',
+              content: `
+                <p>The scenario editor provides two modes for working with content:</p>
+                <h4>✏️ Edit Mode</h4>
+                <ul>
+                  <li>Full markdown editor with toolbar</li>
+                  <li>Live preview pane for immediate feedback</li>
+                  <li>Syntax highlighting for better readability</li>
+                  <li>Auto-save functionality to prevent data loss</li>
+                </ul>
+                <h4>👁️ Preview Mode</h4>
+                <ul>
+                  <li>Rendered markdown display</li>
+                  <li>Final appearance preview</li>
+                  <li>Easy switching between edit and preview</li>
+                  <li>Print-friendly formatting</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>⌨️ Keyboard Shortcuts:</strong> Use Ctrl+S to save in edit mode.
+                </div>
+              `
+            },
+            {
+              title: 'Content Guidelines',
+              content: `
+                <p>Follow these guidelines for high-quality user scenarios:</p>
+                <h4>📝 Writing Best Practices</h4>
+                <ul>
+                  <li><strong>Be Specific:</strong> Use concrete examples and real-world contexts</li>
+                  <li><strong>Reference Personas:</strong> Link to specific actors from your DAK</li>
+                  <li><strong>Include Context:</strong> Healthcare setting, timing, and circumstances</li>
+                  <li><strong>Cover Variations:</strong> Normal, alternative, and exception flows</li>
+                  <li><strong>Use Clear Language:</strong> Avoid technical jargon when possible</li>
+                </ul>
+                <h4>🔗 Integration Points</h4>
+                <ul>
+                  <li>Reference business processes that implement the scenario</li>
+                  <li>Link to decision support logic used in the workflow</li>
+                  <li>Identify core data elements captured during the scenario</li>
+                  <li>Connect to relevant program indicators for measurement</li>
+                </ul>
+              `
+            }
+          ]
+        }
+      ],
       'dak-selection': [
         {
           id: 'choosing-dak-repository',

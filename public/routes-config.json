@@ -18,6 +18,10 @@
       "component": "ActorEditor",
       "path": "./components/ActorEditor"
     },
+    "user-scenarios": {
+      "component": "UserScenarios",
+      "path": "./components/UserScenarios"
+    },
     "business-process-selection": {
       "component": "BusinessProcessSelection",
       "path": "./components/BusinessProcessSelection"

@@ -1,0 +1,459 @@
+/* UserScenarios.css */
+
+.user-scenarios-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  color: white;
+  padding: 20px;
+}
+
+.user-scenarios-header {
+  background: rgb(4, 11, 118);
+  padding: 30px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.user-scenarios-header h1 {
+  color: white;
+  margin: 0 0 10px 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.user-scenarios-header p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.user-scenarios-content {
+  display: flex;
+  gap: 30px;
+  min-height: 600px;
+}
+
+/* Scenarios Sidebar */
+.scenarios-sidebar {
+  flex: 0 0 350px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  max-height: 700px;
+}
+
+.scenarios-sidebar h3 {
+  margin: 0 0 20px 0;
+  font-size: 1.3rem;
+  color: #333;
+  border-bottom: 2px solid #e1e1e1;
+  padding-bottom: 10px;
+}
+
+.scenarios-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scenario-item {
+  padding: 15px;
+  border: 1px solid #e1e1e1;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.scenario-item:hover {
+  border-color: #0078d4;
+  box-shadow: 0 2px 4px rgba(0, 120, 212, 0.2);
+  transform: translateY(-1px);
+}
+
+.scenario-item.selected {
+  border-color: #0078d4;
+  background: #f0f8ff;
+  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.3);
+}
+
+.scenario-item h4 {
+  margin: 0 0 5px 0;
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.scenario-id {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+  font-family: 'Courier New', monospace;
+}
+
+.empty-state {
+  text-align: center;
+  color: #666;
+  padding: 40px 20px;
+}
+
+.empty-state p {
+  margin: 0 0 10px 0;
+  line-height: 1.6;
+}
+
+/* Scenario Editor */
+.scenario-editor {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e1e1e1;
+}
+
+.editor-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #333;
+  text-transform: capitalize;
+  flex: 1;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.editor-content {
+  height: 600px;
+  overflow: hidden;
+}
+
+.editor-placeholder {
+  text-align: center;
+  color: #666;
+  padding: 100px 20px;
+  font-size: 1.1rem;
+}
+
+/* Buttons */
+.btn-primary {
+  background: #0078d4;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #005a9e;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.3);
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #0078d4;
+  border: 2px solid #0078d4;
+  padding: 10px 22px;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #0078d4;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.3);
+}
+
+.btn-secondary:disabled {
+  border-color: #ccc;
+  color: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  border-bottom: 1px solid #e1e1e1;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.modal-content {
+  padding: 30px;
+}
+
+.modal-actions {
+  padding: 20px 30px;
+  border-top: 1px solid #e1e1e1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e1e1e1;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1);
+}
+
+.form-help {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Error and Loading States */
+.error-container {
+  text-align: center;
+  padding: 50px 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  color: #333;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin: 20px;
+}
+
+.error-container h2 {
+  color: #d32f2f;
+  margin-bottom: 15px;
+}
+
+.error-container button {
+  margin-top: 20px;
+}
+
+.error-message {
+  background: #ffebee;
+  color: #c62828;
+  padding: 15px;
+  border-radius: 4px;
+  border-left: 4px solid #d32f2f;
+  margin: 15px 0;
+}
+
+.error-banner {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #d32f2f;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  max-width: 400px;
+}
+
+.error-banner p {
+  margin: 0;
+  flex: 1;
+}
+
+.error-banner button {
+  background: none;
+  border: 1px solid white;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.error-banner button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.loading-container {
+  text-align: center;
+  padding: 50px 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  color: #333;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin: 20px;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #0078d4;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .user-scenarios-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .scenarios-sidebar {
+    flex: none;
+    max-height: 300px;
+  }
+  
+  .user-scenarios-header h1 {
+    font-size: 2rem;
+  }
+  
+  .modal {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .modal-content,
+  .modal-header,
+  .modal-actions {
+    padding: 20px;
+  }
+}
+
+/* Dark mode support for the markdown editor */
+[data-color-mode="dark"] .w-md-editor {
+  background-color: #1e1e1e;
+}
+
+/* Ensure markdown editor fits properly */
+.w-md-editor {
+  background-color: white;
+}
+
+.w-md-editor .w-md-editor-text-container .w-md-editor-text {
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}

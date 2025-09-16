@@ -101,6 +101,9 @@ function createLazyComponent(componentName) {
     case 'ActorEditor':
       LazyComponent = React.lazy(() => import('../components/ActorEditor'));
       break;
+    case 'UserScenarios':
+      LazyComponent = React.lazy(() => import('../components/UserScenarios'));
+      break;
     case 'BusinessProcessSelection':
       LazyComponent = React.lazy(() => import('../components/BusinessProcessSelection'));
       break;
