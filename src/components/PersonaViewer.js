@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import githubService from '../services/githubService';
-import { PageLayout, usePage } from './framework';
-import './UserScenariosViewer.css';
+import { PageLayout, useDAKParams } from './framework';
+import './PersonaViewer.css';
 
-const UserScenariosViewer = () => {
+const PersonaViewer = () => {
   return (
-    <PageLayout pageName="user-scenarios">
-      <UserScenariosViewerContent />
+    <PageLayout pageName="persona-viewer">
+      <PersonaViewerContent />
     </PageLayout>
   );
 };
 
-const UserScenariosViewerContent = () => {
-  const { profile, repository, branch } = usePage();
+const PersonaViewerContent = () => {
+  const { profile, repository, branch } = useDAKParams();
   
   // Get data from page framework
   const user = profile?.login;
@@ -367,4 +367,4 @@ const UserScenariosViewerContent = () => {
   );
 };
 
-export default UserScenariosViewer;
+export default PersonaViewer;
