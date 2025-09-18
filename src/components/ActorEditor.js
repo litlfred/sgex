@@ -434,8 +434,9 @@ const ActorEditor = () => {
                 setShowPreview(false);
               }
             }}
-            role="presentation"
+            role="button"
             tabIndex={0}
+            aria-label="Close modal (click outside or press Escape)"
           >
             <div 
               className="modal-content" 
@@ -861,8 +862,9 @@ const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChan
     
     <div className="form-row">
       <div className="form-group">
-        <label>Version</label>
+        <label htmlFor="actor-version">Version</label>
         <input
+          id="actor-version"
           type="text"
           value={actorDefinition.metadata?.version || ''}
           onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, version: e.target.value })}
@@ -870,8 +872,9 @@ const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChan
         />
       </div>
       <div className="form-group">
-        <label>Status</label>
+        <label htmlFor="actor-status">Status</label>
         <select
+          id="actor-status"
           value={actorDefinition.metadata?.status || 'draft'}
           onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, status: e.target.value })}
         >
@@ -883,8 +886,9 @@ const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChan
     </div>
 
     <div className="form-group">
-      <label>Publisher</label>
+      <label htmlFor="actor-publisher">Publisher</label>
       <input
+        id="actor-publisher"
         type="text"
         value={actorDefinition.metadata?.publisher || ''}
         onChange={(e) => onFieldChange('metadata', { ...actorDefinition.metadata, publisher: e.target.value })}
@@ -922,8 +926,9 @@ const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChan
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Name</label>
+              <label htmlFor={`actor-contact-name-${index}`}>Name</label>
               <input
+                id={`actor-contact-name-${index}`}
                 type="text"
                 value={contact.name || ''}
                 onChange={(e) => {
@@ -935,8 +940,9 @@ const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChan
               />
             </div>
             <div className="form-group">
-              <label>Email</label>
+              <label htmlFor={`actor-contact-email-${index}`}>Email</label>
               <input
+                id={`actor-contact-email-${index}`}
                 type="email"
                 value={contact.email || ''}
                 onChange={(e) => {
@@ -953,8 +959,9 @@ const MetadataTab = ({ actorDefinition, errors, onFieldChange, onNestedFieldChan
     </div>
 
     <div className="form-group">
-      <label>Tags</label>
+      <label htmlFor="actor-tags">Tags</label>
       <input
+        id="actor-tags"
         type="text"
         value={actorDefinition.metadata?.tags?.join(', ') || ''}
         onChange={(e) => onFieldChange('metadata', { 

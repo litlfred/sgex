@@ -293,8 +293,8 @@ body.theme-light .landing-page {
   position: absolute;
   top: -8px;
   right: -8px;
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-  color: white;
+  background: var(--status-orange-gradient);
+  color: var(--who-text-on-primary);
   border-radius: 50%;
   width: var(--icon-size-default);
   height: var(--icon-size-default);
@@ -373,8 +373,8 @@ body.theme-light .landing-page {
 }
 
 .who-badge {
-  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
-  color: white;
+  background: var(--who-blue-gradient);
+  color: var(--who-text-on-primary);
   padding: 0.3rem 0.6rem;
   border-radius: 12px;
   font-size: 0.7rem;
@@ -694,12 +694,12 @@ body.theme-light .landing-page {
 
 /* Warning message styles */
 .warning-message {
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
+  background: var(--who-error-bg);
+  border: 1px solid var(--who-error-border);
   border-radius: 8px;
   margin: 0 0 2.5rem 0;
   animation: slideInFromTop 0.3s ease-out;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 20px var(--who-shadow-medium);
   position: relative;
   z-index: 10;
   transform: translateY(-8px);
@@ -718,7 +718,7 @@ body.theme-light .landing-page {
 }
 
 .warning-text {
-  color: #856404;
+  color: var(--who-error-text);
   font-weight: 500;
   flex: 1;
   line-height: 1.4;
@@ -727,7 +727,7 @@ body.theme-light .landing-page {
 .warning-dismiss {
   background: none;
   border: none;
-  color: #856404;
+  color: var(--who-error-text);
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0;
