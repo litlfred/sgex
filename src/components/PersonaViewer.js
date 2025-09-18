@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import githubService from '../services/githubService';
-import { PageLayout, useDAKParams } from './framework';
+import { PageLayout, usePage } from './framework';
 import './PersonaViewer.css';
 
 const PersonaViewer = () => {
@@ -12,7 +12,7 @@ const PersonaViewer = () => {
 };
 
 const PersonaViewerContent = () => {
-  const { profile, repository, branch } = useDAKParams();
+  const { profile, repository, branch } = usePage();
   
   // Get data from page framework
   const user = profile?.login;
@@ -260,7 +260,7 @@ const PersonaViewerContent = () => {
 
   if (loading) {
     return (
-      <div className="user-scenarios-viewer">
+      <div className="persona-viewer">
         <div className="loading-state">
           <div className="loading-spinner"></div>
           <p>Loading user scenarios and personas...</p>
@@ -272,7 +272,7 @@ const PersonaViewerContent = () => {
 
   if (error) {
     return (
-      <div className="user-scenarios-viewer">
+      <div className="persona-viewer">
         <div className="error-state">
           <h2>Error</h2>
           <p>{error}</p>
@@ -287,11 +287,11 @@ const PersonaViewerContent = () => {
   }
 
   return (
-    <div className="user-scenarios-viewer">
+    <div className="persona-viewer">
       <div className="page-header">
-        <h1>User Scenarios & Personas</h1>
+        <h1>Generic Personas & Actor Definitions</h1>
         <p className="page-description">
-          Actor definitions and personas found in this DAK repository.
+          Actor definitions and personas found in this DAK repository for healthcare workflows.
         </p>
         {user && repo && (
           <div className="repository-info">
@@ -309,10 +309,10 @@ const PersonaViewerContent = () => {
       </div>
 
       <div className="actors-summary">
-        <h2>Found Actors ({actors.length})</h2>
+        <h2>Found Personas & Actors ({actors.length})</h2>
         {actors.length === 0 ? (
           <div className="no-actors">
-            <p>No actor definitions found in this repository.</p>
+            <p>No actor definitions or personas found in this repository.</p>
             <div className="search-info">
               <h3>Searched in:</h3>
               <ul>

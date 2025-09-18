@@ -430,13 +430,16 @@ const DAKDashboardContent = () => {
 
 
 
-    // For generic-personas, navigate to actor editor
+    // For generic-personas, navigate to appropriate viewer/editor based on access
     if (component.id === 'generic-personas') {
       const owner = repository.owner?.login || repository.full_name.split('/')[0];
       const repoName = repository.name;
+      
+      // If user has write access, go to editor; otherwise go to viewer
+      const routeBase = hasWriteAccess ? 'actor-editor' : 'persona-viewer';
       const path = selectedBranch 
-        ? `/actor-editor/${owner}/${repoName}/${selectedBranch}`
-        : `/actor-editor/${owner}/${repoName}`;
+        ? `/${routeBase}/${owner}/${repoName}/${selectedBranch}`
+        : `/${routeBase}/${owner}/${repoName}`;
       
       handleNavigationClick(event, path, navigate, navigationState);
       return;
