@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { PageLayout } from './framework';
 import documentationService from '../services/documentationService';
 import bookmarkService from '../services/bookmarkService';
-import githubService from '../services/githubService';
 
 const DocumentationViewer = () => {
   const { docId } = useParams();
@@ -166,7 +165,7 @@ const DocumentationViewer = () => {
   }
 
   // Custom breadcrumbs for documentation in the preferred style
-  const customBreadcrumbs = breadcrumbs.length > 1 ? breadcrumbs.map((crumb, index) => ({
+  const customBreadcrumbs = breadcrumbs.length > 1 ? breadcrumbs.map((crumb) => ({
     label: crumb.label,
     path: crumb.path,
     current: crumb.current,

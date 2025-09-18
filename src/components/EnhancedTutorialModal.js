@@ -11,7 +11,6 @@ const EnhancedTutorialModal = ({ tutorialId, onClose, contextData = {} }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [tutorialState, setTutorialState] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const [showChoices, setShowChoices] = useState(false);
 
   // Theme-aware mascot image
   const mascotImage = useThemeImage('sgex-mascot.png');
@@ -81,7 +80,6 @@ const EnhancedTutorialModal = ({ tutorialId, onClose, contextData = {} }) => {
     }
 
     setCurrentStepIndex(nextIndex);
-    setShowChoices(false);
   };
 
   const handleUserChoice = (choice) => {
@@ -94,7 +92,6 @@ const EnhancedTutorialModal = ({ tutorialId, onClose, contextData = {} }) => {
     }
 
     const currentStep = tutorial.steps[currentStepIndex];
-    const stepResult = tutorialService.processStep(tutorial, currentStepIndex, null, tutorialState);
 
     // Check if this step has branching choices
     const hasBranches = currentStep.branches && currentStep.branches.length > 0;

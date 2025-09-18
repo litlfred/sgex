@@ -320,7 +320,7 @@ const DAKSelectionContent = () => {
     }
   }, [getMockRepositories]);
 
-  const fetchRepositories = useCallback(async (forceRescan = false, useCachedData = false) => {
+  const fetchRepositories = useCallback(async (forceRescan = false) => {
     setLoading(true);
     setError(null);
     setIsScanning(false);
@@ -655,7 +655,7 @@ const DAKSelectionContent = () => {
     }
     
     // Always check cache first on initial load
-    fetchRepositories(false, false); // forceRescan=false, useCachedData=false (but still check cache first)
+    fetchRepositories(false); // forceRescan=false (but still check cache first)
   }, [effectiveProfile, effectiveAction, userParam, fetchRepositories]);
 
   const handleRepositorySelect = (repo) => {

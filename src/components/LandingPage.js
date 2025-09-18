@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
 import repositoryCacheService from '../services/repositoryCacheService';
-import secureTokenStorage from '../services/secureTokenStorage';
 import PATLogin from './PATLogin';
 import { PageLayout } from './framework';
 import { handleNavigationClick } from '../utils/navigationUtils';
