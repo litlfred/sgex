@@ -1619,6 +1619,15 @@ const PreviewBadge = () => {
               key={pr.id}
               className={`preview-badge clickable ${isExpanded ? 'expanded' : ''} ${isSticky ? 'sticky' : ''}`}
               onClick={(event) => handleBadgeClick(pr, event)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  handleBadgeClick(pr, event);
+                }
+              }}
+              tabIndex={0}
+              role="button"
+              aria-label={isExpanded ? `View PR: ${pr.title}` : `Expand for comments: ${pr.title}`}
               title={isExpanded ? `Click to view PR: ${pr.title}` : `Click to expand for comments: ${pr.title}`}
             >
               <div className="badge-content">
@@ -2278,8 +2287,17 @@ const PreviewBadge = () => {
         <div 
           className={`preview-badge clickable ${isExpanded ? 'expanded' : ''} ${isSticky ? 'sticky' : ''}`}
           onClick={handleBadgeToggle}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              handleBadgeToggle(event);
+            }
+          }}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
+          tabIndex={0}
+          role="button"
+          aria-label={isSticky ? "Collapse branch details" : isExpanded ? "Keep branch details expanded" : `Show branch details for ${branchInfo.name}`}
           title={isSticky ? "Click to collapse" : isExpanded ? "Click to keep expanded" : `🔍 Hover for branch details, click to pin: ${branchInfo.name}`}
         >
           <div className="badge-content">

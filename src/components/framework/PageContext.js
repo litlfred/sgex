@@ -203,7 +203,19 @@ const PageContext = ({ customBreadcrumbs }) => {
           <div className="page-context-row page-context-user-repo">
             {profile && (
               <>
-                <span className="page-context-profile" onClick={handleGitHubUser}>
+                <span 
+                  className="page-context-profile" 
+                  onClick={handleGitHubUser}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleGitHubUser();
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`View GitHub profile for ${profile.login}`}
+                >
                   {profile.login}
                 </span>
                 {repository && <span className="page-context-separator">/</span>}
@@ -237,7 +249,6 @@ const PageContext = ({ customBreadcrumbs }) => {
                           value={branchSearchTerm}
                           onChange={(e) => setBranchSearchTerm(e.target.value)}
                           className="branch-search-input"
-                          autoFocus={false}
                         />
                       </div>
                       <div className="branch-list">

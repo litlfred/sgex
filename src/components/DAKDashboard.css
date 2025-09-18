@@ -1033,14 +1033,14 @@ body.theme-light .file-count {
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid #e1e5e9;
-  background: #f8f9fa;
+  border-bottom: 1px solid var(--who-border-color);
+  background: var(--who-primary-bg);
   border-radius: 12px 12px 0 0;
 }
 
 .dialog-header h3 {
   margin: 0;
-  color: #24292e;
+  color: var(--who-text-primary);
   font-size: 1.3rem;
 }
 
@@ -1049,7 +1049,7 @@ body.theme-light .file-count {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #6a737d;
+  color: var(--who-text-muted);
   width: 32px;
   height: 32px;
   display: flex;
@@ -1059,7 +1059,7 @@ body.theme-light .file-count {
 }
 
 .dialog-close:hover {
-  background: #e1e5e9;
+  background: var(--who-hover-bg);
 }
 
 .dialog-content {
@@ -1096,15 +1096,15 @@ body.theme-light .file-count {
 }
 
 .option-card {
-  border: 2px solid #e1e5e9;
+  border: 2px solid var(--who-border-color);
   border-radius: 8px;
   padding: 1.5rem;
-  background: #f8f9fa;
+  background: var(--who-card-bg);
 }
 
 .option-card h4 {
   margin: 0 0 0.8rem 0;
-  color: #24292e;
+  color: var(--who-text-primary);
   font-size: 1.1rem;
 }
 
