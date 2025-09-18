@@ -246,6 +246,15 @@ const SelectProfilePage = () => {
                 <div 
                   className="profile-card"
                   onClick={(event) => handleProfileSelect(event, { type: 'user', ...user })}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleProfileSelect(event, { type: 'user', ...user });
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`Select personal profile: ${user.login}`}
                 >
                   <div className="profile-card-header">
                     <img src={user?.avatar_url} alt="Personal profile" />
@@ -269,6 +278,15 @@ const SelectProfilePage = () => {
                   key={org.login}
                   className={`profile-card ${org.isWHO ? 'who-org' : ''}`}
                   onClick={(event) => handleProfileSelect(event, { type: 'org', ...org })}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleProfileSelect(event, { type: 'org', ...org });
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`Select organization: ${org.login}`}
                 >
                   <div className="profile-card-header">
                     <img 
