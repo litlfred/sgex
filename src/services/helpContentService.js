@@ -875,6 +875,117 @@ class HelpContentService {
             }
           ]
         }
+      ],
+
+      'functional-requirements': [
+        {
+          id: 'functional-requirements-overview',
+          title: 'Understanding Functional & Non-Functional Requirements',
+          badge: '/sgex/cat-paw-info-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'What are Requirements in DAK?',
+              content: `
+                <p>Requirements in a WHO SMART Guidelines DAK define system capabilities and constraints:</p>
+                <ul>
+                  <li><strong>Functional Requirements:</strong> What the system must do (features, behaviors, functions)</li>
+                  <li><strong>Non-Functional Requirements:</strong> How the system performs (performance, security, usability)</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💡 Location:</strong> Requirements are stored as FHIR FSH files in the <code>input/fsh/</code> directory.
+                </div>
+              `
+            },
+            {
+              title: 'FHIR Structure Definitions',
+              content: `
+                <p>Requirements follow WHO SMART Base structure definitions:</p>
+                <ul>
+                  <li><strong>FunctionalRequirement:</strong> Profile for system functionality specifications</li>
+                  <li><strong>NonFunctionalRequirement:</strong> Profile for system quality attributes</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🔗 References:</strong> Based on <a href="https://worldhealthorganization.github.io/smart-base/" target="_blank">WHO SMART Base</a> profiles
+                </div>
+              `
+            },
+            {
+              title: 'Creating Requirements',
+              content: `
+                <p>Use the Requirements Editor to:</p>
+                <ul>
+                  <li>Create new functional or non-functional requirement files</li>
+                  <li>Edit existing requirements with FSH syntax</li>
+                  <li>Organize requirements by type and category</li>
+                  <li>Delete outdated requirements</li>
+                </ul>
+                <div class="help-warning">
+                  <strong>⚠️ Authentication Required:</strong> You need write access to create, edit, or delete requirements.
+                </div>
+              `
+            },
+            {
+              title: 'Requirements Template Structure',
+              content: `
+                <p>Each requirement file includes:</p>
+                <ul>
+                  <li><strong>Profile Definition:</strong> Extends FunctionalRequirement or NonFunctionalRequirement</li>
+                  <li><strong>Identifier:</strong> Unique ID for the requirement</li>
+                  <li><strong>Title & Description:</strong> Human-readable requirement specification</li>
+                  <li><strong>Status:</strong> Development status (draft, active, retired)</li>
+                  <li><strong>Example Instance:</strong> Sample implementation</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>📝 Best Practice:</strong> Use clear, testable language and follow SMART criteria (Specific, Measurable, Achievable, Relevant, Time-bound)
+                </div>
+              `
+            }
+          ]
+        },
+        {
+          id: 'requirements-fsh-syntax',
+          title: 'FSH Syntax for Requirements',
+          badge: '/sgex/cat-paw-code-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Basic FSH Structure',
+              content: `
+                <p>FHIR Shorthand (FSH) syntax for requirements:</p>
+                <pre><code>Profile: MyRequirement
+Parent: FunctionalRequirement
+Id: my-requirement
+Title: "My Requirement Title"
+Description: "Detailed requirement description"
+
+* identifier MS
+* title MS
+* description MS
+* status MS</code></pre>
+                <div class="help-tip">
+                  <strong>💡 MS Flag:</strong> MustSupport (MS) indicates required elements
+                </div>
+              `
+            },
+            {
+              title: 'Instance Examples',
+              content: `
+                <p>Create example instances to demonstrate usage:</p>
+                <pre><code>Instance: MyRequirementExample
+InstanceOf: MyRequirement
+Usage: #example
+Title: "Example Requirement"
+Description: "Example instance"
+
+* identifier.value = "req-001"
+* title = "User Authentication Required"
+* description = "System must authenticate users"
+* status = #active</code></pre>
+              `
+            }
+          ]
+        }
       ]
     };
   }
