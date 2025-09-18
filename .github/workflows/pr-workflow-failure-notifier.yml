@@ -1,3 +1,21 @@
+# 🚨 COPILOT PROHIBITION WARNING 🚨
+# 
+# THIS FILE IS CRITICAL TO DEPLOYMENT WORKFLOW MONITORING AND PR MANAGEMENT
+# 
+# ⛔ COPILOT AGENTS ARE STRICTLY PROHIBITED FROM MAKING ANY CHANGES TO THIS FILE
+# ⛔ WITHOUT EXPLICIT WRITTEN CONSENT FROM THE REPOSITORY OWNER (@litlfred)
+# 
+# This workflow monitors deployment failures and manages PR notifications.
+# Changes can disrupt the deployment feedback system and PR management.
+# 
+# 🔒 REQUIRED PROCESS FOR CHANGES:
+# 1. Request explicit consent from @litlfred in a GitHub comment
+# 2. Wait for written approval before making ANY changes  
+# 3. Document the explicit consent in the commit message
+# 4. Test extensively in a separate environment before merging
+# 
+# 🚨 END PROHIBITION WARNING 🚨
+
 name: PR Workflow Failure Notifier
 
 # This workflow runs after any workflow fails and posts a rich comment on the associated PR
