@@ -1,6 +1,28 @@
 /**
  * SGEX Route Configuration Service
  * 
+ * 🚨 COPILOT PROHIBITION WARNING 🚨
+ * 
+ * THIS FILE IS ABSOLUTELY CRITICAL TO ROUTE CONFIGURATION AND COMPONENT LOADING
+ * 
+ * ⛔ COPILOT AGENTS ARE STRICTLY PROHIBITED FROM MAKING ANY CHANGES TO THIS FILE
+ * ⛔ WITHOUT EXPLICIT WRITTEN CONSENT FROM THE REPOSITORY OWNER (@litlfred)
+ * 
+ * This service provides access to the route configuration and supports lazy loading.
+ * It controls how components are loaded and routed throughout the application.
+ * Any unauthorized changes can break component loading and application routing.
+ * 
+ * 🔒 REQUIRED PROCESS FOR CHANGES:
+ * 1. Request explicit consent from @litlfred in a GitHub comment
+ * 2. Wait for written approval before making ANY changes
+ * 3. Document the explicit consent in the commit message
+ * 4. Test extensively in a separate environment before merging
+ * 
+ * Violation of this prohibition will result in immediate reversion and 
+ * potential blocking of copilot access to this repository.
+ * 
+ * 🚨 END PROHIBITION WARNING 🚨
+ * 
  * This service provides access to the route configuration and supports lazy loading.
  * It automatically detects the deployment type and loads the appropriate configuration:
  * - routes-config.json for main site and feature branches
