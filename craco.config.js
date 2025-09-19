@@ -8,7 +8,7 @@
  * 1. Replaces deprecated onBeforeSetupMiddleware/onAfterSetupMiddleware with setupMiddlewares
  * 2. Handles HTTPS configuration migration from 'https' to 'server' property  
  * 3. Adds devServer.close() compatibility method for graceful shutdown (fixes TypeError)
- * 4. Loads build-time repository configuration from .env.build
+ * 4. Loads build-time repository configuration from .env
  */
 
 const fs = require('fs');
@@ -20,11 +20,11 @@ const redirectServedPath = require('react-dev-utils/redirectServedPathMiddleware
 const paths = require('react-scripts/config/paths');
 const getHttpsConfig = require('react-scripts/config/getHttpsConfig');
 
-// Load repository configuration from .env.build if it exists
+// Load repository configuration from .env if it exists
 function loadRepositoryConfig() {
-  const envBuildPath = path.join(__dirname, '.env.build');
-  if (fs.existsSync(envBuildPath)) {
-    const envContent = fs.readFileSync(envBuildPath, 'utf8');
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
     const envVars = {};
     
     envContent.split('\n').forEach(line => {
