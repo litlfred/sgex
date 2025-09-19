@@ -652,10 +652,6 @@ jobs:
               const deploymentAccessible = '${{ steps.verify_deployment.outputs.deployment_accessible }}';
               const waitTime = '${{ steps.verify_deployment.outputs.wait_time }}';
               
-              // Get deployment verification status
-              const deploymentAccessible = '${{ steps.verify_deployment.outputs.deployment_accessible }}';
-              const waitTime = '${{ steps.verify_deployment.outputs.wait_time }}';
-              
               // Create target names derived from the branch name for new tabs
               const safeBranchName = branchName.replace(/[^a-zA-Z0-9]/g, '-');
               const branchTargetName = `sgex-preview-${safeBranchName}`;
