@@ -27,12 +27,6 @@ const FunctionalRequirementsContent = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileContent, setFileContent] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newFileName, setNewFileName] = useState('');
-  const [newFileType, setNewFileType] = useState('FunctionalRequirement');
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleHomeNavigation = () => {
@@ -130,7 +124,7 @@ const FunctionalRequirementsContent = () => {
     return 'FunctionalRequirement';
   };
 
-  // Open file content modal
+  // Open file content modal for viewing only
   const handleViewFile = async (file) => {
     try {
       setSelectedFile(file);
@@ -141,7 +135,6 @@ const FunctionalRequirementsContent = () => {
         if (response.ok) {
           const content = await response.text();
           setFileContent(content);
-          setEditContent(content);
         } else {
           setFileContent('// Error loading file content');
         }
@@ -150,204 +143,6 @@ const FunctionalRequirementsContent = () => {
       console.error('Error fetching file content:', error);
       setFileContent('// Error loading file content');
     }
-  };
-
-  // Start editing
-  const handleEditFile = () => {
-    setIsEditing(true);
-  };
-
-  // Save file content
-  const handleSaveFile = async () => {
-    if (!selectedFile || !githubService.isAuth()) {
-      alert('Authentication required to save files');
-      return;
-    }
-
-    try {
-      setSaving(true);
-      
-      const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
-      const currentRepo = repo || repository?.name;
-      const currentBranch = branch;
-
-      await githubService.updateFile(
-        currentUser,
-        currentRepo,
-        selectedFile.path,
-        editContent,
-        `Update requirement file: ${selectedFile.name}`,
-        currentBranch
-      );
-
-      setFileContent(editContent);
-      setIsEditing(false);
-      alert('File saved successfully!');
-    } catch (error) {
-      console.error('Error saving file:', error);
-      alert(`Error saving file: ${error.message}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Create new requirement file
-  const handleCreateFile = async () => {
-    if (!newFileName.trim() || !githubService.isAuth()) {
-      alert('Please provide a filename and ensure you are authenticated');
-      return;
-    }
-
-    try {
-      setSaving(true);
-      
-      const fileName = newFileName.endsWith('.fsh') ? newFileName : `${newFileName}.fsh`;
-      const filePath = `input/fsh/${fileName}`;
-      
-      const template = createRequirementTemplate(newFileType, fileName);
-      
-      const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
-      const currentRepo = repo || repository?.name;
-      const currentBranch = branch;
-
-      await githubService.createFile(
-        currentUser,
-        currentRepo,
-        filePath,
-        template,
-        `Create new ${newFileType} file: ${fileName}`,
-        currentBranch
-      );
-
-      // Refresh file list
-      setRequirementFiles(prev => [...prev, {
-        name: fileName,
-        path: filePath,
-        type: newFileType
-      }]);
-
-      setShowCreateModal(false);
-      setNewFileName('');
-      alert('File created successfully!');
-    } catch (error) {
-      console.error('Error creating file:', error);
-      alert(`Error creating file: ${error.message}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Delete file
-  const handleDeleteFile = async () => {
-    if (!selectedFile || !githubService.isAuth()) {
-      alert('Authentication required to delete files');
-      return;
-    }
-
-    if (!window.confirm(`Are you sure you want to delete ${selectedFile.name}?`)) {
-      return;
-    }
-
-    try {
-      setSaving(true);
-      
-      const currentUser = user || repository?.owner?.login || repository?.full_name.split('/')[0];
-      const currentRepo = repo || repository?.name;
-      const currentBranch = branch;
-
-      await githubService.deleteFile(
-        currentUser,
-        currentRepo,
-        selectedFile.path,
-        `Delete requirement file: ${selectedFile.name}`,
-        currentBranch
-      );
-
-      // Remove from list
-      setRequirementFiles(prev => prev.filter(f => f.path !== selectedFile.path));
-      setShowModal(false);
-      alert('File deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting file:', error);
-      alert(`Error deleting file: ${error.message}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Create FSH template for requirements
-  const createRequirementTemplate = (type, filename) => {
-    const reqId = filename.replace('.fsh', '').replace(/[^a-zA-Z0-9]/g, '');
-    const profileType = type === 'FunctionalRequirement' ? 'FunctionalRequirement' : 'NonFunctionalRequirement';
-    
-    return `// ${type} Definition - WHO SMART Guidelines DAK
-// Based on: https://worldhealthorganization.github.io/smart-base/StructureDefinition-${profileType}.html
-// Generated by SGEX Workbench
-
-Profile: ${reqId}
-Parent: ${profileType}
-Id: ${reqId.toLowerCase()}
-Title: "${reqId} - ${type}"
-Description: "TODO: Add description for this ${type.toLowerCase()}"
-
-// Required elements from base profile
-* identifier MS
-* identifier ^short = "Unique identifier for this requirement"
-* title MS  
-* title ^short = "Title of the requirement"
-* description MS
-* description ^short = "Detailed description of the requirement"
-* status MS
-* status ^short = "Status of the requirement (draft | active | retired)"
-
-// Additional elements specific to requirements
-* priority MS
-* priority ^short = "Priority level (high | medium | low)"
-* category MS
-* category ^short = "Category or classification of the requirement"
-
-// Traceability and relationships
-* derivedFrom MS
-* derivedFrom ^short = "Source document or requirement this derives from"
-
-// Implementation guidance
-* implementationGuidance MS
-* implementationGuidance ^short = "Technical implementation notes"
-
-// TODO: Add domain-specific constraints based on requirement type
-${type === 'FunctionalRequirement' ? 
-  `// Functional requirement specific elements
-* acceptanceCriteria MS
-* acceptanceCriteria ^short = "Testable acceptance criteria"
-* userStory MS  
-* userStory ^short = "User story format description"` :
-  `// Non-functional requirement specific elements  
-* performanceMetrics MS
-* performanceMetrics ^short = "Measurable performance criteria"
-* qualityAttributes MS
-* qualityAttributes ^short = "Quality characteristics (usability, reliability, etc.)"`
-}
-
-Instance: ${reqId}Example
-InstanceOf: ${reqId}
-Usage: #example
-Title: "Example ${type}"
-Description: "Example instance of ${reqId}"
-
-* identifier.value = "${reqId.toLowerCase()}-example"
-* title = "Example ${type} Title"
-* description = "This is an example description for the ${type.toLowerCase()}"
-* status = #draft
-* priority = #medium
-* category = "System Function"
-* implementationGuidance = "Provide specific technical implementation details here"
-${type === 'FunctionalRequirement' ? 
-  `* acceptanceCriteria = "Given [context], when [action], then [expected result]"
-* userStory = "As a [user type], I want [goal] so that [benefit]"` :
-  `* performanceMetrics = "Response time < 2 seconds under normal load"
-* qualityAttributes = "Usability, Performance, Security"`
-}
-`;
   };
 
   // Filter files based on search term
@@ -416,8 +211,8 @@ ${type === 'FunctionalRequirement' ?
       <div className="requirements-content">
         <div className="content-section">
           <div className="section-header">
-            <h2>Requirements Editor</h2>
-            <p>Create, edit, and manage functional and non-functional requirements as FHIR FSH files</p>
+            <h2>Requirements Viewer</h2>
+            <p>View and browse functional and non-functional requirements as FHIR FSH files</p>
           </div>
 
           <div className="requirements-controls">
@@ -430,20 +225,7 @@ ${type === 'FunctionalRequirement' ?
                 className="search-input"
               />
             </div>
-            <button 
-              onClick={() => setShowCreateModal(true)} 
-              className="create-button"
-              disabled={!githubService.isAuth()}
-            >
-              + Create Requirement
-            </button>
           </div>
-
-          {!githubService.isAuth() && (
-            <div className="auth-notice">
-              <p>⚠️ Authentication required to create, edit, or delete requirement files.</p>
-            </div>
-          )}
 
           <div className="requirements-sections">
             {Object.entries(groupedFiles).map(([type, files]) => (
@@ -453,7 +235,7 @@ ${type === 'FunctionalRequirement' ?
                 {files.length === 0 ? (
                   <div className="no-files-message">
                     <p>No {type.toLowerCase().replace('requirement', ' requirements')} found.</p>
-                    <p>Create new requirement files to get started.</p>
+                    <p>Requirements files should be stored in the input/fsh/ directory.</p>
                   </div>
                 ) : (
                   <div className="requirements-grid">
@@ -469,7 +251,7 @@ ${type === 'FunctionalRequirement' ?
                             onClick={() => handleViewFile(file)}
                             className="action-btn view"
                           >
-                            View/Edit
+                            View
                           </button>
                         </div>
                       </div>
@@ -482,100 +264,20 @@ ${type === 'FunctionalRequirement' ?
         </div>
       </div>
 
-      {/* File Content Modal */}
+      {/* File Content Modal - View Only */}
       {showModal && selectedFile && (
         <div className="modal-overlay">
           <div className="modal-content large">
             <div className="modal-header">
               <h3>{selectedFile.name}</h3>
               <div className="modal-actions">
-                {githubService.isAuth() && (
-                  <>
-                    {!isEditing ? (
-                      <button onClick={handleEditFile} className="action-btn edit">
-                        Edit
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={handleSaveFile} 
-                        className="action-btn save"
-                        disabled={saving}
-                      >
-                        {saving ? 'Saving...' : 'Save'}
-                      </button>
-                    )}
-                    <button 
-                      onClick={handleDeleteFile} 
-                      className="action-btn delete"
-                      disabled={saving}
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
                 <button onClick={() => setShowModal(false)} className="action-btn close">
                   Close
                 </button>
               </div>
             </div>
             <div className="modal-body">
-              {isEditing ? (
-                <textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  className="content-editor"
-                  rows={25}
-                />
-              ) : (
-                <pre className="content-viewer">{fileContent}</pre>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create File Modal */}
-      {showCreateModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Create New Requirement</h3>
-              <button onClick={() => setShowCreateModal(false)} className="action-btn close">
-                Close
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>File Name:</label>
-                <input
-                  type="text"
-                  value={newFileName}
-                  onChange={(e) => setNewFileName(e.target.value)}
-                  placeholder="e.g., user-authentication-req"
-                  className="form-input"
-                />
-                <small>File will be saved as {newFileName}.fsh in input/fsh/</small>
-              </div>
-              <div className="form-group">
-                <label>Requirement Type:</label>
-                <select
-                  value={newFileType}
-                  onChange={(e) => setNewFileType(e.target.value)}
-                  className="form-select"
-                >
-                  <option value="FunctionalRequirement">Functional Requirement</option>
-                  <option value="NonFunctionalRequirement">Non-Functional Requirement</option>
-                </select>
-              </div>
-              <div className="form-actions">
-                <button 
-                  onClick={handleCreateFile} 
-                  className="action-btn primary"
-                  disabled={!newFileName.trim() || saving}
-                >
-                  {saving ? 'Creating...' : 'Create File'}
-                </button>
-              </div>
+              <pre className="content-viewer">{fileContent}</pre>
             </div>
           </div>
         </div>

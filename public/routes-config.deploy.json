@@ -7,6 +7,16 @@
         { "path": "/", "exact": true }
       ]
     },
+    "FunctionalRequirementsEditor": {
+      "path": "./components/FunctionalRequirementsEditor",
+      "routes": [
+        { "path": "/functional-requirements", "exact": true },
+        { "path": "/functional-requirements/:user", "exact": true },
+        { "path": "/functional-requirements/:user/:repo", "exact": true },
+        { "path": "/functional-requirements/:user/:repo/:branch", "exact": true },
+        { "path": "/functional-requirements/:user/:repo/:branch/*", "exact": false }
+      ]
+    },
     "NotFound": {
       "path": "./components/NotFound",
       "routes": [

@@ -911,17 +911,17 @@ class HelpContentService {
               `
             },
             {
-              title: 'Creating Requirements',
+              title: 'Viewing Requirements',
               content: `
-                <p>Use the Requirements Editor to:</p>
+                <p>Use the Requirements Viewer to:</p>
                 <ul>
-                  <li>Create new functional or non-functional requirement files</li>
-                  <li>Edit existing requirements with FSH syntax</li>
-                  <li>Organize requirements by type and category</li>
-                  <li>Delete outdated requirements</li>
+                  <li>Browse existing functional and non-functional requirement files</li>
+                  <li>View FSH source code for requirements</li>
+                  <li>Search and filter requirements by type and category</li>
+                  <li>Understand requirement structure and organization</li>
                 </ul>
-                <div class="help-warning">
-                  <strong>⚠️ Authentication Required:</strong> You need write access to create, edit, or delete requirements.
+                <div class="help-tip">
+                  <strong>💡 Read-Only:</strong> This viewer provides read-only access to requirement files.
                 </div>
               `
             },
