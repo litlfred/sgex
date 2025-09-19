@@ -1796,3 +1796,31 @@ body.theme-light .file-count {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.85rem;
 }
+
+/* Dark mode styles for mcp-info */
+body.theme-dark .mcp-info {
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
+  box-shadow: 0 4px 20px var(--who-shadow-medium);
+}
+
+body.theme-dark .mcp-info h4 {
+  color: var(--who-text-primary);
+}
+
+body.theme-dark .mcp-info p {
+  color: var(--who-text-secondary);
+}
+
+body.theme-dark .mcp-info ul {
+  color: var(--who-text-secondary);
+}
+
+body.theme-dark .mcp-info li {
+  color: var(--who-text-secondary);
+}
+
+body.theme-dark .mcp-info code {
+  background: var(--who-secondary-bg);
+  color: var(--who-text-primary);
+}

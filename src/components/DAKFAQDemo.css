@@ -217,6 +217,33 @@
   margin: 8px 0;
 }
 
+/* Dark mode styles for mcp-info */
+body.theme-dark .mcp-info {
+  background: var(--who-card-bg);
+  border: 1px solid var(--who-border-color);
+}
+
+body.theme-dark .mcp-info h2 {
+  color: var(--who-text-primary);
+}
+
+body.theme-dark .mcp-info p {
+  color: var(--who-text-secondary);
+}
+
+body.theme-dark .mcp-info ul {
+  color: var(--who-text-secondary);
+}
+
+body.theme-dark .mcp-info li {
+  color: var(--who-text-secondary);
+}
+
+body.theme-dark .mcp-info code {
+  background: var(--who-secondary-bg);
+  color: var(--who-text-primary);
+}
+
 .demo-info {
   background: white;
   border: 1px solid #e5e7eb;
