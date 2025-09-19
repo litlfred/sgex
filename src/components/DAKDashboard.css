@@ -522,18 +522,22 @@ body.theme-light .dak-dashboard {
   min-height: 200px;
   padding: 1.5rem;
   display: flex;
-  flex-direction: row;
-  align-items: stretch;
+  flex-direction: column;
   gap: 1.5rem;
-  justify-content: space-between;
 }
 
 .component-main {
   display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+.component-header-content {
+  display: flex;
   flex-direction: row;
   align-items: center;
   gap: 1.5rem;
-  flex: 1;
 }
 
 .component-card.large-card .component-header {
@@ -574,10 +578,9 @@ body.theme-light .dak-dashboard {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-end;
-  min-width: 150px;
-  padding-left: 1rem;
-  border-left: 1px solid var(--who-border-color);
+  align-items: flex-start;
+  padding-top: 1rem;
+  border-top: 1px solid var(--who-border-color);
 }
 
 /* Dark mode adjustments for card content text */
@@ -927,23 +930,14 @@ body.theme-light .file-count {
   }
 
   /* DAK Component Card Mobile Responsive */
-  .component-card.large-card {
+  .component-header-content {
     flex-direction: column;
+    align-items: center;
     gap: 1rem;
-  }
-
-  .component-main {
-    flex-direction: column;
-    width: 100%;
-    gap: 1rem;
+    text-align: center;
   }
 
   .component-meta-section {
-    width: 100%;
-    padding-left: 0;
-    border-left: none;
-    border-top: 1px solid var(--who-border-color);
-    padding-top: 1rem;
     align-items: center;
   }
 
