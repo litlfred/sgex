@@ -1,5 +1,29 @@
 /**
  * Utility functions for extracting route information from React Router routes
+ * 
+ * 🚨 COPILOT PROHIBITION WARNING 🚨
+ * 
+ * THIS FILE IS ABSOLUTELY CRITICAL TO URL ROUTING AND COMPONENT RESOLUTION
+ * 
+ * ⛔ COPILOT AGENTS ARE STRICTLY PROHIBITED FROM MAKING ANY CHANGES TO THIS FILE
+ * ⛔ WITHOUT EXPLICIT WRITTEN CONSENT FROM THE REPOSITORY OWNER (@litlfred)
+ * 
+ * This file contains core routing utilities for DAK component URL parsing,
+ * route generation, and component resolution. It's a compatibility layer
+ * for the lazy loading system and integrates with the global route configuration.
+ * Any unauthorized changes can break application routing and component loading.
+ * 
+ * 🔒 REQUIRED PROCESS FOR CHANGES:
+ * 1. Request explicit consent from @litlfred in a GitHub comment
+ * 2. Wait for written approval before making ANY changes
+ * 3. Document the explicit consent in the commit message
+ * 4. Test extensively in a separate environment before merging
+ * 
+ * Violation of this prohibition will result in immediate reversion and 
+ * potential blocking of copilot access to this repository.
+ * 
+ * 🚨 END PROHIBITION WARNING 🚨
+ * 
  * This is now a compatibility layer for the new lazy loading system
  */
 import React from 'react';
