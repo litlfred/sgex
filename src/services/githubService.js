@@ -660,7 +660,10 @@ class GitHubService {
         retryable: this._isRetryableError(error)
       };
 
-      console.warn(`Failed to check ${owner}/${repo} for sushi-config.yaml with smart.who.int.base dependency:`, error.message);
+      // Only log non-404 errors to avoid verbose output during repository scanning
+      if (error.status !== 404) {
+        console.warn(`Failed to check ${owner}/${repo} for sushi-config.yaml with smart.who.int.base dependency:`, error.message);
+      }
       
       // Cache negative result
       repositoryCompatibilityCache.set(owner, repo, false);

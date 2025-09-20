@@ -248,6 +248,7 @@ const WelcomePage = () => {
                         placeholder="Token name"
                         className="token-name-input"
                         disabled={patLoading}
+                        aria-label="Token name (optional)"
                       />
                     </div>
                     <div className="form-group">
