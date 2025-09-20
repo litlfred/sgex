@@ -27,6 +27,8 @@ const DAKFAQDemoContent = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [mcpEndpoints, setMcpEndpoints] = useState([]);
+  const [mcpServiceStatus, setMcpServiceStatus] = useState('unknown');
 
   // Get user and repo from page framework
   const repo = repository?.name;
@@ -52,6 +54,7 @@ const DAKFAQDemoContent = () => {
 
   useEffect(() => {
     initializeFAQEngine();
+    fetchMCPEndpoints();
   }, []);
 
   const initializeFAQEngine = async () => {
@@ -64,6 +67,49 @@ const DAKFAQDemoContent = () => {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMCPEndpoints = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:3001/');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.endpoints) {
+          // Convert endpoints object to array with additional metadata
+          const endpointsArray = Object.entries(data.endpoints).map(([endpoint, description]) => ({
+            endpoint,
+            description,
+            method: endpoint.split(' ')[0],
+            path: endpoint.split(' ')[1],
+            fullUrl: `http://127.0.0.1:3001${endpoint.split(' ')[1]}`
+          }));
+          setMcpEndpoints(endpointsArray);
+          setMcpServiceStatus('running');
+        }
+      } else {
+        setMcpServiceStatus('not-running');
+      }
+    } catch (error) {
+      console.log('MCP service not available:', error.message);
+      setMcpServiceStatus('not-running');
+      // Set fallback endpoints with corrected URLs
+      setMcpEndpoints([
+        {
+          endpoint: 'GET /mcp/faq/questions/catalog',
+          description: 'Get question catalog',
+          method: 'GET',
+          path: '/mcp/faq/questions/catalog',
+          fullUrl: 'http://127.0.0.1:3001/mcp/faq/questions/catalog'
+        },
+        {
+          endpoint: 'POST /mcp/faq/questions/execute',
+          description: 'Execute questions',
+          method: 'POST',
+          path: '/mcp/faq/questions/execute',
+          fullUrl: 'http://127.0.0.1:3001/mcp/faq/questions/execute'
+        }
+      ]);
     }
   };
 
@@ -199,14 +245,52 @@ const DAKFAQDemoContent = () => {
 
       <div className="mcp-info">
         <h2>MCP Server Integration</h2>
+        <div className="mcp-status">
+          <p>
+            <strong>Service Status:</strong> 
+            <span className={`status-badge ${mcpServiceStatus}`}>
+              {mcpServiceStatus === 'running' ? '🟢 Running' : 
+               mcpServiceStatus === 'not-running' ? '🔴 Not Running' : '⚪ Unknown'}
+            </span>
+          </p>
+        </div>
+        
         <p>
-          The FAQ system can also be accessed via the local MCP server API for programmatic access.
-          Start the MCP server and access:
+          The FAQ system can be accessed via the local MCP server API for programmatic access.
+          {mcpServiceStatus === 'not-running' && (
+            <span> <strong>Start the MCP server</strong> to access all endpoints.</span>
+          )}
         </p>
-        <ul>
-          <li><code>GET http://127.0.0.1:3001/faq/questions/catalog</code> - Get question catalog</li>
-          <li><code>POST http://127.0.0.1:3001/faq/questions/execute</code> - Execute questions</li>
-        </ul>
+        
+        <div className="endpoints-section">
+          <h3>Available Endpoints ({mcpEndpoints.length})</h3>
+          {mcpEndpoints.length > 0 ? (
+            <div className="endpoints-list">
+              {mcpEndpoints.map((endpoint, index) => (
+                <div key={index} className="endpoint-item">
+                  <div className="endpoint-header">
+                    <span className={`method-badge ${endpoint.method.toLowerCase()}`}>
+                      {endpoint.method}
+                    </span>
+                    <code className="endpoint-url">{endpoint.fullUrl}</code>
+                  </div>
+                  <p className="endpoint-description">{endpoint.description}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>No endpoints available. Start the MCP server to see all available endpoints.</p>
+          )}
+        </div>
+        
+        <div className="mcp-usage-info">
+          <h4>Usage Instructions</h4>
+          <ol>
+            <li>Start the MCP server: <code>cd services/dak-faq-mcp && npm start</code></li>
+            <li>Use any HTTP client to access the endpoints above</li>
+            <li>Refresh this page to see updated endpoint status</li>
+          </ol>
+        </div>
       </div>
     </div>
   );
