@@ -54,6 +54,10 @@
     "faq-demo": {
       "component": "DAKFAQDemo",
       "path": "./components/DAKFAQDemo"
+    },
+    "program-indicators": {
+      "component": "ProgramIndicators",
+      "path": "./components/ProgramIndicators"
     }
   },
   "standardComponents": {

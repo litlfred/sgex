@@ -875,6 +875,62 @@ class HelpContentService {
             }
           ]
         }
+      ],
+
+      'program-indicators': [
+        {
+          id: 'program-indicators-overview',
+          title: 'Understanding Program Indicators',
+          badge: '/sgex/cat-paw-info-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'What are Program Indicators?',
+              content: `
+                <p>Program Indicators (Component 7) are performance indicators and measurement definitions used for monitoring and evaluation of health programs. They provide quantitative measures to assess the effectiveness and impact of interventions.</p>
+                <h4>Purpose: Monitoring and Evaluation</h4>
+                <p>To track program performance, measure outcomes, and provide data-driven insights for decision making and program improvement.</p>
+                <h4>FHIR FSH Source Files</h4>
+                <ul>
+                  <li><strong>Measure Files:</strong> Define indicators with calculation logic and reporting requirements</li>
+                  <li><strong>CQL Files:</strong> Contain clinical quality language expressions for complex calculations</li>
+                  <li><strong>Library Files:</strong> Support shared calculation logic across multiple measures</li>
+                </ul>
+              `
+            },
+            {
+              title: 'Viewing Measure Files',
+              content: `
+                <p>The Program Indicators viewer displays all measure files found in your DAK repository, showing:</p>
+                <ul>
+                  <li><strong>Title:</strong> Human-readable name of the indicator</li>
+                  <li><strong>Description:</strong> Purpose and context of the measure</li>
+                  <li><strong>File Name:</strong> Source file containing the definition</li>
+                  <li><strong>ID:</strong> Unique identifier for the measure</li>
+                </ul>
+                <p>Click on any measure card to view its complete source code and definition.</p>
+                <div class="help-tip">
+                  <strong>📁 File Locations:</strong> Measures are typically found in <code>input/fsh/measures/</code> directory
+                </div>
+              `
+            },
+            {
+              title: 'Searching and Filtering',
+              content: `
+                <p>Use the search bar to quickly find specific indicators by:</p>
+                <ul>
+                  <li><strong>Title:</strong> Search by measure name or title</li>
+                  <li><strong>Description:</strong> Find measures by purpose or context</li>
+                  <li><strong>ID:</strong> Locate specific measures by identifier</li>
+                </ul>
+                <p>The search is case-insensitive and matches partial text across all these fields.</p>
+                <div class="help-tip">
+                  <strong>💡 Tip:</strong> Use keywords like "coverage", "outcome", or "process" to find measures by type
+                </div>
+              `
+            }
+          ]
+        }
       ]
     };
   }
