@@ -14,6 +14,7 @@ import { schemaRoute } from './server/routes/schema.js';
 import { dakComponentsRoute } from './server/routes/dak-components.js';
 import { HealthResponse, ErrorResponse } from './types.js';
 import { createMCPLogger } from './logger.js';
+import { DAKRepositoryScanner } from './dakRepositoryScanner.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,6 +29,19 @@ const logger = createMCPLogger('DAK-FAQ-MCP', {
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const HOST = '127.0.0.1'; // Local only for security
+
+// Initialize DAK Repository Scanner
+const dakScanner = new DAKRepositoryScanner(logger, process.env.GITHUB_TOKEN);
+
+// Start background scanning on startup
+setImmediate(async () => {
+  try {
+    logger.info('STARTUP_SCAN', 'Starting background DAK repository scan...');
+    await dakScanner.scanAllProfiles(false); // Use cache if available
+  } catch (error) {
+    logger.error('STARTUP_SCAN', 'Failed to perform startup scan', error instanceof Error ? error : undefined);
+  }
+});
 
 // Middleware
 app.use(cors({
@@ -74,6 +88,121 @@ app.use('/mcp/faq/execute', executeRoute);  // Add single execution routes
 app.use('/mcp/faq', schemaRoute);
 app.use('/mcp/faq', dakComponentsRoute);
 
+// DAK Repository Scanner endpoints
+app.get('/mcp/daks', async (req: Request, res: Response) => {
+  try {
+    const daks = dakScanner.getKnownDAKs();
+    res.json({
+      success: true,
+      count: daks.length,
+      repositories: daks
+    });
+  } catch (error) {
+    logger.error('DAK_LIST', 'Failed to get DAK list', error instanceof Error ? error : undefined);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve DAK repositories'
+    });
+  }
+});
+
+app.get('/mcp/daks/status', async (req: Request, res: Response) => {
+  try {
+    const status = dakScanner.getScanStatus();
+    res.json({
+      success: true,
+      ...status
+    });
+  } catch (error) {
+    logger.error('DAK_STATUS', 'Failed to get scan status', error instanceof Error ? error : undefined);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve scan status'
+    });
+  }
+});
+
+app.post('/mcp/daks/scan', async (req: Request, res: Response) => {
+  try {
+    const { force } = req.body;
+    logger.info('DAK_SCAN_REQUEST', `Manual scan requested (force: ${!!force})`);
+    
+    // Start scan asynchronously
+    setImmediate(async () => {
+      try {
+        await dakScanner.scanAllProfiles(!!force);
+      } catch (error) {
+        logger.error('DAK_SCAN_ASYNC', 'Async scan failed', error instanceof Error ? error : undefined);
+      }
+    });
+    
+    res.json({
+      success: true,
+      message: 'DAK repository scan started'
+    });
+  } catch (error) {
+    logger.error('DAK_SCAN', 'Failed to start scan', error instanceof Error ? error : undefined);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to start scan'
+    });
+  }
+});
+
+app.post('/mcp/daks/profiles', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { profile } = req.body;
+    if (!profile || typeof profile !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'Profile name is required'
+      });
+      return;
+    }
+    
+    dakScanner.addProfile(profile);
+    logger.info('PROFILE_ADD_REQUEST', `Added profile: ${profile}`);
+    
+    res.json({
+      success: true,
+      message: `Profile ${profile} added for scanning`
+    });
+  } catch (error) {
+    logger.error('PROFILE_ADD', 'Failed to add profile', error instanceof Error ? error : undefined);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to add profile'
+    });
+  }
+});
+
+app.post('/mcp/daks/repositories', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { owner, repo } = req.body;
+    if (!owner || !repo || typeof owner !== 'string' || typeof repo !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'Owner and repo names are required'
+      });
+      return;
+    }
+    
+    dakScanner.addRepository(owner, repo);
+    logger.info('REPO_ADD_REQUEST', `Added repository: ${owner}/${repo}`);
+    
+    res.json({
+      success: true,
+      message: `Repository ${owner}/${repo} added to DAK list`
+    });
+  } catch (error) {
+    logger.error('REPO_ADD', 'Failed to add repository', error instanceof Error ? error : undefined);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to add repository'
+    });
+  }
+});
+
 // MCP Service Registry endpoint - discovers all running local MCP services
 app.get('/mcp/services', async (req: Request, res: Response) => {
   const services = [];
@@ -82,7 +211,7 @@ app.get('/mcp/services', async (req: Request, res: Response) => {
   services.push({
     id: 'dak-faq',
     name: 'DAK FAQ MCP Service',
-    description: 'WHO SMART Guidelines DAK FAQ functionality',
+    description: 'WHO SMART Guidelines DAK FAQ functionality and repository scanning',
     functionality: 'dak-faq',
     baseUrl: `http://${HOST}:${PORT}/mcp`,
     version: '1.0.0',
@@ -101,13 +230,19 @@ app.get('/mcp/services', async (req: Request, res: Response) => {
       'GET /faq/decision-tables',
       'GET /faq/business-processes',
       'GET /faq/personas',
-      'GET /faq/questionnaires'
+      'GET /faq/questionnaires',
+      'GET /daks',
+      'GET /daks/status',
+      'POST /daks/scan',
+      'POST /daks/profiles',
+      'POST /daks/repositories'
     ],
     transport: ['http'],
     capabilities: {
       tools: true,
       resources: false,
-      prompts: false
+      prompts: false,
+      dakScanning: true
     }
   });
   
