@@ -1,6 +1,7 @@
 /**
  * DAK FAQ MCP Server
  * Local-only server providing FAQ functionality for DAK repositories
+ * Enhanced with request tracking and logging capabilities
  */
 
 import express, { Request, Response, NextFunction } from 'express';
@@ -8,6 +9,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fetch from 'node-fetch';
+import { createHash, randomUUID } from 'crypto';
 import { executeRoute } from './server/routes/execute.js';
 import { catalogRoute } from './server/routes/catalog.js';
 import { schemaRoute } from './server/routes/schema.js';
@@ -30,6 +32,11 @@ const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const HOST = '127.0.0.1'; // Local only for security
 
+// Request tracking configuration
+const REQUEST_BUFFER_SIZE = parseInt(process.env.MCP_REQUEST_BUFFER_SIZE || '2000', 10);
+const requestBuffer: any[] = [];
+const logBuffer: any[] = [];
+
 // Initialize DAK Repository Scanner
 const dakScanner = new DAKRepositoryScanner(logger, process.env.GITHUB_TOKEN);
 
@@ -43,6 +50,83 @@ setImmediate(async () => {
   }
 });
 
+// Request tracking middleware
+const requestTrackingMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const requestId = randomUUID();
+  const startTime = Date.now();
+  
+  // Capture request data
+  const requestData = {
+    uuid: requestId,
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    url: req.originalUrl,
+    serviceId: 'dak-faq',
+    serviceName: 'DAK FAQ MCP Service',
+    request: {
+      headers: req.headers,
+      body: req.body,
+      query: req.query,
+      params: req.params
+    },
+    metadata: {
+      ipAddress: req.ip || req.connection.remoteAddress,
+      userAgent: req.get('User-Agent'),
+      referrer: req.get('Referer'),
+      requestSize: JSON.stringify(req.body || {}).length
+    }
+  };
+
+  // Store request ID for response tracking
+  (req as any).requestId = requestId;
+  
+  // Override res.json to capture response
+  const originalJson = res.json;
+  res.json = function(body: any) {
+    const endTime = Date.now();
+    const responseTime = endTime - startTime;
+    
+    // Complete request data with response
+    const completeRequest = {
+      ...requestData,
+      status: res.statusCode,
+      responseTime,
+      response: {
+        headers: res.getHeaders(),
+        body: body
+      },
+      metadata: {
+        ...requestData.metadata,
+        responseSize: JSON.stringify(body || {}).length
+      },
+      timing: {
+        startTime,
+        endTime,
+        duration: responseTime
+      }
+    };
+    
+    // Add to buffer (circular buffer)
+    requestBuffer.push(completeRequest);
+    if (requestBuffer.length > REQUEST_BUFFER_SIZE) {
+      requestBuffer.shift();
+    }
+    
+    // Log the request
+    logger.info('API_QUERY', `${req.method} ${req.originalUrl} - ${res.statusCode} (${responseTime}ms)`, {
+      requestId,
+      method: req.method,
+      url: req.originalUrl,
+      status: res.statusCode,
+      responseTime
+    });
+    
+    return originalJson.call(this, body);
+  };
+  
+  next();
+};
+
 // Middleware
 app.use(cors({
   origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
@@ -50,22 +134,43 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Add logging middleware
+// Trust proxy for accurate IP addresses
+app.set('trust proxy', true);
+
+// Apply request tracking middleware to all routes
+app.use(requestTrackingMiddleware);
+
+// Enhanced logging middleware for service lifecycle
 app.use((req: Request, res: Response, next: NextFunction) => {
-  const start = Date.now();
+  const startTime = Date.now();
   
-  // Log incoming request
-  logger.logQuery(req.method, req.path, Object.keys(req.query).length > 0 ? req.query : null);
-  
-  // Capture response details
-  const originalSend = res.send;
-  res.send = function(data) {
-    const responseTime = Date.now() - start;
-    logger.logQuery(req.method, req.path, null, responseTime, res.statusCode);
-    return originalSend.call(this, data);
-  };
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    const logEntry = {
+      id: randomUUID(),
+      timestamp: new Date().toISOString(),
+      level: res.statusCode >= 400 ? 'error' : 'info',
+      category: 'API_REQUEST',
+      message: `${req.method} ${req.originalUrl} - ${res.statusCode} (${duration}ms)`,
+      serviceCategory: 'mcp-dak-faq',
+      metadata: {
+        method: req.method,
+        url: req.originalUrl,
+        status: res.statusCode,
+        duration,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip
+      }
+    };
+    
+    // Add to log buffer
+    logBuffer.push(logEntry);
+    if (logBuffer.length > REQUEST_BUFFER_SIZE) {
+      logBuffer.shift();
+    }
+  });
   
   next();
 });
@@ -235,7 +340,10 @@ app.get('/mcp/services', async (req: Request, res: Response) => {
       'GET /daks/status',
       'POST /daks/scan',
       'POST /daks/profiles',
-      'POST /daks/repositories'
+      'POST /daks/repositories',
+      'GET /requests',
+      'GET /requests/:uuid',
+      'GET /logs'
     ],
     transport: ['http'],
     capabilities: {
@@ -325,6 +433,127 @@ app.get('/', (req: Request, res: Response) => {
       note: 'This server is designed for local use only and should not be exposed to remote networks'
     }
   });
+});
+
+// Request tracking API endpoints
+app.get('/mcp/requests', (req: Request, res: Response) => {
+  try {
+    const { limit = 100, offset = 0, method, status, service } = req.query;
+    
+    let filtered = [...requestBuffer];
+    
+    // Apply filters
+    if (method) {
+      filtered = filtered.filter(r => r.method === method);
+    }
+    if (status) {
+      const statusCode = parseInt(status as string);
+      filtered = filtered.filter(r => Math.floor(r.status / 100) === Math.floor(statusCode / 100));
+    }
+    if (service) {
+      filtered = filtered.filter(r => r.serviceId === service);
+    }
+    
+    // Sort by timestamp (newest first)
+    filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    
+    // Apply pagination
+    const startIndex = parseInt(offset as string) || 0;
+    const limitNum = parseInt(limit as string) || 100;
+    const paginated = filtered.slice(startIndex, startIndex + limitNum);
+    
+    res.json({
+      success: true,
+      total: filtered.length,
+      requests: paginated,
+      pagination: {
+        offset: startIndex,
+        limit: limitNum,
+        hasMore: startIndex + limitNum < filtered.length
+      }
+    });
+  } catch (error) {
+    logger.error('REQUEST_LIST', 'Failed to get request list', error instanceof Error ? error : undefined);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve requests'
+    });
+  }
+});
+
+app.get('/mcp/requests/:uuid', (req: Request, res: Response) => {
+  try {
+    const { uuid } = req.params;
+    const request = requestBuffer.find(r => r.uuid === uuid);
+    
+    if (!request) {
+      res.status(404).json({
+        success: false,
+        error: 'Request not found'
+      });
+      return;
+    }
+    
+    res.json({
+      success: true,
+      request
+    });
+  } catch (error) {
+    logger.error('REQUEST_DETAIL', 'Failed to get request details', error instanceof Error ? error : undefined);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve request details'
+    });
+  }
+});
+
+// Log retrieval API endpoints
+app.get('/mcp/logs', (req: Request, res: Response) => {
+  try {
+    const { limit = 100, offset = 0, level, category, search } = req.query;
+    
+    let filtered = [...logBuffer];
+    
+    // Apply filters
+    if (level) {
+      filtered = filtered.filter(l => l.level === level);
+    }
+    if (category) {
+      filtered = filtered.filter(l => l.category === category);
+    }
+    if (search) {
+      const searchTerm = (search as string).toLowerCase();
+      filtered = filtered.filter(l => 
+        l.message.toLowerCase().includes(searchTerm) ||
+        l.category.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    // Sort by timestamp (newest first)
+    filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    
+    // Apply pagination
+    const startIndex = parseInt(offset as string) || 0;
+    const limitNum = parseInt(limit as string) || 100;
+    const paginated = filtered.slice(startIndex, startIndex + limitNum);
+    
+    res.json({
+      success: true,
+      total: filtered.length,
+      logs: paginated,
+      pagination: {
+        offset: startIndex,
+        limit: limitNum,
+        hasMore: startIndex + limitNum < filtered.length
+      }
+    });
+  } catch (error) {
+    logger.error('LOG_LIST', 'Failed to get log list', error instanceof Error ? error : undefined);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve logs'
+    });
+  }
 });
 
 // Error handling middleware
