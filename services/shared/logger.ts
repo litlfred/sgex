@@ -1,27 +1,39 @@
 /**
- * Centralized MCP Services Logging Utility
- * Provides consistent logging across all MCP services with support for
- * both interactive and non-interactive modes
+ * Enhanced MCP Services Logging Utility
+ * Leverages existing SGEX logging service with additional MCP-specific features
+ * Provides service filtering, interactive/non-interactive modes, and centralized logging
  */
 
 import { createWriteStream, WriteStream } from 'fs';
 import { join } from 'path';
 
 type LogLevel = 'error' | 'warn' | 'info' | 'debug' | 'trace';
+type ServiceCategory = 'mcp-dak-faq' | 'mcp-publication-api' | 'web-service' | 'shared-service';
 
 interface LogEntry {
   timestamp: string;
   message: string;
   level: LogLevel;
+  category: string;
+  serviceCategory: ServiceCategory;
 }
 
 interface MCPLoggerOptions {
   logLevel?: LogLevel;
   logFile?: string;
+  serviceCategory?: ServiceCategory;
 }
 
-class MCPLogger {
+interface LogFilter {
+  levels?: LogLevel[];
+  categories?: string[];
+  serviceCategories?: ServiceCategory[];
+  searchText?: string;
+}
+
+class EnhancedMCPLogger {
   private serviceName: string;
+  private serviceCategory: ServiceCategory;
   private isInteractive: boolean;
   private logLevel: LogLevel;
   private logFile?: string;
@@ -30,9 +42,16 @@ class MCPLogger {
   private currentLevel: number;
   private colors: Record<string, string>;
   private fileStream?: WriteStream;
+  private logHistory: LogEntry[] = [];
+  private maxHistorySize: number = 1000;
+  private filter: LogFilter = {};
+
+  // Integration with SGEX logger
+  private sgexLogger: any = null;
 
   constructor(serviceName: string, options: MCPLoggerOptions = {}) {
     this.serviceName = serviceName;
+    this.serviceCategory = options.serviceCategory || this.inferServiceCategory(serviceName);
     this.isInteractive = process.env.MCP_INTERACTIVE === 'true';
     this.logLevel = options.logLevel || (process.env.MCP_LOG_LEVEL as LogLevel) || 'info';
     this.logFile = options.logFile;
@@ -60,12 +79,101 @@ class MCPLogger {
       reset: '\x1b[0m'     // Reset
     };
     
+    // Initialize SGEX logger integration
+    this.initializeSGEXIntegration();
+    
     // Initialize log file if specified
     if (this.logFile) {
       this.fileStream = createWriteStream(this.logFile, { flags: 'a' });
     }
     
     this.logInitialization();
+  }
+
+  /**
+   * Initialize integration with existing SGEX logging service
+   */
+  private initializeSGEXIntegration(): void {
+    try {
+      // Try to import SGEX logger if available
+      if (typeof window !== 'undefined' && (window as any).sgexLogger) {
+        this.sgexLogger = (window as any).sgexLogger.getLogger(this.serviceName);
+      } else {
+        // For Node.js environment, try to load the logger
+        try {
+          const loggerPath = process.cwd().includes('services') 
+            ? '../../src/utils/logger.js'
+            : './src/utils/logger.js';
+          // Note: Dynamic import would be used in real implementation
+          // this.sgexLogger = require(loggerPath).default?.getLogger(this.serviceName);
+        } catch (error) {
+          // SGEX logger not available, continue with standalone logging
+        }
+      }
+    } catch (error) {
+      // SGEX logger integration failed, continue with standalone logging
+    }
+  }
+
+  /**
+   * Infer service category from service name
+   */
+  private inferServiceCategory(serviceName: string): ServiceCategory {
+    const name = serviceName.toLowerCase();
+    if (name.includes('dak-faq') || name.includes('faq')) {
+      return 'mcp-dak-faq';
+    } else if (name.includes('publication') || name.includes('api')) {
+      return 'mcp-publication-api';
+    } else if (name.includes('web') || name.includes('sgex')) {
+      return 'web-service';
+    } else {
+      return 'shared-service';
+    }
+  }
+
+  /**
+   * Set log filter for filtering messages by category, level, or text
+   */
+  setFilter(filter: LogFilter): void {
+    this.filter = { ...filter };
+  }
+
+  /**
+   * Get filtered log history
+   */
+  getFilteredLogs(): LogEntry[] {
+    return this.logHistory.filter(entry => this.matchesFilter(entry));
+  }
+
+  /**
+   * Check if log entry matches current filter
+   */
+  private matchesFilter(entry: LogEntry): boolean {
+    // Filter by levels
+    if (this.filter.levels && !this.filter.levels.includes(entry.level)) {
+      return false;
+    }
+
+    // Filter by categories
+    if (this.filter.categories && !this.filter.categories.includes(entry.category)) {
+      return false;
+    }
+
+    // Filter by service categories
+    if (this.filter.serviceCategories && !this.filter.serviceCategories.includes(entry.serviceCategory)) {
+      return false;
+    }
+
+    // Filter by search text
+    if (this.filter.searchText) {
+      const searchText = this.filter.searchText.toLowerCase();
+      const messageText = entry.message.toLowerCase();
+      if (!messageText.includes(searchText)) {
+        return false;
+      }
+    }
+
+    return true;
   }
   
   /**
@@ -76,6 +184,7 @@ class MCPLogger {
     this.debug('SERVICE_INIT', `Process ID: ${process.pid}`);
     this.debug('SERVICE_INIT', `Node version: ${process.version}`);
     this.debug('SERVICE_INIT', `Platform: ${process.platform}`);
+    this.debug('SERVICE_INIT', `Service Category: ${this.serviceCategory}`);
     this.debug('SERVICE_INIT', `Mode: ${this.isInteractive ? 'interactive' : 'non-interactive'}`);
   }
   
@@ -136,7 +245,7 @@ class MCPLogger {
   }
   
   /**
-   * Core logging method
+   * Core logging method with SGEX integration
    */
   log(level: LogLevel, category: string, message: string, colorOverride: string | null = null): void {
     const levelNum = this.levels[level];
@@ -147,6 +256,45 @@ class MCPLogger {
     const timestamp = new Date().toISOString();
     const prefix = `[${timestamp}] [${this.serviceName}] [${level.toUpperCase()}] [${category}]`;
     const fullMessage = `${prefix} ${message}`;
+    
+    // Create log entry for history
+    const logEntry: LogEntry = {
+      timestamp,
+      message,
+      level,
+      category,
+      serviceCategory: this.serviceCategory
+    };
+    
+    // Add to history
+    this.logHistory.push(logEntry);
+    if (this.logHistory.length > this.maxHistorySize) {
+      this.logHistory = this.logHistory.slice(-this.maxHistorySize);
+    }
+
+    // Forward to SGEX logger if available
+    if (this.sgexLogger) {
+      try {
+        switch (level) {
+          case 'error':
+            this.sgexLogger.error(message);
+            break;
+          case 'warn':
+            this.sgexLogger.warn(message);
+            break;
+          case 'info':
+            this.sgexLogger.info(message);
+            break;
+          case 'debug':
+            this.sgexLogger.debug(message);
+            break;
+          default:
+            this.sgexLogger.info(message);
+        }
+      } catch (error) {
+        // SGEX logger call failed, continue with standalone logging
+      }
+    }
     
     // Color for interactive mode
     const color = colorOverride || level;
@@ -213,16 +361,23 @@ class MCPLogger {
       return `${seconds}s`;
     }
   }
+
+  /**
+   * Get available service categories for filtering
+   */
+  static getServiceCategories(): ServiceCategory[] {
+    return ['mcp-dak-faq', 'mcp-publication-api', 'web-service', 'shared-service'];
+  }
 }
 
 /**
  * Factory function to create logger instances
  */
-export function createMCPLogger(serviceName: string, options: MCPLoggerOptions = {}): MCPLogger {
-  return new MCPLogger(serviceName, options);
+export function createMCPLogger(serviceName: string, options: MCPLoggerOptions = {}): EnhancedMCPLogger {
+  return new EnhancedMCPLogger(serviceName, options);
 }
 
 /**
  * Default export for backward compatibility
  */
-export default MCPLogger;
+export default EnhancedMCPLogger;

@@ -18,10 +18,11 @@ import { createMCPLogger } from './logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize logger
+// Initialize logger with service category
 const logger = createMCPLogger('DAK-FAQ-MCP', {
   logLevel: (process.env.MCP_LOG_LEVEL as any) || 'info',
-  logFile: process.env.MCP_LOG_FILE
+  logFile: process.env.MCP_LOG_FILE,
+  serviceCategory: 'mcp-dak-faq'
 });
 
 const app = express();

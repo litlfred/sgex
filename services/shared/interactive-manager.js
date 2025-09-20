@@ -4,6 +4,7 @@
  * Interactive Terminal Interface for MCP Services
  * Provides split-screen view with service status indicators and scrollable logging
  * Uses blessed library for reliable cross-platform terminal UI on Ubuntu/Linux
+ * Enhanced with service category filtering and SGEX logger integration
  */
 
 import blessed from 'blessed';
@@ -14,14 +15,39 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = join(__filename, '..');
 
+type ServiceCategory = 'mcp-dak-faq' | 'mcp-publication-api' | 'web-service' | 'shared-service';
+
+interface ServiceFilter {
+  categories: ServiceCategory[];
+  levels: string[];
+  searchText: string;
+}
+
 class MCPServiceManager {
+  private services: Map<string, any>;
+  private logs: any[];
+  private filteredLogs: any[];
+  private maxLogs: number;
+  private screen: any;
+  private statusBox: any;
+  private logBox: any;
+  private filterBox: any;
+  private currentFilter: ServiceFilter;
+
   constructor() {
     this.services = new Map();
     this.logs = [];
+    this.filteredLogs = [];
     this.maxLogs = 1000;
     this.screen = null;
     this.statusBox = null;
     this.logBox = null;
+    this.filterBox = null;
+    this.currentFilter = {
+      categories: ['mcp-dak-faq', 'mcp-publication-api', 'web-service'],
+      levels: ['error', 'warn', 'info'],
+      searchText: ''
+    };
     this.setupUI();
     this.setupServices();
   }
@@ -30,16 +56,16 @@ class MCPServiceManager {
     // Create screen
     this.screen = blessed.screen({
       smartCSR: true,
-      title: 'SGEX MCP Services Manager'
+      title: 'SGEX MCP Services Manager - Enhanced Logging'
     });
 
-    // Status panel (top 30% of screen)
+    // Status panel (top 25% of screen)
     this.statusBox = blessed.box({
       label: ' Service Status ',
       top: 0,
       left: 0,
       width: '100%',
-      height: '30%',
+      height: '25%',
       border: {
         type: 'line'
       },
@@ -56,13 +82,36 @@ class MCPServiceManager {
       scrollable: false
     });
 
-    // Log panel (bottom 70% of screen)
-    this.logBox = blessed.log({
-      label: ' Service Logs ',
-      top: '30%',
+    // Filter panel (25% to 35% of screen)
+    this.filterBox = blessed.box({
+      label: ' Log Filters ',
+      top: '25%',
       left: 0,
       width: '100%',
-      height: '70%',
+      height: '10%',
+      border: {
+        type: 'line'
+      },
+      style: {
+        fg: 'yellow',
+        border: {
+          fg: 'yellow'
+        },
+        label: {
+          fg: 'white',
+          bold: true
+        }
+      },
+      scrollable: false
+    });
+
+    // Log panel (bottom 65% of screen)
+    this.logBox = blessed.log({
+      label: ' Filtered Service Logs ',
+      top: '35%',
+      left: 0,
+      width: '100%',
+      height: '65%',
       border: {
         type: 'line'
       },
@@ -85,6 +134,7 @@ class MCPServiceManager {
 
     // Add boxes to screen
     this.screen.append(this.statusBox);
+    this.screen.append(this.filterBox);
     this.screen.append(this.logBox);
 
     // Focus on log box for scrolling
@@ -100,16 +150,22 @@ class MCPServiceManager {
       this.showHelp();
     });
 
+    // Filter controls
+    this.screen.key(['f'], () => {
+      this.showFilterDialog();
+    });
+
     // Render screen
     this.screen.render();
   }
 
   setupServices() {
-    // Define services
+    // Define services with categories
     const serviceConfigs = [
       {
         id: 'dak-faq-mcp',
         name: 'DAK FAQ MCP Service',
+        category: 'mcp-dak-faq' as ServiceCategory,
         port: 3001,
         path: 'services/dak-faq-mcp',
         command: 'npm',
@@ -118,6 +174,7 @@ class MCPServiceManager {
       {
         id: 'dak-publication-api',
         name: 'DAK Publication API Service', 
+        category: 'mcp-publication-api' as ServiceCategory,
         port: 3002,
         path: 'services/dak-publication-api',
         command: 'npm',
@@ -126,6 +183,7 @@ class MCPServiceManager {
       {
         id: 'sgex-web',
         name: 'SGEX Web Application',
+        category: 'web-service' as ServiceCategory,
         port: 3000,
         path: '.',
         command: 'npm',
@@ -145,15 +203,205 @@ class MCPServiceManager {
     });
 
     this.updateStatusDisplay();
+    this.updateFilterDisplay();
   }
 
-  startService(serviceId) {
+  /**
+   * Apply current filter to logs and update display
+   */
+  applyFilter() {
+    this.filteredLogs = this.logs.filter(log => {
+      // Filter by category
+      if (!this.currentFilter.categories.includes(log.category)) {
+        return false;
+      }
+
+      // Filter by level
+      if (!this.currentFilter.levels.includes(log.level)) {
+        return false;
+      }
+
+      // Filter by search text
+      if (this.currentFilter.searchText && 
+          !log.message.toLowerCase().includes(this.currentFilter.searchText.toLowerCase())) {
+        return false;
+      }
+
+      return true;
+    });
+
+    // Clear and repopulate log box
+    this.logBox.setContent('');
+    this.filteredLogs.forEach(log => {
+      this.logBox.log(log.formattedMessage);
+    });
+    this.screen.render();
+  }
+
+  /**
+   * Show filter configuration dialog
+   */
+  showFilterDialog() {
+    const filterDialog = blessed.form({
+      parent: this.screen,
+      keys: true,
+      left: 'center',
+      top: 'center',
+      width: 60,
+      height: 20,
+      border: {
+        type: 'line'
+      },
+      style: {
+        border: {
+          fg: 'yellow'
+        }
+      },
+      label: ' Configure Log Filters '
+    });
+
+    const instructions = blessed.box({
+      parent: filterDialog,
+      top: 1,
+      left: 2,
+      width: '90%',
+      height: 3,
+      content: 'Use arrow keys to navigate, Enter to toggle, Esc to close',
+      style: {
+        fg: 'cyan'
+      }
+    });
+
+    // Category checkboxes
+    let checkboxTop = 4;
+    const categoryCheckboxes: any[] = [];
+    ['mcp-dak-faq', 'mcp-publication-api', 'web-service'].forEach((cat, index) => {
+      const checkbox = blessed.checkbox({
+        parent: filterDialog,
+        top: checkboxTop + index,
+        left: 2,
+        width: 25,
+        height: 1,
+        text: cat,
+        checked: this.currentFilter.categories.includes(cat as ServiceCategory),
+        style: {
+          fg: 'white'
+        }
+      });
+      categoryCheckboxes.push({ checkbox, category: cat });
+    });
+
+    // Level checkboxes
+    checkboxTop = 8;
+    const levelCheckboxes: any[] = [];
+    ['error', 'warn', 'info', 'debug'].forEach((level, index) => {
+      const checkbox = blessed.checkbox({
+        parent: filterDialog,
+        top: checkboxTop + index,
+        left: 30,
+        width: 15,
+        height: 1,
+        text: level,
+        checked: this.currentFilter.levels.includes(level),
+        style: {
+          fg: 'white'
+        }
+      });
+      levelCheckboxes.push({ checkbox, level });
+    });
+
+    // Search textbox
+    const searchBox = blessed.textbox({
+      parent: filterDialog,
+      label: ' Search Text ',
+      top: 13,
+      left: 2,
+      width: '90%',
+      height: 3,
+      border: {
+        type: 'line'
+      },
+      style: {
+        border: {
+          fg: 'green'
+        }
+      },
+      value: this.currentFilter.searchText
+    });
+
+    // Apply button
+    const applyButton = blessed.button({
+      parent: filterDialog,
+      mouse: true,
+      keys: true,
+      shrink: true,
+      padding: {
+        left: 1,
+        right: 1
+      },
+      left: 'center',
+      top: 17,
+      content: 'Apply Filter',
+      style: {
+        bg: 'green',
+        fg: 'white',
+        focus: {
+          bg: 'blue'
+        }
+      }
+    });
+
+    applyButton.on('press', () => {
+      // Update filter from checkboxes
+      this.currentFilter.categories = categoryCheckboxes
+        .filter(item => item.checkbox.checked)
+        .map(item => item.category as ServiceCategory);
+      
+      this.currentFilter.levels = levelCheckboxes
+        .filter(item => item.checkbox.checked)
+        .map(item => item.level);
+
+      this.currentFilter.searchText = searchBox.value || '';
+
+      this.applyFilter();
+      this.updateFilterDisplay();
+      filterDialog.destroy();
+      this.screen.render();
+    });
+
+    filterDialog.on('keypress', (ch: any, key: any) => {
+      if (key.name === 'escape') {
+        filterDialog.destroy();
+        this.screen.render();
+      }
+    });
+
+    filterDialog.show();
+    filterDialog.focus();
+    this.screen.render();
+  }
+
+  updateFilterDisplay() {
+    let content = '';
+    content += '{bold}Active Filters:{/bold}\n';
+    content += `Categories: ${this.currentFilter.categories.join(', ')}\n`;
+    content += `Levels: ${this.currentFilter.levels.join(', ')}\n`;
+    if (this.currentFilter.searchText) {
+      content += `Search: "${this.currentFilter.searchText}"\n`;
+    }
+    content += `Showing: ${this.filteredLogs.length}/${this.logs.length} logs`;
+
+    this.filterBox.setContent(content);
+    this.screen.render();
+  }
+
+  startService(serviceId: string) {
     const service = this.services.get(serviceId);
     if (!service || service.status === 'running') {
       return;
     }
 
-    this.log(`Starting ${service.name}...`, 'info');
+    this.log(`Starting ${service.name}...`, 'info', service.category);
     
     // Set environment variables for MCP logging integration
     const env = {
@@ -174,9 +422,9 @@ class MCPServiceManager {
 
     // Handle stdout
     childProcess.stdout.on('data', (data) => {
-      const lines = data.toString().split('\n').filter(line => line.trim());
-      lines.forEach(line => {
-        this.log(`[${service.name}] ${line}`, 'info');
+      const lines = data.toString().split('\n').filter((line: string) => line.trim());
+      lines.forEach((line: string) => {
+        this.log(`[${service.name}] ${line}`, 'info', service.category);
       });
       
       // Check if service is ready
@@ -188,9 +436,9 @@ class MCPServiceManager {
 
     // Handle stderr  
     childProcess.stderr.on('data', (data) => {
-      const lines = data.toString().split('\n').filter(line => line.trim());
-      lines.forEach(line => {
-        this.log(`[${service.name}] ${line}`, 'error');
+      const lines = data.toString().split('\n').filter((line: string) => line.trim());
+      lines.forEach((line: string) => {
+        this.log(`[${service.name}] ${line}`, 'error', service.category);
       });
     });
 
@@ -198,20 +446,20 @@ class MCPServiceManager {
     childProcess.on('exit', (code) => {
       service.status = code === 0 ? 'stopped' : 'failed';
       service.process = null;
-      this.log(`${service.name} exited with code ${code}`, code === 0 ? 'info' : 'error');
+      this.log(`${service.name} exited with code ${code}`, code === 0 ? 'info' : 'error', service.category);
       this.updateStatusDisplay();
     });
 
     this.updateStatusDisplay();
   }
 
-  stopService(serviceId) {
+  stopService(serviceId: string) {
     const service = this.services.get(serviceId);
     if (!service || !service.process) {
       return;
     }
 
-    this.log(`Stopping ${service.name}...`, 'info');
+    this.log(`Stopping ${service.name}...`, 'info', service.category);
     service.status = 'stopping';
     service.process.kill('SIGTERM');
     
@@ -219,7 +467,7 @@ class MCPServiceManager {
     setTimeout(() => {
       if (service.process) {
         service.process.kill('SIGKILL');
-        this.log(`Force killed ${service.name}`, 'warn');
+        this.log(`Force killed ${service.name}`, 'warn', service.category);
       }
     }, 5000);
 
@@ -228,8 +476,8 @@ class MCPServiceManager {
 
   updateStatusDisplay() {
     let content = '';
-    content += '{bold}SGEX MCP Services Manager{/bold}\n';
-    content += '{bold}================================{/bold}\n\n';
+    content += '{bold}SGEX MCP Services Manager - Enhanced Logging{/bold}\n';
+    content += '{bold}================================================{/bold}\n\n';
     
     for (const [id, service] of this.services) {
       let statusColor = 'red';
@@ -258,6 +506,7 @@ class MCPServiceManager {
 
       content += `{bold}${service.name}{/bold}\n`;
       content += `  Status: {${statusColor}-fg}●{/} {${statusColor}-fg}${statusText}{/}\n`;
+      content += `  Category: ${service.category}\n`;
       content += `  Port: ${service.port}\n`;
       if (uptime) {
         content += `  Uptime: ${uptime}\n`;
@@ -271,6 +520,7 @@ class MCPServiceManager {
     content += '  [3] Start SGEX Web Application\n';
     content += '  [a] Start All Services\n';
     content += '  [s] Stop All Services\n';
+    content += '  [f] Configure Filters\n';
     content += '  [h] Show Help\n';
     content += '  [q] Quit\n';
 
@@ -278,27 +528,32 @@ class MCPServiceManager {
     this.screen.render();
   }
 
-  log(message, level = 'info') {
+  log(message: string, level: string = 'info', category: ServiceCategory = 'shared-service') {
     const timestamp = new Date().toISOString();
     const coloredMessage = this.colorizeLogMessage(message, level);
     
-    this.logs.push({
+    const logEntry = {
       timestamp,
       message,
-      level
-    });
+      level,
+      category,
+      formattedMessage: `${timestamp} ${coloredMessage}`
+    };
+
+    this.logs.push(logEntry);
 
     // Keep only last maxLogs entries
     if (this.logs.length > this.maxLogs) {
       this.logs = this.logs.slice(-this.maxLogs);
     }
 
-    // Add to log box
-    this.logBox.log(`${timestamp} ${coloredMessage}`);
+    // Apply filter and update display
+    this.applyFilter();
+    this.updateFilterDisplay();
     this.screen.render();
   }
 
-  colorizeLogMessage(message, level) {
+  colorizeLogMessage(message: string, level: string) {
     switch (level) {
       case 'error':
         return `{red-fg}${message}{/}`;
@@ -315,7 +570,7 @@ class MCPServiceManager {
     }
   }
 
-  formatUptime(milliseconds) {
+  formatUptime(milliseconds: number) {
     const seconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
@@ -345,7 +600,7 @@ class MCPServiceManager {
     });
 
     const helpContent = `
-{bold}SGEX MCP Services Manager Help{/bold}
+{bold}SGEX MCP Services Manager - Enhanced Logging{/bold}
 
 {bold}Service Controls:{/bold}
   [1] - Start DAK FAQ MCP Service (port 3001)
@@ -353,6 +608,12 @@ class MCPServiceManager {
   [3] - Start SGEX Web Application (port 3000)
   [a] - Start All Services
   [s] - Stop All Services
+
+{bold}Log Filtering:{/bold}
+  [f] - Open filter configuration dialog
+  Filter by: Service categories, log levels, search text
+  Categories: mcp-dak-faq, mcp-publication-api, web-service
+  Levels: error, warn, info, debug
 
 {bold}Navigation:{/bold}
   [Arrow Keys] - Scroll through logs
@@ -397,14 +658,14 @@ Press any key to close this help.
     });
 
     this.screen.key(['a'], () => {
-      this.log('Starting all services...', 'info');
+      this.log('Starting all services...', 'info', 'shared-service');
       this.startService('dak-faq-mcp');
       setTimeout(() => this.startService('dak-publication-api'), 2000);
       setTimeout(() => this.startService('sgex-web'), 4000);
     });
 
     this.screen.key(['s'], () => {
-      this.log('Stopping all services...', 'info');
+      this.log('Stopping all services...', 'info', 'shared-service');
       for (const [id] of this.services) {
         this.stopService(id);
       }
@@ -412,7 +673,7 @@ Press any key to close this help.
   }
 
   shutdown() {
-    this.log('Shutting down services manager...', 'info');
+    this.log('Shutting down services manager...', 'info', 'shared-service');
     
     // Stop all services
     for (const [id, service] of this.services) {
@@ -429,9 +690,10 @@ Press any key to close this help.
 
   start() {
     this.setupKeyHandlers();
-    this.log('SGEX MCP Services Manager started', 'success');
-    this.log('Press [h] for help, [a] to start all services, [q] to quit', 'info');
+    this.log('SGEX MCP Services Manager with Enhanced Logging started', 'success', 'shared-service');
+    this.log('Press [h] for help, [f] for filters, [a] to start all services, [q] to quit', 'info', 'shared-service');
     this.updateStatusDisplay();
+    this.applyFilter();
   }
 }
 
