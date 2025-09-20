@@ -44,53 +44,44 @@ You can deploy the SGEX MCP service using either **manual deployment** or **auto
 
 ### Option A: GitHub Actions Deployment (Recommended)
 
-GitHub Actions provides automated, secure deployment with proper secret management and environment separation.
+GitHub Actions provides automated, secure deployment to the **development environment** with proper secret management.
 
 #### 1. Set up Repository Secrets
 
 In your GitHub repository, go to Settings → Secrets and variables → Actions, and add the following secrets:
 
-**Required for all environments:**
+**Required secrets:**
 - `FLY_API_TOKEN` - Your Fly.io API token (get from `fly auth token`)
-
-**Per-environment GitHub OAuth secrets:**
-- `GITHUB_CLIENT_ID_DEV` - GitHub OAuth Client ID for development
-- `GITHUB_CLIENT_SECRET_DEV` - GitHub OAuth Client Secret for development  
-- `GITHUB_TOKEN_DEV` - GitHub API token for development
-- `GITHUB_CLIENT_ID_STAGING` - (Optional) For staging environment
-- `GITHUB_CLIENT_SECRET_STAGING` - (Optional) For staging environment
-- `GITHUB_TOKEN_STAGING` - (Optional) For staging environment
-- `GITHUB_CLIENT_ID_PROD` - (Optional) For production environment
-- `GITHUB_CLIENT_SECRET_PROD` - (Optional) For production environment
-- `GITHUB_TOKEN_PROD` - (Optional) For production environment
+- `GITHUB_CLIENT_ID_DEV` - GitHub OAuth Client ID for development environment
+- `GITHUB_CLIENT_SECRET_DEV` - GitHub OAuth Client Secret for development environment  
+- `GITHUB_TOKEN_DEV` - GitHub API token for development environment
 
 #### 2. Deploy via GitHub Actions
 
 **Automatic Deployment:**
-- Push changes to `main` branch → Automatically deploys to `dev` environment
-- Merge PR to `main` → Automatically deploys to `dev` environment
+- Push changes to `main` branch → Automatically deploys to dev environment (`sgex-mcp-dev`)
+- Merge PR to `main` → Automatically deploys to dev environment
 
 **Manual Deployment:**
 1. Go to your repository → Actions tab
-2. Select "Deploy MCP Server to Fly.io" workflow
+2. Select "Deploy MCP Server to Fly.io (Dev)" workflow
 3. Click "Run workflow"
-4. Choose environment: `dev`, `staging`, or `production`
-5. Optionally specify a branch (defaults to current branch)
-6. Click "Run workflow"
+4. Optionally specify a branch (defaults to current branch)
+5. Click "Run workflow"
 
 **Command Line Trigger:**
 ```bash
 # Deploy current branch to dev environment
 gh workflow run mcp-deployment.yml
 
-# Deploy specific branch to production
-gh workflow run mcp-deployment.yml -f environment=production -f branch=main
+# Deploy specific branch to dev environment
+gh workflow run mcp-deployment.yml -f branch=feature-branch
 ```
 
 #### 3. Monitor Deployment
 
 - View deployment progress in the Actions tab
-- Deployment summary shows app URL and status
+- Deployment summary shows app URL: `https://sgex-mcp-dev.fly.dev`
 - Automatic health checks verify successful deployment
 
 ### Option B: Manual Deployment
@@ -168,7 +159,7 @@ fly auth token
 
 ### 2. **GitHub OAuth Application Setup**
 
-For each environment (dev/staging/prod), create separate GitHub OAuth applications:
+Create a GitHub OAuth application for the development environment:
 
 **Development Environment:**
 1. GitHub Settings → Developer settings → OAuth Apps → New OAuth App
@@ -179,13 +170,6 @@ For each environment (dev/staging/prod), create separate GitHub OAuth applicatio
 3. Save **Client ID** as `GITHUB_CLIENT_ID_DEV` in repository secrets
 4. Save **Client Secret** as `GITHUB_CLIENT_SECRET_DEV` in repository secrets
 
-**Production Environment (optional):**
-1. Create another OAuth app with production URLs:
-   - **Name**: `SGEX MCP Server (Production)`
-   - **Homepage URL**: `https://sgex-mcp-production.fly.dev`
-   - **Callback URL**: `https://sgex-mcp-production.fly.dev/auth/github/callback`
-2. Save as `GITHUB_CLIENT_ID_PROD` and `GITHUB_CLIENT_SECRET_PROD`
-
 ### 3. **GitHub API Token Setup**
 
 ```bash
@@ -193,9 +177,7 @@ For each environment (dev/staging/prod), create separate GitHub OAuth applicatio
 # - read:org (check organization membership)
 # - read:user (get user information)
 
-# Add to repository secrets as:
-# - GITHUB_TOKEN_DEV (for development)
-# - GITHUB_TOKEN_PROD (for production)
+# Add to repository secrets as GITHUB_TOKEN_DEV
 ```
 
 ### 4. **Repository Secrets Summary**
@@ -208,9 +190,6 @@ Add these secrets in GitHub repository Settings → Secrets and variables → Ac
 | `GITHUB_CLIENT_ID_DEV` | OAuth Client ID for dev environment | ✅ Required |
 | `GITHUB_CLIENT_SECRET_DEV` | OAuth Client Secret for dev environment | ✅ Required |
 | `GITHUB_TOKEN_DEV` | GitHub API token for dev environment | ✅ Required |
-| `GITHUB_CLIENT_ID_PROD` | OAuth Client ID for production | ⚠️ Optional |
-| `GITHUB_CLIENT_SECRET_PROD` | OAuth Client Secret for production | ⚠️ Optional |
-| `GITHUB_TOKEN_PROD` | GitHub API token for production | ⚠️ Optional |
 
 ### 5. **First Deployment**
 
@@ -218,10 +197,12 @@ After setting up secrets, trigger the first deployment:
 
 ```bash
 # Via GitHub CLI
-gh workflow run mcp-deployment.yml -f environment=dev
+gh workflow run mcp-deployment.yml
 
-# Or via GitHub UI: Actions → Deploy MCP Server to Fly.io → Run workflow
+# Or via GitHub UI: Actions → Deploy MCP Server to Fly.io (Dev) → Run workflow
 ```
+
+The service will be deployed to: `https://sgex-mcp-dev.fly.dev`
 
 The included GitHub Actions workflow (`.github/workflows/mcp-deployment.yml`) provides:
 
