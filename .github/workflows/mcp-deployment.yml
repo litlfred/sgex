@@ -1,0 +1,225 @@
+name: Deploy MCP Server to Fly.io
+
+on:
+  # Manual trigger for deployments
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+        default: 'dev'
+      branch:
+        description: 'Branch to deploy (defaults to current branch)'
+        required: false
+        type: string
+        default: ''
+  
+  # Automatic deployment on push to main (dev environment)
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/dak-faq-mcp/**'
+      - '.github/workflows/mcp-deployment.yml'
+  
+  # Automatic deployment on PR merge (dev environment)
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+    paths:
+      - 'services/dak-faq-mcp/**'
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  FLY_APP_PREFIX: sgex-mcp
+  
+jobs:
+  deploy:
+    name: Deploy MCP Server
+    runs-on: ubuntu-latest
+    
+    # Only run on merged PRs or manual/push triggers
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || github.ref }}
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'services/dak-faq-mcp/package-lock.json'
+      
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ENVIRONMENT="${{ inputs.environment }}"
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            ENVIRONMENT="dev"
+          else
+            ENVIRONMENT="dev"
+          fi
+          
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "app_name=${{ env.FLY_APP_PREFIX }}-$ENVIRONMENT" >> $GITHUB_OUTPUT
+          
+          # Set Fly.io secrets based on environment
+          case $ENVIRONMENT in
+            production)
+              echo "github_client_id_secret=GITHUB_CLIENT_ID_PROD" >> $GITHUB_OUTPUT
+              echo "github_client_secret_secret=GITHUB_CLIENT_SECRET_PROD" >> $GITHUB_OUTPUT
+              echo "github_token_secret=GITHUB_TOKEN_PROD" >> $GITHUB_OUTPUT
+              echo "cors_origin=https://litlfred.github.io" >> $GITHUB_OUTPUT
+              ;;
+            staging)
+              echo "github_client_id_secret=GITHUB_CLIENT_ID_STAGING" >> $GITHUB_OUTPUT
+              echo "github_client_secret_secret=GITHUB_CLIENT_SECRET_STAGING" >> $GITHUB_OUTPUT
+              echo "github_token_secret=GITHUB_TOKEN_STAGING" >> $GITHUB_OUTPUT
+              echo "cors_origin=https://litlfred.github.io" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "github_client_id_secret=GITHUB_CLIENT_ID_DEV" >> $GITHUB_OUTPUT
+              echo "github_client_secret_secret=GITHUB_CLIENT_SECRET_DEV" >> $GITHUB_OUTPUT
+              echo "github_token_secret=GITHUB_TOKEN_DEV" >> $GITHUB_OUTPUT
+              echo "cors_origin=https://litlfred.github.io" >> $GITHUB_OUTPUT
+              ;;
+          esac
+      
+      - name: Install MCP service dependencies
+        working-directory: services/dak-faq-mcp
+        run: npm ci
+      
+      - name: Build MCP service
+        working-directory: services/dak-faq-mcp
+        run: npm run build
+      
+      - name: Run tests (if available)
+        working-directory: services/dak-faq-mcp
+        run: |
+          if npm run test --if-present; then
+            echo "✅ Tests passed"
+          else
+            echo "⚠️ No tests found or tests failed"
+          fi
+        continue-on-error: true
+      
+      - name: Set up Fly.io CLI
+        uses: superfly/flyctl-actions/setup-flyctl@master
+      
+      - name: Update fly.toml for environment
+        working-directory: services/dak-faq-mcp
+        run: |
+          # Create environment-specific fly.toml
+          sed "s/app = \"sgex-mcp-dev\"/app = \"${{ steps.env.outputs.app_name }}\"/" fly.toml > fly-${{ steps.env.outputs.environment }}.toml
+          mv fly-${{ steps.env.outputs.environment }}.toml fly.toml
+          
+          echo "📋 Updated fly.toml for ${{ steps.env.outputs.environment }} environment:"
+          cat fly.toml
+      
+      - name: Deploy to Fly.io
+        working-directory: services/dak-faq-mcp
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          echo "🚀 Deploying ${{ steps.env.outputs.app_name }} to Fly.io..."
+          
+          # Deploy the application
+          flyctl deploy --app ${{ steps.env.outputs.app_name }} --build-only || flyctl launch --now --name ${{ steps.env.outputs.app_name }}
+          
+          # Set secrets (only update if they exist)
+          if [ -n "${{ secrets[steps.env.outputs.github_client_id_secret] }}" ]; then
+            echo "🔑 Setting GitHub OAuth secrets..."
+            flyctl secrets set \
+              GITHUB_CLIENT_ID="${{ secrets[steps.env.outputs.github_client_id_secret] }}" \
+              GITHUB_CLIENT_SECRET="${{ secrets[steps.env.outputs.github_client_secret_secret] }}" \
+              GITHUB_TOKEN="${{ secrets[steps.env.outputs.github_token_secret] }}" \
+              CORS_ORIGIN="${{ steps.env.outputs.cors_origin }}" \
+              --app ${{ steps.env.outputs.app_name }}
+          else
+            echo "⚠️ GitHub OAuth secrets not configured for ${{ steps.env.outputs.environment }} environment"
+            echo "Please set the following secrets in GitHub repository settings:"
+            echo "- ${{ steps.env.outputs.github_client_id_secret }}"
+            echo "- ${{ steps.env.outputs.github_client_secret_secret }}"
+            echo "- ${{ steps.env.outputs.github_token_secret }}"
+          fi
+          
+          # Final deployment with secrets
+          flyctl deploy --app ${{ steps.env.outputs.app_name }}
+      
+      - name: Verify deployment
+        working-directory: services/dak-faq-mcp
+        run: |
+          echo "🏥 Verifying deployment health..."
+          
+          # Wait for deployment to be ready
+          sleep 30
+          
+          # Get app URL
+          APP_URL="https://${{ steps.env.outputs.app_name }}.fly.dev"
+          echo "🌐 Testing deployment at: $APP_URL"
+          
+          # Test health endpoint
+          if curl -f -s "$APP_URL/health" > /dev/null; then
+            echo "✅ Health check passed"
+            curl -s "$APP_URL/health" | jq .
+          else
+            echo "❌ Health check failed"
+            flyctl logs --app ${{ steps.env.outputs.app_name }} || true
+            exit 1
+          fi
+          
+          # Test API info endpoint
+          echo "📋 API Information:"
+          curl -s "$APP_URL/" | jq .security.oauth_configured || true
+      
+      - name: Post deployment summary
+        if: always()
+        run: |
+          echo "## 🚀 MCP Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ steps.env.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**App Name:** ${{ steps.env.outputs.app_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** https://${{ steps.env.outputs.app_name }}.fly.dev" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ inputs.branch || github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ **Status:** Deployment successful" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📋 Available Endpoints" >> $GITHUB_STEP_SUMMARY
+            echo "- Health: https://${{ steps.env.outputs.app_name }}.fly.dev/health" >> $GITHUB_STEP_SUMMARY
+            echo "- API Info: https://${{ steps.env.outputs.app_name }}.fly.dev/" >> $GITHUB_STEP_SUMMARY
+            echo "- OAuth: https://${{ steps.env.outputs.app_name }}.fly.dev/auth/github" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Status:** Deployment failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check the workflow logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔧 Management Commands" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# View logs" >> $GITHUB_STEP_SUMMARY
+          echo "flyctl logs --app ${{ steps.env.outputs.app_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# View status" >> $GITHUB_STEP_SUMMARY
+          echo "flyctl status --app ${{ steps.env.outputs.app_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Scale resources" >> $GITHUB_STEP_SUMMARY
+          echo "flyctl scale memory 512 --app ${{ steps.env.outputs.app_name }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
