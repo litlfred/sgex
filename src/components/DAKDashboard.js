@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import githubService from '../services/githubService';
-import dakValidationService from '../services/dakValidationService';
 import branchContextService from '../services/branchContextService';
 import HelpButton from './HelpButton';
 import DAKStatusBox from './DAKStatusBox';

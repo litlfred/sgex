@@ -804,6 +804,9 @@ const BranchListingPage = () => {
                                         <div 
                                             className="discussion-summary-bar"
                                             onClick={() => toggleDiscussion(pr.number)}
+                                            onKeyDown={(e) => e.key === 'Enter' && toggleDiscussion(pr.number)}
+                                            role="button"
+                                            tabIndex={0}
                                         >
                                             <div className="discussion-summary-text">
                                                 <span className="discussion-summary-icon">💬</span>

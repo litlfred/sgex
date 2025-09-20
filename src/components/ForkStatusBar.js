@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { handleNavigationClick } from '../utils/navigationUtils';
 
-const ForkStatusBar = ({ profile, repository, selectedBranch }) => {
+const ForkStatusBar = ({ repository }) => {
   const navigate = useNavigate();
   
   const [isExpanded, setIsExpanded] = useState(false);

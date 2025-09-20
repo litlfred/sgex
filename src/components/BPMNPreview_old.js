@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { lazyLoadBpmnViewer } from '../services/libraryLoaderService';
-import githubService from '../services/githubService';
 
 const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
   const containerRef = useRef(null);
@@ -20,10 +19,6 @@ const BPMNPreview = ({ file, repository, selectedBranch, profile }) => {
         if (containerRef.current) {
           containerRef.current.innerHTML = '';
         }
-
-        const owner = repository.owner?.login || repository.full_name.split('/')[0];
-        const repoName = repository.name;
-        const ref = selectedBranch || 'main';
 
         // Create a simple demo BPMN for preview (always use demo for performance)
         const bpmnXml = `<?xml version="1.0" encoding="UTF-8"?>

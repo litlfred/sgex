@@ -83,7 +83,6 @@ const DAKPublicationGenerator = ({ profile, repository, selectedBranch, hasWrite
       : `${repoName} - ${component.name}`;
     
     const currentDate = new Date().toLocaleDateString();
-    const currentYear = new Date().getFullYear();
     
     if (format === 'html') {
       return generateHTMLPublication(publicationTitle, scope, component, currentDate);

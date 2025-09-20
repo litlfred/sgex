@@ -112,7 +112,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
               try {
                 if (newWindow.closed || !newWindow.location || newWindow.location.href === 'about:blank') {
                   newWindow.close();
-                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
+                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url);
                 }
               } catch (e) {
                 // Cross-origin restriction means it probably loaded successfully
@@ -122,7 +122,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
           }
         } catch (error) {
           console.warn('Failed to open GitHub issue:', error);
-          window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, issueType);
+          window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url);
         }
       },
 
@@ -182,7 +182,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
               try {
                 if (newWindow.closed || !newWindow.location || newWindow.location.href === 'about:blank') {
                   newWindow.close();
-                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
+                  window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url);
                 }
               } catch (e) {
                 // Cross-origin restriction means it probably loaded successfully
@@ -192,12 +192,12 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
           }
         } catch (error) {
           console.warn('Failed to open DAK issue:', error);
-          window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url, `dak-${issueType}`);
+          window.helpModalInstance?.showFallbackInstructions?.('github-blocked', url);
         }
       },
 
       // Function to show fallback instructions when GitHub access is blocked
-      showFallbackInstructions: (reason, url, issueType) => {
+      showFallbackInstructions: (reason, url) => {
         const instructions = {
           'github-blocked': {
             title: 'GitHub Access Required',

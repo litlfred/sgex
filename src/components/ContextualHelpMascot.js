@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import helpContentService from '../services/helpContentService';
-import tutorialService from '../services/tutorialService';
 import cacheManagementService from '../services/cacheManagementService';
 import issueTrackingService from '../services/issueTrackingService';
 import githubService from '../services/githubService';
@@ -38,7 +37,6 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
   const { t, i18n } = useTranslation();
   const { user, repo } = useParams(); // Extract DAK context from URL
   const [showHelp, setShowHelp] = useState(false);
-  const [helpSticky, setHelpSticky] = useState(false);
   const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(getSavedTheme() === 'dark');
   const [cacheClearing, setCacheClearing] = useState(false);
@@ -60,15 +58,12 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
     switch (savedState) {
       case 0: // Hidden
         setShowHelp(false);
-        setHelpSticky(false);
         break;
       case 1: // Non-sticky (shown)
         setShowHelp(true);
-        setHelpSticky(false);
         break;
       case 2: // Sticky (shown)
         setShowHelp(true);
-        setHelpSticky(true);
         break;
     }
   }, []);
@@ -195,22 +190,18 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
     switch (nextState) {
       case 0: // Hidden
         setShowHelp(false);
-        setHelpSticky(false);
         break;
       case 1: // Non-sticky (shown)
         setShowHelp(true);
-        setHelpSticky(false);
         break;
       case 2: // Sticky (shown)
         setShowHelp(true);
-        setHelpSticky(true);
         break;
     }
   };
 
   const handleCloseHelp = () => {
     setShowHelp(false);
-    setHelpSticky(false);
     setHelpState(0); // Reset to hidden state
   };
 
@@ -219,7 +210,6 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
     if (topic.tutorialId) {
       setSelectedHelpTopic({ ...topic, type: 'enhanced-tutorial' });
       setShowHelp(false);
-      setHelpSticky(false);
       setHelpState(0); // Reset to hidden state
       return;
     }
@@ -228,13 +218,11 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
     if (topic.type === 'action' && topic.action) {
       topic.action();
       setShowHelp(false);
-      setHelpSticky(false);
       setHelpState(0); // Reset to hidden state
     } else {
       // For slideshow and other types, show in modal
       setSelectedHelpTopic(topic);
       setShowHelp(false);
-      setHelpSticky(false);
       setHelpState(0); // Reset to hidden state
     }
   };
@@ -282,6 +270,9 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           onClick={handleClick}
+          onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+          role="button"
+          tabIndex={0}
         >
           <img 
             src={mascotImage} 

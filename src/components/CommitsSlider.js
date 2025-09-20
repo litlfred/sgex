@@ -125,7 +125,7 @@ const CommitsSlider = ({ repository, selectedBranch }) => {
       </div>
 
       <div className="commits-slider" ref={sliderRef}>
-        {commits.map((commit, index) => (
+        {commits.map((commit) => (
           <div key={commit.sha} className="commit-card">
             <div className="commit-header">
               <img 

@@ -11,9 +11,7 @@ import userAccessService from '../../services/userAccessService';
 
 // The dashboard component
 const RepositoryStatsDashboard = ({ 
-  toolDefinition, 
-  pageParams, 
-  toolState 
+  pageParams 
 }) => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);

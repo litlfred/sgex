@@ -29,7 +29,6 @@ const BranchListing = () => {
   const [checkingStatuses, setCheckingStatuses] = useState(false);
   const [prFilter, setPrFilter] = useState('open'); // 'open', 'closed', 'all'
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [githubToken, setGithubToken] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
   const [submittingComments, setSubmittingComments] = useState({});
   const [expandedDiscussions, setExpandedDiscussions] = useState({});
@@ -47,13 +46,13 @@ const BranchListing = () => {
     setIsRefreshing(true);
     
     // Clear the cache to force fresh data
-    branchListingCacheService.forceRefresh(GITHUB_OWNER, GITHUB_REPO);
+    branchListingCacheService.forceRefresh(repositoryConfig.getOwner(), repositoryConfig.getName());
     
     // The fetchData function will be called by the useEffect when isRefreshing changes
   }, []);
 
   // GitHub authentication functions
-  const handleAuthSuccess = (token, octokitInstance) => {
+  const handleAuthSuccess = (token) => {
     // Use githubService for authentication management
     const success = githubService.authenticate(token);
     if (success) {
@@ -493,13 +492,13 @@ const BranchListing = () => {
             </div>
             <h3>🚀 Ready to Contribute?</h3>
             <div class="action-buttons">
-              <a href={`${repositoryConfig.getGitHubUrl()}/issues/new`} target="_blank" class="contribute-btn primary">
+              <a href="${repositoryConfig.getGitHubUrl()}/issues/new" target="_blank" class="contribute-btn primary">
                 🐛 Report a Bug
               </a>
-              <a href={`${repositoryConfig.getGitHubUrl()}/issues/new?template=feature_request.md`} target="_blank" class="contribute-btn secondary">
+              <a href="${repositoryConfig.getGitHubUrl()}/issues/new?template=feature_request.md" target="_blank" class="contribute-btn secondary">
                 ✨ Request a Feature  
               </a>
-              <a href={`${repositoryConfig.getGitHubUrl()}/tree/main/public/docs`} target="_blank" class="contribute-btn tertiary-alt">
+              <a href="${repositoryConfig.getGitHubUrl()}/tree/main/public/docs" target="_blank" class="contribute-btn tertiary-alt">
                 📖 Docs on GitHub
               </a>
             </div>
@@ -518,14 +517,14 @@ const BranchListing = () => {
       setLoading(true);
       
       // Check cache first
-      const cachedData = branchListingCacheService.getCachedData(GITHUB_OWNER, GITHUB_REPO);
+      const cachedData = branchListingCacheService.getCachedData(repositoryConfig.getOwner(), repositoryConfig.getName());
       if (cachedData && !isRefreshing) {
         console.log('Using cached branch listing data');
         setBranches(cachedData.branches);
         setPullRequests(cachedData.pullRequests);
         
         // Update cache info for display
-        setCacheInfo(branchListingCacheService.getCacheInfo(GITHUB_OWNER, GITHUB_REPO));
+        setCacheInfo(branchListingCacheService.getCacheInfo(repositoryConfig.getOwner(), repositoryConfig.getName()));
         
         // Still check deployment statuses and other real-time data
         await checkAllDeploymentStatuses(cachedData.branches, cachedData.pullRequests);
@@ -553,11 +552,11 @@ const BranchListing = () => {
       
       // Use githubService instead of direct GitHub API calls
       // Fetch branches
-      const branchData = await githubService.getBranches(GITHUB_OWNER, GITHUB_REPO);
+      const branchData = await githubService.getBranches(repositoryConfig.getOwner(), repositoryConfig.getName());
       
       // Fetch pull requests based on filter
       const prState = prFilter === 'all' ? 'all' : prFilter;
-      const prData = await githubService.getPullRequests(GITHUB_OWNER, GITHUB_REPO, {
+      const prData = await githubService.getPullRequests(repositoryConfig.getOwner(), repositoryConfig.getName(), {
         state: prState,
         sort: 'updated',
         per_page: 100
@@ -599,10 +598,10 @@ const BranchListing = () => {
       });
       
       // Cache the fetched data
-      branchListingCacheService.setCachedData(GITHUB_OWNER, GITHUB_REPO, filteredBranches, formattedPRs);
+      branchListingCacheService.setCachedData(repositoryConfig.getOwner(), repositoryConfig.getName(), filteredBranches, formattedPRs);
       
       // Update cache info for display
-      setCacheInfo(branchListingCacheService.getCacheInfo(GITHUB_OWNER, GITHUB_REPO));
+      setCacheInfo(branchListingCacheService.getCacheInfo(repositoryConfig.getOwner(), repositoryConfig.getName()));
       
       setBranches(filteredBranches);
       setPullRequests(formattedPRs);
@@ -658,7 +657,7 @@ const BranchListing = () => {
             branchName: 'copilot/fix-459',
             safeBranchName: 'copilot-fix-459',
             url: './copilot-fix-459/index.html',
-            prUrl: '${repositoryConfig.getGitHubUrl()}/pull/123',
+            prUrl: `${repositoryConfig.getGitHubUrl()}/pull/123`,
             updatedAt: new Date().toLocaleDateString(),
             createdAt: new Date(Date.now() - 86400000).toLocaleDateString()
           },
@@ -671,7 +670,7 @@ const BranchListing = () => {
             branchName: 'feature/dark-mode',
             safeBranchName: 'feature-dark-mode',
             url: './feature-dark-mode/index.html',
-            prUrl: '${repositoryConfig.getGitHubUrl()}/pull/122',
+            prUrl: `${repositoryConfig.getGitHubUrl()}/pull/122`,
             updatedAt: new Date(Date.now() - 172800000).toLocaleDateString(),
             createdAt: new Date(Date.now() - 345600000).toLocaleDateString()
           },
@@ -684,7 +683,7 @@ const BranchListing = () => {
             branchName: 'fix/auth-flow',
             safeBranchName: 'fix-auth-flow',
             url: './fix-auth-flow/index.html',
-            prUrl: '${repositoryConfig.getGitHubUrl()}/pull/121',
+            prUrl: `${repositoryConfig.getGitHubUrl()}/pull/121`,
             updatedAt: new Date(Date.now() - 259200000).toLocaleDateString(),
             createdAt: new Date(Date.now() - 432000000).toLocaleDateString()
           }
@@ -1073,6 +1072,15 @@ const BranchListing = () => {
                           <div 
                             className="discussion-summary-bar"
                             onClick={() => toggleDiscussion(pr.number)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                toggleDiscussion(pr.number);
+                              }
+                            }}
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`Toggle discussion for PR #${pr.number}`}
                           >
                             <div className="discussion-summary-text">
                               <span className="discussion-summary-icon">💬</span>

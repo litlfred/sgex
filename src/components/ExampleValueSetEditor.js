@@ -9,8 +9,6 @@ import { createAssetEditor } from '../framework';
 
 // The actual editor component
 const ValueSetEditorComponent = ({ 
-  toolDefinition, 
-  pageParams, 
   toolState,
   onAssetSave,
   onGitHubSave 

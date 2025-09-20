@@ -88,7 +88,10 @@ const DAKActionSelectionContent = () => {
               key={action.id}
               className={`action-card-container`}
               onClick={(event) => handleActionSelect(event, action.id)}
+              onKeyDown={(e) => e.key === 'Enter' && handleActionSelect(e, action.id)}
               style={{ '--action-color': action.color }}
+              role="button"
+              tabIndex={0}
             >
               <div className="action-card-main">
                 <div className="action-card">
