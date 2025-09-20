@@ -30,7 +30,8 @@
     "web-vitals": "^5.1.0"
   },
   "scripts": {
-    "start": "craco start",
+    "start": "concurrently --names \"web,services\" --prefix-colors \"blue,green\" \"craco start\" \"npm run run-all-services-interactive\"",
+    "start-web-only": "craco start",
     "build": "npm run build-mcp && npm run build-publication-api && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
