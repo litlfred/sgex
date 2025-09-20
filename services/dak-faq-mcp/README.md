@@ -34,7 +34,27 @@ npm install
 npm run build
 ```
 
-### Start MCP Server (Recommended for AI/CLI integration)
+### Local Development (No Authentication)
+```bash
+# Start REST API server in development mode
+npm start
+
+# Service runs on http://127.0.0.1:8080
+# All endpoints accessible without authentication
+```
+
+### Local Development with OAuth (Testing Production Mode)
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your GitHub OAuth credentials
+# Set NODE_ENV=production to test OAuth flow locally
+
+npm start
+```
+
+### Start MCP Server (For AI/CLI integration)
 ```bash
 # Start MCP server with stdio transport
 npm run start-mcp
@@ -43,13 +63,43 @@ npm run start-mcp
 npm run dev-mcp
 ```
 
-### Start REST API Server (For web/HTTP integration)  
+## Deployment
+
+### Fly.io Production Deployment
+
+Deploy as a public service with GitHub OAuth authentication:
+
+```bash
+# Navigate to MCP service directory
+cd services/dak-faq-mcp
+
+# Deploy to Fly.io (see DEPLOYMENT.md for full instructions)
+fly launch
+fly secrets set GITHUB_CLIENT_ID=your_client_id
+fly secrets set GITHUB_CLIENT_SECRET=your_client_secret  
+fly secrets set GITHUB_TOKEN=your_github_token
+fly deploy
+```
+
+**Access Control**: Only GitHub collaborators on `litlfred/sgex` can access protected endpoints.
+
+See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for complete deployment instructions including:
+- GitHub OAuth setup
+- Fly.io configuration
+- Environment variables
+- Authentication flow
+- Troubleshooting
+
+### Local Development Only
+
+For local development without deployment:
+
 ```bash
 # Start REST API server
 npm start
 
-# Or with development mode
-npm run dev
+# Or start MCP server  
+npm run start-mcp
 ```
 
 ## Protocol Comparison
