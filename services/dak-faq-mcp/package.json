@@ -2,6 +2,7 @@
   "name": "dak-faq-mcp-server",
   "version": "1.0.0",
   "description": "MCP server for DAK FAQ functionality",
+  "serviceCategory": "mcp-dak-faq",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {

@@ -2,6 +2,7 @@
   "name": "@sgex/dak-publication-api",
   "version": "1.0.0",
   "description": "OpenAPI-driven DAK Publication Services - WYSIWYG-first architecture",
+  "serviceCategory": "mcp-publication-api",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

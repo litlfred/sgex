@@ -116,17 +116,81 @@ class EnhancedMCPLogger {
   }
 
   /**
-   * Infer service category from service name
+   * Get service category from directory name and package.json
    */
   private inferServiceCategory(serviceName: string): ServiceCategory {
-    const name = serviceName.toLowerCase();
-    if (name.includes('dak-faq') || name.includes('faq')) {
-      return 'mcp-dak-faq';
-    } else if (name.includes('publication') || name.includes('api')) {
-      return 'mcp-publication-api';
-    } else if (name.includes('web') || name.includes('sgex')) {
-      return 'web-service';
-    } else {
+    try {
+      // Get the current working directory to determine service location
+      const cwd = process.cwd();
+      const pathParts = cwd.split('/');
+      
+      // Look for service directory name
+      let serviceDir = '';
+      if (pathParts.includes('services')) {
+        const servicesIndex = pathParts.indexOf('services');
+        if (servicesIndex + 1 < pathParts.length) {
+          serviceDir = pathParts[servicesIndex + 1];
+        }
+      }
+      
+      // Try to read package.json for service category information
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        
+        let packageJsonPath = path.join(cwd, 'package.json');
+        if (!fs.existsSync(packageJsonPath) && serviceDir) {
+          // Try relative path for services
+          packageJsonPath = path.join(cwd, '..', '..', 'services', serviceDir, 'package.json');
+        }
+        
+        if (fs.existsSync(packageJsonPath)) {
+          const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+          
+          // Check for explicit service category in package.json
+          if (packageJson.serviceCategory) {
+            return packageJson.serviceCategory as ServiceCategory;
+          }
+          
+          // Infer from package name or description
+          const name = packageJson.name?.toLowerCase() || '';
+          const description = packageJson.description?.toLowerCase() || '';
+          
+          if (name.includes('dak-faq') || description.includes('faq')) {
+            return 'mcp-dak-faq';
+          } else if (name.includes('publication') || name.includes('dak-publication') || description.includes('publication')) {
+            return 'mcp-publication-api';
+          } else if (name.includes('sgex') || description.includes('workbench') || description.includes('web')) {
+            return 'web-service';
+          }
+        }
+      } catch (error) {
+        // Fall back to directory-based inference
+      }
+      
+      // Infer from directory name
+      if (serviceDir) {
+        if (serviceDir.includes('dak-faq') || serviceDir.includes('faq')) {
+          return 'mcp-dak-faq';
+        } else if (serviceDir.includes('publication') || serviceDir.includes('api')) {
+          return 'mcp-publication-api';
+        } else if (serviceDir.includes('web') || serviceDir.includes('sgex')) {
+          return 'web-service';
+        }
+      }
+      
+      // Final fallback to service name inference
+      const name = serviceName.toLowerCase();
+      if (name.includes('dak-faq') || name.includes('faq')) {
+        return 'mcp-dak-faq';
+      } else if (name.includes('publication') || name.includes('api')) {
+        return 'mcp-publication-api';
+      } else if (name.includes('web') || name.includes('sgex')) {
+        return 'web-service';
+      } else {
+        return 'shared-service';
+      }
+    } catch (error) {
       return 'shared-service';
     }
   }
