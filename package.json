@@ -9,6 +9,8 @@
     "url": "https://github.com/litlfred/sgex.git"
   },
   "dependencies": {
+    "@hpcc-js/wasm": "^2.26.1",
+    "@monaco-editor/react": "^4.6.0",
     "@octokit/rest": "^22.0.0",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
@@ -16,6 +18,7 @@
     "@uiw/react-md-editor": "^4.0.8",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
+    "archimate-js": "^0.0.4",
     "bpmn-js": "^18.6.3",
     "bpmn-moddle": "^9.0.3",
     "dompurify": "^3.2.6",

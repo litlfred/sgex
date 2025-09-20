@@ -43,6 +43,10 @@
       "component": "QuestionnaireEditor",
       "path": "./components/QuestionnaireEditor"
     },
+    "fml-structuremap-editor": {
+      "component": "FMLStructureMapEditor",
+      "path": "./components/FMLStructureMapEditor"
+    },
     "docs": {
       "component": "DocumentationViewer",
       "path": "./components/DocumentationViewer"

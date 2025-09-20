@@ -875,6 +875,169 @@ class HelpContentService {
             }
           ]
         }
+      ],
+      'fml-structuremap-editor': [
+        {
+          id: 'fml-editor-overview',
+          title: 'FML/StructureMap Editor Overview',
+          badge: '/sgex/cat-paw-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'Introduction to FML/StructureMap Editor',
+              content: `
+                <p>The FML/StructureMap Editor enables you to create and manage FHIR Mapping Language (FML) transformations:</p>
+                <ul>
+                  <li><strong>Strategic View:</strong> ArchiMate visualization of logical models and relationships</li>
+                  <li><strong>Technical View:</strong> Interactive mapping interface with Monaco code editor</li>
+                  <li><strong>Dual Visualization:</strong> Both business-level and technical implementation views</li>
+                  <li><strong>Existing Integration:</strong> Reuses logical models already parsed from FSH files</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🎯 Purpose:</strong> Bridge L2 (business logic) and L3 (FHIR implementation) DAK components through visual mapping
+                </div>
+              `
+            },
+            {
+              title: 'Strategic View - ArchiMate Visualization',
+              content: `
+                <p>The Strategic View provides a high-level overview using ArchiMate Application Layer modeling:</p>
+                <h4>Logical Models Display</h4>
+                <ul>
+                  <li><strong>Application Components:</strong> Each FHIR Logical Model appears as an ArchiMate component</li>
+                  <li><strong>Model Properties:</strong> Shows source FSH file, element count, and descriptions</li>
+                  <li><strong>Relationships:</strong> Automatically generated associations between related models</li>
+                </ul>
+                <h4>DAK Concepts Integration</h4>
+                <ul>
+                  <li><strong>Data Objects:</strong> DAK concepts appear as ArchiMate data objects</li>
+                  <li><strong>Concept Links:</strong> Visual connections between logical models and concepts</li>
+                  <li><strong>Business Context:</strong> Strategic view for stakeholders and business analysts</li>
+                </ul>
+                <div class="help-note">
+                  <strong>📊 Visual Strategy:</strong> Use this view to communicate data architecture to non-technical stakeholders
+                </div>
+              `
+            },
+            {
+              title: 'Technical View - Mapping Interface',
+              content: `
+                <p>The Technical View provides hands-on FML authoring and mapping visualization:</p>
+                <h4>Three-Panel Layout</h4>
+                <ul>
+                  <li><strong>Left Panel:</strong> FML files browser (input/maps directory)</li>
+                  <li><strong>Center Panel:</strong> Interactive mapping visualization using diagram-js</li>
+                  <li><strong>Right Panel:</strong> Monaco Editor with FML syntax highlighting</li>
+                </ul>
+                <h4>Mapping Features</h4>
+                <ul>
+                  <li><strong>Visual Connections:</strong> Draw mapping lines between source and target elements</li>
+                  <li><strong>Code Generation:</strong> Generate FML code from visual mappings</li>
+                  <li><strong>Syntax Highlighting:</strong> Full FML language support in Monaco Editor</li>
+                  <li><strong>Real-time Validation:</strong> Immediate feedback on FML syntax and semantics</li>
+                </ul>
+              `
+            },
+            {
+              title: 'Working with FML Files',
+              content: `
+                <p>Best practices for managing FML/StructureMap files in your DAK repository:</p>
+                <h4>File Organization</h4>
+                <ul>
+                  <li><strong>Location:</strong> Store FML files in <code>input/maps/</code> directory</li>
+                  <li><strong>Naming:</strong> Use descriptive names like <code>PatientToQuestionnaire.fml</code></li>
+                  <li><strong>Structure:</strong> One mapping per file for better maintainability</li>
+                </ul>
+                <h4>FML Language Features</h4>
+                <ul>
+                  <li><strong>Map Declarations:</strong> Define source and target structures</li>
+                  <li><strong>Group Rules:</strong> Organize related transformations</li>
+                  <li><strong>Element Mapping:</strong> Direct field-to-field transformations</li>
+                  <li><strong>Conditional Logic:</strong> When/where clauses for complex scenarios</li>
+                </ul>
+                <div class="help-warning">
+                  <strong>⚠️ Requirements:</strong> Logical models must exist in FSH files for mapping visualization to work
+                </div>
+              `
+            },
+            {
+              title: 'Integration with Existing Infrastructure',
+              content: `
+                <p>The FML editor leverages existing SGEX components for seamless integration:</p>
+                <h4>Reused Components</h4>
+                <ul>
+                  <li><strong>FSH Parsing:</strong> Extends CoreDataDictionaryViewer's logical model parsing</li>
+                  <li><strong>diagram-js Foundation:</strong> Uses established patterns from BPMN editor</li>
+                  <li><strong>Monaco Editor:</strong> New addition for advanced code editing capabilities</li>
+                  <li><strong>GitHub Integration:</strong> Full version control and collaboration support</li>
+                </ul>
+                <h4>Architecture Benefits</h4>
+                <ul>
+                  <li><strong>Consistent UX:</strong> Follows established SGEX design patterns</li>
+                  <li><strong>Performance:</strong> Lazy loading of heavy libraries (archimate-js, Monaco)</li>
+                  <li><strong>Accessibility:</strong> WHO branding and accessibility standards</li>
+                  <li><strong>Scalability:</strong> Built on proven component architecture</li>
+                </ul>
+              `
+            }
+          ]
+        },
+        {
+          id: 'fml-troubleshooting',
+          title: 'FML Editor Troubleshooting',
+          badge: '/sgex/cat-paw-warning-icon.svg',
+          type: 'accordion',
+          content: [
+            {
+              title: 'No Logical Models Found',
+              content: `
+                <p>If you see "No logical models found in FSH files":</p>
+                <ul>
+                  <li><strong>Check FSH Files:</strong> Ensure <code>input/fsh/</code> directory contains .fsh files</li>
+                  <li><strong>Logical Model Syntax:</strong> Files must contain <code>Logical:</code> declarations</li>
+                  <li><strong>Repository Access:</strong> Verify your GitHub token has read access to the repository</li>
+                  <li><strong>Branch Selection:</strong> Confirm you're viewing the correct branch</li>
+                </ul>
+                <div class="help-example">
+                  <strong>Example FSH Logical Model:</strong><br>
+                  <code>Logical: PatientSummary<br>
+                  Title: "Patient Summary Logical Model"<br>
+                  Description: "Core patient data elements"</code>
+                </div>
+              `
+            },
+            {
+              title: 'Monaco Editor Not Loading',
+              content: `
+                <p>If the FML code editor doesn't appear:</p>
+                <ul>
+                  <li><strong>Browser Compatibility:</strong> Ensure you're using a modern browser (Chrome, Firefox, Edge)</li>
+                  <li><strong>JavaScript Enabled:</strong> Monaco Editor requires JavaScript to be enabled</li>
+                  <li><strong>Network Issues:</strong> Check if CDN resources are being blocked</li>
+                  <li><strong>Browser Cache:</strong> Try clearing browser cache and reloading</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🔧 Fallback:</strong> If Monaco fails to load, you can still view FML file content in the file list
+                </div>
+              `
+            },
+            {
+              title: 'ArchiMate View Issues',
+              content: `
+                <p>If the strategic view isn't displaying correctly:</p>
+                <ul>
+                  <li><strong>Library Loading:</strong> ArchiMate-js may take time to load on first use</li>
+                  <li><strong>Model Data:</strong> Verify that logical models are properly parsed</li>
+                  <li><strong>Container Size:</strong> Check that the viewer container has adequate dimensions</li>
+                  <li><strong>Browser Console:</strong> Look for any JavaScript errors in developer tools</li>
+                </ul>
+                <div class="help-note">
+                  <strong>📊 Fallback Display:</strong> If ArchiMate viewer fails, a grid-based fallback shows the same information
+                </div>
+              `
+            }
+          ]
+        }
       ]
     };
   }

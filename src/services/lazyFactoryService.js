@@ -15,7 +15,10 @@ import {
   lazyLoadBpmnModeler, 
   lazyLoadBpmnViewer, 
   lazyLoadAjv, 
-  lazyLoadAjvFormats 
+  lazyLoadAjvFormats,
+  lazyLoadMonacoEditor,
+  lazyLoadArchimateViewer,
+  lazyLoadGraphVizService
 } from './libraryLoaderService';
 
 /**
@@ -62,13 +65,45 @@ export async function createLazyAjv(options = {}) {
 }
 
 /**
+ * Create a lazy-loaded Monaco Editor instance
+ * @param {Object} options - Monaco Editor configuration options
+ * @returns {Promise<MonacoEditor>} Monaco Editor component
+ */
+export async function createLazyMonacoEditor(options = {}) {
+  const MonacoEditor = await lazyLoadMonacoEditor();
+  return MonacoEditor;
+}
+
+/**
+ * Create a lazy-loaded ArchiMate Viewer instance
+ * @param {Object} options - ArchiMate viewer configuration options
+ * @returns {Promise<ArchiMateViewer>} Configured ArchiMate viewer instance
+ */
+export async function createLazyArchimateViewer(options = {}) {
+  const ArchiMateViewer = await lazyLoadArchimateViewer();
+  return new ArchiMateViewer(options);
+}
+
+/**
+ * Create a lazy-loaded GraphViz Service instance
+ * @returns {Promise<GraphVizService>} GraphViz service with layout methods
+ */
+export async function createLazyGraphVizService() {
+  const GraphVizService = await lazyLoadGraphVizService();
+  return GraphVizService;
+}
+
+/**
  * Lazy factory utilities for unified access
  */
 const LazyFactoryService = {
   createLazyOctokit,
   createLazyBpmnModeler,
   createLazyBpmnViewer,
-  createLazyAjv
+  createLazyAjv,
+  createLazyMonacoEditor,
+  createLazyArchimateViewer,
+  createLazyGraphVizService
 };
 
 export default LazyFactoryService;
