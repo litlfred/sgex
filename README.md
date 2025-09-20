@@ -124,30 +124,131 @@ For detailed implementation information, see [docs/404-implementation.md](docs/4
 
 ## MCP Services
 
-SGEX Workbench includes Model Context Protocol (MCP) services that provide structured API access to DAK information:
+SGEX Workbench includes Model Context Protocol (MCP) services that provide structured API access to DAK information. There are currently **2 MCP services** available:
 
-### DAK FAQ MCP Service
+### Available MCP Services
+
+#### 1. DAK FAQ MCP Service
 - **Location**: `services/dak-faq-mcp/`
 - **URL**: `http://127.0.0.1:3001/mcp` (local development only)
 - **Purpose**: REST API for accessing DAK components and FAQ questions
+- **Endpoints**: 14 endpoints including FAQ questions, value sets, decision tables, business processes, personas/actors, and questionnaires
 
-#### Quick Start
+#### 2. DAK Publication API Service  
+- **Location**: `services/dak-publication-api/`
+- **URL**: `http://127.0.0.1:3002` (local development only)
+- **Purpose**: OpenAPI-driven DAK publication generation and rendering with WYSIWYG-first architecture
+- **Endpoints**: 16 endpoints for templates, variables, content generation, publications, and integrations
+
+### Quick Start - Individual Services
+
+Using **DAK FAQ MCP Service** as an example of how to run a single MCP service:
+
 ```bash
 cd services/dak-faq-mcp
 npm install
 npm start
 ```
 
-#### Available Endpoints
-- FAQ questions catalog and execution
-- DAK value sets, decision tables, business processes
-- Personas/actors and questionnaires
-- Service health checks
+Similarly, for **DAK Publication API Service**:
 
-#### Documentation
+```bash
+cd services/dak-publication-api
+npm install
+npm start
+```
+
+### Quick Start - All MCP Services
+
+SGEX provides **two modes** for running all MCP services from the root directory:
+
+#### Interactive Mode (Default)
+Provides a split-screen terminal interface with service status indicators and scrollable logging buffer:
+
+```bash
+# Install dependencies for all services
+npm run build-mcp
+npm run build-publication-api
+
+# Run in interactive mode with terminal UI
+npm run run-all-services-interactive
+```
+
+**Interactive Mode Features:**
+- **Status Panel**: Real-time service status indicators (● running, ● stopped, ● failed)
+- **Log Panel**: Scrollable logging buffer with color-coded messages  
+- **Service Controls**: Start/stop individual services with keyboard shortcuts
+- **Uptime Tracking**: Service uptime and performance monitoring
+- **Help System**: Press `h` for help, `q` to quit
+
+#### Non-Interactive Mode
+Suitable for CI/CD, scripting, or when you prefer simple console output:
+
+```bash
+# Run in non-interactive mode (logs to stderr)
+npm run run-all-services-non-interactive
+
+# Or use the basic concurrent mode
+npm run run-all-services
+```
+
+**Non-Interactive Mode Features:**
+- **Stderr Logging**: All service logs directed to stderr for easy redirection
+- **Colored Prefixes**: Each service has colored prefix for identification
+- **Background Execution**: Suitable for running in background or scripts
+
+### Service Features
+
+#### DAK FAQ MCP Service Features
+- FAQ questions catalog and execution
+- DAK value sets, decision tables, business processes  
+- Personas/actors and questionnaires
+- Service health checks and validation
+- OpenAPI schema generation
+
+#### DAK Publication API Service Features
+- Template management and variable substitution
+- Content generation and publication workflows
+- Integration with external publishing systems
+- Swagger/OpenAPI documentation interface
+- WYSIWYG content editing capabilities
+
+### Logging and Monitoring
+
+All MCP services use a centralized logging system that provides:
+
+#### Logging Features
+- **Initialization/Running/Shutdown Logging**: Track service lifecycle events
+- **API Query Logging**: Monitor all incoming requests and responses with timing
+- **Error Tracking**: Detailed error logging with stack traces
+- **Performance Monitoring**: Response time tracking and uptime monitoring
+
+#### Log Categories
+- `SERVICE_INIT`: Service initialization and startup
+- `SERVICE_RUNNING`: Service ready and operational status  
+- `SERVICE_SHUTDOWN`: Service shutdown and cleanup
+- `API_QUERY`: HTTP request/response logging with timing
+- `SERVICE_DISCOVERY`: MCP service registry operations
+- `SERVER_ERROR`: Error conditions and stack traces
+
+#### Terminal Interface Options for Ubuntu/Linux
+
+For the interactive mode, SGEX uses the **blessed** library, which provides excellent compatibility across Ubuntu flavors and Linux/Unix systems:
+
+- **blessed**: Mature, stable terminal UI library with excellent Ubuntu/Linux support
+- **Cross-platform**: Works reliably on all major Linux distributions
+- **Feature-rich**: Supports scrolling, colors, mouse interaction, and keyboard shortcuts
+- **Lightweight**: Minimal dependencies and fast performance
+
+**Alternative Options** (for advanced users):
+- **ink**: React-based terminal UIs (requires Node 14+)
+- **terminal-kit**: Extensive terminal capabilities
+- **blessed-contrib**: Additional widgets for blessed
+
+### Documentation
 Complete MCP documentation: [`public/docs/mcp/`](public/docs/mcp/)
 
-**Security Note**: MCP services bind to localhost only (127.0.0.1:3001) and are intended for local development and testing.
+**Security Note**: All MCP services bind to localhost only (127.0.0.1) and are intended for local development and testing.
 
 ### MCP Inspector (Local Development Only)
 

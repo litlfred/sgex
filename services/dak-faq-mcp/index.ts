@@ -13,9 +13,16 @@ import { catalogRoute } from './server/routes/catalog.js';
 import { schemaRoute } from './server/routes/schema.js';
 import { dakComponentsRoute } from './server/routes/dak-components.js';
 import { HealthResponse, ErrorResponse } from './types.js';
+import { createMCPLogger } from './logger';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Initialize logger
+const logger = createMCPLogger('DAK-FAQ-MCP', {
+  logLevel: (process.env.MCP_LOG_LEVEL as any) || 'info',
+  logFile: process.env.MCP_LOG_FILE
+});
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -29,6 +36,24 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Add logging middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+  
+  // Log incoming request
+  logger.logQuery(req.method, req.path, Object.keys(req.query).length > 0 ? req.query : null);
+  
+  // Capture response details
+  const originalSend = res.send;
+  res.send = function(data) {
+    const responseTime = Date.now() - start;
+    logger.logQuery(req.method, req.path, null, responseTime, res.statusCode);
+    return originalSend.call(this, data);
+  };
+  
+  next();
+});
 
 // Health check endpoint - with /mcp prefix
 app.get('/mcp/health', (req: Request, res: Response<HealthResponse>) => {
@@ -124,7 +149,7 @@ app.get('/mcp/services', async (req: Request, res: Response) => {
       });
     }
   } catch (err) {
-    console.log('DAK Publication API service not available on port 3002');
+    logger.debug('SERVICE_DISCOVERY', 'DAK Publication API service not available on port 3002');
   }
   
   const serviceRegistry = {
@@ -168,7 +193,7 @@ app.get('/', (req: Request, res: Response) => {
 
 // Error handling middleware
 app.use((error: any, req: Request, res: Response<ErrorResponse>, next: NextFunction) => {
-  console.error('Server error:', error);
+  logger.logError('SERVER_ERROR', 'Unhandled server error', error);
   
   const errorResponse: ErrorResponse = {
     error: {
@@ -198,32 +223,34 @@ app.use((req: Request, res: Response<ErrorResponse>) => {
 
 // Start server
 const server = app.listen(PORT, HOST, () => {
-  console.log(`DAK FAQ MCP Server running on http://${HOST}:${PORT}`);
-  console.log('Security: Local binding only (127.0.0.1)');
-  console.log('Available endpoints:');
-  console.log(`  - GET  http://${HOST}:${PORT}/mcp/health`);
-  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/questions/catalog`);
-  console.log(`  - POST http://${HOST}:${PORT}/mcp/faq/questions/execute`);
-  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/valuesets`);
-  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/decision-tables`);
-  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/business-processes`);
-  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/personas`);
-  console.log(`  - GET  http://${HOST}:${PORT}/mcp/faq/questionnaires`);
+  logger.logRunning(PORT, HOST);
+  logger.info('SERVICE_INFO', 'Security: Local binding only (127.0.0.1)');
+  logger.info('SERVICE_INFO', 'Available endpoints:');
+  logger.info('SERVICE_INFO', `  - GET  http://${HOST}:${PORT}/mcp/health`);
+  logger.info('SERVICE_INFO', `  - GET  http://${HOST}:${PORT}/mcp/faq/questions/catalog`);
+  logger.info('SERVICE_INFO', `  - POST http://${HOST}:${PORT}/mcp/faq/questions/execute`);
+  logger.info('SERVICE_INFO', `  - GET  http://${HOST}:${PORT}/mcp/faq/valuesets`);
+  logger.info('SERVICE_INFO', `  - GET  http://${HOST}:${PORT}/mcp/faq/decision-tables`);
+  logger.info('SERVICE_INFO', `  - GET  http://${HOST}:${PORT}/mcp/faq/business-processes`);
+  logger.info('SERVICE_INFO', `  - GET  http://${HOST}:${PORT}/mcp/faq/personas`);
+  logger.info('SERVICE_INFO', `  - GET  http://${HOST}:${PORT}/mcp/faq/questionnaires`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('Received SIGTERM, shutting down gracefully');
+  logger.info('SHUTDOWN', 'Received SIGTERM signal');
+  logger.logShutdown('SIGTERM signal');
   server.close(() => {
-    console.log('Server closed');
+    logger.info('SHUTDOWN', 'Server closed gracefully');
     process.exit(0);
   });
 });
 
 process.on('SIGINT', () => {
-  console.log('Received SIGINT, shutting down gracefully');
+  logger.info('SHUTDOWN', 'Received SIGINT signal');
+  logger.logShutdown('SIGINT signal');
   server.close(() => {
-    console.log('Server closed');
+    logger.info('SHUTDOWN', 'Server closed gracefully');
     process.exit(0);
   });
 });
