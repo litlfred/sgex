@@ -13,7 +13,7 @@ import { catalogRoute } from './server/routes/catalog.js';
 import { schemaRoute } from './server/routes/schema.js';
 import { dakComponentsRoute } from './server/routes/dak-components.js';
 import { HealthResponse, ErrorResponse } from './types.js';
-import { createMCPLogger } from './logger';
+import { createMCPLogger } from './logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc && cp -r questions dist/",
+    "build": "tsc && cp -r questions dist/ && cp logger.ts dist/ && cp logger.js dist/ 2>/dev/null || true",
     "start": "npm run build && node dist/index.js",
     "start-mcp": "npm run build && node dist/mcp-server.js",
     "dev": "npm run build && node dist/index.js --dev",
