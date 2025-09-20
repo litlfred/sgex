@@ -38,14 +38,16 @@ const BugReportForm = ({ onClose, contextData = {} }) => {
     };
   }, []);
 
-  // Auto-select Bug Report template and enable console by default for bug reports
+  // Don't auto-select any template - let users choose from the dropdown
   useEffect(() => {
-    if (templates.length > 0 && !selectedTemplate) {
-      const bugTemplate = templates.find(t => t.type === 'bug') || templates[0];
-      setSelectedTemplate(bugTemplate);
-      setIncludeConsole(bugTemplate.type === 'bug');
+    // Reset form when templates load to ensure clean state
+    if (templates.length > 0) {
+      setSelectedTemplate(null);
+      setFormData({});
+      setIncludeConsole(false);
+      setIncludeScreenshot(false);
     }
-  }, [templates, selectedTemplate]); // Added selectedTemplate back to dependencies
+  }, [templates]);
 
   const loadTemplates = async () => {
     try {
