@@ -19,7 +19,7 @@ const BPMNViewerContent = () => {
   const containerRef = useRef(null);
   
   // Get page data from framework
-  const { profile, repository, branch, asset, loading: pageLoading, error: pageError } = usePage();
+  const { profile, repository, branch, asset, error: pageError } = usePage();
   
   console.log('BPMNViewer: Page framework data:', { profile: !!profile, repository: !!repository, branch, asset });
   console.log('BPMNViewer: Location state (legacy):', location.state);
@@ -551,6 +551,64 @@ const BPMNViewerContent = () => {
       }
     }
   }, [currentProfile, currentRepository, currentSelectedFile, profile, repository, asset, location.pathname, navigate]);
+
+  // Handle page-level errors from framework first
+  if (pageError) {
+    return (
+      <div className="bpmn-viewer">
+        <div className="viewer-content">
+          <div className="viewer-main">
+            <div className="error-overlay">
+              <div className="error-content">
+                <h2>❌ Asset Not Found</h2>
+                <p>{pageError}</p>
+                <div className="error-actions">
+                  <button 
+                    className="action-btn primary"
+                    onClick={() => navigate('/business-process-selection', {
+                      state: { 
+                        profile: currentProfile, 
+                        repository: currentRepository, 
+                        component,
+                        selectedBranch: currentBranch 
+                      }
+                    })}
+                  >
+                    ← Browse Available Files
+                  </button>
+                  <button 
+                    className="action-btn secondary"
+                    onClick={() => navigate('/')}
+                  >
+                    🏠 Home
+                  </button>
+                  {currentRepository && (
+                    <button 
+                      className="action-btn secondary"
+                      onClick={() => window.open(`${currentRepository.html_url}/tree/${currentBranch || 'main'}`, '_blank')}
+                    >
+                      📂 View Repository
+                    </button>
+                  )}
+                </div>
+                <div className="error-help">
+                  <details>
+                    <summary>🤔 What can I do?</summary>
+                    <ul>
+                      <li>The file may have been moved, renamed, or deleted from the repository</li>
+                      <li>Check if the file exists in a different branch</li>
+                      <li>Use "Browse Available Files" to see what BPMN files are currently available</li>
+                      <li>Contact the repository maintainer if you believe this is an error</li>
+                    </ul>
+                  </details>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Don't render the component if we're missing required data, unless we're on asset URL and framework is loading
   const pathSegments = location.pathname.split('/').filter(segment => segment);
