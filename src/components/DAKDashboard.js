@@ -54,12 +54,14 @@ const DAKDashboardContent = () => {
   const [activeTab, setActiveTab] = useState(getInitialTab); // 'core', 'publications', or 'faq'
   const [issueCounts, setIssueCounts] = useState({});
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showFAQModal, setShowFAQModal] = useState(false);
+  const [selectedFAQComponent, setSelectedFAQComponent] = useState(null);
 
   // Use the branch from PageProvider
   const selectedBranch = branch;
 
   // Enhanced Component Card component with status badge support
-  const ComponentCard = ({ component, handleComponentClick, t, statusBadge, badgeIcon, badgeColor }) => {
+  const ComponentCard = ({ component, handleComponentClick, t, statusBadge, badgeIcon, badgeColor, publicationFormats }) => {
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
     
@@ -118,6 +120,22 @@ const DAKDashboardContent = () => {
                     title={statusBadge}
                   >
                     <span className="badge-icon">{badgeIcon}</span>
+                  </div>
+                )}
+                
+                {/* Publication Format Badges */}
+                {publicationFormats && (
+                  <div className="publication-format-badges">
+                    {publicationFormats.map((format, index) => (
+                      <div 
+                        key={index}
+                        className="format-badge"
+                        style={{ backgroundColor: format.color }}
+                        title={format.title}
+                      >
+                        <span className="format-icon">{format.icon}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -405,87 +423,6 @@ const DAKDashboardContent = () => {
     }
   ];
 
-  // Define publication tools as card components
-  const publicationComponents = [
-    {
-      id: 'repository-status',
-      name: 'Repository Status',
-      description: 'Monitor commits, pull requests, and repository activity for your DAK',
-      icon: '📊',
-      cardImage: 'dashboard/dak_status.png',
-      type: 'Tool',
-      color: '#0078d4',
-      fileTypes: ['Status', 'Analytics'],
-      count: 0,
-      editor: 'Repository status dashboard'
-    },
-    {
-      id: 'staging-ground',
-      name: 'Staging Ground',
-      description: 'Review and manage changes before committing them to the repository',
-      icon: '📝',
-      cardImage: 'dashboard/dak_staging.png',
-      type: 'Tool',
-      color: '#ff8c00',
-      fileTypes: ['Changes', 'Commits'],
-      count: 0,
-      editor: 'Change management workspace'
-    },
-    {
-      id: 'publication-generator',
-      name: 'DAK Publication Generator',
-      description: 'Generate professional WHO SMART Guidelines publications in multiple formats',
-      icon: '📚',
-      cardImage: 'dashboard/dak_publications.png',
-      type: 'Tool',
-      color: '#107c10',
-      fileTypes: ['HTML', 'PDF', 'EPUB'],
-      count: 0,
-      editor: 'Publication generator with multiple formats'
-    },
-    {
-      id: 'published-content',
-      name: 'Published DAK Content',
-      description: 'Access published Implementation Guide content for this DAK repository',
-      icon: '🌐',
-      cardImage: 'dashboard/dak_published.png',
-      type: 'Tool',
-      color: '#881798',
-      fileTypes: ['Pages', 'IG'],
-      count: 0,
-      editor: 'Published content browser'
-    }
-  ];
-
-  // Define FAQ tools as card components
-  const faqComponents = [
-    {
-      id: 'dak-questions',
-      name: 'DAK Questions',
-      description: 'Ask questions about this DAK and get automated answers based on repository analysis',
-      icon: '❓',
-      cardImage: 'dashboard/dak_faq.png',
-      type: 'Tool',
-      color: '#d13438',
-      fileTypes: ['Questions', 'Answers'],
-      count: 2,
-      editor: 'Interactive FAQ system'
-    },
-    {
-      id: 'mcp-server-api',
-      name: 'MCP Server API',
-      description: 'Access the FAQ system programmatically via the MCP server API for automated queries',
-      icon: '🔌',
-      cardImage: 'dashboard/dak_api.png',
-      type: 'Tool',
-      color: '#6b69d6',
-      fileTypes: ['API', 'Integration'],
-      count: 0,
-      editor: 'API documentation and examples'
-    }
-  ];
-
-
 
   const handleComponentClick = (event, component) => {
     const navigationState = {
@@ -617,6 +554,12 @@ const DAKDashboardContent = () => {
     // TODO: Implement specific handlers for each FAQ tool
   };
 
+  // Handle FAQ component clicks (for DAK components in FAQ tab)
+  const handleFAQComponentClick = (event, component) => {
+    setSelectedFAQComponent(component);
+    setShowFAQModal(true);
+  };
+
 
 
   if (loading) {
@@ -741,38 +684,18 @@ const DAKDashboardContent = () => {
           {activeTab === 'publications' && (
             <div className="components-section publications-section active">
               <div className="section-header">
-                <h3 className="section-title">Publishing Tools</h3>
+                <h3 className="section-title">DAK Publication</h3>
                 <p className="section-description">
-                  Tools and services for publishing and managing your WHO SMART Guidelines Digital Adaptation Kit
+                  Generate WHO SMART Guidelines publications for each component with multiple output formats
                 </p>
               </div>
 
-              <div className="components-grid publication-components">
-                {publicationComponents.map((component) => {
-                  const badgeIcon = '🖨️'; // Printing press icon for all publication tools
-                  const statusBadge = 'Publish';
-                  const badgeColor = '#107c10';
-                  
-                  return (
-                    <ComponentCard
-                      key={component.id}
-                      component={component}
-                      handleComponentClick={handleComponentClick}
-                      t={t}
-                      statusBadge={statusBadge}
-                      badgeIcon={badgeIcon}
-                      badgeColor={badgeColor}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Other Publication Content as Status Bars */}
+              {/* Repository Status Bar */}
               <div className="publication-status-bars">
                 <StatusBar 
-                  title="Repository Status Details" 
+                  title="Repository Status" 
                   icon="📊" 
-                  defaultExpanded={true}
+                  defaultExpanded={false}
                   color="#0078d4"
                 >
                   {repository && selectedBranch && (
@@ -783,14 +706,6 @@ const DAKDashboardContent = () => {
                       profile={profile}
                     />
                   )}
-                </StatusBar>
-                
-                <StatusBar 
-                  title="Advanced Publication Settings" 
-                  icon="⚙️" 
-                  defaultExpanded={false}
-                  color="#6b69d6"
-                >
                   <Publications
                     profile={profile}
                     repository={repository}
@@ -798,6 +713,55 @@ const DAKDashboardContent = () => {
                     hasWriteAccess={hasWriteAccess}
                   />
                 </StatusBar>
+                
+                <StatusBar 
+                  title="Staging Ground" 
+                  icon="📝" 
+                  defaultExpanded={false}
+                  color="#ff8c00"
+                >
+                  <div className="staging-ground-content">
+                    <p>Changes made through DAK component editors are staged here before being committed to the repository. Review and commit your changes when ready.</p>
+                    <div className="staging-summary">
+                      <div className="staging-status">
+                        <span className="status-indicator">🔴</span>
+                        <span className="status-indicator">🟡</span>
+                        <span className="status-indicator">🟢</span>
+                        <button className="save-btn" disabled>💾 Save Changes</button>
+                      </div>
+                      <div className="staging-files">
+                        <h4>📁 Changed Files</h4>
+                        <p>No changes in staging ground</p>
+                        <p>Changes made through DAK component editors will appear here before being saved to the repository.</p>
+                      </div>
+                    </div>
+                  </div>
+                </StatusBar>
+              </div>
+
+              {/* 9 DAK Components with Publication Badges */}
+              <div className="components-grid core-components">
+                {coreDAKComponents.map((component) => {
+                  // Multiple publication format badges
+                  const publicationFormats = [
+                    { icon: '📄', title: 'DocBook XML', color: '#6b69d6' },
+                    { icon: '📖', title: 'EPUB', color: '#d13438' },
+                    { icon: '🌐', title: 'HTML', color: '#107c10' }
+                  ];
+                  
+                  return (
+                    <ComponentCard
+                      key={component.id}
+                      component={component}
+                      handleComponentClick={handleComponentClick}
+                      t={t}
+                      statusBadge="Publish"
+                      badgeIcon="🖨️"
+                      badgeColor="#107c10"
+                      publicationFormats={publicationFormats}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
@@ -806,53 +770,16 @@ const DAKDashboardContent = () => {
           {activeTab === 'faq' && (
             <div className="components-section faq-section active">
               <div className="section-header">
-                <h3 className="section-title">FAQ Tools</h3>
+                <h3 className="section-title">DAK FAQ</h3>
                 <p className="section-description">
-                  Interactive tools for asking questions and getting automated answers about your DAK
+                  Click on any component to view and ask questions specific to that DAK component
                 </p>
               </div>
 
-              <div className="components-grid faq-components">
-                {faqComponents.map((component) => {
-                  const badgeIcon = '❓'; // Question mark icon for all FAQ tools
-                  const statusBadge = 'Ask';
-                  const badgeColor = '#d13438';
-                  
-                  return (
-                    <ComponentCard
-                      key={component.id}
-                      component={component}
-                      handleComponentClick={handleComponentClick}
-                      t={t}
-                      statusBadge={statusBadge}
-                      badgeIcon={badgeIcon}
-                      badgeColor={badgeColor}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* FAQ Content as Status Bars */}
+              {/* MCP Server Information Status Bar */}
               <div className="faq-status-bars">
                 <StatusBar 
-                  title="Interactive FAQ System" 
-                  icon="❓" 
-                  defaultExpanded={true}
-                  color="#d13438"
-                >
-                  <FAQAccordion
-                    repository={`${profile?.login}/${repository?.name}`}
-                    branch={selectedBranch || 'main'}
-                    githubService={githubService}
-                    filters={{
-                      level: 'dak' // Start with DAK-level questions
-                    }}
-                    className="dak-faq-accordion"
-                  />
-                </StatusBar>
-                
-                <StatusBar 
-                  title="MCP Server API Documentation" 
+                  title="MCP Server API" 
                   icon="🔌" 
                   defaultExpanded={false}
                   color="#6b69d6"
@@ -900,6 +827,23 @@ const DAKDashboardContent = () => {
                     )}
                   </div>
                 </StatusBar>
+              </div>
+
+              {/* 9 DAK Components with FAQ Badges */}
+              <div className="components-grid core-components">
+                {coreDAKComponents.map((component) => {
+                  return (
+                    <ComponentCard
+                      key={component.id}
+                      component={component}
+                      handleComponentClick={(event, comp) => handleFAQComponentClick(event, comp)}
+                      t={t}
+                      statusBadge="Ask"
+                      badgeIcon="❓"
+                      badgeColor="#d13438"
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
@@ -962,6 +906,37 @@ const DAKDashboardContent = () => {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FAQ Component Modal */}
+      {showFAQModal && selectedFAQComponent && (
+        <div className="faq-modal-overlay" onClick={() => setShowFAQModal(false)}>
+          <div className="faq-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="faq-modal-header">
+              <h3>❓ FAQ: {selectedFAQComponent.name}</h3>
+              <button 
+                className="modal-close-btn"
+                onClick={() => setShowFAQModal(false)}
+                aria-label="Close modal"
+              >
+                ×
+              </button>
+            </div>
+            <div className="faq-modal-content">
+              <p>Questions specific to <strong>{selectedFAQComponent.name}</strong></p>
+              <FAQAccordion
+                repository={`${profile?.login}/${repository?.name}`}
+                branch={selectedBranch || 'main'}
+                githubService={githubService}
+                filters={{
+                  level: 'component',
+                  component: selectedFAQComponent.id
+                }}
+                className="component-faq-accordion"
+              />
             </div>
           </div>
         </div>
