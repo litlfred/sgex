@@ -5,6 +5,7 @@ import { PageLayout } from './framework';
 import documentationService from '../services/documentationService';
 import bookmarkService from '../services/bookmarkService';
 import githubService from '../services/githubService';
+import './DocumentationViewer.css';
 
 const DocumentationViewer = () => {
   const { docId } = useParams();
