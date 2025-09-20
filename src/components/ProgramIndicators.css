@@ -27,6 +27,41 @@
   color: #7f8c8d;
 }
 
+.page-error-notice {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(231, 76, 60, 0.1);
+  border-left: 4px solid #e74c3c;
+  border-radius: 4px;
+}
+
+.page-error-notice p {
+  margin: 0.5rem 0;
+  color: #c0392b;
+}
+
+.page-error-details {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.page-error-details h3 {
+  margin: 0 0 0.75rem 0;
+  color: #e74c3c;
+}
+
+.page-error-details ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.page-error-details li {
+  margin: 0.25rem 0;
+}
+
 .viewer-header {
   background: rgb(4, 11, 118);
   color: white;

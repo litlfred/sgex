@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, usePage } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
@@ -15,11 +15,13 @@ const ProgramIndicators = () => {
 
 const ProgramIndicatorsContent = () => {
   const navigate = useNavigate();
-  const { profile, repository, branch } = usePage();
+  const { profile, repository, branch, error: pageError } = usePage();
+  const { user: urlUser, repo: urlRepo, branch: urlBranch } = useParams();
   
-  // Get data from page framework
-  const user = profile?.login;
-  const repo = repository?.name;
+  // Get data from page framework, with URL params as fallback
+  const user = profile?.login || urlUser;
+  const repo = repository?.name || urlRepo;
+  const effectiveBranch = branch || urlBranch || 'main';
   
   const [measureFiles, setMeasureFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -101,8 +103,8 @@ const ProgramIndicatorsContent = () => {
 
   // Fetch measure files from the repository
   const fetchMeasureFiles = useCallback(async () => {
-    if (!user || !repo || !branch) {
-      console.log('ProgramIndicators: Missing required data:', { user, repo, branch });
+    if (!user || !repo || !effectiveBranch) {
+      console.log('ProgramIndicators: Missing required data:', { user, repo, branch: effectiveBranch });
       return;
     }
 
@@ -110,14 +112,14 @@ const ProgramIndicatorsContent = () => {
       setLoading(true);
       setError(null);
       
-      console.log(`ProgramIndicators: Fetching measures from ${user}/${repo}/${branch}`);
+      console.log(`ProgramIndicators: Fetching measures from ${user}/${repo}/${effectiveBranch}`);
       
       // Check if measures directory exists
       let measuresPath = 'input/fsh/measures';
       let files = [];
       
       try {
-        const dirContents = await githubService.getDirectoryContents(user, repo, measuresPath, branch);
+        const dirContents = await githubService.getDirectoryContents(user, repo, measuresPath, effectiveBranch);
         files = dirContents.filter(file => 
           file.type === 'file' && 
           (file.name.endsWith('.fsh') || file.name.endsWith('.cql'))
@@ -135,7 +137,7 @@ const ProgramIndicatorsContent = () => {
         
         for (const altPath of altPaths) {
           try {
-            const dirContents = await githubService.getDirectoryContents(user, repo, altPath, branch);
+            const dirContents = await githubService.getDirectoryContents(user, repo, altPath, effectiveBranch);
             const measureFiles = dirContents.filter(file => 
               file.type === 'file' && 
               (file.name.toLowerCase().includes('measure') || 
@@ -160,7 +162,7 @@ const ProgramIndicatorsContent = () => {
       const parsedMeasures = [];
       for (const file of files) {
         try {
-          const content = await githubService.getFileContent(user, repo, `${measuresPath}/${file.name}`, branch);
+          const content = await githubService.getFileContent(user, repo, `${measuresPath}/${file.name}`, effectiveBranch);
           const measure = parseMeasureFile(content, file.name);
           parsedMeasures.push(measure);
         } catch (fileError) {
@@ -181,19 +183,24 @@ const ProgramIndicatorsContent = () => {
       
     } catch (error) {
       console.error('ProgramIndicators: Error fetching measure files:', error);
-      setError(`Failed to fetch measure files: ${error.message}`);
+      // Check if this is a repository access error
+      if (error.message.includes('not found') || error.message.includes('not accessible')) {
+        setError('Unable to access repository. This may be due to network issues, rate limiting, or repository permissions. Please try again later.');
+      } else {
+        setError(`Failed to fetch measure files: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
-  }, [user, repo, branch, parseMeasureFile]);
+  }, [user, repo, effectiveBranch, parseMeasureFile]);
 
   // Check for published IG
   const checkPublishedIG = useCallback(async () => {
-    if (!user || !repo || !branch) return;
+    if (!user || !repo || !effectiveBranch) return;
     
     try {
       setCheckingPublishedIG(true);
-      const baseUrl = getBaseUrl(branch);
+      const baseUrl = getBaseUrl(effectiveBranch);
       
       // Check if IG is published by trying to access index.html
       const response = await fetch(`${baseUrl}/index.html`, { method: 'HEAD' });
@@ -204,7 +211,7 @@ const ProgramIndicatorsContent = () => {
     } finally {
       setCheckingPublishedIG(false);
     }
-  }, [user, repo, branch, getBaseUrl]);
+  }, [user, repo, effectiveBranch, getBaseUrl]);
 
   // Fetch branches for repository
   const fetchBranches = useCallback(async () => {
@@ -228,7 +235,7 @@ const ProgramIndicatorsContent = () => {
         setFileContent(measure.content);
       } else {
         // Fetch content if not already loaded
-        const content = await githubService.getFileContent(user, repo, measure.fileName, branch);
+        const content = await githubService.getFileContent(user, repo, measure.fileName, effectiveBranch);
         setFileContent(content);
       }
       
@@ -248,12 +255,12 @@ const ProgramIndicatorsContent = () => {
 
   // Initialize data
   useEffect(() => {
-    if (user && repo && branch) {
+    if (user && repo && effectiveBranch) {
       fetchMeasureFiles();
       fetchBranches();
       checkPublishedIG();
     }
-  }, [user, repo, branch, fetchMeasureFiles, fetchBranches, checkPublishedIG]);
+  }, [user, repo, effectiveBranch, fetchMeasureFiles, fetchBranches, checkPublishedIG]);
 
   if (loading) {
     return (
@@ -261,6 +268,12 @@ const ProgramIndicatorsContent = () => {
         <div className="loading-content">
           <h2>Loading Program Indicators...</h2>
           <p>Fetching measure files from repository...</p>
+          {pageError && (
+            <div className="page-error-notice">
+              <p><strong>Repository Access:</strong> {pageError}</p>
+              <p>Attempting to access repository directly...</p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -272,6 +285,19 @@ const ProgramIndicatorsContent = () => {
         <div className="error-content">
           <h2>Error Loading Program Indicators</h2>
           <p>{error}</p>
+          {pageError && (
+            <div className="page-error-details">
+              <h3>Repository Access Issue</h3>
+              <p>{pageError}</p>
+              <p>This may be due to:</p>
+              <ul>
+                <li>Network connectivity issues</li>
+                <li>GitHub API rate limiting</li>
+                <li>Repository access permissions</li>
+                <li>Temporary service unavailability</li>
+              </ul>
+            </div>
+          )}
           <div className="error-actions">
             <button onClick={() => navigate('/')} className="action-btn primary">
               Return Home
@@ -299,7 +325,7 @@ const ProgramIndicatorsContent = () => {
                 📁 {user}/{repo}
               </span>
               <span className="branch-badge">
-                🌿 {branch}
+                🌿 {effectiveBranch}
               </span>
               <span className="count-badge">
                 📊 {measures.length} measure{measures.length !== 1 ? 's' : ''}
@@ -310,7 +336,7 @@ const ProgramIndicatorsContent = () => {
           {hasPublishedIG && (
             <div className="published-ig-link">
               <a 
-                href={`${getBaseUrl(branch)}/artifacts.html#structures-measures`}
+                href={`${getBaseUrl(effectiveBranch)}/artifacts.html#structures-measures`}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="action-btn secondary"
