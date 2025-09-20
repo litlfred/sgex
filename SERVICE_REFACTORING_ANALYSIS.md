@@ -1,4 +1,16 @@
-# Service Refactoring Analysis
+# Service Refactoring Analysis - SUPERSEDED
+
+**⚠️ NOTICE: This analysis has been superseded by SERVICE_REFACTORING_ANALYSIS_REVISED.md**
+
+This file is preserved for reference only. Please refer to `SERVICE_REFACTORING_ANALYSIS_REVISED.md` for the current analysis based on:
+- WHO SMART Guidelines DAK logical model integration
+- NPM package isolation requirements  
+- Proper business logic separation from web services
+- JSON Schema and OpenAPI compliance requirements
+
+---
+
+## Original Analysis (SUPERSEDED)
 
 This comprehensive analysis examines all services in both `src/services` and `services` directories to prepare for consolidation.
 
