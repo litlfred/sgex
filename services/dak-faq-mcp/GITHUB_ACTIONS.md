@@ -18,6 +18,8 @@ The GitHub Actions workflow provides:
 3. **Add dev OAuth secrets** to repository (see DEPLOYMENT.md for details)
 4. **Deploy via Actions tab** or automatic on code changes to main
 
+> 📋 **Secret Management**: For detailed information about secret generation, permissions, and security practices, see [`SECRET_MANAGEMENT.md`](./SECRET_MANAGEMENT.md).
+
 ## Security Benefits
 
 ✅ **No local credentials** - All secrets managed in GitHub

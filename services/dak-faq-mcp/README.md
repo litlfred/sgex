@@ -90,6 +90,12 @@ See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for complete deployment instructions incl
 - Authentication flow
 - Troubleshooting
 
+See [`SECRET_MANAGEMENT.md`](./SECRET_MANAGEMENT.md) for detailed information about:
+- Secret generation and permissions
+- Security best practices
+- Access control and rotation
+- Troubleshooting authentication issues
+
 ### Local Development Only
 
 For local development without deployment:

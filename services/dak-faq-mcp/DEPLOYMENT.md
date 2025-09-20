@@ -56,6 +56,8 @@ In your GitHub repository, go to Settings → Secrets and variables → Actions,
 - `GITHUB_CLIENT_SECRET_DEV` - GitHub OAuth Client Secret for development environment  
 - `GITHUB_TOKEN_DEV` - GitHub API token for development environment
 
+> 📋 **Detailed Secret Management**: For comprehensive information about secret generation, storage, permissions, and security practices, see [`SECRET_MANAGEMENT.md`](./SECRET_MANAGEMENT.md).
+
 #### 2. Deploy via GitHub Actions
 
 **Automatic Deployment:**
@@ -190,6 +192,8 @@ Add these secrets in GitHub repository Settings → Secrets and variables → Ac
 | `GITHUB_CLIENT_ID_DEV` | OAuth Client ID for dev environment | ✅ Required |
 | `GITHUB_CLIENT_SECRET_DEV` | OAuth Client Secret for dev environment | ✅ Required |
 | `GITHUB_TOKEN_DEV` | GitHub API token for dev environment | ✅ Required |
+
+> 🔒 **Security Note**: For detailed information about secret permissions, rotation, and security practices, see [`SECRET_MANAGEMENT.md`](./SECRET_MANAGEMENT.md).
 
 ### 5. **First Deployment**
 
