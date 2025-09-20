@@ -96,6 +96,12 @@ See [`SECRET_MANAGEMENT.md`](./SECRET_MANAGEMENT.md) for detailed information ab
 - Access control and rotation
 - Troubleshooting authentication issues
 
+See [`DAK_ARCHITECTURE.md`](./DAK_ARCHITECTURE.md) for comprehensive information about:
+- DAK object instantiation and population from Git repositories
+- Data access layer and VCS service interactions
+- Staging service architecture and asset management
+- Source URI tracking and validation services
+
 ### Local Development Only
 
 For local development without deployment:
