@@ -681,4 +681,4 @@ if (require.main === module) {
   manager.start();
 }
 
-export default MCPServiceManager;
+module.exports = MCPServiceManager;
