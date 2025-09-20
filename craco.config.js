@@ -46,6 +46,26 @@ function loadRepositoryConfig() {
 loadRepositoryConfig();
 
 module.exports = {
+  webpack: {
+    configure: (webpackConfig, { env, paths }) => {
+      // Fix CSS ordering warnings in production builds
+      if (env === 'production') {
+        const miniCssExtractPlugin = webpackConfig.plugins.find(
+          plugin => plugin.constructor.name === 'MiniCssExtractPlugin'
+        );
+        
+        if (miniCssExtractPlugin) {
+          // Ignore CSS order warnings to prevent build failures
+          miniCssExtractPlugin.options = {
+            ...miniCssExtractPlugin.options,
+            ignoreOrder: true
+          };
+        }
+      }
+      
+      return webpackConfig;
+    }
+  },
   devServer: (devServerConfig, { env, paths, proxy, allowedHost }) => {
     // Override the deprecated onBeforeSetupMiddleware and onAfterSetupMiddleware
     // with the new setupMiddlewares API for webpack-dev-server 5.x compatibility

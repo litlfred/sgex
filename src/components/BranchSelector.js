@@ -212,7 +212,7 @@ const BranchSelector = ({
                 />
               </div>
               <div className="form-group">
-                <label>Create from:</label>
+                <span className="info-label">Create from:</span>
                 <span className="source-branch">{selectedBranch || 'main'}</span>
               </div>
               {createError && (
