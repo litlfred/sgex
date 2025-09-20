@@ -1796,3 +1796,113 @@ body.theme-light .file-count {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.85rem;
 }
+
+/* Status Badge Styles */
+.component-status-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.component-status-badge .badge-icon {
+  font-size: 18px;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Status Bar Styles */
+.status-bar {
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-bar-header {
+  padding: 1rem 1.5rem;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.status-bar-header:hover {
+  filter: brightness(1.1);
+}
+
+.status-bar-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.status-bar-icon {
+  font-size: 1.2rem;
+}
+
+.status-bar-chevron {
+  font-size: 0.9rem;
+  transition: transform 0.3s ease;
+  opacity: 0.8;
+}
+
+.status-bar-chevron.expanded {
+  transform: rotate(180deg);
+}
+
+.status-bar-content {
+  padding: 1.5rem;
+  background: var(--who-card-bg, #ffffff);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Publication and FAQ specific styling */
+.publication-status-bars,
+.faq-status-bars {
+  margin-top: 2rem;
+}
+
+.publication-components,
+.faq-components {
+  margin-bottom: 2rem;
+}
+
+/* Responsive adjustments for status badges */
+@media (max-width: 768px) {
+  .component-status-badge {
+    width: 28px;
+    height: 28px;
+    top: 6px;
+    right: 6px;
+  }
+  
+  .component-status-badge .badge-icon {
+    font-size: 16px;
+  }
+  
+  .status-bar-header {
+    padding: 0.8rem 1rem;
+  }
+  
+  .status-bar-title {
+    gap: 0.5rem;
+    font-size: 1rem;
+  }
+  
+  .status-bar-icon {
+    font-size: 1.1rem;
+  }
+}

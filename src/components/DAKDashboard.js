@@ -58,8 +58,8 @@ const DAKDashboardContent = () => {
   // Use the branch from PageProvider
   const selectedBranch = branch;
 
-  // Component Card component defined within the dashboard
-  const ComponentCard = ({ component, handleComponentClick, t }) => {
+  // Enhanced Component Card component with status badge support
+  const ComponentCard = ({ component, handleComponentClick, t, statusBadge, badgeIcon, badgeColor }) => {
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
     
@@ -109,6 +109,17 @@ const DAKDashboardContent = () => {
                     {component.icon}
                   </div>
                 )}
+                
+                {/* Status Badge */}
+                {statusBadge && badgeIcon && (
+                  <div 
+                    className="component-status-badge"
+                    style={{ backgroundColor: badgeColor || '#007bff' }}
+                    title={statusBadge}
+                  >
+                    <span className="badge-icon">{badgeIcon}</span>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -135,6 +146,32 @@ const DAKDashboardContent = () => {
             </div>
           </div>
         </div>
+      </div>
+    );
+  };
+
+  // Expandable Status Bar component for other content
+  const StatusBar = ({ title, icon, children, defaultExpanded = false, color = '#007bff' }) => {
+    const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+    
+    return (
+      <div className={`status-bar ${isExpanded ? 'expanded' : 'collapsed'}`}>
+        <div 
+          className="status-bar-header" 
+          onClick={() => setIsExpanded(!isExpanded)}
+          style={{ backgroundColor: color }}
+        >
+          <div className="status-bar-title">
+            <span className="status-bar-icon">{icon}</span>
+            <span className="status-bar-text">{title}</span>
+          </div>
+          <span className={`status-bar-chevron ${isExpanded ? 'expanded' : ''}`}>▼</span>
+        </div>
+        {isExpanded && (
+          <div className="status-bar-content">
+            {children}
+          </div>
+        )}
       </div>
     );
   };
@@ -368,6 +405,86 @@ const DAKDashboardContent = () => {
     }
   ];
 
+  // Define publication tools as card components
+  const publicationComponents = [
+    {
+      id: 'repository-status',
+      name: 'Repository Status',
+      description: 'Monitor commits, pull requests, and repository activity for your DAK',
+      icon: '📊',
+      cardImage: 'dashboard/dak_status.png',
+      type: 'Tool',
+      color: '#0078d4',
+      fileTypes: ['Status', 'Analytics'],
+      count: 0,
+      editor: 'Repository status dashboard'
+    },
+    {
+      id: 'staging-ground',
+      name: 'Staging Ground',
+      description: 'Review and manage changes before committing them to the repository',
+      icon: '📝',
+      cardImage: 'dashboard/dak_staging.png',
+      type: 'Tool',
+      color: '#ff8c00',
+      fileTypes: ['Changes', 'Commits'],
+      count: 0,
+      editor: 'Change management workspace'
+    },
+    {
+      id: 'publication-generator',
+      name: 'DAK Publication Generator',
+      description: 'Generate professional WHO SMART Guidelines publications in multiple formats',
+      icon: '📚',
+      cardImage: 'dashboard/dak_publications.png',
+      type: 'Tool',
+      color: '#107c10',
+      fileTypes: ['HTML', 'PDF', 'EPUB'],
+      count: 0,
+      editor: 'Publication generator with multiple formats'
+    },
+    {
+      id: 'published-content',
+      name: 'Published DAK Content',
+      description: 'Access published Implementation Guide content for this DAK repository',
+      icon: '🌐',
+      cardImage: 'dashboard/dak_published.png',
+      type: 'Tool',
+      color: '#881798',
+      fileTypes: ['Pages', 'IG'],
+      count: 0,
+      editor: 'Published content browser'
+    }
+  ];
+
+  // Define FAQ tools as card components
+  const faqComponents = [
+    {
+      id: 'dak-questions',
+      name: 'DAK Questions',
+      description: 'Ask questions about this DAK and get automated answers based on repository analysis',
+      icon: '❓',
+      cardImage: 'dashboard/dak_faq.png',
+      type: 'Tool',
+      color: '#d13438',
+      fileTypes: ['Questions', 'Answers'],
+      count: 2,
+      editor: 'Interactive FAQ system'
+    },
+    {
+      id: 'mcp-server-api',
+      name: 'MCP Server API',
+      description: 'Access the FAQ system programmatically via the MCP server API for automated queries',
+      icon: '🔌',
+      cardImage: 'dashboard/dak_api.png',
+      type: 'Tool',
+      color: '#6b69d6',
+      fileTypes: ['API', 'Integration'],
+      count: 0,
+      editor: 'API documentation and examples'
+    }
+  ];
+
 
 
   const handleComponentClick = (event, component) => {
@@ -377,6 +494,18 @@ const DAKDashboardContent = () => {
       component,
       selectedBranch
     };
+    
+    // Handle publication tool clicks
+    if (component.type === 'Tool' && activeTab === 'publications') {
+      handlePublicationToolClick(component);
+      return;
+    }
+    
+    // Handle FAQ tool clicks
+    if (component.type === 'Tool' && activeTab === 'faq') {
+      handleFAQToolClick(component);
+      return;
+    }
     
     // For decision-support, always navigate to view page (no permission check needed)
     if (component.id === 'decision-support') {
@@ -472,6 +601,20 @@ const DAKDashboardContent = () => {
       : `/${component.id}/${owner}/${repoName}`;
     
     handleNavigationClick(event, path, navigate, navigationState);
+  };
+
+  // Handle publication tool clicks
+  const handlePublicationToolClick = (component) => {
+    // For now, just show which tool was clicked - can be expanded later
+    console.log('Publication tool clicked:', component.name);
+    // TODO: Implement specific handlers for each publication tool
+  };
+
+  // Handle FAQ tool clicks  
+  const handleFAQToolClick = (component) => {
+    // For now, just show which tool was clicked - can be expanded later
+    console.log('FAQ tool clicked:', component.name);
+    // TODO: Implement specific handlers for each FAQ tool
   };
 
 
@@ -572,12 +715,20 @@ const DAKDashboardContent = () => {
 
               <div className="components-grid core-components">
                 {coreDAKComponents.map((component) => {
+                  // Determine status badge based on user permissions
+                  const badgeIcon = hasWriteAccess ? '✏️' : '👁️';
+                  const statusBadge = hasWriteAccess ? 'Edit' : 'View';
+                  const badgeColor = hasWriteAccess ? '#28a745' : '#007bff';
+                  
                   return (
                     <ComponentCard
                       key={component.id}
                       component={component}
                       handleComponentClick={handleComponentClick}
                       t={t}
+                      statusBadge={statusBadge}
+                      badgeIcon={badgeIcon}
+                      badgeColor={badgeColor}
                     />
                   );
                 })}
@@ -589,22 +740,65 @@ const DAKDashboardContent = () => {
           {/* Publishing Section */}
           {activeTab === 'publications' && (
             <div className="components-section publications-section active">
-              {/* Repository Status Dashboard */}
-              {repository && selectedBranch && (
-                <DAKStatusBox 
-                  repository={repository}
-                  selectedBranch={selectedBranch}
-                  hasWriteAccess={hasWriteAccess}
-                  profile={profile}
-                />
-              )}
-              
-              <Publications
-                profile={profile}
-                repository={repository}
-                selectedBranch={selectedBranch}
-                hasWriteAccess={hasWriteAccess}
-              />
+              <div className="section-header">
+                <h3 className="section-title">Publishing Tools</h3>
+                <p className="section-description">
+                  Tools and services for publishing and managing your WHO SMART Guidelines Digital Adaptation Kit
+                </p>
+              </div>
+
+              <div className="components-grid publication-components">
+                {publicationComponents.map((component) => {
+                  const badgeIcon = '🖨️'; // Printing press icon for all publication tools
+                  const statusBadge = 'Publish';
+                  const badgeColor = '#107c10';
+                  
+                  return (
+                    <ComponentCard
+                      key={component.id}
+                      component={component}
+                      handleComponentClick={handleComponentClick}
+                      t={t}
+                      statusBadge={statusBadge}
+                      badgeIcon={badgeIcon}
+                      badgeColor={badgeColor}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Other Publication Content as Status Bars */}
+              <div className="publication-status-bars">
+                <StatusBar 
+                  title="Repository Status Details" 
+                  icon="📊" 
+                  defaultExpanded={true}
+                  color="#0078d4"
+                >
+                  {repository && selectedBranch && (
+                    <DAKStatusBox 
+                      repository={repository}
+                      selectedBranch={selectedBranch}
+                      hasWriteAccess={hasWriteAccess}
+                      profile={profile}
+                    />
+                  )}
+                </StatusBar>
+                
+                <StatusBar 
+                  title="Advanced Publication Settings" 
+                  icon="⚙️" 
+                  defaultExpanded={false}
+                  color="#6b69d6"
+                >
+                  <Publications
+                    profile={profile}
+                    repository={repository}
+                    selectedBranch={selectedBranch}
+                    hasWriteAccess={hasWriteAccess}
+                  />
+                </StatusBar>
+              </div>
             </div>
           )}
 
@@ -612,64 +806,100 @@ const DAKDashboardContent = () => {
           {activeTab === 'faq' && (
             <div className="components-section faq-section active">
               <div className="section-header">
-                <h3 className="section-title">DAK FAQ System</h3>
+                <h3 className="section-title">FAQ Tools</h3>
                 <p className="section-description">
-                  Ask questions about this DAK and get automated answers based on repository analysis
+                  Interactive tools for asking questions and getting automated answers about your DAK
                 </p>
               </div>
 
-              <FAQAccordion
-                repository={`${profile?.login}/${repository?.name}`}
-                branch={selectedBranch || 'main'}
-                githubService={githubService}
-                filters={{
-                  level: 'dak' // Start with DAK-level questions
-                }}
-                className="dak-faq-accordion"
-              />
+              <div className="components-grid faq-components">
+                {faqComponents.map((component) => {
+                  const badgeIcon = '❓'; // Question mark icon for all FAQ tools
+                  const statusBadge = 'Ask';
+                  const badgeColor = '#d13438';
+                  
+                  return (
+                    <ComponentCard
+                      key={component.id}
+                      component={component}
+                      handleComponentClick={handleComponentClick}
+                      t={t}
+                      statusBadge={statusBadge}
+                      badgeIcon={badgeIcon}
+                      badgeColor={badgeColor}
+                    />
+                  );
+                })}
+              </div>
 
-              {/* MCP Server Info */}
-              <div className="mcp-info" style={{ marginTop: '2rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
-                <h4>MCP Server API</h4>
-                {window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? (
-                  <>
-                    <p>
-                      The FAQ system can also be accessed programmatically via the MCP server API:
-                    </p>
-                    <ul>
-                      <li><code>GET http://127.0.0.1:3001/faq/questions/catalog</code> - Get question catalog</li>
-                      <li><code>POST http://127.0.0.1:3001/faq/questions/execute</code> - Execute questions</li>
-                    </ul>
-                  </>
-                ) : (
-                  <>
-                    <p>
-                      For programmatic access to the FAQ system, you can install and run the MCP server locally:
-                    </p>
-                    <div style={{ background: '#e9ecef', padding: '1rem', borderRadius: '4px', marginBottom: '1rem' }}>
-                      <h5>Installation Instructions:</h5>
-                      <ol>
-                        <li>Clone the SGEX repository: <code>git clone {repositoryConfig.getGitHubUrl()}.git</code></li>
-                        <li>Navigate to repository: <code>cd sgex</code></li>
-                        <li>Build MCP server: <code>npm run build-mcp</code></li>
-                        <li>Start MCP server: <code>npm run run-mcp</code></li>
-                      </ol>
-                      <p style={{ margin: '0.5rem 0', fontSize: '0.9em', color: '#6c757d' }}>
-                        <strong>Alternative:</strong> For manual setup, navigate to <code>services/dak-faq-mcp</code> and run <code>npm install && npm run build && npm start</code>
-                      </p>
-                    </div>
-                    <p>
-                      Once running, the MCP server will be available at:
-                    </p>
-                    <ul>
-                      <li><code>GET http://127.0.0.1:3001/faq/questions/catalog</code> - Get question catalog</li>
-                      <li><code>POST http://127.0.0.1:3001/faq/questions/execute</code> - Execute questions</li>
-                    </ul>
-                    <p>
-                      <strong>Note:</strong> The MCP server runs locally for security and provides full API access to the DAK FAQ system.
-                    </p>
-                  </>
-                )}
+              {/* FAQ Content as Status Bars */}
+              <div className="faq-status-bars">
+                <StatusBar 
+                  title="Interactive FAQ System" 
+                  icon="❓" 
+                  defaultExpanded={true}
+                  color="#d13438"
+                >
+                  <FAQAccordion
+                    repository={`${profile?.login}/${repository?.name}`}
+                    branch={selectedBranch || 'main'}
+                    githubService={githubService}
+                    filters={{
+                      level: 'dak' // Start with DAK-level questions
+                    }}
+                    className="dak-faq-accordion"
+                  />
+                </StatusBar>
+                
+                <StatusBar 
+                  title="MCP Server API Documentation" 
+                  icon="🔌" 
+                  defaultExpanded={false}
+                  color="#6b69d6"
+                >
+                  <div className="mcp-info">
+                    <h4>MCP Server API</h4>
+                    {window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? (
+                      <>
+                        <p>
+                          The FAQ system can also be accessed programmatically via the MCP server API:
+                        </p>
+                        <ul>
+                          <li><code>GET http://127.0.0.1:3001/faq/questions/catalog</code> - Get question catalog</li>
+                          <li><code>POST http://127.0.0.1:3001/faq/questions/execute</code> - Execute questions</li>
+                        </ul>
+                      </>
+                    ) : (
+                      <>
+                        <p>
+                          For programmatic access to the FAQ system, you can install and run the MCP server locally:
+                        </p>
+                        <div style={{ background: '#e9ecef', padding: '1rem', borderRadius: '4px', marginBottom: '1rem' }}>
+                          <h5>Installation Instructions:</h5>
+                          <ol>
+                            <li>Clone the SGEX repository: <code>git clone {repositoryConfig.getGitHubUrl()}.git</code></li>
+                            <li>Navigate to repository: <code>cd sgex</code></li>
+                            <li>Build MCP server: <code>npm run build-mcp</code></li>
+                            <li>Start MCP server: <code>npm run run-mcp</code></li>
+                          </ol>
+                          <p style={{ margin: '0.5rem 0', fontSize: '0.9em', color: '#6c757d' }}>
+                            <strong>Alternative:</strong> For manual setup, navigate to <code>services/dak-faq-mcp</code> and run <code>npm install && npm run build && npm start</code>
+                          </p>
+                        </div>
+                        <p>
+                          Once running, the MCP server will be available at:
+                        </p>
+                        <ul>
+                          <li><code>GET http://127.0.0.1:3001/faq/questions/catalog</code> - Get question catalog</li>
+                          <li><code>POST http://127.0.0.1:3001/faq/questions/execute</code> - Execute questions</li>
+                        </ul>
+                        <p>
+                          <strong>Note:</strong> The MCP server runs locally for security and provides full API access to the DAK FAQ system.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </StatusBar>
               </div>
             </div>
           )}
