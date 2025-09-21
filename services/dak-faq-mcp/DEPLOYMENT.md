@@ -10,6 +10,9 @@ The SGEX MCP service provides a REST API for accessing DAK (Digital Adaptation K
 - **GitHub OAuth authentication** for user identification
 - **Collaborator authorization** - only collaborators on `litlfred/sgex` can access protected endpoints
 - **No persistent database** - authorization is checked dynamically via GitHub API
+- **ChatGPT Integration** - designed for use with ChatGPT developer mode
+
+> 🤖 **ChatGPT Integration**: For detailed instructions on integrating the deployed service with ChatGPT developer mode, see [`CHATGPT_INTEGRATION.md`](./CHATGPT_INTEGRATION.md).
 
 ## Prerequisites
 
@@ -425,6 +428,50 @@ Fly.io automatically monitors:
 
 ### Common Issues
 
+#### 1. **"No access token available. Please login with 'flyctl auth login'"**
+
+This error occurs when the `FLYIO_API_TOKEN` GitHub repository secret is not configured.
+
+**Solution:**
+```bash
+# 1. Generate Fly.io API token locally
+fly auth login
+fly auth token
+
+# 2. Copy the token and add it to GitHub repository secrets
+# Go to: Repository Settings → Secrets and variables → Actions
+# Add new secret: FLYIO_API_TOKEN = <your_fly_token_here>
+```
+
+**Verification:**
+- The secret must be named exactly `FLYIO_API_TOKEN`
+- The token should start with `fly_` 
+- Ensure you have admin access to the repository to add secrets
+
+#### 2. **OAuth Configuration Errors**
+
+```
+Error: Invalid client_id or redirect_uri
+```
+
+**Solution:** Verify GitHub OAuth application settings:
+- Client ID matches `FLYIO_CLIENT_ID_DEV` secret
+- Callback URL is `https://sgex-mcp-dev.fly.dev/auth/github/callback`
+- Application is active and not suspended
+
+#### 3. **Collaborator Access Issues**
+
+```
+Error: 403 Forbidden - read:org scope required
+```
+
+**Solution:** 
+- Ensure `FLYIO_GH_PAT_DEV` has `read:org` scope
+- Token must be approved for organization access if repository is in an organization
+- User must be a collaborator on `litlfred/sgex`
+
+#### 4. **Legacy Troubleshooting Issues**
+
 1. **OAuth not configured**
    ```bash
    # Check secrets are set
@@ -453,6 +500,32 @@ Fly.io automatically monitors:
    docker build -t sgex-mcp .
    docker run -p 8080:8080 sgex-mcp
    ```
+
+### Quick Fixes
+
+#### Reset Deployment
+```bash
+# Destroy and recreate application (CAUTION: will lose data)
+flyctl apps destroy sgex-mcp-dev
+# Then re-run the deployment workflow
+```
+
+#### Update Secrets Only
+```bash
+# Update secrets without full redeployment
+flyctl secrets set GITHUB_CLIENT_ID=new_value --app sgex-mcp-dev
+flyctl secrets set GITHUB_CLIENT_SECRET=new_value --app sgex-mcp-dev
+flyctl secrets set GITHUB_TOKEN=new_value --app sgex-mcp-dev
+```
+
+### Support Resources
+
+- **Fly.io Documentation**: https://fly.io/docs/
+- **Fly.io Support**: https://fly.io/docs/about/support/
+- **GitHub OAuth Documentation**: https://docs.github.com/en/developers/apps/building-oauth-apps
+- **Repository Issues**: https://github.com/litlfred/sgex/issues
+- **ChatGPT Integration Guide**: [`CHATGPT_INTEGRATION.md`](./CHATGPT_INTEGRATION.md)
+- **Secret Management Guide**: [`SECRET_MANAGEMENT.md`](./SECRET_MANAGEMENT.md)
 
 ### Support Resources
 

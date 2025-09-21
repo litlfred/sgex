@@ -83,6 +83,8 @@ fly deploy
 
 **Access Control**: Only GitHub collaborators on `litlfred/sgex` can access protected endpoints.
 
+**ChatGPT Integration**: The deployed service is designed for integration with ChatGPT developer mode. See [`CHATGPT_INTEGRATION.md`](./CHATGPT_INTEGRATION.md) for detailed setup instructions.
+
 See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for complete deployment instructions including:
 - GitHub OAuth setup
 - Fly.io configuration

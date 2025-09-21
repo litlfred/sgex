@@ -91,6 +91,36 @@ jobs:
           echo "📋 Updated fly.toml for dev environment:"
           cat fly.toml
       
+      - name: Check required secrets
+        run: |
+          echo "🔍 Checking deployment prerequisites..."
+          
+          # Check if Fly.io API token is available
+          if [ -z "${{ secrets.FLYIO_API_TOKEN }}" ]; then
+            echo "❌ Error: FLYIO_API_TOKEN secret is not configured"
+            echo ""
+            echo "To fix this deployment error, please:"
+            echo "1. Generate a Fly.io API token: fly auth token"
+            echo "2. Add it to GitHub repository secrets as FLYIO_API_TOKEN"
+            echo "3. Go to: Settings → Secrets and variables → Actions"
+            echo ""
+            echo "For detailed setup instructions, see:"
+            echo "- services/dak-faq-mcp/DEPLOYMENT.md"
+            echo "- services/dak-faq-mcp/SECRET_MANAGEMENT.md"
+            exit 1
+          fi
+          
+          echo "✅ Fly.io API token is configured"
+          
+          # Check OAuth secrets (optional but recommended)
+          if [ -z "${{ secrets.FLYIO_CLIENT_ID_DEV }}" ]; then
+            echo "⚠️  Warning: GitHub OAuth secrets not configured"
+            echo "   The service will run but authentication will be limited"
+            echo "   See DEPLOYMENT.md for OAuth setup instructions"
+          else
+            echo "✅ GitHub OAuth secrets are configured"
+          fi
+      
       - name: Deploy to Fly.io (Dev)
         working-directory: services/dak-faq-mcp
         env:
@@ -98,7 +128,17 @@ jobs:
         run: |
           echo "🚀 Deploying ${{ env.FLY_APP_NAME }} to Fly.io..."
           
+          # Verify flyctl authentication
+          if ! flyctl auth whoami; then
+            echo "❌ Fly.io authentication failed"
+            echo "Please check that FLYIO_API_TOKEN is valid"
+            exit 1
+          fi
+          
+          echo "✅ Fly.io authentication successful"
+          
           # Deploy the application
+          echo "🏗️  Starting deployment..."
           flyctl deploy --app ${{ env.FLY_APP_NAME }} --build-only || flyctl launch --now --name ${{ env.FLY_APP_NAME }}
           
           # Set dev environment secrets (only update if they exist)
@@ -112,13 +152,16 @@ jobs:
               --app ${{ env.FLY_APP_NAME }}
           else
             echo "⚠️ GitHub OAuth secrets not configured for dev environment"
-            echo "Please set the following secrets in GitHub repository settings:"
-            echo "- FLYIO_CLIENT_ID_DEV"
-            echo "- FLYIO_CLIENT_SECRET_DEV"
-            echo "- FLYIO_GH_PAT_DEV"
+            echo "The service will run but OAuth authentication will not work"
+            echo ""
+            echo "To enable OAuth authentication, please set these secrets:"
+            echo "- FLYIO_CLIENT_ID_DEV (GitHub OAuth Client ID)"
+            echo "- FLYIO_CLIENT_SECRET_DEV (GitHub OAuth Client Secret)"
+            echo "- FLYIO_GH_PAT_DEV (GitHub Personal Access Token)"
           fi
           
           # Final deployment with secrets
+          echo "🚀 Completing deployment with environment configuration..."
           flyctl deploy --app ${{ env.FLY_APP_NAME }}
       
       - name: Verify deployment
