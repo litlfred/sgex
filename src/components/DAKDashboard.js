@@ -61,7 +61,7 @@ const DAKDashboardContent = () => {
   const selectedBranch = branch;
 
   // Enhanced Component Card component with status badge support
-  const ComponentCard = ({ component, handleComponentClick, t, statusBadge, badgeIcon, badgeColor, publicationFormats }) => {
+  const ComponentCard = ({ component, handleComponentClick, t, statusBadge, badgeIcon, badgeColor }) => {
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
     
@@ -120,22 +120,6 @@ const DAKDashboardContent = () => {
                     title={statusBadge}
                   >
                     <span className="badge-icon">{badgeIcon}</span>
-                  </div>
-                )}
-                
-                {/* Publication Format Badges */}
-                {publicationFormats && (
-                  <div className="publication-format-badges">
-                    {publicationFormats.map((format, index) => (
-                      <div 
-                        key={index}
-                        className="format-badge"
-                        style={{ backgroundColor: format.color }}
-                        title={format.title}
-                      >
-                        <span className="format-icon">{format.icon}</span>
-                      </div>
-                    ))}
                   </div>
                 )}
               </div>
@@ -742,23 +726,21 @@ const DAKDashboardContent = () => {
               {/* 9 DAK Components with Publication Badges */}
               <div className="components-grid core-components">
                 {coreDAKComponents.map((component) => {
-                  // Multiple publication format badges
-                  const publicationFormats = [
-                    { icon: '📄', title: 'DocBook XML', color: '#6b69d6' },
-                    { icon: '📖', title: 'EPUB', color: '#d13438' },
-                    { icon: '🌐', title: 'HTML', color: '#107c10' }
-                  ];
+                  // Create component with publication format text badges in description
+                  const componentWithFormats = {
+                    ...component,
+                    description: `${component.description} • DocBook • EPUB • HTML`
+                  };
                   
                   return (
                     <ComponentCard
                       key={component.id}
-                      component={component}
+                      component={componentWithFormats}
                       handleComponentClick={handleComponentClick}
                       t={t}
                       statusBadge="Publish"
                       badgeIcon="🖨️"
                       badgeColor="#107c10"
-                      publicationFormats={publicationFormats}
                     />
                   );
                 })}
@@ -840,7 +822,7 @@ const DAKDashboardContent = () => {
                       t={t}
                       statusBadge="Ask"
                       badgeIcon="❓"
-                      badgeColor="#d13438"
+                      badgeColor="#8b5cf6"
                     />
                   );
                 })}
