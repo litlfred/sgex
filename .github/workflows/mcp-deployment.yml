@@ -94,7 +94,7 @@ jobs:
       - name: Deploy to Fly.io (Dev)
         working-directory: services/dak-faq-mcp
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLYIO_API_TOKEN }}
         run: |
           echo "🚀 Deploying ${{ env.FLY_APP_NAME }} to Fly.io..."
           
@@ -102,20 +102,20 @@ jobs:
           flyctl deploy --app ${{ env.FLY_APP_NAME }} --build-only || flyctl launch --now --name ${{ env.FLY_APP_NAME }}
           
           # Set dev environment secrets (only update if they exist)
-          if [ -n "${{ secrets.GITHUB_CLIENT_ID_DEV }}" ]; then
+          if [ -n "${{ secrets.FLYIO_CLIENT_ID_DEV }}" ]; then
             echo "🔑 Setting GitHub OAuth secrets for dev environment..."
             flyctl secrets set \
-              GITHUB_CLIENT_ID="${{ secrets.GITHUB_CLIENT_ID_DEV }}" \
-              GITHUB_CLIENT_SECRET="${{ secrets.GITHUB_CLIENT_SECRET_DEV }}" \
-              GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN_DEV }}" \
+              GITHUB_CLIENT_ID="${{ secrets.FLYIO_CLIENT_ID_DEV }}" \
+              GITHUB_CLIENT_SECRET="${{ secrets.FLYIO_CLIENT_SECRET_DEV }}" \
+              GITHUB_TOKEN="${{ secrets.FLYIO_GH_PAT_DEV }}" \
               CORS_ORIGIN="https://litlfred.github.io" \
               --app ${{ env.FLY_APP_NAME }}
           else
             echo "⚠️ GitHub OAuth secrets not configured for dev environment"
             echo "Please set the following secrets in GitHub repository settings:"
-            echo "- GITHUB_CLIENT_ID_DEV"
-            echo "- GITHUB_CLIENT_SECRET_DEV"
-            echo "- GITHUB_TOKEN_DEV"
+            echo "- FLYIO_CLIENT_ID_DEV"
+            echo "- FLYIO_CLIENT_SECRET_DEV"
+            echo "- FLYIO_GH_PAT_DEV"
           fi
           
           # Final deployment with secrets

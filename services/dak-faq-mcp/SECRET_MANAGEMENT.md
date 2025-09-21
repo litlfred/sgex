@@ -11,7 +11,7 @@ The SGEX MCP server deployment requires 4 types of secrets for secure operation:
 
 ## Secret Categories and Generation
 
-### 1. Fly.io API Token (`FLY_API_TOKEN`)
+### 1. Fly.io API Token (`FLYIO_API_TOKEN`)
 
 **Purpose**: Allows GitHub Actions to deploy and manage the MCP service on Fly.io
 
@@ -32,7 +32,7 @@ fly auth token
 - Access to set secrets on Fly.io applications
 - Read/write access to Fly.io organization resources
 
-**Storage**: GitHub repository secrets as `FLY_API_TOKEN`
+**Storage**: GitHub repository secrets as `FLYIO_API_TOKEN`
 
 **Security Considerations**:
 - ⚠️ **High Privilege**: This token has full access to your Fly.io account
@@ -40,7 +40,7 @@ fly auth token
 - ⏰ **Rotation**: Consider rotating periodically for security
 - 🏢 **Scope**: Limited to specific Fly.io organization if configured
 
-### 2. GitHub OAuth Application (`GITHUB_CLIENT_ID_DEV`, `GITHUB_CLIENT_SECRET_DEV`)
+### 2. GitHub OAuth Application (`FLYIO_CLIENT_ID_DEV`, `FLYIO_CLIENT_SECRET_DEV`)
 
 **Purpose**: Enables users to authenticate via GitHub OAuth for MCP service access
 
@@ -59,7 +59,7 @@ fly auth token
 - **App Access**: Public (anyone can initiate OAuth, but authorization is controlled separately)
 
 **Storage**: 
-- GitHub repository secrets as `GITHUB_CLIENT_ID_DEV` and `GITHUB_CLIENT_SECRET_DEV`
+- GitHub repository secrets as `FLYIO_CLIENT_ID_DEV` and `FLYIO_CLIENT_SECRET_DEV`
 
 **Security Considerations**:
 - 🔒 **Client Secret Security**: Must be kept secret, stored in GitHub repository secrets
@@ -67,7 +67,7 @@ fly auth token
 - 👥 **User Consent**: Users see OAuth authorization prompt with app name and permissions
 - 🔄 **OAuth Flow**: Uses standard OAuth 2.0 authorization code flow
 
-### 3. GitHub API Token (`GITHUB_TOKEN_DEV`)
+### 3. GitHub Personal Access Token (`FLYIO_GH_PAT_DEV`)
 
 **Purpose**: Allows the MCP service to check if authenticated users are collaborators on `litlfred/sgex`
 
@@ -75,7 +75,7 @@ fly auth token
 1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
 2. Click "Generate new token (classic)"
 3. Configure token:
-   - **Note**: `SGEX MCP Server - Collaborator Checks`
+   - **Note**: `SGEX MCP Server - Collaborator Checks (Fly.io Dev)`
    - **Expiration**: 90 days (or as per security policy)
    - **Scopes**: 
      - ✅ `read:user` - Get user information
@@ -88,7 +88,7 @@ fly auth token
   - `GET /repos/litlfred/sgex/collaborators/{username}` - Check collaborator status
   - `GET /user` - Get authenticated user information
 
-**Storage**: GitHub repository secrets as `GITHUB_TOKEN_DEV`
+**Storage**: GitHub repository secrets as `FLYIO_GH_PAT_DEV`
 
 **Security Considerations**:
 - 🎯 **Minimal Permissions**: Only `read:user` and `read:org` scopes
@@ -121,12 +121,12 @@ fly auth token
 ```yaml
 # Example from workflow
 env:
-  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  FLY_API_TOKEN: ${{ secrets.FLYIO_API_TOKEN }}
 run: |
   flyctl secrets set \
-    GITHUB_CLIENT_ID="${{ secrets.GITHUB_CLIENT_ID_DEV }}" \
-    GITHUB_CLIENT_SECRET="${{ secrets.GITHUB_CLIENT_SECRET_DEV }}" \
-    GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN_DEV }}"
+    GITHUB_CLIENT_ID="${{ secrets.FLYIO_CLIENT_ID_DEV }}" \
+    GITHUB_CLIENT_SECRET="${{ secrets.FLYIO_CLIENT_SECRET_DEV }}" \
+    GITHUB_TOKEN="${{ secrets.FLYIO_GH_PAT_DEV }}"
 ```
 
 **Security Measures**:
@@ -139,10 +139,10 @@ run: |
 
 | Secret | Required Permissions | Access Level | Rotation Frequency |
 |--------|---------------------|--------------|-------------------|
-| `FLY_API_TOKEN` | Full Fly.io account access | High | Monthly |
-| `GITHUB_CLIENT_ID_DEV` | OAuth app client ID | Medium | Rarely |
-| `GITHUB_CLIENT_SECRET_DEV` | OAuth app client secret | High | Quarterly |
-| `GITHUB_TOKEN_DEV` | `read:user`, `read:org` | Medium | 90 days |
+| `FLYIO_API_TOKEN` | Full Fly.io account access | High | Monthly |
+| `FLYIO_CLIENT_ID_DEV` | GitHub OAuth app client ID | Medium | Rarely |
+| `FLYIO_CLIENT_SECRET_DEV` | GitHub OAuth app client secret | High | Quarterly |
+| `FLYIO_GH_PAT_DEV` | `read:user`, `read:org` | Medium | 90 days |
 
 ## Security Best Practices
 
@@ -172,19 +172,19 @@ run: |
 ```
 Error: Invalid client_id or redirect_uri
 ```
-**Solution**: Verify `GITHUB_CLIENT_ID_DEV` matches OAuth app and callback URL is correct
+**Solution**: Verify `FLYIO_CLIENT_ID_DEV` matches OAuth app and callback URL is correct
 
 ### 2. **GitHub Token Issues**
 ```
 Error: 403 Forbidden - read:org scope required
 ```
-**Solution**: Ensure `GITHUB_TOKEN_DEV` has `read:org` scope and organization approval
+**Solution**: Ensure `FLYIO_GH_PAT_DEV` has `read:org` scope and organization approval
 
 ### 3. **Fly.io Token Issues**
 ```
 Error: authentication failed
 ```
-**Solution**: Regenerate `FLY_API_TOKEN` using `fly auth token`
+**Solution**: Regenerate `FLYIO_API_TOKEN` using `fly auth token`
 
 ## Emergency Procedures
 
@@ -220,10 +220,10 @@ Error: authentication failed
 
 ### Required Repository Secrets
 ```
-FLY_API_TOKEN=fly_token_here
-GITHUB_CLIENT_ID_DEV=oauth_client_id_here
-GITHUB_CLIENT_SECRET_DEV=oauth_client_secret_here
-GITHUB_TOKEN_DEV=github_token_here
+FLYIO_API_TOKEN=fly_token_here
+FLYIO_CLIENT_ID_DEV=oauth_client_id_here
+FLYIO_CLIENT_SECRET_DEV=oauth_client_secret_here
+FLYIO_GH_PAT_DEV=github_pat_here
 ```
 
 ### Service URLs

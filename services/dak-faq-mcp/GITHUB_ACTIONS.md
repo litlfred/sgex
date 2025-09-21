@@ -13,7 +13,7 @@ The GitHub Actions workflow provides:
 
 ## Quick Setup
 
-1. **Add Fly.io API token** to repository secrets as `FLY_API_TOKEN`
+1. **Add Fly.io API token** to repository secrets as `FLYIO_API_TOKEN`
 2. **Create GitHub OAuth app** for development environment
 3. **Add dev OAuth secrets** to repository (see DEPLOYMENT.md for details)
 4. **Deploy via Actions tab** or automatic on code changes to main
