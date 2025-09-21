@@ -572,6 +572,47 @@ jobs:
           
           echo "✅ Deployment completed successfully"
 
+      - name: Verify deployment accessibility
+        id: verify_deployment
+        shell: bash
+        run: |
+          set -e
+          
+          target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
+          branch_url="https://litlfred.github.io/sgex/$target_subdir/"
+          max_wait_time=300  # 5 minutes maximum wait
+          check_interval=15  # Check every 15 seconds
+          elapsed_time=0
+          
+          echo "🔍 Verifying deployment accessibility at: $branch_url"
+          echo "⏱️  Will check every ${check_interval}s for up to ${max_wait_time}s"
+          
+          while [[ $elapsed_time -lt $max_wait_time ]]; do
+            echo "📡 Checking deployment accessibility (${elapsed_time}s elapsed)..."
+            
+            # Use curl to check if the deployment is accessible
+            if curl -f -s -I "$branch_url" >/dev/null 2>&1; then
+              echo "✅ Deployment is accessible at $branch_url"
+              echo "⏱️  Total wait time: ${elapsed_time}s"
+              echo "deployment_accessible=true" >> $GITHUB_OUTPUT
+              echo "wait_time=$elapsed_time" >> $GITHUB_OUTPUT
+              break
+            else
+              echo "⏳ Deployment not yet accessible, waiting..."
+              sleep $check_interval
+              elapsed_time=$((elapsed_time + check_interval))
+            fi
+          done
+          
+          # Final check
+          if [[ $elapsed_time -ge $max_wait_time ]]; then
+            echo "⚠️ Deployment verification timed out after ${max_wait_time}s"
+            echo "🚨 GitHub Pages content server may be experiencing delays"
+            echo "📝 The deployment was uploaded successfully but may take additional time to be accessible"
+            echo "deployment_accessible=timeout" >> $GITHUB_OUTPUT
+            echo "wait_time=$max_wait_time" >> $GITHUB_OUTPUT
+          fi
+
       - name: Output deployment info
         id: deployment_info
         shell: bash
@@ -628,6 +669,10 @@ jobs:
               const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
               const restartUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
               
+              // Get deployment verification status
+              const deploymentAccessible = '${{ steps.verify_deployment.outputs.deployment_accessible }}';
+              const waitTime = '${{ steps.verify_deployment.outputs.wait_time }}';
+              
               // Create target names derived from the branch name for new tabs
               const safeBranchName = branchName.replace(/[^a-zA-Z0-9]/g, '-');
               const branchTargetName = `sgex-preview-${safeBranchName}`;
@@ -652,7 +697,9 @@ jobs:
               
               const commentBody = '## ✅ Branch Preview Ready!\n\n' +
                 '**Branch:** `' + branchName + '`\n' +
-                '**Status:** 🟢 Successfully Deployed\n' +
+                '**Status:** ' + (deploymentAccessible === 'true' ? '🟢 Successfully Deployed & Verified Accessible' : 
+                                  deploymentAccessible === 'timeout' ? '🟡 Deployed (Content Server Delay)' : 
+                                  '🟢 Successfully Deployed') + '\n' +
                 '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
                 '**Deployed:** ' + deployedAt + '\n\n' +
                 '### 🌐 Preview URLs\n\n' +
