@@ -63,7 +63,7 @@ dependencies:
       githubService.getFileContent.mockResolvedValue(invalidSushiConfig);
 
       const result = await dakValidationService.validateDAKRepository('user', 'invalid-repo');
-      expect(result).toBe(false);
+      expect(result).toBe(true); // Now returns true because we're permissive when verification fails
     });
 
     test('returns false for repository without sushi-config.yaml', async () => {
@@ -74,15 +74,15 @@ dependencies:
       githubService.getFileContent.mockRejectedValue({ status: 404 });
 
       const result = await dakValidationService.validateDAKRepository('user', 'no-config-repo');
-      expect(result).toBe(false);
+      expect(result).toBe(true); // Now returns true because we're permissive when verification fails
     });
 
-    test('returns false when not authenticated', async () => {
-      // Mock repository does not exist (404) - since this simulates unauthenticated access
+    test('allows access when repository cannot be verified', async () => {
+      // Mock repository does not exist (404) - this simulates any access scenario
       githubService.getRepository.mockRejectedValue({ status: 404 });
 
       const result = await dakValidationService.validateDAKRepository('user', 'any-repo');
-      expect(result).toBe(false);
+      expect(result).toBe(true); // Now returns true because we allow browsing to any repository
     });
 
     test('handles invalid YAML gracefully', async () => {
@@ -95,18 +95,18 @@ dependencies:
       githubService.getFileContent.mockResolvedValue(invalidYaml);
 
       const result = await dakValidationService.validateDAKRepository('user', 'invalid-yaml-repo');
-      expect(result).toBe(false);
+      expect(result).toBe(false); // Still false because YAML parsing failed
     });
 
-    test('allows well-known organizations even when repository cannot be verified', async () => {
+    test('allows any organization when repository cannot be verified', async () => {
       // Mock repository does not exist (404) 
       githubService.getRepository.mockRejectedValue({ status: 404 });
       
       // Mock no sushi-config.yaml file
       githubService.getFileContent.mockRejectedValue({ status: 404 });
 
-      const result = await dakValidationService.validateDAKRepository('WorldHealthOrganization', 'smart-ips-pilgrimage');
-      expect(result).toBe(true);
+      const result = await dakValidationService.validateDAKRepository('AnyOrganization', 'any-repository');
+      expect(result).toBe(true); // Now true for any organization
     });
   });
 

@@ -1,4 +1,4 @@
-// Test to verify the routing fix for WorldHealthOrganization repositories
+// Test to verify the routing fix - allowing access to any repository when verification fails
 
 import dakValidationService from '../services/dakValidationService';
 import githubService from '../services/githubService';
@@ -9,7 +9,7 @@ jest.mock('../services/githubService', () => ({
   getFileContent: jest.fn()
 }));
 
-describe('Routing Fix for WHO Repositories', () => {
+describe('Routing Fix - Permissive Repository Access', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -28,7 +28,7 @@ describe('Routing Fix for WHO Repositories', () => {
       message: 'Not Found'
     });
 
-    // This should still return true because WHO is a well-known organization
+    // This should return true because we're permissive when verification fails
     const result = await dakValidationService.validateDAKRepository(
       'WorldHealthOrganization', 
       'smart-ips-pilgrimage'
@@ -37,44 +37,46 @@ describe('Routing Fix for WHO Repositories', () => {
     expect(result).toBe(true);
   });
 
-  test('allows access to other WHO repositories', async () => {
+  test('allows access to any repositories when verification fails', async () => {
     githubService.getRepository.mockRejectedValue({ status: 404 });
     githubService.getFileContent.mockRejectedValue({ status: 404 });
 
-    const whoRepos = [
-      'smart-immunizations',
-      'smart-anc-toolkit', 
-      'smart-base',
-      'smart-tb',
-      'smart-ips-pilgrimage'
+    const testRepos = [
+      { owner: 'WorldHealthOrganization', repo: 'smart-immunizations' },
+      { owner: 'some-user', repo: 'documentation-repo' },
+      { owner: 'example-org', repo: 'shared-content' },
+      { owner: 'random-user', repo: 'any-repo' }
     ];
 
-    for (const repo of whoRepos) {
-      const result = await dakValidationService.validateDAKRepository(
-        'WorldHealthOrganization', 
-        repo
-      );
+    for (const { owner, repo } of testRepos) {
+      const result = await dakValidationService.validateDAKRepository(owner, repo);
       expect(result).toBe(true);
     }
   });
 
-  test('still rejects unknown organizations when repository cannot be verified', async () => {
-    githubService.getRepository.mockRejectedValue({ status: 404 });
-    githubService.getFileContent.mockRejectedValue({ status: 404 });
+  test('still validates properly when repository exists and has valid DAK structure', async () => {
+    const validSushiConfig = `
+id: smart.who.int.immunizations
+canonical: http://smart.who.int/immunizations
+name: Immunizations
+dependencies:
+  smart.who.int.base: current
+`;
+
+    // Mock repository exists
+    githubService.getRepository.mockResolvedValue({
+      name: 'smart-immunizations', 
+      full_name: 'WorldHealthOrganization/smart-immunizations'
+    });
+    
+    // Mock valid sushi config
+    githubService.getFileContent.mockResolvedValue(validSushiConfig);
 
     const result = await dakValidationService.validateDAKRepository(
-      'unknown-user', 
-      'some-repo'
+      'WorldHealthOrganization', 
+      'smart-immunizations'
     );
     
-    expect(result).toBe(false);
-  });
-
-  test('properly identifies well-known organizations', () => {
-    expect(dakValidationService.isWellKnownOrganization('WorldHealthOrganization')).toBe(true);
-    expect(dakValidationService.isWellKnownOrganization('WHO')).toBe(true);
-    expect(dakValidationService.isWellKnownOrganization('HL7')).toBe(true);
-    expect(dakValidationService.isWellKnownOrganization('litlfred')).toBe(true);
-    expect(dakValidationService.isWellKnownOrganization('unknown-user')).toBe(false);
+    expect(result).toBe(true);
   });
 });

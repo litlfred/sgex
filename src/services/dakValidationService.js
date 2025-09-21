@@ -33,15 +33,10 @@ class DAKValidationService {
           return true;
         }
         
-        // For well-known organizations like WHO, be permissive even if we can't verify existence
-        // This helps with unauthenticated access to public repositories
-        if (this.isWellKnownOrganization(owner)) {
-          console.log(`Repository ${owner}/${repo} from well-known organization - allowing access even if not verified`);
-          return true;
-        }
-        
-        console.log(`No sushi-config.yaml found in ${owner}/${repo} and repository doesn't exist`);
-        return false;
+        // Be permissive when we can't verify repository existence - users should be able to browse
+        // to any repository they're given (e.g., shared via email) as it could be documentation
+        console.log(`Repository ${owner}/${repo} cannot be verified - allowing access as it may be documentation or shared content`);
+        return true;
       }
 
       // Parse the YAML content
@@ -82,8 +77,9 @@ class DAKValidationService {
           console.log(`Repository ${owner}/${repo} has sushi-config.yaml but missing smart.who.int.base dependency - allowing access since repository exists`);
           return true;
         }
-        console.log(`Repository ${owner}/${repo} has sushi-config.yaml but missing smart.who.int.base dependency`);
-        return false;
+        // Be permissive when repository cannot be verified - allow access as it may be documentation
+        console.log(`Repository ${owner}/${repo} has sushi-config.yaml but missing smart.who.int.base dependency - allowing access as it may be documentation`);
+        return true;
       }
 
     } catch (error) {
@@ -180,30 +176,6 @@ class DAKValidationService {
     const fullName = `${owner}/${repo}`;
     console.log(`Demo mode: ${fullName} accepted as valid DAK repository (proper org/repo format)`);
     return true;
-  }
-
-  /**
-   * Check if an organization is well-known (e.g., WHO, major health organizations)
-   * These organizations' repositories are allowed even if we can't verify their existence
-   * due to authentication limitations
-   * @param {string} owner - Repository owner
-   * @returns {boolean} - True if this is a well-known organization
-   */
-  isWellKnownOrganization(owner) {
-    const wellKnownOrgs = [
-      'WorldHealthOrganization',
-      'WHO',
-      'who',
-      'HL7',
-      'hl7',
-      'CDC',
-      'cdc',
-      'NIH',
-      'nih',
-      'litlfred' // Include litlfred as a trusted developer for DAK work
-    ];
-    
-    return wellKnownOrgs.includes(owner);
   }
 }
 
