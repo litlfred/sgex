@@ -32,6 +32,14 @@ class DAKValidationService {
           console.log(`Repository ${owner}/${repo} exists on GitHub - allowing access even without sushi-config.yaml`);
           return true;
         }
+        
+        // For well-known organizations like WHO, be permissive even if we can't verify existence
+        // This helps with unauthenticated access to public repositories
+        if (this.isWellKnownOrganization(owner)) {
+          console.log(`Repository ${owner}/${repo} from well-known organization - allowing access even if not verified`);
+          return true;
+        }
+        
         console.log(`No sushi-config.yaml found in ${owner}/${repo} and repository doesn't exist`);
         return false;
       }
@@ -92,19 +100,9 @@ class DAKValidationService {
    */
   async checkRepositoryExists(owner, repo) {
     try {
-      // Use the same approach as githubService - get the octokit instance
-      const octokit = githubService.isAuth() ? githubService.octokit : null;
-      
-      if (!octokit) {
-        // In unauthenticated mode, we can't reliably check repository existence
-        console.log(`Cannot check repository existence for ${owner}/${repo} - not authenticated`);
-        return false;
-      }
-
-      await octokit.rest.repos.get({
-        owner,
-        repo
-      });
+      // Use the same approach as githubService.getRepository method for consistency
+      // This handles both authenticated and unauthenticated scenarios
+      await githubService.getRepository(owner, repo);
       
       console.log(`Repository ${owner}/${repo} exists on GitHub`);
       return true;
@@ -129,30 +127,15 @@ class DAKValidationService {
    */
   async fetchSushiConfig(owner, repo, branch = 'main') {
     try {
-      // Use the same approach as githubService - get the octokit instance
-      const octokit = githubService.isAuth() ? githubService.octokit : null;
-      
-      if (!octokit) {
-        // In unauthenticated mode, we can't fetch file contents reliably
-        console.log(`Cannot fetch sushi-config.yaml for ${owner}/${repo} - not authenticated`);
-        return null;
-      }
-
       // Try main branch first if no branch specified
       const branchesToTry = branch === 'main' ? ['main', 'master'] : [branch];
       
       for (const branchName of branchesToTry) {
         try {
-          const { data } = await octokit.rest.repos.getContent({
-            owner,
-            repo,
-            path: 'sushi-config.yaml',
-            ref: branchName
-          });
+          // Use githubService.getFileContent which handles both authenticated and unauthenticated cases
+          const content = await githubService.getFileContent(owner, repo, 'sushi-config.yaml', branchName);
           
-          if (data.type === 'file' && data.content) {
-            // Decode base64 content
-            const content = decodeURIComponent(escape(atob(data.content)));
+          if (content) {
             console.log(`Found sushi-config.yaml in ${owner}/${repo} on branch ${branchName}`);
             return content;
           }
@@ -197,6 +180,30 @@ class DAKValidationService {
     const fullName = `${owner}/${repo}`;
     console.log(`Demo mode: ${fullName} accepted as valid DAK repository (proper org/repo format)`);
     return true;
+  }
+
+  /**
+   * Check if an organization is well-known (e.g., WHO, major health organizations)
+   * These organizations' repositories are allowed even if we can't verify their existence
+   * due to authentication limitations
+   * @param {string} owner - Repository owner
+   * @returns {boolean} - True if this is a well-known organization
+   */
+  isWellKnownOrganization(owner) {
+    const wellKnownOrgs = [
+      'WorldHealthOrganization',
+      'WHO',
+      'who',
+      'HL7',
+      'hl7',
+      'CDC',
+      'cdc',
+      'NIH',
+      'nih',
+      'litlfred' // Include litlfred as a trusted developer for DAK work
+    ];
+    
+    return wellKnownOrgs.includes(owner);
   }
 }
 

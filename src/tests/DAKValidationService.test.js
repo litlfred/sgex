@@ -5,6 +5,8 @@ import githubService from '../services/githubService';
 // Mock the GitHub service
 jest.mock('../services/githubService', () => ({
   isAuth: jest.fn(),
+  getRepository: jest.fn(),
+  getFileContent: jest.fn(),
   octokit: {
     rest: {
       repos: {
@@ -31,19 +33,14 @@ dependencies:
   hl7.fhir.uv.extensions.r4: 5.1.0
 `;
 
-      githubService.isAuth.mockReturnValue(true);
-      
-      // Mock repository existence check
-      githubService.octokit.rest.repos.get.mockResolvedValue({
-        data: { name: 'smart-immunizations', full_name: 'WorldHealthOrganization/smart-immunizations' }
+      // Mock repository existence check - should succeed
+      githubService.getRepository.mockResolvedValue({
+        name: 'smart-immunizations', 
+        full_name: 'WorldHealthOrganization/smart-immunizations'
       });
       
-      githubService.octokit.rest.repos.getContent.mockResolvedValue({
-        data: {
-          type: 'file',
-          content: Buffer.from(validSushiConfig).toString('base64')
-        }
-      });
+      // Mock file content fetch - should return valid config
+      githubService.getFileContent.mockResolvedValue(validSushiConfig);
 
       const result = await dakValidationService.validateDAKRepository('WorldHealthOrganization', 'smart-immunizations');
       expect(result).toBe(true);
@@ -59,36 +56,30 @@ dependencies:
   other.dependency: 1.0.0
 `;
 
-      githubService.isAuth.mockReturnValue(true);
+      // Mock repository does not exist (404) - this should make the validation fail for non-WHO orgs
+      githubService.getRepository.mockRejectedValue({ status: 404 });
       
-      // Mock repository does not exist (404)
-      githubService.octokit.rest.repos.get.mockRejectedValue({ status: 404 });
-      
-      githubService.octokit.rest.repos.getContent.mockResolvedValue({
-        data: {
-          type: 'file',
-          content: Buffer.from(invalidSushiConfig).toString('base64')
-        }
-      });
+      // File content should not be reached since repository doesn't exist
+      githubService.getFileContent.mockResolvedValue(invalidSushiConfig);
 
       const result = await dakValidationService.validateDAKRepository('user', 'invalid-repo');
       expect(result).toBe(false);
     });
 
     test('returns false for repository without sushi-config.yaml', async () => {
-      githubService.isAuth.mockReturnValue(true);
-      
       // Mock repository does not exist (404)
-      githubService.octokit.rest.repos.get.mockRejectedValue({ status: 404 });
+      githubService.getRepository.mockRejectedValue({ status: 404 });
       
-      githubService.octokit.rest.repos.getContent.mockRejectedValue({ status: 404 });
+      // Mock file content not found (404)  
+      githubService.getFileContent.mockRejectedValue({ status: 404 });
 
       const result = await dakValidationService.validateDAKRepository('user', 'no-config-repo');
       expect(result).toBe(false);
     });
 
     test('returns false when not authenticated', async () => {
-      githubService.isAuth.mockReturnValue(false);
+      // Mock repository does not exist (404) - since this simulates unauthenticated access
+      githubService.getRepository.mockRejectedValue({ status: 404 });
 
       const result = await dakValidationService.validateDAKRepository('user', 'any-repo');
       expect(result).toBe(false);
@@ -97,20 +88,25 @@ dependencies:
     test('handles invalid YAML gracefully', async () => {
       const invalidYaml = 'invalid: yaml: content: [unclosed';
 
-      githubService.isAuth.mockReturnValue(true);
-      
       // Mock repository does not exist (404) 
-      githubService.octokit.rest.repos.get.mockRejectedValue({ status: 404 });
+      githubService.getRepository.mockRejectedValue({ status: 404 });
       
-      githubService.octokit.rest.repos.getContent.mockResolvedValue({
-        data: {
-          type: 'file',
-          content: Buffer.from(invalidYaml).toString('base64')
-        }
-      });
+      // Mock file content with invalid YAML
+      githubService.getFileContent.mockResolvedValue(invalidYaml);
 
       const result = await dakValidationService.validateDAKRepository('user', 'invalid-yaml-repo');
       expect(result).toBe(false);
+    });
+
+    test('allows well-known organizations even when repository cannot be verified', async () => {
+      // Mock repository does not exist (404) 
+      githubService.getRepository.mockRejectedValue({ status: 404 });
+      
+      // Mock no sushi-config.yaml file
+      githubService.getFileContent.mockRejectedValue({ status: 404 });
+
+      const result = await dakValidationService.validateDAKRepository('WorldHealthOrganization', 'smart-ips-pilgrimage');
+      expect(result).toBe(true);
     });
   });
 
