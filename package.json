@@ -17,7 +17,7 @@
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "bpmn-js": "^18.6.3",
-    "bpmn-moddle": "^9.0.3",
+    "bpmn-moddle": "^9.0.4",
     "dompurify": "^3.2.6",
     "html2canvas": "^1.4.1",
     "i18next": "^25.5.2",
