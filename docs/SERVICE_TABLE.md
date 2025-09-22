@@ -35,5 +35,9 @@ This table is automatically generated from the codebase on every commit.
 - Localhost URLs are clickable links for local development testing
 - MCP manifest links included for MCP tooling
 
+<<<<<<< HEAD
 *Generated on: 2025-09-21T09:59:35.122Z*
+=======
+*Generated on: 2025-09-22T13:45:45.132Z*
+>>>>>>> 7b5398f165cfbdcbfac6188e38f99213063e6ea0
 *Generator: scripts/generate-service-table.js*

@@ -51,10 +51,10 @@ GitHub Actions provides automated, secure deployment to the **development enviro
 In your GitHub repository, go to Settings → Secrets and variables → Actions, and add the following secrets:
 
 **Required secrets:**
-- `FLY_API_TOKEN` - Your Fly.io API token (get from `fly auth token`)
-- `GITHUB_CLIENT_ID_DEV` - GitHub OAuth Client ID for development environment
-- `GITHUB_CLIENT_SECRET_DEV` - GitHub OAuth Client Secret for development environment  
-- `GITHUB_TOKEN_DEV` - GitHub API token for development environment
+- `FLYIO_API_TOKEN` - Your Fly.io API token (get from `fly auth token`)
+- `FLYIO_CLIENT_ID_DEV` - GitHub OAuth Client ID for Fly.io development environment
+- `FLYIO_CLIENT_SECRET_DEV` - GitHub OAuth Client Secret for Fly.io development environment  
+- `FLYIO_GH_PAT_DEV` - GitHub Personal Access Token (PAT) for development environment
 
 > 📋 **Detailed Secret Management**: For comprehensive information about secret generation, storage, permissions, and security practices, see [`SECRET_MANAGEMENT.md`](./SECRET_MANAGEMENT.md).
 
@@ -156,7 +156,7 @@ curl https://your-app-name.fly.dev/
 # Get your Fly.io API token
 fly auth token
 
-# Copy the token and add it to GitHub repository secrets as FLY_API_TOKEN
+# Copy the token and add it to GitHub repository secrets as FLYIO_API_TOKEN
 ```
 
 ### 2. **GitHub OAuth Application Setup**
@@ -169,17 +169,17 @@ Create a GitHub OAuth application for the development environment:
    - **Name**: `SGEX MCP Server (Development)`
    - **Homepage URL**: `https://sgex-mcp-dev.fly.dev`
    - **Callback URL**: `https://sgex-mcp-dev.fly.dev/auth/github/callback`
-3. Save **Client ID** as `GITHUB_CLIENT_ID_DEV` in repository secrets
-4. Save **Client Secret** as `GITHUB_CLIENT_SECRET_DEV` in repository secrets
+3. Save **Client ID** as `FLYIO_CLIENT_ID_DEV` in repository secrets
+4. Save **Client Secret** as `FLYIO_CLIENT_SECRET_DEV` in repository secrets
 
-### 3. **GitHub API Token Setup**
+### 3. **GitHub API Personal Access Token Setup**
 
 ```bash
-# Create GitHub Personal Access Token with scopes:
+# Create GitHub Personal Access Token (PAT) with scopes:
 # - read:org (check organization membership)
 # - read:user (get user information)
 
-# Add to repository secrets as GITHUB_TOKEN_DEV
+# Add to repository secrets as FLYIO_GH_PAT_DEV
 ```
 
 ### 4. **Repository Secrets Summary**
@@ -188,10 +188,10 @@ Add these secrets in GitHub repository Settings → Secrets and variables → Ac
 
 | Secret Name | Description | Required |
 |-------------|-------------|-----------|
-| `FLY_API_TOKEN` | Fly.io API token for deployment | ✅ Required |
-| `GITHUB_CLIENT_ID_DEV` | OAuth Client ID for dev environment | ✅ Required |
-| `GITHUB_CLIENT_SECRET_DEV` | OAuth Client Secret for dev environment | ✅ Required |
-| `GITHUB_TOKEN_DEV` | GitHub API token for dev environment | ✅ Required |
+| `FLYIO_API_TOKEN` | Fly.io API token for deployment | ✅ Required |
+| `FLYIO_CLIENT_ID_DEV` | GitHub OAuth Client ID for Fly.io dev environment | ✅ Required |
+| `FLYIO_CLIENT_SECRET_DEV` | GitHub OAuth Client Secret for Fly.io dev environment | ✅ Required |
+| `FLYIO_GH_PAT_DEV` | GitHub Personal Access Token (PAT) for dev environment | ✅ Required |
 
 > 🔒 **Security Note**: For detailed information about secret permissions, rotation, and security practices, see [`SECRET_MANAGEMENT.md`](./SECRET_MANAGEMENT.md).
 
