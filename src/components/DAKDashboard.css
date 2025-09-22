@@ -1796,3 +1796,269 @@ body.theme-light .file-count {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.85rem;
 }
+
+/* Status Badge Styles */
+.component-status-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.component-status-badge .badge-icon {
+  font-size: 18px;
+  color: white !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Publication Format Badges */
+.publication-format-badges {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+}
+
+.format-badge {
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.format-badge .format-icon {
+  font-size: 12px;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+/* FAQ Modal Styles */
+.faq-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.faq-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.faq-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e1e5e9;
+  background: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+}
+
+.faq-modal-header h3 {
+  margin: 0;
+  color: #24292e;
+  font-size: 1.3rem;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #6a737d;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.modal-close-btn:hover {
+  background: #e1e5e9;
+}
+
+.faq-modal-content {
+  padding: 2rem;
+}
+
+.staging-ground-content {
+  padding: 1rem 0;
+}
+
+.staging-summary {
+  margin-top: 1rem;
+}
+
+.staging-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.status-indicator {
+  font-size: 1.2rem;
+}
+
+.save-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 1rem;
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.staging-files h4 {
+  margin: 1rem 0 0.5rem 0;
+  color: #24292e;
+}
+
+/* Status Bar Styles */
+.status-bar {
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-bar-header {
+  padding: 1rem 1.5rem;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.status-bar-header:hover {
+  filter: brightness(1.1);
+}
+
+.status-bar-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.status-bar-icon {
+  font-size: 1.2rem;
+}
+
+.status-bar-chevron {
+  font-size: 0.9rem;
+  transition: transform 0.3s ease;
+  opacity: 0.8;
+}
+
+.status-bar-chevron.expanded {
+  transform: rotate(180deg);
+}
+
+.status-bar-content {
+  padding: 1.5rem;
+  background: var(--who-card-bg, #ffffff);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Publication and FAQ specific styling */
+.publication-status-bars,
+.faq-status-bars {
+  margin-top: 2rem;
+}
+
+.publication-components,
+.faq-components {
+  margin-bottom: 2rem;
+}
+
+/* Responsive adjustments for status badges */
+@media (max-width: 768px) {
+  .component-status-badge {
+    width: 28px;
+    height: 28px;
+    top: 6px;
+    right: 6px;
+  }
+  
+  .component-status-badge .badge-icon {
+    font-size: 16px;
+    color: white !important;
+  }
+  
+  .publication-format-badges {
+    bottom: 6px;
+    right: 6px;
+    gap: 2px;
+  }
+  
+  .format-badge {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .format-badge .format-icon {
+    font-size: 10px;
+  }
+  
+  .status-bar-header {
+    padding: 0.8rem 1rem;
+  }
+  
+  .status-bar-title {
+    gap: 0.5rem;
+    font-size: 1rem;
+  }
+  
+  .status-bar-icon {
+    font-size: 1.1rem;
+  }
+  
+  .faq-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .faq-modal-header {
+    padding: 1rem 1.5rem;
+  }
+  
+  .faq-modal-content {
+    padding: 1.5rem;
+  }
+}
