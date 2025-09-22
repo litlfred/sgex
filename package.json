@@ -98,7 +98,7 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.9",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
-    "@typescript-eslint/parser": "^8.43.0",
+    "@typescript-eslint/parser": "^8.44.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "http-proxy-middleware": "^3.0.5",
     "identity-obj-proxy": "^3.0.0",
