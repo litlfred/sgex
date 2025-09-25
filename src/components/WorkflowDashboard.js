@@ -32,7 +32,14 @@ const WorkflowDashboard = ({
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [actionStates, setActionStates] = useState({}); // Track individual action states
+  const [expandedWorkflows, setExpandedWorkflows] = useState({}); // Track expanded workflow details
+  const [workflowJobs, setWorkflowJobs] = useState({}); // Cache for workflow jobs
+  const [loadingJobs, setLoadingJobs] = useState({}); // Track job loading states
+  const [approvalStates, setApprovalStates] = useState({}); // Track if workflows were recently approved
+  const [approvalCheckInterval, setApprovalCheckInterval] = useState(null); // Interval for approval checking
   const refreshIntervalRef = useRef(null);
+  const expandedWorkflowsRef = useRef({}); // Ref to track expanded workflows for refresh logic
+  const workflowsRef = useRef([]); // Ref to track current workflows for approval checking
   const [lastRefresh, setLastRefresh] = useState(null);
 
   // Fetch all workflows for the branch
@@ -58,8 +65,77 @@ const WorkflowDashboard = ({
         lastRun: w.createdAt
       })));
 
-      setWorkflows(workflowData);
+      // During refresh, update workflows seamlessly to prevent visual flashing
+      if (isRefresh) {
+        setWorkflows(prevWorkflows => {
+          // If this is the same data structure, preserve the array reference to prevent re-rendering
+          if (prevWorkflows.length === workflowData.length) {
+            // Check if data actually changed before updating
+            const hasChanges = workflowData.some((newWorkflow, index) => {
+              const prevWorkflow = prevWorkflows[index];
+              return !prevWorkflow || 
+                     prevWorkflow.status !== newWorkflow.status ||
+                     prevWorkflow.conclusion !== newWorkflow.conclusion ||
+                     prevWorkflow.displayStatus !== newWorkflow.displayStatus ||
+                     prevWorkflow.runId !== newWorkflow.runId ||
+                     (prevWorkflow.createdAt?.getTime() !== newWorkflow.createdAt?.getTime());
+            });
+            
+            // Only update if there are actual changes
+            if (!hasChanges) {
+              console.debug('No workflow changes detected during refresh, keeping existing data');
+              return prevWorkflows;
+            }
+          }
+          
+          console.debug('Workflow changes detected, updating data seamlessly');
+          // Update the ref for approval checking
+          workflowsRef.current = workflowData;
+          return workflowData;
+        });
+      } else {
+        // Initial load - normal replacement
+        setWorkflows(workflowData);
+        // Update the ref for approval checking
+        workflowsRef.current = workflowData;
+      }
+      
       setLastRefresh(new Date());
+
+      // Clear job cache during refresh to ensure job data matches the 30-second update interval
+      if (isRefresh) {
+        console.debug('Clearing job cache to sync with 30-second refresh interval');
+        setWorkflowJobs({});
+        
+        // Refetch jobs for currently expanded workflows to maintain up-to-date job information
+        const currentlyExpanded = Object.keys(expandedWorkflowsRef.current).filter(workflowId => expandedWorkflowsRef.current[workflowId]);
+        if (currentlyExpanded.length > 0) {
+          console.debug(`Refreshing job data for ${currentlyExpanded.length} expanded workflows`);
+          
+          // Use setTimeout to allow the workflow data to be processed first
+          setTimeout(async () => {
+            for (const workflowId of currentlyExpanded) {
+              const workflow = workflowData.find(w => w.workflow.id.toString() === workflowId);
+              const runId = workflow?.runId || workflow?.lastRunId;
+              
+              if (runId) {
+                try {
+                  const jobs = await githubActionsService.getWorkflowRunJobs(runId);
+                  if (jobs) {
+                    setWorkflowJobs(prev => ({
+                      ...prev,
+                      [runId]: jobs
+                    }));
+                    console.debug(`Refreshed ${jobs.length} jobs for expanded workflow ${workflow.workflow.name}`);
+                  }
+                } catch (error) {
+                  console.error(`Error refreshing jobs for expanded workflow ${workflow?.workflow.name}:`, error);
+                }
+              }
+            }
+          }, 100);
+        }
+      }
 
       // Call callback if provided
       if (onWorkflowAction && workflowData.length > 0) {
@@ -75,37 +151,102 @@ const WorkflowDashboard = ({
     }
   }, [branchName, githubActionsService, onWorkflowAction]);
 
-  // Setup auto-refresh
-  const setupAutoRefresh = useCallback(() => {
-    if (refreshIntervalRef.current) {
-      clearInterval(refreshIntervalRef.current);
-    }
-
-    // Refresh every 15 seconds for active monitoring
-    refreshIntervalRef.current = setInterval(() => {
-      fetchWorkflows(true);
-    }, 15000);
-  }, [fetchWorkflows]);
-
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-    };
-  }, []);
+  // Cleanup is now handled in the main useEffect above
 
   // Initial load and setup refresh when branch changes
   useEffect(() => {
-    if (branchName && githubActionsService) {
-      const initializeWorkflows = async () => {
-        await fetchWorkflows();
-        setupAutoRefresh();
-      };
-      initializeWorkflows();
-    }
-  }, [branchName, githubActionsService, fetchWorkflows, setupAutoRefresh]);
+    if (!branchName || !githubActionsService) return;
+
+    let mounted = true;
+    
+    const initializeWorkflows = async () => {
+      // Fetch workflows
+      try {
+        setLoading(true);
+        setError(null);
+        console.debug(`Fetching workflows for branch: ${branchName}`);
+        const workflowData = await githubActionsService.getAllWorkflowsForBranch(branchName);
+        
+        if (!mounted) return; // Component was unmounted
+        
+        console.debug(`Fetched ${workflowData.length} workflows:`, workflowData.map(w => ({
+          name: w.workflow.name,
+          status: w.displayStatus,
+          lastRun: w.createdAt
+        })));
+
+        setWorkflows(workflowData);
+        workflowsRef.current = workflowData;
+        setLastRefresh(new Date());
+
+        // Call callback if provided
+        if (onWorkflowAction && workflowData.length > 0) {
+          onWorkflowAction({ type: 'workflows_loaded', workflows: workflowData });
+        }
+      } catch (err) {
+        if (!mounted) return;
+        console.error('Error fetching workflows:', err);
+        setError(err.message);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+
+      // Setup auto-refresh
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+      refreshIntervalRef.current = setInterval(() => {
+        if (mounted) {
+          fetchWorkflows(true);
+        }
+      }, 30000);
+
+      // Setup approval checking  
+      if (approvalCheckInterval) {
+        clearInterval(approvalCheckInterval);
+      }
+      const interval = setInterval(() => {
+        if (!mounted) return;
+        console.debug('Performing periodic approval check for workflows');
+        
+        setApprovalStates(prevStates => {
+          const newStates = { ...prevStates };
+          const currentWorkflows = workflowsRef.current;
+          
+          currentWorkflows.forEach(workflow => {
+            const workflowId = workflow.workflow.id;
+            const runId = workflow.runId || workflow.lastRunId;
+            
+            if (workflow.status === 'waiting' && runId) {
+              if (newStates[workflowId]?.wasApproved) {
+                console.debug(`Resetting approval state for workflow ${workflow.workflow.name} - can be approved again`);
+                delete newStates[workflowId];
+              }
+            }
+          });
+          
+          return newStates;
+        });
+      }, 60000);
+      setApprovalCheckInterval(interval);
+    };
+
+    initializeWorkflows();
+
+    return () => {
+      mounted = false;
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+      if (approvalCheckInterval) {
+        clearInterval(approvalCheckInterval);
+        setApprovalCheckInterval(null);
+      }
+    };
+  }, [branchName, githubActionsService, onWorkflowAction]); // Only essential dependencies
 
   // Handle workflow trigger
   const handleTriggerWorkflow = async (workflow) => {
@@ -117,7 +258,9 @@ const WorkflowDashboard = ({
     let success = false;
     try {
       console.debug(`Triggering workflow: ${workflow.workflow.name} for branch: ${branchName}`);
-      success = await githubActionsService.triggerWorkflow(branchName);
+      
+      // Use the specific workflow ID instead of the generic triggerWorkflow method
+      success = await githubActionsService.triggerSpecificWorkflow(workflow.workflow.id, branchName);
       
       if (success) {
         setActionStates(prev => ({ ...prev, [workflowId]: { 
@@ -234,6 +377,16 @@ const WorkflowDashboard = ({
       success = await githubActionsService.approveWorkflowRun(runId);
       
       if (success) {
+        // Mark this workflow as recently approved to disable the button temporarily
+        setApprovalStates(prev => ({
+          ...prev,
+          [workflowId]: {
+            wasApproved: true,
+            approvedAt: Date.now(),
+            runId: runId
+          }
+        }));
+
         setActionStates(prev => ({ ...prev, [workflowId]: { 
           action: 'approved', 
           message: `✅ Workflow "${workflow.workflow.name}" has been approved! Monitoring progress...`,
@@ -243,20 +396,6 @@ const WorkflowDashboard = ({
         // Immediate refresh to show the workflow starting
         console.debug(`Immediately refreshing workflows after approval of ${workflow.workflow.name}`);
         fetchWorkflows(true);
-        
-        // Setup aggressive monitoring for the next 2 minutes after approval
-        let refreshCount = 0;
-        const maxRefreshes = 12; // 12 refreshes over 2 minutes
-        const approvedWorkflowMonitor = setInterval(() => {
-          refreshCount++;
-          console.debug(`Aggressive monitoring refresh ${refreshCount}/${maxRefreshes} for approved workflow: ${workflow.workflow.name}`);
-          fetchWorkflows(true);
-          
-          if (refreshCount >= maxRefreshes) {
-            clearInterval(approvedWorkflowMonitor);
-            console.debug(`Stopping aggressive monitoring for approved workflow: ${workflow.workflow.name}`);
-          }
-        }, 10000); // Every 10 seconds for 2 minutes
 
         // Call callback
         if (onWorkflowAction) {
@@ -295,6 +434,56 @@ const WorkflowDashboard = ({
     fetchWorkflows(true);
   };
 
+  // Toggle workflow expansion to show job details
+  const toggleWorkflowExpansion = async (workflow) => {
+    const workflowId = workflow.workflow.id;
+    const runId = workflow.runId || workflow.lastRunId;
+    
+    // If already expanded, just collapse it
+    if (expandedWorkflows[workflowId]) {
+      setExpandedWorkflows(prev => {
+        const newState = {
+          ...prev,
+          [workflowId]: false
+        };
+        expandedWorkflowsRef.current = newState; // Update ref
+        return newState;
+      });
+      return;
+    }
+
+    // If not expanded and we have a run ID, fetch jobs
+    if (runId && githubActionsService) {
+      setLoadingJobs(prev => ({ ...prev, [workflowId]: true }));
+      
+      try {
+        const jobs = await githubActionsService.getWorkflowRunJobs(runId);
+        
+        if (jobs) {
+          setWorkflowJobs(prev => ({
+            ...prev,
+            [runId]: jobs
+          }));
+          console.debug(`Fetched ${jobs.length} jobs for workflow ${workflow.workflow.name}`);
+        }
+      } catch (error) {
+        console.error(`Error fetching jobs for workflow ${workflow.workflow.name}:`, error);
+      } finally {
+        setLoadingJobs(prev => ({ ...prev, [workflowId]: false }));
+      }
+    }
+
+    // Expand the workflow
+    setExpandedWorkflows(prev => {
+      const newState = {
+        ...prev,
+        [workflowId]: true
+      };
+      expandedWorkflowsRef.current = newState; // Update ref
+      return newState;
+    });
+  };
+
   const formatDate = (date) => {
     if (!date) return 'Never';
     return new Intl.DateTimeFormat('en-US', {
@@ -303,6 +492,23 @@ const WorkflowDashboard = ({
       hour: '2-digit',
       minute: '2-digit'
     }).format(date);
+  };
+
+  const formatDuration = (seconds) => {
+    if (!seconds) return 'N/A';
+    
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (minutes === 0) {
+      return `${remainingSeconds}s`;
+    } else if (minutes < 60) {
+      return `${minutes}m ${remainingSeconds}s`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return `${hours}h ${remainingMinutes}m`;
+    }
   };
 
   const getWorkflowDescription = (workflow) => {
@@ -374,13 +580,14 @@ const WorkflowDashboard = ({
           {lastRefresh && (
             <span className="last-refresh">
               Last updated: {formatDate(lastRefresh)}
+              {refreshing && <span className="refresh-indicator"> • Updating...</span>}
             </span>
           )}
           <button 
             onClick={handleManualRefresh}
             disabled={refreshing}
             className="refresh-btn"
-            title="Refresh workflow status"
+            title="Refresh workflow status (auto-refreshes every 30 seconds)"
           >
             {refreshing ? '⏳' : '🔄'} Refresh
           </button>
@@ -546,6 +753,11 @@ const WorkflowDashboard = ({
           <div className="workflows-list">
             {workflows.map((workflow) => {
               const actionState = actionStates[workflow.workflow.id];
+              const workflowId = workflow.workflow.id;
+              const runId = workflow.runId || workflow.lastRunId;
+              const isExpanded = expandedWorkflows[workflowId];
+              const isLoadingJobs = loadingJobs[workflowId];
+              const jobs = runId ? workflowJobs[runId] : null;
               
               return (
                 <div key={workflow.workflow.id} className="workflow-card">
@@ -596,7 +808,111 @@ const WorkflowDashboard = ({
                         Run ID: {workflow.runId || workflow.lastRunId}
                       </span>
                     )}
+                    {/* Job expansion toggle */}
+                    {runId && (
+                      <button
+                        onClick={() => toggleWorkflowExpansion(workflow)}
+                        className="job-expansion-toggle"
+                        disabled={isLoadingJobs}
+                      >
+                        {isLoadingJobs ? (
+                          <>⏳ Loading jobs...</>
+                        ) : isExpanded ? (
+                          <>🔽 Hide jobs</>
+                        ) : (
+                          <>🔼 Show jobs</>
+                        )}
+                      </button>
+                    )}
                   </div>
+
+                  {/* Expandable job details section */}
+                  {isExpanded && runId && (
+                    <div className="workflow-jobs-section">
+                      {isLoadingJobs ? (
+                        <div className="jobs-loading">
+                          <div className="loading-spinner"></div>
+                          <span>Loading job details...</span>
+                        </div>
+                      ) : jobs && jobs.length > 0 ? (
+                        <div className="jobs-list">
+                          <div className="jobs-header">
+                            <h5>Jobs for this run:</h5>
+                          </div>
+                          {jobs.map((job) => (
+                            <div key={job.id} className="job-card">
+                              <div className="job-header">
+                                <div className="job-info">
+                                  <div className="job-name">
+                                    {job.url ? (
+                                      <a 
+                                        href={job.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="job-link"
+                                      >
+                                        {job.name}
+                                      </a>
+                                    ) : (
+                                      <span>{job.name}</span>
+                                    )}
+                                  </div>
+                                  <div className="job-details">
+                                    {job.runnerName && (
+                                      <span className="job-runner">Runner: {job.runnerName}</span>
+                                    )}
+                                    {job.duration && (
+                                      <span className="job-duration">Duration: {formatDuration(job.duration)}</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="job-status">
+                                  <span className={`status-badge ${job.badgeClass}`}>
+                                    <span className="status-icon">{job.icon}</span>
+                                    <span className="status-text">{job.displayStatus}</span>
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              {/* Job steps - only show if there are steps */}
+                              {job.steps && job.steps.length > 0 && (
+                                <div className="job-steps">
+                                  <details className="job-steps-details">
+                                    <summary className="job-steps-summary">
+                                      {job.steps.length} step{job.steps.length !== 1 ? 's' : ''}
+                                    </summary>
+                                    <div className="job-steps-list">
+                                      {job.steps.map((step, stepIndex) => (
+                                        <div key={stepIndex} className="job-step">
+                                          <div className="step-info">
+                                            <span className="step-number">{step.number}.</span>
+                                            <span className="step-name">{step.name}</span>
+                                          </div>
+                                          <div className="step-status">
+                                            <span className={`step-badge ${step.badgeClass}`}>
+                                              <span className="step-icon">{step.icon}</span>
+                                              <span className="step-text">{step.displayStatus}</span>
+                                            </span>
+                                            {step.duration && (
+                                              <span className="step-duration">{formatDuration(step.duration)}</span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </details>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="jobs-empty">
+                          <span>No job details available for this run</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Action buttons and status messages */}
                   <div className="workflow-actions">
@@ -621,12 +937,21 @@ const WorkflowDashboard = ({
                           {workflow.status === 'waiting' && (workflow.runId || workflow.lastRunId) && (
                             <button
                               onClick={() => handleApproveWorkflow(workflow)}
-                              disabled={actionState?.action === 'approving'}
+                              disabled={
+                                actionState?.action === 'approving' || 
+                                approvalStates[workflowId]?.wasApproved
+                              }
                               className="workflow-action-btn approve-btn"
-                              title={`Approve ${workflow.workflow.name}`}
+                              title={
+                                approvalStates[workflowId]?.wasApproved 
+                                  ? `Workflow was recently approved. Button will re-enable in the next minute if approval is needed again.`
+                                  : `Approve ${workflow.workflow.name}`
+                              }
                             >
                               {actionState?.action === 'approving' ? (
                                 <>⏳ Approving...</>
+                              ) : approvalStates[workflowId]?.wasApproved ? (
+                                <>✅ Recently Approved</>
                               ) : (
                                 <>✅ Approve</>
                               )}
