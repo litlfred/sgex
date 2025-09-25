@@ -69,7 +69,7 @@ export async function execute(input) {
 
     // Read and analyze the file
     const fileContent = await storage.readFile(assetFile);
-    const analysisResult = await analyzeTerminologyUsage(fileContent, assetFile);
+    const analysisResult = await analyzeTerminologyUsage(fileContent.toString('utf-8'), assetFile);
 
     if (analysisResult.totalTerminologies === 0) {
       warnings.push(getLocalizedError(locale, 'no_terminology_found', { fileName: assetFile }));

@@ -3,11 +3,13 @@
  * Provides unified access to file system operations for local repositories
  */
 
+import BufferPolyfill from '../../utils/browserBuffer.js';
+
 export class Storage {
   /**
    * Read a file from the repository
    * @param {string} path - Relative path to the file
-   * @returns {Promise<string>} - File content as string
+   * @returns {Promise<Buffer>} - File content as Buffer
    */
   async readFile(path) {
     throw new Error('readFile must be implemented by subclass');
@@ -106,14 +108,16 @@ export class GitHubStorage extends Storage {
         console.warn(`GitHubStorage.readFile: ⚠️ Content string is empty for ${path}`);
       }
       
-      // Return the decoded string content directly
+      // Convert the decoded string content to browser-compatible Buffer
       // (githubService.getFileContent already decodes the base64 content to a string)
-      console.log(`GitHubStorage.readFile: Returning content as string...`);
-      console.log(`GitHubStorage.readFile: ✅ Successfully read file ${path}, returning content directly`);
+      console.log(`GitHubStorage.readFile: Converting string to browser-compatible Buffer...`);
+      const content = BufferPolyfill.from(contentString, 'utf-8');
+      console.log(`GitHubStorage.readFile: ✅ Buffer-like object created successfully, size: ${content.length} bytes`);
       
-      this.cache.set(cacheKey, contentString);
+      this.cache.set(cacheKey, content);
+      console.log(`GitHubStorage.readFile: ✅ Successfully read file ${path}, cached and returning content`);
       console.log(`GitHubStorage.readFile: Content preview (first 200 chars):`, contentString.substring(0, 200));
-      return contentString;
+      return content;
     } catch (error) {
       console.error(`GitHubStorage.readFile: ❌ Failed to read file ${path}:`, error);
       console.error(`GitHubStorage.readFile: Error details:`, {
@@ -193,7 +197,7 @@ export class GitHubStorage extends Storage {
       const response = await this.githubService.getFileContent(owner, repo, path, this.branch);
       
       return {
-        size: response.length,
+        size: response.length || 0, // Use string length since githubService returns decoded string
         sha: response.sha || 'unknown',
         path: path,
         type: 'file',
@@ -217,7 +221,7 @@ export class MockStorage extends Storage {
 
   async readFile(path) {
     if (this.mockFiles[path]) {
-      return this.mockFiles[path];
+      return BufferPolyfill.from(this.mockFiles[path], 'utf-8');
     }
     throw new Error(`File not found: ${path}`);
   }

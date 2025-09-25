@@ -68,7 +68,7 @@ export async function execute(input) {
 
     // Read and analyze the file
     const fileContent = await storage.readFile(assetFile);
-    const analysisResult = await analyzeIndicatorCalculations(fileContent, assetFile);
+    const analysisResult = await analyzeIndicatorCalculations(fileContent.toString('utf-8'), assetFile);
 
     if (analysisResult.totalCalculations === 0) {
       warnings.push(getLocalizedError(locale, 'no_calculations_found', { fileName: assetFile }));

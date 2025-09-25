@@ -54,7 +54,7 @@ export async function execute(input) {
 
     // Read and parse sushi-config.yaml
     const sushiConfigContent = await storage.readFile('sushi-config.yaml');
-    const sushiConfig = yaml.load(sushiConfigContent);
+    const sushiConfig = yaml.load(sushiConfigContent.toString('utf-8'));
 
     // Extract DAK name
     let dakName = null;
