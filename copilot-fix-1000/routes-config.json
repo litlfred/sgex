@@ -53,6 +53,10 @@
     "faq-demo": {
       "component": "DAKFAQDemo",
       "path": "./components/DAKFAQDemo"
+    },
+    "functional-requirements": {
+      "component": "FunctionalRequirementsEditor",
+      "path": "./components/FunctionalRequirementsEditor"
     }
   },
   "standardComponents": {
