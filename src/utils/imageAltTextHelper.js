@@ -24,6 +24,7 @@ export function extractAltTextFromFilename(filename) {
     'sgex-mascot': 'SGEX Mascot',
     'authoring': 'Authoring Interface',
     'collaboration': 'Collaboration Features', 
+    'tutorial-icon': 'Tutorial Management',
     'create': 'Create New DAK',
     'editing': 'Editing Interface',
     'forking': 'Repository Forking',
@@ -97,6 +98,7 @@ export const ALT_TEXT_KEYS = {
   // Feature/workflow images
   IMAGE_AUTHORING: 'altText.image.authoring',
   IMAGE_COLLABORATION: 'altText.image.collaboration',
+  IMAGE_TUTORIAL: 'altText.image.tutorial',
   IMAGE_WORKFLOW: 'altText.image.workflow',
   IMAGE_PRONUNCIATION: 'altText.image.pronunciation',
   

@@ -31,6 +31,7 @@ const WelcomePage = () => {
   const mascotImage = useThemeImage('sgex-mascot.png');
   const authoringImage = useThemeImage('authoring.png');
   const collaborationImage = useThemeImage('collaboration.png');
+  const tutorialImage = useThemeImage('tutorial-icon.png');
 
   // Initial authentication check - runs once on mount
   useEffect(() => {
@@ -127,6 +128,10 @@ const WelcomePage = () => {
 
   const handleDismissWarning = () => {
     setWarningMessage(null);
+  };
+
+  const handleTutorialClick = () => {
+    handleNavigationClick(navigate, '/local-tutorial-manager');
   };
 
   const handleCollaborationOpen = () => {
@@ -232,6 +237,20 @@ const WelcomePage = () => {
               </div>
               <p>Create, edit, or fork WHO SMART Guidelines Digital Adaptation Kits.</p>
             </button>
+
+            {/* Tutorial Card - Only show when authenticated */}
+            {isAuthenticated && (
+              <button 
+                className="action-card tutorial-card" 
+                onClick={handleTutorialClick}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleTutorialClick()}
+              >
+                <div className="card-icon">
+                  <img src={tutorialImage} alt={getAltText(t, ALT_TEXT_KEYS.IMAGE_TUTORIAL, 'Tutorials')} />
+                </div>
+                <p>Generate, manage, and upload screen recording tutorials for SGEX user scenarios.</p>
+              </button>
+            )}
 
             {/* PAT Login + Demo Card (Middle) - Only show when not authenticated */}
             {!isAuthenticated && (
