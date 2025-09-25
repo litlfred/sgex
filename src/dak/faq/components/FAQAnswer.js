@@ -15,7 +15,8 @@ const FAQAnswer = ({
   githubService = null,
   assetFiles = [],
   showRawData = false,
-  className = ''
+  className = '',
+  executionMode = 'client-side' // 'client-side' or 'mcp-service'
 }) => {
   const { t, i18n } = useTranslation();
   const [result, setResult] = useState(null);
@@ -23,7 +24,7 @@ const FAQAnswer = ({
   const [error, setError] = useState(null);
 
   const executeQuestion = useCallback(async () => {
-    if (!questionId || !githubService) {
+    if (!questionId) {
       return;
     }
 
@@ -31,19 +32,66 @@ const FAQAnswer = ({
     setError(null);
 
     try {
-      // Prepare request
-      const request = {
-        questionId,
-        parameters: {
-          ...parameters,
-          locale: i18n.language.replace('-', '_') || 'en_US'
-        },
-        assetFiles
-      };
+      let questionResult;
 
-      // Execute question
-      const context = { githubService };
-      const questionResult = await faqExecutionEngine.executeQuestion(request, context);
+      if (executionMode === 'client-side') {
+        // Client-side execution using FAQExecutionEngine
+        if (!githubService) {
+          throw new Error('GitHub service is required for client-side execution');
+        }
+
+        const request = {
+          questionId,
+          parameters: {
+            ...parameters,
+            locale: i18n.language.replace('-', '_') || 'en_US'
+          },
+          assetFiles
+        };
+
+        const context = { githubService };
+        questionResult = await faqExecutionEngine.executeQuestion(request, context);
+
+      } else if (executionMode === 'mcp-service') {
+        // MCP service execution
+        const request = {
+          questionId,
+          parameters: {
+            ...parameters,
+            locale: i18n.language.replace('-', '_') || 'en_US'
+          },
+          assetFiles
+        };
+
+        const response = await fetch('http://127.0.0.1:3001/mcp/faq/questions/execute', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            questions: [request]
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`MCP service error: ${response.status} ${response.statusText}`);
+        }
+
+        const mcpResponse = await response.json();
+        if (!mcpResponse.success || !mcpResponse.results || mcpResponse.results.length === 0) {
+          throw new Error('MCP service returned no results');
+        }
+
+        const result = mcpResponse.results[0];
+        if (!result.success) {
+          throw new Error(result.error || 'MCP service execution failed');
+        }
+
+        questionResult = result.result;
+
+      } else {
+        throw new Error(`Unknown execution mode: ${executionMode}`);
+      }
       
       setResult(questionResult);
     } catch (err) {
@@ -51,7 +99,7 @@ const FAQAnswer = ({
     } finally {
       setLoading(false);
     }
-  }, [questionId, parameters, githubService, assetFiles, i18n.language]);
+  }, [questionId, parameters, githubService, assetFiles, i18n.language, executionMode]);
 
   useEffect(() => {
     executeQuestion();
@@ -152,6 +200,14 @@ const FAQAnswer = ({
 
   return (
     <div className={`faq-answer success ${className}`}>
+      <div className="faq-execution-mode">
+        <small>
+          {executionMode === 'client-side' ? 
+            '🌐 Executed client-side via GitHub API' : 
+            '🖥️ Executed via MCP service'
+          }
+        </small>
+      </div>
       {renderNarrative()}
       {renderMessages()}
       {renderStructuredData()}
