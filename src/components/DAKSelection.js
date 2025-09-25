@@ -416,7 +416,10 @@ const DAKSelectionContent = () => {
               },
               // onProgress callback - update progress indicator with enhanced display
               (progress) => {
-                console.log('📊 Real scanning progress:', progress);
+                // Reduced verbosity: only log scanning progress in debug mode
+                if (process.env.NODE_ENV === 'development') {
+                  console.log('📊 Real scanning progress:', progress);
+                }
                 setScanProgress(progress);
                 
                 // Update scanning errors if provided
@@ -427,7 +430,10 @@ const DAKSelectionContent = () => {
                 // Track repositories currently being scanned with enhanced display timing
                 if (progress.started && !progress.completed) {
                   // Repository is being started - add to currently scanning set
-                  console.log('🔍 Started scanning:', progress.currentRepo);
+                  // Reduced verbosity: only log in development mode
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('🔍 Started scanning:', progress.currentRepo);
+                  }
                   setCurrentlyScanningRepos(prev => new Set([...prev, progress.currentRepo]));
                   
                   // Ensure the scanning state is properly set
@@ -438,7 +444,10 @@ const DAKSelectionContent = () => {
                   });
                 } else if (progress.completed) {
                   // Repository is completed - show completion state
-                  console.log('✅ Completed scanning:', progress.currentRepo);
+                  // Reduced verbosity: only log in development mode
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('✅ Completed scanning:', progress.currentRepo);
+                  }
                   setScanProgress({
                     ...progress,
                     completed: true
@@ -473,9 +482,12 @@ const DAKSelectionContent = () => {
                   }, 500);
                 }
               },
-              // onError callback - track individual scanning errors
+              // onError callback - track individual scanning errors (reduced verbosity)
               (errorInfo) => {
-                console.warn('Individual repository scan error:', errorInfo);
+                // Only log non-404 errors to reduce console verbosity during repository scanning
+                if (errorInfo.errorType !== 'not_found') {
+                  console.warn('Repository scan error:', errorInfo.repo, errorInfo.errorType);
+                }
               }
             );
             
