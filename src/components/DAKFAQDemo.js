@@ -71,8 +71,116 @@ const DAKFAQDemoContent = () => {
   };
 
   const fetchMCPEndpoints = async () => {
+    // Since the MCP service is only available locally, we'll provide the complete
+    // list of endpoints statically for deployed environments
+    const allEndpoints = [
+      {
+        endpoint: 'GET /mcp/health',
+        description: 'Health check',
+        method: 'GET',
+        path: '/mcp/health',
+        fullUrl: 'http://127.0.0.1:3001/mcp/health'
+      },
+      {
+        endpoint: 'GET /mcp/faq/questions/catalog',
+        description: 'List available FAQ questions',
+        method: 'GET',
+        path: '/mcp/faq/questions/catalog',
+        fullUrl: 'http://127.0.0.1:3001/mcp/faq/questions/catalog'
+      },
+      {
+        endpoint: 'POST /mcp/faq/questions/execute',
+        description: 'Execute FAQ questions in batch',
+        method: 'POST',
+        path: '/mcp/faq/questions/execute',
+        fullUrl: 'http://127.0.0.1:3001/mcp/faq/questions/execute'
+      },
+      {
+        endpoint: 'POST /mcp/faq/execute/:questionId',
+        description: 'Execute a specific FAQ question by ID',
+        method: 'POST',
+        path: '/mcp/faq/execute/:questionId',
+        fullUrl: 'http://127.0.0.1:3001/mcp/faq/execute/:questionId'
+      },
+      {
+        endpoint: 'POST /mcp/faq/execute',
+        description: 'Execute a single FAQ question (alternative endpoint)',
+        method: 'POST',
+        path: '/mcp/faq/execute',
+        fullUrl: 'http://127.0.0.1:3001/mcp/faq/execute'
+      },
+      {
+        endpoint: 'GET /mcp/faq/schemas',
+        description: 'Get all question schemas',
+        method: 'GET',
+        path: '/mcp/faq/schemas',
+        fullUrl: 'http://127.0.0.1:3001/mcp/faq/schemas'
+      },
+      {
+        endpoint: 'GET /mcp/faq/schemas/:questionId',
+        description: 'Get schema for specific question',
+        method: 'GET',
+        path: '/mcp/faq/schemas/:questionId',
+        fullUrl: 'http://127.0.0.1:3001/mcp/faq/schemas/:questionId'
+      },
+      {
+        endpoint: 'GET /mcp/faq/openapi',
+        description: 'Get OpenAPI schema for all questions',
+        method: 'GET',
+        path: '/mcp/faq/openapi',
+        fullUrl: 'http://127.0.0.1:3001/mcp/faq/openapi'
+      },
+      {
+        endpoint: 'POST /mcp/faq/validate',
+        description: 'Validate question parameters',
+        method: 'POST',
+        path: '/mcp/faq/validate',
+        fullUrl: 'http://127.0.0.1:3001/mcp/faq/validate'
+      },
+      {
+        endpoint: 'GET /mcp/faq/valuesets',
+        description: 'List value sets available in this DAK',
+        method: 'GET',
+        path: '/mcp/faq/valuesets',
+        fullUrl: 'http://127.0.0.1:3001/mcp/faq/valuesets'
+      },
+      {
+        endpoint: 'GET /mcp/faq/decision-tables',
+        description: 'List decision tables available in this DAK',
+        method: 'GET',
+        path: '/mcp/faq/decision-tables',
+        fullUrl: 'http://127.0.0.1:3001/mcp/faq/decision-tables'
+      },
+      {
+        endpoint: 'GET /mcp/faq/business-processes',
+        description: 'List business processes in this DAK',
+        method: 'GET',
+        path: '/mcp/faq/business-processes',
+        fullUrl: 'http://127.0.0.1:3001/mcp/faq/business-processes'
+      },
+      {
+        endpoint: 'GET /mcp/faq/personas',
+        description: 'List personas/actors in this DAK',
+        method: 'GET',
+        path: '/mcp/faq/personas',
+        fullUrl: 'http://127.0.0.1:3001/mcp/faq/personas'
+      },
+      {
+        endpoint: 'GET /mcp/faq/questionnaires',
+        description: 'List questionnaires available in this DAK',
+        method: 'GET',
+        path: '/mcp/faq/questionnaires',
+        fullUrl: 'http://127.0.0.1:3001/mcp/faq/questionnaires'
+      }
+    ];
+
     try {
-      const response = await fetch('http://127.0.0.1:3001/');
+      // Try to fetch from local MCP service first (for development)
+      const response = await fetch('http://127.0.0.1:3001/', {
+        method: 'GET',
+        timeout: 2000 // Short timeout for local service
+      });
+      
       if (response.ok) {
         const data = await response.json();
         if (data.endpoints) {
@@ -86,30 +194,17 @@ const DAKFAQDemoContent = () => {
           }));
           setMcpEndpoints(endpointsArray);
           setMcpServiceStatus('running');
+          return;
         }
-      } else {
-        setMcpServiceStatus('not-running');
       }
-    } catch (error) {
-      console.log('MCP service not available:', error.message);
+      
+      // If local service is not available, use the static endpoints list
       setMcpServiceStatus('not-running');
-      // Set fallback endpoints with corrected URLs
-      setMcpEndpoints([
-        {
-          endpoint: 'GET /mcp/faq/questions/catalog',
-          description: 'Get question catalog',
-          method: 'GET',
-          path: '/mcp/faq/questions/catalog',
-          fullUrl: 'http://127.0.0.1:3001/mcp/faq/questions/catalog'
-        },
-        {
-          endpoint: 'POST /mcp/faq/questions/execute',
-          description: 'Execute questions',
-          method: 'POST',
-          path: '/mcp/faq/questions/execute',
-          fullUrl: 'http://127.0.0.1:3001/mcp/faq/questions/execute'
-        }
-      ]);
+      setMcpEndpoints(allEndpoints);
+    } catch (error) {
+      console.log('MCP service not available, using static endpoints list:', error.message);
+      setMcpServiceStatus('not-running');
+      setMcpEndpoints(allEndpoints);
     }
   };
 
@@ -257,8 +352,10 @@ const DAKFAQDemoContent = () => {
         
         <p>
           The FAQ system can be accessed via the local MCP server API for programmatic access.
-          {mcpServiceStatus === 'not-running' && (
-            <span> <strong>Start the MCP server</strong> to access all endpoints.</span>
+          {mcpServiceStatus === 'running' ? (
+            <span> The MCP service is currently <strong>running locally</strong> and available for testing.</span>
+          ) : (
+            <span> The MCP service is <strong>not running locally</strong>, but all 14 endpoints are listed below for reference.</span>
           )}
         </p>
         
