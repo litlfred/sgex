@@ -69,6 +69,98 @@ jobs:
       deployment_status: ${{ steps.deployment_info.outputs.deployment_status }}
     
     steps:
+      - name: Create initial deployment comment
+        uses: actions/github-script@v8
+        with:
+          script: |
+            try {
+              const branchName = '${{ github.event.inputs.branch || github.head_ref || github.ref_name }}';
+              const commitSha = '${{ github.sha }}';
+              const startedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+              const runId = '${{ github.run_id }}';
+              const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+              
+              // Find PR associated with this branch
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${branchName}`
+              });
+              
+              if (prs.length === 0) {
+                console.log('No associated pull request found for this branch');
+                return;
+              }
+              
+              const prNumber = prs[0].number;
+              console.log(`Found associated PR #${prNumber} for branch ${branchName}`);
+              
+              const commentBody = '## 🚀 Branch Preview Deployment\n\n' +
+                '**Branch:** `' + branchName + '`\n' +
+                '**Status:** 🟡 Building...\n' +
+                '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
+                '**Started:** ' + startedAt + '\n\n' +
+                '### 📋 Build Progress\n\n' +
+                '- ⏳ **Initializing** - Setting up build environment\n' +
+                '- ⏸️ Installing dependencies\n' +
+                '- ⏸️ Building React application\n' +
+                '- ⏸️ Deploying to GitHub Pages\n' +
+                '- ⏸️ Finalizing deployment\n\n' +
+                '### 🔗 Build Status\n\n' +
+                '<table>\n' +
+                '<tr>\n' +
+                '<td align="center">\n' +
+                '<a href="' + workflowUrl + '"><img src="https://img.shields.io/badge/📄_LIVE_LOGS-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Live Logs" /></a><br/>\n' +
+                '<sub><b>Follow build progress</b></sub>\n' +
+                '</td>\n' +
+                '</tr>\n' +
+                '</table>\n\n' +
+                '---\n' +
+                '⏳ *Deployment in progress... This comment will be updated with the final status.*\n\n';
+              
+              // Check for existing deployment comment to update
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+              });
+              
+              const existingComment = comments.find(comment => 
+                comment.body.includes('Branch Preview Deployment') ||
+                comment.body.includes('Branch Preview Ready!') || 
+                comment.body.includes('Branch Preview Failed!')
+              );
+              
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: commentBody
+                });
+                console.log(`✅ Updated existing deployment comment to show build start on PR #${prNumber}`);
+                // Store comment ID for later updates
+                core.exportVariable('DEPLOYMENT_COMMENT_ID', existingComment.id);
+              } else {
+                const { data: newComment } = await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: commentBody
+                });
+                console.log(`✅ Created new deployment comment showing build start on PR #${prNumber}`);
+                // Store comment ID for later updates
+                core.exportVariable('DEPLOYMENT_COMMENT_ID', newComment.id);
+              }
+              
+              // Store PR number for later steps
+              core.exportVariable('PR_NUMBER', prNumber);
+              
+            } catch (error) {
+              console.error('Error creating initial deployment comment:', error);
+            }
+
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
@@ -112,6 +204,53 @@ jobs:
         run: npm ci --legacy-peer-deps
         continue-on-error: false
 
+      - name: Update deployment comment - Dependencies Installed
+        if: env.DEPLOYMENT_COMMENT_ID != '' && env.PR_NUMBER != ''
+        uses: actions/github-script@v8
+        with:
+          script: |
+            try {
+              const branchName = '${{ steps.branch_info.outputs.branch_name }}';
+              const commitSha = '${{ github.sha }}';
+              const startedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+              const runId = '${{ github.run_id }}';
+              const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+              
+              const commentBody = '## 🚀 Branch Preview Deployment\n\n' +
+                '**Branch:** `' + branchName + '`\n' +
+                '**Status:** 🟡 Building...\n' +
+                '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
+                '**Started:** ' + startedAt + '\n\n' +
+                '### 📋 Build Progress\n\n' +
+                '- ✅ **Initializing** - Build environment ready\n' +
+                '- ✅ **Installing dependencies** - Complete\n' +
+                '- ⏳ **Building React application** - In progress\n' +
+                '- ⏸️ Deploying to GitHub Pages\n' +
+                '- ⏸️ Finalizing deployment\n\n' +
+                '### 🔗 Build Status\n\n' +
+                '<table>\n' +
+                '<tr>\n' +
+                '<td align="center">\n' +
+                '<a href="' + workflowUrl + '"><img src="https://img.shields.io/badge/📄_LIVE_LOGS-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Live Logs" /></a><br/>\n' +
+                '<sub><b>Follow build progress</b></sub>\n' +
+                '</td>\n' +
+                '</tr>\n' +
+                '</table>\n\n' +
+                '---\n' +
+                '⏳ *Building React application... This comment will be updated with the final status.*\n\n';
+              
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: process.env.DEPLOYMENT_COMMENT_ID,
+                body: commentBody
+              });
+              console.log(`✅ Updated deployment comment - dependencies installed`);
+              
+            } catch (error) {
+              console.error('Error updating deployment comment (dependencies):', error);
+            }
+
       - name: Skip QA Generation for Branch Deployment
         run: |
           echo "ℹ️  Skipping QA report and issues analysis generation for branch deployment"
@@ -147,6 +286,53 @@ jobs:
           PUBLIC_URL: ${{ steps.public_url.outputs.public_url }}
           GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
           REACT_APP_GITHUB_REF_NAME: ${{ steps.branch_info.outputs.branch_name }}
+
+      - name: Update deployment comment - Build Complete
+        if: env.DEPLOYMENT_COMMENT_ID != '' && env.PR_NUMBER != ''
+        uses: actions/github-script@v8
+        with:
+          script: |
+            try {
+              const branchName = '${{ steps.branch_info.outputs.branch_name }}';
+              const commitSha = '${{ github.sha }}';
+              const startedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+              const runId = '${{ github.run_id }}';
+              const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+              
+              const commentBody = '## 🚀 Branch Preview Deployment\n\n' +
+                '**Branch:** `' + branchName + '`\n' +
+                '**Status:** 🟡 Deploying...\n' +
+                '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
+                '**Started:** ' + startedAt + '\n\n' +
+                '### 📋 Build Progress\n\n' +
+                '- ✅ **Initializing** - Build environment ready\n' +
+                '- ✅ **Installing dependencies** - Complete\n' +
+                '- ✅ **Building React application** - Complete\n' +
+                '- ⏳ **Deploying to GitHub Pages** - In progress\n' +
+                '- ⏸️ Finalizing deployment\n\n' +
+                '### 🔗 Build Status\n\n' +
+                '<table>\n' +
+                '<tr>\n' +
+                '<td align="center">\n' +
+                '<a href="' + workflowUrl + '"><img src="https://img.shields.io/badge/📄_LIVE_LOGS-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Live Logs" /></a><br/>\n' +
+                '<sub><b>Follow build progress</b></sub>\n' +
+                '</td>\n' +
+                '</tr>\n' +
+                '</table>\n\n' +
+                '---\n' +
+                '⏳ *Deploying to GitHub Pages... This comment will be updated with the final status.*\n\n';
+              
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: process.env.DEPLOYMENT_COMMENT_ID,
+                body: commentBody
+              });
+              console.log(`✅ Updated deployment comment - build complete`);
+              
+            } catch (error) {
+              console.error('Error updating deployment comment (build complete):', error);
+            }
 
       - name: Validate branch directory safety
         id: validate_branch
@@ -613,27 +799,17 @@ jobs:
               const mainTargetName = `sgex-main-app`;
               const mainAppUrl = 'https://litlfred.github.io/sgex/main/';
               
-              // Find PR associated with this branch
-              const { data: prs } = await github.rest.pulls.list({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: 'open',
-                head: `${context.repo.owner}:${branchName}`
-              });
-              
-              if (prs.length === 0) {
-                console.log('No associated pull request found for this branch');
-                return;
-              }
-              
-              const prNumber = prs[0].number;
-              console.log(`Found associated PR #${prNumber} for branch ${branchName}`);
-              
               const commentBody = '## ✅ Branch Preview Ready!\n\n' +
                 '**Branch:** `' + branchName + '`\n' +
                 '**Status:** 🟢 Successfully Deployed\n' +
                 '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
                 '**Deployed:** ' + deployedAt + '\n\n' +
+                '### 📋 Build Progress\n\n' +
+                '- ✅ **Initializing** - Build environment ready\n' +
+                '- ✅ **Installing dependencies** - Complete\n' +
+                '- ✅ **Building React application** - Complete\n' +
+                '- ✅ **Deploying to GitHub Pages** - Complete\n' +
+                '- ✅ **Finalizing deployment** - Complete\n\n' +
                 '### 🌐 Preview URLs\n\n' +
                 '<table>\n' +
                 '<tr>\n' +
@@ -666,35 +842,63 @@ jobs:
                 '💡 *This branch preview was deployed successfully and will remain until the next deployment.*\n\n' +
                 '_Note: This deployment only updates the branch subdirectory and does not affect the landing page._';
               
-              // Find existing deployment comment
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-              });
-              
-              const existingComment = comments.find(comment => 
-                comment.body.includes('Branch Preview Ready!') || 
-                comment.body.includes('Branch Preview Deployed!') ||
-                comment.body.includes('Deployment Approval Required')
-              );
-              
-              if (existingComment) {
+              // Use stored comment ID if available, otherwise find existing comment
+              if (process.env.DEPLOYMENT_COMMENT_ID && process.env.PR_NUMBER) {
                 await github.rest.issues.updateComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  comment_id: existingComment.id,
+                  comment_id: process.env.DEPLOYMENT_COMMENT_ID,
                   body: commentBody
                 });
-                console.log(`✅ Updated existing deployment comment on PR #${prNumber}`);
+                console.log(`✅ Updated deployment comment with success status using stored comment ID`);
               } else {
-                await github.rest.issues.createComment({
+                // Fallback to finding PR and comment (legacy behavior)
+                const { data: prs } = await github.rest.pulls.list({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open',
+                  head: `${context.repo.owner}:${branchName}`
+                });
+                
+                if (prs.length === 0) {
+                  console.log('No associated pull request found for this branch');
+                  return;
+                }
+                
+                const prNumber = prs[0].number;
+                console.log(`Found associated PR #${prNumber} for branch ${branchName}`);
+                
+                // Find existing deployment comment
+                const { data: comments } = await github.rest.issues.listComments({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: prNumber,
-                  body: commentBody
                 });
-                console.log(`✅ Created new deployment comment on PR #${prNumber}`);
+                
+                const existingComment = comments.find(comment => 
+                  comment.body.includes('Branch Preview Deployment') ||
+                  comment.body.includes('Branch Preview Ready!') || 
+                  comment.body.includes('Branch Preview Deployed!') ||
+                  comment.body.includes('Deployment Approval Required')
+                );
+                
+                if (existingComment) {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: existingComment.id,
+                    body: commentBody
+                  });
+                  console.log(`✅ Updated existing deployment comment on PR #${prNumber}`);
+                } else {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: prNumber,
+                    body: commentBody
+                  });
+                  console.log(`✅ Created new deployment comment on PR #${prNumber}`);
+                }
               }
               
             } catch (error) {
@@ -714,27 +918,16 @@ jobs:
               const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
               const restartUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
               
-              // Find PR associated with this branch
-              const { data: prs } = await github.rest.pulls.list({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: 'open',
-                head: `${context.repo.owner}:${branchName}`
-              });
-              
-              if (prs.length === 0) {
-                console.log('No associated pull request found for this branch');
-                return;
-              }
-              
-              const prNumber = prs[0].number;
-              console.log(`Found associated PR #${prNumber} for branch ${branchName} (FAILED deployment)`);
-              
               const commentBody = '## ❌ Branch Preview Failed!\n\n' +
                 '**Branch:** `' + branchName + '`\n' +
                 '**Status:** 🔴 Deployment Failed\n' +
                 '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
                 '**Failed:** ' + failedAt + '\n\n' +
+                '### 📋 Build Progress\n\n' +
+                '- ✅ **Initializing** - Build environment ready\n' +
+                '- ❌ **Build failed** - Check logs for details\n' +
+                '- ⏸️ Deploying to GitHub Pages\n' +
+                '- ⏸️ Finalizing deployment\n\n' +
                 '### 🔍 Troubleshooting Actions\n\n' +
                 '<table>\n' +
                 '<tr>\n' +
@@ -759,36 +952,63 @@ jobs:
                 '❗ *Please check the build logs above and fix any issues before restarting the deployment.*\n\n' +
                 '_Note: The previous deployment (if any) remains active until this branch is successfully deployed._';
               
-              // Find existing deployment comment
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-              });
-              
-              const existingComment = comments.find(comment => 
-                comment.body.includes('Branch Preview Ready!') || 
-                comment.body.includes('Branch Preview Deployed!') || 
-                comment.body.includes('Branch Preview Failed!') ||
-                comment.body.includes('Deployment Approval Required')
-              );
-              
-              if (existingComment) {
+              // Use stored comment ID if available, otherwise find existing comment
+              if (process.env.DEPLOYMENT_COMMENT_ID && process.env.PR_NUMBER) {
                 await github.rest.issues.updateComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  comment_id: existingComment.id,
+                  comment_id: process.env.DEPLOYMENT_COMMENT_ID,
                   body: commentBody
                 });
-                console.log(`✅ Updated existing deployment comment with failure status on PR #${prNumber}`);
+                console.log(`✅ Updated deployment comment with failure status using stored comment ID`);
               } else {
-                await github.rest.issues.createComment({
+                // Fallback to finding PR and comment (legacy behavior)
+                const { data: prs } = await github.rest.pulls.list({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open',
+                  head: `${context.repo.owner}:${branchName}`
+                });
+                
+                if (prs.length === 0) {
+                  console.log('No associated pull request found for this branch');
+                  return;
+                }
+                
+                const prNumber = prs[0].number;
+                console.log(`Found associated PR #${prNumber} for branch ${branchName} (FAILED deployment)`);
+                
+                // Find existing deployment comment
+                const { data: comments } = await github.rest.issues.listComments({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: prNumber,
-                  body: commentBody
                 });
-                console.log(`✅ Created new failure deployment comment on PR #${prNumber}`);
+                
+                const existingComment = comments.find(comment => 
+                  comment.body.includes('Branch Preview Deployment') ||
+                  comment.body.includes('Branch Preview Ready!') || 
+                  comment.body.includes('Branch Preview Failed!') ||
+                  comment.body.includes('Deployment Approval Required')
+                );
+                
+                if (existingComment) {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: existingComment.id,
+                    body: commentBody
+                  });
+                  console.log(`✅ Updated existing deployment comment with failure status on PR #${prNumber}`);
+                } else {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: prNumber,
+                    body: commentBody
+                  });
+                  console.log(`✅ Created new failure deployment comment on PR #${prNumber}`);
+                }
               }
               
             } catch (error) {
