@@ -12,7 +12,29 @@ const PersonaViewer = () => {
 };
 
 const PersonaViewerContent = () => {
-  const { profile, repository, branch } = usePage();
+  const pageContext = usePage();
+  
+  // Handle case where PageProvider context might be null
+  if (!pageContext) {
+    return (
+      <div className="persona-viewer">
+        <div className="page-header">
+          <h1>Generic Personas & Actor Definitions</h1>
+          <p className="page-description">
+            Initializing page context...
+          </p>
+        </div>
+        <div className="main-content">
+          <div className="error-message">
+            <h2>Loading</h2>
+            <p>Page framework is initializing. Please wait...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  const { profile, repository, branch } = pageContext;
   
   // Get data from page framework
   const user = profile?.login;
