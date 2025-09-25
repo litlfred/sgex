@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-DAK.schema.json",
+  "title": "Digital Adaptation Kit (DAK)",
+  "description": "Logical Model for representing a complete Digital Adaptation Kit (DAK) with metadata and all 9 DAK components",
+  "type": "object",
+  "properties": {
+    "resourceType": {
+      "type": "string",
+      "const": "DAK",
+      "description": "Resource type identifier for DAK logical model"
+    },
+    "id": {
+      "type": "object",
+      "description": "Unique id for the element within a resource (for internal references). This may be any string value that does not contain spaces."
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the publishing organization"
+    },
+    "title": {
+      "type": "string",
+      "description": "Full title of the DAK (e.g., SMART Base)"
+    },
+    "description[x]": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "string",
+          "format": "uri"
+        }
+      ],
+      "description": "Description of the DAK - either Markdown content or a URI to a Markdown file (absolute or relative to repository root)"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of the DAK"
+    },
+    "status": {
+      "type": "string",
+      "description": "Publication status of the DAK"
+    },
+    "publicationUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Canonical URL for the DAK (e.g., http://smart.who.int/base)"
+    },
+    "license": {
+      "type": "string",
+      "description": "License under which the DAK is published"
+    },
+    "copyrightYear": {
+      "type": "string",
+      "description": "Year or year range for copyright"
+    },
+    "publisher": {
+      "type": "object",
+      "description": "Organization responsible for publishing the DAK"
+    },
+    "modifierExtension": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "FHIR Extension"
+      },
+      "description": "May be used to represent additional information that is not part of the basic definition of the element and that modifies the understanding of the element in which it is contained and/or the understanding of the containing element's descendants. Usually modifier elements provide negation or qualification. To make the use of extensions safe and manageable, there is a strict set of governance applied to the definition and use of extensions. Though any implementer can define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension. Applications processing a resource are required to check for modifier extensions.\n\nModifier extensions SHALL NOT change the meaning of any elements on Resource or DomainResource (including cannot change the meaning of modifierExtension itself)."
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL of the publishing organization"
+    },
+    "healthInterventions": {
+      "type": "array",
+      "items": {
+        "$ref": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-HealthInterventions.schema.json"
+      },
+      "description": "Overview of the health interventions and WHO, regional or national recommendations included within the DAK"
+    },
+    "personas": {
+      "type": "array",
+      "items": {
+        "$ref": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-GenericPersona.schema.json"
+      },
+      "description": "Depiction of the human and system actors"
+    },
+    "userScenarios": {
+      "type": "array",
+      "items": {
+        "$ref": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-UserScenario.schema.json"
+      },
+      "description": "Narratives that describe how the different personas may interact with each other"
+    },
+    "businessProcesses": {
+      "type": "array",
+      "items": {
+        "$ref": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-BusinessProcessWorkflow.schema.json"
+      },
+      "description": "Business processes and workflows for achieving health programme objectives"
+    },
+    "dataElements": {
+      "type": "array",
+      "items": {
+        "$ref": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-CoreDataElement.schema.json"
+      },
+      "description": "Data elements required throughout the different points of a workflow"
+    },
+    "decisionLogic": {
+      "type": "array",
+      "items": {
+        "$ref": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-DecisionSupportLogic.schema.json"
+      },
+      "description": "Decision-support logic and algorithms to support appropriate service delivery"
+    },
+    "indicators": {
+      "type": "array",
+      "items": {
+        "$ref": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-ProgramIndicator.schema.json"
+      },
+      "description": "Core set of indicators for decision-making, performance metrics and reporting"
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "$ref": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-Requirements.schema.json"
+      },
+      "description": "High-level list of core functions and capabilities that the system must have"
+    },
+    "testScenarios": {
+      "type": "array",
+      "items": {
+        "$ref": "https://worldhealthorganization.github.io/smart-base/StructureDefinition-TestScenario.schema.json"
+      },
+      "description": "Set of test scenarios to validate an implementation of the DAK"
+    }
+  },
+  "required": [
+    "resourceType",
+    "id",
+    "name",
+    "title",
+    "description[x]",
+    "version",
+    "status",
+    "publicationUrl",
+    "license",
+    "copyrightYear",
+    "publisher",
+    "name"
+  ],
+  "resourceDefinition": "http://smart.who.int/base/StructureDefinition/DAK",
+  "fhir:parent": "http://hl7.org/fhir/StructureDefinition/Base"
+}
