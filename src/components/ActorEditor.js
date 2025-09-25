@@ -7,7 +7,59 @@ const ActorEditor = () => {
   const navigate = useNavigate();
   const pageParams = useDAKParams();
   
-  // Handle PageProvider initialization issues
+  // For now, we'll set editActorId to null since it's not in URL params
+  // This could be enhanced later to support URL-based actor editing
+  const editActorId = null;
+
+  // State management - ALL HOOKS MUST BE AT THE TOP
+  const [actorDefinition, setActorDefinition] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [showPreview, setShowPreview] = useState(false);
+  const [fshPreview, setFshPreview] = useState('');
+  const [stagedActors, setStagedActors] = useState([]);
+  const [showActorList, setShowActorList] = useState(false);
+  const [activeTab, setActiveTab] = useState('basic');
+
+  // Initialize component
+  const initializeEditor = useCallback(async () => {
+    setLoading(true);
+    
+    try {
+      if (editActorId) {
+        // Load existing actor definition from staging ground
+        const actorData = actorDefinitionService.getFromStagingGround(editActorId);
+        if (actorData) {
+          setActorDefinition(actorData.actorDefinition);
+        } else {
+          setActorDefinition(actorDefinitionService.createEmptyActorDefinition());
+        }
+      } else {
+        // Create new actor definition
+        setActorDefinition(actorDefinitionService.createEmptyActorDefinition());
+      }
+      
+      // Load staged actors list
+      const staged = actorDefinitionService.listStagedActors();
+      setStagedActors(staged);
+      
+    } catch (error) {
+      console.error('Error initializing actor editor:', error);
+      setErrors({ initialization: 'Failed to initialize editor' });
+    } finally {
+      setLoading(false);
+    }
+  }, [editActorId]);
+
+  useEffect(() => {
+    // Only initialize if we have valid page parameters
+    if (!pageParams.error && !pageParams.loading) {
+      initializeEditor();
+    }
+  }, [pageParams.error, pageParams.loading, initializeEditor]);
+
+  // Handle PageProvider initialization issues - AFTER all hooks
   if (pageParams.error) {
     return (
       <PageLayout pageName="actor-editor">
@@ -36,55 +88,6 @@ const ActorEditor = () => {
   }
   
   const { profile, repository, branch } = pageParams;
-  
-  // For now, we'll set editActorId to null since it's not in URL params
-  // This could be enhanced later to support URL-based actor editing
-  const editActorId = null;
-
-  // State management
-  const [actorDefinition, setActorDefinition] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [showPreview, setShowPreview] = useState(false);
-  const [fshPreview, setFshPreview] = useState('');
-  const [stagedActors, setStagedActors] = useState([]);
-  const [showActorList, setShowActorList] = useState(false);
-  const [activeTab, setActiveTab] = useState('basic');
-
-  // Initialize component
-  useEffect(() => {
-    const initializeEditor = async () => {
-      setLoading(true);
-      
-      try {
-        if (editActorId) {
-          // Load existing actor from staging ground
-          const result = actorDefinitionService.getFromStagingGround(editActorId);
-          if (result) {
-            setActorDefinition(result.actorDefinition);
-          } else {
-            // Actor not found, create new one
-            setActorDefinition(actorDefinitionService.createEmptyActorDefinition());
-          }
-        } else {
-          // Create new actor
-          setActorDefinition(actorDefinitionService.createEmptyActorDefinition());
-        }
-        
-        // Load list of staged actors
-        setStagedActors(actorDefinitionService.listStagedActors());
-        
-      } catch (error) {
-        console.error('Error initializing actor editor:', error);
-        setErrors({ general: 'Failed to initialize editor' });
-      }
-      
-      setLoading(false);
-    };
-
-    initializeEditor();
-  }, [editActorId]);
 
   // Handle form field changes
   const handleFieldChange = useCallback((field, value) => {

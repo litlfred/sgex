@@ -33,7 +33,22 @@ const DecisionSupportLogicViewContent = () => {
   const navigate = useNavigate();
   const pageParams = useDAKParams();
   
-  // Handle PageProvider initialization issues
+  // Component state - ALL HOOKS AT THE TOP
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dakDTCodeSystem, setDakDTCodeSystem] = useState(null);
+  const [decisionTables, setDecisionTables] = useState([]);
+  const [filteredVariables, setFilteredVariables] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState('Code');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [selectedDialog, setSelectedDialog] = useState(null);
+  const [cqlModal, setCqlModal] = useState(null);
+  const [activeSection, setActiveSection] = useState('variables'); // 'variables' or 'tables'
+  const [enhancedFullwidth, setEnhancedFullwidth] = useState(false);
+  const [autoHide, setAutoHide] = useState(false);
+
+  // Handle PageProvider initialization issues - AFTER all hooks
   if (pageParams.error) {
     return (
       <div className="decision-support-container">
@@ -58,21 +73,6 @@ const DecisionSupportLogicViewContent = () => {
   }
   
   const { profile, repository, branch: selectedBranch } = pageParams;
-  
-  // Component state
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [dakDTCodeSystem, setDakDTCodeSystem] = useState(null);
-  const [decisionTables, setDecisionTables] = useState([]);
-  const [filteredVariables, setFilteredVariables] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState('Code');
-  const [sortDirection, setSortDirection] = useState('asc');
-  const [selectedDialog, setSelectedDialog] = useState(null);
-  const [cqlModal, setCqlModal] = useState(null);
-  const [activeSection, setActiveSection] = useState('variables'); // 'variables' or 'tables'
-  const [enhancedFullwidth, setEnhancedFullwidth] = useState(false);
-  const [autoHide, setAutoHide] = useState(false);
 
   // Load DAK decision support data
   useEffect(() => {

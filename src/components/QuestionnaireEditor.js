@@ -289,7 +289,16 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
 const QuestionnaireEditorContent = () => {
   const pageParams = useDAKParams();
   
-  // Handle PageProvider initialization issues
+  // Component state - ALL HOOKS MUST BE AT THE TOP
+  const [questionnaires, setQuestionnaires] = useState([]);
+  const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+  
+  // Handle PageProvider initialization issues - AFTER all hooks
   if (pageParams.error) {
     return (
       <div className="questionnaire-editor-container">
@@ -315,19 +324,13 @@ const QuestionnaireEditorContent = () => {
   
   const { repository, branch, isLoading: pageLoading } = pageParams;
   
-  // Component state
-  const [questionnaires, setQuestionnaires] = useState([]);
-  const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [editing, setEditing] = useState(false);
-  const [questionnaireContent, setQuestionnaireContent] = useState(null);
-  const [originalContent, setOriginalContent] = useState(null);
-  
-  // LForms integration state
+  // LForms integration state (additional state)
   const [lformsLoaded, setLformsLoaded] = useState(false);
   const [editMode, setEditMode] = useState('visual'); // 'visual' or 'json'
   const [lformsError, setLformsError] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [questionnaireContent, setQuestionnaireContent] = useState(null);
+  const [originalContent, setOriginalContent] = useState(null);
 
   // Check if we have the necessary context data
   const hasRequiredData = repository && branch && !pageLoading;

@@ -25,30 +25,9 @@ const PersonaViewerContent = () => {
           </p>
         </div>
         <div className="main-content">
-          <div className="loading-message">
+          <div className="error-message">
             <h2>Loading</h2>
             <p>Page framework is initializing. Please wait...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  // Handle case where page context type is not suitable for DAK operations
-  if (pageContext.type === 'top-level' || pageContext.type === 'unknown') {
-    return (
-      <div className="persona-viewer">
-        <div className="page-header">
-          <h1>Generic Personas & Actor Definitions</h1>
-          <p className="page-description">
-            This component requires a DAK repository context to scan for actor definitions.
-          </p>
-        </div>
-        <div className="main-content">
-          <div className="error-message">
-            <h2>Repository Context Required</h2>
-            <p>Please navigate to this page from a DAK repository context or use the URL pattern:</p>
-            <code>/persona-viewer/:user/:repo/:branch</code>
           </div>
         </div>
       </div>
