@@ -7,7 +7,7 @@ export class Storage {
   /**
    * Read a file from the repository
    * @param {string} path - Relative path to the file
-   * @returns {Promise<Buffer>} - File content as Buffer
+   * @returns {Promise<string>} - File content as string
    */
   async readFile(path) {
     throw new Error('readFile must be implemented by subclass');
@@ -106,16 +106,14 @@ export class GitHubStorage extends Storage {
         console.warn(`GitHubStorage.readFile: ⚠️ Content string is empty for ${path}`);
       }
       
-      // Convert the decoded string content to Buffer 
+      // Return the decoded string content directly
       // (githubService.getFileContent already decodes the base64 content to a string)
-      console.log(`GitHubStorage.readFile: Converting string to Buffer...`);
-      const content = Buffer.from(contentString, 'utf-8');
-      console.log(`GitHubStorage.readFile: ✅ Buffer created successfully, size: ${content.length} bytes`);
+      console.log(`GitHubStorage.readFile: Returning content as string...`);
+      console.log(`GitHubStorage.readFile: ✅ Successfully read file ${path}, returning content directly`);
       
-      this.cache.set(cacheKey, content);
-      console.log(`GitHubStorage.readFile: ✅ Successfully read file ${path}, cached and returning content`);
+      this.cache.set(cacheKey, contentString);
       console.log(`GitHubStorage.readFile: Content preview (first 200 chars):`, contentString.substring(0, 200));
-      return content;
+      return contentString;
     } catch (error) {
       console.error(`GitHubStorage.readFile: ❌ Failed to read file ${path}:`, error);
       console.error(`GitHubStorage.readFile: Error details:`, {
@@ -195,11 +193,11 @@ export class GitHubStorage extends Storage {
       const response = await this.githubService.getFileContent(owner, repo, path, this.branch);
       
       return {
-        size: Buffer.from(response.content, 'base64').length,
-        sha: response.sha,
-        path: response.path,
-        type: response.type,
-        url: response.html_url
+        size: response.length,
+        sha: response.sha || 'unknown',
+        path: path,
+        type: 'file',
+        url: `https://github.com/${owner}/${repo}/blob/${this.branch}/${path}`
       };
     } catch (error) {
       throw new Error(`Failed to get file info for ${path}: ${error.message}`);
@@ -219,7 +217,7 @@ export class MockStorage extends Storage {
 
   async readFile(path) {
     if (this.mockFiles[path]) {
-      return Buffer.from(this.mockFiles[path], 'utf-8');
+      return this.mockFiles[path];
     }
     throw new Error(`File not found: ${path}`);
   }
@@ -246,7 +244,7 @@ export class MockStorage extends Storage {
   async getFileInfo(path) {
     if (this.mockFiles[path]) {
       return {
-        size: Buffer.from(this.mockFiles[path], 'utf-8').length,
+        size: this.mockFiles[path].length,
         path: path,
         type: 'file'
       };

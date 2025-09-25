@@ -77,7 +77,7 @@ export async function execute(input) {
 
     // Read and parse the DMN file
     const dmnContent = await storage.readFile(assetFile);
-    const analysisResult = await analyzeDmnRules(dmnContent.toString('utf-8'), assetFile);
+    const analysisResult = await analyzeDmnRules(dmnContent, assetFile);
 
     if (analysisResult.totalRules === 0) {
       warnings.push(getLocalizedError(locale, 'no_rules_found', { fileName: assetFile }));

@@ -80,6 +80,70 @@
   padding-bottom: 8px;
 }
 
+.execution-mode-selector {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 32px;
+}
+
+.execution-mode-selector h3 {
+  color: #1f2937;
+  font-size: 1.1rem;
+  margin: 0 0 16px 0;
+}
+
+.execution-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.execution-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.execution-option:hover:not(.disabled) {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.execution-option.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f9fafb;
+}
+
+.execution-option input[type="radio"] {
+  margin-top: 2px;
+}
+
+.option-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.option-label strong {
+  color: #1f2937;
+  font-size: 0.9rem;
+}
+
+.option-label small {
+  color: #6b7280;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
 .faq-question-section {
   margin-bottom: 32px;
   padding: 24px;

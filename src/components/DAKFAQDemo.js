@@ -29,6 +29,7 @@ const DAKFAQDemoContent = () => {
   const [error, setError] = useState(null);
   const [mcpEndpoints, setMcpEndpoints] = useState([]);
   const [mcpServiceStatus, setMcpServiceStatus] = useState('unknown');
+  const [executionMode, setExecutionMode] = useState('client-side'); // 'client-side' or 'mcp-service'
 
   // Get user and repo from page framework
   const repo = repository?.name;
@@ -279,8 +280,56 @@ const DAKFAQDemoContent = () => {
       </header>
 
       <div className="faq-questions">
-        <h2>Available Questions</h2>
-        <p>Here are some example FAQ questions that can be answered about this DAK:</p>
+        <h2>DAK FAQ System</h2>
+        <p>Ask questions about this DAK and get automated answers based on repository analysis</p>
+        
+        <div className="execution-mode-selector">
+          <h3>Execution Mode</h3>
+          <div className="execution-options">
+            <label className="execution-option">
+              <input
+                type="radio"
+                name="executionMode"
+                value="client-side"
+                checked={executionMode === 'client-side'}
+                onChange={(e) => setExecutionMode(e.target.value)}
+              />
+              <span className="option-label">
+                <strong>Client-Side Execution</strong>
+                <small>Runs directly in your browser using GitHub API</small>
+              </span>
+            </label>
+            
+            {mcpServiceStatus === 'running' && (
+              <label className="execution-option">
+                <input
+                  type="radio"
+                  name="executionMode"
+                  value="mcp-service"
+                  checked={executionMode === 'mcp-service'}
+                  onChange={(e) => setExecutionMode(e.target.value)}
+                />
+                <span className="option-label">
+                  <strong>MCP Service</strong>
+                  <small>Uses local MCP server for enhanced performance</small>
+                </span>
+              </label>
+            )}
+            
+            {mcpServiceStatus === 'not-running' && (
+              <div className="execution-option disabled">
+                <input type="radio" disabled />
+                <span className="option-label">
+                  <strong>MCP Service</strong>
+                  <small>Not available - Start MCP server to enable</small>
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <h3>Available Questions ({sampleQuestions.length})</h3>
+        <p>Click on any question below to expand and see the answer. Questions are executed when you expand them.</p>
         
         {sampleQuestions.map(question => (
           <div key={question.id} className="faq-question-section">
@@ -300,6 +349,7 @@ const DAKFAQDemoContent = () => {
                   }}
                   githubService={githubService}
                   showRawData={true}
+                  executionMode={executionMode}
                 />
               </div>
             ) : (
@@ -309,6 +359,7 @@ const DAKFAQDemoContent = () => {
                 parameters={repositoryContext}
                 githubService={githubService}
                 showRawData={true}
+                executionMode={executionMode}
               />
             )}
           </div>

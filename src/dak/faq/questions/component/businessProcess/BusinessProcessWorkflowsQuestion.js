@@ -78,7 +78,7 @@ export async function execute(input) {
     for (const bpmnFile of bpmnFiles) {
       try {
         const bpmnContent = await storage.readFile(bpmnFile);
-        const workflow = await parseBpmnWorkflow(bpmnContent.toString('utf-8'), bpmnFile, includeSubprocesses);
+        const workflow = await parseBpmnWorkflow(bpmnContent, bpmnFile, includeSubprocesses);
         if (workflow) {
           workflows.push(workflow);
         }
