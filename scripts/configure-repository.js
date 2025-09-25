@@ -161,17 +161,25 @@ function updateStaticFiles(repoInfo) {
 
 function main() {
   console.log('🔧 Configuring repository settings for build...');
+  console.log('📋 Step 1/4: Reading package.json repository configuration...');
   
   // Get repository from package.json (required)
   const repoInfo = getRepositoryFromPackageJson();
   
+  console.log('📋 Step 2/4: Validating against git remote origin...');
   // Validate against git remote if present
   validateGitRemote(repoInfo);
   
+  console.log('📋 Step 3/4: Setting up environment variables for React build...');
   // Set environment variables
   setEnvironmentVariables(repoInfo);
   
+  console.log('📋 Step 4/4: Updating static files for deployment...');
+  // Update static files for deployment
+  updateStaticFiles(repoInfo);
+  
   console.log('✨ Repository configuration complete!');
+  console.log('🚀 Starting React development server (this may take 1-2 minutes)...');
 }
 
 if (require.main === module) {

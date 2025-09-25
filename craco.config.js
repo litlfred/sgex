@@ -46,6 +46,30 @@ function loadRepositoryConfig() {
 loadRepositoryConfig();
 
 module.exports = {
+  webpack: {
+    configure: (webpackConfig, { env, paths }) => {
+      // Add progress plugin for better startup visibility
+      if (env === 'development') {
+        const webpack = require('webpack');
+        
+        // Add progress plugin to show compilation progress
+        webpackConfig.plugins.push(
+          new webpack.ProgressPlugin((percentage, message, ...args) => {
+            // Only show progress at key milestones to avoid spam
+            if (percentage === 0) {
+              console.log('🚀 Starting webpack compilation...');
+            } else if (percentage === 1) {
+              console.log('✅ Webpack compilation complete!');
+            } else if (percentage > 0 && percentage < 1 && Math.floor(percentage * 100) % 20 === 0) {
+              console.log(`⏳ Webpack: ${Math.floor(percentage * 100)}% - ${message}`);
+            }
+          })
+        );
+      }
+      
+      return webpackConfig;
+    },
+  },
   devServer: (devServerConfig, { env, paths, proxy, allowedHost }) => {
     // Override the deprecated onBeforeSetupMiddleware and onAfterSetupMiddleware
     // with the new setupMiddlewares API for webpack-dev-server 5.x compatibility
@@ -80,6 +104,8 @@ module.exports = {
           return devServer.stop();
         };
       }
+      
+      console.log('🔧 Setting up development server middlewares...');
 
       // Before middlewares (replaces onBeforeSetupMiddleware)
       // Keep `evalSourceMapMiddleware`
@@ -115,8 +141,16 @@ module.exports = {
       return middlewares;
     };
 
-    // Remove the onListening approach as we're handling it in setupMiddlewares
-    delete devServerConfig.onListening;
+    // Add onListening to show when server is ready
+    devServerConfig.onListening = (devServer) => {
+      if (!devServer) {
+        throw new Error('webpack-dev-server is not defined');
+      }
+      const port = devServer.server.address().port;
+      console.log('🌐 Development server started successfully!');
+      console.log(`📍 Server running at: http://localhost:${port}${process.env.PUBLIC_URL || '/sgex/'}`);
+      console.log('🎯 Ready for development - you can now access the application');
+    };
 
     return devServerConfig;
   },
