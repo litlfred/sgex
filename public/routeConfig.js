@@ -37,6 +37,17 @@ function getDeploymentType() {
       return 'main';
     }
     
+    // Check if we're on a feature branch deployment
+    // Feature branch deployments follow the pattern: /sgex/branch-name/
+    var sgexMatch = path.match(/^\/sgex\/([^\/]+)\//);
+    if (sgexMatch) {
+      var branchName = sgexMatch[1];
+      // If the branch name is NOT 'main' and is NOT a standard app page, it's likely a feature branch
+      if (branchName !== 'main' && !['docs', 'dashboard', 'select_profile', 'dak-action', 'dak-selection'].includes(branchName)) {
+        return 'deploy';
+      }
+    }
+    
     // If we're at the root with no routing context, likely deploy branch
     if ((path === '/' || path === '/sgex/') && !window.location.search && !window.location.hash) {
       return 'deploy';
