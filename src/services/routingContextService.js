@@ -232,17 +232,7 @@ export function storeStructuredContext(routePath, branch) {
 export function extractDAKComponentsFromRoutes() {
   // Try to get from global config first
   if (typeof window !== 'undefined' && window.SGEX_ROUTES_CONFIG) {
-    const config = window.SGEX_ROUTES_CONFIG;
-    
-    // Get all component names - this includes DAK, standard, and deploy components
-    if (config.getAllComponentNames) {
-      return config.getAllComponentNames();
-    }
-    
-    // Fallback to just DAK components if getAllComponentNames doesn't exist
-    if (config.getDAKComponentNames) {
-      return config.getDAKComponentNames();
-    }
+    return window.SGEX_ROUTES_CONFIG.getDAKComponentNames();
   }
   
   // Fallback for server-side rendering or if config not loaded
@@ -277,8 +267,6 @@ export function parseDAKUrl(pathname) {
 
 /**
  * Check if a component is a valid DAK component
- * Note: This now checks all components (DAK, standard, and deploy-specific)
- * since components can be listed in different sections depending on deployment type
  */
 export function isValidDAKComponent(component) {
   const validComponents = extractDAKComponentsFromRoutes();
