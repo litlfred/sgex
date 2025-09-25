@@ -130,8 +130,8 @@ const WelcomePage = () => {
     setWarningMessage(null);
   };
 
-  const handleTutorialClick = () => {
-    handleNavigationClick(navigate, '/local-tutorial-manager');
+  const handleTutorialClick = (event) => {
+    handleNavigationClick(event, '/local-tutorial-manager', navigate);
   };
 
   const handleCollaborationOpen = () => {
