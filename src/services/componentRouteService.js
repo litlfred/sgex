@@ -83,6 +83,9 @@ function createLazyComponent(componentName) {
     case 'DAKFAQDemo':
       LazyComponent = React.lazy(() => import('../components/DAKFAQDemo'));
       break;
+    case 'LocalTutorialManager':
+      LazyComponent = React.lazy(() => import('../components/LocalTutorialManager'));
+      break;
     
     // DAK Components
     case 'DAKDashboard':

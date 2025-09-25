@@ -875,6 +875,188 @@ class HelpContentService {
             }
           ]
         }
+      ],
+      'local-tutorial-manager': [
+        {
+          id: 'tutorial-generation-overview',
+          title: 'Tutorial Generation System Overview',
+          badge: '/sgex/cat-paw-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'What is the Tutorial Manager?',
+              content: `
+                <p>The SGEX Tutorial Manager allows you to generate screen recording tutorials for user journey scenarios.</p>
+                <h4>Key Features:</h4>
+                <ul>
+                  <li><strong>📁 Feature File Processing:</strong> Converts Gherkin feature files into tutorial scenarios</li>
+                  <li><strong>🌍 Multilingual Support:</strong> Generate tutorials in 6 UN languages (EN, FR, ES, AR, ZH, RU)</li>
+                  <li><strong>🎬 Local Generation:</strong> Create tutorials on your local machine for full control</li>
+                  <li><strong>📤 GitHub Integration:</strong> Upload finished tutorials to GitHub releases</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💡 Tip:</strong> Tutorial generation works locally to ensure you have full control over the recording process and quality.
+                </div>
+              `
+            },
+            {
+              title: 'How It Works',
+              content: `
+                <p>The tutorial system follows a 5-step process:</p>
+                <ol>
+                  <li><strong>Feature Detection:</strong> Scans your repository for .feature files with narration keywords</li>
+                  <li><strong>Language Selection:</strong> Choose which languages to generate tutorials for</li>
+                  <li><strong>Guide Generation:</strong> Downloads a comprehensive guide for local setup</li>
+                  <li><strong>Local Recording:</strong> Use Playwright and eSpeak on your machine to create videos</li>
+                  <li><strong>Upload & Share:</strong> Upload final tutorials to GitHub releases for distribution</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>🔒 Security:</strong> All tutorial generation happens locally using your existing GitHub PAT, so no additional credentials are needed.
+                </div>
+              `
+            }
+          ]
+        },
+        {
+          id: 'feature-file-requirements',
+          title: 'Feature File Requirements',
+          badge: '/sgex/cat-paw-info-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'What Makes a Valid Tutorial Feature?',
+              content: `
+                <p>Feature files must meet specific criteria to be used for tutorial generation:</p>
+                <h4>Required Elements:</h4>
+                <ul>
+                  <li><strong>📝 Narration Keywords:</strong> Must contain "say", "narrate", or "speak" in step definitions</li>
+                  <li><strong>📍 Gherkin Format:</strong> Standard Gherkin syntax with Given/When/Then steps</li>
+                  <li><strong>💬 Clear Instructions:</strong> Steps that can be translated to UI actions</li>
+                  <li><strong>🔗 Scenario Chaining:</strong> Optional @next: and @previous: tags for linking tutorials</li>
+                </ul>
+                <div class="help-example">
+                  <strong>Example:</strong>
+                  <pre><code>When I say "Welcome to the SGEX Dashboard"
+And I click on the "Core Data Dictionary" button
+Then I narrate "This opens the data dictionary viewer"</code></pre>
+                </div>
+              `
+            },
+            {
+              title: 'Narration Best Practices',
+              content: `
+                <p>Write effective narration for multilingual tutorials:</p>
+                <ul>
+                  <li><strong>🗣️ Clear Language:</strong> Use simple, direct language that translates well</li>
+                  <li><strong>⏱️ Good Timing:</strong> Allow 2-3 seconds per sentence for proper pacing</li>
+                  <li><strong>🎯 User Focus:</strong> Explain what the user sees and why it matters</li>
+                  <li><strong>🌍 Cultural Awareness:</strong> Avoid idioms or culture-specific references</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>📏 Length Guide:</strong> Aim for 10-20 narration steps per tutorial (2-3 minutes total)
+                </div>
+              `
+            }
+          ]
+        },
+        {
+          id: 'local-setup-guide',
+          title: 'Local Setup Requirements',
+          badge: '/sgex/cat-paw-tools-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'System Dependencies',
+              content: `
+                <p>Install these tools on your local machine before generating tutorials:</p>
+                <h4>Required Software:</h4>
+                <ul>
+                  <li><strong>🗣️ eSpeak NG:</strong> Text-to-speech engine for narration
+                    <br><code>sudo apt-get install espeak-ng</code> (Linux)
+                    <br><code>brew install espeak</code> (Mac)</li>
+                  <li><strong>🎬 FFmpeg:</strong> Video processing and compression
+                    <br><code>sudo apt-get install ffmpeg</code> (Linux)
+                    <br><code>brew install ffmpeg</code> (Mac)</li>
+                  <li><strong>🎵 Sox:</strong> Audio processing utilities
+                    <br><code>sudo apt-get install sox</code> (Linux)
+                    <br><code>brew install sox</code> (Mac)</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🪟 Windows Users:</strong> Consider using WSL (Windows Subsystem for Linux) for easier dependency management.
+                </div>
+              `
+            },
+            {
+              title: 'Node.js Dependencies',
+              content: `
+                <p>Install these Node.js packages for tutorial generation:</p>
+                <pre><code># Install Playwright for screen recording
+npm install -D @playwright/test
+
+# Install Gherkin parser
+npm install -D @cucumber/gherkin
+
+# Install browsers
+npx playwright install chromium</code></pre>
+                <h4>Verification:</h4>
+                <ul>
+                  <li>Run <code>npm run tutorial:test</code> to verify setup</li>
+                  <li>Check that all dependencies are found</li>
+                  <li>Test basic tutorial generation with sample feature</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🚨 Troubleshooting:</strong> If dependencies fail to install, check the generated guide for OS-specific instructions.
+                </div>
+              `
+            }
+          ]
+        },
+        {
+          id: 'upload-and-sharing',
+          title: 'Uploading and Sharing Tutorials',
+          badge: '/sgex/cat-paw-upload-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'GitHub Releases Integration',
+              content: `
+                <p>Share your tutorials through GitHub releases for unlimited distribution:</p>
+                <h4>Why GitHub Releases?</h4>
+                <ul>
+                  <li><strong>🆓 Free Hosting:</strong> No bandwidth limits or storage costs</li>
+                  <li><strong>🔗 Direct Links:</strong> Direct download URLs for embedding</li>
+                  <li><strong>📊 Version Control:</strong> Track tutorial versions over time</li>
+                  <li><strong>🌐 Global CDN:</strong> Fast downloads worldwide via GitHub's infrastructure</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>📏 File Sizes:</strong> Tutorials are compressed to 5-15 MB each for web-friendly distribution.
+                </div>
+              `
+            },
+            {
+              title: 'Upload Process',
+              content: `
+                <p>Upload your generated tutorials to GitHub:</p>
+                <ol>
+                  <li><strong>Generate Locally:</strong> Create tutorials using the downloaded guide</li>
+                  <li><strong>Quality Check:</strong> Review videos, audio sync, and compression</li>
+                  <li><strong>Create Release:</strong> Use GitHub web interface or CLI
+                    <br><code>gh release create tutorial-v$(date +%Y%m%d)</code></li>
+                  <li><strong>Upload Assets:</strong> Add MP4 videos, SRT captions, and documentation</li>
+                  <li><strong>Publish:</strong> Make the release public for sharing</li>
+                </ol>
+                <div class="help-example">
+                  <strong>Release Structure:</strong>
+                  <pre><code>tutorial-v20240315/
+├── user-login-pat-en.mp4
+├── user-login-pat-fr.mp4
+├── user-login-pat-en.srt
+└── README.md</code></pre>
+                </div>
+              `
+            }
+          ]
+        }
       ]
     };
   }

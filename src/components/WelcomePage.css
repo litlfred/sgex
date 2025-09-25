@@ -227,6 +227,11 @@ body.theme-light .welcome-page-content {
   background: var(--who-hover-bg);
 }
 
+.tutorial-card:hover {
+  border-color: #ff6b35;
+  background: var(--who-hover-bg);
+}
+
 /* PAT + Demo Card Styles */
 .pat-demo-card {
   display: flex;
