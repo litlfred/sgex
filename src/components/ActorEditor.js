@@ -59,6 +59,118 @@ const ActorEditor = () => {
     }
   }, [pageParams.error, pageParams.loading, initializeEditor]);
 
+  // Handle form field changes
+  const handleFieldChange = useCallback((field, value) => {
+    setActorDefinition(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // Clear field-specific errors
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  }, [errors]);
+
+  // Handle nested field changes
+  const handleNestedFieldChange = useCallback((parentField, index, field, value) => {
+    setActorDefinition(prev => {
+      const newDefinition = { ...prev };
+      if (!newDefinition[parentField]) {
+        newDefinition[parentField] = [];
+      }
+      if (!newDefinition[parentField][index]) {
+        newDefinition[parentField][index] = {};
+      }
+      newDefinition[parentField][index][field] = value;
+      return newDefinition;
+    });
+  }, []);
+
+  // Add new item to array field
+  const addArrayItem = useCallback((field, defaultItem = {}) => {
+    setActorDefinition(prev => ({
+      ...prev,
+      [field]: [...(prev[field] || []), defaultItem]
+    }));
+  }, []);
+
+  // Remove item from array field
+  const removeArrayItem = useCallback((field, index) => {
+    setActorDefinition(prev => ({
+      ...prev,
+      [field]: prev[field].filter((_, i) => i !== index)
+    }));
+  }, []);
+
+  // Validate form data
+  const validateForm = useCallback(() => {
+    const newErrors = {};
+    
+    if (!actorDefinition?.id) {
+      newErrors.id = 'Actor ID is required';
+    }
+    
+    if (!actorDefinition?.name) {
+      newErrors.name = 'Actor name is required';
+    }
+    
+    if (!actorDefinition?.description) {
+      newErrors.description = 'Actor description is required';
+    }
+    
+    if (!actorDefinition?.type) {
+      newErrors.type = 'Actor type is required';
+    }
+    
+    // Validate roles
+    if (actorDefinition?.roles) {
+      actorDefinition.roles.forEach((role, index) => {
+        if (!role.code) {
+          newErrors[`roles.${index}.code`] = 'Role code is required';
+        }
+        if (!role.display) {
+          newErrors[`roles.${index}.display`] = 'Role display name is required';
+        }
+        if (!role.system) {
+          newErrors[`roles.${index}.system`] = 'Role system is required';
+        }
+      });
+    }
+    
+    // Validate qualifications
+    if (actorDefinition?.qualifications) {
+      actorDefinition.qualifications.forEach((qual, index) => {
+        if (!qual.code) {
+          newErrors[`qualifications.${index}.code`] = 'Qualification code is required';
+        }
+        if (!qual.display) {
+          newErrors[`qualifications.${index}.display`] = 'Qualification display name is required';
+        }
+      });
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [actorDefinition]);
+
+  // Generate FSH preview
+  const generatePreview = useCallback(() => {
+    if (!actorDefinition) return;
+    
+    try {
+      const fsh = actorDefinitionService.generateFSH(actorDefinition);
+      setFshPreview(fsh);
+    } catch (error) {
+      console.error('Error generating FSH preview:', error);
+      setErrors({ general: 'Failed to generate FSH preview' });
+    }
+  }, [actorDefinition]);
+
   // Handle PageProvider initialization issues - AFTER all hooks
   if (pageParams.error) {
     return (
@@ -88,178 +200,6 @@ const ActorEditor = () => {
   }
   
   const { profile, repository, branch } = pageParams;
-
-  // Handle form field changes
-  const handleFieldChange = useCallback((field, value) => {
-    setActorDefinition(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    // Clear field-specific errors
-    if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
-  }, [errors]);
-
-  // Handle nested field changes
-  const handleNestedFieldChange = useCallback((parentField, index, field, value) => {
-    setActorDefinition(prev => {
-      const newDefinition = { ...prev };
-      if (!newDefinition[parentField]) {
-        newDefinition[parentField] = [];
-      }
-      
-      if (!newDefinition[parentField][index]) {
-        newDefinition[parentField][index] = {};
-      }
-      
-      newDefinition[parentField][index][field] = value;
-      return newDefinition;
-    });
-  }, []);
-
-  // Add new item to array fields
-  const addArrayItem = useCallback((field, defaultItem = {}) => {
-    setActorDefinition(prev => ({
-      ...prev,
-      [field]: [...(prev[field] || []), defaultItem]
-    }));
-  }, []);
-
-  // Remove item from array fields
-  const removeArrayItem = useCallback((field, index) => {
-    setActorDefinition(prev => ({
-      ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
-    }));
-  }, []);
-
-  // Validate form
-  const validateForm = useCallback(() => {
-    if (!actorDefinition) return false;
-    
-    const validation = actorDefinitionService.validateActorDefinition(actorDefinition);
-    
-    if (!validation.isValid) {
-      const fieldErrors = {};
-      validation.errors.forEach(error => {
-        if (error.includes('ID')) fieldErrors.id = error;
-        else if (error.includes('Name')) fieldErrors.name = error;
-        else if (error.includes('Description')) fieldErrors.description = error;
-        else if (error.includes('type')) fieldErrors.type = error;
-        else if (error.includes('role')) fieldErrors.roles = error;
-        else fieldErrors.general = error;
-      });
-      setErrors(fieldErrors);
-      return false;
-    }
-    
-    setErrors({});
-    return true;
-  }, [actorDefinition]);
-
-  // Save actor definition
-  const handleSave = async () => {
-    if (!validateForm()) {
-      return;
-    }
-    
-    setSaving(true);
-    
-    try {
-      const result = await actorDefinitionService.saveToStagingGround(actorDefinition);
-      
-      if (result.success) {
-        // Refresh staged actors list
-        setStagedActors(actorDefinitionService.listStagedActors());
-        
-        // Show success message (could be a toast notification)
-        alert('Actor definition saved to staging ground successfully!');
-        
-        // Update the URL to reflect we're now editing this actor
-        if (!editActorId) {
-          navigate(`/actor-editor/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
-        }
-      } else {
-        setErrors({ general: result.error });
-      }
-    } catch (error) {
-      console.error('Error saving actor definition:', error);
-      setErrors({ general: 'Failed to save actor definition' });
-    }
-    
-    setSaving(false);
-  };
-
-  // Generate FSH preview
-  const generatePreview = useCallback(() => {
-    if (!actorDefinition) return;
-    
-    try {
-      const fsh = actorDefinitionService.generateFSH(actorDefinition);
-      setFshPreview(fsh);
-      setShowPreview(true);
-    } catch (error) {
-      console.error('Error generating FSH preview:', error);
-      setErrors({ general: 'Failed to generate FSH preview' });
-    }
-  }, [actorDefinition]);
-
-  // Load actor template
-  const loadTemplate = (template) => {
-    setActorDefinition({
-      ...actorDefinitionService.createEmptyActorDefinition(),
-      ...template,
-      metadata: {
-        ...actorDefinitionService.createEmptyActorDefinition().metadata,
-        ...template.metadata
-      }
-    });
-    setErrors({});
-  };
-
-  // Load existing staged actor
-  const loadStagedActor = (actorId) => {
-    const result = actorDefinitionService.getFromStagingGround(actorId);
-    if (result) {
-      setActorDefinition(result.actorDefinition);
-      setErrors({});
-      setShowActorList(false);
-      
-      // Update URL
-      navigate(`/actor-editor/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
-    }
-  };
-
-  // Delete staged actor
-  const deleteStagedActor = (actorId) => {
-    if (window.confirm(`Are you sure you want to delete the actor "${actorId}"?`)) {
-      const success = actorDefinitionService.removeFromStagingGround(actorId);
-      if (success) {
-        setStagedActors(actorDefinitionService.listStagedActors());
-        
-        // If we're currently editing this actor, create a new one
-        if (editActorId === actorId) {
-          setActorDefinition(actorDefinitionService.createEmptyActorDefinition());
-          navigate(`/actor-editor/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
-        }
-      }
-    }
-  };
-
-
-
-  // Redirect if missing required context - use useEffect to avoid render issues
-  useEffect(() => {
-    if (!profile || !repository) {
-      navigate('/');
-    }
-  }, [profile, repository, navigate]);
 
   return (
     <PageLayout pageName="actor-editor">
