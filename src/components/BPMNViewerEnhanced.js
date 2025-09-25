@@ -569,22 +569,22 @@ const BPMNViewerEnhanced = () => {
                     <div className="property-group">
                       <h5>General</h5>
                       <div className="property-item">
-                        <label>ID:</label>
+                        <div className="property-label">ID:</div>
                         <span>{selectedElement.id}</span>
                       </div>
                       <div className="property-item">
-                        <label>Type:</label>
+                        <div className="property-label">Type:</div>
                         <span>{selectedElement.type}</span>
                       </div>
                       {selectedElement.businessObject?.name && (
                         <div className="property-item">
-                          <label>Name:</label>
+                          <div className="property-label">Name:</div>
                           <span>{selectedElement.businessObject.name}</span>
                         </div>
                       )}
                       {selectedElement.businessObject?.documentation && (
                         <div className="property-item">
-                          <label>Documentation:</label>
+                          <div className="property-label">Documentation:</div>
                           <div className="documentation">
                             {selectedElement.businessObject.documentation[0]?.text || 'No documentation'}
                           </div>
@@ -596,11 +596,11 @@ const BPMNViewerEnhanced = () => {
                       <div className="property-group">
                         <h5>Sequence Flow</h5>
                         <div className="property-item">
-                          <label>Source:</label>
+                          <div className="property-label">Source:</div>
                           <span>{selectedElement.businessObject.sourceRef?.id}</span>
                         </div>
                         <div className="property-item">
-                          <label>Target:</label>
+                          <div className="property-label">Target:</div>
                           <span>{selectedElement.businessObject.targetRef?.id}</span>
                         </div>
                       </div>
@@ -632,19 +632,19 @@ const BPMNViewerEnhanced = () => {
               <h4>File Information</h4>
               <div className="info-grid">
                 <div className="info-item">
-                  <label>File Name:</label>
+                  <div className="info-label">File Name:</div>
                   <span>{selectedFile.name}</span>
                 </div>
                 <div className="info-item">
-                  <label>File Path:</label>
+                  <div className="info-label">File Path:</div>
                   <span className="file-path">{selectedFile.path}</span>
                 </div>
                 <div className="info-item">
-                  <label>File Size:</label>
+                  <div className="info-label">File Size:</div>
                   <span>{(selectedFile.size / 1024).toFixed(1)} KB</span>
                 </div>
                 <div className="info-item">
-                  <label>Access Level:</label>
+                  <div className="info-label">Access Level:</div>
                   <span className={`access-badge ${hasWriteAccess ? 'write' : 'read'}`}>
                     {hasWriteAccess ? '✏️ Edit Access' : '👁️ Read-Only'}
                   </span>

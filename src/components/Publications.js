@@ -285,7 +285,7 @@ const Publications = ({ profile, repository, selectedBranch, hasWriteAccess }) =
 
                 <div className="publication-content">
                   <div className="publication-url">
-                    <label>Published at:</label>
+                    <span className="info-label">Published at:</span>
                     <a 
                       href={publicationUrl}
                       target="_blank"

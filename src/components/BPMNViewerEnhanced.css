@@ -108,9 +108,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
-  color: white;
-  border-bottom: 1px solid #005a9e;
+  background: var(--who-blue-gradient-light);
+  color: var(--who-text-on-primary);
+  border-bottom: 1px solid var(--who-blue-dark);
 }
 
 .toolbar-left {
@@ -438,7 +438,9 @@ body.theme-dark .help-text {
   gap: 0.3rem;
 }
 
-.info-item label {
+.info-item label,
+.info-item .info-label,
+.property-item .property-label {
   font-size: 0.85rem;
   color: var(--who-text-secondary, #666);
   font-weight: 500;

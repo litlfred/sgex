@@ -220,7 +220,7 @@ const ScreenshotEditor = ({
           {/* Toolbar */}
           <div className="screenshot-toolbar">
             <div className="tool-group">
-              <label>Tool:</label>
+              <span className="info-label">Tool:</span>
               <button
                 className={`tool-btn ${currentTool === 'draw' ? 'active' : ''}`}
                 onClick={() => setCurrentTool('draw')}
@@ -243,7 +243,7 @@ const ScreenshotEditor = ({
 
             {(currentTool === 'draw' || currentTool === 'highlight') && (
               <div className="tool-group">
-                <label>Color:</label>
+                <span className="info-label">Color:</span>
                 <div className="color-palette">
                   {colors.map(color => (
                     <button
@@ -260,8 +260,9 @@ const ScreenshotEditor = ({
 
             {(currentTool === 'draw' || currentTool === 'highlight') && (
               <div className="tool-group">
-                <label>Size:</label>
+                <label htmlFor="screenshot-size-slider">Size:</label>
                 <input
+                  id="screenshot-size-slider"
                   type="range"
                   min="1"
                   max="10"
