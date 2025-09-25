@@ -106,7 +106,7 @@ function validateGitRemote(packageRepoInfo) {
 }
 
 function setEnvironmentVariables(repoInfo) {
-  // Create .env file for build
+  // Create .env file for build (React Scripts recognizes this format)
   const envContent = `# Auto-generated repository configuration from package.json
 REACT_APP_REPO_OWNER=${repoInfo.owner}
 REACT_APP_REPO_NAME=${repoInfo.name}
@@ -115,17 +115,17 @@ REACT_APP_REPO_CONFIG_SOURCE=${repoInfo.source}
 `;
 
   try {
-    fs.writeFileSync('.env.build', envContent);
+    fs.writeFileSync('.env', envContent);
     console.log(`✅ Repository configuration set from ${repoInfo.source}:`);
     console.log(`   Owner: ${repoInfo.owner}`);
     console.log(`   Name: ${repoInfo.name}`);
     console.log(`   Full: ${repoInfo.owner}/${repoInfo.name}`);
-    console.log(`   Env file: .env.build`);
+    console.log(`   Env file: .env`);
     
     // Also update 404.html with dynamic repository configuration
     updateStaticFiles(repoInfo);
   } catch (error) {
-    console.error('❌ Failed to write .env.build file:', error);
+    console.error('❌ Failed to write .env file:', error);
     process.exit(1);
   }
 }

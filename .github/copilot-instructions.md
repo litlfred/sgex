@@ -494,6 +494,37 @@ npm test -- --coverage     # Generate coverage report
 - Support both fine-grained and classic Personal Access Tokens
 - Implement proper branch and commit workflows
 
+## 🚨 CRITICAL FILE MODIFICATION PROHIBITIONS
+
+**ABSOLUTELY FORBIDDEN**: The following files are CRITICAL to the deployment and routing infrastructure of SGeX Workbench. Copilot agents are **STRICTLY PROHIBITED** from making ANY changes to these files without **EXPLICIT WRITTEN CONSENT** from the repository owner/admin:
+
+### 🚫 GitHub Pages Deployment Workflows
+- **`.github/workflows/branch-deployment.yml`** - Branch deployment workflow
+- **`.github/workflows/landing-page-deployment.yml`** - Landing page deployment workflow
+- **Any other `*.yml` or `*.yaml` files in `.github/workflows/`** - All workflow files
+
+### 🚫 Critical HTML Files  
+- **`public/404.html`** - SPA routing logic for GitHub Pages
+- **`public/index.html`** - Main application entry point
+
+### 🚫 Routing and URL Handling Services
+- **`src/services/routingContextService.js`** - Core routing context service
+- **`src/utils/routeUtils.ts`** - URL parsing and routing utilities
+- **Any file containing URL routing, path processing, or deployment logic**
+
+### ⚠️ Violation Consequences
+- **Automatic rejection** of any PR containing changes to these files without explicit consent
+- **Immediate reversion** of any unauthorized changes
+- **Potential blocking** of future copilot access to the repository
+
+### ✅ Required Process for Changes
+1. **Request explicit consent** from @litlfred (repository owner) in a GitHub comment
+2. **Wait for written approval** before making ANY changes
+3. **Document the explicit consent** in the commit message
+4. **Test extensively** in a separate branch before merging
+
+**Remember**: These files control the entire deployment and routing infrastructure. Unauthorized changes can break the production application for all users.
+
 ## Troubleshooting Common Issues
 
 ### Authentication Issues
