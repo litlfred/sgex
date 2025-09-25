@@ -1,20 +1,16 @@
 {
   "deployType": "deploy",
-  "components": {
+  "dakComponents": {
+    "functional-requirements": {
+      "component": "FunctionalRequirementsEditor",
+      "path": "./components/FunctionalRequirementsEditor"
+    }
+  },
+  "standardComponents": {
     "BranchListingPage": {
       "path": "./components/BranchListingPage",
       "routes": [
         { "path": "/", "exact": true }
-      ]
-    },
-    "FunctionalRequirementsEditor": {
-      "path": "./components/FunctionalRequirementsEditor",
-      "routes": [
-        { "path": "/functional-requirements", "exact": true },
-        { "path": "/functional-requirements/:user", "exact": true },
-        { "path": "/functional-requirements/:user/:repo", "exact": true },
-        { "path": "/functional-requirements/:user/:repo/:branch", "exact": true },
-        { "path": "/functional-requirements/:user/:repo/:branch/*", "exact": false }
       ]
     },
     "NotFound": {
