@@ -328,65 +328,23 @@ const DAKFAQDemoContent = () => {
           </div>
         </div>
 
-        <h3>Available Questions ({sampleQuestions.length})</h3>
+        <h3>Available Questions ({questions.length})</h3>
         <p>Click on any question below to expand and see the answer. Questions are executed when you expand them.</p>
         
-        {sampleQuestions.map(question => (
+        {questions.map(question => (
           <div key={question.id} className="faq-question-section">
             <h3>{question.title}</h3>
             <p className="question-description">{question.description}</p>
             
-            {question.id === 'decision-table-inputs' ? (
-              // Special handling for asset-level DMN question
-              <div className="dmn-demo">
-                <p><em>This is an asset-level question that analyzes individual DMN files. 
-                In a real DAK repository, this would scan DMN files in directories like input/cql/ or input/dmn/.</em></p>
-                <FAQAnswer
-                  questionId={question.id}
-                  parameters={{
-                    ...repositoryContext,
-                    assetFile: 'input/cql/IMMZ.D2.DT.BCG.dmn' // Example DMN file path
-                  }}
-                  githubService={githubService}
-                  showRawData={true}
-                  executionMode={executionMode}
-                />
-              </div>
-            ) : (
-              // Regular DAK/component-level questions
-              <FAQAnswer
-                questionId={question.id}
-                parameters={repositoryContext}
-                githubService={githubService}
-                showRawData={true}
-                executionMode={executionMode}
-              />
-            )}
+            <FAQAnswer
+              questionId={question.id}
+              parameters={repositoryContext}
+              githubService={githubService}
+              showRawData={true}
+              executionMode={executionMode}
+            />
           </div>
         ))}
-      </div>
-
-      <div className="faq-catalog">
-        <h2>FAQ Question Catalog</h2>
-        <p>All available questions in the system:</p>
-        
-        <div className="catalog-grid">
-          {questions.map(question => (
-            <div key={question.id} className="catalog-item">
-              <h4>{question.title}</h4>
-              <p>{question.description}</p>
-              <div className="catalog-meta">
-                <span className="level">{question.level}</span>
-                <span className="version">v{question.version}</span>
-              </div>
-              <div className="tags">
-                {question.tags.map(tag => (
-                  <span key={tag} className="tag">{tag}</span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
 
       <div className="mcp-info">
