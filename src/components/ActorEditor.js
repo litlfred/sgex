@@ -5,7 +5,37 @@ import { PageLayout, useDAKParams } from './framework';
 
 const ActorEditor = () => {
   const navigate = useNavigate();
-  const { profile, repository, branch } = useDAKParams();
+  const pageParams = useDAKParams();
+  
+  // Handle PageProvider initialization issues
+  if (pageParams.error) {
+    return (
+      <PageLayout pageName="actor-editor">
+        <div className="actor-editor-container">
+          <div className="error-message">
+            <h2>Page Context Error</h2>
+            <p>{pageParams.error}</p>
+            <p>This component requires a DAK repository context to function properly.</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+  
+  if (pageParams.loading) {
+    return (
+      <PageLayout pageName="actor-editor">
+        <div className="actor-editor-container">
+          <div className="loading-message">
+            <h2>Loading...</h2>
+            <p>Initializing page context...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+  
+  const { profile, repository, branch } = pageParams;
   
   // For now, we'll set editActorId to null since it's not in URL params
   // This could be enhanced later to support URL-based actor editing

@@ -31,7 +31,33 @@ const DecisionSupportLogicView = () => {
 
 const DecisionSupportLogicViewContent = () => {
   const navigate = useNavigate();
-  const { profile, repository, branch: selectedBranch } = useDAKParams();
+  const pageParams = useDAKParams();
+  
+  // Handle PageProvider initialization issues
+  if (pageParams.error) {
+    return (
+      <div className="decision-support-container">
+        <div className="error-message">
+          <h2>Page Context Error</h2>
+          <p>{pageParams.error}</p>
+          <p>This component requires a DAK repository context to function properly.</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (pageParams.loading) {
+    return (
+      <div className="decision-support-container">
+        <div className="loading-message">
+          <h2>Loading...</h2>
+          <p>Initializing page context...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  const { profile, repository, branch: selectedBranch } = pageParams;
   
   // Component state
   const [loading, setLoading] = useState(true);

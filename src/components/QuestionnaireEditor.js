@@ -287,7 +287,33 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
 };
 
 const QuestionnaireEditorContent = () => {
-  const { repository, branch, isLoading: pageLoading } = useDAKParams();
+  const pageParams = useDAKParams();
+  
+  // Handle PageProvider initialization issues
+  if (pageParams.error) {
+    return (
+      <div className="questionnaire-editor-container">
+        <div className="error-message">
+          <h2>Page Context Error</h2>
+          <p>{pageParams.error}</p>
+          <p>This component requires a DAK repository context to function properly.</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (pageParams.loading) {
+    return (
+      <div className="questionnaire-editor-container">
+        <div className="loading-message">
+          <h2>Loading...</h2>
+          <p>Initializing page context...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  const { repository, branch, isLoading: pageLoading } = pageParams;
   
   // Component state
   const [questionnaires, setQuestionnaires] = useState([]);
