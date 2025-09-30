@@ -3,7 +3,7 @@
  * Provides unified access to file system operations for local repositories
  */
 
-import BufferPolyfill from '../../utils/browserBuffer.js';
+import BufferPolyfill from '../../../utils/browserBuffer.js';
 
 export class Storage {
   /**
