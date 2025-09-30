@@ -77,6 +77,9 @@ function createLazyComponent(componentName) {
     case 'BranchListingPage':
       LazyComponent = React.lazy(() => import('../components/BranchListingPage'));
       break;
+    case 'LandingPage':
+      LazyComponent = React.lazy(() => import('../components/LandingPage'));
+      break;
     case 'NotFound':
       LazyComponent = React.lazy(() => import('../components/NotFound'));
       break;
