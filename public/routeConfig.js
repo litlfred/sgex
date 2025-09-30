@@ -71,7 +71,13 @@ function getDeploymentType() {
 
 // Get appropriate config file name based on deployment type  
 function getConfigFileName(deployType) {
-  return deployType === 'deploy' ? './routes-config.deploy.json' : './routes-config.json';
+  // Use absolute path to ensure correct loading from any page depth
+  // This fixes the issue where deep URLs like /sgex/main/docs/overview
+  // would try to load config from the wrong location
+  var basePath = '/sgex/';
+  return deployType === 'deploy' 
+    ? basePath + 'routes-config.deploy.json' 
+    : basePath + 'routes-config.json';
 }
 
 // Synchronous configuration loading using XMLHttpRequest for 404.html compatibility
