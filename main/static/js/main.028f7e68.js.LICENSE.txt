@@ -49,7 +49,7 @@
  */
 
 /**
- * react-router v7.9.1
+ * react-router v7.9.3
  *
  * Copyright (c) Remix Software Inc.
  *
@@ -60,7 +60,7 @@
  */
 
 /**
- * react-router-dom v7.9.1
+ * react-router-dom v7.9.3
  *
  * Copyright (c) Remix Software Inc.
  *
