@@ -1,2 +1,0 @@
-"use strict";(self.webpackChunksgex_workbench=self.webpackChunksgex_workbench||[]).push([[381],{8381:(e,c,s)=>{s.r(c),s.d(c,{default:()=>d});var r=s(5043),a=s(9615),n=s(6712),t=s(579);const d=()=>{const e=(0,a.Zp)();return(0,r.useEffect)(()=>{e("/dak-action",{replace:!0})},[e]),(0,t.jsx)(n.Mx,{pageName:"dashboard-redirect",children:(0,t.jsx)("div",{className:"redirect-message",children:(0,t.jsx)("p",{children:"Redirecting to DAK Action Selection..."})})})}}}]);
-//# sourceMappingURL=381.f59c9a0e.chunk.js.map
