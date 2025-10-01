@@ -59,8 +59,15 @@ function getDeploymentType() {
       return 'main';
     }
     
+    // Extract repo name from path dynamically
+    // GitHub Pages URLs have format: https://user.github.io/repo-name/...
+    // So pathname starts with /repo-name/
+    var pathParts = path.split('/').filter(Boolean);
+    var repoName = pathParts.length > 0 ? pathParts[0] : '';
+    
     // If we're at the root with no routing context, likely deploy branch
-    if ((path === '/' || path === '/sgex/') && !window.location.search && !window.location.hash) {
+    // Check for both root '/' and repo root '/repo-name/'
+    if ((path === '/' || path === '/' + repoName + '/') && !window.location.search && !window.location.hash) {
       return 'deploy';
     }
   }
