@@ -21,7 +21,7 @@
     "enum": "Question ID must be one of the available FAQ questions. Use the list_faq_questions endpoint to get current options."
   },
   "_generated": {
-    "timestamp": "2025-09-18T20:40:39.516Z",
+    "timestamp": "2025-10-01T23:42:13.013Z",
     "count": 7,
     "source": "scripts/generate-service-table.js"
   }

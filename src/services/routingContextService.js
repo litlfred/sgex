@@ -1,6 +1,28 @@
 /**
  * SGEX Routing Context Service
  * 
+ * 🚨 COPILOT PROHIBITION WARNING 🚨
+ * 
+ * THIS FILE IS ABSOLUTELY CRITICAL TO URL ROUTING AND CONTEXT MANAGEMENT
+ * 
+ * ⛔ COPILOT AGENTS ARE STRICTLY PROHIBITED FROM MAKING ANY CHANGES TO THIS FILE
+ * ⛔ WITHOUT EXPLICIT WRITTEN CONSENT FROM THE REPOSITORY OWNER (@litlfred)
+ * 
+ * This service handles core routing context, URL processing, and navigation state
+ * management. It integrates with 404.html routing logic and React Router.
+ * Any unauthorized changes can break application navigation and routing for all users.
+ * 
+ * 🔒 REQUIRED PROCESS FOR CHANGES:
+ * 1. Request explicit consent from @litlfred in a GitHub comment
+ * 2. Wait for written approval before making ANY changes
+ * 3. Document the explicit consent in the commit message
+ * 4. Test extensively in a separate environment before merging
+ * 
+ * Violation of this prohibition will result in immediate reversion and 
+ * potential blocking of copilot access to this repository.
+ * 
+ * 🚨 END PROHIBITION WARNING 🚨
+ * 
  * Lightweight service that reads structured routing context prepared by 404.html.
  * Replaces the heavy urlProcessorService.js with minimal parsing logic.
  * 

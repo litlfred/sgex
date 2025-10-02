@@ -1,0 +1,58 @@
+# Fly.io configuration for DAK FAQ MCP Server
+
+app = "sgex-mcp-dev"
+primary_region = "iad"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[experimental]
+  auto_rollback = true
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["http", "tls"]
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.tcp_checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "1s"
+
+  [[services.http_checks]]
+    interval = "10s"
+    timeout = "2s"
+    grace_period = "1s"
+    method = "get"
+    path = "/health"
+    protocol = "http"
+    tls_skip_verify = false
+
+[vm]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+
+[metrics]
+  port = 9091
+  path = "/metrics"

@@ -2,6 +2,17 @@
  * TypeScript type definitions for DAK FAQ MCP Server
  */
 
+// Extend Express Request interface for authentication
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        username: string;
+      };
+    }
+  }
+}
+
 export interface FAQQuestion {
   id: string;
   level: 'dak' | 'component' | 'asset';
@@ -108,6 +119,30 @@ export interface HealthResponse {
   timestamp: string;
   version: string;
   description: string;
+  environment?: string;
+  auth_configured?: boolean;
+}
+
+// OAuth-related types
+export interface OAuthSession {
+  state: string;
+  authenticated: boolean;
+  username?: string;
+  access_token?: string;
+}
+
+export interface OAuthResponse {
+  auth_url?: string;
+  session_id?: string;
+  instructions?: string;
+  success?: boolean;
+  username?: string;
+  message?: string;
+}
+
+export interface AuthStatusResponse {
+  authenticated: boolean;
+  username?: string;
 }
 
 export interface OpenAPISchema {
