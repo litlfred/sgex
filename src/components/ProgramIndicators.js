@@ -35,6 +35,30 @@ const ProgramIndicatorsContent = () => {
   const [measureSearch, setMeasureSearch] = useState('');
   const [hasPublishedIG, setHasPublishedIG] = useState(false);
   const [checkingPublishedIG, setCheckingPublishedIG] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newMeasureName, setNewMeasureName] = useState('');
+  const [hasWriteAccess, setHasWriteAccess] = useState(false);
+
+  // Check write permissions
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (repository && profile) {
+        try {
+          // Check if user has write access to repository
+          const isAuthenticated = githubService.isAuth();
+          const hasPermissions = repository.permissions?.push || false;
+          setHasWriteAccess(isAuthenticated && hasPermissions);
+        } catch (error) {
+          console.warn('Could not check write permissions:', error);
+          setHasWriteAccess(false);
+        }
+      } else {
+        setHasWriteAccess(false);
+      }
+    };
+
+    checkPermissions();
+  }, [repository, profile]);
 
   // Generate base URL for IG Publisher artifacts
   const getBaseUrl = useCallback((branchName) => {
@@ -246,6 +270,69 @@ const ProgramIndicatorsContent = () => {
     }
   };
 
+  // Create new measure file
+  const handleCreateMeasure = () => {
+    if (!hasWriteAccess) {
+      alert('You need write access to this repository to create new measures.');
+      return;
+    }
+    setShowCreateModal(true);
+  };
+
+  // Generate template for new measure
+  const createNewMeasure = () => {
+    if (!newMeasureName.trim()) {
+      alert('Please enter a measure name');
+      return;
+    }
+
+    const sanitizedName = newMeasureName.trim().replace(/[^a-zA-Z0-9-_]/g, '');
+    const measureId = `${sanitizedName}`;
+    const measureTitle = newMeasureName.trim();
+
+    const measureTemplate = `Instance: ${measureId}
+InstanceOf: Measure
+Usage: #definition
+Title: "${measureTitle}"
+Description: "Performance indicator for ${measureTitle}"
+* status = #draft
+* experimental = true
+* date = "${new Date().toISOString().split('T')[0]}"
+* publisher = "WHO SMART Guidelines"
+* type = #process
+* scoring = #proportion
+
+* group.population[+].code = http://terminology.hl7.org/CodeSystem/measure-population#initial-population
+* group.population[=].description = "Initial population"
+* group.population[=].criteria.language = #text/cql
+* group.population[=].criteria.expression = "Initial Population"
+
+* group.population[+].code = http://terminology.hl7.org/CodeSystem/measure-population#numerator
+* group.population[=].description = "Numerator"
+* group.population[=].criteria.language = #text/cql
+* group.population[=].criteria.expression = "Numerator"
+
+* group.population[+].code = http://terminology.hl7.org/CodeSystem/measure-population#denominator
+* group.population[=].description = "Denominator"
+* group.population[=].criteria.language = #text/cql
+* group.population[=].criteria.expression = "Denominator"
+`;
+
+    // Show the template in a modal for editing/saving
+    setSelectedFile({
+      id: measureId,
+      title: measureTitle,
+      fileName: `${sanitizedName}.fsh`,
+      description: `Performance indicator for ${measureTitle}`,
+      content: measureTemplate,
+      isNew: true
+    });
+    setFileContent(measureTemplate);
+    setShowCreateModal(false);
+    setNewMeasureName('');
+    setShowModal(true);
+  };
+
   // Filter measures based on search
   const filteredMeasures = measures.filter(measure =>
     measure.title.toLowerCase().includes(measureSearch.toLowerCase()) ||
@@ -345,6 +432,18 @@ const ProgramIndicatorsContent = () => {
               </a>
             </div>
           )}
+
+          {hasWriteAccess && (
+            <div className="create-measure-section">
+              <button 
+                onClick={handleCreateMeasure}
+                className="action-btn primary create-btn"
+                title="Create a new measure file"
+              >
+                ➕ Create New Measure
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -380,6 +479,15 @@ const ProgramIndicatorsContent = () => {
                     <li><code>input/fsh/</code> (with measure-related files)</li>
                     <li><code>input/measures/</code></li>
                   </ul>
+                  {hasWriteAccess && (
+                    <button 
+                      onClick={handleCreateMeasure}
+                      className="action-btn primary"
+                      style={{ marginTop: '1rem' }}
+                    >
+                      ➕ Create Your First Measure
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -407,6 +515,55 @@ const ProgramIndicatorsContent = () => {
         )}
       </div>
 
+      {showCreateModal && (
+        <div className="file-modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="file-modal create-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>➕ Create New Measure</h3>
+              <button onClick={() => setShowCreateModal(false)} className="close-btn">✕</button>
+            </div>
+            <div className="modal-content">
+              <div className="create-form">
+                <label htmlFor="measure-name">Measure Name:</label>
+                <input
+                  id="measure-name"
+                  type="text"
+                  placeholder="e.g., HIV Testing Coverage"
+                  value={newMeasureName}
+                  onChange={(e) => setNewMeasureName(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      createNewMeasure();
+                    }
+                  }}
+                  className="measure-name-input"
+                  autoFocus
+                />
+                <div className="create-form-help">
+                  <p>This will create a new FHIR Measure file in FSH (FHIR Shorthand) format.</p>
+                  <p>The file will be saved as: <code>input/fsh/measures/{newMeasureName.trim().replace(/[^a-zA-Z0-9-_]/g, '') || 'measure-name'}.fsh</code></p>
+                </div>
+                <div className="create-form-actions">
+                  <button 
+                    onClick={createNewMeasure}
+                    className="action-btn primary"
+                    disabled={!newMeasureName.trim()}
+                  >
+                    Create Measure Template
+                  </button>
+                  <button 
+                    onClick={() => setShowCreateModal(false)}
+                    className="action-btn secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showModal && selectedFile && (
         <div className="file-modal-overlay" onClick={() => setShowModal(false)}>
           <div className="file-modal" onClick={(e) => e.stopPropagation()}>
@@ -418,7 +575,33 @@ const ProgramIndicatorsContent = () => {
               <div className="file-info">
                 <span className="file-name">📄 {selectedFile.fileName}</span>
                 <span className="measure-id">ID: {selectedFile.id}</span>
+                {selectedFile.isNew && (
+                  <span className="new-badge">✨ New</span>
+                )}
               </div>
+              {selectedFile.isNew && (
+                <div className="new-measure-notice">
+                  <p><strong>Template Generated</strong></p>
+                  <p>This is a template for your new measure. To save this measure to your repository:</p>
+                  <ol>
+                    <li>Review and customize the template below</li>
+                    <li>Copy the content</li>
+                    <li>Create a new file at <code>input/fsh/measures/{selectedFile.fileName}</code></li>
+                    <li>Paste and save the content</li>
+                  </ol>
+                  <div className="notice-actions">
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(fileContent);
+                        alert('Template copied to clipboard!');
+                      }}
+                      className="action-btn primary"
+                    >
+                      📋 Copy Template
+                    </button>
+                  </div>
+                </div>
+              )}
               <pre className="file-content">{fileContent}</pre>
             </div>
           </div>

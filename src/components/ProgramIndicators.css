@@ -438,3 +438,109 @@
     font-size: 0.8rem;
   }
 }
+
+/* Create Measure Functionality */
+.create-measure-section {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.create-btn {
+  font-weight: 600;
+}
+
+/* Create Modal */
+.create-modal {
+  max-width: 600px;
+}
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.create-form label {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.25rem;
+}
+
+.measure-name-input {
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.measure-name-input:focus {
+  outline: none;
+  border-color: #0078d4;
+}
+
+.create-form-help {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #5a6c7d;
+}
+
+.create-form-help p {
+  margin: 0.5rem 0;
+}
+
+.create-form-help code {
+  background: #e9ecef;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+}
+
+.create-form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+/* New Measure Badge and Notice */
+.new-badge {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.new-measure-notice {
+  background: #e8f4fd;
+  border-left: 4px solid #0078d4;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+}
+
+.new-measure-notice strong {
+  color: #0078d4;
+}
+
+.new-measure-notice ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.new-measure-notice li {
+  margin: 0.25rem 0;
+  color: #2c3e50;
+}
+
+.notice-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
