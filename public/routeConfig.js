@@ -59,8 +59,15 @@ function getDeploymentType() {
       return 'main';
     }
     
+    // Extract repo name from path dynamically
+    // GitHub Pages URLs have format: https://user.github.io/repo-name/...
+    // So pathname starts with /repo-name/
+    var pathParts = path.split('/').filter(Boolean);
+    var repoName = pathParts.length > 0 ? pathParts[0] : '';
+    
     // If we're at the root with no routing context, likely deploy branch
-    if ((path === '/' || path === '/sgex/') && !window.location.search && !window.location.hash) {
+    // Check for both root '/' and repo root '/repo-name/'
+    if ((path === '/' || path === '/' + repoName + '/') && !window.location.search && !window.location.hash) {
       return 'deploy';
     }
   }
@@ -227,86 +234,30 @@ function getSGEXRouteConfig(deployType) {
     // Try to load synchronously if not already loaded
     loadRouteConfigSync(deployType);
     
-    // If still failed, provide a minimal fallback configuration
+    // If still failed, provide helpful error message
     if (!window.SGEX_ROUTES_CONFIG) {
-      console.warn('Using fallback route configuration due to loading failure');
       deployType = deployType || getDeploymentType();
+      var configFile = getConfigFileName(deployType);
       
-      // Create minimal working configuration with essential routes only
-      window.SGEX_ROUTES_CONFIG = {
-        deployType: deployType,
-        dakComponents: {
-          "dashboard": { "component": "DAKDashboard", "path": "./components/DAKDashboard" }
-        },
-        standardComponents: {
-          "BranchListingPage": { "component": "BranchListingPage", "path": "./components/BranchListingPage", "routes": ["/"] },
-          "NotFound": { "component": "NotFound", "path": "./components/NotFound", "routes": ["*"] }
-        },
-        components: {},
-        testRoutes: [],
-        
-        // Helper methods
-        getDAKComponentNames: function() {
-          return Object.keys(this.dakComponents);
-        },
-        getAllComponentNames: function() {
-          var dakNames = Object.keys(this.dakComponents);
-          var standardNames = Object.keys(this.standardComponents);
-          var deployNames = Object.keys(this.components);
-          return dakNames.concat(standardNames).concat(deployNames);
-        },
-        getReactComponent: function(component) {
-          var dakComp = this.dakComponents[component];
-          return dakComp ? dakComp.component || dakComp : null;
-        },
-        getComponentPath: function(componentName) {
-          // Check DAK components
-          for (var dakName in this.dakComponents) {
-            var dakComp = this.dakComponents[dakName];
-            if (dakComp.component === componentName) {
-              return dakComp.path;
-            }
-          }
-          
-          // Check standard components
-          var standardComp = this.standardComponents[componentName];
-          if (standardComp) {
-            return standardComp.path;
-          }
-          
-          // Check deploy components
-          var deployComp = this.components[componentName];
-          if (deployComp) {
-            return deployComp.path;
-          }
-          
-          return null;
-        },
-        getRoutes: function(componentName) {
-          var dakComp = this.dakComponents[componentName];
-          if (dakComp && dakComp.routes) {
-            return dakComp.routes;
-          }
-          
-          var standardComp = this.standardComponents[componentName];
-          if (standardComp && standardComp.routes) {
-            return standardComp.routes;
-          }
-          
-          var deployComp = this.components[componentName];
-          if (deployComp && deployComp.routes) {
-            return deployComp.routes;
-          }
-          
-          return [];
-        },
-        isValidDAKComponent: function(component) {
-          return Object.prototype.hasOwnProperty.call(this.dakComponents, component);
-        },
-        isValidComponent: function(componentName) {
-          return this.getAllComponentNames().includes(componentName);
-        }
-      };
+      console.error(
+        '❌ SGEX Route Configuration Failed to Load\n\n' +
+        'Configuration file: ' + configFile + '\n' +
+        'Deployment type: ' + deployType + '\n' +
+        'Current URL: ' + (typeof window !== 'undefined' ? window.location.href : 'N/A') + '\n\n' +
+        'Troubleshooting steps:\n' +
+        '1. Verify the configuration file exists in the build output\n' +
+        '2. Check that routeConfig.js is loaded with correct PUBLIC_URL\n' +
+        '3. For branch deployments, ensure files are deployed to correct directory\n' +
+        '4. Check browser console for any 404 errors\n' +
+        '5. Verify GitHub Pages deployment completed successfully\n\n' +
+        'Expected behavior:\n' +
+        '- Local (localhost): Uses routes-config.json\n' +
+        '- Landing page (/sgex/): Uses routes-config.deploy.json\n' +
+        '- Branch preview (/sgex/{branch}/): Uses routes-config.json\n'
+      );
+      
+      // Return null to indicate failure - no fallback
+      return null;
     }
   }
   return window.SGEX_ROUTES_CONFIG;

@@ -77,6 +77,9 @@ function createLazyComponent(componentName) {
     case 'BranchListingPage':
       LazyComponent = React.lazy(() => import('../components/BranchListingPage'));
       break;
+    case 'LandingPage':
+      LazyComponent = React.lazy(() => import('../components/LandingPage'));
+      break;
     case 'NotFound':
       LazyComponent = React.lazy(() => import('../components/NotFound'));
       break;
@@ -205,30 +208,59 @@ export function generateLazyRoutes() {
       config = window.getSGEXRouteConfig();
     }
   } catch (error) {
-    console.warn('Error getting SGEX route configuration:', error);
+    console.error('Error getting SGEX route configuration:', error);
   }
   
   if (!config) {
-    console.warn('SGEX route configuration not loaded, falling back to minimal routes');
-    
-    // Provide a more comprehensive fallback that includes essential routes for the help system
-    const BranchListingPage = createLazyComponent('BranchListingPage');
-    const DAKDashboard = createLazyComponent('DAKDashboard');
-    const LandingPage = createLazyComponent('LandingPage');
-    const DocumentationViewer = createLazyComponent('DocumentationViewer');
+    // Create an error display component instead of falling back silently
+    const ErrorDisplay = () => (
+      <div style={{
+        padding: '40px',
+        maxWidth: '800px',
+        margin: '40px auto',
+        backgroundColor: '#fff3cd',
+        border: '2px solid #ffc107',
+        borderRadius: '8px',
+        fontFamily: 'monospace'
+      }}>
+        <h2 style={{ color: '#856404', marginTop: 0 }}>
+          ⚠️ SGEX Route Configuration Error
+        </h2>
+        <p style={{ color: '#856404' }}>
+          The route configuration could not be loaded. This typically happens when:
+        </p>
+        <ul style={{ color: '#856404' }}>
+          <li>The <code>routeConfig.js</code> file failed to load (check browser console for 404 errors)</li>
+          <li>The <code>routes-config.json</code> file is missing from the build</li>
+          <li>The deployment has not completed successfully</li>
+        </ul>
+        <h3 style={{ color: '#856404' }}>Troubleshooting:</h3>
+        <ol style={{ color: '#856404' }}>
+          <li>Check the browser console for detailed error messages</li>
+          <li>Verify all deployment files are present</li>
+          <li>Ensure <code>routeConfig.js</code> is loaded with correct PUBLIC_URL</li>
+          <li>For branch deployments, verify files are in the correct directory</li>
+        </ol>
+        <p style={{ 
+          marginTop: '20px', 
+          padding: '10px', 
+          backgroundColor: '#fff', 
+          border: '1px solid #ffc107',
+          borderRadius: '4px',
+          color: '#856404'
+        }}>
+          <strong>Current URL:</strong> {window.location.href}<br/>
+          <strong>Hostname:</strong> {window.location.hostname}<br/>
+          <strong>Pathname:</strong> {window.location.pathname}
+        </p>
+      </div>
+    );
     
     return [
-      <Route key="fallback-home" path="/" element={<BranchListingPage />} />,
-      <Route key="fallback-dashboard" path="/dashboard" element={<DAKDashboard />} />,
-      <Route key="fallback-dashboard-user" path="/dashboard/:user" element={<DAKDashboard />} />,
-      <Route key="fallback-dashboard-user-repo" path="/dashboard/:user/:repo" element={<DAKDashboard />} />,
-      <Route key="fallback-dashboard-user-repo-branch" path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />,
-      <Route key="fallback-welcome" path="/welcome" element={<LandingPage />} />,
-      <Route key="fallback-docs" path="/docs/:docId" element={<DocumentationViewer />} />,
-      <Route key="fallback-docs-default" path="/docs" element={<DocumentationViewer />} />,
-      <Route key="fallback-404" path="*" element={<div>Page not found</div>} />
+      <Route key="error-all" path="*" element={<ErrorDisplay />} />
     ];
   }
+
 
   const routes = [];
 
