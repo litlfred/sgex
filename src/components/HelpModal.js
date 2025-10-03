@@ -65,8 +65,8 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
 
     window.helpModalInstance = {
       openSgexIssue: (issueType) => {
-        // For bug reports, show the new integrated form
-        if (issueType === 'bug') {
+        // For bug reports and blank issues, show the integrated form with template selection
+        if (issueType === 'bug' || issueType === 'blank') {
           setShowBugReportForm(true);
           return;
         }
@@ -311,7 +311,7 @@ const HelpModal = ({ topic, helpTopic, contextData, onClose, tutorialId }) => {
   };
 
   const handleBugReport = () => {
-    // Show the new integrated bug report form
+    // Show the integrated bug report form with template selection
     setShowBugReportForm(true);
   };
 
