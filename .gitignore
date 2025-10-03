@@ -10,6 +10,10 @@ yarn-error.log*
 /.next
 _site/
 
+# TypeScript build artifacts
+*.d.ts.map
+*.js.map
+
 # Environment variables
 .env
 .env.local

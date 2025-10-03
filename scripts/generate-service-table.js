@@ -218,11 +218,6 @@ class ServiceTableGenerator {
         "examples": questionIds.slice(0, 3),
         "errorMessage": {
           "enum": "Question ID must be one of the available FAQ questions. Use the list_faq_questions endpoint to get current options."
-        },
-        "_generated": {
-          "timestamp": new Date().toISOString(),
-          "count": questionIds.length,
-          "source": "scripts/generate-service-table.js"
         }
       };
 
@@ -710,9 +705,6 @@ This table is automatically generated from the codebase on every commit.
 - OpenAPI Spec links point to the corresponding OpenAPI documentation in the repo
 - Localhost URLs are clickable links for local development testing
 - MCP manifest links included for MCP tooling
-
-*Generated on: ${new Date().toISOString()}*
-*Generator: scripts/generate-service-table.js*
 `;
 
     return header + tableRows + legend;
