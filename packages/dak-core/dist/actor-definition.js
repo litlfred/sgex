@@ -2,15 +2,29 @@
 /**
  * Actor Definition Core Logic
  * Pure business logic for managing FHIR Persona-based actor definitions
- * Extracted from actorDefinitionService.js
+ * Refactored to use base component class and shared FSH utilities
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.actorDefinitionCore = exports.ActorDefinitionCore = void 0;
-class ActorDefinitionCore {
+const base_component_1 = require("./base-component");
+const fsh_utils_1 = require("./fsh-utils");
+class ActorDefinitionCore extends base_component_1.BaseDAKComponent {
+    constructor(actor) {
+        super(actor || (0, base_component_1.createEmptyComponent)('actor', {
+            type: 'human',
+            responsibilities: []
+        }));
+    }
     /**
      * Load JSON schema for actor definitions
      */
     loadSchema() {
+        return this.getSchema();
+    }
+    /**
+     * Get JSON schema for actor definitions
+     */
+    getSchema() {
         try {
             // This would typically load from a schema file
             // For now, return a basic schema structure
@@ -47,13 +61,16 @@ class ActorDefinitionCore {
     /**
      * Generate FSH (FHIR Shorthand) representation of actor definition
      */
-    generateFSH(actor) {
-        let fsh = `Profile: ${actor.id}\n`;
-        fsh += `Parent: Person\n`;
-        fsh += `Id: ${actor.id}\n`;
-        fsh += `Title: "${actor.name}"\n`;
-        fsh += `Description: "${this.escapeFSHString(actor.description)}"\n`;
-        fsh += `\n`;
+    generateFSH() {
+        const actor = this.component;
+        let fsh = (0, fsh_utils_1.generateFSHHeader)({
+            type: 'Profile',
+            id: actor.id,
+            parent: 'Person',
+            title: actor.name,
+            description: actor.description
+        });
+        fsh += '\n\n';
         // Add type-specific constraints
         if (actor.type === 'human') {
             fsh += `* active = true\n`;
@@ -77,97 +94,86 @@ class ActorDefinitionCore {
         return fsh;
     }
     /**
-     * Escape special characters for FSH strings
-     */
-    escapeFSHString(str) {
-        return str.replace(/"/g, '\\"').replace(/\n/g, '\\n');
-    }
-    /**
      * Parse FSH content back to actor definition
      */
     parseFSH(fshContent) {
-        const lines = fshContent.split('\n');
+        const metadata = (0, fsh_utils_1.extractFSHMetadata)(fshContent);
         const actor = {
+            id: metadata.id || '',
+            name: metadata.title || metadata.name || '',
+            description: metadata.description || '',
+            type: fshContent.includes('SystemCapabilityExtension') ? 'system' : 'human',
             responsibilities: [],
             skills: [],
             systems: []
         };
-        for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.startsWith('Profile:')) {
-                actor.id = trimmed.substring(8).trim();
-            }
-            else if (trimmed.startsWith('Title:')) {
-                actor.name = trimmed.substring(6).trim().replace(/"/g, '');
-            }
-            else if (trimmed.startsWith('Description:')) {
-                actor.description = trimmed.substring(12).trim().replace(/"/g, '');
-            }
-        }
-        // Infer type from extensions or default to human
-        if (fshContent.includes('SystemCapabilityExtension')) {
-            actor.type = 'system';
-        }
-        else {
-            actor.type = 'human';
-        }
         return actor;
     }
     /**
      * Validate actor definition against schema and business rules
      */
-    validateActorDefinition(actor) {
+    validate() {
+        const actor = this.component;
         const errors = [];
         const warnings = [];
-        // Required field validation
-        if (!actor.id || actor.id.trim() === '') {
-            errors.push('Actor ID is required');
-        }
-        if (!actor.name || actor.name.trim() === '') {
-            errors.push('Actor name is required');
-        }
-        if (!actor.description || actor.description.trim() === '') {
-            errors.push('Actor description is required');
-        }
-        if (!actor.type || !['human', 'system'].includes(actor.type)) {
-            errors.push('Actor type must be either "human" or "system"');
+        // Use base validation for required fields and ID format
+        const requiredValidation = this.validateRequiredFields(['id', 'name', 'description', 'type']);
+        const idValidation = this.validateIdFormat(actor.id);
+        // Custom validation for actor-specific rules
+        if (actor.type && !['human', 'system'].includes(actor.type)) {
+            errors.push({
+                code: 'INVALID_ACTOR_TYPE',
+                message: 'Actor type must be either "human" or "system"',
+                component: 'actor'
+            });
         }
         if (!actor.responsibilities || actor.responsibilities.length === 0) {
-            warnings.push('Actor should have at least one responsibility defined');
+            warnings.push({
+                code: 'MISSING_RESPONSIBILITIES',
+                message: 'Actor should have at least one responsibility defined',
+                component: 'actor'
+            });
         }
         // Business rule validation
         if (actor.type === 'human' && actor.systems && actor.systems.length > 0) {
-            warnings.push('Human actors typically should not have system capabilities');
+            warnings.push({
+                code: 'HUMAN_WITH_SYSTEMS',
+                message: 'Human actors typically should not have system capabilities',
+                component: 'actor'
+            });
         }
         if (actor.type === 'system' && actor.skills && actor.skills.length > 0) {
-            warnings.push('System actors typically should not have human skills');
+            warnings.push({
+                code: 'SYSTEM_WITH_SKILLS',
+                message: 'System actors typically should not have human skills',
+                component: 'actor'
+            });
         }
-        // ID format validation
-        if (actor.id && !/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(actor.id)) {
-            errors.push('Actor ID must start with a letter and contain only letters, numbers, hyphens, and underscores');
-        }
-        return {
-            isValid: errors.length === 0,
-            errors,
-            warnings
-        };
+        return (0, base_component_1.mergeValidationResults)(requiredValidation, idValidation, { isValid: errors.length === 0, errors, warnings });
+    }
+    /**
+     * Backward compatibility wrapper
+     */
+    validateActorDefinition(actor) {
+        const oldComponent = this.component;
+        this.component = actor;
+        const result = this.validate();
+        this.component = oldComponent;
+        return result;
     }
     /**
      * Create an empty actor definition template
      */
-    createEmptyActorDefinition() {
-        return {
-            id: '',
-            name: '',
-            description: '',
+    static createEmpty() {
+        return (0, base_component_1.createEmptyComponent)('actor', {
             type: 'human',
             responsibilities: []
-        };
+        });
     }
     /**
      * Get predefined actor templates
      */
-    getActorTemplates() {
+    static getTemplates() {
         return [
             {
                 id: 'healthcare-worker',
@@ -238,8 +244,8 @@ class ActorDefinitionCore {
     /**
      * Generate actor definition from template
      */
-    generateFromTemplate(templateId, customizations) {
-        const templates = this.getActorTemplates();
+    static fromTemplate(templateId, customizations) {
+        const templates = ActorDefinitionCore.getTemplates();
         const template = templates.find(t => t.id === templateId);
         if (!template) {
             throw new Error(`Actor template not found: ${templateId}`);
@@ -251,6 +257,6 @@ class ActorDefinitionCore {
     }
 }
 exports.ActorDefinitionCore = ActorDefinitionCore;
-// Export singleton instance
+// Export singleton instance for backward compatibility
 exports.actorDefinitionCore = new ActorDefinitionCore();
 //# sourceMappingURL=actor-definition.js.map

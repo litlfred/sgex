@@ -11,6 +11,8 @@
  * - WHO SMART Guidelines schema compliance
  * - Component discovery and validation
  * - Asset management
+ * - Shared FSH parsing and generation utilities
+ * - Base component classes for all DAK types
  * - No web or MCP service dependencies
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -40,6 +42,9 @@ Object.defineProperty(exports, "DAKValidationService", { enumerable: true, get: 
 var actor_definition_1 = require("./actor-definition");
 Object.defineProperty(exports, "ActorDefinitionCore", { enumerable: true, get: function () { return actor_definition_1.ActorDefinitionCore; } });
 Object.defineProperty(exports, "actorDefinitionCore", { enumerable: true, get: function () { return actor_definition_1.actorDefinitionCore; } });
+// Base component classes and utilities
+__exportStar(require("./base-component"), exports);
+__exportStar(require("./fsh-utils"), exports);
 var types_1 = require("./types");
 Object.defineProperty(exports, "DAKComponentType", { enumerable: true, get: function () { return types_1.DAKComponentType; } });
 Object.defineProperty(exports, "DAKAssetType", { enumerable: true, get: function () { return types_1.DAKAssetType; } });

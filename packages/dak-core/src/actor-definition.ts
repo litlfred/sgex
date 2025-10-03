@@ -1,16 +1,26 @@
 /**
  * Actor Definition Core Logic
  * Pure business logic for managing FHIR Persona-based actor definitions
- * Extracted from actorDefinitionService.js
+ * Refactored to use base component class and shared FSH utilities
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import { 
+  BaseDAKComponent, 
+  DAKComponentBase,
+  ComponentValidationResult,
+  mergeValidationResults,
+  createEmptyComponent
+} from './base-component';
+import { 
+  extractFSHMetadata, 
+  generateFSHHeader, 
+  escapeFSHString,
+  parseFSHField,
+  FSH_PATTERNS
+} from './fsh-utils';
+import { DAKValidationError, DAKValidationWarning } from './types';
 
-export interface ActorDefinition {
-  id: string;
-  name: string;
-  description: string;
+export interface ActorDefinition extends DAKComponentBase {
   type: 'human' | 'system';
   responsibilities: string[];
   skills?: string[];
@@ -18,18 +28,29 @@ export interface ActorDefinition {
   [key: string]: any;
 }
 
-export interface ActorValidationResult {
-  isValid: boolean;
-  errors: string[];
-  warnings: string[];
-}
+// Keep backward compatibility alias
+export interface ActorValidationResult extends ComponentValidationResult {}
 
-export class ActorDefinitionCore {
+export class ActorDefinitionCore extends BaseDAKComponent<ActorDefinition> {
+  
+  constructor(actor?: ActorDefinition) {
+    super(actor || createEmptyComponent<ActorDefinition>('actor', {
+      type: 'human',
+      responsibilities: []
+    }));
+  }
   
   /**
    * Load JSON schema for actor definitions
    */
   loadSchema(): any {
+    return this.getSchema();
+  }
+  
+  /**
+   * Get JSON schema for actor definitions
+   */
+  getSchema(): any {
     try {
       // This would typically load from a schema file
       // For now, return a basic schema structure
@@ -66,13 +87,18 @@ export class ActorDefinitionCore {
   /**
    * Generate FSH (FHIR Shorthand) representation of actor definition
    */
-  generateFSH(actor: ActorDefinition): string {
-    let fsh = `Profile: ${actor.id}\n`;
-    fsh += `Parent: Person\n`;
-    fsh += `Id: ${actor.id}\n`;
-    fsh += `Title: "${actor.name}"\n`;
-    fsh += `Description: "${this.escapeFSHString(actor.description)}"\n`;
-    fsh += `\n`;
+  generateFSH(): string {
+    const actor = this.component;
+    
+    let fsh = generateFSHHeader({
+      type: 'Profile',
+      id: actor.id,
+      parent: 'Person',
+      title: actor.name,
+      description: actor.description
+    });
+    
+    fsh += '\n\n';
 
     // Add type-specific constraints
     if (actor.type === 'human') {
@@ -99,111 +125,102 @@ export class ActorDefinitionCore {
   }
 
   /**
-   * Escape special characters for FSH strings
-   */
-  private escapeFSHString(str: string): string {
-    return str.replace(/"/g, '\\"').replace(/\n/g, '\\n');
-  }
-
-  /**
    * Parse FSH content back to actor definition
    */
   parseFSH(fshContent: string): ActorDefinition {
-    const lines = fshContent.split('\n');
-    const actor: Partial<ActorDefinition> = {
+    const metadata = extractFSHMetadata(fshContent);
+    
+    const actor: ActorDefinition = {
+      id: metadata.id || '',
+      name: metadata.title || metadata.name || '',
+      description: metadata.description || '',
+      type: fshContent.includes('SystemCapabilityExtension') ? 'system' : 'human',
       responsibilities: [],
       skills: [],
       systems: []
     };
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-      
-      if (trimmed.startsWith('Profile:')) {
-        actor.id = trimmed.substring(8).trim();
-      } else if (trimmed.startsWith('Title:')) {
-        actor.name = trimmed.substring(6).trim().replace(/"/g, '');
-      } else if (trimmed.startsWith('Description:')) {
-        actor.description = trimmed.substring(12).trim().replace(/"/g, '');
-      }
-    }
-
-    // Infer type from extensions or default to human
-    if (fshContent.includes('SystemCapabilityExtension')) {
-      actor.type = 'system';
-    } else {
-      actor.type = 'human';
-    }
-
-    return actor as ActorDefinition;
+    return actor;
   }
 
   /**
    * Validate actor definition against schema and business rules
    */
-  validateActorDefinition(actor: ActorDefinition): ActorValidationResult {
-    const errors: string[] = [];
-    const warnings: string[] = [];
+  validate(): ComponentValidationResult {
+    const actor = this.component;
+    const errors: DAKValidationError[] = [];
+    const warnings: DAKValidationWarning[] = [];
 
-    // Required field validation
-    if (!actor.id || actor.id.trim() === '') {
-      errors.push('Actor ID is required');
-    }
-
-    if (!actor.name || actor.name.trim() === '') {
-      errors.push('Actor name is required');
-    }
-
-    if (!actor.description || actor.description.trim() === '') {
-      errors.push('Actor description is required');
-    }
-
-    if (!actor.type || !['human', 'system'].includes(actor.type)) {
-      errors.push('Actor type must be either "human" or "system"');
+    // Use base validation for required fields and ID format
+    const requiredValidation = this.validateRequiredFields(['id', 'name', 'description', 'type']);
+    const idValidation = this.validateIdFormat(actor.id);
+    
+    // Custom validation for actor-specific rules
+    if (actor.type && !['human', 'system'].includes(actor.type)) {
+      errors.push({
+        code: 'INVALID_ACTOR_TYPE',
+        message: 'Actor type must be either "human" or "system"',
+        component: 'actor'
+      });
     }
 
     if (!actor.responsibilities || actor.responsibilities.length === 0) {
-      warnings.push('Actor should have at least one responsibility defined');
+      warnings.push({
+        code: 'MISSING_RESPONSIBILITIES',
+        message: 'Actor should have at least one responsibility defined',
+        component: 'actor'
+      });
     }
 
     // Business rule validation
     if (actor.type === 'human' && actor.systems && actor.systems.length > 0) {
-      warnings.push('Human actors typically should not have system capabilities');
+      warnings.push({
+        code: 'HUMAN_WITH_SYSTEMS',
+        message: 'Human actors typically should not have system capabilities',
+        component: 'actor'
+      });
     }
 
     if (actor.type === 'system' && actor.skills && actor.skills.length > 0) {
-      warnings.push('System actors typically should not have human skills');
+      warnings.push({
+        code: 'SYSTEM_WITH_SKILLS',
+        message: 'System actors typically should not have human skills',
+        component: 'actor'
+      });
     }
 
-    // ID format validation
-    if (actor.id && !/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(actor.id)) {
-      errors.push('Actor ID must start with a letter and contain only letters, numbers, hyphens, and underscores');
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-      warnings
-    };
+    return mergeValidationResults(
+      requiredValidation,
+      idValidation,
+      { isValid: errors.length === 0, errors, warnings }
+    );
+  }
+  
+  /**
+   * Backward compatibility wrapper
+   */
+  validateActorDefinition(actor: ActorDefinition): ActorValidationResult {
+    const oldComponent = this.component;
+    this.component = actor;
+    const result = this.validate();
+    this.component = oldComponent;
+    return result;
   }
 
   /**
    * Create an empty actor definition template
    */
-  createEmptyActorDefinition(): ActorDefinition {
-    return {
-      id: '',
-      name: '',
-      description: '',
+  static createEmpty(): ActorDefinition {
+    return createEmptyComponent<ActorDefinition>('actor', {
       type: 'human',
       responsibilities: []
-    };
+    });
   }
 
   /**
    * Get predefined actor templates
    */
-  getActorTemplates(): ActorDefinition[] {
+  static getTemplates(): ActorDefinition[] {
     return [
       {
         id: 'healthcare-worker',
@@ -275,8 +292,8 @@ export class ActorDefinitionCore {
   /**
    * Generate actor definition from template
    */
-  generateFromTemplate(templateId: string, customizations?: Partial<ActorDefinition>): ActorDefinition {
-    const templates = this.getActorTemplates();
+  static fromTemplate(templateId: string, customizations?: Partial<ActorDefinition>): ActorDefinition {
+    const templates = ActorDefinitionCore.getTemplates();
     const template = templates.find(t => t.id === templateId);
     
     if (!template) {
@@ -290,5 +307,5 @@ export class ActorDefinitionCore {
   }
 }
 
-// Export singleton instance
+// Export singleton instance for backward compatibility
 export const actorDefinitionCore = new ActorDefinitionCore();
