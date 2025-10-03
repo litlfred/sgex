@@ -1,36 +1,32 @@
 /**
  * Actor Definition Core Logic
  * Pure business logic for managing FHIR Persona-based actor definitions
- * Extracted from actorDefinitionService.js
+ * Refactored to use base component class and shared FSH utilities
  */
-export interface ActorDefinition {
-    id: string;
-    name: string;
-    description: string;
+import { BaseDAKComponent, DAKComponentBase, ComponentValidationResult } from './base-component';
+export interface ActorDefinition extends DAKComponentBase {
     type: 'human' | 'system';
     responsibilities: string[];
     skills?: string[];
     systems?: string[];
     [key: string]: any;
 }
-export interface ActorValidationResult {
-    isValid: boolean;
-    errors: string[];
-    warnings: string[];
+export interface ActorValidationResult extends ComponentValidationResult {
 }
-export declare class ActorDefinitionCore {
+export declare class ActorDefinitionCore extends BaseDAKComponent<ActorDefinition> {
+    constructor(actor?: ActorDefinition);
     /**
      * Load JSON schema for actor definitions
      */
     loadSchema(): any;
     /**
+     * Get JSON schema for actor definitions
+     */
+    getSchema(): any;
+    /**
      * Generate FSH (FHIR Shorthand) representation of actor definition
      */
-    generateFSH(actor: ActorDefinition): string;
-    /**
-     * Escape special characters for FSH strings
-     */
-    private escapeFSHString;
+    generateFSH(): string;
     /**
      * Parse FSH content back to actor definition
      */
@@ -38,19 +34,22 @@ export declare class ActorDefinitionCore {
     /**
      * Validate actor definition against schema and business rules
      */
+    validate(): ComponentValidationResult;
+    /**
+     * Backward compatibility wrapper
+     */
     validateActorDefinition(actor: ActorDefinition): ActorValidationResult;
     /**
      * Create an empty actor definition template
      */
-    createEmptyActorDefinition(): ActorDefinition;
+    static createEmpty(): ActorDefinition;
     /**
      * Get predefined actor templates
      */
-    getActorTemplates(): ActorDefinition[];
+    static getTemplates(): ActorDefinition[];
     /**
      * Generate actor definition from template
      */
-    generateFromTemplate(templateId: string, customizations?: Partial<ActorDefinition>): ActorDefinition;
+    static fromTemplate(templateId: string, customizations?: Partial<ActorDefinition>): ActorDefinition;
 }
 export declare const actorDefinitionCore: ActorDefinitionCore;
-//# sourceMappingURL=actor-definition.d.ts.map

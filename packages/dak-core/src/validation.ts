@@ -8,7 +8,6 @@ import addFormats from 'ajv-formats';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'yaml';
-import { Configuration, ConfigurationManager } from 'fsh-sushi/dist/fshtypes';
 import { 
   DAK, 
   DAKRepository, 

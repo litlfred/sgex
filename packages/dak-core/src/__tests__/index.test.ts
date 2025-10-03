@@ -7,6 +7,7 @@ import {
   DAKComponentType, 
   DAKAssetType,
   actorDefinitionCore,
+  ActorDefinitionCore,
   DAKValidationService 
 } from '../index';
 
@@ -68,7 +69,7 @@ describe('DAK Core Package', () => {
 
   describe('ActorDefinitionCore', () => {
     test('should create empty actor definition', () => {
-      const actor = actorDefinitionCore.createEmptyActorDefinition();
+      const actor = ActorDefinitionCore.createEmpty();
       
       expect(actor).toHaveProperty('id');
       expect(actor).toHaveProperty('name');
@@ -117,7 +118,8 @@ describe('DAK Core Package', () => {
         responsibilities: ['Provide care']
       };
 
-      const fsh = actorDefinitionCore.generateFSH(actor);
+      const actorCore = new ActorDefinitionCore(actor);
+      const fsh = actorCore.generateFSH();
       
       expect(fsh).toContain('Profile: healthcare-worker');
       expect(fsh).toContain('Title: "Healthcare Worker"');
@@ -125,7 +127,7 @@ describe('DAK Core Package', () => {
     });
 
     test('should get actor templates', () => {
-      const templates = actorDefinitionCore.getActorTemplates();
+      const templates = ActorDefinitionCore.getTemplates();
       
       expect(templates).toBeInstanceOf(Array);
       expect(templates.length).toBeGreaterThan(0);
