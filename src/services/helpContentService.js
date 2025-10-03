@@ -542,6 +542,153 @@ class HelpContentService {
           ]
         }
       ],
+      'functional-requirements': [
+        {
+          id: 'requirements-editor-overview',
+          title: 'Requirements Editor Overview',
+          badge: '/sgex/cat-paw-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'About Requirements',
+              content: `
+                <p>The Requirements Editor helps you manage functional and non-functional requirements for your DAK:</p>
+                <ul>
+                  <li><strong>Functional Requirements:</strong> Define what the system must do (capabilities, features, behaviors)</li>
+                  <li><strong>Non-Functional Requirements:</strong> Define how the system should perform (performance, security, usability)</li>
+                  <li><strong>WHO Compliant:</strong> Based on WHO smart-base logical models</li>
+                  <li><strong>FSH Format:</strong> Uses FHIR Shorthand for requirements definition</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>📋 File Location:</strong> Requirements are stored in <code>input/fsh/requirements/*.fsh</code>
+                </div>
+              `
+            },
+            {
+              title: 'Functional Requirements',
+              content: `
+                <p>Functional requirements define system capabilities using the WHO smart-base FunctionalRequirement model:</p>
+                <ul>
+                  <li><strong>id:</strong> Unique requirement identifier (e.g., FR-001)</li>
+                  <li><strong>activity:</strong> Description of the activity being performed</li>
+                  <li><strong>actor:</strong> Reference to the actor(s) performing the activity</li>
+                  <li><strong>capability:</strong> "I want to..." statement describing the capability</li>
+                  <li><strong>benefit:</strong> "So that..." statement describing the benefit</li>
+                  <li><strong>classification:</strong> Classification codes for categorization</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💡 Example:</strong> "As a healthcare worker, I want to record patient vitals so that I can track health status"
+                </div>
+              `
+            },
+            {
+              title: 'Non-Functional Requirements',
+              content: `
+                <p>Non-functional requirements define system qualities using the WHO smart-base NonFunctionalRequirement model:</p>
+                <ul>
+                  <li><strong>id:</strong> Unique requirement identifier (e.g., NFR-001)</li>
+                  <li><strong>requirement:</strong> Description of the requirement</li>
+                  <li><strong>category:</strong> Category (e.g., performance, security, usability)</li>
+                  <li><strong>classification:</strong> Classification codes for categorization</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>💡 Example:</strong> "The system SHALL respond to user actions within 2 seconds"
+                </div>
+              `
+            },
+            {
+              title: 'Creating Requirements',
+              content: `
+                <p>To create a new requirement:</p>
+                <ol>
+                  <li>Click "+ Functional" or "+ Non-Functional" in the sidebar</li>
+                  <li>A template will be loaded with the required FSH structure</li>
+                  <li>Fill in the requirement details following the model</li>
+                  <li>Click "Save" to commit to your repository</li>
+                </ol>
+                <div class="help-warning">
+                  <strong>⚠️ Remember:</strong> Each requirement must have a unique ID
+                </div>
+              `
+            },
+            {
+              title: 'Editing Requirements',
+              content: `
+                <p>To edit an existing requirement:</p>
+                <ol>
+                  <li>Select the requirement from the list in the sidebar</li>
+                  <li>The FSH content will load in the editor</li>
+                  <li>Make your changes to the FSH content</li>
+                  <li>Click "Save" to commit changes</li>
+                  <li>Or click "Cancel" to discard changes</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>💡 Tip:</strong> Use the help panel below the editor for FSH syntax reference
+                </div>
+              `
+            }
+          ]
+        },
+        {
+          id: 'requirements-models',
+          title: 'WHO SMART Base Requirements Models',
+          badge: '/sgex/cat-paw-file-icon.svg',
+          type: 'slideshow',
+          content: [
+            {
+              title: 'FunctionalRequirement Model',
+              content: `
+                <p>The FunctionalRequirement logical model is defined in WHO smart-base:</p>
+                <pre><code>Logical: FunctionalRequirement
+Title: "Functional Requirement (DAK)"
+Description: "Logical Model for representing functional requirement from a DAK"
+
+* id 1..1 id "Requirement ID"
+* activity 1..1 string "Activity"
+* actor 0..* Reference(SGActor) "Actor"
+* capability[x] 0..1 string or Coding "Capability"
+* benefit[x] 0..1 string or Coding "Benefit"
+* classification 0..* Coding "Classification"</code></pre>
+                <div class="help-tip">
+                  <strong>🔗 Reference:</strong> <a href="https://worldhealthorganization.github.io/smart-base/StructureDefinition-FunctionalRequirement.html" target="_blank">WHO smart-base FunctionalRequirement</a>
+                </div>
+              `
+            },
+            {
+              title: 'NonFunctionalRequirement Model',
+              content: `
+                <p>The NonFunctionalRequirement logical model is defined in WHO smart-base:</p>
+                <pre><code>Logical: NonFunctionalRequirement
+Title: "Non-Functional Requirement (DAK)"
+Description: "Logical Model for representing non-functional requirement from a DAK"
+
+* id 1..1 id "Requirement ID"
+* requirement 1..1 string "Requirement"
+* category 0..1 Coding "Category"
+* classification 0..* Coding "Classification"</code></pre>
+                <div class="help-tip">
+                  <strong>🔗 Reference:</strong> <a href="https://worldhealthorganization.github.io/smart-base/StructureDefinition-NonFunctionalRequirement.html" target="_blank">WHO smart-base NonFunctionalRequirement</a>
+                </div>
+              `
+            },
+            {
+              title: 'Requirements Extraction',
+              content: `
+                <p>WHO smart-base provides a requirements extractor script for processing requirements from Excel:</p>
+                <ul>
+                  <li><strong>Input:</strong> Excel files in <code>input/system-requirements/</code></li>
+                  <li><strong>Sheets:</strong> "Functional" and "Non-Functional" worksheets</li>
+                  <li><strong>Output:</strong> FHIR Requirements resources</li>
+                  <li><strong>Script:</strong> <code>input/scripts/req_extractor.py</code></li>
+                </ul>
+                <div class="help-tip">
+                  <strong>🔗 Reference:</strong> <a href="https://github.com/WorldHealthOrganization/smart-base/blob/main/input/scripts/req_extractor.py" target="_blank">req_extractor.py</a>
+                </div>
+              `
+            }
+          ]
+        }
+      ],
       'pat-login': [
         {
           id: 'pat-authentication-help',
