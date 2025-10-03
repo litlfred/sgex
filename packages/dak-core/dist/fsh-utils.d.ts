@@ -2,6 +2,9 @@
  * FSH (FHIR Shorthand) Utility Functions
  * Shared FSH parsing and generation utilities for all DAK components
  * Extracted from duplicated code across actorDefinitionService, QuestionnaireEditor, and DecisionSupportLogicView
+ *
+ * REFACTORED: Now uses fsh-sushi module's tokenizer and parser when available (Node.js),
+ * with regex fallback for browser environments
  */
 /**
  * FSH Field Patterns - Common regex patterns for parsing FSH content
@@ -27,6 +30,7 @@ export declare const FSH_PATTERNS: {
 export declare function parseFSHField(content: string, patterns: RegExp | RegExp[]): string | undefined;
 /**
  * Extract basic FSH metadata (id, title, description, status, name)
+ * Now uses SUSHI's parser for proper tokenization
  */
 export interface FSHMetadata {
     id?: string;
@@ -47,6 +51,9 @@ export declare function escapeFSHString(str: string | undefined | null): string;
 export declare function unescapeFSHString(str: string | undefined | null): string;
 /**
  * Parse FSH lines into structured data
+ *
+ * DEPRECATED: This function is kept for backward compatibility but is no longer recommended.
+ * Use SUSHI's importText function directly for proper FSH parsing.
  */
 export interface ParsedFSHLine {
     indent: number;

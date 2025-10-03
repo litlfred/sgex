@@ -54,6 +54,15 @@ module.exports = {
         path: false,
         fs: false,
         os: false,
+        crypto: false,
+        stream: false,
+        buffer: false,
+        util: false,
+        assert: false,
+        http: false,
+        https: false,
+        url: false,
+        zlib: false,
       };
       return webpackConfig;
     },
