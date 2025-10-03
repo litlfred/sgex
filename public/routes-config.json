@@ -54,6 +54,10 @@
     "faq-demo": {
       "component": "DAKFAQDemo",
       "path": "./components/DAKFAQDemo"
+    },
+    "persona-viewer": {
+      "component": "PersonaViewer", 
+      "path": "./components/PersonaViewer"
     }
   },
   "standardComponents": {

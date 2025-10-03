@@ -5,13 +5,13 @@ import { PageLayout, useDAKParams } from './framework';
 
 const ActorEditor = () => {
   const navigate = useNavigate();
-  const { profile, repository, branch } = useDAKParams();
+  const pageParams = useDAKParams();
   
   // For now, we'll set editActorId to null since it's not in URL params
   // This could be enhanced later to support URL-based actor editing
   const editActorId = null;
 
-  // State management
+  // State management - ALL HOOKS MUST BE AT THE TOP
   const [actorDefinition, setActorDefinition] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -23,38 +23,41 @@ const ActorEditor = () => {
   const [activeTab, setActiveTab] = useState('basic');
 
   // Initialize component
-  useEffect(() => {
-    const initializeEditor = async () => {
-      setLoading(true);
-      
-      try {
-        if (editActorId) {
-          // Load existing actor from staging ground
-          const result = actorDefinitionService.getFromStagingGround(editActorId);
-          if (result) {
-            setActorDefinition(result.actorDefinition);
-          } else {
-            // Actor not found, create new one
-            setActorDefinition(actorDefinitionService.createEmptyActorDefinition());
-          }
+  const initializeEditor = useCallback(async () => {
+    setLoading(true);
+    
+    try {
+      if (editActorId) {
+        // Load existing actor definition from staging ground
+        const actorData = actorDefinitionService.getFromStagingGround(editActorId);
+        if (actorData) {
+          setActorDefinition(actorData.actorDefinition);
         } else {
-          // Create new actor
           setActorDefinition(actorDefinitionService.createEmptyActorDefinition());
         }
-        
-        // Load list of staged actors
-        setStagedActors(actorDefinitionService.listStagedActors());
-        
-      } catch (error) {
-        console.error('Error initializing actor editor:', error);
-        setErrors({ general: 'Failed to initialize editor' });
+      } else {
+        // Create new actor definition
+        setActorDefinition(actorDefinitionService.createEmptyActorDefinition());
       }
       
+      // Load staged actors list
+      const staged = actorDefinitionService.listStagedActors();
+      setStagedActors(staged);
+      
+    } catch (error) {
+      console.error('Error initializing actor editor:', error);
+      setErrors({ initialization: 'Failed to initialize editor' });
+    } finally {
       setLoading(false);
-    };
-
-    initializeEditor();
+    }
   }, [editActorId]);
+
+  useEffect(() => {
+    // Only initialize if we have valid page parameters
+    if (!pageParams.error && !pageParams.loading) {
+      initializeEditor();
+    }
+  }, [pageParams.error, pageParams.loading, initializeEditor]);
 
   // Handle form field changes
   const handleFieldChange = useCallback((field, value) => {
@@ -80,17 +83,15 @@ const ActorEditor = () => {
       if (!newDefinition[parentField]) {
         newDefinition[parentField] = [];
       }
-      
       if (!newDefinition[parentField][index]) {
         newDefinition[parentField][index] = {};
       }
-      
       newDefinition[parentField][index][field] = value;
       return newDefinition;
     });
   }, []);
 
-  // Add new item to array fields
+  // Add new item to array field
   const addArrayItem = useCallback((field, defaultItem = {}) => {
     setActorDefinition(prev => ({
       ...prev,
@@ -98,7 +99,7 @@ const ActorEditor = () => {
     }));
   }, []);
 
-  // Remove item from array fields
+  // Remove item from array field
   const removeArrayItem = useCallback((field, index) => {
     setActorDefinition(prev => ({
       ...prev,
@@ -106,62 +107,56 @@ const ActorEditor = () => {
     }));
   }, []);
 
-  // Validate form
+  // Validate form data
   const validateForm = useCallback(() => {
-    if (!actorDefinition) return false;
+    const newErrors = {};
     
-    const validation = actorDefinitionService.validateActorDefinition(actorDefinition);
-    
-    if (!validation.isValid) {
-      const fieldErrors = {};
-      validation.errors.forEach(error => {
-        if (error.includes('ID')) fieldErrors.id = error;
-        else if (error.includes('Name')) fieldErrors.name = error;
-        else if (error.includes('Description')) fieldErrors.description = error;
-        else if (error.includes('type')) fieldErrors.type = error;
-        else if (error.includes('role')) fieldErrors.roles = error;
-        else fieldErrors.general = error;
-      });
-      setErrors(fieldErrors);
-      return false;
+    if (!actorDefinition?.id) {
+      newErrors.id = 'Actor ID is required';
     }
     
-    setErrors({});
-    return true;
-  }, [actorDefinition]);
-
-  // Save actor definition
-  const handleSave = async () => {
-    if (!validateForm()) {
-      return;
+    if (!actorDefinition?.name) {
+      newErrors.name = 'Actor name is required';
     }
     
-    setSaving(true);
+    if (!actorDefinition?.description) {
+      newErrors.description = 'Actor description is required';
+    }
     
-    try {
-      const result = await actorDefinitionService.saveToStagingGround(actorDefinition);
-      
-      if (result.success) {
-        // Refresh staged actors list
-        setStagedActors(actorDefinitionService.listStagedActors());
-        
-        // Show success message (could be a toast notification)
-        alert('Actor definition saved to staging ground successfully!');
-        
-        // Update the URL to reflect we're now editing this actor
-        if (!editActorId) {
-          navigate(`/actor-editor/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
+    if (!actorDefinition?.type) {
+      newErrors.type = 'Actor type is required';
+    }
+    
+    // Validate roles
+    if (actorDefinition?.roles) {
+      actorDefinition.roles.forEach((role, index) => {
+        if (!role.code) {
+          newErrors[`roles.${index}.code`] = 'Role code is required';
         }
-      } else {
-        setErrors({ general: result.error });
-      }
-    } catch (error) {
-      console.error('Error saving actor definition:', error);
-      setErrors({ general: 'Failed to save actor definition' });
+        if (!role.display) {
+          newErrors[`roles.${index}.display`] = 'Role display name is required';
+        }
+        if (!role.system) {
+          newErrors[`roles.${index}.system`] = 'Role system is required';
+        }
+      });
     }
     
-    setSaving(false);
-  };
+    // Validate qualifications
+    if (actorDefinition?.qualifications) {
+      actorDefinition.qualifications.forEach((qual, index) => {
+        if (!qual.code) {
+          newErrors[`qualifications.${index}.code`] = 'Qualification code is required';
+        }
+        if (!qual.display) {
+          newErrors[`qualifications.${index}.display`] = 'Qualification display name is required';
+        }
+      });
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [actorDefinition]);
 
   // Generate FSH preview
   const generatePreview = useCallback(() => {
@@ -170,63 +165,99 @@ const ActorEditor = () => {
     try {
       const fsh = actorDefinitionService.generateFSH(actorDefinition);
       setFshPreview(fsh);
-      setShowPreview(true);
     } catch (error) {
       console.error('Error generating FSH preview:', error);
       setErrors({ general: 'Failed to generate FSH preview' });
     }
   }, [actorDefinition]);
 
-  // Load actor template
-  const loadTemplate = (template) => {
-    setActorDefinition({
-      ...actorDefinitionService.createEmptyActorDefinition(),
-      ...template,
-      metadata: {
-        ...actorDefinitionService.createEmptyActorDefinition().metadata,
-        ...template.metadata
-      }
-    });
-    setErrors({});
-  };
-
-  // Load existing staged actor
-  const loadStagedActor = (actorId) => {
-    const result = actorDefinitionService.getFromStagingGround(actorId);
-    if (result) {
-      setActorDefinition(result.actorDefinition);
-      setErrors({});
-      setShowActorList(false);
-      
-      // Update URL
-      navigate(`/actor-editor/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
+  // Save actor definition to staging ground
+  const handleSave = useCallback(async () => {
+    if (!validateForm()) {
+      return;
     }
-  };
+    
+    setSaving(true);
+    
+    try {
+      actorDefinitionService.saveToStagingGround(actorDefinition, {
+        type: 'actor-definition',
+        actorId: actorDefinition.id,
+        actorName: actorDefinition.name,
+        branch: branch,
+        repository: repository?.name,
+        owner: profile?.login
+      });
+      
+      // Refresh staged actors list
+      const staged = actorDefinitionService.listStagedActors();
+      setStagedActors(staged);
+      
+      setErrors({});
+    } catch (error) {
+      console.error('Error saving actor definition:', error);
+      setErrors({ general: 'Failed to save actor definition' });
+    } finally {
+      setSaving(false);
+    }
+  }, [actorDefinition, validateForm, branch, repository, profile]);
+
+  // Load template
+  const loadTemplate = useCallback((templateId) => {
+    const templates = actorDefinitionService.getActorTemplates();
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setActorDefinition(template);
+    }
+  }, []);
+
+  // Load staged actor
+  const loadStagedActor = useCallback((actorId) => {
+    const actorData = actorDefinitionService.getFromStagingGround(actorId);
+    if (actorData) {
+      setActorDefinition(actorData.actorDefinition);
+      setShowActorList(false);
+    }
+  }, []);
 
   // Delete staged actor
-  const deleteStagedActor = (actorId) => {
-    if (window.confirm(`Are you sure you want to delete the actor "${actorId}"?`)) {
-      const success = actorDefinitionService.removeFromStagingGround(actorId);
-      if (success) {
-        setStagedActors(actorDefinitionService.listStagedActors());
-        
-        // If we're currently editing this actor, create a new one
-        if (editActorId === actorId) {
-          setActorDefinition(actorDefinitionService.createEmptyActorDefinition());
-          navigate(`/actor-editor/${profile?.login}/${repository?.name}${branch && branch !== 'main' ? `/${branch}` : ''}`);
-        }
-      }
+  const deleteStagedActor = useCallback((actorId) => {
+    if (window.confirm('Are you sure you want to delete this staged actor?')) {
+      actorDefinitionService.removeFromStagingGround(actorId);
+      const staged = actorDefinitionService.listStagedActors();
+      setStagedActors(staged);
     }
-  };
+  }, []);
 
-
-
-  // Redirect if missing required context - use useEffect to avoid render issues
-  useEffect(() => {
-    if (!profile || !repository) {
-      navigate('/');
-    }
-  }, [profile, repository, navigate]);
+  // Handle PageProvider initialization issues - AFTER all hooks
+  if (pageParams.error) {
+    return (
+      <PageLayout pageName="actor-editor">
+        <div className="actor-editor-container">
+          <div className="error-message">
+            <h2>Page Context Error</h2>
+            <p>{pageParams.error}</p>
+            <p>This component requires a DAK repository context to function properly.</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+  
+  if (pageParams.loading) {
+    return (
+      <PageLayout pageName="actor-editor">
+        <div className="actor-editor-container">
+          <div className="loading-message">
+            <h2>Loading...</h2>
+            <p>Initializing page context...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+  
+  const { profile, repository, branch } = pageParams;
 
   return (
     <PageLayout pageName="actor-editor">
