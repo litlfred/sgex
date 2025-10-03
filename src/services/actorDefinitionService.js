@@ -8,7 +8,7 @@
  */
 
 import stagingGroundService from './stagingGroundService';
-import { ActorDefinitionCore, escapeFSHString, extractFSHMetadata } from '../../packages/dak-core/src/index';
+import { ActorDefinitionCore, escapeFSHString, extractFSHMetadata } from '@sgex/dak-core/dist/browser';
 
 class ActorDefinitionService {
   constructor() {

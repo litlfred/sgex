@@ -2,7 +2,7 @@ import React, { useState, useEffect, Component } from 'react';
 import { PageLayout, AssetEditorLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
-import { extractFSHMetadata } from '../../packages/dak-core/src/index';
+import { extractFSHMetadata } from '@sgex/dak-core/dist/browser';
 import './QuestionnaireEditor.css';
 
 // Enhanced Visual Editor Component with LForms integration

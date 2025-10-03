@@ -46,6 +46,18 @@ function loadRepositoryConfig() {
 loadRepositoryConfig();
 
 module.exports = {
+  webpack: {
+    configure: (webpackConfig) => {
+      // Add fallback for Node.js modules that aren't available in browser
+      webpackConfig.resolve.fallback = {
+        ...webpackConfig.resolve.fallback,
+        path: false,
+        fs: false,
+        os: false,
+      };
+      return webpackConfig;
+    },
+  },
   devServer: (devServerConfig, { env, paths, proxy, allowedHost }) => {
     // Override the deprecated onBeforeSetupMiddleware and onAfterSetupMiddleware
     // with the new setupMiddlewares API for webpack-dev-server 5.x compatibility

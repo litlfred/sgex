@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
 import { lazyLoadMDEditor } from '../services/libraryLoaderService';
-import { parseFSHCodeSystem } from '../../packages/dak-core/src/index';
+import { parseFSHCodeSystem } from '@sgex/dak-core/dist/browser';
 
 // Lazy markdown component using the utility
 const LazyMarkdown = ({ source }) => {
