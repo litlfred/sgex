@@ -1,0 +1,65 @@
+{
+  "id": "personas",
+  "level": "component",
+  "title": "dak.faq.personas.title",
+  "description": "dak.faq.personas.description",
+  "parameters": [
+    {
+      "name": "repository",
+      "type": "string",
+      "required": true,
+      "description": "dak.faq.params.repository"
+    },
+    {
+      "name": "locale",
+      "type": "string",
+      "required": false,
+      "description": "dak.faq.params.locale",
+      "default": "en"
+    }
+  ],
+  "tags": ["component", "personas", "actors"],
+  "componentType": "personas",
+  "schema": {
+    "input": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "description": "GitHub repository in format 'user/repo' or local folder path"
+        },
+        "locale": {
+          "type": "string",
+          "description": "Language locale code",
+          "default": "en"
+        }
+      },
+      "required": ["repository"]
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "structured": {
+          "type": "object",
+          "properties": {
+            "personas": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "file": { "type": "string" },
+                  "role": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "narrative": { "type": "string" },
+        "errors": { "type": "array", "items": { "type": "string" } },
+        "warnings": { "type": "array", "items": { "type": "string" } },
+        "meta": { "type": "object" }
+      }
+    }
+  }
+}
