@@ -2,6 +2,9 @@
  * FSH (FHIR Shorthand) Utility Functions
  * Shared FSH parsing and generation utilities for all DAK components
  * Extracted from duplicated code across actorDefinitionService, QuestionnaireEditor, and DecisionSupportLogicView
+ *
+ * REFACTORED: Now uses fsh-sushi module's tokenizer and parser with lazy loading
+ * Lazy loads fsh-sushi on first use for optimal performance
  */
 /**
  * FSH Field Patterns - Common regex patterns for parsing FSH content
@@ -27,6 +30,7 @@ export declare const FSH_PATTERNS: {
 export declare function parseFSHField(content: string, patterns: RegExp | RegExp[]): string | undefined;
 /**
  * Extract basic FSH metadata (id, title, description, status, name)
+ * Now uses SUSHI's parser with lazy loading for proper tokenization
  */
 export interface FSHMetadata {
     id?: string;
@@ -36,7 +40,7 @@ export interface FSHMetadata {
     status?: string;
     type?: string;
 }
-export declare function extractFSHMetadata(fshContent: string): FSHMetadata;
+export declare function extractFSHMetadata(fshContent: string): Promise<FSHMetadata>;
 /**
  * Escape special characters for FSH strings
  */
@@ -47,6 +51,9 @@ export declare function escapeFSHString(str: string | undefined | null): string;
 export declare function unescapeFSHString(str: string | undefined | null): string;
 /**
  * Parse FSH lines into structured data
+ *
+ * DEPRECATED: This function is kept for backward compatibility but is no longer recommended.
+ * Use SUSHI's importText function directly for proper FSH parsing.
  */
 export interface ParsedFSHLine {
     indent: number;
@@ -78,7 +85,7 @@ export interface FSHConcept {
     properties?: Record<string, any>;
     [key: string]: any;
 }
-export declare function parseFSHCodeSystem(fshContent: string): FSHConcept[];
+export declare function parseFSHCodeSystem(fshContent: string): Promise<FSHConcept[]>;
 /**
  * Generate FSH from code system concepts
  */

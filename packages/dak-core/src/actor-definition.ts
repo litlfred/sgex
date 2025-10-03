@@ -127,8 +127,8 @@ export class ActorDefinitionCore extends BaseDAKComponent<ActorDefinition> {
   /**
    * Parse FSH content back to actor definition
    */
-  parseFSH(fshContent: string): ActorDefinition {
-    const metadata = extractFSHMetadata(fshContent);
+  async parseFSH(fshContent: string): Promise<ActorDefinition> {
+    const metadata = await extractFSHMetadata(fshContent);
     
     const actor: ActorDefinition = {
       id: metadata.id || '',

@@ -30,7 +30,7 @@ export declare class ActorDefinitionCore extends BaseDAKComponent<ActorDefinitio
     /**
      * Parse FSH content back to actor definition
      */
-    parseFSH(fshContent: string): ActorDefinition;
+    parseFSH(fshContent: string): Promise<ActorDefinition>;
     /**
      * Validate actor definition against schema and business rules
      */

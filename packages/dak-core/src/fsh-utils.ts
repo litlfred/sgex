@@ -2,7 +2,46 @@
  * FSH (FHIR Shorthand) Utility Functions
  * Shared FSH parsing and generation utilities for all DAK components
  * Extracted from duplicated code across actorDefinitionService, QuestionnaireEditor, and DecisionSupportLogicView
+ * 
+ * REFACTORED: Now uses fsh-sushi module's tokenizer and parser with lazy loading
+ * Lazy loads fsh-sushi on first use for optimal performance
  */
+
+// Lazy-loaded SUSHI parser - loaded on first use
+let importText: any = null;
+let sushiLoadPromise: Promise<any> | null = null;
+
+/**
+ * Lazy load the fsh-sushi module
+ * Uses dynamic import for code splitting and lazy loading
+ */
+async function loadSushiParser(): Promise<any> {
+  if (importText) {
+    return importText;
+  }
+  
+  if (!sushiLoadPromise) {
+    sushiLoadPromise = (async () => {
+      try {
+        // Dynamic import with webpack magic comments for proper code splitting
+        // webpackChunkName tells webpack to name this chunk
+        // webpackMode: "lazy" ensures lazy loading
+        const fshSushi = await import(
+          /* webpackChunkName: "fsh-sushi" */
+          /* webpackMode: "lazy" */
+          'fsh-sushi'
+        );
+        importText = fshSushi.sushiImport.importText;
+        return importText;
+      } catch (error) {
+        console.warn('Failed to load fsh-sushi module:', error);
+        throw error;
+      }
+    })();
+  }
+  
+  return sushiLoadPromise;
+}
 
 /**
  * FSH Field Patterns - Common regex patterns for parsing FSH content
@@ -64,6 +103,7 @@ export function parseFSHField(content: string, patterns: RegExp | RegExp[]): str
 
 /**
  * Extract basic FSH metadata (id, title, description, status, name)
+ * Now uses SUSHI's parser with lazy loading for proper tokenization
  */
 export interface FSHMetadata {
   id?: string;
@@ -74,15 +114,71 @@ export interface FSHMetadata {
   type?: string;
 }
 
-export function extractFSHMetadata(fshContent: string): FSHMetadata {
-  return {
-    id: parseFSHField(fshContent, [FSH_PATTERNS.ID, FSH_PATTERNS.PROFILE, FSH_PATTERNS.INSTANCE]),
-    title: parseFSHField(fshContent, FSH_PATTERNS.TITLE),
-    name: parseFSHField(fshContent, FSH_PATTERNS.NAME),
-    description: parseFSHField(fshContent, FSH_PATTERNS.DESCRIPTION),
-    status: parseFSHField(fshContent, FSH_PATTERNS.STATUS),
-    type: parseFSHField(fshContent, FSH_PATTERNS.TYPE),
-  };
+export async function extractFSHMetadata(fshContent: string): Promise<FSHMetadata> {
+  // Try to use SUSHI parser with lazy loading
+  try {
+    const parser = await loadSushiParser();
+    
+    const rawFSH: { content: string; path: string } = {
+      content: fshContent,
+      path: 'inline.fsh'
+    };
+    
+    const docs = parser([rawFSH]);
+    
+    if (docs.length === 0) {
+      throw new Error('No documents parsed');
+    }
+    
+    const doc = docs[0];
+    const metadata: FSHMetadata = {};
+    
+    // Try to extract metadata from any entity in the document
+    const entities = [
+      ...doc.profiles.values(),
+      ...doc.extensions.values(),
+      ...doc.instances.values(),
+      ...doc.valueSets.values(),
+      ...doc.codeSystems.values(),
+      ...doc.logicals.values()
+    ];
+    
+    if (entities.length === 0) {
+      // No entities parsed successfully, fall back to regex
+      throw new Error('No entities found in document');
+    }
+    
+    const entity = entities[0];
+    metadata.id = entity.id;
+    metadata.name = entity.name;
+    metadata.title = entity.title;
+    metadata.description = entity.description;
+    
+    // Extract status if available
+    if ('status' in entity) {
+      metadata.status = (entity as any).status;
+    }
+    
+    // Determine type
+    if (doc.profiles.size > 0) metadata.type = 'Profile';
+    else if (doc.extensions.size > 0) metadata.type = 'Extension';
+    else if (doc.instances.size > 0) metadata.type = 'Instance';
+    else if (doc.valueSets.size > 0) metadata.type = 'ValueSet';
+    else if (doc.codeSystems.size > 0) metadata.type = 'CodeSystem';
+    else if (doc.logicals.size > 0) metadata.type = 'Logical';
+    
+    return metadata;
+  } catch (error) {
+    // Fallback to regex-based parsing if SUSHI fails to load or parse
+    return {
+      id: parseFSHField(fshContent, [FSH_PATTERNS.ID, FSH_PATTERNS.PROFILE, FSH_PATTERNS.INSTANCE]),
+      title: parseFSHField(fshContent, FSH_PATTERNS.TITLE),
+      name: parseFSHField(fshContent, FSH_PATTERNS.NAME),
+      description: parseFSHField(fshContent, FSH_PATTERNS.DESCRIPTION),
+      status: parseFSHField(fshContent, FSH_PATTERNS.STATUS),
+      type: parseFSHField(fshContent, FSH_PATTERNS.TYPE),
+    };
+  }
 }
 
 /**
@@ -113,6 +209,9 @@ export function unescapeFSHString(str: string | undefined | null): string {
 
 /**
  * Parse FSH lines into structured data
+ * 
+ * DEPRECATED: This function is kept for backward compatibility but is no longer recommended.
+ * Use SUSHI's importText function directly for proper FSH parsing.
  */
 export interface ParsedFSHLine {
   indent: number;
@@ -123,6 +222,7 @@ export interface ParsedFSHLine {
 }
 
 export function parseFSHLines(fshContent: string): ParsedFSHLine[] {
+  console.warn('parseFSHLines is deprecated. Consider using SUSHI\'s importText for proper FSH parsing.');
   return fshContent.split('\n').map(line => {
     const trimmed = line.trim();
     const indent = line.length - line.trimStart().length;
@@ -186,85 +286,84 @@ export interface FSHConcept {
   [key: string]: any;
 }
 
-export function parseFSHCodeSystem(fshContent: string): FSHConcept[] {
-  const lines = fshContent.split('\n');
+export async function parseFSHCodeSystem(fshContent: string): Promise<FSHConcept[]> {
+  // Try to use SUSHI parser with lazy loading
+  try {
+    const parser = await loadSushiParser();
+    
+    const rawFSH: { content: string; path: string } = {
+      content: fshContent,
+      path: 'inline.fsh'
+    };
+    
+    const docs = parser([rawFSH]);
+    
+    if (docs.length === 0) {
+      throw new Error('No documents parsed');
+    }
+    
+    const doc = docs[0];
+    const concepts: FSHConcept[] = [];
+    
+    // Find CodeSystem in the document
+    const codeSystem = doc.codeSystems.values().next().value;
+    
+    if (!codeSystem || !codeSystem.rules) {
+      throw new Error('No code system found');
+    }
+    
+    // Convert SUSHI ConceptRules to our format
+    for (const rule of codeSystem.rules) {
+      // Check if this is a ConceptRule (has code, display, definition)
+      if ('code' in rule && typeof rule.code === 'string') {
+        const fshConcept: FSHConcept = {
+          code: rule.code,
+          display: (rule as any).display,
+          definition: (rule as any).definition,
+          properties: {}
+        };
+        
+        concepts.push(fshConcept);
+      }
+    }
+    
+    return concepts;
+  } catch (error) {
+    // Fallback to basic parsing if SUSHI fails to load or parse
+    return parseFSHCodeSystemBasic(fshContent);
+  }
+}
+
+/**
+ * Fallback basic FSH code system parser (for backward compatibility)
+ * Only used if SUSHI parser fails
+ */
+function parseFSHCodeSystemBasic(fshContent: string): FSHConcept[] {
   const concepts: FSHConcept[] = [];
   let currentConcept: FSHConcept | null = null;
-  let multiLineState: string | null = null;
-  let multiLineContent: string[] = [];
   
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  // Simple line-by-line parsing for basic cases
+  const lines = fshContent.split('\n');
+  
+  for (const line of lines) {
     const trimmed = line.trim();
     
-    // Check if this is a top-level concept (starts with * # and is not indented)
-    const isTopLevel = line.startsWith('* #') && !line.startsWith('  ');
-    
-    if (isTopLevel) {
-      // Finish any ongoing multi-line content
-      if (multiLineState && currentConcept) {
-        currentConcept[multiLineState] = multiLineContent.join('\n').trim();
-        multiLineState = null;
-        multiLineContent = [];
-      }
-      
-      // Save previous concept
+    // Check if this is a top-level concept
+    const conceptMatch = trimmed.match(/^\*\s*#(\S+)\s*"([^"]*)"/);
+    if (conceptMatch) {
       if (currentConcept) {
         concepts.push(currentConcept);
       }
       
-      // Parse new concept code
-      const match = trimmed.match(/^\*\s*#(\S+)/);
-      if (match) {
-        currentConcept = {
-          code: match[1],
-          properties: {}
-        };
-        
-        // Check for inline display or definition
-        const displayMatch = trimmed.match(/"([^"]+)"/);
-        if (displayMatch) {
-          currentConcept.display = displayMatch[1];
-        }
-      }
-    } else if (currentConcept && trimmed) {
-      // Parse property lines for current concept
-      if (trimmed.includes('"') && !multiLineState) {
-        // Extract property name and value
-        const propMatch = trimmed.match(/\s*\*\s*([^"]+)\s*"([^"]*)"/);
-        if (propMatch) {
-          const propName = propMatch[1].trim();
-          const propValue = propMatch[2];
-          
-          if (propName) {
-            // Check if this is a multi-line start (value is empty or incomplete)
-            if (!propValue || propValue === '') {
-              multiLineState = propName;
-              multiLineContent = [];
-            } else {
-              currentConcept.properties![propName] = propValue;
-              
-              // Also set as top-level property for common fields
-              if (propName === 'display' || propName === 'Display') {
-                currentConcept.display = propValue;
-              } else if (propName === 'definition' || propName === 'Definition') {
-                currentConcept.definition = propValue;
-              }
-            }
-          }
-        }
-      } else if (multiLineState) {
-        // Collect multi-line content
-        multiLineContent.push(line);
-      }
+      currentConcept = {
+        code: conceptMatch[1],
+        display: conceptMatch[2] || conceptMatch[1],
+        properties: {}
+      };
     }
   }
   
-  // Save last concept
   if (currentConcept) {
-    if (multiLineState) {
-      currentConcept[multiLineState] = multiLineContent.join('\n').trim();
-    }
     concepts.push(currentConcept);
   }
   

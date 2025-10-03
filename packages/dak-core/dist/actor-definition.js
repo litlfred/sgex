@@ -96,8 +96,8 @@ class ActorDefinitionCore extends base_component_1.BaseDAKComponent {
     /**
      * Parse FSH content back to actor definition
      */
-    parseFSH(fshContent) {
-        const metadata = (0, fsh_utils_1.extractFSHMetadata)(fshContent);
+    async parseFSH(fshContent) {
+        const metadata = await (0, fsh_utils_1.extractFSHMetadata)(fshContent);
         const actor = {
             id: metadata.id || '',
             name: metadata.title || metadata.name || '',

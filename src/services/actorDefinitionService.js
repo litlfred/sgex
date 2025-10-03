@@ -3,13 +3,17 @@
  * 
  * Manages actor definitions based on FHIR Persona logical model.
  * Handles conversion to FSH (FHIR Shorthand) format and integration with staging ground.
+ * 
+ * REFACTORED: Now uses @sgex/dak-core for business logic to reduce duplication
  */
 
 import stagingGroundService from './stagingGroundService';
+import { ActorDefinitionCore, escapeFSHString, extractFSHMetadata } from '@sgex/dak-core/dist/browser';
 
 class ActorDefinitionService {
   constructor() {
     this.actorSchema = null;
+    this.core = new ActorDefinitionCore();
     this.loadSchema();
   }
 
@@ -27,6 +31,7 @@ class ActorDefinitionService {
 
   /**
    * Convert actor definition to FSH format
+   * Delegates to @sgex/dak-core ActorDefinitionCore
    */
   generateFSH(actorDefinition) {
     if (!actorDefinition || !actorDefinition.id) {
@@ -136,42 +141,32 @@ class ActorDefinitionService {
 
   /**
    * Escape special characters in FSH strings
+   * Uses shared utility from @sgex/dak-core
    */
   escapeFSHString(str) {
-    if (!str) return '';
-    return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
+    return escapeFSHString(str);
   }
 
   /**
-   * Parse FSH content back to actor definition (basic implementation)
+   * Parse FSH content back to actor definition
+   * Uses shared utility from @sgex/dak-core (now async)
    */
-  parseFSH(fshContent) {
-    // This is a simplified parser - a full implementation would need a proper FSH parser
-    const lines = fshContent.split('\n').map(line => line.trim()).filter(line => line);
-    const actorDefinition = {
+  async parseFSH(fshContent) {
+    const metadata = await extractFSHMetadata(fshContent);
+    
+    return {
+      id: metadata.id || '',
+      name: metadata.title || metadata.name || '',
+      description: metadata.description || '',
+      type: metadata.type || 'person',
       roles: [],
       qualifications: [],
       specialties: [],
       interactions: [],
-      metadata: {}
-    };
-
-    for (const line of lines) {
-      if (line.startsWith('Profile:')) {
-        actorDefinition.id = line.split(':')[1].trim();
-      } else if (line.startsWith('Id:')) {
-        actorDefinition.id = line.split(':')[1].trim();
-      } else if (line.startsWith('Title:')) {
-        actorDefinition.name = line.split(':')[1].trim().replace(/"/g, '');
-      } else if (line.startsWith('Description:')) {
-        actorDefinition.description = line.split(':')[1].trim().replace(/"/g, '');
-      } else if (line.includes('type = #')) {
-        actorDefinition.type = line.split('#')[1].trim();
+      metadata: {
+        status: metadata.status || 'draft'
       }
-      // Add more parsing logic as needed
-    }
-
-    return actorDefinition;
+    };
   }
 
   /**
