@@ -48,33 +48,10 @@ const DecisionSupportLogicViewContent = () => {
   const [enhancedFullwidth, setEnhancedFullwidth] = useState(false);
   const [autoHide, setAutoHide] = useState(false);
 
-  // Handle PageProvider initialization issues - AFTER all hooks
-  if (pageParams.error) {
-    return (
-      <div className="decision-support-container">
-        <div className="error-message">
-          <h2>Page Context Error</h2>
-          <p>{pageParams.error}</p>
-          <p>This component requires a DAK repository context to function properly.</p>
-        </div>
-      </div>
-    );
-  }
-  
-  if (pageParams.loading) {
-    return (
-      <div className="decision-support-container">
-        <div className="loading-message">
-          <h2>Loading...</h2>
-          <p>Initializing page context...</p>
-        </div>
-      </div>
-    );
-  }
-  
+  // Extract profile, repository, branch for use in effects
   const { profile, repository, branch: selectedBranch } = pageParams;
 
-  // Load DAK decision support data
+  // Load DAK decision support data - MOVED BEFORE EARLY RETURNS
   useEffect(() => {
     const loadDecisionSupportData = async () => {
       if (!repository || !selectedBranch) return;
@@ -526,31 +503,6 @@ define "Contraindication Present":
     };
   };
 
-  // Filter and sort variables
-  useEffect(() => {
-    if (!dakDTCodeSystem?.concepts) return;
-    
-    let filtered = dakDTCodeSystem.concepts.filter(concept =>
-      concept.Code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      concept.Display?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      concept.Definition?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    
-    // Sort
-    filtered.sort((a, b) => {
-      const aVal = a[sortField] || '';
-      const bVal = b[sortField] || '';
-      
-      if (sortDirection === 'asc') {
-        return aVal.localeCompare(bVal);
-      } else {
-        return bVal.localeCompare(aVal);
-      }
-    });
-    
-    setFilteredVariables(filtered);
-  }, [dakDTCodeSystem, searchTerm, sortField, sortDirection]);
-
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -652,29 +604,6 @@ define "Contraindication Present":
   const handleToggleAutoHide = () => {
     setAutoHide(!autoHide);
   };
-
-  // Cleanup effect for enhanced fullwidth
-  useEffect(() => {
-    return () => {
-      // Clean up body class on unmount
-      document.body.classList.remove('enhanced-fullwidth-active');
-    };
-  }, []);
-
-  // Update body class when enhanced fullwidth changes
-  useEffect(() => {
-    if (enhancedFullwidth) {
-      document.body.classList.add('enhanced-fullwidth-active');
-    } else {
-      document.body.classList.remove('enhanced-fullwidth-active');
-    }
-    
-    return () => {
-      document.body.classList.remove('enhanced-fullwidth-active');
-    };
-  }, [enhancedFullwidth]);
-
-
 
   if (loading) {
     return (
