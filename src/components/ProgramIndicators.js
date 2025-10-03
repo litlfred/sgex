@@ -78,16 +78,22 @@ const ProgramIndicatorsContent = () => {
       id: fileName.replace('.fsh', ''),
       title: '',
       description: '',
+      name: '',
+      definition: '',
+      numerator: '',
+      denominator: '',
+      disaggregation: '',
       fileName: fileName,
-      content: content
+      content: content,
+      instanceOf: ''
     };
 
-    // Extract title from various possible formats
+    // Extract fields from FSH content
     const lines = content.split('\n');
     for (const line of lines) {
       const trimmedLine = line.trim();
       
-      // Look for Instance definition with title
+      // Look for Instance definition
       if (trimmedLine.startsWith('Instance:')) {
         const instanceMatch = trimmedLine.match(/Instance:\s*([^\s]+)/);
         if (instanceMatch) {
@@ -95,31 +101,92 @@ const ProgramIndicatorsContent = () => {
         }
       }
       
-      // Look for title field
-      if (trimmedLine.startsWith('* title =') || trimmedLine.startsWith('* title=')) {
-        const titleMatch = trimmedLine.match(/\* title\s*=\s*"([^"]+)"/);
+      // Look for InstanceOf to determine if it's a ProgramIndicator
+      if (trimmedLine.startsWith('InstanceOf:')) {
+        const instanceOfMatch = trimmedLine.match(/InstanceOf:\s*([^\s]+)/);
+        if (instanceOfMatch) {
+          measure.instanceOf = instanceOfMatch[1];
+        }
+      }
+      
+      // Look for Title field
+      if (trimmedLine.startsWith('Title:')) {
+        const titleMatch = trimmedLine.match(/Title:\s*"([^"]+)"/);
         if (titleMatch) {
           measure.title = titleMatch[1];
         }
       }
       
-      // Look for description field
-      if (trimmedLine.startsWith('* description =') || trimmedLine.startsWith('* description=')) {
-        const descMatch = trimmedLine.match(/\* description\s*=\s*"([^"]+)"/);
+      // Look for Description field
+      if (trimmedLine.startsWith('Description:')) {
+        const descMatch = trimmedLine.match(/Description:\s*"([^"]+)"/);
         if (descMatch) {
           measure.description = descMatch[1];
         }
       }
       
-      // Alternative title pattern (first line comment)
+      // Look for ProgramIndicator-specific fields
+      if (trimmedLine.startsWith('* name =')) {
+        const nameMatch = trimmedLine.match(/\* name\s*=\s*"([^"]+)"/);
+        if (nameMatch) {
+          measure.name = nameMatch[1];
+          // Use name as title if title is not set
+          if (!measure.title) {
+            measure.title = nameMatch[1];
+          }
+        }
+      }
+      
+      if (trimmedLine.startsWith('* definition =')) {
+        const defMatch = trimmedLine.match(/\* definition\s*=\s*"([^"]+)"/);
+        if (defMatch) {
+          measure.definition = defMatch[1];
+        }
+      }
+      
+      if (trimmedLine.startsWith('* numerator =')) {
+        const numMatch = trimmedLine.match(/\* numerator\s*=\s*"([^"]+)"/);
+        if (numMatch) {
+          measure.numerator = numMatch[1];
+        }
+      }
+      
+      if (trimmedLine.startsWith('* denominator =')) {
+        const denomMatch = trimmedLine.match(/\* denominator\s*=\s*"([^"]+)"/);
+        if (denomMatch) {
+          measure.denominator = denomMatch[1];
+        }
+      }
+      
+      if (trimmedLine.startsWith('* disaggregation =')) {
+        const disagMatch = trimmedLine.match(/\* disaggregation\s*=\s*"([^"]+)"/);
+        if (disagMatch) {
+          measure.disaggregation = disagMatch[1];
+        }
+      }
+      
+      // Alternative parsing for older formats
+      if (trimmedLine.startsWith('* title =') || trimmedLine.startsWith('* title=')) {
+        const titleMatch = trimmedLine.match(/\* title\s*=\s*"([^"]+)"/);
+        if (titleMatch && !measure.title) {
+          measure.title = titleMatch[1];
+        }
+      }
+      
+      // First line comment as fallback title
       if (trimmedLine.startsWith('//') && !measure.title) {
         measure.title = trimmedLine.replace('//', '').trim();
       }
     }
 
-    // If no title found, use filename
+    // If no title found, use id or filename
     if (!measure.title) {
-      measure.title = measure.id || fileName.replace('.fsh', '');
+      measure.title = measure.name || measure.id || fileName.replace('.fsh', '');
+    }
+    
+    // Build comprehensive description for display
+    if (!measure.description && measure.definition) {
+      measure.description = measure.definition;
     }
 
     return measure;
@@ -290,32 +357,26 @@ const ProgramIndicatorsContent = () => {
     const measureId = `${sanitizedName}`;
     const measureTitle = newMeasureName.trim();
 
+    // Use WHO ProgramIndicator logical model template
     const measureTemplate = `Instance: ${measureId}
-InstanceOf: Measure
+InstanceOf: ProgramIndicator
 Usage: #definition
 Title: "${measureTitle}"
-Description: "Performance indicator for ${measureTitle}"
-* status = #draft
-* experimental = true
-* date = "${new Date().toISOString().split('T')[0]}"
-* publisher = "WHO SMART Guidelines"
-* type = #process
-* scoring = #proportion
+Description: "Program indicator for ${measureTitle}"
 
-* group.population[+].code = http://terminology.hl7.org/CodeSystem/measure-population#initial-population
-* group.population[=].description = "Initial population"
-* group.population[=].criteria.language = #text/cql
-* group.population[=].criteria.expression = "Initial Population"
+* id = "${measureId}"
+* name = "${measureTitle}"
+* definition = "Definition of what the indicator measures - describe the specific aspect of program performance this indicator tracks"
+* numerator = "Description of the numerator calculation - define what is counted in the numerator"
+* denominator = "Description of the denominator calculation - define the total population or comparison group"
+* disaggregation = "Description of how the indicator should be disaggregated - e.g., by age, sex, location, time period"
 
-* group.population[+].code = http://terminology.hl7.org/CodeSystem/measure-population#numerator
-* group.population[=].description = "Numerator"
-* group.population[=].criteria.language = #text/cql
-* group.population[=].criteria.expression = "Numerator"
+// Optional: Add description with more context
+// * description = "Extended description of the indicator purpose and usage"
 
-* group.population[+].code = http://terminology.hl7.org/CodeSystem/measure-population#denominator
-* group.population[=].description = "Denominator"
-* group.population[=].criteria.language = #text/cql
-* group.population[=].criteria.expression = "Denominator"
+// Optional: Add references to related Health Interventions
+// * references[+] = "HealthInterventionID1"
+// * references[+] = "HealthInterventionID2"
 `;
 
     // Show the template in a modal for editing/saving
@@ -323,7 +384,7 @@ Description: "Performance indicator for ${measureTitle}"
       id: measureId,
       title: measureTitle,
       fileName: `${sanitizedName}.fsh`,
-      description: `Performance indicator for ${measureTitle}`,
+      description: `Program indicator for ${measureTitle}`,
       content: measureTemplate,
       isNew: true
     });
@@ -499,9 +560,26 @@ Description: "Performance indicator for ${measureTitle}"
                 <div className="measure-header">
                   <h3 className="measure-title">{measure.title}</h3>
                   <span className="measure-id">{measure.id}</span>
+                  {measure.instanceOf && (
+                    <span className="instance-badge">{measure.instanceOf}</span>
+                  )}
                 </div>
                 {measure.description && (
                   <p className="measure-description">{measure.description}</p>
+                )}
+                {measure.instanceOf === 'ProgramIndicator' && (
+                  <div className="indicator-details">
+                    {measure.numerator && (
+                      <div className="indicator-field">
+                        <strong>Numerator:</strong> {measure.numerator.substring(0, 100)}{measure.numerator.length > 100 ? '...' : ''}
+                      </div>
+                    )}
+                    {measure.denominator && (
+                      <div className="indicator-field">
+                        <strong>Denominator:</strong> {measure.denominator.substring(0, 100)}{measure.denominator.length > 100 ? '...' : ''}
+                      </div>
+                    )}
+                  </div>
                 )}
                 <div className="measure-meta">
                   <span className="file-name">📄 {measure.fileName}</span>
@@ -540,8 +618,9 @@ Description: "Performance indicator for ${measureTitle}"
                   autoFocus
                 />
                 <div className="create-form-help">
-                  <p>This will create a new FHIR Measure file in FSH (FHIR Shorthand) format.</p>
+                  <p>This will create a new Program Indicator using the WHO SMART Guidelines ProgramIndicator logical model.</p>
                   <p>The file will be saved as: <code>input/fsh/measures/{newMeasureName.trim().replace(/[^a-zA-Z0-9-_]/g, '') || 'measure-name'}.fsh</code></p>
+                  <p className="model-reference">Model: <a href="https://github.com/WorldHealthOrganization/smart-base/blob/main/input/fsh/models/ProgramIndicator.fsh" target="_blank" rel="noopener noreferrer">ProgramIndicator</a></p>
                 </div>
                 <div className="create-form-actions">
                   <button 
@@ -575,16 +654,52 @@ Description: "Performance indicator for ${measureTitle}"
               <div className="file-info">
                 <span className="file-name">📄 {selectedFile.fileName}</span>
                 <span className="measure-id">ID: {selectedFile.id}</span>
+                {selectedFile.instanceOf && (
+                  <span className="instance-badge">{selectedFile.instanceOf}</span>
+                )}
                 {selectedFile.isNew && (
                   <span className="new-badge">✨ New</span>
                 )}
               </div>
+              
+              {/* Show ProgramIndicator fields if available */}
+              {selectedFile.instanceOf === 'ProgramIndicator' && !selectedFile.isNew && (
+                <div className="program-indicator-details">
+                  {selectedFile.name && (
+                    <div className="indicator-detail-field">
+                      <strong>Name:</strong> {selectedFile.name}
+                    </div>
+                  )}
+                  {selectedFile.definition && (
+                    <div className="indicator-detail-field">
+                      <strong>Definition:</strong> {selectedFile.definition}
+                    </div>
+                  )}
+                  {selectedFile.numerator && (
+                    <div className="indicator-detail-field">
+                      <strong>Numerator:</strong> {selectedFile.numerator}
+                    </div>
+                  )}
+                  {selectedFile.denominator && (
+                    <div className="indicator-detail-field">
+                      <strong>Denominator:</strong> {selectedFile.denominator}
+                    </div>
+                  )}
+                  {selectedFile.disaggregation && (
+                    <div className="indicator-detail-field">
+                      <strong>Disaggregation:</strong> {selectedFile.disaggregation}
+                    </div>
+                  )}
+                </div>
+              )}
+              
               {selectedFile.isNew && (
                 <div className="new-measure-notice">
-                  <p><strong>Template Generated</strong></p>
-                  <p>This is a template for your new measure. To save this measure to your repository:</p>
+                  <p><strong>WHO ProgramIndicator Template Generated</strong></p>
+                  <p>This template follows the WHO SMART Guidelines ProgramIndicator logical model from smart-base. To save this indicator to your repository:</p>
                   <ol>
                     <li>Review and customize the template below</li>
+                    <li>Fill in the required fields (name, definition, numerator, denominator, disaggregation)</li>
                     <li>Copy the content</li>
                     <li>Create a new file at <code>input/fsh/measures/{selectedFile.fileName}</code></li>
                     <li>Paste and save the content</li>

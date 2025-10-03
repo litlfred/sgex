@@ -500,6 +500,23 @@
   font-size: 0.85rem;
 }
 
+.model-reference {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #dee2e6;
+  font-size: 0.85rem;
+}
+
+.model-reference a {
+  color: #0078d4;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.model-reference a:hover {
+  text-decoration: underline;
+}
+
 .create-form-actions {
   display: flex;
   gap: 0.75rem;
@@ -543,4 +560,62 @@
   margin-top: 1rem;
   display: flex;
   gap: 0.5rem;
+}
+
+/* ProgramIndicator Display Styles */
+.instance-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.indicator-details {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e0e0e0;
+  font-size: 0.85rem;
+}
+
+.indicator-field {
+  margin: 0.5rem 0;
+  color: #5a6c7d;
+}
+
+.indicator-field strong {
+  color: #2c3e50;
+  display: inline-block;
+  min-width: 110px;
+}
+
+.program-indicator-details {
+  background: #f8f9fa;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.indicator-detail-field {
+  margin: 0.75rem 0;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.indicator-detail-field strong {
+  color: #667eea;
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.indicator-detail-field:last-child {
+  margin-bottom: 0;
 }
