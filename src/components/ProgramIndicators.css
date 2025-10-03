@@ -517,6 +517,12 @@
   text-decoration: underline;
 }
 
+.fallback-notice {
+  color: #e67e22;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
 .create-form-actions {
   display: flex;
   gap: 0.75rem;

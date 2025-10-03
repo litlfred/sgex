@@ -38,6 +38,73 @@ const ProgramIndicatorsContent = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newMeasureName, setNewMeasureName] = useState('');
   const [hasWriteAccess, setHasWriteAccess] = useState(false);
+  const [programIndicatorModel, setProgramIndicatorModel] = useState(null);
+  const [loadingModel, setLoadingModel] = useState(false);
+
+  // Fetch ProgramIndicator model from smart-base repository
+  const fetchProgramIndicatorModel = useCallback(async () => {
+    try {
+      setLoadingModel(true);
+      const modelUrl = 'https://raw.githubusercontent.com/WorldHealthOrganization/smart-base/main/input/fsh/models/ProgramIndicator.fsh';
+      const response = await fetch(modelUrl);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch ProgramIndicator model');
+      }
+      
+      const modelContent = await response.text();
+      
+      // Parse the model to extract field definitions
+      const fields = [];
+      const lines = modelContent.split('\n');
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        // Match field definitions like: * id 1..1 id "Indicator ID" "Description..."
+        const fieldMatch = trimmed.match(/^\*\s+(\w+)\s+([0-9.]+)\s+(\w+(?:\s+or\s+\w+)?)\s+"([^"]+)"\s+"([^"]+)"/);
+        if (fieldMatch) {
+          const [, name, cardinality, type, displayName, description] = fieldMatch;
+          const isRequired = cardinality.startsWith('1..');
+          fields.push({
+            name,
+            cardinality,
+            type,
+            displayName,
+            description,
+            isRequired
+          });
+        }
+      }
+      
+      setProgramIndicatorModel({
+        content: modelContent,
+        fields: fields,
+        url: modelUrl
+      });
+      
+      console.log('ProgramIndicators: Fetched ProgramIndicator model with', fields.length, 'fields');
+    } catch (error) {
+      console.warn('ProgramIndicators: Failed to fetch ProgramIndicator model:', error);
+      // Set a fallback model structure
+      setProgramIndicatorModel({
+        content: null,
+        fields: [
+          { name: 'id', cardinality: '1..1', type: 'id', displayName: 'Indicator ID', description: 'Identifier for the program indicator', isRequired: true },
+          { name: 'description', cardinality: '0..1', type: 'string or uri', displayName: 'Description', description: 'Description of the program indicator', isRequired: false },
+          { name: 'name', cardinality: '1..1', type: 'string', displayName: 'Name', description: 'Name of the indicator', isRequired: true },
+          { name: 'definition', cardinality: '1..1', type: 'string', displayName: 'Definition', description: 'Definition of what the indicator measures', isRequired: true },
+          { name: 'numerator', cardinality: '1..1', type: 'string', displayName: 'Numerator', description: 'Description of the numerator calculation', isRequired: true },
+          { name: 'denominator', cardinality: '1..1', type: 'string', displayName: 'Denominator', description: 'Description of the denominator calculation', isRequired: true },
+          { name: 'disaggregation', cardinality: '1..1', type: 'string', displayName: 'Disaggregation', description: 'Description of how the indicator should be disaggregated', isRequired: true },
+          { name: 'references', cardinality: '0..*', type: 'id', displayName: 'References', description: 'References to Health Intervention IDs', isRequired: false }
+        ],
+        url: modelUrl,
+        isFallback: true
+      });
+    } finally {
+      setLoadingModel(false);
+    }
+  }, []);
 
   // Check write permissions
   useEffect(() => {
@@ -346,10 +413,15 @@ const ProgramIndicatorsContent = () => {
     setShowCreateModal(true);
   };
 
-  // Generate template for new measure
+  // Generate template for new measure using dynamically fetched model
   const createNewMeasure = () => {
     if (!newMeasureName.trim()) {
       alert('Please enter a measure name');
+      return;
+    }
+
+    if (!programIndicatorModel) {
+      alert('ProgramIndicator model not loaded yet. Please try again in a moment.');
       return;
     }
 
@@ -357,27 +429,50 @@ const ProgramIndicatorsContent = () => {
     const measureId = `${sanitizedName}`;
     const measureTitle = newMeasureName.trim();
 
-    // Use WHO ProgramIndicator logical model template
-    const measureTemplate = `Instance: ${measureId}
-InstanceOf: ProgramIndicator
-Usage: #definition
-Title: "${measureTitle}"
-Description: "Program indicator for ${measureTitle}"
+    // Generate template dynamically from model fields
+    let templateLines = [
+      `Instance: ${measureId}`,
+      `InstanceOf: ProgramIndicator`,
+      `Usage: #definition`,
+      `Title: "${measureTitle}"`,
+      `Description: "Program indicator for ${measureTitle}"`,
+      ``
+    ];
 
-* id = "${measureId}"
-* name = "${measureTitle}"
-* definition = "Definition of what the indicator measures - describe the specific aspect of program performance this indicator tracks"
-* numerator = "Description of the numerator calculation - define what is counted in the numerator"
-* denominator = "Description of the denominator calculation - define the total population or comparison group"
-* disaggregation = "Description of how the indicator should be disaggregated - e.g., by age, sex, location, time period"
+    // Add required fields
+    const requiredFields = programIndicatorModel.fields.filter(f => f.isRequired);
+    for (const field of requiredFields) {
+      if (field.name === 'id') {
+        templateLines.push(`* ${field.name} = "${measureId}"`);
+      } else if (field.name === 'name') {
+        templateLines.push(`* ${field.name} = "${measureTitle}"`);
+      } else {
+        templateLines.push(`* ${field.name} = "${field.description}"`);
+      }
+    }
 
-// Optional: Add description with more context
-// * description = "Extended description of the indicator purpose and usage"
+    // Add optional fields as comments
+    templateLines.push(``);
+    templateLines.push(`// Optional fields:`);
+    const optionalFields = programIndicatorModel.fields.filter(f => !f.isRequired);
+    for (const field of optionalFields) {
+      if (field.cardinality.includes('*')) {
+        // Array field
+        templateLines.push(`// * ${field.name}[+] = "value1"`);
+        templateLines.push(`// * ${field.name}[+] = "value2"`);
+      } else {
+        templateLines.push(`// * ${field.name} = "${field.description}"`);
+      }
+    }
 
-// Optional: Add references to related Health Interventions
-// * references[+] = "HealthInterventionID1"
-// * references[+] = "HealthInterventionID2"
-`;
+    // Add model reference
+    templateLines.push(``);
+    templateLines.push(`// Model reference: ${programIndicatorModel.url}`);
+    if (programIndicatorModel.isFallback) {
+      templateLines.push(`// Note: Using fallback model structure (could not fetch from smart-base)`);
+    }
+
+    const measureTemplate = templateLines.join('\n');
 
     // Show the template in a modal for editing/saving
     setSelectedFile({
@@ -408,7 +503,12 @@ Description: "Program indicator for ${measureTitle}"
       fetchBranches();
       checkPublishedIG();
     }
-  }, [user, repo, effectiveBranch, fetchMeasureFiles, fetchBranches, checkPublishedIG]);
+    
+    // Fetch ProgramIndicator model once when component mounts
+    if (!programIndicatorModel) {
+      fetchProgramIndicatorModel();
+    }
+  }, [user, repo, effectiveBranch, fetchMeasureFiles, fetchBranches, checkPublishedIG, programIndicatorModel, fetchProgramIndicatorModel]);
 
   if (loading) {
     return (
@@ -500,8 +600,9 @@ Description: "Program indicator for ${measureTitle}"
                 onClick={handleCreateMeasure}
                 className="action-btn primary create-btn"
                 title="Create a new measure file"
+                disabled={loadingModel}
               >
-                ➕ Create New Measure
+                {loadingModel ? '⏳ Loading Model...' : '➕ Create New Measure'}
               </button>
             </div>
           )}
@@ -545,8 +646,9 @@ Description: "Program indicator for ${measureTitle}"
                       onClick={handleCreateMeasure}
                       className="action-btn primary"
                       style={{ marginTop: '1rem' }}
+                      disabled={loadingModel}
                     >
-                      ➕ Create Your First Measure
+                      {loadingModel ? '⏳ Loading Model...' : '➕ Create Your First Measure'}
                     </button>
                   )}
                 </div>
@@ -619,8 +721,12 @@ Description: "Program indicator for ${measureTitle}"
                 />
                 <div className="create-form-help">
                   <p>This will create a new Program Indicator using the WHO SMART Guidelines ProgramIndicator logical model.</p>
+                  <p>The template is dynamically generated from the model definition in smart-base repository.</p>
                   <p>The file will be saved as: <code>input/fsh/measures/{newMeasureName.trim().replace(/[^a-zA-Z0-9-_]/g, '') || 'measure-name'}.fsh</code></p>
-                  <p className="model-reference">Model: <a href="https://github.com/WorldHealthOrganization/smart-base/blob/main/input/fsh/models/ProgramIndicator.fsh" target="_blank" rel="noopener noreferrer">ProgramIndicator</a></p>
+                  <p className="model-reference">
+                    Model: <a href="https://github.com/WorldHealthOrganization/smart-base/blob/main/input/fsh/models/ProgramIndicator.fsh" target="_blank" rel="noopener noreferrer">ProgramIndicator.fsh</a>
+                    {programIndicatorModel?.isFallback && <span className="fallback-notice"> (using fallback)</span>}
+                  </p>
                 </div>
                 <div className="create-form-actions">
                   <button 
