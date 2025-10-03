@@ -14,7 +14,13 @@ const PersonaViewer = () => {
 const PersonaViewerContent = () => {
   const pageContext = usePage();
   
-  // Handle case where PageProvider context might be null
+  // All hooks must be called before any early returns
+  const [actors, setActors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [scanStatus, setScanStatus] = useState('');
+  
+  // Handle case where PageProvider context might be null - AFTER all hooks
   if (!pageContext) {
     return (
       <div className="persona-viewer">
@@ -40,11 +46,6 @@ const PersonaViewerContent = () => {
   const user = profile?.login;
   const repo = repository?.name;
   const selectedBranch = branch || repository?.default_branch || 'main';
-  
-  const [actors, setActors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [scanStatus, setScanStatus] = useState('');
 
   // Helper function to parse FSH file content for actor definitions
   const parseFshFileForActors = useCallback((filePath, content) => {

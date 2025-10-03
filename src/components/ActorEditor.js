@@ -171,6 +171,64 @@ const ActorEditor = () => {
     }
   }, [actorDefinition]);
 
+  // Save actor definition to staging ground
+  const handleSave = useCallback(async () => {
+    if (!validateForm()) {
+      return;
+    }
+    
+    setSaving(true);
+    
+    try {
+      actorDefinitionService.saveToStagingGround(actorDefinition, {
+        type: 'actor-definition',
+        actorId: actorDefinition.id,
+        actorName: actorDefinition.name,
+        branch: branch,
+        repository: repository?.name,
+        owner: profile?.login
+      });
+      
+      // Refresh staged actors list
+      const staged = actorDefinitionService.listStagedActors();
+      setStagedActors(staged);
+      
+      setErrors({});
+    } catch (error) {
+      console.error('Error saving actor definition:', error);
+      setErrors({ general: 'Failed to save actor definition' });
+    } finally {
+      setSaving(false);
+    }
+  }, [actorDefinition, validateForm, branch, repository, profile]);
+
+  // Load template
+  const loadTemplate = useCallback((templateId) => {
+    const templates = actorDefinitionService.getActorTemplates();
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setActorDefinition(template);
+    }
+  }, []);
+
+  // Load staged actor
+  const loadStagedActor = useCallback((actorId) => {
+    const actorData = actorDefinitionService.getFromStagingGround(actorId);
+    if (actorData) {
+      setActorDefinition(actorData.actorDefinition);
+      setShowActorList(false);
+    }
+  }, []);
+
+  // Delete staged actor
+  const deleteStagedActor = useCallback((actorId) => {
+    if (window.confirm('Are you sure you want to delete this staged actor?')) {
+      actorDefinitionService.removeFromStagingGround(actorId);
+      const staged = actorDefinitionService.listStagedActors();
+      setStagedActors(staged);
+    }
+  }, []);
+
   // Handle PageProvider initialization issues - AFTER all hooks
   if (pageParams.error) {
     return (
