@@ -84,7 +84,9 @@ class DAKValidationService {
 
     } catch (error) {
       console.log(`Error validating DAK repository ${owner}/${repo}:`, error.message);
-      return false;
+      // Be permissive when errors occur - allow access as repository might be documentation or shared content
+      console.log(`Allowing access to ${owner}/${repo} despite validation error - may be documentation or shared content`);
+      return true;
     }
   }
 

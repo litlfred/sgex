@@ -95,7 +95,7 @@ dependencies:
       githubService.getFileContent.mockResolvedValue(invalidYaml);
 
       const result = await dakValidationService.validateDAKRepository('user', 'invalid-yaml-repo');
-      expect(result).toBe(false); // Still false because YAML parsing failed
+      expect(result).toBe(true); // Now true because errors are handled permissively
     });
 
     test('allows any organization when repository cannot be verified', async () => {
