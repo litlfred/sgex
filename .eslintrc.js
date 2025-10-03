@@ -11,7 +11,6 @@ module.exports = {
     {
       files: ['*.ts', '*.tsx'],
       parser: '@typescript-eslint/parser',
-      plugins: ['@typescript-eslint'],
       extends: [
         'react-app',
         'react-app/jest',
