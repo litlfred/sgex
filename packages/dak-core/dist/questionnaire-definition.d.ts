@@ -58,7 +58,7 @@ export declare class QuestionnaireDefinitionCore extends BaseDAKComponent<Questi
     /**
      * Parse FSH content to questionnaire definition
      */
-    parseFSH(fshContent: string): QuestionnaireDefinition;
+    parseFSH(fshContent: string): Promise<QuestionnaireDefinition>;
     /**
      * Validate questionnaire definition
      */
@@ -70,11 +70,11 @@ export declare class QuestionnaireDefinitionCore extends BaseDAKComponent<Questi
     /**
      * Extract FSH metadata from content (static helper for backward compatibility)
      */
-    static extractMetadata(fshContent: string): {
+    static extractMetadata(fshContent: string): Promise<{
         title?: string;
         name?: string;
         description?: string;
         status?: string;
-    };
+    }>;
 }
 export declare const questionnaireDefinitionCore: QuestionnaireDefinitionCore;

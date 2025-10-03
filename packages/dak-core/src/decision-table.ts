@@ -92,9 +92,9 @@ export class DecisionTableCore extends BaseDAKComponent<DecisionTable> {
   /**
    * Parse FSH code system to decision table
    */
-  parseFSH(fshContent: string): DecisionTable {
-    const metadata = extractFSHMetadata(fshContent);
-    const concepts = parseFSHCodeSystem(fshContent);
+  async parseFSH(fshContent: string): Promise<DecisionTable> {
+    const metadata = await extractFSHMetadata(fshContent);
+    const concepts = await parseFSHCodeSystem(fshContent);
     
     // Convert FSHConcept to DecisionTableVariable format
     const variables: DecisionTableVariable[] = concepts.map(concept => ({
@@ -193,8 +193,8 @@ export class DecisionTableCore extends BaseDAKComponent<DecisionTable> {
   /**
    * Parse FSH code system (static helper for backward compatibility)
    */
-  static parseFSHCodeSystem(fshContent: string): DecisionTableVariable[] {
-    const concepts = parseFSHCodeSystem(fshContent);
+  static async parseFSHCodeSystem(fshContent: string): Promise<DecisionTableVariable[]> {
+    const concepts = await parseFSHCodeSystem(fshContent);
     return concepts.map(concept => ({
       Code: concept.code,
       Display: concept.display || concept.code,

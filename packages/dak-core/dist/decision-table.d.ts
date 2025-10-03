@@ -34,7 +34,7 @@ export declare class DecisionTableCore extends BaseDAKComponent<DecisionTable> {
     /**
      * Parse FSH code system to decision table
      */
-    parseFSH(fshContent: string): DecisionTable;
+    parseFSH(fshContent: string): Promise<DecisionTable>;
     /**
      * Validate decision table
      */
@@ -46,7 +46,7 @@ export declare class DecisionTableCore extends BaseDAKComponent<DecisionTable> {
     /**
      * Parse FSH code system (static helper for backward compatibility)
      */
-    static parseFSHCodeSystem(fshContent: string): DecisionTableVariable[];
+    static parseFSHCodeSystem(fshContent: string): Promise<DecisionTableVariable[]>;
     /**
      * Create decision table from concepts
      */

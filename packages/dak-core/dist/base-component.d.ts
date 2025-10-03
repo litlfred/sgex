@@ -65,8 +65,9 @@ export declare abstract class BaseDAKComponent<T extends DAKComponentBase> {
     abstract generateFSH(): string;
     /**
      * Parse FSH content (must be implemented by subclasses)
+     * Now async to support lazy loading of fsh-sushi parser
      */
-    abstract parseFSH(fshContent: string): T;
+    abstract parseFSH(fshContent: string): Promise<T>;
     /**
      * Get component schema for JSON validation
      */

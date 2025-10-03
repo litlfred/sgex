@@ -85,8 +85,8 @@ const DecisionSupportLogicViewContent = () => {
             selectedBranch
           );
           
-          // Parse FSH content to extract code system data using shared utility
-          const concepts = parseFSHCodeSystem(fshContent);
+          // Parse FSH content to extract code system data using shared utility (now async)
+          const concepts = await parseFSHCodeSystem(fshContent);
           
           // Convert to expected format (map FSHConcept to DAK variable format)
           const dakConcepts = concepts.map(c => ({

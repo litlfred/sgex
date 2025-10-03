@@ -108,8 +108,8 @@ class QuestionnaireDefinitionCore extends base_component_1.BaseDAKComponent {
     /**
      * Parse FSH content to questionnaire definition
      */
-    parseFSH(fshContent) {
-        const metadata = (0, fsh_utils_1.extractFSHMetadata)(fshContent);
+    async parseFSH(fshContent) {
+        const metadata = await (0, fsh_utils_1.extractFSHMetadata)(fshContent);
         const questionnaire = {
             id: metadata.id || '',
             name: metadata.name || metadata.title || '',
@@ -206,8 +206,8 @@ class QuestionnaireDefinitionCore extends base_component_1.BaseDAKComponent {
     /**
      * Extract FSH metadata from content (static helper for backward compatibility)
      */
-    static extractMetadata(fshContent) {
-        return (0, fsh_utils_1.extractFSHMetadata)(fshContent);
+    static async extractMetadata(fshContent) {
+        return await (0, fsh_utils_1.extractFSHMetadata)(fshContent);
     }
 }
 exports.QuestionnaireDefinitionCore = QuestionnaireDefinitionCore;

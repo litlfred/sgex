@@ -149,10 +149,10 @@ class ActorDefinitionService {
 
   /**
    * Parse FSH content back to actor definition
-   * Uses shared utility from @sgex/dak-core
+   * Uses shared utility from @sgex/dak-core (now async)
    */
-  parseFSH(fshContent) {
-    const metadata = extractFSHMetadata(fshContent);
+  async parseFSH(fshContent) {
+    const metadata = await extractFSHMetadata(fshContent);
     
     return {
       id: metadata.id || '',

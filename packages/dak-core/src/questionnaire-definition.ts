@@ -168,8 +168,8 @@ export class QuestionnaireDefinitionCore extends BaseDAKComponent<QuestionnaireD
   /**
    * Parse FSH content to questionnaire definition
    */
-  parseFSH(fshContent: string): QuestionnaireDefinition {
-    const metadata = extractFSHMetadata(fshContent);
+  async parseFSH(fshContent: string): Promise<QuestionnaireDefinition> {
+    const metadata = await extractFSHMetadata(fshContent);
     
     const questionnaire: QuestionnaireDefinition = {
       id: metadata.id || '',
@@ -284,13 +284,13 @@ export class QuestionnaireDefinitionCore extends BaseDAKComponent<QuestionnaireD
   /**
    * Extract FSH metadata from content (static helper for backward compatibility)
    */
-  static extractMetadata(fshContent: string): {
+  static async extractMetadata(fshContent: string): Promise<{
     title?: string;
     name?: string;
     description?: string;
     status?: string;
-  } {
-    return extractFSHMetadata(fshContent);
+  }> {
+    return await extractFSHMetadata(fshContent);
   }
 }
 

@@ -429,14 +429,14 @@ const QuestionnaireEditorContent = () => {
         // Parse JSON questionnaire
         questionnaireData = JSON.parse(content);
       } else if (questionnaire.fileType === 'FSH') {
-        // For FSH files, create a preview object with metadata
+        // For FSH files, create a preview object with metadata (async extraction)
         questionnaireData = {
           resourceType: 'Questionnaire',
           fileType: 'FSH',
-          title: extractFshTitle(content) || questionnaire.displayName,
-          status: extractFshStatus(content) || 'draft',
-          name: extractFshName(content) || questionnaire.displayName,
-          description: extractFshDescription(content) || 'FHIR Shorthand Questionnaire',
+          title: await extractFshTitle(content) || questionnaire.displayName,
+          status: await extractFshStatus(content) || 'draft',
+          name: await extractFshName(content) || questionnaire.displayName,
+          description: await extractFshDescription(content) || 'FHIR Shorthand Questionnaire',
           rawContent: content,
           isReadOnly: true
         };
@@ -457,24 +457,24 @@ const QuestionnaireEditorContent = () => {
   };
 
   // Helper functions to extract metadata from FSH content
-  // Now using shared utilities from @sgex/dak-core
-  const extractFshTitle = (content) => {
-    const metadata = extractFSHMetadata(content);
+  // Now using shared utilities from @sgex/dak-core (async)
+  const extractFshTitle = async (content) => {
+    const metadata = await extractFSHMetadata(content);
     return metadata.title || metadata.name || null;
   };
 
-  const extractFshStatus = (content) => {
-    const metadata = extractFSHMetadata(content);
+  const extractFshStatus = async (content) => {
+    const metadata = await extractFSHMetadata(content);
     return metadata.status || null;
   };
 
-  const extractFshName = (content) => {
-    const metadata = extractFSHMetadata(content);
+  const extractFshName = async (content) => {
+    const metadata = await extractFSHMetadata(content);
     return metadata.name || metadata.id || null;
   };
 
-  const extractFshDescription = (content) => {
-    const metadata = extractFSHMetadata(content);
+  const extractFshDescription = async (content) => {
+    const metadata = await extractFSHMetadata(content);
     return metadata.description || null;
   };
 

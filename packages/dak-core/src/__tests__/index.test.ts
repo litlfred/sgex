@@ -215,7 +215,7 @@ describe('DAK Core Package', () => {
       expect(fsh).toContain('status = #draft');
     });
 
-    test('should extract FSH metadata', () => {
+    test('should extract FSH metadata', async () => {
       const fshContent = `
 Instance: TestQuestionnaire
 Title: "Test Questionnaire"
@@ -224,7 +224,7 @@ Description: "A test questionnaire"
 * title = "Test"
       `;
       
-      const metadata = QuestionnaireDefinitionCore.extractMetadata(fshContent);
+      const metadata = await QuestionnaireDefinitionCore.extractMetadata(fshContent);
       
       expect(metadata.title).toBe('Test Questionnaire');
       expect(metadata.status).toBe('draft');
@@ -265,7 +265,7 @@ Description: "A test questionnaire"
       expect(result.errors).toHaveLength(0);
     });
 
-    test('should parse FSH code system', () => {
+    test('should parse FSH code system', async () => {
       const fshContent = `
 CodeSystem: DAKDT
 Title: "DAK Decision Table Variables"
@@ -276,7 +276,7 @@ Title: "DAK Decision Table Variables"
   * ^definition = "Second variable"
       `;
       
-      const variables = DecisionTableCore.parseFSHCodeSystem(fshContent);
+      const variables = await DecisionTableCore.parseFSHCodeSystem(fshContent);
       
       expect(variables).toHaveLength(2);
       expect(variables[0].Code).toBe('VAR1');

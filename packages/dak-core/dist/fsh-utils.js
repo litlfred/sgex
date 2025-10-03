@@ -4,9 +4,42 @@
  * Shared FSH parsing and generation utilities for all DAK components
  * Extracted from duplicated code across actorDefinitionService, QuestionnaireEditor, and DecisionSupportLogicView
  *
- * REFACTORED: Now uses fsh-sushi module's tokenizer and parser when available (Node.js),
- * with regex fallback for browser environments
+ * REFACTORED: Now uses fsh-sushi module's tokenizer and parser with lazy loading
+ * Lazy loads fsh-sushi on first use for optimal performance
  */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FSH_PATTERNS = void 0;
 exports.parseFSHField = parseFSHField;
@@ -18,23 +51,37 @@ exports.generateFSHHeader = generateFSHHeader;
 exports.parseFSHCodeSystem = parseFSHCodeSystem;
 exports.generateFSHCodeSystem = generateFSHCodeSystem;
 exports.validateFSHSyntax = validateFSHSyntax;
-// Conditional import of fsh-sushi - only available in Node.js
+// Lazy-loaded SUSHI parser - loaded on first use
 let importText = null;
-let sushiAvailable = false;
-try {
-    // This will only work in Node.js environment
-    // @ts-ignore - dynamic require for conditional loading
-    // webpack magic comment to ignore this module in browser builds
-    if (typeof window === 'undefined' && typeof process !== 'undefined') {
-        /* webpackIgnore: true */
-        const { sushiImport } = eval('require')('fsh-sushi');
-        importText = sushiImport.importText;
-        sushiAvailable = true;
+let sushiLoadPromise = null;
+/**
+ * Lazy load the fsh-sushi module
+ * Uses dynamic import for code splitting and lazy loading
+ */
+async function loadSushiParser() {
+    if (importText) {
+        return importText;
     }
-}
-catch (error) {
-    // SUSHI not available or in browser environment - will use regex fallback
-    sushiAvailable = false;
+    if (!sushiLoadPromise) {
+        sushiLoadPromise = (async () => {
+            try {
+                // Dynamic import with webpack magic comments for proper code splitting
+                // webpackChunkName tells webpack to name this chunk
+                // webpackMode: "lazy" ensures lazy loading
+                const fshSushi = await Promise.resolve().then(() => __importStar(require(
+                /* webpackChunkName: "fsh-sushi" */
+                /* webpackMode: "lazy" */
+                'fsh-sushi')));
+                importText = fshSushi.sushiImport.importText;
+                return importText;
+            }
+            catch (error) {
+                console.warn('Failed to load fsh-sushi module:', error);
+                throw error;
+            }
+        })();
+    }
+    return sushiLoadPromise;
 }
 /**
  * FSH Field Patterns - Common regex patterns for parsing FSH content
@@ -86,70 +133,68 @@ function parseFSHField(content, patterns) {
     }
     return undefined;
 }
-function extractFSHMetadata(fshContent) {
-    // Try SUSHI parser first if available (Node.js environment)
-    if (sushiAvailable && importText) {
-        try {
-            const rawFSH = {
-                content: fshContent,
-                path: 'inline.fsh'
-            };
-            const docs = importText([rawFSH]);
-            if (docs.length === 0) {
-                throw new Error('No documents parsed');
-            }
-            const doc = docs[0];
-            const metadata = {};
-            // Try to extract metadata from any entity in the document
-            const entities = [
-                ...doc.profiles.values(),
-                ...doc.extensions.values(),
-                ...doc.instances.values(),
-                ...doc.valueSets.values(),
-                ...doc.codeSystems.values(),
-                ...doc.logicals.values()
-            ];
-            if (entities.length === 0) {
-                // No entities parsed successfully, fall back to regex
-                throw new Error('No entities found in document');
-            }
-            const entity = entities[0];
-            metadata.id = entity.id;
-            metadata.name = entity.name;
-            metadata.title = entity.title;
-            metadata.description = entity.description;
-            // Extract status if available
-            if ('status' in entity) {
-                metadata.status = entity.status;
-            }
-            // Determine type
-            if (doc.profiles.size > 0)
-                metadata.type = 'Profile';
-            else if (doc.extensions.size > 0)
-                metadata.type = 'Extension';
-            else if (doc.instances.size > 0)
-                metadata.type = 'Instance';
-            else if (doc.valueSets.size > 0)
-                metadata.type = 'ValueSet';
-            else if (doc.codeSystems.size > 0)
-                metadata.type = 'CodeSystem';
-            else if (doc.logicals.size > 0)
-                metadata.type = 'Logical';
-            return metadata;
+async function extractFSHMetadata(fshContent) {
+    // Try to use SUSHI parser with lazy loading
+    try {
+        const parser = await loadSushiParser();
+        const rawFSH = {
+            content: fshContent,
+            path: 'inline.fsh'
+        };
+        const docs = parser([rawFSH]);
+        if (docs.length === 0) {
+            throw new Error('No documents parsed');
         }
-        catch (error) {
-            // Fall through to regex-based parsing
+        const doc = docs[0];
+        const metadata = {};
+        // Try to extract metadata from any entity in the document
+        const entities = [
+            ...doc.profiles.values(),
+            ...doc.extensions.values(),
+            ...doc.instances.values(),
+            ...doc.valueSets.values(),
+            ...doc.codeSystems.values(),
+            ...doc.logicals.values()
+        ];
+        if (entities.length === 0) {
+            // No entities parsed successfully, fall back to regex
+            throw new Error('No entities found in document');
         }
+        const entity = entities[0];
+        metadata.id = entity.id;
+        metadata.name = entity.name;
+        metadata.title = entity.title;
+        metadata.description = entity.description;
+        // Extract status if available
+        if ('status' in entity) {
+            metadata.status = entity.status;
+        }
+        // Determine type
+        if (doc.profiles.size > 0)
+            metadata.type = 'Profile';
+        else if (doc.extensions.size > 0)
+            metadata.type = 'Extension';
+        else if (doc.instances.size > 0)
+            metadata.type = 'Instance';
+        else if (doc.valueSets.size > 0)
+            metadata.type = 'ValueSet';
+        else if (doc.codeSystems.size > 0)
+            metadata.type = 'CodeSystem';
+        else if (doc.logicals.size > 0)
+            metadata.type = 'Logical';
+        return metadata;
     }
-    // Fallback to regex-based parsing (works in both Node.js and browser)
-    return {
-        id: parseFSHField(fshContent, [exports.FSH_PATTERNS.ID, exports.FSH_PATTERNS.PROFILE, exports.FSH_PATTERNS.INSTANCE]),
-        title: parseFSHField(fshContent, exports.FSH_PATTERNS.TITLE),
-        name: parseFSHField(fshContent, exports.FSH_PATTERNS.NAME),
-        description: parseFSHField(fshContent, exports.FSH_PATTERNS.DESCRIPTION),
-        status: parseFSHField(fshContent, exports.FSH_PATTERNS.STATUS),
-        type: parseFSHField(fshContent, exports.FSH_PATTERNS.TYPE),
-    };
+    catch (error) {
+        // Fallback to regex-based parsing if SUSHI fails to load or parse
+        return {
+            id: parseFSHField(fshContent, [exports.FSH_PATTERNS.ID, exports.FSH_PATTERNS.PROFILE, exports.FSH_PATTERNS.INSTANCE]),
+            title: parseFSHField(fshContent, exports.FSH_PATTERNS.TITLE),
+            name: parseFSHField(fshContent, exports.FSH_PATTERNS.NAME),
+            description: parseFSHField(fshContent, exports.FSH_PATTERNS.DESCRIPTION),
+            status: parseFSHField(fshContent, exports.FSH_PATTERNS.STATUS),
+            type: parseFSHField(fshContent, exports.FSH_PATTERNS.TYPE),
+        };
+    }
 }
 /**
  * Escape special characters for FSH strings
@@ -209,46 +254,44 @@ function generateFSHHeader(options) {
     }
     return lines.join('\n');
 }
-function parseFSHCodeSystem(fshContent) {
-    // Try SUSHI parser first if available (Node.js environment)
-    if (sushiAvailable && importText) {
-        try {
-            const rawFSH = {
-                content: fshContent,
-                path: 'inline.fsh'
-            };
-            const docs = importText([rawFSH]);
-            if (docs.length === 0) {
-                throw new Error('No documents parsed');
-            }
-            const doc = docs[0];
-            const concepts = [];
-            // Find CodeSystem in the document
-            const codeSystem = doc.codeSystems.values().next().value;
-            if (!codeSystem || !codeSystem.rules) {
-                throw new Error('No code system found');
-            }
-            // Convert SUSHI ConceptRules to our format
-            for (const rule of codeSystem.rules) {
-                // Check if this is a ConceptRule (has code, display, definition)
-                if ('code' in rule && typeof rule.code === 'string') {
-                    const fshConcept = {
-                        code: rule.code,
-                        display: rule.display,
-                        definition: rule.definition,
-                        properties: {}
-                    };
-                    concepts.push(fshConcept);
-                }
-            }
-            return concepts;
+async function parseFSHCodeSystem(fshContent) {
+    // Try to use SUSHI parser with lazy loading
+    try {
+        const parser = await loadSushiParser();
+        const rawFSH = {
+            content: fshContent,
+            path: 'inline.fsh'
+        };
+        const docs = parser([rawFSH]);
+        if (docs.length === 0) {
+            throw new Error('No documents parsed');
         }
-        catch (error) {
-            // Fall through to basic parsing
+        const doc = docs[0];
+        const concepts = [];
+        // Find CodeSystem in the document
+        const codeSystem = doc.codeSystems.values().next().value;
+        if (!codeSystem || !codeSystem.rules) {
+            throw new Error('No code system found');
         }
+        // Convert SUSHI ConceptRules to our format
+        for (const rule of codeSystem.rules) {
+            // Check if this is a ConceptRule (has code, display, definition)
+            if ('code' in rule && typeof rule.code === 'string') {
+                const fshConcept = {
+                    code: rule.code,
+                    display: rule.display,
+                    definition: rule.definition,
+                    properties: {}
+                };
+                concepts.push(fshConcept);
+            }
+        }
+        return concepts;
     }
-    // Fallback to basic parsing (works in both Node.js and browser)
-    return parseFSHCodeSystemBasic(fshContent);
+    catch (error) {
+        // Fallback to basic parsing if SUSHI fails to load or parse
+        return parseFSHCodeSystemBasic(fshContent);
+    }
 }
 /**
  * Fallback basic FSH code system parser (for backward compatibility)
