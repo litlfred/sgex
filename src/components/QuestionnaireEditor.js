@@ -2,6 +2,7 @@ import React, { useState, useEffect, Component } from 'react';
 import { PageLayout, AssetEditorLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
+import { extractFSHMetadata } from '../../packages/dak-core/src/index';
 import './QuestionnaireEditor.css';
 
 // Enhanced Visual Editor Component with LForms integration
@@ -456,63 +457,25 @@ const QuestionnaireEditorContent = () => {
   };
 
   // Helper functions to extract metadata from FSH content
+  // Now using shared utilities from @sgex/dak-core
   const extractFshTitle = (content) => {
-    // Support various FSH title patterns
-    const patterns = [
-      /\*\s*title\s*=\s*"([^"]+)"/,  // * title = "Title"
-      /^\s*Title:\s*"?([^"\n]+)"?/m,  // Title: "Title" or Title: Title
-      /Instance:\s*\w+\s*"([^"]+)"/   // Instance: Name "Title"
-    ];
-    
-    for (const pattern of patterns) {
-      const match = content.match(pattern);
-      if (match) return match[1].trim();
-    }
-    return null;
+    const metadata = extractFSHMetadata(content);
+    return metadata.title || metadata.name || null;
   };
 
   const extractFshStatus = (content) => {
-    // Support various FSH status patterns
-    const patterns = [
-      /\*\s*status\s*=\s*#(\w+)/,     // * status = #draft
-      /^\s*Status:\s*#?(\w+)/m        // Status: draft or Status: #draft
-    ];
-    
-    for (const pattern of patterns) {
-      const match = content.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
+    const metadata = extractFSHMetadata(content);
+    return metadata.status || null;
   };
 
   const extractFshName = (content) => {
-    // Support various FSH name patterns
-    const patterns = [
-      /\*\s*name\s*=\s*"([^"]+)"/,     // * name = "Name"
-      /^\s*Name:\s*"?([^"\n]+)"?/m,    // Name: "Name" or Name: Name
-      /Instance:\s*(\w+)/              // Instance: InstanceName
-    ];
-    
-    for (const pattern of patterns) {
-      const match = content.match(pattern);
-      if (match) return match[1].trim();
-    }
-    return null;
+    const metadata = extractFSHMetadata(content);
+    return metadata.name || metadata.id || null;
   };
 
   const extractFshDescription = (content) => {
-    // Support various FSH description patterns
-    const patterns = [
-      /\*\s*description\s*=\s*"([^"]+)"/,    // * description = "Description"
-      /^\s*Description:\s*"?([^"\n]+)"?/m,   // Description: "Text" or Description: Text
-      /\/\/\s*(.+)/                          // // Comment line
-    ];
-    
-    for (const pattern of patterns) {
-      const match = content.match(pattern);
-      if (match) return match[1].trim();
-    }
-    return null;
+    const metadata = extractFSHMetadata(content);
+    return metadata.description || null;
   };
 
   // Create new questionnaire

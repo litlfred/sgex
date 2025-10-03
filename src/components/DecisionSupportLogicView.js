@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
 import { lazyLoadMDEditor } from '../services/libraryLoaderService';
+import { parseFSHCodeSystem } from '../../packages/dak-core/src/index';
 
 // Lazy markdown component using the utility
 const LazyMarkdown = ({ source }) => {
@@ -84,8 +85,25 @@ const DecisionSupportLogicViewContent = () => {
             selectedBranch
           );
           
-          // Parse FSH content to extract code system data
-          const codeSystemData = parseFSHCodeSystem(fshContent);
+          // Parse FSH content to extract code system data using shared utility
+          const concepts = parseFSHCodeSystem(fshContent);
+          
+          // Convert to expected format (map FSHConcept to DAK variable format)
+          const dakConcepts = concepts.map(c => ({
+            Code: c.code,
+            Display: c.display || c.code,
+            Definition: c.definition || '',
+            Tables: c.properties?.Tables || c.properties?.table || '',
+            Tabs: c.properties?.Tabs || c.properties?.tab || '',
+            CQL: c.properties?.CQL || ''
+          }));
+          
+          const codeSystemData = {
+            id: 'DAK.DT',
+            name: 'Decision Table',
+            concepts: dakConcepts
+          };
+          
           setDakDTCodeSystem(codeSystemData);
           setFilteredVariables(codeSystemData.concepts || []);
         } catch (error) {
@@ -227,186 +245,6 @@ define "BCG Contraindications":
     loadDecisionSupportData();
     // eslint-disable-next-line react-hooks/exhaustive-deps  
   }, [repository, selectedBranch, profile?.isDemo]); // Include profile.isDemo for fallback logic
-
-  const parseFSHCodeSystem = (fshContent) => {
-    // Enhanced FSH parser for DAK code system
-    const lines = fshContent.split('\n');
-    const concepts = [];
-    let currentConcept = null;
-    let multiLineState = null; // Track what multi-line content we're parsing
-    let multiLineContent = [];
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const trimmedLine = line.trim();
-      
-      // Check if this is a top-level concept (starts with * # and is not indented)
-      const isTopLevel = line.startsWith('* #') && !line.startsWith('  ');
-      
-      if (isTopLevel) {
-        // Finish any ongoing multi-line content
-        if (multiLineState && currentConcept) {
-          if (multiLineState === 'definition') {
-            currentConcept.Definition = multiLineContent.join('\n').trim();
-          } else if (multiLineState === 'cql') {
-            currentConcept.CQL = multiLineContent.join('\n').trim();
-          }
-          multiLineState = null;
-          multiLineContent = [];
-        }
-        
-        // New concept - extract code and display from quoted strings
-        let conceptLine = trimmedLine.substring(2).trim(); // Remove '* #'
-        
-        // Match quoted strings: "code" "display"
-        // Handle escaped quotes properly
-        const quoteMatches = [];
-        let inQuote = false;
-        let current = '';
-        let i = 0;
-        
-        while (i < conceptLine.length) {
-          const char = conceptLine[i];
-          
-          if (char === '"' && (i === 0 || conceptLine[i-1] !== '\\')) {
-            if (inQuote) {
-              // End of quote
-              quoteMatches.push(current);
-              current = '';
-              inQuote = false;
-            } else {
-              // Start of quote
-              inQuote = true;
-            }
-          } else if (inQuote) {
-            if (char === '\\' && i + 1 < conceptLine.length && conceptLine[i + 1] === '"') {
-              // Escaped quote
-              current += '"';
-              i++; // Skip the next character
-            } else {
-              current += char;
-            }
-          }
-          i++;
-        }
-        
-        if (quoteMatches.length >= 2) {
-          const code = quoteMatches[0];
-          const display = quoteMatches[1];
-          
-          currentConcept = {
-            Code: code,
-            Display: display,
-            Definition: '',
-            Tables: '',
-            Tabs: '',
-            CQL: ''
-          };
-          concepts.push(currentConcept);
-        }
-      } else if (currentConcept) {
-        // Handle definition start
-        if (trimmedLine.startsWith('* ^definition = """')) {
-          multiLineState = 'definition';
-          multiLineContent = [];
-          // Get content after the opening """
-          const afterOpening = trimmedLine.substring('* ^definition = """'.length);
-          if (afterOpening && afterOpening !== '"""') {
-            multiLineContent.push(afterOpening);
-          }
-        }
-        // Handle definition end
-        else if (multiLineState === 'definition' && trimmedLine.endsWith('"""')) {
-          const beforeClosing = trimmedLine.substring(0, trimmedLine.length - 3);
-          if (beforeClosing) {
-            multiLineContent.push(beforeClosing);
-          }
-          currentConcept.Definition = multiLineContent.join('\n').trim();
-          multiLineState = null;
-          multiLineContent = [];
-        }
-        // Handle definition continuation
-        else if (multiLineState === 'definition') {
-          multiLineContent.push(trimmedLine);
-        }
-        // Handle CQL designation start
-        else if (trimmedLine.startsWith('* ^designation[+].value = """')) {
-          multiLineState = 'cql';
-          multiLineContent = [];
-          // Get content after the opening """
-          const afterOpening = trimmedLine.substring('* ^designation[+].value = """'.length);
-          if (afterOpening && afterOpening !== '"""') {
-            multiLineContent.push(afterOpening);
-          }
-        }
-        // Handle CQL designation end
-        else if (multiLineState === 'cql' && trimmedLine.endsWith('"""')) {
-          const beforeClosing = trimmedLine.substring(0, trimmedLine.length - 3);
-          if (beforeClosing) {
-            multiLineContent.push(beforeClosing);
-          }
-          currentConcept.CQL = multiLineContent.join('\n').trim();
-          multiLineState = null;
-          multiLineContent = [];
-        }
-        // Handle CQL continuation
-        else if (multiLineState === 'cql') {
-          multiLineContent.push(line); // Keep original indentation for CQL
-        }
-        // Handle table property
-        else if (trimmedLine.includes('* ^property[+].code = #"table"')) {
-          // Look for the next line with valueString
-          for (let j = i + 1; j < lines.length; j++) {
-            const nextLine = lines[j].trim();
-            if (nextLine.startsWith('* ^property[=].valueString = ')) {
-              const match = nextLine.match(/valueString = "([^"]*)"/);
-              if (match) {
-                currentConcept.Tables = match[1];
-                break;
-              }
-            }
-            // Stop looking if we hit another property or concept
-            if (nextLine.startsWith('* ^property[+]') || nextLine.startsWith('* #')) {
-              break;
-            }
-          }
-        }
-        // Handle tab property
-        else if (trimmedLine.includes('* ^property[+].code = #"tab"')) {
-          // Look for the next line with valueString
-          for (let j = i + 1; j < lines.length; j++) {
-            const nextLine = lines[j].trim();
-            if (nextLine.startsWith('* ^property[=].valueString = ')) {
-              const match = nextLine.match(/valueString = "([^"]*)"/);
-              if (match) {
-                currentConcept.Tabs = match[1];
-                break;
-              }
-            }
-            // Stop looking if we hit another property or concept
-            if (nextLine.startsWith('* ^property[+]') || nextLine.startsWith('* #')) {
-              break;
-            }
-          }
-        }
-      }
-    }
-    
-    // Handle any remaining multi-line content at end of file
-    if (multiLineState && currentConcept) {
-      if (multiLineState === 'definition') {
-        currentConcept.Definition = multiLineContent.join('\n').trim();
-      } else if (multiLineState === 'cql') {
-        currentConcept.CQL = multiLineContent.join('\n').trim();
-      }
-    }
-    
-    return {
-      id: 'DAK.DT',
-      name: 'Decision Table',
-      concepts: concepts
-    };
-  };
 
   const createFallbackDAKDT = () => {
     // Fallback data for demonstration
