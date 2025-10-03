@@ -8,7 +8,9 @@ import {
   DAKAssetType,
   actorDefinitionCore,
   ActorDefinitionCore,
-  DAKValidationService 
+  DAKValidationService,
+  QuestionnaireDefinitionCore,
+  DecisionTableCore
 } from '../index';
 
 describe('DAK Core Package', () => {
@@ -148,6 +150,185 @@ describe('DAK Core Package', () => {
       expect(DAKAssetType.BPMN).toBe('bpmn');
       expect(DAKAssetType.DMN).toBe('dmn');
       expect(DAKAssetType.FHIR_PROFILE).toBe('fhir-profile');
+    });
+  });
+
+  describe('QuestionnaireDefinitionCore', () => {
+    test('should create empty questionnaire definition', () => {
+      const questionnaire = QuestionnaireDefinitionCore.createEmpty();
+      
+      expect(questionnaire).toHaveProperty('id');
+      expect(questionnaire).toHaveProperty('name');
+      expect(questionnaire).toHaveProperty('status');
+      expect(questionnaire.status).toBe('draft');
+      expect(questionnaire.resourceType).toBe('Questionnaire');
+    });
+
+    test('should validate questionnaire definition', () => {
+      const validQuestionnaire = {
+        id: 'test-questionnaire',
+        name: 'Test Questionnaire',
+        description: 'A test questionnaire',
+        title: 'Test Questionnaire',
+        status: 'draft' as const,
+        type: 'questionnaire' as const,
+        resourceType: 'Questionnaire' as const,
+        item: [
+          {
+            linkId: '1',
+            text: 'Question 1',
+            type: 'string'
+          }
+        ]
+      };
+
+      const qCore = new QuestionnaireDefinitionCore(validQuestionnaire);
+      const result = qCore.validate();
+      
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    test('should generate FSH from questionnaire', () => {
+      const questionnaire = {
+        id: 'test-q',
+        name: 'Test Questionnaire',
+        description: 'A test',
+        title: 'Test',
+        status: 'draft' as const,
+        type: 'questionnaire' as const,
+        item: [
+          {
+            linkId: 'q1',
+            text: 'Question 1',
+            type: 'string',
+            required: true
+          }
+        ]
+      };
+
+      const qCore = new QuestionnaireDefinitionCore(questionnaire);
+      const fsh = qCore.generateFSH();
+      
+      expect(fsh).toContain('Instance: test-q');
+      expect(fsh).toContain('InstanceOf: Questionnaire');
+      expect(fsh).toContain('status = #draft');
+    });
+
+    test('should extract FSH metadata', () => {
+      const fshContent = `
+Instance: TestQuestionnaire
+Title: "Test Questionnaire"
+Description: "A test questionnaire"
+* status = #draft
+* title = "Test"
+      `;
+      
+      const metadata = QuestionnaireDefinitionCore.extractMetadata(fshContent);
+      
+      expect(metadata.title).toBe('Test Questionnaire');
+      expect(metadata.status).toBe('draft');
+    });
+  });
+
+  describe('DecisionTableCore', () => {
+    test('should create empty decision table', () => {
+      const dt = DecisionTableCore.createEmpty();
+      
+      expect(dt).toHaveProperty('id');
+      expect(dt).toHaveProperty('name');
+      expect(dt).toHaveProperty('concepts');
+      expect(dt.concepts).toEqual([]);
+    });
+
+    test('should validate decision table', () => {
+      const validDT = {
+        id: 'test-dt',
+        name: 'Test Decision Table',
+        description: 'A test decision table',
+        type: 'decision-table' as const,
+        concepts: [
+          {
+            code: 'VAR1',
+            Code: 'VAR1',
+            display: 'Variable 1',
+            Display: 'Variable 1',
+            Definition: 'First variable'
+          }
+        ]
+      };
+
+      const dtCore = new DecisionTableCore(validDT);
+      const result = dtCore.validate();
+      
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    test('should parse FSH code system', () => {
+      const fshContent = `
+CodeSystem: DAKDT
+Title: "DAK Decision Table Variables"
+
+* #VAR1 "Variable 1"
+  * ^definition = "First variable"
+* #VAR2 "Variable 2"
+  * ^definition = "Second variable"
+      `;
+      
+      const variables = DecisionTableCore.parseFSHCodeSystem(fshContent);
+      
+      expect(variables).toHaveLength(2);
+      expect(variables[0].Code).toBe('VAR1');
+      expect(variables[0].Display).toBe('Variable 1');
+      expect(variables[1].Code).toBe('VAR2');
+    });
+
+    test('should generate FSH from decision table', () => {
+      const dt = {
+        id: 'test-dt',
+        name: 'Test DT',
+        description: 'Test',
+        type: 'decision-table' as const,
+        concepts: [
+          {
+            code: 'VAR1',
+            display: 'Variable 1',
+            definition: 'First variable'
+          }
+        ]
+      };
+
+      const dtCore = new DecisionTableCore(dt);
+      const fsh = dtCore.generateFSH();
+      
+      expect(fsh).toContain('CodeSystem: test-dt');
+      expect(fsh).toContain('Title: "Test DT"');
+      expect(fsh).toContain('#VAR1');
+    });
+
+    test('should manage variables', () => {
+      const dtCore = new DecisionTableCore();
+      
+      dtCore.addVariable({
+        Code: 'VAR1',
+        code: 'VAR1',
+        Display: 'Variable 1',
+        display: 'Variable 1'
+      });
+      
+      expect(dtCore.getVariables()).toHaveLength(1);
+      
+      const found = dtCore.findVariable('VAR1');
+      expect(found).toBeDefined();
+      expect(found?.Code).toBe('VAR1');
+      
+      dtCore.updateVariable('VAR1', { Display: 'Updated Variable 1' });
+      const updated = dtCore.findVariable('VAR1');
+      expect(updated?.Display).toBe('Updated Variable 1');
+      
+      dtCore.removeVariable('VAR1');
+      expect(dtCore.getVariables()).toHaveLength(0);
     });
   });
 });

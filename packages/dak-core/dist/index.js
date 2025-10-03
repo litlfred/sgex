@@ -30,7 +30,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DAKAssetType = exports.DAKComponentType = exports.actorDefinitionCore = exports.ActorDefinitionCore = exports.DAKValidationService = exports.dakService = exports.DAKService = void 0;
+exports.DAKAssetType = exports.DAKComponentType = exports.decisionTableCore = exports.DecisionTableCore = exports.questionnaireDefinitionCore = exports.QuestionnaireDefinitionCore = exports.actorDefinitionCore = exports.ActorDefinitionCore = exports.DAKValidationService = exports.dakService = exports.DAKService = void 0;
 // Core types
 __exportStar(require("./types"), exports);
 // Core services
@@ -42,6 +42,12 @@ Object.defineProperty(exports, "DAKValidationService", { enumerable: true, get: 
 var actor_definition_1 = require("./actor-definition");
 Object.defineProperty(exports, "ActorDefinitionCore", { enumerable: true, get: function () { return actor_definition_1.ActorDefinitionCore; } });
 Object.defineProperty(exports, "actorDefinitionCore", { enumerable: true, get: function () { return actor_definition_1.actorDefinitionCore; } });
+var questionnaire_definition_1 = require("./questionnaire-definition");
+Object.defineProperty(exports, "QuestionnaireDefinitionCore", { enumerable: true, get: function () { return questionnaire_definition_1.QuestionnaireDefinitionCore; } });
+Object.defineProperty(exports, "questionnaireDefinitionCore", { enumerable: true, get: function () { return questionnaire_definition_1.questionnaireDefinitionCore; } });
+var decision_table_1 = require("./decision-table");
+Object.defineProperty(exports, "DecisionTableCore", { enumerable: true, get: function () { return decision_table_1.DecisionTableCore; } });
+Object.defineProperty(exports, "decisionTableCore", { enumerable: true, get: function () { return decision_table_1.decisionTableCore; } });
 // Base component classes and utilities
 __exportStar(require("./base-component"), exports);
 __exportStar(require("./fsh-utils"), exports);

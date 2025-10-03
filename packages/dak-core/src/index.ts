@@ -22,6 +22,8 @@ export * from './types';
 export { DAKService, dakService } from './dak-service';
 export { DAKValidationService } from './validation';
 export { ActorDefinitionCore, actorDefinitionCore } from './actor-definition';
+export { QuestionnaireDefinitionCore, questionnaireDefinitionCore } from './questionnaire-definition';
+export { DecisionTableCore, decisionTableCore } from './decision-table';
 
 // Base component classes and utilities
 export * from './base-component';
@@ -42,6 +44,16 @@ export type {
   ActorDefinition,
   ActorValidationResult
 } from './actor-definition';
+
+export type {
+  QuestionnaireDefinition,
+  QuestionnaireItem
+} from './questionnaire-definition';
+
+export type {
+  DecisionTable,
+  DecisionTableVariable
+} from './decision-table';
 
 export {
   DAKComponentType,
