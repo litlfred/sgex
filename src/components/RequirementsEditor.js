@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PageLayout, AssetEditorLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
+import { escapeFSHString, extractFSHMetadata } from '@sgex/dak-core/dist/browser';
 import './RequirementsEditor.css';
 
 /**
@@ -103,12 +104,27 @@ const RequirementsEditorContent = () => {
       
       setRequirementContent(content);
       
-      // Detect type from filename or content
-      if (requirement.name.toLowerCase().includes('nonfunctional') || 
-          requirement.name.toLowerCase().includes('non-functional')) {
-        setRequirementType('nonfunctional');
-      } else {
-        setRequirementType('functional');
+      // Use extractFSHMetadata to detect type from content
+      try {
+        const metadata = await extractFSHMetadata(content);
+        // Check parent or name to determine type
+        if (metadata.name?.toLowerCase().includes('nonfunctional') || 
+            metadata.name?.toLowerCase().includes('non-functional') ||
+            requirement.name.toLowerCase().includes('nonfunctional') || 
+            requirement.name.toLowerCase().includes('non-functional')) {
+          setRequirementType('nonfunctional');
+        } else {
+          setRequirementType('functional');
+        }
+      } catch (metaErr) {
+        // Fall back to filename detection if metadata extraction fails
+        console.warn('Could not extract FSH metadata, using filename detection:', metaErr);
+        if (requirement.name.toLowerCase().includes('nonfunctional') || 
+            requirement.name.toLowerCase().includes('non-functional')) {
+          setRequirementType('nonfunctional');
+        } else {
+          setRequirementType('functional');
+        }
       }
     } catch (err) {
       console.error('Error loading requirement:', err);
@@ -388,31 +404,52 @@ const RequirementsEditorContent = () => {
   );
 };
 
+// Helper function to generate FSH header for Logical models
+// Uses escapeFSHString from @sgex/dak-core
+function generateLogicalModelHeader(id, title, description, parent) {
+  const lines = [];
+  lines.push(`Logical: ${id}`);
+  lines.push(`Title: "${escapeFSHString(title)}"`);
+  lines.push(`Description: "${escapeFSHString(description)}"`);
+  if (parent) {
+    lines.push(`Parent: ${parent}`);
+  }
+  return lines.join('\n');
+}
+
 // Generate template for functional requirement based on WHO smart-base model
 function generateFunctionalRequirementTemplate() {
-  return `Logical: NewFunctionalRequirement
-Title: "New Functional Requirement"
-Description: "Description of the functional requirement"
-Parent: FunctionalRequirement
+  const header = generateLogicalModelHeader(
+    'NewFunctionalRequirement',
+    'New Functional Requirement',
+    'Description of the functional requirement',
+    'FunctionalRequirement'
+  );
+  
+  return `${header}
 
 * id = "FR-NEW-001"
-* activity = "Description of the activity being performed"
+* activity = "${escapeFSHString('Description of the activity being performed')}"
 * actor = Reference(ActorName) // Optional: Reference to actor
-* capability = "I want to..." // Optional: Capability statement
-* benefit = "So that..." // Optional: Benefit statement
+* capability = "${escapeFSHString('I want to...')}" // Optional: Capability statement
+* benefit = "${escapeFSHString('So that...')}" // Optional: Benefit statement
 * classification = #category // Optional: Classification code
 `;
 }
 
 // Generate template for non-functional requirement based on WHO smart-base model
 function generateNonFunctionalRequirementTemplate() {
-  return `Logical: NewNonFunctionalRequirement
-Title: "New Non-Functional Requirement"
-Description: "Description of the non-functional requirement"
-Parent: NonFunctionalRequirement
+  const header = generateLogicalModelHeader(
+    'NewNonFunctionalRequirement',
+    'New Non-Functional Requirement',
+    'Description of the non-functional requirement',
+    'NonFunctionalRequirement'
+  );
+  
+  return `${header}
 
 * id = "NFR-NEW-001"
-* requirement = "Description of the non-functional requirement"
+* requirement = "${escapeFSHString('Description of the non-functional requirement')}"
 * category = #performance // Optional: Category (e.g., #performance, #security, #usability)
 * classification = #category // Optional: Classification code
 `;
