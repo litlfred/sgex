@@ -30,16 +30,16 @@ except ImportError:
 class PRCommentManager:
     """Manages PR comments with content injection protection."""
     
-    # Marker to identify our managed comment
-    COMMENT_MARKER = "<!-- sgex-deployment-status-comment -->"
+    # Base marker to identify our managed comments
+    COMMENT_MARKER_BASE = "sgex-deployment-status-comment"
     
     # Allowed stages to prevent injection
     ALLOWED_STAGES = {
         'started', 'setup', 'building', 'deploying', 'verifying', 
-        'success', 'failure'
+        'success', 'failure', 'pages-built'
     }
     
-    def __init__(self, token: str, repo: str, pr_number: int):
+    def __init__(self, token: str, repo: str, pr_number: int, action_id: Optional[str] = None):
         """
         Initialize the PR comment manager.
         
@@ -47,16 +47,29 @@ class PRCommentManager:
             token: GitHub token for authentication
             repo: Repository in format 'owner/repo'
             pr_number: Pull request number
+            action_id: Optional action ID to create unique comment per workflow run.
+                      This ensures exactly one comment per action run, allowing
+                      multiple workflows (e.g., deploy-branch and pages-build-deployment)
+                      to maintain their own separate status comments.
         """
         self.token = token
         self.owner, self.repo_name = repo.split('/')
         self.pr_number = pr_number
+        self.action_id = action_id
         self.api_base = "https://api.github.com"
         self.headers = {
             "Authorization": f"token {token}",
             "Accept": "application/vnd.github.v3+json",
             "Content-Type": "application/json"
         }
+        
+        # Create action-specific marker
+        if action_id:
+            # Sanitize action_id to prevent injection
+            safe_action_id = re.sub(r'[^a-zA-Z0-9\-_]', '', str(action_id))[:50]
+            self.comment_marker = f"<!-- {self.COMMENT_MARKER_BASE}:{safe_action_id} -->"
+        else:
+            self.comment_marker = f"<!-- {self.COMMENT_MARKER_BASE} -->"
     
     def sanitize_string(self, value: str, max_length: int = 500) -> str:
         """
@@ -123,7 +136,7 @@ class PRCommentManager:
     
     def get_existing_comment(self) -> Optional[Dict[str, Any]]:
         """
-        Find existing managed comment on the PR.
+        Find existing managed comment on the PR for this action_id.
         
         Returns:
             Comment dict if found, None otherwise
@@ -136,7 +149,7 @@ class PRCommentManager:
             
             comments = response.json()
             for comment in comments:
-                if self.COMMENT_MARKER in comment.get('body', ''):
+                if self.comment_marker in comment.get('body', ''):
                     return comment
             
             return None
@@ -226,6 +239,18 @@ Verifying deployment of commit [`{commit_sha_short}`]({commit_url})
 **Stage:** Verification in progress
 **Updated:** {timestamp}"""
         
+        elif stage == 'pages-built':
+            status_line = "## 🚀 Deployment Status: GitHub Pages Built"
+            status_icon = "🟢"
+            status_text = "Pages content deployed, site building"
+            actions = f"""**🔗 Quick Actions:**
+- 🌐 [Open Branch Preview]({branch_url})
+- 📊 [View build logs]({workflow_url})
+
+**📝 Pages Update:**
+GitHub Pages built for commit [`{commit_sha_short}`]({commit_url})
+**Built:** {timestamp}"""
+        
         elif stage == 'success':
             status_line = "## 🚀 Deployment Status: Successfully Deployed ✅"
             status_icon = "🟢"
@@ -261,8 +286,8 @@ Failed commit [`{commit_sha_short}`]({commit_url})
 Processing commit [`{commit_sha_short}`]({commit_url})
 **Updated:** {timestamp}"""
         
-        # Build complete comment
-        comment = f"""{self.COMMENT_MARKER}
+        # Build complete comment with action-specific marker
+        comment = f"""{self.comment_marker}
 {status_line}
 
 {actions}
@@ -275,6 +300,8 @@ Processing commit [`{commit_sha_short}`]({commit_url})
 """
         
         if stage == 'success' and branch_url:
+            comment += f"**Preview URL:** {branch_url}\n"
+        elif stage == 'pages-built' and branch_url:
             comment += f"**Preview URL:** {branch_url}\n"
         elif stage in ['verifying', 'deploying'] and branch_url:
             comment += f"**Preview URL (pending):** {branch_url}\n"
@@ -348,15 +375,28 @@ Examples:
   python manage-pr-comment.py --token $TOKEN --repo owner/repo --pr 123 \\
       --stage started --data '{"commit_sha": "abc123", "branch_name": "feature", "commit_url": "...", "workflow_url": "..."}'
   
-  # Update comment for deployment success
+  # Update comment for deployment success with action ID to ensure one comment per workflow run
   python manage-pr-comment.py --token $TOKEN --repo owner/repo --pr 123 \\
+      --action-id ${{ github.run_id }} \\
       --stage success --data '{"commit_sha": "abc123", "branch_name": "feature", "commit_url": "...", "workflow_url": "...", "branch_url": "..."}'
+
+Workflow Interaction:
+  When a PR is created or updated, two workflows may run:
+  1. deploy-branch workflow (branch-deployment.yml): Builds and deploys to gh-pages
+  2. pages-build-deployment workflow (GitHub native): Builds the static site from gh-pages
+  
+  To maintain separate status comments for each workflow:
+  - Pass --action-id ${{ github.run_id }} from the deploy-branch workflow
+  - Pass --action-id ${{ github.event.deployment.id }} from pages-build-deployment
+  
+  This ensures exactly one comment per workflow run, preventing duplicate or conflicting updates.
         """
     )
     
     parser.add_argument('--token', required=True, help='GitHub token for authentication')
     parser.add_argument('--repo', required=True, help='Repository in format owner/repo')
     parser.add_argument('--pr', type=int, required=True, help='Pull request number')
+    parser.add_argument('--action-id', help='Optional action/run ID to ensure one comment per workflow run')
     parser.add_argument('--stage', required=True, 
                        choices=list(PRCommentManager.ALLOWED_STAGES),
                        help='Current workflow stage')
@@ -372,7 +412,7 @@ Examples:
         sys.exit(1)
     
     # Create manager and update comment
-    manager = PRCommentManager(args.token, args.repo, args.pr)
+    manager = PRCommentManager(args.token, args.repo, args.pr, args.action_id)
     success = manager.update_comment(args.stage, data)
     
     sys.exit(0 if success else 1)

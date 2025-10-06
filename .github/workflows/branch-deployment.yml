@@ -130,6 +130,7 @@ jobs:
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
             --stage "started" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ github.event.inputs.branch || github.head_ref || github.ref_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
 
@@ -178,6 +179,7 @@ jobs:
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
             --stage "setup" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
 
@@ -209,6 +211,7 @@ jobs:
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
             --stage "building" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
 
@@ -339,6 +342,7 @@ jobs:
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
             --stage "deploying" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
 
@@ -652,6 +656,7 @@ jobs:
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
             --stage "verifying" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
 
@@ -748,6 +753,7 @@ jobs:
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
             --stage "success" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
 
@@ -759,5 +765,6 @@ jobs:
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
             --stage "failure" \
             --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ github.event.inputs.branch || github.head_ref || github.ref_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"error_message\":\"Build or deployment failed. Check logs for details.\"}"
