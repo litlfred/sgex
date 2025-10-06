@@ -16,7 +16,7 @@ import json
 import os
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Optional, Any
 from urllib.parse import quote
 
@@ -148,10 +148,13 @@ class PRCommentManager:
             response.raise_for_status()
             
             comments = response.json()
+            print(f"Searching {len(comments)} comments for marker: {self.comment_marker}")
             for comment in comments:
                 if self.comment_marker in comment.get('body', ''):
+                    print(f"✅ Found existing comment (ID: {comment['id']}) for action_id")
                     return comment
             
+            print(f"No existing comment found for action_id: {self.action_id}")
             return None
         except requests.exceptions.RequestException as e:
             print(f"Error fetching comments: {e}", file=sys.stderr)
@@ -214,7 +217,7 @@ class PRCommentManager:
         workflow_url = self.sanitize_url(data.get('workflow_url', ''))
         branch_url = self.sanitize_url(data.get('branch_url', ''))
         
-        timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
         
         # Stage-specific content with HTML headers for consistent styling
         if stage == 'started':
