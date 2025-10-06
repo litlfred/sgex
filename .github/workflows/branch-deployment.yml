@@ -96,6 +96,49 @@ jobs:
           ref: ${{ github.event.inputs.branch || github.head_ref || github.ref }}
           fetch-depth: 0
 
+      - name: Post build started notification to PR
+        uses: actions/github-script@v8
+        with:
+          script: |
+            try {
+              const commitSha = '${{ github.sha }}';
+              const branchName = '${{ github.event.inputs.branch || github.head_ref || github.ref_name }}';
+              const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${commitSha}`;
+              
+              console.log(`Checking for PR associated with branch: ${branchName}`);
+              
+              // Find PR associated with this branch
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${branchName}`
+              });
+              
+              if (prs.length === 0) {
+                console.log('No associated pull request found for this branch');
+                return;
+              }
+              
+              const prNumber = prs[0].number;
+              console.log(`Found associated PR #${prNumber} for branch ${branchName}`);
+              
+              // Post build started comment
+              const commentBody = `Build started for commit [\`${commitSha.substring(0, 7)}\`](${commitUrl})`;
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+              
+              console.log(`✅ Posted build started notification to PR #${prNumber}`);
+            } catch (error) {
+              console.error('Error posting build started notification:', error);
+              // Don't fail the workflow if comment posting fails
+            }
+
       - name: Determine branch information
         id: branch_info
         shell: bash
