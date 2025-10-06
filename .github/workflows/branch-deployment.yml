@@ -209,7 +209,7 @@ jobs:
         run: |
           # Calculate the full branch URL based on PUBLIC_URL
           public_url="${{ steps.public_url.outputs.public_url }}"
-          branch_url="https://litlfred.github.io${public_url}"
+          branch_url="https://${{ github.repository_owner }}.github.io${public_url}"
           
           python3 scripts/manage-pr-comment.py \
             --token "${{ secrets.GITHUB_TOKEN }}" \
@@ -322,6 +322,10 @@ jobs:
         run: |
           set -e
           
+          # Save the Python script before switching branches
+          mkdir -p /tmp/sgex-scripts
+          cp scripts/manage-pr-comment.py /tmp/sgex-scripts/manage-pr-comment.py
+          
           # Check if gh-pages branch exists
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
             echo "Checking out existing gh-pages branch"
@@ -342,7 +346,7 @@ jobs:
         if: steps.find_pr.outputs.result != ''
         continue-on-error: true
         run: |
-          python3 scripts/manage-pr-comment.py \
+          python3 /tmp/sgex-scripts/manage-pr-comment.py \
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
@@ -655,8 +659,8 @@ jobs:
         continue-on-error: true
         run: |
           target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
-          branch_url="https://litlfred.github.io/sgex/$target_subdir/"
-          python3 scripts/manage-pr-comment.py \
+          branch_url="https://${{ github.repository_owner }}.github.io/sgex/$target_subdir/"
+          python3 /tmp/sgex-scripts/manage-pr-comment.py \
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
@@ -671,7 +675,7 @@ jobs:
           set -e
           
           target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
-          branch_url="https://litlfred.github.io/sgex/$target_subdir/"
+          branch_url="https://${{ github.repository_owner }}.github.io/sgex/$target_subdir/"
           max_wait_time=300  # 5 minutes maximum wait
           check_interval=15  # Check every 15 seconds
           elapsed_time=0
@@ -712,7 +716,7 @@ jobs:
           target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
           branch_name="${{ steps.branch_info.outputs.branch_name }}"
           commit_sha="${{ github.sha }}"
-          branch_url="https://litlfred.github.io/sgex/$target_subdir/"
+          branch_url="https://${{ github.repository_owner }}.github.io/sgex/$target_subdir/"
           
           echo "🎉 Branch Deployment Summary:"
           echo "- Branch: $branch_name"
@@ -752,8 +756,8 @@ jobs:
         continue-on-error: true
         run: |
           target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
-          branch_url="https://litlfred.github.io/sgex/$target_subdir/"
-          python3 scripts/manage-pr-comment.py \
+          branch_url="https://${{ github.repository_owner }}.github.io/sgex/$target_subdir/"
+          python3 /tmp/sgex-scripts/manage-pr-comment.py \
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
@@ -765,7 +769,7 @@ jobs:
         if: always() && failure() && steps.find_pr.outputs.result != ''
         continue-on-error: true
         run: |
-          python3 scripts/manage-pr-comment.py \
+          python3 /tmp/sgex-scripts/manage-pr-comment.py \
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
