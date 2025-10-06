@@ -207,13 +207,17 @@ jobs:
         if: steps.find_pr.outputs.result != ''
         continue-on-error: true
         run: |
+          # Calculate the full branch URL based on PUBLIC_URL
+          public_url="${{ steps.public_url.outputs.public_url }}"
+          branch_url="https://litlfred.github.io${public_url}"
+          
           python3 scripts/manage-pr-comment.py \
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
             --action-id "${{ github.run_id }}" \
             --stage "building" \
-            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
 
       - name: Build branch-specific React app
         continue-on-error: false

@@ -245,6 +245,11 @@ class PRCommentManager:
             actions = f"""<h3>🔗 Quick Actions</h3>
 
 - 📊 [Watch build progress]({workflow_url})"""
+            
+            # Add preview URL if available (determined after PUBLIC_URL calculation)
+            if branch_url:
+                actions += f"\n- 🌐 [Expected deployment URL]({branch_url}) (will be live after deployment)"
+            
             timeline_entry = f"- **{timestamp}** - 🔵 Building application"
         
         elif stage == 'deploying':
@@ -343,8 +348,8 @@ class PRCommentManager:
         
         if branch_url and stage in ['success', 'pages-built']:
             comment += f"\n**Preview URL:** {branch_url}\n"
-        elif branch_url and stage in ['verifying', 'deploying']:
-            comment += f"\n**Preview URL (pending):** {branch_url}\n"
+        elif branch_url and stage in ['verifying', 'deploying', 'building']:
+            comment += f"\n**Expected Preview URL:** {branch_url} (deploying...)\n"
         
         comment += f"""
 ---
