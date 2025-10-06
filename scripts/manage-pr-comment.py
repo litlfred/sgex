@@ -224,7 +224,7 @@ class PRCommentManager:
             next_step = "**Next:** Installing dependencies and setting up environment"
             actions = f"""<h3>🔗 Quick Actions</h3>
 
-- 📊 [Watch build progress]({workflow_url})"""
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
             timeline_entry = f"- **{timestamp}** - 🔵 Build started for commit [`{commit_sha_short}`]({commit_url})"
         
         elif stage == 'setup':
@@ -234,7 +234,7 @@ class PRCommentManager:
             next_step = "**Next:** Building React application"
             actions = f"""<h3>🔗 Quick Actions</h3>
 
-- 📊 [Watch build progress]({workflow_url})"""
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
             timeline_entry = f"- **{timestamp}** - 🔵 Environment setup complete"
         
         elif stage == 'building':
@@ -242,13 +242,16 @@ class PRCommentManager:
             status_icon = "🔵"
             status_text = "Compiling and bundling application code"
             next_step = "**Next:** Deploying to GitHub Pages"
+            
+            # Build actions with styled buttons
             actions = f"""<h3>🔗 Quick Actions</h3>
 
-- 📊 [Watch build progress]({workflow_url})"""
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
             
             # Add preview URL if available (determined after PUBLIC_URL calculation)
             if branch_url:
-                actions += f"\n- 🌐 [Expected deployment URL]({branch_url}) (will be live after deployment)"
+                actions += f"""
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
             
             timeline_entry = f"- **{timestamp}** - 🔵 Building application"
         
@@ -259,7 +262,10 @@ class PRCommentManager:
             next_step = "**Next:** Verifying deployment accessibility"
             actions = f"""<h3>🔗 Quick Actions</h3>
 
-- 📊 [Watch deployment progress]({workflow_url})"""
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
+            if branch_url:
+                actions += f"""
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Expected Deployment URL"/></a> _(deploying...)_"""
             timeline_entry = f"- **{timestamp}** - 🟡 Deploying to gh-pages branch"
         
         elif stage == 'verifying':
@@ -269,8 +275,10 @@ class PRCommentManager:
             next_step = "**Next:** Deployment complete or failure reported"
             actions = f"""<h3>🔗 Quick Actions</h3>
 
-- 📊 [View deployment logs]({workflow_url})
-- 🌐 [Preview URL]({branch_url}) (verifying...)"""
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
+            if branch_url:
+                actions += f"""
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Preview URL"/></a> _(verifying...)_"""
             timeline_entry = f"- **{timestamp}** - 🟡 Verifying deployment"
         
         elif stage == 'pages-built':
@@ -280,8 +288,8 @@ class PRCommentManager:
             next_step = "**Status:** Site is live and accessible"
             actions = f"""<h3>🔗 Quick Actions</h3>
 
-- 🌐 [Open Branch Preview]({branch_url})
-- 📊 [View build logs]({workflow_url})"""
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-brightgreen?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Open Branch Preview"/></a>
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
             timeline_entry = f"- **{timestamp}** - 🟢 GitHub Pages built"
         
         elif stage == 'success':
@@ -291,11 +299,11 @@ class PRCommentManager:
             next_step = "**Status:** Deployment complete - site is ready for testing"
             actions = f"""<h3>🌐 Preview URLs</h3>
 
-- 🌐 [Open Branch Preview]({branch_url})
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Open_Branch_Preview-brightgreen?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Open Branch Preview"/></a>
 
 <h3>🔗 Quick Actions</h3>
 
-- 📊 [View build logs]({workflow_url})"""
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
             timeline_entry = f"- **{timestamp}** - ✅ Deployment successful - site is live"
         
         elif stage == 'failure':
@@ -306,8 +314,7 @@ class PRCommentManager:
             next_step = "**Action Required:** Fix issues and retry deployment"
             actions = f"""<h3>🔗 Quick Actions</h3>
 
-- 📊 [Check error logs]({workflow_url}) - Action ID: `{self.action_id if self.action_id else 'N/A'}`
-- 🔄 Retry deployment after fixing issues
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Error_Logs-red?style=for-the-badge&logo=github&label=📊&labelColor=gray" alt="Error Logs"/></a> _Action ID: `{self.action_id if self.action_id else 'N/A'}`_
 
 **Error:** {error_message}"""
             timeline_entry = f"- **{timestamp}** - ❌ Deployment failed: {error_message}"
@@ -320,7 +327,7 @@ class PRCommentManager:
             next_step = "**Status:** Processing deployment"
             actions = f"""<h3>🔗 Quick Actions</h3>
 
-- 📊 [Watch progress]({workflow_url})"""
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
             timeline_entry = f"- **{timestamp}** - 🔵 Processing"
         
         # Build timeline section
