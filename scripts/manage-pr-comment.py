@@ -157,13 +157,38 @@ class PRCommentManager:
             print(f"Error fetching comments: {e}", file=sys.stderr)
             return None
     
-    def build_comment_body(self, stage: str, data: Dict[str, Any]) -> str:
+    def extract_timeline_from_comment(self, comment_body: str) -> str:
         """
-        Build the comment body for the given stage.
+        Extract the timeline section from existing comment.
+        
+        Args:
+            comment_body: Existing comment body
+            
+        Returns:
+            Timeline section or empty string if not found
+        """
+        # Look for the timeline section between markers
+        timeline_start = comment_body.find('### 📋 Deployment Timeline')
+        if timeline_start == -1:
+            return ""
+        
+        timeline_end = comment_body.find('---', timeline_start + 1)
+        if timeline_end == -1:
+            timeline_end = comment_body.find('💡 *', timeline_start + 1)
+        
+        if timeline_end == -1:
+            return comment_body[timeline_start:]
+        
+        return comment_body[timeline_start:timeline_end].strip()
+    
+    def build_comment_body(self, stage: str, data: Dict[str, Any], existing_timeline: str = "") -> str:
+        """
+        Build the comment body for the given stage, appending to timeline.
         
         Args:
             stage: Current stage of the workflow
             data: Stage-specific data (will be sanitized)
+            existing_timeline: Previous timeline entries to append to
             
         Returns:
             Formatted comment body with marker
@@ -178,113 +203,115 @@ class PRCommentManager:
         
         timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
         
-        # Stage-specific content
+        # Stage-specific content with HTML headers for consistent styling
         if stage == 'started':
-            status_line = "## 🚀 Deployment Status: Build Started"
+            status_line = "<h2>🚀 Deployment Status: Build Started</h2>"
             status_icon = "🔵"
             status_text = "Initializing build process"
-            actions = f"""**🔗 Quick Actions:**
-- 📊 [Watch build progress]({workflow_url})
+            next_step = "**Next:** Installing dependencies and setting up environment"
+            actions = f"""<h3>🔗 Quick Actions</h3>
 
-**📝 Recent Change:**
-Build started for commit [`{commit_sha_short}`]({commit_url})
-**Started:** {timestamp}"""
+- 📊 [Watch build progress]({workflow_url})"""
+            timeline_entry = f"- **{timestamp}** - 🔵 Build started for commit [`{commit_sha_short}`]({commit_url})"
         
         elif stage == 'setup':
-            status_line = "## 🚀 Deployment Status: Setting Up Environment"
+            status_line = "<h2>🚀 Deployment Status: Setting Up Environment</h2>"
             status_icon = "🔵"
             status_text = "Installing dependencies and configuring environment"
-            actions = f"""**🔗 Quick Actions:**
-- 📊 [Watch build progress]({workflow_url})
+            next_step = "**Next:** Building React application"
+            actions = f"""<h3>🔗 Quick Actions</h3>
 
-**📝 Recent Change:**
-Build for commit [`{commit_sha_short}`]({commit_url})
-**Stage:** Environment setup
-**Updated:** {timestamp}"""
+- 📊 [Watch build progress]({workflow_url})"""
+            timeline_entry = f"- **{timestamp}** - 🔵 Environment setup complete"
         
         elif stage == 'building':
-            status_line = "## 🚀 Deployment Status: Building Application"
+            status_line = "<h2>🚀 Deployment Status: Building Application</h2>"
             status_icon = "🔵"
             status_text = "Compiling and bundling application code"
-            actions = f"""**🔗 Quick Actions:**
-- 📊 [Watch build progress]({workflow_url})
+            next_step = "**Next:** Deploying to GitHub Pages"
+            actions = f"""<h3>🔗 Quick Actions</h3>
 
-**📝 Recent Change:**
-Build for commit [`{commit_sha_short}`]({commit_url})
-**Stage:** Building application
-**Updated:** {timestamp}"""
+- 📊 [Watch build progress]({workflow_url})"""
+            timeline_entry = f"- **{timestamp}** - 🔵 Building application"
         
         elif stage == 'deploying':
-            status_line = "## 🚀 Deployment Status: Deploying to GitHub Pages"
+            status_line = "<h2>🚀 Deployment Status: Deploying to GitHub Pages</h2>"
             status_icon = "🟡"
             status_text = "Pushing build artifacts to gh-pages branch"
-            actions = f"""**🔗 Quick Actions:**
-- 📊 [Watch deployment progress]({workflow_url})
+            next_step = "**Next:** Verifying deployment accessibility"
+            actions = f"""<h3>🔗 Quick Actions</h3>
 
-**📝 Recent Change:**
-Deploying commit [`{commit_sha_short}`]({commit_url})
-**Stage:** Deployment in progress
-**Updated:** {timestamp}"""
+- 📊 [Watch deployment progress]({workflow_url})"""
+            timeline_entry = f"- **{timestamp}** - 🟡 Deploying to gh-pages branch"
         
         elif stage == 'verifying':
-            status_line = "## 🚀 Deployment Status: Verifying Deployment"
+            status_line = "<h2>🚀 Deployment Status: Verifying Deployment</h2>"
             status_icon = "🟡"
             status_text = "Checking deployment accessibility"
-            actions = f"""**🔗 Quick Actions:**
-- 📊 [View deployment logs]({workflow_url})
-- 🌐 [Preview URL]({branch_url}) (verifying...)
+            next_step = "**Next:** Deployment complete or failure reported"
+            actions = f"""<h3>🔗 Quick Actions</h3>
 
-**📝 Recent Change:**
-Verifying deployment of commit [`{commit_sha_short}`]({commit_url})
-**Stage:** Verification in progress
-**Updated:** {timestamp}"""
+- 📊 [View deployment logs]({workflow_url})
+- 🌐 [Preview URL]({branch_url}) (verifying...)"""
+            timeline_entry = f"- **{timestamp}** - 🟡 Verifying deployment"
         
         elif stage == 'pages-built':
-            status_line = "## 🚀 Deployment Status: GitHub Pages Built"
+            status_line = "<h2>🚀 Deployment Status: GitHub Pages Built</h2>"
             status_icon = "🟢"
             status_text = "Pages content deployed, site building"
-            actions = f"""**🔗 Quick Actions:**
-- 🌐 [Open Branch Preview]({branch_url})
-- 📊 [View build logs]({workflow_url})
+            next_step = "**Status:** Site is live and accessible"
+            actions = f"""<h3>🔗 Quick Actions</h3>
 
-**📝 Pages Update:**
-GitHub Pages built for commit [`{commit_sha_short}`]({commit_url})
-**Built:** {timestamp}"""
+- 🌐 [Open Branch Preview]({branch_url})
+- 📊 [View build logs]({workflow_url})"""
+            timeline_entry = f"- **{timestamp}** - 🟢 GitHub Pages built"
         
         elif stage == 'success':
-            status_line = "## 🚀 Deployment Status: Successfully Deployed ✅"
+            status_line = "<h2>🚀 Deployment Status: Successfully Deployed ✅</h2>"
             status_icon = "🟢"
             status_text = "Live and accessible"
-            actions = f"""**🔗 Quick Actions:**
-- 🌐 [Open Branch Preview]({branch_url})
-- 📊 [View build logs]({workflow_url})
+            next_step = "**Status:** Deployment complete - site is ready for testing"
+            actions = f"""<h3>🌐 Preview URLs</h3>
 
-**📝 Deployment Complete:**
-Deployed commit [`{commit_sha_short}`]({commit_url})
-**Deployed:** {timestamp}"""
+- 🌐 [Open Branch Preview]({branch_url})
+
+<h3>🔗 Quick Actions</h3>
+
+- 📊 [View build logs]({workflow_url})"""
+            timeline_entry = f"- **{timestamp}** - ✅ Deployment successful - site is live"
         
         elif stage == 'failure':
             error_message = self.sanitize_string(data.get('error_message', 'Unknown error'), max_length=200)
-            status_line = "## 🚀 Deployment Status: Failed ❌"
+            status_line = "<h2>🚀 Deployment Status: Failed ❌</h2>"
             status_icon = "🔴"
             status_text = "Deployment failed"
-            actions = f"""**🔗 Quick Actions:**
-- 📊 [Check error logs]({workflow_url})
+            next_step = "**Action Required:** Fix issues and retry deployment"
+            actions = f"""<h3>🔗 Quick Actions</h3>
+
+- 📊 [Check error logs]({workflow_url}) - Action ID: `{self.action_id if self.action_id else 'N/A'}`
 - 🔄 Retry deployment after fixing issues
 
-**📝 Failure Details:**
-Failed commit [`{commit_sha_short}`]({commit_url})
-**Error:** {error_message}
-**Failed:** {timestamp}"""
+**Error:** {error_message}"""
+            timeline_entry = f"- **{timestamp}** - ❌ Deployment failed: {error_message}"
         
         else:
             # Fallback (should not reach here due to validation)
-            status_line = "## 🚀 Deployment Status: In Progress"
+            status_line = "<h2>🚀 Deployment Status: In Progress</h2>"
             status_icon = "🔵"
             status_text = "Processing"
-            actions = f"""**📝 Update:**
-Processing commit [`{commit_sha_short}`]({commit_url})
-**Updated:** {timestamp}"""
+            next_step = "**Status:** Processing deployment"
+            actions = f"""<h3>🔗 Quick Actions</h3>
+
+- 📊 [Watch progress]({workflow_url})"""
+            timeline_entry = f"- **{timestamp}** - 🔵 Processing"
+        
+        # Build timeline section
+        timeline_section = "### 📋 Deployment Timeline\n\n"
+        if existing_timeline:
+            # Extract just the timeline entries from existing timeline
+            timeline_lines = [line for line in existing_timeline.split('\n') if line.strip().startswith('-')]
+            timeline_section += '\n'.join(timeline_lines) + '\n'
+        timeline_section += timeline_entry + '\n'
         
         # Build complete comment with action-specific marker
         comment = f"""{self.comment_marker}
@@ -294,19 +321,22 @@ Processing commit [`{commit_sha_short}`]({commit_url})
 
 ---
 
-## 📊 Overall Progress
-**Branch:** `{branch_name}`
-**Status:** {status_icon} {status_text}
+<h3>📊 Overall Progress</h3>
+
+**Branch:** `{branch_name}`  
+**Status:** {status_icon} {status_text}  
+{next_step}
 """
         
-        if stage == 'success' and branch_url:
-            comment += f"**Preview URL:** {branch_url}\n"
-        elif stage == 'pages-built' and branch_url:
-            comment += f"**Preview URL:** {branch_url}\n"
-        elif stage in ['verifying', 'deploying'] and branch_url:
-            comment += f"**Preview URL (pending):** {branch_url}\n"
+        if branch_url and stage in ['success', 'pages-built']:
+            comment += f"\n**Preview URL:** {branch_url}\n"
+        elif branch_url and stage in ['verifying', 'deploying']:
+            comment += f"\n**Preview URL (pending):** {branch_url}\n"
         
         comment += f"""
+---
+
+{timeline_section}
 ---
 
 💡 *This comment is automatically updated as the deployment progresses.*
@@ -329,11 +359,14 @@ Processing commit [`{commit_sha_short}`]({commit_url})
             # Validate stage
             stage = self.validate_stage(stage)
             
-            # Build comment body
-            comment_body = self.build_comment_body(stage, data)
-            
-            # Check for existing comment
+            # Check for existing comment and extract timeline
             existing = self.get_existing_comment()
+            existing_timeline = ""
+            if existing:
+                existing_timeline = self.extract_timeline_from_comment(existing.get('body', ''))
+            
+            # Build comment body with existing timeline
+            comment_body = self.build_comment_body(stage, data, existing_timeline)
             
             if existing:
                 # Update existing comment
