@@ -172,11 +172,24 @@ class PRCommentManager:
         if timeline_start == -1:
             return ""
         
-        timeline_end = comment_body.find('---', timeline_start + 1)
+        # Find the end of the timeline section (the next --- after timeline header, but skip the line itself)
+        # Timeline structure:
+        # ### 📋 Deployment Timeline
+        # 
+        # - entry 1
+        # - entry 2
+        # ---
+        # So we look for \n--- or start of next section
+        search_start = timeline_start + len('### 📋 Deployment Timeline')
+        
+        # Look for the closing --- that comes after the timeline entries
+        timeline_end = comment_body.find('\n---', search_start)
         if timeline_end == -1:
-            timeline_end = comment_body.find('💡 *', timeline_start + 1)
+            # Try to find the final marker
+            timeline_end = comment_body.find('💡 *', search_start)
         
         if timeline_end == -1:
+            # No clear end, take the rest
             return comment_body[timeline_start:]
         
         return comment_body[timeline_start:timeline_end].strip()
@@ -363,7 +376,16 @@ class PRCommentManager:
             existing = self.get_existing_comment()
             existing_timeline = ""
             if existing:
+                print(f"Found existing comment with ID {existing['id']}")
                 existing_timeline = self.extract_timeline_from_comment(existing.get('body', ''))
+                if existing_timeline:
+                    # Count existing timeline entries
+                    entry_count = len([line for line in existing_timeline.split('\n') if line.strip().startswith('-')])
+                    print(f"Extracted {entry_count} existing timeline entries")
+                else:
+                    print("No existing timeline found in comment")
+            else:
+                print(f"No existing comment found for action_id: {self.action_id if self.action_id else 'N/A'}")
             
             # Build comment body with existing timeline
             comment_body = self.build_comment_body(stage, data, existing_timeline)
