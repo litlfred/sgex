@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { usePage } from './PageProvider';
 import ContextualHelpMascot from '../ContextualHelpMascot';
 import useThemeImage from '../../hooks/useThemeImage';
+import repositoryConfig from '../../config/repositoryConfig';
 
 /**
  * Error handler component with automatic bug reporting functionality
@@ -44,7 +45,7 @@ The page should load without errors.
 ${error}
     `);
 
-    return `https://github.com/litlfred/sgex/issues/new?title=${title}&body=${body}&labels=bug,user-error`;
+    return `${repositoryConfig.getGitHubUrl()}/issues/new?title=${title}&body=${body}&labels=bug,user-error`;
   };
 
   const handleSendBugReport = () => {

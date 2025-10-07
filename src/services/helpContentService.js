@@ -1,4 +1,6 @@
 // Help Content Service - Provides page-specific help topics and content
+import repositoryConfig from '../config/repositoryConfig';
+
 class HelpContentService {
   constructor() {
     // Universal help topics that appear on all pages
@@ -58,7 +60,7 @@ class HelpContentService {
         type: 'action',
         action: () => {
           // Open workflows in GitHub Actions tab
-          const repoUrl = 'https://github.com/litlfred/sgex';
+          const repoUrl = repositoryConfig.getGitHubUrl();
           window.open(`${repoUrl}/actions`, '_blank');
         },
         content: `
@@ -69,18 +71,18 @@ class HelpContentService {
           <div class="workflow-links">
             <h4>🚀 Deployment Workflows:</h4>
             <ul>
-              <li><a href="https://github.com/litlfred/sgex/blob/main/.github/workflows/branch-deployment.yml" target="_blank">Branch Deployment</a> - Deploy feature branches for preview</li>
-              <li><a href="https://github.com/litlfred/sgex/blob/main/.github/workflows/landing-page-deployment.yml" target="_blank">Landing Page Deployment</a> - Deploy main app to production</li>
+              <li><a href="${repositoryConfig.getGitHubUrl()}/blob/main/.github/workflows/branch-deployment.yml" target="_blank">Branch Deployment</a> - Deploy feature branches for preview</li>
+              <li><a href="${repositoryConfig.getGitHubUrl()}/blob/main/.github/workflows/landing-page-deployment.yml" target="_blank">Landing Page Deployment</a> - Deploy main app to production</li>
             </ul>
             <h4>🛡️ Quality & Security Workflows:</h4>
             <ul>
-              <li><a href="https://github.com/litlfred/sgex/blob/main/.github/workflows/framework-compliance.yml" target="_blank">Framework Compliance</a> - Code quality and standards</li>
-              <li><a href="https://github.com/litlfred/sgex/blob/main/.github/workflows/dependency-security.yml" target="_blank">Security Scanning</a> - Dependency vulnerability checks</li>
+              <li><a href="${repositoryConfig.getGitHubUrl()}/blob/main/.github/workflows/framework-compliance.yml" target="_blank">Framework Compliance</a> - Code quality and standards</li>
+              <li><a href="${repositoryConfig.getGitHubUrl()}/blob/main/.github/workflows/dependency-security.yml" target="_blank">Security Scanning</a> - Dependency vulnerability checks</li>
             </ul>
             <h4>💬 Feedback Workflows:</h4>
             <ul>
-              <li><a href="https://github.com/litlfred/sgex/blob/main/.github/workflows/pr-commit-feedback.yml" target="_blank">PR Commit Feedback</a> - Real-time PR status updates</li>
-              <li><a href="https://github.com/litlfred/sgex/blob/main/.github/workflows/review.yml" target="_blank">Review Deployment</a> - Auto-deploy on approval</li>
+              <li><a href="${repositoryConfig.getGitHubUrl()}/blob/main/.github/workflows/pr-commit-feedback.yml" target="_blank">PR Commit Feedback</a> - Real-time PR status updates</li>
+              <li><a href="${repositoryConfig.getGitHubUrl()}/blob/main/.github/workflows/review.yml" target="_blank">Review Deployment</a> - Auto-deploy on approval</li>
             </ul>
           </div>
         `
@@ -136,7 +138,7 @@ class HelpContentService {
                 <strong>🔗 Can't access GitHub?</strong> If the buttons above don't work in your environment:
                 <ol>
                   <li>Email us directly at <a href="mailto:smart@who.int?subject=SGEX Bug Report">smart@who.int</a></li>
-                  <li>Or visit <a href="https://github.com/litlfred/sgex/issues/new" target="_blank">github.com/litlfred/sgex/issues/new</a> manually</li>
+                  <li>Or visit <a href="${repositoryConfig.getGitHubUrl()}/issues/new" target="_blank">${repositoryConfig.getFullName()}/issues/new</a> manually</li>
                 </ol>
               </div>
             `
@@ -972,6 +974,34 @@ class HelpContentService {
         break;
       default:
         url += '?labels=dak-feedback';
+    }
+
+    window.open(url, '_blank');
+  }
+
+  // Helper method to open SGEX-specific issues
+  openSgexIssue(issueType) {
+    const baseUrl = `${repositoryConfig.getGitHubUrl()}/issues/new`;
+    let url = baseUrl;
+
+    switch (issueType) {
+      case 'bug':
+        url += '?template=bug_report.md&labels=bug';
+        break;
+      case 'feature':
+        url += '?template=feature_request.md&labels=enhancement';
+        break;
+      case 'documentation':
+        url += '?template=documentation.md&labels=documentation';
+        break;
+      case 'question':
+        url += '?template=question.md&labels=question';
+        break;
+      case 'blank':
+        // Just the basic new issue URL
+        break;
+      default:
+        url += '?labels=bug';
     }
 
     window.open(url, '_blank');

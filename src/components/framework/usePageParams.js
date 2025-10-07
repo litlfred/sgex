@@ -60,12 +60,41 @@ export const useDAKParams = () => {
   try {
     const pageParams = usePageParams();
     
+    // Handle case where PageProvider context is null or not properly initialized
+    if (!pageParams || !pageParams.type) {
+      console.warn('useDAKParams: PageProvider context not available, returning empty data');
+      return {
+        user: null,
+        profile: null,
+        repository: null,
+        branch: null,
+        asset: null,
+        updateBranch: () => {},
+        navigate: () => {},
+        loading: true,
+        error: null
+      };
+    }
+    
     // Only throw error if page is fully loaded and type is not DAK/ASSET
-    // This prevents errors during initial loading or page type determination
+    // But allow loading state to pass through
     if (!pageParams.loading && 
         pageParams.type !== PAGE_TYPES.DAK && 
         pageParams.type !== PAGE_TYPES.ASSET) {
-      throw new Error(`useDAKParams can only be used on DAK or Asset pages. Current page type: ${pageParams.type}`);
+      
+      // Instead of throwing, return null data with error flag for graceful degradation
+      console.warn(`useDAKParams: Component loaded on ${pageParams.type} page instead of DAK/Asset page. Returning empty data for graceful degradation.`);
+      return {
+        user: null,
+        profile: null,
+        repository: null,
+        branch: null,
+        asset: null,
+        updateBranch: () => {},
+        navigate: pageParams.navigate || (() => {}),
+        loading: false,
+        error: `This component requires a DAK or Asset page context but was loaded on a ${pageParams.type} page.`
+      };
     }
 
     return {
@@ -75,23 +104,24 @@ export const useDAKParams = () => {
       branch: pageParams.branch,
       asset: pageParams.asset,
       updateBranch: pageParams.updateBranch,
-      navigate: pageParams.navigate
+      navigate: pageParams.navigate,
+      loading: pageParams.loading || false,
+      error: null
     };
   } catch (error) {
-    // If PageProvider is not ready yet, return empty object
-    if (error.message.includes('usePage must be used within a PageProvider')) {
-      console.log('useDAKParams: PageProvider not ready yet, returning empty data');
-      return {
-        user: null,
-        profile: null,
-        repository: null,
-        branch: null,
-        asset: null,
-        updateBranch: () => {},
-        navigate: () => {}
-      };
-    }
-    throw error;
+    // If PageProvider is not ready yet, return empty object with loading state
+    console.warn('useDAKParams: PageProvider error, returning empty data:', error.message);
+    return {
+      user: null,
+      profile: null,
+      repository: null,
+      branch: null,
+      asset: null,
+      updateBranch: () => {},
+      navigate: () => {},
+      loading: true,
+      error: null
+    };
   }
 };
 

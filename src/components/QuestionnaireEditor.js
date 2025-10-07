@@ -2,6 +2,7 @@ import React, { useState, useEffect, Component } from 'react';
 import { PageLayout, AssetEditorLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
+import { extractFSHMetadata } from '@sgex/dak-core/dist/browser';
 import './QuestionnaireEditor.css';
 
 // Enhanced Visual Editor Component with LForms integration
@@ -287,21 +288,50 @@ const LFormsVisualEditor = ({ questionnaire, onChange }) => {
 };
 
 const QuestionnaireEditorContent = () => {
-  const { repository, branch, isLoading: pageLoading } = useDAKParams();
+  const pageParams = useDAKParams();
   
-  // Component state
+  // Component state - ALL HOOKS MUST BE AT THE TOP
   const [questionnaires, setQuestionnaires] = useState([]);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [editing, setEditing] = useState(false);
-  const [questionnaireContent, setQuestionnaireContent] = useState(null);
-  const [originalContent, setOriginalContent] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
   
-  // LForms integration state
+  // Handle PageProvider initialization issues - AFTER all hooks
+  if (pageParams.error) {
+    return (
+      <div className="questionnaire-editor-container">
+        <div className="error-message">
+          <h2>Page Context Error</h2>
+          <p>{pageParams.error}</p>
+          <p>This component requires a DAK repository context to function properly.</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (pageParams.loading) {
+    return (
+      <div className="questionnaire-editor-container">
+        <div className="loading-message">
+          <h2>Loading...</h2>
+          <p>Initializing page context...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  const { repository, branch, isLoading: pageLoading } = pageParams;
+  
+  // LForms integration state (additional state)
   const [lformsLoaded, setLformsLoaded] = useState(false);
   const [editMode, setEditMode] = useState('visual'); // 'visual' or 'json'
   const [lformsError, setLformsError] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [questionnaireContent, setQuestionnaireContent] = useState(null);
+  const [originalContent, setOriginalContent] = useState(null);
 
   // Check if we have the necessary context data
   const hasRequiredData = repository && branch && !pageLoading;
@@ -428,14 +458,14 @@ const QuestionnaireEditorContent = () => {
         // Parse JSON questionnaire
         questionnaireData = JSON.parse(content);
       } else if (questionnaire.fileType === 'FSH') {
-        // For FSH files, create a preview object with metadata
+        // For FSH files, create a preview object with metadata (async extraction)
         questionnaireData = {
           resourceType: 'Questionnaire',
           fileType: 'FSH',
-          title: extractFshTitle(content) || questionnaire.displayName,
-          status: extractFshStatus(content) || 'draft',
-          name: extractFshName(content) || questionnaire.displayName,
-          description: extractFshDescription(content) || 'FHIR Shorthand Questionnaire',
+          title: await extractFshTitle(content) || questionnaire.displayName,
+          status: await extractFshStatus(content) || 'draft',
+          name: await extractFshName(content) || questionnaire.displayName,
+          description: await extractFshDescription(content) || 'FHIR Shorthand Questionnaire',
           rawContent: content,
           isReadOnly: true
         };
@@ -456,63 +486,25 @@ const QuestionnaireEditorContent = () => {
   };
 
   // Helper functions to extract metadata from FSH content
-  const extractFshTitle = (content) => {
-    // Support various FSH title patterns
-    const patterns = [
-      /\*\s*title\s*=\s*"([^"]+)"/,  // * title = "Title"
-      /^\s*Title:\s*"?([^"\n]+)"?/m,  // Title: "Title" or Title: Title
-      /Instance:\s*\w+\s*"([^"]+)"/   // Instance: Name "Title"
-    ];
-    
-    for (const pattern of patterns) {
-      const match = content.match(pattern);
-      if (match) return match[1].trim();
-    }
-    return null;
+  // Now using shared utilities from @sgex/dak-core (async)
+  const extractFshTitle = async (content) => {
+    const metadata = await extractFSHMetadata(content);
+    return metadata.title || metadata.name || null;
   };
 
-  const extractFshStatus = (content) => {
-    // Support various FSH status patterns
-    const patterns = [
-      /\*\s*status\s*=\s*#(\w+)/,     // * status = #draft
-      /^\s*Status:\s*#?(\w+)/m        // Status: draft or Status: #draft
-    ];
-    
-    for (const pattern of patterns) {
-      const match = content.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
+  const extractFshStatus = async (content) => {
+    const metadata = await extractFSHMetadata(content);
+    return metadata.status || null;
   };
 
-  const extractFshName = (content) => {
-    // Support various FSH name patterns
-    const patterns = [
-      /\*\s*name\s*=\s*"([^"]+)"/,     // * name = "Name"
-      /^\s*Name:\s*"?([^"\n]+)"?/m,    // Name: "Name" or Name: Name
-      /Instance:\s*(\w+)/              // Instance: InstanceName
-    ];
-    
-    for (const pattern of patterns) {
-      const match = content.match(pattern);
-      if (match) return match[1].trim();
-    }
-    return null;
+  const extractFshName = async (content) => {
+    const metadata = await extractFSHMetadata(content);
+    return metadata.name || metadata.id || null;
   };
 
-  const extractFshDescription = (content) => {
-    // Support various FSH description patterns
-    const patterns = [
-      /\*\s*description\s*=\s*"([^"]+)"/,    // * description = "Description"
-      /^\s*Description:\s*"?([^"\n]+)"?/m,   // Description: "Text" or Description: Text
-      /\/\/\s*(.+)/                          // // Comment line
-    ];
-    
-    for (const pattern of patterns) {
-      const match = content.match(pattern);
-      if (match) return match[1].trim();
-    }
-    return null;
+  const extractFshDescription = async (content) => {
+    const metadata = await extractFSHMetadata(content);
+    return metadata.description || null;
   };
 
   // Create new questionnaire

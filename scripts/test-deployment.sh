@@ -5,6 +5,18 @@
 
 set -e
 
+# Get repository configuration from the build script
+get_repo_config() {
+    local config_output=$(node -e "
+        const { FALLBACK_REPOSITORY } = require('./scripts/configure-repository.js');
+        console.log(FALLBACK_REPOSITORY.owner + '/' + FALLBACK_REPOSITORY.name);
+    " 2>/dev/null || echo "litlfred/sgex")
+    echo "$config_output"
+}
+
+REPO_CONFIG=$(get_repo_config)
+IFS='/' read -r REPO_OWNER REPO_NAME <<< "$REPO_CONFIG"
+
 echo "🧪 Multi-Branch GitHub Pages Deployment Test"
 echo "=============================================="
 
@@ -118,7 +130,7 @@ echo "🧪 Test 3: GitHub API integration"
 echo "--------------------------------"
 
 echo "Testing GitHub API call for branches..."
-API_URL="https://api.github.com/repos/litlfred/sgex/branches"
+API_URL="https://api.github.com/repos/${REPO_CONFIG}/branches"
 
 if curl -s --head "$API_URL" | head -n 1 | grep "200 OK" > /dev/null; then
     echo "✅ GitHub API is accessible"
@@ -197,8 +209,8 @@ echo "The multi-branch GitHub Pages deployment system is ready for production us
 echo ""
 echo "🚀 Next steps:"
 echo "   1. Push this branch to trigger the actual deployment workflow"
-echo "   2. Visit https://litlfred.github.io/sgex/ to see the landing page"
-echo "   3. Check branch previews at https://litlfred.github.io/sgex/sgex/BRANCH-NAME/"
+echo "   2. Visit https://${REPO_OWNER}.github.io/${REPO_NAME}/ to see the landing page"
+echo "   3. Check branch previews at https://${REPO_OWNER}.github.io/${REPO_NAME}/sgex/BRANCH-NAME/"
 echo ""
 echo "🐱 Meow! The deployment system is purrfectly ready!"
 

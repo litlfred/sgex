@@ -1,3 +1,24 @@
+# 🚨 COPILOT PROHIBITION WARNING 🚨
+# 
+# THIS FILE IS ABSOLUTELY CRITICAL TO GITHUB PAGES DEPLOYMENT INFRASTRUCTURE
+# 
+# ⛔ COPILOT AGENTS ARE STRICTLY PROHIBITED FROM MAKING ANY CHANGES TO THIS FILE
+# ⛔ WITHOUT EXPLICIT WRITTEN CONSENT FROM THE REPOSITORY OWNER (@litlfred)
+# 
+# This workflow controls branch deployment to GitHub Pages. Any unauthorized 
+# changes can break the entire deployment system for all users and branches.
+# 
+# 🔒 REQUIRED PROCESS FOR CHANGES:
+# 1. Request explicit consent from @litlfred in a GitHub comment
+# 2. Wait for written approval before making ANY changes  
+# 3. Document the explicit consent in the commit message
+# 4. Test extensively in a separate environment before merging
+# 
+# Violation of this prohibition will result in immediate reversion and 
+# potential blocking of copilot access to this repository.
+# 
+# 🚨 END PROHIBITION WARNING 🚨
+
 name: Deploy Feature Branch
 
 on:
@@ -75,6 +96,54 @@ jobs:
           ref: ${{ github.event.inputs.branch || github.head_ref || github.ref }}
           fetch-depth: 0
 
+      - name: Find associated PR
+        id: find_pr
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          result-encoding: string
+          script: |
+            const branchName = '${{ github.event.inputs.branch || github.head_ref || github.ref_name }}';
+            try {
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${branchName}`
+              });
+              if (prs.length > 0) {
+                console.log(`Found PR #${prs[0].number}`);
+                return prs[0].number.toString();
+              }
+              console.log('No PR found');
+              return '';
+            } catch (error) {
+              console.error('Error finding PR:', error);
+              return '';
+            }
+
+      - name: Update PR comment - Build Started
+        if: steps.find_pr.outputs.result != ''
+        continue-on-error: true
+        run: |
+          # Calculate branch URL for PR comment
+          branch_name="${{ github.event.inputs.branch || github.head_ref || github.ref_name }}"
+          if [[ "$branch_name" == "main" ]]; then
+            public_url="/sgex/main/"
+          else
+            safe_branch_name=$(echo "$branch_name" | tr '/' '-')
+            public_url="/sgex/${safe_branch_name}/"
+          fi
+          branch_url="https://${{ github.repository_owner }}.github.io${public_url}"
+          
+          python3 scripts/manage-pr-comment.py \
+            --token "${{ secrets.GITHUB_TOKEN }}" \
+            --repo "${{ github.repository }}" \
+            --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
+            --stage "started" \
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"$branch_name\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
+
       - name: Determine branch information
         id: branch_info
         shell: bash
@@ -96,6 +165,25 @@ jobs:
           echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
           echo "Building and deploying branch: $branch_name"
 
+      - name: Determine PUBLIC_URL and branch URL
+        id: public_url
+        run: |
+          branch_name="${{ steps.branch_info.outputs.branch_name }}"
+          if [[ "$branch_name" == "main" ]]; then
+            public_url="/sgex/main/"
+          else
+            safe_branch_name=$(echo "$branch_name" | tr '/' '-')
+            public_url="/sgex/${safe_branch_name}/"
+          fi
+          export PUBLIC_URL="$public_url"
+          echo "public_url=$public_url" >> $GITHUB_OUTPUT
+          echo "Determined PUBLIC_URL: $public_url"
+          
+          # Also calculate the full branch URL for PR comments
+          branch_url="https://${{ github.repository_owner }}.github.io${public_url}"
+          echo "branch_url=$branch_url" >> $GITHUB_OUTPUT
+          echo "Branch URL: $branch_url"
+
       - name: Configure git user
         shell: bash
         run: |
@@ -112,25 +200,40 @@ jobs:
         run: npm ci --legacy-peer-deps
         continue-on-error: false
 
+      - name: Update PR comment - Environment Setup Complete
+        if: steps.find_pr.outputs.result != ''
+        continue-on-error: true
+        run: |
+          python3 scripts/manage-pr-comment.py \
+            --token "${{ secrets.GITHUB_TOKEN }}" \
+            --repo "${{ github.repository }}" \
+            --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
+            --stage "setup" \
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"${{ steps.public_url.outputs.branch_url }}\"}"
+
       - name: Skip QA Generation for Branch Deployment
         run: |
           echo "ℹ️  Skipping QA report and issues analysis generation for branch deployment"
           echo "These reports are generated during main branch CI/CD and are not needed for preview deployments"
           echo "This prevents merge conflicts when multiple branches deploy simultaneously to gh-pages"
 
-      - name: Determine PUBLIC_URL for branch
-        id: public_url
+
+      - name: Update PR comment - Building Application
+        if: steps.find_pr.outputs.result != ''
+        continue-on-error: true
         run: |
-          branch_name="${{ steps.branch_info.outputs.branch_name }}"
-          if [[ "$branch_name" == "main" ]]; then
-            public_url="/sgex/main/"
-          else
-            safe_branch_name=$(echo "$branch_name" | tr '/' '-')
-            public_url="/sgex/${safe_branch_name}/"
-          fi
-          export PUBLIC_URL="$public_url"
-          echo "public_url=$public_url" >> $GITHUB_OUTPUT
-          echo "Determined PUBLIC_URL: $public_url"
+          # Calculate the full branch URL based on PUBLIC_URL
+          public_url="${{ steps.public_url.outputs.public_url }}"
+          branch_url="https://${{ github.repository_owner }}.github.io${public_url}"
+          
+          python3 scripts/manage-pr-comment.py \
+            --token "${{ secrets.GITHUB_TOKEN }}" \
+            --repo "${{ github.repository }}" \
+            --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
+            --stage "building" \
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
 
       - name: Build branch-specific React app
         continue-on-error: false
@@ -235,6 +338,10 @@ jobs:
         run: |
           set -e
           
+          # Save the Python script before switching branches
+          mkdir -p /tmp/sgex-scripts
+          cp scripts/manage-pr-comment.py /tmp/sgex-scripts/manage-pr-comment.py
+          
           # Check if gh-pages branch exists
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
             echo "Checking out existing gh-pages branch"
@@ -250,6 +357,18 @@ jobs:
             git commit -m "Initial gh-pages branch"
             git push origin gh-pages
           fi
+
+      - name: Update PR comment - Deploying to GitHub Pages
+        if: steps.find_pr.outputs.result != ''
+        continue-on-error: true
+        run: |
+          python3 /tmp/sgex-scripts/manage-pr-comment.py \
+            --token "${{ secrets.GITHUB_TOKEN }}" \
+            --repo "${{ github.repository }}" \
+            --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
+            --stage "deploying" \
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"${{ steps.public_url.outputs.branch_url }}\"}"
 
       - name: Clean old deployment for this branch
         shell: bash
@@ -551,6 +670,61 @@ jobs:
           
           echo "✅ Deployment completed successfully"
 
+      - name: Update PR comment - Verifying Deployment
+        if: steps.find_pr.outputs.result != ''
+        continue-on-error: true
+        run: |
+          target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
+          branch_url="https://${{ github.repository_owner }}.github.io/sgex/$target_subdir/"
+          python3 /tmp/sgex-scripts/manage-pr-comment.py \
+            --token "${{ secrets.GITHUB_TOKEN }}" \
+            --repo "${{ github.repository }}" \
+            --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
+            --stage "verifying" \
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
+
+      - name: Verify deployment accessibility
+        id: verify_deployment
+        shell: bash
+        run: |
+          set -e
+          
+          target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
+          branch_url="https://${{ github.repository_owner }}.github.io/sgex/$target_subdir/"
+          max_wait_time=300  # 5 minutes maximum wait
+          check_interval=15  # Check every 15 seconds
+          elapsed_time=0
+          
+          echo "🔍 Verifying deployment accessibility at: $branch_url"
+          echo "⏱️  Will check every ${check_interval}s for up to ${max_wait_time}s"
+          
+          while [[ $elapsed_time -lt $max_wait_time ]]; do
+            echo "📡 Checking deployment accessibility (${elapsed_time}s elapsed)..."
+            
+            # Use curl to check if the deployment is accessible
+            if curl -f -s -I "$branch_url" >/dev/null 2>&1; then
+              echo "✅ Deployment is accessible at $branch_url"
+              echo "⏱️  Total wait time: ${elapsed_time}s"
+              echo "deployment_accessible=true" >> $GITHUB_OUTPUT
+              echo "wait_time=$elapsed_time" >> $GITHUB_OUTPUT
+              break
+            else
+              echo "⏳ Deployment not yet accessible, waiting..."
+              sleep $check_interval
+              elapsed_time=$((elapsed_time + check_interval))
+            fi
+          done
+          
+          # Final check
+          if [[ $elapsed_time -ge $max_wait_time ]]; then
+            echo "⚠️ Deployment verification timed out after ${max_wait_time}s"
+            echo "🚨 GitHub Pages content server may be experiencing delays"
+            echo "📝 The deployment was uploaded successfully but may take additional time to be accessible"
+            echo "deployment_accessible=timeout" >> $GITHUB_OUTPUT
+            echo "wait_time=$max_wait_time" >> $GITHUB_OUTPUT
+          fi
+
       - name: Output deployment info
         id: deployment_info
         shell: bash
@@ -558,7 +732,7 @@ jobs:
           target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
           branch_name="${{ steps.branch_info.outputs.branch_name }}"
           commit_sha="${{ github.sha }}"
-          branch_url="https://litlfred.github.io/sgex/$target_subdir/"
+          branch_url="https://${{ github.repository_owner }}.github.io/sgex/$target_subdir/"
           
           echo "🎉 Branch Deployment Summary:"
           echo "- Branch: $branch_name"
@@ -594,203 +768,27 @@ jobs:
           echo "deployment_status=failure" >> $GITHUB_OUTPUT
 
       - name: Comment on associated PR (Success)
-        if: always() && steps.deployment_info.outputs.deployment_status == 'success'
-        uses: actions/github-script@v8
-        with:
-          script: |
-            try {
-              const branchName = '${{ steps.deployment_info.outputs.branch_name }}';
-              const branchUrl = '${{ steps.deployment_info.outputs.branch_url }}';
-              const commitSha = '${{ steps.deployment_info.outputs.commit_sha }}';
-              const deployedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
-              const runId = '${{ github.run_id }}';
-              const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
-              const restartUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
-              
-              // Create target names derived from the branch name for new tabs
-              const safeBranchName = branchName.replace(/[^a-zA-Z0-9]/g, '-');
-              const branchTargetName = `sgex-preview-${safeBranchName}`;
-              const mainTargetName = `sgex-main-app`;
-              const mainAppUrl = 'https://litlfred.github.io/sgex/main/';
-              
-              // Find PR associated with this branch
-              const { data: prs } = await github.rest.pulls.list({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: 'open',
-                head: `${context.repo.owner}:${branchName}`
-              });
-              
-              if (prs.length === 0) {
-                console.log('No associated pull request found for this branch');
-                return;
-              }
-              
-              const prNumber = prs[0].number;
-              console.log(`Found associated PR #${prNumber} for branch ${branchName}`);
-              
-              const commentBody = '## ✅ Branch Preview Ready!\n\n' +
-                '**Branch:** `' + branchName + '`\n' +
-                '**Status:** 🟢 Successfully Deployed\n' +
-                '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
-                '**Deployed:** ' + deployedAt + '\n\n' +
-                '### 🌐 Preview URLs\n\n' +
-                '<table>\n' +
-                '<tr>\n' +
-                '<td align="center">\n' +
-                '<a href="' + branchUrl + '" target="' + branchTargetName + '"><img src="https://img.shields.io/badge/🌐_BRANCH_PREVIEW-4CAF50?style=for-the-badge&logo=github&logoColor=white" alt="Branch Preview" /></a><br/>\n' +
-                '<sub><b>Open branch preview</b></sub>\n' +
-                '</td>\n' +
-                '<td align="center">\n' +
-                '<a href="' + mainAppUrl + '" target="' + mainTargetName + '"><img src="https://img.shields.io/badge/🏠_MAIN_APP-2196F3?style=for-the-badge&logo=github&logoColor=white" alt="Main App" /></a><br/>\n' +
-                '<sub><b>Open main application</b></sub>\n' +
-                '</td>\n' +
-                '</tr>\n' +
-                '</table>\n\n' +
-                '### 🔄 Deployment Actions\n\n' +
-                '<table>\n' +
-                '<tr>\n' +
-                '<td align="center">\n' +
-                '<a href="' + restartUrl + '?branch=' + encodeURIComponent(branchName) + '"><img src="https://img.shields.io/badge/🚀_REDEPLOY_BRANCH-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Redeploy Branch" /></a><br/>\n' +
-                '<sub><b>Redeploy this branch</b></sub>\n' +
-                '</td>\n' +
-                '<td align="center">\n' +
-                '<a href="' + workflowUrl + '"><img src="https://img.shields.io/badge/📄_BUILD_LOGS-6C757D?style=for-the-badge&logo=github&logoColor=white" alt="Build Logs" /></a><br/>\n' +
-                '<sub><b>View deployment details</b></sub>\n' +
-                '</td>\n' +
-                '</tr>\n' +
-                '</table>\n\n' +
-                '### 📋 Instructions\n' +
-                '**To redeploy:** Click "REDEPLOY BRANCH" above, then click "Run workflow" (branch name will be pre-filled)\n\n' +
-                '---\n' +
-                '💡 *This branch preview was deployed successfully and will remain until the next deployment.*\n\n' +
-                '_Note: This deployment only updates the branch subdirectory and does not affect the landing page._';
-              
-              // Find existing deployment comment
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-              });
-              
-              const existingComment = comments.find(comment => 
-                comment.body.includes('Branch Preview Ready!') || 
-                comment.body.includes('Branch Preview Deployed!') ||
-                comment.body.includes('Deployment Approval Required')
-              );
-              
-              if (existingComment) {
-                await github.rest.issues.updateComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  comment_id: existingComment.id,
-                  body: commentBody
-                });
-                console.log(`✅ Updated existing deployment comment on PR #${prNumber}`);
-              } else {
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: prNumber,
-                  body: commentBody
-                });
-                console.log(`✅ Created new deployment comment on PR #${prNumber}`);
-              }
-              
-            } catch (error) {
-              console.error('Error posting deployment comment:', error);
-            }
+        if: always() && steps.deployment_info.outputs.deployment_status == 'success' && steps.find_pr.outputs.result != ''
+        continue-on-error: true
+        run: |
+          target_subdir="${{ steps.validate_branch.outputs.target_subdir }}"
+          branch_url="https://${{ github.repository_owner }}.github.io/sgex/$target_subdir/"
+          python3 /tmp/sgex-scripts/manage-pr-comment.py \
+            --token "${{ secrets.GITHUB_TOKEN }}" \
+            --repo "${{ github.repository }}" \
+            --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
+            --stage "success" \
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
 
       - name: Comment on associated PR (Failure)
-        if: always() && failure()
-        uses: actions/github-script@v8
-        with:
-          script: |
-            try {
-              const branchName = '${{ github.event.inputs.branch || github.head_ref || github.ref_name }}';
-              const commitSha = '${{ github.sha }}';
-              const failedAt = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
-              const runId = '${{ github.run_id }}';
-              const workflowUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
-              const restartUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/branch-deployment.yml`;
-              
-              // Find PR associated with this branch
-              const { data: prs } = await github.rest.pulls.list({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: 'open',
-                head: `${context.repo.owner}:${branchName}`
-              });
-              
-              if (prs.length === 0) {
-                console.log('No associated pull request found for this branch');
-                return;
-              }
-              
-              const prNumber = prs[0].number;
-              console.log(`Found associated PR #${prNumber} for branch ${branchName} (FAILED deployment)`);
-              
-              const commentBody = '## ❌ Branch Preview Failed!\n\n' +
-                '**Branch:** `' + branchName + '`\n' +
-                '**Status:** 🔴 Deployment Failed\n' +
-                '**Commit:** `' + commitSha.substring(0, 7) + '`\n' +
-                '**Failed:** ' + failedAt + '\n\n' +
-                '### 🔍 Troubleshooting Actions\n\n' +
-                '<table>\n' +
-                '<tr>\n' +
-                '<td align="center">\n' +
-                '<a href="' + workflowUrl + '"><img src="https://img.shields.io/badge/📄_CHECK_LOGS-DC3545?style=for-the-badge&logo=github&logoColor=white" alt="Check Logs" /></a><br/>\n' +
-                '<sub><b>View error details</b></sub>\n' +
-                '</td>\n' +
-                '<td align="center">\n' +
-                '<a href="' + restartUrl + '?branch=' + encodeURIComponent(branchName) + '"><img src="https://img.shields.io/badge/🔄_RETRY_BUILD-FF9800?style=for-the-badge&logo=github&logoColor=white" alt="Retry Build" /></a><br/>\n' +
-                '<sub><b>Restart deployment</b></sub>\n' +
-                '</td>\n' +
-                '</tr>\n' +
-                '</table>\n\n' +
-                '### 💡 Common Issues\n' +
-                '- Build errors in code changes\n' +
-                '- Missing dependencies or npm install issues\n' +
-                '- GitHub Pages deployment limits\n' +
-                '- Network connectivity issues\n\n' +
-                '### 📋 Instructions\n' +
-                '**To retry:** Click "RETRY BUILD" above, then click "Run workflow" (branch name will be pre-filled)\n\n' +
-                '---\n' +
-                '❗ *Please check the build logs above and fix any issues before restarting the deployment.*\n\n' +
-                '_Note: The previous deployment (if any) remains active until this branch is successfully deployed._';
-              
-              // Find existing deployment comment
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-              });
-              
-              const existingComment = comments.find(comment => 
-                comment.body.includes('Branch Preview Ready!') || 
-                comment.body.includes('Branch Preview Deployed!') || 
-                comment.body.includes('Branch Preview Failed!') ||
-                comment.body.includes('Deployment Approval Required')
-              );
-              
-              if (existingComment) {
-                await github.rest.issues.updateComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  comment_id: existingComment.id,
-                  body: commentBody
-                });
-                console.log(`✅ Updated existing deployment comment with failure status on PR #${prNumber}`);
-              } else {
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: prNumber,
-                  body: commentBody
-                });
-                console.log(`✅ Created new failure deployment comment on PR #${prNumber}`);
-              }
-              
-            } catch (error) {
-              console.error('Error posting failure deployment comment:', error);
-            }
+        if: always() && failure() && steps.find_pr.outputs.result != ''
+        continue-on-error: true
+        run: |
+          python3 /tmp/sgex-scripts/manage-pr-comment.py \
+            --token "${{ secrets.GITHUB_TOKEN }}" \
+            --repo "${{ github.repository }}" \
+            --pr "${{ steps.find_pr.outputs.result }}" \
+            --action-id "${{ github.run_id }}" \
+            --stage "failure" \
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ github.event.inputs.branch || github.head_ref || github.ref_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"error_message\":\"Build or deployment failed. Check logs for details.\"}"

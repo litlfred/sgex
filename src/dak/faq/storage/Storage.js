@@ -3,6 +3,8 @@
  * Provides unified access to file system operations for local repositories
  */
 
+import BufferPolyfill from '../../../utils/browserBuffer.js';
+
 export class Storage {
   /**
    * Read a file from the repository
@@ -106,11 +108,11 @@ export class GitHubStorage extends Storage {
         console.warn(`GitHubStorage.readFile: ⚠️ Content string is empty for ${path}`);
       }
       
-      // Convert the decoded string content to Buffer 
+      // Convert the decoded string content to browser-compatible Buffer
       // (githubService.getFileContent already decodes the base64 content to a string)
-      console.log(`GitHubStorage.readFile: Converting string to Buffer...`);
-      const content = Buffer.from(contentString, 'utf-8');
-      console.log(`GitHubStorage.readFile: ✅ Buffer created successfully, size: ${content.length} bytes`);
+      console.log(`GitHubStorage.readFile: Converting string to browser-compatible Buffer...`);
+      const content = BufferPolyfill.from(contentString, 'utf-8');
+      console.log(`GitHubStorage.readFile: ✅ Buffer-like object created successfully, size: ${content.length} bytes`);
       
       this.cache.set(cacheKey, content);
       console.log(`GitHubStorage.readFile: ✅ Successfully read file ${path}, cached and returning content`);
@@ -195,11 +197,11 @@ export class GitHubStorage extends Storage {
       const response = await this.githubService.getFileContent(owner, repo, path, this.branch);
       
       return {
-        size: Buffer.from(response.content, 'base64').length,
-        sha: response.sha,
-        path: response.path,
-        type: response.type,
-        url: response.html_url
+        size: response.length || 0, // Use string length since githubService returns decoded string
+        sha: response.sha || 'unknown',
+        path: path,
+        type: 'file',
+        url: `https://github.com/${owner}/${repo}/blob/${this.branch}/${path}`
       };
     } catch (error) {
       throw new Error(`Failed to get file info for ${path}: ${error.message}`);
@@ -219,7 +221,7 @@ export class MockStorage extends Storage {
 
   async readFile(path) {
     if (this.mockFiles[path]) {
-      return Buffer.from(this.mockFiles[path], 'utf-8');
+      return BufferPolyfill.from(this.mockFiles[path], 'utf-8');
     }
     throw new Error(`File not found: ${path}`);
   }
@@ -246,7 +248,7 @@ export class MockStorage extends Storage {
   async getFileInfo(path) {
     if (this.mockFiles[path]) {
       return {
-        size: Buffer.from(this.mockFiles[path], 'utf-8').length,
+        size: this.mockFiles[path].length,
         path: path,
         type: 'file'
       };

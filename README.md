@@ -144,10 +144,15 @@ npm start
 - Personas/actors and questionnaires
 - Service health checks
 
+#### Deployment Options
+- **Local Development**: Localhost binding (127.0.0.1:8080) for development
+- **Fly.io Production**: Public HTTPS deployment with GitHub OAuth authentication
+
 #### Documentation
 Complete MCP documentation: [`public/docs/mcp/`](public/docs/mcp/)
+Deployment guide: [`services/dak-faq-mcp/DEPLOYMENT.md`](services/dak-faq-mcp/DEPLOYMENT.md)
 
-**Security Note**: MCP services bind to localhost only (127.0.0.1:3001) and are intended for local development and testing.
+**Security**: Local development bypasses authentication. Production deployment requires GitHub OAuth and collaborator access to `litlfred/sgex`.
 ### Docker
 
 1. **Build the docker image**

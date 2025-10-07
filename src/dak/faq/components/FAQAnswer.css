@@ -28,6 +28,19 @@
   background: #f0fdf4;
 }
 
+.faq-execution-mode {
+  margin-bottom: 12px;
+  text-align: right;
+}
+
+.faq-execution-mode small {
+  background: #e5e7eb;
+  color: #6b7280;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
 .faq-answer.warning {
   border-color: #d97706;
   background: #fffbeb;
