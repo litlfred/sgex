@@ -33,9 +33,32 @@ const RequirementsEditorContent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(false);
-  const [requirementContent, setRequirementContent] = useState(null);
   const [requirementType, setRequirementType] = useState('functional'); // 'functional' or 'nonfunctional'
   const [showCreateNew, setShowCreateNew] = useState(false);
+  const [showFSHPreview, setShowFSHPreview] = useState(false);
+  const [fshPreview, setFSHPreview] = useState('');
+  
+  // Form data for functional requirement
+  const [functionalReq, setFunctionalReq] = useState({
+    id: '',
+    title: '',
+    description: '',
+    activity: '',
+    actor: '',
+    capability: '',
+    benefit: '',
+    classification: ''
+  });
+  
+  // Form data for non-functional requirement
+  const [nonFunctionalReq, setNonFunctionalReq] = useState({
+    id: '',
+    title: '',
+    description: '',
+    requirement: '',
+    category: '',
+    classification: ''
+  });
 
   // Extract user and repo from repository
   const user = repository?.owner?.login || repository?.full_name?.split('/')[0];
@@ -102,29 +125,43 @@ const RequirementsEditorContent = () => {
       const response = await fetch(requirement.download_url);
       const content = await response.text();
       
-      setRequirementContent(content);
-      
-      // Use extractFSHMetadata to detect type from content
+      // Use extractFSHMetadata to parse the FSH content
       try {
         const metadata = await extractFSHMetadata(content);
-        // Check parent or name to determine type
-        if (metadata.name?.toLowerCase().includes('nonfunctional') || 
+        
+        // Determine type from metadata or filename
+        const isNonFunctional = metadata.name?.toLowerCase().includes('nonfunctional') || 
             metadata.name?.toLowerCase().includes('non-functional') ||
             requirement.name.toLowerCase().includes('nonfunctional') || 
-            requirement.name.toLowerCase().includes('non-functional')) {
-          setRequirementType('nonfunctional');
+            requirement.name.toLowerCase().includes('non-functional');
+        
+        setRequirementType(isNonFunctional ? 'nonfunctional' : 'functional');
+        
+        // Parse FSH content into form fields
+        if (isNonFunctional) {
+          setNonFunctionalReq({
+            id: parseFSHValue(content, 'id') || '',
+            title: metadata.title || '',
+            description: metadata.description || '',
+            requirement: parseFSHValue(content, 'requirement') || '',
+            category: parseFSHValue(content, 'category') || '',
+            classification: parseFSHValue(content, 'classification') || ''
+          });
         } else {
-          setRequirementType('functional');
+          setFunctionalReq({
+            id: parseFSHValue(content, 'id') || '',
+            title: metadata.title || '',
+            description: metadata.description || '',
+            activity: parseFSHValue(content, 'activity') || '',
+            actor: parseFSHValue(content, 'actor') || '',
+            capability: parseFSHValue(content, 'capability') || '',
+            benefit: parseFSHValue(content, 'benefit') || '',
+            classification: parseFSHValue(content, 'classification') || ''
+          });
         }
       } catch (metaErr) {
-        // Fall back to filename detection if metadata extraction fails
-        console.warn('Could not extract FSH metadata, using filename detection:', metaErr);
-        if (requirement.name.toLowerCase().includes('nonfunctional') || 
-            requirement.name.toLowerCase().includes('non-functional')) {
-          setRequirementType('nonfunctional');
-        } else {
-          setRequirementType('functional');
-        }
+        console.warn('Could not parse FSH metadata:', metaErr);
+        setError('Failed to parse requirement content');
       }
     } catch (err) {
       console.error('Error loading requirement:', err);
@@ -139,32 +176,104 @@ const RequirementsEditorContent = () => {
     setEditing(true);
     setSelectedRequirement(null);
     
-    const template = type === 'functional' 
-      ? generateFunctionalRequirementTemplate()
-      : generateNonFunctionalRequirementTemplate();
-    
-    setRequirementContent(template);
+    // Reset form fields
+    if (type === 'functional') {
+      setFunctionalReq({
+        id: '',
+        title: '',
+        description: '',
+        activity: '',
+        actor: '',
+        capability: '',
+        benefit: '',
+        classification: ''
+      });
+    } else {
+      setNonFunctionalReq({
+        id: '',
+        title: '',
+        description: '',
+        requirement: '',
+        category: '',
+        classification: ''
+      });
+    }
+  };
+
+  // Generate FSH from form data
+  const generateFSHFromForm = () => {
+    if (requirementType === 'functional') {
+      const req = functionalReq;
+      const logicalName = req.id || 'NewFunctionalRequirement';
+      const header = generateLogicalModelHeader(
+        logicalName,
+        req.title || 'New Functional Requirement',
+        req.description || 'Description of the functional requirement',
+        'FunctionalRequirement'
+      );
+      
+      const fields = [];
+      if (req.id) fields.push(`* id = "${req.id}"`);
+      if (req.activity) fields.push(`* activity = "${escapeFSHString(req.activity)}"`);
+      if (req.actor) fields.push(`* actor = Reference(${req.actor})`);
+      if (req.capability) fields.push(`* capability = "${escapeFSHString(req.capability)}"`);
+      if (req.benefit) fields.push(`* benefit = "${escapeFSHString(req.benefit)}"`);
+      if (req.classification) fields.push(`* classification = #${req.classification}`);
+      
+      return `${header}\n\n${fields.join('\n')}\n`;
+    } else {
+      const req = nonFunctionalReq;
+      const logicalName = req.id || 'NewNonFunctionalRequirement';
+      const header = generateLogicalModelHeader(
+        logicalName,
+        req.title || 'New Non-Functional Requirement',
+        req.description || 'Description of the non-functional requirement',
+        'NonFunctionalRequirement'
+      );
+      
+      const fields = [];
+      if (req.id) fields.push(`* id = "${req.id}"`);
+      if (req.requirement) fields.push(`* requirement = "${escapeFSHString(req.requirement)}"`);
+      if (req.category) fields.push(`* category = #${req.category}`);
+      if (req.classification) fields.push(`* classification = #${req.classification}`);
+      
+      return `${header}\n\n${fields.join('\n')}\n`;
+    }
+  };
+
+  // Show FSH preview
+  const handlePreviewFSH = () => {
+    const fsh = generateFSHFromForm();
+    setFSHPreview(fsh);
+    setShowFSHPreview(true);
   };
 
   // Save requirement
   const handleSave = async () => {
-    if (!requirementContent) return;
+    const currentReq = requirementType === 'functional' ? functionalReq : nonFunctionalReq;
+    
+    if (!currentReq.id) {
+      setError('Please provide a requirement ID');
+      return;
+    }
 
     try {
+      const fshContent = generateFSHFromForm();
+      
       const fileName = showCreateNew 
-        ? `${requirementType === 'functional' ? 'Functional' : 'NonFunctional'}Requirement-${Date.now()}.fsh`
+        ? `${requirementType === 'functional' ? 'Functional' : 'NonFunctional'}Requirement-${currentReq.id}.fsh`
         : selectedRequirement.name;
 
       const filePath = `input/fsh/requirements/${fileName}`;
       const commitMessage = showCreateNew
-        ? `Add ${requirementType} requirement: ${fileName}`
-        : `Update ${requirementType} requirement: ${fileName}`;
+        ? `Add ${requirementType} requirement: ${currentReq.id}`
+        : `Update ${requirementType} requirement: ${currentReq.id}`;
 
       await githubService.createOrUpdateFile(
         user,
         repo,
         filePath,
-        requirementContent,
+        fshContent,
         commitMessage,
         branch,
         showCreateNew ? null : selectedRequirement.sha
@@ -186,7 +295,7 @@ const RequirementsEditorContent = () => {
       setEditing(false);
       setShowCreateNew(false);
       setSelectedRequirement(null);
-      setRequirementContent(null);
+      setError(null);
       
     } catch (err) {
       console.error('Error saving requirement:', err);
@@ -199,8 +308,8 @@ const RequirementsEditorContent = () => {
     setEditing(false);
     setShowCreateNew(false);
     setSelectedRequirement(null);
-    setRequirementContent(null);
     setRequirementType('functional');
+    setError(null);
   };
 
   // Delete requirement
@@ -345,6 +454,9 @@ const RequirementsEditorContent = () => {
                     {requirementType === 'functional' ? 'Functional' : 'Non-Functional'} Requirement
                   </h3>
                   <div className="editor-actions">
+                    <button className="btn-preview" onClick={handlePreviewFSH}>
+                      👁️ Preview FSH
+                    </button>
                     {!showCreateNew && (
                       <button className="btn-delete" onClick={handleDelete}>
                         🗑️ Delete
@@ -360,38 +472,190 @@ const RequirementsEditorContent = () => {
                 </div>
 
                 <div className="editor-content">
-                  <textarea
-                    className="fsh-editor"
-                    value={requirementContent || ''}
-                    onChange={(e) => setRequirementContent(e.target.value)}
-                    placeholder="Enter FSH content..."
-                    spellCheck="false"
-                  />
-                </div>
-
-                <div className="editor-help">
-                  <h4>FSH Format</h4>
                   {requirementType === 'functional' ? (
-                    <div>
-                      <p>Functional requirements should include:</p>
-                      <ul>
-                        <li><code>id</code>: Requirement identifier (required)</li>
-                        <li><code>activity</code>: Description of the activity (required)</li>
-                        <li><code>actor</code>: Reference to actors (optional)</li>
-                        <li><code>capability</code>: "I want" statement (optional)</li>
-                        <li><code>benefit</code>: "So that" statement (optional)</li>
-                        <li><code>classification</code>: Classification codes (optional)</li>
-                      </ul>
+                    <div className="form-fields">
+                      <div className="form-group">
+                        <label htmlFor="req-id">Requirement ID *</label>
+                        <input
+                          type="text"
+                          id="req-id"
+                          value={functionalReq.id}
+                          onChange={(e) => setFunctionalReq({...functionalReq, id: e.target.value})}
+                          placeholder="e.g., FR-001"
+                          required
+                        />
+                        <span className="help-text">Unique identifier for this requirement</span>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="req-title">Title *</label>
+                        <input
+                          type="text"
+                          id="req-title"
+                          value={functionalReq.title}
+                          onChange={(e) => setFunctionalReq({...functionalReq, title: e.target.value})}
+                          placeholder="e.g., Patient Registration"
+                          required
+                        />
+                        <span className="help-text">Short descriptive title</span>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="req-description">Description</label>
+                        <textarea
+                          id="req-description"
+                          value={functionalReq.description}
+                          onChange={(e) => setFunctionalReq({...functionalReq, description: e.target.value})}
+                          placeholder="Detailed description of the functional requirement"
+                          rows="3"
+                        />
+                        <span className="help-text">Detailed explanation of the requirement</span>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="req-activity">Activity *</label>
+                        <textarea
+                          id="req-activity"
+                          value={functionalReq.activity}
+                          onChange={(e) => setFunctionalReq({...functionalReq, activity: e.target.value})}
+                          placeholder="Description of the activity being performed"
+                          rows="2"
+                          required
+                        />
+                        <span className="help-text">What activity is being performed</span>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="req-actor">Actor</label>
+                        <input
+                          type="text"
+                          id="req-actor"
+                          value={functionalReq.actor}
+                          onChange={(e) => setFunctionalReq({...functionalReq, actor: e.target.value})}
+                          placeholder="e.g., HealthWorker"
+                        />
+                        <span className="help-text">Actor reference (who performs this)</span>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="req-capability">Capability ("I want to...")</label>
+                        <textarea
+                          id="req-capability"
+                          value={functionalReq.capability}
+                          onChange={(e) => setFunctionalReq({...functionalReq, capability: e.target.value})}
+                          placeholder="I want to..."
+                          rows="2"
+                        />
+                        <span className="help-text">User story capability statement</span>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="req-benefit">Benefit ("So that...")</label>
+                        <textarea
+                          id="req-benefit"
+                          value={functionalReq.benefit}
+                          onChange={(e) => setFunctionalReq({...functionalReq, benefit: e.target.value})}
+                          placeholder="So that..."
+                          rows="2"
+                        />
+                        <span className="help-text">User story benefit statement</span>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="req-classification">Classification</label>
+                        <input
+                          type="text"
+                          id="req-classification"
+                          value={functionalReq.classification}
+                          onChange={(e) => setFunctionalReq({...functionalReq, classification: e.target.value})}
+                          placeholder="e.g., registration"
+                        />
+                        <span className="help-text">Classification code (optional)</span>
+                      </div>
                     </div>
                   ) : (
-                    <div>
-                      <p>Non-functional requirements should include:</p>
-                      <ul>
-                        <li><code>id</code>: Requirement identifier (required)</li>
-                        <li><code>requirement</code>: Requirement description (required)</li>
-                        <li><code>category</code>: Category code (optional)</li>
-                        <li><code>classification</code>: Classification codes (optional)</li>
-                      </ul>
+                    <div className="form-fields">
+                      <div className="form-group">
+                        <label htmlFor="nfr-id">Requirement ID *</label>
+                        <input
+                          type="text"
+                          id="nfr-id"
+                          value={nonFunctionalReq.id}
+                          onChange={(e) => setNonFunctionalReq({...nonFunctionalReq, id: e.target.value})}
+                          placeholder="e.g., NFR-001"
+                          required
+                        />
+                        <span className="help-text">Unique identifier for this requirement</span>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="nfr-title">Title *</label>
+                        <input
+                          type="text"
+                          id="nfr-title"
+                          value={nonFunctionalReq.title}
+                          onChange={(e) => setNonFunctionalReq({...nonFunctionalReq, title: e.target.value})}
+                          placeholder="e.g., Response Time"
+                          required
+                        />
+                        <span className="help-text">Short descriptive title</span>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="nfr-description">Description</label>
+                        <textarea
+                          id="nfr-description"
+                          value={nonFunctionalReq.description}
+                          onChange={(e) => setNonFunctionalReq({...nonFunctionalReq, description: e.target.value})}
+                          placeholder="Detailed description of the non-functional requirement"
+                          rows="3"
+                        />
+                        <span className="help-text">Detailed explanation of the requirement</span>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="nfr-requirement">Requirement *</label>
+                        <textarea
+                          id="nfr-requirement"
+                          value={nonFunctionalReq.requirement}
+                          onChange={(e) => setNonFunctionalReq({...nonFunctionalReq, requirement: e.target.value})}
+                          placeholder="The system SHALL..."
+                          rows="3"
+                          required
+                        />
+                        <span className="help-text">Description of the requirement</span>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="nfr-category">Category</label>
+                        <select
+                          id="nfr-category"
+                          value={nonFunctionalReq.category}
+                          onChange={(e) => setNonFunctionalReq({...nonFunctionalReq, category: e.target.value})}
+                        >
+                          <option value="">Select category...</option>
+                          <option value="performance">Performance</option>
+                          <option value="security">Security</option>
+                          <option value="usability">Usability</option>
+                          <option value="reliability">Reliability</option>
+                          <option value="scalability">Scalability</option>
+                          <option value="maintainability">Maintainability</option>
+                          <option value="accessibility">Accessibility</option>
+                        </select>
+                        <span className="help-text">Category of non-functional requirement</span>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="nfr-classification">Classification</label>
+                        <input
+                          type="text"
+                          id="nfr-classification"
+                          value={nonFunctionalReq.classification}
+                          onChange={(e) => setNonFunctionalReq({...nonFunctionalReq, classification: e.target.value})}
+                          placeholder="e.g., quality"
+                        />
+                        <span className="help-text">Classification code (optional)</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -399,6 +663,47 @@ const RequirementsEditorContent = () => {
             )}
           </div>
         </div>
+
+        {/* FSH Preview Modal */}
+        {showFSHPreview && (
+          <div 
+            className="modal-overlay" 
+            onClick={() => setShowFSHPreview(false)}
+            role="presentation"
+          >
+            <div 
+              className="modal-content" 
+              onClick={e => e.stopPropagation()}
+              role="dialog"
+              aria-labelledby="fsh-preview-title"
+              aria-modal="true"
+            >
+              <div className="modal-header">
+                <h3 id="fsh-preview-title">FSH Preview</h3>
+                <button 
+                  onClick={() => setShowFSHPreview(false)}
+                  className="close-btn"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="modal-body">
+                <pre className="fsh-preview">{fshPreview}</pre>
+              </div>
+              <div className="modal-footer">
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(fshPreview);
+                    alert('FSH copied to clipboard!');
+                  }}
+                  className="copy-btn"
+                >
+                  📋 Copy to Clipboard
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AssetEditorLayout>
   );
@@ -417,42 +722,23 @@ function generateLogicalModelHeader(id, title, description, parent) {
   return lines.join('\n');
 }
 
-// Generate template for functional requirement based on WHO smart-base model
-function generateFunctionalRequirementTemplate() {
-  const header = generateLogicalModelHeader(
-    'NewFunctionalRequirement',
-    'New Functional Requirement',
-    'Description of the functional requirement',
-    'FunctionalRequirement'
-  );
+// Helper function to parse FSH field values
+function parseFSHValue(fshContent, fieldName) {
+  // Pattern to match FSH field assignments
+  const patterns = [
+    new RegExp(`\\*\\s*${fieldName}\\s*=\\s*"([^"]*)"`, 'i'),  // * field = "value"
+    new RegExp(`\\*\\s*${fieldName}\\s*=\\s*#(\\S+)`, 'i'),     // * field = #code
+    new RegExp(`\\*\\s*${fieldName}\\s*=\\s*Reference\\(([^)]+)\\)`, 'i') // * field = Reference(Actor)
+  ];
   
-  return `${header}
-
-* id = "FR-NEW-001"
-* activity = "${escapeFSHString('Description of the activity being performed')}"
-* actor = Reference(ActorName) // Optional: Reference to actor
-* capability = "${escapeFSHString('I want to...')}" // Optional: Capability statement
-* benefit = "${escapeFSHString('So that...')}" // Optional: Benefit statement
-* classification = #category // Optional: Classification code
-`;
-}
-
-// Generate template for non-functional requirement based on WHO smart-base model
-function generateNonFunctionalRequirementTemplate() {
-  const header = generateLogicalModelHeader(
-    'NewNonFunctionalRequirement',
-    'New Non-Functional Requirement',
-    'Description of the non-functional requirement',
-    'NonFunctionalRequirement'
-  );
+  for (const pattern of patterns) {
+    const match = fshContent.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
   
-  return `${header}
-
-* id = "NFR-NEW-001"
-* requirement = "${escapeFSHString('Description of the non-functional requirement')}"
-* category = #performance // Optional: Category (e.g., #performance, #security, #usability)
-* classification = #category // Optional: Classification code
-`;
+  return '';
 }
 
 export default RequirementsEditor;
