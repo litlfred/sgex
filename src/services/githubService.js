@@ -1961,6 +1961,30 @@ class GitHubService {
     }
   }
 
+  // Create a new file (requires authentication)
+  async createFile(owner, repo, path, content, message, branch = 'main') {
+    if (!this.isAuth()) {
+      throw new Error('Authentication required to create files');
+    }
+
+    try {
+      // Create the file (without SHA since it's new)
+      const { data } = await this.octokit.rest.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path,
+        message,
+        content: btoa(unescape(encodeURIComponent(content))),
+        branch
+      });
+
+      return data;
+    } catch (error) {
+      console.error(`Failed to create file ${path}:`, error);
+      throw error;
+    }
+  }
+
   // Update file content (requires authentication)
   async updateFile(owner, repo, path, content, message, branch = 'main') {
     if (!this.isAuth()) {
