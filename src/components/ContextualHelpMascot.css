@@ -368,10 +368,22 @@
     align-items: start;
   }
   
+  /* Make all topic buttons consistent height in 2-column layout */
+  .help-topics-list.multi-column-2 .help-topic-btn {
+    min-height: 64px;
+    align-items: flex-start;
+  }
+  
   /* 3-column layout for 11+ topics */
   .help-topics-list.multi-column-3 {
     grid-template-columns: 1fr 1fr 1fr;
     gap: 8px 12px;
+  }
+  
+  /* Make all topic buttons consistent height in 3-column layout */
+  .help-topics-list.multi-column-3 .help-topic-btn {
+    min-height: 72px;
+    align-items: flex-start;
   }
   
   /* Title spans full width in grid layout */

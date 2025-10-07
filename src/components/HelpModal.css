@@ -123,10 +123,22 @@
     min-width: 500px;
   }
   
+  /* Make all menu items consistent height in 2-column layout */
+  .help-menu-dropdown.multi-column-2 .menu-item {
+    min-height: 64px;
+    align-items: flex-start;
+  }
+  
   /* 3-column layout for 9+ items */
   .help-menu-dropdown.multi-column-3 {
     grid-template-columns: 1fr 1fr 1fr;
     min-width: 700px;
+  }
+  
+  /* Make all menu items consistent height in 3-column layout */
+  .help-menu-dropdown.multi-column-3 .menu-item {
+    min-height: 72px;
+    align-items: flex-start;
   }
 }
 
