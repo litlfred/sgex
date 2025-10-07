@@ -365,9 +365,9 @@ const RequirementsEditorContent = () => {
         </div>
       )}
 
-        <div className="requirements-layout">
-          {/* Left sidebar - Requirements list */}
-          <div className="requirements-sidebar">
+      <div className="requirements-layout">
+        {/* Left sidebar - Requirements list */}
+        <div className="requirements-sidebar">
             <div className="sidebar-header">
               <h3>Requirements ({requirements.length})</h3>
               <div className="create-buttons">
