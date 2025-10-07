@@ -52,8 +52,7 @@ describe('Service Table Generator', () => {
     
     expect(table).toContain('# Service Table');
     expect(table).toContain('Test Service');
-    expect(table).toContain('Generated on:');
-    expect(table).toContain('scripts/generate-service-table.js');
+    expect(table).not.toContain('Generated on:');
   });
 
   test('should create schema links correctly', () => {
@@ -79,10 +78,8 @@ describe('Service Table Generator', () => {
         "type": "string",
         "enum": questionIds.sort(),
         "examples": questionIds.slice(0, 3),
-        "_generated": {
-          "timestamp": new Date().toISOString(),
-          "count": questionIds.length,
-          "source": "scripts/generate-service-table.js"
+        "errorMessage": {
+          "enum": "Question ID must be one of the available FAQ questions. Use the list_faq_questions endpoint to get current options."
         }
       };
 
@@ -96,7 +93,7 @@ describe('Service Table Generator', () => {
     const schema = JSON.parse(schemaContent);
     
     expect(schema.enum).toEqual(['test-question-1', 'test-question-2']);
-    expect(schema._generated.count).toBe(2);
+    expect(schema._generated).toBeUndefined();
     
     // Cleanup
     await fs.unlink(tempSchemaPath).catch(() => {});
@@ -136,7 +133,7 @@ describe('Service Table Integration', () => {
       
       expect(tableContent).toContain('# Service Table');
       expect(tableContent).toContain('DAK FAQ');
-      expect(tableContent).toContain('Generated on:');
+      expect(tableContent).not.toContain('Generated on:');
       
       // Check logs
       expect(logs.some(log => log.includes('Generating service table'))).toBe(true);

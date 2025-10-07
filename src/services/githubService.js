@@ -660,7 +660,10 @@ class GitHubService {
         retryable: this._isRetryableError(error)
       };
 
-      console.warn(`Failed to check ${owner}/${repo} for sushi-config.yaml with smart.who.int.base dependency:`, error.message);
+      // Only log non-404 errors to avoid verbose output during repository scanning
+      if (error.status !== 404) {
+        console.warn(`Failed to check ${owner}/${repo} for sushi-config.yaml with smart.who.int.base dependency:`, error.message);
+      }
       
       // Cache negative result
       repositoryCompatibilityCache.set(owner, repo, false);
@@ -1436,13 +1439,15 @@ class GitHubService {
         console.log('📊 githubService.getFileContent: Base64 content length:', data.content.length);
         
         try {
-          // Use modern Buffer approach for reliable base64 decoding
-          const content = Buffer.from(data.content, 'base64').toString('utf-8');
+          // Use browser-compatible base64 decoding instead of Buffer
+          const content = atob(data.content);
+          // Convert to UTF-8 if needed (atob returns Latin-1)
+          const utf8Content = decodeURIComponent(escape(content));
           console.log(`✅ githubService.getFileContent: Successfully fetched and decoded file content`);
-          console.log('📏 githubService.getFileContent: Final content length:', content.length, 'characters');
-          console.log('👀 githubService.getFileContent: Content preview (first 200 chars):', content.substring(0, 200));
+          console.log('📏 githubService.getFileContent: Final content length:', utf8Content.length, 'characters');
+          console.log('👀 githubService.getFileContent: Content preview (first 200 chars):', utf8Content.substring(0, 200));
           
-          return content;
+          return utf8Content;
         } catch (decodeError) {
           console.error('❌ githubService.getFileContent: Base64 decoding failed:', decodeError);
           console.error('🔍 githubService.getFileContent: Raw base64 content preview:', data.content.substring(0, 100));

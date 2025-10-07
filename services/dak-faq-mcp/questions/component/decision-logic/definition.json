@@ -1,0 +1,65 @@
+{
+  "id": "decision-logic",
+  "level": "component",
+  "title": "dak.faq.decision_logic.title",
+  "description": "dak.faq.decision_logic.description",
+  "parameters": [
+    {
+      "name": "repository",
+      "type": "string",
+      "required": true,
+      "description": "dak.faq.params.repository"
+    },
+    {
+      "name": "locale",
+      "type": "string",
+      "required": false,
+      "description": "dak.faq.params.locale",
+      "default": "en"
+    }
+  ],
+  "tags": ["component", "decision-logic", "dmn", "decision-support"],
+  "componentType": "decision-logic",
+  "schema": {
+    "input": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "description": "GitHub repository in format 'user/repo' or local folder path"
+        },
+        "locale": {
+          "type": "string",
+          "description": "Language locale code",
+          "default": "en"
+        }
+      },
+      "required": ["repository"]
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "structured": {
+          "type": "object",
+          "properties": {
+            "decisionLogic": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "file": { "type": "string" },
+                  "type": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "narrative": { "type": "string" },
+        "errors": { "type": "array", "items": { "type": "string" } },
+        "warnings": { "type": "array", "items": { "type": "string" } },
+        "meta": { "type": "object" }
+      }
+    }
+  }
+}

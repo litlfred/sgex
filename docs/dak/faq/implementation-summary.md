@@ -10,8 +10,16 @@ This document summarizes the draft question sets created for each of the 9 DAK c
 - **`dak-name`**: "What is the name of this DAK?" - Extracts DAK name from sushi-config.yaml
 - **`dak-version`**: "What is the version of this DAK?" - Extracts version metadata from sushi-config.yaml
 
-#### Component Level (1 question)
-- **`business-process-workflows`**: "What business process workflows are defined?" - Scans BPMN files for workflow definitions
+#### Component Level (9 questions) ✅ NEW
+- **`health-interventions`**: "What health interventions and recommendations are included in this DAK?" - Scans for intervention files
+- **`personas`**: "What generic personas are defined in this DAK?" - Scans for actor/persona definitions
+- **`user-scenarios`**: "What user scenarios are described in this DAK?" - Scans for scenario files
+- **`business-processes`**: "What business processes and workflows are defined in this DAK?" - Scans for BPMN workflow files
+- **`data-elements`**: "What core data elements are defined in this DAK?" - Scans for data dictionaries and profiles
+- **`decision-logic`**: "What decision-support logic is included in this DAK?" - Scans for DMN/CQL logic files
+- **`indicators`**: "What program indicators are defined in this DAK?" - Scans for indicator definitions
+- **`requirements`**: "What functional and non-functional requirements are specified in this DAK?" - Scans for requirement files
+- **`test-scenarios`**: "What test scenarios are included in this DAK?" - Scans for test scenario files
 
 #### Asset Level (4 questions)
 - **`decision-table-inputs`**: "What are the inputs required for this decision table?" - Analyzes DMN files for input requirements *(original implementation)*
