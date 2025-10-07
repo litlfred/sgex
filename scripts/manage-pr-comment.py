@@ -448,7 +448,7 @@ class PRCommentManager:
 
 <h3>📊 Overall Progress</h3>
 
-**Branch:** `{branch_name}`  
+**Branch:** [`{branch_name}`]({branch_url})  
 **Status:** {status_icon} {status_text}  
 {next_step}
 """
