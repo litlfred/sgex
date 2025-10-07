@@ -46,6 +46,62 @@ function loadRepositoryConfig() {
 loadRepositoryConfig();
 
 module.exports = {
+  webpack: {
+    configure: (webpackConfig) => {
+      const webpack = require('webpack');
+      
+      // Add comprehensive fallbacks for Node.js modules used by fsh-sushi
+      // These are required for dynamic imports of fsh-sushi to work in browser
+      
+      webpackConfig.resolve.fallback = {
+        ...webpackConfig.resolve.fallback,
+        // Core Node.js modules
+        path: false,
+        fs: false,
+        os: false,
+        crypto: false,
+        stream: false,
+        buffer: false,
+        util: false,
+        assert: false,
+        http: false,
+        https: false,
+        url: false,
+        zlib: false,
+        constants: false,
+        // Additional modules used by fsh-sushi
+        child_process: false,
+        events: require.resolve('events/'),
+        net: false,
+        tls: false,
+        dns: false,
+        dgram: false,
+      };
+      
+      // Add plugin to handle node: protocol imports
+      webpackConfig.plugins = [
+        ...webpackConfig.plugins,
+        new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
+          const mod = resource.request.replace(/^node:/, '');
+          
+          // Map node: modules to their browser equivalents or false
+          const nodeModules = {
+            events: require.resolve('events/'),
+            // All others resolve to empty module
+          };
+          
+          if (nodeModules[mod]) {
+            resource.request = nodeModules[mod];
+          } else {
+            // Resolve to an empty module for unsupported Node.js modules
+            resource.request = 'data:text/javascript,module.exports = {}';
+          }
+        }),
+      ];
+      
+      return webpackConfig;
+    },
+  },
   devServer: (devServerConfig, { env, paths, proxy, allowedHost }) => {
     // Override the deprecated onBeforeSetupMiddleware and onAfterSetupMiddleware
     // with the new setupMiddlewares API for webpack-dev-server 5.x compatibility

@@ -215,31 +215,6 @@ export function generateLazyRoutes() {
   }
   
   if (!config) {
-<<<<<<< HEAD
-    console.warn('SGEX route configuration not loaded, falling back to minimal routes');
-    
-    // Provide a more comprehensive fallback that includes essential routes for the help system
-    const BranchListingPage = createLazyComponent('BranchListingPage');
-    const DAKDashboard = createLazyComponent('DAKDashboard');
-    const LandingPage = createLazyComponent('LandingPage');
-    const DocumentationViewer = createLazyComponent('DocumentationViewer');
-    const UserScenarios = createLazyComponent('UserScenarios');
-    
-    return [
-      <Route key="fallback-home" path="/" element={<BranchListingPage />} />,
-      <Route key="fallback-dashboard" path="/dashboard" element={<DAKDashboard />} />,
-      <Route key="fallback-dashboard-user" path="/dashboard/:user" element={<DAKDashboard />} />,
-      <Route key="fallback-dashboard-user-repo" path="/dashboard/:user/:repo" element={<DAKDashboard />} />,
-      <Route key="fallback-dashboard-user-repo-branch" path="/dashboard/:user/:repo/:branch" element={<DAKDashboard />} />,
-      <Route key="fallback-user-scenarios" path="/user-scenarios" element={<UserScenarios />} />,
-      <Route key="fallback-user-scenarios-user" path="/user-scenarios/:user" element={<UserScenarios />} />,
-      <Route key="fallback-user-scenarios-user-repo" path="/user-scenarios/:user/:repo" element={<UserScenarios />} />,
-      <Route key="fallback-user-scenarios-user-repo-branch" path="/user-scenarios/:user/:repo/:branch" element={<UserScenarios />} />,
-      <Route key="fallback-welcome" path="/welcome" element={<LandingPage />} />,
-      <Route key="fallback-docs" path="/docs/:docId" element={<DocumentationViewer />} />,
-      <Route key="fallback-docs-default" path="/docs" element={<DocumentationViewer />} />,
-      <Route key="fallback-404" path="*" element={<div>Page not found</div>} />
-=======
     // Create an error display component instead of falling back silently
     const ErrorDisplay = () => (
       <div style={{
@@ -286,7 +261,6 @@ export function generateLazyRoutes() {
     
     return [
       <Route key="error-all" path="*" element={<ErrorDisplay />} />
->>>>>>> origin/main
     ];
   }
 
