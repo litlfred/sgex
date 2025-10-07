@@ -110,8 +110,8 @@ class PRCommentManager:
         if not isinstance(url, str):
             return ""
         
-        # Only allow https URLs to GitHub
-        if not re.match(r'^https://github\.com/', url):
+        # Only allow https URLs to GitHub and GitHub Pages
+        if not re.match(r'^https://(github\.com/|[a-zA-Z0-9\-]+\.github\.io/)', url):
             return ""
         
         return url
@@ -201,13 +201,16 @@ class PRCommentManager:
         """
         Build the comment body for the given stage, appending to timeline.
         
+        CRITICAL: The HTML comment marker MUST be the very first thing in the returned
+        comment body to ensure get_existing_comment() can find and update existing comments.
+        
         Args:
             stage: Current stage of the workflow
             data: Stage-specific data (will be sanitized)
             existing_timeline: Previous timeline entries to append to
             
         Returns:
-            Formatted comment body with marker
+            Formatted comment body with marker at the very start
         """
         # Sanitize all data inputs
         commit_sha = self.sanitize_string(data.get('commit_sha', 'unknown'), max_length=40)
@@ -222,27 +225,33 @@ class PRCommentManager:
         # Stage-specific content with HTML headers for consistent styling
         if stage == 'started':
             status_line = "<h2>🚀 Deployment Status: Build Started</h2>"
-            status_icon = "🔵"
+            status_icon = "🟠"
             status_text = "Initializing build process"
             next_step = "**Next:** Installing dependencies and setting up environment"
             actions = f"""<h3>🔗 Quick Actions</h3>
 
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
-            timeline_entry = f"- **{timestamp}** - 🔵 Build started for commit [`{commit_sha_short}`]({commit_url})"
+            if branch_url:
+                actions += f"""
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
+            timeline_entry = f"- **{timestamp}** - ✅ Build started for commit [`{commit_sha_short}`]({commit_url})"
         
         elif stage == 'setup':
             status_line = "<h2>🚀 Deployment Status: Setting Up Environment</h2>"
-            status_icon = "🔵"
+            status_icon = "🟠"
             status_text = "Installing dependencies and configuring environment"
             next_step = "**Next:** Building React application"
             actions = f"""<h3>🔗 Quick Actions</h3>
 
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
-            timeline_entry = f"- **{timestamp}** - 🔵 Environment setup complete"
+            if branch_url:
+                actions += f"""
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
+            timeline_entry = f"- **{timestamp}** - 🟠 Setting up environment"
         
         elif stage == 'building':
             status_line = "<h2>🚀 Deployment Status: Building Application</h2>"
-            status_icon = "🔵"
+            status_icon = "🟠"
             status_text = "Compiling and bundling application code"
             next_step = "**Next:** Deploying to GitHub Pages"
             
@@ -254,13 +263,13 @@ class PRCommentManager:
             # Add preview URL if available (determined after PUBLIC_URL calculation)
             if branch_url:
                 actions += f"""
-<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
             
-            timeline_entry = f"- **{timestamp}** - 🔵 Building application"
+            timeline_entry = f"- **{timestamp}** - ✅ Environment setup complete"
         
         elif stage == 'deploying':
             status_line = "<h2>🚀 Deployment Status: Deploying to GitHub Pages</h2>"
-            status_icon = "🟡"
+            status_icon = "🟠"
             status_text = "Pushing build artifacts to gh-pages branch"
             next_step = "**Next:** Verifying deployment accessibility"
             actions = f"""<h3>🔗 Quick Actions</h3>
@@ -268,12 +277,12 @@ class PRCommentManager:
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
             if branch_url:
                 actions += f"""
-<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Expected Deployment URL"/></a> _(deploying...)_"""
-            timeline_entry = f"- **{timestamp}** - 🟡 Deploying to gh-pages branch"
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(deploying...)_"""
+            timeline_entry = f"- **{timestamp}** - ✅ Build complete"
         
         elif stage == 'verifying':
             status_line = "<h2>🚀 Deployment Status: Verifying Deployment</h2>"
-            status_icon = "🟡"
+            status_icon = "🟠"
             status_text = "Checking deployment accessibility"
             next_step = "**Next:** Deployment complete or failure reported"
             actions = f"""<h3>🔗 Quick Actions</h3>
@@ -281,8 +290,8 @@ class PRCommentManager:
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
             if branch_url:
                 actions += f"""
-<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Preview URL"/></a> _(verifying...)_"""
-            timeline_entry = f"- **{timestamp}** - 🟡 Verifying deployment"
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Preview URL"/></a> _(verifying...)_"""
+            timeline_entry = f"- **{timestamp}** - ✅ Deployment complete"
         
         elif stage == 'pages-built':
             status_line = "<h2>🚀 Deployment Status: GitHub Pages Built</h2>"
@@ -291,7 +300,7 @@ class PRCommentManager:
             next_step = "**Status:** Site is live and accessible"
             actions = f"""<h3>🔗 Quick Actions</h3>
 
-<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-brightgreen?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Open Branch Preview"/></a>
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-brightgreen?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Open Branch Preview"/></a>
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
             timeline_entry = f"- **{timestamp}** - 🟢 GitHub Pages built"
         
@@ -302,7 +311,7 @@ class PRCommentManager:
             next_step = "**Status:** Deployment complete - site is ready for testing"
             actions = f"""<h3>🌐 Preview URLs</h3>
 
-<a href="{branch_url}"><img src="https://img.shields.io/badge/Open_Branch_Preview-brightgreen?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Open Branch Preview"/></a>
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Open_Branch_Preview-brightgreen?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Open Branch Preview"/></a>
 
 <h3>🔗 Quick Actions</h3>
 
@@ -356,11 +365,6 @@ class PRCommentManager:
 {next_step}
 """
         
-        if branch_url and stage in ['success', 'pages-built']:
-            comment += f"\n**Preview URL:** {branch_url}\n"
-        elif branch_url and stage in ['verifying', 'deploying', 'building']:
-            comment += f"\n**Expected Preview URL:** {branch_url} (deploying...)\n"
-        
         comment += f"""
 ---
 
@@ -369,6 +373,15 @@ class PRCommentManager:
 
 💡 *This comment is automatically updated as the deployment progresses.*
 """
+        
+        # Validation: Ensure marker is at the very start (CRITICAL for comment updates to work)
+        # This is critical for get_existing_comment() to find and update existing comments
+        if not comment.startswith(self.comment_marker):
+            raise RuntimeError(
+                f"CRITICAL ERROR: Comment marker is not at the start of comment body. "
+                f"This will cause duplicate comments. Marker: {self.comment_marker}, "
+                f"Comment starts with: {comment[:100]}"
+            )
         
         return comment
     
@@ -404,6 +417,12 @@ class PRCommentManager:
             
             # Build comment body with existing timeline
             comment_body = self.build_comment_body(stage, data, existing_timeline)
+            
+            # Debug: Log marker placement verification
+            marker_at_start = comment_body.startswith(self.comment_marker)
+            print(f"📋 Comment body generated (marker at start: {marker_at_start}, length: {len(comment_body)} chars)")
+            if not marker_at_start:
+                print(f"⚠️  WARNING: Marker not at start! First 100 chars: {comment_body[:100]}")
             
             if existing:
                 # Update existing comment
