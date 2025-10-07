@@ -234,7 +234,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
-            timeline_entry = f"- **{timestamp}** - 🟠 Build started for commit [`{commit_sha_short}`]({commit_url})"
+            timeline_entry = f"- **{timestamp}** - ✅ Build started for commit [`{commit_sha_short}`]({commit_url})"
         
         elif stage == 'setup':
             status_line = "<h2>🚀 Deployment Status: Setting Up Environment</h2>"
@@ -247,7 +247,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
-            timeline_entry = f"- **{timestamp}** - 🟠 Environment setup complete"
+            timeline_entry = f"- **{timestamp}** - ✅ Environment setup complete"
         
         elif stage == 'building':
             status_line = "<h2>🚀 Deployment Status: Building Application</h2>"
@@ -265,7 +265,7 @@ class PRCommentManager:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
             
-            timeline_entry = f"- **{timestamp}** - 🟠 Building application"
+            timeline_entry = f"- **{timestamp}** - ✅ Building application"
         
         elif stage == 'deploying':
             status_line = "<h2>🚀 Deployment Status: Deploying to GitHub Pages</h2>"
@@ -278,7 +278,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(deploying...)_"""
-            timeline_entry = f"- **{timestamp}** - 🟠 Deploying to gh-pages branch"
+            timeline_entry = f"- **{timestamp}** - ✅ Deploying to gh-pages branch"
         
         elif stage == 'verifying':
             status_line = "<h2>🚀 Deployment Status: Verifying Deployment</h2>"
@@ -291,7 +291,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Preview URL"/></a> _(verifying...)_"""
-            timeline_entry = f"- **{timestamp}** - 🟠 Verifying deployment"
+            timeline_entry = f"- **{timestamp}** - ✅ Verifying deployment"
         
         elif stage == 'pages-built':
             status_line = "<h2>🚀 Deployment Status: GitHub Pages Built</h2>"
