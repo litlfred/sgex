@@ -201,13 +201,16 @@ class PRCommentManager:
         """
         Build the comment body for the given stage, appending to timeline.
         
+        CRITICAL: The HTML comment marker MUST be the very first thing in the returned
+        comment body to ensure get_existing_comment() can find and update existing comments.
+        
         Args:
             stage: Current stage of the workflow
             data: Stage-specific data (will be sanitized)
             existing_timeline: Previous timeline entries to append to
             
         Returns:
-            Formatted comment body with marker
+            Formatted comment body with marker at the very start
         """
         # Sanitize all data inputs
         commit_sha = self.sanitize_string(data.get('commit_sha', 'unknown'), max_length=40)
@@ -370,6 +373,15 @@ class PRCommentManager:
 💡 *This comment is automatically updated as the deployment progresses.*
 """
         
+        # Validation: Ensure marker is at the very start (CRITICAL for comment updates to work)
+        # This is critical for get_existing_comment() to find and update existing comments
+        if not comment.startswith(self.comment_marker):
+            raise RuntimeError(
+                f"CRITICAL ERROR: Comment marker is not at the start of comment body. "
+                f"This will cause duplicate comments. Marker: {self.comment_marker}, "
+                f"Comment starts with: {comment[:100]}"
+            )
+        
         return comment
     
     def update_comment(self, stage: str, data: Dict[str, Any]) -> bool:
@@ -404,6 +416,12 @@ class PRCommentManager:
             
             # Build comment body with existing timeline
             comment_body = self.build_comment_body(stage, data, existing_timeline)
+            
+            # Debug: Log marker placement verification
+            marker_at_start = comment_body.startswith(self.comment_marker)
+            print(f"📋 Comment body generated (marker at start: {marker_at_start}, length: {len(comment_body)} chars)")
+            if not marker_at_start:
+                print(f"⚠️  WARNING: Marker not at start! First 100 chars: {comment_body[:100]}")
             
             if existing:
                 # Update existing comment
