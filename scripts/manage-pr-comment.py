@@ -365,11 +365,6 @@ class PRCommentManager:
 {next_step}
 """
         
-        if branch_url and stage in ['success', 'pages-built']:
-            comment += f"\n**Preview URL:** {branch_url}\n"
-        elif branch_url and stage in ['verifying', 'deploying', 'building']:
-            comment += f"\n**Expected Preview URL:** {branch_url} (deploying...)\n"
-        
         comment += f"""
 ---
 
