@@ -338,7 +338,6 @@ const RequirementsEditorContent = () => {
       // Reset state
       setEditing(false);
       setSelectedRequirement(null);
-      setRequirementContent(null);
     } catch (err) {
       console.error('Error deleting requirement:', err);
       setError('Failed to delete requirement');
@@ -701,7 +700,6 @@ const RequirementsEditorContent = () => {
           </div>
         )}
       </div>
-    </div>
   );
 };
 
