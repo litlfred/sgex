@@ -299,39 +299,18 @@ const QuestionnaireEditorContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   
-  // Handle PageProvider initialization issues - AFTER all hooks
-  if (pageParams.error) {
-    return (
-      <div className="questionnaire-editor-container">
-        <div className="error-message">
-          <h2>Page Context Error</h2>
-          <p>{pageParams.error}</p>
-          <p>This component requires a DAK repository context to function properly.</p>
-        </div>
-      </div>
-    );
-  }
-  
-  if (pageParams.loading) {
-    return (
-      <div className="questionnaire-editor-container">
-        <div className="loading-message">
-          <h2>Loading...</h2>
-          <p>Initializing page context...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  const { repository, branch, isLoading: pageLoading } = pageParams;
-  
-  // LForms integration state (additional state)
+  // LForms integration state (additional state hooks must also be at top)
   const [lformsLoaded, setLformsLoaded] = useState(false);
   const [editMode, setEditMode] = useState('visual'); // 'visual' or 'json'
   const [lformsError, setLformsError] = useState(null);
   const [editing, setEditing] = useState(false);
   const [questionnaireContent, setQuestionnaireContent] = useState(null);
   const [originalContent, setOriginalContent] = useState(null);
+
+  // Get repository and branch from page params (with null-safe access)
+  const repository = pageParams?.repository;
+  const branch = pageParams?.branch;
+  const pageLoading = pageParams?.isLoading;
 
   // Check if we have the necessary context data
   const hasRequiredData = repository && branch && !pageLoading;
@@ -430,6 +409,30 @@ const QuestionnaireEditorContent = () => {
 
     loadQuestionnaires();
   }, [hasRequiredData, repository, branch, pageLoading]); // Include pageLoading since it's used in the effect
+
+  // Handle PageProvider initialization issues - AFTER all hooks
+  if (pageParams.error) {
+    return (
+      <div className="questionnaire-editor-container">
+        <div className="error-message">
+          <h2>Page Context Error</h2>
+          <p>{pageParams.error}</p>
+          <p>This component requires a DAK repository context to function properly.</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (pageParams.loading) {
+    return (
+      <div className="questionnaire-editor-container">
+        <div className="loading-message">
+          <h2>Loading...</h2>
+          <p>Initializing page context...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Early return if PageProvider context is not ready
   if (!repository || !branch) {
