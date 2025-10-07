@@ -225,7 +225,7 @@ class PRCommentManager:
         # Stage-specific content with HTML headers for consistent styling
         if stage == 'started':
             status_line = "<h2>🚀 Deployment Status: Build Started</h2>"
-            status_icon = "🔵"
+            status_icon = "🟠"
             status_text = "Initializing build process"
             next_step = "**Next:** Installing dependencies and setting up environment"
             actions = f"""<h3>🔗 Quick Actions</h3>
@@ -234,11 +234,11 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
-            timeline_entry = f"- **{timestamp}** - 🔵 Build started for commit [`{commit_sha_short}`]({commit_url})"
+            timeline_entry = f"- **{timestamp}** - 🟠 Build started for commit [`{commit_sha_short}`]({commit_url})"
         
         elif stage == 'setup':
             status_line = "<h2>🚀 Deployment Status: Setting Up Environment</h2>"
-            status_icon = "🔵"
+            status_icon = "🟠"
             status_text = "Installing dependencies and configuring environment"
             next_step = "**Next:** Building React application"
             actions = f"""<h3>🔗 Quick Actions</h3>
@@ -247,11 +247,11 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
-            timeline_entry = f"- **{timestamp}** - 🔵 Environment setup complete"
+            timeline_entry = f"- **{timestamp}** - 🟠 Environment setup complete"
         
         elif stage == 'building':
             status_line = "<h2>🚀 Deployment Status: Building Application</h2>"
-            status_icon = "🔵"
+            status_icon = "🟠"
             status_text = "Compiling and bundling application code"
             next_step = "**Next:** Deploying to GitHub Pages"
             
@@ -265,11 +265,11 @@ class PRCommentManager:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
             
-            timeline_entry = f"- **{timestamp}** - 🔵 Building application"
+            timeline_entry = f"- **{timestamp}** - 🟠 Building application"
         
         elif stage == 'deploying':
             status_line = "<h2>🚀 Deployment Status: Deploying to GitHub Pages</h2>"
-            status_icon = "🟡"
+            status_icon = "🟠"
             status_text = "Pushing build artifacts to gh-pages branch"
             next_step = "**Next:** Verifying deployment accessibility"
             actions = f"""<h3>🔗 Quick Actions</h3>
@@ -278,11 +278,11 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Expected Deployment URL"/></a> _(deploying...)_"""
-            timeline_entry = f"- **{timestamp}** - 🟡 Deploying to gh-pages branch"
+            timeline_entry = f"- **{timestamp}** - 🟠 Deploying to gh-pages branch"
         
         elif stage == 'verifying':
             status_line = "<h2>🚀 Deployment Status: Verifying Deployment</h2>"
-            status_icon = "🟡"
+            status_icon = "🟠"
             status_text = "Checking deployment accessibility"
             next_step = "**Next:** Deployment complete or failure reported"
             actions = f"""<h3>🔗 Quick Actions</h3>
@@ -291,7 +291,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Preview URL"/></a> _(verifying...)_"""
-            timeline_entry = f"- **{timestamp}** - 🟡 Verifying deployment"
+            timeline_entry = f"- **{timestamp}** - 🟠 Verifying deployment"
         
         elif stage == 'pages-built':
             status_line = "<h2>🚀 Deployment Status: GitHub Pages Built</h2>"
