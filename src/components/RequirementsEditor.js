@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PageLayout, AssetEditorLayout, useDAKParams } from './framework';
+import { PageLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
 import { escapeFSHString, extractFSHMetadata } from '@sgex/dak-core/dist/browser';
@@ -355,19 +355,15 @@ const RequirementsEditorContent = () => {
   }
 
   return (
-    <AssetEditorLayout
-      title="Functional and Non-Functional Requirements"
-      subtitle="System requirements specifications that define capabilities and constraints"
-    >
-      <div className="requirements-editor">
-        <ContextualHelpMascot pageId="functional-requirements" />
+    <div className="requirements-editor">
+      <ContextualHelpMascot pageId="functional-requirements" />
 
-        {error && (
-          <div className="error-message">
-            <span className="error-icon">⚠️</span>
-            {error}
-          </div>
-        )}
+      {error && (
+        <div className="error-message">
+          <span className="error-icon">⚠️</span>
+          {error}
+        </div>
+      )}
 
         <div className="requirements-layout">
           {/* Left sidebar - Requirements list */}
@@ -705,7 +701,7 @@ const RequirementsEditorContent = () => {
           </div>
         )}
       </div>
-    </AssetEditorLayout>
+    </div>
   );
 };
 
