@@ -237,9 +237,9 @@ const UserScenariosContent = () => {
 ## Overview
 Brief description of this user scenario.
 
-## Actors
-- Primary actor: [Actor name]
-- Secondary actors: [List other actors if applicable]
+## Generic Personas
+- Primary persona: [Persona name from your DAK's generic persona definitions]
+- Secondary personas: [List other personas if applicable]
 
 ## Preconditions
 - [List any preconditions]

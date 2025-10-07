@@ -364,7 +364,7 @@ class HelpContentService {
                 <h4>📋 Essential Components</h4>
                 <ul>
                   <li><strong>Overview</strong> - Brief description of the scenario</li>
-                  <li><strong>Actors</strong> - Primary and secondary personas involved</li>
+                  <li><strong>Generic Personas</strong> - Primary and secondary personas involved</li>
                   <li><strong>Preconditions</strong> - Starting state or requirements</li>
                   <li><strong>Flow of Events</strong> - Step-by-step interaction sequence</li>
                   <li><strong>Postconditions</strong> - Expected outcomes</li>
@@ -372,7 +372,7 @@ class HelpContentService {
                   <li><strong>Exception Flows</strong> - Error handling and recovery</li>
                 </ul>
                 <div class="help-tip">
-                  <strong>✨ Best Practice:</strong> Reference specific personas from your DAK's actor definitions.
+                  <strong>✨ Best Practice:</strong> Reference specific personas from your DAK's generic persona definitions.
                 </div>
               `
             },
