@@ -122,6 +122,9 @@ function createLazyComponent(componentName) {
     case 'QuestionnaireEditor':
       LazyComponent = React.lazy(() => import('../components/QuestionnaireEditor'));
       break;
+    case 'PersonaViewer':
+      LazyComponent = React.lazy(() => import('../components/PersonaViewer'));
+      break;
     case 'RequirementsEditor':
       LazyComponent = React.lazy(() => import('../components/RequirementsEditor'));
       break;

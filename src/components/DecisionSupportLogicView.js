@@ -32,9 +32,9 @@ const DecisionSupportLogicView = () => {
 
 const DecisionSupportLogicViewContent = () => {
   const navigate = useNavigate();
-  const { profile, repository, branch: selectedBranch } = useDAKParams();
+  const pageParams = useDAKParams();
   
-  // Component state
+  // Component state - ALL HOOKS AT THE TOP
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dakDTCodeSystem, setDakDTCodeSystem] = useState(null);
@@ -49,7 +49,10 @@ const DecisionSupportLogicViewContent = () => {
   const [enhancedFullwidth, setEnhancedFullwidth] = useState(false);
   const [autoHide, setAutoHide] = useState(false);
 
-  // Load DAK decision support data
+  // Extract profile, repository, branch for use in effects
+  const { profile, repository, branch: selectedBranch } = pageParams;
+
+  // Load DAK decision support data - MOVED BEFORE EARLY RETURNS
   useEffect(() => {
     const loadDecisionSupportData = async () => {
       if (!repository || !selectedBranch) return;
@@ -338,31 +341,6 @@ define "Contraindication Present":
     };
   };
 
-  // Filter and sort variables
-  useEffect(() => {
-    if (!dakDTCodeSystem?.concepts) return;
-    
-    let filtered = dakDTCodeSystem.concepts.filter(concept =>
-      concept.Code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      concept.Display?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      concept.Definition?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    
-    // Sort
-    filtered.sort((a, b) => {
-      const aVal = a[sortField] || '';
-      const bVal = b[sortField] || '';
-      
-      if (sortDirection === 'asc') {
-        return aVal.localeCompare(bVal);
-      } else {
-        return bVal.localeCompare(aVal);
-      }
-    });
-    
-    setFilteredVariables(filtered);
-  }, [dakDTCodeSystem, searchTerm, sortField, sortDirection]);
-
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -464,29 +442,6 @@ define "Contraindication Present":
   const handleToggleAutoHide = () => {
     setAutoHide(!autoHide);
   };
-
-  // Cleanup effect for enhanced fullwidth
-  useEffect(() => {
-    return () => {
-      // Clean up body class on unmount
-      document.body.classList.remove('enhanced-fullwidth-active');
-    };
-  }, []);
-
-  // Update body class when enhanced fullwidth changes
-  useEffect(() => {
-    if (enhancedFullwidth) {
-      document.body.classList.add('enhanced-fullwidth-active');
-    } else {
-      document.body.classList.remove('enhanced-fullwidth-active');
-    }
-    
-    return () => {
-      document.body.classList.remove('enhanced-fullwidth-active');
-    };
-  }, [enhancedFullwidth]);
-
-
 
   if (loading) {
     return (
