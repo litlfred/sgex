@@ -242,7 +242,7 @@ const PreviewBadge = () => {
     }
   };
 
-  const fetchCommentsForPR = async (owner, repo, prNumber, page = 1, append = false, showLoading = true) => {
+  const fetchCommentsForPR = async (owner, repo, prNumber, page = 1, append = false, showLoading = true, preserveDisplayCount = false) => {
     try {
       if (showLoading) {
         setCommentsLoading(true);
@@ -267,6 +267,7 @@ const PreviewBadge = () => {
       console.debug('Comments fetched for PR discussion:', {
         refreshType: append ? 'append' : 'replace',
         showLoading,
+        preserveDisplayCount,
         reviewCommentsCount: reviewComments.length,
         issueCommentsCount: issueComments.length,
         totalComments: newComments.length,
@@ -337,9 +338,19 @@ const PreviewBadge = () => {
           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         
         setAllComments(allItems);
-        const initialDisplayCount = Math.min(5, allItems.length);
-        setDisplayedCommentsCount(initialDisplayCount);
-        setComments(allItems.slice(0, initialDisplayCount));
+        
+        // Preserve the display count during auto-refresh to avoid resetting the view
+        if (preserveDisplayCount) {
+          // Keep the current displayedCommentsCount, but ensure it doesn't exceed total
+          const currentDisplayCount = Math.min(displayedCommentsCount, allItems.length);
+          setDisplayedCommentsCount(currentDisplayCount);
+          setComments(allItems.slice(0, currentDisplayCount));
+        } else {
+          // Initial load or manual refresh - show first 5 comments
+          const initialDisplayCount = Math.min(5, allItems.length);
+          setDisplayedCommentsCount(initialDisplayCount);
+          setComments(allItems.slice(0, initialDisplayCount));
+        }
       }
       
       // Check if there are more comments to load
@@ -1067,18 +1078,10 @@ const PreviewBadge = () => {
     // Set up new interval to refresh comments every 5 seconds
     commentRefreshIntervalRef.current = setInterval(async () => {
       try {
-        const latestComments = await fetchCommentsForPR(owner, repo, prNumber, 1, false, false);
-        
-        // Check if there are new comments compared to what we have
-        if (latestComments.length > 0 && comments.length > 0) {
-          const latestId = latestComments[0].id;
-          const currentLatestId = comments[0].id;
-          
-          if (latestId !== currentLatestId) {
-            console.debug('New comments detected during auto-refresh');
-            // Don't reset the page, just refresh the current view
-          }
-        }
+        // Fetch the latest comments without showing loading indicator
+        // Use preserveDisplayCount=true to maintain the current view during auto-refresh
+        await fetchCommentsForPR(owner, repo, prNumber, 1, false, false, true);
+        console.debug('Comments auto-refreshed successfully');
       } catch (error) {
         console.debug('Failed to auto-refresh comments:', error);
       }
@@ -1095,7 +1098,8 @@ const PreviewBadge = () => {
       const pr = prInfo[0];
       
       console.debug('Manual refresh of comments requested');
-      await fetchCommentsForPR(owner, repo, pr.number, 1, false, true);
+      // Preserve display count during manual refresh as well
+      await fetchCommentsForPR(owner, repo, pr.number, 1, false, true, true);
       
       // Brief success feedback
       setTimeout(() => setIsRefreshingComments(false), 1000);
@@ -1221,8 +1225,8 @@ const PreviewBadge = () => {
           // Set success status
           setCommentSubmissionStatus('success');
           
-          // Refresh comments after successful submission - multiple attempts for reliability
-          await fetchCommentsForPR(owner, repo, pr.number, 1, false, true);
+          // Refresh comments after successful submission - preserve display count
+          await fetchCommentsForPR(owner, repo, pr.number, 1, false, true, true);
           
           // Mark the newly added comment for glow effect
           if (submittedComment && submittedComment.id) {
@@ -1237,7 +1241,7 @@ const PreviewBadge = () => {
           // Additional refresh after a short delay to ensure GitHub API consistency
           setTimeout(async () => {
             try {
-              await fetchCommentsForPR(owner, repo, pr.number, 1, false, false);
+              await fetchCommentsForPR(owner, repo, pr.number, 1, false, false, true);
               console.debug('Secondary comment refresh completed after comment submission');
             } catch (error) {
               console.debug('Secondary comment refresh failed:', error);
@@ -2095,9 +2099,9 @@ const PreviewBadge = () => {
                             checked={showStatusUpdates}
                             onChange={(e) => {
                               setShowStatusUpdates(e.target.checked);
-                              // Refresh comments when toggling status updates
+                              // Refresh comments when toggling status updates, preserve display count
                               if (prInfo && prInfo.length > 0) {
-                                fetchCommentsForPR(repositoryConfig.getOwner(), repositoryConfig.getName(), prInfo[0].number, 1, false);
+                                fetchCommentsForPR(repositoryConfig.getOwner(), repositoryConfig.getName(), prInfo[0].number, 1, false, false, true);
                               }
                             }}
                           />
