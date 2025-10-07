@@ -231,6 +231,9 @@ class PRCommentManager:
             actions = f"""<h3>🔗 Quick Actions</h3>
 
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
+            if branch_url:
+                actions += f"""
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
             timeline_entry = f"- **{timestamp}** - 🔵 Build started for commit [`{commit_sha_short}`]({commit_url})"
         
         elif stage == 'setup':
@@ -241,6 +244,9 @@ class PRCommentManager:
             actions = f"""<h3>🔗 Quick Actions</h3>
 
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
+            if branch_url:
+                actions += f"""
+<a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=🌐&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
             timeline_entry = f"- **{timestamp}** - 🔵 Environment setup complete"
         
         elif stage == 'building':

@@ -126,13 +126,23 @@ jobs:
         if: steps.find_pr.outputs.result != ''
         continue-on-error: true
         run: |
+          # Calculate branch URL for PR comment
+          branch_name="${{ github.event.inputs.branch || github.head_ref || github.ref_name }}"
+          if [[ "$branch_name" == "main" ]]; then
+            public_url="/sgex/main/"
+          else
+            safe_branch_name=$(echo "$branch_name" | tr '/' '-')
+            public_url="/sgex/${safe_branch_name}/"
+          fi
+          branch_url="https://${{ github.repository_owner }}.github.io${public_url}"
+          
           python3 scripts/manage-pr-comment.py \
             --token "${{ secrets.GITHUB_TOKEN }}" \
             --repo "${{ github.repository }}" \
             --pr "${{ steps.find_pr.outputs.result }}" \
             --action-id "${{ github.run_id }}" \
             --stage "started" \
-            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ github.event.inputs.branch || github.head_ref || github.ref_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"$branch_name\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"$branch_url\"}"
 
       - name: Determine branch information
         id: branch_info
@@ -154,6 +164,25 @@ jobs:
           
           echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
           echo "Building and deploying branch: $branch_name"
+
+      - name: Determine PUBLIC_URL and branch URL
+        id: public_url
+        run: |
+          branch_name="${{ steps.branch_info.outputs.branch_name }}"
+          if [[ "$branch_name" == "main" ]]; then
+            public_url="/sgex/main/"
+          else
+            safe_branch_name=$(echo "$branch_name" | tr '/' '-')
+            public_url="/sgex/${safe_branch_name}/"
+          fi
+          export PUBLIC_URL="$public_url"
+          echo "public_url=$public_url" >> $GITHUB_OUTPUT
+          echo "Determined PUBLIC_URL: $public_url"
+          
+          # Also calculate the full branch URL for PR comments
+          branch_url="https://${{ github.repository_owner }}.github.io${public_url}"
+          echo "branch_url=$branch_url" >> $GITHUB_OUTPUT
+          echo "Branch URL: $branch_url"
 
       - name: Configure git user
         shell: bash
@@ -181,7 +210,7 @@ jobs:
             --pr "${{ steps.find_pr.outputs.result }}" \
             --action-id "${{ github.run_id }}" \
             --stage "setup" \
-            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"${{ steps.public_url.outputs.branch_url }}\"}"
 
       - name: Skip QA Generation for Branch Deployment
         run: |
@@ -189,19 +218,6 @@ jobs:
           echo "These reports are generated during main branch CI/CD and are not needed for preview deployments"
           echo "This prevents merge conflicts when multiple branches deploy simultaneously to gh-pages"
 
-      - name: Determine PUBLIC_URL for branch
-        id: public_url
-        run: |
-          branch_name="${{ steps.branch_info.outputs.branch_name }}"
-          if [[ "$branch_name" == "main" ]]; then
-            public_url="/sgex/main/"
-          else
-            safe_branch_name=$(echo "$branch_name" | tr '/' '-')
-            public_url="/sgex/${safe_branch_name}/"
-          fi
-          export PUBLIC_URL="$public_url"
-          echo "public_url=$public_url" >> $GITHUB_OUTPUT
-          echo "Determined PUBLIC_URL: $public_url"
 
       - name: Update PR comment - Building Application
         if: steps.find_pr.outputs.result != ''
@@ -352,7 +368,7 @@ jobs:
             --pr "${{ steps.find_pr.outputs.result }}" \
             --action-id "${{ github.run_id }}" \
             --stage "deploying" \
-            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+            --data "{\"commit_sha\":\"${{ github.sha }}\",\"branch_name\":\"${{ steps.branch_info.outputs.branch_name }}\",\"commit_url\":\"https://github.com/${{ github.repository }}/commit/${{ github.sha }}\",\"workflow_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",\"branch_url\":\"${{ steps.public_url.outputs.branch_url }}\"}"
 
       - name: Clean old deployment for this branch
         shell: bash
