@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import githubService from '../services/githubService';
+import stagingGroundService from '../services/stagingGroundService';
 import { PageLayout, usePage } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import './UserScenarios.css';
@@ -54,7 +55,7 @@ const UserScenariosContent = () => {
       .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
   };
 
-  // Load user scenario files from input/pagecontent/
+  // Load user scenario files from GitHub and staging ground
   const loadScenarioFiles = useCallback(async () => {
     if (!user || !repo || !branch) return;
 
@@ -62,12 +63,12 @@ const UserScenariosContent = () => {
       setLoading(true);
       setError(null);
 
-      // Get files from input/pagecontent directory
+      // Get files from input/pagecontent directory in GitHub
       const pageContentPath = 'input/pagecontent';
       const files = await githubService.getDirectoryContents(user, repo, pageContentPath, branch);
       
-      // Filter for userscenario-*.md files
-      const scenarioFiles = files
+      // Filter for userscenario-*.md files from GitHub
+      const githubScenarios = files
         .filter(file => 
           file.type === 'file' && 
           file.name.startsWith('userscenario-') && 
@@ -76,10 +77,45 @@ const UserScenariosContent = () => {
         .map(file => ({
           ...file,
           id: file.name.replace('userscenario-', '').replace('.md', ''),
-          title: file.name.replace('userscenario-', '').replace('.md', '').replace(/-/g, ' ')
+          title: file.name.replace('userscenario-', '').replace('.md', '').replace(/-/g, ' '),
+          source: 'github'
         }));
 
-      setScenarioFiles(scenarioFiles);
+      // Get files from staging ground
+      const stagingGround = stagingGroundService.getStagingGround();
+      const stagedScenarios = stagingGround.files
+        .filter(file => 
+          file.path.startsWith('input/pagecontent/userscenario-') && 
+          file.path.endsWith('.md')
+        )
+        .map(file => {
+          const fileName = file.path.split('/').pop();
+          return {
+            path: file.path,
+            name: fileName,
+            id: fileName.replace('userscenario-', '').replace('.md', ''),
+            title: file.metadata?.scenarioTitle || fileName.replace('userscenario-', '').replace('.md', '').replace(/-/g, ' '),
+            source: 'staging',
+            isNew: file.metadata?.isNew || false,
+            lastModified: file.metadata?.lastModified
+          };
+        });
+
+      // Merge GitHub and staged files, giving priority to staged versions
+      const allScenarios = [...githubScenarios];
+      
+      stagedScenarios.forEach(staged => {
+        const existingIndex = allScenarios.findIndex(s => s.path === staged.path);
+        if (existingIndex >= 0) {
+          // Replace with staged version (has unsaved changes)
+          allScenarios[existingIndex] = { ...allScenarios[existingIndex], ...staged, hasChanges: true };
+        } else {
+          // New file in staging ground
+          allScenarios.push(staged);
+        }
+      });
+
+      setScenarioFiles(allScenarios);
     } catch (err) {
       console.error('Error loading scenario files:', err);
       setError(`Failed to load user scenarios: ${err.message}`);
@@ -88,15 +124,34 @@ const UserScenariosContent = () => {
     }
   }, [user, repo, branch]);
 
-  // Load content of a specific scenario file
+  // Load content of a specific scenario file from staging ground or GitHub
   const loadScenarioContent = useCallback(async (scenarioFile) => {
-    if (!user || !repo || !branch || !scenarioFile) return;
+    if (!scenarioFile) return;
 
     try {
       setLoading(true);
-      const content = await githubService.getFileContent(user, repo, scenarioFile.path, branch);
-      setScenarioContent(content);
-      setSelectedScenario(scenarioFile);
+      let content;
+      
+      // Check staging ground first
+      if (scenarioFile.source === 'staging' || scenarioFile.hasChanges) {
+        const stagingGround = stagingGroundService.getStagingGround();
+        const stagedFile = stagingGround.files.find(f => f.path === scenarioFile.path);
+        if (stagedFile) {
+          content = stagedFile.content;
+        }
+      }
+      
+      // Fall back to GitHub if not in staging ground
+      if (!content && user && repo && branch) {
+        content = await githubService.getFileContent(user, repo, scenarioFile.path, branch);
+      }
+      
+      if (content) {
+        setScenarioContent(content);
+        setSelectedScenario(scenarioFile);
+      } else {
+        throw new Error('Could not load scenario content');
+      }
     } catch (err) {
       console.error('Error loading scenario content:', err);
       setError(`Failed to load scenario: ${err.message}`);
@@ -105,50 +160,41 @@ const UserScenariosContent = () => {
     }
   }, [user, repo, branch]);
 
-  // Save scenario content
+  // Save scenario content to staging ground (not directly to GitHub)
   const saveScenarioContent = useCallback(async () => {
-    if (!user || !repo || !branch || !selectedScenario) return;
+    if (!selectedScenario) return;
 
     try {
       setSaving(true);
       
-      const commitMessage = `Update user scenario: ${selectedScenario.id}`;
+      // Save to staging ground (local storage), not directly to GitHub
+      const success = stagingGroundService.updateFile(selectedScenario.path, scenarioContent, {
+        componentType: 'user-scenario',
+        scenarioId: selectedScenario.id,
+        lastModified: Date.now()
+      });
       
-      await githubService.updateFile(
-        user,
-        repo,
-        selectedScenario.path,
-        scenarioContent,
-        commitMessage,
-        selectedScenario.sha,
-        branch
-      );
-      
-      // Refresh the file list to get updated SHA
-      await loadScenarioFiles();
-      
-      // Update the selected scenario with new SHA
-      const updatedFiles = await githubService.getDirectoryContents(user, repo, 'input/pagecontent', branch);
-      const updatedScenario = updatedFiles.find(f => f.path === selectedScenario.path);
-      if (updatedScenario) {
-        setSelectedScenario({
-          ...selectedScenario,
-          sha: updatedScenario.sha
-        });
+      if (success) {
+        // Update local state to reflect saved content
+        setIsEditMode(false);
+        setError(null);
+        // Show success message
+        console.log('Scenario saved to staging ground. Use Publications → Staging Ground to commit to GitHub.');
+      } else {
+        throw new Error('Failed to save to staging ground');
       }
       
-      setIsEditMode(false);
     } catch (err) {
       console.error('Error saving scenario:', err);
       setError(`Failed to save scenario: ${err.message}`);
     } finally {
       setSaving(false);
     }
-  }, [user, repo, branch, selectedScenario, scenarioContent, loadScenarioFiles]);
+  }, [selectedScenario, scenarioContent]);
 
-  // Create new scenario
+  // Create new scenario in staging ground (not directly in GitHub)
   const createNewScenario = useCallback(async () => {
-    if (!user || !repo || !branch || !newScenarioId || !newScenarioTitle) return;
+    if (!newScenarioId || !newScenarioTitle) return;
 
     try {
       setSaving(true);
@@ -160,17 +206,29 @@ const UserScenariosContent = () => {
         return;
       }
 
-      // Check if file already exists
+      // Check if file already exists in staging ground
       const fileName = `userscenario-${newScenarioId}.md`;
       const filePath = `input/pagecontent/${fileName}`;
       
-      try {
-        await githubService.getFileContent(user, repo, filePath, branch);
-        setError('A scenario with this ID already exists. Please choose a different ID.');
+      const stagingGround = stagingGroundService.getStagingGround();
+      const existsInStaging = stagingGround.files.some(f => f.path === filePath);
+      
+      if (existsInStaging) {
+        setError('A scenario with this ID already exists in staging ground. Please choose a different ID.');
         setSaving(false);
         return;
-      } catch (err) {
-        // File doesn't exist, which is what we want
+      }
+      
+      // Also check if it exists in GitHub
+      if (user && repo && branch) {
+        try {
+          await githubService.getFileContent(user, repo, filePath, branch);
+          setError('A scenario with this ID already exists in the repository. Please choose a different ID.');
+          setSaving(false);
+          return;
+        } catch (err) {
+          // File doesn't exist in GitHub, which is what we want
+        }
       }
 
       // Create initial content
@@ -206,24 +264,30 @@ Brief description of this user scenario.
 - [Additional notes or considerations]
 `;
 
-      const commitMessage = `Create new user scenario: ${newScenarioTitle}`;
+      // Save to staging ground (local storage), not directly to GitHub
+      const success = stagingGroundService.updateFile(filePath, initialContent, {
+        componentType: 'user-scenario',
+        scenarioId: newScenarioId,
+        scenarioTitle: newScenarioTitle,
+        isNew: true,
+        createdAt: Date.now()
+      });
       
-      await githubService.createFile(
-        user,
-        repo,
-        filePath,
-        initialContent,
-        commitMessage,
-        branch
-      );
-      
-      // Refresh the file list
-      await loadScenarioFiles();
-      
-      // Clear the modal
-      setShowNewScenarioModal(false);
-      setNewScenarioId('');
-      setNewScenarioTitle('');
+      if (success) {
+        // Refresh the file list
+        await loadScenarioFiles();
+        
+        // Clear the modal
+        setShowNewScenarioModal(false);
+        setNewScenarioId('');
+        setNewScenarioTitle('');
+        setError(null);
+        
+        // Show success message
+        console.log('New scenario created in staging ground. Use Publications → Staging Ground to commit to GitHub.');
+      } else {
+        throw new Error('Failed to save to staging ground');
+      }
       
     } catch (err) {
       console.error('Error creating scenario:', err);
@@ -231,7 +295,7 @@ Brief description of this user scenario.
     } finally {
       setSaving(false);
     }
-  }, [user, repo, branch, newScenarioId, newScenarioTitle, loadScenarioFiles]);
+  }, [newScenarioId, newScenarioTitle, user, repo, branch, loadScenarioFiles]);
 
   // Load scenario files when component mounts or context changes
   useEffect(() => {
