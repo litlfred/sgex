@@ -110,8 +110,8 @@ class PRCommentManager:
         if not isinstance(url, str):
             return ""
         
-        # Only allow https URLs to GitHub
-        if not re.match(r'^https://github\.com/', url):
+        # Only allow https URLs to GitHub and GitHub Pages
+        if not re.match(r'^https://(github\.com/|[a-zA-Z0-9\-]+\.github\.io/)', url):
             return ""
         
         return url
