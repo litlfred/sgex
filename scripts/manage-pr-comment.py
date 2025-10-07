@@ -197,6 +197,73 @@ class PRCommentManager:
         
         return comment_body[timeline_start:timeline_end].strip()
     
+    def update_timeline_status(self, existing_timeline: str, current_stage: str) -> str:
+        """
+        Update previous in-progress (🟠) steps to completed (🟢) when advancing to a new step.
+        
+        Args:
+            existing_timeline: Previous timeline entries
+            current_stage: Current stage being executed
+            
+        Returns:
+            Updated timeline with previous in-progress steps marked as completed
+        """
+        if not existing_timeline:
+            return ""
+        
+        # Replace all in-progress orange circles with completed green circles for previous steps
+        # This happens when we advance to a new stage
+        updated_timeline = existing_timeline.replace(" - 🟠 ", " - 🟢 ")
+        
+        return updated_timeline
+    
+    def get_workflow_step_link(self, stage: str, commit_sha: str, repo: str) -> str:
+        """
+        Generate a link to the specific workflow step in the workflow file at the given commit.
+        
+        Args:
+            stage: Current workflow stage
+            commit_sha: Commit SHA for permalink
+            repo: Repository in format owner/repo
+            
+        Returns:
+            Markdown link to the workflow step
+        """
+        # Map stages to their approximate line numbers in branch-deployment.yml
+        # These are the "Update PR comment" step names in the workflow
+        stage_to_line = {
+            'started': 125,      # "Update PR comment - Build Started"
+            'setup': 203,        # "Update PR comment - Environment Setup Complete"
+            'building': 222,     # "Update PR comment - Building Application"
+            'deploying': 361,    # "Update PR comment - Deploying to GitHub Pages"
+            'verifying': 673,    # "Update PR comment - Verifying Deployment"
+            'success': 770,      # "Comment on associated PR (Success)"
+            'failure': 784,      # "Comment on associated PR (Failure)"
+            'pages-built': None  # Not in branch-deployment.yml
+        }
+        
+        stage_to_name = {
+            'started': 'Build Started',
+            'setup': 'Environment Setup Complete',
+            'building': 'Building Application',
+            'deploying': 'Deploying to GitHub Pages',
+            'verifying': 'Verifying Deployment',
+            'success': 'Successfully Deployed',
+            'failure': 'Deployment Failed',
+            'pages-built': 'GitHub Pages Built'
+        }
+        
+        line = stage_to_line.get(stage)
+        name = stage_to_name.get(stage, stage)
+        
+        if line and commit_sha and commit_sha != 'unknown':
+            # Create permalink to specific line in workflow file at this commit
+            workflow_file = ".github/workflows/branch-deployment.yml"
+            link = f"https://github.com/{repo}/blob/{commit_sha}/{workflow_file}#L{line}"
+            return f"[{name}]({link})"
+        else:
+            return name
+    
     def build_comment_body(self, stage: str, data: Dict[str, Any], existing_timeline: str = "") -> str:
         """
         Build the comment body for the given stage, appending to timeline.
@@ -220,7 +287,26 @@ class PRCommentManager:
         workflow_url = self.sanitize_url(data.get('workflow_url', ''))
         branch_url = self.sanitize_url(data.get('branch_url', ''))
         
+        # Extract action ID from workflow URL if available
+        action_id_display = self.action_id if self.action_id else 'N/A'
+        
+        # Update existing timeline: change previous in-progress steps to completed
+        if existing_timeline:
+            existing_timeline = self.update_timeline_status(existing_timeline, stage)
+        
         timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+        
+        # Get workflow step link
+        repo = f"{self.owner}/{self.repo_name}"
+        step_link = self.get_workflow_step_link(stage, commit_sha, repo)
+        
+        # Build preamble with action ID and commit ID links
+        preamble = f"""<h3>📊 Deployment Information</h3>
+
+**Action ID:** [{action_id_display}]({workflow_url})  
+**Commit:** [`{commit_sha_short}`]({commit_url}) ([view changes]({commit_url.replace('/commit/', '/commits/')}))  
+**Workflow Step:** {step_link}
+"""
         
         # Stage-specific content with HTML headers for consistent styling
         if stage == 'started':
@@ -234,7 +320,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
-            timeline_entry = f"- **{timestamp}** - ✅ Build started for commit [`{commit_sha_short}`]({commit_url})"
+            timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - Initializing"
         
         elif stage == 'setup':
             status_line = "<h2>🚀 Deployment Status: Setting Up Environment</h2>"
@@ -247,7 +333,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
-            timeline_entry = f"- **{timestamp}** - 🟠 Setting up environment"
+            timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - In progress"
         
         elif stage == 'building':
             status_line = "<h2>🚀 Deployment Status: Building Application</h2>"
@@ -265,7 +351,7 @@ class PRCommentManager:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(will be live after deployment)_"""
             
-            timeline_entry = f"- **{timestamp}** - ✅ Environment setup complete"
+            timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - In progress"
         
         elif stage == 'deploying':
             status_line = "<h2>🚀 Deployment Status: Deploying to GitHub Pages</h2>"
@@ -278,7 +364,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Expected Deployment URL"/></a> _(deploying...)_"""
-            timeline_entry = f"- **{timestamp}** - ✅ Build complete"
+            timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - In progress"
         
         elif stage == 'verifying':
             status_line = "<h2>🚀 Deployment Status: Verifying Deployment</h2>"
@@ -291,7 +377,7 @@ class PRCommentManager:
             if branch_url:
                 actions += f"""
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-orange?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Preview URL"/></a> _(verifying...)_"""
-            timeline_entry = f"- **{timestamp}** - ✅ Deployment complete"
+            timeline_entry = f"- **{timestamp}** - 🟠 {step_link} - In progress"
         
         elif stage == 'pages-built':
             status_line = "<h2>🚀 Deployment Status: GitHub Pages Built</h2>"
@@ -302,10 +388,10 @@ class PRCommentManager:
 
 <a href="{branch_url}"><img src="https://img.shields.io/badge/Preview_URL-brightgreen?style=for-the-badge&logo=github&label=%F0%9F%8C%90&labelColor=gray" alt="Open Branch Preview"/></a>
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
-            timeline_entry = f"- **{timestamp}** - 🟢 GitHub Pages built"
+            timeline_entry = f"- **{timestamp}** - 🟢 {step_link} - Complete"
         
         elif stage == 'success':
-            status_line = "<h2>🚀 Deployment Status: Successfully Deployed ✅</h2>"
+            status_line = "<h2>🚀 Deployment Status: Successfully Deployed 🟢</h2>"
             status_icon = "🟢"
             status_text = "Live and accessible"
             next_step = "**Status:** Deployment complete - site is ready for testing"
@@ -316,20 +402,20 @@ class PRCommentManager:
 <h3>🔗 Quick Actions</h3>
 
 <a href="{workflow_url}"><img src="https://img.shields.io/badge/Build_Logs-gray?style=for-the-badge&logo=github" alt="Build Logs"/></a>"""
-            timeline_entry = f"- **{timestamp}** - ✅ Deployment successful - site is live"
+            timeline_entry = f"- **{timestamp}** - 🟢 {step_link} - Site is live"
         
         elif stage == 'failure':
             error_message = self.sanitize_string(data.get('error_message', 'Unknown error'), max_length=200)
-            status_line = "<h2>🚀 Deployment Status: Failed ❌</h2>"
+            status_line = "<h2>🚀 Deployment Status: Failed 🔴</h2>"
             status_icon = "🔴"
             status_text = "Deployment failed"
             next_step = "**Action Required:** Fix issues and retry deployment"
             actions = f"""<h3>🔗 Quick Actions</h3>
 
-<a href="{workflow_url}"><img src="https://img.shields.io/badge/Error_Logs-red?style=for-the-badge&logo=github&label=📊&labelColor=gray" alt="Error Logs"/></a> _Action ID: `{self.action_id if self.action_id else 'N/A'}`_
+<a href="{workflow_url}"><img src="https://img.shields.io/badge/Error_Logs-red?style=for-the-badge&logo=github&label=📊&labelColor=gray" alt="Error Logs"/></a>
 
 **Error:** {error_message}"""
-            timeline_entry = f"- **{timestamp}** - ❌ Deployment failed: {error_message}"
+            timeline_entry = f"- **{timestamp}** - 🔴 {step_link} - Failed: {error_message}"
         
         else:
             # Fallback (should not reach here due to validation)
@@ -353,6 +439,8 @@ class PRCommentManager:
         # Build complete comment with action-specific marker
         comment = f"""{self.comment_marker}
 {status_line}
+
+{preamble}
 
 {actions}
 
