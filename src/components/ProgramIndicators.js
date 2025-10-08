@@ -41,12 +41,14 @@ const ProgramIndicatorsContent = () => {
   const [programIndicatorModel, setProgramIndicatorModel] = useState(null);
   const [loadingModel, setLoadingModel] = useState(false);
 
+  // ProgramIndicator model URL
+  const MODEL_URL = 'https://raw.githubusercontent.com/WorldHealthOrganization/smart-base/main/input/fsh/models/ProgramIndicator.fsh';
+
   // Fetch ProgramIndicator model from smart-base repository
   const fetchProgramIndicatorModel = useCallback(async () => {
     try {
       setLoadingModel(true);
-      const modelUrl = 'https://raw.githubusercontent.com/WorldHealthOrganization/smart-base/main/input/fsh/models/ProgramIndicator.fsh';
-      const response = await fetch(modelUrl);
+      const response = await fetch(MODEL_URL);
       
       if (!response.ok) {
         throw new Error('Failed to fetch ProgramIndicator model');
@@ -79,7 +81,7 @@ const ProgramIndicatorsContent = () => {
       setProgramIndicatorModel({
         content: modelContent,
         fields: fields,
-        url: modelUrl
+        url: MODEL_URL
       });
       
       console.log('ProgramIndicators: Fetched ProgramIndicator model with', fields.length, 'fields');
@@ -98,7 +100,7 @@ const ProgramIndicatorsContent = () => {
           { name: 'disaggregation', cardinality: '1..1', type: 'string', displayName: 'Disaggregation', description: 'Description of how the indicator should be disaggregated', isRequired: true },
           { name: 'references', cardinality: '0..*', type: 'id', displayName: 'References', description: 'References to Health Intervention IDs', isRequired: false }
         ],
-        url: modelUrl,
+        url: MODEL_URL,
         isFallback: true
       });
     } finally {
