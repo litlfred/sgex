@@ -369,14 +369,14 @@
     min-width: 600px; /* 50% wider than base */
   }
   
-  /* Make all topic buttons exactly 2 lines height in 2-column layout */
+  /* Make all topic buttons exactly 2 lines height in 2-column layout using font-relative sizing */
   .help-topics-list.multi-column-2 .help-topic-btn {
-    height: 52px; /* Fixed height for 2 lines: 14px font * 1.4 line-height * 2 lines + 12px padding top/bottom */
-    min-height: 52px;
-    max-height: 52px;
+    height: 3.5em; /* 2 lines of text at 1.5 line-height + padding */
+    min-height: 3.5em;
+    max-height: 3.5em;
     align-items: flex-start;
     overflow: hidden;
-    line-height: 1.4;
+    line-height: 1.5;
   }
   
   /* 3-column layout for 11+ topics - 100% wider */
@@ -386,14 +386,14 @@
     min-width: 800px; /* 100% wider than base */
   }
   
-  /* Make all topic buttons exactly 3 lines height in 3-column layout */
+  /* Make all topic buttons exactly 3 lines height in 3-column layout using font-relative sizing */
   .help-topics-list.multi-column-3 .help-topic-btn {
-    height: 70px; /* Fixed height for 3 lines: 14px font * 1.4 line-height * 3 lines + 12px padding top/bottom */
-    min-height: 70px;
-    max-height: 70px;
+    height: 5em; /* 3 lines of text at 1.5 line-height + padding */
+    min-height: 5em;
+    max-height: 5em;
     align-items: flex-start;
     overflow: hidden;
-    line-height: 1.4;
+    line-height: 1.5;
   }
   
   /* Title spans full width in grid layout */
@@ -403,15 +403,9 @@
     margin-bottom: 8px;
   }
   
-  /* Dividers and full-width elements span all columns */
+  /* Only dividers span all columns - let language, theme, and cache be part of the grid */
   .help-topics-list.multi-column-2 .help-menu-divider,
-  .help-topics-list.multi-column-3 .help-menu-divider,
-  .help-topics-list.multi-column-2 .help-menu-language-selector,
-  .help-topics-list.multi-column-3 .help-menu-language-selector,
-  .help-topics-list.multi-column-2 .help-theme-toggle-btn,
-  .help-topics-list.multi-column-3 .help-theme-toggle-btn,
-  .help-topics-list.multi-column-2 .help-menu-cache-section,
-  .help-topics-list.multi-column-3 .help-menu-cache-section {
+  .help-topics-list.multi-column-3 .help-menu-divider {
     grid-column: 1 / -1;
   }
 }
