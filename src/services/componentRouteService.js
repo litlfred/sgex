@@ -128,6 +128,9 @@ function createLazyComponent(componentName) {
     case 'ProgramIndicatorsViewer':
       LazyComponent = React.lazy(() => import('../components/ProgramIndicatorsViewer'));
       break;
+    case 'ProgramIndicatorEditor':
+      LazyComponent = React.lazy(() => import('../components/ProgramIndicatorEditor'));
+      break;
     
     default:
       console.warn(`Unknown component ${componentName}, using fallback`);
