@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import githubService from '../services/githubService';
 import { PageLayout, useDAKParams } from './framework';
 import { lazyLoadMDEditor } from '../services/libraryLoaderService';
+import { parseFSHCodeSystem } from '@sgex/dak-core/dist/browser';
 
 // Lazy markdown component using the utility
 const LazyMarkdown = ({ source }) => {
@@ -31,9 +32,9 @@ const DecisionSupportLogicView = () => {
 
 const DecisionSupportLogicViewContent = () => {
   const navigate = useNavigate();
-  const { profile, repository, branch: selectedBranch } = useDAKParams();
+  const pageParams = useDAKParams();
   
-  // Component state
+  // Component state - ALL HOOKS AT THE TOP
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dakDTCodeSystem, setDakDTCodeSystem] = useState(null);
@@ -48,7 +49,10 @@ const DecisionSupportLogicViewContent = () => {
   const [enhancedFullwidth, setEnhancedFullwidth] = useState(false);
   const [autoHide, setAutoHide] = useState(false);
 
-  // Load DAK decision support data
+  // Extract profile, repository, branch for use in effects
+  const { profile, repository, branch: selectedBranch } = pageParams;
+
+  // Load DAK decision support data - MOVED BEFORE EARLY RETURNS
   useEffect(() => {
     const loadDecisionSupportData = async () => {
       if (!repository || !selectedBranch) return;
@@ -84,8 +88,25 @@ const DecisionSupportLogicViewContent = () => {
             selectedBranch
           );
           
-          // Parse FSH content to extract code system data
-          const codeSystemData = parseFSHCodeSystem(fshContent);
+          // Parse FSH content to extract code system data using shared utility (now async)
+          const concepts = await parseFSHCodeSystem(fshContent);
+          
+          // Convert to expected format (map FSHConcept to DAK variable format)
+          const dakConcepts = concepts.map(c => ({
+            Code: c.code,
+            Display: c.display || c.code,
+            Definition: c.definition || '',
+            Tables: c.properties?.Tables || c.properties?.table || '',
+            Tabs: c.properties?.Tabs || c.properties?.tab || '',
+            CQL: c.properties?.CQL || ''
+          }));
+          
+          const codeSystemData = {
+            id: 'DAK.DT',
+            name: 'Decision Table',
+            concepts: dakConcepts
+          };
+          
           setDakDTCodeSystem(codeSystemData);
           setFilteredVariables(codeSystemData.concepts || []);
         } catch (error) {
@@ -228,186 +249,6 @@ define "BCG Contraindications":
     // eslint-disable-next-line react-hooks/exhaustive-deps  
   }, [repository, selectedBranch, profile?.isDemo]); // Include profile.isDemo for fallback logic
 
-  const parseFSHCodeSystem = (fshContent) => {
-    // Enhanced FSH parser for DAK code system
-    const lines = fshContent.split('\n');
-    const concepts = [];
-    let currentConcept = null;
-    let multiLineState = null; // Track what multi-line content we're parsing
-    let multiLineContent = [];
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const trimmedLine = line.trim();
-      
-      // Check if this is a top-level concept (starts with * # and is not indented)
-      const isTopLevel = line.startsWith('* #') && !line.startsWith('  ');
-      
-      if (isTopLevel) {
-        // Finish any ongoing multi-line content
-        if (multiLineState && currentConcept) {
-          if (multiLineState === 'definition') {
-            currentConcept.Definition = multiLineContent.join('\n').trim();
-          } else if (multiLineState === 'cql') {
-            currentConcept.CQL = multiLineContent.join('\n').trim();
-          }
-          multiLineState = null;
-          multiLineContent = [];
-        }
-        
-        // New concept - extract code and display from quoted strings
-        let conceptLine = trimmedLine.substring(2).trim(); // Remove '* #'
-        
-        // Match quoted strings: "code" "display"
-        // Handle escaped quotes properly
-        const quoteMatches = [];
-        let inQuote = false;
-        let current = '';
-        let i = 0;
-        
-        while (i < conceptLine.length) {
-          const char = conceptLine[i];
-          
-          if (char === '"' && (i === 0 || conceptLine[i-1] !== '\\')) {
-            if (inQuote) {
-              // End of quote
-              quoteMatches.push(current);
-              current = '';
-              inQuote = false;
-            } else {
-              // Start of quote
-              inQuote = true;
-            }
-          } else if (inQuote) {
-            if (char === '\\' && i + 1 < conceptLine.length && conceptLine[i + 1] === '"') {
-              // Escaped quote
-              current += '"';
-              i++; // Skip the next character
-            } else {
-              current += char;
-            }
-          }
-          i++;
-        }
-        
-        if (quoteMatches.length >= 2) {
-          const code = quoteMatches[0];
-          const display = quoteMatches[1];
-          
-          currentConcept = {
-            Code: code,
-            Display: display,
-            Definition: '',
-            Tables: '',
-            Tabs: '',
-            CQL: ''
-          };
-          concepts.push(currentConcept);
-        }
-      } else if (currentConcept) {
-        // Handle definition start
-        if (trimmedLine.startsWith('* ^definition = """')) {
-          multiLineState = 'definition';
-          multiLineContent = [];
-          // Get content after the opening """
-          const afterOpening = trimmedLine.substring('* ^definition = """'.length);
-          if (afterOpening && afterOpening !== '"""') {
-            multiLineContent.push(afterOpening);
-          }
-        }
-        // Handle definition end
-        else if (multiLineState === 'definition' && trimmedLine.endsWith('"""')) {
-          const beforeClosing = trimmedLine.substring(0, trimmedLine.length - 3);
-          if (beforeClosing) {
-            multiLineContent.push(beforeClosing);
-          }
-          currentConcept.Definition = multiLineContent.join('\n').trim();
-          multiLineState = null;
-          multiLineContent = [];
-        }
-        // Handle definition continuation
-        else if (multiLineState === 'definition') {
-          multiLineContent.push(trimmedLine);
-        }
-        // Handle CQL designation start
-        else if (trimmedLine.startsWith('* ^designation[+].value = """')) {
-          multiLineState = 'cql';
-          multiLineContent = [];
-          // Get content after the opening """
-          const afterOpening = trimmedLine.substring('* ^designation[+].value = """'.length);
-          if (afterOpening && afterOpening !== '"""') {
-            multiLineContent.push(afterOpening);
-          }
-        }
-        // Handle CQL designation end
-        else if (multiLineState === 'cql' && trimmedLine.endsWith('"""')) {
-          const beforeClosing = trimmedLine.substring(0, trimmedLine.length - 3);
-          if (beforeClosing) {
-            multiLineContent.push(beforeClosing);
-          }
-          currentConcept.CQL = multiLineContent.join('\n').trim();
-          multiLineState = null;
-          multiLineContent = [];
-        }
-        // Handle CQL continuation
-        else if (multiLineState === 'cql') {
-          multiLineContent.push(line); // Keep original indentation for CQL
-        }
-        // Handle table property
-        else if (trimmedLine.includes('* ^property[+].code = #"table"')) {
-          // Look for the next line with valueString
-          for (let j = i + 1; j < lines.length; j++) {
-            const nextLine = lines[j].trim();
-            if (nextLine.startsWith('* ^property[=].valueString = ')) {
-              const match = nextLine.match(/valueString = "([^"]*)"/);
-              if (match) {
-                currentConcept.Tables = match[1];
-                break;
-              }
-            }
-            // Stop looking if we hit another property or concept
-            if (nextLine.startsWith('* ^property[+]') || nextLine.startsWith('* #')) {
-              break;
-            }
-          }
-        }
-        // Handle tab property
-        else if (trimmedLine.includes('* ^property[+].code = #"tab"')) {
-          // Look for the next line with valueString
-          for (let j = i + 1; j < lines.length; j++) {
-            const nextLine = lines[j].trim();
-            if (nextLine.startsWith('* ^property[=].valueString = ')) {
-              const match = nextLine.match(/valueString = "([^"]*)"/);
-              if (match) {
-                currentConcept.Tabs = match[1];
-                break;
-              }
-            }
-            // Stop looking if we hit another property or concept
-            if (nextLine.startsWith('* ^property[+]') || nextLine.startsWith('* #')) {
-              break;
-            }
-          }
-        }
-      }
-    }
-    
-    // Handle any remaining multi-line content at end of file
-    if (multiLineState && currentConcept) {
-      if (multiLineState === 'definition') {
-        currentConcept.Definition = multiLineContent.join('\n').trim();
-      } else if (multiLineState === 'cql') {
-        currentConcept.CQL = multiLineContent.join('\n').trim();
-      }
-    }
-    
-    return {
-      id: 'DAK.DT',
-      name: 'Decision Table',
-      concepts: concepts
-    };
-  };
-
   const createFallbackDAKDT = () => {
     // Fallback data for demonstration
     return {
@@ -499,31 +340,6 @@ define "Contraindication Present":
       ]
     };
   };
-
-  // Filter and sort variables
-  useEffect(() => {
-    if (!dakDTCodeSystem?.concepts) return;
-    
-    let filtered = dakDTCodeSystem.concepts.filter(concept =>
-      concept.Code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      concept.Display?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      concept.Definition?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    
-    // Sort
-    filtered.sort((a, b) => {
-      const aVal = a[sortField] || '';
-      const bVal = b[sortField] || '';
-      
-      if (sortDirection === 'asc') {
-        return aVal.localeCompare(bVal);
-      } else {
-        return bVal.localeCompare(aVal);
-      }
-    });
-    
-    setFilteredVariables(filtered);
-  }, [dakDTCodeSystem, searchTerm, sortField, sortDirection]);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -626,29 +442,6 @@ define "Contraindication Present":
   const handleToggleAutoHide = () => {
     setAutoHide(!autoHide);
   };
-
-  // Cleanup effect for enhanced fullwidth
-  useEffect(() => {
-    return () => {
-      // Clean up body class on unmount
-      document.body.classList.remove('enhanced-fullwidth-active');
-    };
-  }, []);
-
-  // Update body class when enhanced fullwidth changes
-  useEffect(() => {
-    if (enhancedFullwidth) {
-      document.body.classList.add('enhanced-fullwidth-active');
-    } else {
-      document.body.classList.remove('enhanced-fullwidth-active');
-    }
-    
-    return () => {
-      document.body.classList.remove('enhanced-fullwidth-active');
-    };
-  }, [enhancedFullwidth]);
-
-
 
   if (loading) {
     return (

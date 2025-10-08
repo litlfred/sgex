@@ -92,7 +92,21 @@ potential blocking of copilot access to this repository.
             return;
           }
 
-          // Optimistic routing: try branch deployment first, fallback to main
+          // Smart routing: check if first segment is a valid component name
+          var firstSegment = pathSegments[1];
+          
+          // Load route config to check if it's a valid component
+          if (typeof window.getSGEXRouteConfig === 'function') {
+            var routeConfig = window.getSGEXRouteConfig();
+            if (routeConfig && routeConfig.isValidComponent && routeConfig.isValidComponent(firstSegment)) {
+              // Component-first routing: /sgex/{component}/{user}/{repo}/{branch}
+              var componentRoutePath = pathSegments.slice(1).join('/');
+              redirectToSPA('/sgex/', componentRoutePath);
+              return;
+            }
+          }
+          
+          // Fallback to optimistic branch routing if not a known component
           var branch = pathSegments[1];
           var component = pathSegments[2];
           

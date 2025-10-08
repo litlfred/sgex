@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@octokit/rest": "^22.0.0",
-    "@testing-library/jest-dom": "^6.8.0",
+    "@sgex/dak-core": "file:packages/dak-core",
+    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@uiw/react-md-editor": "^4.0.8",
@@ -18,13 +19,18 @@
     "ajv-formats": "^3.0.1",
     "bpmn-js": "^18.7.0",
     "bpmn-moddle": "^9.0.3",
-    "dompurify": "^3.2.6",
+    "dompurify": "^3.2.7",
     "html2canvas": "^1.4.1",
-    "i18next": "^25.5.2",
+    "i18next": "^25.5.3",
     "i18next-browser-languagedetector": "^8.2.0",
     "node-fetch": "^3.3.2",
+<<<<<<< HEAD
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+=======
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+>>>>>>> 94563b9d0ffd3420ae7de45cff646fc198d0f1b2
     "react-i18next": "^16.0.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.9.3",
@@ -36,7 +42,7 @@
   "scripts": {
     "configure:repo": "node scripts/configure-repository.js",
     "start": "npm run configure:repo && craco start",
-    "build": "npm run configure:repo && react-scripts build",
+    "build": "npm run configure:repo && craco build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve": "npm run build && cd build && python3 -m http.server 3000",
@@ -95,15 +101,21 @@
     "@types/ajv": "^1.0.4",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.5.2",
-    "@types/react": "^19.1.15",
-    "@types/react-dom": "^19.1.9",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
     "@typescript-eslint/eslint-plugin": "^8.44.1",
     "@typescript-eslint/parser": "^8.44.0",
+<<<<<<< HEAD
+=======
+    "buffer": "^6.0.3",
+>>>>>>> 94563b9d0ffd3420ae7de45cff646fc198d0f1b2
     "eslint-plugin-jsx-a11y": "^6.10.2",
+    "events": "^3.3.0",
     "http-proxy-middleware": "^3.0.5",
     "identity-obj-proxy": "^3.0.0",
     "js-yaml": "^4.1.0",
     "jsdom": "^27.0.0",
+    "process": "^0.11.10",
     "ts-json-schema-generator": "^2.4.0",
     "typescript": "^5.9.2",
     "typescript-json-schema": "^0.65.1"
