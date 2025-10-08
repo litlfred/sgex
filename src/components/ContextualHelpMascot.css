@@ -346,6 +346,64 @@
 /* Help topics list */
 .help-topics-list {
   width: 100%;
+  
+  /* Default single column layout */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Desktop multi-column layout for help topics */
+@media (min-width: 1024px) {
+  .help-thought-bubble {
+    /* Allow wider bubble on desktop for multi-column layout */
+    max-width: min(80vw, 800px);
+  }
+  
+  /* 2-column layout for 6+ topics - 50% wider */
+  .help-topics-list.multi-column-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+    align-items: start;
+    min-width: 600px; /* 50% wider than base */
+  }
+  
+  /* Make all topic buttons exactly 2 lines height in 2-column layout using font-relative sizing */
+  .help-topics-list.multi-column-2 .help-topic-btn {
+    height: 3.5em; /* 2 lines of text at 1.5 line-height + padding */
+    min-height: 3.5em;
+    max-height: 3.5em;
+    align-items: flex-start;
+    overflow: hidden;
+    line-height: 1.5;
+  }
+  
+  /* 3-column layout for 11+ topics - 100% wider */
+  .help-topics-list.multi-column-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px 12px;
+    min-width: 800px; /* 100% wider than base */
+  }
+  
+  /* Make all topic buttons exactly 3 lines height in 3-column layout using font-relative sizing */
+  .help-topics-list.multi-column-3 .help-topic-btn {
+    height: 5em; /* 3 lines of text at 1.5 line-height + padding */
+    min-height: 5em;
+    max-height: 5em;
+    align-items: flex-start;
+    overflow: hidden;
+    line-height: 1.5;
+  }
+  
+  /* Title spans full width in grid layout */
+  .help-topics-list.multi-column-2 h4,
+  .help-topics-list.multi-column-3 h4 {
+    grid-column: 1 / -1;
+    margin-bottom: 8px;
+  }
+  
+  /* Language, theme, and cache are now part of the grid layout */
 }
 
 .help-topics-list h4 {
@@ -424,10 +482,85 @@
     min-width: 260px;
     max-width: calc(100vw - 40px);
     padding: 16px;
+    /* Fix overflow issues */
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
   }
   
   .help-text {
     font-size: 13px;
+  }
+  
+  /* Two-column layout for help topics in landscape orientation */
+  .help-topics-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* Landscape mobile layout (horizontal orientation) */
+@media (max-width: 768px) and (max-height: 600px) {
+  .help-thought-bubble {
+    /* Use full viewport in landscape */
+    position: fixed !important;
+    top: 10px !important;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: 10px !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    min-width: none !important;
+    z-index: 10000 !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+  }
+  
+  .help-topics-list {
+    /* Two-column grid layout for better space utilization */
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px 12px !important;
+    margin-top: 8px !important;
+  }
+  
+  .help-topics-list h4 {
+    /* Title spans full width */
+    grid-column: 1 / -1 !important;
+    margin: 0 0 8px 0 !important;
+    font-size: 14px !important;
+  }
+  
+  .help-topic-btn {
+    /* Smaller buttons for two-column layout */
+    padding: 8px 12px !important;
+    margin: 0 !important;
+    font-size: 12px !important;
+    gap: 8px !important;
+  }
+  
+  .help-topic-badge {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  
+  /* Language selector and theme toggle also use grid */
+  .help-menu-language-selector,
+  .help-theme-toggle-btn,
+  .help-menu-cache-section {
+    grid-column: 1 / -1 !important;
+    margin: 4px 0 !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+  }
+  
+  /* Hide bubble tail in landscape full-screen mode */
+  .bubble-tail {
+    display: none !important;
   }
 }
 
@@ -438,14 +571,6 @@
 
 .help-thought-bubble {
   z-index: 1001;
-}
-
-/* Help menu divider */
-.help-menu-divider {
-  height: 1px;
-  background: var(--who-border-color, #e0e0e0);
-  margin: 12px 0;
-  opacity: 0.5;
 }
 
 /* Help theme toggle button in menu */

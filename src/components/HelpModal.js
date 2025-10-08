@@ -344,6 +344,11 @@ Best regards,
     window.open(`mailto:smart@who.int?subject=${subject}&body=${body}`);
   };
 
+  const handleGitHubSource = () => {
+    // Open the SGEX GitHub repository
+    window.open('https://github.com/litlfred/sgex', '_blank');
+  };
+
   const handleDocumentation = () => {
     // Use the standard /docs path that matches the route configuration
     // The docs component is configured as a DAK component at /docs
@@ -544,31 +549,55 @@ Best regards,
             </button>
           </div>
           
-          {showMenu && (
-            <div className="help-menu-dropdown">
-              <button onClick={handleDocumentation} className="menu-item">
-                <span className="menu-icon">📖</span>
-                Documentation
-              </button>
-              
-              <button onClick={handleBugReport} className="menu-item">
-                <img src="/sgex/bug-report-icon.svg" alt={getAltText(t, ALT_TEXT_KEYS.ICON_BUG_REPORT, 'Bug Report')} className="menu-icon" />
-                File Bug Report
-              </button>
-              
-              {contextData.repository && (
-                <button onClick={handleDAKFeedback} className="menu-item">
-                  <span className="menu-icon">📝</span>
-                  Provide DAK Feedback
+          {showMenu && (() => {
+            // Calculate the number of menu items
+            const menuItems = [
+              'Documentation',
+              'File Bug Report',
+              ...(contextData.repository ? ['Provide DAK Feedback'] : []),
+              'GitHub Source',
+              'Email Support'
+            ];
+            
+            // Determine multi-column class based on number of items
+            let columnClass = '';
+            if (menuItems.length >= 9) {
+              columnClass = 'multi-column-3';
+            } else if (menuItems.length >= 5) {
+              columnClass = 'multi-column-2';
+            }
+            
+            return (
+              <div className={`help-menu-dropdown ${columnClass}`}>
+                <button onClick={handleDocumentation} className="menu-item">
+                  <span className="menu-icon">📖</span>
+                  Documentation
                 </button>
-              )}
-              
-              <button onClick={handleEmailSupport} className="menu-item">
-                <span className="menu-icon">📧</span>
-                Email Support
-              </button>
-            </div>
-          )}
+                
+                <button onClick={handleBugReport} className="menu-item">
+                  <img src="/sgex/bug-report-icon.svg" alt={getAltText(t, ALT_TEXT_KEYS.ICON_BUG_REPORT, 'Bug Report')} className="menu-icon" />
+                  File Bug Report
+                </button>
+                
+                {contextData.repository && (
+                  <button onClick={handleDAKFeedback} className="menu-item">
+                    <span className="menu-icon">📝</span>
+                    Provide DAK Feedback
+                  </button>
+                )}
+                
+                <button onClick={handleGitHubSource} className="menu-item">
+                  <span className="menu-icon">🐙</span>
+                  GitHub Source
+                </button>
+                
+                <button onClick={handleEmailSupport} className="menu-item">
+                  <span className="menu-icon">📧</span>
+                  Email Support
+                </button>
+              </div>
+            );
+          })()}
         </div>
         
         <div className="help-modal-content">

@@ -20,29 +20,10 @@ const PersonaViewerContent = () => {
   const [error, setError] = useState(null);
   const [scanStatus, setScanStatus] = useState('');
   
-  // Handle case where PageProvider context might be null - AFTER all hooks
-  if (!pageContext) {
-    return (
-      <div className="persona-viewer">
-        <div className="page-header">
-          <h1>Generic Personas & Actor Definitions</h1>
-          <p className="page-description">
-            Initializing page context...
-          </p>
-        </div>
-        <div className="main-content">
-          <div className="error-message">
-            <h2>Loading</h2>
-            <p>Page framework is initializing. Please wait...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  const { profile, repository, branch } = pageContext;
-  
-  // Get data from page framework
+  // Get data from page framework (with null-safe access)
+  const profile = pageContext?.profile;
+  const repository = pageContext?.repository;
+  const branch = pageContext?.branch;
   const user = profile?.login;
   const repo = repository?.name;
   const selectedBranch = branch || repository?.default_branch || 'main';
@@ -280,6 +261,26 @@ const PersonaViewerContent = () => {
     
     return baseUrl;
   }, [user, repo, selectedBranch]);
+
+  // Handle case where PageProvider context might be null - AFTER all hooks
+  if (!pageContext) {
+    return (
+      <div className="persona-viewer">
+        <div className="page-header">
+          <h1>Generic Personas & Actor Definitions</h1>
+          <p className="page-description">
+            Initializing page context...
+          </p>
+        </div>
+        <div className="main-content">
+          <div className="error-message">
+            <h2>Loading</h2>
+            <p>Page framework is initializing. Please wait...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
