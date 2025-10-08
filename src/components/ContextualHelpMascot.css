@@ -357,33 +357,43 @@
 @media (min-width: 1024px) {
   .help-thought-bubble {
     /* Allow wider bubble on desktop for multi-column layout */
-    max-width: min(80vw, 600px);
+    max-width: min(80vw, 800px);
   }
   
-  /* 2-column layout for 6+ topics */
+  /* 2-column layout for 6+ topics - 50% wider */
   .help-topics-list.multi-column-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px 16px;
     align-items: start;
+    min-width: 600px; /* 50% wider than base */
   }
   
-  /* Make all topic buttons consistent height in 2-column layout */
+  /* Make all topic buttons exactly 2 lines height in 2-column layout */
   .help-topics-list.multi-column-2 .help-topic-btn {
-    min-height: 64px;
+    height: 52px; /* Fixed height for 2 lines: 14px font * 1.4 line-height * 2 lines + 12px padding top/bottom */
+    min-height: 52px;
+    max-height: 52px;
     align-items: flex-start;
+    overflow: hidden;
+    line-height: 1.4;
   }
   
-  /* 3-column layout for 11+ topics */
+  /* 3-column layout for 11+ topics - 100% wider */
   .help-topics-list.multi-column-3 {
     grid-template-columns: 1fr 1fr 1fr;
     gap: 8px 12px;
+    min-width: 800px; /* 100% wider than base */
   }
   
-  /* Make all topic buttons consistent height in 3-column layout */
+  /* Make all topic buttons exactly 3 lines height in 3-column layout */
   .help-topics-list.multi-column-3 .help-topic-btn {
-    min-height: 72px;
+    height: 70px; /* Fixed height for 3 lines: 14px font * 1.4 line-height * 3 lines + 12px padding top/bottom */
+    min-height: 70px;
+    max-height: 70px;
     align-items: flex-start;
+    overflow: hidden;
+    line-height: 1.4;
   }
   
   /* Title spans full width in grid layout */
