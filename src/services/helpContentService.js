@@ -87,6 +87,22 @@ class HelpContentService {
           </div>
         `
       },
+      githubSource: {
+        id: 'sgex-github-source',
+        title: 'GitHub Source',
+        badge: '/sgex/cat-paw-lock-icon.svg', // Using lock icon temporarily until we add a proper GitHub icon
+        type: 'action',
+        action: () => {
+          // Open the SGEX GitHub repository
+          window.open('https://github.com/litlfred/sgex', '_blank');
+        },
+        content: `
+          <p>Access the complete source code for SGEX Workbench on GitHub.</p>
+          <div class="help-tip">
+            <strong>🐙 GitHub Repository:</strong> View source code, report issues, contribute, and stay up-to-date with development.
+          </div>
+        `
+      },
       bugReport: {
         id: 'report-sgex-bug',
         title: 'Report a SGeX bug',
@@ -897,6 +913,9 @@ class HelpContentService {
     if (contextData.selectedDak || contextData.repository) {
       topics.push(this.universalTopics.dakFeedback);
     }
+    
+    // Add GitHub Source link
+    topics.push(this.universalTopics.githubSource);
     
     return topics;
   }
