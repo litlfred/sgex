@@ -328,6 +328,24 @@
   font-style: italic;
 }
 
+.error-text {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: #d32f2f;
+  font-weight: 500;
+}
+
+.input-error {
+  border-color: #d32f2f !important;
+  background-color: #ffebee !important;
+}
+
+.input-error:focus {
+  border-color: #c62828 !important;
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1) !important;
+}
+
 .btn-preview {
   background: #6b69d6;
   color: white;

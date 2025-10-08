@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PageLayout, useDAKParams } from './framework';
 import ContextualHelpMascot from './ContextualHelpMascot';
 import githubService from '../services/githubService';
+import requirementsService from '../services/requirementsService';
 import { escapeFSHString, extractFSHMetadata } from '@sgex/dak-core/dist/browser';
 import './RequirementsEditor.css';
 
@@ -37,6 +38,7 @@ const RequirementsEditorContent = () => {
   const [showCreateNew, setShowCreateNew] = useState(false);
   const [showFSHPreview, setShowFSHPreview] = useState(false);
   const [fshPreview, setFSHPreview] = useState('');
+  const [idValidationError, setIdValidationError] = useState(null);
   
   // Form data for functional requirement
   const [functionalReq, setFunctionalReq] = useState({
@@ -59,6 +61,23 @@ const RequirementsEditorContent = () => {
     category: '',
     classification: ''
   });
+
+  // Handle ID change with validation
+  const handleIdChange = (newId, isFunctional) => {
+    if (isFunctional) {
+      setFunctionalReq({...functionalReq, id: newId});
+    } else {
+      setNonFunctionalReq({...nonFunctionalReq, id: newId});
+    }
+    
+    // Validate ID in real-time
+    if (newId) {
+      const validation = requirementsService.validateRequirementId(newId);
+      setIdValidationError(validation.isValid ? null : validation.error);
+    } else {
+      setIdValidationError(null);
+    }
+  };
 
   // Extract user and repo from repository
   const user = repository?.owner?.login || repository?.full_name?.split('/')[0];
@@ -257,8 +276,19 @@ const RequirementsEditorContent = () => {
       return;
     }
 
+    // Validate ID according to WHO IG Starter Kit naming conventions
+    const idValidation = requirementsService.validateRequirementId(currentReq.id);
+    if (!idValidation.isValid) {
+      setError(idValidation.error);
+      return;
+    }
+
     try {
-      const fshContent = generateFSHFromForm();
+      // Save to staging ground first
+      await requirementsService.saveToStagingGround(currentReq, requirementType);
+      
+      // Generate FSH content
+      const fshContent = requirementsService.generateFSH(currentReq, requirementType);
       
       const fileName = showCreateNew 
         ? `${requirementType === 'functional' ? 'Functional' : 'NonFunctional'}Requirement-${currentReq.id}.fsh`
@@ -296,10 +326,11 @@ const RequirementsEditorContent = () => {
       setShowCreateNew(false);
       setSelectedRequirement(null);
       setError(null);
+      setIdValidationError(null);
       
     } catch (err) {
       console.error('Error saving requirement:', err);
-      setError('Failed to save requirement');
+      setError(err.message || 'Failed to save requirement');
     }
   };
 
@@ -310,6 +341,7 @@ const RequirementsEditorContent = () => {
     setSelectedRequirement(null);
     setRequirementType('functional');
     setError(null);
+    setIdValidationError(null);
   };
 
   // Delete requirement
@@ -475,11 +507,16 @@ const RequirementsEditorContent = () => {
                           type="text"
                           id="req-id"
                           value={functionalReq.id}
-                          onChange={(e) => setFunctionalReq({...functionalReq, id: e.target.value})}
-                          placeholder="e.g., FR-001"
+                          onChange={(e) => handleIdChange(e.target.value, true)}
+                          placeholder="e.g., FunctionalReq001 or Functional-Req-001"
                           required
+                          className={idValidationError ? 'input-error' : ''}
                         />
-                        <span className="help-text">Unique identifier for this requirement</span>
+                        {idValidationError ? (
+                          <span className="error-text">{idValidationError}</span>
+                        ) : (
+                          <span className="help-text">Must start with capital letter, no underscores. Hyphens allowed but not preferred.</span>
+                        )}
                       </div>
 
                       <div className="form-group">
@@ -576,11 +613,16 @@ const RequirementsEditorContent = () => {
                           type="text"
                           id="nfr-id"
                           value={nonFunctionalReq.id}
-                          onChange={(e) => setNonFunctionalReq({...nonFunctionalReq, id: e.target.value})}
-                          placeholder="e.g., NFR-001"
+                          onChange={(e) => handleIdChange(e.target.value, false)}
+                          placeholder="e.g., NonFunctionalReq001 or NonFunctional-Req-001"
                           required
+                          className={idValidationError ? 'input-error' : ''}
                         />
-                        <span className="help-text">Unique identifier for this requirement</span>
+                        {idValidationError ? (
+                          <span className="error-text">{idValidationError}</span>
+                        ) : (
+                          <span className="help-text">Must start with capital letter, no underscores. Hyphens allowed but not preferred.</span>
+                        )}
                       </div>
 
                       <div className="form-group">
