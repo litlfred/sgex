@@ -47,6 +47,16 @@ on:
         required: false
         type: boolean
         default: false
+  # Trigger for pull request events to ensure copilot and external contributions trigger workflows
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]  # Only for PRs targeting main branch
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/branch-deployment.yml'
 
 permissions:
   contents: write
