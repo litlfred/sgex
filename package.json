@@ -24,13 +24,8 @@
     "i18next": "^25.5.3",
     "i18next-browser-languagedetector": "^8.2.0",
     "node-fetch": "^3.3.2",
-<<<<<<< HEAD
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-=======
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
->>>>>>> 94563b9d0ffd3420ae7de45cff646fc198d0f1b2
     "react-i18next": "^16.0.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.9.3",
@@ -105,10 +100,7 @@
     "@types/react-dom": "^19.2.0",
     "@typescript-eslint/eslint-plugin": "^8.44.1",
     "@typescript-eslint/parser": "^8.44.0",
-<<<<<<< HEAD
-=======
     "buffer": "^6.0.3",
->>>>>>> 94563b9d0ffd3420ae7de45cff646fc198d0f1b2
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "events": "^3.3.0",
     "http-proxy-middleware": "^3.0.5",
