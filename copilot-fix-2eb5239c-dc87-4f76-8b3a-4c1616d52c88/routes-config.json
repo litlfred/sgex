@@ -55,6 +55,10 @@
       "component": "DAKFAQDemo",
       "path": "./components/DAKFAQDemo"
     },
+    "persona-viewer": {
+      "component": "PersonaViewer", 
+      "path": "./components/PersonaViewer"
+    },
     "functional-requirements": {
       "component": "RequirementsEditor",
       "path": "./components/RequirementsEditor"
