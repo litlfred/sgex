@@ -403,11 +403,7 @@
     margin-bottom: 8px;
   }
   
-  /* Only dividers span all columns - let language, theme, and cache be part of the grid */
-  .help-topics-list.multi-column-2 .help-menu-divider,
-  .help-topics-list.multi-column-3 .help-menu-divider {
-    grid-column: 1 / -1;
-  }
+  /* Language, theme, and cache are now part of the grid layout */
 }
 
 .help-topics-list h4 {
@@ -562,11 +558,6 @@
     font-size: 12px !important;
   }
   
-  .help-menu-divider {
-    grid-column: 1 / -1 !important;
-    margin: 4px 0 !important;
-  }
-  
   /* Hide bubble tail in landscape full-screen mode */
   .bubble-tail {
     display: none !important;
@@ -580,14 +571,6 @@
 
 .help-thought-bubble {
   z-index: 1001;
-}
-
-/* Help menu divider */
-.help-menu-divider {
-  height: 1px;
-  background: var(--who-border-color, #e0e0e0);
-  margin: 12px 0;
-  opacity: 0.5;
 }
 
 /* Help theme toggle button in menu */

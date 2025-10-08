@@ -355,11 +355,9 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                       ))}
                       
                       {/* Language Selector in Help Menu */}
-                      <div className="help-menu-divider"></div>
                       <LanguageSelector className="help-menu-language-selector" />
                       
                       {/* Theme Toggle in Help Menu */}
-                      <div className="help-menu-divider"></div>
                       <button 
                         className={`help-theme-toggle-btn ${isDarkMode ? 'dark' : 'light'}`}
                         onClick={handleToggleTheme}
@@ -371,7 +369,6 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                       </button>
                       
                     {/* Flush Cache Option */}
-                    <div className="help-menu-divider"></div>
                     <div className="help-menu-cache-section">
                       {cacheCleared ? (
                         <div className="cache-success-message">
@@ -394,11 +391,9 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                   <div>
                     {helpContent}
                     {/* Language Selector in Help Menu */}
-                    <div className="help-menu-divider"></div>
                     <LanguageSelector className="help-menu-language-selector" />
                     
                     {/* Theme Toggle in Help Menu */}
-                    <div className="help-menu-divider"></div>
                     <button 
                       className={`help-theme-toggle-btn ${isDarkMode ? 'dark' : 'light'}`}
                       onClick={handleToggleTheme}
@@ -410,7 +405,6 @@ const ContextualHelpMascot = ({ pageId, helpContent, position = 'bottom-right', 
                     </button>
                     
                     {/* Flush Cache Option */}
-                    <div className="help-menu-divider"></div>
                     <div className="help-menu-cache-section">
                       {cacheCleared ? (
                         <div className="cache-success-message">
