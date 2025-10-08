@@ -55,15 +55,13 @@
       "component": "DAKFAQDemo",
       "path": "./components/DAKFAQDemo"
     },
-<<<<<<< HEAD
     "program-indicators": {
       "component": "ProgramIndicators",
       "path": "./components/ProgramIndicators"
-=======
+    },
     "persona-viewer": {
       "component": "PersonaViewer", 
       "path": "./components/PersonaViewer"
->>>>>>> 94563b9d0ffd3420ae7de45cff646fc198d0f1b2
     }
   },
   "standardComponents": {
